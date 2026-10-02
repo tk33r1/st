@@ -299,11 +299,11 @@
     .lede b,
     .done .what b,
     .note b {
-      color: var(--heart-secondary);
       font-weight: 400;
     }
 
     /* 導入文の要の語（「リクエスト」「3つの AI」）はピンク。注記の太字は注意なので黄色 */
+    .done .what b { color: var(--heart-secondary); }
     .lede b { color: var(--heart-primary); }
     .note b { color: var(--glitch-accent); }
 
@@ -1243,15 +1243,16 @@
     .histitem.on { border-color: var(--heart-secondary); }
     .histopen { text-align: left; padding: 10px 13px; min-width: 0; }
 
-    .histopen .t {
-      display: block; font-size: 13.5px; font-family: var(--f-body);
+    .histopen .t,
+    .histopen .d {
+      display: block; font-family: var(--f-body);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
+    .histopen .t { font-size: 13.5px; }
+
     .histopen .d {
-      display: block; margin-top: 3px; font-size: 11px; color: var(--faint);
-      font-family: var(--f-body); font-variant-numeric: tabular-nums;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-top: 3px; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums;
     }
 
     .histdel { border-left: 1px solid var(--border); color: var(--faint); font-size: 15px; }
@@ -1789,6 +1790,7 @@
       : '<span class="ph">♪</span>';
     // 曲名だけの依頼は、DJ が曲を特定するまでアーティストの代わりにこう出す
     const artistLabel = (s) => (s.isFree ? '曲名を調べています' : s.artist);
+    const variantHTML = (variant) => variant ? '<span class="vtag">' + esc(variant) + '</span>' : '';
 
     /* 回線が遅いと、前に出した要求の応答が後から届く。呼ぶたびに前の要求を古くし、
        返した関数は「これがまだ最後の要求か」を答える。古い応答は描かずに捨てる */
@@ -1855,9 +1857,8 @@
 
     // 候補の1行。検索結果と AI 相談の「見つかった曲」で共通
     function candButtonHTML(t, attr) {
-      const v = t.variant ? '<span class="vtag">' + esc(t.variant) + '</span>' : '';
       return '<button class="cand" ' + attr + '>' + artHTML(t.artwork, true) +
-        '<span><span class="t trunc">' + esc(t.title) + v + '</span>' +
+        '<span><span class="t trunc">' + esc(t.title) + variantHTML(t.variant) + '</span>' +
         '<span class="a trunc">' + esc(t.artist) + '</span>' +
         // 尺は曲を選ぶ判断材料なので、長いアルバム名に押し出されないよう先頭に置く
         '<span class="d trunc">' + formatDurationMs(t.durationMs) + ' · ' + esc(t.album) + '</span></span>' +
@@ -1977,9 +1978,8 @@
 
     function trackHeroHTML(track) {
       const free = track.isFree;
-      const variant = track.variant ? '<span class="vtag">' + esc(track.variant) + '</span>' : '';
       return artHTML(track.artwork) +
-        '<h2>' + esc(track.title) + variant + '</h2>' +
+        '<h2>' + esc(track.title) + variantHTML(track.variant) + '</h2>' +
         '<div class="a">' + esc(artistLabel(track)) + '</div>' +
         (free ? '' : '<div class="d">' + esc(track.album) + ' · ' + formatDurationMs(track.durationMs) + '</div>');
     }
@@ -2297,6 +2297,13 @@
         '</span></div>';
     }
 
+    // 現在・過去の一覧で、曲の行と空のときの案内を同じ形で組み立てる。
+    function rowsHTML(songs, ids, empty, past) {
+      return songs.length
+        ? songs.map((s) => rowHTML(s, ids.has(s.id), past)).join('')
+        : '<div class="blank">' + esc(empty) + '</div>';
+    }
+
     /* 15秒ごとの更新と、一覧を開いたときの読み込みは重なりうる。
        後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
     const boardLatest = latestOnly();
@@ -2342,13 +2349,9 @@
       /* いまかかっている曲は上のカードで出しているので、再生済からは外す。
          同じ曲が2か所に並ぶと、鳴っているのか終わったのかが読めなくなる。 */
       const played = d.now ? d.played.filter((s) => s.id !== d.now.id) : d.played;
-      $('#playedRows').innerHTML = played.length
-        ? played.map((s) => rowHTML(s, ids.has(s.id))).join('')
-        : '<div class="blank">' +
-        (d.now ? 'いまかかっている曲が最初の1曲です' : 'まだ1曲もかかっていません') + '</div>';
-      $('#waitingRows').innerHTML = d.waiting.length
-        ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
-        : '<div class="blank">リクエストはまだありません</div>';
+      $('#playedRows').innerHTML = rowsHTML(played, ids,
+        d.now ? 'いまかかっている曲が最初の1曲です' : 'まだ1曲もかかっていません');
+      $('#waitingRows').innerHTML = rowsHTML(d.waiting, ids, 'リクエストはまだありません');
 
       // 受付の開始・停止も、開いた時点のままにせずここで追う（見出しの比べ合わせより先に）
       syncOpenState(d.event);
@@ -2436,9 +2439,7 @@
         $('#pastDate').textContent = ymd(d.event.at);
         $('#pastShare').hidden = false;
         $('#pastQR').hidden = false;
-        $('#pastRows').innerHTML = d.played.length
-          ? d.played.map((x) => rowHTML(x, ids.has(x.id), true)).join('')
-          : '<div class="blank">この回でかかった曲はありません</div>';
+        $('#pastRows').innerHTML = rowsHTML(d.played, ids, 'この回でかかった曲はありません', true);
         $('#pastNote').textContent =
           'この回でかかった曲を、かかった順に並べています。'
           + '終わった回なので、♥ や内容の変更はできません。';

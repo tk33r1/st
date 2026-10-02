@@ -54,7 +54,8 @@
 
 1. 1ページでしか使わない JS・CSS は、そのページの横に置く（例: `dj/request/catalog.js`）
 2. 1つの区画（`tools/`・`dj/`・`glitch/`・`job/` など）の複数のページで使うものは、その区画の `assets/` に置く
-3. 区画をまたいで使うものは、ルートの `assets/` に置く
+3. 区画をまたいで使うものは、ルートの `assets/` に置く。
+   例外は QR Palette の部品（`tools/qr-palette/` の `qr-core.js`・`qr-style.js`・`qr-assets.js`・`qr-export.js`）。持ち主は QR Palette で、`dj/request/` と `.github/scripts/ogp/generate-qr-artwork.js` はそれを借りて読んでいる。直したら借りている側も確かめる
 4. 外部から取り込んだライブラリ・フォントは `assets/vendor/`・`assets/fonts/`。取り込みスクリプトを通し、手で置かない
 5. データ（JSON）は `data/` に置く。GitHub Actions が作るものは、上の表に「手で編集しない」と書く
 6. ダウンロード用の資料は `files/` に置く

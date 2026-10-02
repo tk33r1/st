@@ -3808,7 +3808,6 @@
     // When the shock cannon's reserve finishes filling. Module-scope because the Arsenal
     // view renders the countdown, and it outlives any single charge.
     let shockReadyAt = 0;
-    let errorCount = 0, warnCount = 0;
     let sudoContext = null;
     let unreadHistoryCount = 0;
 
@@ -3934,8 +3933,8 @@
     // Starts empty: problems are recorded only from real events (unknown commands, sudo failures, etc.).
     const problems = [];
     function recountProblems() {
-      errorCount = problems.filter(p => p.sev === 'error').length;
-      warnCount = problems.filter(p => p.sev === 'warn').length;
+      const errorCount = problems.filter(p => p.sev === 'error').length;
+      const warnCount = problems.filter(p => p.sev === 'warn').length;
       DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span> <span>⚠</span> <span>${warnCount}</span>`;
       setBadge(DOM.probBadge, errorCount + warnCount);
       if (!DOM.panelProblems.classList.contains('hidden')) renderProblems();
@@ -4594,11 +4593,16 @@
       if (activeTab === cmd) activeTab = tabOrder[Math.min(idx, tabOrder.length - 1)] || null;
       renderEditor();
     }
+    function selectTab(cmd) {
+      activeTab = cmd;
+      setActiveTree(cmd);
+      renderEditor();
+    }
     DOM.tabbar.addEventListener('click', (e) => {
       const close = e.target.closest('[data-close]');
       if (close) { closeTab(close.dataset.close); return; }
       const tab = e.target.closest('[data-tab]');
-      if (tab) { activeTab = tab.dataset.tab; setActiveTree(activeTab); renderEditor(); }
+      if (tab) selectTab(tab.dataset.tab);
     });
     // Keyboard parity with the mouse. renderEditor()/closeTab() rebuild the whole bar, so
     // every branch hands focus back to the row it should now be on — otherwise the next
@@ -4617,7 +4621,7 @@
       const cmd = tab.dataset.tab;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        activeTab = cmd; setActiveTree(cmd); renderEditor(); focusTab(cmd);
+        selectTab(cmd); focusTab(cmd);
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         closeTab(cmd); focusTab(activeTab);
@@ -5057,7 +5061,7 @@
             if (elements.length === 0) { clearInterval(meltdownInterval); return; }
             const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
-              meltdownElements.push({ element: el });
+              meltdownElements.push(el);
               setTransformVars(el);
               el.classList.add('meltdown-element');
               el.classList.remove('rebuilding-element');
@@ -5069,7 +5073,7 @@
       },
       rebuild() {
         if (!isMeltdown) return null;
-        clearInterval(meltdownInterval); clearInterval(rebuildInterval); let elements = [...meltdownElements];
+        clearInterval(meltdownInterval); clearInterval(rebuildInterval); const elements = [...meltdownElements];
         rebuildInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
@@ -5089,13 +5093,13 @@
               }, 1100);
               return;
             }
-            const item = elements.pop();
-            if (item.element) {
-              item.element.classList.remove('meltdown-element');
-              item.element.classList.add('rebuilding-element');
+            const el = elements.pop();
+            if (el) {
+              el.classList.remove('meltdown-element');
+              el.classList.add('rebuilding-element');
               setTimeout(() => {
-                item.element.classList.remove('rebuilding-element');
-                clearTransformVars(item.element);
+                el.classList.remove('rebuilding-element');
+                clearTransformVars(el);
               }, 1000);
             }
           }
@@ -6233,6 +6237,12 @@
           }
           damageAt(x, y, 45); // one section, hit hard — no splash, all of it lands where it fell
         };
+        // 即時の一発と長押し中の連射で、毎回最新の座標を使う。
+        const startHeldFire = (fire, ms) => {
+          const shoot = () => fire(lastX, lastY);
+          shoot();
+          holdTimer = setInterval(shoot, cadence(ms));
+        };
         const onDown = (e) => {
           if (multiTouch) return; // a two-finger scroll is in progress — don't fire
           if (e.pointerType === 'mouse' && e.button !== 0) return; // left button fires; right cycles weapon
@@ -6242,14 +6252,14 @@
           const w = weapon();
           if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
           const actions = {
-            mg: () => { fireMG(lastX, lastY); holdTimer = setInterval(() => fireMG(lastX, lastY), cadence(70)); },
+            mg: () => startHeldFire(fireMG, 70),
             sg: () => fireShotgun(lastX, lastY),
-            hammer: () => { hammerHit(lastX, lastY); holdTimer = setInterval(() => hammerHit(lastX, lastY), cadence(700)); },
-            flame: () => { flame(lastX, lastY); holdTimer = setInterval(() => flame(lastX, lastY), cadence(45)); },
+            hammer: () => startHeldFire(hammerHit, 700),
+            flame: () => startHeldFire(flame, 45),
             coin: () => { scratching = true; slx = lastX; sly = lastY; },
             grenade: () => fireGrenade(lastX, lastY),
             shock: () => startCharge(),
-            repair: () => { mend(lastX, lastY); holdTimer = setInterval(() => mend(lastX, lastY), cadence(60)); }
+            repair: () => startHeldFire(mend, 60)
           };
           if (actions[w]) actions[w]();
         };

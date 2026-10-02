@@ -37,7 +37,8 @@ ACTIVE_GLOBS = (
     'magi-app/www/**/*.js',
     'magi-app/www/**/*.html',
 )
-SKIP_DIRS = ('node_modules', 'vendor', 'android', 'ios')
+# Wrangler のバンドルには正本から取り込んだモデルIDが含まれるので、検査対象から外す。
+SKIP_DIRS = ('node_modules', 'vendor', 'android', 'ios', '.wrangler')
 
 # magi2 の3人格は UI テーマで temperature を揺らす（workers/magi2/personas.js の PERSONA_TEMPERATURE の最大値）。
 PERSONA_MAX_TEMPERATURE = 1.3
