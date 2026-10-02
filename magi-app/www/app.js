@@ -84,6 +84,31 @@ var barTitle = document.getElementById('bar-title');
 var agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
 var pendingReactions = {};
 
+// 次の質問の予測（Worker の suggest イベント）。入力欄が空で送れる状態のときだけ薄く重ね、
+// › で入力欄に入れる（送信はしない）。会話を切り替える・送る・使うと消える。
+var agentSuggestEl = document.getElementById('agent-suggest');
+var agentSuggestText = document.getElementById('agent-suggest-text');
+var agentSuggestUse = document.getElementById('agent-suggest-use');
+var agentSuggestion = '';
+function renderAgentSuggest() {
+  var show = !!agentSuggestion && !agentInput.value && !agentInput.disabled;
+  agentSuggestEl.hidden = !show;
+  agentInput.classList.toggle('has-suggest', show);
+  if (!show) return;
+  agentSuggestText.textContent = agentSuggestion;
+  agentSuggestUse.setAttribute('aria-label', 'Use the suggested question: ' + agentSuggestion);
+}
+function setAgentSuggestion(text) { agentSuggestion = String(text || '').trim(); renderAgentSuggest(); }
+agentSuggestUse.addEventListener('click', function () {
+  if (!agentSuggestion || agentInput.disabled) return;
+  agentInput.value = agentSuggestion.slice(0, 1000);
+  setAgentSuggestion('');
+  agentInput.focus({ preventScroll: true });
+  agentInput.setSelectionRange(agentInput.value.length, agentInput.value.length);
+});
+// 打ち始めたら隠し、全部消したらまた出す（予測は直前の答えに対するものなので、残しておいてよい）
+agentInput.addEventListener('input', renderAgentSuggest);
+
 // ---- Helpers ----------------------------------------------------------------
 function esc(s) {
   return String(s == null ? '' : s)
@@ -131,7 +156,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.1 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.2 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('') + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
   + '</div>';
@@ -258,6 +283,7 @@ function resetAgent() {
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
   attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
+  setAgentSuggestion('');
   closeAgentPanels();
   setAgentTitle('');
   showSplashIfEmpty();
@@ -268,6 +294,7 @@ function agentDegrade(msg) {
   agentDegraded.textContent = msg || 'MAGI is currently unreachable. Check your connection and try again.';
   agentDegraded.classList.remove('hidden');
   agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+  renderAgentSuggest();
 }
 function renderAgentError(env) {
   env = env || {};
@@ -409,6 +436,7 @@ async function agentSend() {
   var text = agentInput.value.trim().slice(0, 1000);
   var atts = attachments.slice();
   if (!text && !atts.length) return;
+  setAgentSuggestion('');
   agentInput.value = '';
   attachments = []; renderAttachTray();
   // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）
@@ -444,7 +472,7 @@ async function agentSend() {
   safeStore('magi_current_history', agentHistory);
 
   agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
-  var reply = '', errored = false, timedOut = false;
+  var reply = '', errored = false, timedOut = false, suggestion = '';
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
 
@@ -457,7 +485,7 @@ async function agentSend() {
     if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outbound, theme }),
+      body: JSON.stringify({ messages: outbound, theme, suggest: true }),
       signal: ctrl.signal,
     });
     clearTimeout(connectTimer);
@@ -485,6 +513,8 @@ async function agentSend() {
         },
         integrated: function (d) { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
         error: function (d) { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
+        // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
+        suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
         done: function () { },
       });
     }
@@ -505,6 +535,7 @@ async function agentSend() {
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
+    setAgentSuggestion(suggestion);
   }
 }
 
@@ -691,6 +722,7 @@ function loadSavedSession(id) {
   localStorage.setItem('magi_current_session_id', currentSessionId);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false;
+  setAgentSuggestion('');
   renderHistoryToLog(agentHistory);
   updateAgentActionButtons();
 }
