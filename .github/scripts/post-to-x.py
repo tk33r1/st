@@ -333,8 +333,8 @@ def set_alt_text(creds, media_id, text):
 def page_is_live(url):
     """号ページが公開反映済みか確かめる。
 
-    未知パスにもトップページが 200 で返るホスティングなので、ステータスだけでは
-    判定できない。canonical が対象 URL を指しているかどうかで見る。
+    未知パスは 404.html が 404 で返るが、キャッシュやリダイレクトで別のページが 200 で
+    返ることもあるので、ステータスに加えて canonical が対象 URL を指しているかどうかで見る。
     """
     req = urllib.request.Request(url, method='GET')
     req.add_header('User-Agent', 'DailyBriefXPoster/1.0')

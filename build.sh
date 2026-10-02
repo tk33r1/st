@@ -50,8 +50,9 @@ while IFS= read -r -d '' f; do
   n=$((n + 1))
 done < <(list)
 
-# 2. reverse-recaptcha をビルドして、ソースのあった場所（/game/reverse-recaptcha/）に置く
-(cd game/reverse-recaptcha && npm ci --no-audit --no-fund && npm run build -- --outDir "../../$OUT/game/reverse-recaptcha" --emptyOutDir)
+# 2. reverse-recaptcha をビルドして、ソースのあった場所（/game/reverse-recaptcha/）に置く。
+#    vite などは devDependencies なので、NODE_ENV=production の環境でも入るよう --include=dev を付ける
+(cd game/reverse-recaptcha && npm ci --include=dev --no-audit --no-fund && npm run build -- --outDir "../../$OUT/game/reverse-recaptcha" --emptyOutDir)
 
 # 3. 出来上がりを確かめる（足りない・余計なものがあれば、デプロイさせずに止める）
 fail() { echo "build.sh: $*" >&2; exit 1; }

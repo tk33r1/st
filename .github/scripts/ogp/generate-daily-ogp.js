@@ -3,7 +3,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawnSync } = require('child_process');
 const { launch, connect, newPage, evalJs, sleep, WEBP_QUALITY } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
@@ -319,7 +318,7 @@ function buildDailyHtml(brandCfg, issue) {
 </html>`;
 }
 
-async function captureCard(port, htmlPath, outPngPath) {
+async function captureCard(port, htmlPath, outWebpPath) {
   const chrome = await launch(port);
   try {
     const cdp = await connect(port);
@@ -335,14 +334,17 @@ async function captureCard(port, htmlPath, outPngPath) {
       ]))()`);
       await sleep(800);
 
+      // 品質はほかの OGP カードと同じ（cdp.js の WEBP_QUALITY）。以前は可逆 WebP で1枚約400KBあり、
+      // 号が増えるたびに git とデプロイが重くなっていた（非可逆の92で約120KB。文字の見た目は変わらない）
       const shot = await s('Page.captureScreenshot', {
-        format: 'png',
+        format: 'webp',
+        quality: WEBP_QUALITY,
         clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
         captureBeyondViewport: true,
       });
       if (!shot || !shot.data) throw new Error('Page.captureScreenshot returned no data');
 
-      fs.writeFileSync(outPngPath, Buffer.from(shot.data, 'base64'));
+      fs.writeFileSync(outWebpPath, Buffer.from(shot.data, 'base64'));
     } finally {
       cdp.ws.close();
     }
@@ -382,7 +384,6 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   // 日刊の号ごとの OGP はメディア別ディレクトリに置く（images/ogp 直下の肥大化を避ける）
   const outDir = path.join(ROOT, 'images', 'ogp', brandCfg.outPrefix);
   fs.mkdirSync(outDir, { recursive: true });
-  const outPngPath = path.join(outDir, `${d}.png`);
   const outWebpPath = path.join(outDir, `${d}.webp`);
 
   const htmlContent = buildDailyHtml(brandCfg, issue);
@@ -396,7 +397,7 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   try {
     for (let attempt = 1; ; attempt++) {
       try {
-        await captureCard(brandCfg.port, htmlPath, outPngPath);
+        await captureCard(brandCfg.port, htmlPath, outWebpPath);
         break;
       } catch (e) {
         console.error(`[attempt ${attempt}/${MAX_ATTEMPTS}] OGP capture failed: ${e && e.stack || e}`);
@@ -407,21 +408,6 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
-
-  // 品質はほかの OGP カードと同じ（cdp.js の WEBP_QUALITY）。以前は可逆で1枚約400KBあり、
-  // 号が増えるたびに git とデプロイが重くなっていた（非可逆の92で約120KB。文字の見た目は変わらない）
-  const pyCode = `
-from PIL import Image
-import sys
-src, dst, quality = sys.argv[1], sys.argv[2], int(sys.argv[3])
-img = Image.open(src)
-img.save(dst, format='WEBP', quality=quality, method=6)
-`;
-  const pyRes = spawnSync('python', ['-c', pyCode, outPngPath, outWebpPath, String(WEBP_QUALITY)]);
-  if (pyRes.error || pyRes.status !== 0) {
-    throw new Error('Python WebP conversion failed: ' + (pyRes.stderr ? pyRes.stderr.toString() : ''));
-  }
-  try { fs.unlinkSync(outPngPath); } catch {}
 
   const kb = (fs.statSync(outWebpPath).size / 1024).toFixed(1);
   console.log(`SUCCESS: images/ogp/${brandCfg.outPrefix}/${d}.webp (${kb} KB, WebP q${WEBP_QUALITY} 2400x1260)`);
