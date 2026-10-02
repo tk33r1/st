@@ -42,8 +42,8 @@ const PATCHES = {
         'if(o)CA(s);else for(a=t?1:2;a<e.length;++a){var h=1===a?w:g[a-2];null!==e[a].destructorFunction&&e[a].destructorFunction(h)}' +
         'if(c)return e[0].fromWireType(v)})}' }
   ],
-  // QR Palette の読み取りテストに使う OpenCV WeChat（取得元は vendor/wechat/index.js の冒頭）
-  'tools/qr-palette/vendor/wechat/wasm.js': [
+  // QR Palette の読み取りテストに使う OpenCV WeChat（qr-scanner-wechat の dist/wasm.mjs）
+  'assets/vendor/qr-scanner-wechat@0.1.3/wasm.js': [
     { // createNamedFunction
       start: 'function tA(A,I){return A=JA(A),new Function(', end: ')(I)}',
       replace: 'function tA(A,I){/*tk.st: CSP で unsafe-eval を許さないため、new Function を使わない形に置き換え（名前付きの関数で本体を呼ぶだけで、働きは元と同じ）*/return A=JA(A),{[A]:function(){return I.apply(this,arguments)}}[A]}' },

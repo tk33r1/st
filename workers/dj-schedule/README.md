@@ -53,7 +53,7 @@ npx wrangler deploy
 （`schema.sql` 側に列が入っている）。
 
 ```bash
-npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-add-status.sql
+npx wrangler d1 execute dj-schedule-db --remote --file=./migrations/0002_add_status.sql
 ```
 
 2回流すと `duplicate column name` で落ちる。適用済みという意味なので無視してよい。
@@ -64,7 +64,7 @@ npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-add-status.sql
 既存 DB からも消すなら次を流す（何度流しても害はない）。
 
 ```bash
-npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-drop-ym-index.sql
+npx wrangler d1 execute dj-schedule-db --remote --file=./migrations/0003_drop_ym_index.sql
 ```
 
 ### イベント作成方式からの移行
@@ -74,7 +74,7 @@ npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-drop-ym-index.s
 
 ```bash
 npx wrangler d1 execute dj-schedule-db --remote --command "SELECT COUNT(*) FROM responses"
-npx wrangler d1 execute dj-schedule-db --remote --file=./drop-old-tables.sql
+npx wrangler d1 execute dj-schedule-db --remote --file=./migrations/0001_drop_old_tables.sql
 ```
 
 ## ローカル確認

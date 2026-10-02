@@ -25,7 +25,7 @@ const BOXES = [[1330, 300, 700, 700], [1900, 250, 420, 420], [1900, 620, 420, 42
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ogp-qr-'));
   const host = path.join(tmp, 'decode.html');
-  const jsqr = fs.readFileSync(path.join(ROOT, 'tools/qr-palette/vendor/jsQR.js'), 'utf8')
+  const jsqr = fs.readFileSync(path.join(ROOT, 'assets/vendor/jsqr@1.4.0/jsQR.js'), 'utf8')
     .replace(/<\/script/gi, '<\\/script');
   fs.writeFileSync(host, '<!DOCTYPE html><html><head><meta charset="utf-8"><script>' +
     jsqr + '</script></head><body></body></html>');

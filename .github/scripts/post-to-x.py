@@ -35,7 +35,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-from daily_engine import REPO_ROOT, format_issue_date, load_json_list, write_json_atomic
+from daily_engine import REPO_ROOT, format_issue_date, load_history, save_history
 
 JST = timezone(timedelta(hours=9))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -256,7 +256,7 @@ def issue_image_path(config, date_key):
 
 
 def prepare_image(webp_path):
-    """OGP は可逆 WebP だが X は PNG/JPEG が確実なので変換して渡す。
+    """OGP は WebP だが X は PNG/JPEG が確実なので変換して渡す。
 
     5MB を超える場合だけ JPEG に落とす（文字主体のカードなので通常は PNG のまま）。
     """
@@ -375,15 +375,15 @@ def main():
     args = parser.parse_args()
 
     config = load_media_config(args.media)
-    data_json_path = config['data_json_path']
-    history = load_json_list(data_json_path)
+    data_dir = config['data_dir']
+    history = load_history(data_dir)
     if not history:
-        raise SystemExit(f"号が1件もありません: {data_json_path}")
+        raise SystemExit(f"号が1件もありません: {data_dir}")
 
     if args.date:
         issue = next((i for i in history if i.get('date') == args.date), None)
         if issue is None:
-            raise SystemExit(f"{args.date} 号が {data_json_path} に見つかりません。")
+            raise SystemExit(f"{args.date} 号が {data_dir} に見つかりません。")
     else:
         issue = max(history, key=lambda i: str(i.get('date') or ''))
 
@@ -442,7 +442,7 @@ def main():
 
     issue['x_post_id'] = post_id
     issue['x_posted_at'] = datetime.now(JST).isoformat(timespec='seconds')
-    write_json_atomic(data_json_path, history, indent=2)
+    save_history(data_dir, history)
     log(f" -> ポスト完了: https://x.com/{handle}/status/{post_id}")
 
 

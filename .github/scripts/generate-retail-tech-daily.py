@@ -137,7 +137,7 @@ CONFIG = {
     'theme_color': '#1a47d4',
     'share_prefix': '【流通DX日刊速報】',
     'user_agent': 'RetailTechDailyBrief/3.0',
-    'data_json_path': os.path.join(REPO_ROOT, 'data', 'retail-tech-daily.json'),
+    'data_dir': os.path.join(REPO_ROOT, 'data', 'retail-tech-daily'),  # 年ごとの <YYYY>.json
     'job_dir': os.path.join(REPO_ROOT, 'job', 'retailtechdaily'),
 
     'jp_query_gen': JP_GENERAL_QUERY,

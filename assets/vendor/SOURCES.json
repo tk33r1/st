@@ -208,6 +208,35 @@
   "@fontsource/noto-sans-jp@5.3.0/LICENSE": {
    "from": "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5.3.0/LICENSE",
    "sha256": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3"
+  },
+  "jsqr@1.4.0/jsQR.js": {
+   "from": "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
+   "sha256": "bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859"
+  },
+  "jsqr@1.4.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/LICENSE",
+   "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+  },
+  "zxing-wasm@3.1.3/zxing_reader.js": {
+   "from": "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.3/dist/iife/reader/index.js",
+   "sha256": "98e44c8063b9aa75b31562f6b64b2cead420842ac3e4f57a791c01cd8f450a7a"
+  },
+  "zxing-wasm@3.1.3/zxing_reader.wasm": {
+   "from": "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.3/dist/reader/zxing_reader.wasm",
+   "sha256": "2ebda08a93eea3efcd8399cda6b276e6a0b1de4fec60b4d8988a047de4c6d1ba"
+  },
+  "zxing-wasm@3.1.3/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.3/LICENSE",
+   "sha256": "fb506e4ade12d7a9efa67c9d76a9a28c8e15d347ca49a69e48e29b40b34ad2ab"
+  },
+  "qr-scanner-wechat@0.1.3/wasm.js": {
+   "from": "https://cdn.jsdelivr.net/npm/qr-scanner-wechat@0.1.3/dist/wasm.mjs",
+   "sha256": "89529f9154aa615726739b0ffb5ef654955d42adf778eb6ebe218fa41c925c1f",
+   "patched": 3
+  },
+  "qr-scanner-wechat@0.1.3/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/qr-scanner-wechat@0.1.3/LICENSE",
+   "sha256": "af32efdd008a371c77b13eef5010c81d6c5c2f67c054b6bb74317e13ac38c171"
   }
  },
  "split": {
@@ -219,12 +248,6 @@
    ],
    "size": 32129114,
    "sha256": "2390efa7fb66e7e42dbae15427571a5ffc96b829480904c30f471f0a78967f61"
-  }
- },
- "local": {
-  "tools/qr-palette/vendor/wechat/wasm.js": {
-   "sha256": "89529f9154aa615726739b0ffb5ef654955d42adf778eb6ebe218fa41c925c1f",
-   "patched": 3
   }
  }
 }

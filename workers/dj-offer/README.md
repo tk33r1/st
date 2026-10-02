@@ -46,15 +46,15 @@ POST /dj/api/offer/send
 
 ### 3. secret の登録
 
-wrangler は `workers/wrangler` にしか入っていないので、そこから `--config` で指す。
+wrangler は全 Worker 共通で `workers/` に入れてある（初回は `cd workers && npm ci`）ので、そこから `--config` で指す。
 `workers/dj-offer` で `npx` すると毎回ダウンロードが走る。
 
 ```bash
-cd workers/wrangler
-npx wrangler secret put RESEND_API_KEY        --config ../dj-offer/wrangler.toml
-npx wrangler secret put TURNSTILE_SECRET_KEY  --config ../dj-offer/wrangler.toml
-npx wrangler secret put OFFER_TO              --config ../dj-offer/wrangler.toml
-npx wrangler secret put OFFER_FROM            --config ../dj-offer/wrangler.toml
+cd workers
+npx wrangler secret put RESEND_API_KEY        --config dj-offer/wrangler.toml
+npx wrangler secret put TURNSTILE_SECRET_KEY  --config dj-offer/wrangler.toml
+npx wrangler secret put OFFER_TO              --config dj-offer/wrangler.toml
+npx wrangler secret put OFFER_FROM            --config dj-offer/wrangler.toml
 ```
 
 | secret | 値 |
@@ -80,9 +80,9 @@ secret は Worker が存在しないと登録できないので、デプロイ�
 ため、登録後の再デプロイは要らない。
 
 ```bash
-cd workers/wrangler
-npx wrangler deploy --config ../dj-offer/wrangler.toml
-npx wrangler secret list --config ../dj-offer/wrangler.toml   # 4つ揃ったか（値は出ない）
+cd workers
+npx wrangler deploy --config dj-offer/wrangler.toml
+npx wrangler secret list --config dj-offer/wrangler.toml   # 4つ揃ったか（値は出ない）
 ```
 
 secret が1つでも欠けていると、フォームは 500 を返して「DM からご連絡ください」と表示する

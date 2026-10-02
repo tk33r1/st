@@ -2,6 +2,6 @@
 -- WHERE ym = ? はそちらで足り、この索引は書き込みのたびに更新されるだけだった。
 -- 以前の schema.sql で作った DB のみ対象。何度流しても害はない。
 --
---   npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-drop-ym-index.sql
+--   npx wrangler d1 execute dj-schedule-db --remote --file=./migrations/0003_drop_ym_index.sql
 
 DROP INDEX IF EXISTS idx_month_responses_ym;

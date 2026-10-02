@@ -1,9 +1,17 @@
-// tk.st: 読み込みに失敗したモジュールはブラウザのモジュールマップに残り、
-// 同じ URL では二度と読み直せない。再試行時に親へ付けたクエリを子にも渡して、
-// キャッシュを外せるようにしている（元は import('./wasm.mjs')）。
+// qr-wechat.js — OpenCV WeChat で QR を読む（qr-verify.js が import する）。
+//
+// qr-scanner-wechat@0.1.3 の dist/index.mjs（MIT License, Anthony Fu。ライセンス文は
+// assets/vendor/qr-scanner-wechat@0.1.3/LICENSE）を元に、tk.st で次の2点を書き直したもの。
+// 本体の wasm.js は assets/vendor/ に同梱したもの（.github/scripts/vendor/fetch-vendor.js が取り込む）。
+//
+// - 読み込みに失敗したモジュールはブラウザのモジュールマップに残り、同じ URL では
+//   二度と読み直せない。再試行時に親へ付けたクエリを子にも渡して、キャッシュを外せる
+//   ようにしている（元は import('./wasm.mjs')）。
+// - scan() で作った OpenCV.js のオブジェクトを、失敗したときも含めて必ず解放する。
+const WASM = new URL('../../assets/vendor/qr-scanner-wechat@0.1.3/wasm.js', import.meta.url).href;
 const __q = new URL(import.meta.url).search;
 async function importOpenCV() {
-  const cv = await import('./wasm.js' + __q).then((r) => r.cv);
+  const cv = await import(WASM + __q).then((r) => r.cv);
   await cv.ready;
   const qrcode_detector = await loadModels(cv);
   return {
@@ -70,7 +78,7 @@ async function scan(input, options = {}) {
   };
 }
 async function loadModels(cv) {
-  const models = await import('./wasm.js' + __q);
+  const models = await import(WASM + __q);
   cv.FS_createDataFile("/", "detect.prototxt", models.detect_prototxt, true, false, false);
   cv.FS_createDataFile("/", "detect.caffemodel", models.detect_caffemodel, true, false, false);
   cv.FS_createDataFile("/", "sr.prototxt", models.sr_prototxt, true, false, false);

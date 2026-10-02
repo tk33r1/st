@@ -427,7 +427,7 @@ def update_registry():
             '',
             '```bash',
             'npx wrangler deploy --config workers/magi2/wrangler.toml',
-            'npx wrangler deploy --config workers/wrangler/wrangler.toml',
+            'npx wrangler deploy --config workers/games/wrangler.toml',
             'npx wrangler deploy --config workers/dj-request/wrangler.toml',
             '```',
         ])

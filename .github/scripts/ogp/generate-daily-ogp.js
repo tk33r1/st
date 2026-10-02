@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
+const { launch, connect, newPage, evalJs, sleep, WEBP_QUALITY } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const WIDTH = 1200;
@@ -20,7 +20,7 @@ const BRAND_CONFIGS = {
     primarySubtle: 'rgba(111, 140, 247, 0.12)',
     primaryBorder: 'rgba(111, 140, 247, 0.32)',
     badgeBg: '#0f172a',
-    jsonPath: path.join(ROOT, 'data', 'retail-tech-daily.json'),
+    dataDir: path.join(ROOT, 'data', 'retail-tech-daily'),
     outPrefix: 'retailtechdaily',
     portalOgpPath: path.join(ROOT, 'images', 'ogp', 'retail-tech-ogp.webp'),
     defaultTags: ['店舗DX', '流通'],
@@ -54,7 +54,7 @@ const BRAND_CONFIGS = {
     primarySubtle: 'rgba(0, 158, 150, 0.08)',
     primaryBorder: 'rgba(0, 158, 150, 0.25)',
     badgeBg: '#009e96',
-    jsonPath: path.join(ROOT, 'data', 'nitori-daily.json'),
+    dataDir: path.join(ROOT, 'data', 'nitori-daily'),
     outPrefix: 'nitoridaily',
     portalOgpPath: path.join(ROOT, 'images', 'ogp', 'nitori-ogp.webp'),
     defaultTags: ['ニトリ', '店舗DX', '商品開発'],
@@ -352,6 +352,15 @@ async function captureCard(port, htmlPath, outPngPath) {
   }
 }
 
+// 号の履歴を新しい順で読む（data/<メディア>/<年>.json。daily_engine.py の load_history と同じ）
+function loadHistory(dataDir) {
+  if (!fs.existsSync(dataDir)) throw new Error(`${dataDir} not found`);
+  return fs.readdirSync(dataDir)
+    .filter(name => /^\d{4}\.json$/.test(name))
+    .flatMap(name => JSON.parse(fs.readFileSync(path.join(dataDir, name), 'utf8')))
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+}
+
 async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   const brandKey = targetBrand;
   const brandCfg = BRAND_CONFIGS[brandKey];
@@ -359,17 +368,14 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
     throw new Error(`Unknown brand: ${targetBrand}`);
   }
 
-  if (!fs.existsSync(brandCfg.jsonPath)) {
-    throw new Error(`${brandCfg.jsonPath} not found`);
-  }
-
-  const newsData = JSON.parse(fs.readFileSync(brandCfg.jsonPath, 'utf8'));
+  const newsData = loadHistory(brandCfg.dataDir);
   let issue = null;
   if (targetDate) {
     issue = newsData.find(it => it.date === targetDate);
-    if (!issue) throw new Error(`Target date ${targetDate} not found in ${brandCfg.jsonPath}`);
+    if (!issue) throw new Error(`Target date ${targetDate} not found in ${brandCfg.dataDir}`);
   } else {
     issue = newsData[0];
+    if (!issue) throw new Error(`No issues in ${brandCfg.dataDir}`);
   }
 
   const d = issue.date;
@@ -402,21 +408,23 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 
+  // 品質はほかの OGP カードと同じ（cdp.js の WEBP_QUALITY）。以前は可逆で1枚約400KBあり、
+  // 号が増えるたびに git とデプロイが重くなっていた（非可逆の92で約120KB。文字の見た目は変わらない）
   const pyCode = `
 from PIL import Image
 import sys
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, quality = sys.argv[1], sys.argv[2], int(sys.argv[3])
 img = Image.open(src)
-img.save(dst, format='WEBP', lossless=True, method=6)
+img.save(dst, format='WEBP', quality=quality, method=6)
 `;
-  const pyRes = spawnSync('python', ['-c', pyCode, outPngPath, outWebpPath]);
+  const pyRes = spawnSync('python', ['-c', pyCode, outPngPath, outWebpPath, String(WEBP_QUALITY)]);
   if (pyRes.error || pyRes.status !== 0) {
     throw new Error('Python WebP conversion failed: ' + (pyRes.stderr ? pyRes.stderr.toString() : ''));
   }
   try { fs.unlinkSync(outPngPath); } catch {}
 
   const kb = (fs.statSync(outWebpPath).size / 1024).toFixed(1);
-  console.log(`SUCCESS: images/ogp/${brandCfg.outPrefix}/${d}.webp (${kb} KB, Lossless WebP 2400x1260)`);
+  console.log(`SUCCESS: images/ogp/${brandCfg.outPrefix}/${d}.webp (${kb} KB, WebP q${WEBP_QUALITY} 2400x1260)`);
 
   // ポータル代表 OGP にも同期コピー
   try {

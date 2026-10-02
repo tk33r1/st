@@ -1,6 +1,9 @@
 # Node.js
 node_modules/
 
+# Cloudflare Pages に出すもの（build.sh が作る）
+_site/
+
 # Wrangler
 .wrangler/
 .dev.vars
@@ -22,10 +25,10 @@ err.txt
 __pycache__/
 *.pyc
 
-# Codex に添付した画像の一時置き場（サイトの公開範囲に入るので、コミットしない）
+# Codex に添付した画像の一時置き場（リポジトリは GitHub で公開しているので、コミットしない）
 .codex-remote-attachments/
 
-# エディタの手元設定（1人で管理しているので共有しない。リポジトリ直下は公開範囲にも入る）
+# エディタの手元設定（1人で管理しているので共有しない）
 .vscode/
 
 # Claude Code の手元の許可リスト（手元のパスや叩いたコマンドが残る。共有する設定は .claude/settings.json）

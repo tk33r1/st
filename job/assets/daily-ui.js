@@ -353,19 +353,40 @@
     return article;
   }
 
-  // 横断検索とウォッチ新着が同じ search-index.json を読むので、取得は一度だけにする。
-  let searchIndexPromise = null;
-  function loadSearchIndex() {
-    if (!searchIndexPromise) {
-      searchIndexPromise = fetch('search-index.json', { cache: 'no-cache' })
+  // 横断検索とウォッチ新着の索引。号が増えても1ファイルが育たないよう年ごとに分けてある
+  // （daily_engine.py の build_search_index）。search-index.json に最新の年の記事と年の一覧
+  // （years、新しい順）、それより前の年は search-index-<年>.json。同じファイルは一度しか取らない。
+  const indexFiles = {};
+  function fetchIndexFile(name) {
+    if (!indexFiles[name]) {
+      indexFiles[name] = fetch(name, { cache: 'no-cache' })
         .then(function(response) {
           if (!response.ok) throw new Error('HTTP ' + response.status);
           return response.json();
         })
-        .then(function(payload) { return Array.isArray(payload.records) ? payload.records : []; })
+        .then(function(payload) { return payload && Array.isArray(payload.records) ? payload : null; })
         .catch(function() { return null; });
     }
-    return searchIndexPromise;
+    return indexFiles[name];
+  }
+
+  // all が true なら全部の年（横断検索）。false なら最新の年だけで、1月は前の年も足す
+  // （ウォッチ新着。年が明けた直後に一覧が空にならないように）。読めなければ null。
+  async function loadSearchIndex(all) {
+    const head = await fetchIndexFile('search-index.json');
+    if (!head) return null;
+    const years = Array.isArray(head.years) ? head.years.map(String) : [];
+    const latest = head.records.reduce(function(max, record) {
+      const date = String(record.date || '');
+      return date > max ? date : max;
+    }, '');
+    const older = all ? years.slice(1) : (latest.slice(4, 6) === '01' ? years.slice(1, 2) : []);
+    const parts = await Promise.all(older.map(function(year) { return fetchIndexFile('search-index-' + year + '.json'); }));
+    // 横断検索で一部の年だけ欠けると、黙って結果が減る。読めなかったと伝える
+    if (all && parts.some(function(part) { return !part; })) return null;
+    return parts.reduce(function(records, part) {
+      return part ? records.concat(part.records) : records;
+    }, head.records.slice());
   }
 
   function initArchiveSearch() {
@@ -395,7 +416,7 @@
     async function ensureIndex() {
       if (records) return records;
       status.textContent = '検索インデックスを読み込んでいます…';
-      const loaded = await loadSearchIndex();
+      const loaded = await loadSearchIndex(true);
       if (!loaded) status.textContent = '検索データを読み込めませんでした。';
       records = loaded || [];
       return records;
@@ -553,7 +574,7 @@
       });
     }
     watch.onChange(render);
-    loadSearchIndex().then(function(loaded) {
+    loadSearchIndex(false).then(function(loaded) {
       records = loaded || [];
       latestDate = records.reduce(function(max, record) {
         const date = String(record.date || '');

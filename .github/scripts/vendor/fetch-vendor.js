@@ -15,7 +15,7 @@
  *
  * ページは Content-Security-Policy で 'unsafe-eval' を許していないので、文字列からコードを
  * 作るライブラリはそのままでは止まる。取り込みのたびに patches.js の置き換えを当て、当てた
- * あとの SHA-256 を記録する（assets/vendor の外にある LOCAL_PATCHED にも当てる）。
+ * あとの SHA-256 を記録する。
  * 同梱の JS に文字列からコードを作る処理が残っていないかも毎回確かめ、DYNAMIC_OK に
  * 理由を書いたもの以外が見つかったら止める。
  */
@@ -86,13 +86,19 @@ const LIBS = [
     files: [[JSD + 'wasm-feature-detect@1.9.0/dist/esm/index.js', 'index.js']] },
   // pdf-studio の日本語の書き込み用（fontkit で PDF に埋め込むので TTF のまま）
   { dir: '@fontsource/noto-sans-jp@5.3.0', license: JSD + '@fontsource/noto-sans-jp@5.3.0/LICENSE',
-    files: [['https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@5.3.0/japanese-400-normal.ttf', 'japanese-400-normal.ttf']] }
+    files: [['https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@5.3.0/japanese-400-normal.ttf', 'japanese-400-normal.ttf']] },
+  // QR Palette の読み取りテスト（tools/qr-palette/qr-verify.js）に使うデコーダ
+  { dir: 'jsqr@1.4.0', license: JSD + 'jsqr@1.4.0/LICENSE',
+    files: [[JSD + 'jsqr@1.4.0/dist/jsQR.js', 'jsQR.js']] },
+  { dir: 'zxing-wasm@3.1.3', license: JSD + 'zxing-wasm@3.1.3/LICENSE',
+    files: [[JSD + 'zxing-wasm@3.1.3/dist/iife/reader/index.js', 'zxing_reader.js'],
+            [JSD + 'zxing-wasm@3.1.3/dist/reader/zxing_reader.wasm', 'zxing_reader.wasm']] },
+  // 本体だけ。呼び出し口（dist/index.mjs）は tk.st で書き直したので tools/qr-palette/qr-wechat.js に置いている
+  { dir: 'qr-scanner-wechat@0.1.3', license: JSD + 'qr-scanner-wechat@0.1.3/LICENSE',
+    files: [[JSD + 'qr-scanner-wechat@0.1.3/dist/wasm.mjs', 'wasm.js']] }
 ];
 
 const { PATCHES, DYNAMIC_CODE, applyPatches } = require('./patches');
-
-// assets/vendor の外にあって取り込みの対象ではないが、置き換えは当てるもの
-const LOCAL_PATCHED = ['tools/qr-palette/vendor/wechat/wasm.js'];
 
 // 同梱の JS に残っていてよい「文字列からコードを作る処理」とその件数。どれも CSP の下では
 // 通らない経路なので実害がない。件数が変わったら（版を上げたときなど）中身を見て判断し直す
@@ -129,8 +135,8 @@ async function get(url) {
 (async () => {
   const checkOnly = process.argv.includes('--check');
   const recordFile = path.join(OUT, 'SOURCES.json');
-  const prev = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : { files: {}, split: {}, local: {} };
-  const record = { files: {}, split: {}, local: {} };
+  const prev = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : { files: {}, split: {} };
+  const record = { files: {}, split: {} };
   let fetched = 0, bad = 0;
 
   for (const lib of LIBS) {
@@ -195,26 +201,9 @@ async function get(url) {
     }
   }
 
-  // assets/vendor の外にあるが、置き換えを当てるもの
-  for (const rel of LOCAL_PATCHED) {
-    const file = path.join(ROOT, rel);
-    const p = patchBuffer(rel, fs.readFileSync(file));
-    if (p.applied) {
-      if (checkOnly) { console.error('置き換えが当たっていない: ' + rel); bad++; }
-      else { fs.writeFileSync(file, p.buf); console.log('置き換えを当てた: ' + rel + '（' + p.applied + ' か所）'); }
-    }
-    // 改行の違い（Git の自動変換）で値が揺れないよう、LF にそろえてから測る
-    const sum = sha256(Buffer.from(p.buf.toString('utf8').replace(/\r\n/g, '\n'), 'utf8'));
-    const known = prev.local && prev.local[rel];
-    if (known && known.sha256 !== sum && !p.applied) { console.error('記録と違う: ' + rel); bad++; }
-    record.local[rel] = { sha256: sum, patched: p.count };
-  }
-
   // 同梱の JS に、文字列からコードを作る処理が残っていないか（CSP の下で止まる）
-  const dirs = [OUT].concat(fs.readdirSync(path.join(ROOT, 'tools'))
-    .map(t => path.join(ROOT, 'tools', t, 'vendor')).filter(d => fs.existsSync(d)));
   const re = new RegExp(DYNAMIC_CODE.source, 'g');
-  for (const f of dirs.flatMap(walk).filter(f => /\.m?js$/.test(f))) {
+  for (const f of walk(OUT).filter(f => /\.m?js$/.test(f))) {
     const rel = path.relative(ROOT, f).split(path.sep).join('/');
     const n = (fs.readFileSync(f, 'utf8').match(re) || []).length;
     const ok = DYNAMIC_OK[rel] ? DYNAMIC_OK[rel][0] : 0;

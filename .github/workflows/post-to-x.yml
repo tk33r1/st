@@ -89,7 +89,7 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
-        git add data/nitori-daily.json data/retail-tech-daily.json
+        git add data/nitori-daily/ data/retail-tech-daily/
         git commit -m "Record X post [skip ci]" || exit 0
         git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
         git push origin HEAD:main

@@ -73,11 +73,11 @@ jobs:
         git config --global user.email "$BOT_EMAIL"
         case "$MEDIA" in
           retailtechdaily)
-            git add job/retailtechdaily/ data/retail-tech-daily.json images/ogp/
+            git add job/retailtechdaily/ data/retail-tech-daily/ images/ogp/
             commit_message="Auto-generate retail tech daily"
             ;;
           nitoridaily)
-            git add job/nitoridaily/ data/nitori-daily.json images/ogp/
+            git add job/nitoridaily/ data/nitori-daily/ images/ogp/
             commit_message="Auto-generate nitori daily"
             ;;
         esac
@@ -136,7 +136,7 @@ jobs:
         fi
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
-        git add data/nitori-daily.json data/retail-tech-daily.json
+        git add data/nitori-daily/ data/retail-tech-daily/
         git commit -m "Record X post [skip ci]" || exit 0
         git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
         git push origin HEAD:main

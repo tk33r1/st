@@ -129,3 +129,16 @@
 # ascii-roguelike のクリア報酬ボタンが指すこの URL はページが無く、これまでトップページが出ていた。
 # 動きを変えないよう明示的にトップへ送る（行き先を後で変えられるよう 302）。
 /bitcoinyen/certification  /  302
+
+# 移動: 2026-10-02  QR Palette のデコーダを assets/vendor/ の取り込み（fetch-vendor.js）に載せ、版ごとの置き場所へ移した。
+# OpenCV WeChat の呼び出し口（index.js）は tk.st で書き直したものなので、ページの横の qr-wechat.js にした。
+# 個別の行を * より前に置く（上から順に最初に当たったものが使われる）。
+/tools/qr-palette/vendor/jsQR.js           /assets/vendor/jsqr@1.4.0/jsQR.js  301
+/tools/qr-palette/vendor/jsQR.LICENSE      /assets/vendor/jsqr@1.4.0/LICENSE  301
+/tools/qr-palette/vendor/zxing/*           /assets/vendor/zxing-wasm@3.1.3/:splat  301
+/tools/qr-palette/vendor/wechat/index.js   /tools/qr-palette/qr-wechat.js  301
+/tools/qr-palette/vendor/wechat/*          /assets/vendor/qr-scanner-wechat@0.1.3/:splat  301
+
+# 移動: 2026-10-02  日刊の号データ data/nitori-daily.json・data/retail-tech-daily.json を、年ごとの
+# data/nitori-daily/<年>.json・data/retail-tech-daily/<年>.json に分けた（1ファイルが毎日まるごと書き直されながら育つのを止めた）。
+# 生成と X 投稿のスクリプトだけが読む内部のデータで、1つの行き先に対応しないので 301 は張らない。

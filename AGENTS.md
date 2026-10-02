@@ -6,7 +6,8 @@
 
 ## プロジェクト概要
 
-- **サイト本体**: ビルド工程なしの素の静的ファイル。各ページは `*/index.html` に
+- **サイト本体**: ビルド工程なしの素の静的ファイル（デプロイ時の `build.sh` は、公開するファイルを選んで写すのと
+  reverse-recaptcha のビルドだけ。後述「デプロイ」）。各ページは `*/index.html` に
   スタイルとスクリプトをほぼ内包する自給自足型（ルートの `index.html` は単体で約400KB）。
   公開 URL はディレクトリ構造と一致する（`tools/pdf-studio/index.html` → `https://tk.st/tools/pdf-studio/`）。
   ルートの `index.html` は Bitcoin の Witness 領域（Ordinals インスクリプション）にも刻んである
@@ -20,7 +21,7 @@
   `export default { async fetch(request, env) {...} }` の標準形。
 - **MAGI アプリ** (`magi-app/`): MAGI チャットのモバイル版。PWA + Capacitor で
   iOS/Android にパッケージングする npm 管理のサブプロジェクト（npm を使うのはほかに
-  `game/reverse-recaptcha/` と `workers/wrangler/` だけ。「ビルドとテスト」参照）。
+  `game/reverse-recaptcha/` と `workers/` だけ。「ビルドとテスト」参照）。
 - **GitHub Actions** (`.github/`): サイトマップ生成とガソリン価格 JSON の週次更新。
   `.github/scripts/ogp/` は CI ではなく手元で叩く OGP カード生成（`README.md` 参照）。
 
@@ -29,20 +30,23 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | データ（JSON）だけを置く。手で直す正本は `tools.json`/`game.json`（一覧データ）と `glitch.json`（記事メタ一元管理）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`（週次）、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily.json`/`retail-tech-daily.json`（日刊の号データ）、`nitori-tiktok-buzz.json`（日刊ニトリの TikTok の取得結果）。ここに置いたものはすべて公開される |
+| `data/` | データ（JSON）だけを置く。手で直す正本は `tools.json`/`game.json`（一覧データ）と `glitch.json`（記事メタ一元管理）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`（週次）、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily/`・`retail-tech-daily/`（日刊の号データ。年ごとの `<YYYY>.json` に分けてある。生成と X 投稿のスクリプトは `daily_engine.py` の `load_history`/`save_history` で読み書きする）、`nitori-tiktok-buzz.json`（日刊ニトリの TikTok の取得結果）。ここに置いたものはすべて公開される |
 | `assets/` | 区画をまたいで使う自前のコードと、取り込んだ外部物。`analytics.js`（GTM と Ahrefs の読み込みをまとめたもの。いまは `job/` が使う）、`buy-me-oil.js`（寄付ウィジェット。`oil-price.json` は自分の場所から `../data/` を引く）、`bijutsu-shisui.js`+`.css`（DJ の各ページと `anniversary/mitsuki32/` の背景演出）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `files/` | ダウンロード用の資料（PDF）。トップページからリンクしている。旧 `data/` の URL は `_redirects` で 301（インスクリプション版のトップページが旧 URL を持っているので外さない） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。共通部品は `tools/assets/`: `tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`tools/assets/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
-| `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
-| `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
+| `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301）。毎日2枚ずつ増えるので、ほかのカードと同じ非可逆 WebP（`cdp.js` の `WEBP_QUALITY`）で書き出す（2026-10-02 までの号は可逆で約400KB） |
+| `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/games`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments`。共通部品は `glitch/assets/`（`glitch.js` が `data/glitch.json` から記事メタを描く、`glitch.css`） |
 | `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト。`catalog.js` は iTunes 検索と AI 推薦曲の照合）、`booth/`（ブースコンソール。`audio-analysis.js` は30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）。共通部品は `dj/assets/`: `dj-modal.js`+`.css`（request・booth・schedule のモーダル）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`） |
-| `job/` | 職務ページと日刊ブリーフ（`nitoridaily/`・`retailtechdaily/`。号ページは GitHub Actions が生成する）。日刊の共通部品は `job/assets/`（`daily-ui.js`、`daily-base.css`、メディアごとの `nitori-daily.css`・`retail-tech-daily.css`） |
+| `job/` | 職務ページと日刊ブリーフ（`nitoridaily/`・`retailtechdaily/`。号ページは GitHub Actions が生成する。ポータルの横断検索・ウォッチ新着の索引は年ごとに分け、`search-index.json` に最新の年の記事と年の一覧、それより前の年は `search-index-<年>.json`）。日刊の共通部品は `job/assets/`（`daily-ui.js`、`daily-base.css`、メディアごとの `nitori-daily.css`・`retail-tech-daily.css`） |
 | `magi/`, `contact/`, `thought/` | 個別ページ |
+| `motovlog/` | ハーレーのモトブログ（LIBERTY MOTOVLOG）。画像は `images/contents/motovlog/`、OGP は `.github/scripts/ogp/generate-motovlog.js` |
 | `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
 | `images/` | `contents/`（ページ内の画像。区画ごとに分ける: `dj/`、`glitch/<記事番号>/`、`motovlog/`（360° ビューのコマは `motovlog/liberty-edition/`））、`favicons/`（ファビコンと apple-touch-icon。iOS は SVG を使えないので、SVG のファビコンとは別に 180px の PNG を置く）、`ogp/`（下の行） |
-| `workers/` | Cloudflare Workers（下表参照） |
-| `magi-app/` | MAGI モバイルアプリ（PWA + Capacitor 6）。`www/` が出荷物 |
+| `workers/` | Cloudflare Workers（下表参照）。`workers/package.json` は全 Worker 共通の wrangler。サイトには出さない |
+| `config/` | AI モデル設定の正本 `ai-models.json`（後述「AIモデル設定」）。Worker がデプロイ時に取り込み、GitHub Actions が読む。サイトには出さない |
+| `magi-app/` | MAGI モバイルアプリ（PWA + Capacitor 6）。`www/` が出荷物で、サイトに出すのも `www/` だけ |
+| `build.sh` | Cloudflare Pages のビルド。公開するファイルだけを `_site/` に写す（後述「デプロイ」） |
 
 ### ファイルの置き場所
 
@@ -60,8 +64,11 @@
    手で作る OGP 画像は WebP にする（PNG だと 1MB を超えることがある）。
    例外は `magi-app/www/` の PWA アイコン（`icon-*.png`）。Capacitor はアプリに `www/` しか同梱しないので、出荷物の中に置く
 
-どこに置いても公開される（公開しない置き場はない）。公開した URL は外部から直リンクされうるので、
-動かしたら必ず `_redirects` に 301 を足す。
+サイトに出るのは、`build.sh` の `private` に当たらないものすべて（ページを足すたびに書き足す必要はない）。
+出さないのはドットファイル（`.github/`・`.claude/` など）、`AGENTS.md`・`build.sh`、`workers/`・`config/`、
+`magi-app/` の `www/` 以外、reverse-recaptcha のソース、`*.md`（README・企画書など。`assets/vendor/` のライセンス文は出す）。
+それ以外はどこに置いても公開される。公開した URL は外部から直リンクされうるので、
+動かしたら必ず `_redirects` に 301 を足す（公開をやめるだけのもの、行き先が1つに決まらないものは張らない）。
 
 ### Workers 一覧（各ディレクトリに `wrangler.toml` と `src/index.js`）
 
@@ -74,14 +81,15 @@
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版。secret: `MAGI_API_KEY` |
 | `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応）。人格ごとに会社を分けている（Enthusiast = DeepSeek、Humanist = Gemini、Strategist・統合 = OpenAI）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY` |
-| `workers/wrangler` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。wrangler のみ npm 依存 |
+| `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db` |
 
 ## ビルドとテスト
 
-- **ビルド工程は存在しない**。静的ファイルはそのままデプロイされる。
-  例外は `game/reverse-recaptcha/`（Vite + React）。リポジトリにあるのはソースで、本番はビルド結果
-  （`assets/index-*.js` を読む `index.html`）が配信されている（ビルドは Cloudflare Pages 側の設定で、
-  リポジトリ内に設定はない）。`src/` から import していないファイルや `public/` の未参照ファイルは置かない。
+- **ビルド工程は存在しない**。静的ファイルはそのままデプロイされる（`build.sh` は公開するファイルを写すだけ）。
+  例外は `game/reverse-recaptcha/`（Vite + React）。リポジトリにあるのはソースで、`build.sh` がビルドした結果
+  （`assets/index-*.js` を読む `index.html`）を同じ場所（`/game/reverse-recaptcha/`）に置く。
+  `src/` から import していないファイルや `public/` の未参照ファイルは置かない。
+- 公開されるものを手元で確かめるには `bash build.sh` → `python3 -m http.server --directory _site`。
 - **テストスイートも存在しない**。検証は構文チェックと手動確認で行う:
   ```bash
   # Worker の構文チェック
@@ -98,25 +106,29 @@
   はローカル D1 用の設定例。同 README.md「ローカル確認」節を参照）。
 - npm を使うのは次の3つだけ:
   - `magi-app/`: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
-  - `game/reverse-recaptcha/`: `npm ci` → `npm run build`（本番のビルドは Cloudflare Pages 側）。
+  - `game/reverse-recaptcha/`: `npm ci` → `npm run build`（本番は `build.sh` がビルドする）。
     依存を変えたら `npm install` で `package-lock.json` も更新してコミットする（ずれると `npm ci` が通らない）。
-  - `workers/wrangler/`: wrangler だけ。
+  - `workers/`: 全 Worker 共通の wrangler だけ（`workers/package.json`）。`cd workers && npm ci` で入れる。
 
 ## デプロイ
 
-- **静的サイト**: `main` への push で Cloudflare 側に反映される前提（リポジトリ内に
-  Pages 設定ファイルはない。`_headers` は未使用、`_redirects` はルートに置いて
-  旧 URL のリダイレクトだけを定義している）。
+- **静的サイト**: `main` への push で Cloudflare Pages がビルドして反映する。Pages の設定は
+  「ビルドコマンド: `bash build.sh`」「ビルドの出力先: `_site`」。`build.sh` は Git が管理しているファイルのうち
+  公開するものだけを `_site/` に写し（「ファイルの置き場所」）、reverse-recaptcha をビルドし、出来上がりを
+  確かめる（必要なファイルが無い・出さないはずのものがある・Pages の上限（1ファイル 25MiB、全体 20,000 件）を
+  超える、のどれかで止まり、デプロイされない）。`_headers` は未使用、`_redirects` はルートに置いて
+  旧 URL のリダイレクトだけを定義している。
   存在しないパスにはルートの `404.html` が 404 で返る（置く前は Pages がトップページを 200 で返していた）。
   このページはどの深さのパスでも同じファイルが出るので、中のリンク・画像はルートからのパス（`/…`）で書く。
   `/in`・`/tw`・`/ln_100y`・`/magi-app/android/` などの短縮 URL は Cloudflare のゾーン側のリダイレクトで、リポジトリにはない。
-- **Workers**: 手動デプロイ。各ディレクトリで `npx wrangler deploy`
-  （ルートから `npx wrangler deploy --config workers/<name>/wrangler.toml` でも可）。
+- **Workers**: 手動デプロイ。wrangler は `workers/` に共通で入れてあるので、`cd workers` してから
+  `npx wrangler deploy --config <name>/wrangler.toml`（ほかの場所で `npx` すると毎回ダウンロードが走る）。
 - **シークレット**: `wrangler secret put <NAME> --config workers/<name>/wrangler.toml` で設定。
   リポジトリにコミットしない。`.dev.vars` も `.gitignore` 済み。
 - **D1 の初期化**: `npx wrangler d1 create <db>` → database_id を `wrangler.toml` に貼る →
   `npx wrangler d1 execute <db> --remote --file=./schema.sql`。
-  既存 DB への列追加は `migrate-*.sql` / `migrations/` を使う（2回適用は `duplicate column` で落ちる＝適用済み）。
+  既存 DB への変更は各 Worker の `migrations/` に連番（`0001_<内容>.sql`）で置き、`d1 execute --file` で流す
+  （2回適用は `duplicate column` で落ちる＝適用済み）。
 - **GitHub Actions**（bot が `main` に直接コミットする）:
   - `sitemap.yml`（push 時）: `update-modified.py` で各 HTML の JSON-LD `dateModified` を
     git コミット日時と同期 → `sitemap.xml` / `robots.txt` を再生成。bot 自身のコミットは
@@ -281,10 +293,10 @@
 
 ## その他
 
-- `.gitignore`: `node_modules/`, `.wrangler/`, `.dev.vars`, `*.apk`（APK は GitHub Releases で配布）、
+- `.gitignore`: `node_modules/`, `_site/`（`build.sh` の出力）, `.wrangler/`, `.dev.vars`, `*.apk`（APK は GitHub Releases で配布）、
   デバッグ用ダンプ（`dom.txt`, `err.txt`, `*.log`）、`.claude/settings.local.json`（Claude Code の手元の許可リスト。
-  リポジトリ直下はサイトとして公開されるので、手元のパスやコマンド履歴を載せない）。
-- `.claude/settings.json`（共有する Claude Code の設定）もリポジトリごと公開されている（GitHub もサイトも）。
+  リポジトリは GitHub で公開しているので、手元のパスやコマンド履歴を載せない）。
+- `.claude/settings.json`（共有する Claude Code の設定）もリポジトリごと GitHub で公開されている（サイトには出ない）。
   手元の絶対パス（`c:\dev\…`・ユーザー名入りのパス）を含む許可や `additionalDirectories` は `.claude/settings.local.json` に置く。
 - ルート `index.html` は巨大かつ高頻度で編集される。変更後は上記の script 抽出＋
   `node --check` で構文確認するのがこのリポジトリの習慣。

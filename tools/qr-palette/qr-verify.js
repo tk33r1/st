@@ -16,18 +16,19 @@
  *   window.QRVerify.run({ render, expect, moduleWidth, margin, padColor })
  *     → { engines: [{id,name,state}], ran, passed, level, mismatch }
  *
- * デコーダは全部このリポジトリに同梱してあり（vendor/）、実行時に外へ出る
- * 通信はない。重いものは押されたときだけ読み込む。
+ * デコーダは全部このリポジトリに同梱してあり（assets/vendor/。OpenCV WeChat の
+ * 呼び出し口だけは手を入れたので qr-wechat.js）、実行時に外へ出る通信はない。
+ * 重いものは押されたときだけ読み込む。
  */
 (function (global) {
   'use strict';
 
-  // vendor/ の場所はこのファイルからの相対で決める。ページの階層に依存しない。
+  // 同梱したライブラリの場所はこのファイルからの相対で決める。ページの階層に依存しない。
   const HERE = (function () {
     const s = document.currentScript;
     return s ? s.src : location.href;
   })();
-  const V = url => new URL('vendor/' + url, HERE).href;
+  const V = url => new URL('../../assets/vendor/' + url, HERE).href;
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -73,7 +74,7 @@
       onFail: '簡素な読み取りアプリでは失敗することがあります',
       heavy: false,
       load: once(async () => {
-        if (typeof global.jsQR !== 'function') await loadScript(V('jsQR.js'));
+        if (typeof global.jsQR !== 'function') await loadScript(V('jsqr@1.4.0/jsQR.js'));
         return typeof global.jsQR === 'function';
       }),
       decode: (canvas, image) => {
@@ -91,13 +92,13 @@
       heavy: true,
       load: once(async () => {
         if (typeof global.ZXingWASM === 'undefined') {
-          await loadScript(V('zxing/zxing_reader.js'));
+          await loadScript(V('zxing-wasm@3.1.3/zxing_reader.js'));
         }
         if (typeof global.ZXingWASM === 'undefined') return false;
         // 既定では CDN から .wasm を取りに行くので、同梱したものに向け直す。
         global.ZXingWASM.setZXingModuleOverrides({
           locateFile: (path, prefix) =>
-            (/zxing_reader\.wasm$/.test(path) ? V('zxing/zxing_reader.wasm') : prefix + path)
+            (/zxing_reader\.wasm$/.test(path) ? V('zxing-wasm@3.1.3/zxing_reader.wasm') : prefix + path)
         });
         return true;
       }),
@@ -119,7 +120,7 @@
       load: once(async () => {
         // 失敗した import はモジュールマップに残るので、やり直しではクエリを変える
         const q = wechatTries++ ? '?r=' + Date.now() : '';
-        const mod = await import(V('wechat/index.js') + q);
+        const mod = await import(new URL('qr-wechat.js', HERE).href + q);
         await mod.ready();
         ENGINES_BY_ID.wechat._scan = mod.scan;
         return true;

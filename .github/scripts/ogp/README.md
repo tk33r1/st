@@ -32,6 +32,7 @@ Web フォント（JetBrains Mono / Noto Sans JP）を Google Fonts から読む
 | `generate-qr-artwork.js` | QR Palette と同じ描画エンジンで実QRの図版を生成 |
 | `verify-qr.js` | QR Palette のカードに入っている QR が実際にデコードできるか検査 |
 | `assets/qr-artwork.png` | QR Palette の図版（後述） |
+| `glitch-ogp.html` | /glitch の記事カードを画面で作るページ（後述） |
 
 ツールを増やすときは `cards.js` に1エントリ足す。
 
@@ -48,6 +49,19 @@ node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 カードの色・書体・グラデーションは `motovlog/index.html` のヒーローと同じ値を
 持ち、左肩のマークもページのナビと同じ `images/contents/motovlog/motovlog-logo.webp` を
 読む。ページ側のデザインを変えたらスクリプトも合わせて直すこと。
+
+## /glitch の記事カード（ブラウザで作る）
+
+`glitch-ogp.html` は、記事ごとに見出し・タグ・画像を画面で調整して書き出す編集用のページ。
+ほかのカードと違ってヘッドレスでは撮らない。以前は `glitch/ogp/` に置いて公開していたが、
+サイトに出す必要がないのでここへ移した（`.github/` はサイトに出さない。リポジトリ直下の `build.sh` 参照）。
+
+```bash
+python3 -m http.server 8000 --directory .github/scripts/ogp   # → http://localhost:8000/glitch-ogp.html
+```
+
+ファイルを Chrome で直接開いても動く。React・Babel・html2canvas は unpkg から、フォントは
+Google Fonts から読むのでネットワークが要る。書き出した画像は `images/ogp/glitch-<記事番号>-ogp.webp` に置く。
 
 ## アクセントカラーはカテゴリで決まる
 

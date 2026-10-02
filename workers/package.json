@@ -1,0 +1,9 @@
+{
+  "name": "tk-st-workers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "全 Worker 共通の wrangler。cd workers && npm ci のあと npx wrangler deploy --config <name>/wrangler.toml",
+  "devDependencies": {
+    "wrangler": "^4.81.1"
+  }
+}

@@ -9,7 +9,7 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
 - Pythonの生成処理は `ai_model_registry.py` から正本を読む。`OPENAI_MODEL` /
   `DEEPSEEK_MODEL` はローカルで別モデルを試す場合だけの上書き手段で、GitHub Actionsの
   実運用workflowでは設定しない。日刊生成は正本を読めなくてもルールベースで号を出す。
-- Cloudflare Worker（`workers/magi2`・`workers/wrangler`・`workers/dj-request`）は正本のJSONを `import` する。
+- Cloudflare Worker（`workers/magi2`・`workers/games`・`workers/dj-request`）は正本のJSONを `import` する。
   wrangler がデプロイ時にバンドルへ取り込むので、正本を変えたら再デプロイで反映される。
 - 正本にはモデルIDだけを置く。モデル一覧・Chat CompletionsのURL、APIキーの環境変数、
   版番号のパターン、スモークテストの中身といったプロバイダー固有の知識は `ai_models.py` の
@@ -32,7 +32,7 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
    PRの作成失敗のいずれかがあれば、Issueを作成または追記する。
 
 自動マージとWorkerの自動デプロイはしない。PRをマージするとGitHub Actionsの生成処理は更新される。
-MAGI本体・ゲーム共通API・DJ ブースの曲の背景カードは `workers/magi2`・`workers/wrangler`・`workers/dj-request` を
+MAGI本体・ゲーム共通API・DJ ブースの曲の背景カードは `workers/magi2`・`workers/games`・`workers/dj-request` を
 手動デプロイして本番へ反映する。
 PR本文にも同じ手順を出す。
 

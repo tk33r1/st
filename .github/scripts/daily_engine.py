@@ -145,6 +145,35 @@ def load_json_list(path):
     return value
 
 
+def load_history(data_dir):
+    """号の履歴を新しい順で読む。
+
+    data/<メディア>/<年>.json に年ごとに分けて持っている（1つのファイルが毎日まるごと
+    書き直されながら際限なく育たないように）。ディレクトリが無ければ空の履歴。
+    """
+    if not os.path.isdir(data_dir):
+        return []
+    history = []
+    for name in sorted(os.listdir(data_dir)):
+        if re.fullmatch(r'\d{4}\.json', name):
+            history.extend(load_json_list(os.path.join(data_dir, name)))
+    history.sort(key=lambda x: x.get('date', ''), reverse=True)
+    return history
+
+
+def save_history(data_dir, history):
+    """履歴を年ごとのファイルに書き分ける。中身の変わらない年のファイルは書き直さない。"""
+    by_year = defaultdict(list)
+    for issue in history:
+        by_year[str(issue['date'])[:4]].append(issue)
+    for year, issues in by_year.items():
+        issues.sort(key=lambda x: x.get('date', ''), reverse=True)
+        path = os.path.join(data_dir, f'{year}.json')
+        if os.path.exists(path) and load_json_list(path) == issues:
+            continue
+        write_json_atomic(path, issues, indent=2)
+
+
 def write_json_atomic(path, value, **dump_options):
     """同一ディレクトリの一時ファイルへ書き出してから置換し、途中終了による破損を防ぐ。"""
     directory = os.path.dirname(path) or '.'
@@ -431,10 +460,10 @@ def fetch_google_news_rss(query, lang='ja', gl='JP', ceid='JP:ja', max_items=40)
     return items
 
 
-def load_recent_published_history(json_path, exclude_date_key=None, days_limit=7):
-    if not os.path.exists(json_path):
+def load_recent_published_history(data_dir, exclude_date_key=None, days_limit=7):
+    data = load_history(data_dir)
+    if not data:
         return {'recent_urls': set(), 'recent_title_keys': set(), 'recent_titles': []}
-    data = load_json_list(json_path)
     recent_urls = set()
     recent_title_keys = set()
     recent_titles = []
@@ -507,7 +536,7 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     if target_date is None:
         target_date = datetime.now(JST)
 
-    pub_history = load_recent_published_history(config['data_json_path'], exclude_date_key=exclude_date_key, days_limit=7)
+    pub_history = load_recent_published_history(config['data_dir'], exclude_date_key=exclude_date_key, days_limit=7)
     when_clause = "when:3d" if target_date.weekday() == 0 else "when:2d"
     jp_blacklist = noise_blacklist(config, 'jp_noise_blacklist', DEFAULT_JP_NOISE_BLACKLIST)
     global_blacklist = noise_blacklist(config, 'global_noise_blacklist', DEFAULT_GLOBAL_NOISE_BLACKLIST)
@@ -1119,9 +1148,16 @@ def render_social_metrics(issue, previous_issue=None):
 
 
 def build_search_index(config, articles_history):
-    records = []
+    """横断検索とウォッチ新着の索引を、ファイル名 → 中身の辞書で返す。
+
+    号が増えても1ファイルが育ち続けないよう年ごとに分ける。search-index.json には最新の年の
+    記事と年の一覧（years、新しい順）を入れ、それより前の年は search-index-<年>.json に置く。
+    ポータルを開くたびに読むのは search-index.json だけ（job/assets/daily-ui.js）。
+    """
+    records_by_year = defaultdict(list)
     for issue in articles_history:
         date_key = issue.get('date', '')
+        records = records_by_year[str(date_key)[:4]]
         for idx, art in enumerate(issue.get('articles', []) or [], 1):
             records.append({
                 'date': date_key,
@@ -1135,7 +1171,13 @@ def build_search_index(config, articles_history):
                 'tags': art.get('tags', []) or [],
                 'url': f"{date_key}/#art-{idx}",
             })
-    return {'media': config['media_id'], 'records': records}
+    years = sorted(records_by_year, reverse=True)
+    if not years:
+        return {'search-index.json': {'media': config['media_id'], 'years': [], 'records': []}}
+    files = {'search-index.json': {'media': config['media_id'], 'years': years, 'records': records_by_year[years[0]]}}
+    for year in years[1:]:
+        files[f'search-index-{year}.json'] = {'media': config['media_id'], 'year': year, 'records': records_by_year[year]}
+    return files
 
 
 def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
@@ -2145,7 +2187,7 @@ def trigger_daily_ogp_generation(config, date_key):
     ogp_script = os.path.join(REPO_ROOT, '.github', 'scripts', 'ogp', 'generate-daily-ogp.js')
     if not os.path.exists(ogp_script):
         raise FileNotFoundError(f"OGP 生成スクリプトが見つかりません: {ogp_script}")
-    print(f" -> 日刊 OGP 画像生成中 (Lossless WebP): {date_key}...")
+    print(f" -> 日刊 OGP 画像生成中 (WebP): {date_key}...")
     import subprocess
     try:
         # やり直しは generate-daily-ogp.js 側で行う。ここの timeout は Chrome が固まったときの保険
@@ -2202,11 +2244,8 @@ def write_collection_outputs(config, articles_history):
     for filename, content in outputs:
         with open(os.path.join(job_dir, filename), 'w', encoding='utf-8') as f:
             f.write(content)
-    write_json_atomic(
-        os.path.join(job_dir, 'search-index.json'),
-        build_search_index(config, articles_history),
-        separators=(',', ':'),
-    )
+    for filename, payload in build_search_index(config, articles_history).items():
+        write_json_atomic(os.path.join(job_dir, filename), payload, separators=(',', ':'))
 
 
 def run_daily_pipeline(config):
@@ -2216,18 +2255,17 @@ def run_daily_pipeline(config):
     parser.add_argument('--dry-run', action='store_true', help='Collect candidates and display them without AI summarization')
     args = parser.parse_args()
 
-    data_json_path = config['data_json_path']
+    data_dir = config['data_dir']
     job_dir = config['job_dir']
     if args.rebuild:
         print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
-        if not os.path.exists(data_json_path):
-            print(f"[ERROR] {data_json_path} が存在しません。", file=sys.stderr)
+        articles_history = load_history(data_dir)
+        if not articles_history:
+            print(f"[ERROR] {data_dir} に号がありません。", file=sys.stderr)
             sys.exit(1)
-        articles_history = load_json_list(data_json_path)
-        articles_history.sort(key=lambda x: x['date'], reverse=True)
         repaired_indices = repair_history_source_links(articles_history)
         if repaired_indices:
-            write_json_atomic(data_json_path, articles_history, indent=2)
+            save_history(data_dir, articles_history)
             print(f" -> 旧号のSNS出典URLを修復してJSONへ反映: {len(repaired_indices)} 号")
 
         for i in range(len(articles_history)):
@@ -2270,9 +2308,7 @@ def run_daily_pipeline(config):
 
     ai_result = analyze_news_with_fallback(config, candidates, target_date_formatted, yesterday_str)
 
-    articles_history = []
-    if os.path.exists(data_json_path):
-        articles_history = load_json_list(data_json_path)
+    articles_history = load_history(data_dir)
 
     articles_history = [a for a in articles_history if a.get('date') != target_date_key]
 
@@ -2297,7 +2333,7 @@ def run_daily_pipeline(config):
     repaired_indices = repair_history_source_links(articles_history)
 
     print("[3/3] ファイル出力中...")
-    write_json_atomic(data_json_path, articles_history, indent=2)
+    save_history(data_dir, articles_history)
 
     # 新規追加号と、その前後で prev/next リンクが変わる隣接号だけ再生成すれば十分
     # （それ以外の過去号の内容・リンク先は今回の追加で変化しない）。

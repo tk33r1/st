@@ -310,7 +310,7 @@ CONFIG = {
     'theme_color': '#009e96',
     'share_prefix': '【ニトリ日刊速報】',
     'user_agent': 'NitoriDailyBrief/3.0',
-    'data_json_path': os.path.join(REPO_ROOT, 'data', 'nitori-daily.json'),
+    'data_dir': os.path.join(REPO_ROOT, 'data', 'nitori-daily'),  # 年ごとの <YYYY>.json
     'job_dir': os.path.join(REPO_ROOT, 'job', 'nitoridaily'),
 
     'jp_query_gen': JP_GENERAL_QUERY,
