@@ -18,8 +18,9 @@ magi-app/
 │   ├── index.html           ← full-screen mobile UI
 │   ├── app.js               ← chat, SSE streaming, reactions, history
 │   ├── manifest.webmanifest ← PWA manifest
+│   ├── icon-*.png           ← PWA / home-screen icons (192, 512, maskable 512)
 │   └── sw.js                ← service worker (caches shell, never the API)
-├── resources/icon.svg       ← source icon for generation
+├── resources/icon.svg       ← source icon for the native app icons
 ├── capacitor.config.json
 ├── package.json
 └── README.md
@@ -42,9 +43,9 @@ Open it in a mobile browser and "Add to Home Screen" to install as a PWA.
 ```bash
 cd magi-app
 npm install
-npm run icons        # generate PNG app icons + splash from resources/icon.svg
 npm run add:ios      # adds the ios/ native project   (macOS + Xcode)
 npm run add:android  # adds the android/ native project (Android Studio)
+npm run icons        # generate native app icons + splash from resources/icon.svg
 npm run sync
 npm run open:ios     # or: npm run open:android  → build & run from the IDE
 ```
@@ -52,6 +53,12 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
 - **iOS** requires macOS with Xcode.
 - **Android** requires Android Studio (any OS).
 - After changing `www/`, re-run `npm run sync`.
+- `npm run icons` only writes into `ios/` and `android/` (it needs at least one of
+  them). The PWA icons in `www/` are kept by hand: without `--ios --android` the
+  generator would write unused `icons/*.webp` (PNG data despite the name) and a
+  stray `www/manifest.json` that the app never loads. `icon-maskable-512.png` is
+  `icon-512.png` flattened onto `#0c0c0c` (the artwork already sits inside the
+  maskable safe zone): `convert icon-512.png -background '#0c0c0c' -alpha remove -alpha off icon-maskable-512.png`.
 
 ## Backend CORS
 

@@ -5,7 +5,7 @@
   "description": "MAGI mobile — Multi-Agent Generative Intelligence client (PWA + Capacitor)",
   "scripts": {
     "serve": "npx --yes serve www -l 5173",
-    "icons": "npx --yes @capacitor/assets generate --assetPath resources --iconBackgroundColor #0c0c0c --iconBackgroundColorDark #0c0c0c",
+    "icons": "npx --yes @capacitor/assets generate --ios --android --assetPath resources --iconBackgroundColor #0c0c0c --iconBackgroundColorDark #0c0c0c",
     "add:ios": "npx cap add ios",
     "add:android": "npx cap add android",
     "sync": "npx cap sync",

@@ -77,6 +77,9 @@
 ## ビルドとテスト
 
 - **ビルド工程は存在しない**。静的ファイルはそのままデプロイされる。
+  例外は `game/reverse-recaptcha/`（Vite + React）。リポジトリにあるのはソースで、本番はビルド結果
+  （`assets/index-*.js` を読む `index.html`）が配信されている（ビルドは Cloudflare Pages 側の設定で、
+  リポジトリ内に設定はない）。`src/` から import していないファイルや `public/` の未参照ファイルは置かない。
 - **テストスイートも存在しない**。検証は構文チェックと手動確認で行う:
   ```bash
   # Worker の構文チェック
@@ -270,6 +273,7 @@
 ## その他
 
 - `.gitignore`: `node_modules/`, `.wrangler/`, `.dev.vars`, `*.apk`（APK は GitHub Releases で配布）、
-  デバッグ用ダンプ（`dom.txt`, `err.txt`, `*.log`）。
+  デバッグ用ダンプ（`dom.txt`, `err.txt`, `*.log`）、`.claude/settings.local.json`（Claude Code の手元の許可リスト。
+  リポジトリ直下はサイトとして公開されるので、手元のパスやコマンド履歴を載せない）。
 - ルート `index.html` は巨大かつ高頻度で編集される。変更後は上記の script 抽出＋
   `node --check` で構文確認するのがこのリポジトリの習慣。

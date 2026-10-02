@@ -27,3 +27,6 @@ __pycache__/
 
 # エディタの手元設定（1人で管理しているので共有しない。リポジトリ直下は公開範囲にも入る）
 .vscode/
+
+# Claude Code の手元の許可リスト（手元のパスや叩いたコマンドが残る。共有する設定は .claude/settings.json）
+.claude/settings.local.json
