@@ -82,6 +82,7 @@ const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.dig
 // （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
 // 回数制限（IP・全体・リアクション）と、通知メールの「今日はもう送った」印（limit = 1）に使う。
 async function countUp(db, key, period, limit) {
+  if (!(limit > 0)) return null; // 上限 0 は「止める」。行が無いときの最初の1回も通さない
   const row = await db.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
     ON CONFLICT(ip, day) DO UPDATE SET count = count + 1 WHERE count < ?3 RETURNING count`)
     .bind(key, period, limit).first();

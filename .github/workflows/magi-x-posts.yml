@@ -9,7 +9,7 @@ name: MAGI X Posts
 # 取り込んだ投稿には、AI で画像の説明（1枚1行）と返信・引用の相手の投稿の要約を付ける。相手の本文と画像は保存しない
 #   interests: いいねとフォローを読み、関心を分野ごとに要約して .github/magi/x-interests.json に書く
 #              （生のデータは保存しない。全件を読み直すので数ドルかかる。数か月に1回の手動実行で十分）
-# fetch と interests で素材が変わったら、コミットしてから magi-context.yml に人格カードの作り直しを頼む。
+# fetch・recheck・interests で素材が変わったら、コミットしてから magi-context.yml に人格カードの作り直しを頼む。
 # bot（GITHUB_TOKEN）の push はほかの workflow を起動しないが、workflow_dispatch での起動はできる。
 # magi-context.json を書くのを magi-context.yml だけにして、書き手どうしの衝突を起こさないため。
 # 費用は本人の読み取りの単価（$0.001／件）。X API の残高から引かれる。
@@ -25,9 +25,9 @@ on:
         options: [check, fetch, recheck, interests]
         default: check
       days:
-        description: 'recheck で読み直す日数'
+        description: 'recheck で読み直す日数（空なら既定の60日。ほかのモードでは使わない）'
         type: string
-        default: '60'
+        default: ''
 
 permissions:
   contents: write
@@ -58,8 +58,12 @@ jobs:
         X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
         X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        DAYS: ${{ inputs.days || '60' }}
-      run: python3 .github/scripts/magi-x-posts.py --$MODE --days "$DAYS"
+        DAYS: ${{ inputs.days }}
+      # 日数は recheck で指定があるときだけ渡す（既定は magi-x-posts.py の RECHECK_DAYS の1か所）
+      run: |
+        args="--$MODE"
+        if [ "$MODE" = recheck ] && [ -n "$DAYS" ]; then args="$args --days $DAYS"; fi
+        python3 .github/scripts/magi-x-posts.py $args
 
     # .github/magi/ を書くのはこの workflow だけなので、取り込みで衝突しない。変わらなければ何もしない
     - name: Commit X sources and rebuild persona cards

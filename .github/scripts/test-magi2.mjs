@@ -458,3 +458,16 @@ test('全利用者の合計が1日の上限を超えたら 429 を返し、最�
     assert.match(mails[0].subject, /全体の上限/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('上限を 0 にすると、その日の最初の1回から断る', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-zero-'));
+  try {
+    const w = worker();
+    w.env.DB = database(join(dir, 'db.sqlite'));
+    w.ctx.defaults.daily_limit = 0;
+    const res = await w.chat([{ role: 'user', content: 'q' }]);
+    assert.equal(res.status, 429);
+    assert.equal((await res.json()).error.code, 'daily_limit_exceeded');
+    assert.equal(w.calls.length, 0, '上流は呼ばない');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

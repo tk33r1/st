@@ -3,7 +3,8 @@
 
   --check      本人として認証できるかを、値を出さずに確かめる
   --fetch      本人の投稿（リポストを除く）のうち前回より新しい分を読み、.github/magi/x-posts.json に足す
-  --recheck    --fetch の前に直近 RECHECK_DAYS 日を読み直し、X で消した投稿をファイルからも落とす（月1回）。
+  --recheck    直近 RECHECK_DAYS 日（--days で変えられる）を読み直し、X で消した投稿をファイルからも落とす（月1回）。
+               新しい投稿もこれで入る（--fetch は別に走らない）。毎週の取り込みが止まっていたら、保存済みの最新から読む。
                --days 365 なら1年分を読み直し、説明の済んでいない投稿に説明を付ける（説明を付け直すとき）
   取り込んだ投稿には、画像の説明（media。1枚1行）と、返信・引用の相手の投稿の要約（context）を AI で付ける。
   相手の投稿の本文や画像そのものは保存しない（公開リポジトリに他人の投稿を並べないため。X の規約でも再配布は制限される）
@@ -127,6 +128,8 @@ def check():
 
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'magi', 'x-posts.json')
 PAGE_SIZE = 100          # 1回の取得の上限（X の仕様）
+MAX_PAGES = 100          # 空のページが続いても止まるための安全弁（3,200件なら32ページで読み切る）
+ENRICH_MAX_STREAK = 3    # 説明付けがこの件数続けて失敗したらやめる（OpenAI の残高切れなど）
 TWEET_FIELDS = 'created_at,public_metrics,referenced_tweets,in_reply_to_user_id,note_tweet,lang,attachments'
 # 添付の画像（動画・GIF はサムネイル）と、返信・引用の相手の投稿も一緒に受け取る（includes に入る）。
 # 相手の投稿は本人の読み取りではないので $0.005／件。本文は保存せず、何への返信・引用かの要約だけを残す
@@ -216,7 +219,7 @@ def enrich(records):
     要るのは、この実行で受け取った includes。失敗した投稿は付けないまま残し、次の読み直しでまた試す。"""
     todo = [r for r in records if not r.get('enriched')]
     api_key = os.environ.get('OPENAI_API_KEY', '').strip()
-    done = images = contexts = failed = 0
+    done = images = contexts = failed = streak = 0
     if todo and api_key:
         mc = load_magi_context()
         for r in todo:
@@ -234,7 +237,14 @@ def enrich(records):
                 done += 1
             except RuntimeError as e:
                 failed += 1
+                streak += 1
                 print(f'[WARN] 投稿 {r["id"]} の説明を付けられなかった: {str(e)[:150]}', file=sys.stderr)
+                # 続けて失敗するなら OpenAI 側の問題（残高切れなど）。1件ごとの再試行で何時間もかけず、読めた分を保存する
+                if streak >= ENRICH_MAX_STREAK:
+                    print(f'::warning::説明付けが {streak} 件続けて失敗したのでやめた。残りは次の読み直しで付ける')
+                    break
+                continue
+            streak = 0
     elif todo:
         print('::warning::OPENAI_API_KEY が無いので、画像の説明と返信・引用の要約を付けなかった')
     for r in records:
@@ -249,21 +259,22 @@ RECHECK_DAYS = 60  # --recheck で読み直す期間（月1回）。月1回の�
 
 def read_timeline(user_id, handle, creds, **params):
     """本人の投稿を新しい順に読み切って記録のリストを返す（includes は INCLUDES に貯める）。
-    X がさかのぼって返すのは直近3,200件までなので、上限を設けなくても1回 $3.2 ほどで止まる。"""
+    X がさかのぼって返すのは直近3,200件まで（リポストも数に入る）なので、上限を設けなくても1回 $3.2 ほどで止まる。
+    リポストを除くと中身が空のページが返ることがあるので、空でも次のページがある限り読み続ける。"""
     query = timeline_query(**params)
-    records, pages = [], 0
-    while True:
+    records = []
+    for page in range(1, MAX_PAGES + 1):
         status, body = api_get(f'/users/{user_id}/tweets', query, creds)
         if status != 200:
-            sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
-        pages += 1
+            sys.exit(f'投稿を読めなかった（{page} ページ目）: HTTP {status} — {summarize_error(body)}')
         remember(body)
-        tweets = body.get('data', [])
-        records += [to_record(t, handle) for t in tweets]
+        records += [to_record(t, handle) for t in body.get('data', [])]
         token = body.get('meta', {}).get('next_token')
-        if not token or not tweets:
+        if not token:
             return records
         query['pagination_token'] = token
+    print(f'::warning::{MAX_PAGES} ページで読むのをやめた（それより古い分は読んでいない）')
+    return records
 
 
 def fetch(recheck=False, days=RECHECK_DAYS):
@@ -283,16 +294,21 @@ def fetch(recheck=False, days=RECHECK_DAYS):
         saved = {}
 
     if recheck:
+        posted = lambda p: datetime.fromisoformat(p['created_at'].replace('Z', '+00:00'))
         start = datetime.now(timezone.utc) - timedelta(days=days)
+        # 毎週の取り込みが長く止まっていたら、保存済みの最新の投稿から読む（読み直しの範囲より前に空いた抜けも埋める）
+        if saved:
+            start = min(start, posted(max(saved.values(), key=lambda p: int(p['id']))))
         fresh = read_timeline(user_id, handle, creds, start_time=start.strftime('%Y-%m-%dT%H:%M:%SZ'))
-        # 期間内の保存分で、読み直しに返ってこなかったものは X で消されている
+        # 読み直しに返ってこなかった保存分は X で消されている。ただし判定するのは実際に読めた範囲（読めた中で
+        # 最も古い投稿より新しいもの）だけ。X の3,200件の上限などで途中までしか読めなくても、まだある投稿を落とさない
         # （消した投稿の本文は、公開される Actions のログにも出さない）
         ids = {r['id'] for r in fresh}
-        removed = [i for i, p in saved.items()
-                   if i not in ids and datetime.fromisoformat(p['created_at'].replace('Z', '+00:00')) >= start]
+        covered = min((posted(r) for r in fresh), default=None)
+        removed = [i for i, p in saved.items() if covered and i not in ids and posted(p) >= covered]
         for i in removed:
             del saved[i]
-        print(f'読み直し: 直近 {days} 日。X で消された投稿 {len(removed)} 件を落とした')
+        print(f'読み直し: {start:%Y-%m-%d} 以降。X で消された投稿 {len(removed)} 件を落とした')
     else:
         newest = max(map(int, saved), default=0)
         # 前回より新しい分だけを読む（読んだ件数だけ課金される）
