@@ -37,7 +37,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 ```sh
 cd workers
 npx wrangler secret put RESEND_API_KEY --config magi2/wrangler.toml   # dj-offer と同じキーでよい
-npx wrangler secret put ALERT_TO       --config magi2/wrangler.toml
+npx wrangler secret put ALERT_TO       --config magi2/wrangler.toml   # カンマ区切りで複数可: a@example.com, b@example.com
 npx wrangler secret put ALERT_FROM     --config magi2/wrangler.toml   # 例: MAGI <magi@tk.st>
 ```
 

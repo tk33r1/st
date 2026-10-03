@@ -295,7 +295,7 @@ test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけ
       // ただの回数制限の 429 は知らせない
       if (url.includes('googleapis')) return Response.json({ error: { message: 'Rate limit reached for requests' } }, { status: 429 });
     });
-    Object.assign(w.env, { DB: database(join(dir, 'db.sqlite')), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+    Object.assign(w.env, { DB: database(join(dir, 'db.sqlite')), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com, second@example.com', ALERT_FROM: 'from@example.com' });
     for (let i = 0; i < 2; i++) {
       const res = await w.chat([{ role: 'user', content: 'q' }]);
       await res.text();
@@ -303,6 +303,7 @@ test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけ
     }
     assert.equal(mails.length, 1);
     assert.match(mails[0].subject, /deepseek.*402/);
+    assert.deepEqual(mails[0].to, ['to@example.com', 'second@example.com']);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

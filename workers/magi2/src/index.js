@@ -250,7 +250,7 @@ async function callModel({ env, messages, cfg, stream, signal, temperature }) {
 // 1人格の失敗は欠席（[NO RESPONSE]）として黙って進むので、チャージを使い切っても画面からは気づきにくい。
 // 401・402・403 と、残高や枠の不足を示す 429 を拾う（ただの回数制限の 429 は拾わない）。
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
-// 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。
+// 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
 const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
 const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
@@ -273,7 +273,7 @@ async function alertUpstream(env, log, provider, res) {
     headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: env.ALERT_FROM,
-      to: [env.ALERT_TO],
+      to: env.ALERT_TO.split(',').map(s => s.trim()).filter(Boolean), // カンマ区切りで複数可
       subject: `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`,
       text: [
         `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,

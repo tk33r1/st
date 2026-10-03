@@ -22,6 +22,6 @@ database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 #   (任意) 外部クライアント許可用: wrangler secret put CLIENT_API_KEY ...
 #   (任意) 上流の残高切れ・キーの失効をメールで知らせる（無ければログに出すだけ。README.md）
 #      wrangler secret put RESEND_API_KEY --config workers/magi2/wrangler.toml  # dj-offer と同じキーでよい
-#      wrangler secret put ALERT_TO       --config workers/magi2/wrangler.toml  # 受け取るアドレス
+#      wrangler secret put ALERT_TO       --config workers/magi2/wrangler.toml  # 受け取るアドレス（カンマ区切りで複数可）
 #      wrangler secret put ALERT_FROM     --config workers/magi2/wrangler.toml  # 例: MAGI <magi@tk.st>（Resend で認証済みのドメイン）
 #   4) wrangler deploy --config workers/magi2/wrangler.toml
