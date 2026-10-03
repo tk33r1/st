@@ -2998,9 +2998,14 @@
 
     /* 保存済みの往復を Worker の messages に直す。送信用と画面復元用で同じ会話を
        二重に持たず、turns を唯一の正本にする。 */
+    /* 回答には、その回の各人格の意見を debate（{ 人格名: { round1, round2 } }）として付ける。
+       Worker はこれを人格ごとの履歴に使う（各人格には自分の過去の意見だけを自分の発言として渡す）。
+       トップページの MAGI とアプリは、履歴の項目に同じ形の debate を持っていて、そのまま送っている */
+    const debateOf = (personas) => Object.fromEntries(Object.entries(personas || {})
+      .map(([cn, rounds]) => [cn, { round1: (rounds || [])[0] || null, round2: (rounds || [])[1] || null }]));
     const messagesFromTurns = (turns) => (turns || []).flatMap((entry) => [
       { role: 'user', content: String(entry.q || '') },
-      { role: 'assistant', content: String(entry.reply || '') },
+      { role: 'assistant', content: String(entry.reply || ''), debate: debateOf(entry.personas) },
     ]).filter((m) => m.content);
 
     /* Worker に渡す直近12件。いま送る発言を末尾に足し、先頭が回答だけになる場合は

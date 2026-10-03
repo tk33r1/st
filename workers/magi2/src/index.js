@@ -61,14 +61,18 @@ function normaliseImagePart(part, counters) {
   return { type: 'image_url', image_url: { url } };
 }
 
-// 1メッセージを検証し {role, content} だけに正規化する。
-// クライアントは表示用の付加キー（mid / debate / reactions）を持つ履歴をそのまま
-// 送ってくるので、上流へ渡す前にここで落とす。
+// 1メッセージを検証し {role, content} に正規化する。
+// クライアントは表示用の付加キー（mid / debate / reactions）を持つ履歴をそのまま送ってくる。
+// そのうち assistant の debate（その回の各人格の意見）だけは opinions として残し、人格ごとの履歴に使う
+// （personaThread）。上流の API へは role と content しか送らない（requestBody）。
 function normaliseMessage(m, counters) {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
   }
-  if (typeof m.content === 'string') return { role: m.role, content: m.content };
+  if (typeof m.content === 'string') {
+    const opinions = m.role === 'assistant' ? normaliseDebate(m.debate) : null;
+    return opinions ? { role: m.role, content: m.content, opinions } : { role: m.role, content: m.content };
+  }
   // 画像を含められるのは user メッセージのみ
   if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message の content は文字列、または user のパート配列が必要です', { retryable: false });
@@ -99,6 +103,48 @@ const withImages = (text, images) => images.length ? [...images, { type: 'text',
 // 人格が答えられなかった回に、画面のカードへ出す印（persona イベントの absent:true と一緒に送る）
 const PERSONA_ABSENT = '[NO RESPONSE]';
 
+// 過去の回の各人格の意見。画面は履歴の assistant に debate（{ codename: { round1, round2 } }）を付けて送ってくる。
+// 討議後の意見を優先し、届かなかった回（'…'）や欠席の印は使わない。知らない人格名や文字列以外は捨てる
+function normaliseDebate(debate) {
+  if (!debate || typeof debate !== 'object') return null;
+  const usable = (t) => typeof t === 'string' && t.trim() && t.trim() !== '…' && t.trim() !== PERSONA_ABSENT;
+  const out = {};
+  for (const p of PERSONAS) {
+    const d = debate[p.codename];
+    const text = d && typeof d === 'object' ? [d.round2, d.round1].find(usable) : null;
+    if (text) out[p.codename] = text.trim().slice(0, DEFAULTS.persona_history_max_chars);
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+// content（文字列かパート配列）同士をつなぐ / 頭に文を足す
+const toParts = (c) => typeof c === 'string' ? [{ type: 'text', text: c }] : c;
+const joinContent = (a, b) => typeof a === 'string' && typeof b === 'string' ? `${a}\n\n${b}` : [...toParts(a), ...toParts(b)];
+const prependText = (text, c) => typeof c === 'string' ? text + c : [{ type: 'text', text }, ...c];
+
+// 人格1人ぶんの会話の履歴を組む。assistant には、その人格自身の過去の意見だけを置く（自分の発言として引き継ぐ）。
+// 統合人格（Shinya Takeda）の過去の回答は、次の user 発言の頭に「前回の回答」として付ける（自分の発言と取り違えて、
+// 統合人格の口調や立場を引き継がないように）。他の人格の過去の意見は入れない（他の人格の意見は、その回の討議メモでだけ渡す）。
+// 自分の意見が無い回（古い履歴・欠席した回）は user が続くので、同じ役割が続いたら1つにまとめる。
+function personaThread(codename, history, lastContent) {
+  const out = [];
+  let prevAnswer = null;
+  const push = (role, content) => {
+    const last = out[out.length - 1];
+    if (last && last.role === role) last.content = joinContent(last.content, content);
+    else out.push({ role, content });
+  };
+  const withPrevAnswer = (c) => prevAnswer ? prependText(`〔前回の Shinya Takeda の回答〕\n${prevAnswer}\n\n`, c) : c;
+  for (const m of history) {
+    if (m.role === 'user') { push('user', withPrevAnswer(m.content)); prevAnswer = null; continue; }
+    const own = m.opinions && m.opinions[codename];
+    if (own) push('assistant', own);
+    prevAnswer = contentText(m.content);
+  }
+  push('user', withPrevAnswer(lastContent));
+  return out;
+}
+
 // 「120文字以内」の指定を数えて、末尾に「（109文字）」「(98 characters)」と書き足すモデルがある（Gemini）。
 // プロンプトでも止めているが、書かれたときはここで落とす
 const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|characters?|chars?)\s*[）)]\s*$/i, '').trim();
@@ -106,7 +152,8 @@ const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|c
 // 会社ごとの呼び出し方の違いはここに閉じる（値は personas.js の DEFAULTS.models）。
 function requestBody(cfg, { messages, stream, temperature }) {
   const sampling = { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p };
-  const base = { model: cfg.model, stream: !!stream, messages };
+  // 上流へは role と content だけを送る（履歴に付けて持ち回っている opinions などは落とす）
+  const base = { model: cfg.model, stream: !!stream, messages: messages.map(({ role, content }) => ({ role, content })) };
   switch (cfg.provider) {
     case 'openai':
       // reasoning_effort は省略すると medium になるので、非推論でも必ず送る。
@@ -489,7 +536,8 @@ export default {
           let r1;
           try {
             r1 = await Promise.allSettled(personas.map(async (p) => {
-              const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1, personaTemp);
+              // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
+              const text = await fetchPersonaText(env, p, personaThread(p.codename, history, lastContent), t1.signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };
             }));
@@ -516,7 +564,7 @@ export default {
               // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
               const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
               try {
-                p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: withImages(dmsg, lastImages) }], t2.signal, log, 2, personaTemp);
+                p.r2 = await fetchPersonaText(env, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), t2.signal, log, 2, personaTemp);
                 send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
               } catch (e) { absent(p, 2, e); }
             }));
