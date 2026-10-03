@@ -75,6 +75,7 @@
     .description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 14px; line-height: 1.5; margin-top: 4px; }
     .kind { font-size: 12px; padding-top: 2px; white-space: nowrap; }
     .status:not(:empty) { margin-top: 8px; }
+    .results[hidden] + .status:not(:empty) { margin-top: 20px; }
     .daily-search { margin-top: 16px; font-size: 14px; }
     .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
     .daily-query { overflow-wrap: anywhere; }
@@ -119,8 +120,9 @@
       <div class="results" id="results">
         <h2 id="result-heading" hidden></h2>
         <ul class="result-list" id="result-list" aria-labelledby="result-heading"></ul>
-        <p class="status" id="search-status" role="status" aria-atomic="true"></p>
       </div>
+      <!-- 読み上げの通知が落ちないよう、状態の行は隠す要素の外に置き、常に存在させる。 -->
+      <p class="status" id="search-status" role="status" aria-atomic="true"></p>
       <p class="daily-search" id="daily-search" hidden><span class="daily-query" id="daily-query"></span> <a id="nitori-search" href="/job/nitoridaily/"></a> <span aria-hidden="true">·</span> <a id="retail-search" href="/job/retailtechdaily/"></a></p>
     </section>
     <noscript><p>下の一覧からお選びください。</p></noscript>
@@ -209,18 +211,33 @@
       });
       var dailyEntries = entries.filter(function (entry) { return entry.card === 'daily'; });
 
-      // 隣接転置も1箇所として数える。短い来訪要素と数字IDには曖昧一致を使わない。
+      // 転置した部分への挿入・削除も許すDamerau–Levenshtein距離。
+      // 短い来訪要素と数字IDには曖昧一致を使わない。
       function editDistance(a, b) {
         a = Array.from(a); b = Array.from(b);
-        var rows = Array.from({ length: a.length + 1 }, function (_, i) { return [i]; });
-        for (var j = 0; j <= b.length; j++) rows[0][j] = j;
-        for (var i = 1; i <= a.length; i++) {
+        var limit = a.length + b.length;
+        var rows = Array.from({ length: a.length + 2 }, function () { return Array(b.length + 2).fill(0); });
+        rows[0][0] = limit;
+        for (var i = 0; i <= a.length; i++) { rows[i + 1][0] = limit; rows[i + 1][1] = i; }
+        for (var j = 0; j <= b.length; j++) { rows[0][j + 1] = limit; rows[1][j + 1] = j; }
+        var lastRow = new Map();
+        for (i = 1; i <= a.length; i++) {
+          var lastColumn = 0;
           for (j = 1; j <= b.length; j++) {
-            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) rows[i][j] = Math.min(rows[i][j], rows[i - 2][j - 2] + 1);
+            var previousRow = lastRow.get(b[j - 1]) || 0;
+            var previousColumn = lastColumn;
+            var cost = 1;
+            if (a[i - 1] === b[j - 1]) { cost = 0; lastColumn = j; }
+            rows[i + 1][j + 1] = Math.min(
+              rows[i][j] + cost,
+              rows[i + 1][j] + 1,
+              rows[i][j + 1] + 1,
+              rows[previousRow][previousColumn] + (i - previousRow - 1) + 1 + (j - previousColumn - 1)
+            );
           }
+          lastRow.set(a[i - 1], i);
         }
-        return rows[a.length][b.length];
+        return rows[a.length + 1][b.length + 1];
       }
       function closeness(a, b) {
         a = a || ''; b = b || '';
@@ -286,6 +303,8 @@
           item.titles = [normalize(displayTitle), normalize(title)];
           item.tags = tags.map(normalize);
           item.fields = item.titles.concat(item.tags, [normalize(description), normalize(short)]);
+          // URLの語との照合用。名前の途中の文字（nextgenのen等）には当てず、語単位で比べる。
+          item.words = new Set(item.titles.concat(item.tags).flatMap(function (field) { return field.split(/[^\p{L}\p{N}]+/u).concat(compact(field)); }).filter(Boolean));
           items.push(item);
           return items;
         }, []);
@@ -319,7 +338,7 @@
             var last = incoming[incoming.length - 1] || '';
             var distance = closeness(last, item.parts[item.parts.length - 1]);
             if (distance !== null && !/^\d+$/.test(last)) add(item, 2, distance);
-            var count = words.filter(function (word) { return includesTerm(item.titles.concat(item.tags), word); }).length;
+            var count = words.filter(function (word) { return item.words.has(word); }).length;
             if (count) add(item, 4, 0, count);
           } else {
             var correction = entryCorrection(item);
@@ -327,6 +346,8 @@
           }
         });
         if (exactSection && exactSection.parts.length < incoming.length) add(exactSection, 5);
+        // 完全一致・配下で行き先が決まっていれば、語の一致による候補は足さない。
+        if (candidates.some(function (candidate) { return candidate.rank <= 1; })) candidates = candidates.filter(function (candidate) { return candidate.rank !== 4; });
         var seen = new Set();
         return candidates.sort(function (a, b) { return a.rank - b.rank || a.distance - b.distance || b.words - a.words || tie(a.item, b.item); }).filter(function (candidate) {
           var href = candidate.item.href;
@@ -345,7 +366,7 @@
       }
       var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], displayed: [], mode: 'suggestion', searchUsed: false };
       var composing = false;
-      var compositionUntil = 0;
+      var imeEnterHeld = false;
       var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
       function render() {
@@ -400,16 +421,26 @@
           li.appendChild(link); list.appendChild(li);
         });
         status.textContent = notices.join(' ');
-        byId('results').hidden = !state.displayed.length && !notices.length;
+        byId('results').hidden = !state.displayed.length && heading.hidden;
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
       function renderWhenReady() { if (!composing && inputTimer === null) render(); }
       byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); });
       input.addEventListener('compositionstart', function () { composing = true; clearTimeout(inputTimer); inputTimer = null; });
-      input.addEventListener('compositionend', function () { composing = false; compositionUntil = performance.now() + 80; schedule(); });
+      input.addEventListener('compositionend', function () { composing = false; schedule(); });
       input.addEventListener('input', function () { if (!composing) schedule(); });
-      function imeEvent(event) { return composing || event.isComposing || event.keyCode === 229 || performance.now() < compositionUntil; }
+      function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
+      // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
+      // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。
+      document.addEventListener('keydown', function (event) {
+        if (enterKey(event) && (composing || event.isComposing || event.keyCode === 229)) imeEnterHeld = true;
+      }, true);
+      document.addEventListener('keyup', function (event) { if (enterKey(event)) imeEnterHeld = false; }, true);
+      window.addEventListener('blur', function () { imeEnterHeld = false; });
+      function imeEvent(event) {
+        return composing || event.isComposing || event.keyCode === 229 || (enterKey(event) && (imeEnterHeld || event.repeat));
+      }
       input.addEventListener('keydown', function (event) {
         if (imeEvent(event) || (event.key !== 'ArrowDown' && event.key !== 'Enter')) return;
         event.preventDefault();
