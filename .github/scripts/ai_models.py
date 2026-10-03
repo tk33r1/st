@@ -318,7 +318,7 @@ def smoke_google(url, api_key, model):
 
 
 def smoke_typesafe(url, api_key, model):
-    """magi2の言語判定と、日刊ニトリのSNS採否を本番の指示・形式で確認する。"""
+    """magi2の言語判定と、日刊のSNS・ニュース採否を本番の指示・形式で確認する。"""
     config = magi_config()['language']
     cases = [
         ({'earlier_messages': [], 'latest_message': '今週末、ツーリングとDJの練習、どっちに時間を使うべき？'}, 'ja'),
@@ -347,7 +347,33 @@ def smoke_typesafe(url, api_key, model):
         body = post_json(url, api_key, request_payload({'platform': 'x', 'author': '@consumer', 'text': text}, model))
         if (parse_probability(body) >= MIN_PROBABILITY) != expected:
             raise RuntimeError('日刊ニトリのSNS採否が期待と異なります')
-    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株'
+    import daily_news_filter as news_gate
+    news_cases = [
+        ('スイーツ売り場に電子棚札、スーパーが実証開始', '棚札更新の省力化と時間帯別値下げを検証。', True),
+        ('Grocery chain deploys dynamic pricing and electronic shelf labels', 'Prices are updated by demand forecasts.', True),
+        ('コンビニが秋の新メニュー、限定スイーツを発売', '季節限定の商品だけを紹介。', False),
+        ('生成AIで詩を書こう、プロンプト入門', '個人の文章作成を解説。小売・物流の活用は扱わない。', False),
+    ]
+    for title, description, expected in news_cases:
+        body = post_json(url, api_key, news_gate.request_payload(
+            news_gate.state_for({'title': title, 'description': description, 'source': ''}), model,
+        ))
+        if (news_gate.parse_probability(body) >= news_gate.MIN_PROBABILITY) != expected:
+            raise RuntimeError('リテールテックのニュース採否が期待と異なります')
+    nitori_news_cases = [
+        ('Nitori opens a new store in Vietnam', 'The furniture retailer expands its store network.', True),
+        ('ニトリグループのN＋、新店舗をオープン', '婦人服ブランドが出店し新商品を展開。', True),
+        ('ニトリ株の目標株価と投資判断', '株価予想と投資推奨のみ。商品・店舗・事業の新しい情報はない。', False),
+        ('河城にとりが登場するゲームを紹介', '東方Projectのキャラクター紹介。家具小売とは無関係。', False),
+    ]
+    # ブランド名の救済とは別に、モデル自体の採否を確認する。
+    for title, description, expected in nitori_news_cases:
+        body = post_json(url, api_key, news_gate.request_payload(
+            news_gate.state_for({'title': title, 'description': description, 'source': ''}), model, 'nitori',
+        ))
+        if (news_gate.parse_probability(body) >= news_gate.MIN_PROBABILITY) != expected:
+            raise RuntimeError('ニトリのニュース採否が期待と異なります')
+    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物'
 
 
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。

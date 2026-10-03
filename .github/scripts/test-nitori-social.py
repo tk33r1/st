@@ -15,6 +15,7 @@ import urllib.error
 
 import brightdata_social as social
 import daily_engine as engine
+import daily_news_filter as news_gate
 import nitori_social_filter as gate
 
 spec = importlib.util.spec_from_file_location('nitori_daily', Path(__file__).with_name('generate-nitori-daily.py'))
@@ -91,7 +92,7 @@ class ContentFilterTests(unittest.TestCase):
 
 
 class CollectionTests(unittest.TestCase):
-    def test_daily_pipeline_keeps_jev_accepted_gifts_but_filters_news_and_past_posts(self):
+    def test_daily_pipeline_keeps_accepted_gifts_separate_from_news_and_filters_past_posts(self):
         now = datetime(2026, 10, 4, tzinfo=daily.JST)
         post = item('母へのプレゼントにニトリのクッションを買った',
                     title='母へのプレゼントにニトリのクッションを買った',
@@ -99,10 +100,10 @@ class CollectionTests(unittest.TestCase):
                     pub_ts=(now-timedelta(hours=12)).timestamp(), source='X', description='購入体験')
         news = dict(post, link='https://example.com/news', is_sns_raw=False)
         config = dict(daily.CONFIG, extra_candidates_fn=lambda date: [post])
-        with patch.object(engine, 'fetch_google_news_rss', return_value=[news]), patch.object(engine, 'load_recent_published_history', return_value={}):
+        with patch.object(engine, 'fetch_google_news_rss', return_value=[news]), patch.object(engine, 'load_recent_published_history', return_value={}), patch.object(news_gate, 'api_key', return_value='test'), patch.object(news_gate, 'classify', return_value=.1):
             candidates = engine.gather_all_candidate_news(config, now)
         self.assertEqual([p['link'] for p in candidates['EXTRA']], [post['link']])
-        self.assertEqual(candidates['JP'], [])
+        self.assertEqual(candidates['JP'], [news])
         with patch.object(engine, 'fetch_google_news_rss', return_value=[]), patch.object(engine, 'load_recent_published_history', return_value={'recent_urls': {post['link']}}):
             candidates = engine.gather_all_candidate_news(config, now)
         self.assertEqual(candidates['EXTRA'], [])

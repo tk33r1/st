@@ -4,7 +4,7 @@ AI APIで使うモデルID・画面の表示名の正本は `config/ai-models.js
 各設定はAPIに送るモデルID `id` と、画面用の名称 `display_name` を必ず持つ。
 3社とも画面は `display_name` を使い、APIには `id` を送る。
 実運用で直接モデルを選ぶプロバイダーは OpenAI・DeepSeek・Google（Gemini）の3社と、magi2 の言語の判定に使う
-TypeSafe AI（Jev。magi2の言語判定と日刊ニトリのSNS採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
+TypeSafe AI（Jev。magi2の言語判定、日刊ニトリのSNS採否、日刊ニトリ・リテールテックのニュース採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 Jev はモデル一覧の API が無く、`jev-latest` は版を追う固定のエイリアスなので、更新の監視はせずスモークテストだけを行う（`PROVIDERS` の `watch: False`）。
 
@@ -66,6 +66,8 @@ PR本文にも同じ手順を出す。
 | Google | 推論 minimal（Gemini 3 系は切れない）・temperature 1.3・top_p・画像入力 | magi2 の Humanist |
 | TypeSafe | System One API の choice 質問。本番の `LANGUAGE_DETECT` の指示と選択肢で、英字の混ざった日本語・日本語の名前を含む英語・前の発言を引き継ぐ「OK」の3通りが正しく判定されるか | magi2 の言語の判定 |
 | TypeSafe | System One APIのnoul質問。本番の `nitori_social_filter.py` の採否基準で、テレビ台・通常の贈り物を採用し、PR・株を除外できるか | 日刊ニトリのX・TikTok内容判定 |
+| TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` の採否基準で、食品売り場の技術導入と英語の店舗技術記事を採用し、食品紹介のみ・一般AI記事を除外できるか | 日刊リテールテックの国内・海外ニュース候補 |
+| TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` のニトリ用採否基準で、英語の出店・N＋を採用し、投資推奨・同名別物を除外できるか（ブランド名救済前の判定） | 日刊ニトリの国内・海外ニュース候補 |
 
 OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
 `TYPESAFE_API_KEY` は Worker の `MAGI_TYPESAFE_API_KEY` と同じキーでよい。

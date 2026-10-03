@@ -984,7 +984,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           })), stop.signal);
         log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
 
-        // --- 第3回以降: 統合人格が判定し、答えを変えうる論点が残っていれば、答えられる人格にだけ聞き返す ---
+        // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
         // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
         // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
         const maxRounds = adaptive ? DEBATE.max_rounds : 2;

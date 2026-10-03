@@ -7,12 +7,14 @@
 
 import os
 from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
+from daily_news_filter import filter_retail_news
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
 
 # 収集クエリ定義
-JP_GENERAL_QUERY = '(リテールテック OR 流通DX OR リテールメディア OR スマートカート OR セルフレジ OR "無人店舗" OR "無人決済" OR "ウォークスルー決済" OR "電子棚札" OR "ESL" OR "需要予測" OR "AI発注" OR "自動発注" OR "ダイナミックプライシング" OR "店舗DX") -レシピ -セール -スイーツ'
+# 食品やキャンペーンに伴う技術導入も取得し、内容の採否はJevへ渡す。
+JP_GENERAL_QUERY = '(リテールテック OR 流通DX OR リテールメディア OR スマートカート OR セルフレジ OR "無人店舗" OR "無人決済" OR "ウォークスルー決済" OR "電子棚札" OR "ESL" OR "需要予測" OR "AI発注" OR "自動発注" OR "ダイナミックプライシング" OR "店舗DX")'
 JP_INDUSTRY_QUERY = '(site:ryutsuu.biz OR site:diamond-rm.net OR site:dcs.diamond.co.jp) ("DX" OR "テック" OR "レジ" OR "カート" OR "メディア" OR "AI" OR "実証" OR "RFID" OR "省人化" OR "無人" OR "棚札")'
 JP_SNS_QUERY = '((site:x.com OR site:twitter.com) ("セルフレジ" OR "スマートカート" OR "レジゴー" OR "無人レジ" OR "リテール" OR "スーパー" OR "コンビニ")) OR (("Xで話題" OR "SNSで話題" OR "賛否" OR "物議" OR "バズ" OR "反響") ("セルフレジ" OR "スマートカート" OR "無人レジ" OR "ダイナミックプライシング" OR "スーパー" OR "コンビニ" OR "値上げ" OR "タッチパネル"))'
 
@@ -146,6 +148,8 @@ CONFIG = {
     'global_query_gen': GLOBAL_GENERAL_QUERY,
     'global_query_ind': GLOBAL_INDUSTRY_QUERY,
     'global_query_sns': GLOBAL_SNS_QUERY,
+
+    'news_filter_fn': filter_retail_news,
 
     'keyword_regex': build_keyword_regex(KEYWORD_PATTERNS),
     'generic_trend_tags': ['流通DX', 'リテールテック'],

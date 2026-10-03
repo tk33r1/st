@@ -497,7 +497,7 @@ def load_recent_published_history(data_dir, exclude_date_key=None, days_limit=7)
     }
 
 
-def filter_and_dedup_news(items, blacklist_patterns, published_history=None, is_relevant_fn=None, is_global=False):
+def filter_and_dedup_news(items, blacklist_patterns, published_history=None, is_relevant_fn=None, is_global=False, dedupe_titles=True):
     seen_links = set()
     seen_titles = set()
     filtered = []
@@ -519,7 +519,7 @@ def filter_and_dedup_news(items, blacklist_patterns, published_history=None, is_
             past_duplicates_count += 1
             continue
 
-        if title_key in seen_titles:
+        if dedupe_titles and title_key in seen_titles:
             continue
 
         if any(p.search(title) for p in blacklist_patterns):
@@ -540,12 +540,16 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     when_clause = "when:3d" if target_date.weekday() == 0 else "when:2d"
     jp_blacklist = noise_blacklist(config, 'jp_noise_blacklist', DEFAULT_JP_NOISE_BLACKLIST)
     global_blacklist = noise_blacklist(config, 'global_noise_blacklist', DEFAULT_GLOBAL_NOISE_BLACKLIST)
+    news_filter_fn = config.get('news_filter_fn')
+    # 内容判定を置き換える媒体では、先に除外語で落とさず日付・重複だけを確認する。
+    news_relevant_fn = None if news_filter_fn else config.get('is_relevant_fn')
 
     jp_raw = fetch_google_news_rss(f"{config['jp_query_gen']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=40)
     jp_raw += fetch_google_news_rss(f"{config['jp_query_ind']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=35)
     jp_raw += fetch_google_news_rss(f"{config['jp_query_sns']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=25)
     jp_items, jp_past_dups = filter_and_dedup_news(
-        jp_raw, jp_blacklist, pub_history, config.get('is_relevant_fn'), is_global=False
+        jp_raw, [] if news_filter_fn else jp_blacklist, pub_history, news_relevant_fn,
+        is_global=False, dedupe_titles=not bool(news_filter_fn),
     )
 
     # 外部追加ソース（例: Yahoo! リアルタイム検索バズ等）
@@ -578,7 +582,8 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     gl_raw += fetch_google_news_rss(f"{config['global_query_ind']} {when_clause}", lang='en-US', gl='US', ceid='US:en', max_items=35)
     gl_raw += fetch_google_news_rss(f"{config['global_query_sns']} {when_clause}", lang='en-US', gl='US', ceid='US:en', max_items=20)
     global_items, global_past_dups = filter_and_dedup_news(
-        gl_raw, global_blacklist, pub_history, config.get('is_relevant_fn'), is_global=True
+        gl_raw, [] if news_filter_fn else global_blacklist, pub_history, news_relevant_fn,
+        is_global=True, dedupe_titles=not bool(news_filter_fn),
     )
 
     # Google News の "when:Nd" はヒット件数が少ない狭いクエリ（特に海外の個社名検索）だと
@@ -598,13 +603,33 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     jp_items = apply_recency_cutoff(jp_items, '国内')
     global_items = apply_recency_cutoff(global_items, '海外')
 
+    news_priority_fn = config.get('news_priority_fn')
+    if news_filter_fn:
+        def judge_news(items, label, blacklist, is_global):
+            def fallback(item):
+                kept, _ = filter_and_dedup_news(
+                    [item], blacklist, is_relevant_fn=config.get('is_relevant_fn'), is_global=is_global,
+                )
+                return bool(kept)
+            return news_filter_fn(items, label, fallback_fn=fallback)
+
+        jp_items = judge_news(jp_items, '国内', jp_blacklist, False)
+        global_items = judge_news(global_items, '海外', global_blacklist, True)
+        if news_priority_fn:
+            # 救済候補が先に取得されても、Jev採用記事を見出し重複で消さない。
+            jp_items.sort(key=news_priority_fn, reverse=True)
+            global_items.sort(key=news_priority_fn, reverse=True)
+        # 冒頭が同じNG記事で別の掲載対象を消さないよう、候補内の見出し重複は判定後に除く。
+        jp_items, _ = filter_and_dedup_news(jp_items, [])
+        global_items, _ = filter_and_dedup_news(global_items, [])
+
     sort_fn = config.get('relevance_sort_key_fn')
-    if sort_fn:
-        jp_items.sort(key=lambda x: sort_fn(x, False), reverse=True)
-        global_items.sort(key=lambda x: sort_fn(x, True), reverse=True)
-    else:
-        jp_items.sort(key=lambda x: x.get('pub_ts', 0), reverse=True)
-        global_items.sort(key=lambda x: x.get('pub_ts', 0), reverse=True)
+    def sort_key(item, is_global):
+        relevance = sort_fn(item, is_global) if sort_fn else item.get('pub_ts', 0)
+        # 後段AIの候補件数上限でも救済記事が採用記事を押し出さない。
+        return (news_priority_fn(item), relevance) if news_priority_fn else relevance
+    jp_items.sort(key=lambda item: sort_key(item, False), reverse=True)
+    global_items.sort(key=lambda item: sort_key(item, True), reverse=True)
 
     print(f" -> 収集完了: 国内 {len(jp_items)} 件 (元 {len(jp_raw)} 件, 過去掲載除外 {jp_past_dups} 件) / 海外 {len(global_items)} 件 (元 {len(gl_raw)} 件, 過去掲載除外 {global_past_dups} 件)")
     return {

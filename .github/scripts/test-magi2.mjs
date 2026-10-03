@@ -1140,6 +1140,17 @@ test('adaptive_debate を付けた画面だけ統合人格が判定し、聞い�
   assert.equal(judges[0].reasoning_effort, 'low');
   assert.equal('temperature' in judges[0], false, '推論ありでは temperature を送れない');
   assert.match(judges[0].messages[0].content, /第2回を終えた/);
+  for (const [i, round] of [[0, 2], [1, 3]]) {
+    const system = judges[i].messages[0].content;
+    assert.match(system, new RegExp(`第${round}回を終えた`));
+    assert.match(system, /追加の一往復で回答の理由・具体性・判断の質を改善できるか/);
+    assert.match(system, /案の弱点や選ぶ基準が未検討なら/);
+    assert.match(system, /既知の条件で選択肢の比較・弱点・判断基準を検討できるなら/);
+    assert.doesNotMatch(system, /そのままだと答えが変わってしまう論点が残っているときだけ/);
+  }
+  assert.match(judges[2].messages[0].content, /第4回を終えた/);
+  assert.match(judges[2].messages[0].content, /そのままだと答えが変わってしまう論点が残っているときだけ/);
+  assert.doesNotMatch(judges[2].messages[0].content, /追加の一往復で回答の理由・具体性・判断の質を改善できるか/);
   assert.match(judges[2].messages[0].content, /次が第5回で、最後の回/);
   assert.deepEqual(events.filter(([e]) => e === 'ask').map(([, d]) => [d.round, d.questions.map(q => q.codename + ':' + q.text).join()]),
     [[3, 'CASPER-3:問い1,MELCHIOR-1:熱の問い'], [4, 'CASPER-3:問い2'], [5, 'CASPER-3:問い3']]);

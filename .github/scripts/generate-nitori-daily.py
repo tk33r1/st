@@ -14,6 +14,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 import brightdata_social
 from nitori_social_filter import filter_consumer_posts
+from daily_news_filter import filter_nitori_news, news_judgement_priority
 from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
 
 JST = timezone(timedelta(hours=9))
@@ -22,7 +23,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
 
 # 収集クエリ定義
-JP_GENERAL_QUERY = '("株式会社ニトリ" OR "ニトリホールディングス" OR "ニトリHD" OR "ニトリ" OR "デコホーム" OR "島忠") ("店舗" OR "出店" OR "新商品" OR "値下げ" OR "決算" OR "PB" OR "家具" OR "インテリア" OR "生活雑貨" OR "社長" OR "似鳥") -レシピ -スイーツ'
+# 商品の使い方を検索の除外語で落とさず、取得後の内容判定に渡す。
+JP_GENERAL_QUERY = '("株式会社ニトリ" OR "ニトリホールディングス" OR "ニトリHD" OR "ニトリ" OR "デコホーム" OR "島忠" OR "N+" OR "N＋") ("店舗" OR "出店" OR "新商品" OR "値下げ" OR "決算" OR "PB" OR "家具" OR "インテリア" OR "生活雑貨" OR "社長" OR "似鳥")'
 JP_INDUSTRY_QUERY = '("ニトリ" OR "NITORI") ("DX" OR "アプリ" OR "EC" OR "ネット" OR "物流" OR "自動化" OR "ロボット" OR "倉庫" OR "RFID" OR "セルフレジ" OR "ライブコマース" OR "サイズ計測" OR "画像検索")'
 JP_SNS_QUERY = '((site:x.com OR site:twitter.com) ("ニトリ" OR "NITORI") ("買った" OR "おすすめ" OR "便利" OR "バズ" OR "神" OR "使いやすい" OR "家具" OR "収納" OR "カーテン" OR "マットレス" OR "不満" OR "不良品" OR "改悪")) OR (("Xで話題" OR "SNSで話題" OR "賛否" OR "物議" OR "バズ" OR "反響" OR "神アイテム" OR "品切れ" OR "売り切れ" OR "買ってよかった") ("ニトリ" OR "NITORI" OR "デコホーム"))'
 
@@ -251,6 +253,14 @@ BRAND_LOGO_SVG = """<svg viewBox="0 0 64 64" width="34" height="34" style="flex-
 
 
 def fallback_rule_based(candidates, yesterday_str):
+    # ブランド名で救済したJevのNGは、AIによる最終選定なしでは掲載しない。
+    rule_candidates = dict(candidates)
+    skipped = 0
+    for region in ('JP', 'GLOBAL'):
+        rule_candidates[region] = [item for item in candidates[region] if item.get('_news_judgement') != 'brand_rescue']
+        skipped += len(candidates[region]) - len(rule_candidates[region])
+    if skipped:
+        print(f' -> ルールベース発行: AI未選定のブランド名救済候補を {skipped} 件除外')
     sns_news_count = 0
 
     def classify(item):
@@ -268,7 +278,7 @@ def fallback_rule_based(candidates, yesterday_str):
         return "商品開発・ヒット商品", "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。", ["商品開発", "生活提案", "PB"]
 
     return build_rule_based_fallback(
-        candidates, yesterday_str, classify,
+        rule_candidates, yesterday_str, classify,
         jp_limit=6,
         global_limit=3,
         jp_summary_fallback="{source}による株式会社ニトリに関する最新報道です。",
@@ -313,6 +323,9 @@ CONFIG = {
     'global_query_ind': GLOBAL_INDUSTRY_QUERY,
     'global_query_sns': GLOBAL_SNS_QUERY,
 
+    'news_filter_fn': filter_nitori_news,
+    'news_priority_fn': news_judgement_priority,
+
     'extra_candidates_fn': fetch_all_social_buzz,
     # SNSの内容はJev判定済み。ニュース用の「プレゼント」等で再び落とさない。
     'extra_noise_blacklist': [],
@@ -334,7 +347,7 @@ CONFIG = {
     'primary_source_domains': ['nitori-net.jp'],
 
     'editor_title': '流通・SPAアナリスト兼インテリア・小売マーケター（「Nitori Daily Brief」編集長）',
-    'prompt_selection_rules': """1. ニトリグループに無関係な他社の単独ニュースやスパム懸賞は完全に除外してください。
+    'prompt_selection_rules': """1. ニトリグループに無関係な他社の単独ニュースやスパム懸賞は完全に除外してください。ニュース候補にはJevの内容判定でNGでもブランド名を含むため戻した記事があります。ブランド名だけで採用せず、ニトリの商品・店舗・事業の具体的な情報を確認してください。別事業への言及だけの記事、株価予想・投資推奨、数字だけの決算は除外してください。
 2. 直近掲載済みのトピックと重複する内容は必ず除外し、昨日新しく発表・報道された最新動向を最優先してください。
 3. 国内ニュースから最も重要なもの4〜6件、海外・グローバル関連から2〜4件を厳選してください（計7〜10件）。ただし候補は事前に直近数日分の日付範囲で絞り込み済みです。海外ニュース候補の件数がこれに満たない場合は、無理に古い・関連度の低い候補で件数を埋めず、実際に選定条件を満たす件数のみを採用してください（0件でも構いません）。
    選定の際は「SPA（製造物流小売業）としての構造的強み」「ヒット商品・新商品開発」「物流・自動化・DXの進化」「店舗展開・海外進出の成果」「価格戦略・為替対応」を最重視してください。
