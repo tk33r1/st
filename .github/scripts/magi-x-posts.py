@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """MAGI の人格カードの素材にする、本人（@Tah_Keh）の X の投稿を X API で取り込む。
 
-いまは本人確認（--check）だけを持つ。@Tah_Keh のアクセストークンが、どのアプリの鍵（Consumer Key）と
+本人確認（--check）と、投稿の取り込み（--fetch）を持つ。取り込んだ投稿は .github/magi/x-posts.json に保存する。@Tah_Keh のアクセストークンが、どのアプリの鍵（Consumer Key）と
 組めば通るか、通ったときに本人として認証されるかを、値を出さずに確かめる。
 
   python .github/scripts/magi-x-posts.py --check
@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import sys
 import time
@@ -158,12 +159,104 @@ def check():
         sys.exit(1)
 
 
+# ---------------------------------------------------------------- 取り込み
+
+OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'magi', 'x-posts.json')
+PAGE_SIZE = 100          # 1回の取得の上限（X の仕様）
+MAX_POSTS_PER_RUN = 4000  # 1回の実行で読む上限。本人の読み取りは $0.001／件なので最大 $4 の安全弁
+TWEET_FIELDS = 'created_at,public_metrics,referenced_tweets,in_reply_to_user_id,note_tweet,lang'
+
+
+def own_credentials():
+    for src, creds in credential_sets():
+        if src == 'X_TAHKEH':
+            return creds
+    sys.exit('X_TAHKEH_CONSUMER_KEY / _SECRET が未設定（本人の投稿は本人のアプリの鍵で読む）')
+
+
+def clean_text(t, own_handle):
+    """他人のアカウント名を伏せる（ファイルは GitHub で公開されるため）。本人のものは残す。"""
+    return re.sub(r'@(\w{1,15})', lambda m: m.group(0) if m.group(1).lower() == own_handle.lower() else '@user', t).strip()
+
+
+def to_record(tw, own_handle):
+    refs = {r.get('type') for r in tw.get('referenced_tweets', [])}
+    text = (tw.get('note_tweet') or {}).get('text') or tw.get('text', '')
+    # 返信の頭に並ぶ宛先（@a @b …）は本文ではないので落とす
+    if 'replied_to' in refs:
+        text = re.sub(r'^(@\w{1,15}\s+)+', '', text)
+    m = tw.get('public_metrics', {})
+    return {
+        'id': tw['id'],
+        'created_at': tw.get('created_at'),
+        'kind': 'reply' if 'replied_to' in refs else 'quote' if 'quoted' in refs else 'post',
+        'text': clean_text(text, own_handle),
+        'likes': m.get('like_count', 0),
+        'reposts': m.get('retweet_count', 0),
+    }
+
+
+def fetch():
+    """本人の投稿（リポストを除く）を新しい順に読み、前回より新しい分を x-posts.json に足す。"""
+    creds = own_credentials()
+    status, me = api_get('/users/me', {}, creds)
+    if status != 200:
+        sys.exit(f'本人の情報を取れなかった: HTTP {status} — {summarize_error(me)}')
+    user_id, handle = me['data']['id'], me['data']['username']
+
+    try:
+        with open(OUT_PATH, encoding='utf-8') as f:
+            saved = json.load(f)
+    except FileNotFoundError:
+        saved = {'posts': []}
+    known = {p['id'] for p in saved['posts']}
+    newest = max((int(p['id']) for p in saved['posts']), default=0)
+
+    query = {'max_results': str(PAGE_SIZE), 'exclude': 'retweets', 'tweet.fields': TWEET_FIELDS}
+    if newest:
+        query['since_id'] = str(newest)  # 2回目以降は、前回より新しい分だけを読む（読んだ件数だけ課金される）
+    added, read, pages = [], 0, 0
+    while read < MAX_POSTS_PER_RUN:
+        status, body = api_get(f'/users/{user_id}/tweets', query, creds)
+        if status != 200:
+            sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
+        pages += 1
+        tweets = body.get('data', [])
+        read += len(tweets)
+        added += [to_record(t, handle) for t in tweets if t['id'] not in known]
+        token = body.get('meta', {}).get('next_token')
+        if not token or not tweets:
+            break
+        query['pagination_token'] = token
+
+    posts = sorted(saved['posts'] + added, key=lambda p: int(p['id']), reverse=True)
+    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+    with open(OUT_PATH, 'w', encoding='utf-8', newline='\n') as f:
+        json.dump({
+            'note': '本人（@' + handle + '）の X の投稿。MAGI の人格カードの素材（.github/scripts/magi-x-posts.py が書く。手で編集しない）。'
+                    '他人のアカウント名は @user に伏せてある',
+            'handle': handle,
+            'posts': posts,
+        }, f, ensure_ascii=False, indent=1)
+        f.write('\n')
+    kinds = {k: sum(1 for p in posts if p['kind'] == k) for k in ('post', 'reply', 'quote')}
+    span = (posts[-1]['created_at'][:10], posts[0]['created_at'][:10]) if posts else ('-', '-')
+    print(f'読んだ件数: {read}（{pages} ページ、本人の読み取りなら約 ${read * 0.001:.2f}）')
+    print(f'新しく足した件数: {len(added)} ／ 保存の合計: {len(posts)}（投稿 {kinds["post"]}・返信 {kinds["reply"]}・引用 {kinds["quote"]}）')
+    print(f'期間: {span[0]} 〜 {span[1]}')
+    if read >= MAX_POSTS_PER_RUN:
+        print(f'::warning::1回の上限（{MAX_POSTS_PER_RUN} 件）で止めた。続きは次の実行で読む')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--check', action='store_true', help='本人として認証できるかだけを確かめる')
+    ap.add_argument('--fetch', action='store_true', help='本人の投稿を読み、前回より新しい分を保存する')
     args = ap.parse_args()
     if args.check:
         check()
+    elif args.fetch:
+        fetch()
     else:
         ap.print_help()
 
