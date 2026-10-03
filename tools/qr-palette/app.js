@@ -1734,29 +1734,8 @@
     }, '×');
     removeBtn.disabled = !o.onRemove;
 
-    // つまみを動かしているあいだは検査を待たせる。ここを素の update() に
-    // すると、ドラッグ1コマごとにデコーダが起動して画面が固まる
-    picker.addEventListener('input', () => {
-      const v = picker.value.toUpperCase();
-      hexInput.value = v;
-      o.onColor(v);
-      designDragged();
-    });
-    picker.addEventListener('change', verifyOnCommit);
-    // 単色の欄（bindColor）と同じく、確定したときに形式を確かめて反映する
-    hexInput.addEventListener('change', () => {
-      const v = normHex(hexInput.value, null);
-      if (!v) {
-        showToast('カラーコードの形式が違います', 'error');
-        hexInput.value = picker.value.toUpperCase();
-        return;
-      }
-      hexInput.value = v;
-      picker.value = v;
-      o.onColor(v);
-      state.presetName = '';
-      update();
-    });
+    // 単色と同じ配線。多色・グラデーションの行だけは、無効なコードを元の色に戻す。
+    bindColor(picker, hexInput, v => o.onColor(v), { resetInvalidHex: true });
     if (o.onRemove) {
       removeBtn.addEventListener('click', () => { o.onRemove(); designChanged(); });
     }
@@ -4266,12 +4245,14 @@
   // 配線
   // ------------------------------------------------------------------
   // 色の見本・カラーコード・RGB の欄を1組で配線する。どこから変えても残りを揃える。
-  //   rgbIds … [R, G, B] の数値欄（単色だけが持つ）。省略可
-  function bindColor(pickerId, hexId, apply, rgbIds) {
+  //   opts.rgb … [R, G, B] の数値欄（単色だけが持つ）。省略可
+  //   opts.resetInvalidHex … 無効なコードを元の色に戻す（多色・グラデーションの行用）
+  function bindColor(pickerId, hexId, apply, opts) {
     const picker = asEl(pickerId);
     if (!picker) return;
+    const o = opts || {};
     const hex = hexId ? asEl(hexId) : null;
-    const rgb = (rgbIds || []).map(asEl).filter(Boolean);
+    const rgb = (o.rgb || []).map(asEl).filter(Boolean);
     const hasRgb = rgb.length === 3;
     const showRgb = v => {
       const c = hasRgb ? hexToRgb(v) : null;
@@ -4288,7 +4269,11 @@
     if (hex) {
       hex.addEventListener('change', () => {
         const v = normHex(hex.value, null);
-        if (!v) { showToast('カラーコードの形式が違います', 'error'); return; }
+        if (!v) {
+          showToast('カラーコードの形式が違います', 'error');
+          if (o.resetInvalidHex) hex.value = picker.value.toUpperCase();
+          return;
+        }
         hex.value = v;
         picker.value = v;
         showRgb(v);
@@ -4433,7 +4418,7 @@
     bindColor(cq(scope, 'color-picker'), cq(scope, 'color-hex'), v => {
       touch();
       paintOf(scope).color = v;
-    }, ['r', 'g', 'b'].map(k => cq(scope, 'color-' + k)));
+    }, { rgb: ['r', 'g', 'b'].map(k => cq(scope, 'color-' + k)) });
     bindRange(cq(scope, 'angle'), cq(scope, 'val-angle'), v => v + '°', v => {
       touch();
       paintOf(scope).angle = v;
@@ -4594,7 +4579,6 @@
       state.style.cellScale = v;
       updateFrameGridPreviews();
     });
-    bindRange('opt-celljitter', 'val-celljitter', pct, v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
       // 角丸の上限は余白で決まる。余白を詰めたぶん、はみ出した丸みは先に削る
@@ -4602,14 +4586,21 @@
       if (state.style.radius > cap) state.style.radius = cap;
       syncControls();
     });
-    bindRange('opt-radius', 'val-radius', v => String(v), v => { state.style.radius = v; });
-    bindRange('opt-minver', 'val-minver', fmtMinVersion, v => { state.minVersion = v; });
-    bindRange('logo-size', 'val-logosize', pct, v => { state.style.logo.size = v; });
-    bindRange('logo-pad', 'val-logopad', pct, v => { state.style.logo.pad = v; });
-    bindRange('frame-line-width', 'val-frame-line-width', fmtLineWidth, v => { state.style.frame.lineWidth = v; });
-    bindRange('frame-line-width2', 'val-frame-line-width2', fmtLineWidth, v => { state.style.frame.lineWidth2 = v; });
-    bindRange('frame-content-size', 'val-frame-content-size', pct, v => { state.style.frame.contentSize = v; });
-    bindRange('frame-content-pad', 'val-frame-content-pad', pct, v => { state.style.frame.contentPad = v; });
+    // 値を代入するだけの配線。デザインは復元・テンプレート・undo で入れ替わるので、
+    // 持ち主を配線時に固定せず、操作のたびに引き直す。
+    [
+      ['opt-celljitter', 'val-celljitter', pct, () => state.style, 'cellJitter'],
+      ['opt-radius', 'val-radius', String, () => state.style, 'radius'],
+      ['opt-minver', 'val-minver', fmtMinVersion, () => state, 'minVersion'],
+      ['logo-size', 'val-logosize', pct, () => state.style.logo, 'size'],
+      ['logo-pad', 'val-logopad', pct, () => state.style.logo, 'pad'],
+      ['frame-line-width', 'val-frame-line-width', fmtLineWidth, () => state.style.frame, 'lineWidth'],
+      ['frame-line-width2', 'val-frame-line-width2', fmtLineWidth, () => state.style.frame, 'lineWidth2'],
+      ['frame-content-size', 'val-frame-content-size', pct, () => state.style.frame, 'contentSize'],
+      ['frame-content-pad', 'val-frame-content-pad', pct, () => state.style.frame, 'contentPad']
+    ].forEach(([id, labelId, format, owner, key]) => {
+      bindRange(id, labelId, format, v => { owner()[key] = v; });
+    });
 
     $('logo-text').addEventListener('input', e => {
       state.style.logo.text = e.target.value;

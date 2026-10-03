@@ -1256,15 +1256,20 @@
     // 上下を出し分けないときは、上も下の指定をそのまま使う
     const topOwn = fr.topContentMode;
     const topCMode = isLabel ? ((pos === 'both' || topOwn) ? (topOwn || 'text') : bottomCMode) : 'text';
+    // 上の指定が無いときの代替は、文字・画像・アイコンの id と実体で別々に決まる。
+    // ここで解いておけば、描画側は上下どちらも同じ形の部品として扱える。
+    const part = (enabled, mode, text, src, icon, iconData) => ({
+      enabled: isLabel && enabled, mode: mode, text: text, src: src, icon: icon, iconData: iconData,
+      hasContent: mode === 'icon' ? true : mode === 'image' ? !!src : !!String(text).trim()
+    });
     return {
-      pos: pos,
-      isLabel: isLabel,
-      topCMode: topCMode,
-      bottomCMode: bottomCMode,
-      topText: pos === 'both' ? (fr.textTop || '') : (fr.textTop || fr.text || ''),
-      bottomText: fr.text || '',
-      topSrc: (pos === 'both' || fr.topSrc) ? (fr.topSrc || '') : (fr.src || ''),
-      bottomSrc: fr.src || ''
+      top: part(pos === 'top' || pos === 'both', topCMode,
+        pos === 'both' ? (fr.textTop || '') : (fr.textTop || fr.text || ''),
+        (pos === 'both' || fr.topSrc) ? (fr.topSrc || '') : (fr.src || ''),
+        (pos === 'both' || fr.topIcon) ? (fr.topIcon || 'si-instagram') : (fr.icon || 'si-instagram'),
+        (pos === 'both' || fr.topIconData) ? fr.topIconData : fr.iconData),
+      bottom: part(pos === 'bottom' || pos === 'both', bottomCMode,
+        fr.text || '', fr.src || '', fr.icon || 'si-instagram', fr.iconData)
     };
   }
 
@@ -1711,16 +1716,6 @@
     const isLabel = st.frame.type === 'label';
     const L = frameLabelParts(st);
 
-    const hasTop = isLabel && (L.pos === 'top' || L.pos === 'both');
-    const hasBottom = isLabel && (L.pos === 'bottom' || L.pos === 'both');
-
-    const hasTopContent = L.topCMode === 'icon'
-      ? true
-      : (L.topCMode === 'image' ? !!L.topSrc : !!String(L.topText).trim());
-    const hasBottomContent = L.bottomCMode === 'icon'
-      ? true
-      : (L.bottomCMode === 'image' ? !!L.bottomSrc : !!String(L.bottomText).trim());
-
     // ラベルの中身の大きさと、その周りの余白（中身の大きさに対する比）。
     // 既定の 1.0 / 0.2 なら 4.0 + 0.8*2 = 5.6 で、FRAME_METRICS.label と同じ帯になる。
     const fcSizeRaw = Number(st.frame.contentSize);
@@ -1731,8 +1726,8 @@
     const contentPadU = contentSide * fcPadR;
 
     const labelH = isLabel && fm.label ? contentSide + contentPadU * 2 : 0;
-    const topH = hasTop && hasTopContent ? labelH : 0;
-    const bottomH = hasBottom && hasBottomContent ? labelH : 0;
+    const topH = L.top.enabled && L.top.hasContent ? labelH : 0;
+    const bottomH = L.bottom.enabled && L.bottom.hasContent ? labelH : 0;
 
     const W = inner + pad * 2;
     const H = inner + pad * 2 + topH + bottomH + tailH;
@@ -2011,13 +2006,12 @@
       // 中身がどれだけの箱を占めるか。下地の大きさをこれに合わせる。
       // 画像は縦横比が分からない（読み込まずに文字列だけで組み立てている）ので、
       // アイコンと同じ正方形の板を敷く。
-      function frameContentBox(isTop) {
-        const cMode = isTop ? L.topCMode : L.bottomCMode;
-        if (cMode === 'icon') return { w: contentSide, h: contentSide };
-        if (cMode === 'image') {
-          return (isTop ? L.topSrc : L.bottomSrc) ? { w: contentSide, h: contentSide } : null;
+      function frameContentBox(part) {
+        if (part.mode === 'icon') return { w: contentSide, h: contentSide };
+        if (part.mode === 'image') {
+          return part.src ? { w: contentSide, h: contentSide } : null;
         }
-        const txt = isTop ? L.topText : L.bottomText;
+        const txt = part.text;
         if (!String(txt).trim()) return null;
         // 文字幅は「全角1・半角0.56」の見積もりなので、大文字の並びだと少し足りない。
         // 板が字に食い込まないよう、両側に半文字ぶんだけ足しておく。
@@ -2027,13 +2021,13 @@
 
       // 中身の後ろに敷く板。文字のように横長のときは、角の形はそのままで横に長い
       // 帯になる（backdropRectPath。セル枠は粒の数で合わせる cellsPlate）。
-      function renderFrameBackdrop(cy, idSuffix, isTop) {
+      function renderFrameBackdrop(cy, idSuffix, part) {
         // 「背景の色」は背景の指定をそのまま使う（透過も含めて同じにする）。
         // 帯は背景（QRブロック）の外にあるので、模様は帯の箱で塗り直す
         const followBg = !!(st.frame.backdropPaint && st.frame.backdropPaint.type === 'bg');
         const bdPaint = followBg ? bgPaint : backdropPaintOf(st.frame, st.fg);
         if (followBg ? !bgVisible : (!bdPaint || bdPaint.type === 'none')) return;
-        const box = frameContentBox(isTop);
+        const box = frameContentBox(part);
         if (!box || box.w <= 0 || box.h <= 0) return;
 
         const bh = box.h + contentPadU;
@@ -2055,35 +2049,25 @@
         body += layer.body;
       }
 
-      function renderContent(cy, idSuffix, isTop) {
-        const cMode = isTop ? L.topCMode : L.bottomCMode;
+      function renderContent(cy, idSuffix, part) {
+        renderFrameBackdrop(cy, idSuffix, part);
 
-        renderFrameBackdrop(cy, idSuffix, isTop);
-
-        if (cMode === 'icon') {
-          const iconId = isTop
-            ? ((L.pos === 'both' || st.frame.topIcon) ? (st.frame.topIcon || 'si-instagram') : (st.frame.icon || 'si-instagram'))
-            : (st.frame.icon || 'si-instagram');
-          const iconData = isTop
-            ? ((L.pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
-            : st.frame.iconData;
+        if (part.mode === 'icon') {
           // アイコンの色は上下で分けられない（指定する場所がひとつしかない）
           const iconPaint = st.frame.iconPaint;
-          renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconPaint);
-        } else if (cMode === 'image') {
-          const src = isTop ? L.topSrc : L.bottomSrc;
-          renderFrameImage(src, W / 2, cy);
+          renderFrameIcon(part.icon, W / 2, cy, idSuffix, part.iconData, iconPaint);
+        } else if (part.mode === 'image') {
+          renderFrameImage(part.src, W / 2, cy);
         } else {
-          const txt = isTop ? L.topText : L.bottomText;
-          renderFrameText(txt, cy, idSuffix);
+          renderFrameText(part.text, cy, idSuffix);
         }
       }
 
       if (topH) {
-        renderContent(pad + labelH / 2, 't', true);
+        renderContent(pad + labelH / 2, 't', L.top);
       }
       if (bottomH) {
-        renderContent(pad + topH + inner + labelH / 2, 'b', false);
+        renderContent(pad + topH + inner + labelH / 2, 'b', L.bottom);
       }
     }
 
@@ -2191,14 +2175,9 @@
     if (st.logo.type === 'text') add(st.logo.font, logoTextLines(st.logo.text).join(''));
 
     const L = frameLabelParts(st);
-    if (L.isLabel) {
-      if ((L.pos === 'bottom' || L.pos === 'both') && L.bottomCMode === 'text') {
-        add(st.frame.font, L.bottomText);
-      }
-      if ((L.pos === 'top' || L.pos === 'both') && L.topCMode === 'text') {
-        add(st.frame.font, L.topText);
-      }
-    }
+    [L.bottom, L.top].forEach(part => {
+      if (part.enabled && part.mode === 'text') add(st.frame.font, part.text);
+    });
 
     // 要るのは字の種類だけ。並べ替えて畳めば、同じ字を使い回した文言は
     // 同じ取り寄せになる（呼び出し側のキャッシュがそのまま効く）。

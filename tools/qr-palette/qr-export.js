@@ -106,6 +106,16 @@
     return out;
   }
 
+  // 取得中の呼び出しも同じ Promise を使う。失敗は覚えず、次にまた試す。
+  function cachedPromise(cache, key, load) {
+    let p = cache.get(key);
+    if (!p) {
+      p = load().catch(e => { cache.delete(key); throw e; });
+      cache.set(key, p);
+    }
+    return p;
+  }
+
   // ページが読み込んでいない CSS の @font-face。取りに行って組み立てたシートから拾う。
   // シートには CSS の場所を baseURL として渡す（渡さないと相対の url() がページの場所で
   // 解決され、src を解決済みで返すブラウザでは別のパスを取りに行ってしまう）。
@@ -113,34 +123,22 @@
   const cssFaces = new Map();
   function cssFontFaces(cssUrl) {
     const base = new URL(cssUrl, location.href).href;
-    let p = cssFaces.get(base);
-    if (!p) {
-      p = fetch(base)
-        .then(res => { if (!res.ok) throw new Error('font css ' + res.status); return res.text(); })
-        .then(text => {
-          const sheet = new CSSStyleSheet({ baseURL: base });
-          sheet.replaceSync(text);
-          return facesOf(sheet.cssRules, base);
-        })
-        .catch(e => { cssFaces.delete(base); throw e; });
-      cssFaces.set(base, p);
-    }
-    return p;
+    return cachedPromise(cssFaces, base, () => fetch(base)
+      .then(res => { if (!res.ok) throw new Error('font css ' + res.status); return res.text(); })
+      .then(text => {
+        const sheet = new CSSStyleSheet({ baseURL: base });
+        sheet.replaceSync(text);
+        return facesOf(sheet.cssRules, base);
+      }));
   }
 
   // フォントのファイルを data URL に。同じファイルは一度しか読まない。
   // ファイルの数は同梱したぶんで頭打ちなので、上限は置かない。失敗は覚えず、次にまた試す。
   const fontFileCache = new Map();
   function fontFileDataUrl(url) {
-    let p = fontFileCache.get(url);
-    if (!p) {
-      p = fetch(url)
-        .then(res => { if (!res.ok) throw new Error('font ' + res.status); return res.blob(); })
-        .then(blobToDataUrl)
-        .catch(e => { fontFileCache.delete(url); throw e; });
-      fontFileCache.set(url, p);
-    }
-    return p;
+    return cachedPromise(fontFileCache, url, () => fetch(url)
+      .then(res => { if (!res.ok) throw new Error('font ' + res.status); return res.blob(); })
+      .then(blobToDataUrl));
   }
 
   // 埋め込んだフォントは、SVG を <img> で描く最初の一回には間に合わない。初回の
