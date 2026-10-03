@@ -11,7 +11,7 @@
   何をサイトに出すかは `build.sh` が決める（後述「公開範囲」）。
 - **Workers** (`workers/`): 認証・DB・AI 呼び出しなどのサーバーサイド機能。Cloudflare Workers + D1 (SQLite)。
   入口は各 Worker の `src/index.js`（`export default { async fetch(request, env) {...} }` の標準形）。
-  ほかに読むのは `config/ai-models.json` と、magi2 の `personas.js` だけ。
+  共通モデル設定は `config/ai-models.json`、magi2 の設定は `personas.js`、サイト案内の処理は `site-search.js`。
 - **MAGI アプリ** (`magi-app/`): MAGI チャットのモバイル版。PWA + Capacitor 6 で iOS/Android にパッケージングする。
 - **GitHub Actions** (`.github/`): 日刊ブリーフの生成と X 投稿、MAGI の人格カード、サイトマップ、ガソリン価格、
   AI モデルの検査、Worker のデプロイ（後述「デプロイ」）。
@@ -240,6 +240,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   画像・推論・ストリーミング）をなぞっているので、呼び出し方を変えたらそちらも合わせる。
 - **magi2 の人格設定**: `workers/magi2/personas.js` が人格の骨格プロンプト、用途ごとの推論強度、
   トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
+  - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はOpenAIだけに送る。
+    固定の入口11件は `SITE_SEARCH.pages` と `404.html` の `data-entry` で同じ行き先・日英の名前・説明を持つ。片方を変えたらもう片方も直す。
+    回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。検索内容はログ・通知・DBに残さない。
   人間向けの別形式（以前の `persona.yaml` のようなもの）を並べて二重管理にしないこと。
   - **固定プロンプトに書くのは「役割と出力の形」と「気質」だけ**。本人の事実・関心・考え（好きなもの、拠り所の書物、
     仕事の中身、得意ジャンルなど）は書かず、サイトの本文に書いて人格カードに任せる（固定に書くと本人が変わっても

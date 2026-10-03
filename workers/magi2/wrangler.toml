@@ -7,6 +7,10 @@ routes = [
   { pattern = "workers.tk.st/magi2*", zone_name = "tk.st" },
 ]
 
+[vars]
+# 公開・品質確認後に true。停止時はWorkerを先にfalseにする（通常チャットは続く）。
+SITE_SEARCH_ENABLED = "false"
+
 [[d1_databases]]
 binding       = "DB"
 database_name = "tk-st-magi2-db"

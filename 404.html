@@ -79,6 +79,18 @@
     .daily-search { margin-top: 16px; font-size: 14px; }
     .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
     .daily-query { overflow-wrap: anywhere; }
+    .ai-search { margin-top: 20px; padding: 16px; border: 1px solid var(--accent); border-radius: 10px; }
+    .ai-search button { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+    .ai-search button:disabled { cursor: wait; opacity: .6; }
+    .ai-disclosure, .ai-mark, .ai-ask { font-size: 13px; color: var(--muted); }
+    .ai-disclosure { margin: 8px 0; }
+    .ai-search details { margin-top: 8px; font-size: 13px; }
+    .ai-search summary { display: block; min-height: 44px; padding: 10px; }
+    .ai-search details p { padding: 0 10px 10px; }
+    .ai-answer { margin-top: 16px; padding: 12px; background: var(--surface); border-radius: 8px; overflow-wrap: anywhere; }
+    .ai-ask { font-family: ui-monospace, monospace; margin: 8px 0; }
+    #ai-list { margin-top: 12px; }
+    .ai-followups a, #ai-daily { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
     .explore { margin-top: 36px; }
     .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 16px; }
     details { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
@@ -124,6 +136,19 @@
       <!-- 読み上げの通知が落ちないよう、状態の行は隠す要素の外に置き、常に存在させる。 -->
       <p class="status" id="search-status" role="status" aria-atomic="true"></p>
       <p class="daily-search" id="daily-search" hidden><span class="daily-query" id="daily-query"></span> <a id="nitori-search" href="/job/nitoridaily/"></a> <span aria-hidden="true">·</span> <a id="retail-search" href="/job/retailtechdaily/"></a></p>
+      <div class="ai-search" id="ai-search" hidden>
+        <button type="button" id="ai-run" data-ja="Shinya Takeda AI に聞く" data-en="Ask Shinya Takeda AI">Shinya Takeda AI に聞く</button>
+        <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
+        <p class="ai-disclosure" data-ja="検索語とサイトのページ一覧を OpenAI に送ります。押すまで送信しません。" data-en="Your search and the site's page list are sent to OpenAI only when you press the button."></p>
+        <details><summary data-ja="詳しく" data-en="Details">詳しく</summary><p data-ja="検索語と公開済みのページ一覧・自己像カードをOpenAI APIへ送ります。APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, the public page list, and a public self-image card are sent to the OpenAI API. API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p><p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p></details>
+        <div id="ai-result" hidden>
+          <div class="ai-answer"><strong>Shinya Takeda AI</strong> <span class="ai-mark" data-ja="AIによる応答" data-en="AI-generated">AIによる応答</span><p class="ai-ask" id="ai-ask" aria-hidden="true"></p><p id="ai-comment"></p></div>
+          <a id="ai-daily" hidden></a>
+          <ul class="result-list" id="ai-list"></ul>
+          <p class="ai-followups"><a id="ai-request" hidden data-ai-target="request" data-ja="要望を送る →" data-en="Send a request →">要望を送る →</a><a href="/" data-ai-target="magi" data-ja="続きを MAGI で話す →" data-en="Keep talking on MAGI →">続きを MAGI で話す →</a></p>
+        </div>
+      </div>
+      <p class="status" id="ai-status" role="status" aria-atomic="true"></p>
     </section>
     <noscript><p>下の一覧からお選びください。</p></noscript>
     <section class="explore" aria-labelledby="explore-heading">
@@ -369,6 +394,102 @@
       var imeEnterHeld = false;
       var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
+      // 品質・費用・計測の確認後に公開する。URLなどから有効化できない。
+      var AI_SEARCH_ENABLED = false;
+      var ai = { generation: 0, controller: null, query: '', eligible: false };
+      var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
+        : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
+      function resetAI() {
+        ai.generation++;
+        if (ai.controller) ai.controller.abort();
+        ai.controller = null; ai.query = ''; ai.eligible = false;
+        byId('ai-search').hidden = true; byId('ai-result').hidden = true;
+        byId('ai-run').disabled = false; byId('ai-cancel').hidden = true;
+        byId('ai-status').textContent = ''; byId('ai-list').replaceChildren();
+      }
+      function syncAI(query, total) {
+        var eligible = AI_SEARCH_ENABLED && query && !composing && state.jsonReady && state.failures === 0 && total === 0;
+        if (!eligible) { if (ai.eligible) resetAI(); return; }
+        if (ai.query !== query) resetAI();
+        ai.query = query; ai.eligible = true; byId('ai-search').hidden = false;
+      }
+      function aiHref(value, daily) {
+        if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return null;
+        try {
+          var u = new URL(value, 'https://tk.st');
+          if (u.origin !== 'https://tk.st') return null;
+          if (daily) {
+            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname) || u.hash !== '#archiveSearch'
+              || Array.from(u.searchParams.keys()).join(',') !== 'q' || !u.searchParams.get('q')) return null;
+          } else if (u.search || u.hash) return null;
+          return u.pathname + u.search + u.hash;
+        } catch (_) { return null; }
+      }
+      byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
+      byId('ai-run').addEventListener('click', async function () {
+        if (!ai.eligible || ai.controller || composing || input.value.slice(0, 200).trim() !== ai.query) return;
+        var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
+        var timer;
+        var expired = new Promise(function (_, reject) { timer = setTimeout(function () { ac.abort(); reject(new Error('Timeout')); }, 15000); });
+        byId('ai-run').disabled = true; byId('ai-cancel').hidden = false; byId('ai-result').hidden = true;
+        byId('ai-status').textContent = aiText.thinking;
+        send('not_found_ai_used');
+        try {
+          var origin = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://workers.tk.st';
+          var res = await Promise.race([fetch(origin + '/magi2/site-search', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify({ query: query, locale: lang }) }), expired]);
+          if (generation !== ai.generation || ac.signal.aborted) return;
+          if (!res.ok) {
+            byId('ai-status').textContent = res.status === 429 ? aiText.limited : aiText.unavailable;
+            send('not_found_ai_result', { status: res.status === 429 ? 'limited' : 'error', count: 0 });
+            if (res.status === 429) byId('ai-run').disabled = true;
+            return;
+          }
+          var data = await Promise.race([res.json(), expired]);
+          if (generation !== ai.generation || ac.signal.aborted) return;
+          if (!data || !['results', 'no_results'].includes(data.status) || !Array.isArray(data.results) || data.results.length > 3) throw new Error('Invalid response');
+          var rows = data.results.filter(function (p) { return p && typeof p.title === 'string' && typeof p.description === 'string' && ['tool', 'game', 'article', 'page'].includes(p.kind) && aiHref(p.url, false); });
+          if (rows.length !== data.results.length) throw new Error('Invalid links');
+          byId('ai-list').replaceChildren();
+          rows.forEach(function (p, i) {
+            var li = document.createElement('li'), a = document.createElement('a'), content = document.createElement('span'), title = document.createElement('span'), desc = document.createElement('span'), kind = document.createElement('span');
+            a.href = aiHref(p.url, false); a.className = 'result-link'; a.dataset.aiTarget = 'result'; a.dataset.aiPosition = i + 1;
+            title.className = 'result-title'; title.textContent = p.title; desc.className = 'description'; desc.textContent = p.description;
+            kind.className = 'kind'; kind.textContent = text[p.kind] || (lang === 'ja' ? 'ページ' : 'Page');
+            content.appendChild(title); content.appendChild(desc); a.appendChild(content); a.appendChild(kind); li.appendChild(a); byId('ai-list').appendChild(li);
+          });
+          var daily = data.daily, dailyLink = byId('ai-daily'); dailyLink.hidden = true;
+          if (daily) {
+            if (!['nitori', 'retail'].includes(daily.media) || typeof daily.query !== 'string' || !aiHref(daily.url, true)) throw new Error('Invalid daily');
+            if (compact(daily.query.toLowerCase()) !== compact(query.toLowerCase())) {
+              dailyLink.href = aiHref(daily.url, true); dailyLink.dataset.aiTarget = 'daily'; dailyLink.hidden = false;
+              var name = daily.media === 'nitori' ? (lang === 'ja' ? '日刊ニトリ' : 'Daily Nitori') : (lang === 'ja' ? '日刊リテールテック' : 'Daily Retail Tech');
+              dailyLink.textContent = lang === 'ja' ? name + 'で「' + daily.query + '」を探す →' : 'Search ' + name + ' for “' + daily.query + '” →';
+            }
+          }
+          var chars = Array.from(query);
+          byId('ai-ask').textContent = '~$ ask "' + chars.slice(0, 40).join('') + (chars.length > 40 ? '…' : '') + '"';
+          byId('ai-comment').textContent = typeof data.comment === 'string' ? data.comment : data.status === 'no_results' ? aiText.none : '';
+          byId('ai-comment').hidden = !byId('ai-comment').textContent;
+          byId('ai-request').hidden = data.status !== 'no_results'; byId('ai-result').hidden = false;
+          byId('ai-status').textContent = data.status === 'no_results' ? aiText.none : aiText.ready + ' ' + (lang === 'ja' ? rows.length + '件のページ候補。' : rows.length + ' page suggestions.');
+          send('not_found_ai_result', { status: data.status, count: rows.length });
+        } catch (_) {
+          if (generation !== ai.generation) return;
+          byId('ai-status').textContent = aiText.unavailable; send('not_found_ai_result', { status: 'error', count: 0 });
+        } finally {
+          clearTimeout(timer);
+          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; if (byId('ai-status').textContent !== aiText.limited) byId('ai-run').disabled = false; }
+        }
+      });
+      byId('ai-cancel').addEventListener('click', function () { var query = ai.query; resetAI(); syncAI(query, 0); byId('ai-status').textContent = aiText.cancelled; });
+      function recordAIClick(event) {
+        var a = event.target.closest('a[data-ai-target]');
+        if (!a || (event.type === 'auxclick' && event.button !== 1)) return;
+        var values = { target: a.dataset.aiTarget }; if (a.dataset.aiTarget === 'result') values.position = Number(a.dataset.aiPosition);
+        send('not_found_ai_click', values);
+      }
+      byId('ai-search').addEventListener('click', recordAIClick); byId('ai-search').addEventListener('auxclick', recordAIClick);
       function render() {
         if (composing) return;
         if (list.contains(document.activeElement)) input.focus({ preventScroll: true });
@@ -422,14 +543,15 @@
         });
         status.textContent = notices.join(' ');
         byId('results').hidden = !state.displayed.length && heading.hidden;
+        syncAI(query, total);
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
       function renderWhenReady() { if (!composing && inputTimer === null) render(); }
       byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); });
-      input.addEventListener('compositionstart', function () { composing = true; clearTimeout(inputTimer); inputTimer = null; });
+      input.addEventListener('compositionstart', function () { resetAI(); composing = true; clearTimeout(inputTimer); inputTimer = null; });
       input.addEventListener('compositionend', function () { composing = false; schedule(); });
-      input.addEventListener('input', function () { if (!composing) schedule(); });
+      input.addEventListener('input', function () { resetAI(); if (!composing) schedule(); });
       function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
       // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
       // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。

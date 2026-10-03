@@ -1,4 +1,5 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -222,7 +223,7 @@ function personaThread(codename, history, lastContent) {
 const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|characters?|chars?)\s*[）)]\s*$/i, '').trim();
 
 // 会社ごとの呼び出し方の違いはここに閉じる（値は personas.js の DEFAULTS.models）。
-function requestBody(cfg, { messages, stream, temperature }) {
+function requestBody(cfg, { messages, stream, temperature, response_format }) {
   const sampling = { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p };
   // 上流へは role と content だけを送る（履歴に付けて持ち回っている opinions などは落とす）
   const base = { model: cfg.model, stream: !!stream, messages: messages.map(({ role, content }) => ({ role, content })) };
@@ -233,6 +234,7 @@ function requestBody(cfg, { messages, stream, temperature }) {
       return {
         ...base, reasoning_effort: cfg.reasoning_effort, max_completion_tokens: cfg.max_tokens,
         ...(cfg.reasoning_effort === 'none' ? sampling : {}),
+        ...(response_format ? { response_format, store: false } : {}),
       };
     case 'deepseek':
       // 推論の入り切りは thinking で明示する（省略すると推論あり）。推論ありだと temperature は黙って無視される
@@ -247,9 +249,9 @@ function requestBody(cfg, { messages, stream, temperature }) {
   }
 }
 
-async function callModel({ env, messages, cfg, stream, signal, temperature }) {
+async function callModel({ env, messages, cfg, stream, signal, temperature, response_format }) {
   const provider = PROVIDERS[cfg.provider];
-  const body = requestBody(cfg, { messages, stream, temperature });
+  const body = requestBody(cfg, { messages, stream, temperature, response_format });
   const key = env[provider.key];
   if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
   const res = await fetch(provider.endpoint, {
@@ -293,7 +295,7 @@ async function alertUpstream(env, log, provider, res) {
 
 // 通知メールを送る。key ごとに UTC の1日に1通（rate_limit に key の行を「送った」印として作る）。
 // 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ
-async function sendAlert(env, log, key, subject, lines) {
+async function sendAlert(env, log, key, subject, lines, redact = false) {
   if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
   const day = new Date().toISOString().slice(0, 10);
   if (await countUp(env.DB, key, day, 1) == null) return; // 今日はもう送った
@@ -311,13 +313,70 @@ async function sendAlert(env, log, key, subject, lines) {
     });
     sent = res.ok;
   } catch (err) {
-    log('alert', 'mail failed', key, err && err.message);
+    log('alert', 'mail failed', key, ...(redact ? [] : [err && err.message]));
   } finally {
     // HTTP エラーだけでなく、fetch 自体が通信例外で終わったときも次回に再試行できるよう戻す。
     if (!sent) await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
   }
   // エラー本文の受信が止まっても再試行を妨げないよう、印を解除してから本文を読む。
-  if (res && !sent) log('alert', 'mail failed', key, res.status, (await res.text().catch(() => '')).slice(0, 200));
+  if (res && !sent) {
+    if (redact) { log('alert', 'mail failed', res.status); await res.body?.cancel().catch(() => {}); }
+    else log('alert', 'mail failed', key, res.status, (await res.text().catch(() => '')).slice(0, 200));
+  }
+}
+
+// 検索は本文を判定にだけ使い、例外・本文をログにも通知にも渡さない。
+function searchUpstream(env, ctx, log, purpose) {
+  return Object.assign(Object.create(env), {
+    onUpstreamError: (provider, res) => ctx.waitUntil((async () => {
+      let body = '';
+      try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
+      finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
+      if (![401, 402, 403].includes(res.status) && !(res.status === 429 && QUOTA_RE.test(body))) return;
+      log('site_search', 'upstream_alert', provider, res.status);
+      await sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
+        `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
+      ], true);
+    })().catch(() => log('site_search', 'alert_failed'))),
+  });
+}
+
+async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
+  const fail = (status, code) => httpError(status, {
+    stage: status === 429 ? 'rate_limit' : status < 500 ? 'bad_request' : 'upstream', code,
+    message: status === 429 ? '本日の利用上限に達しました。明日またお試しください' : status < 500 ? '検索の入力が不正です' : 'いまは AI に聞けません',
+    retryable: status === 503,
+  }, requestId, cors);
+  const started = Date.now();
+  try {
+    return await searchDeadline(SITE_SEARCH.request_timeout_ms, async signal => {
+      if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_json');
+      let body;
+      try { body = await readJsonLimited(request, SITE_SEARCH.request_bytes); }
+      catch (err) { return fail(err.envelope?.http_status || 400, err.envelope?.code || 'invalid_json'); }
+      if (Object.keys(body).length !== 2 || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
+      const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+      if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
+      if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
+      const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
+      if (signal.aborted) throw searchFailure('cancelled');
+      const day = new Date().toISOString().slice(0, 10);
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      if (await countUp(env.DB, 'search:' + ip, day, SITE_SEARCH.daily_limit) == null) return fail(429, 'daily_limit_exceeded');
+      if (await countUp(env.DB, 'search:global', day, SITE_SEARCH.global_daily_limit) == null) {
+        ctx.waitUntil(sendAlert(env, log, 'alert:site-search-global', '[MAGI] AI検索の本日の全体上限に達しました', [
+          `UTC日付: ${day}`, `全体上限: ${SITE_SEARCH.global_daily_limit}`,
+        ], true).catch(() => log('site_search', 'alert_failed')));
+        return fail(429, 'global_daily_limit_exceeded');
+      }
+      if (signal.aborted) throw searchFailure('cancelled');
+      const upstream = searchUpstream(env, ctx, log, '404検索');
+      const result = await selectSitePages({ query, locale: body.locale, pages, cards, signal, log,
+        call: opts => callModel({ ...opts, env: upstream }) });
+      return jsonResponse({ request_id: requestId, ...result }, cors, 200, { 'Cache-Control': 'no-store' });
+    }, request.signal);
+  } catch (_) { log('site_search', 'unavailable'); return fail(503, 'search_unavailable'); }
+  finally { log('site_search', 'elapsed_ms', Date.now() - started); }
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。
@@ -348,17 +407,17 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
 }
 
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
-async function fetchTitle(env, lastContent, signal, log) {
+async function fetchTitle(env, lastContent, langNote, signal, log) {
   try {
     const res = await callModel({
       env, cfg: DEFAULTS.models.titler, stream: false, signal,
       // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる
-      messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastContent }],
+      messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: lastContent }],
     });
     if (!res.ok) { log('title_call', `HTTP ${res.status}`); return null; }
     const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
-    // タイトルは1行・記号類を除去し、保険として長さを制限
-    const clean = raw.replace(/[\r\n"'`「」『』]/g, '').trim().slice(0, 24);
+    // タイトルは1行・記号類を除去し、保険として長さを制限（英語の4語が収まる長さ）
+    const clean = raw.replace(/[\r\n"'`「」『』]/g, '').trim().slice(0, 40);
     log('title_call', `len=${clean.length}`);
     return clean || null;
   } catch (e) {
@@ -367,28 +426,54 @@ async function fetchTitle(env, lastContent, signal, log) {
   }
 }
 
+// 出力の言語の指定（personas.js の REPLY_LANGUAGE）。言語の名前はコードで決めず、ユーザーの言葉を引用して
+// 「この言語で書く」とだけ伝える（どの言語でもモデルが見分ける）。コードが選ぶのは引用する発言だけ：
+// 画面が付けた状況説明を足す前の会話を新しい順に見て、言語が読み取れる最初の発言を使う。
+// 英字だけの発言は3語以上、それ以外の文字（かな・漢字・ハングル・アラビア文字・エチオピア文字など）は2字以上で読み取れるとみなす。
+// 「OK」や曲名だけ・画像だけの発言は飛ばす（日本語の会話の「Daft Punk?」で英語に切り替わらないように）。無ければ null
+function replyLanguageNote(messages) {
+  for (const m of [...messages].reverse()) {
+    if (m.role !== 'user') continue;
+    const text = contentText(m.content).trim();
+    const words = (text.match(/[A-Za-z]+/g) || []).length;
+    const letters = [...text].filter(ch => ch.codePointAt(0) > 127 && /\p{L}/u.test(ch)).length;
+    if (words >= 3 || letters >= 2) return REPLY_LANGUAGE.note(text.slice(0, REPLY_LANGUAGE.sample_chars));
+  }
+  return null;
+}
+const withLangNote = (prompt, langNote) => langNote ? `${prompt}\n\n${langNote}` : prompt;
+
 // 次の質問の予測（非クリティカル：失敗・時間切れでも null）。
 // 会話は1本の文字起こしにして渡す（チャットの形のまま渡すと、モデルが AI の続きとして答えてしまう）。
-// 1発言は末尾を残して切る：相談の1通目は DJ の文脈の前置きの後ろに本文があり、頭を残すと本文が消える。
-async function fetchSuggestion(env, convo, signal, log) {
+// 画面が付けた状況説明（context）は、ユーザーの発言とは別の見出しで渡す。
+// 出力の言語（langNote）は会話の後ろに付ける。
+async function fetchSuggestion(env, convo, context, langNote, signal, log) {
   try {
-    const clip = (t) => t.length > SUGGESTER.message_max_chars ? '…' + t.slice(-SUGGESTER.message_max_chars) : t;
+    // 発言は末尾を残し（長い答えは最後の問いかけが大事）、状況説明は頭を残す（役割と場面が先に書いてある）
+    const tail = (t, max) => t.length > max ? '…' + t.slice(-max) : t;
+    const head = (t, max) => t.length > max ? t.slice(0, max) + '…' : t;
     const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
       const imgs = contentImages(m.content).length;
-      const text = clip(contentText(m.content).trim()) + (imgs ? ` [画像${imgs}枚]` : '');
+      const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '');
       return `${m.role === 'user' ? 'ユーザー' : 'AI'}: ${text}`;
     }).join('\n');
+    const input = [
+      ...(context ? [SUGGESTER.context_header, head(context.trim(), SUGGESTER.context_max_chars), ''] : []),
+      '【会話】', transcript, ...(langNote ? ['', langNote] : []),
+    ].join('\n');
     const res = await callModel({
       env, cfg: DEFAULTS.models.suggester, stream: false, signal, temperature: SUGGESTER.temperature,
-      messages: [{ role: 'system', content: SUGGESTER.system_prompt }, { role: 'user', content: `【会話】\n${transcript}` }],
+      messages: [{ role: 'system', content: SUGGESTER.system_prompt }, { role: 'user', content: input }],
     });
     if (!res.ok) { log('suggest_call', `HTTP ${res.status}`); return null; }
     const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
-    // 1行目だけを使い、話者の名乗り・囲みの引用符を落とす
-    const line = (raw.split(/\r?\n/).find(l => l.trim()) || '')
-      .replace(/^\s*(?:ユーザー|user)\s*[:：]\s*/i, '')
-      .replace(/^[「『"'“]+|[」』"'”]+$/g, '')
-      .trim().slice(0, SUGGESTER.max_chars);
+    // 1行目だけを使い、話者の名乗りと、文全体を囲む引用符を落とす。
+    // 囲みは対で1組だけ外す（「曲名」——説明 の頭の「 だけを剥がすと、閉じの 」 が残って崩れる）
+    let line = (raw.split(/\r?\n/).find(l => l.trim()) || '')
+      .replace(/^\s*(?:ユーザー|user)\s*[:：]\s*/i, '').trim();
+    const close = { '「': '」', '『': '』', '"': '"', '“': '”', "'": "'" }[line[0]];
+    if (close && line.length > 1 && line.endsWith(close) && !line.slice(1, -1).includes(close)) line = line.slice(1, -1).trim();
+    line = line.slice(0, SUGGESTER.max_chars);
     log('suggest_call', `len=${line.length}`);
     return line || null;
   } catch (e) {
@@ -576,6 +661,7 @@ async function readChatInput(request) {
   let messages = body.messages;
   const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
   const wantSuggest = body.suggest === true;
+  const wantSitePages = body.site_pages === true;
   if (!Array.isArray(messages) || messages.length === 0) {
     throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
   }
@@ -588,18 +674,24 @@ async function readChatInput(request) {
     throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
   }
   // DJ の状況説明は本文に紛れ込ませず、専用の上限で検証してから先頭の質問へ添える。
+  // 予測には添える前の会話と状況説明を別に渡す（ユーザーの発言に混ぜると、状況説明の回答ルールを予測がなぞる）
+  // 出力の言語は状況説明を足す前の会話で決める（状況説明は日本語なので、足した後だと日本語に見える）
+  const plainMessages = messages;
+  const langNote = replyLanguageNote(plainMessages);
+  let context = null;
   if (body.context != null) {
     if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
     checkText(body.context, DEFAULTS.input.context_max_chars, counters);
-    const firstUser = messages.find(m => m.role === 'user');
-    firstUser.content = prependText(body.context + '\n', firstUser.content);
+    context = body.context;
+    const first = messages.findIndex(m => m.role === 'user');
+    messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
-  return { messages, theme, wantSuggest };
+  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages };
 }
 
 async function handleChat(request, env, ctx, { requestId, cors, log }) {
-  let messages, theme, wantSuggest;
-  try { ({ messages, theme, wantSuggest } = await readChatInput(request)); }
+  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages;
+  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages } = await readChatInput(request)); }
   catch (err) { return inputError(err, requestId, cors); }
 
   // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
@@ -650,6 +742,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   });
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
   const stop = new AbortController();
+  const pageStop = new AbortController();
+  const stopPages = () => pageStop.abort();
+  stop.signal.addEventListener('abort', stopPages, { once: true });
   const stream = new ReadableStream({
     cancel() { log('client', 'cancelled'); stop.abort(); },
     async start(controller) {
@@ -665,14 +760,30 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         // R2 / 統合にも同じものを添え直す（人格が途中で画像を見失わないように）。
         const lastUser = contentText(lastContent);
         const lastImages = contentImages(lastContent);
+        // 出力の言語。指示とカードが日本語なので、英語の会話だと付けないと日本語で答える（3人格・統合・タイトル・予測の全部に付ける）。
+        // 3人格と統合は今回の発言の後ろに付ける（system の後ろだけだと、その後に読む日本語のカードや見本に負けて、CASPER は英語の質問の半分近くを日本語で答えた）。
+        // 3人格は system の後ろにも重ねる（DJ の相談のように日本語の状況説明が付くと、発言の後ろだけでは足りない）
+        const noteLang = (c) => langNote ? joinContent(c, langNote) : c;
+        // 一覧の取得もこの分岐で行う。人格の討議は検索の取得待ちにしない。
+        let pagesPromise = null;
+        if (wantSitePages && env.SITE_SEARCH_ENABLED === 'true' && env.DB && lastUser.trim()) {
+          const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
+          pagesPromise = (async () => {
+            const locale = /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
+            const pages = await getSitePages(ctx, locale, pageStop.signal);
+            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true,
+              signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
+          })().catch(() => { log('site_search', 'omitted'); return null; });
+        }
         if (lastImages.length) log('vision', `images=${lastImages.length}`);
         // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
         const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
 
         // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
+        // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
         let titlePromise = null;
         if (!history.some(m => m.role === 'assistant')) {
-          titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, lastContent, signal, log), stop.signal)
+          titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, plainMessages[plainMessages.length - 1].content, langNote, signal, log), stop.signal)
             .then(t => { if (t) send('title', { text: t }); })
             .catch(() => {});
         }
@@ -683,7 +794,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
 
         // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
         const cards = await cardsPromise;
-        const personas = PERSONAS.map(p => withCard(p, cards));
+        const personas = PERSONAS.map(p => withCard(p, cards))
+          .map(p => ({ ...p, system_prompt: withLangNote(p.system_prompt, langNote) }));
 
         // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
         // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
@@ -697,7 +809,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         const r1 = await withTimeout(personaTimeoutMs, signal =>
           Promise.allSettled(personas.map(async (p) => {
             // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
-            const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
+            const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(lastContent)), signal, log, 1, personaTemp);
             send('persona', { round: 1, codename: p.codename, name: p.name, text });
             return { ...p, r1: text };
           })), stop.signal);
@@ -722,7 +834,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
             // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
             const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
             try {
-              p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
+              p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
               send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
             } catch (e) { absent(p, 2, e); }
           })), stop.signal);
@@ -734,12 +846,23 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
         const bias = theme ? SYNTH_BIAS[theme] : null;
         if (bias) log('synthesizer_call', 'bias', theme);
+        let pageChoice = null;
+        if (pagesPromise) {
+          try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, stop.signal); }
+          catch (_) { pageStop.abort(); }
+          if (stop.signal.aborted) throw searchFailure('cancelled');
+        }
+        const hasPages = pageChoice && (pageChoice.results.length || pageChoice.daily);
         const synthMessages = [
           // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
           { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
           ...(bias ? [{ role: 'system', content: bias }] : []),
+          ...(hasPages ? [{ role: 'system', content: SITE_SEARCH.synth_header + '\n' + JSON.stringify({
+            pages: pageChoice.results.map(({ title, description }) => ({ title, description })),
+            daily: pageChoice.daily ? { media: pageChoice.daily.media, query: pageChoice.daily.query } : null,
+          }) }] : []),
           ...history,
-          { role: 'user', content: withImages(augmented, lastImages) },
+          { role: 'user', content: withImages(noteLang(augmented), lastImages) },
         ];
 
         const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
@@ -753,10 +876,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           return readSynthesis(synthRes.body, send);
         }, stop.signal);
         log('synthesizer_call', 'ok');
+        if (hasPages && !stop.signal.aborted) send('pages', chatPageEvent(pageChoice));
         // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
         if (wantSuggest) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
-            signal => fetchSuggestion(upstream, [...messages, { role: 'assistant', content: answer }], signal, log), stop.signal);
+            signal => fetchSuggestion(upstream, [...plainMessages, { role: 'assistant', content: answer }], context, langNote, signal, log), stop.signal);
           if (text) send('suggest', { text });
         }
         // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
@@ -777,6 +901,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           send('error', e);
         }
         close();
+      } finally {
+        pageStop.abort();
+        stop.signal.removeEventListener('abort', stopPages);
       }
     },
   });
@@ -816,11 +943,14 @@ export default {
     // 存在する POST の入口だけを、chat / react 共通の条件で認可する。
     const isChat = request.method === 'POST' && url.pathname === '/magi2/chat';
     const isReaction = request.method === 'POST' && url.pathname === '/magi2/react';
-    if (!isChat && !isReaction) {
+    const isSiteSearch = request.method === 'POST' && url.pathname === '/magi2/site-search';
+    if (isSiteSearch) cors['Cache-Control'] = 'no-store';
+    if (!isChat && !isReaction && !isSiteSearch) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
     if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
-      log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
+      if (isSiteSearch) log('auth', 'rejected (site-search)');
+      else log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
       return httpError(401, {
         stage: 'auth', code: 'unauthorized',
         message: isReaction ? '許可されていない Origin です'
@@ -829,6 +959,7 @@ export default {
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
+    if (isSiteSearch) return handleSiteSearch(request, env, ctx, context);
     return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
   },
 };

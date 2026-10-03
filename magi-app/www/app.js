@@ -471,6 +471,36 @@ agentLog.addEventListener('click', function (e) {
 });
 
 // ---- Send -------------------------------------------------------------------
+function renderAgentPages(replyEl, data) {
+  // リンクはこの回答の表示だけ。履歴・次の質問・保存会話へは入れない。
+  if (!data || !Array.isArray(data.pages) || data.pages.length > 3) return;
+  var panel = document.createElement('div'); panel.className = 'agent-pages';
+  function add(title, description, raw, daily) {
+    if (typeof title !== 'string' || typeof description !== 'string' || typeof raw !== 'string') return;
+    try {
+      var u = new URL(raw);
+      if (u.origin !== 'https://tk.st' || u.username || u.password) return;
+      if (daily) {
+        if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname) || u.hash !== '#archiveSearch'
+          || Array.from(u.searchParams.keys()).join(',') !== 'q' || !u.searchParams.get('q')) return;
+      } else if (u.search || u.hash) return;
+      var a = document.createElement('a'); a.className = 'agent-page'; a.href = u.href;
+      a.target = '_blank'; a.rel = 'noopener noreferrer';
+      var name = document.createElement('strong'); name.textContent = title; a.appendChild(name);
+      if (description) { var desc = document.createElement('span'); desc.textContent = description; a.appendChild(desc); }
+      panel.appendChild(a);
+    } catch (_) {}
+  }
+  data.pages.forEach(function (p) { if (p && ['tool', 'game', 'article', 'page'].includes(p.kind)) add(p.title, p.description, p.url, false); });
+  var d = data.daily;
+  if (d && ['nitori', 'retail'].includes(d.media) && typeof d.query === 'string') {
+    var ja = document.documentElement.lang === 'ja';
+    var name = d.media === 'nitori' ? (ja ? '日刊ニトリ' : 'Daily Nitori') : (ja ? '日刊リテールテック' : 'Daily Retail Tech');
+    add(ja ? name + 'で「' + d.query + '」を探す →' : 'Search ' + name + ' for “' + d.query + '” →', '', d.url, true);
+  }
+  if (panel.children.length) replyEl.appendChild(panel);
+}
+
 function prepareAgentMessages(history, lastContent) {
   const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
@@ -540,7 +570,7 @@ async function agentSend() {
 
   agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
   setAgentStopMode(true);
-  var reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
+  var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
 
@@ -558,7 +588,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outbound, theme, suggest: true }),
+      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true }),
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -591,6 +621,7 @@ async function agentSend() {
         error: function (d) { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
         // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
+        pages: function (d) { if (!dropped()) sitePages = d; },
         done: function () { completed = true; },
       }, watch);
       if (!dropped() && !errored && (!completed || !reply.trim())) {
@@ -621,6 +652,7 @@ async function agentSend() {
   }
   if (dropped()) { delete pendingReactions[mid]; return; }
   if (completed && reply.trim() && !errored) {
+    renderAgentPages(replyEl, sitePages);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
     agentHistory.push({ role: 'assistant', content: reply, debate: debateData, mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
@@ -852,6 +884,7 @@ function showInfoPanel() {
     + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
     + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and context from the latest <strong>12 messages</strong>.</li>'
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
+    + '<li>When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Your <strong>IP address</strong> is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'

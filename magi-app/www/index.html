@@ -158,6 +158,9 @@
     .agent-reply { margin-top: 0.4rem; padding: 0.6rem 0.7rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
     .agent-reply .agent-who { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
     .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
+    .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
+    .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
+    .agent-page span { font-size: 11px; opacity: .8; }
 
     /* reactions */
     .reaction-bar { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; position: relative; }
@@ -303,6 +306,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261003_1"></script>
+  <script src="app.js?v=20261004_1"></script>
 </body>
 </html>

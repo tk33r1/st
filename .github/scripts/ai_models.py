@@ -7,6 +7,7 @@ import json
 import os
 import re
 import struct
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -176,8 +177,34 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 4096,  # magi2 の統合と同じ。推論ぶんの余裕も含む
         'stream': True,
     }, stream=True)
+    smoke_openai_site_search(url, api_key, model)
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、サイト案内/strictスキーマ2種、Web検索強制/推論/JSONスキーマ'
+
+
+def smoke_openai_site_search(url, api_key, model):
+    """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
+    config = json.loads(subprocess.check_output(
+        ['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs')], encoding='utf-8'))
+    for mode in ('search', 'chat'):
+        # nullableなdailyの両側を試し、strict+anyOfを実際に受け付けることを確認する。
+        for daily in (None, {'media': 'nitori', 'query': '出店'}):
+            expected = {'selections': ['tool:7'], 'daily': daily}
+            if mode == 'search':
+                expected['comment'] = 'PDF Studioでまとめられます。'
+            response = post_json(url, api_key, {
+                'model': model, 'stream': False, 'store': False,
+                'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
+                'reasoning_effort': config['model']['reasoning_effort'],
+                'temperature': config['temperature'], 'top_p': config['top_p'],
+                'max_completion_tokens': config['model']['max_tokens'] if mode == 'search' else config['chat_max_tokens'],
+                'response_format': config['formats'][mode],
+            })
+            choice = response.get('choices', [{}])[0]
+            if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+                raise RuntimeError('サイト案内の応答が正常完了しませんでした')
+            if json.loads(message_content(response)) != expected:
+                raise RuntimeError('サイト案内のスキーマ疎通で期待した応答が得られませんでした')
 
 
 OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'

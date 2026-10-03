@@ -15,6 +15,7 @@ const mobile = read('magi-app/www/app.js');
 const home = read('index.html');
 const dj = read('dj/request/index.html');
 const between = (s, start, end) => s.slice(s.indexOf(start), s.indexOf(end, s.indexOf(start)));
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const tick = () => new Promise(r => setImmediate(r));
 const encode = s => new TextEncoder().encode(s);
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -35,14 +36,17 @@ function worker(stream = completion(), upstream = null) {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
       const replaced = upstream && await upstream(url, options);
       if (replaced) return replaced;
+      if (/^https:\/\/tk\.st\/data\/(tools|game|glitch)\.json$/.test(url)) return Response.json(JSON.parse(read('data/' + url.split('/').at(-1))));
       const body = JSON.parse(options.body); calls.push(body);
+      if (body.response_format?.type === 'json_schema') return Response.json({ choices: [{ message: { content: JSON.stringify({ selections: ['tool:7'], ...(body.response_format.json_schema.name === 'site_search' ? { comment: 'PDF Studioでまとめられます。' } : {}), daily: null }) }, finish_reason: 'stop' }] });
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
     },
   });
-  const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ');
+  const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(strip(read('workers/magi2/personas.js')) + '\n'
+    + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
-    + '\nglobalThis.defaults = DEFAULTS;', ctx);
+    + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test' };
   const request = async (path, body, ip = '192.0.2.1', headers = {}) => {
     const res = await ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
@@ -77,6 +81,236 @@ function database(file) {
     async run() { return { meta: { changes: sqlite(file, sql, args).changes } }; },
   }; } };
 }
+
+// 同時実行や上限の順序を速く確認するD1代替。SQL自体は上の実SQLiteでも検証する。
+function counts() {
+  const rows = new Map();
+  return { rows, prepare(sql) { let args; return {
+    bind(...values) { args = values; return this; },
+    async first() {
+      assert.match(sql, /RETURNING count/);
+      const [key, day, limit] = args, id = key + '|' + day, count = rows.get(id) || 0;
+      if (count >= limit) return null;
+      rows.set(id, count + 1); return { count: count + 1 };
+    },
+    async run() { if (sql.startsWith('DELETE')) rows.delete(args.join('|')); return { meta: { changes: 1 } }; },
+  }; } };
+}
+function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts(); return w; }
+const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search', body, ip);
+const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
+const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)', daily: null };
+
+test('検索は認可・入力・フラグ・DB・完全な一覧を確認してから回数とAIを使う', async () => {
+  const w = enableSearch(worker());
+  for (const body of ['{', null, {}, { query: '', locale: 'ja' }, { query: '\u0000\u0001', locale: 'ja' }, { query: 'x'.repeat(201), locale: 'ja' }, { query: 'q', locale: 'fr' }, { query: 'q', locale: 'ja', model: 'other' }]) {
+    assert.equal((await searchRequest(w, body)).status, 400);
+  }
+  assert.equal((await searchRequest(w, JSON.stringify({ query: 'q', locale: 'ja' }) + ' '.repeat(4096))).status, 413);
+  assert.equal((await w.request('/magi2/site-search', '{}', undefined, { 'Content-Type': 'text/plain' })).status, 400);
+  assert.equal((await w.request('/magi2/site-search', '{}', undefined, { Origin: 'https://outside.example' })).status, 401);
+  w.env.SITE_SEARCH_ENABLED = 'false'; assert.equal((await searchRequest(w)).status, 503);
+  assert.equal(w.calls.length, 0); assert.equal(w.env.DB.rows.size, 0);
+  w.env.SITE_SEARCH_ENABLED = 'true'; const db = w.env.DB; delete w.env.DB;
+  assert.equal((await searchRequest(w)).status, 503); w.env.DB = db;
+  const broken = enableSearch(worker(undefined, url => url.endsWith('/game.json') ? Response.json({}) : undefined));
+  assert.equal((await searchRequest(broken)).status, 503); assert.equal(broken.env.DB.rows.size, 0); assert.equal(broken.calls.length, 0);
+  const res = await searchRequest(w), body = await res.json();
+  assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store'); assert.ok(body.request_id);
+  assert.equal(body.results[0].title, 'PDF Studio'); assert.equal(body.results[0].url, '/tools/pdf-studio/');
+  const call = w.calls.at(-1); assert.equal(call.max_completion_tokens, 300); assert.equal(call.temperature, .4);
+  assert.equal(call.reasoning_effort, 'none'); assert.equal(call.response_format.json_schema.strict, true);
+});
+
+test('検索のIP上限を超えた要求は全体を進めず、通常チャットとは別に数える', async () => {
+  const w = enableSearch(worker()), day = new Date().toISOString().slice(0, 10);
+  const responses = await Promise.all(Array.from({ length: 14 }, () => searchRequest(w)));
+  assert.equal(responses.filter(r => r.status === 200).length, 10);
+  assert.equal(responses.filter(r => r.status === 429).length, 4);
+  assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
+  assert.equal(w.env.DB.rows.get('search:192.0.2.1|' + day), 10);
+  assert.equal(w.calls.length, 10); assert.equal(w.env.DB.rows.has('global|' + day), false);
+  assert.match(await (await w.chat([{ role: 'user', content: 'q' }])).text(), /event: done/);
+  assert.equal(w.env.DB.rows.get('global|' + day), 1); assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
+  w.ctx.searchConfig.global_daily_limit = 10;
+  assert.equal((await searchRequest(w, undefined, '192.0.2.2')).status, 429);
+  assert.equal(w.env.DB.rows.get('search:192.0.2.2|' + day), 1);
+  assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
+});
+
+test('AIの未知ID・日刊の不正値・コメントの記号を検証し、実在するURLだけを作る', () => {
+  const w = worker(), pages = w.ctx.makeSitePages(['tools', 'game', 'glitch'].map(name => JSON.parse(read('data/' + name + '.json'))));
+  assert.equal(pages.length, ['tools', 'game', 'glitch'].map(name => { const data = JSON.parse(read('data/' + name + '.json')); return (data.articles || data).length; }).reduce((a, b) => a + b, 11));
+  const html = read('404.html');
+  for (const [id, url, ja, en, descJa, descEn] of w.ctx.searchConfig.pages) {
+    const link = html.match(new RegExp('<a[^>]*data-entry="' + id + '"[^>]*>'))[0];
+    for (const [attribute, value] of [['href', url], ['data-title-ja', ja], ['data-title-en', en], ['data-description-ja', descJa], ['data-description-en', descEn]]) assert.ok(link.includes(attribute + '="' + value + '"'));
+  }
+  assert.throws(() => w.ctx.validateSiteChoice({ ...validSearch, selections: ['tool:missing'] }, pages, 'ja'));
+  const mixed = w.ctx.validateSiteChoice({ ...validSearch, selections: ['tool:7', 'tool:missing'] }, pages, 'ja');
+  assert.equal(mixed.results.length, 1); assert.equal(mixed.comment, null);
+  assert.ok(w.ctx.validateSiteChoice(validSearch, pages, 'ja').comment.includes('(>_<)'));
+  for (const comment of ['https://outside.example', '<script>', 'www.fake.test', 'x'.repeat(121), 'link](path)', '`code`']) assert.equal(w.ctx.validateSiteChoice({ ...validSearch, comment }, pages, 'ja').comment, null);
+  for (const daily of [{ media: 'other', query: 'AI' }, { media: 'nitori', query: 'ニトリ出店' }, { media: 'retail', query: 'x' }, { media: 'retail', query: 'https://x.y' }, { media: 'nitori', query: '<xx>' }, {}]) {
+    const r = w.ctx.validateSiteChoice({ ...validSearch, daily }, pages, 'ja'); assert.equal(r.daily, null); assert.equal(r.comment, null); assert.equal(r.results.length, 1);
+  }
+  const daily = w.ctx.validateSiteChoice({ selections: [], comment: 'ニュースです', daily: { media: 'retail', query: ' ＡＩ ' } }, pages, 'en');
+  assert.equal(daily.status, 'results'); assert.equal(daily.daily.query, 'AI'); assert.equal(daily.daily.url, '/job/retailtechdaily/?q=AI#archiveSearch');
+  for (const raw of ['https://outside.example/tools/a/', 'https://tk.st/tools/a/?q=x', 'https://tk.st/tools/a/#x', 'https://tk.st/tools/%3Fbad/', 'https://tk.st/tools/%5Cbad/', 'https://user@tk.st/tools/a/', 'https://tk.st/game/a/']) assert.equal(w.ctx.siteHref(raw, 'tools'), null);
+});
+
+test('検索の空応答・拒否・出力上限・JSON不正・本文受信の遅れは503で、開始済みの回数は戻さない', async () => {
+  for (const response of [() => searchReply(''), () => searchReply('broken'), () => searchReply(validSearch, 'length'), () => searchReply(validSearch, 'stop', 'refused'), () => searchReply({ ...validSearch, extra: 1 })]) {
+    const w = enableSearch(worker(undefined, (_, o) => o?.body && JSON.parse(o.body).response_format ? response() : undefined));
+    assert.equal((await searchRequest(w)).status, 503); assert.equal(w.env.DB.rows.size, 2);
+  }
+  let aborted = false;
+  const slow = enableSearch(worker(undefined, (_, o) => {
+    if (!o?.body || !JSON.parse(o.body).response_format) return;
+    o.signal.addEventListener('abort', () => { aborted = true; });
+    return new Response(new ReadableStream({ start() {} }));
+  }));
+  slow.ctx.searchConfig.ai_timeout_ms = 15;
+  assert.equal((await searchRequest(slow)).status, 503); assert.equal(aborted, true);
+});
+
+test('古い完全な一覧を丸ごと使い、更新失敗では置き換えず、24時間を超えたら断る', async () => {
+  let broken = false;
+  const w = enableSearch(worker(undefined, url => broken && url.endsWith('/game.json') ? Response.json({}) : undefined));
+  assert.equal((await searchRequest(w)).status, 200);
+  const old = w.ctx.searchCache.pages;
+  w.ctx.searchCache.fetchedAt = Date.now() - 11 * 60000; broken = true;
+  assert.equal((await searchRequest(w)).status, 200); await Promise.all(w.waits);
+  assert.equal(w.ctx.searchCache.pages, old); assert.ok(w.ctx.searchCache.retryAt > Date.now());
+  w.ctx.searchCache.fetchedAt = Date.now() - 25 * 3600000;
+  assert.equal((await searchRequest(w)).status, 503);
+  w.ctx.searchCache.retryAt = 0;
+  assert.equal((await searchRequest(w)).status, 503); assert.equal(w.ctx.searchCache.pages, old);
+});
+
+test('検索エラーに入力が含まれても公開エラー・ログ・通知に流さず、会社単位の通知抑制を使う', async () => {
+  const secret = 'PRIVATE_SEARCH_TEXT', logs = [], mails = [];
+  const w = enableSearch(worker(undefined, (url, o) => {
+    if (url.includes('resend.com')) { mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
+    if (o?.body && JSON.parse(o.body).response_format) return new Response('insufficient_quota ' + secret, { status: 429 });
+  }));
+  w.ctx.console.log = (...values) => logs.push(values);
+  Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  for (let i = 0; i < 2; i++) {
+    const res = await searchRequest(w, { query: secret, locale: 'en' }); assert.equal(res.status, 503); assert.ok(!(await res.text()).includes(secret));
+  }
+  await Promise.all(w.waits); assert.equal(mails.length, 1);
+  assert.ok(!JSON.stringify([logs, mails]).includes(secret)); assert.ok(mails[0].text.includes('404検索'));
+});
+
+test('チャットのページ選びは最新本文500文字だけで並列に行い、統合とイベントで同じ候補を使う', async () => {
+  const w = enableSearch(worker());
+  const latest = 'PDFをまとめたい' + '😀'.repeat(500);
+  const text = await (await w.request('/magi2/chat', { site_pages: true, suggest: true, messages: [
+    { role: 'user', content: 'OLD_PRIVATE_HISTORY' }, { role: 'assistant', content: 'old answer' },
+    { role: 'user', content: [{ type: 'text', text: latest.slice(0, 998) }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAAA' } }] },
+  ] })).text();
+  assert.match(text, /event: pages/); assert.match(text, /https:\/\/tk.st\/tools\/pdf-studio\//);
+  assert.ok(text.indexOf('event: pages') < text.indexOf('event: done'));
+  const selector = w.calls.find(c => c.response_format), input = JSON.parse(selector.messages.at(-1).content);
+  assert.equal(Array.from(input.query).length, 500); assert.equal(selector.max_completion_tokens, 120);
+  assert.doesNotMatch(JSON.stringify(selector), /OLD_PRIVATE_HISTORY|data:image|自己像|内部討議/);
+  const synth = w.calls.find(c => c.stream); assert.ok(synth.messages.some(m => m.content.includes('検証済みのサイト案内') && m.content.includes('PDF Studio')));
+  assert.equal([...w.env.DB.rows.keys()].some(k => k.startsWith('search:')), false);
+});
+
+test('ページ選びの無効・非要求・画像だけ・DB未設定・通常上限では検索を呼ばず、失敗でもチャットは続く', async () => {
+  for (const reason of ['flag', 'optin', 'images', 'db', 'quota']) {
+    const w = enableSearch(worker());
+    if (reason === 'flag') w.env.SITE_SEARCH_ENABLED = 'false';
+    if (reason === 'db') delete w.env.DB;
+    if (reason === 'quota') w.ctx.defaults.daily_limit = 0;
+    const res = await w.request('/magi2/chat', { site_pages: reason !== 'optin', messages: [{ role: 'user', content: reason === 'images' ? [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAAA' } }] : 'q' }] });
+    if (reason === 'quota') assert.equal(res.status, 429); else assert.match(await res.text(), /event: done/);
+    assert.equal(w.calls.some(c => c.response_format), false);
+  }
+  const w = enableSearch(worker(undefined, (_, o) => o?.body && JSON.parse(o.body).response_format ? searchReply('broken') : undefined));
+  const text = await (await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] })).text();
+  assert.match(text, /event: done/); assert.doesNotMatch(text, /event: pages/);
+});
+
+test('遅いページ選びだけを中止し、後から返っても統合や画面へ混ぜない', async () => {
+  let aborted = false;
+  const w = enableSearch(worker(undefined, async (_, o) => {
+    if (!o?.body || !JSON.parse(o.body).response_format) return;
+    o.signal.addEventListener('abort', () => { aborted = true; });
+    await delay(60); return searchReply({ selections: ['tool:7'], daily: null });
+  }));
+  w.ctx.searchConfig.chat_wait_ms = 10;
+  const text = await (await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] })).text();
+  assert.match(text, /event: done/); assert.doesNotMatch(text, /event: pages/); assert.equal(aborted, true);
+  assert.ok(!w.calls.find(c => c.stream).messages.some(m => m.content.includes('検証済みのサイト案内')));
+  await delay(65);
+});
+
+test('統合の失敗ではpagesとdoneを出さず、接続キャンセルでは選択用AIも止める', async () => {
+  for (const stream of [completion(''), completion('partial', 'length'), completion('partial', 'stop', false)]) {
+    const w = enableSearch(worker(stream)), text = await (await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] })).text();
+    assert.match(text, /event: error/); assert.doesNotMatch(text, /event: pages|event: done/);
+  }
+  let aborted = false;
+  const w = enableSearch(worker(undefined, (_, o) => {
+    if (!o?.body) return;
+    const body = JSON.parse(o.body);
+    if (body.response_format) o.signal.addEventListener('abort', () => { aborted = true; });
+    return new Promise((_, reject) => o.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+  }));
+  const res = await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] });
+  await tick(); await res.body.cancel(); await tick(); assert.equal(aborted, true);
+  let allAbsentAborted = false;
+  let searchStarted;
+  const started = new Promise(resolve => { searchStarted = resolve; });
+  const absent = enableSearch(worker(undefined, async (_, o) => {
+    if (!o?.body) return;
+    const body = JSON.parse(o.body);
+    if (body.response_format) { searchStarted(); return new Promise((_, reject) => o.signal.addEventListener('abort', () => { allAbsentAborted = true; reject(new DOMException('aborted', 'AbortError')); })); }
+    if (body.max_completion_tokens === 512 || body.max_tokens) { await started; return new Response('failed', { status: 400 }); }
+  }));
+  const text = await (await absent.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] })).text();
+  assert.match(text, /event: error/); assert.doesNotMatch(text, /event: pages|event: done/); assert.equal(allAbsentAborted, true);
+});
+
+test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替えなら捨て、履歴へ保存しない', async () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    for (const mode of ['success', 'eof', 'error', 'switch']) {
+      const c = client(src, isHome), renders = [], outbound = [];
+      c.ctx.renderAgentPages = (_, data) => renders.push(data);
+      c.ctx.fetch = async (_, o) => { outbound.push(JSON.parse(o.body)); return { ok: true, body: {} }; };
+      c.ctx.parseSSE = async (_, h) => {
+        h.integrated({ delta: 'answer' }); h.pages({ pages: [{ title: 'PDF Studio' }], daily: null }); assert.equal(renders.length, 0);
+        if (mode === 'error') h.error({ code: 'failed' });
+        if (mode === 'switch') { c.ctx.agentGen++; c.ctx.agentHistory = []; c.ctx.agentBusy = false; }
+        if (mode !== 'eof') h.done();
+      };
+      await c.ctx.agentSend(); assert.equal(outbound[0].site_pages, true);
+      assert.equal(renders.length, mode === 'success' ? 1 : 0);
+      assert.equal(JSON.stringify(c.ctx.agentHistory).includes('PDF Studio'), false);
+    }
+  }
+});
+
+test('両画面のリンク検証とラベルの描画は一致し、サイト外・クエリ偽装を拒否する', () => {
+  function node() { return { children: [], appendChild(child) { this.children.push(child); } }; }
+  const helper = src => between(src, 'function renderAgentPages(', 'function prepareAgentMessages(').trim().split('\n').map(line => line.trim()).join('\n');
+  assert.equal(helper(home), helper(mobile));
+  for (const src of [home, mobile]) {
+    const ctx = vm.createContext({ URL, document: { createElement: node, documentElement: { lang: 'ja' } } });
+    vm.runInContext(helper(src), ctx); const reply = node();
+    ctx.renderAgentPages(reply, { pages: [
+      { kind: 'tool', title: '<script>label</script>', description: '<img>', url: 'https://tk.st/tools/pdf-studio/' },
+      { kind: 'tool', title: 'bad', description: '', url: 'https://tk.st.evil.test/tools/a/' },
+      { kind: 'page', title: 'bad', description: '', url: 'https://tk.st/?q=private' },
+    ], daily: { media: 'retail', query: 'AI', url: 'https://tk.st/job/retailtechdaily/?q=AI&extra=x#archiveSearch' } });
+    assert.equal(reply.children[0].children.length, 1);
+    assert.equal(reply.children[0].children[0].children[0].textContent, '<script>label</script>');
+    assert.equal(reply.children[0].children[0].rel, 'noopener noreferrer');
+  }
+});
 
 test('chat と react の認可を共通化しても、公開情報・未知の入口・エラー応答を保つ', async () => {
   const w = worker();
@@ -161,6 +395,12 @@ test('リアクションの移行・所有権・重複・回数制限を実 SQLi
     sqlite(old, read('workers/magi2/migrations/0001_reaction_ownership.sql'));
     assert.equal(sqlite(old, 'SELECT delete_token_hash FROM reactions WHERE id=1', []).row.delete_token_hash, null);
     const w = worker(); w.env.DB = database(join(dir, 'new.sqlite'));
+    // 実SQLiteの検証は時間が掛かる。分の境目をまたいでも同じ窓の上限を確認する。
+    const fixedTime = Date.now();
+    w.ctx.Date = class extends Date {
+      constructor(...args) { super(...(args.length ? args : [fixedTime])); }
+      static now() { return fixedTime; }
+    };
     const body = { target: 'integrated', reaction: '👍', request: 'q', response: 'a' };
     const add = await (await w.request('/magi2/react', body)).json();
     assert.match(add.delete_token, /^[a-f0-9]{64}$/);
@@ -243,7 +483,7 @@ function client(src, isHome = false) {
     localStorage: { removeItem() {} }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
-    archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = !enabled; },
+    archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = !enabled; },
   });
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
   return { ctx, timers, errors };

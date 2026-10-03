@@ -2023,6 +2023,10 @@
       animation: blink calc(60s / var(--bpm)) step-end infinite;
     }
 
+    .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
+    .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
+    .agent-page span { font-size: 11px; opacity: .8; }
+
     .reaction-bar {
       display: flex;
       align-items: center;
@@ -7605,6 +7609,36 @@
       return turn;
     }
 
+    function renderAgentPages(replyEl, data) {
+      // リンクはこの回答の表示だけ。履歴・次の質問・保存会話へは入れない。
+      if (!data || !Array.isArray(data.pages) || data.pages.length > 3) return;
+      var panel = document.createElement('div'); panel.className = 'agent-pages';
+      function add(title, description, raw, daily) {
+        if (typeof title !== 'string' || typeof description !== 'string' || typeof raw !== 'string') return;
+        try {
+          var u = new URL(raw);
+          if (u.origin !== 'https://tk.st' || u.username || u.password) return;
+          if (daily) {
+            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname) || u.hash !== '#archiveSearch'
+              || Array.from(u.searchParams.keys()).join(',') !== 'q' || !u.searchParams.get('q')) return;
+          } else if (u.search || u.hash) return;
+          var a = document.createElement('a'); a.className = 'agent-page'; a.href = u.href;
+          a.target = '_blank'; a.rel = 'noopener noreferrer';
+          var name = document.createElement('strong'); name.textContent = title; a.appendChild(name);
+          if (description) { var desc = document.createElement('span'); desc.textContent = description; a.appendChild(desc); }
+          panel.appendChild(a);
+        } catch (_) {}
+      }
+      data.pages.forEach(function (p) { if (p && ['tool', 'game', 'article', 'page'].includes(p.kind)) add(p.title, p.description, p.url, false); });
+      var d = data.daily;
+      if (d && ['nitori', 'retail'].includes(d.media) && typeof d.query === 'string') {
+        var ja = document.documentElement.lang === 'ja';
+        var name = d.media === 'nitori' ? (ja ? '日刊ニトリ' : 'Daily Nitori') : (ja ? '日刊リテールテック' : 'Daily Retail Tech');
+        add(ja ? name + 'で「' + d.query + '」を探す →' : 'Search ' + name + ' for “' + d.query + '” →', '', d.url, true);
+      }
+      if (panel.children.length) replyEl.appendChild(panel);
+    }
+
     function prepareAgentMessages(history, lastContent) {
       const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
@@ -7667,7 +7701,7 @@
       saveCurrentHistory();
 
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
-      let reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
+      let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
 
       // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
@@ -7685,7 +7719,7 @@
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
         const outbound = prepareAgentMessages(agentHistory, sendContent);
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true }), signal: ctrl.signal });
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true }), signal: ctrl.signal });
         if (dropped()) return;
         watch();
         if (!res.ok || !res.body) {
@@ -7712,6 +7746,7 @@
             error: (d) => { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
+            pages: (d) => { if (!dropped()) sitePages = d; },
             done: () => { completed = true; },
           }, watch);
           if (!dropped() && !errored && (!completed || !reply.trim())) {
@@ -7746,6 +7781,7 @@
       }
       if (dropped()) { delete pendingReactions[mid]; return; }
       if (completed && reply.trim() && !errored) {
+        renderAgentPages(replyEl, sitePages);
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
@@ -8076,6 +8112,7 @@
             <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
             <li>${tr('Each persona, and the final answer, also draws on summaries of this site (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.', '各人格と最終回答は、このサイトの要約（各ページ、年表、プロフィールの性格検査）も拠り所にします。サイトが更新されると自動で作り直されるので、MAGI は本人の今に追従します。')}</li>
             <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
+            <li>${tr('When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。')}</li>
             <!-- "12 messages", not "12 round-trips": AGENT_MAX_HISTORY and the Worker's
                  history_max_messages are both 12 *messages* (≈6 exchanges), which is the
                  context window carried forward — not a cap on how long a session may run. -->
