@@ -8,8 +8,8 @@ routes = [
 ]
 
 [vars]
-# 公開・品質確認後に true。停止時はWorkerを先にfalseにする（通常チャットは続く）。
-SITE_SEARCH_ENABLED = "false"
+# 404のAI検索とチャットのサイト案内を有効化。停止時はWorkerを先にfalseにする（通常チャットは続く）。
+SITE_SEARCH_ENABLED = "true"
 
 [[d1_databases]]
 binding       = "DB"

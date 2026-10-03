@@ -117,7 +117,7 @@ export const DEFAULTS = {
     },
     // 統合：推論あり・ストリーミング。max_tokens は推論トークンを含むので広く取る（答えの長さは200字の指定で決まる）。
     // 足りないと finish_reason=length になり、答えが途中まで流れた後に失敗扱いになる。課金は使った分だけ
-    synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'high', max_tokens: 4096 },
+    synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'low', max_tokens: 4096 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
     titler: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 48 },
