@@ -54,9 +54,10 @@ JST = timezone(timedelta(hours=9))
 ENDPOINT = 'https://api.openai.com/v1/chat/completions'
 MODEL = model_id_with_override('openai', 'luna', 'OPENAI_MODEL')
 
-# 人格カードの長さ。プロンプトでは CARD_TARGET を指示し、検査は少し緩めに取る。
+# 人格カードの長さ。プロンプトでは CARD_TARGET を指示し、検査は緩めに取る（素材の多い人格は指示より長く書きがちで、
+# 1,400 字では弾かれた。Worker 側は PERSONA_CONTEXT.max_chars = 2000 で切るので、それより内側に置く）。
 CARD_TARGET = 800
-CARD_MIN, CARD_MAX = 80, 1400
+CARD_MIN, CARD_MAX = 80, 1800
 # 1人格ぶんの素材の上限。目印の付け過ぎで要約コストが膨らむのを止める安全弁。
 SOURCE_MAX = 40000
 
