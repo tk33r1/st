@@ -1676,6 +1676,7 @@
       <ul>
         <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
         <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
+        <li>1日の利用上限のため、<strong>IP アドレス</strong>を日ごとの回数としてデータベースに記録します（相談の中身は記録しません）。</li>
         <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
         <li class="warn">機密情報や個人情報は入力しないでください。</li>
       </ul>
@@ -2957,6 +2958,13 @@
     ];
     const CHAT_MAX = 12;          // Worker 側も同数で trim される
     let chatBusy = false;
+    /* 相談の停止。回答を待つ間は送信ボタンが ■ になり、押すと接続を切る（Worker も続きの呼び出しを止める）。
+       状況説明を読んでいる間に押されたときは、MAGI に送る前にやめる */
+    let chatCtrl = null, chatStopped = false;
+    function stopConsult() {
+      chatStopped = true;
+      if (chatCtrl) chatCtrl.abort();
+    }
     // MAGI が予測した次の相談。空の入力欄に薄く出し、› で入れる（送信・会話の切り替え・使用で消す）
     let chatSuggestion = '';
 
@@ -3156,6 +3164,7 @@
       /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
          ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
+      chatCtrl = ctrl;
       let timedOut = false, to = null;
       const watch = () => {
         clearTimeout(to);
@@ -3203,13 +3212,16 @@
           }, watch);
         }
       } catch (e) {
-        failure = (timedOut || e.name === 'AbortError')
+        failure = chatStopped ? null : (timedOut || e.name === 'AbortError')
           ? '時間内に返事が来ませんでした。もう一度お試しください。'
           : '通信に失敗しました。電波の良い場所でもう一度お試しください。';
       } finally {
         clearTimeout(to);
+        if (chatCtrl === ctrl) chatCtrl = null;
         finishTurn(turn);
       }
+      // 止めた相談はエラーを出さずに外す（質問は sendConsult が入力欄に戻す）
+      if (chatStopped) { turn.remove(); return null; }
 
       if (completed && reply && !failure) {
         chatSuggestion = suggestion;
@@ -3230,6 +3242,7 @@
       if (text.length < 2) return;
 
       chatBusy = true;
+      chatStopped = false;
       chatSuggestion = '';
       $('#chatErr').hidden = true;
       DJModal.close($('#aiInfoDlg'));
@@ -3242,7 +3255,7 @@
       let answered = false;
       try {
         const context = await djContext();
-        if (context === null) { turn.remove(); return; }
+        if (context === null || chatStopped) { turn.remove(); return; }
         const reply = await askMagi(turn, text, context);
         if (reply) {
           answered = true;
@@ -3434,7 +3447,10 @@
         $('#chatSuggestText').textContent = chatSuggestion;
         $('#chatSuggestUse').setAttribute('aria-label', '予測した相談を入れる：' + chatSuggestion);
       }
-      $('#chatSend').disabled = chatBusy || consultLocked || input.value.trim().length < 2;
+      // 回答を待つ間は停止ボタンになる（押せるまま）
+      $('#chatSend').disabled = consultLocked || (!chatBusy && input.value.trim().length < 2);
+      $('#chatSend').textContent = chatBusy ? '■' : '送信';
+      $('#chatSend').setAttribute('aria-label', chatBusy ? '停止' : '送信');
 
       $('#chatLock').hidden = !consultLocked;
       $('#toConsultFromFree').hidden = consultLocked;
@@ -3519,7 +3535,7 @@
         sendConsult($('#chatInput').value);
       }
     });
-    $('#chatSend').addEventListener('click', () => sendConsult($('#chatInput').value));
+    $('#chatSend').addEventListener('click', () => (chatBusy ? stopConsult() : sendConsult($('#chatInput').value)));
     $('#chatClear').addEventListener('click', () => { setValue($('#chatInput'), ''); $('#chatInput').focus(); });
     // 予測を入れるだけで送らない（直してから送れるように）。入れたら予測は消す
     $('#chatSuggestUse').addEventListener('click', () => {

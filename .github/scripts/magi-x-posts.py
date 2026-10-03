@@ -163,23 +163,48 @@ def fetch():
         saved = {'posts': []}
     known = {p['id'] for p in saved['posts']}
     newest = max((int(p['id']) for p in saved['posts']), default=0)
-
-    query = {'max_results': str(PAGE_SIZE), 'exclude': 'retweets', 'tweet.fields': TWEET_FIELDS}
-    if newest:
-        query['since_id'] = str(newest)  # 2回目以降は、前回より新しい分だけを読む（読んだ件数だけ課金される）
     added, read, pages = [], 0, 0
-    while read < MAX_POSTS_PER_RUN:
-        status, body = api_get(f'/users/{user_id}/tweets', query, creds)
-        if status != 200:
-            sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
-        pages += 1
-        tweets = body.get('data', [])
-        read += len(tweets)
-        added += [to_record(t, handle) for t in tweets if t['id'] not in known]
-        token = body.get('meta', {}).get('next_token')
-        if not token or not tweets:
-            break
-        query['pagination_token'] = token
+
+    def read_range(since_id, until_id):
+        """since_id より新しく until_id より古い投稿を、新しい順に読む。上限で止めたら、読んだうち最も古い ID を返す。"""
+        nonlocal read, pages
+        query = {'max_results': str(PAGE_SIZE), 'exclude': 'retweets', 'tweet.fields': TWEET_FIELDS}
+        if since_id:
+            query['since_id'] = str(since_id)  # 前回より新しい分だけを読む（読んだ件数だけ課金される）
+        if until_id:
+            query['until_id'] = str(until_id)
+        oldest = None
+        while True:
+            if read >= MAX_POSTS_PER_RUN:
+                return oldest
+            status, body = api_get(f'/users/{user_id}/tweets', query, creds)
+            if status != 200:
+                sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
+            pages += 1
+            tweets = body.get('data', [])
+            read += len(tweets)
+            added.extend(to_record(t, handle) for t in tweets if t['id'] not in known)
+            known.update(t['id'] for t in tweets)
+            if tweets:
+                oldest = min(int(t['id']) for t in tweets)
+            token = body.get('meta', {}).get('next_token')
+            if not token or not tweets:
+                return None
+            query['pagination_token'] = token
+
+    # 前回、1回の上限で止めた範囲（古い側の残り）があれば、先にその続きを読む。
+    # 新しい順にしか読めないので、止めた位置を覚えておかないと、次の実行は最新より新しい分しか読まず残りが抜ける
+    gap = saved.get('resume')
+    if gap:
+        stopped = read_range(gap['since_id'], gap['until_id'])
+        gap = {'since_id': gap['since_id'], 'until_id': stopped} if stopped else None
+    if not gap:
+        stopped = read_range(newest, None)
+        if stopped and newest:
+            gap = {'since_id': newest, 'until_id': stopped}
+        elif stopped:
+            # 初回は上限で止めた位置より古い分を、次の実行で読む（since_id なし＝さかのぼれる限り）
+            gap = {'since_id': 0, 'until_id': stopped}
 
     posts = sorted(saved['posts'] + added, key=lambda p: int(p['id']), reverse=True)
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
@@ -188,6 +213,8 @@ def fetch():
             'note': '本人（@' + handle + '）の X の投稿。MAGI の人格カードの素材（.github/scripts/magi-x-posts.py が書く。手で編集しない）。'
                     '他人のアカウント名は @user に伏せてある',
             'handle': handle,
+            # 1回の上限で読み残した範囲（次の実行で続きを読む）。読み切ったら持たない
+            **({'resume': gap} if gap else {}),
             'posts': posts,
         }, f, ensure_ascii=False, indent=1)
         f.write('\n')
@@ -196,8 +223,8 @@ def fetch():
     print(f'読んだ件数: {read}（{pages} ページ、本人の読み取りなら約 ${read * 0.001:.2f}）')
     print(f'新しく足した件数: {len(added)} ／ 保存の合計: {len(posts)}（投稿 {kinds["post"]}・返信 {kinds["reply"]}・引用 {kinds["quote"]}）')
     print(f'期間: {span[0]} 〜 {span[1]}')
-    if read >= MAX_POSTS_PER_RUN:
-        print(f'::warning::1回の上限（{MAX_POSTS_PER_RUN} 件）で止めた。続きは次の実行で読む')
+    if gap:
+        print(f'::warning::1回の上限（{MAX_POSTS_PER_RUN} 件）で止めた。読み残した古い側は次の実行で続きから読む')
 
 
 # ---------------------------------------------------------------- いいねとフォロー（要約だけを保存）

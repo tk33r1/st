@@ -235,12 +235,63 @@ async function callModel({ env, messages, cfg, stream, signal, temperature }) {
   const body = requestBody(cfg, { messages, stream, temperature });
   const key = env[provider.key];
   if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
-  return fetch(provider.endpoint, {
+  const res = await fetch(provider.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
     body: JSON.stringify(body),
     signal,
   });
+  // 失敗は残高切れ・キーの失効でないかを見る（本文は呼び出し側も読むので複製を渡す）
+  if (!res.ok && env.onUpstreamError) env.onUpstreamError(cfg.provider, res.clone());
+  return res;
+}
+
+// --- 上流の会社の残高切れ・キーの失効をメールで知らせる ---
+// 1人格の失敗は欠席（[NO RESPONSE]）として黙って進むので、チャージを使い切っても画面からは気づきにくい。
+// 401・402・403 と、残高や枠の不足を示す 429 を拾う（ただの回数制限の 429 は拾わない）。
+// 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
+// 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。
+const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
+const PROVIDER_ROLES = {
+  openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
+  deepseek: 'DeepSeek（MELCHIOR-1）',
+  google: 'Google Gemini（BALTHASAR-2）',
+};
+async function alertUpstream(env, log, provider, res) {
+  const body = (await res.text().catch(() => '')).slice(0, 500);
+  const billing = [401, 402, 403].includes(res.status) || (res.status === 429 && QUOTA_RE.test(body));
+  if (!billing) return;
+  log('upstream_alert', provider, res.status, body.slice(0, 200));
+  if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('upstream_alert', 'mail skipped (secret missing)'); return; }
+  const key = `alert:${provider}:${res.status}`;
+  const day = new Date().toISOString().slice(0, 10);
+  const first = await env.DB.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1) ON CONFLICT(ip, day) DO NOTHING RETURNING count`)
+    .bind(key, day).first();
+  if (!first) return; // 今日はもう送った
+  const sent = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: env.ALERT_FROM,
+      to: [env.ALERT_TO],
+      subject: `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`,
+      text: [
+        `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
+        '',
+        `HTTP ${res.status}`,
+        body,
+        '',
+        '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
+        'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
+        '同じ会社・同じ状態のメールは UTC の1日に1通です。',
+      ].join('\n'),
+    }),
+  });
+  if (!sent.ok) {
+    // 送れなかったら印を消し、次の失敗でまた試す
+    await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
+    log('upstream_alert', 'mail failed', sent.status, (await sent.text().catch(() => '')).slice(0, 200));
+  }
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。
@@ -420,11 +471,14 @@ async function readSynthesis(body, send) {
 
 // 処理全体にタイムアウトを掛け、成功・失敗のどちらでもタイマーを解除する。
 // ストリームは fetch の完了だけでなく、本文を読み終わるまでこの中で扱う。
-async function withTimeout(ms, run) {
+// stop（利用者が止めた・接続が切れた）を渡すと、時間切れの前でもそこで止める。
+async function withTimeout(ms, run, stop) {
   const ac = new AbortController();
   const id = setTimeout(() => ac.abort(), ms);
+  const onStop = () => ac.abort();
+  if (stop) { if (stop.aborted) ac.abort(); else stop.addEventListener('abort', onStop); }
   try { return await run(ac.signal); }
-  finally { clearTimeout(id); }
+  finally { clearTimeout(id); if (stop) stop.removeEventListener('abort', onStop); }
 }
 
 export default {
@@ -605,7 +659,14 @@ export default {
     }
 
     // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
+    // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
+    const upstream = Object.assign(Object.create(env), {
+      onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
+    });
+    // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
+    const stop = new AbortController();
     const stream = new ReadableStream({
+      cancel() { log('client', 'cancelled'); stop.abort(); },
       async start(controller) {
         const enc = new TextEncoder();
         let closed = false;
@@ -626,7 +687,7 @@ export default {
           // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
           let titlePromise = null;
           if (!history.some(m => m.role === 'assistant')) {
-            titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(env, lastContent, signal, log))
+            titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, lastContent, signal, log), stop.signal)
               .then(t => { if (t) send('title', { text: t }); })
               .catch(() => {});
           }
@@ -651,10 +712,10 @@ export default {
           const r1 = await withTimeout(personaTimeoutMs, signal =>
             Promise.allSettled(personas.map(async (p) => {
               // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
-              const text = await fetchPersonaText(env, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
+              const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };
-            })));
+            })), stop.signal);
           const opinions = [];
           r1.forEach((r, i) => {
             if (r.status === 'fulfilled') { opinions.push(r.value); return; }
@@ -676,10 +737,10 @@ export default {
               // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
               const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
               try {
-                p.r2 = await fetchPersonaText(env, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
+                p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
                 send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
               } catch (e) { absent(p, 2, e); }
-            })));
+            })), stop.signal);
           log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
 
           // --- 統合コール（推論あり・stream）---
@@ -698,19 +759,19 @@ export default {
 
           const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
             log('synthesizer_call', 'start');
-            const synthRes = await callModel({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
+            const synthRes = await callModel({ env: upstream, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
             if (!synthRes.ok) {
               const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
               throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
             }
 
             return readSynthesis(synthRes.body, send);
-          });
+          }, stop.signal);
           log('synthesizer_call', 'ok');
           // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
           if (wantSuggest && answer.trim()) {
             const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
-              signal => fetchSuggestion(env, [...messages, { role: 'assistant', content: answer }], signal, log));
+              signal => fetchSuggestion(upstream, [...messages, { role: 'assistant', content: answer }], signal, log), stop.signal);
             if (text) send('suggest', { text });
           }
           // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
@@ -718,6 +779,8 @@ export default {
           send('done', { request_id: requestId });
           close();
         } catch (err) {
+          // 利用者が止めたときは、もう誰も読んでいないので何も送らない
+          if (stop.signal.aborted) { log('client', 'stopped', err && (err.name || err.message)); close(); return; }
           // タイムアウト(AbortError)は upstream として表現
           if (err && err.name === 'AbortError') {
             const env2 = stageError('upstream', 'timeout', 'AI の応答がタイムアウトしました', { retryable: true });

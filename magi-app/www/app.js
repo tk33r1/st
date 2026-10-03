@@ -172,7 +172,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.7 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.8 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -298,6 +298,7 @@ var agentGen = 0, agentCtrl = null;
 function dropAgentRequest() {
   agentGen++;
   if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
+  setAgentStopMode(false);
   setAgentSuggestion('');
 }
 function resetAgent() {
@@ -489,6 +490,21 @@ function prepareAgentMessages(history, lastContent) {
   return messages;
 }
 
+// While a reply is being generated the send button becomes a stop button (■). Pressing it drops the
+// connection, and the Worker stops its remaining upstream calls too.
+var AGENT_SEND_ICON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>';
+var AGENT_STOP_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
+function setAgentStopMode(on) {
+  agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
+  agentSendBtn.title = agentSendBtn.ariaLabel = on ? 'Stop' : 'Send';
+  if (on) agentSendBtn.disabled = false;
+}
+function agentStop() {
+  if (!agentCtrl) return;
+  agentCtrl.userStopped = true;
+  agentCtrl.abort();
+}
+
 async function agentSend() {
   if (agentBusy || agentDead) return;
   var text = agentInput.value.trim().slice(0, 1000);
@@ -523,6 +539,7 @@ async function agentSend() {
   safeStore('magi_current_history', agentHistory);
 
   agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+  setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
@@ -584,18 +601,22 @@ async function agentSend() {
   } catch (err) {
     errored = true;
     if (dropped()) return;
-    console.error('[agent] fetch failed', AGENT_API, err);
     turn.remove();
-    if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
-    else agentDegrade();
+    // Stopped with the stop button: no error; the question goes back into the input below.
+    if (ctrl.userStopped) { }
+    else if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
+    else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
   } finally {
     clearTimeout(idleTimer);
     if (agentCtrl === ctrl) agentCtrl = null;
+    // A dropped request restores the button too, unless a newer send has already taken it over.
+    if (!dropped() || !agentBusy) setAgentStopMode(false);
     if (dropped()) delete pendingReactions[mid];
     if (!dropped()) {
       replyEl.classList.remove('streaming');
       agentBusy = false;
       if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+      else agentSendBtn.disabled = true;
     }
   }
   if (dropped()) { delete pendingReactions[mid]; return; }
@@ -612,6 +633,8 @@ async function agentSend() {
     var last = agentHistory[agentHistory.length - 1];
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
+    // A stopped question goes back into the input so it can be edited and resent (unless something new was typed).
+    if (ctrl.userStopped && !agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
   }
 }
 
@@ -830,6 +853,7 @@ function showInfoPanel() {
     + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and context from the latest <strong>12 messages</strong>.</li>'
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
+    + '<li>Your <strong>IP address</strong> is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
     + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
     + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong>used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
@@ -899,7 +923,7 @@ function exportAgentChat() {
 }
 
 // ---- Wire up ----------------------------------------------------------------
-agentSendBtn.addEventListener('click', agentSend);
+agentSendBtn.addEventListener('click', function () { if (agentBusy) agentStop(); else agentSend(); });
 // Enter で送信、Shift+Enter で改行（入力欄は textarea）。日本語入力の変換を確定する Enter では送らない
 agentInput.addEventListener('keydown', function (e) {
   if (e.isComposing || e.keyCode === 229) return;

@@ -27,6 +27,27 @@ npx wrangler deploy --config magi2/wrangler.toml
 - 統合は空でない本文、`finish_reason: stop`、`[DONE]` がそろったときだけ正常完了する。
 - 画面は `done` を受け取った回答だけ保存し、接続30秒・開始後の無通信70秒で入力を戻す。
 
+## 上流の残高切れの通知
+
+1人格の失敗は欠席（`[NO RESPONSE]`）として黙って進むので、チャージを使い切っても画面からは気づきにくい。
+各社の API が 401・402・403、または残高や枠の不足を示す 429 を返したら、Resend でメールを送る
+（ただの回数制限の 429 は送らない）。同じ会社・同じ HTTP ステータスは UTC の1日に1通で、送った印は
+`rate_limit` に `alert:<会社>:<ステータス>` の行として残す。送れなかったら印を消し、次の失敗でまた試す。
+
+```sh
+cd workers
+npx wrangler secret put RESEND_API_KEY --config magi2/wrangler.toml   # dj-offer と同じキーでよい
+npx wrangler secret put ALERT_TO       --config magi2/wrangler.toml
+npx wrangler secret put ALERT_FROM     --config magi2/wrangler.toml   # 例: MAGI <magi@tk.st>
+```
+
+どれかが無ければ、ログに `upstream_alert` を出すだけで会話は止めない。
+
+## 停止
+
+画面は生成中に送信ボタンを停止ボタン（■）に変え、押すと接続を切る。Worker はストリームの `cancel` で
+続きの人格・統合・予測の呼び出しを止める（タブを閉じたときも同じ）。止めた質問は入力欄に戻す。
+
 ## ローカル検証
 
 ```sh

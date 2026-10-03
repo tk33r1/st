@@ -23,7 +23,8 @@ const completion = (text = 'answer', reason = 'stop', done = true) =>
   + `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] })}\n\n`
   + (done ? 'data: [DONE]\n\n' : '');
 
-function worker(stream = completion()) {
+// upstream を渡すと、上流（各社の API・Resend）への fetch をそれで置き換えられる（undefined を返せば既定の応答）
+function worker(stream = completion(), upstream = null) {
   const calls = [], waits = [];
   const cards = JSON.parse(read('data/magi-context.json'));
   const ctx = vm.createContext({
@@ -32,6 +33,8 @@ function worker(stream = completion()) {
     crypto: webcrypto, setTimeout, clearTimeout, console: { log() {} },
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
+      const replaced = upstream && await upstream(url, options);
+      if (replaced) return replaced;
       const body = JSON.parse(options.body); calls.push(body);
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
     },
@@ -264,5 +267,58 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
     ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
     ctx.unregisterReaction({}, 'integrated'); release(); await tick();
     assert.equal(posts.at(-1).op, 'remove'); assert.equal(posts.at(-1).delete_token, receipt.delete_token);
+  }
+});
+
+test('接続が切れたら、人格の呼び出しを止めて統合を呼ばない', async () => {
+  const aborted = [];
+  const w = worker(completion(), (url, options) => new Promise((_, reject) => {
+    // 人格の呼び出しを止めておき、止められたら AbortError で返す
+    options.signal.addEventListener('abort', () => { aborted.push(url); reject(new DOMException('aborted', 'AbortError')); });
+  }));
+  const res = await w.chat([{ role: 'user', content: 'q' }]);
+  const reader = res.body.getReader();
+  await tick();
+  await reader.cancel();
+  for (let i = 0; i < 5; i++) await tick();
+  assert.ok(aborted.length >= 3, '3人格の呼び出しが止まる');
+  assert.equal(w.calls.filter(c => c.stream).length, 0, '統合は呼ばない');
+});
+
+test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけメールで知らせる', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-alert-'));
+  try {
+    const mails = [];
+    const w = worker(completion(), (url, options) => {
+      if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(options.body)); return Response.json({ id: 'mail' }); }
+      if (url.includes('deepseek')) return Response.json({ error: { message: 'Insufficient Balance' } }, { status: 402 });
+      // ただの回数制限の 429 は知らせない
+      if (url.includes('googleapis')) return Response.json({ error: { message: 'Rate limit reached for requests' } }, { status: 429 });
+    });
+    Object.assign(w.env, { DB: database(join(dir, 'db.sqlite')), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+    for (let i = 0; i < 2; i++) {
+      const res = await w.chat([{ role: 'user', content: 'q' }]);
+      await res.text();
+      await Promise.all(w.waits);
+    }
+    assert.equal(mails.length, 1);
+    assert.match(mails[0].subject, /deepseek.*402/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('両画面は停止ボタンで止めた質問を、エラーを出さずに入力欄へ戻す', async () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    const c = client(src, isHome);
+    c.ctx.agentInput.value = 'stop me';
+    c.ctx.fetch = async (_, { signal }) => ({ ok: true, body: { signal } });
+    c.ctx.parseSSE = async body => new Promise((_, reject) => body.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+    const pending = c.ctx.agentSend(); await tick();
+    assert.equal(c.ctx.agentSendBtn.title, 'Stop');
+    c.ctx.agentStop(); await pending;
+    assert.equal(c.errors.length, 0);
+    assert.equal(c.ctx.agentHistory.length, 0);
+    assert.equal(c.ctx.agentInput.value, 'stop me');
+    assert.equal(c.ctx.agentBusy, false);
+    assert.equal(c.ctx.agentSendBtn.title, 'Send');
   }
 });

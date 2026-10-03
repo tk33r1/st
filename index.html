@@ -7273,7 +7273,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 3.7 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 3.8 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7404,6 +7404,7 @@
     function dropAgentRequest() {
       agentGen++;
       if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
+      setAgentStopMode(false);
       // 予測は直前の会話に対するものなので、会話が替わったら捨てる
       setAgentSuggestion('');
     }
@@ -7623,6 +7624,20 @@
       return messages;
     }
 
+    // 生成中は送信ボタンを停止ボタン（■）に変える。押すと接続を切り、Worker も続きの呼び出しを止める
+    const AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg>';
+    const AGENT_STOP_ICON = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" /></svg>';
+    function setAgentStopMode(on) {
+      agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
+      agentSendBtn.title = agentSendBtn.ariaLabel = on ? tr('Stop', '停止') : tr('Send', '送信');
+      if (on) agentSendBtn.disabled = false;
+    }
+    function agentStop() {
+      if (!agentCtrl) return;
+      agentCtrl.userStopped = true;
+      agentCtrl.abort();
+    }
+
     async function agentSend() {
       if (agentBusy || agentDead) return;
       const text = agentInput.value.trim().slice(0, 1000);
@@ -7651,7 +7666,7 @@
       agentHistory.push({ role: 'user', content: storeContent });
       saveCurrentHistory();
 
-      agentBusy = true; setAgentInputEnabled(false);
+      agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
 
@@ -7707,15 +7722,18 @@
       } catch (err) {
         errored = true;
         if (dropped()) return; // aborted on purpose; the finally below still tidies up
-        console.error('[agent] fetch failed', AGENT_API, err);
         turn.remove();
+        // 停止ボタンで止めたときはエラーを出さない（下で入力欄に戻す）
+        if (ctrl.userStopped) { }
         // A timeout is transient — show a retryable error rather than permanently
         // degrading MAGI (which a genuine network/CORS failure does).
-        if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
-        else agentDegrade();
+        else if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
+        else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
       } finally {
         clearTimeout(idleTimer);
         if (agentCtrl === ctrl) agentCtrl = null;
+        // 打ち切られた送信でも、次の送信がまだ始まっていなければボタンを戻す
+        if (!dropped() || !agentBusy) setAgentStopMode(false);
         if (dropped()) delete pendingReactions[mid];
         // A dropped request leaves the dock to whoever took it over: resetAgent() has
         // already reset these, and a later send may be busy with them by now.
@@ -7723,6 +7741,7 @@
           replyEl.classList.remove('streaming');
           agentBusy = false;
           if (!agentDead) { setAgentInputEnabled(true); agentInput.focus({ preventScroll: true }); }
+          else agentSendBtn.disabled = true;
         }
       }
       if (dropped()) { delete pendingReactions[mid]; return; }
@@ -7746,12 +7765,14 @@
         if (agentHistory.length) saveCurrentHistory();
         else safeRemove('magi_current_history');
         syncCurrentToSaved(); updateAgentActionButtons();
+        // 止めた質問は入力欄に戻す（直して送り直せるように）。待つ間に打ち始めた文があればそちらを残す
+        if (ctrl.userStopped && !agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
         if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) agentLog.innerHTML = agentHintHTML();
       }
     }
-    agentSendBtn.addEventListener('click', agentSend);
+    agentSendBtn.addEventListener('click', () => (agentBusy ? agentStop() : agentSend()));
     // Enter で送信、Shift+Enter で改行（入力欄は textarea）
     agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
@@ -8061,6 +8082,7 @@
             <li>${tr(`Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, and <strong class="text-normal">60 daily requests</strong>. Each reply is written with the last <strong class="text-normal">${AGENT_MAX_HISTORY} messages</strong> as context; anything older drops out.`, `利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">60回のリクエスト</strong>まで。回答は直近<strong class="text-normal">${AGENT_MAX_HISTORY}メッセージ</strong>（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。`)}</li>
             <li>${tr('Images can be attached (up to <strong class="text-normal">4 per message</strong>, resized in your browser before sending) and are sent to the API just like text.', '画像も添付できます（1メッセージ<strong class="text-normal">最大4枚</strong>。送信前にブラウザ側で縮小されます）。テキスト同様に API へ送信されます。')}</li>
             <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
+            <li>${tr('Your <strong class="text-normal">IP address</strong> is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.', '利用上限のため、<strong class="text-normal">IP アドレス</strong>を日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒に IP アドレスも保存されます。')}</li>
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
             <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong>, <strong class="text-normal">DeepSeek API</strong> and <strong class="text-normal">Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong class="text-normal">sent to all three</strong>.', '<strong class="text-normal">OpenAI API</strong>・<strong class="text-normal">DeepSeek API</strong>・<strong class="text-normal">Gemini API</strong>を使用しています。人格ごとに別の API で動くため、入力内容（画像を含む）は<strong class="text-normal">3社すべてへ送信</strong>されます。')}</li>
             <li>${tr('OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong class="text-normal">used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong class="text-normal">stored on servers in China and may be used to train its models</strong>.', 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：<strong class="text-normal">Google の製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります</strong>。DeepSeek：<strong class="text-normal">中国のサーバーに保存され、同社のモデルの学習に利用されることがあります</strong>。')}</li>
