@@ -163,6 +163,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が MAGI の人格カードを作り直して
     `data/magi-context.json` にコミットする（後述「MAGI の人格カード」。差分判定や失敗時の扱いは同スクリプトの冒頭）。
     手動実行の `force` は素材が同じでも全人格を作り直す。
+  - `magi-x-posts.yml`（毎週月曜 03:00 JST＋手動）: 本人の X を人格カードの素材として読み、同じ実行の中でカードも
+    作り直す（bot の push はほかの workflow を起動しないため。後述「MAGI の人格カード」の X の素材）。
+    手動実行の `mode` は `check`（認証の確認だけ）・`fetch`（新しい投稿を足す。定期実行もこれ）・`interests`（いいねとフォローの要約）。
   - `ai-models.yml`（push＋PR）/ `ai-model-watch.yml`（週次＋手動）: AIモデル設定の正本
     `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
     `/models` APIから更新候補を検知する。スモークテストは毎週回し、候補が通ればレビュー用PRへ出し、
@@ -270,8 +273,16 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     年表はカテゴリー（`cat`）で振り分ける（`TIMELINE_ROUTES`: music・bike = melchior、flânerie = balthasar、digital = casper）。
     表に無いカテゴリーは統合人格のカードに入れ、Actions に警告を出すので、担当を決めたら `TIMELINE_ROUTES` に足す。
   - **統合人格のカード**: 3人格のほかに、統合人格（キーは `Shinya Takeda`）の分も作り、統合の system プロンプトの後ろに足す。
-    素材は自己像（自己紹介・ライト／ダークの肩書き・性格検査の事故の後と前）だけで、3人格の素材とは重ねない。
+    素材は自己像（自己紹介・ライト／ダークの肩書き・性格検査の事故の後と前）と X（投稿・関心の要約）で、サイトの本文は3人格の素材と重ねない。
     Worker は4枚そろったときを「完全」とみなす（欠ければ欠けた分を前回のまま保ち、1分後に取り直す）。
+  - **X の素材**（`.github/scripts/magi-x-posts.py`、本人 @Tah_Keh の OAuth 1.0a。Secrets は `X_TAHKEH_*`）:
+    - 投稿（リポストを除く）は `.github/magi/x-posts.json` に貯める。他人の @ は `@user` に伏せる。
+      直近1年分を MELCHIOR と統合人格の素材にし、言い回しの見本もここから取る。
+    - いいねとフォローは生のデータを保存せず、LLM で分野ごとに要約した `.github/magi/x-interests.json` だけを残して4枚すべてに足す
+      （他人の投稿やアカウントを公開リポジトリに並べないため。一般の個人の名前もカードに書かせない）。
+    - 費用は本人の読み取りの単価（$0.001／件）で、X の残高から引かれる。いいね5,000件とフォローを読む `interests` は1回 約$5。
+      アプリが Pay Per Use のプロジェクトに入っていないと 403（client-forbidden）になる。
+    - いいねは15分に75回（7,500件）までなので、続けて実行すると 429 になる。スクリプトは制限が解けるまで待って続ける。
   - **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。目印が消えると
     workflow がエラーで止まる（Worker は前回のカードのまま動き続ける）。
   - 目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
