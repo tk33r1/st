@@ -1,6 +1,8 @@
 name: MAGI Persona Context
 
 # 人格カード（data/magi-context.json）を、元ページが変わったときだけ作り直す。
+# magi-context.json を書くのはこの workflow だけ（X の素材を取り込む magi-x-posts.yml も、素材をコミットしたら
+# ここを workflow_dispatch で起動する。書き手を1つにして、下の concurrency で順番に流す）。
 # 起動は push のたび。素材の一覧は magi-context.py の PERSONAS だけが持ち、LLM を呼ぶか
 # どうかも人格ごとのハッシュで決めるので、素材が変わっていなければ API 呼び出しは 0 回で終わる
 # （paths で絞ると素材の一覧が2か所に分かれ、足し忘れた素材の更新が黙って無視されるため絞らない）。

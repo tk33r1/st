@@ -24,41 +24,19 @@ var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
 
-// Persona descriptions — kept in step with tk.st's index.html (AGENT_PERSONAS there). desc follows
-// workers/magi2/personas.js, context follows .github/scripts/magi-context.py (PERSONAS), theme follows
-// PERSONA_TEMPERATURE / SYNTH_BIAS. The LLM each persona runs on can change weekly, so it is not written
-// here but fetched from the Worker's /magi2/models.
+// Persona names (shown on the debate cards and the splash buttons). The descriptions (temperament, context,
+// theme) and the LLM behind each persona are not written here: they come from the Worker's /magi2/models
+// (source of truth: PERSONA_GUIDE in workers/magi2/personas.js, shared with tk.st), so they can change
+// without an app release.
 var AGENT_PERSONAS = [
-  {
-    codename: 'MELCHIOR-1', name: 'ENTHUSIAST',
-    desc: 'The chaotic self. An impulsive geek who trusts gut instinct and burns hot for what it loves. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
-    context: 'Also speaks from a summary of the DJ and Motovlog pages — music, DJing, and the road back to riding after an accident — and on the music and bike entries of the tk.st timeline. Rebuilt automatically whenever those change.',
-    theme: 'Light: default. Dark: speaks a little more freely, with more weight in the final answer.',
-  },
-  {
-    codename: 'BALTHASAR-2', name: 'HUMANIST',
-    desc: 'The compassionate self. A poetic, introverted dreamer, always centered on humanity: deeply empathetic, and bold enough to cross ethical lines when the philosophy calls for it.',
-    context: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed — and on the life entries of the tk.st timeline. Rebuilt automatically whenever those change.',
-    theme: 'Light: default. Dark: speaks a little more freely.',
-  },
-  {
-    codename: 'CASPER-3', name: 'STRATEGIST',
-    desc: 'The logical self. A strategist relentlessly pursuing rationality and the optimal answer. Interested only in exceptional people; unsentimental and organization-first.',
-    context: 'Also draws on a summary of the Job page, the tools and Glitch articles published on tk.st, and the digital entries of the tk.st timeline. Rebuilt automatically whenever they change.',
-    theme: 'Light: more weight in the final answer. Dark: speaks a little more freely.',
-  },
+  { codename: 'MELCHIOR-1', name: 'ENTHUSIAST' },
+  { codename: 'BALTHASAR-2', name: 'HUMANIST' },
+  { codename: 'CASPER-3', name: 'STRATEGIST' },
 ];
-// The integrated persona that writes the final answer — kept in step with tk.st's index.html (AGENT_SYNTH there).
-// Its temperament is not in a fixed prompt: it follows the self-image card built from the personality tests
-// (workers/magi2/personas.js SYNTHESIZER / PERSONA_CONTEXT). Its LLM comes from /magi2/models' synthesizer.
-var AGENT_SYNTH = {
-  codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true,
-  desc: 'The integrated self — the voice that writes the final answer after the three debate. Its temperament is not hand-written: it follows a summary of my own personality tests (MBTI, CliftonStrengths, Big Five), including how they changed after the accident.',
-  context: 'Draws on a summary of the profile on tk.st — the bio, the two job titles, and the personality tests before and after the accident. Rebuilt automatically whenever they change.',
-  theme: 'Light: leans toward the Strategist when weighing the debate. Dark: leans toward the Enthusiast.',
-};
-// The LLM behind each persona. Fetched once, the first time a persona is opened on the splash
-// (retried on the next open if it fails). undefined = loading, null = unavailable.
+// The integrated persona that writes the final answer, shown next to the three on the splash.
+var AGENT_SYNTH = { codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true };
+// Fetched once, the first time a persona is opened on the splash (retried on the next open if it fails).
+// undefined = loading, null = unavailable.
 var MODELS_API = API_BASE + '/magi2/models';
 var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
 var agentModels;
@@ -74,12 +52,14 @@ function loadAgentModels() {
 }
 function personaDescHTML(p) {
   var m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
-  var llm = agentModels === undefined ? '…' : m ? (PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model : 'unavailable';
-  return '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>' + esc(p.desc)
+  var head = '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>';
+  if (!m) return head + esc(agentModels === undefined ? '…' : 'Could not load the description.');
+  function text(o) { return esc(o && o.en ? o.en : ''); }
+  return head + text(m.desc)
     + '<dl class="magi-desc-meta">'
-    + '<dt>LLM</dt><dd>' + esc(llm) + '</dd>'
-    + '<dt>Context</dt><dd>' + esc(p.context) + '</dd>'
-    + '<dt>Theme</dt><dd>' + esc(p.theme) + '</dd>'
+    + '<dt>LLM</dt><dd>' + esc((PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model) + '</dd>'
+    + '<dt>Context</dt><dd>' + text(m.context) + '</dd>'
+    + '<dt>Theme</dt><dd>' + text(m.theme) + '</dd>'
     + '</dl>';
 }
 var REACT_EMOJIS = ['👎', '❤️', '😂', '🎉', '🔥', '👏', '🙏', '💯', '🤔', '👀', '😮', '😢', '😍', '🤯', '🙌', '🥳', '😎', '😅', '🤝', '💪', '✨', '💡', '✅', '🚀', '👌', '🫡', '🤩', '😇', '🥹', '🫶'];
@@ -183,7 +163,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.5 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.6 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'

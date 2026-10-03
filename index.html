@@ -7217,52 +7217,16 @@
         bar.classList.add('locked');
       });
     }
-    // 人格の説明。desc は workers/magi2/personas.js の骨格プロンプト、context は
-    // .github/scripts/magi-context.py の PERSONAS（人格カードの素材）、theme は personas.js の
-    // PERSONA_TEMPERATURE / SYNTH_BIAS に合わせてある。向こうを変えたらここも直す。
-    // 使っている LLM は週次で変わりうるので書かず、Worker の /magi2/models から取る。
+    // 人格の名前（討議カードとスプラッシュのボタンに出す）。説明（気質・素材・テーマによる違い）と使っている LLM は
+    // 画面に書かず、Worker の /magi2/models から取る（正本は workers/magi2/personas.js の PERSONA_GUIDE。アプリと共通）。
     const AGENT_PERSONAS = [
-      {
-        codename: 'MELCHIOR-1', name: 'ENTHUSIAST', name_ja: '熱狂者',
-        desc: 'The chaotic self. An impulsive geek who trusts gut instinct and burns hot for what it loves. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
-        desc_ja: '混沌の自我。直感に正直で衝動的なオタク。好きなものには熱く燃える。人より「事柄」に興味が向き、趣味の合う相手には共感的だが、閉鎖的な自己中心性もあわせ持ち、ルールを踏み越えることへのためらいも少ない。',
-        context: 'Also speaks from a summary of the DJ and Motovlog pages — music, DJing, and the road back to riding after an accident — and on the music and bike entries of the timeline on this page. Rebuilt automatically whenever those change.',
-        context_ja: 'DJ と Motovlog のページ本文（音楽・DJ としての考え方、事故からバイクに戻った経緯と愛機への思い）と、このページの年表のうち音楽とバイクの項目の要約も拠り所にする。更新されると自動で作り直される。',
-        theme: 'Light: default. Dark: speaks a little more freely, with more weight in the final answer.',
-        theme_ja: 'ライト：標準。ダーク：発言の揺らぎが大きくなり、最終回答での比重が少し上がる。',
-      },
-      {
-        codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者',
-        desc: 'The compassionate self. A poetic, introverted dreamer, always centered on humanity: deeply empathetic, and bold enough to cross ethical lines when the philosophy calls for it.',
-        desc_ja: '慈愛の自我。詩的で内向的な博愛の夢想家。関心の中心はつねに人間。深く共感的で、自分の哲学に沿うなら倫理的な禁忌も厭わない大胆さを持つ。',
-        context: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed — and on the life entries of the timeline on this page. Rebuilt automatically whenever those change.',
-        context_ja: 'Thought ページ本文（愛・幸せ・失敗・人生についての結論と、その拠り所の書物、考えの変遷）と、このページの年表のうち人生の項目の要約も拠り所にする。更新されると自動で作り直される。',
-        theme: 'Light: default. Dark: speaks a little more freely.',
-        theme_ja: 'ライト：標準。ダーク：発言の揺らぎが大きくなる。',
-      },
-      {
-        codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家',
-        desc: 'The logical self. A strategist relentlessly pursuing rationality and the optimal answer. Interested only in exceptional people; unsentimental and organization-first.',
-        desc_ja: '論理の自我。合理性と最適解をひたすら追う戦略家。秀でた人間にのみ興味を持ち、非共感的で組織中心的。',
-        context: 'Also draws on a summary of the Job page, the tools and Glitch articles published on this site, and the digital entries of the timeline on this page. Rebuilt automatically whenever they change.',
-        context_ja: 'Job ページ本文と、このサイトで公開している自作ツール・技術ブログ（glitch）の一覧、このページの年表のうちデジタルの項目の要約も拠り所にする。更新されると自動で作り直される。',
-        theme: 'Light: more weight in the final answer. Dark: speaks a little more freely.',
-        theme_ja: 'ライト：最終回答での比重が少し上がる。ダーク：発言の揺らぎが大きくなる。',
-      },
+      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', name_ja: '熱狂者' },
+      { codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者' },
+      { codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家' },
     ];
-    // 統合人格（3人格の討議を踏まえて最終回答を書く本人）。気質は固定プロンプトに持たず、
-    // 性格検査から作る自己像のカードに従う（workers/magi2/personas.js の SYNTHESIZER と PERSONA_CONTEXT）。
-    // スプラッシュでは3人格の横に並べ、LLM は /magi2/models の synthesizer を出す。
-    const AGENT_SYNTH = {
-      codename: 'Shinya Takeda', name: 'INTEGRATED', name_ja: '統合人格', synth: true,
-      desc: 'The integrated self — the voice that writes the final answer after the three debate. Its temperament is not hand-written: it follows a summary of my own personality tests (MBTI, CliftonStrengths, Big Five), including how they changed after the accident.',
-      desc_ja: '統合の自我。3人格の討議を踏まえて最終回答を書く本人。気質は手書きせず、本人の性格検査（MBTI・クリフトンストレングス・ビッグファイブ）の要約と、事故の前後での変化に従う。',
-      context: 'Draws on a summary of the profile on this page — the bio, the two job titles, and the personality tests before and after the accident. Rebuilt automatically whenever they change.',
-      context_ja: 'このページのプロフィール（自己紹介、ライト／ダークの2つの肩書き、事故の前後の性格検査）の要約を拠り所にする。更新されると自動で作り直される。',
-      theme: 'Light: leans toward the Strategist when weighing the debate. Dark: leans toward the Enthusiast.',
-      theme_ja: 'ライト：討議をまとめるとき戦略家の視点をやや重く見る。ダーク：熱狂者の視点をやや重く見る。',
-    };
-    // 各人格がいま使っている LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
+    // 統合人格（3人格の討議を踏まえて最終回答を書く本人）。スプラッシュでは3人格の横に並べる
+    const AGENT_SYNTH = { codename: 'Shinya Takeda', name: 'INTEGRATED', name_ja: '統合人格', synth: true };
+    // 人格の説明と LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
     // （失敗したら次に開いたときに取り直す）。undefined = 取得中、null = 取れなかった
     const MODELS_API = MAGI_ORIGIN + '/magi2/models';
     const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
@@ -7274,13 +7238,14 @@
       .catch(() => { agentModelsPromise = null; return (agentModels = null); }));
     const personaDescHTML = (p) => {
       const m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
-      const llm = agentModels === undefined ? '…'
-        : m ? `${PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}` : tr('unavailable', '取得できませんでした');
-      return `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>${esc(pick(p, 'desc'))}`
+      const head = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>`;
+      if (!m) return head + esc(agentModels === undefined ? '…' : tr('Could not load the description.', '説明を取得できませんでした。'));
+      const text = (o) => esc(o ? tr(o.en, o.ja) : '');
+      return head + text(m.desc)
         + '<dl class="magi-desc-meta">'
-        + `<dt>LLM</dt><dd>${esc(llm)}</dd>`
-        + `<dt>${tr('Context', '素材')}</dt><dd>${esc(pick(p, 'context'))}</dd>`
-        + `<dt>${tr('Theme', 'テーマ')}</dt><dd>${esc(pick(p, 'theme'))}</dd>`
+        + `<dt>LLM</dt><dd>${esc(`${PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}`)}</dd>`
+        + `<dt>${tr('Context', '素材')}</dt><dd>${text(m.context)}</dd>`
+        + `<dt>${tr('Theme', 'テーマ')}</dt><dd>${text(m.theme)}</dd>`
         + '</dl>';
     };
     // 3人格の討議カード。送信直後（debate なし）は thinking 状態の空カード、履歴復元では保存済みの討議を流し込む。
@@ -7308,7 +7273,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 3.5 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 3.6 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'

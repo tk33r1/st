@@ -10,12 +10,9 @@
   python .github/scripts/magi-x-posts.py --check
 
 認証は OAuth 1.0a（ユーザーとして署名する）。本人の投稿を本人として読むと「Owned Read」の単価になる。
-環境変数:
+環境変数（リポジトリ Secrets）:
+  X_TAHKEH_CONSUMER_KEY / X_TAHKEH_CONSUMER_SECRET       … 本人のアプリの鍵（Pay Per Use のプロジェクトに入れておく）
   X_TAHKEH_ACCESS_TOKEN / X_TAHKEH_ACCESS_TOKEN_SECRET   … @Tah_Keh のトークン
-  アプリの鍵は、次のうち設定されているものを順に試す:
-    X_TAHKEH_CONSUMER_KEY / X_TAHKEH_CONSUMER_SECRET
-    X_NITORIDAILY_CONSUMER_KEY / X_NITORIDAILY_CONSUMER_SECRET
-    X_RETAILTECHDAILY_CONSUMER_KEY / X_RETAILTECHDAILY_CONSUMER_SECRET
 """
 
 import argparse
@@ -34,7 +31,6 @@ import urllib.request
 
 API = 'https://api.x.com/2'
 EXPECTED_HANDLE = 'Tah_Keh'
-CONSUMER_SOURCES = ('X_TAHKEH', 'X_NITORIDAILY', 'X_RETAILTECHDAILY')
 HTTP_TIMEOUT_SEC = 30
 RATE_LIMIT_RETRIES = 2
 RATE_LIMIT_MAX_WAIT_SEC = 16 * 60
@@ -90,22 +86,14 @@ def api_get(path, query, creds):
             return 0, f'{type(e).__name__}: {e}'
 
 
-def credential_sets():
-    """@Tah_Keh のトークンと、設定済みのアプリの鍵の組み合わせを返す。値そのものは表に出さない。"""
-    token = os.environ.get('X_TAHKEH_ACCESS_TOKEN', '').strip()
-    token_secret = os.environ.get('X_TAHKEH_ACCESS_TOKEN_SECRET', '').strip()
-    if not token or not token_secret:
-        sys.exit('X_TAHKEH_ACCESS_TOKEN / X_TAHKEH_ACCESS_TOKEN_SECRET が未設定')
-    sets = []
-    for src in CONSUMER_SOURCES:
-        key = os.environ.get(f'{src}_CONSUMER_KEY', '').strip()
-        sec = os.environ.get(f'{src}_CONSUMER_SECRET', '').strip()
-        if key and sec:
-            sets.append((src, {'consumer_key': key, 'consumer_secret': sec,
-                               'access_token': token, 'access_token_secret': token_secret}))
-    if not sets:
-        sys.exit('アプリの鍵（X_*_CONSUMER_KEY / _SECRET）が1組も設定されていない')
-    return sets
+def own_credentials():
+    """本人（@Tah_Keh）のトークンと、本人のアプリの鍵。値そのものは表に出さない。"""
+    names = ('X_TAHKEH_CONSUMER_KEY', 'X_TAHKEH_CONSUMER_SECRET', 'X_TAHKEH_ACCESS_TOKEN', 'X_TAHKEH_ACCESS_TOKEN_SECRET')
+    values = [os.environ.get(n, '').strip() for n in names]
+    missing = [n for n, v in zip(names, values) if not v]
+    if missing:
+        sys.exit('未設定: ' + ', '.join(missing))
+    return dict(zip(('consumer_key', 'consumer_secret', 'access_token', 'access_token_secret'), values))
 
 
 def summarize_error(body):
@@ -118,60 +106,16 @@ def summarize_error(body):
     return str(body)[:300]
 
 
-def app_bearer_check(src):
-    """アプリの鍵だけでアプリ用のトークン（Bearer）を取り、公開情報を1件読む。トークン（ユーザー）側と切り分けるため。"""
-    key = os.environ.get(f'{src}_CONSUMER_KEY', '').strip()
-    sec = os.environ.get(f'{src}_CONSUMER_SECRET', '').strip()
-    basic = base64.b64encode(f'{percent_encode(key)}:{percent_encode(sec)}'.encode()).decode()
-    req = urllib.request.Request('https://api.x.com/oauth2/token', data=b'grant_type=client_credentials',
-                                 headers={'Authorization': f'Basic {basic}',
-                                          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'})
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
-            bearer = json.loads(res.read().decode('utf-8')).get('access_token')
-    except urllib.error.HTTPError as e:
-        print(f'{src} のアプリ用トークンの発行: HTTP {e.code} — {e.read().decode("utf-8", errors="replace")[:200]}')
-        return
-    req = urllib.request.Request(f'{API}/users/by/username/{EXPECTED_HANDLE}', headers={'Authorization': f'Bearer {bearer}'})
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
-            data = json.loads(res.read().decode('utf-8')).get('data', {})
-            print(f'{src} のアプリ用トークンで: 読めた → @{data.get("username")}（アプリはプロジェクトに入っている）')
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8', errors='replace')
-        try:
-            body = json.loads(body)
-        except json.JSONDecodeError:
-            pass
-        print(f'{src} のアプリ用トークンで: HTTP {e.code} — {summarize_error(body)}')
-
-
 def check():
-    """各アプリの鍵と組んで、本人として認証できるかを確かめる（/2/users/me）。"""
-    key = os.environ.get('X_TAHKEH_CONSUMER_KEY', '').strip()
-    if key:
-        # 画面に出ている API Key と見比べるための末尾4文字（API Key は通信のたびに平文で送る値。Secret は出さない）
-        print(f'X_TAHKEH の API Key: {len(key)} 文字、末尾 …{key[-4:]}')
-        app_bearer_check('X_TAHKEH')
-    # トークンの持ち主のユーザー ID はトークンの先頭（"数字-…"）に入っている。値は出さず、一致だけ見る
-    token = os.environ.get('X_TAHKEH_ACCESS_TOKEN', '').strip()
-    print(f'トークン: {len(token)} 文字、ユーザー ID の形 = {token.split("-", 1)[0].isdigit()}')
-    ok = None
-    for src, creds in credential_sets():
-        status, body = api_get('/users/me', {}, creds)
-        if status == 200 and isinstance(body, dict) and body.get('data'):
-            user = body['data']
-            same = user.get('username', '').lower() == EXPECTED_HANDLE.lower()
-            print(f'{src} の鍵と組んで: 認証できた → @{user.get("username")}（id {user.get("id")}）'
-                  f'{"" if same else "  ※ @" + EXPECTED_HANDLE + " ではない"}')
-            ok = ok or (src if same else None)
-        else:
-            print(f'{src} の鍵と組んで: HTTP {status} — {summarize_error(body)}')
-    if ok:
-        print(f'結論: @{EXPECTED_HANDLE} として {ok} のアプリの鍵で認証できる')
-    else:
-        print('結論: どの鍵とも本人として認証できなかった（上の HTTP ステータスと理由を参照）')
-        sys.exit(1)
+    """本人として認証できるかを確かめる（/2/users/me）。"""
+    status, body = api_get('/users/me', {}, own_credentials())
+    user = body.get('data') if status == 200 and isinstance(body, dict) else None
+    if not user:
+        # 403（client-forbidden）は、アプリが Pay Per Use のプロジェクトに入っていないとき
+        sys.exit(f'認証できなかった: HTTP {status} — {summarize_error(body)}')
+    if user.get('username', '').lower() != EXPECTED_HANDLE.lower():
+        sys.exit(f"@{user.get('username')} として認証された（@{EXPECTED_HANDLE} のトークンではない）")
+    print(f"@{EXPECTED_HANDLE} として認証できた（id {user.get('id')}）")
 
 
 # ---------------------------------------------------------------- 取り込み
@@ -180,13 +124,6 @@ OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'magi'
 PAGE_SIZE = 100          # 1回の取得の上限（X の仕様）
 MAX_POSTS_PER_RUN = 4000  # 1回の実行で読む上限。本人の読み取りは $0.001／件なので最大 $4 の安全弁
 TWEET_FIELDS = 'created_at,public_metrics,referenced_tweets,in_reply_to_user_id,note_tweet,lang'
-
-
-def own_credentials():
-    for src, creds in credential_sets():
-        if src == 'X_TAHKEH':
-            return creds
-    sys.exit('X_TAHKEH_CONSUMER_KEY / _SECRET が未設定（本人の投稿は本人のアプリの鍵で読む）')
 
 
 def clean_text(t, own_handle):

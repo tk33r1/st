@@ -5,8 +5,9 @@ name: MAGI X Posts
 #   fetch:     前回より新しい投稿を読み、.github/magi/x-posts.json に足す（週1回の定期実行もこれ）
 #   interests: いいねとフォローを読み、関心を分野ごとに要約して .github/magi/x-interests.json に書く
 #              （生のデータは保存しない。全件を読み直すので数ドルかかる。数か月に1回の手動実行で十分）
-# fetch と interests の後は、同じ実行の中で人格カードを作り直してコミットする。bot（GITHUB_TOKEN）の push は
-# ほかの workflow を起動しないので、magi-context.yml には任せられないため。
+# fetch と interests で素材が変わったら、コミットしてから magi-context.yml に人格カードの作り直しを頼む。
+# bot（GITHUB_TOKEN）の push はほかの workflow を起動しないが、workflow_dispatch での起動はできる。
+# magi-context.json を書くのを magi-context.yml だけにして、書き手どうしの衝突を起こさないため。
 # 費用は本人の読み取りの単価（$0.001／件）。X API の残高から引かれる。
 on:
   schedule:
@@ -21,9 +22,9 @@ on:
 
 permissions:
   contents: write
+  actions: write   # magi-context.yml の起動
 
-# workflow をまたいだ組の共有はしない（待機中の実行が新しい実行に黙ってキャンセルされるため。AGENTS.md）。
-# magi-context.yml と同時に magi-context.json を書くことはまれで、push は push-with-retry.sh が取り込み直す
+# workflow をまたいだ組の共有はしない（待機中の実行が新しい実行に黙ってキャンセルされるため。AGENTS.md）
 concurrency:
   group: magi-x-posts
   cancel-in-progress: false
@@ -47,39 +48,18 @@ jobs:
         X_TAHKEH_ACCESS_TOKEN_SECRET: ${{ secrets.X_TAHKEH_ACCESS_TOKEN_SECRET }}
         X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
         X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
-        X_NITORIDAILY_CONSUMER_KEY: ${{ secrets.X_NITORIDAILY_CONSUMER_KEY }}
-        X_NITORIDAILY_CONSUMER_SECRET: ${{ secrets.X_NITORIDAILY_CONSUMER_SECRET }}
-        X_RETAILTECHDAILY_CONSUMER_KEY: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_KEY }}
-        X_RETAILTECHDAILY_CONSUMER_SECRET: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_SECRET }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: python3 .github/scripts/magi-x-posts.py --$MODE
 
-    # 素材を先に出す。.github/magi/ を書くのはこの workflow だけなので、取り込みで衝突しない
-    - name: Commit X sources
+    # .github/magi/ を書くのはこの workflow だけなので、取り込みで衝突しない。変わらなければ何もしない
+    - name: Commit X sources and rebuild persona cards
       if: ${{ env.MODE != 'check' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
         git add .github/magi/
         git commit -m "Update MAGI X sources" || exit 0
         bash .github/scripts/push-with-retry.sh
-
-    # magi-context.json は magi-context.yml も書く生成物で、rebase で取り込むと衝突する。
-    # 弾かれたら最新の main に合わせ直して作り直す（素材に差分のある人格だけ作り直すので、やり直しは軽い）。
-    # CI を止める印は付けない（Cloudflare Pages が magi-context.json の公開を省略しないように）
-    - name: Rebuild persona cards
-      if: ${{ env.MODE != 'check' }}
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: |
-        for i in 1 2 3 4; do
-          git fetch -q origin main && git reset -q --hard origin/main
-          python3 .github/scripts/magi-context.py || exit 1
-          git add data/magi-context.json
-          git diff --cached --quiet && exit 0
-          git commit -q -m "Update MAGI persona context from X"
-          git push origin HEAD:main && exit 0
-          sleep $((i * 10))
-        done
-        echo "push に4回失敗した" >&2
-        exit 1
+        gh workflow run magi-context.yml --ref main

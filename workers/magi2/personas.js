@@ -117,11 +117,76 @@ export const SYNTHESIZER = {
   ].join('\n'),
 };
 
-// 人格カード：サイト本文（各ページの data-magi の目印とトップページの年表など）から GitHub Actions が要約して
+// 画面（トップページ・アプリ）のスプラッシュに出す人格の説明。/magi2/models がモデル名と一緒に返し、画面には書かない
+// （画面ごとに持つと食い違い、アプリは説明を直すだけでリリースが要るため）。
+//   desc: 気質。上の固定プロンプトに合わせる（統合人格は気質を固定に持たないので、そのことを書く）
+//   context: 人格カードの素材。.github/scripts/magi-context.py の PERSONAS に合わせる
+//   theme: テーマによる違い。下の PERSONA_TEMPERATURE / SYNTH_BIAS に合わせる
+// 本人の事実や関心はここにも書かない（カードに任せる）。
+export const PERSONA_GUIDE = {
+  'MELCHIOR-1': {
+    desc: {
+      en: 'The chaotic self. An impulsive geek who trusts gut instinct and burns hot for what it loves. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
+      ja: '混沌の自我。直感に正直で衝動的なオタク。好きなものには熱く燃える。人より「事柄」に興味が向き、趣味の合う相手には共感的だが、閉鎖的な自己中心性もあわせ持ち、ルールを踏み越えることへのためらいも少ない。',
+    },
+    context: {
+      en: 'Also speaks from a summary of the DJ and Motovlog pages, the Glitch article on buying DJ tracks, the music and bike entries of the tk.st timeline, my posts on X from the past year, and what I like and follow there. Rebuilt automatically whenever those change.',
+      ja: 'DJ と Motovlog のページ本文、DJ 音源の買い方を書いた glitch の記事、tk.st の年表のうち音楽とバイクの項目、直近1年の X の投稿と、X のいいね・フォローの要約も拠り所にする。更新されると自動で作り直される。',
+    },
+    theme: {
+      en: 'Light: default. Dark: speaks a little more freely, with more weight in the final answer.',
+      ja: 'ライト：標準。ダーク：発言の揺らぎが大きくなり、最終回答での比重が少し上がる。',
+    },
+  },
+  'BALTHASAR-2': {
+    desc: {
+      en: 'The compassionate self. A poetic, introverted dreamer, always centered on humanity: deeply empathetic, and bold enough to cross ethical lines when the philosophy calls for it.',
+      ja: '慈愛の自我。詩的で内向的な博愛の夢想家。関心の中心はつねに人間。深く共感的で、自分の哲学に沿うなら倫理的な禁忌も厭わない大胆さを持つ。',
+    },
+    context: {
+      en: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed — the life entries of the tk.st timeline, and what I like and follow on X. Rebuilt automatically whenever those change.',
+      ja: 'Thought ページ本文（愛・幸せ・失敗・人生についての結論と、その拠り所の書物、考えの変遷）、tk.st の年表のうち人生の項目、X のいいね・フォローの要約も拠り所にする。更新されると自動で作り直される。',
+    },
+    theme: {
+      en: 'Light: default. Dark: speaks a little more freely.',
+      ja: 'ライト：標準。ダーク：発言の揺らぎが大きくなる。',
+    },
+  },
+  'CASPER-3': {
+    desc: {
+      en: 'The logical self. A strategist relentlessly pursuing rationality and the optimal answer. Interested only in exceptional people; unsentimental and organization-first.',
+      ja: '論理の自我。合理性と最適解をひたすら追う戦略家。秀でた人間にのみ興味を持ち、非共感的で組織中心的。',
+    },
+    context: {
+      en: 'Also draws on a summary of the Job page, the Glitch articles, the tools published on tk.st, the digital entries of the tk.st timeline, and what I like and follow on X. Rebuilt automatically whenever they change.',
+      ja: 'Job ページ本文、技術ブログ（glitch）の記事本文、tk.st で公開している自作ツールの一覧、tk.st の年表のうちデジタルの項目、X のいいね・フォローの要約も拠り所にする。更新されると自動で作り直される。',
+    },
+    theme: {
+      en: 'Light: more weight in the final answer. Dark: speaks a little more freely.',
+      ja: 'ライト：最終回答での比重が少し上がる。ダーク：発言の揺らぎが大きくなる。',
+    },
+  },
+  'Shinya Takeda': {
+    desc: {
+      en: 'The integrated self — the voice that writes the final answer after the three debate. Its temperament is not hand-written: it follows a summary of my own personality tests (MBTI, CliftonStrengths, Big Five), including how they changed after the accident.',
+      ja: '統合の自我。3人格の討議を踏まえて最終回答を書く本人。気質は手書きせず、本人の性格検査（MBTI・クリフトンストレングス・ビッグファイブ）の要約と、事故の前後での変化に従う。',
+    },
+    context: {
+      en: 'Draws on a summary of the profile on tk.st — the bio, the two job titles, and the personality tests before and after the accident — plus my posts on X from the past year (for how I talk) and what I like and follow there. Rebuilt automatically whenever they change.',
+      ja: 'tk.st のプロフィール（自己紹介、ライト／ダークの2つの肩書き、事故の前後の性格検査）と、直近1年の X の投稿（話し方の見本）、X のいいね・フォローの要約を拠り所にする。更新されると自動で作り直される。',
+    },
+    theme: {
+      en: 'Light: leans toward the Strategist when weighing the debate. Dark: leans toward the Enthusiast.',
+      ja: 'ライト：討議をまとめるとき戦略家の視点をやや重く見る。ダーク：熱狂者の視点をやや重く見る。',
+    },
+  },
+};
+
+// 人格カード：サイト本文（各ページの data-magi の目印とトップページの年表など）と本人の X から GitHub Actions が要約して
 // data/magi-context.json に書き出したものを、3人格と統合人格の system プロンプトの後ろに足す。
-// 上の system_prompt は人格の骨格（一人称・口調・文字数）で、カードは「いまの中身」。
-// 統合人格のカード（キーは SYNTHESIZER.codename）は自己像（自己紹介・肩書き・性格検査と事故の前後の変化）。
-// 取得できないときはカード無し＝上の固定プロンプトだけで動く。→ .github/scripts/magi-context.py
+// 上の system_prompt は人格の骨格（役割・出力の形・気質）で、カードは「いまの中身」。
+// 統合人格のカード（キーは SYNTHESIZER.codename）は自己像（自己紹介・肩書き・性格検査と事故の前後の変化、X での話し方）。
+// tk.st から取れないときは、デプロイ時に同梱したカードで動く（src/index.js）。→ .github/scripts/magi-context.py
 export const PERSONA_CONTEXT = {
   url: 'https://tk.st/data/magi-context.json',
   ttl_ms: 10 * 60 * 1000,   // 取得できたカードを使い回す時間。過ぎたら手元のカードで答えつつ裏で取り直す

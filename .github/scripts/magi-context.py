@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """MAGI（workers/magi2）の3人格に渡す「人格カード」を、サイトの本文から生成する。
 
-人格の骨格（一人称・口調・文字数）は workers/magi2/personas.js に固定で持ち、
+人格の骨格（役割・出力の形・気質）は workers/magi2/personas.js に固定で持ち、
 ここで作るのは「いま大切にしている考え・関心・経験」の部分だけ。ページを書き換えると
 人格もそれに追従する、というのが狙い。
 
 流れ:
-  1. 抽出: 各ページの `data-magi="<人格キー>"` を付けた要素のテキストと、一覧 JSON
-     （tools.json 等）と、トップページの JS に直書きした本人のデータ（年表・自己紹介・肩書き・
-     性格検査。名前を指定した定数だけ）を人格ごとに集める。素材は意図して選んだものだけに絞る
+  1. 抽出: 各ページの `data-magi="<人格キー>"` を付けた要素のテキスト（技術ブログは data/glitch.json の
+     記事をすべてたどる）と、一覧 JSON（tools.json）と、トップページの JS に直書きした本人のデータ（年表・
+     自己紹介・肩書き・性格検査。名前を指定した定数だけ）と、本人の X（magi-x-posts.py が取り込んだ投稿と
+     関心の要約）を人格ごとに集める。素材は意図して選んだものだけに絞る
      （JSON-LD は本文の言い換えばかりで、SEO の都合で直すたびに作り直しが走るので使わない）。
      class や id には依存しないので、デザインを改修しても目印さえ残せば壊れない。
      目印の内側で読ませたくない部分には `data-magi-skip` を付ける。
@@ -22,7 +23,7 @@
      Worker は残ったカードで動き続ける。
 
 カードは3人格のほかに、統合人格（Shinya Takeda）の分も作る。統合人格の素材は自己像（自己紹介・肩書き・
-性格検査と、事故の前後での変化）で、3人格の素材とは重ねない。
+性格検査と、事故の前後での変化）と X で、サイトの本文は3人格の素材と重ねない。
 
 ローカル確認: `python .github/scripts/magi-context.py --dry-run` で抽出結果と
 「どの人格が再生成対象か」だけを表示する（API キー不要）。
@@ -71,6 +72,8 @@ TIMELINE_ROUTES = {
     'digital': 'casper',
 }
 SYNTH_KEY = 'synth'
+# 技術ブログの記事の一覧。PERSONAS で glitch を指定した人格は、ここにある記事を全部たどる
+GLITCH_INDEX = 'data/glitch.json'
 
 # 人格ごとの素材。キーはページ側の data-magi の値、codename は Worker 側の PERSONAS と一致させる。
 # 素材の一覧はここだけが正。workflow は push のたびに起動し、変わったかどうかはハッシュで判定する。
@@ -93,8 +96,9 @@ PERSONAS = {
     'melchior': {
         'codename': 'MELCHIOR-1',
         'name': 'Enthusiast',
-        # glitch/003（DJ 音源の買い方）は音楽の話なので、CASPER と両方に渡す（記事側の目印が casper melchior）
-        'pages': ['dj/index.html', 'motovlog/index.html', 'glitch/003/index.html'],
+        'pages': ['dj/index.html', 'motovlog/index.html'],
+        # glitch の記事のうち、目印が melchior のもの（003 の DJ 音源の買い方は、目印が casper melchior）
+        'glitch': True,
         'lists': [],
         # dj・motovlog は紹介文で本人の声ではないので、声の見本は X の投稿から取る
         'x_posts': True,
@@ -111,15 +115,13 @@ PERSONAS = {
     'casper': {
         'codename': 'CASPER-3',
         'name': 'Strategist',
+        'pages': ['job/index.html'],
         # glitch の記事本文は、本人の判断の型（仕組みを理解して最適化する、数字で比べる）と文体の素材
-        'pages': ['job/index.html', 'glitch/001/index.html', 'glitch/002/index.html', 'glitch/003/index.html',
-                  'glitch/004/index.html', 'glitch/005/index.html'],
+        'glitch': True,
         'lists': [
             # (パス, 見出し, 項目の配列を取り出す関数, 1項目を1行にする関数)
             ('data/tools.json', '自作して公開しているブラウザツール',
              lambda d: d, lambda t: f"{t['title']}: {t.get('description', '')}"),
-            ('data/glitch.json', '技術ブログ（glitch）の記事',
-             lambda d: d['articles'], lambda a: f"{a['title']}" + (f": {a['excerpt']}" if a.get('excerpt') else '')),
         ],
         'x_interests': 'casper',
         'focus': (
@@ -385,6 +387,25 @@ def x_interests_text(area):
     return '\n'.join(['■ X のいいね・フォローから読み取った関心（要約）', body]) if body else None
 
 
+# ---------------------------------------------------------------- 抽出（技術ブログの記事）
+
+def glitch_texts(key):
+    """技術ブログ（data/glitch.json の一覧）の記事のうち、key の目印が付いた記事の本文。記事を足しても PERSONAS は
+    直さなくてよい（どの人格の素材にするかは記事側の目印で決める）。目印が1つも無い記事があれば止まる。"""
+    with open(os.path.join(ROOT, GLITCH_INDEX), encoding='utf-8') as f:
+        articles = json.load(f)['articles']
+    blocks = []
+    for a in articles:
+        path = f"glitch/{a['id']}/index.html"
+        if not any(n.attrs.get('data-magi') for n in iter_nodes(parse_html(path))):
+            raise RuntimeError(f'{path} に data-magi の目印が無い（本文に、どの人格の素材にするかを付ける）')
+        if text := marked_text(path, key):
+            blocks.append(f'＝＝ {path} ＝＝\n{text}')
+    if not blocks:
+        raise RuntimeError(f'glitch の記事に data-magi="{key}" の目印が1つも無い')
+    return blocks
+
+
 # ---------------------------------------------------------------- 抽出（一覧 JSON）
 
 def list_text(path, heading, pick, fmt):
@@ -404,6 +425,8 @@ def build_source(key, conf, top, routed):
         if not text:
             raise RuntimeError(f'{path} に data-magi="{key}" の目印が見つからない（または中身が空）')
         blocks.append(f'＝＝ {path} ＝＝\n{text}')
+    if conf.get('glitch'):
+        blocks += glitch_texts(key)
     if conf.get('profile'):
         try:
             blocks.append(f'＝＝ {TOP_PAGE}（自己紹介・肩書き・性格検査） ＝＝\n{profile_text(top)}')

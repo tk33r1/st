@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, PROVIDERS, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -21,7 +21,7 @@ function corsHeaders(origin) {
 }
 
 // --- 統一エラー設計: stage 付きエンベロープ + request_id ---
-const STAGES = ['auth', 'bad_request', 'rate_limit', 'persona_call', 'synthesizer_call', 'upstream', 'internal'];
+// stage は auth / bad_request / rate_limit / persona_call / synthesizer_call / upstream / internal
 function stageError(stage, code, message, extra = {}) {
   const e = new Error(message);
   e.envelope = { stage, code, message, ...extra };
@@ -337,7 +337,7 @@ const withCard = (p, cards) => (cards && cards[p.codename])
 function withTimeout(ms) {
   const ac = new AbortController();
   const id = setTimeout(() => ac.abort(), ms);
-  return { signal: ac.signal, ac, clear: () => clearTimeout(id) };
+  return { signal: ac.signal, clear: () => clearTimeout(id) };
 }
 
 export default {
@@ -351,14 +351,16 @@ export default {
 
     const url = new URL(request.url);
 
-    // --- 各人格がいま使っている LLM（スプラッシュの人格説明が表示する）---
+    // --- スプラッシュの人格の説明：各人格がいま使っている LLM と、説明文（personas.js の PERSONA_GUIDE）---
     // モデルIDの正本は config/ai-models.json で、週次の監視で更新されうるのでページには直書きしない。
+    // 説明文も画面に持たせない（トップページとアプリで食い違わず、アプリのリリースなしで直せる）。
+    // パスの名前はモデル名だけを返していた頃のまま（配布済みのアプリが provider / model を読みに来る）。
     // 公開して困る情報ではないので認可は付けない（読めるのは CORS で許した Origin のページだけ）
     if (request.method === 'GET' && url.pathname === '/magi2/models') {
-      const pickModel = (cfg) => ({ provider: cfg.provider, model: cfg.model });
+      const describe = (codename, cfg) => ({ provider: cfg.provider, model: cfg.model, ...PERSONA_GUIDE[codename] });
       const body = {
-        personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, pickModel(cfg)])),
-        synthesizer: pickModel(DEFAULTS.models.synthesizer),
+        personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, describe(codename, cfg)])),
+        synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
       };
       return new Response(JSON.stringify(body), {
         status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600', ...cors },

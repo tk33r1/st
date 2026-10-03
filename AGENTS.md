@@ -162,9 +162,11 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が MAGI の人格カードを作り直して
     `data/magi-context.json` にコミットする（後述「MAGI の人格カード」。差分判定や失敗時の扱いは同スクリプトの冒頭）。
-    手動実行の `force` は素材が同じでも全人格を作り直す。
-  - `magi-x-posts.yml`（毎週月曜 03:00 JST＋手動）: 本人の X を人格カードの素材として読み、同じ実行の中でカードも
-    作り直す（bot の push はほかの workflow を起動しないため。後述「MAGI の人格カード」の X の素材）。
+    手動実行の `force` は素材が同じでも全人格を作り直す。`magi-context.json` を書くのはこの workflow だけ
+    （書き手が2つあると生成物どうしが rebase で衝突する）。
+  - `magi-x-posts.yml`（毎週月曜 03:00 JST＋手動）: 本人の X を人格カードの素材として読み、素材が変わったらコミットして
+    `magi-context.yml` を `workflow_dispatch` で起動する（bot の push はほかの workflow を起動しないが、dispatch はできる。
+    後述「MAGI の人格カード」の X の素材）。
     手動実行の `mode` は `check`（認証の確認だけ）・`fetch`（新しい投稿を足す。定期実行もこれ）・`interests`（いいねとフォローの要約）。
   - `ai-models.yml`（push＋PR）/ `ai-model-watch.yml`（週次＋手動）: AIモデル設定の正本
     `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
@@ -241,7 +243,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - **固定プロンプトに書くのは「役割と出力の形」と「気質」だけ**。本人の事実・関心・考え（好きなもの、拠り所の書物、
     仕事の中身、得意ジャンルなど）は書かず、サイトの本文に書いて人格カードに任せる（固定に書くと本人が変わっても
     古いまま残り、カードと食い違う）。統合人格は気質も固定に持たず、性格検査から作る自己像のカードを気質の正本にする。
-    画面の人格の説明（トップページと `magi-app/www/app.js` の `AGENT_PERSONAS`）も同じ方針で、固定プロンプトに揃える。
+    画面（トップページとアプリ）のスプラッシュに出す人格の説明（気質・素材・テーマによる違い）は `personas.js` の
+    `PERSONA_GUIDE` が正本で、`/magi2/models` がモデル名と一緒に返す。画面には名前しか書かない（アプリのリリースなしで直せる）。
+    気質は固定プロンプトに、素材は `magi-context.py` の `PERSONAS` に揃える。
   - 3人格は答えの癖と間違え方をばらけさせるため、人格ごとに会社を分けている（Enthusiast = DeepSeek、
     Humanist = Gemini、Strategist・統合 = OpenAI。`DEFAULTS.models.persona` を codename で引く）。呼び出し先は `PROVIDERS`、
     会社ごとの推論の切り方やトークン上限の名前の違いは `src/index.js` の `requestBody` に閉じている。
@@ -265,8 +269,11 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     右の › で入力欄に入れる（送信はしない）。新しい入口を作らずチャットの中で返すので、Origin の確認と1日の上限はチャットと共通。
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
-  付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`・`glitch/003/`、`casper` = `job/`・`glitch/` の各記事の本文）で、
-  ほかに `data/tools.json`・`data/glitch.json` を使う。JSON-LD は使わない。人格に知らせたい事実は本文に書いて目印を付ける。
+  付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、
+  ほかに `data/tools.json` を使う。JSON-LD は使わない。人格に知らせたい事実は本文に書いて目印を付ける。
+  - **glitch の記事**は `data/glitch.json` の一覧から全部たどり、記事の本文に付けた目印で人格に振り分ける（いまは casper。
+    DJ 音源の買い方の 003 は `casper melchior`）。記事を足しても `PERSONAS` は直さなくてよいが、本文の要素に
+    `data-magi` を付けること（目印の無い記事があると止まる）。
   - **トップページのデータ**: 年表・自己紹介・肩書き・性格検査は JS が描くので本文に無く、目印では読めない。
     `magi-context.py` が `index.html` の定数（`TIMELINE_DATA`・`ABOUT_DATA`・`JOB_TITLES`・`PROFILE_DATA`）を名前で取り出す
     （`.github/scripts/magi-js-data.mjs`。Node で評価する）。**名前を変えたら `TOP_CONSTANTS` も直す**（見つからなければ止まる）。
