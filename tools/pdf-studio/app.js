@@ -2535,7 +2535,8 @@
 
   // Nothing is stored anywhere, so a reload really does throw the edit away.
   window.addEventListener('beforeunload', (e) => {
-    if (!pages.length) return;
+    // パンくずの現在地から来たときは、tools-ui.js がもう確かめている
+    if (!pages.length || (window.STCommon && STCommon.leaveConfirmed())) return;
     e.preventDefault();
     e.returnValue = '';
   });

@@ -918,6 +918,14 @@
   document.addEventListener('drop', e => { if (e.dataTransfer) markWork(e.dataTransfer.files); }, true);
   document.addEventListener('paste', e => { if (e.clipboardData) markWork(e.clipboardData.files); }, true);
 
+  // 利用者が何か手を入れたか（ファイル・文字の入力・設定の変更）。パンくずの現在地で白紙に戻る前の確認に使う。
+  // ツールが自分で値を入れたときは数えない（isTrusted で利用者の操作だけを拾う）
+  let touched = false;
+  let leaveConfirmed = false;
+  ['input', 'change', 'drop', 'paste'].forEach(type => {
+    document.addEventListener(type, e => { if (e.isTrusted) touched = true; }, true);
+  });
+
   function tallyNet(since) {
     const t = { sends: 0, sendsSite: 0, site: 0, siteBytes: 0, analytics: 0, ad: 0, other: 0, outside: 0, blocked: 0 };
     net.entries.forEach(e => {
@@ -1498,6 +1506,23 @@
     const mark = document.querySelector('.crumb-mark');
     if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
 
+    // パンくずの現在地は、クエリや # の付かない自分の URL へ飛んでツールを白紙に戻す。
+    // 中身はどこにも残していないので、手を入れた後なら確かめてから進む（新しいタブで開く操作は止めない）
+    const here = document.querySelector('.crumb [aria-current="page"]');
+    if (here) {
+      here.addEventListener('click', e => {
+        if (!touched || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (!window.confirm('最初からやり直しますか？\n読み込んだファイルや入力・設定はすべて消えます。')) {
+          e.preventDefault();
+          return;
+        }
+        // ツール側の beforeunload（PDF Studio）が同じことをもう一度聞かないよう、確かめ済みを知らせる
+        leaveConfirmed = true;
+      });
+      // 戻るでこのページが復元されたら、確かめ済みを取り消す
+      window.addEventListener('pageshow', () => { leaveConfirmed = false; });
+    }
+
     // 先頭へ戻るボタンは、戻るほどスクロールしてから出す
     const up = document.getElementById('scroll-top-btn');
     if (up) {
@@ -1539,5 +1564,7 @@
     loadFFmpeg,
     runFFmpeg,
     ffmpegError,
+    // パンくずの現在地から白紙に戻ることを、利用者がもう確かめたか（beforeunload で二重に聞かないため）
+    leaveConfirmed: () => leaveConfirmed,
   };
 })(window);

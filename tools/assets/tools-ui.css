@@ -355,9 +355,10 @@
 }
 .st-theme .crumb a:hover { color: var(--accent); }
 .st-theme .crumb a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
-/* The current page is the one item here that is not a link, so it carries the
-   UI face and the weight — it doubles as the page title. */
-.st-theme .crumb [aria-current="page"] {
+/* The current page doubles as the page title, so its h1 carries the UI face and
+   the weight. 中のリンクはクエリや # の付かない自分の URL へ飛び、ツールを白紙から
+   やり直す入口になる（作業中なら tools-ui.js が確かめてから進む）。 */
+.st-theme .crumb h1 {
   font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 700;
@@ -368,9 +369,11 @@
   text-overflow: ellipsis;
   min-width: 0;
 }
+.st-theme .crumb [aria-current="page"] { color: var(--ink); }
+.st-theme .crumb [aria-current="page"]:hover { color: var(--accent); }
 /* SAFE TOOLS keeps the same mono breadcrumb face whether it is the current
    listing page or the parent link on a tool detail page. */
-.st-theme .crumb .crumb-section {
+.st-theme .crumb li .crumb-section {
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.08em;

@@ -2164,13 +2164,17 @@
 
     $('#send').addEventListener('click', async () => {
       await withBusy($('#send'), async () => {
+        // 英字名義を待つ間に選び直されても、送信を押した時点の内容を送る
+        const track = { ...picked };
+        const name = $('#name').value;
+        const message = $('#msg').value;
         // AI 相談の照合で US ストアを引いた曲は、英字名義をもう持っている
-        const artistEn = picked.artistEn || await latinArtist(picked.trackId);
+        const artistEn = track.artistEn || await latinArtist(track.trackId);
         await submit({
-          track: { ...picked, artistEn: artistEn || picked.artist },
-          name: $('#name').value,
-          message: $('#msg').value,
-        }, $('#sendErr'), { title: picked.title, artist: picked.artist });
+          track: { ...track, artistEn: artistEn || track.artist },
+          name,
+          message,
+        }, $('#sendErr'), { title: track.title, artist: track.artist });
       });
     });
 
@@ -2375,12 +2379,16 @@
        ボタンは出す。pastEvent は開いている過去の回で、読み込む前や失敗したときは code だけ持つ */
     let currentEvent = null, pastEvent = null, pastLoaded = false;
     const evCode = (ev) => (ev && ev.code) || '';
+    const pastEventsLatest = latestOnly();
 
     function setCurrentEvent(ev) {
       // DJ が新しい回を開くと、いまの回だった回が過去に移るので、過去のイベントを引き直す。
       // 回が変わったと気づくのは一覧の更新とは限らない（ほかの画面では /event の定期確認が先に
       // ここを通る）ので、比べるのはいまの回を書き換えるこの一か所で行う
-      if (evCode(ev) !== evCode(currentEvent)) pastLoaded = false;
+      if (evCode(ev) !== evCode(currentEvent)) {
+        pastLoaded = false;
+        pastEventsLatest();   // 前の回で始めた一覧取得は、成功・失敗とも反映しない
+      }
       currentEvent = evCode(ev) ? ev : null;
       const label = currentEvent && currentEvent.title ? '「' + currentEvent.title + '」' : 'この回';
       $('#evShare').setAttribute('aria-label', label + 'を共有');
@@ -2400,17 +2408,20 @@
 
     async function loadPastEvents() {
       if (pastLoaded) return;
+      const isLatest = pastEventsLatest();
       const box = $('#pastEvents');
       // 読めるまで15秒ごとに試すので、すでに何か出ているときは差し替えない。
       // 毎回スピナーに戻すと、通じない場所でずっと点滅し続けることになる。
       if (!box.firstChild) box.innerHTML = loadingHTML('読み込んでいます');
       try {
         const d = await apiJson('/events');
+        if (!isLatest()) return;
         pastLoaded = true;   // 読めたときだけ立てる。失敗したら次の更新でまた試す
         box.innerHTML = d.events.length
           ? d.events.map(evrowHTML).join('')
           : '<div class="blank">過去のイベントはまだありません</div>';
       } catch {
+        if (!isLatest()) return;
         box.innerHTML = '<div class="blank">過去のイベントを読み込めませんでした</div>';
       }
     }
@@ -2937,7 +2948,7 @@
     const MAGI_API = 'https://workers.tk.st/magi2/chat';
     /* Worker は段階（初回・討議・統合）が終わるまで何も送らないので、いちばん長い
        統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る */
-    const MAGI_IDLE_MS = 25000;
+    const MAGI_IDLE_MS = 70000;
     const CONTEXT_TIMEOUT_MS = 5000;   // 送信前に読む /board（状況説明の材料）の待ち上限
     const MAGI_PERSONAS = [
       { cn: 'MELCHIOR-1', ja: '熱狂者' },
@@ -3032,10 +3043,17 @@
       }
     }
 
-    const nearBottom = () =>
-      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160;
+    // 相談の下には FAQ とフッターがあるため、ページ末尾ではなく会話の末尾を追う
+    const chatBottom = () => $('#chatLog').getBoundingClientRect().bottom;
+    const nearBottom = () => {
+      const bottom = chatBottom();
+      return bottom > 0 && bottom <= window.innerHeight + 160;
+    };
     function chatScroll(force) {
-      if (force || nearBottom()) window.scrollTo({ top: document.documentElement.scrollHeight });
+      if (!$('#pane-consult').classList.contains('on')) return;
+      if (force || nearBottom()) {
+        window.scrollTo({ top: Math.max(0, window.scrollY + chatBottom() - window.innerHeight + 24) });
+      }
     }
 
     function chatTurn(text) {
@@ -3134,7 +3152,7 @@
       };
       watch();
       const bodyEl = turn.querySelector('.ab');
-      let reply = '', failure = null, suggestion = '';
+      let reply = '', failure = null, suggestion = '', completed = false;
 
       try {
         const res = await fetch(MAGI_API, {
@@ -3169,6 +3187,7 @@
             integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
             // 次の相談の予測。回答が最後まで届いたときだけ使う（下の成功の分岐）
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
+            done: () => { completed = true; },
             error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
           }, watch);
         }
@@ -3181,12 +3200,14 @@
         finishTurn(turn);
       }
 
-      if (reply && !failure) {
+      if (completed && reply && !failure) {
         chatSuggestion = suggestion;
         return reply;
       }
       turn.remove();
-      $('#chatErr').textContent = failure || '返事を受け取れませんでした。もう一度お試しください。';
+      $('#chatErr').textContent = failure || (reply && !completed
+        ? '返事を最後まで受け取れませんでした。もう一度お試しください。'
+        : '返事を受け取れませんでした。もう一度お試しください。');
       $('#chatErr').hidden = false;
       chatScroll();
       return null;
@@ -3480,6 +3501,7 @@
     $('#chatInput').addEventListener('input', renderConsultUI);
     // 物理キーボードのある環境だけ Enter 送信（スマホでは改行のまま）
     $('#chatInput').addEventListener('keydown', (e) => {
+      if (e.isComposing || e.keyCode === 229) return;   // IME の変換確定は送信しない
       const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
       if (e.key === 'Enter' && !e.shiftKey && (fine || e.ctrlKey || e.metaKey)) {
         e.preventDefault();
