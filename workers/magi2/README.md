@@ -43,6 +43,9 @@ npx wrangler secret put ALERT_FROM     --config magi2/wrangler.toml   # 例: MAG
 
 どれかが無ければ、ログに `upstream_alert` を出すだけで会話は止めない。
 
+全利用者の合計にも1日の上限（`DEFAULTS.global_daily_limit`、いまは300回）を掛けている。Origin は名乗れるので、
+IP を替えながら大量に呼ばれても費用に天井を作るため。超えた最初の1回で同じ仕組みのメールを送る（`alert:global`）。
+
 ## 停止
 
 画面は生成中に送信ボタンを停止ボタン（■）に変え、押すと接続を切る。Worker はストリームの `cancel` で

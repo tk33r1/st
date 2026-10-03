@@ -18,7 +18,8 @@
      呼ばれない。
   3. 要約: 変わった人格だけ、素材からゼロで人格カードを作る。前回のカードは渡さない
      （渡すと前回の誤りや消した内容が残りやすい。言い回しが多少変わるのは許容する）。
-  4. 検査して data/magi-context.json に書く。抽出で失敗したら何も書かずに exit 1。
+  4. 検査して data/magi-context.json に書く。抽出（目印の消失・素材の上限超え）で失敗した人格は前回のカードのまま
+     残してほかの人格を続け、最後に exit 1（X の投稿は残りの枠に合わせて詰めるので、それだけで上限は超えない）。
      要約や検査で失敗した人格は前回のカードのまま残し、作れた人格だけ書いてから exit 1。
      Worker は残ったカードで動き続ける。
 
@@ -352,8 +353,8 @@ def load_top_page():
 
 # ---------------------------------------------------------------- 抽出（X の投稿と関心の要約）
 
-def x_posts_text():
-    """直近1年の本人の投稿（URL だけの投稿は除く）を、新しい順に上限まで並べる。無ければ None。"""
+def x_posts_text(limit=X_POSTS_MAX):
+    """直近1年の本人の投稿（URL だけの投稿は除く）を、新しい順に limit 字まで並べる。無ければ None。"""
     try:
         with open(os.path.join(ROOT, X_POSTS_PATH), encoding='utf-8') as f:
             posts = json.load(f)['posts']
@@ -371,10 +372,12 @@ def x_posts_text():
         if len(text) < 5:
             continue
         line = f"- {p['created_at'][:10]}{' [返信]' if p['kind'] == 'reply' else ''} {text}"
-        if total + len(line) > X_POSTS_MAX:
+        if total + len(line) + 1 > limit:  # 1 は行をつなぐ改行
             break
         lines.append(line)
-        total += len(line)
+        total += len(line) + 1
+    if not lines:
+        return None
     return '\n'.join(['■ X の投稿（直近1年、新しい順。他人のアカウント名は @user に伏せてある）', *lines])
 
 
@@ -436,10 +439,15 @@ def build_source(key, conf, top, routed):
         blocks.append(f'＝＝ {TOP_PAGE}（年表） ＝＝\n{timeline_text(routed[key])}')
     for path, heading, pick, fmt in conf['lists']:
         blocks.append(f'＝＝ {path} ＝＝\n{list_text(path, heading, pick, fmt)}')
-    if conf.get('x_posts') and (text := x_posts_text()):
-        blocks.append(f'＝＝ {X_POSTS_PATH} ＝＝\n{text}')
-    if conf.get('x_interests') and (text := x_interests_text(conf['x_interests'])):
-        blocks.append(f'＝＝ {X_INTERESTS_PATH} ＝＝\n{text}')
+    interests = conf.get('x_interests') and x_interests_text(conf['x_interests'])
+    interests_block = [f'＝＝ {X_INTERESTS_PATH} ＝＝\n{interests}'] if interests else []
+    if conf.get('x_posts'):
+        # X の投稿は、ほかの素材を入れた残りの枠に収まるだけ新しい順に入れる（サイトの本文が増えても上限で止まらない）。
+        # 200 は見出しとブロックのつなぎ目のぶん
+        room = min(X_POSTS_MAX, SOURCE_MAX - len('\n\n'.join(blocks + interests_block)) - 200)
+        if room > 0 and (text := x_posts_text(room)):
+            blocks.append(f'＝＝ {X_POSTS_PATH} ＝＝\n{text}')
+    blocks += interests_block
     source = '\n\n'.join(blocks)
     if len(source) > SOURCE_MAX:
         raise RuntimeError(f'{key} の素材が {len(source)} 字あり上限 {SOURCE_MAX} を超えた。目印の範囲を見直すこと')
@@ -525,11 +533,18 @@ def main():
 
     previous = load_previous().get('personas', {})
     top, routed = load_top_page()
-    todo = []
+    todo, errors = [], []
     for key, conf in PERSONAS.items():
         subject = conf.get('subject') or f"ある人物（Shinya Takeda）の内面の一側面「{conf['name']}」（{conf['codename']}）"
         system = SYSTEM_PROMPT.format(subject=subject, focus=conf['focus'], target=conf.get('target', CARD_TARGET))
-        source = build_source(key, conf, top, routed)
+        try:
+            source = build_source(key, conf, top, routed)
+        except RuntimeError as e:
+            # 素材を作れなかった人格（目印の消失・上限超え）だけ前回のカードのまま残し、ほかの人格は続ける。
+            # 最後にまとめて失敗させるので、Actions の失敗として気づける
+            errors.append(f"{conf['codename']}: {e}")
+            print(f"[ERROR] {conf['codename']}: {e}", file=sys.stderr)
+            continue
         # プロンプトもハッシュに含める。プロンプトを直せば、素材が同じでも作り直される
         digest = hashlib.sha256(f'{MODEL}\n{system}\n{source}'.encode('utf-8')).hexdigest()
         changed = args.force or previous.get(conf['codename'], {}).get('source_hash') != digest
@@ -540,6 +555,8 @@ def main():
             todo.append((conf, system, source, digest))
 
     if args.dry_run or not todo:
+        if errors:
+            raise RuntimeError(f'{len(errors)} 人格の素材を作れなかった（その人格は前回のカードのまま）')
         return
 
     api_key = os.environ.get('OPENAI_API_KEY', '').strip()
@@ -547,7 +564,7 @@ def main():
         sys.exit('OPENAI_API_KEY が未設定')
 
     now = datetime.now(JST).isoformat(timespec='seconds')
-    updated, errors = {}, []
+    updated = {}
     for conf, system, source, digest in todo:
         # 前回のカードは渡さず、毎回素材からゼロで作る（前回の誤りや消した内容を引き継がないため）
         try:
@@ -564,7 +581,7 @@ def main():
     if updated:
         write_output({**previous, **updated})
     if errors:
-        raise RuntimeError(f'{len(errors)} 人格のカードを作れなかった（作れた人格は保存済み）')
+        raise RuntimeError(f'{len(errors)} 人格のカードを作れなかった（その人格は前回のカードのまま。作れた人格は保存済み）')
 
 
 def write_output(personas):

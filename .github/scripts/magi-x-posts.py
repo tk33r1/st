@@ -3,6 +3,7 @@
 
   --check      本人として認証できるかを、値を出さずに確かめる
   --fetch      本人の投稿（リポストを除く）のうち前回より新しい分を読み、.github/magi/x-posts.json に足す
+  --recheck    --fetch の前に直近 RECHECK_DAYS 日を読み直し、X で消した投稿をファイルからも落とす（月1回）
   --interests  本人のいいね（最大 MAX_LIKES 件）とフォローを読み、関心を分野ごとに要約して
                .github/magi/x-interests.json に書く。中身は他人の投稿とアカウントなので、生のデータは保存しない
                （公開の GitHub に他人の投稿をまとめて置かないため）。要約に一般の個人の名前は書かせない
@@ -28,6 +29,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
 
 API = 'https://api.x.com/2'
 EXPECTED_HANDLE = 'Tah_Keh'
@@ -148,8 +150,12 @@ def to_record(tw, own_handle):
     }
 
 
-def fetch():
-    """本人の投稿（リポストを除く）を新しい順に読み、前回より新しい分を x-posts.json に足す。"""
+RECHECK_DAYS = 30  # --recheck で読み直す期間（月1回）。それより前に消した投稿は残る
+
+
+def fetch(recheck=False):
+    """本人の投稿（リポストを除く）を新しい順に読み、前回より新しい分を x-posts.json に足す。
+    recheck なら先に直近 RECHECK_DAYS 日を読み直し、X で消した投稿をファイルからも落とす（いいね数なども新しくなる）。"""
     creds = own_credentials()
     status, me = api_get('/users/me', {}, creds)
     if status != 200:
@@ -161,6 +167,34 @@ def fetch():
             saved = json.load(f)
     except FileNotFoundError:
         saved = {'posts': []}
+
+    removed = 0
+    if recheck:
+        start = datetime.now(timezone.utc) - timedelta(days=RECHECK_DAYS)
+        query = {'max_results': str(PAGE_SIZE), 'exclude': 'retweets', 'tweet.fields': TWEET_FIELDS,
+                 'start_time': start.strftime('%Y-%m-%dT%H:%M:%SZ')}
+        fresh, n = {}, 0
+        while n < MAX_POSTS_PER_RUN:
+            status, body = api_get(f'/users/{user_id}/tweets', query, creds)
+            if status != 200:
+                sys.exit(f'読み直せなかった: HTTP {status} — {summarize_error(body)}')
+            tweets = body.get('data', [])
+            n += len(tweets)
+            fresh.update((t['id'], to_record(t, handle)) for t in tweets)
+            token = body.get('meta', {}).get('next_token')
+            if not token or not tweets:
+                break
+            query['pagination_token'] = token
+        else:
+            sys.exit(f'読み直しが1回の上限（{MAX_POSTS_PER_RUN} 件）を超えた。消えた投稿を判定できないので何も変えない')
+        # 期間内の保存分は読み直した結果で置き換える。返ってこなかったものは X で消されている
+        # （消した投稿の本文は、公開される Actions のログにも出さない）
+        in_window = lambda p: datetime.fromisoformat(p['created_at'].replace('Z', '+00:00')) >= start
+        kept = [p for p in saved['posts'] if not in_window(p)]
+        removed = sum(1 for p in saved['posts'] if in_window(p) and p['id'] not in fresh)
+        saved['posts'] = kept + list(fresh.values())
+        print(f'読み直し: 直近 {RECHECK_DAYS} 日の {n} 件（約 ${n * 0.001:.3f}）。X で消された投稿 {removed} 件を落とした')
+
     known = {p['id'] for p in saved['posts']}
     newest = max((int(p['id']) for p in saved['posts']), default=0)
     added, read, pages = [], 0, 0
@@ -319,7 +353,6 @@ def interests():
         if not body:
             sys.exit(f'まとめに「{key}」の分野が無かった。まとめの出力: {merged[:300]}')
         areas[key] = body
-    from datetime import datetime, timedelta, timezone
     os.makedirs(os.path.dirname(INTERESTS_PATH), exist_ok=True)
     with open(INTERESTS_PATH, 'w', encoding='utf-8', newline='\n') as f:
         json.dump({
@@ -338,12 +371,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--check', action='store_true', help='本人として認証できるかだけを確かめる')
     ap.add_argument('--fetch', action='store_true', help='本人の投稿を読み、前回より新しい分を保存する')
+    ap.add_argument('--recheck', action='store_true', help='直近の投稿を読み直して X で消したものを落とし、新しい分も保存する（月1回）')
     ap.add_argument('--interests', action='store_true', help='いいねとフォローを読み、関心を分野ごとに要約して保存する')
     args = ap.parse_args()
     if args.check:
         check()
     elif args.fetch:
         fetch()
+    elif args.recheck:
+        fetch(recheck=True)
     elif args.interests:
         interests()
     else:

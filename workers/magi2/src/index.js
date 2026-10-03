@@ -262,8 +262,22 @@ async function alertUpstream(env, log, provider, res) {
   const billing = [401, 402, 403].includes(res.status) || (res.status === 429 && QUOTA_RE.test(body));
   if (!billing) return;
   log('upstream_alert', provider, res.status, body.slice(0, 200));
-  if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('upstream_alert', 'mail skipped (secret missing)'); return; }
-  const key = `alert:${provider}:${res.status}`;
+  await sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
+    `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
+    '',
+    `HTTP ${res.status}`,
+    body,
+    '',
+    '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
+    'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
+    '同じ会社・同じ状態のメールは UTC の1日に1通です。',
+  ]);
+}
+
+// 通知メールを送る。key ごとに UTC の1日に1通（rate_limit に key の行を「送った」印として作る）。
+// 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ
+async function sendAlert(env, log, key, subject, lines) {
+  if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
   const day = new Date().toISOString().slice(0, 10);
   const first = await env.DB.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1) ON CONFLICT(ip, day) DO NOTHING RETURNING count`)
     .bind(key, day).first();
@@ -274,23 +288,13 @@ async function alertUpstream(env, log, provider, res) {
     body: JSON.stringify({
       from: env.ALERT_FROM,
       to: env.ALERT_TO.split(',').map(s => s.trim()).filter(Boolean), // カンマ区切りで複数可
-      subject: `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`,
-      text: [
-        `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
-        '',
-        `HTTP ${res.status}`,
-        body,
-        '',
-        '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
-        'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
-        '同じ会社・同じ状態のメールは UTC の1日に1通です。',
-      ].join('\n'),
+      subject,
+      text: lines.join('\n'),
     }),
   });
   if (!sent.ok) {
-    // 送れなかったら印を消し、次の失敗でまた試す
     await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
-    log('upstream_alert', 'mail failed', sent.status, (await sent.text().catch(() => '')).slice(0, 200));
+    log('alert', 'mail failed', key, sent.status, (await sent.text().catch(() => '')).slice(0, 200));
   }
 }
 
@@ -648,6 +652,27 @@ export default {
             stage: 'rate_limit', code: 'daily_limit_exceeded',
             message: `本日の利用上限（${DEFAULTS.daily_limit}回/日）に達しました`,
             retry_after_day: day, legacy_url: 'https://tk.st/magi/', retryable: false,
+          }, requestId, cors);
+        }
+        // 全利用者の合計にも1日の上限を掛ける。Origin は名乗れるので、IP を替えながら大量に呼ばれても費用に天井を作る。
+        // 上限に達した最初の1回でメールを送る（ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
+        const total = await env.DB.prepare(
+          `INSERT INTO rate_limit (ip, day, count) VALUES ('global', ?1, 1)
+           ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
+           RETURNING count`
+        ).bind(day).first();
+        if (total && total.count > DEFAULTS.global_daily_limit) {
+          log('rate_limit', 'global', day, total.count);
+          ctx.waitUntil(sendAlert(env, log, 'alert:global', `[MAGI] 本日のサイト全体の上限（${DEFAULTS.global_daily_limit}回）に達しました`, [
+            `MAGI（magi2）への質問が、UTC の ${day} に全利用者の合計で ${DEFAULTS.global_daily_limit} 回を超えました。`,
+            '今日（UTC）の残りは、どの利用者にも「本日の利用上限に達しました」と返しています。',
+            'ふだんの利用を大きく超えているので、ログ（wrangler tail）で使われ方を確かめてください。',
+            '上限は workers/magi2/personas.js の DEFAULTS.global_daily_limit です。',
+          ]).catch(e => log('alert', 'failed', e && e.message)));
+          return httpError(429, {
+            stage: 'rate_limit', code: 'global_daily_limit_exceeded',
+            message: '本日の利用上限に達しました。明日またお試しください',
+            retry_after_day: day, retryable: false,
           }, requestId, cors);
         }
       } catch (err) {

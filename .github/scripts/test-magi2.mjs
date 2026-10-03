@@ -323,3 +323,25 @@ test('両画面は停止ボタンで止めた質問を、エラーを出さず�
     assert.equal(c.ctx.agentSendBtn.title, 'Send');
   }
 });
+
+test('全利用者の合計が1日の上限を超えたら 429 を返し、最初の1回でメールを送る', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-global-'));
+  try {
+    const mails = [];
+    const w = worker(completion(), (url, options) => {
+      if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(options.body)); return Response.json({ id: 'mail' }); }
+    });
+    Object.assign(w.env, { DB: database(join(dir, 'db.sqlite')), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+    w.ctx.defaults.global_daily_limit = 2;
+    const codes = [];
+    for (const ip of ['192.0.2.1', '192.0.2.2', '192.0.2.3', '192.0.2.4']) {
+      const res = await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'q' }] }, ip);
+      codes.push(res.status === 429 ? (await res.json()).error.code : res.status);
+      if (res.status === 200) await res.text();
+    }
+    await Promise.all(w.waits);
+    assert.deepEqual(codes, [200, 200, 'global_daily_limit_exceeded', 'global_daily_limit_exceeded']);
+    assert.equal(mails.length, 1);
+    assert.match(mails[0].subject, /全体の上限/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

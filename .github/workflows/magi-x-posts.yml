@@ -3,6 +3,8 @@ name: MAGI X Posts
 # 本人（@Tah_Keh）の X を、MAGI の人格カードの素材として取り込む（.github/scripts/magi-x-posts.py）。
 #   check:     本人として認証できるかだけを確かめる
 #   fetch:     前回より新しい投稿を読み、.github/magi/x-posts.json に足す（週1回の定期実行もこれ）
+#   recheck:   直近30日を読み直し、X で消した投稿をファイルからも落としてから fetch する（月1回の定期実行。1回 数セント）
+#              git の履歴には残るので、完全に消すには履歴の書き換えが要る
 #   interests: いいねとフォローを読み、関心を分野ごとに要約して .github/magi/x-interests.json に書く
 #              （生のデータは保存しない。全件を読み直すので数ドルかかる。数か月に1回の手動実行で十分）
 # fetch と interests で素材が変わったら、コミットしてから magi-context.yml に人格カードの作り直しを頼む。
@@ -11,13 +13,14 @@ name: MAGI X Posts
 # 費用は本人の読み取りの単価（$0.001／件）。X API の残高から引かれる。
 on:
   schedule:
-    - cron: '0 18 * * 0'   # 毎週月曜 03:00 JST
+    - cron: '0 18 * * 0'   # 毎週月曜 03:00 JST（fetch）
+    - cron: '30 18 1 * *'  # 毎月2日 03:30 JST（recheck）
   workflow_dispatch:
     inputs:
       mode:
         description: '実行内容'
         type: choice
-        options: [check, fetch, interests]
+        options: [check, fetch, recheck, interests]
         default: check
 
 permissions:
@@ -31,7 +34,7 @@ concurrency:
 
 env:
   BOT_EMAIL: "github-actions[bot]@users.noreply.github.com"
-  MODE: ${{ inputs.mode || 'fetch' }}
+  MODE: ${{ inputs.mode || (github.event.schedule == '30 18 1 * *' && 'recheck' || 'fetch') }}
 
 jobs:
   run:

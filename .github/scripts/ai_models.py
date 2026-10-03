@@ -173,7 +173,7 @@ def smoke_openai(url, api_key, model):
         'model': model,
         'messages': [{'role': 'user', 'content': 'Reply with OK.'}],
         'reasoning_effort': 'high',
-        'max_completion_tokens': 1536,  # magi2 の統合と同じ。推論ぶんの余裕も含む
+        'max_completion_tokens': 4096,  # magi2 の統合と同じ。推論ぶんの余裕も含む
         'stream': True,
     }, stream=True)
     smoke_openai_web_search(api_key, model)
