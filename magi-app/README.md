@@ -35,8 +35,9 @@ npm run serve        # serves www/ at http://localhost:5173
 
 Open it in a mobile browser and "Add to Home Screen" to install as a PWA.
 
-> Pass a different backend with `?api=`, e.g.
+> Local browser development can select a loopback backend with `?api=`, e.g.
 > `http://localhost:5173/?api=http://localhost:8787` for local Worker dev.
+> Hosted pages and native builds always use `https://workers.tk.st`.
 
 ## 2. Package for iOS / Android (Capacitor)
 
@@ -88,7 +89,7 @@ npx wrangler deploy
 
 If you later host the PWA on a real domain, add that origin to `ALLOWED_ORIGINS`
 in the Worker and redeploy. For a quick test against any backend you control,
-use `?api=` / `window.MAGI_API_BASE`.
+use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
 ## Release (signed) APK
 

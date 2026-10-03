@@ -1,13 +1,15 @@
 // MAGI — persona config (chat-only)
-// 人格・呼び出し設定の正本（モデルIDを除く。src/index.js が import する）。
+// 人格・呼び出し設定の正本（モデルID・表示名を除く。src/index.js が import する）。
 // 以前は人間用に persona.yaml を併置していたが、どこからも読まれず内容がずれたため廃止した。
 
-// モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む。
+// モデルID・表示名の正本。wrangler がデプロイ時にバンドルへ取り込む。
 import aiModels from '../../config/ai-models.json';
 
-const OPENAI_LUNA_MODEL = aiModels.openai.luna;
-const DEEPSEEK_FLASH_MODEL = aiModels.deepseek.flash;
-const GEMINI_FLASH_LITE_MODEL = aiModels.google.flash_lite;
+const modelConfig = (provider, channel) => ({
+  provider,
+  model: aiModels[provider][channel].id,
+  display_name: aiModels[provider][channel].display_name,
+});
 
 // 呼び出し先。3社とも OpenAI 互換の Chat Completions を持つ。key は Wrangler secret の名前。
 // 各社で違う呼び出し方（推論の切り方・トークン上限の名前）は src/index.js の requestBody に置く。
@@ -23,6 +25,14 @@ export const DEFAULTS = {
   history_max_messages: 12, // サーバ側の防御的 trim
   persona_history_max_chars: 400, // 人格の履歴に入れる、過去の回の自分の意見1件あたりの上限（意見は120字以内の指定）
   daily_limit: 60,  // IP×日次の上限（メッセージ数）
+  input: {
+    user_max_chars: 1000,
+    assistant_max_chars: 4000,
+    history_max_chars: 40000, // 本文と人格の過去の意見の合計
+    context_max_chars: 4000, // DJ 相談などの状況説明
+    max_request_bytes: 12 * 1024 * 1024,
+  },
+  reactions: { minute_limit: 30, daily_limit: 480, max_request_bytes: 128 * 1024 },
   // 画像付きは前処理（デコード・タイル化）のぶん遅くなるので人格側の猶予を広げる
   // suggest_ms は次の質問の予測の上限。統合の答えが出た後に待つぶん入力欄の再開が遅れるので短く切る
   timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000, suggest_ms: 4000 },
@@ -32,6 +42,7 @@ export const DEFAULTS = {
     max_images_per_message: 4,        // 1メッセージあたり
     max_images_total: 8,              // 1リクエスト（履歴全体）あたり
     max_image_bytes: 5 * 1024 * 1024, // base64 デコード後の1枚あたり上限
+    max_total_bytes: 8 * 1024 * 1024, // 並列呼び出し時のメモリ使用も抑える
   },
   // 推論制御は reasoning_effort で行う。値の意味と送れるパラメータは会社ごとに違う（→ src/index.js の requestBody）。
   //   OpenAI  : none|low|medium|high|xhigh|max。省略すると Luna は medium で推論するので必ず明示する。
@@ -44,20 +55,20 @@ export const DEFAULTS = {
     // 人格ごとに会社を分け、答えの癖と間違え方をばらけさせる（codename で引く）。
     persona: {
       // 前向きに寄る癖と描写の濃い文体が「熱狂者」に合う
-      'MELCHIOR-1': { provider: 'deepseek', model: DEEPSEEK_FLASH_MODEL, reasoning_effort: 'none', max_tokens: 512 },
+      'MELCHIOR-1': { ...modelConfig('deepseek', 'flash'), reasoning_effort: 'none', max_tokens: 512 },
       // 寄り添いの強さが「人間主義者」に合う。推論ぶんを見込んで上限を広げる
-      'BALTHASAR-2': { provider: 'google', model: GEMINI_FLASH_LITE_MODEL, reasoning_effort: 'minimal', max_tokens: 1024 },
+      'BALTHASAR-2': { ...modelConfig('google', 'flash_lite'), reasoning_effort: 'minimal', max_tokens: 1024 },
       // 手順立てて言い切る実務寄りの型が「戦略家」に合う
-      'CASPER-3': { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 512 },
+      'CASPER-3': { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 512 },
     },
     // 統合：推論あり・ストリーミング。max_tokens は推論トークン分の余裕を確保。
-    synthesizer: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'high', max_tokens: 1536 },
+    synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'high', max_tokens: 1536 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
-    titler: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 48 },
+    titler: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 48 },
     // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
     // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
-    suggester: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 80 },
+    suggester: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 80 },
   },
 };
 

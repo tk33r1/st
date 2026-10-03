@@ -40,24 +40,68 @@ function httpError(status, envelope, requestId, cors) {
   });
 }
 
+// Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
+async function readJsonLimited(request, maxBytes) {
+  const tooLarge = () => stageError('bad_request', 'request_too_large', 'リクエストサイズが上限を超えています', { http_status: 413, retryable: false });
+  if (Number(request.headers.get('Content-Length')) > maxBytes) throw tooLarge();
+  if (!request.body) throw stageError('bad_request', 'invalid_json', 'リクエストボディがありません', { retryable: false });
+  const reader = request.body.getReader();
+  const dec = new TextDecoder();
+  let size = 0, text = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) { await reader.cancel(); throw tooLarge(); }
+      text += dec.decode(value, { stream: true });
+    }
+    const body = JSON.parse(text + dec.decode());
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid body');
+    return body;
+  } finally { reader.releaseLock(); }
+}
+
+function checkText(text, maxChars, counters) {
+  if (text.length > maxChars) throw stageError('bad_request', 'text_too_long', `本文は ${maxChars} 文字までです`, { retryable: false });
+  counters.text += text.length;
+  if (counters.text > DEFAULTS.input.history_max_chars) throw stageError('bad_request', 'history_too_long', '会話の履歴が文字数の上限を超えています', { retryable: false });
+}
+
+const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
+
+// 上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける。
+async function consumeReactionLimit(db, ip, now) {
+  for (const [period, limit] of [[now.slice(0, 16), DEFAULTS.reactions.minute_limit], [now.slice(0, 10), DEFAULTS.reactions.daily_limit]]) {
+    const row = await db.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
+      ON CONFLICT(ip, day) DO UPDATE SET count = count + 1 WHERE count < ?3 RETURNING count`)
+      .bind(`react:${ip}`, period, limit).first();
+    if (!row) throw stageError('rate_limit', 'reaction_limit_exceeded', 'リアクションの利用上限に達しました。時間を置いてお試しください', { http_status: 429, retryable: true });
+  }
+}
+
 // --- マルチモーダル入力（画像）---
 // message.content は文字列のほか、OpenAI 互換のパート配列
 // [{type:'text',text}, {type:'image_url',image_url:{url}}] を受け付ける。
 // 画像は data: URL のみ許可する（外部 URL を許すと Worker を踏み台にした
 // 任意フェッチになるため）。許容 MIME は正規表現側で固定。
 const DATA_IMAGE_RE = /^data:image\/(?:png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$/;
-const b64Bytes = (b64) => Math.floor(b64.length * 3 / 4);
+const b64Bytes = (b64) => Math.floor(b64.length * 3 / 4) - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0);
 
 function normaliseImagePart(part, counters) {
   const url = part && part.image_url && typeof part.image_url.url === 'string' ? part.image_url.url.trim() : '';
   const m = DATA_IMAGE_RE.exec(url);
   if (!m) throw stageError('bad_request', 'invalid_image', '画像は data:image/(png|jpeg|webp|gif);base64,… 形式のみ受け付けます', { retryable: false });
-  if (b64Bytes(m[1]) > DEFAULTS.vision.max_image_bytes) {
+  const bytes = b64Bytes(m[1]);
+  if (m[1].length % 4 !== 0) throw stageError('bad_request', 'invalid_image', '画像の base64 が不正です', { retryable: false });
+  if (bytes > DEFAULTS.vision.max_image_bytes) {
     throw stageError('bad_request', 'image_too_large', `画像は1枚あたり ${Math.round(DEFAULTS.vision.max_image_bytes / 1048576)}MB までです`, { retryable: false });
   }
   if (++counters.total > DEFAULTS.vision.max_images_total) {
     throw stageError('bad_request', 'too_many_images', `画像は1リクエストあたり ${DEFAULTS.vision.max_images_total} 枚までです`, { retryable: false });
   }
+  counters.imageBytes += bytes;
+  if (counters.imageBytes > DEFAULTS.vision.max_total_bytes) throw stageError('bad_request', 'images_too_large', '画像の合計サイズは8MBまでです', { retryable: false });
   return { type: 'image_url', image_url: { url } };
 }
 
@@ -70,11 +114,14 @@ function normaliseMessage(m, counters) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
   }
   if (typeof m.content === 'string') {
+    checkText(m.content, m.role === 'user' ? DEFAULTS.input.user_max_chars : DEFAULTS.input.assistant_max_chars, counters);
+    if (!m.content.trim()) throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
     const opinions = m.role === 'assistant' ? normaliseDebate(m.debate) : null;
+    if (opinions) for (const text of Object.values(opinions)) checkText(text, DEFAULTS.persona_history_max_chars, counters);
     return opinions ? { role: m.role, content: m.content, opinions } : { role: m.role, content: m.content };
   }
   // 画像を含められるのは user メッセージのみ
-  if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0) {
+  if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0 || m.content.length > 8) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message の content は文字列、または user のパート配列が必要です', { retryable: false });
   }
   let images = 0;
@@ -88,6 +135,7 @@ function normaliseMessage(m, counters) {
     }
     throw stageError('bad_request', 'invalid_part', 'content のパートは {type:"text"} か {type:"image_url"} のみです', { retryable: false });
   });
+  checkText(parts.filter(p => p.type === 'text').map(p => p.text).join('\n'), DEFAULTS.input.user_max_chars, counters);
   if (!images && !parts.some(p => p.type === 'text' && p.text.trim())) {
     throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
   }
@@ -293,19 +341,21 @@ function cardsFrom(data) {
 const personaCards = { cards: cardsFrom(bundledContext), expiresAt: 0, refreshing: false };
 
 async function refreshPersonaCards(log) {
-  const t = withTimeout(PERSONA_CONTEXT.fetch_timeout_ms);
   let cards = null;
   try {
-    const res = await fetch(PERSONA_CONTEXT.url, { signal: t.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    // tk.st は存在しないパスにもトップページを 200 で返すので、JSON として読めるかで判定する
-    cards = cardsFrom(await res.json());
-    if (!cards) throw new Error('no cards in JSON');
+    cards = await withTimeout(PERSONA_CONTEXT.fetch_timeout_ms, async (signal) => {
+      const res = await fetch(PERSONA_CONTEXT.url, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // JSON として読めるかと、カードの有無で判定する
+      const fetched = cardsFrom(await res.json());
+      if (!fetched) throw new Error('no cards in JSON');
+      return fetched;
+    });
     log('persona_context', `cards=${Object.keys(cards).length}`);
   } catch (e) {
     cards = null;
     log('persona_context', 'failed', e && e.message);
-  } finally { t.clear(); }
+  }
   // 人格ごとに上書きする。失敗・空の JSON・一部の人格が欠けた JSON でも、欠けた人格は
   // 直近のカードを保つ（まるごと置き換えると、欠けた人格だけ固定プロンプトに戻ってしまう）
   // そろうべきカードは3人格と統合人格の4枚
@@ -329,15 +379,52 @@ function getPersonaCards(ctx, log) {
   return Promise.resolve(personaCards.cards);
 }
 
-const withCard = (p, cards) => (cards && cards[p.codename])
-  ? { ...p, system_prompt: `${p.system_prompt}\n\n${PERSONA_CONTEXT.header}\n${cards[p.codename]}` }
+const withCard = (p, cards, header = PERSONA_CONTEXT.header) => (cards && cards[p.codename])
+  ? { ...p, system_prompt: `${p.system_prompt}\n\n${header}\n${cards[p.codename]}` }
   : p;
 
-// 指定 ms でアボートするタイマ付き signal
-function withTimeout(ms) {
+// 統合の本文と正常な終端の両方を確認する。EOF だけでは成功にしない。
+async function readSynthesis(body, send) {
+  const reader = body.getReader();
+  const dec = new TextDecoder();
+  let buf = '', answer = '', finished = false, finishReason = null;
+  const line = (raw) => {
+    if (!raw.startsWith('data:')) return;
+    const payload = raw.slice(5).trim();
+    if (payload === '[DONE]') { finished = true; return; }
+    let data;
+    try { data = JSON.parse(payload); }
+    catch (_) { throw stageError('synthesizer_call', 'invalid_stream', '統合応答の形式が不正です', { retryable: true }); }
+    if (data.error) throw stageError('synthesizer_call', 'stream_error', '統合応答の途中でエラーが発生しました', { retryable: true });
+    const choice = data.choices?.[0];
+    if (choice?.finish_reason) finishReason = choice.finish_reason;
+    const delta = choice?.delta?.content;
+    if (typeof delta === 'string') { answer += delta; send('integrated', { delta }); }
+  };
+  try {
+    while (!finished) {
+      const { done, value } = await reader.read();
+      if (done) { if (buf.trim()) line(buf.trim()); break; }
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while (!finished && (nl = buf.indexOf('\n')) >= 0) {
+        line(buf.slice(0, nl).trim());
+        buf = buf.slice(nl + 1);
+      }
+    }
+    if (!finished || finishReason !== 'stop') throw stageError('synthesizer_call', 'incomplete_output', '統合応答が最後まで生成されませんでした', { retryable: true });
+    if (!answer.trim()) throw stageError('synthesizer_call', 'empty_output', '統合人格が空の応答を返しました', { retryable: true });
+    return answer;
+  } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+}
+
+// 処理全体にタイムアウトを掛け、成功・失敗のどちらでもタイマーを解除する。
+// ストリームは fetch の完了だけでなく、本文を読み終わるまでこの中で扱う。
+async function withTimeout(ms, run) {
   const ac = new AbortController();
   const id = setTimeout(() => ac.abort(), ms);
-  return { signal: ac.signal, clear: () => clearTimeout(id) };
+  try { return await run(ac.signal); }
+  finally { clearTimeout(id); }
 }
 
 export default {
@@ -352,12 +439,14 @@ export default {
     const url = new URL(request.url);
 
     // --- スプラッシュの人格の説明：各人格がいま使っている LLM と、説明文（personas.js の PERSONA_GUIDE）---
-    // モデルIDの正本は config/ai-models.json で、週次の監視で更新されうるのでページには直書きしない。
+    // モデルID・表示名の正本は config/ai-models.json で、週次の監視で更新されうるのでページには直書きしない。
     // 説明文も画面に持たせない（トップページとアプリで食い違わず、アプリのリリースなしで直せる）。
     // パスの名前はモデル名だけを返していた頃のまま（配布済みのアプリが provider / model を読みに来る）。
     // 公開して困る情報ではないので認可は付けない（読めるのは CORS で許した Origin のページだけ）
     if (request.method === 'GET' && url.pathname === '/magi2/models') {
-      const describe = (codename, cfg) => ({ provider: cfg.provider, model: cfg.model, ...PERSONA_GUIDE[codename] });
+      // 配布済みの画面も model を表示するので、ここで表示名を返す。API 呼び出しは cfg.model のまま。
+      // 実際に指定しているモデルIDも model_id として返し、エイリアスとの対応を確認できるようにする。
+      const describe = (codename, cfg) => ({ provider: cfg.provider, model: cfg.display_name, model_id: cfg.model, ...PERSONA_GUIDE[codename] });
       const body = {
         personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, describe(codename, cfg)])),
         synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
@@ -377,24 +466,33 @@ export default {
         }
       }
       let body;
-      try { body = await request.json(); }
-      catch (_) { return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors); }
+      try { body = await readJsonLimited(request, DEFAULTS.reactions.max_request_bytes); }
+      catch (err) { return httpError(err.envelope?.http_status || 400, err.envelope || { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors); }
 
       const op = body.op === 'remove' ? 'remove' : 'add';
       const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
+      if (![...PERSONAS.map(p => p.codename), 'integrated'].includes(target)) {
+        return httpError(400, { stage: 'bad_request', code: 'invalid_target', message: 'リアクション対象が不正です', retryable: false }, requestId, cors);
+      }
       if (!env.DB) {
         log('reaction', 'skipped (no DB binding)');
         return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
       }
 
-      // 取り消し：登録時に返した行 ID で該当行のみ削除（target を保険のフィルタに）
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const now = new Date().toISOString();
+      try { await consumeReactionLimit(env.DB, ip, now); }
+      catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
+
+      // 取り消し：登録者だけが持つトークンのハッシュも照合する。IP の変化では所有権を失わない。
       if (op === 'remove') {
         const id = Number(body.id);
-        if (!target || !Number.isFinite(id)) {
-          return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'target と id（数値）が必要です', retryable: false }, requestId, cors);
+        const token = typeof body.delete_token === 'string' ? body.delete_token : '';
+        if (!Number.isSafeInteger(id) || id < 1 || !/^[a-f0-9]{64}$/.test(token)) {
+          return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'id と登録時の削除トークンが必要です', retryable: false }, requestId, cors);
         }
         try {
-          const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2`).bind(id, target).run();
+          const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2 AND delete_token_hash = ?3`).bind(id, target, await sha256(token)).run();
           const deleted = (res.meta && res.meta.changes) || 0;
           log('reaction', 'removed', target, id, `changes=${deleted}`);
           return new Response(JSON.stringify({ ok: true, deleted, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
@@ -412,13 +510,16 @@ export default {
         return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
       }
       try {
-        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+        const fingerprint = await sha256(JSON.stringify([target, reaction, reqText, resText]));
         const res = await env.DB.prepare(
-          `INSERT INTO reactions (created_at, ip, target, reaction, request, response) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
-        ).bind(new Date().toISOString(), ip, target, reaction, reqText, resText).run();
-        const id = res.meta && res.meta.last_row_id;
+          `INSERT INTO reactions (created_at, ip, target, reaction, request, response, delete_token_hash, fingerprint)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(ip, fingerprint) DO NOTHING RETURNING id`
+        ).bind(now, ip, target, reaction, reqText, resText, await sha256(token), fingerprint).first();
+        // 重複時は元の登録者の ID・トークンを渡さない（共有 IP の別利用者にも取り消せない）。
+        const id = res && res.id;
         log('reaction', target, reaction, `id=${id}`);
-        return new Response(JSON.stringify({ ok: true, id, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
+        return new Response(JSON.stringify({ ok: true, ...(id ? { id, delete_token: token } : { duplicate: true }), request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
       } catch (err) {
         log('reaction', 'db_error', err.message);
         return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの保存に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
@@ -446,7 +547,7 @@ export default {
     let theme = null; // 'light' | 'dark'：統合の揺らぎに使用
     let wantSuggest = false; // 統合の答えの後に、次の質問の予測を送るか（頼んだ画面だけ。呼び出し1回ぶん増える）
     try {
-      const body = await request.json();
+      const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
       messages = body && body.messages;
       theme = (body && (body.theme === 'light' || body.theme === 'dark')) ? body.theme : null;
       wantSuggest = !!(body && body.suggest === true);
@@ -456,13 +557,20 @@ export default {
       // 検証の前に trim する（画像枚数の上限は実際に上流へ送るぶんに対して数える）
       if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
       // content は文字列 or パート配列。ここで {role, content} だけに正規化される
-      const counters = { total: 0 };
+      const counters = { total: 0, imageBytes: 0, text: 0 };
       messages = messages.map(m => normaliseMessage(m, counters));
       if (messages[messages.length - 1].role !== 'user') {
         throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
       }
+      // DJ の状況説明は本文に紛れ込ませず、専用の上限で検証してから先頭の質問へ添える。
+      if (body.context != null) {
+        if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
+        checkText(body.context, DEFAULTS.input.context_max_chars, counters);
+        const firstUser = messages.find(m => m.role === 'user');
+        firstUser.content = prependText(body.context + '\n', firstUser.content);
+      }
     } catch (err) {
-      if (err.envelope) return httpError(400, err.envelope, requestId, cors);
+      if (err.envelope) return httpError(err.envelope.http_status || 400, err.envelope, requestId, cors);
       return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors);
     }
 
@@ -518,10 +626,9 @@ export default {
           // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
           let titlePromise = null;
           if (!history.some(m => m.role === 'assistant')) {
-            const tt = withTimeout(personaTimeoutMs);
-            titlePromise = fetchTitle(env, lastContent, tt.signal, log)
-              .then(t => { tt.clear(); if (t) send('title', { text: t }); })
-              .catch(() => { tt.clear(); });
+            titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(env, lastContent, signal, log))
+              .then(t => { if (t) send('title', { text: t }); })
+              .catch(() => {});
           }
 
           // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
@@ -541,16 +648,13 @@ export default {
 
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
-          const t1 = withTimeout(personaTimeoutMs);
-          let r1;
-          try {
-            r1 = await Promise.allSettled(personas.map(async (p) => {
+          const r1 = await withTimeout(personaTimeoutMs, signal =>
+            Promise.allSettled(personas.map(async (p) => {
               // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
-              const text = await fetchPersonaText(env, p, personaThread(p.codename, history, lastContent), t1.signal, log, 1, personaTemp);
+              const text = await fetchPersonaText(env, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };
-            }));
-          } finally { t1.clear(); }
+            })));
           const opinions = [];
           r1.forEach((r, i) => {
             if (r.status === 'fulfilled') { opinions.push(r.value); return; }
@@ -564,20 +668,18 @@ export default {
           // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
           // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
           log('persona_call', 'round2 start');
-          const t2 = withTimeout(personaTimeoutMs);
-          try {
-            await Promise.all(opinions.map(async (p) => {
+          await withTimeout(personaTimeoutMs, signal =>
+            Promise.all(opinions.map(async (p) => {
               const others = opinions.filter(o => o.codename !== p.codename)
                 .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
               if (!others) { absent(p, 2); return; }
               // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
               const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
               try {
-                p.r2 = await fetchPersonaText(env, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), t2.signal, log, 2, personaTemp);
+                p.r2 = await fetchPersonaText(env, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
                 send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
               } catch (e) { absent(p, 2, e); }
-            }));
-          } finally { t2.clear(); }
+            })));
           log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
 
           // --- 統合コール（推論あり・stream）---
@@ -588,57 +690,27 @@ export default {
           if (bias) log('synthesizer_call', 'bias', theme);
           const synthMessages = [
             // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
-            { role: 'system', content: cards && cards[SYNTHESIZER.codename]
-              ? `${SYNTHESIZER.system_prompt}\n\n${PERSONA_CONTEXT.synth_header}\n${cards[SYNTHESIZER.codename]}`
-              : SYNTHESIZER.system_prompt },
+            { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
             ...(bias ? [{ role: 'system', content: bias }] : []),
             ...history,
             { role: 'user', content: withImages(augmented, lastImages) },
           ];
 
-          const synthTimer = withTimeout(DEFAULTS.timeouts.synthesizer_ms);
-          let synthRes;
-          try {
+          const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
             log('synthesizer_call', 'start');
-            // 成功時は reader 完了後に clear。throw 時はここで確実に解除しておく
-            synthRes = await callModel({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
-          } catch (e) { synthTimer.clear(); throw e; }
-          if (!synthRes.ok) {
-            const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
-            synthTimer.clear();
-            throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
-          }
-
-          // OpenAI の SSE をパースし、delta.content のみ中継（reasoning は出さない）
-          const reader = synthRes.body.getReader();
-          const dec = new TextDecoder();
-          let buf = '';
-          let answer = ''; // 次の質問の予測に渡すため、中継した本文をためておく
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buf += dec.decode(value, { stream: true });
-            let nl;
-            while ((nl = buf.indexOf('\n')) >= 0) {
-              const line = buf.slice(0, nl).trim();
-              buf = buf.slice(nl + 1);
-              if (!line.startsWith('data:')) continue;
-              const payload = line.slice(5).trim();
-              if (payload === '[DONE]') continue;
-              try {
-                const j = JSON.parse(payload);
-                const delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-                if (delta) { answer += delta; send('integrated', { delta }); }
-              } catch (_) { /* 部分行は次ループで再構成 */ }
+            const synthRes = await callModel({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
+            if (!synthRes.ok) {
+              const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
+              throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
             }
-          }
-          synthTimer.clear();
+
+            return readSynthesis(synthRes.body, send);
+          });
           log('synthesizer_call', 'ok');
           // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
           if (wantSuggest && answer.trim()) {
-            const st = withTimeout(DEFAULTS.timeouts.suggest_ms);
-            const text = await fetchSuggestion(env, [...messages, { role: 'assistant', content: answer }], st.signal, log);
-            st.clear();
+            const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
+              signal => fetchSuggestion(env, [...messages, { role: 'assistant', content: answer }], signal, log));
             if (text) send('suggest', { text });
           }
           // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）

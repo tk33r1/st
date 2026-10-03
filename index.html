@@ -7229,7 +7229,7 @@
     // 人格の説明と LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
     // （失敗したら次に開いたときに取り直す）。undefined = 取得中、null = 取れなかった
     const MODELS_API = MAGI_ORIGIN + '/magi2/models';
-    const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
+    const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
     let agentModels;
     let agentModelsPromise = null;
     const loadAgentModels = () => agentModelsPromise || (agentModelsPromise = fetch(MODELS_API)
@@ -7273,7 +7273,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 3.6 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 3.7 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7450,38 +7450,39 @@
       }
       agentScroll();
     }
-    async function parseSSE(body, handlers) {
-      const reader = body.getReader(); const dec = new TextDecoder(); let buf = '';
-      // Normalise CRLF/CR to LF up front: the spec allows any of the three as a line
-      // break, and a proxy that rewrites them would otherwise leave '\r' on every
-      // payload and stop '\n\n' from ever matching the event separator.
-      const normalise = s => s.replace(/\r\n?/g, '\n');
-      const processBlock = (block) => {
+    async function parseSSE(body, handlers, onChunk) {
+      const reader = body.getReader(), dec = new TextDecoder();
+      let buf = '', skipLF = false;
+      const block = (text) => {
         let ev = 'message', data = '';
-        block.split('\n').forEach(line => {
-          // Per the SSE spec, multiple data: lines in one event are joined with '\n'
-          // (a single leading space after the colon is stripped). Joining without a
-          // separator corrupts payloads the server splits across lines.
+        text.split('\n').forEach(line => {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        data = data.replace(/\n$/, '');
-        if (!data) return;
-        let parsed; try { parsed = JSON.parse(data); } catch (_) { return; }
+        if (!data) return false;
+        const parsed = JSON.parse(data.replace(/\n$/, ''));
         if (handlers[ev]) handlers[ev](parsed);
+        return ev === 'done' || ev === 'error';
       };
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break;
-        buf += normalise(dec.decode(value, { stream: true }));
-        let i;
-        while ((i = buf.indexOf('\n\n')) >= 0) {
-          processBlock(buf.slice(0, i));
-          buf = buf.slice(i + 2);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          if (onChunk) onChunk();
+          let chunk = dec.decode(value, { stream: true });
+          if (!chunk) continue;
+          if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
+          skipLF = chunk.endsWith('\r');
+          buf += chunk.replace(/\r\n?/g, '\n');
+          let i;
+          while ((i = buf.indexOf('\n\n')) >= 0) {
+            const text = buf.slice(0, i); buf = buf.slice(i + 2);
+            if (block(text)) return;
+          }
         }
-      }
-      // Process any remaining buffer after the stream closes (server may omit trailing \n\n)
-      if (buf.trim()) processBlock(buf);
+      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
     }
+
     // --- マルチモーダル入力（画像添付）---
     // 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Gemini）へ渡す。アップロード先を持たない
     // インスクリプションなので、外部ストレージには一切依存させない。
@@ -7603,6 +7604,25 @@
       return turn;
     }
 
+    function prepareAgentMessages(history, lastContent) {
+      const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
+      while (messages[0] && messages[0].role === 'assistant') messages.shift();
+      messages[messages.length - 1].content = lastContent;
+      let remaining = 8;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i];
+        if (!Array.isArray(m.content)) continue;
+        const kept = [];
+        for (const part of m.content) {
+          if (part.type !== 'image_url') kept.push(part);
+          else if (remaining > 0) { kept.push(part); remaining--; }
+        }
+        // 画像だけだった古い質問も、会話上の位置は残す。
+        m.content = kept.length ? kept : '[Earlier images omitted]';
+      }
+      return messages;
+    }
+
     async function agentSend() {
       if (agentBusy || agentDead) return;
       const text = agentInput.value.trim().slice(0, 1000);
@@ -7632,34 +7652,39 @@
       saveCurrentHistory();
 
       agentBusy = true; setAgentInputEnabled(false);
-      let reply = '', errored = false, timedOut = false, suggestion = '';
+      let reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
 
-      // Abort only the connection / initial-response phase (30s). Once the stream
-      // starts the debate may legitimately run long, so the timer is cleared below.
+      // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
       const ctrl = new AbortController();
       const gen = agentGen; agentCtrl = ctrl;
-      const dropped = () => gen !== agentGen; // the dock was reset / switched under us
-      const connectTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, 30000);
+      const dropped = () => gen !== agentGen;
+      let idleTimer = null;
+      const watch = (ms = 70000) => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, ms);
+      };
+      watch(30000);
       try {
         const theme = isDarkNow() ? 'dark' : 'light';
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
-        const outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
-        // 直近の発言だけ送信用の解像度に差し替える（過去ターンはサムネのままで十分）
-        if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
+        const outbound = prepareAgentMessages(agentHistory, sendContent);
         const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true }), signal: ctrl.signal });
-        clearTimeout(connectTimer);
+        if (dropped()) return;
+        watch();
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
+          if (dropped()) return;
           let env = null; try { env = JSON.parse(raw).error; } catch (_) { }
           if (!env) env = { message: `HTTP ${res.status} ${res.statusText || ''}`.trim(), code: 'http_' + res.status };
           console.error('[agent] request failed', AGENT_API, res.status, raw.slice(0, 800));
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
-            title: (d) => { if (d && d.text && !dropped()) { setAgentTitle(d.text); syncCurrentToSaved(); } },
+            title: (d) => { if (d && d.text && !dropped()) setAgentTitle(d.text); },
             persona: (d) => {
+              if (dropped()) return;
               const card = turn.querySelector(`.persona-card[data-codename="${cssEsc(d.codename)}"]`);
               if (!card) return;
               const slot = card.querySelector(`.persona-round[data-round="${d.round || 1}"]`);
@@ -7668,15 +7693,19 @@
               agentScroll();
               if (debateData[d.codename]) debateData[d.codename][d.round === 2 ? 'round2' : 'round1'] = d.text;
             },
-            integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
-            error: (d) => { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
+            integrated: (d) => { if (dropped()) return; reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
+            error: (d) => { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
-            done: () => { },
-          });
+            done: () => { completed = true; },
+          }, watch);
+          if (!dropped() && !errored && (!completed || !reply.trim())) {
+            errored = true; turn.remove();
+            renderAgentError({ message: tr('The complete reply was not received. Please try again.', '返事を最後まで受け取れませんでした。もう一度お試しください。'), code: 'incomplete_reply' });
+          }
         }
       } catch (err) {
-        clearTimeout(connectTimer);
+        errored = true;
         if (dropped()) return; // aborted on purpose; the finally below still tidies up
         console.error('[agent] fetch failed', AGENT_API, err);
         turn.remove();
@@ -7685,7 +7714,9 @@
         if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
         else agentDegrade();
       } finally {
+        clearTimeout(idleTimer);
         if (agentCtrl === ctrl) agentCtrl = null;
+        if (dropped()) delete pendingReactions[mid];
         // A dropped request leaves the dock to whoever took it over: resetAgent() has
         // already reset these, and a later send may be busy with them by now.
         if (!dropped()) {
@@ -7695,7 +7726,7 @@
         }
       }
       if (dropped()) { delete pendingReactions[mid]; return; }
-      if (reply && !errored) {
+      if (completed && reply.trim() && !errored) {
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
@@ -7705,19 +7736,16 @@
         updateAgentActionButtons();
         syncCurrentToSaved();
         setAgentSuggestion(suggestion);
-      } else if (!turn.isConnected) {
-        // The whole turn was discarded (HTTP error / network / timeout), so the question it
-        // belonged to has to come back out of agentHistory too. Leaving it made the *next*
-        // request send two user messages in a row, and left magi_current_history disagreeing
-        // with the saved session — which is only ever written on the success path above.
-        // The mid-stream `error` event is deliberately not covered here: it keeps the turn,
-        // because the personas had already spoken, and their cards need the question above them.
+      } else {
+        // 失敗した往復を次の質問の履歴に持ち越さない。
+        turn.remove();
         const last = agentHistory[agentHistory.length - 1];
         if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
         delete pendingReactions[mid];
         u.remove();
         if (agentHistory.length) saveCurrentHistory();
         else safeRemove('magi_current_history');
+        syncCurrentToSaved(); updateAgentActionButtons();
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
         if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) agentLog.innerHTML = agentHintHTML();
@@ -7755,56 +7783,46 @@
       btn.innerHTML = sym;
       setTimeout(() => { btn.innerHTML = orig; }, 1200);
     }
-    // 値の正規化（旧データは絵文字文字列、現行は { em, id }）
+    // 旧データの絵文字文字列と、現行の { em, id, delete_token } を読めるようにする。
     const reEmoji = (v) => (typeof v === 'string' ? v : (v && v.em) || '');
-    const reId = (v) => (v && typeof v === 'object' ? v.id : undefined);
-    // リアクション API への POST（登録も取り消しも同じ形）
-    const postReact = (body, extra) => fetch(REACT_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      ...extra,
-    });
-    // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）。挿入行の id を返す。
     async function sendReaction(target, reaction, request, response) {
       if (!response) return undefined;
       try {
-        const res = await postReact({ target, reaction, request, response });
+        const res = await fetch(REACT_API, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, reaction, request, response }),
+        });
         if (!res.ok) return undefined;
-        const j = await res.json().catch(() => null);
-        return j && j.id;
+        const j = await res.json();
+        return j && j.id && typeof j.delete_token === 'string' ? { id: j.id, delete_token: j.delete_token } : undefined;
       } catch (_) { return undefined; }
     }
-    // 取り消し：登録時に得た行 id で D1 から該当行を削除
-    function deleteReaction(target, id) {
-      if (id == null) return;
-      try { postReact({ op: 'remove', target, id }, { keepalive: true }).catch(() => { }); } catch (_) { }
+    // トークンを持たない旧データは、連番だけでの削除を試みない。
+    function deleteReaction(target, receipt) {
+      if (!receipt || !receipt.id || !receipt.delete_token) return;
+      try {
+        fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (_) {}
     }
-    // リアクション確定：UIロック→保存→返ってきた id を store に記録して永続化
     function registerReaction(bar, target, em, ctx) {
       const store = reactionStoreFor(bar);
-      // Hold a reference to the exact cell we created so we can detect, when the id
-      // finally arrives, whether the reaction was cancelled/replaced in the meantime.
-      let cell = null;
-      if (store) { cell = { em }; store[target] = cell; persistReactions(); }
-      sendReaction(target, em, ctx.request, ctx.response).then((id) => {
-        if (id == null) return;
+      const cell = { em };
+      if (store) { store[target] = cell; persistReactions(); }
+      sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
+        if (!receipt) return;
         if (store && store[target] === cell) {
-          // Still the active reaction → record the id for a future undo.
-          cell.id = id; persistReactions();
-        } else {
-          // Cancelled (or replaced) before the id came back: unregister couldn't know
-          // the id yet, so delete the now-orphaned DB row here.
-          deleteReaction(target, id);
-        }
+          cell.id = receipt.id; cell.delete_token = receipt.delete_token; persistReactions();
+        } else deleteReaction(target, receipt);
       });
     }
-    // リアクション取り消し：store から消し、保存済みなら D1 からも削除
     function unregisterReaction(bar, target) {
       const store = reactionStoreFor(bar);
-      const id = store ? reId(store[target]) : undefined;
+      const receipt = store && store[target];
       if (store) { delete store[target]; persistReactions(); }
-      if (id != null) deleteReaction(target, id);
+      deleteReaction(target, receipt);
     }
     // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {

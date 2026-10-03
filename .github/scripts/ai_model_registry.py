@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AIモデルIDの正本（config/ai-models.json）を読むための小さな共通モジュール。"""
+"""AIモデルの正本（config/ai-models.json）を読むための小さな共通モジュール。"""
 
 import json
 import os
@@ -19,7 +19,7 @@ def model_id(provider, channel, registry=None):
     if registry is None:
         registry = load_registry()
     try:
-        value = registry[provider][channel]
+        value = registry[provider][channel]['id']
     except (KeyError, TypeError) as e:
         raise RuntimeError(f'AIモデル設定が見つかりません: {provider}.{channel}') from e
     if not isinstance(value, str) or not value.strip():

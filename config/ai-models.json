@@ -1,11 +1,20 @@
 {
   "openai": {
-    "luna": "gpt-6-luna"
+    "luna": {
+      "id": "gpt-6-luna",
+      "display_name": "GPT-6 Luna"
+    }
   },
   "deepseek": {
-    "flash": "deepseek-flash"
+    "flash": {
+      "id": "deepseek-flash",
+      "display_name": "V4.1 Flash"
+    }
   },
   "google": {
-    "flash_lite": "gemini-3.5-flash-lite"
+    "flash_lite": {
+      "id": "gemini-3.5-flash-lite",
+      "display_name": "Gemini 3.5 Flash-Lite"
+    }
   }
 }

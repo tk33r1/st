@@ -350,7 +350,7 @@ async function enrichSong(env, songId, artist, title, durationMs, altArtist) {
    送るのは曲のメタ情報だけで、来場者の名前やひとことは送らない。 */
 
 const SONG_INFO = {
-  model: aiModels.openai.luna,
+  model: aiModels.openai.luna.id,
   reasoning: 'high',
   // ctx.waitUntil は応答を返してからおよそ30秒で打ち切られる。実測は 8〜19秒/曲
   timeoutMs: 25000,

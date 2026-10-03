@@ -2,7 +2,7 @@ name: AI Model Update Watch
 
 on:
   schedule:
-    # 毎週月曜 09:23 JST。各社APIのモデル一覧から更新候補を調べる。
+    # 毎週月曜 09:23 JST。各社APIのモデル一覧とDeepSeek公式のモデル詳細から更新候補を調べる。
     - cron: '23 0 * * 1'
   workflow_dispatch:
 
@@ -50,7 +50,7 @@ jobs:
           echo
         } 2>&1 | tee "$RUNNER_TEMP/smoke.md"
 
-    # 候補はスモークテストに通ったものだけが正本に書かれる。停止予定などの要確認事項が
+    # モデルID・エイリアスの表示名はスモークテストに通ったものだけが正本に書かれる。停止予定などの要確認事項が
     # あると失敗扱いになるが、書かれた候補のPRはそれとは別に作る。
     - name: Discover model updates
       id: discover

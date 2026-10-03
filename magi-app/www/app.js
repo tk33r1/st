@@ -14,11 +14,20 @@
 // hosted PWA, or inside a Capacitor shell) works out of the box. To point at a
 // local `wrangler dev` worker, pass ?api=http://localhost:8787 or set
 // window.MAGI_API_BASE before this script loads.
+// 本番ページとネイティブアプリは接続先を固定する。
+// ローカル HTTP サーバーでの開発時だけ、ループバックの Worker を指定できる。
 var API_BASE = (function () {
-  var q = new URLSearchParams(location.search).get('api');
-  if (q) return q.replace(/\/$/, '');
-  if (window.MAGI_API_BASE) return String(window.MAGI_API_BASE).replace(/\/$/, '');
-  return 'https://workers.tk.st';
+  var production = 'https://workers.tk.st';
+  if (!/^https?:$/.test(location.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)
+      || (window.Capacitor && window.Capacitor.isNativePlatform())) return production;
+  var candidate = new URLSearchParams(location.search).get('api') || window.MAGI_API_BASE;
+  if (!candidate) return production;
+  try {
+    var url = new URL(String(candidate));
+    if (!/^https?:$/.test(url.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+        || url.username || url.password || url.pathname !== '/' || url.search || url.hash) return production;
+    return url.origin;
+  } catch (_) { return production; }
 })();
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
@@ -38,7 +47,7 @@ var AGENT_SYNTH = { codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true }
 // Fetched once, the first time a persona is opened on the splash (retried on the next open if it fails).
 // undefined = loading, null = unavailable.
 var MODELS_API = API_BASE + '/magi2/models';
-var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
+var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
 var agentModels;
 var agentModelsPromise = null;
 function loadAgentModels() {
@@ -163,7 +172,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.6 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.7 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -234,22 +243,25 @@ function applyReactionsToTurn(turn, reactions) {
   });
 }
 var reEmoji = function (v) { return (typeof v === 'string' ? v : (v && v.em) || ''); };
-var reId = function (v) { return (v && typeof v === 'object' ? v.id : undefined); };
 
-// ---- Render persisted history ----------------------------------------------
-function turnHTML(item) {
-  var debate = item.debate || {};
+// 新規送信と履歴復元で同じカードを使う。debate 未指定なら考え中として描画する。
+function personaCardsHTML(debate) {
   var personas = AGENT_PERSONAS.map(function (p) {
-    var d = debate[p.codename] || { round1: '…', round2: '…' };
+    var d = (debate && debate[p.codename]) || { round1: '…', round2: '…' };
     var r2has = d.round2 && d.round2 !== '…';
-    return '<div class="persona-card" data-codename="' + p.codename + '">'
+    return '<div class="persona-card' + (debate ? '' : ' thinking') + '" data-codename="' + p.codename + '">'
       + '<div class="persona-head"><span class="persona-hex">⬡</span><span class="persona-code">' + p.codename + '</span><span class="persona-name">' + p.name + '</span></div>'
       + '<div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">' + esc(d.round1 || '…') + '</div></div>'
       + '<div class="persona-round" data-round="2"' + (r2has ? '' : ' hidden') + '><span class="persona-round-label">After debate</span><div class="persona-text">' + esc(d.round2 || '…') + '</div></div>'
       + reactionBarHTML(p.codename)
       + '</div>';
   }).join('');
-  return '<div class="agent-personas">' + personas + '</div>'
+  return '<div class="agent-personas">' + personas + '</div>';
+}
+
+// ---- Render persisted history ----------------------------------------------
+function turnHTML(item) {
+  return personaCardsHTML(item.debate || {})
     + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + reactionBarHTML('integrated') + '</div>';
 }
 function renderHistoryToLog(history) {
@@ -282,7 +294,14 @@ function initAgent() {
   else showSplashIfEmpty();
   updateAgentActionButtons();
 }
+var agentGen = 0, agentCtrl = null;
+function dropAgentRequest() {
+  agentGen++;
+  if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
+  setAgentSuggestion('');
+}
 function resetAgent() {
+  dropAgentRequest();
   archiveCurrentHistory();
   agentHistory = []; agentBusy = false; agentDead = false;
   localStorage.removeItem('magi_current_history');
@@ -317,25 +336,37 @@ function renderAgentError(env) {
 }
 
 // ---- SSE --------------------------------------------------------------------
-async function parseSSE(body, handlers) {
-  var reader = body.getReader(); var dec = new TextDecoder(); var buf = '';
-  while (true) {
-    var r = await reader.read(); if (r.done) break;
-    buf += dec.decode(r.value, { stream: true });
-    var i;
-    while ((i = buf.indexOf('\n\n')) >= 0) {
-      var block = buf.slice(0, i); buf = buf.slice(i + 2);
-      var ev = 'message', data = '';
-      block.split('\n').forEach(function (line) {
-        if (line.startsWith('event:')) ev = line.slice(6).trim();
-        else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
-      });
-      data = data.replace(/\n$/, '');
-      if (!data) continue;
-      var parsed; try { parsed = JSON.parse(data); } catch (_) { continue; }
-      if (handlers[ev]) handlers[ev](parsed);
+async function parseSSE(body, handlers, onChunk) {
+  const reader = body.getReader(), dec = new TextDecoder();
+  let buf = '', skipLF = false;
+  const block = (text) => {
+    let ev = 'message', data = '';
+    text.split('\n').forEach(line => {
+      if (line.startsWith('event:')) ev = line.slice(6).trim();
+      else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
+    });
+    if (!data) return false;
+    const parsed = JSON.parse(data.replace(/\n$/, ''));
+    if (handlers[ev]) handlers[ev](parsed);
+    return ev === 'done' || ev === 'error';
+  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      if (onChunk) onChunk();
+      let chunk = dec.decode(value, { stream: true });
+      if (!chunk) continue;
+      if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
+      skipLF = chunk.endsWith('\r');
+      buf += chunk.replace(/\r\n?/g, '\n');
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const text = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (block(text)) return;
+      }
     }
-  }
+  } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
 }
 
 // ---- 画像添付（マルチモーダル入力）------------------------------------------
@@ -439,6 +470,25 @@ agentLog.addEventListener('click', function (e) {
 });
 
 // ---- Send -------------------------------------------------------------------
+function prepareAgentMessages(history, lastContent) {
+  const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
+  while (messages[0] && messages[0].role === 'assistant') messages.shift();
+  messages[messages.length - 1].content = lastContent;
+  let remaining = 8;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!Array.isArray(m.content)) continue;
+    const kept = [];
+    for (const part of m.content) {
+      if (part.type !== 'image_url') kept.push(part);
+      else if (remaining > 0) { kept.push(part); remaining--; }
+    }
+    // 画像だけだった古い質問も、会話上の位置は残す。
+    m.content = kept.length ? kept : '[Earlier images omitted]';
+  }
+  return messages;
+}
+
 async function agentSend() {
   if (agentBusy || agentDead) return;
   var text = agentInput.value.trim().slice(0, 1000);
@@ -462,14 +512,7 @@ async function agentSend() {
 
   var turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
   var mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
-  turn.innerHTML = '<div class="agent-personas">' + AGENT_PERSONAS.map(function (p) {
-    return '<div class="persona-card thinking" data-codename="' + p.codename + '">'
-      + '<div class="persona-head"><span class="persona-hex">⬡</span><span class="persona-code">' + p.codename + '</span><span class="persona-name">' + p.name + '</span></div>'
-      + '<div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">…</div></div>'
-      + '<div class="persona-round" data-round="2" hidden><span class="persona-round-label">After debate</span><div class="persona-text">…</div></div>'
-      + reactionBarHTML(p.codename)
-      + '</div>';
-  }).join('') + '</div>';
+  turn.innerHTML = personaCardsHTML();
   var replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
   replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + reactionBarHTML('integrated');
   turn.appendChild(replyEl);
@@ -480,33 +523,41 @@ async function agentSend() {
   safeStore('magi_current_history', agentHistory);
 
   agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
-  var reply = '', errored = false, timedOut = false, suggestion = '';
+  var reply = '', errored = false, timedOut = false, suggestion = '', completed = false;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
 
   var ctrl = new AbortController();
-  var connectTimer = setTimeout(function () { timedOut = true; ctrl.abort(); }, 30000);
+  var gen = agentGen; agentCtrl = ctrl;
+  var dropped = function () { return gen !== agentGen; };
+  var idleTimer = null;
+  var watch = function (ms) {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { timedOut = true; ctrl.abort(); }, ms || 70000);
+  };
+  watch(30000);
   try {
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-    var outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
-    // 直近の発言だけ送信用の解像度に差し替える（過去ターンはサムネのままで十分）
-    if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
+    var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: outbound, theme, suggest: true }),
       signal: ctrl.signal,
     });
-    clearTimeout(connectTimer);
+    if (dropped()) return;
+    watch();
     if (!res.ok || !res.body) {
       var raw = await res.text().catch(function () { return ''; });
+      if (dropped()) return;
       var env = null; try { env = JSON.parse(raw).error; } catch (_) { }
       if (!env) env = { message: ('HTTP ' + res.status + ' ' + (res.statusText || '')).trim(), code: 'http_' + res.status };
       console.error('[agent] request failed', AGENT_API, res.status, raw.slice(0, 800));
       turn.remove(); renderAgentError(env); errored = true;
     } else {
       await parseSSE(res.body, {
-        title: function (d) { if (d && d.text) { setAgentTitle(d.text); syncCurrentToSaved(); } },
+        title: function (d) { if (d && d.text && !dropped()) setAgentTitle(d.text); },
         persona: function (d) {
+          if (dropped()) return;
           var cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
           var card = turn.querySelector('.persona-card[data-codename="' + cn + '"]');
           if (!card) return;
@@ -519,31 +570,48 @@ async function agentSend() {
             else debateData[d.codename].round1 = d.text;
           }
         },
-        integrated: function (d) { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
-        error: function (d) { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
+        integrated: function (d) { if (dropped()) return; reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
+        error: function (d) { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
         // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
-        done: function () { },
-      });
+        done: function () { completed = true; },
+      }, watch);
+      if (!dropped() && !errored && (!completed || !reply.trim())) {
+        errored = true; turn.remove();
+        renderAgentError({ message: 'The complete reply was not received. Please try again.', code: 'incomplete_reply' });
+      }
     }
   } catch (err) {
-    clearTimeout(connectTimer);
+    errored = true;
+    if (dropped()) return;
     console.error('[agent] fetch failed', AGENT_API, err);
     turn.remove();
     if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
     else agentDegrade();
   } finally {
-    replyEl.classList.remove('streaming');
-    agentBusy = false;
-    if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+    clearTimeout(idleTimer);
+    if (agentCtrl === ctrl) agentCtrl = null;
+    if (dropped()) delete pendingReactions[mid];
+    if (!dropped()) {
+      replyEl.classList.remove('streaming');
+      agentBusy = false;
+      if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+    }
   }
-  if (reply && !errored) {
-    agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid: mid, reactions: pendingReactions[mid] || {} });
+  if (dropped()) { delete pendingReactions[mid]; return; }
+  if (completed && reply.trim() && !errored) {
+    // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
+    agentHistory.push({ role: 'assistant', content: reply, debate: debateData, mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
     setAgentSuggestion(suggestion);
+  } else {
+    turn.remove(); u.remove(); delete pendingReactions[mid];
+    var last = agentHistory[agentHistory.length - 1];
+    if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
+    safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
   }
 }
 
@@ -571,31 +639,41 @@ function getReactionContext(bar) {
 async function sendReaction(target, reaction, request, response) {
   if (!response) return undefined;
   try {
-    var res = await fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target: target, reaction: reaction, request: request, response: response }) });
+    const res = await fetch(REACT_API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target, reaction, request, response }),
+    });
     if (!res.ok) return undefined;
-    var j = await res.json().catch(function () { return null; });
-    return j && j.id;
+    const j = await res.json();
+    return j && j.id && typeof j.delete_token === 'string' ? { id: j.id, delete_token: j.delete_token } : undefined;
   } catch (_) { return undefined; }
 }
-function deleteReaction(target, id) {
-  if (id == null) return;
-  try { fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'remove', target: target, id: id }), keepalive: true }).catch(function () { }); } catch (_) { }
+// トークンを持たない旧データは、連番だけでの削除を試みない。
+function deleteReaction(target, receipt) {
+  if (!receipt || !receipt.id || !receipt.delete_token) return;
+  try {
+    fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_) {}
 }
 function registerReaction(bar, target, em, ctx) {
-  var store = reactionStoreFor(bar);
-  var cell = null;
-  if (store) { cell = { em: em }; store[target] = cell; persistReactions(); }
-  sendReaction(target, em, ctx.request, ctx.response).then(function (id) {
-    if (id == null) return;
-    if (store && store[target] === cell) { cell.id = id; persistReactions(); }
-    else deleteReaction(target, id);
+  const store = reactionStoreFor(bar);
+  const cell = { em };
+  if (store) { store[target] = cell; persistReactions(); }
+  sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
+    if (!receipt) return;
+    if (store && store[target] === cell) {
+      cell.id = receipt.id; cell.delete_token = receipt.delete_token; persistReactions();
+    } else deleteReaction(target, receipt);
   });
 }
 function unregisterReaction(bar, target) {
-  var store = reactionStoreFor(bar);
-  var id = store ? reId(store[target]) : undefined;
+  const store = reactionStoreFor(bar);
+  const receipt = store && store[target];
   if (store) { delete store[target]; persistReactions(); }
-  if (id != null) deleteReaction(target, id);
+  deleteReaction(target, receipt);
 }
 function flashReactBtn(btn, sym) {
   var orig = btn.innerHTML; btn.innerHTML = sym;
@@ -723,6 +801,8 @@ function loadSavedSession(id) {
   var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
   var session = sessions.find(function (s) { return s.id === id; });
   if (!session) return;
+  dropAgentRequest();
+  agentBusy = false;
   agentHistory = session.history.slice();
   safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
@@ -747,7 +827,7 @@ function showInfoPanel() {
     + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
     + '<li>Each persona, and the final answer, also draws on summaries of tk.st (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.</li>'
     + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
-    + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
+    + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and context from the latest <strong>12 messages</strong>.</li>'
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'

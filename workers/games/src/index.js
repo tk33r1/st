@@ -25,7 +25,7 @@ function json(data, status = 200, extraHeaders = {}) {
 // モデル・max_completion_tokens・reasoning_effort はここで固定する。Origin ヘッダは
 // ブラウザ外から偽装できるので、料金に響くパラメータをクライアントに開けない。
 // ───────────────────────────────────────────────────────────────
-const GPT_MODEL = aiModels.openai.luna;
+const GPT_MODEL = aiModels.openai.luna.id;
 const MAX_HISTORY = 20;      // 会話履歴は際限なく伸びるので直近だけ通す
 const MAX_CHARS = 4000;      // 1メッセージあたり
 

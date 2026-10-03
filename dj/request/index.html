@@ -2990,7 +2990,7 @@
         + 'アーティスト名と曲名は Apple Music での表記に合わせる（挙げた曲は iTunes Search API で照合される）。'
         + 'すでにかけた曲・受付済みの曲は挙げない。挙げた理由をひとことだけ添える。');
       L.push(CONTEXT_END);
-      return L.join('\n');
+      return L.join('\n').slice(0, 4000); // Worker の context 上限に合わせる
     }
 
     // 状況説明の終わりの目印。最初の発言の頭に付けるので、どこから相談の本文かを MAGI に示す
@@ -3009,44 +3009,49 @@
     ]).filter((m) => m.content);
 
     /* Worker に渡す直近12件。いま送る発言を末尾に足し、先頭が回答だけになる場合は
-       切り落とす。残った最初の発言（＝ユーザーの発言）の頭に DJ の文脈を付ける。 */
-    function messagesForMagi(context, content) {
+       切り落とす。DJ の文脈は context として別に渡す。 */
+    function messagesForMagi(content) {
       const messages = [
         ...messagesFromTurns(conv && conv.turns),
         { role: 'user', content },
       ].slice(-CHAT_MAX);
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
-      if (messages[0]) messages[0].content = context + '\n' + messages[0].content;
       return messages;
     }
 
     /* SSE を event / data ブロックに切り分けて handlers に流す。
        onChunk は本文のかたまりが届くたびに呼ぶ（無通信の見張りを延ばすため） */
     async function parseSSE(body, handlers, onChunk) {
-      const reader = body.getReader();
-      const dec = new TextDecoder();
-      let buf = '';
-      for (;;) {
-        const r = await reader.read();
-        if (r.done) break;
-        if (onChunk) onChunk();
-        buf += dec.decode(r.value, { stream: true });
-        let i;
-        while ((i = buf.indexOf('\n\n')) >= 0) {
-          const block = buf.slice(0, i);
-          buf = buf.slice(i + 2);
-          let ev = 'message', data = '';
-          for (const line of block.split('\n')) {
-            if (line.startsWith('event:')) ev = line.slice(6).trim();
-            else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
+      const reader = body.getReader(), dec = new TextDecoder();
+      let buf = '', skipLF = false;
+      const block = (text) => {
+        let ev = 'message', data = '';
+        text.split('\n').forEach(line => {
+          if (line.startsWith('event:')) ev = line.slice(6).trim();
+          else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
+        });
+        if (!data) return false;
+        const parsed = JSON.parse(data.replace(/\n$/, ''));
+        if (handlers[ev]) handlers[ev](parsed);
+        return ev === 'done' || ev === 'error';
+      };
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          if (onChunk) onChunk();
+          let chunk = dec.decode(value, { stream: true });
+          if (!chunk) continue;
+          if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
+          skipLF = chunk.endsWith('\r');
+          buf += chunk.replace(/\r\n?/g, '\n');
+          let i;
+          while ((i = buf.indexOf('\n\n')) >= 0) {
+            const text = buf.slice(0, i); buf = buf.slice(i + 2);
+            if (block(text)) return;
           }
-          data = data.replace(/\n$/, '');
-          if (!data) continue;
-          let parsed;
-          try { parsed = JSON.parse(data); } catch { continue; }
-          if (handlers[ev]) handlers[ev](parsed);
         }
-      }
+      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
     }
 
     // 相談の下には FAQ とフッターがあるため、ページ末尾ではなく会話の末尾を追う
@@ -3164,7 +3169,7 @@
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messagesForMagi(context, content), theme: 'dark', suggest: true }),
+          body: JSON.stringify({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true }),
           signal: ctrl.signal,
         });
         watch();

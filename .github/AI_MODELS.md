@@ -1,6 +1,8 @@
 # AIモデルの更新管理
 
-AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダー → 用途チャネル → モデルID）。
+AI APIで使うモデルID・画面の表示名の正本は `config/ai-models.json`（プロバイダー → 用途チャネル → モデル設定）。
+各設定はAPIに送るモデルID `id` と、画面用の名称 `display_name` を必ず持つ。
+3社とも画面は `display_name` を使い、APIには `id` を送る。
 実運用で直接モデルを選ぶプロバイダーは OpenAI・DeepSeek・Google（Gemini）の3社で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 
@@ -11,7 +13,7 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
   実運用workflowでは設定しない。日刊生成は正本を読めなくてもルールベースで号を出す。
 - Cloudflare Worker（`workers/magi2`・`workers/games`・`workers/dj-request`）は正本のJSONを `import` する。
   wrangler がデプロイ時にバンドルへ取り込むので、正本を変えたら再デプロイで反映される。
-- 正本にはモデルIDだけを置く。モデル一覧・Chat CompletionsのURL、APIキーの環境変数、
+- 正本にはモデルIDと表示名だけを置く。モデル一覧・公式のモデル詳細・Chat CompletionsのURL、APIキーの環境変数、
   版番号のパターン、スモークテストの中身といったプロバイダー固有の知識は `ai_models.py` の
   `PROVIDERS` にまとめてある。
 - `ai-models.yml` は `config/`・`.github/`・`workers/` を触るpushとPRで、正本の形式と、
@@ -25,6 +27,12 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
 2. **更新候補の検知**。各社の `/models` APIを見て、OpenAIは同じLuna系列のより新しい世代番号
    （`6` と `6.0` は同じ版として扱う）を、Googleは同じFlash-Lite系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
    候補はその場でスモークテストにかけ、**合格したものだけ**を正本に書く。
+   OpenAI・Googleは限定した系列の公式表記（`GPT-<版> Luna`・`Gemini <版> Flash-Lite`）に合わせて
+   `display_name` も同時に更新する。
+   DeepSeekは公式の「Models & Pricing」のモデルID列と「MODEL VERSION」行を対応させ、
+   使用中のエイリアスの実モデル名を取得する。表示名が変わった場合もスモークテストに通ったものだけを
+   正本の `display_name` に書く。取得失敗・表の形式変更・対応が曖昧な場合は前回の表示名を保持し、Issueで知らせる。
+   確認日時だけでは正本を更新しないので、版が同じなら毎週PRは増えない。
 3. **レビュー用PR**。正本が変わっていればPRを作る（ブランチ `automation/ai-model-update`）。
    ほかの要確認事項（停止予定、DeepSeekの一覧取得失敗など）があってもPRは止めない。
    PRに人のコミットがある場合はブランチを上書きせず、レポートをコメントするだけにする。
@@ -34,6 +42,8 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
 自動マージとWorkerの自動デプロイはしない。PRをマージするとGitHub Actionsの生成処理は更新される。
 MAGI本体・ゲーム共通API・DJ ブースの曲の背景カードは `workers/magi2`・`workers/games`・`workers/dj-request` を
 手動デプロイして本番へ反映する。
+表示名だけの変更は `workers/magi2` の再デプロイでトップページと配布済みのMAGIアプリに反映される。
+`/magi2/models` の `model` は3社共通で画面用の表示名、`model_id` は実際にAPIへ指定するIDを返す。
 PR本文にも同じ手順を出す。
 
 ### スモークテストの中身
@@ -65,7 +75,7 @@ Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じキーでよい
 # 正本の形式と直書きの検査（APIキー不要）
 python .github/scripts/ai_models.py check
 
-# 各社のモデル一覧から新しい版を探し、スモークテストに通れば正本へ反映する（3社のAPIキーが必要）
+# モデル一覧・公式のモデル詳細から新しい版や表示名を探し、スモークテストに通れば正本へ反映する（3社のAPIキーが必要）
 python .github/scripts/ai_models.py update
 
 # 正本のモデルで実APIの最小互換性テスト（3社のAPIキーが必要。少額のAPI利用が発生）

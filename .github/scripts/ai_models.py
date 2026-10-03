@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 import zlib
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 
 from ai_model_registry import REGISTRY_PATH, REPO_ROOT, load_registry, model_id
@@ -83,13 +84,37 @@ def post_json(url, api_key, payload, stream=False):
     except OSError as e:
         raise RuntimeError(f'接続エラー: {e}') from e
     if stream:
-        if 'data: [DONE]' not in raw:
-            raise RuntimeError('ストリームが [DONE] で完了しませんでした')
+        validate_chat_stream(raw)
         return raw
     try:
         return json.loads(raw)
     except json.JSONDecodeError as e:
         raise RuntimeError(f'JSON応答ではありません: {raw[:500]}') from e
+
+
+def validate_chat_stream(raw):
+    """統合と同じく、正常な終端と本文を検証する（推論だけで終了した応答も失敗）。"""
+    done, finish, text = False, None, ''
+    for line in raw.splitlines():
+        if not line.startswith('data:'):
+            continue
+        payload = line[5:].strip()
+        if payload == '[DONE]':
+            done = True
+            break
+        try:
+            body = json.loads(payload)
+        except json.JSONDecodeError as e:
+            raise RuntimeError('ストリームの JSON が不正です') from e
+        if body.get('error'):
+            raise RuntimeError('ストリームの途中でエラーが発生しました')
+        choices = body.get('choices') or []
+        if choices:
+            choice = choices[0]
+            finish = choice.get('finish_reason') or finish
+            text += (choice.get('delta') or {}).get('content') or ''
+    if not done or finish != 'stop' or not text.strip():
+        raise RuntimeError(f'ストリームが正常な本文を返しませんでした（finish_reason={finish}）')
 
 
 def message_content(body):
@@ -148,7 +173,7 @@ def smoke_openai(url, api_key, model):
         'model': model,
         'messages': [{'role': 'user', 'content': 'Reply with OK.'}],
         'reasoning_effort': 'high',
-        'max_completion_tokens': 128,
+        'max_completion_tokens': 1536,  # magi2 の統合と同じ。推論ぶんの余裕も含む
         'stream': True,
     }, stream=True)
     smoke_openai_web_search(api_key, model)
@@ -237,21 +262,23 @@ def smoke_google(url, api_key, model):
     return '推論minimal/画像/高温/top_p'
 
 
-# プロバイダー固有の知識はここだけに置き、正本（config/ai-models.json）にはモデルIDだけを持つ。
+# プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。
 # channels の値は版番号を抜き出すパターンで、より新しい版がモデル一覧に出たら更新候補にする。
-# None はIDが固定のエイリアス（中身は各社が差し替える）で、毎週のスモークテストで互換性だけ確かめる。
+# None はIDが固定のエイリアス。互換性に加え、公式のモデル詳細で背後の版も確認する。
 PROVIDERS = {
     'openai': {
         'key_env': 'OPENAI_API_KEY',
         'models_url': 'https://api.openai.com/v1/models',
         'chat_url': 'https://api.openai.com/v1/chat/completions',
         'channels': {'luna': re.compile(r'gpt-(\d+(?:\.\d+)*)-luna')},
+        'display_name_template': 'GPT-{version} Luna',
         'smoke': smoke_openai,
     },
     'deepseek': {
         'key_env': 'DEEPSEEK_API_KEY',
         'models_url': 'https://api.deepseek.com/models',
         'chat_url': 'https://api.deepseek.com/chat/completions',
+        'display_names_url': 'https://api-docs.deepseek.com/quick_start/pricing/',
         'channels': {'flash': None},
         'smoke': smoke_deepseek,
     },
@@ -261,6 +288,7 @@ PROVIDERS = {
         'models_url': 'https://generativelanguage.googleapis.com/v1beta/openai/models',
         'chat_url': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
         'channels': {'flash_lite': re.compile(r'gemini-(\d+(?:\.\d+)*)-flash-lite')},
+        'display_name_template': 'Gemini {version} Flash-Lite',
         'smoke': smoke_google,
     },
 }
@@ -272,7 +300,7 @@ def validate_registry(registry):
     errors = []
     for provider, channels in registry.items():
         if not isinstance(channels, dict):
-            errors.append(f'{provider}: 値は「チャネル → モデルID」のオブジェクトにしてください')
+            errors.append(f'{provider}: 値は「チャネル → モデル設定」のオブジェクトにしてください')
             continue
         known = PROVIDERS.get(provider, {}).get('channels', {})
         errors.extend(
@@ -288,6 +316,12 @@ def validate_registry(registry):
                 continue
             if pattern and not pattern.fullmatch(current):
                 errors.append(f'{provider}.{channel}: {current} が版番号のパターンに合いません')
+            entry = registry[provider][channel]
+            if set(entry) - {'id', 'display_name'}:
+                errors.append(f'{provider}.{channel}: 未定義のモデル設定があります')
+            display_name = entry.get('display_name')
+            if not isinstance(display_name, str) or not display_name.strip():
+                errors.append(f'{provider}.{channel}: 表示名が必要です')
     return errors
 
 
@@ -357,6 +391,89 @@ def version_key(pattern, model):
     return tuple(parts)
 
 
+def versioned_display_name(pconf, channel, model):
+    # 対象は上の channels で限定した系列だけ。公式の系列名にIDの版番号を組み合わせる。
+    match = pconf['channels'][channel].fullmatch(model)
+    if not match:
+        raise RuntimeError(f'表示名を組み立てられないモデルIDです: {model}')
+    return pconf['display_name_template'].format(version=match.group(1))
+
+
+class ModelDetailsParser(HTMLParser):
+    """公式ページの表を読む。モデル列と版の行を対応させ、本文や脚注からは推測しない。"""
+
+    def __init__(self):
+        super().__init__()
+        self.tables = []
+        self.depth = 0
+        self.rows = []
+        self.row = None
+        self.cell = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'table':
+            self.depth += 1
+            if self.depth == 1:
+                self.rows = []
+        elif self.depth == 1:
+            if tag == 'tr':
+                self.row = []
+            elif tag in ('td', 'th') and self.row is not None:
+                self.cell = []
+
+    def handle_data(self, data):
+        if self.depth == 1 and self.cell is not None:
+            self.cell.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == 'table':
+            if self.depth == 1:
+                self.tables.append(self.rows)
+            self.depth = max(0, self.depth - 1)
+        elif self.depth == 1:
+            if tag in ('td', 'th') and self.cell is not None:
+                self.row.append(' '.join(''.join(self.cell).split()))
+                self.cell = None
+            elif tag == 'tr' and self.row is not None:
+                self.rows.append(self.row)
+                self.row = None
+
+
+def parse_deepseek_display_name(html, model):
+    parser = ModelDetailsParser()
+    parser.feed(html)
+    names = set()
+    for rows in parser.tables:
+        headers = [row for row in rows if row and row[0].upper() in ('MODEL', '模型')]
+        versions = [row for row in rows if row and row[0].upper() in ('MODEL VERSION', '模型版本')]
+        for header in headers:
+            columns = [i for i, cell in enumerate(header[1:], 1)
+                       if re.search(rf'(?<![\w.-]){re.escape(model)}(?![\w.-])', cell)]
+            for row in versions:
+                for column in columns:
+                    if len(row) != len(header):
+                        raise RuntimeError('DeepSeek: 公式のモデル詳細の列数が一致しません')
+                    version = row[column]
+                    if not re.fullmatch(r'DeepSeek-V\d+(?:\.\d+)*-Flash(?:-[A-Za-z0-9]+)*', version):
+                        raise RuntimeError(f'DeepSeek: 公式の Flash モデル版を解釈できません: {version}')
+                    names.add(version.removeprefix('DeepSeek-').replace('-', ' '))
+    if len(names) != 1:
+        raise RuntimeError(f'DeepSeek: {model} に対応する版を公式のモデル詳細から一意に取得できません')
+    return names.pop()
+
+
+def fetch_deepseek_display_name(url, model):
+    request = urllib.request.Request(url, headers={
+        'Accept': 'text/html', 'User-Agent': 'tk.st-ai-model-watch/1.0',
+    })
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            html = response.read().decode('utf-8')
+    except (OSError, UnicodeError) as e:
+        raise RuntimeError(f'DeepSeek: 公式のモデル詳細の取得に失敗: {e}') from e
+    return parse_deepseek_display_name(html, model)
+
+
 def update_registry():
     """新しい版を探し、スモークテストに通った候補だけを正本へ書く。
 
@@ -376,6 +493,7 @@ def update_registry():
     ]
     changes = []
     problems = []
+    workers_to_deploy = set()
 
     for provider, pconf in PROVIDERS.items():
         try:
@@ -388,7 +506,8 @@ def update_registry():
 
         for channel, pattern in pconf['channels'].items():
             label = f'{provider}.{channel}'
-            current = registry[provider][channel]
+            entry = registry[provider][channel]
+            current = model_id(provider, channel, registry)
             live = by_id.get(current)
             if not live:
                 problems.append(f'{label}: 現在のモデル {current} が一覧にありません')
@@ -397,6 +516,19 @@ def update_registry():
             status = '' if live else '（⚠ 一覧にない）'
             if pattern is None:
                 report.append(f'- {label}: エイリアス `{current}`{status}')
+                if not live:
+                    continue
+                try:
+                    display_name = fetch_deepseek_display_name(pconf['display_names_url'], current)
+                    if display_name != entry.get('display_name'):
+                        detail = pconf['smoke'](pconf['chat_url'], api_key, current)
+                        changes.append(f'{label}: 表示名 `{entry.get("display_name")}` → `{display_name}`（スモークテスト合格: {detail}）')
+                        entry['display_name'] = display_name
+                        workers_to_deploy.add('magi2')
+                    report.append(f'- {label}: 実モデル `{display_name}`（出典: {pconf["display_names_url"]}）')
+                except RuntimeError as e:
+                    problems.append(str(e))
+                    report.append(f'- {label}: 表示名の更新を見送り（{e}）。前回の表示名を保持します。')
                 continue
 
             # 現在のモデルが一覧から消えていても、後継の候補は探す
@@ -407,12 +539,15 @@ def update_registry():
                 continue
             candidate = max(newer, key=lambda m: version_key(pattern, m))
             try:
+                display_name = versioned_display_name(pconf, channel, candidate)
                 detail = pconf['smoke'](pconf['chat_url'], api_key, candidate)
             except RuntimeError as e:
                 problems.append(f'{label}: 更新候補 {candidate} がスモークテストに失敗: {e}')
                 report.append(f'- {label}: 更新候補 `{candidate}` はスモークテスト失敗のため見送り（現在 `{current}`{status}）')
                 continue
-            registry[provider][channel] = candidate
+            entry['id'] = candidate
+            entry['display_name'] = display_name
+            workers_to_deploy.update(('magi2', 'games', 'dj-request') if provider == 'openai' else ('magi2',))
             changes.append(f'{label}: `{current}` → `{candidate}`（スモークテスト合格: {detail}）')
             report.append(f'- {label}: 更新候補 `{current}` → `{candidate}`')
 
@@ -423,13 +558,12 @@ def update_registry():
             '',
             '## マージ後の反映',
             '',
-            'GitHub Actionsの生成処理はmainへの反映後から新モデルを使います。',
-            'Cloudflare Workerは次の3件を手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
+            'GitHub Actionsの生成処理はmainへの反映後から新設定を使います。表示名だけの変更ではAPI用のIDは変わりません。',
+            '変更が関係するCloudflare Workerを手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
             '',
             '```bash',
-            'npx wrangler deploy --config workers/magi2/wrangler.toml',
-            'npx wrangler deploy --config workers/games/wrangler.toml',
-            'npx wrangler deploy --config workers/dj-request/wrangler.toml',
+            'cd workers',
+            *(f'npx wrangler deploy --config {worker}/wrangler.toml' for worker in sorted(workers_to_deploy)),
             '```',
         ])
         REGISTRY_PATH.write_text(
@@ -471,7 +605,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('check', help='正本の形式と、モデルIDの直書きがないことを検査する')
-    sub.add_parser('update', help='各社のモデル一覧から新しい版を探し、スモークテストに通れば正本を更新する')
+    sub.add_parser('update', help='モデル一覧と公式のモデル詳細から新しい版・表示名を探し、スモークテストに通れば正本を更新する')
     sub.add_parser('smoke', help='正本のモデルで実運用の呼び出し方を最小リクエストで試す')
     args = parser.parse_args()
 
