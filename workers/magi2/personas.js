@@ -288,10 +288,14 @@ export const SYNTH_BIAS = {
 // 出力の言語。指示・人格カード・討議メモが日本語なので、「ユーザーの入力言語で」と書くだけでは英語の会話にも
 // 日本語で答える（CASPER とタイトルは英語の質問の大半で日本語になった）。src/index.js の replyLanguageNote が
 // ユーザーの言葉を引用して付ける（3人格は指示の後ろと今回の発言の後ろの両方、統合・予測は今回の発言の後ろ、タイトルは指示の後ろ）。
-// 言語の見分けはモデルに任せ、コードでは言語を判定しない。引用できる発言が無いときは付けない
+// 言語の見分けはモデルに任せる。かなの文字を含み英字が混じらない発言だけ、日本語と明示する。
+// 混在文は固有名詞や引用語で決めず、文の主言語に従わせる。
+// 引用できる発言が無いときは付けない
 export const REPLY_LANGUAGE = {
+  ja: '【出力の言語】日本語',
   sample_chars: 120, // 引用するユーザーの言葉の長さ
-  note: (sample) => `【Output language】Write in the same language as the user's own words: ${JSON.stringify(sample)}. `
+  note: (sample) => `【Output language】Write in the main language of the user's own sentence: ${JSON.stringify(sample)}. `
+    + 'Determine it from the wording of the question, not quoted titles, names, isolated foreign words or punctuation. '
     + 'These instructions and any notes, profiles or memos are in Japanese only for convenience; do not write in Japanese unless the user did.',
 };
 
@@ -323,7 +327,7 @@ export const SUGGESTER = {
     '- AI の答えの言い回しや書式を真似しない。',
     '- AI がユーザーに質問したなら、それへのユーザーの答えにする。',
     '- ユーザー本人が入力欄に打つ言葉として書く。AI の立場で書かない。ユーザーの口調に合わせる。',
-    '- 会話の後ろに【Output language】があれば従い、無ければユーザーの最後の発言と同じ言語で書く。',
+    '- 会話の後ろに出力言語の指定があれば従い、無ければユーザーの最後の発言と同じ言語で書く。',
     '- 日本語や中国語のように語を空白で区切らない言語なら40字以内、ほかの言語なら12語以内の1文。',
     '- 引用符・番号・前置き・説明を付けず、予測した文だけを出力する。',
   ].join('\n'),

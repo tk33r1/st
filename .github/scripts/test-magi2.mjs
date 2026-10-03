@@ -6,6 +6,7 @@ import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { webcrypto } from 'node:crypto';
+import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
 
@@ -100,6 +101,38 @@ function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts
 const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search', body, ip);
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
 const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)', daily: null };
+
+test('出力言語は混在文を日本語に固定せず、記号や短い返答では直前の言語を維持する', () => {
+  const w = worker();
+  const ja = vm.runInContext('REPLY_LANGUAGE.ja', w.ctx);
+  const note = vm.runInContext('REPLY_LANGUAGE.note', w.ctx);
+  const user = content => ({ role: 'user', content });
+  for (const text of ['個人情報保護方針について教えて', 'この曲はどうですか？', 'ｺﾉｷｮｸﾊﾄﾞｳ？']) {
+    assert.equal(w.ctx.replyLanguageNote([user(text)]), ja);
+  }
+  for (const text of ['What do you think of サカナクション?', 'What does 「こんにちは」 mean in English?',
+    'Which sounds better: jazz・funk or house?', 'PDFを結合する方法は？', '你好', '안녕하세요']) {
+    assert.equal(w.ctx.replyLanguageNote([user(text)]), note(text));
+  }
+  const english = user('What do you think of Daft Punk?');
+  for (const text of ['・', 'ー', 'ーー', 'ｰ', 'ﾞﾟ', '😀', '?', 'OK', 'Daft Punk?', 'あ']) {
+    assert.equal(w.ctx.replyLanguageNote([english, { role: 'assistant', content: '日本語の回答' }, user(text)]), note(english.content));
+    assert.equal(w.ctx.replyLanguageNote([user('この曲はどうですか？'), user(text)]), ja);
+    assert.equal(w.ctx.replyLanguageNote([user(text)]), null);
+  }
+});
+
+test('全人格・統合・タイトル・予測へ同じ言語指定を渡し、日本語の状況説明で上書きしない', async () => {
+  for (const text of ['What do you think of サカナクション?', 'この曲はどうですか？']) {
+    const w = worker();
+    const note = text.startsWith('What') ? vm.runInContext('REPLY_LANGUAGE.note', w.ctx)(text) : vm.runInContext('REPLY_LANGUAGE.ja', w.ctx);
+    const res = await w.request('/magi2/chat', { messages: [{ role: 'user', content: text }], suggest: true,
+      context: '選曲の相談です。状況説明は日本語ですが、ユーザーの発言ではありません。' });
+    assert.match(await res.text(), /event: done/);
+    assert.equal(w.calls.length, 9); // R1とR2の各3人格、統合、タイトル、予測
+    for (const call of w.calls) assert.ok(call.messages.some(m => typeof m.content === 'string' && m.content.includes(note)));
+  }
+});
 
 test('検索は認可・入力・フラグ・DB・完全な一覧を確認してから回数とAIを使う', async () => {
   const w = enableSearch(worker());
@@ -201,6 +234,72 @@ test('検索エラーに入力が含まれても公開エラー・ログ・通�
   }
   await Promise.all(w.waits); assert.equal(mails.length, 1);
   assert.ok(!JSON.stringify([logs, mails]).includes(secret)); assert.ok(mails[0].text.includes('404検索'));
+});
+
+test('検索とチャットのページ選びは、遅れて届く429本文を判定し、メールの送信は待たない', { timeout: 2000 }, async () => {
+  const secret = 'PRIVATE_SEARCH_TEXT';
+  // 実際のfetchを使う。メモリ上のResponseだけではsignalによる本文の中止を再現できない。
+  const server = createServer((req, res) => {
+    req.resume();
+    res.writeHead(429, { 'Content-Type': 'application/json' }); res.flushHeaders();
+    const timer = setTimeout(() => res.end(JSON.stringify({ error: { code: 'insufficient_quota', message: secret } })), 80);
+    res.on('close', () => clearTimeout(timer));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  let releaseMail;
+  try {
+    for (const chat of [false, true]) {
+      const logs = [], mails = [];
+      const w = enableSearch(worker(undefined, (url, o) => {
+        if (url.includes('resend.com')) {
+          mails.push(JSON.parse(o.body));
+          return new Promise(resolve => { releaseMail = () => resolve(Response.json({ id: 'mail' })); });
+        }
+        if (o?.body && JSON.parse(o.body).response_format) return fetch('http://127.0.0.1:' + server.address().port, o);
+      }));
+      w.ctx.console.log = (...values) => logs.push(values);
+      Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+      const res = chat
+        ? await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: secret }] })
+        : await searchRequest(w, { query: secret, locale: 'en' });
+      const text = await res.text();
+      if (chat) { assert.match(text, /event: done/); assert.doesNotMatch(text, /event: pages|event: error/); }
+      else { assert.equal(res.status, 503); assert.ok(!text.includes(secret)); }
+      assert.equal(mails.length, 1); assert.ok(mails[0].text.includes(chat ? 'チャットのページ選び' : '404検索'));
+      assert.ok(!JSON.stringify([logs, mails]).includes(secret));
+      releaseMail(); releaseMail = null; await Promise.all(w.waits);
+    }
+  } finally {
+    if (releaseMail) releaseMail();
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('検索エラーの本文が届かなければ期限で通信を止め、HTTPコードだけで判定できる通知は送る', { timeout: 2000 }, async () => {
+  let status;
+  const server = createServer((req, res) => {
+    req.resume(); res.writeHead(status, { 'Content-Type': 'application/json' }); res.flushHeaders();
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    for (status of [429, 401]) {
+      const mails = [];
+      let signal;
+      const w = enableSearch(worker(undefined, (url, o) => {
+        if (url.includes('resend.com')) { mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
+        if (o?.body && JSON.parse(o.body).response_format) {
+          signal = o.signal; return fetch('http://127.0.0.1:' + server.address().port, o);
+        }
+      }));
+      // 通知の本文待ち2秒だけを短縮し、AI全体の8秒の期限ではなく本文の期限で戻ることを確認する。
+      w.ctx.setTimeout = (fn, ms) => setTimeout(fn, ms === 2000 ? 40 : ms);
+      Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+      assert.equal((await searchRequest(w)).status, 503); assert.equal(signal.aborted, true);
+      await Promise.all(w.waits); assert.equal(mails.length, status === 401 ? 1 : 0);
+    }
+  } finally {
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test('チャットのページ選びは最新本文500文字だけで並列に行い、統合とイベントで同じ候補を使う', async () => {

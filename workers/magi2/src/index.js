@@ -261,7 +261,9 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
     signal,
   });
   // 失敗は残高切れ・キーの失効でないかを見る（本文は呼び出し側も読むので複製を渡す）
-  if (!res.ok && env.onUpstreamError) env.onUpstreamError(cfg.provider, res.clone());
+  // 検索では本文の分類を待つ。先に戻ると検索の後処理がabortし、複製した本文も読めなくなる。
+  // メールの送信はフック内のwaitUntilで行うので、ここでは待たない。
+  if (!res.ok && env.onUpstreamError) await env.onUpstreamError(cfg.provider, res.clone());
   return res;
 }
 
@@ -328,16 +330,16 @@ async function sendAlert(env, log, key, subject, lines, redact = false) {
 // 検索は本文を判定にだけ使い、例外・本文をログにも通知にも渡さない。
 function searchUpstream(env, ctx, log, purpose) {
   return Object.assign(Object.create(env), {
-    onUpstreamError: (provider, res) => ctx.waitUntil((async () => {
+    onUpstreamError: async (provider, res) => {
       let body = '';
       try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
       finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
       if (![401, 402, 403].includes(res.status) && !(res.status === 429 && QUOTA_RE.test(body))) return;
       log('site_search', 'upstream_alert', provider, res.status);
-      await sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
+      ctx.waitUntil(sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
         `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
-      ], true);
-    })().catch(() => log('site_search', 'alert_failed'))),
+      ], true).catch(() => log('site_search', 'alert_failed')));
+    },
   });
 }
 
@@ -430,14 +432,22 @@ async function fetchTitle(env, lastContent, langNote, signal, log) {
 // 「この言語で書く」とだけ伝える（どの言語でもモデルが見分ける）。コードが選ぶのは引用する発言だけ：
 // 画面が付けた状況説明を足す前の会話を新しい順に見て、言語が読み取れる最初の発言を使う。
 // 英字だけの発言は3語以上、それ以外の文字（かな・漢字・ハングル・アラビア文字・エチオピア文字など）は2字以上で読み取れるとみなす。
-// 「OK」や曲名だけ・画像だけの発言は飛ばす（日本語の会話の「Daft Punk?」で英語に切り替わらないように）。無ければ null
+// 「OK」や曲名だけ・画像だけの発言は飛ばす（日本語の会話の「Daft Punk?」で英語に切り替わらないように）。無ければ null。
+// かなの文字があり、英字が混じらない発言だけは「日本語」と書く（漢字の多い日本語を中国語と取り違えないため）。
+// 混在文は固有名詞だけで言語を決めず、引用した文の主言語をモデルに判断させる。
+// 「・」「ー」や濁点など、Common/Inheritedの文字・記号は言語の根拠に数えない。
+const isLanguageLetter = (ch) => /\p{L}/u.test(ch) && !/[\p{Script=Common}\p{Script=Inherited}]/u.test(ch);
+const isKanaLetter = (ch) => /\p{L}/u.test(ch) && /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
 function replyLanguageNote(messages) {
   for (const m of [...messages].reverse()) {
     if (m.role !== 'user') continue;
     const text = contentText(m.content).trim();
     const words = (text.match(/[A-Za-z]+/g) || []).length;
-    const letters = [...text].filter(ch => ch.codePointAt(0) > 127 && /\p{L}/u.test(ch)).length;
-    if (words >= 3 || letters >= 2) return REPLY_LANGUAGE.note(text.slice(0, REPLY_LANGUAGE.sample_chars));
+    const letters = [...text].filter(ch => ch.codePointAt(0) > 127 && isLanguageLetter(ch)).length;
+    if (words >= 3 || letters >= 2) {
+      if (!/[A-Za-z]/.test(text) && [...text].some(isKanaLetter)) return REPLY_LANGUAGE.ja;
+      return REPLY_LANGUAGE.note(text.slice(0, REPLY_LANGUAGE.sample_chars));
+    }
   }
   return null;
 }
