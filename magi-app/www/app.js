@@ -48,6 +48,15 @@ var AGENT_PERSONAS = [
     theme: 'Light: more weight in the final answer. Dark: speaks a little more freely.',
   },
 ];
+// The integrated persona that writes the final answer — kept in step with tk.st's index.html (AGENT_SYNTH there).
+// Its temperament is not in a fixed prompt: it follows the self-image card built from the personality tests
+// (workers/magi2/personas.js SYNTHESIZER / PERSONA_CONTEXT). Its LLM comes from /magi2/models' synthesizer.
+var AGENT_SYNTH = {
+  codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true,
+  desc: 'The integrated self — the voice that writes the final answer after the three debate. Its temperament is not hand-written: it follows a summary of my own personality tests (MBTI, CliftonStrengths, Big Five), including how they changed after the accident.',
+  context: 'Draws on a summary of the profile on tk.st — the bio, the two job titles, and the personality tests before and after the accident. Rebuilt automatically whenever they change.',
+  theme: 'Light: leans toward the Strategist when weighing the debate. Dark: leans toward the Enthusiast.',
+};
 // The LLM behind each persona. Fetched once, the first time a persona is opened on the splash
 // (retried on the next open if it fails). undefined = loading, null = unavailable.
 var MODELS_API = API_BASE + '/magi2/models';
@@ -64,7 +73,7 @@ function loadAgentModels() {
   return agentModelsPromise;
 }
 function personaDescHTML(p) {
-  var m = agentModels && agentModels.personas && agentModels.personas[p.codename];
+  var m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
   var llm = agentModels === undefined ? '…' : m ? (PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model : 'unavailable';
   return '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>' + esc(p.desc)
     + '<dl class="magi-desc-meta">'
@@ -174,8 +183,9 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.4 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-  + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('') + '</div>'
+  + '<div class="magi-ver">ver 3.5 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
+  + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
   + '</div>';
 
@@ -625,7 +635,7 @@ agentLog.addEventListener('click', function (e) {
     var wasActive = node.classList.contains('active');
     splash.querySelectorAll('.magi-node').forEach(function (n) { n.classList.remove('active'); });
     if (wasActive) { desc.classList.add('hidden'); return; }
-    var p = AGENT_PERSONAS.find(function (x) { return x.codename === node.dataset.codename; });
+    var p = AGENT_PERSONAS.concat([AGENT_SYNTH]).find(function (x) { return x.codename === node.dataset.codename; });
     node.classList.add('active');
     desc.innerHTML = personaDescHTML(p);
     desc.classList.remove('hidden');
@@ -755,6 +765,7 @@ function showInfoPanel() {
   makeAgentPanel('agent-info-panel', 'System & Privacy',
     '<ul>'
     + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
+    + '<li>Each persona, and the final answer, also draws on summaries of tk.st (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.</li>'
     + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
     + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
