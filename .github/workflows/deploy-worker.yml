@@ -22,7 +22,6 @@ on:
           - dj-schedule
           - dj-offer
           - comments
-          - auth
           - magi
           - magi2
           - games

@@ -1,104 +1,484 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- 計測タグ（GTM + Ahrefs）は /assets/analytics.js に集約（どの深さのパスでも出るページなのでルートからのパス） -->
-  <script src="/assets/analytics.js" async></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#f3f4f6">
-  <title>404 Not Found | tk.st</title>
-  <!-- Cloudflare Pages は存在しないパスすべてにこのページを 404 で返す（どの深さでも同じファイル）。
-       相対パスは表示中の URL を基準に解決されて壊れるので、リンクと画像はルートからのパスで書く。 -->
+  <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0c0c" media="(prefers-color-scheme: dark)">
+  <title>ページが見つかりませんでした | tk.st</title>
   <link rel="icon" href="/images/favicons/st-favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/images/favicons/st-favicon.png">
+  <script>
+    // 共通ローダーは変更せず、404だけで停止設定とページビュー分類の初期値を渡す。
+    (function () {
+      function allowed() {
+        try { return localStorage.getItem('st-analytics') !== 'off'; } catch (_) { return true; }
+      }
+      window.ST404Analytics = function (event, values) {
+        if (allowed()) {
+          try { window.dataLayer.push(Object.assign({ event: event }, values)); } catch (_) { /* 計測はUIから独立 */ }
+        }
+      };
+      if (!allowed()) return;
+      var referrer = '';
+      try {
+        var ref = new URL(document.referrer);
+        if (/^https?:$/.test(ref.protocol)) {
+          referrer = ref.origin + ((ref.origin === location.origin || ['tk.st', 'www.tk.st'].includes(ref.hostname)) ? ref.pathname : '');
+        }
+      } catch (_) { /* referrerなし */ }
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ page_type: '404', pathname: location.pathname, page_referrer: referrer });
+      var script = document.createElement('script');
+      script.src = '/assets/analytics.js';
+      script.async = true;
+      document.head.appendChild(script);
+    })();
+  </script>
   <style>
-    /* 色はトップページのライトテーマと同じ値 */
     :root {
-      --bg-color: #f3f4f6;
-      --surface-color: #ffffff;
-      --text-color: #1f2937;
-      --primary-color: #15803d;
-      --primary-bg: #dcfce7;
-      --secondary-color: #4b5563;
-      --border-color: #d1d5db;
-      --error-color: #b91c1c;
+      color-scheme: light dark;
+      --bg: #f3f4f6; --surface: #fff; --text: #1f2937; --accent: #15803d;
+      --muted: #4b5563; --border: #d1d5db; --hover: #dcfce7;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0c0c0c; --surface: #1a1a1a; --text: #d4d4d4; --accent: #4ade80; --muted: #888; --border: #333; --hover: #112016; }
     }
     *, ::before, ::after { box-sizing: border-box; }
-    html { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: var(--bg-color);
-      color: var(--text-color);
-      line-height: 1.7;
-    }
-    main {
-      width: 100%;
-      max-width: 640px;
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .bar {
-      display: flex;
-      gap: 6px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--border-color); }
-    .term { padding: 20px 20px 24px; font-size: 14px; }
-    .term p { margin: 0; overflow-wrap: anywhere; }
-    .prompt { color: var(--primary-color); }
-    .err { color: var(--error-color); }
-    h1 { margin: 20px 0 4px; font-size: 20px; font-weight: 700; }
-    .term .note { color: var(--secondary-color); margin: 0 0 20px; }
-    ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-    a {
-      display: inline-block;
-      padding: 6px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--primary-color);
-      text-decoration: none;
-    }
-    a:hover, a:focus-visible { background: var(--primary-bg); border-color: var(--primary-color); }
-    .cursor { display: inline-block; width: 0.6em; height: 1.1em; vertical-align: text-bottom; background: var(--primary-color); animation: blink 1s steps(1) infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+    [hidden] { display: none !important; }
+    html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; padding: 48px 24px; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.65; }
+    main { max-width: 760px; margin: 0 auto; }
+    h1, h2, p { margin: 0; }
+    h1 { margin: 8px 0; font-size: clamp(22px, 4vw, 28px); line-height: 1.4; }
+    h2 { font-size: 20px; line-height: 1.4; }
+    .error-code, .requested-url { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .error-code { color: var(--accent); font-size: clamp(40px, 8vw, 56px); line-height: 1.15; font-weight: 600; letter-spacing: -.04em; }
+    .intro, .requested-url, .status, .description, .card-description, .count, .kind { color: var(--muted); }
+    .requested-url { font-size: 13px; margin-top: 12px; overflow-wrap: anywhere; }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .search { margin-top: 32px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    input { width: 100%; min-height: 52px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; }
+    input::placeholder { color: var(--muted); }
+    .results { margin-top: 20px; }
+    .results h2 { font-size: 16px; margin-bottom: 8px; }
+    .status { font-size: 14px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    .result-list { display: grid; gap: 8px; }
+    .result-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: start; min-height: 52px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-decoration: none; }
+    .result-link:hover { background: var(--hover); text-decoration: none; }
+    .result-title { font-weight: 600; }
+    .description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 14px; line-height: 1.5; margin-top: 4px; }
+    .kind { font-size: 12px; padding-top: 2px; white-space: nowrap; }
+    .status:not(:empty) { margin-top: 8px; }
+    .daily-search { margin-top: 16px; font-size: 14px; }
+    .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
+    .daily-query { overflow-wrap: anywhere; }
+    .explore { margin-top: 36px; }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 16px; }
+    details { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 18px; border-radius: 12px; min-height: 88px; }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover { background: var(--hover); }
+    .card-title { font-weight: 600; }
+    .card-description { display: block; font-size: 13px; font-weight: 400; margin-top: 2px; }
+    .count { font-size: 12px; font-weight: 400; margin-left: 8px; white-space: nowrap; }
+    .chevron { align-self: center; color: var(--accent); font-size: 20px; line-height: 1; }
+    details[open] .chevron { transform: rotate(90deg); }
+    .card-body { padding: 0 18px 12px; }
+    .card-list a, .all-link { display: flex; align-items: center; min-height: 44px; padding: 8px 0; font-size: 14px; text-decoration: none; }
+    .card-list li + li { border-top: 1px solid var(--border); }
+    .card-list:not(:empty) { margin-bottom: 6px; }
+    .all-link { border-top: 1px solid var(--border); }
+    .other-links { display: flex; flex-wrap: wrap; gap: 0 20px; margin-top: 16px; }
+    .other-links a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+    .home { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; font-weight: 600; }
+    noscript p { margin-top: 28px; }
+    @media (max-width: 559px) { body { padding: 32px 16px; } .cards { grid-template-columns: minmax(0, 1fr); } .result-link { column-gap: 8px; padding: 12px; } }
   </style>
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
+  <!-- JavaScript無効時の既存GTM導線。st-analyticsでは制御できない。 -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
   <main>
-    <div class="bar" aria-hidden="true"><span></span><span></span><span></span></div>
-    <div class="term">
-      <p><span class="prompt">guest@tk.st:~$</span> cd <span id="path">このページ</span></p>
-      <p class="err">cd: No such file or directory</p>
-      <h1>404 Not Found</h1>
-      <p class="note">お探しのページは見つかりませんでした。移動したか、URL が間違っている可能性があります。</p>
-      <ul>
-        <li><a href="/">cd ~</a></li>
-        <li><a href="/tools/">tools/</a></li>
-        <li><a href="/game/">game/</a></li>
-        <li><a href="/glitch/">glitch/</a></li>
-      </ul>
-      <p style="margin-top:20px"><span class="prompt">guest@tk.st:~$</span> <span class="cursor" aria-hidden="true"></span></p>
-    </div>
+    <header>
+      <p class="error-code"><span aria-hidden="true">~$ </span>404</p>
+      <h1 data-ja="ページが見つかりませんでした" data-en="Page not found">ページが見つかりませんでした</h1>
+      <p class="intro" data-ja="URLが変わったか、入力に誤りがあるかもしれません。" data-en="The address may have changed, or there may be a typo.">URLが変わったか、入力に誤りがあるかもしれません。</p>
+      <p class="requested-url" id="requested-url" hidden></p>
+    </header>
+    <section class="search" id="search" aria-labelledby="search-label" hidden>
+      <form id="search-form" role="search">
+        <label id="search-label" for="query" data-ja="ツール・ゲーム・記事を検索" data-en="Search tools, games, and articles">ツール・ゲーム・記事を検索</label>
+        <input id="query" type="search" maxlength="200" autocomplete="off" spellcheck="false" placeholder="ツール・ゲーム・記事を検索" aria-controls="result-list" aria-describedby="search-status">
+      </form>
+      <div class="results" id="results">
+        <h2 id="result-heading" hidden></h2>
+        <ul class="result-list" id="result-list" aria-labelledby="result-heading"></ul>
+        <p class="status" id="search-status" role="status" aria-atomic="true"></p>
+      </div>
+      <p class="daily-search" id="daily-search" hidden><span class="daily-query" id="daily-query"></span> <a id="nitori-search" href="/job/nitoridaily/"></a> <span aria-hidden="true">·</span> <a id="retail-search" href="/job/retailtechdaily/"></a></p>
+    </section>
+    <noscript><p>下の一覧からお選びください。</p></noscript>
+    <section class="explore" aria-labelledby="explore-heading">
+      <h2 id="explore-heading" data-ja="サイトの全体" data-en="Explore the site">サイトの全体</h2>
+      <div class="cards">
+        <details id="card-tools">
+          <summary><span><span class="card-title" data-ja="ツール" data-en="Tools">ツール</span><span class="count" id="count-tools" hidden></span><span class="card-description" data-ja="ブラウザで完結" data-en="Everything runs in your browser">ブラウザで完結</span></span><span class="chevron" aria-hidden="true">›</span></summary>
+          <div class="card-body"><ul class="card-list" id="list-tools"></ul><a class="all-link" data-entry="tools" data-section="tools" data-card="tools" data-title-ja="ツール一覧" data-title-en="All tools" data-description-ja="ブラウザで完結" data-description-en="Everything runs in your browser" href="/tools/" data-ja="ツールをすべて見る →" data-en="View all tools →">ツールをすべて見る →</a></div>
+        </details>
+        <details id="card-game">
+          <summary><span><span class="card-title" data-ja="ゲーム" data-en="Games">ゲーム</span><span class="count" id="count-game" hidden></span><span class="card-description" data-ja="ブラウザで遊べる" data-en="Play in your browser">ブラウザで遊べる</span></span><span class="chevron" aria-hidden="true">›</span></summary>
+          <div class="card-body"><ul class="card-list" id="list-game"></ul><a class="all-link" data-entry="game" data-section="game" data-card="game" data-title-ja="ゲーム一覧" data-title-en="All games" data-description-ja="ブラウザで遊べる" data-description-en="Play in your browser" href="/game/" data-ja="ゲームをすべて見る →" data-en="View all games →">ゲームをすべて見る →</a></div>
+        </details>
+        <details id="card-glitch">
+          <summary><span><span class="card-title">Glitch</span><span class="count" id="count-glitch" hidden></span><span class="card-description" data-ja="工夫と実験の記事" data-en="Ideas, hacks, and experiments">工夫と実験の記事</span></span><span class="chevron" aria-hidden="true">›</span></summary>
+          <div class="card-body"><ul class="card-list" id="list-glitch"></ul><a class="all-link" data-entry="glitch" data-section="glitch" data-card="glitch" data-title-ja="Glitch 記事一覧" data-title-en="All Glitch articles" data-description-ja="工夫と実験の記事" data-description-en="Ideas, hacks, and experiments" href="/glitch/" data-ja="記事をすべて見る →" data-en="View all articles →">記事をすべて見る →</a></div>
+        </details>
+        <details id="card-daily">
+          <summary><span><span class="card-title" data-ja="日刊ブリーフ" data-en="Daily briefs">日刊ブリーフ</span><span class="count" data-ja="2媒体" data-en="2 publications">2媒体</span><span class="card-description" data-ja="小売のニュースを毎日" data-en="Retail news, every day">小売のニュースを毎日</span></span><span class="chevron" aria-hidden="true">›</span></summary>
+          <div class="card-body"><ul class="card-list">
+            <li><a data-entry="nitori" data-section="job" data-card="daily" data-title-ja="日刊ニトリ" data-title-en="Daily Nitori" data-description-ja="ニトリとホームファニシングのニュース" data-description-en="Nitori and home furnishing news" href="/job/nitoridaily/" data-ja="日刊ニトリ →" data-en="Daily Nitori →">日刊ニトリ →</a></li>
+            <li><a data-entry="retail" data-section="job" data-card="daily" data-title-ja="日刊リテールテック" data-title-en="Daily Retail Tech" data-description-ja="小売とテクノロジーのニュース" data-description-en="Retail and technology news" href="/job/retailtechdaily/" data-ja="日刊リテールテック →" data-en="Daily Retail Tech →">日刊リテールテック →</a></li>
+          </ul></div>
+        </details>
+      </div>
+      <!-- 固定の入口の定義はこの11リンク。候補もここから作り、個別のDJページは載せない。 -->
+      <nav aria-label="ほかのページ" id="other-nav"><ul class="other-links">
+        <li><a data-entry="magi" data-section="magi" data-title-ja="MAGI" data-title-en="MAGI" data-description-ja="3つの人格と話すAIチャット" data-description-en="Chat with three AI personas" href="/magi/">MAGI</a></li>
+        <li><a data-entry="dj" data-section="dj" data-title-ja="DJ" data-title-en="DJ" data-description-ja="DJの活動とプロフィール" data-description-en="DJ activity and profile" href="/dj/">DJ</a></li>
+        <li><a data-entry="motovlog" data-section="motovlog" data-title-ja="Motovlog" data-title-en="Motovlog" data-description-ja="LIBERTY MOTOVLOG" data-description-en="LIBERTY MOTOVLOG" href="/motovlog/">Motovlog</a></li>
+        <li><a data-entry="thought" data-section="thought" data-title-ja="Thought" data-title-en="Thought" data-description-ja="考えていること" data-description-en="Thoughts and reflections" href="/thought/">Thought</a></li>
+        <li><a data-entry="job" data-section="job" data-title-ja="職務" data-title-en="Career" data-description-ja="仕事とこれまでの経験" data-description-en="Work and experience" href="/job/" data-ja="職務" data-en="Career">職務</a></li>
+        <li><a data-entry="contact" data-section="contact" data-title-ja="お問い合わせ" data-title-en="Contact" data-description-ja="Shinya Takedaへの連絡" data-description-en="Get in touch with Shinya Takeda" href="/contact/" data-ja="お問い合わせ" data-en="Contact">お問い合わせ</a></li>
+      </ul></nav>
+    </section>
+    <a class="home" href="/" data-ja="トップページへ →" data-en="Go to the homepage →">トップページへ →</a>
   </main>
   <script>
-    // 要求されたパスを表示する。URL 由来の値なので textContent で入れる。
     (function () {
-      var p = document.getElementById('path');
-      try { p.textContent = decodeURIComponent(location.pathname); } catch (e) { p.textContent = location.pathname; }
+      'use strict';
+      var lang = 'ja';
+      try { if (navigator.language) lang = /^ja/i.test(navigator.language) ? 'ja' : 'en'; } catch (_) { /* 静的HTMLと同じ日本語 */ }
+      var messages = {
+        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊' },
+        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief' }
+      };
+      var text = messages[lang];
+      var byId = function (id) { return document.getElementById(id); };
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-ja][data-en]').forEach(function (node) { node.textContent = node.dataset[lang]; });
+      document.title = (lang === 'ja' ? 'ページが見つかりませんでした' : 'Page not found') + ' | tk.st';
+      byId('other-nav').setAttribute('aria-label', lang === 'ja' ? 'ほかのページ' : 'More pages');
+      var input = byId('query');
+      input.placeholder = byId('search-label').textContent;
+      var list = byId('result-list');
+      var heading = byId('result-heading');
+      var status = byId('search-status');
+
+      function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
+      function stripControls(value) { return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ''); }
+      function normalize(value) {
+        return value.normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); }).replace(/[\s_-]+/gu, ' ').trim();
+      }
+      function compact(value) { return value.replace(/\s/g, ''); }
+      function pathParts(value) {
+        var parts = value.split('/').filter(Boolean);
+        if (parts.length && /^index\.html?$/i.test(parts[parts.length - 1])) parts.pop();
+        else if (parts.length) parts[parts.length - 1] = parts[parts.length - 1].replace(/\.[a-z0-9]{1,10}$/i, '');
+        return parts.map(normalize);
+      }
+      function pathKey(parts) { return '/' + parts.join('/') + '/'; }
+      var displayedPath = stripControls(safeDecode(location.pathname));
+      byId('requested-url').textContent = location.host + displayedPath;
+      byId('requested-url').hidden = false;
+      // NFKC後の末尾だけを補正する。表示と計測には元のpathnameを使う。
+      var comparablePath = safeDecode(location.pathname).normalize('NFKC');
+      var trimmedPath = comparablePath.replace(/[。、)」』】.,;:!?\s]+$/gu, '');
+      var removedEnding = trimmedPath !== comparablePath;
+      var incoming = pathParts(trimmedPath);
+      var incomingKey = pathKey(incoming);
+      var entries = Array.from(document.querySelectorAll('[data-entry]')).map(function (node, order) {
+        var entry = { key: 'entry:' + node.dataset.entry, kind: 'entry', title: node.getAttribute('data-title-' + lang), description: node.getAttribute('data-description-' + lang), href: node.getAttribute('href'), section: node.dataset.section, card: node.dataset.card || '', order: order };
+        entry.parts = pathParts(entry.href);
+        return entry;
+      });
+      var dailyEntries = entries.filter(function (entry) { return entry.card === 'daily'; });
+
+      // 隣接転置も1箇所として数える。短い来訪要素と数字IDには曖昧一致を使わない。
+      function editDistance(a, b) {
+        a = Array.from(a); b = Array.from(b);
+        var rows = Array.from({ length: a.length + 1 }, function (_, i) { return [i]; });
+        for (var j = 0; j <= b.length; j++) rows[0][j] = j;
+        for (var i = 1; i <= a.length; i++) {
+          for (j = 1; j <= b.length; j++) {
+            rows[i][j] = Math.min(rows[i - 1][j] + 1, rows[i][j - 1] + 1, rows[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) rows[i][j] = Math.min(rows[i][j], rows[i - 2][j - 2] + 1);
+          }
+        }
+        return rows[a.length][b.length];
+      }
+      function closeness(a, b) {
+        a = a || ''; b = b || '';
+        if (a === b && a) return 0;
+        var length = Math.max(Array.from(a).length, Array.from(b).length);
+        if (Array.from(a).length <= 3 || /^\d+$/.test(a) || /^\d+$/.test(b) || Math.abs(a.length - b.length) > 2 || length > 80) return null;
+        var distance = editDistance(a, b);
+        return distance <= (length >= 8 ? 2 : 1) && distance / length <= .25 ? distance : null;
+      }
+      function isPrefix(parts, full) { return parts.length <= full.length && parts.every(function (part, i) { return part === full[i]; }); }
+      function entryCorrection(entry) {
+        if (!incoming.length) return null;
+        if (entry.parts.length === 1) {
+          var d = closeness(incoming[0], entry.parts[0]);
+          return d && d > 0 ? d : null;
+        }
+        // 日刊の /job/ 抜け。日付は比較対象に入れない。
+        var missing = closeness(incoming[0], entry.parts[1]);
+        if (missing !== null) return missing;
+        if (incoming.length < 2) return null;
+        var first = closeness(incoming[0], entry.parts[0]);
+        var second = closeness(incoming[1], entry.parts[1]);
+        if (first === null || second === null || first + second === 0) return null;
+        return first + second;
+      }
+      var exactSection = entries.filter(function (entry) { return isPrefix(entry.parts, incoming); }).sort(function (a, b) { return b.parts.length - a.parts.length; })[0];
+      var corrections = entries.filter(function (entry) { return entryCorrection(entry) !== null; });
+      var correctedSection = corrections.length === 1 ? corrections[0] : null;
+      var arrivedSection = (exactSection || correctedSection || {}).section || '';
+      var initialCard = (exactSection || {}).card || (correctedSection || {}).card;
+      if (initialCard) byId('card-' + initialCard).open = true;
+
+      function validatedHref(value, section) {
+        if (typeof value !== 'string' || !/^(?:\/(?!\/)|https?:\/\/)/i.test(value) || /[\u0000-\u0020\u007f\\]/.test(value)) return null;
+        try {
+          var url = new URL(value, 'https://tk.st');
+          if (!/^https?:$/.test(url.protocol) || !['tk.st', 'www.tk.st'].includes(url.hostname) || url.port || url.username || url.password || url.search || url.hash) return null;
+          var decoded = safeDecode(url.pathname);
+          if (!decoded.startsWith('/' + section + '/') || /[\u0000-\u001f\u007f\\?#]/.test(decoded) || decoded.split('/').some(function (part) { return part === '.' || part === '..'; })) return null;
+          var parts = pathParts(decoded);
+          if (parts.length < 2) return null;
+          return url.pathname;
+        } catch (_) { return null; }
+      }
+      function adapt(data, section, kind, offset) {
+        var source = section === 'glitch' ? data && data.articles : data;
+        if (!Array.isArray(source)) throw new Error('Invalid list');
+        var seen = new Set();
+        return source.reduce(function (items, row, index) {
+          if (!row || typeof row !== 'object' || typeof row.title !== 'string' || !row.title.trim() || !/^[a-z0-9-]+$/i.test(String(row.id == null ? '' : row.id))) return items;
+          var href = section === 'glitch' ? '/glitch/' + row.id + '/' : validatedHref(row.url, section);
+          if (!href) return items;
+          var key = pathKey(pathParts(safeDecode(href)));
+          if (seen.has(key)) return items;
+          seen.add(key);
+          var title = row.title.trim();
+          var displayTitle = kind === 'tool' ? title.split(' - ')[0] : title;
+          var description = typeof row.description === 'string' ? row.description : (typeof row.excerpt === 'string' ? row.excerpt : '');
+          var short = typeof row.shortDescription === 'string' ? row.shortDescription : '';
+          var tags = Array.isArray(row.tags) ? row.tags.filter(function (tag) { return typeof tag === 'string'; }) : [];
+          if (typeof row.genre === 'string') tags = tags.concat(row.genre);
+          var item = { key: kind + ':' + row.id, kind: kind, title: displayTitle, description: short || description, href: href, section: section, order: offset + index, parts: pathParts(safeDecode(href)) };
+          item.titles = [normalize(displayTitle), normalize(title)];
+          item.tags = tags.map(normalize);
+          item.fields = item.titles.concat(item.tags, [normalize(description), normalize(short)]);
+          items.push(item);
+          return items;
+        }, []);
+      }
+      function includesTerm(fields, term) { return fields.some(function (field) { return field.includes(term) || compact(field).includes(compact(term)); }); }
+      function tie(a, b) { return (b.section === arrivedSection ? 1 : 0) - (a.section === arrivedSection ? 1 : 0) || a.order - b.order; }
+      function searchItems(items, query) {
+        var normalized = normalize(query);
+        var terms = normalized.split(' ').filter(Boolean);
+        if (!terms.length) return [];
+        return items.reduce(function (matches, item) {
+          if (!terms.every(function (term) { return includesTerm(item.fields, term); })) return matches;
+          var rank = item.titles.some(function (title) { return compact(title) === compact(normalized); }) ? 0
+            : item.titles.some(function (title) { return compact(title).startsWith(compact(normalized)); }) ? 1
+            : terms.every(function (term) { return includesTerm(item.titles, term); }) ? 2
+            : terms.every(function (term) { return includesTerm(item.titles.concat(item.tags), term); }) ? 3 : 4;
+          matches.push({ item: item, rank: rank });
+          return matches;
+        }, []).sort(function (a, b) { return a.rank - b.rank || tie(a.item, b.item); }).map(function (match) { return match.item; });
+      }
+      function suggestions(items, issue) {
+        var candidates = [];
+        function add(item, rank, distance, words) { candidates.push({ item: item, rank: rank, distance: distance || 0, words: words || 0 }); }
+        if (issue) add(issue, 0);
+        var sectionWords = new Set(entries.flatMap(function (entry) { return entry.parts; }));
+        var words = Array.from(new Set(incoming.flatMap(function (part) { return part.split(' '); }).filter(function (word) { return word.length >= 2 && !/^\d+$/.test(word) && !sectionWords.has(word); })));
+        items.concat(entries).forEach(function (item) {
+          if (pathKey(item.parts) === incomingKey) add(item, 0);
+          if (item.kind !== 'entry') {
+            if (item.parts.length < incoming.length && isPrefix(item.parts, incoming)) add(item, 1);
+            var last = incoming[incoming.length - 1] || '';
+            var distance = closeness(last, item.parts[item.parts.length - 1]);
+            if (distance !== null && !/^\d+$/.test(last)) add(item, 2, distance);
+            var count = words.filter(function (word) { return includesTerm(item.titles.concat(item.tags), word); }).length;
+            if (count) add(item, 4, 0, count);
+          } else {
+            var correction = entryCorrection(item);
+            if (correction !== null) add(item, 3, correction);
+          }
+        });
+        if (exactSection && exactSection.parts.length < incoming.length) add(exactSection, 5);
+        var seen = new Set();
+        return candidates.sort(function (a, b) { return a.rank - b.rank || a.distance - b.distance || b.words - a.words || tie(a.item, b.item); }).filter(function (candidate) {
+          var href = candidate.item.href;
+          if (seen.has(href)) return false;
+          seen.add(href); return true;
+        }).slice(0, 3).map(function (candidate) { return candidate.item; });
+      }
+
+      function makeLink(item) { var link = document.createElement('a'); link.href = item.href; link.textContent = item.title; return link; }
+      function fillCard(section, items) {
+        var target = byId('list-' + section);
+        items.forEach(function (item) { var li = document.createElement('li'); li.appendChild(makeLink(item)); target.appendChild(li); });
+        var count = byId('count-' + section);
+        count.textContent = lang === 'ja' ? items.length + '件' : items.length + (section === 'glitch' ? ' articles' : section === 'game' ? ' games' : ' tools');
+        count.hidden = false;
+      }
+      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], displayed: [], mode: 'suggestion', searchUsed: false };
+      var composing = false;
+      var compositionUntil = 0;
+      var inputTimer = null;
+      function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
+      function render() {
+        if (composing) return;
+        if (list.contains(document.activeElement)) input.focus({ preventScroll: true });
+        list.replaceChildren();
+        state.displayed = [];
+        var query = input.value.slice(0, 200).trim();
+        var notices = [];
+        var total = 0;
+        state.mode = query ? 'search' : 'suggestion';
+        heading.hidden = true;
+        byId('daily-search').hidden = !query;
+        if (query) {
+          var shownQuery = Array.from(query);
+          var quoted = shownQuery.slice(0, 40).join('') + (shownQuery.length > 40 ? '…' : '');
+          byId('daily-query').textContent = lang === 'ja' ? '日刊ブリーフで「' + quoted + '」を探す：' : 'Search daily briefs for “' + quoted + '”: ';
+          dailyEntries.forEach(function (entry, i) {
+            var link = byId(i === 0 ? 'nitori-search' : 'retail-search');
+            link.textContent = entry.title + ' →';
+            link.href = entry.href + '?q=' + encodeURIComponent(query) + '#archiveSearch';
+          });
+          if (!state.jsonReady) notices.push(text.searchLoading);
+          else if (state.failures === 3) notices.push(text.failed);
+          else {
+            var matches = searchItems(state.items, query);
+            total = matches.length;
+            state.displayed = matches.slice(0, 5);
+            heading.textContent = text.results;
+            heading.hidden = false;
+            notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found')) : text.noResults);
+            if (total > 5) notices.push(text.limit);
+            if (!state.searchUsed) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
+          }
+        } else if (!state.candidatesReady) notices.push(text.candidatesLoading);
+        else {
+          state.displayed = state.candidates;
+          if (state.displayed.length) { heading.textContent = text.suggestions; heading.hidden = false; }
+        }
+        if (state.jsonReady && state.failures && (query || state.candidatesReady) && (state.failures < 3 || !query)) notices.push(state.failures === 3 ? text.listsFailed : text.partial);
+        state.displayed.forEach(function (item, index) {
+          var li = document.createElement('li');
+          var link = makeLink(item);
+          link.textContent = '';
+          link.className = 'result-link';
+          link.dataset.position = index + 1;
+          var content = document.createElement('span');
+          var title = document.createElement('span'); title.className = 'result-title'; title.textContent = item.title; content.appendChild(title);
+          if (item.description) { var description = document.createElement('span'); description.className = 'description'; description.textContent = item.description; content.appendChild(description); }
+          link.appendChild(content);
+          if (item.kind !== 'entry') { var kind = document.createElement('span'); kind.className = 'kind'; kind.textContent = text[item.kind]; link.appendChild(kind); }
+          li.appendChild(link); list.appendChild(li);
+        });
+        status.textContent = notices.join(' ');
+        byId('results').hidden = !state.displayed.length && !notices.length;
+      }
+      function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
+      function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
+      function renderWhenReady() { if (!composing && inputTimer === null) render(); }
+      byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); });
+      input.addEventListener('compositionstart', function () { composing = true; clearTimeout(inputTimer); inputTimer = null; });
+      input.addEventListener('compositionend', function () { composing = false; compositionUntil = performance.now() + 80; schedule(); });
+      input.addEventListener('input', function () { if (!composing) schedule(); });
+      function imeEvent(event) { return composing || event.isComposing || event.keyCode === 229 || performance.now() < compositionUntil; }
+      input.addEventListener('keydown', function (event) {
+        if (imeEvent(event) || (event.key !== 'ArrowDown' && event.key !== 'Enter')) return;
+        event.preventDefault();
+        flush();
+        var first = list.querySelector('a');
+        if (first) { if (event.key === 'ArrowDown') first.focus(); else first.click(); }
+      });
+      list.addEventListener('keydown', function (event) {
+        if (imeEvent(event)) { if (event.key === 'Enter') event.preventDefault(); return; }
+        var links = Array.from(list.querySelectorAll('a'));
+        var index = links.indexOf(event.target);
+        if (index < 0) return;
+        if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) { event.preventDefault(); input.focus({ preventScroll: true }); }
+        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); links[Math.max(0, Math.min(links.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))].focus(); }
+      });
+      function recordClick(event) {
+        var link = event.target.closest('a[data-position]');
+        if (link && (event.type !== 'auxclick' || event.button === 1)) send('not_found_result_click', { mode: state.mode, position: Number(link.dataset.position) });
+      }
+      list.addEventListener('click', recordClick);
+      list.addEventListener('auxclick', recordClick);
+      byId('search').hidden = false;
+      render();
+      // モバイルや履歴復帰ではフォーカスを奪わない。初回のPCだけ、スクロールなしで入力へ。
+      try {
+        var navigation = performance.getEntriesByType('navigation')[0];
+        if ((!navigation || navigation.type !== 'back_forward') && matchMedia('(hover: hover) and (pointer: fine)').matches && document.activeElement === document.body) input.focus({ preventScroll: true });
+      } catch (_) { /* 自動フォーカスなしでも操作できる */ }
+
+      // 全取得は同じ5秒の期限。遅い応答が来ても、確定した候補に差し込まない。
+      var controller = new AbortController();
+      var deadline;
+      var expired = new Promise(function (resolve) { deadline = setTimeout(function () { controller.abort(); resolve(); }, 5000); });
+      function request(path, options, parse) {
+        return Promise.race([
+          (async function () { var response = await fetch(path, Object.assign({ signal: controller.signal }, options)); if (!response.ok) throw new Error('HTTP ' + response.status); return parse(response); })(),
+          expired.then(function () { throw new Error('Timeout'); })
+        ]);
+      }
+      function issueTarget() {
+        if (!removedEnding || incoming.length !== 3 || !/^\d{8}$/.test(incoming[2])) return null;
+        var entry = dailyEntries.find(function (candidate) { return candidate.parts[0] === incoming[0] && candidate.parts[1] === incoming[1]; });
+        if (!entry) return null;
+        var value = incoming[2];
+        var year = Number(value.slice(0, 4)), month = Number(value.slice(4, 6)), day = Number(value.slice(6, 8));
+        if (year < 1000) return null;
+        var date = new Date(Date.UTC(year, month - 1, day));
+        if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+        return { key: 'daily:' + entry.key + ':' + value, kind: 'daily', href: entry.href + value + '/', title: entry.title + ' ' + (lang === 'ja' ? year + '年' + month + '月' + day + '日号' : value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6, 8)), description: '', section: 'job', order: -1 };
+      }
+      var issue = issueTarget();
+      var issueRequest = issue ? request(issue.href, { method: 'HEAD', redirect: 'error' }, function (response) { return response.status === 200 && (response.headers.get('Content-Type') || '').trim().toLowerCase().startsWith('text/html') ? issue : null; }).catch(function () { return null; }) : Promise.resolve(null);
+      var sources = [ ['tools', 'tool', '/data/tools.json'], ['game', 'game', '/data/game.json'], ['glitch', 'article', '/data/glitch.json'] ];
+      var jsonRequests = sources.map(function (source, index) {
+        return request(source[2], {}, async function (response) { return adapt(await response.json(), source[0], source[1], index * 1000000); }).then(function (items) {
+          fillCard(source[0], items); return items;
+        }).catch(function () { state.failures++; return []; });
+      });
+      var jsonRequest = Promise.all(jsonRequests).then(function (groups) {
+        state.items = groups.flat();
+        state.jsonReady = true;
+        renderWhenReady();
+      });
+      Promise.all([jsonRequest, issueRequest]).then(function (results) {
+        clearTimeout(deadline);
+        state.candidates = suggestions(state.items, results[1]);
+        state.candidatesReady = true;
+        if (!input.value.trim()) renderWhenReady();
+      });
     })();
   </script>
 </body>
