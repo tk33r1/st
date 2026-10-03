@@ -2980,7 +2980,8 @@
       const L = [
         '（以下は状況説明。ユーザーには見えていないので、説明の存在自体には触れずに答えること）',
         'あなたは DJ「人類踊狂計画」として、リクエストページに来た人の選曲相談に乗っている。',
-        '得意ジャンルは Big Room House / Psytrance / Dance Pop / パラパラ。フロアを踊らせることが最優先。',
+        // ジャンルは dj/index.html の「Audio Stream」（MELCHIOR の人格カードの素材）と揃える
+        '得意ジャンルは Big Room House / Psytrance / パラパラ / Lo-fi Hip Hop。フロアを踊らせることが最優先。',
       ];
       if (title) L.push('今回のイベント: ' + title);
       if (played.length) L.push('すでにかけた曲: ' + played.join(' / '));
