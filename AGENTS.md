@@ -241,8 +241,16 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 - **magi2 の人格設定**: `workers/magi2/personas.js` が人格の骨格プロンプト、用途ごとの推論強度、
   トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
   - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はOpenAIだけに送る。
-    固定の入口11件は `SITE_SEARCH.pages` と `404.html` の `data-entry` で同じ行き先・日英の名前・説明を持つ。片方を変えたらもう片方も直す。
+    検索候補は `.github/scripts/site-search-index.py` が公開HTMLから作る `data/site-search.json`（生成物、手で編集しない）。
+    `build.sh` は出荷するHTMLから毎回生成する。手元では `python -B .github/scripts/site-search-index.py` で更新する。
+    noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。
+    主な入口は `404.html` の常設入口（`data-entry`）が正本で、noindexでも索引に入れ、日英の名前を持たせる（入口を足すなら `data-entry` を書く）。
+    AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
+    AIの検索や MAGI の話題から外したいページは、ページを noindex にする。
     回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。検索内容はログ・通知・DBに残さない。
+    MAGI はサイトの案内役も兼ねる（`SITE_GUIDE`／`siteGuide`）。画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ったときだけ、
+    3人格に場面といまのページを、統合人格に `data/site-search.json` から作るページ一覧（日刊の号を除く）を足す。
+    `dj/request/` は送らない（選曲の相談にサイトの話を混ぜない）。新しい画面で MAGI を使うときは、送るかどうかを決めること。
   人間向けの別形式（以前の `persona.yaml` のようなもの）を並べて二重管理にしないこと。
   - **固定プロンプトに書くのは「役割と出力の形」と「気質」だけ**。本人の事実・関心・考え（好きなもの、拠り所の書物、
     仕事の中身、得意ジャンルなど）は書かず、サイトの本文に書いて人格カードに任せる（固定に書くと本人が変わっても

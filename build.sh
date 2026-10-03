@@ -54,6 +54,9 @@ done < <(list)
 #    vite などは devDependencies なので、NODE_ENV=production の環境でも入るよう --include=dev を付ける
 (cd game/reverse-recaptcha && npm ci --include=dev --no-audit --no-fund && npm run build -- --outDir "../../$OUT/game/reverse-recaptcha" --emptyOutDir)
 
+# 公開するHTMLそのものから作る。noindex・転送・重複ページをAIの検索対象から外す。
+python3 .github/scripts/site-search-index.py --root "$OUT"
+
 # 3. 出来上がりを確かめる（足りない・余計なものがあれば、デプロイさせずに止める）
 fail() { echo "build.sh: $*" >&2; exit 1; }
 for f in index.html 404.html _redirects robots.txt sitemap.xml favicon.ico \

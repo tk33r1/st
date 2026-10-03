@@ -54,18 +54,35 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 ## 404のAI検索とチャットのサイト案内
 
 `POST /magi2/site-search` は `{ query, locale: 'ja' | 'en' }`（200文字・本文4KiBまで）を受け取る。
-3つの公開一覧がそろった後、OpenAIに最大3件のIDと短いひとことを選ばせ、照合したIDからリンクを作る。
+公開HTMLから自動生成した `data/site-search.json` を取得・検証した後、OpenAIに最大3件のIDと短いひとことを選ばせ、照合したIDからリンクを作る。
 URLやタイトルをAIに生成させない。失敗は503で、該当なしの正常応答と分ける。応答は `no-store`。
+
+対象はtk.stで公開されるHTMLのうちnoindex以外。404・転送用・別URLをcanonicalとする重複ページ・MAGIのアプリの本体（`/magi-app/www/`）も除く。
+`/dj/request/` と日刊の号も対象で、`/dj/booth/`・`/dj/schedule/`・記念日のページはnoindexにより対象外。
+主な入口は `404.html` の常設入口（`data-entry`）が正本。noindexでも載せ（お問い合わせ）、`hub: true` と英語名（`title_en`・`description_en`）を付ける。
+生成側は Worker と同じ条件で全行を検査し、合わない行があればビルドを止める。Worker は合わない行だけ飛ばす。
+`.github/scripts/site-search-index.py` がタイトル・説明を抽出し、ツール・ゲーム・Glitchは既存JSONのタグや説明も使う。
+`build.sh` は公開ファイルを揃えた後に再生成するため、新しいページをWorkerへ手動登録する必要はない。
+手元の生成物は `python -B .github/scripts/site-search-index.py` で更新する（手で編集しない）。
+公開時は静的サイトを先に反映し、`https://tk.st/data/site-search.json` が取得できることを確認してからmagi2をデプロイする。
+AIへは名前・説明・URLとの一致で順位をつけた最大40件・16,000文字分を渡す。主な入口11件は必ず入れ、日刊の号は5件まで。英語の機能語は数えない。
+AIの選択IDは、実際に渡した候補内で検証する。ページ本文の検索・自動翻訳は行わない。
 
 - 404検索は既存の `countUp` と `rate_limit` を利用し、UTC日ごとに `search:<IP>`（10回）→ `search:global`（300回）の順に数える。表・移行の追加はない。
 - 入力・認可・停止フラグ・一覧取得の失敗では数えない。AI開始後の失敗・0件・キャンセルは数える。全体上限で断った場合のIP回数は戻さない。
 - `site_pages: true` の通常チャットは、最新本文の先頭500文字だけでページを選び、統合に添えた同じ候補を `pages` イベントで返す。通常チャットの上限内で行い、`search:` は使わない。DB未設定時は案内を省く。
 - 討議と並列に開始し、統合前には最大2秒だけ待つ。失敗・遅延では検索だけを省く。停止・切断・全員欠席では検索も中止する。
 - 両画面は回答の `done` 後だけリンクを表示する。リンクはその場だけで、履歴や次回の要求には含めない。
-- 一覧の有効期間は10分、古い一覧は24時間まで使用して裏で更新する。3一覧をそろえて差し替え、失敗後は1分あける。
+- サイト案内: 画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ると、「このページは何？」「tk.st とは？」に答えられるよう、
+  3人格の system に場面といまのページ（索引の題名と説明。アプリは `SITE_GUIDE.app`）を、統合人格に同じ索引から作るページ一覧を足す
+  （主な入口を先に並べ、日刊の号は外し、`SITE_GUIDE.list_max_chars`（6,000字）で打ち切る）。索引はページ選びと共有し、取得は最大1.5秒だけ待つ。
+  取れなければ一覧なしで続ける。停止フラグ（`SITE_SEARCH_ENABLED`）が `true` でなければ索引を読まず、場面の説明だけを足す。
+  `page` は索引を引く鍵としてだけ使い、文字列としてプロンプトに入れない。ページ選びには今のページの題名を `current_page` で渡し、今のページ自体のリンクは出さない。
+  `dj/request/` は `page` を送らないので、案内は足さない。
+- 一覧の有効期間は10分、古い一覧は24時間まで使用して裏で更新する。索引全体を検証して差し替え（検査済みの一覧を日英別に保持）、失敗後は1分あける。noindexへの変更・削除もこの更新周期で反映する。
 - 検索語・ひとこと・上流本文はDB／ログ／Resendに残さない。検索用の運用通知は会社・HTTPコード・用途のみ。通知抑制は既存の `alert:<会社>:<HTTP>`、検索の全体上限は `alert:site-search-global` を使う。
 
-公開フラグは初期状態でオフ。Workerの `wrangler.toml` の `SITE_SEARCH_ENABLED = "true"`、次に404の `AI_SEARCH_ENABLED = true` で有効化する。
+公開フラグは現在オン。Workerの `wrangler.toml` の `SITE_SEARCH_ENABLED = "true"`、次に404の `AI_SEARCH_ENABLED = true` で有効化する。
 停止はWorkerを先に `false` にする。通常チャットは続く。公開前に本番スモークテスト、設計書の20件の品質評価・費用見積もり、GTM設定を確認する。
 ネイティブアプリは `npm run sync` と再ビルド後、実機でリンクが開くことを確認する。
 
@@ -73,6 +90,7 @@ URLやタイトルをAIに生成させない。失敗は503で、該当なしの
 
 ```sh
 node --test .github/scripts/test-magi2.mjs
+python -B .github/scripts/test-site-search-index.py
 python -B .github/scripts/magi-context.py --dry-run
 python -B .github/scripts/ai_models.py check
 python -B .github/scripts/preview-404-ai.py

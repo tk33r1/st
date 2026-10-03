@@ -83,10 +83,19 @@
     .ai-search button { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
     .ai-search button:disabled { cursor: wait; opacity: .6; }
     .ai-disclosure, .ai-mark, .ai-ask { font-size: 13px; color: var(--muted); }
-    .ai-disclosure { margin: 8px 0; }
-    .ai-search details { margin-top: 8px; font-size: 13px; }
-    .ai-search summary { display: block; min-height: 44px; padding: 10px; }
-    .ai-search details p { padding: 0 10px 10px; }
+    .ai-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .ai-disclosure { margin: 0; flex: 1; }
+    .ai-search .ai-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--accent); }
+    .ai-search .ai-info:hover { background: var(--hover); }
+    .ai-info svg { width: 22px; height: 22px; }
+    .ai-info-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 20px 60px #0005; }
+    .ai-info-dialog::backdrop { background: #0008; }
+    .ai-info-content { padding: 20px 24px 24px; }
+    .ai-info-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .ai-info-header h2 { font-size: 18px; }
+    .ai-info-close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text); font: inherit; font-size: 24px; cursor: pointer; }
+    .ai-info-close:hover { background: var(--hover); }
+    .ai-info-content p { margin-top: 16px; font-size: 14px; }
     .ai-answer { margin-top: 16px; padding: 12px; background: var(--surface); border-radius: 8px; overflow-wrap: anywhere; }
     .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
     #ai-thinking { display: block; margin: 8px 0 0; }
@@ -144,8 +153,12 @@
         <button type="button" id="ai-run" data-ja="Shinya Takeda AI に聞く" data-en="Ask Shinya Takeda AI">Shinya Takeda AI に聞く</button>
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
         <span id="ai-thinking" hidden></span>
-        <p class="ai-disclosure" data-ja="検索語とサイトのページ一覧を OpenAI に送ります。押すまで送信しません。" data-en="Your search and the site's page list are sent to OpenAI only when you press the button."></p>
-        <details><summary data-ja="詳しく" data-en="Details">詳しく</summary><p data-ja="検索語と公開済みのページ一覧・自己像カードをOpenAI APIへ送ります。APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, the public page list, and a public self-image card are sent to the OpenAI API. API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p><p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p></details>
+        <div class="ai-disclosure-row">
+          <p class="ai-disclosure" data-ja="検索語とサイトのページ一覧を OpenAI に送ります。押すまで送信しません。" data-en="Your search and the site's page list are sent to OpenAI only when you press the button."></p>
+          <button type="button" class="ai-info" id="ai-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
+          </button>
+        </div>
         <div id="ai-result" hidden>
           <div class="ai-answer"><strong>Shinya Takeda AI</strong> <span class="ai-mark" data-ja="AIによる応答" data-en="AI-generated">AIによる応答</span><p class="ai-ask" id="ai-ask" aria-hidden="true"></p><p id="ai-comment"></p></div>
           <a id="ai-daily" hidden></a>
@@ -191,6 +204,16 @@
     </section>
     <a class="home" href="/" data-ja="トップページへ →" data-en="Go to the homepage →">トップページへ →</a>
   </main>
+  <dialog class="ai-info-dialog" id="ai-info-dialog" aria-labelledby="ai-info-title" aria-describedby="ai-info-text">
+    <div class="ai-info-content">
+      <div class="ai-info-header">
+        <h2 id="ai-info-title" data-ja="AI検索とプライバシー" data-en="AI search and privacy">AI検索とプライバシー</h2>
+        <button type="button" class="ai-info-close" id="ai-info-close" aria-label="閉じる" autofocus><span aria-hidden="true">×</span></button>
+      </div>
+      <p id="ai-info-text" data-ja="検索語と公開済みのページ一覧・自己像カードをOpenAI APIへ送ります。APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, the public page list, and a public self-image card are sent to the OpenAI API. API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
+      <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
+    </div>
+  </dialog>
   <script>
     (function () {
       'use strict';
@@ -204,6 +227,16 @@
       var byId = function (id) { return document.getElementById(id); };
       document.documentElement.lang = lang;
       document.querySelectorAll('[data-ja][data-en]').forEach(function (node) { node.textContent = node.dataset[lang]; });
+      var infoDialog = byId('ai-info-dialog');
+      var infoOpen = byId('ai-info-open');
+      infoOpen.setAttribute('aria-label', lang === 'ja' ? 'AI検索とプライバシーについて' : 'About AI search and privacy');
+      byId('ai-info-close').setAttribute('aria-label', lang === 'ja' ? '閉じる' : 'Close');
+      infoOpen.addEventListener('click', function () { infoDialog.showModal(); });
+      byId('ai-info-close').addEventListener('click', function () { infoDialog.close(); });
+      infoDialog.addEventListener('click', function (event) {
+        var rect = infoDialog.getBoundingClientRect();
+        if (event.target === infoDialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) infoDialog.close();
+      });
       document.title = (lang === 'ja' ? 'ページが見つかりませんでした' : 'Page not found') + ' | tk.st';
       byId('other-nav').setAttribute('aria-label', lang === 'ja' ? 'ほかのページ' : 'More pages');
       var input = byId('query');

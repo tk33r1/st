@@ -1,5 +1,5 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
-import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages } from '../site-search.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -674,6 +674,10 @@ async function readChatInput(request) {
   const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
   const wantSuggest = body.suggest === true;
   const wantSitePages = body.site_pages === true;
+  // いま開いているページ（トップページは '/'、アプリは 'app'）。送った画面だけにサイト案内を足す。
+  // 値はサイトの索引を引くのに使うだけで、プロンプトには入れない。形が違えば送らなかったものとして扱う
+  const page = typeof body.page === 'string' && body.page.length <= SITE_GUIDE.page_max_chars
+    && (body.page === 'app' || (body.page.startsWith('/') && /^[a-z0-9/-]+$/i.test(body.page))) ? body.page : null;
   if (!Array.isArray(messages) || messages.length === 0) {
     throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
   }
@@ -698,12 +702,12 @@ async function readChatInput(request) {
     const first = messages.findIndex(m => m.role === 'user');
     messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
-  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages };
+  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page };
 }
 
 async function handleChat(request, env, ctx, { requestId, cors, log }) {
-  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages;
-  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages } = await readChatInput(request)); }
+  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page;
+  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page } = await readChatInput(request)); }
   catch (err) { return inputError(err, requestId, cors); }
 
   // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
@@ -776,17 +780,6 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         // 3人格と統合は今回の発言の後ろに付ける（system の後ろだけだと、その後に読む日本語のカードや見本に負けて、CASPER は英語の質問の半分近くを日本語で答えた）。
         // 3人格は system の後ろにも重ねる（DJ の相談のように日本語の状況説明が付くと、発言の後ろだけでは足りない）
         const noteLang = (c) => langNote ? joinContent(c, langNote) : c;
-        // 一覧の取得もこの分岐で行う。人格の討議は検索の取得待ちにしない。
-        let pagesPromise = null;
-        if (wantSitePages && env.SITE_SEARCH_ENABLED === 'true' && env.DB && lastUser.trim()) {
-          const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
-          pagesPromise = (async () => {
-            const locale = /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
-            const pages = await getSitePages(ctx, locale, pageStop.signal);
-            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true,
-              signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
-          })().catch(() => { log('site_search', 'omitted'); return null; });
-        }
         if (lastImages.length) log('vision', `images=${lastImages.length}`);
         // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
         const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
@@ -800,13 +793,43 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
             .catch(() => {});
         }
 
+        // サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
+        // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
+        const searchOn = env.SITE_SEARCH_ENABLED === 'true';
+        const wantPages = wantSitePages && searchOn && env.DB && lastUser.trim();
+        const indexPromise = searchOn && (page || wantPages) ? getSitePages(ctx, 'ja', pageStop.signal).catch(() => null) : null;
+        const cards = await cardsPromise;
+        // サイト案内（画面が page を送ったときだけ）。3人格を長く待たせないよう、索引は短い期限で待つ。
+        // 取れなければ一覧なしで、場面の説明だけを足す
+        let guide = null;
+        if (page) {
+          let pages = null;
+          try { pages = await searchDeadline(SITE_GUIDE.wait_ms, () => indexPromise, stop.signal); } catch (_) {}
+          if (stop.signal.aborted) throw searchFailure('cancelled');
+          guide = siteGuide(page, pages);
+          log('site_guide', page, guide.current ? 'known' : 'unknown', pages ? 'listed' : 'unlisted');
+        }
+        // ページ選びもこの分岐で始める。人格の討議は検索の取得待ちにしない。
+        let pagesPromise = null;
+        if (wantPages) {
+          const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
+          pagesPromise = (async () => {
+            const locale = /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
+            // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
+            if (!await indexPromise) throw searchFailure('list_fetch');
+            const pages = await getSitePages(ctx, locale, pageStop.signal);
+            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true, current: guide && guide.current,
+              signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
+          })().catch(() => { log('site_search', 'omitted'); return null; });
+        }
+
         // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
         const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
         if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
-        // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-        const cards = await cardsPromise;
+        // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
         const personas = PERSONAS.map(p => withCard(p, cards))
+          .map(p => guide ? { ...p, system_prompt: `${p.system_prompt}\n\n${guide.persona}` } : p)
           .map(p => ({ ...p, system_prompt: withLangNote(p.system_prompt, langNote) }));
 
         // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
@@ -864,11 +887,14 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           catch (_) { pageStop.abort(); }
           if (stop.signal.aborted) throw searchFailure('cancelled');
         }
+        // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
+        if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
         const hasPages = pageChoice && (pageChoice.results.length || pageChoice.daily);
         const synthMessages = [
           // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
           { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
           ...(bias ? [{ role: 'system', content: bias }] : []),
+          ...(guide ? [{ role: 'system', content: guide.synth }] : []),
           ...(hasPages ? [{ role: 'system', content: SITE_SEARCH.synth_header + '\n' + JSON.stringify({
             pages: pageChoice.results.map(({ title, description }) => ({ title, description })),
             daily: pageChoice.daily ? { media: pageChoice.daily.media, query: pageChoice.daily.query } : null,

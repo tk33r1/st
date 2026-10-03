@@ -7758,7 +7758,7 @@
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
         const outbound = prepareAgentMessages(agentHistory, sendContent);
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true }), signal: ctrl.signal });
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: '/' }), signal: ctrl.signal });
         if (dropped()) return;
         watch();
         if (!res.ok || !res.body) {

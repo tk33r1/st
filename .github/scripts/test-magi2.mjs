@@ -37,7 +37,7 @@ function worker(stream = completion(), upstream = null) {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
       const replaced = upstream && await upstream(url, options);
       if (replaced) return replaced;
-      if (/^https:\/\/tk\.st\/data\/(tools|game|glitch)\.json$/.test(url)) return Response.json(JSON.parse(read('data/' + url.split('/').at(-1))));
+      if (/^https:\/\/tk\.st\/data\/(tools|game|glitch|site-search)\.json$/.test(url)) return Response.json(JSON.parse(read('data/' + url.split('/').at(-1))));
       const body = JSON.parse(options.body); calls.push(body);
       if (body.response_format?.type === 'json_schema') return Response.json({ choices: [{ message: { content: JSON.stringify({ selections: ['tool:7'], ...(body.response_format.json_schema.name === 'site_search' ? { comment: 'PDF Studioでまとめられます。' } : {}), daily: null }) }, finish_reason: 'stop' }] });
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
@@ -102,6 +102,71 @@ const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' 
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
 const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)', daily: null };
 
+test('公開ページ一覧から曲リクエストを404とチャットで案内し、送った候補以外のIDは採用しない', async () => {
+  for (const chat of [false, true]) {
+    const w = enableSearch(worker(undefined, (_, o) => {
+      if (!o?.body) return;
+      const body = JSON.parse(o.body);
+      if (!body.response_format) return;
+      const system = body.messages[0].content;
+      assert.ok(system.includes('page:/dj/request/'));
+      assert.ok(!system.includes('page:/dj/booth/'));
+      assert.ok(!system.includes('page:/dj/schedule/'));
+      return searchReply({ selections: ['page:/dj/request/'], ...(!chat ? { comment: '曲のリクエストはこちらです。' } : {}), daily: null });
+    }));
+    if (chat) {
+      const res = await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: '曲のリクエスト' }] });
+      const text = await res.text(); assert.match(text, /event: pages/); assert.ok(text.includes('https://tk.st/dj/request/'));
+    } else {
+      const res = await searchRequest(w, { query: '曲のリクエスト', locale: 'ja' });
+      assert.equal(res.status, 200); assert.equal((await res.json()).results[0].url, '/dj/request/');
+    }
+  }
+});
+
+test('索引の不正な行と重複は飛ばし、全部不正なら拒否し、ページ数が増えてもAI候補の件数・文字数を守る', () => {
+  const w = worker(), data = JSON.parse(read('data/site-search.json'));
+  for (const url of ['//outside.test/', '/a/?q=x', '/a/#x', '/%2e%2e/b/', '/a/%5cfoo/', '/a/%0afoo/', '/a/%ZZ/']) {
+    assert.throws(() => w.ctx.makeSitePages({ version: 1, pages: [{ ...data.pages[0], url }] }), url);
+    assert.equal(w.ctx.makeSitePages({ version: 1, pages: [{ ...data.pages[0], url }, data.pages[1]] }).length, 1, url);
+  }
+  assert.throws(() => w.ctx.makeSitePages({ version: 1, pages: [{ ...data.pages[0], title_en: 5 }] }));
+  assert.equal(w.ctx.makeSitePages({ ...data, pages: [...data.pages, data.pages[0]] }).length, data.pages.length);
+  const pages = w.ctx.makeSitePages(data);
+  const many = Array.from({ length: 2000 }, (_, n) => ({ id: 'page:issue-' + n, kind: 'page', title: '日刊のニュース ' + n,
+    description: '', detail: '日刊のニュース', url: '/job/nitoridaily/' + (20200000 + n) + '/' }));
+  const shortlist = w.ctx.shortlistSitePages([...many, ...pages], '曲のリクエスト');
+  assert.ok(shortlist.some(p => p.url === '/dj/request/'));
+  assert.ok(shortlist.some(p => p.url === '/job/nitoridaily/'));
+  assert.ok(shortlist.some(p => p.url === '/job/retailtechdaily/'));
+  assert.ok(pages.filter(p => p.hub).every(h => shortlist.some(p => p.id === h.id)));
+  assert.ok(shortlist.filter(p => /^[/]job[/]nitoridaily[/][0-9]{8}[/]$/.test(p.url)).length <= w.ctx.searchConfig.candidate_issue_limit);
+  assert.ok(shortlist.length <= w.ctx.searchConfig.candidate_limit);
+  const candidateLine = vm.runInContext('candidateLine', w.ctx);
+  assert.ok(shortlist.map(p => candidateLine(p) + '\n').join('').length <= w.ctx.searchConfig.candidate_max_chars);
+  const omitted = many.find(p => !shortlist.some(x => x.id === p.id));
+  assert.throws(() => w.ctx.validateSiteChoice({ selections: [omitted.id], comment: '案内', daily: null }, shortlist, 'ja'));
+});
+
+test('英語の機能語では点を付けず、英数字は語単位で照合する', () => {
+  const w = worker(), pages = w.ctx.makeSitePages(JSON.parse(read('data/site-search.json')));
+  const issues = Array.from({ length: 700 }, (_, n) => ({ id: 'page:issue-' + n, kind: 'page', title: 'Nitori Daily ' + n + ' is a news issue',
+    description: '', detail: 'Nitori Daily', url: '/job/nitoridaily/' + (20200000 + n) + '/' }));
+  for (const [query, url] of [['Is there a tool to make a QR code?', '/tools/qr-palette/'], ['How do I get in touch?', '/contact/'], ['contact the owner', '/contact/']]) {
+    const shortlist = w.ctx.shortlistSitePages([...issues, ...pages], query);
+    assert.ok(shortlist.slice(0, 15).some(p => p.url === url), query);
+    assert.ok(shortlist.filter(p => p.id.startsWith('page:issue-')).length <= w.ctx.searchConfig.candidate_issue_limit, query);
+  }
+});
+
+test('英語の画面では主な入口を英語名で返し、検査済みの一覧をキャッシュする', async () => {
+  const w = enableSearch(worker());
+  const en = await w.ctx.getSitePages({ waitUntil() {} }, 'en'), ja = await w.ctx.getSitePages({ waitUntil() {} }, 'ja');
+  assert.equal(en.find(p => p.url === '/job/').title, 'Career'); assert.equal(ja.find(p => p.url === '/job/').title, '職務');
+  assert.equal(en.find(p => p.url === '/contact/').title, 'Contact');
+  assert.equal(await w.ctx.getSitePages({ waitUntil() {} }, 'en'), en);
+});
+
 test('出力言語は混在文を日本語に固定せず、記号や短い返答では直前の言語を維持する', () => {
   const w = worker();
   const ja = vm.runInContext('REPLY_LANGUAGE.ja', w.ctx);
@@ -147,7 +212,7 @@ test('検索は認可・入力・フラグ・DB・完全な一覧を確認して
   assert.equal(w.calls.length, 0); assert.equal(w.env.DB.rows.size, 0);
   w.env.SITE_SEARCH_ENABLED = 'true'; const db = w.env.DB; delete w.env.DB;
   assert.equal((await searchRequest(w)).status, 503); w.env.DB = db;
-  const broken = enableSearch(worker(undefined, url => url.endsWith('/game.json') ? Response.json({}) : undefined));
+  const broken = enableSearch(worker(undefined, url => url.endsWith('/site-search.json') ? Response.json({}) : undefined));
   assert.equal((await searchRequest(broken)).status, 503); assert.equal(broken.env.DB.rows.size, 0); assert.equal(broken.calls.length, 0);
   const res = await searchRequest(w), body = await res.json();
   assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store'); assert.ok(body.request_id);
@@ -173,13 +238,10 @@ test('検索のIP上限を超えた要求は全体を進めず、通常チャッ
 });
 
 test('AIの未知ID・日刊の不正値・コメントの記号を検証し、実在するURLだけを作る', () => {
-  const w = worker(), pages = w.ctx.makeSitePages(['tools', 'game', 'glitch'].map(name => JSON.parse(read('data/' + name + '.json'))));
-  assert.equal(pages.length, ['tools', 'game', 'glitch'].map(name => { const data = JSON.parse(read('data/' + name + '.json')); return (data.articles || data).length; }).reduce((a, b) => a + b, 11));
-  const html = read('404.html');
-  for (const [id, url, ja, en, descJa, descEn] of w.ctx.searchConfig.pages) {
-    const link = html.match(new RegExp('<a[^>]*data-entry="' + id + '"[^>]*>'))[0];
-    for (const [attribute, value] of [['href', url], ['data-title-ja', ja], ['data-title-en', en], ['data-description-ja', descJa], ['data-description-en', descEn]]) assert.ok(link.includes(attribute + '="' + value + '"'));
-  }
+  const w = worker(), pages = w.ctx.makeSitePages(JSON.parse(read('data/site-search.json')));
+  assert.equal(pages.length, JSON.parse(read('data/site-search.json')).pages.length);
+  assert.ok(pages.some(p => p.url === '/dj/request/'));
+  assert.ok(!pages.some(p => ['/dj/booth/', '/dj/schedule/'].includes(p.url)));
   assert.throws(() => w.ctx.validateSiteChoice({ ...validSearch, selections: ['tool:missing'] }, pages, 'ja'));
   const mixed = w.ctx.validateSiteChoice({ ...validSearch, selections: ['tool:7', 'tool:missing'] }, pages, 'ja');
   assert.equal(mixed.results.length, 1); assert.equal(mixed.comment, null);
@@ -190,7 +252,6 @@ test('AIの未知ID・日刊の不正値・コメントの記号を検証し、�
   }
   const daily = w.ctx.validateSiteChoice({ selections: [], comment: 'ニュースです', daily: { media: 'retail', query: ' ＡＩ ' } }, pages, 'en');
   assert.equal(daily.status, 'results'); assert.equal(daily.daily.query, 'AI'); assert.equal(daily.daily.url, '/job/retailtechdaily/?q=AI#archiveSearch');
-  for (const raw of ['https://outside.example/tools/a/', 'https://tk.st/tools/a/?q=x', 'https://tk.st/tools/a/#x', 'https://tk.st/tools/%3Fbad/', 'https://tk.st/tools/%5Cbad/', 'https://user@tk.st/tools/a/', 'https://tk.st/game/a/']) assert.equal(w.ctx.siteHref(raw, 'tools'), null);
 });
 
 test('検索の空応答・拒否・出力上限・JSON不正・本文受信の遅れは503で、開始済みの回数は戻さない', async () => {
@@ -210,7 +271,7 @@ test('検索の空応答・拒否・出力上限・JSON不正・本文受信の�
 
 test('古い完全な一覧を丸ごと使い、更新失敗では置き換えず、24時間を超えたら断る', async () => {
   let broken = false;
-  const w = enableSearch(worker(undefined, url => broken && url.endsWith('/game.json') ? Response.json({}) : undefined));
+  const w = enableSearch(worker(undefined, url => broken && url.endsWith('/site-search.json') ? Response.json({}) : undefined));
   assert.equal((await searchRequest(w)).status, 200);
   const old = w.ctx.searchCache.pages;
   w.ctx.searchCache.fetchedAt = Date.now() - 11 * 60000; broken = true;
@@ -375,6 +436,71 @@ test('統合の失敗ではpagesとdoneを出さず、接続キャンセルで�
   assert.match(text, /event: error/); assert.doesNotMatch(text, /event: pages|event: done/); assert.equal(allAbsentAborted, true);
 });
 
+// サイト案内のテスト用の小さな索引（data/site-search.json の形）
+const guideIndex = { version: 1, pages: [
+  { id: 'page:/', kind: 'page', title: 'TOP_TITLE', description: 'TOP_DESC', url: '/', detail: 'TOP_TITLE' },
+  { id: 'tool:7', kind: 'tool', title: 'PDF Studio', description: 'PDF_DESC', url: '/tools/pdf-studio/', detail: 'PDF Studio' },
+  { id: 'page:tools', kind: 'page', title: 'TOOLS_TITLE', description: 'TOOLS_DESC', url: '/tools/', detail: 'TOOLS_TITLE', hub: true, title_en: 'All tools', description_en: 'EN_DESC' },
+  { id: 'page:/job/nitoridaily/20261003/', kind: 'page', title: 'ISSUE_TITLE', description: '', url: '/job/nitoridaily/20261003/', detail: 'ISSUE_TITLE' },
+] };
+const serveIndex = (index = guideIndex) => url => url.endsWith('/site-search.json') ? (index ? Response.json(index) : new Response('down', { status: 503 })) : undefined;
+
+test('page を送った画面だけにサイト案内を足し、3人格には場面だけ、統合には一覧まで渡す', async () => {
+  for (const [page, index, flag = 'true'] of [['/', guideIndex], ['app', guideIndex], ['/unknown/', guideIndex], ['/', null], ['/', guideIndex, 'false'],
+    [null, guideIndex], ['https://evil.example/', guideIndex], ['/<x>', guideIndex], ['/' + 'a'.repeat(100), guideIndex]]) {
+    const w = worker(undefined, serveIndex(index));
+    w.env.SITE_SEARCH_ENABLED = flag;
+    const guide = vm.runInContext('SITE_GUIDE', w.ctx), personas = vm.runInContext('PERSONAS', w.ctx);
+    const body = { messages: [{ role: 'user', content: 'このページは何？' }], ...(page ? { page } : { context: 'DJ_CONTEXT' }) };
+    assert.match(await (await w.request('/magi2/chat', body)).text(), /event: done/);
+    const personaCalls = w.calls.filter(c => personas.some(p => c.messages[0].content.startsWith(p.system_prompt)));
+    const synth = w.calls.find(c => c.stream).messages.filter(m => m.role === 'system').map(m => m.content).join('|');
+    assert.equal(personaCalls.length, 6);
+    const expected = !index || flag !== 'true' ? guide.unknown_page
+      : { '/': 'TOP_TITLE — TOP_DESC', app: guide.app.title + ' — ' + guide.app.description, '/unknown/': guide.unknown_page }[page];
+    if (!expected) {
+      assert.ok(!JSON.stringify(w.calls).includes(guide.persona_header) && !JSON.stringify(w.calls).includes(guide.synth_header), String(page));
+      continue;
+    }
+    for (const c of personaCalls) {
+      const system = c.messages[0].content;
+      assert.ok(system.includes(guide.persona_header) && system.includes(guide.current_label + expected));
+      assert.ok(!system.includes('TOOLS_DESC'));
+    }
+    assert.ok(synth.includes(guide.synth_header) && synth.includes(guide.current_label + expected));
+    // 索引が取れない・停止フラグが false なら一覧なしで続ける。取れたら主な入口を先に並べ、日刊の号を外す
+    const listed = !!index && flag === 'true';
+    assert.equal(synth.includes('- TOOLS_TITLE — TOOLS_DESC'), listed);
+    if (listed) assert.ok(synth.indexOf('- TOOLS_TITLE') < synth.indexOf('- TOP_TITLE') && synth.indexOf('- TOP_TITLE') < synth.indexOf('- PDF Studio'));
+    assert.ok(!synth.includes('ISSUE_TITLE'));
+  }
+  assert.ok(!between(dj, 'body: JSON.stringify({ messages: messagesForMagi', 'signal').includes('page'));
+});
+
+test('統合人格に渡すページ一覧は上限の字数で打ち切る', () => {
+  const w = worker(), guide = vm.runInContext('SITE_GUIDE', w.ctx);
+  const pages = Array.from({ length: 200 }, (_, n) => ({ id: 'page:' + n, kind: 'page', title: 'PAGE_' + n, description: 'x'.repeat(150), url: '/p' + n + '/', hub: false }));
+  const synth = w.ctx.siteGuide('/', pages).synth;
+  const list = synth.slice(synth.indexOf(guide.list_label) + guide.list_label.length);
+  assert.ok(list.length <= guide.list_max_chars + 1); assert.ok(list.includes('PAGE_0')); assert.ok(!list.includes('PAGE_199'));
+});
+
+test('ページ選びに今のページの題名を渡し、今のページそのものへのリンクは出さない', async () => {
+  let selector, indexFetches = 0;
+  const w = enableSearch(worker(undefined, (url, o) => {
+    if (url.endsWith('/site-search.json')) { indexFetches++; return Response.json(guideIndex); }
+    if (!o?.body || !JSON.parse(o.body).response_format) return;
+    selector = JSON.parse(o.body);
+    return searchReply({ selections: ['page:tools', 'tool:7'], daily: null });
+  }));
+  const text = await (await w.request('/magi2/chat', { site_pages: true, page: '/tools/', messages: [{ role: 'user', content: 'このページは何？' }] })).text();
+  assert.equal(JSON.parse(selector.messages.at(-1).content).current_page, 'TOOLS_TITLE');
+  assert.equal(indexFetches, 1); // 案内とページ選びで同じ索引を使う
+  const lines = text.split(String.fromCharCode(10));
+  const pages = JSON.parse(lines[lines.indexOf('event: pages') + 1].slice('data: '.length)).pages.map(p => p.url);
+  assert.deepEqual(pages, ['https://tk.st/tools/pdf-studio/']);
+});
+
 test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替えなら捨て、履歴へ保存しない', async () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
     for (const mode of ['success', 'eof', 'error', 'switch']) {
@@ -387,7 +513,7 @@ test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替え�
         if (mode === 'switch') { c.ctx.agentGen++; c.ctx.agentHistory = []; c.ctx.agentBusy = false; }
         if (mode !== 'eof') h.done();
       };
-      await c.ctx.agentSend(); assert.equal(outbound[0].site_pages, true);
+      await c.ctx.agentSend(); assert.equal(outbound[0].site_pages, true); assert.equal(outbound[0].page, isHome ? '/' : 'app');
       assert.equal(renders.length, mode === 'success' ? 1 : 0);
       assert.equal(JSON.stringify(c.ctx.agentHistory).includes('PDF Studio'), false);
     }

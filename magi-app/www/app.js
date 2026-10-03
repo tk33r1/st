@@ -632,7 +632,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true }),
+      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app' }),
       signal: ctrl.signal,
     });
     if (dropped()) return;
