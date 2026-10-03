@@ -36,6 +36,8 @@ API = 'https://api.x.com/2'
 EXPECTED_HANDLE = 'Tah_Keh'
 CONSUMER_SOURCES = ('X_TAHKEH', 'X_NITORIDAILY', 'X_RETAILTECHDAILY')
 HTTP_TIMEOUT_SEC = 30
+RATE_LIMIT_RETRIES = 2
+RATE_LIMIT_MAX_WAIT_SEC = 16 * 60
 
 
 def percent_encode(value):
@@ -61,21 +63,31 @@ def oauth_header(method, url, query, creds):
 
 
 def api_get(path, query, creds):
-    """GET して (HTTP ステータス, JSON または本文の先頭) を返す。例外は投げない。"""
+    """GET して (HTTP ステータス, JSON または本文の先頭) を返す。例外は投げない。
+    429（15分ごとの回数制限）は、制限が解ける時刻（x-rate-limit-reset）まで待って出し直す。
+    いいねは15分に75回（7,500件）までで、続けて実行すると2回目が途中で引っかかる。"""
     url = f'{API}{path}'
     full = url + ('?' + urllib.parse.urlencode(query) if query else '')
-    req = urllib.request.Request(full, headers={'Authorization': oauth_header('GET', url, query, creds)})
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
-            return res.status, json.loads(res.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8', errors='replace')
+    for attempt in range(RATE_LIMIT_RETRIES + 1):
+        req = urllib.request.Request(full, headers={'Authorization': oauth_header('GET', url, query, creds)})
         try:
-            return e.code, json.loads(body)
-        except json.JSONDecodeError:
-            return e.code, body[:300]
-    except (OSError, ValueError) as e:
-        return 0, f'{type(e).__name__}: {e}'
+            with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
+                return res.status, json.loads(res.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='replace')
+            if e.code == 429 and attempt < RATE_LIMIT_RETRIES:
+                reset = e.headers.get('x-rate-limit-reset', '')
+                wait = int(reset) - int(time.time()) + 5 if reset.isdigit() else 60
+                wait = min(max(wait, 5), RATE_LIMIT_MAX_WAIT_SEC)
+                print(f'回数制限に当たった。{wait} 秒待って出し直す（{path}）', flush=True)
+                time.sleep(wait)
+                continue
+            try:
+                return e.code, json.loads(body)
+            except json.JSONDecodeError:
+                return e.code, body[:300]
+        except (OSError, ValueError) as e:
+            return 0, f'{type(e).__name__}: {e}'
 
 
 def credential_sets():
