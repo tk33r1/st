@@ -7250,6 +7250,18 @@
         theme_ja: 'ライト：最終回答での比重が少し上がる。ダーク：発言の揺らぎが大きくなる。',
       },
     ];
+    // 統合人格（3人格の討議を踏まえて最終回答を書く本人）。気質は固定プロンプトに持たず、
+    // 性格検査から作る自己像のカードに従う（workers/magi2/personas.js の SYNTHESIZER と PERSONA_CONTEXT）。
+    // スプラッシュでは3人格の横に並べ、LLM は /magi2/models の synthesizer を出す。
+    const AGENT_SYNTH = {
+      codename: 'Shinya Takeda', name: 'INTEGRATED', name_ja: '統合人格', synth: true,
+      desc: 'The integrated self — the voice that writes the final answer after the three debate. Its temperament is not hand-written: it follows a summary of my own personality tests (MBTI, CliftonStrengths, Big Five), including how they changed after the accident.',
+      desc_ja: '統合の自我。3人格の討議を踏まえて最終回答を書く本人。気質は手書きせず、本人の性格検査（MBTI・クリフトンストレングス・ビッグファイブ）の要約と、事故の前後での変化に従う。',
+      context: 'Draws on a summary of the profile on this page — the bio, the two job titles, and the personality tests before and after the accident. Rebuilt automatically whenever they change.',
+      context_ja: 'このページのプロフィール（自己紹介、ライト／ダークの2つの肩書き、事故の前後の性格検査）の要約を拠り所にする。更新されると自動で作り直される。',
+      theme: 'Light: leans toward the Strategist when weighing the debate. Dark: leans toward the Enthusiast.',
+      theme_ja: 'ライト：討議をまとめるとき戦略家の視点をやや重く見る。ダーク：熱狂者の視点をやや重く見る。',
+    };
     // 各人格がいま使っている LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
     // （失敗したら次に開いたときに取り直す）。undefined = 取得中、null = 取れなかった
     const MODELS_API = MAGI_ORIGIN + '/magi2/models';
@@ -7261,7 +7273,7 @@
       .then(j => (agentModels = j))
       .catch(() => { agentModelsPromise = null; return (agentModels = null); }));
     const personaDescHTML = (p) => {
-      const m = agentModels && agentModels.personas && agentModels.personas[p.codename];
+      const m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
       const llm = agentModels === undefined ? '…'
         : m ? `${PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}` : tr('unavailable', '取得できませんでした');
       return `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>${esc(pick(p, 'desc'))}`
@@ -7297,7 +7309,8 @@
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
       + '<div class="magi-ver">ver 3.4 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
+      + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
+      + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
       + '<div class="magi-stores">'
       + '<a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" class="magi-android" title="' + tr('Download the MAGI Android app', 'MAGI Androidアプリをダウンロード') + '">'
@@ -7847,7 +7860,7 @@
         const wasActive = node.classList.contains('active');
         splash.querySelectorAll('.magi-node').forEach(n => n.classList.remove('active'));
         if (wasActive) { desc.classList.add('hidden'); return; }
-        const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
+        const p = [...AGENT_PERSONAS, AGENT_SYNTH].find(x => x.codename === node.dataset.codename);
         node.classList.add('active');
         desc.innerHTML = personaDescHTML(p);
         desc.classList.remove('hidden');
@@ -8057,6 +8070,7 @@
         <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-normal leading-relaxed">
           <ul class="space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed">
             <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
+            <li>${tr('Each persona, and the final answer, also draws on summaries of this site (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.', '各人格と最終回答は、このサイトの要約（各ページ、年表、プロフィールの性格検査）も拠り所にします。サイトが更新されると自動で作り直されるので、MAGI は本人の今に追従します。')}</li>
             <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
             <!-- "12 messages", not "12 round-trips": AGENT_MAX_HISTORY and the Worker's
                  history_max_messages are both 12 *messages* (≈6 exchanges), which is the
