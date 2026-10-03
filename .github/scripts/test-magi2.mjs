@@ -111,7 +111,8 @@ test('出力言語は混在文を日本語に固定せず、記号や短い返�
     assert.equal(w.ctx.replyLanguageNote([user(text)]), ja);
   }
   for (const text of ['What do you think of サカナクション?', 'What does 「こんにちは」 mean in English?',
-    'Which sounds better: jazz・funk or house?', 'PDFを結合する方法は？', '你好', '안녕하세요']) {
+    'Which sounds better: jazz・funk or house?', 'Ｗｈｙ サカナクション？', 'Что вы думаете о サカナクション?',
+    'PDFを結合する方法は？', '你好', '안녕하세요']) {
     assert.equal(w.ctx.replyLanguageNote([user(text)]), note(text));
   }
   const english = user('What do you think of Daft Punk?');

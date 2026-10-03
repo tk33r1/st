@@ -1208,6 +1208,7 @@
       font-family: var(--f-display);
     }
 
+    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .answer .who { font-size: 10.5px; letter-spacing: .08em; color: var(--faint); margin-bottom: 4px; font-family: var(--f-display); }
     .answer .ab { font-size: 14.5px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--f-body); }
     .answer.streaming .ab::after { content: '▍'; animation: blink 1s steps(2) infinite; color: var(--heart-secondary); }
@@ -2960,9 +2961,10 @@
     let chatBusy = false;
     /* 相談の停止。回答を待つ間は送信ボタンが ■ になり、押すと接続を切る（Worker も続きの呼び出しを止める）。
        状況説明を読んでいる間に押されたときは、MAGI に送る前にやめる */
-    let chatCtrl = null, chatStopped = false;
+    let chatCtrl = null, chatStopped = false, chatThinking = null;
     function stopConsult() {
       chatStopped = true;
+      if (chatThinking) chatThinking.cancel();
       if (chatCtrl) chatCtrl.abort();
     }
     // MAGI が予測した次の相談。空の入力欄に薄く出し、› で入れる（送信・会話の切り替え・使用で消す）
@@ -3075,6 +3077,40 @@
       }
     }
 
+    // トップのインスクリプションとアプリ単体配布のため、4画面に同じ計時処理を内包する。
+    function setMagiThinkingLabel(el, seconds, finished) {
+      el.className = 'magi-thinking';
+      el.dataset.en = finished ? 'Thought for ' + seconds + 's' : 'Thinking for ' + seconds + 's';
+      el.dataset.ja = seconds + (finished ? '秒考えました' : '秒考え中');
+      el.textContent = document.documentElement.lang === 'ja' ? el.dataset.ja : el.dataset.en;
+    }
+    function magiThinkingHTML(seconds) {
+      if (!Number.isInteger(seconds) || seconds < 0) return '';
+      var el = document.createElement('span');
+      setMagiThinkingLabel(el, seconds, true);
+      return el.outerHTML;
+    }
+    function startMagiThinking(target, startedAt) {
+      var el = document.createElement('span'), seconds = null;
+      target.appendChild(el);
+      // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
+      var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+      var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
+      tick();
+      var timer = setInterval(tick, 1000);
+      return {
+        finish: function () {
+          if (seconds === null) {
+            clearInterval(timer);
+            seconds = elapsed();
+            setMagiThinkingLabel(el, seconds, true);
+          }
+          return seconds;
+        },
+        cancel: function () { clearInterval(timer); el.remove(); },
+      };
+    }
+
     function chatTurn(text) {
       const log = $('#chatLog');
       const me = document.createElement('div');
@@ -3160,11 +3196,12 @@
 
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
        失敗したら turn を画面から外してエラーを出し、null を返す（履歴への保存は成功したときに sendConsult が行う） */
-    async function askMagi(turn, content, context) {
+    async function askMagi(turn, content, context, thinking) {
       /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
          ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
       chatCtrl = ctrl;
+      ctrl.signal.addEventListener('abort', () => thinking.cancel(), { once: true });
       let timedOut = false, to = null;
       const watch = () => {
         clearTimeout(to);
@@ -3204,11 +3241,11 @@
               slot.querySelector('.px').textContent = d.text || '';
               chatScroll();
             },
-            integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
+            integrated: (d) => { reply += d.delta || ''; if (reply.trim()) thinking.finish(); bodyEl.textContent = reply; chatScroll(); },
             // 次の相談の予測。回答が最後まで届いたときだけ使う（下の成功の分岐）
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
             done: () => { completed = true; },
-            error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
+            error: (d) => { thinking.cancel(); failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
           }, watch);
         }
       } catch (e) {
@@ -3240,6 +3277,7 @@
       if (chatBusy || consultLocked) return;
       text = String(text || '').trim().slice(0, 300);
       if (text.length < 2) return;
+      const startedAt = performance.now();
 
       chatBusy = true;
       chatStopped = false;
@@ -3250,18 +3288,20 @@
       renderConsultUI();
 
       const turn = chatTurn(text);
+      const thinking = startMagiThinking(turn.querySelector('.who'), startedAt);
+      chatThinking = thinking;
       chatScroll(true);
 
       let answered = false;
       try {
         const context = await djContext();
         if (context === null || chatStopped) { turn.remove(); return; }
-        const reply = await askMagi(turn, text, context);
+        const reply = await askMagi(turn, text, context, thinking);
         if (reply) {
           answered = true;
           const c = conv || (conv = newConsult(text));
           // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
-          const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, picks: pickSongs(reply).length ? null : [] };
+          const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, thinkingSeconds: thinking.finish(), picks: pickSongs(reply).length ? null : [] };
           c.turns = c.turns.concat(entry).slice(-TURN_MAX);
           c.count = (c.count || 0) + 1;
           c.title = eventTitle;
@@ -3270,6 +3310,8 @@
           showPicks(turn, verifyEntry(c.id, entry));
         }
       } finally {
+        if (!answered) thinking.cancel();
+        if (chatThinking === thinking) chatThinking = null;
         // 届かなかった相談（受付が閉じていた・通信に失敗した）は入力欄に戻す。送る前に欄を空にして
         // いるので、戻さないと打った文が消える。待つ間に新しく打ち始めていたら、そちらを残す
         if (!answered && !$('#chatInput').value.trim()) setValue($('#chatInput'), text);
@@ -3398,6 +3440,7 @@
           if (!slot.hidden) slot.querySelector('.px').textContent = got[k];
         });
       });
+      turn.querySelector('.who').insertAdjacentHTML('beforeend', magiThinkingHTML(entry.thinkingSeconds));
       turn.querySelector('.ab').textContent = entry.reply;
       finishTurn(turn);
       return turn;

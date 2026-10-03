@@ -2017,6 +2017,8 @@
       margin-bottom: 0.15rem;
     }
 
+    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
     .agent-reply.streaming::after {
       content: '▌';
       color: var(--primary-color);
@@ -7592,6 +7594,40 @@
       if (img) img.classList.toggle('expanded');
     });
 
+    // トップのインスクリプションとアプリ単体配布のため、4画面に同じ計時処理を内包する。
+    function setMagiThinkingLabel(el, seconds, finished) {
+      el.className = 'magi-thinking';
+      el.dataset.en = finished ? 'Thought for ' + seconds + 's' : 'Thinking for ' + seconds + 's';
+      el.dataset.ja = seconds + (finished ? '秒考えました' : '秒考え中');
+      el.textContent = document.documentElement.lang === 'ja' ? el.dataset.ja : el.dataset.en;
+    }
+    function magiThinkingHTML(seconds) {
+      if (!Number.isInteger(seconds) || seconds < 0) return '';
+      var el = document.createElement('span');
+      setMagiThinkingLabel(el, seconds, true);
+      return el.outerHTML;
+    }
+    function startMagiThinking(target, startedAt) {
+      var el = document.createElement('span'), seconds = null;
+      target.appendChild(el);
+      // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
+      var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+      var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
+      tick();
+      var timer = setInterval(tick, 1000);
+      return {
+        finish: function () {
+          if (seconds === null) {
+            clearInterval(timer);
+            seconds = elapsed();
+            setMagiThinkingLabel(el, seconds, true);
+          }
+          return seconds;
+        },
+        cancel: function () { clearInterval(timer); el.remove(); },
+      };
+    }
+
     // The two kinds of entry in the log, shared by a live send and a replayed session.
     function userBubbleEl(content) {
       const u = document.createElement('div');
@@ -7600,12 +7636,12 @@
       return u;
     }
     // An assistant turn: the persona cards (when there are any) above the integrated reply.
-    function agentTurnEl(mid, cardsHTML, reply, streaming) {
+    function agentTurnEl(mid, cardsHTML, reply, streaming, thinkingSeconds) {
       const turn = document.createElement('div');
       turn.className = 'fade-in agent-turn';
       turn.dataset.mid = mid; // リアクション状態を履歴項目と対応付けるための一意キー
       turn.innerHTML = cardsHTML
-        + `<div class="agent-reply${streaming ? ' streaming' : ''}"><span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body">${esc(reply)}</span>${reactionBarHTML('integrated')}</div>`;
+        + `<div class="agent-reply${streaming ? ' streaming' : ''}"><span class="agent-who">✦ ${esc(displayName())}${magiThinkingHTML(thinkingSeconds)}</span><span class="agent-reply-body">${esc(reply)}</span>${reactionBarHTML('integrated')}</div>`;
       return turn;
     }
 
@@ -7640,7 +7676,7 @@
     }
 
     function prepareAgentMessages(history, lastContent) {
-      const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
+      const messages = history.slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, ...m }) => ({ ...m }));
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
       messages[messages.length - 1].content = lastContent;
       let remaining = 8;
@@ -7677,6 +7713,7 @@
       const text = agentInput.value.trim().slice(0, 1000);
       const atts = attachments.slice();
       if (!text && !atts.length) return;
+      const startedAt = performance.now();
       setAgentSuggestion('');
       agentInput.value = ''; fitAgentInput();
       attachments = []; renderAttachTray();
@@ -7696,6 +7733,7 @@
       agentLog.appendChild(turn); agentScroll();
       const replyEl = turn.querySelector('.agent-reply');
       const replyBody = replyEl.querySelector('.agent-reply-body');
+      const thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
       agentHistory.push({ role: 'user', content: storeContent });
       saveCurrentHistory();
@@ -7707,6 +7745,7 @@
       // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
       const ctrl = new AbortController();
       const gen = agentGen; agentCtrl = ctrl;
+      ctrl.signal.addEventListener('abort', () => thinking.cancel(), { once: true });
       const dropped = () => gen !== agentGen;
       let idleTimer = null;
       const watch = (ms = 70000) => {
@@ -7742,8 +7781,8 @@
               agentScroll();
               if (debateData[d.codename]) debateData[d.codename][d.round === 2 ? 'round2' : 'round1'] = d.text;
             },
-            integrated: (d) => { if (dropped()) return; reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
-            error: (d) => { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
+            integrated: (d) => { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
+            error: (d) => { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
             pages: (d) => { if (!dropped()) sitePages = d; },
@@ -7766,6 +7805,7 @@
         else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
       } finally {
         clearTimeout(idleTimer);
+        if (!completed || errored || dropped()) thinking.cancel();
         if (agentCtrl === ctrl) agentCtrl = null;
         // 打ち切られた送信でも、次の送信がまだ始まっていなければボタンを戻す
         if (!dropped() || !agentBusy) setAgentStopMode(false);
@@ -7785,7 +7825,7 @@
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
-        agentHistory.push({ role: 'assistant', content: reply, debate: debateData, mid, reactions: pendingReactions[mid] || {} });
+        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
         saveCurrentHistory();
         updateAgentActionButtons();
@@ -7965,7 +8005,7 @@
       history.forEach(item => {
         if (item.role === 'user') { agentLog.appendChild(userBubbleEl(item.content)); return; }
         if (!item.mid) item.mid = genMid(); // 旧データには mid を遅延付与
-        const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false);
+        const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false, item.thinkingSeconds);
         applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
         agentLog.appendChild(turn);
       });

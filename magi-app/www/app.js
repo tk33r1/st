@@ -146,6 +146,10 @@ function safeStore(key, val) {
 }
 var genMid = function () { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
 var agentScroll = function () { agentLog.scrollTop = agentLog.scrollHeight; };
+// 終わった往復とエラーを1回だけ読み上げる（#agent-log は読み上げ領域にしない。index.html の注記）。
+// 保存した会話を開き直したときは読み上げない（自分で開いたものなので、ログを順にたどれる）。
+var agentStatusEl = document.getElementById('agent-status');
+var announceAgent = function (text) { agentStatusEl.textContent = text || ''; };
 
 var ICON_COPY = '<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 var ICON_LIKE = '<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>';
@@ -259,10 +263,44 @@ function personaCardsHTML(debate) {
   return '<div class="agent-personas">' + personas + '</div>';
 }
 
+// トップのインスクリプションとアプリ単体配布のため、4画面に同じ計時処理を内包する。
+function setMagiThinkingLabel(el, seconds, finished) {
+  el.className = 'magi-thinking';
+  el.dataset.en = finished ? 'Thought for ' + seconds + 's' : 'Thinking for ' + seconds + 's';
+  el.dataset.ja = seconds + (finished ? '秒考えました' : '秒考え中');
+  el.textContent = document.documentElement.lang === 'ja' ? el.dataset.ja : el.dataset.en;
+}
+function magiThinkingHTML(seconds) {
+  if (!Number.isInteger(seconds) || seconds < 0) return '';
+  var el = document.createElement('span');
+  setMagiThinkingLabel(el, seconds, true);
+  return el.outerHTML;
+}
+function startMagiThinking(target, startedAt) {
+  var el = document.createElement('span'), seconds = null;
+  target.appendChild(el);
+  // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
+  var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+  var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
+  tick();
+  var timer = setInterval(tick, 1000);
+  return {
+    finish: function () {
+      if (seconds === null) {
+        clearInterval(timer);
+        seconds = elapsed();
+        setMagiThinkingLabel(el, seconds, true);
+      }
+      return seconds;
+    },
+    cancel: function () { clearInterval(timer); el.remove(); },
+  };
+}
+
 // ---- Render persisted history ----------------------------------------------
 function turnHTML(item) {
   return personaCardsHTML(item.debate || {})
-    + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + reactionBarHTML('integrated') + '</div>';
+    + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda' + magiThinkingHTML(item.thinkingSeconds) + '</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + reactionBarHTML('integrated') + '</div>';
 }
 function renderHistoryToLog(history) {
   agentLog.innerHTML = '';
@@ -309,6 +347,7 @@ function resetAgent() {
   localStorage.removeItem('magi_current_title');
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
+  announceAgent('');
   agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = ''; fitAgentInput();
   attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
   setAgentSuggestion('');
@@ -321,6 +360,7 @@ function agentDegrade(msg) {
   agentDead = true;
   agentDegraded.textContent = msg || 'MAGI is currently unreachable. Check your connection and try again.';
   agentDegraded.classList.remove('hidden');
+  announceAgent(agentDegraded.textContent);
   agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
   renderAgentSuggest();
 }
@@ -333,6 +373,7 @@ function renderAgentError(env) {
   if (env.request_id) lines.push('<div class="agent-rid">request_id: ' + esc(env.request_id) + '</div>');
   div.innerHTML = '⚠ ' + esc(env.message || 'An error occurred') + lines.join('');
   agentLog.appendChild(div);
+  announceAgent(env.message || 'An error occurred');
   agentScroll();
 }
 
@@ -502,7 +543,7 @@ function renderAgentPages(replyEl, data) {
 }
 
 function prepareAgentMessages(history, lastContent) {
-  const messages = history.slice(-AGENT_MAX_HISTORY).map(m => ({ ...m }));
+  const messages = history.slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, ...m }) => ({ ...m }));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -540,6 +581,7 @@ async function agentSend() {
   var text = agentInput.value.trim().slice(0, 1000);
   var atts = attachments.slice();
   if (!text && !atts.length) return;
+  var startedAt = performance.now();
   setAgentSuggestion('');
   agentInput.value = ''; fitAgentInput();
   attachments = []; renderAttachTray();
@@ -564,6 +606,7 @@ async function agentSend() {
   turn.appendChild(replyEl);
   agentLog.appendChild(turn); agentScroll();
   var replyBody = replyEl.querySelector('.agent-reply-body');
+  var thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
   agentHistory.push({ role: 'user', content: storeContent });
   safeStore('magi_current_history', agentHistory);
@@ -576,6 +619,7 @@ async function agentSend() {
 
   var ctrl = new AbortController();
   var gen = agentGen; agentCtrl = ctrl;
+  ctrl.signal.addEventListener('abort', function () { thinking.cancel(); }, { once: true });
   var dropped = function () { return gen !== agentGen; };
   var idleTimer = null;
   var watch = function (ms) {
@@ -617,8 +661,8 @@ async function agentSend() {
             else debateData[d.codename].round1 = d.text;
           }
         },
-        integrated: function (d) { if (dropped()) return; reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
-        error: function (d) { if (dropped()) return; errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
+        integrated: function (d) { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
+        error: function (d) { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
         // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
         pages: function (d) { if (!dropped()) sitePages = d; },
@@ -639,6 +683,7 @@ async function agentSend() {
     else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
   } finally {
     clearTimeout(idleTimer);
+    if (!completed || errored || dropped()) thinking.cancel();
     if (agentCtrl === ctrl) agentCtrl = null;
     // A dropped request restores the button too, unless a newer send has already taken it over.
     if (!dropped() || !agentBusy) setAgentStopMode(false);
@@ -653,8 +698,9 @@ async function agentSend() {
   if (dropped()) { delete pendingReactions[mid]; return; }
   if (completed && reply.trim() && !errored) {
     renderAgentPages(replyEl, sitePages);
+    announceAgent('MAGI replied. ' + reply);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
-    agentHistory.push({ role: 'assistant', content: reply, debate: debateData, mid: mid, reactions: pendingReactions[mid] || {} });
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();

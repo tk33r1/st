@@ -61,6 +61,7 @@
     .fade-in { animation: fadeIn var(--duration-normal) ease both; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     .hidden { display: none !important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 
     /* kebab (more options) dropdown */
     .kebab-wrap { position: relative; display: inline-flex; }
@@ -157,6 +158,7 @@
     .persona-round-label { display: block; font-size: 9px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
     .agent-reply { margin-top: 0.4rem; padding: 0.6rem 0.7rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
     .agent-reply .agent-who { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
     .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
     .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
@@ -283,7 +285,10 @@
       </div>
     </header>
 
-    <div id="agent-log" aria-live="polite" aria-atomic="false"></div>
+    <!-- 読み上げ領域にしない。回答は本文を1文字ずつ書き換えて流れ、考え中の秒数も毎秒変わるので、
+         ここを読み上げると延々と読み続ける。終わった往復とエラーは #agent-status が1回だけ知らせる。 -->
+    <div id="agent-log"></div>
+    <div id="agent-status" class="sr-only" aria-live="polite"></div>
     <div id="agent-degraded" class="hidden"></div>
 
     <div id="agent-attach-tray" class="hidden"></div>
@@ -306,6 +311,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261004_1"></script>
+  <script src="app.js?v=20261004_2"></script>
 </body>
 </html>

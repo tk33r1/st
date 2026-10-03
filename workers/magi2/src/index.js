@@ -433,19 +433,21 @@ async function fetchTitle(env, lastContent, langNote, signal, log) {
 // 画面が付けた状況説明を足す前の会話を新しい順に見て、言語が読み取れる最初の発言を使う。
 // 英字だけの発言は3語以上、それ以外の文字（かな・漢字・ハングル・アラビア文字・エチオピア文字など）は2字以上で読み取れるとみなす。
 // 「OK」や曲名だけ・画像だけの発言は飛ばす（日本語の会話の「Daft Punk?」で英語に切り替わらないように）。無ければ null。
-// かなの文字があり、英字が混じらない発言だけは「日本語」と書く（漢字の多い日本語を中国語と取り違えないため）。
+// かなの文字があり、他言語の文字が混じらない発言だけは「日本語」と書く（漢字の多い日本語を中国語と取り違えないため）。
 // 混在文は固有名詞だけで言語を決めず、引用した文の主言語をモデルに判断させる。
 // 「・」「ー」や濁点など、Common/Inheritedの文字・記号は言語の根拠に数えない。
 const isLanguageLetter = (ch) => /\p{L}/u.test(ch) && !/[\p{Script=Common}\p{Script=Inherited}]/u.test(ch);
 const isKanaLetter = (ch) => /\p{L}/u.test(ch) && /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
+const isJapaneseLetter = (ch) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
 function replyLanguageNote(messages) {
   for (const m of [...messages].reverse()) {
     if (m.role !== 'user') continue;
     const text = contentText(m.content).trim();
     const words = (text.match(/[A-Za-z]+/g) || []).length;
-    const letters = [...text].filter(ch => ch.codePointAt(0) > 127 && isLanguageLetter(ch)).length;
+    const languageLetters = [...text].filter(isLanguageLetter);
+    const letters = languageLetters.filter(ch => ch.codePointAt(0) > 127).length;
     if (words >= 3 || letters >= 2) {
-      if (!/[A-Za-z]/.test(text) && [...text].some(isKanaLetter)) return REPLY_LANGUAGE.ja;
+      if (languageLetters.some(isKanaLetter) && languageLetters.every(isJapaneseLetter)) return REPLY_LANGUAGE.ja;
       return REPLY_LANGUAGE.note(text.slice(0, REPLY_LANGUAGE.sample_chars));
     }
   }

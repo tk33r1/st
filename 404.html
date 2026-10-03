@@ -88,6 +88,10 @@
     .ai-search summary { display: block; min-height: 44px; padding: 10px; }
     .ai-search details p { padding: 0 10px 10px; }
     .ai-answer { margin-top: 16px; padding: 12px; background: var(--surface); border-radius: 8px; overflow-wrap: anywhere; }
+    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #ai-thinking { display: block; margin: 8px 0 0; }
+    #ai-thinking .magi-thinking { margin-inline-start: 0; font-size: 12px; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
     .ai-ask { font-family: ui-monospace, monospace; margin: 8px 0; }
     #ai-list { margin-top: 12px; }
     .ai-followups a, #ai-daily { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
@@ -139,6 +143,7 @@
       <div class="ai-search" id="ai-search" hidden>
         <button type="button" id="ai-run" data-ja="Shinya Takeda AI に聞く" data-en="Ask Shinya Takeda AI">Shinya Takeda AI に聞く</button>
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
+        <span id="ai-thinking" hidden></span>
         <p class="ai-disclosure" data-ja="検索語とサイトのページ一覧を OpenAI に送ります。押すまで送信しません。" data-en="Your search and the site's page list are sent to OpenAI only when you press the button."></p>
         <details><summary data-ja="詳しく" data-en="Details">詳しく</summary><p data-ja="検索語と公開済みのページ一覧・自己像カードをOpenAI APIへ送ります。APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, the public page list, and a public self-image card are sent to the OpenAI API. API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p><p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p></details>
         <div id="ai-result" hidden>
@@ -396,16 +401,51 @@
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
       // 品質・費用・計測の確認後に公開する。URLなどから有効化できない。
       var AI_SEARCH_ENABLED = false;
-      var ai = { generation: 0, controller: null, query: '', eligible: false };
+      var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
       var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
         : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
+      // 考え中と回答の到着は計時ラベルと結果の枠が見せるので、読み上げだけにする。失敗・上限・キャンセルは画面にも出す。
+      function setAIStatus(message, spoken) {
+        var el = byId('ai-status');
+        el.textContent = message; el.classList.toggle('visually-hidden', !!spoken);
+      }
+      // トップのインスクリプションとアプリ単体配布のため、4画面に同じ計時処理を内包する。
+      function setMagiThinkingLabel(el, seconds, finished) {
+        el.className = 'magi-thinking';
+        el.dataset.en = finished ? 'Thought for ' + seconds + 's' : 'Thinking for ' + seconds + 's';
+        el.dataset.ja = seconds + (finished ? '秒考えました' : '秒考え中');
+        el.textContent = document.documentElement.lang === 'ja' ? el.dataset.ja : el.dataset.en;
+      }
+      function startMagiThinking(target, startedAt) {
+        var el = document.createElement('span'), seconds = null;
+        target.appendChild(el);
+        // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
+        var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+        var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
+        tick();
+        var timer = setInterval(tick, 1000);
+        return {
+          finish: function () {
+            if (seconds === null) {
+              clearInterval(timer);
+              seconds = elapsed();
+              setMagiThinkingLabel(el, seconds, true);
+            }
+            return seconds;
+          },
+          cancel: function () { clearInterval(timer); el.remove(); },
+        };
+      }
+
       function resetAI() {
         ai.generation++;
+        if (ai.thinking) { ai.thinking.cancel(); ai.thinking = null; }
         if (ai.controller) ai.controller.abort();
         ai.controller = null; ai.query = ''; ai.eligible = false;
         byId('ai-search').hidden = true; byId('ai-result').hidden = true;
         byId('ai-run').disabled = false; byId('ai-cancel').hidden = true;
-        byId('ai-status').textContent = ''; byId('ai-list').replaceChildren();
+        byId('ai-thinking').hidden = true; byId('ai-thinking').replaceChildren();
+        setAIStatus(''); byId('ai-list').replaceChildren();
       }
       function syncAI(query, total) {
         var eligible = AI_SEARCH_ENABLED && query && !composing && state.jsonReady && state.failures === 0 && total === 0;
@@ -428,11 +468,16 @@
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       byId('ai-run').addEventListener('click', async function () {
         if (!ai.eligible || ai.controller || composing || input.value.slice(0, 200).trim() !== ai.query) return;
+        var startedAt = performance.now();
         var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
+        byId('ai-thinking').replaceChildren(); byId('ai-thinking').hidden = false;
+        var thinking = startMagiThinking(byId('ai-thinking'), startedAt); ai.thinking = thinking;
+        ac.signal.addEventListener('abort', function () { thinking.cancel(); }, { once: true });
+        var answered = false;
         var timer;
         var expired = new Promise(function (_, reject) { timer = setTimeout(function () { ac.abort(); reject(new Error('Timeout')); }, 15000); });
         byId('ai-run').disabled = true; byId('ai-cancel').hidden = false; byId('ai-result').hidden = true;
-        byId('ai-status').textContent = aiText.thinking;
+        setAIStatus(aiText.thinking, true);
         send('not_found_ai_used');
         try {
           var origin = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://workers.tk.st';
@@ -440,7 +485,7 @@
             credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify({ query: query, locale: lang }) }), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!res.ok) {
-            byId('ai-status').textContent = res.status === 429 ? aiText.limited : aiText.unavailable;
+            setAIStatus(res.status === 429 ? aiText.limited : aiText.unavailable);
             send('not_found_ai_result', { status: res.status === 429 ? 'limited' : 'error', count: 0 });
             if (res.status === 429) byId('ai-run').disabled = true;
             return;
@@ -472,17 +517,20 @@
           byId('ai-comment').textContent = typeof data.comment === 'string' ? data.comment : data.status === 'no_results' ? aiText.none : '';
           byId('ai-comment').hidden = !byId('ai-comment').textContent;
           byId('ai-request').hidden = data.status !== 'no_results'; byId('ai-result').hidden = false;
-          byId('ai-status').textContent = data.status === 'no_results' ? aiText.none : aiText.ready + ' ' + (lang === 'ja' ? rows.length + '件のページ候補。' : rows.length + ' page suggestions.');
+          setAIStatus(data.status === 'no_results' ? aiText.none : aiText.ready + ' ' + (lang === 'ja' ? rows.length + '件のページ候補。' : rows.length + ' page suggestions.'), true);
+          thinking.finish(); answered = true;
           send('not_found_ai_result', { status: data.status, count: rows.length });
         } catch (_) {
           if (generation !== ai.generation) return;
-          byId('ai-status').textContent = aiText.unavailable; send('not_found_ai_result', { status: 'error', count: 0 });
+          setAIStatus(aiText.unavailable); send('not_found_ai_result', { status: 'error', count: 0 });
         } finally {
           clearTimeout(timer);
+          if (!answered) thinking.cancel();
+          if (ai.thinking === thinking) ai.thinking = null;
           if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; if (byId('ai-status').textContent !== aiText.limited) byId('ai-run').disabled = false; }
         }
       });
-      byId('ai-cancel').addEventListener('click', function () { var query = ai.query; resetAI(); syncAI(query, 0); byId('ai-status').textContent = aiText.cancelled; });
+      byId('ai-cancel').addEventListener('click', function () { var query = ai.query; resetAI(); syncAI(query, 0); setAIStatus(aiText.cancelled); });
       function recordAIClick(event) {
         var a = event.target.closest('a[data-ai-target]');
         if (!a || (event.type === 'auxclick' && event.button !== 1)) return;
