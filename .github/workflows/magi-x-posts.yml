@@ -3,9 +3,9 @@ name: MAGI X Posts
 # 本人（@Tah_Keh）の X を、MAGI の人格カードの素材として取り込む（.github/scripts/magi-x-posts.py）。
 #   check:     本人として認証できるかだけを確かめる
 #   fetch:     前回より新しい投稿を読み、.github/magi/x-posts.json に足す（週1回の定期実行もこれ）
-#   recheck:   直近60日を読み直し、X で消した投稿をファイルからも落としてから fetch する（月1回の定期実行。1回 数セント）
-#              git の履歴には残るので、完全に消すには履歴の書き換えが要る
-#   backfill:  1年分を読み直し、説明の済んでいない投稿に画像の説明と返信・引用の相手の要約を付ける（最初の1回だけ）
+#   recheck:   直近 days 日（既定60日）を読み直し、X で消した投稿をファイルからも落とす（月1回の定期実行。1回 数セント）。
+#              新しい投稿もこれで入る。git の履歴には残るので、完全に消すには履歴の書き換えが要る。
+#              画像の説明の付け方を変えて付け直すときは、x-posts.json の enriched を外してから days=365 で手動実行する
 # 取り込んだ投稿には、AI で画像の説明（1枚1行）と返信・引用の相手の投稿の要約を付ける。相手の本文と画像は保存しない
 #   interests: いいねとフォローを読み、関心を分野ごとに要約して .github/magi/x-interests.json に書く
 #              （生のデータは保存しない。全件を読み直すので数ドルかかる。数か月に1回の手動実行で十分）
@@ -22,12 +22,12 @@ on:
       mode:
         description: '実行内容'
         type: choice
-        options: [check, fetch, recheck, backfill, interests]
+        options: [check, fetch, recheck, interests]
         default: check
-      enrich_limit:
-        description: '説明を付ける投稿の上限（空なら全部。試しに少しだけ流すとき）'
+      days:
+        description: 'recheck で読み直す日数'
         type: string
-        default: ''
+        default: '60'
 
 permissions:
   contents: write
@@ -58,11 +58,8 @@ jobs:
         X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
         X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ENRICH_LIMIT: ${{ inputs.enrich_limit }}
-      run: |
-        if [ "$MODE" = backfill ]; then args="--recheck --days 365"; else args="--$MODE"; fi
-        if [ -n "$ENRICH_LIMIT" ]; then args="$args --enrich-limit $ENRICH_LIMIT"; fi
-        python3 .github/scripts/magi-x-posts.py $args
+        DAYS: ${{ inputs.days || '60' }}
+      run: python3 .github/scripts/magi-x-posts.py --$MODE --days "$DAYS"
 
     # .github/magi/ を書くのはこの workflow だけなので、取り込みで衝突しない。変わらなければ何もしない
     - name: Commit X sources and rebuild persona cards

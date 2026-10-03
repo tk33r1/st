@@ -78,13 +78,21 @@ function checkText(text, maxChars, counters) {
 
 const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
 
-// 上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける。
+// rate_limit の (key, period) の数を1つ進めて返す。limit に達していたら進めずに null を返す
+// （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
+// 回数制限（IP・全体・リアクション）と、通知メールの「今日はもう送った」印（limit = 1）に使う。
+async function countUp(db, key, period, limit) {
+  const row = await db.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
+    ON CONFLICT(ip, day) DO UPDATE SET count = count + 1 WHERE count < ?3 RETURNING count`)
+    .bind(key, period, limit).first();
+  return row ? row.count : null;
+}
+
 async function consumeReactionLimit(db, ip, now) {
   for (const [period, limit] of [[now.slice(0, 16), DEFAULTS.reactions.minute_limit], [now.slice(0, 10), DEFAULTS.reactions.daily_limit]]) {
-    const row = await db.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
-      ON CONFLICT(ip, day) DO UPDATE SET count = count + 1 WHERE count < ?3 RETURNING count`)
-      .bind(`react:${ip}`, period, limit).first();
-    if (!row) throw stageError('rate_limit', 'reaction_limit_exceeded', 'リアクションの利用上限に達しました。時間を置いてお試しください', { http_status: 429, retryable: true });
+    if (await countUp(db, `react:${ip}`, period, limit) == null) {
+      throw stageError('rate_limit', 'reaction_limit_exceeded', 'リアクションの利用上限に達しました。時間を置いてお試しください', { http_status: 429, retryable: true });
+    }
   }
 }
 
@@ -287,9 +295,7 @@ async function alertUpstream(env, log, provider, res) {
 async function sendAlert(env, log, key, subject, lines) {
   if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
   const day = new Date().toISOString().slice(0, 10);
-  const first = await env.DB.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1) ON CONFLICT(ip, day) DO NOTHING RETURNING count`)
-    .bind(key, day).first();
-  if (!first) return; // 今日はもう送った
+  if (await countUp(env.DB, key, day, 1) == null) return; // 今日はもう送った
   let sent = false, res;
   try {
     res = await fetch('https://api.resend.com/emails', {
@@ -603,14 +609,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
     try {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       const day = new Date().toISOString().slice(0, 10);
-      const row = await env.DB.prepare(
-        `INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
-         ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
-         RETURNING count`
-      ).bind(ip, day).first();
-      const count = row && row.count || 1;
-      log('rate_limit', ip, day, count);
-      if (count > DEFAULTS.daily_limit) {
+      const count = await countUp(env.DB, ip, day, DEFAULTS.daily_limit);
+      log('rate_limit', ip, day, count ?? 'limit');
+      if (count == null) {
         return httpError(429, {
           stage: 'rate_limit', code: 'daily_limit_exceeded',
           message: `本日の利用上限（${DEFAULTS.daily_limit}回/日）に達しました`,
@@ -618,14 +619,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         }, requestId, cors);
       }
       // 全利用者の合計にも1日の上限を掛ける。Origin は名乗れるので、IP を替えながら大量に呼ばれても費用に天井を作る。
-      // 上限に達した最初の1回でメールを送る（ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
-      const total = await env.DB.prepare(
-        `INSERT INTO rate_limit (ip, day, count) VALUES ('global', ?1, 1)
-         ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
-         RETURNING count`
-      ).bind(day).first();
-      if (total && total.count > DEFAULTS.global_daily_limit) {
-        log('rate_limit', 'global', day, total.count);
+      // 上限に達したらメールを送る（1日1通。ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
+      if (await countUp(env.DB, 'global', day, DEFAULTS.global_daily_limit) == null) {
+        log('rate_limit', 'global', day, 'limit');
         ctx.waitUntil(sendAlert(env, log, 'alert:global', `[MAGI] 本日のサイト全体の上限（${DEFAULTS.global_daily_limit}回）に達しました`, [
           `MAGI（magi2）への質問が、UTC の ${day} に全利用者の合計で ${DEFAULTS.global_daily_limit} 回を超えました。`,
           '今日（UTC）の残りは、どの利用者にも「本日の利用上限に達しました」と返しています。',

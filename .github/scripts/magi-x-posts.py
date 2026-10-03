@@ -4,7 +4,7 @@
   --check      本人として認証できるかを、値を出さずに確かめる
   --fetch      本人の投稿（リポストを除く）のうち前回より新しい分を読み、.github/magi/x-posts.json に足す
   --recheck    --fetch の前に直近 RECHECK_DAYS 日を読み直し、X で消した投稿をファイルからも落とす（月1回）。
-               --days 365 なら1年分を読み直し、説明の済んでいない投稿に説明を付ける（初回の付け直し）
+               --days 365 なら1年分を読み直し、説明の済んでいない投稿に説明を付ける（説明を付け直すとき）
   取り込んだ投稿には、画像の説明（media。1枚1行）と、返信・引用の相手の投稿の要約（context）を AI で付ける。
   相手の投稿の本文や画像そのものは保存しない（公開リポジトリに他人の投稿を並べないため。X の規約でも再配布は制限される）
   --interests  本人のいいね（最大 MAX_LIKES 件）とフォローを読み、関心を分野ごとに要約して
@@ -127,7 +127,6 @@ def check():
 
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'magi', 'x-posts.json')
 PAGE_SIZE = 100          # 1回の取得の上限（X の仕様）
-MAX_POSTS_PER_RUN = 4000  # 1回の実行で読む上限。本人の読み取りは $0.001／件なので最大 $4 の安全弁
 TWEET_FIELDS = 'created_at,public_metrics,referenced_tweets,in_reply_to_user_id,note_tweet,lang,attachments'
 # 添付の画像（動画・GIF はサムネイル）と、返信・引用の相手の投稿も一緒に受け取る（includes に入る）。
 # 相手の投稿は本人の読み取りではないので $0.005／件。本文は保存せず、何への返信・引用かの要約だけを残す
@@ -212,7 +211,7 @@ def summarize_context(mc, api_key, rec, parent):
     return line.strip().splitlines()[0][:60] if line.strip() else None
 
 
-def enrich(records, limit=None):
+def enrich(records):
     """説明の済んでいない投稿に、画像の説明（media）と返信・引用の相手の要約（context）を付ける。
     要るのは、この実行で受け取った includes。失敗した投稿は付けないまま残し、次の読み直しでまた試す。"""
     todo = [r for r in records if not r.get('enriched')]
@@ -220,7 +219,7 @@ def enrich(records, limit=None):
     done = images = contexts = failed = 0
     if todo and api_key:
         mc = load_magi_context()
-        for r in todo[:limit]:
+        for r in todo:
             media = [INCLUDES['media'][k] for k in r.get('_media', []) if k in INCLUDES['media'] and image_url(INCLUDES['media'][k])]
             parent = INCLUDES['tweets'].get(r.get('_ref')) if r.get('_ref') else None
             try:
@@ -242,16 +241,35 @@ def enrich(records, limit=None):
         r.pop('_media', None)
         r.pop('_ref', None)
     if todo:
-        print(f'説明を付けた投稿: {done} 件（画像 {images} 枚・相手の要約 {contexts} 件）／ 失敗 {failed} 件 ／ 未処理 {len(todo) - done - failed} 件')
+        print(f'説明を付けた投稿: {done} 件（画像 {images} 枚・相手の要約 {contexts} 件）／ 失敗 {failed} 件')
 
 
 RECHECK_DAYS = 60  # --recheck で読み直す期間（月1回）。月1回の確認の直後に消した投稿も、次の確認で拾えるよう2か月にする
 
 
-def fetch(recheck=False, days=RECHECK_DAYS, enrich_limit=None):
+def read_timeline(user_id, handle, creds, **params):
+    """本人の投稿を新しい順に読み切って記録のリストを返す（includes は INCLUDES に貯める）。
+    X がさかのぼって返すのは直近3,200件までなので、上限を設けなくても1回 $3.2 ほどで止まる。"""
+    query = timeline_query(**params)
+    records, pages = [], 0
+    while True:
+        status, body = api_get(f'/users/{user_id}/tweets', query, creds)
+        if status != 200:
+            sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
+        pages += 1
+        remember(body)
+        tweets = body.get('data', [])
+        records += [to_record(t, handle) for t in tweets]
+        token = body.get('meta', {}).get('next_token')
+        if not token or not tweets:
+            return records
+        query['pagination_token'] = token
+
+
+def fetch(recheck=False, days=RECHECK_DAYS):
     """本人の投稿（リポストを除く）を新しい順に読み、前回より新しい分を x-posts.json に足す。
-    recheck なら先に直近 days 日を読み直し、X で消した投稿をファイルからも落とす（いいね数なども新しくなる）。
-    新しく読んだ投稿と、読み直した範囲の説明の済んでいない投稿には、画像の説明と返信・引用の相手の要約を付ける。"""
+    recheck なら直近 days 日を読み直し（新しい分もこれで入る）、X で消した投稿をファイルからも落とす（いいね数なども新しくなる）。
+    読んだ投稿のうち説明の済んでいないものに、画像の説明と返信・引用の相手の要約を付ける。"""
     creds = own_credentials()
     status, me = api_get('/users/me', {}, creds)
     if status != 200:
@@ -260,112 +278,50 @@ def fetch(recheck=False, days=RECHECK_DAYS, enrich_limit=None):
 
     try:
         with open(OUT_PATH, encoding='utf-8') as f:
-            saved = json.load(f)
+            saved = {p['id']: p for p in json.load(f)['posts']}
     except FileNotFoundError:
-        saved = {'posts': []}
+        saved = {}
 
-    removed = 0
-    rechecked = []
     if recheck:
         start = datetime.now(timezone.utc) - timedelta(days=days)
-        query = timeline_query(start_time=start.strftime('%Y-%m-%dT%H:%M:%SZ'))
-        fresh, n = {}, 0
-        previous = {p['id']: p for p in saved['posts']}
-        while n < MAX_POSTS_PER_RUN:
-            status, body = api_get(f'/users/{user_id}/tweets', query, creds)
-            if status != 200:
-                sys.exit(f'読み直せなかった: HTTP {status} — {summarize_error(body)}')
-            remember(body)
-            tweets = body.get('data', [])
-            n += len(tweets)
-            for t in tweets:
-                rec = to_record(t, handle)
-                # 説明が済んでいる投稿は、前回の説明を引き継ぐ（画像を読ませ直さない）
-                old = previous.get(t['id'], {})
-                if old.get('enriched'):
-                    rec.update({k: old[k] for k in ('media', 'context', 'enriched') if k in old})
-                fresh[t['id']] = rec
-            token = body.get('meta', {}).get('next_token')
-            if not token or not tweets:
-                break
-            query['pagination_token'] = token
-        else:
-            sys.exit(f'読み直しが1回の上限（{MAX_POSTS_PER_RUN} 件）を超えた。消えた投稿を判定できないので何も変えない')
-        # 期間内の保存分は読み直した結果で置き換える。返ってこなかったものは X で消されている
+        fresh = read_timeline(user_id, handle, creds, start_time=start.strftime('%Y-%m-%dT%H:%M:%SZ'))
+        # 期間内の保存分で、読み直しに返ってこなかったものは X で消されている
         # （消した投稿の本文は、公開される Actions のログにも出さない）
-        in_window = lambda p: datetime.fromisoformat(p['created_at'].replace('Z', '+00:00')) >= start
-        kept = [p for p in saved['posts'] if not in_window(p)]
-        removed = sum(1 for p in saved['posts'] if in_window(p) and p['id'] not in fresh)
-        rechecked = list(fresh.values())
-        saved['posts'] = kept + rechecked
-        print(f'読み直し: 直近 {days} 日の {n} 件（約 ${n * 0.001:.3f}。返信・引用の相手は別に $0.005／件）。X で消された投稿 {removed} 件を落とした')
+        ids = {r['id'] for r in fresh}
+        removed = [i for i, p in saved.items()
+                   if i not in ids and datetime.fromisoformat(p['created_at'].replace('Z', '+00:00')) >= start]
+        for i in removed:
+            del saved[i]
+        print(f'読み直し: 直近 {days} 日。X で消された投稿 {len(removed)} 件を落とした')
+    else:
+        newest = max(map(int, saved), default=0)
+        # 前回より新しい分だけを読む（読んだ件数だけ課金される）
+        fresh = read_timeline(user_id, handle, creds, **({'since_id': str(newest)} if newest else {}))
 
-    known = {p['id'] for p in saved['posts']}
-    newest = max((int(p['id']) for p in saved['posts']), default=0)
-    added, read, pages = [], 0, 0
+    added = [r for r in fresh if r['id'] not in saved]
+    for r in fresh:
+        # 説明が済んでいる投稿は、前回の説明を引き継ぐ（画像を読ませ直さない）
+        old = saved.get(r['id'], {})
+        if old.get('enriched'):
+            r.update({k: old[k] for k in ('media', 'context', 'enriched') if k in old})
+        saved[r['id']] = r
+    enrich(fresh)
 
-    def read_range(since_id, until_id):
-        """since_id より新しく until_id より古い投稿を、新しい順に読む。上限で止めたら、読んだうち最も古い ID を返す。"""
-        nonlocal read, pages
-        query = timeline_query()
-        if since_id:
-            query['since_id'] = str(since_id)  # 前回より新しい分だけを読む（読んだ件数だけ課金される）
-        if until_id:
-            query['until_id'] = str(until_id)
-        oldest = None
-        while True:
-            if read >= MAX_POSTS_PER_RUN:
-                return oldest
-            status, body = api_get(f'/users/{user_id}/tweets', query, creds)
-            if status != 200:
-                sys.exit(f'投稿を読めなかった（{pages + 1} ページ目）: HTTP {status} — {summarize_error(body)}')
-            pages += 1
-            remember(body)
-            tweets = body.get('data', [])
-            read += len(tweets)
-            added.extend(to_record(t, handle) for t in tweets if t['id'] not in known)
-            known.update(t['id'] for t in tweets)
-            if tweets:
-                oldest = min(int(t['id']) for t in tweets)
-            token = body.get('meta', {}).get('next_token')
-            if not token or not tweets:
-                return None
-            query['pagination_token'] = token
-
-    # 前回、1回の上限で止めた範囲（古い側の残り）があれば、先にその続きを読む。
-    # 新しい順にしか読めないので、止めた位置を覚えておかないと、次の実行は最新より新しい分しか読まず残りが抜ける
-    gap = saved.get('resume')
-    if gap:
-        stopped = read_range(gap['since_id'], gap['until_id'])
-        gap = {'since_id': gap['since_id'], 'until_id': stopped} if stopped else None
-    if not gap:
-        stopped = read_range(newest, None)
-        if stopped and newest:
-            gap = {'since_id': newest, 'until_id': stopped}
-        elif stopped:
-            # 初回は上限で止めた位置より古い分を、次の実行で読む（since_id なし＝さかのぼれる限り）
-            gap = {'since_id': 0, 'until_id': stopped}
-
-    enrich(rechecked + added, enrich_limit)
-    posts = sorted(saved['posts'] + added, key=lambda p: int(p['id']), reverse=True)
+    posts = sorted(saved.values(), key=lambda p: int(p['id']), reverse=True)
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, 'w', encoding='utf-8', newline='\n') as f:
         json.dump({
             'note': '本人（@' + handle + '）の X の投稿。MAGI の人格カードの素材（.github/scripts/magi-x-posts.py が書く。手で編集しない）。'
                     '他人のアカウント名は @user に伏せてある',
             'handle': handle,
-            # 1回の上限で読み残した範囲（次の実行で続きを読む）。読み切ったら持たない
-            **({'resume': gap} if gap else {}),
             'posts': posts,
         }, f, ensure_ascii=False, indent=1)
         f.write('\n')
     kinds = {k: sum(1 for p in posts if p['kind'] == k) for k in ('post', 'reply', 'quote')}
     span = (posts[-1]['created_at'][:10], posts[0]['created_at'][:10]) if posts else ('-', '-')
-    print(f'読んだ件数: {read}（{pages} ページ、本人の読み取りなら約 ${read * 0.001:.2f}）')
+    print(f'読んだ件数: {len(fresh)}（本人の読み取りなら約 ${len(fresh) * 0.001:.3f}。返信・引用の相手は別に $0.005／件）')
     print(f'新しく足した件数: {len(added)} ／ 保存の合計: {len(posts)}（投稿 {kinds["post"]}・返信 {kinds["reply"]}・引用 {kinds["quote"]}）')
     print(f'期間: {span[0]} 〜 {span[1]}')
-    if gap:
-        print(f'::warning::1回の上限（{MAX_POSTS_PER_RUN} 件）で止めた。読み残した古い側は次の実行で続きから読む')
 
 
 # ---------------------------------------------------------------- いいねとフォロー（要約だけを保存）
@@ -481,14 +437,13 @@ def main():
     ap.add_argument('--recheck', action='store_true', help='直近の投稿を読み直して X で消したものを落とし、新しい分も保存する（月1回）')
     ap.add_argument('--interests', action='store_true', help='いいねとフォローを読み、関心を分野ごとに要約して保存する')
     ap.add_argument('--days', type=int, default=RECHECK_DAYS, help='--recheck で読み直す日数（1年分の説明を付け直すなら 365）')
-    ap.add_argument('--enrich-limit', type=int, default=None, help='画像の説明と相手の要約を付ける投稿の上限（試しに少しだけ流すとき）')
     args = ap.parse_args()
     if args.check:
         check()
     elif args.fetch:
-        fetch(enrich_limit=args.enrich_limit)
+        fetch()
     elif args.recheck:
-        fetch(recheck=True, days=args.days, enrich_limit=args.enrich_limit)
+        fetch(recheck=True, days=args.days)
     elif args.interests:
         interests()
     else:
