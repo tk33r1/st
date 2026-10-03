@@ -168,7 +168,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `magi-context.yml` を `workflow_dispatch` で起動する（bot の push はほかの workflow を起動しないが、dispatch はできる。
     後述「MAGI の人格カード」の X の素材）。
     手動実行の `mode` は `check`（認証の確認だけ）・`fetch`（新しい投稿を足す。毎週の定期実行）・`recheck`（直近60日を読み直して X で消した投稿を落とす。
-    毎月2日の定期実行。git の履歴には残る）・`interests`（いいねとフォローの要約）。
+    毎月2日の定期実行。git の履歴には残る）・`backfill`（1年分を読み直して説明を付け直す。初回だけ）・`interests`（いいねとフォローの要約）。
   - `ai-models.yml`（push＋PR）/ `ai-model-watch.yml`（週次＋手動）: AIモデル設定の正本
     `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
     `/models` APIから更新候補を検知する。スモークテストは毎週回し、候補が通ればレビュー用PRへ出し、
@@ -286,6 +286,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - **X の素材**（`.github/scripts/magi-x-posts.py`、本人 @Tah_Keh の OAuth 1.0a。Secrets は `X_TAHKEH_*`）:
     - 投稿（リポストを除く）は `.github/magi/x-posts.json` に貯める。他人の @ は `@user` に伏せる。
       直近1年分を MELCHIOR と統合人格の素材にし、言い回しの見本もここから取る。
+    - 画像付きの投稿には画像の説明（`media`。1枚1行）を、返信・引用には相手の投稿の要約（`context`）を、取り込むときに AI で付ける。
+      画像そのものと相手の本文は保存しない（他人の投稿を公開リポジトリに並べない。X の規約でも再配布は制限される）。
+      相手の投稿は本人の読み取りではないので $0.005／件。素材では〔〕で囲み、本人の言葉と区別する。
     - いいねとフォローは生のデータを保存せず、LLM で分野ごとに要約した `.github/magi/x-interests.json` だけを残して4枚すべてに足す
       （他人の投稿やアカウントを公開リポジトリに並べないため。一般の個人の名前もカードに書かせない）。
     - 費用は本人の読み取りの単価（$0.001／件）で、X の残高から引かれる。いいね5,000件とフォローを読む `interests` は1回 約$5。

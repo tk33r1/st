@@ -370,16 +370,23 @@ def x_posts_text(limit=X_POSTS_MAX):
         if parse(p['created_at']) < since:
             break
         text = ' '.join(w for w in p['text'].split() if not w.startswith(('http://', 'https://')))
-        if len(text) < 5:
+        media = p.get('media') or []
+        # 画像だけの投稿も、画像の説明があれば残す
+        if len(text) < 5 and not media:
             continue
-        line = f"- {p['created_at'][:10]}{' [返信]' if p['kind'] == 'reply' else ''} {text}"
+        kind = {'reply': ' [返信]', 'quote': ' [引用]'}.get(p['kind'], '')
+        context = f" 〔相手の投稿: {p['context']}〕" if p.get('context') else ''
+        images = f" 〔画像: {' / '.join(media)}〕" if media else ''
+        line = f"- {p['created_at'][:10]}{kind}{context} {text}{images}"
         if total + len(line) + 1 > limit:  # 1 は行をつなぐ改行
             break
         lines.append(line)
         total += len(line) + 1
     if not lines:
         return None
-    return '\n'.join(['■ X の投稿（直近1年、新しい順。他人のアカウント名は @user に伏せてある）', *lines])
+    return '\n'.join(['■ X の投稿（直近1年、新しい順。他人のアカウント名は @user に伏せてある。'
+                      '〔〕の中は、添えた画像と返信・引用の相手の投稿を AI が補った説明で、本人の言葉ではない'
+                      '（投稿が何について言っているかを読むのに使い、本人の言い回しの見本には選ばない）', *lines])
 
 
 def x_interests_text(area):
