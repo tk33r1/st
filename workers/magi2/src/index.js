@@ -122,26 +122,33 @@ const toParts = (c) => typeof c === 'string' ? [{ type: 'text', text: c }] : c;
 const joinContent = (a, b) => typeof a === 'string' && typeof b === 'string' ? `${a}\n\n${b}` : [...toParts(a), ...toParts(b)];
 const prependText = (text, c) => typeof c === 'string' ? text + c : [{ type: 'text', text }, ...c];
 
-// 人格1人ぶんの会話の履歴を組む。assistant には、その人格自身の過去の意見だけを置く（自分の発言として引き継ぐ）。
-// 統合人格（Shinya Takeda）の過去の回答は、次の user 発言の頭に「前回の回答」として付ける（自分の発言と取り違えて、
-// 統合人格の口調や立場を引き継がないように）。他の人格の過去の意見は入れない（他の人格の意見は、その回の討議メモでだけ渡す）。
+// 人格1人ぶんの会話の履歴を組む。3人格は一人の人間の中の面なので、記憶は共有する（過去の回のことは全員が知っている）。
+// ただし渡し方を分ける。
+//   - その人格自身の過去の意見 → assistant（自分の発言として、口調と立場を引き継ぐ）
+//   - 他の2人格の過去の意見と、統合人格（Shinya Takeda）の過去の回答 → 次の user 発言の頭に、誰の言葉かを書いた
+//     見出しを付けて文脈として渡す（自分の発言と取り違えて、他の面の口調を引き継がないように）
 // 自分の意見が無い回（古い履歴・欠席した回）は user が続くので、同じ役割が続いたら1つにまとめる。
+const personaLabel = (p) => `${p.codename}（${p.name}）`;
 function personaThread(codename, history, lastContent) {
   const out = [];
-  let prevAnswer = null;
+  let recap = null; // 直前の回の、他の面の意見と統合の回答（次の user 発言の頭に付ける）
   const push = (role, content) => {
     const last = out[out.length - 1];
     if (last && last.role === role) last.content = joinContent(last.content, content);
     else out.push({ role, content });
   };
-  const withPrevAnswer = (c) => prevAnswer ? prependText(`〔前回の Shinya Takeda の回答〕\n${prevAnswer}\n\n`, c) : c;
+  const withRecap = (c) => recap ? prependText(`${recap}〔ユーザーの今回の発言〕\n`, c) : c;
   for (const m of history) {
-    if (m.role === 'user') { push('user', withPrevAnswer(m.content)); prevAnswer = null; continue; }
+    if (m.role === 'user') { push('user', withRecap(m.content)); recap = null; continue; }
     const own = m.opinions && m.opinions[codename];
     if (own) push('assistant', own);
-    prevAnswer = contentText(m.content);
+    const others = PERSONAS.filter(p => p.codename !== codename && m.opinions && m.opinions[p.codename]);
+    recap = (others.length
+      ? `〔前回、${others.map(personaLabel).join('と')}が言ったこと〕\n${others.map(p => `- ${personaLabel(p)}: ${m.opinions[p.codename]}`).join('\n')}\n\n`
+      : '')
+      + `〔前回、あなたたち3人の議論をまとめて Shinya Takeda が答えたこと〕\n${contentText(m.content)}\n\n`;
   }
-  push('user', withPrevAnswer(lastContent));
+  push('user', withRecap(lastContent));
   return out;
 }
 
