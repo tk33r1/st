@@ -191,11 +191,24 @@
             // ?subject= があれば件名に載せる（ツール側から「どのツールの話か」を
             // 渡してもらうため）。改行と制御文字を落としてから必ずエンコードする。
             // 生で連結すると &body= などを差し込まれる。
+            // 上限は UTF-16 で120単位。サロゲートペア（絵文字など）は2単位まとめて扱い、
+            // 境目で割らない（片割れが残ると encodeURIComponent が URIError を投げ、メーラーが起動しない）。
             var raw = new URLSearchParams(location.search).get("subject") || "";
             var subject = "";
-            for (var i = 0; i < raw.length && subject.length < 120; i++) {
+            for (var i = 0; i < raw.length; i++) {
                 var code = raw.charCodeAt(i);
-                subject += (code < 32 || code === 127) ? " " : raw.charAt(i);
+                var next = raw.charCodeAt(i + 1);
+                var ch;
+                if (code >= 0xD800 && code <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF) {
+                    ch = raw.charAt(i) + raw.charAt(i + 1);
+                    i++;
+                } else if (code < 32 || code === 127 || (code >= 0xD800 && code <= 0xDFFF)) {
+                    ch = " "; // 制御文字と、対になっていないサロゲート
+                } else {
+                    ch = raw.charAt(i);
+                }
+                if (subject.length + ch.length > 120) break;
+                subject += ch;
             }
             subject = subject.trim();
             var query = subject ? "?subject=" + encodeURIComponent(subject) : "";
