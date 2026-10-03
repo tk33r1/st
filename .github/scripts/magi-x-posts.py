@@ -102,8 +102,41 @@ def summarize_error(body):
     return str(body)[:300]
 
 
+def app_bearer_check(src):
+    """アプリの鍵だけでアプリ用のトークン（Bearer）を取り、公開情報を1件読む。トークン（ユーザー）側と切り分けるため。"""
+    key = os.environ.get(f'{src}_CONSUMER_KEY', '').strip()
+    sec = os.environ.get(f'{src}_CONSUMER_SECRET', '').strip()
+    basic = base64.b64encode(f'{percent_encode(key)}:{percent_encode(sec)}'.encode()).decode()
+    req = urllib.request.Request('https://api.x.com/oauth2/token', data=b'grant_type=client_credentials',
+                                 headers={'Authorization': f'Basic {basic}',
+                                          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'})
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
+            bearer = json.loads(res.read().decode('utf-8')).get('access_token')
+    except urllib.error.HTTPError as e:
+        print(f'{src} のアプリ用トークンの発行: HTTP {e.code} — {e.read().decode("utf-8", errors="replace")[:200]}')
+        return
+    req = urllib.request.Request(f'{API}/users/by/username/{EXPECTED_HANDLE}', headers={'Authorization': f'Bearer {bearer}'})
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as res:
+            data = json.loads(res.read().decode('utf-8')).get('data', {})
+            print(f'{src} のアプリ用トークンで: 読めた → @{data.get("username")}（アプリはプロジェクトに入っている）')
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        try:
+            body = json.loads(body)
+        except json.JSONDecodeError:
+            pass
+        print(f'{src} のアプリ用トークンで: HTTP {e.code} — {summarize_error(body)}')
+
+
 def check():
     """各アプリの鍵と組んで、本人として認証できるかを確かめる（/2/users/me）。"""
+    key = os.environ.get('X_TAHKEH_CONSUMER_KEY', '').strip()
+    if key:
+        # 画面に出ている API Key と見比べるための末尾4文字（API Key は通信のたびに平文で送る値。Secret は出さない）
+        print(f'X_TAHKEH の API Key: {len(key)} 文字、末尾 …{key[-4:]}')
+        app_bearer_check('X_TAHKEH')
     # トークンの持ち主のユーザー ID はトークンの先頭（"数字-…"）に入っている。値は出さず、一致だけ見る
     token = os.environ.get('X_TAHKEH_ACCESS_TOKEN', '').strip()
     print(f'トークン: {len(token)} 文字、ユーザー ID の形 = {token.split("-", 1)[0].isdigit()}')
