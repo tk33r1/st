@@ -80,11 +80,12 @@ PERSONAS = {
         'name': 'Humanist',
         'pages': ['thought/index.html'],
         'lists': [],
+        'x_interests': 'balthasar',
         'focus': (
             '人間・愛・幸せ・失敗・人生についての本人の思索。テーマごとの結論と、その拠り所にした書物、'
             '読み手に投げかけている問いを残す。過去の版がある場合は「以前は〜と考えていたが、いまは〜」という'
             '考えの変遷として残す。年表からは、人生の転機と死生観（仏教や大阿闍梨との出会い、事故後の価値観の変化、'
-            '遺言書）など、思索の原体験になった出来事を残す。'
+            '遺言書）など、思索の原体験になった出来事を残す。X のいいね・フォローの要約からは、人や生き方への関心を加える。'
             '最後に「本人の言い回し」として、素材の原文から本人らしい語り口が出ている文を3〜4文、要約も言い換えもせず'
             '「」で囲んでそのまま残す（文体の見本。人格がこの口調を借りて話す）。'
         ),
@@ -95,10 +96,16 @@ PERSONAS = {
         # glitch/003（DJ 音源の買い方）は音楽の話なので、CASPER と両方に渡す（記事側の目印が casper melchior）
         'pages': ['dj/index.html', 'motovlog/index.html', 'glitch/003/index.html'],
         'lists': [],
+        # dj・motovlog は紹介文で本人の声ではないので、声の見本は X の投稿から取る
+        'x_posts': True,
+        'x_interests': 'melchior',
         'focus': (
             '音楽・DJ・ハーレーへの熱量。好きなジャンルやこだわり、DJ としての考え方、原体験、'
             '事故からバイクに戻った経緯と愛機への思いを残す。年表からは、音楽とバイクの原体験と、'
             'DJ を始めてから仲間と出会うまでの歩みを、年とともに残す。音源集めなど、音楽のための工夫も残す。'
+            'X の投稿のうち音楽・DJ・バイク・趣味・遊びの投稿から、いま熱くなっているものを残す。X のいいね・フォローの要約からは、好きなものの広がりを加える。'
+            '最後に「本人の言い回し」として、その X の投稿から本人らしい語り口が出ているものを3〜4件、要約も言い換えもせず'
+            '「」で囲んでそのまま残す（文体の見本）。dj・motovlog の紹介文からは選ばない。'
         ),
     },
     'casper': {
@@ -114,10 +121,12 @@ PERSONAS = {
             ('data/glitch.json', '技術ブログ（glitch）の記事',
              lambda d: d['articles'], lambda a: f"{a['title']}" + (f": {a['excerpt']}" if a.get('excerpt') else '')),
         ],
+        'x_interests': 'casper',
         'focus': (
             '仕事上の専門領域、代表的な実績、意思決定や施策設計の考え方、自作ツールや技術発信から読み取れる'
             '関心領域を残す。年表からは、キャリアの転機（入社の理由、店舗から EC への異動など）と受賞を、年とともに残す。'
             '技術ブログ（glitch）の本文からは、手順や料金表ではなく、判断の型（何を疑い、何と比べ、どこを確かめて決めるか）を残す。'
+            'X のいいね・フォローの要約からは、技術・仕事・お金への関心を加える。'
             '最後に「本人の言い回し」として、技術ブログ（glitch）の本文から本人らしい語り口が出ている文を3〜4文、要約も言い換えもせず'
             '「」で囲んでそのまま残す（文体の見本。人格がこの口調を借りて話す）。job ページは訪問者向けの紹介文で本人の声ではないので、そこからは選ばない。'
         ),
@@ -130,7 +139,10 @@ PERSONAS = {
         'pages': [],
         'lists': [],
         'profile': True,
-        'target': 700,
+        # X の投稿は、統合された本人が人前で話している声なので、統合人格の話し方の素材にする
+        'x_posts': True,
+        'x_interests': 'synth',
+        'target': 900,
         'focus': (
             '本人の気質と自己像。このカードは、本人として答える AI の気質の唯一の拠り所になる。'
             '性格検査（いまの ver 2.0 を主に）から、考え方と答え方の傾向を、会話の振る舞いとしてそのまま使える形で書く'
@@ -138,9 +150,20 @@ PERSONAS = {
             'あわせて、自己紹介の言葉、画面のテーマで変わる2つの肩書き、事故の前（ver 1.0）から後（ver 2.0）への変化を残す。'
             '性格検査の名前・数値・パーセンタイルは書かず、傾向の言葉にする。結果を美化も誇張もしない'
             '（協調性や謙虚さが低ければ「迎合せず率直に言う」のように書き、尊大さや攻撃性には言い換えない）。'
+            'X の投稿からは、普段の話し方（文の長さ、語尾、絵文字や記号の使い方、ユーモア）と最近の関心を残す。'
+            'X のいいね・フォローの要約からは、笑いのツボや共感しやすいものなど全体の傾向を加える。'
+            '最後に「本人の言い回し」として、X の投稿から本人らしい語り口が出ているものを3〜4件、要約も言い換えもせず'
+            '「」で囲んでそのまま残す（話し方の見本）。'
         ),
     },
 }
+
+# 本人の X の投稿（.github/scripts/magi-x-posts.py --fetch が書く）と、いいね・フォローから読み取った関心の要約（--interests）。
+# 投稿は直近1年分だけを使う（「今の本人」に寄せ、量も抑える）。ファイルが無ければ、その素材は使わない
+X_POSTS_PATH = '.github/magi/x-posts.json'
+X_INTERESTS_PATH = '.github/magi/x-interests.json'
+X_POSTS_DAYS = 365
+X_POSTS_MAX = 24000  # 投稿の素材の上限（新しい順に入れて、超えたら打ち切る）
 
 SYSTEM_PROMPT = """あなたは、{subject}のための「人格カード」を書く編集者。
 人格カードは、その人格として会話する AI の system プロンプトに「本人がいま大切にしている考え・関心・経験」として差し込まれる。
@@ -151,6 +174,7 @@ SYSTEM_PROMPT = """あなたは、{subject}のための「人格カード」を�
 - 一人称や口調の指定は不要（別途指定される）。本人についてのメモとして「〜を大切にしている」「〜の経験がある」のように書く。
 - 本人の言い回しで核心を突いている表現は、できるだけそのまま残す。
 - 連絡先・料金・申込方法・URL・ボタンの文言・機材の細かい仕様など、人格の形成に関係しない実務情報は捨てる。
+- 本人以外の一般の人の名前・あだ名・アカウント名は書かない（有名人・アーティスト・作品・ブランドの名前は書いてよい）。
 - 見出し・前置き・後書きを付けず、「- 」で始まる箇条書きだけを出力する。全体で{target}字以内。"""
 
 
@@ -324,6 +348,43 @@ def load_top_page():
     return top, routed
 
 
+# ---------------------------------------------------------------- 抽出（X の投稿と関心の要約）
+
+def x_posts_text():
+    """直近1年の本人の投稿（URL だけの投稿は除く）を、新しい順に上限まで並べる。無ければ None。"""
+    try:
+        with open(os.path.join(ROOT, X_POSTS_PATH), encoding='utf-8') as f:
+            posts = json.load(f)['posts']
+    except FileNotFoundError:
+        return None
+    if not posts:
+        return None
+    parse = lambda s: datetime.fromisoformat(s.replace('Z', '+00:00'))
+    since = parse(posts[0]['created_at']) - timedelta(days=X_POSTS_DAYS)
+    lines, total = [], 0
+    for p in posts:
+        if parse(p['created_at']) < since:
+            break
+        text = ' '.join(w for w in p['text'].split() if not w.startswith(('http://', 'https://')))
+        if len(text) < 5:
+            continue
+        line = f"- {p['created_at'][:10]}{' [返信]' if p['kind'] == 'reply' else ''} {text}"
+        if total + len(line) > X_POSTS_MAX:
+            break
+        lines.append(line)
+        total += len(line)
+    return '\n'.join(['■ X の投稿（直近1年、新しい順。他人のアカウント名は @user に伏せてある）', *lines])
+
+
+def x_interests_text(area):
+    try:
+        with open(os.path.join(ROOT, X_INTERESTS_PATH), encoding='utf-8') as f:
+            body = json.load(f)['areas'].get(area)
+    except FileNotFoundError:
+        return None
+    return '\n'.join(['■ X のいいね・フォローから読み取った関心（要約）', body]) if body else None
+
+
 # ---------------------------------------------------------------- 抽出（一覧 JSON）
 
 def list_text(path, heading, pick, fmt):
@@ -352,6 +413,10 @@ def build_source(key, conf, top, routed):
         blocks.append(f'＝＝ {TOP_PAGE}（年表） ＝＝\n{timeline_text(routed[key])}')
     for path, heading, pick, fmt in conf['lists']:
         blocks.append(f'＝＝ {path} ＝＝\n{list_text(path, heading, pick, fmt)}')
+    if conf.get('x_posts') and (text := x_posts_text()):
+        blocks.append(f'＝＝ {X_POSTS_PATH} ＝＝\n{text}')
+    if conf.get('x_interests') and (text := x_interests_text(conf['x_interests'])):
+        blocks.append(f'＝＝ {X_INTERESTS_PATH} ＝＝\n{text}')
     source = '\n\n'.join(blocks)
     if len(source) > SOURCE_MAX:
         raise RuntimeError(f'{key} の素材が {len(source)} 字あり上限 {SOURCE_MAX} を超えた。目印の範囲を見直すこと')
