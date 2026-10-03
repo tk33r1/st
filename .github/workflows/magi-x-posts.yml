@@ -3,7 +3,7 @@ name: MAGI X Posts
 # 本人（@Tah_Keh）の X を、MAGI の人格カードの素材として取り込む（.github/scripts/magi-x-posts.py）。
 #   check:     本人として認証できるかだけを確かめる
 #   fetch:     前回より新しい投稿を読み、.github/magi/x-posts.json に足す（週1回の定期実行もこれ）
-#   recheck:   直近30日を読み直し、X で消した投稿をファイルからも落としてから fetch する（月1回の定期実行。1回 数セント）
+#   recheck:   直近60日を読み直し、X で消した投稿をファイルからも落としてから fetch する（月1回の定期実行。1回 数セント）
 #              git の履歴には残るので、完全に消すには履歴の書き換えが要る
 #   interests: いいねとフォローを読み、関心を分野ごとに要約して .github/magi/x-interests.json に書く
 #              （生のデータは保存しない。全件を読み直すので数ドルかかる。数か月に1回の手動実行で十分）

@@ -150,7 +150,7 @@ def to_record(tw, own_handle):
     }
 
 
-RECHECK_DAYS = 30  # --recheck で読み直す期間（月1回）。それより前に消した投稿は残る
+RECHECK_DAYS = 60  # --recheck で読み直す期間（月1回）。月1回の確認の直後に消した投稿も、次の確認で拾えるよう2か月にする
 
 
 def fetch(recheck=False):

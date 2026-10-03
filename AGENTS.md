@@ -167,7 +167,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - `magi-x-posts.yml`（毎週月曜 03:00 JST＋手動）: 本人の X を人格カードの素材として読み、素材が変わったらコミットして
     `magi-context.yml` を `workflow_dispatch` で起動する（bot の push はほかの workflow を起動しないが、dispatch はできる。
     後述「MAGI の人格カード」の X の素材）。
-    手動実行の `mode` は `check`（認証の確認だけ）・`fetch`（新しい投稿を足す。毎週の定期実行）・`recheck`（直近30日を読み直して X で消した投稿を落とす。
+    手動実行の `mode` は `check`（認証の確認だけ）・`fetch`（新しい投稿を足す。毎週の定期実行）・`recheck`（直近60日を読み直して X で消した投稿を落とす。
     毎月2日の定期実行。git の履歴には残る）・`interests`（いいねとフォローの要約）。
   - `ai-models.yml`（push＋PR）/ `ai-model-watch.yml`（週次＋手動）: AIモデル設定の正本
     `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
