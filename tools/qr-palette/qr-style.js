@@ -1955,10 +1955,11 @@
       // 下地を先に敷くために、文字の寸法だけを取り出せるようにしておく
       function frameTextMetrics(textStr) {
         const avail = W - 3;
-        const units = textUnits(textStr, st.frame.font);
+        const units = textUnits(textStr, st.frame.font) + Math.max(0, Array.from(String(textStr)).length - 1) * 0.02;
         const cap = contentSide * 0.85;
-        const fs = Math.max(contentSide * 0.4, Math.min(cap, units ? avail / units : cap));
-        return { fs: fs, units: units, tw: Math.max(fs * 2, fs * units) };
+        // 小ささの下限より、長いラベルが帯の幅へ収まることを優先する。
+        const fs = Math.min(cap, units ? avail / units : cap);
+        return { fs: fs, units: units, textWidth: fs * units, tw: Math.max(fs * 2, fs * units) };
       }
 
       function renderFrameText(textStr, ty, idSuffix) {
@@ -1972,6 +1973,8 @@
         const textEl = fill => '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
           '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
           ' text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
+          // 字体ごとの実際の字幅の差でもはみ出さないよう、見積もった幅に合わせる。
+          '" textLength="' + n(m.textWidth) + '" lengthAdjust="spacingAndGlyphs' +
           '" font-family="' + esc(fontFamily) + '">' + esc(text) + '</text>';
 
         const layer = paintedText(textEl, st.frame.textPaint, st.fg, fgRef, textBox,

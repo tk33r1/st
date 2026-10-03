@@ -467,7 +467,6 @@
       const fallbackRow = rows.length + 1;
       const rowNo = Number(row.getAttribute('r') || fallbackRow);
       if (!Number.isInteger(rowNo) || rowNo < 1) continue;
-      if (rowNo > XLSX_MAX_ROWS) continue;
       const cells = [];
       for (const c of tagsIn(row, 'c')) {
         const ref = c.getAttribute('r') || '';
@@ -491,6 +490,12 @@
         }
         while (cells.length < at) cells.push('');
         cells[at] = text;
+      }
+      if (rowNo > XLSX_MAX_ROWS) {
+        // 書式だけを持つ末尾の行は無視するが、中身のある行を黙って捨てない。
+        // 巨大な行番号で rows を広げる前に止める。
+        if (cells.some(v => v !== '')) throw new Error('xlsx too many rows');
+        continue;
       }
       while (rows.length < rowNo - 1) rows.push([]);
       rows[rowNo - 1] = cells;
@@ -527,6 +532,7 @@
   }
 
   global.QRXlsx = {
+    MAX_ROWS: XLSX_MAX_ROWS,
     canRead: canRead,
     build: build,
     read: read

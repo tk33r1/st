@@ -143,7 +143,12 @@
           case 'x': return 'https://x.com/' + id;
           case 'line': return 'https://line.me/R/ti/p/~' + id;
           case 'tiktok': return 'https://www.tiktok.com/@' + id;
-          case 'youtube': return (id.startsWith('UC') || id.startsWith('@')) ? 'https://www.youtube.com/' + id : 'https://www.youtube.com/@' + id;
+          case 'youtube':
+            // @ を付けて入力したものは、UC で始まっていてもハンドルとして扱う。
+            // チャンネルIDは UC＋22文字。接頭辞だけではハンドルと区別できない。
+            return !String(f.id || '').trim().startsWith('@') && /^UC[A-Za-z0-9_-]{22}$/.test(raw)
+              ? 'https://www.youtube.com/channel/' + id
+              : 'https://www.youtube.com/@' + id;
           case 'threads': return 'https://www.threads.net/@' + id;
           case 'bluesky': return 'https://bsky.app/profile/' + (id.indexOf('.') >= 0 ? id : id + '.bsky.social');
           case 'github': return 'https://github.com/' + id;
@@ -2716,8 +2721,8 @@
 
   // WebP は quality 1.0 のときだけ可逆になる（実測で元と1ピクセルも違わない）。
   // 非可逆で 1.0 を渡すと可逆に化けるので、そこだけは 0.99 で止める。
-  function webpQuality() {
-    return state.lossless ? 1 : Math.min(0.99, state.quality / 100);
+  function webpQuality(opts) {
+    return opts.lossless ? 1 : Math.min(0.99, opts.quality / 100);
   }
 
   function avifOptions() {
@@ -3183,8 +3188,8 @@
   // ---- 書き出し用のフォント -------------------------------------------
   // SVG を画像として書き出すとページのフォントを受け継がないので、いまの絵で
   // 使っている字のフォントだけを SVG に埋めて返す（exportFontCss は qr-export.js）。
-  async function withExportFonts(svg) {
-    return window.QRStyle.embedFontCss(svg, await exportFontCss(state.style));
+  async function withExportFonts(svg, style) {
+    return window.QRStyle.embedFontCss(svg, await exportFontCss(style));
   }
 
   // 印刷の寸法（mm）。画面向け（px）で書き出すときは 0
@@ -3205,6 +3210,17 @@
     // 印刷向けに書き出したものは、あとから見て何ミリで作ったか分かるようにする
     const size = state.sizeUnit === 'mm' ? '-' + state.printMm + 'mm' : '';
     return 'qr-' + state.type + '-' + stamp() + size;
+  }
+
+  // 待ち時間のあいだも画面は触れるので、保存・コピーに使うものは押した時点で写す。
+  // フォント、寸法、圧縮、名前のどれも途中から現在の state を読み直さない。
+  function exportSnapshot() {
+    return {
+      svg: lastSvg, text: lastPayload,
+      style: window.QRStyle.merge(window.QRStyle.DEFAULTS, state.style),
+      px: outputPx(), mm: printWidthMm(), stem: fileStem(),
+      encoding: avifOptions(), verdict: Object.assign({}, lastVerdict)
+    };
   }
 
   function flashButtonSuccess(btn, successText) {
@@ -3408,12 +3424,12 @@
   }
 
   // 赤い判定のときだけ、一度だけ訊く。印刷してから気づくのがいちばん高くつく。
-  function askExportAnyway() {
+  function askExportAnyway(verdict) {
     // 判定の文面は句点で終わらないことがある。次の文と地続きに見えないよう補う。
-    const note = lastVerdict.note || '';
+    const note = verdict.note || '';
     const lead = !note ? '' : (note.charAt(note.length - 1) === '。' ? note : note + '。');
     return askConfirm({
-      title: lastVerdict.title || '読み取れませんでした',
+      title: verdict.title || '読み取れませんでした',
       body: lead + 'このまま書き出すと、印刷したあとで読めないことに気づくかもしれません。',
       ok: 'このまま書き出す',
       cancel: 'やめて直す'
@@ -3423,10 +3439,15 @@
   // 書き出してよいか。読めない判定のときだけ確認を挟む。
   // 「簡易チェックでは読めません」（黄）は止めない。軽いデコーダの失敗は
   // 実機では読めることが多く、そこで止めると偽陰性で手を止めることになる。
-  async function okToExport() {
+  async function okToExport(snapshot) {
     await settleVerdict();
+    // 検査を待つあいだに絵が変わったら、古い絵を新しい絵の判定で出さない。
+    if (snapshot.svg !== lastSvg || snapshot.text !== lastPayload) {
+      showToast('検査中に内容やデザインが変わりました。もう一度書き出してください', 'error');
+      return false;
+    }
     if (lastVerdict.kind !== 'ng') return true;
-    return askExportAnyway();
+    return askExportAnyway(Object.assign({}, lastVerdict));
   }
 
   // 書き出しに失敗したときの言い方。大きな絵は端末の上限にかかっていることが多い
@@ -3448,20 +3469,28 @@
 
   // 1枚ぶんを焼く。AVIF だけはブラウザが焼けないので、同梱した
   // エンコーダに渡す（toBlob に image/avif を渡すと黙って PNG が返る）。
-  async function encodeCanvas(canvas, mime, avifOpts) {
+  async function encodeCanvas(canvas, mime, opts) {
     if (mime === 'image/avif') {
       if (!window.QRAvif) throw new Error('avif encoder missing');
-      return window.QRAvif.encode(canvas, avifOpts || avifOptions());
+      return window.QRAvif.encode(canvas, opts);
     }
-    const q = mime === 'image/webp' ? webpQuality() : undefined;
+    const q = mime === 'image/webp' ? webpQuality(opts) : undefined;
     return new Promise(res => canvas.toBlob(res, mime, q));
+  }
+
+  // 未対応の形式では toBlob が PNG を返す。単体・一括とも実体に合わせて名前を付ける。
+  function rasterExtension(blob) {
+    const ext = { 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' }[blob.type];
+    if (!ext) throw new Error('unexpected image format');
+    return ext;
   }
 
   //   fmt … EXPORT_FORMATS の1つ（png / avif / webp）
   async function exportRaster(fmt) {
     const mime = fmt.mime, ext = fmt.ext;
     if (!hasPreview()) return;
-    if (!(await okToExport())) return;
+    const snapshot = exportSnapshot();
+    if (!(await okToExport(snapshot))) return;
 
     // AVIF のエンコーダは 3.4MB ある。取りに行っているあいだ画面が
     // 止まって見えるので、何をしているかは出しておく。
@@ -3480,12 +3509,12 @@
 
     setStatus('rendering', '');
     try {
-      const canvas = await rasterize(await withExportFonts(lastSvg), outputPx(), null);
-      const blob = await encodeCanvas(canvas, mime);
+      const canvas = await rasterize(await withExportFonts(snapshot.svg, snapshot.style), snapshot.px, null);
+      const blob = await encodeCanvas(canvas, mime, snapshot.encoding);
       if (!blob) throw new Error('encode failed');
       // 対応していない形式を渡すと、黙って PNG が返ってくる。拡張子を偽らない
-      const realExt = blob.type === mime ? ext : (blob.type.split('/')[1] || ext);
-      saveBlob(blob, fileStem() + '.' + realExt);
+      const realExt = rasterExtension(blob);
+      saveBlob(blob, snapshot.stem + '.' + realExt);
       const btn = $('btn-' + ext);
       if (btn) flashButtonSuccess(btn, '✓ 保存完了');
       showToast(realExt === ext
@@ -3493,16 +3522,17 @@
         : 'このブラウザは' + ext.toUpperCase() + 'に対応していないため' +
           realExt.toUpperCase() + 'で保存しました');
     } catch (e) {
-      showToast(exportFailMessage('書き出し', outputPx()), 'error');
+      showToast(exportFailMessage('書き出し', snapshot.px), 'error');
     }
     setStatus('ready', 'idle');
   }
 
   async function exportSvg() {
     if (!hasPreview()) return;
-    if (!(await okToExport())) return;
-    const doc = svgDocument(await withExportFonts(lastSvg), printWidthMm());
-    saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
+    const snapshot = exportSnapshot();
+    if (!(await okToExport(snapshot))) return;
+    const doc = svgDocument(await withExportFonts(snapshot.svg, snapshot.style), snapshot.mm);
+    saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), snapshot.stem + '.svg');
     flashButtonSuccess($('btn-svg'), '✓ 保存完了');
     showToast('SVGを保存しました');
   }
@@ -3510,8 +3540,8 @@
   // コピーだけは確認を挟めない。Safari は「押されてすぐ」でないと
   // クリップボードに書かせてくれず、ダイアログを出すと有効期限が切れる。
   // 止めるかわりに、赤い判定のときは知らせを添える。
-  function copyNote() {
-    return lastVerdict.kind === 'ng'
+  function copyNote(verdict) {
+    return verdict.kind === 'ng'
       ? '画像をコピーしました。読み取りテストは失敗しているので、使う前に確かめてください'
       : '画像をコピーしました';
   }
@@ -3522,11 +3552,12 @@
       showToast('このブラウザは画像コピーに対応していません', 'error');
       return;
     }
+    const snapshot = exportSnapshot();
     // Safari は「押されてすぐ」でないと書き込ませてくれない。描き終わってから
     // write を呼ぶと操作の有効期限が切れるので、中身は Promise のまま渡す。
     const png = (async () => {
-      const canvas = await rasterize(await withExportFonts(lastSvg), Math.min(2048, outputPx()), null);
-      const blob = await encodeCanvas(canvas, 'image/png');
+      const canvas = await rasterize(await withExportFonts(snapshot.svg, snapshot.style), Math.min(2048, snapshot.px), null);
+      const blob = await encodeCanvas(canvas, 'image/png', snapshot.encoding);
       if (!blob) throw new Error('encode failed');
       return blob;
     })();
@@ -3543,7 +3574,7 @@
       return;
     }
     flashButtonSuccess($('btn-copy'), '✓ コピー完了');
-    showToast(copyNote());
+    showToast(copyNote(snapshot.verdict));
     if (window.STShare) STShare.celebrate();
   }
 
@@ -3764,7 +3795,8 @@
   // 突き合わせの結果。ok が false の行は作らない。黙って既定値に倒すと、
   // 形としては正しいQRができてしまい、刷ってから間違いに気づくことになる。
   function bulkCoerce(field, raw, fallback) {
-    const s = String(raw == null ? '' : raw).trim();
+    // SSID・パスワード・本文の空白や改行も中身の一部。選択肢の照合だけ正規化する。
+    const s = String(raw == null ? '' : raw);
     if (field.type === 'checkbox') {
       const k = bulkNorm(s);
       if (!k) return { ok: true, value: fallback };
@@ -3967,6 +3999,8 @@
         ? 'Excelブックとして読めませんでした（.xlsx で保存されているか確かめてください）'
         : message === 'xlsx too large'
         ? 'Excelブックの展開サイズ・シート数・行数が大きすぎます'
+        : message === 'xlsx too many rows'
+        ? 'Excelブックの行数が上限を超えています。見出しを含め' + window.QRXlsx.MAX_ROWS + '行以内に分けてください'
         : 'ファイルを読み込めませんでした', 'error');
     }
   }
@@ -4008,25 +4042,26 @@
       showToast('CSVの列をひとつも当てていません', 'error');
       return;
     }
+    const snapshot = exportSnapshot();
     const qrOpts = { ec: state.ec, minVersion: state.minVersion };
-    const px = outputPx();
-    const printMm = printWidthMm();
+    const px = snapshot.px;
+    const printMm = snapshot.mm;
     const headOffset = bulkUseHeader() ? 2 : 1;
     const fmt = EXPORT_FORMATS[$('bulk-format').value] || EXPORT_FORMATS.png;
     // AVIF のエンコードはメインスレッドを止める。可逆の「小ささ優先」は
     // 1枚4秒ほどかかり、そのあいだ「中止」も効かないので、一括では「ふつう」まで。
     const isAvif = fmt.ext === 'avif';
-    const bulkAvif = Object.assign(avifOptions(), { effort: Math.min(state.effort, 2) });
+    const bulkEncoding = Object.assign({}, snapshot.encoding, { effort: Math.min(snapshot.encoding.effort, 2) });
     // デザインは全行で同じ。フレームの文字も、画面で入れた値のまま出る
     // （merge は入れ子まで写す）
-    const baseStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, state.style);
+    const baseStyle = snapshot.style;
 
     const over = rows.length > BULK_MAX ? rows.length - BULK_MAX : 0;
     const use = over ? rows.slice(0, BULK_MAX) : rows;
 
     bulk.starting = true;
     let ok;
-    try { ok = await okToExport(); } finally { bulk.starting = false; }
+    try { ok = await okToExport(snapshot); } finally { bulk.starting = false; }
     if (!ok) return;
 
     const btn = $('btn-bulk-run');
@@ -4046,6 +4081,8 @@
     const digits = String(use.length).length;
     const pad = n => String(n).padStart(digits, '0');
     const manifest = [['行', 'ファイル名', '中身']];
+    const writtenFormats = new Set();
+    let fallbacks = 0;
 
     try {
       // デザインは全行で同じなので、書体の取り寄せも最初の1回で済む
@@ -4091,19 +4128,22 @@
         let svg = window.QRStyle.render(qr, baseStyle).svg;
         if (faceCss) svg = window.QRStyle.embedFontCss(svg, faceCss);
 
-        const name = take('qr-' + pad(i + 1), fmt.ext);
-
+        let realExt = fmt.ext;
         let bytes;
         if (fmt.ext === 'svg') {
           // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
           bytes = new TextEncoder().encode(svgDocument(svg, printMm));
         } else {
           const canvas = await rasterize(svg, px, null);
-          const blob = await encodeCanvas(canvas, fmt.mime, bulkAvif);
+          const blob = await encodeCanvas(canvas, fmt.mime, bulkEncoding);
           if (!blob) { failed.push(lineNo); continue; }
+          realExt = rasterExtension(blob);
+          if (realExt !== fmt.ext) fallbacks++;
           bytes = new Uint8Array(await blob.arrayBuffer());
         }
 
+        const name = take('qr-' + pad(i + 1), realExt);
+        writtenFormats.add(realExt);
         totalBytes += bytes.length;
         if (totalBytes > BULK_BYTES_MAX) throw new Error('zip too large');
         files.push({ name: name, bytes: bytes });
@@ -4127,7 +4167,8 @@
       bulkReport({
         made: files.length ? files.length - 1 : 0,
         skipped: skipped, failed: failed, invalid: invalid,
-        over: over, aborted: bulk.abort, ext: fmt.ext
+        over: over, aborted: bulk.abort, ext: Array.from(writtenFormats).join(' / ') || fmt.ext,
+        fallbacks: fallbacks, requestedExt: fmt.ext
       });
     } catch (e) {
       showToast(String(e && e.message) === 'zip too large'
@@ -4183,6 +4224,7 @@
     host.appendChild(head);
 
     const notes = [];
+    if (r.fallbacks) notes.push('このブラウザは' + r.requestedExt.toUpperCase() + 'に対応していないため、' + r.fallbacks + '件をPNGで作りました。');
     if (r.over && !r.aborted) notes.push('一度に作れるのは' + BULK_MAX + '行までです。残り' + r.over + '行は作っていません。');
     if (r.skipped.length) notes.push('中身が空だった行：' + lineList(r.skipped));
     // 何をどう直せばよいかまで書く。行番号だけだと、結局CSVと画面を往復させる。
