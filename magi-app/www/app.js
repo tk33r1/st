@@ -279,8 +279,8 @@ function magiThinkingHTML(seconds) {
 function startMagiThinking(target, startedAt) {
   var el = document.createElement('span'), seconds = null;
   target.appendChild(el);
-  // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
-  var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+  // 端末のスリープも待ち時間に含め、更新が間引かれても実時刻の差分で秒数を保つ。
+  var elapsed = function () { return Math.max(0, Math.floor((Date.now() - startedAt) / 1000)); };
   var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
   tick();
   var timer = setInterval(tick, 1000);
@@ -581,7 +581,7 @@ async function agentSend() {
   var text = agentInput.value.trim().slice(0, 1000);
   var atts = attachments.slice();
   if (!text && !atts.length) return;
-  var startedAt = performance.now();
+  var startedAt = Date.now();
   setAgentSuggestion('');
   agentInput.value = ''; fitAgentInput();
   attachments = []; renderAttachTray();

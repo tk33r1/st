@@ -570,14 +570,59 @@ test('3画面のSSEは分割CRLF・終端・途中EOFを同じように読む', 
 });
 
 function element() {
-  return { dataset: {}, style: {}, classList: { add() {}, remove() {}, contains() { return false; } }, querySelector: element, querySelectorAll: () => [], appendChild() {}, remove() {}, focus() {} };
+  return { children: [], dataset: {}, style: {}, classList: { add() {}, remove() {}, contains() { return false; } }, querySelector: element, querySelectorAll: () => [], appendChild(el) { this.children.push(el); }, remove() { this.removed = true; }, focus() {} };
 }
+// 通信の期限と表示の更新を別々に進める。スリープは実時刻だけ進め、更新コールバックは呼ばない。
+function thinkingClock() {
+  let now = 0;
+  const intervals = new Map();
+  return {
+    Date: class extends Date { static now() { return now; } },
+    setInterval(fn, ms) { const id = {}; intervals.set(id, { fn, ms }); return id; },
+    clearInterval(id) { intervals.delete(id); },
+    setTime(ms) { now = ms; },
+    tick() { for (const { fn } of intervals.values()) fn(); },
+    intervals,
+  };
+}
+const thinkingSource = src => between(src.replaceAll('\r\n', '\n'), 'function setMagiThinkingLabel(', '\n\n');
+
+test('4画面の計時はスリープを含む実時刻で進み、回答開始で固定し、中断で更新を止める', () => {
+  for (const src of [home, mobile, dj, read('404.html')]) {
+    const clock = thinkingClock();
+    const ctx = vm.createContext({ ...clock, performance: { now: () => 0 }, document: { createElement: element, documentElement: { lang: 'ja' } } });
+    vm.runInContext(thinkingSource(src), ctx);
+    const target = element();
+    const thinking = ctx.startMagiThinking(target, clock.Date.now());
+    const label = target.children[0];
+    assert.equal(label.textContent, '0秒考え中');
+    clock.setTime(2100); clock.tick();
+    assert.equal(label.textContent, '2秒考え中');
+    // コールバックも performance.now() も止まったまま25秒待ち、復帰して回答が届く。
+    clock.setTime(27100);
+    assert.equal(thinking.finish(), 27);
+    assert.equal(label.textContent, '27秒考えました');
+    assert.equal(clock.intervals.size, 0);
+    clock.setTime(35000); clock.tick();
+    assert.equal(thinking.finish(), 27);
+    assert.equal(label.textContent, '27秒考えました');
+    ctx.document.documentElement.lang = 'en';
+    const cancelled = ctx.startMagiThinking(target, clock.Date.now());
+    assert.equal(target.children[1].textContent, 'Thinking for 0s');
+    cancelled.cancel();
+    assert.equal(clock.intervals.size, 0);
+    assert.equal(target.children[1].removed, true);
+  }
+});
+
 function client(src, isHome = false) {
   const timers = new Map(), errors = [];
+  const clock = thinkingClock();
   const ctx = vm.createContext({
+    Date: clock.Date, setInterval: clock.setInterval, clearInterval: clock.clearInterval,
     AbortController, JSON, TextDecoder, console: { error() {} }, window: {}, AGENT_API: 'mock', AGENT_MAX_HISTORY: 12, AGENT_PERSONAS: [],
     setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
-    document: { createElement: element, documentElement: { getAttribute: () => 'light' } },
+    document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(),
     agentHistory: [], agentBusy: false, agentDead: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {},
     localStorage: { removeItem() {} }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
@@ -585,9 +630,35 @@ function client(src, isHome = false) {
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = !enabled; },
   });
+  vm.runInContext(thinkingSource(src), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
-  return { ctx, timers, errors };
+  return { ctx, timers, errors, clock };
 }
+
+test('両画面は最初の回答本文までの秒数を保存し、次の質問のAPIには送らない', async () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    const c = client(src, isHome), outbound = [];
+    c.ctx.fetch = async (_, options) => { outbound.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, handlers) => {
+      c.clock.setTime(1200); handlers.integrated({ delta: '' });
+      assert.equal(c.clock.intervals.size, 1);
+      c.clock.setTime(4500); handlers.integrated({ delta: 'answer' });
+      assert.equal(c.clock.intervals.size, 0);
+      c.clock.setTime(12000); handlers.integrated({ delta: ' continued' }); handlers.done();
+    };
+    await c.ctx.agentSend();
+    assert.equal(c.ctx.agentHistory.at(-1).thinkingSeconds, 4);
+    assert.equal(c.clock.intervals.size, 0);
+    c.ctx.agentInput.value = 'next question';
+    c.ctx.parseSSE = async (_, handlers) => { handlers.integrated({ delta: 'next answer' }); handlers.done(); };
+    await c.ctx.agentSend();
+    const prior = outbound[1].messages.find(m => m.role === 'assistant');
+    assert.equal(prior.content, 'answer continued');
+    assert.equal(Object.hasOwn(prior, 'thinkingSeconds'), false);
+    assert.equal(c.ctx.agentHistory[1].thinkingSeconds, 4);
+    assert.equal(c.clock.intervals.size, 0);
+  }
+});
 
 test('両画面はdone欠落を保存せず、開始後の無通信で入力を戻す', async () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
@@ -595,7 +666,7 @@ test('両画面はdone欠落を保存せず、開始後の無通信で入力を�
     c.ctx.fetch = async () => ({ ok: true, body: {} });
     c.ctx.parseSSE = async (_, handlers) => { assert.equal([...c.timers.values()][0].ms, 70000); handlers.integrated({ delta: 'partial' }); };
     await c.ctx.agentSend();
-    assert.equal(c.ctx.agentHistory.length, 0); assert.equal(c.errors.at(-1).code, 'incomplete_reply'); assert.equal(c.timers.size, 0);
+    assert.equal(c.ctx.agentHistory.length, 0); assert.equal(c.errors.at(-1).code, 'incomplete_reply'); assert.equal(c.timers.size, 0); assert.equal(c.clock.intervals.size, 0);
     c.ctx.agentInput.value = 'retry';
     c.ctx.parseSSE = async (_, handlers) => { handlers.integrated({ delta: 'complete' }); handlers.done(); };
     await c.ctx.agentSend(); assert.equal(c.ctx.agentHistory.at(-1).content, 'complete');
@@ -604,7 +675,7 @@ test('両画面はdone欠落を保存せず、開始後の無通信で入力を�
     c.ctx.parseSSE = async body => new Promise((_, reject) => body.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
     const pending = c.ctx.agentSend(); await tick();
     assert.equal([...c.timers.values()][0].ms, 70000); [...c.timers.values()][0].fn(); await pending;
-    assert.equal(c.ctx.agentBusy, false); assert.equal(c.ctx.agentInput.disabled, false); assert.equal(c.errors.at(-1).code, 'timeout'); assert.equal(c.timers.size, 0);
+    assert.equal(c.ctx.agentBusy, false); assert.equal(c.ctx.agentInput.disabled, false); assert.equal(c.errors.at(-1).code, 'timeout'); assert.equal(c.timers.size, 0); assert.equal(c.clock.intervals.size, 0);
   }
 });
 
@@ -623,7 +694,7 @@ test('モバイルの新規会話と保存会話切り替えは古い回答を�
       c.ctx.loadSavedSession('saved');
     } else { c.ctx.resetAgent(); c.ctx.agentHistory.push({ role: 'user', content: 'new question' }); }
     release(); await pending;
-    assert.equal(c.ctx.agentHistory.length, 1); assert.equal(c.ctx.agentHistory[0].role, 'user'); assert.equal(c.ctx.agentBusy, false);
+    assert.equal(c.ctx.agentHistory.length, 1); assert.equal(c.ctx.agentHistory[0].role, 'user'); assert.equal(c.ctx.agentBusy, false); assert.equal(c.clock.intervals.size, 0);
   }
 });
 
@@ -774,6 +845,7 @@ test('両画面は停止ボタンで止めた質問を、エラーを出さず�
     assert.equal(c.ctx.agentInput.value, 'stop me');
     assert.equal(c.ctx.agentBusy, false);
     assert.equal(c.ctx.agentSendBtn.title, 'Send');
+    assert.equal(c.clock.intervals.size, 0);
   }
 });
 

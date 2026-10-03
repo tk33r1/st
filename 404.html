@@ -130,8 +130,8 @@
     </header>
     <section class="search" id="search" aria-labelledby="search-label" hidden>
       <form id="search-form" role="search">
-        <label id="search-label" for="query" data-ja="ツール・ゲーム・記事を検索" data-en="Search tools, games, and articles">ツール・ゲーム・記事を検索</label>
-        <input id="query" type="search" maxlength="200" autocomplete="off" spellcheck="false" placeholder="ツール・ゲーム・記事を検索" aria-controls="result-list" aria-describedby="search-status">
+        <label id="search-label" for="query" data-ja="サイト内のページを探す" data-en="Find pages on this site">サイト内のページを探す</label>
+        <input id="query" type="search" maxlength="200" autocomplete="off" spellcheck="false" placeholder="キーワードや、やりたいことを入力" data-placeholder-ja="キーワードや、やりたいことを入力" data-placeholder-en="Enter keywords or what you want to do" aria-controls="result-list" aria-describedby="search-status">
       </form>
       <div class="results" id="results">
         <h2 id="result-heading" hidden></h2>
@@ -207,7 +207,7 @@
       document.title = (lang === 'ja' ? 'ページが見つかりませんでした' : 'Page not found') + ' | tk.st';
       byId('other-nav').setAttribute('aria-label', lang === 'ja' ? 'ほかのページ' : 'More pages');
       var input = byId('query');
-      input.placeholder = byId('search-label').textContent;
+      input.placeholder = lang === 'ja' ? input.dataset.placeholderJa : input.dataset.placeholderEn;
       var list = byId('result-list');
       var heading = byId('result-heading');
       var status = byId('search-status');
@@ -399,8 +399,8 @@
       var imeEnterHeld = false;
       var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
-      // 品質・費用・計測の確認後に公開する。URLなどから有効化できない。
-      var AI_SEARCH_ENABLED = false;
+      // 公開フラグ。URLなどから切り替えられない。停止はWorker側を先に行う。
+      var AI_SEARCH_ENABLED = true;
       var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
       var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
         : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
@@ -419,8 +419,8 @@
       function startMagiThinking(target, startedAt) {
         var el = document.createElement('span'), seconds = null;
         target.appendChild(el);
-        // 経過時間から算出し、バックグラウンドで更新が間引かれても秒数を保つ。
-        var elapsed = function () { return Math.max(0, Math.floor((performance.now() - startedAt) / 1000)); };
+        // 端末のスリープも待ち時間に含め、更新が間引かれても実時刻の差分で秒数を保つ。
+        var elapsed = function () { return Math.max(0, Math.floor((Date.now() - startedAt) / 1000)); };
         var tick = function () { setMagiThinkingLabel(el, elapsed(), false); };
         tick();
         var timer = setInterval(tick, 1000);
@@ -468,7 +468,7 @@
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       byId('ai-run').addEventListener('click', async function () {
         if (!ai.eligible || ai.controller || composing || input.value.slice(0, 200).trim() !== ai.query) return;
-        var startedAt = performance.now();
+        var startedAt = Date.now();
         var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
         byId('ai-thinking').replaceChildren(); byId('ai-thinking').hidden = false;
         var thinking = startMagiThinking(byId('ai-thinking'), startedAt); ai.thinking = thinking;
