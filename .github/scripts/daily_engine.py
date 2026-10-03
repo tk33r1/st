@@ -555,7 +555,8 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
         try:
             extra_raw = extra_fn(target_date)
             extra_items, _ = filter_and_dedup_news(
-                extra_raw, jp_blacklist, pub_history, config.get('is_relevant_fn'), is_global=False
+                extra_raw, config.get('extra_noise_blacklist', jp_blacklist),
+                pub_history, config.get('is_relevant_fn'), is_global=False
             )
             extra_limits = config.get('extra_candidate_limits', {})
             if extra_limits:

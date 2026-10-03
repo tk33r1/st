@@ -116,7 +116,7 @@
               "name": "AIへ相談した内容は、どこに送られますか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
+                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。返答の言語を決めるため、相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
               }
             },
             {
@@ -1197,6 +1197,9 @@
     .pcard .pr { margin-top: 6px; }
     .pcard .rl { display: block; font-size: 10px; letter-spacing: .1em; line-height: 1.4; color: var(--faint); font-family: var(--f-body); }
     .pcard .px { display: block; font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; font-family: var(--f-body); }
+    /* 第3回以降：統合人格（Shinya Takeda）からこの人格への問い */
+    .pcard .pa { display: block; font-size: 11px; color: var(--heart-secondary); line-height: 1.55; margin-top: 2px; overflow-wrap: anywhere; font-family: var(--f-body); }
+    .pcard .pa::before { content: '✦ '; }
     .pcard.thinking .px { color: var(--faint); }
 
     .answer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
@@ -1676,6 +1679,7 @@
     <div class="dj-modal__body ai-info-card">
       <ul>
         <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
+        <li>返答の言語を決めるため、直近の相談文だけを <strong>TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します（リクエスト状況は送りません）。同社は API の入力をモデルの学習に利用しないとしています。</li>
         <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
         <li>1日の利用上限のため、<strong>IP アドレス</strong>を日ごとの回数としてデータベースに記録します（相談の中身は記録しません）。</li>
         <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
@@ -1726,7 +1730,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">AIへ相談した内容は、どこに送られますか？</summary>
           <div class="request-faq-answer">
-            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
+            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。返答の言語を決めるため、相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
           </div>
         </details>
         <details class="request-faq-item">
@@ -2948,8 +2952,9 @@
        プロンプトは Worker 側にあるので、DJ の文脈（イベント名・かかった曲・
        得意ジャンル）は送る窓の最初のユーザー発言の前置きとして渡す。 */
     const MAGI_API = 'https://workers.tk.st/magi2/chat';
-    /* Worker は段階（初回・討議・統合）が終わるまで何も送らないので、いちばん長い
-       統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る */
+    /* Worker は段階（初回・討議・判定・統合）が終わるまで何も送らないので、いちばん長い
+       統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る。
+       討議の回数は統合人格の判定で最大5回まで増える（同 DEBATE）が、回ごとに何か届くので延びない */
     const MAGI_IDLE_MS = 70000;
     const CONTEXT_TIMEOUT_MS = 5000;   // 送信前に読む /board（状況説明の材料）の待ち上限
     const MAGI_PERSONAS = [
@@ -3008,11 +3013,15 @@
 
     /* 保存済みの往復を Worker の messages に直す。送信用と画面復元用で同じ会話を
        二重に持たず、turns を唯一の正本にする。 */
-    /* 回答には、その回の各人格の意見を debate（{ 人格名: { round1, round2 } }）として付ける。
+    /* 回答には、その回の各人格の意見を debate（{ 人格名: { round1, round2, followups } }）として付ける。
+       followups は統合人格に聞き返された第3回以降（[{ round, ask, text }]）。
        Worker はこれを人格ごとの履歴に使う（各人格には自分の過去の意見だけを自分の発言として渡す）。
        トップページの MAGI とアプリは、履歴の項目に同じ形の debate を持っていて、そのまま送っている */
     const debateOf = (personas) => Object.fromEntries(Object.entries(personas || {})
-      .map(([cn, rounds]) => [cn, { round1: (rounds || [])[0] || null, round2: (rounds || [])[1] || null }]));
+      .map(([cn, rounds]) => [cn, {
+        round1: (rounds || [])[0] || null, round2: (rounds || [])[1] || null,
+        followups: (rounds || []).slice(2).filter((f) => f && typeof f === 'object'),
+      }]));
     const messagesFromTurns = (turns) => (turns || []).flatMap((entry) => [
       { role: 'user', content: String(entry.q || '') },
       { role: 'assistant', content: String(entry.reply || ''), debate: debateOf(entry.personas) },
@@ -3134,8 +3143,11 @@
       return turn;
     }
 
-    // 人格カードの中の、初回（1）か討議後（2）の枠。それ以外の回は null
+    // 人格カードの中の、その回の枠。初回（1）と討議後（2）は始めから、第3回以降は聞き返されたときだけある
     const roundSlot = (card, round) => card.querySelector('.pr[data-round="' + round + '"]');
+    // 第3回以降の枠（統合人格の問いと、その答え）
+    const followupHTML = (f) => '<div class="pr" data-round="' + (Number(f.round) || 0) + '"><span class="rl">第' + (Number(f.round) || '') + '回</span>' +
+      '<span class="pa">' + esc(f.ask) + '</span><span class="px">' + esc(f.text) + '</span></div>';
 
     // 回答が届き終わった（または履歴から組み直した）ターンの見た目を落ち着かせる
     function finishTurn(turn) {
@@ -3215,7 +3227,7 @@
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true }),
+          body: JSON.stringify({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true, adaptive_debate: true }),
           signal: ctrl.signal,
         });
         watch();
@@ -3231,14 +3243,27 @@
               const round = Number(d.round) || 1;
               if (round >= 2) card.classList.remove('thinking');
               // 討議に加われなかった回は枠を出さない。初回で失敗したなら初回の枠に印が出ているし、
-              // 討議だけ抜けたなら初回意見がそのまま統合に使われている
-              if (d.absent && round >= 2) return;
+              // 討議だけ抜けたなら前の回の意見がそのまま統合に使われている。聞き返した回は問いの枠ごと外す
+              if (d.absent && round >= 2) { if (round >= 3) roundSlot(card, round)?.remove(); return; }
               // 初回と討議後は別の枠に入れる（同じ枠に書くと初回が討議後で上書きされて消える）。
               // 枠の無い回は捨てる
               const slot = roundSlot(card, round);
               if (!slot) return;
               slot.hidden = false;
               slot.querySelector('.px').textContent = d.text || '';
+              chatScroll();
+            },
+            // 統合人格が聞き返した（第3回以降）。問いを向けた人格のカードに枠を足し、考え中に戻す
+            ask: (d) => {
+              if (!d || !Array.isArray(d.questions)) return;
+              const round = Number(d.round) || 0;
+              for (const q of d.questions) {
+                const card = turn.querySelector('.pcard[data-cn="' + String(q.codename || '').replace(/"/g, '') + '"]');
+                if (!card) continue;
+                card.insertAdjacentHTML('beforeend', followupHTML({ round, ask: q.text, text: '…' }));
+                card.classList.add('thinking');
+              }
+              turn.querySelector('details.debate summary').textContent = '統合人格が聞き返しています…（第' + round + '回）';
               chatScroll();
             },
             integrated: (d) => { reply += d.delta || ''; if (reply.trim()) thinking.finish(); bodyEl.textContent = reply; chatScroll(); },
@@ -3422,12 +3447,18 @@
     const needsVerify = (entry) =>
       !Array.isArray(entry.picks) || entry.picks.some((p) => !p || p.state === 'unknown');
 
-    // 人格ごとの [初回, 討議後]。出さなかった回は null
+    // 人格ごとの [初回, 討議後, …第3回以降]。初回と討議後は文字列（出さなかった回は null）、
+    // 第3回以降は統合人格に聞き返された回だけ { round, ask, text }
     const readPersonas = (turn) => Object.fromEntries([...turn.querySelectorAll('.pcard')].map((card) =>
-      [card.dataset.cn, [1, 2].map((r) => {
-        const slot = roundSlot(card, r);
-        return slot.hidden ? null : slot.querySelector('.px').textContent;
-      })]));
+      [card.dataset.cn, [
+        ...[1, 2].map((r) => {
+          const slot = roundSlot(card, r);
+          return slot.hidden ? null : slot.querySelector('.px').textContent;
+        }),
+        ...[...card.querySelectorAll('.pr')].filter((slot) => Number(slot.dataset.round) >= 3).map((slot) => ({
+          round: Number(slot.dataset.round), ask: slot.querySelector('.pa').textContent, text: slot.querySelector('.px').textContent,
+        })),
+      ]]));
 
     // 保存した往復を画面に組み直す（照合の枠は呼び出し側で足す）
     function restoreTurn(entry) {
@@ -3439,6 +3470,7 @@
           slot.hidden = typeof got[k] !== 'string';
           if (!slot.hidden) slot.querySelector('.px').textContent = got[k];
         });
+        got.slice(2).filter((f) => f && typeof f === 'object').forEach((f) => card.insertAdjacentHTML('beforeend', followupHTML(f)));
       });
       turn.querySelector('.who').insertAdjacentHTML('beforeend', magiThinkingHTML(entry.thinkingSeconds));
       turn.querySelector('.ab').textContent = entry.reply;

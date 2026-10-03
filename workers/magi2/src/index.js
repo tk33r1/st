@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, LANGUAGE_DETECT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
@@ -169,15 +169,18 @@ const withImages = (text, images) => images.length ? [...images, { type: 'text',
 // 人格が答えられなかった回に、画面のカードへ出す印（persona イベントの absent:true と一緒に送る）
 const PERSONA_ABSENT = '[NO RESPONSE]';
 
-// 過去の回の各人格の意見。画面は履歴の assistant に debate（{ codename: { round1, round2 } }）を付けて送ってくる。
-// 討議後の意見を優先し、届かなかった回（'…'）や欠席の印は使わない。知らない人格名や文字列以外は捨てる
+// 過去の回の各人格の意見。画面は履歴の assistant に debate（{ codename: { round1, round2, followups } }）を付けて送ってくる。
+// followups は統合人格が聞き返した第3回以降（[{ round, ask, text }]。聞かれた回だけ）。
+// いちばん新しい意見を優先し、届かなかった回（'…'）や欠席の印は使わない。知らない人格名や文字列以外は捨てる
 function normaliseDebate(debate) {
   if (!debate || typeof debate !== 'object') return null;
   const usable = (t) => typeof t === 'string' && t.trim() && t.trim() !== '…' && t.trim() !== PERSONA_ABSENT;
   const out = {};
   for (const p of PERSONAS) {
     const d = debate[p.codename];
-    const text = d && typeof d === 'object' ? [d.round2, d.round1].find(usable) : null;
+    if (!d || typeof d !== 'object') continue;
+    const later = Array.isArray(d.followups) ? d.followups.map(f => f && f.text).reverse() : [];
+    const text = [...later, d.round2, d.round1].find(usable);
     if (text) out[p.codename] = text.trim().slice(0, DEFAULTS.persona_history_max_chars);
   }
   return Object.keys(out).length ? out : null;
@@ -277,6 +280,7 @@ const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
   google: 'Google Gemini（BALTHASAR-2）',
+  typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
 };
 async function alertUpstream(env, log, provider, res) {
   const body = (await res.text().catch(() => '')).slice(0, 500);
@@ -290,7 +294,9 @@ async function alertUpstream(env, log, provider, res) {
     body,
     '',
     '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
-    'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
+    provider === 'typesafe'
+      ? '言語の判定は手元の規則に切り替えて、会話は続けます（英字の混ざった日本語に、他の言語で答えることがあります）。'
+      : 'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
     '同じ会社・同じ状態のメールは UTC の1日に1通です。',
   ]);
 }
@@ -455,15 +461,55 @@ function replyLanguageNote(messages) {
 }
 const withLangNote = (prompt, langNote) => langNote ? `${prompt}\n\n${langNote}` : prompt;
 
+// 出力の言語を Jev で決める（personas.js の LANGUAGE_DETECT）。決まらなければ手元の規則の結果（fallback）を返す。
+// 例外は投げない（判定が無くても会話は進める）。画面が付けた状況説明を足す前の会話（plainMessages）から、
+// ユーザーの発言の文字だけを送る
+async function detectReplyLanguage(env, plainMessages, fallback, signal, log) {
+  const key = env[LANGUAGE_DETECT.key];
+  const texts = plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content).trim()).filter(Boolean)
+    .slice(-LANGUAGE_DETECT.messages).map(t => t.slice(0, LANGUAGE_DETECT.message_max_chars));
+  if (!key || !texts.length) return fallback;
+  try {
+    const res = await fetch(LANGUAGE_DETECT.endpoint, {
+      method: 'POST', signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({
+        model: LANGUAGE_DETECT.model.model,
+        state: { earlier_messages: texts.slice(0, -1), latest_message: texts[texts.length - 1] },
+        questions: { language: {
+          type: 'choice', instructions: LANGUAGE_DETECT.instructions,
+          criteria: Object.fromEntries(Object.entries(LANGUAGE_DETECT.languages).map(([code, l]) => [code, l.criteria])),
+        } },
+      }),
+    });
+    if (!res.ok) {
+      // 残高切れ・キーの失効はメールで知らせる（黙って手元の規則に戻るので、画面からは気づきにくい）
+      if (env.onUpstreamError) await env.onUpstreamError('typesafe', res.clone());
+      log('language', `HTTP ${res.status}`);
+      await res.body?.cancel().catch(() => {});
+      return fallback;
+    }
+    const answer = (await res.json()).answers?.language || {};
+    const lang = LANGUAGE_DETECT.languages[answer.choice];
+    log('language', answer.choice, `confidence=${answer.confidence}`);
+    if (!lang || !lang.name || !(answer.confidence >= LANGUAGE_DETECT.min_confidence)) return fallback;
+    return answer.choice === 'ja' ? REPLY_LANGUAGE.ja : REPLY_LANGUAGE.named(lang.name);
+  } catch (e) {
+    log('language', 'failed', e && (e.name || e.message));
+    return fallback;
+  }
+}
+
 // 次の質問の予測（非クリティカル：失敗・時間切れでも null）。
 // 会話は1本の文字起こしにして渡す（チャットの形のまま渡すと、モデルが AI の続きとして答えてしまう）。
 // 画面が付けた状況説明（context）は、ユーザーの発言とは別の見出しで渡す。
 // 出力の言語（langNote）は会話の後ろに付ける。
+// 発言は末尾を残し（長い答えは最後の問いかけが大事）、状況説明は頭を残す（役割と場面が先に書いてある）
+const tail = (t, max) => t.length > max ? '…' + t.slice(-max) : t;
+const head = (t, max) => t.length > max ? t.slice(0, max) + '…' : t;
+
 async function fetchSuggestion(env, convo, context, langNote, signal, log) {
   try {
-    // 発言は末尾を残し（長い答えは最後の問いかけが大事）、状況説明は頭を残す（役割と場面が先に書いてある）
-    const tail = (t, max) => t.length > max ? '…' + t.slice(-max) : t;
-    const head = (t, max) => t.length > max ? t.slice(0, max) + '…' : t;
     const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
       const imgs = contentImages(m.content).length;
       const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '');
@@ -490,6 +536,57 @@ async function fetchSuggestion(env, convo, context, langNote, signal, log) {
     return line || null;
   } catch (e) {
     log('suggest_call', 'failed', e && e.message);
+    return null;
+  }
+}
+
+// --- 討議の判定（personas.js の DEBATE）---
+// 討議の記録。人格ごとに、これまでの回の意見を順に並べる（判定と統合で同じものを使う）。
+// views は [{ round, text, ask }]。ask は統合人格がその人格に向けた問い（第3回以降）
+const viewLabel = (v) => v.round === 1 ? '初回' : v.round === 2 ? '討議後' : `第${v.round}回`;
+const debateRecord = (opinions) => opinions.map(o => `- ${o.name}（${o.codename}）\n`
+  + o.views.map(v => `  ${viewLabel(v)}${v.ask ? `（自分の問い「${v.ask}」への答え）` : ''}: ${v.text}`).join('\n')).join('\n');
+
+// 判定に渡す材料：画面の状況説明・今回より前の会話（直近）・今回の発言・討議の記録。
+// 画像は渡さない（討議の文字だけで判定する。画像は聞かれた人格が見直す）
+function judgeInput(plainMessages, context, opinions, langNote) {
+  const earlier = plainMessages.slice(0, -1).slice(-DEBATE.transcript_messages)
+    .map(m => `${m.role === 'user' ? 'ユーザー' : '自分'}: ${tail(contentText(m.content).trim(), DEBATE.message_max_chars)}`);
+  const last = plainMessages[plainMessages.length - 1].content;
+  const imgs = contentImages(last).length;
+  return [
+    ...(context ? ['【画面が付けた状況説明（ユーザーの発言ではない）】', head(context.trim(), DEBATE.context_max_chars), ''] : []),
+    ...(earlier.length ? ['【ここまでの会話】', ...earlier, ''] : []),
+    '【今回のユーザーの発言】', contentText(last).trim() + (imgs ? ` [画像${imgs}枚]` : ''), '',
+    '【討議の記録】', debateRecord(opinions),
+    ...(langNote ? ['', langNote] : []),
+  ].join('\n');
+}
+
+// 統合人格（本人）として、いま答えを書けるか、聞き返すなら誰に何を聞くかを決める。
+// 返すのは { assessment, questions }（questions が空なら答える）。questions の相手は、いま討議に残っている人格（active）に限る。
+// 非クリティカル：失敗・時間切れ・形の崩れた JSON は null（その時点の討議で統合する）
+async function fetchJudgement(env, { system, input, active }, signal, log) {
+  try {
+    const res = await callModel({
+      env, cfg: DEFAULTS.models.judge, stream: false, signal, response_format: DEBATE.format,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: input }],
+    });
+    if (!res.ok) { log('debate', 'judge', `HTTP ${res.status}`); return null; }
+    const choice = (await res.json()).choices?.[0] || {};
+    if (choice.finish_reason !== 'stop') { log('debate', 'judge', `finish_reason=${choice.finish_reason}`); return null; }
+    const v = JSON.parse(choice.message?.content || '');
+    const seen = new Set();
+    const questions = v.action === 'ask' && Array.isArray(v.questions) ? v.questions.flatMap(q => {
+      const text = q && typeof q.question === 'string' ? q.question.trim().slice(0, DEBATE.ask_max_chars) : '';
+      if (!text || !active.includes(q.target) || seen.has(q.target)) return [];
+      seen.add(q.target);
+      return [{ target: q.target, question: text }];
+    }) : [];
+    const assessment = typeof v.assessment === 'string' ? v.assessment.trim().slice(0, DEBATE.assessment_max_chars) : '';
+    return { assessment, questions };
+  } catch (e) {
+    log('debate', 'judge', 'failed', e && (e.name || e.message));
     return null;
   }
 }
@@ -674,6 +771,8 @@ async function readChatInput(request) {
   const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
   const wantSuggest = body.suggest === true;
   const wantSitePages = body.site_pages === true;
+  // 討議の回数を判定で増やすか（DEBATE）。付けない画面は2回で止める
+  const adaptive = body.adaptive_debate === true;
   // いま開いているページ（トップページは '/'、アプリは 'app'）。送った画面だけにサイト案内を足す。
   // 値はサイトの索引を引くのに使うだけで、プロンプトには入れない。形が違えば送らなかったものとして扱う
   const page = typeof body.page === 'string' && body.page.length <= SITE_GUIDE.page_max_chars
@@ -702,16 +801,25 @@ async function readChatInput(request) {
     const first = messages.findIndex(m => m.role === 'user');
     messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
-  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page };
+  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page };
 }
 
 async function handleChat(request, env, ctx, { requestId, cors, log }) {
-  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page;
-  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, page } = await readChatInput(request)); }
+  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page;
+  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page } = await readChatInput(request)); }
   catch (err) { return inputError(err, requestId, cors); }
 
-  // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
+  // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
+  const upstream = Object.assign(Object.create(env), {
+    onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
+  });
+  // 人格カードの取得と出力の言語の判定は、レート制限の DB 処理と並行して始めておく（どちらも reject しない）。
+  // 言語は Jev で決め、決まらなければ手元の規則の結果（readChatInput の langNote）を使う。断るときは判定も止める
   const cardsPromise = getPersonaCards(ctx, log);
+  const langStop = new AbortController();
+  const langPromise = withTimeout(LANGUAGE_DETECT.timeout_ms,
+    signal => detectReplyLanguage(upstream, plainMessages, langNote, signal, log), langStop.signal);
+  const refuse = (res) => { langStop.abort(); return res; };
 
   // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
   if (env.DB) {
@@ -721,11 +829,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
       const count = await countUp(env.DB, ip, day, DEFAULTS.daily_limit);
       log('rate_limit', ip, day, count ?? 'limit');
       if (count == null) {
-        return httpError(429, {
+        return refuse(httpError(429, {
           stage: 'rate_limit', code: 'daily_limit_exceeded',
           message: `本日の利用上限（${DEFAULTS.daily_limit}回/日）に達しました`,
           retry_after_day: day, legacy_url: 'https://tk.st/magi/', retryable: false,
-        }, requestId, cors);
+        }, requestId, cors));
       }
       // 全利用者の合計にも1日の上限を掛ける。Origin は名乗れるので、IP を替えながら大量に呼ばれても費用に天井を作る。
       // 上限に達したらメールを送る（1日1通。ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
@@ -737,25 +845,21 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           'ふだんの利用を大きく超えているので、ログ（wrangler tail）で使われ方を確かめてください。',
           '上限は workers/magi2/personas.js の DEFAULTS.global_daily_limit です。',
         ]).catch(e => log('alert', 'failed', e && e.message)));
-        return httpError(429, {
+        return refuse(httpError(429, {
           stage: 'rate_limit', code: 'global_daily_limit_exceeded',
           message: '本日の利用上限に達しました。明日またお試しください',
           retry_after_day: day, retryable: false,
-        }, requestId, cors);
+        }, requestId, cors));
       }
     } catch (err) {
       log('rate_limit', 'db_error', err.message);
-      return httpError(500, { stage: 'internal', code: 'ratelimit_db_error', message: 'レート制限の記録に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+      return refuse(httpError(500, { stage: 'internal', code: 'ratelimit_db_error', message: 'レート制限の記録に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors));
     }
   } else {
     log('rate_limit', 'skipped (no DB binding)');
   }
 
   // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
-  // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
-  const upstream = Object.assign(Object.create(env), {
-    onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
-  });
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
   const stop = new AbortController();
   const pageStop = new AbortController();
@@ -770,6 +874,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
       const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
 
       try {
+        // 出力の言語（3人格・統合・討議の判定・タイトル・予測の全部に同じものを付ける）
+        langNote = await langPromise;
         const history = messages.slice(0, -1);
         const lastContent = messages[messages.length - 1].content;
         // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
@@ -840,13 +946,15 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         };
 
         // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
+        // 各人格の意見は回ごとに views（[{ round, text, ask }]）へ積む。最後の要素がいまの考え
+        const debateStarted = Date.now();
         log('persona_call', 'round1 start');
         const r1 = await withTimeout(personaTimeoutMs, signal =>
           Promise.allSettled(personas.map(async (p) => {
             // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
             const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(lastContent)), signal, log, 1, personaTemp);
             send('persona', { round: 1, codename: p.codename, name: p.name, text });
-            return { ...p, r1: text };
+            return { ...p, r1: text, views: [{ round: 1, text }] };
           })), stop.signal);
         const opinions = [];
         r1.forEach((r, i) => {
@@ -869,15 +977,54 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
             // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
             const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
             try {
-              p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
-              send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
+              const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
+              p.views.push({ round: 2, text });
+              send('persona', { round: 2, codename: p.codename, name: p.name, text });
             } catch (e) { absent(p, 2, e); }
           })), stop.signal);
-        log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
+        log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
+
+        // --- 第3回以降: 統合人格が判定し、答えを変えうる論点が残っていれば、答えられる人格にだけ聞き返す ---
+        // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
+        // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
+        const maxRounds = adaptive ? DEBATE.max_rounds : 2;
+        let assessment = '', lastRound = 2;
+        for (let round = 3; round <= maxRounds && !stop.signal.aborted; round++) {
+          if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
+          const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: DEBATE.system_prompt(round - 1, maxRounds) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
+          const verdict = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
+            system: judgeSystem, input: judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename),
+          }, signal, log), stop.signal);
+          if (verdict && verdict.assessment) assessment = verdict.assessment;
+          log('debate', `after r${round - 1}`, !verdict ? 'judge failed' : verdict.questions.length ? `ask ${verdict.questions.map(q => q.target).join(',')}` : 'answer');
+          // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
+          if (!verdict || !verdict.questions.length) { send('judge', { round: round - 1, action: 'answer' }); break; }
+          // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
+          const asked = verdict.questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
+          send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });
+          await withTimeout(personaTimeoutMs, signal =>
+            Promise.all(asked.map(async ({ p, ask }) => {
+              const own = p.views.map(v => `${viewLabel(v)}: ${v.text}`).join('\n');
+              const others = opinions.filter(o => o.codename !== p.codename)
+                .map(o => `- ${o.name}（${o.codename}）: ${o.views[o.views.length - 1].text}`).join('\n');
+              const qmsg = `${lastUser}\n\n[あなたのこれまでの意見]\n${own}`
+                + (others ? `\n\n[他の人格のいまの意見]\n${others}` : '')
+                + `\n\n[3人の議論をまとめる Shinya Takeda から、あなたへの問い（第${round}回）]\n${ask}`
+                + '\n\n[この問いに、自分の関心と価値観から答えよ。考えが変わったなら変わったと言い、変わらないなら理由を足す。これまでの意見の繰り返しは避ける]';
+              try {
+                const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
+                p.views.push({ round, text, ask });
+                send('persona', { round, codename: p.codename, name: p.name, text });
+              } catch (e) { absent(p, round, e); }
+            })), stop.signal);
+          lastRound = round;
+        }
 
         // --- 統合コール（推論あり・stream）---
-        const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}${o.r2 ? `\n  討議後: ${o.r2}` : ''}`).join('\n');
-        const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
+        // 判定のメモ（一致・対立とその扱い）と、上限で打ち切ったことも添える
+        const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
+          + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
+          + (adaptive && lastRound === maxRounds ? `\n\n[討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える]` : '');
         // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
         const bias = theme ? SYNTH_BIAS[theme] : null;
         if (bias) log('synthesizer_call', 'bias', theme);

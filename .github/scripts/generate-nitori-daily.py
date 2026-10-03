@@ -13,6 +13,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 import brightdata_social
+from nitori_social_filter import filter_consumer_posts
 from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
 
 JST = timezone(timedelta(hours=9))
@@ -34,12 +35,6 @@ NITORI_RELEVANT_KEYWORDS = [
 ]
 GLOBAL_RELEVANT_KEYWORDS = ['nitori', 'ニトリ']
 
-
-YAHOO_REALTIME_SPAM_KEYWORDS = [
-    '当選', 'プレゼント', '懸賞', '商品券', 'その場であたり', 'フォロー＆リポスト',
-    'チキニトラジオ', 'にとりめし', '実業団', '5000m', 'タイムレース', 'ガチャ',
-    '似顔絵', 'パトロール', 'スポンサー', 'パチンコ', 'パチスロ', '台'
-]
 
 # 発行前日の取得ワークフロー（nitori-tiktok-fetch.yml）が書き出すスナップショット
 TIKTOK_SNAPSHOT_PATH = brightdata_social.TIKTOK_SNAPSHOT_PATH
@@ -71,6 +66,7 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
     )
 
     items = []
+    seen_links = set()
     yesterday_dt = target_date - timedelta(days=1)
     pub_ts = int(yesterday_dt.replace(hour=20, minute=0, second=0).timestamp())
 
@@ -94,13 +90,9 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
         if '昨日' not in time_text:
             continue
 
-        # スパム・無関係・個人イベント等の除外
-        if any(k in body_text for k in YAHOO_REALTIME_SPAM_KEYWORDS):
+        if not raw_url or raw_url in seen_links:
             continue
-
-        # ニトリへの言及
-        if 'ニトリ' not in body_text and 'nitori' not in body_text.lower():
-            continue
+        seen_links.add(raw_url)
 
         short_title = body_text[:70] + "..." if len(body_text) > 75 else body_text
 
@@ -120,7 +112,7 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
         })
 
     items.sort(key=lambda x: x['likes'], reverse=True)
-    return items[:5]
+    return filter_consumer_posts(items, 'X')[:5]
 
 
 def fetch_all_social_buzz(target_date=None):
@@ -128,7 +120,8 @@ def fetch_all_social_buzz(target_date=None):
 
     X は Yahoo! リアルタイム検索で「昨日」の投稿を直接取得する。
     TikTok は発行前日の取得ワークフローが書き出したスナップショットを読む
-    （API を直接叩かない）。TikTok 検索は日付で絞ると関連度が壊れるため「直近1週間の人気」
+    （Bright Data APIを直接叩かない。旧形式・設定変更時だけJevで内容を再判定する）。
+    TikTok 検索は日付で絞ると関連度が壊れるため「直近1週間の人気」
     を前夜時点で確定させる設計で、詳細は brightdata_social.py の docstring を参照。
 
     どのソースが落ちても X だけで発行できるよう、各ソースは独立して失敗を吸収する。
@@ -321,6 +314,8 @@ CONFIG = {
     'global_query_sns': GLOBAL_SNS_QUERY,
 
     'extra_candidates_fn': fetch_all_social_buzz,
+    # SNSの内容はJev判定済み。ニュース用の「プレゼント」等で再び落とさない。
+    'extra_noise_blacklist': [],
     'extra_candidate_limits': {'tiktok': brightdata_social.TOP_N_PER_PLATFORM},
     'is_relevant_fn': is_nitori_relevant,
     'relevance_sort_key_fn': relevance_sort_key,

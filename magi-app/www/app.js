@@ -132,6 +132,8 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function safeParse(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+function safeGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+function safeRemove(key) { try { localStorage.removeItem(key); } catch (_) {} }
 // 画像サムネを持つ履歴は容量を食う。あふれたら古い保存セッションを捨てて1回だけ再試行する。
 function safeStore(key, val) {
   var str = typeof val === 'string' ? val : JSON.stringify(val);
@@ -186,8 +188,8 @@ var AGENT_HINT = '<div class="agent-splash">'
 function setAgentTitle(text) {
   agentTitle = (text || '').trim();
   barTitle.textContent = agentTitle || 'MAGI';
-  if (agentTitle) localStorage.setItem('magi_current_title', agentTitle);
-  else localStorage.removeItem('magi_current_title');
+  if (agentTitle) safeStore('magi_current_title', agentTitle);
+  else safeRemove('magi_current_title');
 }
 
 // ---- Reactions persistence --------------------------------------------------
@@ -205,10 +207,10 @@ function persistReactions() { safeStore('magi_current_history', agentHistory); s
 // ---- Saved sessions (history) ----------------------------------------------
 // One id per active conversation (reset on New conversation). The current
 // conversation is synced into magi_saved_sessions in real time.
-var currentSessionId = localStorage.getItem('magi_current_session_id') || null;
+var currentSessionId = safeGet('magi_current_session_id') || null;
 function archiveCurrentHistory() {
   currentSessionId = null;
-  localStorage.removeItem('magi_current_session_id');
+  safeRemove('magi_current_session_id');
 }
 function syncCurrentToSaved() {
   if (!agentHistory || agentHistory.length === 0) return;
@@ -216,12 +218,12 @@ function syncCurrentToSaved() {
   if (!firstUserMsg) return;
   var firstText = contentText(firstUserMsg.content) || 'Image';
   var title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
-  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   if (currentSessionId) {
     sessions = sessions.filter(function (s) { return s.id !== currentSessionId; });
   } else {
     currentSessionId = 'session_' + Date.now();
-    localStorage.setItem('magi_current_session_id', currentSessionId);
+    safeStore('magi_current_session_id', currentSessionId);
   }
   sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice() });
   if (sessions.length > 50) sessions.pop();
@@ -248,6 +250,13 @@ function applyReactionsToTurn(turn, reactions) {
 }
 var reEmoji = function (v) { return (typeof v === 'string' ? v : (v && v.em) || ''); };
 
+// 第3回以降の枠。統合人格がこの人格に聞き返した回だけ出す（debate の followups: [{ round, ask, text }]）
+function followupHTML(f) {
+  var n = Number(f.round) || 0;
+  return '<div class="persona-round" data-round="' + n + '"><span class="persona-round-label">Round ' + (n || '') + '</span>'
+    + '<div class="persona-ask">✦ ' + esc(f.ask || '') + '</div><div class="persona-text">' + esc(f.text || '…') + '</div></div>';
+}
+
 // 新規送信と履歴復元で同じカードを使う。debate 未指定なら考え中として描画する。
 function personaCardsHTML(debate) {
   var personas = AGENT_PERSONAS.map(function (p) {
@@ -257,6 +266,7 @@ function personaCardsHTML(debate) {
       + '<div class="persona-head"><span class="persona-hex">⬡</span><span class="persona-code">' + p.codename + '</span><span class="persona-name">' + p.name + '</span></div>'
       + '<div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">' + esc(d.round1 || '…') + '</div></div>'
       + '<div class="persona-round" data-round="2"' + (r2has ? '' : ' hidden') + '><span class="persona-round-label">After debate</span><div class="persona-text">' + esc(d.round2 || '…') + '</div></div>'
+      + (Array.isArray(d.followups) ? d.followups : []).map(followupHTML).join('')
       + reactionBarHTML(p.codename)
       + '</div>';
   }).join('');
@@ -326,8 +336,8 @@ function showSplashIfEmpty() {
   if (!agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
 }
 function initAgent() {
-  agentHistory = safeParse(localStorage.getItem('magi_current_history'), []);
-  setAgentTitle(localStorage.getItem('magi_current_title') || '');
+  agentHistory = safeParse(safeGet('magi_current_history'), []);
+  setAgentTitle(safeGet('magi_current_title') || '');
   if (agentHistory && agentHistory.length > 0) renderHistoryToLog(agentHistory);
   else showSplashIfEmpty();
   updateAgentActionButtons();
@@ -343,8 +353,8 @@ function resetAgent() {
   dropAgentRequest();
   archiveCurrentHistory();
   agentHistory = []; agentBusy = false; agentDead = false;
-  localStorage.removeItem('magi_current_history');
-  localStorage.removeItem('magi_current_title');
+  safeRemove('magi_current_history');
+  safeRemove('magi_current_title');
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   announceAgent('');
@@ -615,7 +625,7 @@ async function agentSend() {
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
   var debateData = {};
-  AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
+  AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
 
   var ctrl = new AbortController();
   var gen = agentGen; agentCtrl = ctrl;
@@ -632,7 +642,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app' }),
+      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }),
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -652,14 +662,32 @@ async function agentSend() {
           var cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
           var card = turn.querySelector('.persona-card[data-codename="' + cn + '"]');
           if (!card) return;
-          var slot = card.querySelector('.persona-round[data-round="' + (d.round || 1) + '"]');
+          var slot = card.querySelector('.persona-round[data-round="' + (Number(d.round) || 1) + '"]');
           if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
-          if (d.round === 2) card.classList.remove('thinking');
+          if (d.round >= 2) card.classList.remove('thinking');
           agentScroll();
-          if (debateData[d.codename]) {
-            if (d.round === 2) debateData[d.codename].round2 = d.text;
-            else debateData[d.codename].round1 = d.text;
-          }
+          var deb = debateData[d.codename];
+          if (!deb) return;
+          if (d.round >= 3) {
+            var f = deb.followups.filter(function (x) { return x.round === d.round; })[0];
+            if (f) f.text = d.text;
+          } else if (d.round === 2) deb.round2 = d.text;
+          else deb.round1 = d.text;
+        },
+        // 統合人格が聞き返した（第3回以降）。問いを向けた人格のカードに枠を足し、考え中に戻す
+        ask: function (d) {
+          if (dropped() || !d || !Array.isArray(d.questions)) return;
+          d.questions.forEach(function (q) {
+            var qcn = (window.CSS && CSS.escape) ? CSS.escape(q.codename) : q.codename;
+            var qcard = turn.querySelector('.persona-card[data-codename="' + qcn + '"]');
+            var deb = debateData[q.codename];
+            if (!qcard || !deb) return;
+            var f = { round: Number(d.round) || 0, ask: String(q.text || ''), text: '…' };
+            deb.followups.push(f);
+            qcard.querySelector('.reaction-bar').insertAdjacentHTML('beforebegin', followupHTML(f));
+            qcard.classList.add('thinking');
+          });
+          agentScroll();
         },
         integrated: function (d) { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
         error: function (d) { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
@@ -680,7 +708,7 @@ async function agentSend() {
     // Stopped with the stop button: no error; the question goes back into the input below.
     if (ctrl.userStopped) { }
     else if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
-    else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
+    else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: 'Could not receive the reply. Check your connection and try again.', code: 'network_error' }); }
   } finally {
     clearTimeout(idleTimer);
     if (!completed || errored || dropped()) thinking.cancel();
@@ -711,8 +739,8 @@ async function agentSend() {
     var last = agentHistory[agentHistory.length - 1];
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
-    // A stopped question goes back into the input so it can be edited and resent (unless something new was typed).
-    if (ctrl.userStopped && !agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+    // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
+    if (!agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
   }
 }
 
@@ -728,11 +756,10 @@ function getReactionContext(bar) {
     response = body ? body.textContent.trim() : '';
   } else {
     var card = bar.closest('.persona-card');
+    // いちばん新しい回の意見（届いていない回は飛ばす。無ければ初回）
     if (card) {
-      var r2 = card.querySelector('.persona-round[data-round="2"]:not([hidden]) .persona-text');
-      var r1 = card.querySelector('.persona-round[data-round="1"] .persona-text');
-      var r2txt = r2 && r2.textContent.trim();
-      response = (r2txt && r2txt !== '…') ? r2txt : (r1 ? r1.textContent.trim() : '');
+      var texts = Array.prototype.map.call(card.querySelectorAll('.persona-round:not([hidden]) .persona-text'), function (el) { return el.textContent.trim(); });
+      response = texts.slice(1).reverse().filter(function (t) { return t && t !== '…'; })[0] || texts[0] || '';
     }
   }
   return { target: target, request: request, response: response };
@@ -750,31 +777,57 @@ async function sendReaction(target, reaction, request, response) {
   } catch (_) { return undefined; }
 }
 // トークンを持たない旧データは、連番だけでの削除を試みない。
-function deleteReaction(target, receipt) {
-  if (!receipt || !receipt.id || !receipt.delete_token) return;
+async function deleteReaction(target, receipt) {
+  if (!receipt || !receipt.id || !receipt.delete_token) return true;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
   try {
-    fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }),
-      keepalive: true,
-    }).catch(() => {});
-  } catch (_) {}
+      keepalive: true, signal: ctrl.signal,
+    });
+    return res.ok && (await res.json()).ok === true;
+  } catch (_) { return false; }
+  finally { clearTimeout(timer); }
 }
+// 登録中の取り消しは、削除トークンを受け取ってから処理する。通信中の状態は保存しない。
+const reactionRegistrations = new WeakMap();
+const reactionRemovals = new WeakSet();
 function registerReaction(bar, target, em, ctx) {
   const store = reactionStoreFor(bar);
   const cell = { em };
   if (store) { store[target] = cell; persistReactions(); }
-  sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
+  const pending = sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
     if (!receipt) return;
     if (store && store[target] === cell) {
       cell.id = receipt.id; cell.delete_token = receipt.delete_token; persistReactions();
     } else deleteReaction(target, receipt);
   });
+  reactionRegistrations.set(cell, pending);
 }
-function unregisterReaction(bar, target) {
+async function unregisterReaction(bar, target) {
   const store = reactionStoreFor(bar);
   const receipt = store && store[target];
-  if (store) { delete store[target]; persistReactions(); }
-  deleteReaction(target, receipt);
+  if (!receipt) return true;
+  if (typeof receipt === 'object') {
+    if (reactionRemovals.has(receipt)) return false;
+    reactionRemovals.add(receipt);
+  }
+  try {
+    await reactionRegistrations.get(receipt);
+    if (!await deleteReaction(target, receipt)) return false;
+    if (store[target] === receipt) { delete store[target]; persistReactions(); }
+    return true;
+  } finally { if (typeof receipt === 'object') reactionRemovals.delete(receipt); }
+}
+async function undoReaction(bar, target, resetBtn) {
+  // 見た目も削除成功後に戻す。失敗時はトークンと選択を保ち、もう一度押して再試行できる。
+  if (bar.dataset.removing === 'true') return;
+  bar.dataset.removing = 'true';
+  try {
+    if (await unregisterReaction(bar, target)) { resetBtn(); bar.classList.remove('locked'); }
+    else renderAgentError({ message: 'Could not remove the reaction. Please try again.', code: 'reaction_remove_failed' });
+  } finally { delete bar.dataset.removing; }
 }
 function flashReactBtn(btn, sym) {
   var orig = btn.innerHTML; btn.innerHTML = sym;
@@ -829,8 +882,7 @@ agentLog.addEventListener('click', function (e) {
   }
   if (act === 'like') {
     if (btn.classList.contains('liked')) { // cancel the like
-      btn.classList.remove('liked'); bar2.classList.remove('locked');
-      unregisterReaction(bar2, ctx2.target);
+      undoReaction(bar2, ctx2.target, function () { btn.classList.remove('liked'); });
       return;
     }
     if (bar2.classList.contains('locked')) return; // an emoji is already selected
@@ -841,8 +893,7 @@ agentLog.addEventListener('click', function (e) {
   if (act === 'emoji') {
     if (btn.classList.contains('reacted')) {
       // toggle off existing emoji
-      btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; bar2.classList.remove('locked');
-      unregisterReaction(bar2, ctx2.target);
+      undoReaction(bar2, ctx2.target, function () { btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; });
       return;
     }
     if (bar2.classList.contains('locked')) return; // a like is already selected
@@ -880,7 +931,7 @@ var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24
 function renderSavedSessionsList() {
   var list = document.getElementById('agent-history-list');
   if (!list) return;
-  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">No saved conversations.</div>'; return; }
   list.innerHTML = sessions.map(function (s) {
     return '<div class="session-item" data-id="' + esc(s.id) + '">'
@@ -899,7 +950,7 @@ function renderSavedSessionsList() {
 }
 function loadSavedSession(id) {
   syncCurrentToSaved(); // keep the current conversation before switching
-  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   var session = sessions.find(function (s) { return s.id === id; });
   if (!session) return;
   dropAgentRequest();
@@ -908,7 +959,7 @@ function loadSavedSession(id) {
   safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
   currentSessionId = session.id;
-  localStorage.setItem('magi_current_session_id', currentSessionId);
+  safeStore('magi_current_session_id', currentSessionId);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false;
   setAgentSuggestion('');
@@ -916,8 +967,8 @@ function loadSavedSession(id) {
   updateAgentActionButtons();
 }
 function deleteSavedSession(id) {
-  if (currentSessionId === id) { currentSessionId = null; localStorage.removeItem('magi_current_session_id'); }
-  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  if (currentSessionId === id) { currentSessionId = null; safeRemove('magi_current_session_id'); }
+  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   sessions = sessions.filter(function (s) { return s.id !== id; });
   safeStore('magi_saved_sessions', sessions);
   renderSavedSessionsList();
@@ -936,6 +987,7 @@ function showInfoPanel() {
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
     + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
     + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong>used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
+    + '<li>To decide which language to answer in, the text of your last few messages (not images) is also sent to <strong>TypeSafe AI</strong> (Jev, a classification model). TypeSafe states that it does not train models on API inputs.</li>'
     + '<li class="warn">DO NOT input any confidential or personal information.</li>'
     + '</ul>');
 }
@@ -967,6 +1019,9 @@ function getAgentChatMarkdown() {
         md += '#### 🧬 ' + p.codename + ' (' + p.name + ')\n';
         if (deb.round1 && deb.round1 !== '…') md += '* **Initial View:** ' + deb.round1 + '\n';
         if (deb.round2 && deb.round2 !== '…') md += '* **After Debate:** ' + deb.round2 + '\n';
+        (Array.isArray(deb.followups) ? deb.followups : []).forEach(function (f) {
+          if (f && f.text && f.text !== '…') md += '* **Round ' + f.round + '** (asked: ' + f.ask + '): ' + f.text + '\n';
+        });
         md += '\n';
       });
       md += '---\n\n';
@@ -1030,12 +1085,12 @@ document.getElementById('btn-export-agent').addEventListener('click', exportAgen
 document.getElementById('btn-theme').addEventListener('click', function () {
   var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('magi_theme', next);
+  safeStore('magi_theme', next);
 });
 
 // theme restore
 (function () {
-  var t = localStorage.getItem('magi_theme');
+  var t = safeGet('magi_theme');
   if (t) document.documentElement.setAttribute('data-theme', t);
 })();
 

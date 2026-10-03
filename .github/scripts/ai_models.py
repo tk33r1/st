@@ -24,7 +24,7 @@ MODEL_LITERAL_RE = re.compile(
     r'(?<![\w.-])(?:'
     r'gpt-[0-9][a-z0-9._-]*|o[1-9](?:-(?:mini|pro|preview)[a-z0-9._-]*)?|'
     r'deepseek-[a-z0-9._-]+|claude-[a-z0-9._-]+|gemini-[a-z0-9._-]+|'
-    r'mistral-[a-z0-9._-]+|grok-[a-z0-9._-]+|command-r[a-z0-9._-]*|llama-[a-z0-9._-]+'
+    r'mistral-[a-z0-9._-]+|grok-[a-z0-9._-]+|command-r[a-z0-9._-]*|llama-[a-z0-9._-]+|jev-[a-z0-9._-]+'
     r')(?![\w.-])',
     re.IGNORECASE,
 )
@@ -177,15 +177,39 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 4096,  # magi2 の統合と同じ。推論ぶんの余裕も含む
         'stream': True,
     }, stream=True)
-    smoke_openai_site_search(url, api_key, model)
+    config = magi_config()
+    smoke_openai_site_search(url, api_key, model, config)
+    smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、サイト案内/strictスキーマ2種、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、サイト案内/strictスキーマ2種、討議の判定/推論low/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
-def smoke_openai_site_search(url, api_key, model):
-    """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
-    config = json.loads(subprocess.check_output(
+def magi_config():
+    """magi2 の本番の設定（personas.js）を Node で読み出す。"""
+    return json.loads(subprocess.check_output(
         ['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs')], encoding='utf-8'))
+
+
+def smoke_openai_debate_judge(url, api_key, model, config):
+    """magi2 の討議の判定（DEBATE）：推論 low（temperature は送れない）、enum と配列を含む strict な JSON スキーマ。"""
+    expected = {'assessment': '前提が割れている', 'action': 'ask',
+                'questions': [{'target': 'CASPER-3', 'question': '予算の上限は？'}]}
+    response = post_json(url, api_key, {
+        'model': model, 'stream': False, 'store': False,
+        'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
+        'reasoning_effort': config['model']['reasoning_effort'],
+        'max_completion_tokens': config['model']['max_tokens'],
+        'response_format': config['format'],
+    })
+    choice = response.get('choices', [{}])[0]
+    if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+        raise RuntimeError('討議の判定の応答が正常完了しませんでした')
+    if json.loads(message_content(response)) != expected:
+        raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
+
+
+def smoke_openai_site_search(url, api_key, model, config):
+    """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
     for mode in ('search', 'chat'):
         # nullableなdailyの両側を試し、strict+anyOfを実際に受け付けることを確認する。
         for daily in (None, {'media': 'nitori', 'query': '出店'}):
@@ -289,6 +313,39 @@ def smoke_google(url, api_key, model):
     return '推論minimal/画像/高温/top_p'
 
 
+def smoke_typesafe(url, api_key, model):
+    """magi2の言語判定と、日刊ニトリのSNS採否を本番の指示・形式で確認する。"""
+    config = magi_config()['language']
+    cases = [
+        ({'earlier_messages': [], 'latest_message': '今週末、ツーリングとDJの練習、どっちに時間を使うべき？'}, 'ja'),
+        ({'earlier_messages': [], 'latest_message': 'What do you think of サカナクション?'}, 'en'),
+        ({'earlier_messages': ['DJを始めたいんだけど何を買えばいい？'], 'latest_message': 'OK'}, 'ja'),
+    ]
+    for state, expected in cases:
+        body = post_json(url, api_key, {
+            'model': model, 'state': state,
+            'questions': {'language': {'type': 'choice', 'instructions': config['instructions'], 'criteria': config['criteria']}},
+        })
+        try:
+            choice = body['answers']['language']['choice']
+        except (KeyError, TypeError) as e:
+            raise RuntimeError(f'判定の答えを取得できません: {str(body)[:500]}') from e
+        if choice != expected:
+            raise RuntimeError(f'言語の判定が {expected} ではなく {choice} でした: {state["latest_message"]}')
+    from nitori_social_filter import MIN_PROBABILITY, parse_probability, request_payload
+    social_cases = [
+        ('ニトリのテレビ台を買った。配線が隠せて便利！', True),
+        ('母へのプレゼントにニトリのクッションを買った。喜んでくれた。', True),
+        ('【PR】ニトリ様からいただいたテレビ台を紹介します。購入はこちら！', False),
+        ('ニトリの配当とPERを見て100株買った。決算が楽しみ。', False),
+    ]
+    for text, expected in social_cases:
+        body = post_json(url, api_key, request_payload({'platform': 'x', 'author': '@consumer', 'text': text}, model))
+        if (parse_probability(body) >= MIN_PROBABILITY) != expected:
+            raise RuntimeError('日刊ニトリのSNS採否が期待と異なります')
+    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株'
+
+
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。
 # channels の値は版番号を抜き出すパターンで、より新しい版がモデル一覧に出たら更新候補にする。
 # None はIDが固定のエイリアス。互換性に加え、公式のモデル詳細で背後の版も確認する。
@@ -317,6 +374,15 @@ PROVIDERS = {
         'channels': {'flash_lite': re.compile(r'gemini-(\d+(?:\.\d+)*)-flash-lite')},
         'display_name_template': 'Gemini {version} Flash-Lite',
         'smoke': smoke_google,
+    },
+    # 判定専用のモデル（文章を生成しない）。モデル一覧の API が無く、jev-latest は版を追う固定のエイリアスなので、
+    # 更新の監視はせず、スモークテストだけを毎週行う。chat_url は判定の口（スモークテストの呼び出し先）
+    'typesafe': {
+        'key_env': 'TYPESAFE_API_KEY',
+        'chat_url': 'https://api.typesafe.ai/v1/systemone',
+        'channels': {'jev': None},
+        'watch': False,
+        'smoke': smoke_typesafe,
     },
 }
 
@@ -523,6 +589,10 @@ def update_registry():
     workers_to_deploy = set()
 
     for provider, pconf in PROVIDERS.items():
+        if not pconf.get('watch', True):
+            report.extend(f'- {provider}.{channel}: エイリアス `{model_id(provider, channel, registry)}`（更新の監視なし。スモークテストのみ）'
+                          for channel in pconf['channels'])
+            continue
         try:
             api_key = api_key_for(provider, pconf)
             by_id = fetch_models(provider, pconf, api_key)

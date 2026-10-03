@@ -7,5 +7,8 @@ MAGI_OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 MAGI_DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 MAGI_GEMINI_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+# 任意: 発言の言語の判定（TypeSafe AI の Jev）。無ければ手元の規則で判定する
+MAGI_TYPESAFE_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 # 任意: 外部クライアント（tk.st/localhost 以外）から叩く場合のみ
 # CLIENT_API_KEY=

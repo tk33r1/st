@@ -91,7 +91,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 | `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `IP_SALT`, `SONGBPM_KEY`, `OPENAI_API_KEY`。ブース向けに曲の背景カード（OpenAI の Web 検索を強制、出典を照合した事実だけ保存、trackId ごとにイベントをまたいで使い回し、1日の生成数に上限）も作る。投稿時に作り、取りこぼした曲はブースの一覧読み込みのついでに裏で作る |
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版（`magi/` が呼ぶ）。secret: `MAGI_API_KEY`、`CLIENT_API_KEY` |
-| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
+| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（出力の言語の判定。無ければ手元の規則）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
 | `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。secret: `GAME_OPENAI_API_KEY` |
 
 ## ビルドとテスト
@@ -263,7 +263,12 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     会社ごとの推論の切り方やトークン上限の名前の違いは `src/index.js` の `requestBody` に閉じている。
     1人格が失敗しても（障害・安全フィルター・キー未設定・時間切れ）その人格を `[NO RESPONSE]` にして
     残りで討議と統合を続け、全員が失敗したときだけエラーにする。
-  - **人格ごとの会話の履歴**: 画面は履歴の回答に、その回の各人格の意見を `debate`（`{ 人格名: { round1, round2 } }`）として
+  - **討議の回数**: 第1回・第2回の後、統合人格が判定し（`DEBATE`、Luna・推論 low）、答えを変えうる論点が残っていれば
+    答えられる人格にだけ聞き返して最大5回まで回す。基準は「一致したか」ではない（価値観の違いは統合で本人が決める）。
+    第3回以降は、リクエストに `adaptive_debate: true` を付けた画面だけ（配布済みの古いアプリは2回のまま）。
+    MAGI を使う画面を足すときは、`ask` イベントと履歴の `followups` に対応してから付ける（詳細は magi2 の README.md）。
+  - **人格ごとの会話の履歴**: 画面は履歴の回答に、その回の各人格の意見を `debate`（`{ 人格名: { round1, round2, followups } }`。
+    `followups` は聞き返された第3回以降の `[{ round, ask, text }]`）として
     付けて送る（トップページとアプリは履歴の項目をそのまま、`dj/request/` は保存した `personas` を変換して）。Worker は
     人格ごとに履歴を組み直し（`personaThread`）、**その人格自身の過去の意見だけを assistant に置く**。3人格は一人の人間の
     中の面なので記憶は共有し、他の2人格の過去の意見と統合人格の過去の回答も、次の質問の頭に誰の言葉かを書いた見出し
@@ -272,9 +277,12 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     3つの面で、3人の議論を本人がまとめて答える）を書いてある。統合人格には従来どおり自分の回答を assistant で渡す。
     上流の API へは role と content しか送らない（`requestBody`）。
   - 入力は3社すべてに送られる。会社を変えたり足したりしたら、トップページと `magi-app/www/app.js` の
-    「System & Privacy」の送信先・保持・学習利用の説明も直すこと。Gemini はいま無料枠のキーで動いている
+    「System & Privacy」と `dj/request/` の送信先の説明も直すこと。Gemini はいま無料枠のキーで動いている
     （入力が Google の製品改善とモデルの学習に使われ、人が読むこともある）。注意文はそれに合わせてあるので、
     有料枠に切り替えたら説明も直すこと。
+  - **出力の言語**: 会話ごとに1回、直近のユーザーの発言の文字だけを TypeSafe AI（Jev）に送って言語を決め、
+    3人格・統合・討議の判定・タイトル・予測に同じ指定を付ける（`LANGUAGE_DETECT`。画像・状況説明・AI の回答は送らない）。
+    決まらなければ手元の規則（`REPLY_LANGUAGE`）に戻す。Jev は4社目の送り先なので、上の説明にも載せてある。
   - 次の質問の予測: リクエストに `suggest: true` を付けると、統合の答えの後に軽量モデル（`openai.luna`・推論なし）で
     利用者が次に送りそうな質問を1つ作り、`suggest` イベントで送ってから `done` にする（失敗・4秒超えなら送らずに終える）。
     いま付けているのはトップページの MAGI、`magi-app/www/app.js`、`dj/request/` の「AIに相談」。どれも空の入力欄に薄く重ね、

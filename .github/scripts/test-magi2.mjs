@@ -44,7 +44,7 @@ function worker(stream = completion(), upstream = null) {
     },
   });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
-  vm.runInContext(strip(read('workers/magi2/personas.js')) + '\n'
+  vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
     + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache;', ctx);
@@ -751,10 +751,10 @@ function client(src, isHome = false) {
     document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(),
     agentHistory: [], agentBusy: false, agentDead: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {},
-    localStorage: { removeItem() {} }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
+    localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
-    archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = !enabled; },
+    archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(thinkingSource(src), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
@@ -824,16 +824,74 @@ test('モバイルの新規会話と保存会話切り替えは古い回答を�
   }
 });
 
+test('両画面は接続前・受信途中の通信失敗で質問と画像を戻し、同じ履歴で再送できる', async () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) for (const duringStream of [false, true]) {
+    const c = client(src, isHome);
+    c.ctx.agentHistory.push({ role: 'user', content: 'previous question' }, { role: 'assistant', content: 'previous answer' });
+    const attachment = { url: 'data:image/jpeg;base64,AAAA', thumb: 'data:image/jpeg;base64,AAAA' };
+    c.ctx.attachments.push(attachment);
+    // 以前の実装が通信失敗を永久停止にしないことも、実際のagentDegradeで検出する。
+    c.ctx.renderAgentSuggest = () => {};
+    vm.runInContext(between(src, 'function agentDegrade(', 'function renderAgentError('), c.ctx);
+    c.ctx.fetch = async () => { if (!duringStream) throw new TypeError('Failed to fetch'); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: 'partial' }); throw new TypeError('connection lost'); };
+    await c.ctx.agentSend();
+    assert.equal(c.ctx.agentDead, false); assert.equal(c.ctx.agentBusy, false);
+    assert.equal(c.ctx.agentInput.disabled, false); assert.equal(c.ctx.agentSendBtn.disabled, false); assert.equal(c.ctx.attachBtn.disabled, false);
+    assert.equal(c.ctx.agentInput.value, 'q'); assert.equal(c.ctx.attachments[0], attachment);
+    assert.equal(c.ctx.agentHistory.length, 2); assert.equal(c.errors.at(-1).code, 'network_error');
+    assert.equal(c.timers.size, 0); assert.equal(c.clock.intervals.size, 0);
+    const outbound = [];
+    c.ctx.fetch = async (_, options) => { outbound.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: 'complete' }); h.done(); };
+    await c.ctx.agentSend();
+    assert.equal(outbound.length, 1); assert.equal(outbound[0].messages[1].content, 'previous answer');
+    assert.equal(outbound[0].messages[2].content[1].image_url.url, attachment.url);
+    assert.equal(c.ctx.agentHistory.at(-1).content, 'complete');
+  }
+});
+
+test('モバイルは保存容量超過や保存禁止でもタイトル・回答・会話切り替えを止めない', async () => {
+  for (const blocked of [false, true]) {
+    const c = client(mobile);
+    const sessions = [{ id: 'saved', title: 'saved title', history: [{ role: 'user', content: 'saved question' }] }];
+    c.ctx.localStorage = {
+      getItem(key) { if (blocked) throw new DOMException('blocked', 'SecurityError'); return key === 'magi_saved_sessions' ? JSON.stringify(sessions) : null; },
+      setItem() { throw new DOMException('full', 'QuotaExceededError'); },
+      removeItem() { throw new DOMException('blocked', 'SecurityError'); },
+    };
+    c.ctx.barTitle = {}; c.ctx.document.getElementById = () => null;
+    c.ctx.contentText = c => typeof c === 'string' ? c : '';
+    vm.runInContext(between(mobile, 'function safeParse(', 'var genMid'), c.ctx);
+    vm.runInContext(between(mobile, 'function setAgentTitle(', '// ---- Reactions persistence'), c.ctx);
+    vm.runInContext(between(mobile, 'var currentSessionId =', 'function applyReactionsToTurn('), c.ctx);
+    c.ctx.fetch = async () => ({ ok: true, body: {} });
+    c.ctx.parseSSE = async (_, h) => { h.title({ text: 'new title' }); h.integrated({ delta: 'answer' }); h.done(); };
+    await c.ctx.agentSend();
+    assert.equal(c.ctx.barTitle.textContent, 'new title'); assert.equal(c.ctx.agentHistory.at(-1).content, 'answer');
+    assert.equal(c.ctx.agentDead, false); assert.equal(c.ctx.agentBusy, false); assert.equal(c.ctx.agentInput.disabled, false);
+    assert.equal(c.errors.length, 0); assert.equal(c.timers.size, 0);
+    c.ctx.setAgentTitle(''); assert.equal(c.ctx.barTitle.textContent, 'MAGI');
+    c.ctx.renderHistoryToLog = () => {};
+    vm.runInContext(between(mobile, 'var agentGen = 0', 'function agentDegrade('), c.ctx);
+    vm.runInContext(between(mobile, 'function loadSavedSession(', 'function deleteSavedSession('), c.ctx);
+    c.ctx.loadSavedSession('saved');
+    if (!blocked) assert.equal(c.ctx.agentHistory[0].content, 'saved question');
+    assert.equal(c.ctx.agentInput.disabled, false);
+    c.ctx.resetAgent(); assert.equal(c.ctx.agentHistory.length, 0); assert.equal(c.ctx.agentInput.disabled, false);
+  }
+});
+
 test('両画面は削除トークンを保存し、登録中の取り消しでもトークン付きで削除する', async () => {
   for (const [src, end] of [[mobile, 'function flashReactBtn('], [home, '// agent-log 内の全クリック']]) {
     const store = {}, posts = [];
     let release;
     const receipt = { id: 7, delete_token: 'a'.repeat(64) };
-    let delayed = false;
-    const ctx = vm.createContext({ REACT_API: 'mock', reactionStoreFor: () => store, persistReactions() {},
+    let delayed = false, removeStatus = 200;
+    const ctx = vm.createContext({ REACT_API: 'mock', AbortController, setTimeout, clearTimeout, reactionStoreFor: () => store, persistReactions() {},
       fetch: async (_, options) => {
         const body = JSON.parse(options.body); posts.push(body);
-        if (body.op === 'remove') return Response.json({ ok: true });
+        if (body.op === 'remove') return Response.json({ ok: removeStatus === 200 }, { status: removeStatus });
         if (delayed) await new Promise(r => { release = r; });
         return Response.json(receipt);
       },
@@ -841,14 +899,60 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
     vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
     ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
     await tick(); assert.equal(store.integrated.delete_token, receipt.delete_token);
-    ctx.unregisterReaction({}, 'integrated');
+    await ctx.unregisterReaction({}, 'integrated');
     assert.equal(posts.at(-1).delete_token, receipt.delete_token);
     const count = posts.length;
-    ctx.deleteReaction('integrated', { id: 7 }); assert.equal(posts.length, count);
+    await ctx.deleteReaction('integrated', { id: 7 }); assert.equal(posts.length, count);
     delayed = true;
     ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
-    ctx.unregisterReaction({}, 'integrated'); release(); await tick();
+    const removing = ctx.unregisterReaction({}, 'integrated'); release(); await removing;
     assert.equal(posts.at(-1).op, 'remove'); assert.equal(posts.at(-1).delete_token, receipt.delete_token);
+    assert.equal(store.integrated, undefined);
+    // 登録中に押した取り消しが失敗しても、後から受け取ったトークンを残す。
+    removeStatus = 429;
+    ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
+    const failedRemoval = ctx.unregisterReaction({}, 'integrated'); release();
+    assert.equal(await failedRemoval, false); assert.equal(store.integrated.delete_token, receipt.delete_token);
+    removeStatus = 200;
+    assert.equal(await ctx.unregisterReaction({}, 'integrated'), true); assert.equal(store.integrated, undefined);
+  }
+});
+
+test('両画面は削除失敗でトークンと選択を保持し、再試行の成功後だけ解除する', async () => {
+  for (const [src, isHome, end] of [[mobile, false, 'function flashReactBtn('], [home, true, '// agent-log 内の全クリック']]) {
+    for (const failure of ['network', '429', '500', 'invalid_json', 'invalid_ack', 'timeout']) {
+      const receipt = { em: '👍', id: 7, delete_token: 'a'.repeat(64) };
+      const store = { integrated: receipt }, posts = [], errors = [], timers = new Map();
+      let resets = 0, unlocked = 0, failed = true;
+      const bar = { dataset: {}, classList: { remove(name) { assert.equal(name, 'locked'); unlocked++; } } };
+      const ctx = vm.createContext({ REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
+        renderAgentError(e) { errors.push(e); },
+        setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
+        fetch: async (_, options) => {
+          posts.push(JSON.parse(options.body));
+          if (!failed) return Response.json({ ok: true, deleted: 1 });
+          if (failure === 'network') throw new TypeError('Failed to fetch');
+          if (failure === 'timeout') return new Promise((_, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+          if (failure === 'invalid_json') return new Response('not JSON');
+          return Response.json({ ok: false }, { status: /^\d+$/.test(failure) ? Number(failure) : 200 });
+        },
+      });
+      vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
+      const pending = ctx.undoReaction(bar, 'integrated', () => { resets++; });
+      await tick();
+      if (failure === 'timeout') {
+        await ctx.undoReaction(bar, 'integrated', () => { resets++; });
+        assert.equal(posts.length, 1, '処理中の連打では削除を重ねない');
+        [...timers.values()][0]();
+      }
+      await pending;
+      assert.equal(store.integrated, receipt); assert.equal(resets, 0); assert.equal(unlocked, 0);
+      assert.equal(errors.at(-1).code, 'reaction_remove_failed'); assert.equal(bar.dataset.removing, undefined); assert.equal(timers.size, 0);
+      failed = false;
+      await ctx.undoReaction(bar, 'integrated', () => { resets++; });
+      assert.equal(store.integrated, undefined); assert.equal(resets, 1); assert.equal(unlocked, 1);
+      assert.equal(posts.at(-1).delete_token, receipt.delete_token); assert.equal(timers.size, 0);
+    }
   }
 });
 
@@ -1008,4 +1112,138 @@ test('上限を 0 にすると、その日の最初の1回から断る', async (
     assert.equal((await res.json()).error.code, 'daily_limit_exceeded');
     assert.equal(w.calls.length, 0, '上流は呼ばない');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// 討議の判定（personas.js の DEBATE）。上流のうち判定だけを差し替える
+const isJudge = options => JSON.parse(options.body).response_format?.json_schema?.name === 'debate_judge';
+const judgeReply = value => Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(value) } }] });
+const sseEvents = text => [...text.matchAll(/event: (\w+)\ndata: (.*)\n/g)].map(m => [m[1], JSON.parse(m[2])]);
+
+test('adaptive_debate を付けた画面だけ統合人格が判定し、聞いた人格だけで最大5回まで討議する', async () => {
+  let judged = 0;
+  const plain = worker(completion(), (url, options) => { if (isJudge(options)) { judged++; return judgeReply({ assessment: '', action: 'answer', questions: [] }); } });
+  assert.equal(sseEvents(await (await plain.chat([{ role: 'user', content: 'q' }])).text()).at(-1)[0], 'done');
+  assert.equal(judged, 0, '付けない画面（配布済みの古いアプリ）は2回で止める');
+
+  const judges = [];
+  const w = worker(completion(), (url, options) => {
+    if (!isJudge(options)) return;
+    judges.push(JSON.parse(options.body));
+    const n = judges.length;
+    return judgeReply({ assessment: 'メモ' + n, action: 'ask', questions: [
+      { target: 'CASPER-3', question: '問い' + n }, { target: 'CASPER-3', question: '重複' }, { target: 'UNKNOWN', question: 'x' },
+      ...(n === 1 ? [{ target: 'MELCHIOR-1', question: '熱の問い' }] : []),
+    ] });
+  });
+  const events = sseEvents(await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'q' }], adaptive_debate: true })).text());
+  assert.equal(judges.length, 3, '第2〜4回の後だけ判定し、第5回の後は判定しない');
+  assert.equal(judges[0].reasoning_effort, 'low');
+  assert.equal('temperature' in judges[0], false, '推論ありでは temperature を送れない');
+  assert.match(judges[0].messages[0].content, /第2回を終えた/);
+  assert.match(judges[2].messages[0].content, /次が第5回で、最後の回/);
+  assert.deepEqual(events.filter(([e]) => e === 'ask').map(([, d]) => [d.round, d.questions.map(q => q.codename + ':' + q.text).join()]),
+    [[3, 'CASPER-3:問い1,MELCHIOR-1:熱の問い'], [4, 'CASPER-3:問い2'], [5, 'CASPER-3:問い3']]);
+  assert.deepEqual(events.filter(([e, d]) => e === 'persona' && d.round >= 3).map(([, d]) => d.codename + '@' + d.round).sort(),
+    ['CASPER-3@3', 'CASPER-3@4', 'CASPER-3@5', 'MELCHIOR-1@3']);
+  const memo = w.calls.find(c => c.stream).messages.at(-1).content;
+  assert.match(memo, /第5回（自分の問い「問い3」への答え）/);
+  assert.match(memo, /討議を見た自分のメモ\]\nメモ3/);
+  assert.match(memo, /上限の5回で打ち切った/);
+  assert.equal(events.at(-1)[0], 'done');
+});
+
+test('判定が答える・失敗するときは聞き返さずに統合し、judge イベントで無通信の見張りを延ばす', async () => {
+  for (const reply of [() => judgeReply({ assessment: '割れているのは好みだけ', action: 'answer', questions: [] }), () => new Response('down', { status: 500 }), () => judgeReply('not json')]) {
+    let judged = 0;
+    const w = worker(completion(), (url, options) => { if (isJudge(options)) { judged++; return reply(); } });
+    const events = sseEvents(await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'q' }], adaptive_debate: true })).text());
+    assert.equal(judged, 1);
+    assert.equal(events.some(([e]) => e === 'ask'), false);
+    assert.deepEqual(events.find(([e]) => e === 'judge')[1], { round: 2, action: 'answer' });
+    assert.equal(events.at(-1)[0], 'done');
+    assert.doesNotMatch(w.calls.find(c => c.stream).messages.at(-1).content, /上限/);
+  }
+});
+
+test('履歴の followups はいちばん新しい意見を人格の過去の発言に使い、欠席の印は飛ばす', async () => {
+  const w = worker();
+  await (await w.request('/magi2/chat', { adaptive_debate: true, messages: [
+    { role: 'user', content: '前の質問' },
+    { role: 'assistant', content: '前の答え', debate: { 'CASPER-3': { round1: 'A1', round2: 'A2', followups: [{ round: 3, ask: 'q', text: 'A3' }, { round: 4, ask: 'q', text: '[NO RESPONSE]' }] } } },
+    { role: 'user', content: '次の質問' },
+  ] })).text();
+  const casper = w.calls.find(c => !c.stream && c.messages[0].content.startsWith('あなたは、Shinya Takeda という一人の人間の中にある3つの面の1つ「Strategist」'));
+  assert.equal(casper.messages.find(m => m.role === 'assistant').content, 'A3');
+});
+
+test('3画面は adaptive_debate を付け、聞き返しの枠を描き、履歴に followups を残す', () => {
+  for (const src of [home, mobile, dj]) {
+    assert.match(src, /adaptive_debate: true/);
+    assert.match(src, /ask: (?:\(d\) =>|function \(d\))/);
+    assert.match(src, /followupHTML\(/);
+  }
+  assert.match(home, /followups: \[\] \}\]\)\)/);
+  assert.match(mobile, /followups: \[\] \};/);
+  assert.match(dj, /followups: \(rounds \|\| \[\]\)\.slice\(2\)/);
+});
+
+// 発言の言語の判定（personas.js の LANGUAGE_DETECT）。Jev の口だけを差し替える
+const jevReply = (choice, confidence = 0.99) => Response.json({ model: 'jev-1.13.0', answers: { language: { type: 'choice', choice, confidence, probabilities: { [choice]: confidence } } } });
+async function chatWithJev(reply, messages, extra = {}) {
+  const sent = [];
+  const w = worker(completion(), (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return;
+    sent.push(JSON.parse(options.body));
+    return reply();
+  });
+  w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  const text = await (await w.request('/magi2/chat', { messages, ...extra })).text();
+  return { w, sent, text };
+}
+
+test('Jev で決めた出力の言語を全員に渡し、状況説明と AI の回答は Jev に送らない', async () => {
+  const messages = [
+    { role: 'user', content: 'DJを始めたい' }, { role: 'assistant', content: '前の答え' }, { role: 'user', content: 'PDFを結合する方法は？' },
+  ];
+  for (const [choice, expected] of [['ja', w => vm.runInContext('REPLY_LANGUAGE.ja', w.ctx)], ['en', w => vm.runInContext("REPLY_LANGUAGE.named('English')", w.ctx)]]) {
+    const { w, sent, text } = await chatWithJev(() => jevReply(choice), messages, { context: '状況説明です', suggest: true });
+    assert.match(text, /event: done/);
+    assert.equal(sent.length, 1, '判定は1回だけ');
+    assert.deepEqual(sent[0].state, { earlier_messages: ['DJを始めたい'], latest_message: 'PDFを結合する方法は？' });
+    assert.equal(sent[0].model, 'jev-latest');
+    assert.ok(!JSON.stringify(sent[0]).includes('状況説明') && !JSON.stringify(sent[0]).includes('前の答え'));
+    const note = expected(w);
+    for (const call of w.calls) assert.ok(call.messages.some(m => typeof m.content === 'string' && m.content.includes(note)), `${choice}: 全員に同じ指定`);
+    assert.ok(!w.calls.some(c => JSON.stringify(c).includes('main language of the user')), '汎用の指示は使わない');
+  }
+});
+
+test('Jev の失敗・言語の無い発言・低い確信・キー未設定では手元の規則に戻す', async () => {
+  const messages = [{ role: 'user', content: 'PDFを結合する方法は？' }];
+  for (const reply of [() => new Response('down', { status: 500 }), () => jevReply('other'), () => jevReply('ja', 0.3), () => jevReply('xx'), () => Response.json({})]) {
+    const { w, sent, text } = await chatWithJev(reply, messages);
+    assert.match(text, /event: done/);
+    assert.equal(sent.length, 1);
+    const fallback = vm.runInContext('REPLY_LANGUAGE.note', w.ctx)('PDFを結合する方法は？');
+    assert.ok(w.calls.every(c => c.messages.some(m => typeof m.content === 'string' && m.content.includes(fallback))));
+  }
+  let jev = 0;
+  const w = worker(completion(), url => { if (url.startsWith('https://api.typesafe.ai/')) jev++; });
+  assert.match(await (await w.chat(messages)).text(), /event: done/);
+  assert.equal(jev, 0, 'キーが無ければ呼ばない');
+});
+
+test('レート制限で断るときは言語の判定も止める', async () => {
+  let aborted = false;
+  const w = worker(completion(), (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return;
+    return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => { aborted = true; reject(new DOMException('aborted', 'AbortError')); }));
+  });
+  w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  w.env.DB = counts();
+  w.ctx.defaults.daily_limit = 0;
+  const res = await w.chat([{ role: 'user', content: 'q' }]);
+  assert.equal(res.status, 429);
+  await tick();
+  assert.equal(aborted, true);
 });

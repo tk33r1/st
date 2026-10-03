@@ -33,6 +33,7 @@ jobs:
     - name: Fetch TikTok buzz snapshot
       env:
         BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+        TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         BRIGHTDATA_TIKTOK_DATASET_ID: ${{ vars.BRIGHTDATA_TIKTOK_DATASET_ID }}
         BRIGHTDATA_TIMEOUT_SEC: '900'
         BRIGHTDATA_MIN_VIEWS: '10000'
@@ -46,5 +47,4 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add data/nitori-tiktok-buzz.json
         git commit -m "Update TikTok buzz snapshot [skip ci]" || exit 0
-        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
-        git push origin HEAD:main
+        bash .github/scripts/push-with-retry.sh

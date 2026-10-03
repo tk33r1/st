@@ -1984,9 +1984,19 @@
 
     .persona-round { margin-top: 0.25rem }
 
-    .persona-round[data-round="2"] {
+    .persona-round:not([data-round="1"]) {
       border-top: 1px dashed var(--border-color);
       padding-top: 0.25rem;
+    }
+
+    /* 第3回以降：統合人格（本人）からこの人格への問い */
+    .persona-ask {
+      font-size: 10px;
+      line-height: 1.5;
+      color: var(--primary-color);
+      opacity: 0.85;
+      margin-bottom: 0.15rem;
+      word-break: break-word;
     }
 
     .persona-round-label {
@@ -3210,7 +3220,7 @@
               "name": "What is MAGI, and where do my messages go?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the message text to TypeSafe AI to detect the reply language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
               }
             },
             {
@@ -4158,8 +4168,8 @@
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
         question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
-        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
-        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the message text to TypeSafe AI to detect the reply language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ、返答の言語の判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
         sec: 'magi',
@@ -7254,6 +7264,9 @@
         + `<dt>${tr('Theme', 'テーマ')}</dt><dd>${text(m.theme)}</dd>`
         + '</dl>';
     };
+    // 第3回以降の枠。統合人格がこの人格に聞き返した回だけ出す（debate の followups: [{ round, ask, text }]）
+    const followupHTML = (f) => `<div class="persona-round" data-round="${Number(f.round) || 0}"><span class="persona-round-label">${tr(`Round ${Number(f.round) || ''}`, `第${Number(f.round) || ''}回`)}</span>`
+      + `<div class="persona-ask">✦ ${esc(f.ask)}</div><div class="persona-text">${esc(f.text)}</div></div>`;
     // 3人格の討議カード。送信直後（debate なし）は thinking 状態の空カード、履歴復元では保存済みの討議を流し込む。
     const personaCardsHTML = (debate) => `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
       const deb = (debate && debate[p.codename]) || { round1: '…', round2: '…' };
@@ -7262,6 +7275,7 @@
           <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
           <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
           <div class="persona-round" data-round="2"${deb.round2 === '…' ? ' hidden' : ''}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
+          ${(Array.isArray(deb.followups) ? deb.followups : []).map(followupHTML).join('')}
           ${reactionBarHTML(p.codename)}
         </div>`;
     }).join('')}</div>`;
@@ -7740,7 +7754,7 @@
 
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
-      const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
+      const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…', followups: [] }]));
 
       // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
       const ctrl = new AbortController();
@@ -7758,7 +7772,7 @@
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
         const outbound = prepareAgentMessages(agentHistory, sendContent);
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: '/' }), signal: ctrl.signal });
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }), signal: ctrl.signal });
         if (dropped()) return;
         watch();
         if (!res.ok || !res.body) {
@@ -7775,11 +7789,28 @@
               if (dropped()) return;
               const card = turn.querySelector(`.persona-card[data-codename="${cssEsc(d.codename)}"]`);
               if (!card) return;
-              const slot = card.querySelector(`.persona-round[data-round="${d.round || 1}"]`);
+              const slot = card.querySelector(`.persona-round[data-round="${Number(d.round) || 1}"]`);
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
-              if (d.round === 2) card.classList.remove('thinking');
+              if (d.round >= 2) card.classList.remove('thinking');
               agentScroll();
-              if (debateData[d.codename]) debateData[d.codename][d.round === 2 ? 'round2' : 'round1'] = d.text;
+              const deb = debateData[d.codename];
+              if (!deb) return;
+              if (d.round >= 3) { const f = deb.followups.find(x => x.round === d.round); if (f) f.text = d.text; }
+              else deb[d.round === 2 ? 'round2' : 'round1'] = d.text;
+            },
+            // 統合人格が聞き返した（第3回以降）。問いを向けた人格のカードに枠を足し、考え中に戻す
+            ask: (d) => {
+              if (dropped() || !d || !Array.isArray(d.questions)) return;
+              d.questions.forEach(q => {
+                const card = turn.querySelector(`.persona-card[data-codename="${cssEsc(q.codename)}"]`);
+                const deb = debateData[q.codename];
+                if (!card || !deb) return;
+                const f = { round: Number(d.round) || 0, ask: String(q.text || ''), text: '…' };
+                deb.followups.push(f);
+                card.querySelector('.reaction-bar').insertAdjacentHTML('beforebegin', followupHTML(f));
+                card.classList.add('thinking');
+              });
+              agentScroll();
             },
             integrated: (d) => { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
             error: (d) => { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
@@ -7799,10 +7830,9 @@
         turn.remove();
         // 停止ボタンで止めたときはエラーを出さない（下で入力欄に戻す）
         if (ctrl.userStopped) { }
-        // A timeout is transient — show a retryable error rather than permanently
-        // degrading MAGI (which a genuine network/CORS failure does).
+        // 時間切れや一時的な通信障害でも、同じ会話で送り直せるようにする。
         else if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
-        else { console.error('[agent] fetch failed', AGENT_API, err); agentDegrade(); }
+        else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: tr('Could not receive the reply. Check your connection and try again.', '返事を受け取れませんでした。接続を確認して、もう一度お試しください。'), code: 'network_error' }); }
       } finally {
         clearTimeout(idleTimer);
         if (!completed || errored || dropped()) thinking.cancel();
@@ -7841,8 +7871,8 @@
         if (agentHistory.length) saveCurrentHistory();
         else safeRemove('magi_current_history');
         syncCurrentToSaved(); updateAgentActionButtons();
-        // 止めた質問は入力欄に戻す（直して送り直せるように）。待つ間に打ち始めた文があればそちらを残す
-        if (ctrl.userStopped && !agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+        // 中断・通信失敗でも、質問と画像を戻す。待つ間に打ち始めた文があればそちらを残す。
+        if (!agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
         if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) agentLog.innerHTML = agentHintHTML();
@@ -7866,11 +7896,10 @@
         response = body ? body.textContent.trim() : '';
       } else {
         const card = bar.closest('.persona-card');
+        // いちばん新しい回の意見（届いていない回は飛ばす。無ければ初回）
         if (card) {
-          const r2 = card.querySelector('.persona-round[data-round="2"]:not([hidden]) .persona-text');
-          const r1 = card.querySelector('.persona-round[data-round="1"] .persona-text');
-          const r2txt = r2 && r2.textContent.trim();
-          response = (r2txt && r2txt !== '…') ? r2txt : (r1 ? r1.textContent.trim() : '');
+          const texts = [...card.querySelectorAll('.persona-round:not([hidden]) .persona-text')].map(el => el.textContent.trim());
+          response = texts.slice(1).reverse().find(t => t && t !== '…') || texts[0] || '';
         }
       }
       return { target, request, response };
@@ -7895,31 +7924,57 @@
       } catch (_) { return undefined; }
     }
     // トークンを持たない旧データは、連番だけでの削除を試みない。
-    function deleteReaction(target, receipt) {
-      if (!receipt || !receipt.id || !receipt.delete_token) return;
+    async function deleteReaction(target, receipt) {
+      if (!receipt || !receipt.id || !receipt.delete_token) return true;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10000);
       try {
-        fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        const res = await fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }),
-          keepalive: true,
-        }).catch(() => {});
-      } catch (_) {}
+          keepalive: true, signal: ctrl.signal,
+        });
+        return res.ok && (await res.json()).ok === true;
+      } catch (_) { return false; }
+      finally { clearTimeout(timer); }
     }
+    // 登録中の取り消しは、削除トークンを受け取ってから処理する。通信中の状態は保存しない。
+    const reactionRegistrations = new WeakMap();
+    const reactionRemovals = new WeakSet();
     function registerReaction(bar, target, em, ctx) {
       const store = reactionStoreFor(bar);
       const cell = { em };
       if (store) { store[target] = cell; persistReactions(); }
-      sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
+      const pending = sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
         if (!receipt) return;
         if (store && store[target] === cell) {
           cell.id = receipt.id; cell.delete_token = receipt.delete_token; persistReactions();
         } else deleteReaction(target, receipt);
       });
+      reactionRegistrations.set(cell, pending);
     }
-    function unregisterReaction(bar, target) {
+    async function unregisterReaction(bar, target) {
       const store = reactionStoreFor(bar);
       const receipt = store && store[target];
-      if (store) { delete store[target]; persistReactions(); }
-      deleteReaction(target, receipt);
+      if (!receipt) return true;
+      if (typeof receipt === 'object') {
+        if (reactionRemovals.has(receipt)) return false;
+        reactionRemovals.add(receipt);
+      }
+      try {
+        await reactionRegistrations.get(receipt);
+        if (!await deleteReaction(target, receipt)) return false;
+        if (store[target] === receipt) { delete store[target]; persistReactions(); }
+        return true;
+      } finally { if (typeof receipt === 'object') reactionRemovals.delete(receipt); }
+    }
+    async function undoReaction(bar, target, resetBtn) {
+      // 見た目も削除成功後に戻す。失敗時はトークンと選択を保ち、もう一度押して再試行できる。
+      if (bar.dataset.removing === 'true') return;
+      bar.dataset.removing = 'true';
+      try {
+        if (await unregisterReaction(bar, target)) { resetBtn(); bar.classList.remove('locked'); }
+        else renderAgentError({ message: tr('Could not remove the reaction. Please try again.', 'リアクションを取り消せませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' });
+      } finally { delete bar.dataset.removing; }
     }
     // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {
@@ -7971,17 +8026,15 @@
         navigator.clipboard.writeText(ctx.response || '').then(() => flashReactBtn(btn, '✓')).catch(() => { });
         return;
       }
-      // 取り消しはいいね/絵文字で共通：ボタン自身の見た目を戻し、バーの排他ロックを解いて登録を取り下げる
-      const undoReaction = (resetBtn) => { resetBtn(); bar.classList.remove('locked'); unregisterReaction(bar, ctx.target); };
       if (act === 'like') {
-        if (btn.classList.contains('liked')) { undoReaction(() => btn.classList.remove('liked')); return; }
+        if (btn.classList.contains('liked')) { undoReaction(bar, ctx.target, () => btn.classList.remove('liked')); return; }
         if (bar.classList.contains('locked')) return; // 絵文字が選択済み
         btn.classList.add('liked');
         bar.classList.add('locked'); // いいね/絵文字は排他：他方を非活性に
         registerReaction(bar, ctx.target, '👍', ctx);
       } else if (act === 'emoji') {
         if (btn.classList.contains('reacted')) { // 取り消し（選んだ絵文字ボタンを再押下）
-          undoReaction(() => { btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; });
+          undoReaction(bar, ctx.target, () => { btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; });
           return;
         }
         if (bar.classList.contains('locked')) return; // いいねが選択済み
@@ -8163,6 +8216,7 @@
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
             <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong>, <strong class="text-normal">DeepSeek API</strong> and <strong class="text-normal">Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong class="text-normal">sent to all three</strong>.', '<strong class="text-normal">OpenAI API</strong>・<strong class="text-normal">DeepSeek API</strong>・<strong class="text-normal">Gemini API</strong>を使用しています。人格ごとに別の API で動くため、入力内容（画像を含む）は<strong class="text-normal">3社すべてへ送信</strong>されます。')}</li>
             <li>${tr('OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong class="text-normal">used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong class="text-normal">stored on servers in China and may be used to train its models</strong>.', 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：<strong class="text-normal">Google の製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります</strong>。DeepSeek：<strong class="text-normal">中国のサーバーに保存され、同社のモデルの学習に利用されることがあります</strong>。')}</li>
+            <li>${tr('To decide which language to answer in, the text of your last few messages (not images) is also sent to <strong class="text-normal">TypeSafe AI</strong> (Jev, a classification model). TypeSafe states that it does not train models on API inputs.', '返答の言語を決めるため、直近の数件の発言の文字（画像は除く）を <strong class="text-normal">TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します。同社は API の入力をモデルの学習に利用しないとしています。')}</li>
             <li class="text-red-500 font-semibold">${tr('DO NOT input any confidential or personal information.', '機密情報や個人情報は絶対に入力しないでください。')}</li>
           </ul>
         </div>`);
@@ -8223,6 +8277,9 @@
                 if (deb.round2 && deb.round2 !== '…') {
                   md += `* **After Debate:** ${deb.round2}\n`;
                 }
+                (Array.isArray(deb.followups) ? deb.followups : []).forEach(f => {
+                  if (f && f.text && f.text !== '…') md += `* **Round ${f.round}** (asked: ${f.ask}): ${f.text}\n`;
+                });
                 md += `\n`;
               }
             });

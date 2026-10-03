@@ -23,6 +23,8 @@ database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 #      wrangler secret put MAGI_OPENAI_API_KEY   --config workers/magi2/wrangler.toml  # Strategist・統合・タイトル
 #      wrangler secret put MAGI_DEEPSEEK_API_KEY --config workers/magi2/wrangler.toml  # Enthusiast
 #      wrangler secret put MAGI_GEMINI_API_KEY   --config workers/magi2/wrangler.toml  # Humanist（いまは無料枠のキー。入力が学習に使われる。有料枠に替えたら注意文も直す）
+#   (任意) 発言の言語の判定（personas.js の LANGUAGE_DETECT。無ければ手元の規則で判定する）
+#      wrangler secret put MAGI_TYPESAFE_API_KEY --config workers/magi2/wrangler.toml  # TypeSafe AI（Jev）
 #   (任意) 外部クライアント許可用: wrangler secret put CLIENT_API_KEY ...
 #   (任意) 上流の残高切れ・キーの失効をメールで知らせる（無ければログに出すだけ。README.md）
 #      wrangler secret put RESEND_API_KEY --config workers/magi2/wrangler.toml  # dj-offer と同じキーでよい
