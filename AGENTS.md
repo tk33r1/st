@@ -275,6 +275,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - 素材のページを増やすときは `magi-context.py` の `PERSONAS` にだけ足す（workflow は絞り込みをしていない）。
     抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
   - Worker はカードを isolate ごとに使い回すので、反映は10分強遅れることがある（間隔は `personas.js` の `PERSONA_CONTEXT`）。
+    デプロイ時点の `data/magi-context.json` も Worker に同梱していて、起動直後や `tk.st` から取れないときはそれで答える
+    （カード無しで答えることはほぼ起きない）。同梱分はデプロイのたびに入れ替わるので、magi2 を出すときは先に `git pull` して最新のカードを取り込む。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
   - **例外は曲リクエスト**（`workers/dj-request` と `dj/request/`・`dj/booth/`）。保存時に落とすのは制御文字と

@@ -1,4 +1,7 @@
 import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, PROVIDERS, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+// デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
+// 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
+import bundledContext from '../../../data/magi-context.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -216,15 +219,24 @@ async function fetchSuggestion(env, convo, signal, log) {
 }
 
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
-// isolate 内に保持する。取得できないときは直近のカード、それも無ければカード無しで動く
-// （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
-//   expiresAt: 次に取り直す時刻。3人格そろえば ttl_ms 後、欠けや失敗なら retry_ms 後
-//   refreshing: 期限切れ後の裏での取り直しが進行中か（取り直しを重ねないため）。
-//     isolate の起動直後で手元にカードが無い間は、同時に来たリクエストがそれぞれ取得する。
-//     取得中の Promise を共有すれば1本にまとまるが、先に来たリクエストが待たずに終わる
-//     （429 で返す等）と取得が打ち切られ、共有して待つ側が止まりうるので、あえて共有しない。
-//     重なるのは起動直後の数本だけで、小さな JSON を余分に取るにとどまる。
-const personaCards = { cards: null, expiresAt: 0, refreshing: false };
+// isolate 内に保持する。起動直後はデプロイ時に同梱したカードで答えつつ、裏で最新を取りに行く。
+// 取得できないときは直近のカード（同梱分を含む）のまま動くので、カード無し＝固定プロンプトだけで
+// 答えることは、同梱分まで空のときを除いて起きない。カードが無くても会話は止めない。
+//   expiresAt: 次に取り直す時刻。4枚そろえば ttl_ms 後、欠けや失敗なら retry_ms 後（起動時は 0 ＝すぐ取り直す）
+//   refreshing: 裏での取り直しが進行中か（同時に来たリクエストが重ねて取りに行かないため）。
+//     取得中の Promise は複数のリクエストで共有しない。先に来たリクエストが待たずに終わる（429 で返す等）と
+//     取得が打ち切られ、共有して待つ側が止まりうるため。手元に同梱のカードがあるので、待つ必要もない。
+
+// JSON（data/magi-context.json の形）から、人格ごとのカードを取り出す。1枚も無ければ null
+function cardsFrom(data) {
+  const cards = {};
+  for (const [codename, v] of Object.entries((data && data.personas) || {})) {
+    if (v && typeof v.card === 'string' && v.card.trim()) cards[codename] = v.card.trim().slice(0, PERSONA_CONTEXT.max_chars);
+  }
+  return Object.keys(cards).length ? cards : null;
+}
+
+const personaCards = { cards: cardsFrom(bundledContext), expiresAt: 0, refreshing: false };
 
 async function refreshPersonaCards(log) {
   const t = withTimeout(PERSONA_CONTEXT.fetch_timeout_ms);
@@ -233,12 +245,8 @@ async function refreshPersonaCards(log) {
     const res = await fetch(PERSONA_CONTEXT.url, { signal: t.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     // tk.st は存在しないパスにもトップページを 200 で返すので、JSON として読めるかで判定する
-    const data = await res.json();
-    cards = {};
-    for (const [codename, v] of Object.entries((data && data.personas) || {})) {
-      if (v && typeof v.card === 'string' && v.card.trim()) cards[codename] = v.card.trim().slice(0, PERSONA_CONTEXT.max_chars);
-    }
-    if (!Object.keys(cards).length) throw new Error('no cards in JSON');
+    cards = cardsFrom(await res.json());
+    if (!cards) throw new Error('no cards in JSON');
     log('persona_context', `cards=${Object.keys(cards).length}`);
   } catch (e) {
     cards = null;
@@ -256,7 +264,7 @@ async function refreshPersonaCards(log) {
 }
 
 // 会話1回ぶんのカードを返す。期限切れでも手元にカードがあれば、それを返して裏で取り直す
-// （会話を取得待ちにしない）。isolate の起動直後などで手元に何も無いときだけ取得を待つ。
+// （会話を取得待ちにしない）。手元に何も無いとき（同梱分まで空のとき）だけ取得を待つ。
 function getPersonaCards(ctx, log) {
   if (Date.now() < personaCards.expiresAt) return Promise.resolve(personaCards.cards);
   if (!personaCards.cards) return refreshPersonaCards(log);
