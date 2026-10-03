@@ -54,18 +54,32 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: python3 .github/scripts/magi-x-posts.py --$MODE
 
+    # 素材を先に出す。.github/magi/ を書くのはこの workflow だけなので、取り込みで衝突しない
+    - name: Commit X sources
+      if: ${{ env.MODE != 'check' }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "$BOT_EMAIL"
+        git add .github/magi/
+        git commit -m "Update MAGI X sources" || exit 0
+        bash .github/scripts/push-with-retry.sh
+
+    # magi-context.json は magi-context.yml も書く生成物で、rebase で取り込むと衝突する。
+    # 弾かれたら最新の main に合わせ直して作り直す（素材に差分のある人格だけ作り直すので、やり直しは軽い）。
+    # CI を止める印は付けない（Cloudflare Pages が magi-context.json の公開を省略しないように）
     - name: Rebuild persona cards
       if: ${{ env.MODE != 'check' }}
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: python3 .github/scripts/magi-context.py
-
-    - name: Commit and push
-      if: ${{ always() && env.MODE != 'check' }}
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "$BOT_EMAIL"
-        git add .github/magi/ data/magi-context.json
-        # CI を止める印は付けない（Cloudflare Pages が magi-context.json の公開を省略しないように）
-        git commit -m "Update MAGI X sources and persona context" || exit 0
-        bash .github/scripts/push-with-retry.sh
+        for i in 1 2 3 4; do
+          git fetch -q origin main && git reset -q --hard origin/main
+          python3 .github/scripts/magi-context.py || exit 1
+          git add data/magi-context.json
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Update MAGI persona context from X"
+          git push origin HEAD:main && exit 0
+          sleep $((i * 10))
+        done
+        echo "push に4回失敗した" >&2
+        exit 1
