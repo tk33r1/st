@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 03 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 03 Oct 2026 06:08:57 +0900</lastBuildDate>
+    <pubDate>Sun, 04 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 04 Oct 2026 04:40:15 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月4日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261004/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261004/</guid>
+      <pubDate>Sun, 04 Oct 2026 08:00:00 +0900</pubDate>
+      <description>10月3日は、大手流通チェーンによる次世代レジやカートの現場導入検証が活発化しました。 店頭サイネージと購買データを掛け合わせたリテールメディアの戦略が引き続き注目を集めています。</description>
+    </item>
     <item>
       <title>2026年10月3日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261003/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260920/</guid>
       <pubDate>Sun, 20 Sep 2026 08:00:00 +0900</pubDate>
       <description>セルフレジ前提の店舗運営が生活者との摩擦を生み、コンビニの対面会計をめぐる投稿がSNSで賛否を呼んだ。省人化と顧客満足をどう両立させるかが店舗DXの焦点に浮上。 米メイシーズがAI在庫補充ツールを導入するなど、アパレル・食品で需要予測と自動補充の実装が加速。値引き在庫と欠品の同時削減が収益改善の主戦場になる。</description>
-    </item>
-    <item>
-      <title>2026年9月19日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260919/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260919/</guid>
-      <pubDate>Sat, 19 Sep 2026 08:00:00 +0900</pubDate>
-      <description>コンビニのレジ刷新が本格化。ファミリーマートが全国約1万6500店のPOSを一新し、レジ業務を1日あたり約2割削減する方針を示した。セルフレジが前提となった今、決済端末の更新は店舗オペレーションと人材配置の再設計へと意味を変えている。 AIの業務適用が「対話」から「異常検知と施策提案」へ進展。NECは物流・在庫の異常を察知し7つの専門エージェントが解決案を示すSCMソリューションを披露、住友電装も需要予測から物流遅延検知までの一気通貫AI連携構想を打ち出した。</description>
     </item>
   </channel>
 </rss>
