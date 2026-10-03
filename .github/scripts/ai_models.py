@@ -173,7 +173,7 @@ def smoke_openai(url, api_key, model):
     post_json(url, api_key, {
         'model': model,
         'messages': [{'role': 'user', 'content': 'Reply with OK.'}],
-        'reasoning_effort': 'low',
+        'reasoning_effort': 'medium',
         'max_completion_tokens': 4096,  # magi2 の統合と同じ。推論ぶんの余裕も含む
         'stream': True,
     }, stream=True)
