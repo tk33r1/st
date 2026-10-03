@@ -7,7 +7,8 @@
 
 流れ:
   1. 抽出: 各ページの `data-magi="<人格キー>"` を付けた要素のテキストと、一覧 JSON
-     （tools.json 等）を人格ごとに集める。素材は意図して目印を付けたものだけに絞る
+     （tools.json 等）と、トップページの JS に直書きした本人のデータ（年表・自己紹介・肩書き・
+     性格検査。名前を指定した定数だけ）を人格ごとに集める。素材は意図して選んだものだけに絞る
      （JSON-LD は本文の言い換えばかりで、SEO の都合で直すたびに作り直しが走るので使わない）。
      class や id には依存しないので、デザインを改修しても目印さえ残せば壊れない。
      目印の内側で読ませたくない部分には `data-magi-skip` を付ける。
@@ -20,6 +21,9 @@
      要約や検査で失敗した人格は前回のカードのまま残し、作れた人格だけ書いてから exit 1。
      Worker は残ったカードで動き続ける。
 
+カードは3人格のほかに、統合人格（Shinya Takeda）の分も作る。統合人格の素材は自己像（自己紹介・肩書き・
+性格検査と、事故の前後での変化）で、3人格の素材とは重ねない。
+
 ローカル確認: `python .github/scripts/magi-context.py --dry-run` で抽出結果と
 「どの人格が再生成対象か」だけを表示する（API キー不要）。
 """
@@ -30,6 +34,7 @@ import http.client
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -39,7 +44,8 @@ from html.parser import HTMLParser
 
 from ai_model_registry import model_id_with_override
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+SCRIPTS = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(SCRIPTS, '..', '..'))
 OUT_PATH = os.path.join(ROOT, 'data', 'magi-context.json')
 JST = timezone(timedelta(hours=9))
 
@@ -52,6 +58,20 @@ CARD_MIN, CARD_MAX = 80, 1400
 # 1人格ぶんの素材の上限。目印の付け過ぎで要約コストが膨らむのを止める安全弁。
 SOURCE_MAX = 20000
 
+# トップページの JS に直書きしてある本人のデータ。画面には JS が描くので HTML の本文に無く、data-magi の目印では
+# 読めない。定数を名前で取り出す（magi-js-data.mjs）。名前を変えたらここも直す（見つからなければ止まる）。
+TOP_PAGE = 'index.html'
+TOP_CONSTANTS = ('TIMELINE_DATA', 'ABOUT_DATA', 'JOB_TITLES', 'PROFILE_DATA')
+# 年表（TIMELINE_DATA）の項目を、カテゴリー（cat）で人格に振り分ける。表に無いカテゴリーの項目は統合人格の
+# カードに入れ、Actions に警告を出す（黙って捨てない）。どの人格の担当かを決めたら、ここに1行足す。
+TIMELINE_ROUTES = {
+    'music': 'melchior',
+    'bike': 'melchior',
+    'flânerie': 'balthasar',
+    'digital': 'casper',
+}
+SYNTH_KEY = 'synth'
+
 # 人格ごとの素材。キーはページ側の data-magi の値、codename は Worker 側の PERSONAS と一致させる。
 # 素材の一覧はここだけが正。workflow は push のたびに起動し、変わったかどうかはハッシュで判定する。
 PERSONAS = {
@@ -63,7 +83,8 @@ PERSONAS = {
         'focus': (
             '人間・愛・幸せ・失敗・人生についての本人の思索。テーマごとの結論と、その拠り所にした書物、'
             '読み手に投げかけている問いを残す。過去の版がある場合は「以前は〜と考えていたが、いまは〜」という'
-            '考えの変遷として残す。'
+            '考えの変遷として残す。年表からは、人生の転機と死生観（仏教や大阿闍梨との出会い、事故後の価値観の変化、'
+            '遺言書）など、思索の原体験になった出来事を残す。'
         ),
     },
     'melchior': {
@@ -73,7 +94,8 @@ PERSONAS = {
         'lists': [],
         'focus': (
             '音楽・DJ・ハーレーへの熱量。好きなジャンルやこだわり、DJ としての考え方、原体験、'
-            '事故からバイクに戻った経緯と愛機への思いを残す。'
+            '事故からバイクに戻った経緯と愛機への思いを残す。年表からは、音楽とバイクの原体験と、'
+            'DJ を始めてから仲間と出会うまでの歩みを、年とともに残す。'
         ),
     },
     'casper': {
@@ -89,12 +111,27 @@ PERSONAS = {
         ],
         'focus': (
             '仕事上の専門領域、代表的な実績、意思決定や施策設計の考え方、自作ツールや技術発信から読み取れる'
-            '関心領域を残す。'
+            '関心領域を残す。年表からは、キャリアの転機（入社の理由、店舗から EC への異動など）と受賞を、年とともに残す。'
+        ),
+    },
+    # 統合人格（3人格の討議をまとめて答える本人）。素材は自己像だけ。年表は振り分け先の決まっていない項目だけが入る
+    SYNTH_KEY: {
+        'codename': 'Shinya Takeda',
+        'subject': 'ある人物（Shinya Takeda）の、3つの側面を統合した本人そのもの',
+        'pages': [],
+        'lists': [],
+        'profile': True,
+        'target': 600,
+        'focus': (
+            '本人の自己像。自己紹介の言葉、画面のテーマで変わる2つの肩書き、性格検査から読み取れる考え方と振る舞いの傾向、'
+            '事故の前（ver 1.0）と後（ver 2.0）での変化を残す。性格検査の名前・数値・パーセンタイルは書かず、'
+            '「迎合しない」「動じない」のような傾向の言葉にする。謙虚さや協調性が低い結果は、尊大さではなく'
+            '「自分の基準で判断する」のように、口調を荒くしない表し方にする。'
         ),
     },
 }
 
-SYSTEM_PROMPT = """あなたは、ある人物（Shinya Takeda）の内面の一側面「{name}」（{codename}）のための「人格カード」を書く編集者。
+SYSTEM_PROMPT = """あなたは、{subject}のための「人格カード」を書く編集者。
 人格カードは、その人格として会話する AI の system プロンプトに「本人がいま大切にしている考え・関心・経験」として差し込まれる。
 重視する内容: {focus}
 
@@ -219,6 +256,62 @@ def marked_text(path, key):
     return '\n\n'.join(t for t in texts if t)
 
 
+# ---------------------------------------------------------------- 抽出（トップページの JS のデータ）
+
+def js_constants(path, names):
+    """HTML の中の JS の定数を名前で取り出す（評価は Node に任せる。JS のリテラルは Python では読みにくいため）。"""
+    try:
+        res = subprocess.run(['node', os.path.join(SCRIPTS, 'magi-js-data.mjs'), os.path.join(ROOT, path), *names],
+                             capture_output=True, encoding='utf-8')
+    except FileNotFoundError as e:
+        raise RuntimeError('node が見つからない（トップページのデータの取り出しに使う）') from e
+    if res.returncode != 0:
+        raise RuntimeError(f'{path} のデータを取り出せなかった: {res.stderr.strip()[:300]}')
+    return json.loads(res.stdout)
+
+
+def timeline_text(events):
+    lines = [f"- {e['year']} {e['title_ja']}: {e['desc_ja']}" for e in events]
+    return '\n'.join(['■ 年表（トップページ。新しい順）', *lines])
+
+
+def profile_text(top):
+    """統合人格の素材：自己紹介・肩書き・性格検査（事故の後と前）。"""
+    about, titles, profile = top['ABOUT_DATA'], top['JOB_TITLES'], top['PROFILE_DATA']
+    lines = ['■ 自己紹介', *about['bio']['ja'],
+             '■ 肩書き（画面のテーマで切り替わる）', f"ライト: {titles['light']['ja']}", f"ダーク: {titles['dark']['ja']}"]
+    for ver, label in (('2.0', '事故の後（ver 2.0）'), ('1.0', '事故の前（ver 1.0）')):
+        p = profile.get(ver)
+        if not p:
+            continue
+        lines += [
+            f'■ 性格検査：{label}',
+            p['m']['t_ja'].replace('🔗', '').strip(),  # 「MBTI: 運動家 (ENFP-A)」のように見出し込みで入っている
+            'MBTI の傾向: ' + '、'.join(f"{t['name']} {t['pct']}%（反対は {t['opposite']}）" for t in p['traits']),
+            'クリフトンストレングスの領域: ' + '、'.join(f"{s['name']} {round(s['pct'])}%" for s in p['strengths']),
+            '資質の上位5つ: ' + '、'.join(f"{t['rank']}. {t['theme']}" for t in p['themes']),
+        ]
+        lines += [f"ビッグファイブ {b['name']}: {b['level']}（{b['pct']} パーセンタイル）。下位特性: "
+                  + '、'.join(f"{f['name']} {f['pct']}" for f in b['facets']) for b in p.get('bigfive', [])]
+    return '\n'.join(lines)
+
+
+def load_top_page():
+    """トップページのデータを読み、年表を振り分ける。返り値は (定数の辞書, 人格キー → 年表の項目)。"""
+    top = js_constants(TOP_PAGE, TOP_CONSTANTS)
+    events = top['TIMELINE_DATA']
+    if not events:
+        raise RuntimeError(f'{TOP_PAGE} の TIMELINE_DATA が空')
+    routed = {}
+    for e in events:
+        routed.setdefault(TIMELINE_ROUTES.get(e.get('cat'), SYNTH_KEY), []).append(e)
+    for cat in sorted({e.get('cat') for e in events} - TIMELINE_ROUTES.keys(), key=str):
+        # GitHub Actions の注記（実行結果の画面に黄色で出る）
+        print(f'::warning title=MAGI 人格カード::年表のカテゴリー「{cat}」の振り分け先が決まっていない。'
+              f'統合人格のカードに入れた。magi-context.py の TIMELINE_ROUTES に足すこと')
+    return top, routed
+
+
 # ---------------------------------------------------------------- 抽出（一覧 JSON）
 
 def list_text(path, heading, pick, fmt):
@@ -230,7 +323,7 @@ def list_text(path, heading, pick, fmt):
     return f'■ {heading}\n' + '\n'.join(f'- {fmt(item)}' for item in items)
 
 
-def build_source(key, conf):
+def build_source(key, conf, top, routed):
     """人格1つぶんの素材テキスト。どれかの取り出し元が空なら例外（目印の消失に気づくため）。"""
     blocks = []
     for path in conf['pages']:
@@ -238,6 +331,13 @@ def build_source(key, conf):
         if not text:
             raise RuntimeError(f'{path} に data-magi="{key}" の目印が見つからない（または中身が空）')
         blocks.append(f'＝＝ {path} ＝＝\n{text}')
+    if conf.get('profile'):
+        try:
+            blocks.append(f'＝＝ {TOP_PAGE}（自己紹介・肩書き・性格検査） ＝＝\n{profile_text(top)}')
+        except (KeyError, TypeError) as e:
+            raise RuntimeError(f'{TOP_PAGE} の自己紹介・肩書き・性格検査の形が想定と違う（{e!r}）') from e
+    if routed.get(key):
+        blocks.append(f'＝＝ {TOP_PAGE}（年表） ＝＝\n{timeline_text(routed[key])}')
     for path, heading, pick, fmt in conf['lists']:
         blocks.append(f'＝＝ {path} ＝＝\n{list_text(path, heading, pick, fmt)}')
     source = '\n\n'.join(blocks)
@@ -324,11 +424,12 @@ def main():
     args = ap.parse_args()
 
     previous = load_previous().get('personas', {})
+    top, routed = load_top_page()
     todo = []
     for key, conf in PERSONAS.items():
-        system = SYSTEM_PROMPT.format(name=conf['name'], codename=conf['codename'],
-                                      focus=conf['focus'], target=CARD_TARGET)
-        source = build_source(key, conf)
+        subject = conf.get('subject') or f"ある人物（Shinya Takeda）の内面の一側面「{conf['name']}」（{conf['codename']}）"
+        system = SYSTEM_PROMPT.format(subject=subject, focus=conf['focus'], target=conf.get('target', CARD_TARGET))
+        source = build_source(key, conf, top, routed)
         # プロンプトもハッシュに含める。プロンプトを直せば、素材が同じでも作り直される
         digest = hashlib.sha256(f'{MODEL}\n{system}\n{source}'.encode('utf-8')).hexdigest()
         changed = args.force or previous.get(conf['codename'], {}).get('source_hash') != digest

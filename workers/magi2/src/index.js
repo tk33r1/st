@@ -246,7 +246,8 @@ async function refreshPersonaCards(log) {
   } finally { t.clear(); }
   // 人格ごとに上書きする。失敗・空の JSON・一部の人格が欠けた JSON でも、欠けた人格は
   // 直近のカードを保つ（まるごと置き換えると、欠けた人格だけ固定プロンプトに戻ってしまう）
-  const missing = cards ? PERSONAS.map(p => p.codename).filter(c => !cards[c]) : [];
+  // そろうべきカードは3人格と統合人格の4枚
+  const missing = cards ? [...PERSONAS.map(p => p.codename), SYNTHESIZER.codename].filter(c => !cards[c]) : [];
   if (missing.length) log('persona_context', 'missing', missing.join(','));
   const complete = !!cards && !missing.length;
   personaCards.expiresAt = Date.now() + (complete ? PERSONA_CONTEXT.ttl_ms : PERSONA_CONTEXT.retry_ms);
@@ -521,7 +522,10 @@ export default {
           const bias = theme ? SYNTH_BIAS[theme] : null;
           if (bias) log('synthesizer_call', 'bias', theme);
           const synthMessages = [
-            { role: 'system', content: SYNTHESIZER.system_prompt },
+            // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
+            { role: 'system', content: cards && cards[SYNTHESIZER.codename]
+              ? `${SYNTHESIZER.system_prompt}\n\n${PERSONA_CONTEXT.synth_header}\n${cards[SYNTHESIZER.codename]}`
+              : SYNTHESIZER.system_prompt },
             ...(bias ? [{ role: 'system', content: bias }] : []),
             ...history,
             { role: 'user', content: withImages(augmented, lastImages) },

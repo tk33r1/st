@@ -252,6 +252,14 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
   付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、
   ほかに `data/tools.json`・`data/glitch.json` を使う。JSON-LD は使わない。人格に知らせたい事実は本文に書いて目印を付ける。
+  - **トップページのデータ**: 年表・自己紹介・肩書き・性格検査は JS が描くので本文に無く、目印では読めない。
+    `magi-context.py` が `index.html` の定数（`TIMELINE_DATA`・`ABOUT_DATA`・`JOB_TITLES`・`PROFILE_DATA`）を名前で取り出す
+    （`.github/scripts/magi-js-data.mjs`。Node で評価する）。**名前を変えたら `TOP_CONSTANTS` も直す**（見つからなければ止まる）。
+    年表はカテゴリー（`cat`）で振り分ける（`TIMELINE_ROUTES`: music・bike = melchior、flânerie = balthasar、digital = casper）。
+    表に無いカテゴリーは統合人格のカードに入れ、Actions に警告を出すので、担当を決めたら `TIMELINE_ROUTES` に足す。
+  - **統合人格のカード**: 3人格のほかに、統合人格（キーは `Shinya Takeda`）の分も作り、統合の system プロンプトの後ろに足す。
+    素材は自己像（自己紹介・ライト／ダークの肩書き・性格検査の事故の後と前）だけで、3人格の素材とは重ねない。
+    Worker は4枚そろったときを「完全」とみなす（欠ければ欠けた分を前回のまま保ち、1分後に取り直す）。
   - **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。目印が消えると
     workflow がエラーで止まる（Worker は前回のカードのまま動き続ける）。
   - 目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
