@@ -1,0 +1,34 @@
+name: MAGI X Posts
+
+# 本人（@Tah_Keh）の X の投稿を、MAGI の人格カードの素材として取り込む（.github/scripts/magi-x-posts.py）。
+# いまは手動実行の本人確認（check）だけ。取り込みと定期実行は、認証と料金の確認が済んでから足す。
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '実行内容'
+        type: choice
+        options: [check]
+        default: check
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run
+      env:
+        X_TAHKEH_ACCESS_TOKEN: ${{ secrets.X_TAHKEH_ACCESS_TOKEN }}
+        X_TAHKEH_ACCESS_TOKEN_SECRET: ${{ secrets.X_TAHKEH_ACCESS_TOKEN_SECRET }}
+        X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
+        X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
+        X_NITORIDAILY_CONSUMER_KEY: ${{ secrets.X_NITORIDAILY_CONSUMER_KEY }}
+        X_NITORIDAILY_CONSUMER_SECRET: ${{ secrets.X_NITORIDAILY_CONSUMER_SECRET }}
+        X_RETAILTECHDAILY_CONSUMER_KEY: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_KEY }}
+        X_RETAILTECHDAILY_CONSUMER_SECRET: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_SECRET }}
+      run: python3 .github/scripts/magi-x-posts.py --${{ inputs.mode }}
