@@ -1,5 +1,221 @@
 [
   {
+    "date": "20261004",
+    "title": "2026年10月4日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは、廃棄家具の再資源化を担う国内最大級の施設を打ち出し、販売後の回収・再利用まで含めた循環型モデルを前進させる。 累計販売数が伸びるアニマルクッションや、両手を使わず髪を乾かせるドライヤーなど、生活の具体的な不便を解く商品が注目された。",
+    "count": 6,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "ニトリは、廃棄家具の再資源化を担う国内最大級の施設を打ち出し、販売後の回収・再利用まで含めた循環型モデルを前進させる。",
+      "累計販売数が伸びるアニマルクッションや、両手を使わず髪を乾かせるドライヤーなど、生活の具体的な不便を解く商品が注目された。",
+      "家具の代わりにアウトドアチェアを使う投稿や、ランドリーバスケットへの反響から、用途を限定しない実用性が生活者の共感につながる様子が見える。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "廃棄家具の8割を資源へ、ニトリが国内最大級のリサイクル施設",
+        "original_title": "",
+        "source": "日本経済新聞",
+        "source_id": "JP-01",
+        "summary": "日本経済新聞によると、ニトリは国内最大級のリサイクル施設を設け、これまで廃棄されてきた家具を原材料として再活用する。家具の多くが廃棄される現状に対し、回収後の処理を通じて資源としての利用を目指す取り組みだ。施設の詳細な処理能力などは記事見出しからは確認できない。",
+        "why_it_matters": "販売量を伸ばすだけでなく、使用後の家具を資源に戻す仕組みを持てるかは、SPAの供給網を循環型へ進化させる鍵となる。回収から再資源化までを自社の事業設計に組み込めば、廃棄負荷の抑制に加え、原材料調達の選択肢を広げる可能性がある。",
+        "tags": [
+          "ニトリ",
+          "家具リサイクル",
+          "循環型ビジネス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFB5ellZVVZPY3lnbFI5cXZkaGJEVXhILWtOMjN5dElWSWpxNlU0SUJkZzJ6TkZHUUpKbmQ0djl4Um84a2tUUVFLMEU0YmJMRGEwdWdxOW5aNjVhRHN5eC1QTjFKZjJFMEY1Y09nZA?oc=5",
+        "source_pub_ts": 1791018000
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "累計2.4万個の手入れアニマルクッションに新たな動物を追加",
+        "original_title": "",
+        "source": "朝日新聞",
+        "source_id": "JP-03",
+        "summary": "ニトリで販売されている「手入れアニマルクッション」は累計2万4,000個を突破し、新たな動物の種類が加わった。動物の毛並みを整えるように手入れできる商品として支持を集めてきたシリーズで、既存商品の販売実績を踏まえたラインアップ拡充が報じられている。",
+        "why_it_matters": "販売実績のある商品を起点に、選ぶ楽しさや愛着を広げる追加展開は、ゼロから新商品を育てるより需要を見極めやすい。機能だけでなく、手入れの行為そのものを楽しめる体験が支持の核なら、シリーズ化や関連商品の提案にもつながる。",
+        "tags": [
+          "ニトリ",
+          "アニマルクッション",
+          "商品開発"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE5GM0hzb3A0UFQwMXhhQVV2R0p6QnhUeEFJUENzdkIwNlM2RzdYaGFTTTlLWGZvU1F0QkNvYUx0bm5kWE9faTJCZWpkOUtwcFdnUE0tajFjMFBURzY0ZGlIak5nd1hORG5PRWJqci1haFBkY2pOdlZKcUpB?oc=5",
+        "source_pub_ts": 1791010628
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "髪を乾かしながら両手が使える、ニトリの壁掛けハンズフリードライヤー",
+        "original_title": "",
+        "source": "@DIME アットダイム",
+        "source_id": "JP-02",
+        "summary": "ニトリの「壁掛けハンズフリードライヤー」は、壁に掛けて使うことで、髪を乾かす間にドライヤーを手で持ち続ける負担を軽減する商品として紹介された。記事では、長時間使用しても腕が疲れにくい点や、両手を使える点を特徴として挙げている。具体的な仕様や価格は見出しからは確認できない。",
+        "why_it_matters": "家電の性能競争に加え、使用中に手がふさがるという日常の不便を取り除く発想が差別化になる。設置場所や使う人の生活動線まで含めて提案できれば、単品の機能訴求を超え、洗面空間の使い勝手を高める商品として選ばれる余地がある。",
+        "tags": [
+          "ニトリ",
+          "ハンズフリー",
+          "生活家電"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiREFVX3lxTE9vY3ZoTTVMSzhUVExJNTgwdjhXN1EwaVlNSWtKOHRsVGdCOEc2c2pYaHp6ZXFqTjBlZTMyQ2lNMHI4aVZh?oc=5",
+        "source_pub_ts": 1791014703
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "スキンケア用品の定位置に、ニトリ「ハコブNインボックス」が話題",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-04",
+        "summary": "ニトリの「ハコブNインボックス」を、毎日使うスキンケア用品の収納に活用する使い方が紹介された。収納力があり、必要なアイテムをまとめて置ける点に「便利」といった反応が寄せられている。収納用品を本来の用途に限らず、身支度の道具を整理する用途に生かす事例だ。",
+        "why_it_matters": "収納商品の価値は容量だけでなく、使う場所にまとめて置き、必要なものをすぐ手に取れることにもある。生活者による用途の発見は、商品説明だけでは伝えきれない利用場面を示す。売場やECで具体的な収納例を提案すれば、買い足し需要の掘り起こしにもつながる。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "スキンケア"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQQkVDcTl3RVFpdEItMURrZEpoUElWYlZOQmR6R212UU1iWFVlUnpuWUdsSURJMlhpb0VyMHE2enY4TUxaa1lpdnkxclkxZ1dETHhKOEJPUmt5dnhpRWVxbVZNaWJyVndrZS1sZS15eHhpbmxoUkdJQXdwQlZ0YzhsbXpIeENDRlVI0gGIAUFVX3lxTFBCRUNxOXdFUWl0Qi0xRGtkSmhQSVZiVk5CZHpHbXZRTWJYVWVSem5ZR2xJREkyWGlvRXIwcTZ6djhNTFprWWl2eTFyWTFnV0RMeEo4Qk9Sa3l2eGlFZXFtVk1pYnJWd2tlLWxlLXl4eGlubGhSR0lBd3BCVnRjOGxtekh4Q0NGVUg?oc=5",
+        "source_pub_ts": 1791006600
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ソファを買わずにニトリのアウトドアチェア、室内外で使える点に支持",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-05",
+        "summary": "ニトリのアウトドアチェアについて、購入者から「包まれる感じがよい」「BBQにも持ち運べる」といった評価が寄せられ、ソファの代わりとして選んだ人の声も紹介された。屋外向けの商品を室内でも使うことで、くつろぎと持ち運びやすさの両方を評価する反応が見られる。",
+        "why_it_matters": "用途を屋外に限定せず、室内の家具選びにも使えることは、商品の利用頻度と購入理由を広げる。大きな家具を置きにくい住まいや、必要に応じて移動させたい生活者にとって、可搬性とくつろぎの両立は有効な価値提案になる。",
+        "tags": [
+          "ニトリ",
+          "アウトドアチェア",
+          "多用途"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5DcGpZYVZuZ0Z6anJIZW5FSWtwQ2ZOZ1A1cWlRcTJfS1dqRFg1SmVzQjljdzNld3FaLVpweHFSZUd1ekNrd29JWlJZNlk0WGk5b09mcVFXSDhuR3lxbHZkaWItTdIBaEFVX3lxTE5LcGVwRDQ3SUFsb20xVDRjVi1SeHBGaXFGWU40Tm1CVGZvTmZQd2pnNFQ4OEc5eGkteW4wUDBzWU5RdmtCZDJ1RHN3dGRHQ2xSdTBROHFudjFHNElydnNkS09sVXd5ekpW?oc=5",
+        "source_pub_ts": 1791006000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「本当に買って良かった」ニトリのランドリーバスケットにXで8,344いいね",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Xで、ニトリのランドリーバスケットMサイズを「本当に買って良かった」と評価する投稿が反響を集め、8,344いいね、992リポストを記録した。投稿文は短いものの、日々の洗濯に使う身近な収納用品への満足が多くの利用者に共有された。画像の具体的な使用状況や商品の詳細は投稿文からは確認できない。",
+        "why_it_matters": "大きな機能を訴求する商品だけでなく、毎日使う道具への率直な満足も共感を呼ぶ。生活者が実感を短く共有できることは、購入後の使い勝手が口コミの起点になることを示唆する。定番品こそ、使う場面やサイズ選びを伝える情報が購買後押しになる。",
+        "tags": [
+          "ニトリ",
+          "ランドリーバスケット",
+          "SNS反響"
+        ],
+        "url": "https://x.com/KinakoMonaka312/status/2106286763564302678",
+        "source_pub_ts": 1791025200
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのランドリーバスケットMサイズ。本当に買って良かった。 pic.x.com/7sprUCHef4",
+        "platform": "x",
+        "author": "@KinakoMonaka312",
+        "url": "https://x.com/KinakoMonaka312/status/2106286763564302678",
+        "likes": 8344,
+        "retweets": 992,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:34",
+        "captured_at": "",
+        "text": "ニトリのランドリーバスケットMサイズ。本当に買って良かった。 pic.x.com/7sprUCHef4",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリごめん、浮気する…… 赤ちゃん寝返り前にほしかった……！！！ pic.x.com/w79JXvjeC6 x.com/erimama_i...",
+        "platform": "x",
+        "author": "@erimama_ikuji_",
+        "url": "https://x.com/erimama_ikuji_/status/2106356425857597473",
+        "likes": 1168,
+        "retweets": 59,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:11",
+        "captured_at": "",
+        "text": "ニトリごめん、浮気する…… 赤ちゃん寝返り前にほしかった……！！！ pic.x.com/w79JXvjeC6 x.com/erimama_ikuji_…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "今ツのうちわの渡辺くんが持ってる青コップがニトリだと話題ですが 過去に亮平くんも緑の方持ってますのでぜひ緑コップも購入してください🥹🥹🥹 #...",
+        "platform": "x",
+        "author": "@sh_ak5",
+        "url": "https://x.com/sh_ak5/status/2106294164828967076",
+        "likes": 1142,
+        "retweets": 55,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:03",
+        "captured_at": "",
+        "text": "今ツのうちわの渡辺くんが持ってる青コップがニトリだと話題ですが 過去に亮平くんも緑の方持ってますのでぜひ緑コップも購入してください🥹🥹🥹 #渡辺翔太 #阿部亮平 pic.x.com/tkswo1m5fZ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリのうさぬいを買ったんですけど延々と毛繕いしてる pic.x.com/3AGZ2f4Ot5",
+        "platform": "x",
+        "author": "@kagaho04",
+        "url": "https://x.com/kagaho04/status/2106344765658906980",
+        "likes": 1074,
+        "retweets": 163,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:25",
+        "captured_at": "",
+        "text": "ニトリのうさぬいを買ったんですけど延々と毛繕いしてる pic.x.com/3AGZ2f4Ot5",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "幼稚舎から慶應の知り合いが、ニトリに新卒入社して10年以上働いている。 幼稚舎から大学まで慶應（法学部）。 教育費も相当かかっているはず。 ...",
+        "platform": "x",
+        "author": "@wankichi_wan",
+        "url": "https://x.com/wankichi_wan/status/2106202577029505461",
+        "likes": 779,
+        "retweets": 40,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:00",
+        "captured_at": "",
+        "text": "幼稚舎から慶應の知り合いが、ニトリに新卒入社して10年以上働いている。 幼稚舎から大学まで慶應（法学部）。 教育費も相当かかっているはず。 それで就職先がニトリ、しかも転職せず10年以上。 これは「せっかく幼稚舎から慶應なのにもったいない」なのか、 pic.x.com/2ss0ZLqEe2",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "投稿一覧では、ランドリーバスケットへの購入満足のほか、育児用品への期待や他商品との比較、ニトリのコップをめぐるファン同士の呼びかけ、ぬいぐるみの愛らしい様子が話題になった。また、ニトリで長く働く人を題材にした投稿もあり、商品と企業の双方が会話の対象になっている。",
+    "sns_why_it_matters": "反響は機能説明だけでなく、家事や育児の実感、推し活との結び付き、商品に感じる愛着から生まれている。商品が生活の具体的な場面に入り込むほど、利用者自身が使い方や魅力を発信する。企業への関心も含め、こうした声を商品企画や情報発信の手掛かりとして捉えたい。"
+  },
+  {
     "date": "20261003",
     "title": "2026年10月3日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリの9月既存店売上高は前年を3カ月連続で上回り、足元の販売が堅調に推移している。 Nプラスは早期に100店を目指す意欲を表明。家具・住関連を越えたグループの事業拡張が焦点となる。",
