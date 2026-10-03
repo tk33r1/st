@@ -254,7 +254,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     右の › で入力欄に入れる（送信はしない）。新しい入口を作らずチャットの中で返すので、Origin の確認と1日の上限はチャットと共通。
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
-  付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、
+  付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`・`glitch/003/`、`casper` = `job/`・`glitch/` の各記事の本文）で、
   ほかに `data/tools.json`・`data/glitch.json` を使う。JSON-LD は使わない。人格に知らせたい事実は本文に書いて目印を付ける。
   - **トップページのデータ**: 年表・自己紹介・肩書き・性格検査は JS が描くので本文に無く、目印では読めない。
     `magi-context.py` が `index.html` の定数（`TIMELINE_DATA`・`ABOUT_DATA`・`JOB_TITLES`・`PROFILE_DATA`）を名前で取り出す

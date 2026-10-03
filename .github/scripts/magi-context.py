@@ -56,7 +56,7 @@ MODEL = model_id_with_override('openai', 'luna', 'OPENAI_MODEL')
 CARD_TARGET = 800
 CARD_MIN, CARD_MAX = 80, 1400
 # 1人格ぶんの素材の上限。目印の付け過ぎで要約コストが膨らむのを止める安全弁。
-SOURCE_MAX = 20000
+SOURCE_MAX = 40000
 
 # トップページの JS に直書きしてある本人のデータ。画面には JS が描くので HTML の本文に無く、data-magi の目印では
 # 読めない。定数を名前で取り出す（magi-js-data.mjs）。名前を変えたらここも直す（見つからなければ止まる）。
@@ -85,23 +85,28 @@ PERSONAS = {
             '読み手に投げかけている問いを残す。過去の版がある場合は「以前は〜と考えていたが、いまは〜」という'
             '考えの変遷として残す。年表からは、人生の転機と死生観（仏教や大阿闍梨との出会い、事故後の価値観の変化、'
             '遺言書）など、思索の原体験になった出来事を残す。'
+            '最後に「本人の言い回し」として、素材の原文から本人らしい語り口が出ている文を3〜4文、要約も言い換えもせず'
+            '「」で囲んでそのまま残す（文体の見本。人格がこの口調を借りて話す）。'
         ),
     },
     'melchior': {
         'codename': 'MELCHIOR-1',
         'name': 'Enthusiast',
-        'pages': ['dj/index.html', 'motovlog/index.html'],
+        # glitch/003（DJ 音源の買い方）は音楽の話なので、CASPER と両方に渡す（記事側の目印が casper melchior）
+        'pages': ['dj/index.html', 'motovlog/index.html', 'glitch/003/index.html'],
         'lists': [],
         'focus': (
             '音楽・DJ・ハーレーへの熱量。好きなジャンルやこだわり、DJ としての考え方、原体験、'
             '事故からバイクに戻った経緯と愛機への思いを残す。年表からは、音楽とバイクの原体験と、'
-            'DJ を始めてから仲間と出会うまでの歩みを、年とともに残す。'
+            'DJ を始めてから仲間と出会うまでの歩みを、年とともに残す。音源集めなど、音楽のための工夫も残す。'
         ),
     },
     'casper': {
         'codename': 'CASPER-3',
         'name': 'Strategist',
-        'pages': ['job/index.html'],
+        # glitch の記事本文は、本人の判断の型（仕組みを理解して最適化する、数字で比べる）と文体の素材
+        'pages': ['job/index.html', 'glitch/001/index.html', 'glitch/002/index.html', 'glitch/003/index.html',
+                  'glitch/004/index.html', 'glitch/005/index.html'],
         'lists': [
             # (パス, 見出し, 項目の配列を取り出す関数, 1項目を1行にする関数)
             ('data/tools.json', '自作して公開しているブラウザツール',
@@ -112,6 +117,9 @@ PERSONAS = {
         'focus': (
             '仕事上の専門領域、代表的な実績、意思決定や施策設計の考え方、自作ツールや技術発信から読み取れる'
             '関心領域を残す。年表からは、キャリアの転機（入社の理由、店舗から EC への異動など）と受賞を、年とともに残す。'
+            '技術ブログ（glitch）の本文からは、手順や料金表ではなく、判断の型（何を疑い、何と比べ、どこを確かめて決めるか）を残す。'
+            '最後に「本人の言い回し」として、素材の原文から本人らしい語り口が出ている文を3〜4文、要約も言い換えもせず'
+            '「」で囲んでそのまま残す（文体の見本。人格がこの口調を借りて話す）。'
         ),
     },
     # 統合人格（3人格の討議をまとめて答える本人）。素材は自己像だけ。年表は振り分け先の決まっていない項目だけが入る。
@@ -150,8 +158,9 @@ SYSTEM_PROMPT = """あなたは、{subject}のための「人格カード」を�
 
 VOID_TAGS = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 # 中身ごと捨てる要素（UI 部品・埋め込み・装飾）
+# pre はコード例（glitch の手順のコマンドなど）。人格の素材にならない
 SKIP_TAGS = {'script', 'style', 'svg', 'button', 'form', 'input', 'select', 'textarea', 'iframe',
-             'noscript', 'video', 'audio', 'canvas', 'nav', 'dialog'}
+             'noscript', 'video', 'audio', 'canvas', 'nav', 'dialog', 'pre'}
 BLOCK_TAGS = {'p', 'div', 'section', 'article', 'header', 'footer', 'main', 'aside', 'ul', 'ol', 'li',
               'dl', 'dt', 'dd', 'table', 'tr', 'blockquote', 'figure', 'figcaption', 'template',
               'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'br', 'hr'}
