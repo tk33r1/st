@@ -14,6 +14,7 @@ import urllib.error
 import urllib.request
 
 from ai_model_registry import model_id
+from typesafe_alert import notify_http_error
 
 ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
 QUESTION = 'この投稿は、生活者がニトリの商品・店舗・買い物について語っている投稿か（懸賞・広告・株の話・同じ名前の別物ではないか）？'
@@ -86,6 +87,7 @@ def classify(state, key, model):
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
             return parse_probability(json.load(response))
     except urllib.error.HTTPError as error:
+        notify_http_error(error)
         raise ClassificationError(f'HTTP {error.code}') from error
     except (http.client.HTTPException, OSError, ValueError) as error:
         raise ClassificationError(type(error).__name__) from error

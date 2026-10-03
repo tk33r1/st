@@ -17,6 +17,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from ai_model_registry import REGISTRY_PATH, REPO_ROOT, load_registry, model_id
+from typesafe_alert import notify_http_error
 
 
 # クォートの有無を問わず拾う（YAML の値はクォートなしで書けるため）。
@@ -80,6 +81,9 @@ def post_json(url, api_key, payload, stream=False):
         with urllib.request.urlopen(request, timeout=90) as response:
             raw = response.read().decode('utf-8', errors='replace')
     except urllib.error.HTTPError as e:
+        if url == 'https://api.typesafe.ai/v1/systemone':
+            notify_http_error(e)
+            raise RuntimeError(f'TypeSafe HTTP {e.code}') from e
         detail = e.read().decode('utf-8', errors='replace')[:1000]
         raise RuntimeError(f'HTTP {e.code}: {detail}') from e
     except OSError as e:

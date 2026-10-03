@@ -69,6 +69,12 @@ PR本文にも同じ手順を出す。
 
 OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
 `TYPESAFE_API_KEY` は Worker の `MAGI_TYPESAFE_API_KEY` と同じキーでよい。
+Actionsの日刊生成・TikTok取得・週次スモークテストでも、TypeSafeが401・402・403、または残高・枠不足の429を
+返したら `typesafe_alert.py` がResendでメール通知する（通常の回数制限の429・通信障害・5xxは対象外）。
+Repository Secretsに `RESEND_API_KEY`・`ALERT_FROM`・`ALERT_TO` が必要で、magi2と同じ値でよい。
+`ALERT_TO` はカンマ区切りで複数可。宛先を公開リポジトリに書かず、WorkerのsecretもActionsには自動で引き継がれない。
+同じPython実行中の同じHTTPステータスは1通にまとめ、送信失敗時は次のAPI失敗で再試行する。
+キー・記事・投稿・上流の応答本文は通知に含めない。通知未設定・送信失敗でも従来の判定失敗時の処理を続ける。
 OpenAIとDeepSeekは既存のRepository Secretをそのまま使う。`GEMINI_API_KEY` はmagi2の Humanist 用に足した
 Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じキーでよい（未設定だと監視がIssueで知らせる）。
 レビュー用PRを自動作成するには、GitHubのリポジトリ設定で Actions にPull Requestの作成を

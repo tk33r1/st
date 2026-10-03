@@ -18,6 +18,10 @@ concurrency:
   group: nitori-tiktok-fetch
   cancel-in-progress: false
 
+env:
+  ALERT_FROM: ${{ secrets.ALERT_FROM }}
+  ALERT_TO: ${{ secrets.ALERT_TO }}
+
 jobs:
   fetch-tiktok:
     runs-on: ubuntu-latest
@@ -34,6 +38,7 @@ jobs:
       env:
         BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
         TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         BRIGHTDATA_TIKTOK_DATASET_ID: ${{ vars.BRIGHTDATA_TIKTOK_DATASET_ID }}
         BRIGHTDATA_TIMEOUT_SEC: '900'
         BRIGHTDATA_MIN_VIEWS: '10000'
