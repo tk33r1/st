@@ -78,6 +78,51 @@ function database(file) {
   }; } };
 }
 
+test('chat と react の認可を共通化しても、公開情報・未知の入口・エラー応答を保つ', async () => {
+  const w = worker();
+  w.env.CLIENT_API_KEY = 'client-key';
+  for (const path of ['/magi2/chat', '/magi2/react']) {
+    for (const headers of [{ Origin: 'https://outside.example' }, { Origin: '', 'x-api-key': 'wrong' }]) {
+      const res = await w.request(path, '{', '192.0.2.1', headers);
+      assert.equal(res.status, 401);
+      const error = (await res.json()).error;
+      assert.equal(error.code, 'unauthorized');
+      assert.ok(error.request_id);
+      assert.equal(error.message, path.endsWith('/react') ? '許可されていない Origin です'
+        : '許可されていない Origin です（許可: https://tk.st, https://www.tk.st, localhost）。外部利用は x-api-key が必要です');
+    }
+    for (const headers of [
+      { Origin: 'https://tk.st' }, { Origin: 'https://www.tk.st' }, { Origin: 'https://localhost' },
+      { Origin: 'capacitor://localhost' }, { Origin: 'http://localhost:5173' },
+      { Origin: 'https://outside.example', 'x-api-key': 'client-key' },
+    ]) {
+      const res = await w.request(path, '{', '192.0.2.1', headers);
+      assert.equal(res.status, 400);
+      const error = (await res.json()).error;
+      assert.equal(error.code, 'invalid_json');
+      assert.equal(error.message, 'リクエストボディの JSON が不正です');
+    }
+  }
+  const route = (path, method = 'GET') => w.ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
+    method, headers: { Origin: 'https://outside.example' },
+  }), w.env, { waitUntil(p) { w.waits.push(p); } });
+  const models = await route('/magi2/models');
+  assert.equal(models.status, 200);
+  assert.equal(models.headers.get('Content-Type'), 'application/json');
+  assert.equal(models.headers.get('Cache-Control'), 'public, max-age=600');
+  assert.equal(models.headers.get('Access-Control-Allow-Origin'), 'https://tk.st');
+  const body = await models.json();
+  assert.deepEqual(Object.keys(body.personas), ['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3']);
+  assert.ok(body.synthesizer.model_id);
+  assert.equal((await route('/magi2/chat')).status, 404);
+  assert.equal((await route('/magi2/missing', 'POST')).status, 404);
+  assert.equal((await route('/magi2/missing', 'OPTIONS')).status, 204);
+  // キーが未設定なら、ヘッダーが空でも外部からは認可しない。
+  delete w.env.CLIENT_API_KEY;
+  assert.equal((await w.request('/magi2/chat', '{', '192.0.2.1', { Origin: '' })).status, 401);
+  assert.equal(w.calls.length, 0);
+});
+
 test('本文・分割テキスト・履歴・状況説明・生ボディの上限を上流呼び出し前に検証する', async () => {
   const w = worker();
   for (const content of ['x'.repeat(1001), [{ type: 'text', text: 'x'.repeat(600) }, { type: 'text', text: 'y'.repeat(600) }]]) {
@@ -305,6 +350,74 @@ test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけ
     assert.match(mails[0].subject, /deepseek.*402/);
     assert.deepEqual(mails[0].to, ['to@example.com', 'second@example.com']);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('通知メールが通信例外・HTTP エラーで失敗したら印を消し、成功後は重複送信しない', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-alert-retry-'));
+  try {
+    for (const [failure, key] of [['network', 'alert:deepseek:402'], ['http', 'alert:global']]) {
+      const file = join(dir, failure + '.sqlite');
+      let attempts = 0;
+      const w = worker(completion(), (url) => {
+        if (url !== 'https://api.resend.com/emails') return;
+        attempts++;
+        if (attempts === 1) {
+          if (failure === 'network') throw new TypeError('network unavailable');
+          return new Response('unavailable', { status: 503 });
+        }
+        return Response.json({ id: 'mail' });
+      });
+      Object.assign(w.env, { DB: database(file), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+      const send = () => w.ctx.sendAlert(w.env, () => {}, key, 'test', ['test']);
+      await send();
+      assert.equal(attempts, 1);
+      assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ?', [key]).row, null);
+      // 同時に再試行されても、成功する送信は1つだけ。
+      await Promise.all([send(), send()]);
+      assert.equal(attempts, 2);
+      assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ?', [key]).row.count, 1);
+      await send();
+      assert.equal(attempts, 2);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('通知の HTTP エラー本文が止まっても再試行でき、本文受信後も再試行の成功印を保つ', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-alert-body-'));
+  let body, pending;
+  try {
+    const file = join(dir, 'db.sqlite'), key = 'alert:global';
+    let attempts = 0;
+    const w = worker(completion(), url => {
+      if (url !== 'https://api.resend.com/emails') return;
+      attempts++;
+      if (attempts === 1) return new Response(new ReadableStream({
+        start(controller) { body = controller; controller.enqueue(encode('unavailable')); },
+      }), { status: 503 });
+      return Response.json({ id: 'mail' });
+    });
+    Object.assign(w.env, { DB: database(file), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+    const send = () => w.ctx.sendAlert(w.env, () => {}, key, 'test', ['test']);
+    let settled = false;
+    pending = send().then(() => { settled = true; });
+    await tick();
+    assert.equal(attempts, 1);
+    assert.equal(settled, false); // 503 の本文受信はまだ終わっていない。
+    assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ?', [key]).row, null);
+    await send();
+    assert.equal(attempts, 2);
+    assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ?', [key]).row.count, 1);
+    body.close(); body = null;
+    await pending;
+    // 最初の失敗の後始末で、後から成功した送信の印を消さない。
+    assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ?', [key]).row.count, 1);
+    await send();
+    assert.equal(attempts, 2);
+  } finally {
+    if (body) body.close();
+    if (pending) await pending;
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('両画面は停止ボタンで止めた質問を、エラーを出さずに入力欄へ戻す', async () => {

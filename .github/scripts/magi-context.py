@@ -42,6 +42,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from functools import cache
 from html.parser import HTMLParser
 
 from ai_model_registry import model_id_with_override
@@ -230,6 +231,8 @@ class TreeBuilder(HTMLParser):
         self.stack[-1].children.append(data)
 
 
+# 生成1回の中では、目印の確認・本文の抽出・別人格の素材集めに同じ DOM を使う。
+@cache
 def parse_html(path):
     with open(os.path.join(ROOT, path), encoding='utf-8') as f:
         builder = TreeBuilder()
@@ -533,6 +536,7 @@ def load_previous():
 
 
 def main():
+    parse_html.cache_clear()
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dry-run', action='store_true', help='抽出と差分判定だけ行い、API は呼ばない')
     ap.add_argument('--force', action='store_true', help='素材が変わっていなくても全人格を作り直す')

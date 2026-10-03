@@ -34,10 +34,18 @@ function toEnvelope(err, requestId) {
     detail: String(err && err.message || err).slice(0, 200), request_id: requestId, retryable: false,
   };
 }
-function httpError(status, envelope, requestId, cors) {
-  return new Response(JSON.stringify({ error: { ...envelope, request_id: requestId } }), {
-    status, headers: { 'Content-Type': 'application/json', ...cors },
+function jsonResponse(body, cors, status = 200, headers = {}) {
+  return new Response(JSON.stringify(body), {
+    status, headers: { 'Content-Type': 'application/json', ...headers, ...cors },
   });
+}
+function httpError(status, envelope, requestId, cors) {
+  return jsonResponse({ error: { ...envelope, request_id: requestId } }, cors, status);
+}
+function inputError(err, requestId, cors) {
+  return httpError(err.envelope?.http_status || 400, err.envelope || {
+    stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false,
+  }, requestId, cors);
 }
 
 // Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
@@ -282,20 +290,27 @@ async function sendAlert(env, log, key, subject, lines) {
   const first = await env.DB.prepare(`INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1) ON CONFLICT(ip, day) DO NOTHING RETURNING count`)
     .bind(key, day).first();
   if (!first) return; // 今日はもう送った
-  const sent = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: env.ALERT_FROM,
-      to: env.ALERT_TO.split(',').map(s => s.trim()).filter(Boolean), // カンマ区切りで複数可
-      subject,
-      text: lines.join('\n'),
-    }),
-  });
-  if (!sent.ok) {
-    await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
-    log('alert', 'mail failed', key, sent.status, (await sent.text().catch(() => '')).slice(0, 200));
+  let sent = false, res;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: env.ALERT_FROM,
+        to: env.ALERT_TO.split(',').map(s => s.trim()).filter(Boolean), // カンマ区切りで複数可
+        subject,
+        text: lines.join('\n'),
+      }),
+    });
+    sent = res.ok;
+  } catch (err) {
+    log('alert', 'mail failed', key, err && err.message);
+  } finally {
+    // HTTP エラーだけでなく、fetch 自体が通信例外で終わったときも次回に再試行できるよう戻す。
+    if (!sent) await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
   }
+  // エラー本文の受信が止まっても再試行を妨げないよう、印を解除してから本文を読む。
+  if (res && !sent) log('alert', 'mail failed', key, res.status, (await res.text().catch(() => '')).slice(0, 200));
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。
@@ -485,6 +500,295 @@ async function withTimeout(ms, run, stop) {
   finally { clearTimeout(id); if (stop) stop.removeEventListener('abort', onStop); }
 }
 
+// リアクションの登録・取り消し。認可は入口で共通に確認する。
+async function handleReaction(request, env, { requestId, cors, log }) {
+  let body;
+  try { body = await readJsonLimited(request, DEFAULTS.reactions.max_request_bytes); }
+  catch (err) { return inputError(err, requestId, cors); }
+
+  const op = body.op === 'remove' ? 'remove' : 'add';
+  const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
+  if (![...PERSONAS.map(p => p.codename), 'integrated'].includes(target)) {
+    return httpError(400, { stage: 'bad_request', code: 'invalid_target', message: 'リアクション対象が不正です', retryable: false }, requestId, cors);
+  }
+  if (!env.DB) {
+    log('reaction', 'skipped (no DB binding)');
+    return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const now = new Date().toISOString();
+  try { await consumeReactionLimit(env.DB, ip, now); }
+  catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
+
+  // 取り消し：登録者だけが持つトークンのハッシュも照合する。IP の変化では所有権を失わない。
+  if (op === 'remove') {
+    const id = Number(body.id);
+    const token = typeof body.delete_token === 'string' ? body.delete_token : '';
+    if (!Number.isSafeInteger(id) || id < 1 || !/^[a-f0-9]{64}$/.test(token)) {
+      return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'id と登録時の削除トークンが必要です', retryable: false }, requestId, cors);
+    }
+    try {
+      const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2 AND delete_token_hash = ?3`).bind(id, target, await sha256(token)).run();
+      const deleted = (res.meta && res.meta.changes) || 0;
+      log('reaction', 'removed', target, id, `changes=${deleted}`);
+      return jsonResponse({ ok: true, deleted, request_id: requestId }, cors);
+    } catch (err) {
+      log('reaction', 'db_error (remove)', err.message);
+      return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの取り消しに失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+    }
+  }
+
+  // 登録
+  const reaction = typeof body.reaction === 'string' ? body.reaction.slice(0, 64) : '';
+  const reqText = typeof body.request === 'string' ? body.request.slice(0, 8000) : '';
+  const resText = typeof body.response === 'string' ? body.response.slice(0, 16000) : '';
+  if (!reaction || !resText) {
+    return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
+  }
+  try {
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+    const fingerprint = await sha256(JSON.stringify([target, reaction, reqText, resText]));
+    const res = await env.DB.prepare(
+      `INSERT INTO reactions (created_at, ip, target, reaction, request, response, delete_token_hash, fingerprint)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(ip, fingerprint) DO NOTHING RETURNING id`
+    ).bind(now, ip, target, reaction, reqText, resText, await sha256(token), fingerprint).first();
+    // 重複時は元の登録者の ID・トークンを渡さない（共有 IP の別利用者にも取り消せない）。
+    const id = res && res.id;
+    log('reaction', target, reaction, `id=${id}`);
+    return jsonResponse({ ok: true, ...(id ? { id, delete_token: token } : { duplicate: true }), request_id: requestId }, cors);
+  } catch (err) {
+    log('reaction', 'db_error', err.message);
+    return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの保存に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+  }
+}
+
+// チャットの入力検証。会話処理に入る前に送信量と履歴を確定する。
+async function readChatInput(request) {
+  const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
+  let messages = body.messages;
+  const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
+  const wantSuggest = body.suggest === true;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
+  }
+  // 検証の前に trim する（画像枚数の上限は実際に上流へ送るぶんに対して数える）
+  if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
+  // content は文字列 or パート配列。本文と人格の過去の意見を正規化する
+  const counters = { total: 0, imageBytes: 0, text: 0 };
+  messages = messages.map(m => normaliseMessage(m, counters));
+  if (messages[messages.length - 1].role !== 'user') {
+    throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
+  }
+  // DJ の状況説明は本文に紛れ込ませず、専用の上限で検証してから先頭の質問へ添える。
+  if (body.context != null) {
+    if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
+    checkText(body.context, DEFAULTS.input.context_max_chars, counters);
+    const firstUser = messages.find(m => m.role === 'user');
+    firstUser.content = prependText(body.context + '\n', firstUser.content);
+  }
+  return { messages, theme, wantSuggest };
+}
+
+async function handleChat(request, env, ctx, { requestId, cors, log }) {
+  let messages, theme, wantSuggest;
+  try { ({ messages, theme, wantSuggest } = await readChatInput(request)); }
+  catch (err) { return inputError(err, requestId, cors); }
+
+  // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
+  const cardsPromise = getPersonaCards(ctx, log);
+
+  // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
+  if (env.DB) {
+    try {
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const day = new Date().toISOString().slice(0, 10);
+      const row = await env.DB.prepare(
+        `INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
+         ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
+         RETURNING count`
+      ).bind(ip, day).first();
+      const count = row && row.count || 1;
+      log('rate_limit', ip, day, count);
+      if (count > DEFAULTS.daily_limit) {
+        return httpError(429, {
+          stage: 'rate_limit', code: 'daily_limit_exceeded',
+          message: `本日の利用上限（${DEFAULTS.daily_limit}回/日）に達しました`,
+          retry_after_day: day, legacy_url: 'https://tk.st/magi/', retryable: false,
+        }, requestId, cors);
+      }
+      // 全利用者の合計にも1日の上限を掛ける。Origin は名乗れるので、IP を替えながら大量に呼ばれても費用に天井を作る。
+      // 上限に達した最初の1回でメールを送る（ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
+      const total = await env.DB.prepare(
+        `INSERT INTO rate_limit (ip, day, count) VALUES ('global', ?1, 1)
+         ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
+         RETURNING count`
+      ).bind(day).first();
+      if (total && total.count > DEFAULTS.global_daily_limit) {
+        log('rate_limit', 'global', day, total.count);
+        ctx.waitUntil(sendAlert(env, log, 'alert:global', `[MAGI] 本日のサイト全体の上限（${DEFAULTS.global_daily_limit}回）に達しました`, [
+          `MAGI（magi2）への質問が、UTC の ${day} に全利用者の合計で ${DEFAULTS.global_daily_limit} 回を超えました。`,
+          '今日（UTC）の残りは、どの利用者にも「本日の利用上限に達しました」と返しています。',
+          'ふだんの利用を大きく超えているので、ログ（wrangler tail）で使われ方を確かめてください。',
+          '上限は workers/magi2/personas.js の DEFAULTS.global_daily_limit です。',
+        ]).catch(e => log('alert', 'failed', e && e.message)));
+        return httpError(429, {
+          stage: 'rate_limit', code: 'global_daily_limit_exceeded',
+          message: '本日の利用上限に達しました。明日またお試しください',
+          retry_after_day: day, retryable: false,
+        }, requestId, cors);
+      }
+    } catch (err) {
+      log('rate_limit', 'db_error', err.message);
+      return httpError(500, { stage: 'internal', code: 'ratelimit_db_error', message: 'レート制限の記録に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+    }
+  } else {
+    log('rate_limit', 'skipped (no DB binding)');
+  }
+
+  // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
+  // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
+  const upstream = Object.assign(Object.create(env), {
+    onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
+  });
+  // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
+  const stop = new AbortController();
+  const stream = new ReadableStream({
+    cancel() { log('client', 'cancelled'); stop.abort(); },
+    async start(controller) {
+      const enc = new TextEncoder();
+      let closed = false;
+      const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
+      const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
+
+      try {
+        const history = messages.slice(0, -1);
+        const lastContent = messages[messages.length - 1].content;
+        // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
+        // R2 / 統合にも同じものを添え直す（人格が途中で画像を見失わないように）。
+        const lastUser = contentText(lastContent);
+        const lastImages = contentImages(lastContent);
+        if (lastImages.length) log('vision', `images=${lastImages.length}`);
+        // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
+        const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+
+        // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
+        let titlePromise = null;
+        if (!history.some(m => m.role === 'assistant')) {
+          titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, lastContent, signal, log), stop.signal)
+            .then(t => { if (t) send('title', { text: t }); })
+            .catch(() => {});
+        }
+
+        // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
+        const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
+        if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
+
+        // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
+        const cards = await cardsPromise;
+        const personas = PERSONAS.map(p => withCard(p, cards));
+
+        // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
+        // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
+        const absent = (p, round, reason) => {
+          log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
+          send('persona', { round, codename: p.codename, name: p.name, text: PERSONA_ABSENT, absent: true });
+        };
+
+        // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
+        log('persona_call', 'round1 start');
+        const r1 = await withTimeout(personaTimeoutMs, signal =>
+          Promise.allSettled(personas.map(async (p) => {
+            // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
+            const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
+            send('persona', { round: 1, codename: p.codename, name: p.name, text });
+            return { ...p, r1: text };
+          })), stop.signal);
+        const opinions = [];
+        r1.forEach((r, i) => {
+          if (r.status === 'fulfilled') { opinions.push(r.value); return; }
+          absent(personas[i], 1, r.reason);
+          absent(personas[i], 2);
+        });
+        // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
+        if (!opinions.length) throw r1[0].reason;
+        log('persona_call', 'round1 ok', `personas=${opinions.length}`);
+
+        // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
+        // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
+        log('persona_call', 'round2 start');
+        await withTimeout(personaTimeoutMs, signal =>
+          Promise.all(opinions.map(async (p) => {
+            const others = opinions.filter(o => o.codename !== p.codename)
+              .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
+            if (!others) { absent(p, 2); return; }
+            // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
+            const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
+            try {
+              p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
+              send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
+            } catch (e) { absent(p, 2, e); }
+          })), stop.signal);
+        log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
+
+        // --- 統合コール（推論あり・stream）---
+        const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}${o.r2 ? `\n  討議後: ${o.r2}` : ''}`).join('\n');
+        const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
+        // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
+        const bias = theme ? SYNTH_BIAS[theme] : null;
+        if (bias) log('synthesizer_call', 'bias', theme);
+        const synthMessages = [
+          // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
+          { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
+          ...(bias ? [{ role: 'system', content: bias }] : []),
+          ...history,
+          { role: 'user', content: withImages(augmented, lastImages) },
+        ];
+
+        const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
+          log('synthesizer_call', 'start');
+          const synthRes = await callModel({ env: upstream, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
+          if (!synthRes.ok) {
+            const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
+            throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
+          }
+
+          return readSynthesis(synthRes.body, send);
+        }, stop.signal);
+        log('synthesizer_call', 'ok');
+        // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
+        if (wantSuggest) {
+          const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
+            signal => fetchSuggestion(upstream, [...messages, { role: 'assistant', content: answer }], signal, log), stop.signal);
+          if (text) send('suggest', { text });
+        }
+        // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
+        if (titlePromise) await titlePromise;
+        send('done', { request_id: requestId });
+        close();
+      } catch (err) {
+        // 利用者が止めたときは、もう誰も読んでいないので何も送らない
+        if (stop.signal.aborted) { log('client', 'stopped', err && (err.name || err.message)); close(); return; }
+        // タイムアウト(AbortError)は upstream として表現
+        if (err && err.name === 'AbortError') {
+          const env2 = stageError('upstream', 'timeout', 'AI の応答がタイムアウトしました', { retryable: true });
+          log('error', 'upstream', 'timeout');
+          send('error', toEnvelope(env2, requestId));
+        } else {
+          const e = toEnvelope(err, requestId);
+          log('error', e.stage, e.code, e.message);
+          send('error', e);
+        }
+        close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
@@ -509,320 +813,25 @@ export default {
         personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, describe(codename, cfg)])),
         synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
       };
-      return new Response(JSON.stringify(body), {
-        status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600', ...cors },
-      });
+      return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
     }
 
-    // --- リアクション保存: いいね/絵文字が付いたら request/response を DB に記録 ---
-    if (request.method === 'POST' && url.pathname === '/magi2/react') {
-      // chat と同じ認可（tk.st/localhost は Origin 許可、それ以外は x-api-key 必須）
-      if (!isAllowedOrigin(origin)) {
-        if (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY) {
-          log('auth', 'rejected (react)', origin);
-          return httpError(401, { stage: 'auth', code: 'unauthorized', message: '許可されていない Origin です', retryable: false }, requestId, cors);
-        }
-      }
-      let body;
-      try { body = await readJsonLimited(request, DEFAULTS.reactions.max_request_bytes); }
-      catch (err) { return httpError(err.envelope?.http_status || 400, err.envelope || { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors); }
-
-      const op = body.op === 'remove' ? 'remove' : 'add';
-      const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
-      if (![...PERSONAS.map(p => p.codename), 'integrated'].includes(target)) {
-        return httpError(400, { stage: 'bad_request', code: 'invalid_target', message: 'リアクション対象が不正です', retryable: false }, requestId, cors);
-      }
-      if (!env.DB) {
-        log('reaction', 'skipped (no DB binding)');
-        return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
-      }
-
-      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      const now = new Date().toISOString();
-      try { await consumeReactionLimit(env.DB, ip, now); }
-      catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
-
-      // 取り消し：登録者だけが持つトークンのハッシュも照合する。IP の変化では所有権を失わない。
-      if (op === 'remove') {
-        const id = Number(body.id);
-        const token = typeof body.delete_token === 'string' ? body.delete_token : '';
-        if (!Number.isSafeInteger(id) || id < 1 || !/^[a-f0-9]{64}$/.test(token)) {
-          return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'id と登録時の削除トークンが必要です', retryable: false }, requestId, cors);
-        }
-        try {
-          const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2 AND delete_token_hash = ?3`).bind(id, target, await sha256(token)).run();
-          const deleted = (res.meta && res.meta.changes) || 0;
-          log('reaction', 'removed', target, id, `changes=${deleted}`);
-          return new Response(JSON.stringify({ ok: true, deleted, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
-        } catch (err) {
-          log('reaction', 'db_error (remove)', err.message);
-          return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの取り消しに失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
-        }
-      }
-
-      // 登録
-      const reaction = typeof body.reaction === 'string' ? body.reaction.slice(0, 64) : '';
-      const reqText = typeof body.request === 'string' ? body.request.slice(0, 8000) : '';
-      const resText = typeof body.response === 'string' ? body.response.slice(0, 16000) : '';
-      if (!target || !reaction || !resText) {
-        return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
-      }
-      try {
-        const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
-        const fingerprint = await sha256(JSON.stringify([target, reaction, reqText, resText]));
-        const res = await env.DB.prepare(
-          `INSERT INTO reactions (created_at, ip, target, reaction, request, response, delete_token_hash, fingerprint)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(ip, fingerprint) DO NOTHING RETURNING id`
-        ).bind(now, ip, target, reaction, reqText, resText, await sha256(token), fingerprint).first();
-        // 重複時は元の登録者の ID・トークンを渡さない（共有 IP の別利用者にも取り消せない）。
-        const id = res && res.id;
-        log('reaction', target, reaction, `id=${id}`);
-        return new Response(JSON.stringify({ ok: true, ...(id ? { id, delete_token: token } : { duplicate: true }), request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
-      } catch (err) {
-        log('reaction', 'db_error', err.message);
-        return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの保存に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
-      }
-    }
-
-    if (!(request.method === 'POST' && url.pathname === '/magi2/chat')) {
+    // 存在する POST の入口だけを、chat / react 共通の条件で認可する。
+    const isChat = request.method === 'POST' && url.pathname === '/magi2/chat';
+    const isReaction = request.method === 'POST' && url.pathname === '/magi2/react';
+    if (!isChat && !isReaction) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
-
-    // 1) auth: tk.st/localhost は Origin で許可、それ以外は x-api-key 必須
-    if (!isAllowedOrigin(origin)) {
-      if (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY) {
-        log('auth', 'rejected', origin);
-        return httpError(401, {
-          stage: 'auth', code: 'unauthorized',
-          message: `許可されていない Origin です（許可: ${ALLOWED_ORIGINS.join(', ')}, localhost）。外部利用は x-api-key が必要です`,
-          retryable: false,
-        }, requestId, cors);
-      }
+    if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
+      log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
+      return httpError(401, {
+        stage: 'auth', code: 'unauthorized',
+        message: isReaction ? '許可されていない Origin です'
+          : `許可されていない Origin です（許可: ${ALLOWED_ORIGINS.join(', ')}, localhost）。外部利用は x-api-key が必要です`,
+        retryable: false,
+      }, requestId, cors);
     }
-
-    // 2) bad_request: body 検証
-    let messages;
-    let theme = null; // 'light' | 'dark'：統合の揺らぎに使用
-    let wantSuggest = false; // 統合の答えの後に、次の質問の予測を送るか（頼んだ画面だけ。呼び出し1回ぶん増える）
-    try {
-      const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
-      messages = body && body.messages;
-      theme = (body && (body.theme === 'light' || body.theme === 'dark')) ? body.theme : null;
-      wantSuggest = !!(body && body.suggest === true);
-      if (!Array.isArray(messages) || messages.length === 0) {
-        throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
-      }
-      // 検証の前に trim する（画像枚数の上限は実際に上流へ送るぶんに対して数える）
-      if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
-      // content は文字列 or パート配列。ここで {role, content} だけに正規化される
-      const counters = { total: 0, imageBytes: 0, text: 0 };
-      messages = messages.map(m => normaliseMessage(m, counters));
-      if (messages[messages.length - 1].role !== 'user') {
-        throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
-      }
-      // DJ の状況説明は本文に紛れ込ませず、専用の上限で検証してから先頭の質問へ添える。
-      if (body.context != null) {
-        if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
-        checkText(body.context, DEFAULTS.input.context_max_chars, counters);
-        const firstUser = messages.find(m => m.role === 'user');
-        firstUser.content = prependText(body.context + '\n', firstUser.content);
-      }
-    } catch (err) {
-      if (err.envelope) return httpError(err.envelope.http_status || 400, err.envelope, requestId, cors);
-      return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors);
-    }
-
-    // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
-    const cardsPromise = getPersonaCards(ctx, log);
-
-    // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
-    if (env.DB) {
-      try {
-        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-        const day = new Date().toISOString().slice(0, 10);
-        const row = await env.DB.prepare(
-          `INSERT INTO rate_limit (ip, day, count) VALUES (?1, ?2, 1)
-           ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
-           RETURNING count`
-        ).bind(ip, day).first();
-        const count = row && row.count || 1;
-        log('rate_limit', ip, day, count);
-        if (count > DEFAULTS.daily_limit) {
-          return httpError(429, {
-            stage: 'rate_limit', code: 'daily_limit_exceeded',
-            message: `本日の利用上限（${DEFAULTS.daily_limit}回/日）に達しました`,
-            retry_after_day: day, legacy_url: 'https://tk.st/magi/', retryable: false,
-          }, requestId, cors);
-        }
-        // 全利用者の合計にも1日の上限を掛ける。Origin は名乗れるので、IP を替えながら大量に呼ばれても費用に天井を作る。
-        // 上限に達した最初の1回でメールを送る（ふだんの利用を大きく超えるので、使われ方を確かめる合図になる）
-        const total = await env.DB.prepare(
-          `INSERT INTO rate_limit (ip, day, count) VALUES ('global', ?1, 1)
-           ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
-           RETURNING count`
-        ).bind(day).first();
-        if (total && total.count > DEFAULTS.global_daily_limit) {
-          log('rate_limit', 'global', day, total.count);
-          ctx.waitUntil(sendAlert(env, log, 'alert:global', `[MAGI] 本日のサイト全体の上限（${DEFAULTS.global_daily_limit}回）に達しました`, [
-            `MAGI（magi2）への質問が、UTC の ${day} に全利用者の合計で ${DEFAULTS.global_daily_limit} 回を超えました。`,
-            '今日（UTC）の残りは、どの利用者にも「本日の利用上限に達しました」と返しています。',
-            'ふだんの利用を大きく超えているので、ログ（wrangler tail）で使われ方を確かめてください。',
-            '上限は workers/magi2/personas.js の DEFAULTS.global_daily_limit です。',
-          ]).catch(e => log('alert', 'failed', e && e.message)));
-          return httpError(429, {
-            stage: 'rate_limit', code: 'global_daily_limit_exceeded',
-            message: '本日の利用上限に達しました。明日またお試しください',
-            retry_after_day: day, retryable: false,
-          }, requestId, cors);
-        }
-      } catch (err) {
-        log('rate_limit', 'db_error', err.message);
-        return httpError(500, { stage: 'internal', code: 'ratelimit_db_error', message: 'レート制限の記録に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
-      }
-    } else {
-      log('rate_limit', 'skipped (no DB binding)');
-    }
-
-    // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
-    // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
-    const upstream = Object.assign(Object.create(env), {
-      onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
-    });
-    // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
-    const stop = new AbortController();
-    const stream = new ReadableStream({
-      cancel() { log('client', 'cancelled'); stop.abort(); },
-      async start(controller) {
-        const enc = new TextEncoder();
-        let closed = false;
-        const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
-        const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
-
-        try {
-          const history = messages.slice(0, -1);
-          const lastContent = messages[messages.length - 1].content;
-          // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
-          // R2 / 統合にも同じものを添え直す（人格が途中で画像を見失わないように）。
-          const lastUser = contentText(lastContent);
-          const lastImages = contentImages(lastContent);
-          if (lastImages.length) log('vision', `images=${lastImages.length}`);
-          // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
-          const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
-
-          // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
-          let titlePromise = null;
-          if (!history.some(m => m.role === 'assistant')) {
-            titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, lastContent, signal, log), stop.signal)
-              .then(t => { if (t) send('title', { text: t }); })
-              .catch(() => {});
-          }
-
-          // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
-          const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
-          if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
-
-          // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-          const cards = await cardsPromise;
-          const personas = PERSONAS.map(p => withCard(p, cards));
-
-          // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
-          // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
-          const absent = (p, round, reason) => {
-            log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
-            send('persona', { round, codename: p.codename, name: p.name, text: PERSONA_ABSENT, absent: true });
-          };
-
-          // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
-          log('persona_call', 'round1 start');
-          const r1 = await withTimeout(personaTimeoutMs, signal =>
-            Promise.allSettled(personas.map(async (p) => {
-              // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
-              const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, lastContent), signal, log, 1, personaTemp);
-              send('persona', { round: 1, codename: p.codename, name: p.name, text });
-              return { ...p, r1: text };
-            })), stop.signal);
-          const opinions = [];
-          r1.forEach((r, i) => {
-            if (r.status === 'fulfilled') { opinions.push(r.value); return; }
-            absent(personas[i], 1, r.reason);
-            absent(personas[i], 2);
-          });
-          // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
-          if (!opinions.length) throw r1[0].reason;
-          log('persona_call', 'round1 ok', `personas=${opinions.length}`);
-
-          // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
-          // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
-          log('persona_call', 'round2 start');
-          await withTimeout(personaTimeoutMs, signal =>
-            Promise.all(opinions.map(async (p) => {
-              const others = opinions.filter(o => o.codename !== p.codename)
-                .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
-              if (!others) { absent(p, 2); return; }
-              // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
-              const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
-              try {
-                p.r2 = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(dmsg, lastImages)), signal, log, 2, personaTemp);
-                send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
-              } catch (e) { absent(p, 2, e); }
-            })), stop.signal);
-          log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
-
-          // --- 統合コール（推論あり・stream）---
-          const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}${o.r2 ? `\n  討議後: ${o.r2}` : ''}`).join('\n');
-          const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
-          // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
-          const bias = theme ? SYNTH_BIAS[theme] : null;
-          if (bias) log('synthesizer_call', 'bias', theme);
-          const synthMessages = [
-            // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
-            { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
-            ...(bias ? [{ role: 'system', content: bias }] : []),
-            ...history,
-            { role: 'user', content: withImages(augmented, lastImages) },
-          ];
-
-          const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
-            log('synthesizer_call', 'start');
-            const synthRes = await callModel({ env: upstream, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
-            if (!synthRes.ok) {
-              const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
-              throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
-            }
-
-            return readSynthesis(synthRes.body, send);
-          }, stop.signal);
-          log('synthesizer_call', 'ok');
-          // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
-          if (wantSuggest && answer.trim()) {
-            const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
-              signal => fetchSuggestion(upstream, [...messages, { role: 'assistant', content: answer }], signal, log), stop.signal);
-            if (text) send('suggest', { text });
-          }
-          // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
-          if (titlePromise) { try { await titlePromise; } catch (_) {} }
-          send('done', { request_id: requestId });
-          close();
-        } catch (err) {
-          // 利用者が止めたときは、もう誰も読んでいないので何も送らない
-          if (stop.signal.aborted) { log('client', 'stopped', err && (err.name || err.message)); close(); return; }
-          // タイムアウト(AbortError)は upstream として表現
-          if (err && err.name === 'AbortError') {
-            const env2 = stageError('upstream', 'timeout', 'AI の応答がタイムアウトしました', { retryable: true });
-            log('error', 'upstream', 'timeout');
-            send('error', toEnvelope(env2, requestId));
-          } else {
-            const e = toEnvelope(err, requestId);
-            log('error', e.stage, e.code, e.message);
-            send('error', e);
-          }
-          close();
-        }
-      },
-    });
-
-    return new Response(stream, {
-      headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
-    });
+    const context = { requestId, cors, log };
+    return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
   },
 };
