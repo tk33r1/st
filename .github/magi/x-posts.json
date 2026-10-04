@@ -3,6 +3,15 @@
  "handle": "Tah_Keh",
  "posts": [
   {
+   "id": "2106733183924625832",
+   "created_at": "2026-10-04T13:08:26.000Z",
+   "kind": "post",
+   "text": "Jev TypeSafe AI すごすぎて触ってたら徹夜して土日終わった\nhttps://t.co/h9RQiYEdQK\n\n・安く正確に分岐を入れたい時\n・生成AIに渡すプロンプトを前処理したい時\n\n使える → つまり使えないケースがほぼない\n\n今、AIを組み込んだアプリケーションを構築しているなら、どこかに組み込めるはず",
+   "likes": 0,
+   "reposts": 0,
+   "enriched": true
+  },
+  {
    "id": "2105959932222996979",
    "created_at": "2026-10-02T09:55:49.000Z",
    "kind": "post",
