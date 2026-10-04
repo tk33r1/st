@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 04 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 04 Oct 2026 04:40:15 +0900</lastBuildDate>
+    <pubDate>Mon, 05 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 05 Oct 2026 04:53:37 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月5日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261005/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261005/</guid>
+      <pubDate>Mon, 05 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ファミリーマートはコーヒーマシンの液晶広告を本格展開し、店頭機器を新たな広告接点として活用する動きを進める。 セルフレジをめぐる話題から、会計の省人化だけでなく、利用者の習熟差や混雑時の案内設計が店舗体験を左右することがうかがえる。</description>
+    </item>
     <item>
       <title>2026年10月4日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261004/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260921/</guid>
       <pubDate>Mon, 21 Sep 2026 08:00:00 +0900</pubDate>
       <description>セブン-イレブンが宅配アプリ『7NOW』に予約機能を搭載。コンビニデリバリーが「即時配送」から「計画購買」へ広がり、店舗在庫とピッキング人員を時間軸で平準化できるかが新たな競争軸となる。 キャッシュレスが進む一方で1円硬貨が増産される逆説は、現金とキャッシュレスが長期併存する現実を示す。釣銭・硬貨在庫という見えないコストが、セミセルフレジや釣銭機への投資判断を左右する。</description>
-    </item>
-    <item>
-      <title>2026年9月20日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260920/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260920/</guid>
-      <pubDate>Sun, 20 Sep 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジ前提の店舗運営が生活者との摩擦を生み、コンビニの対面会計をめぐる投稿がSNSで賛否を呼んだ。省人化と顧客満足をどう両立させるかが店舗DXの焦点に浮上。 米メイシーズがAI在庫補充ツールを導入するなど、アパレル・食品で需要予測と自動補充の実装が加速。値引き在庫と欠品の同時削減が収益改善の主戦場になる。</description>
     </item>
   </channel>
 </rss>
