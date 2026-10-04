@@ -91,7 +91,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 | `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `IP_SALT`, `SONGBPM_KEY`, `OPENAI_API_KEY`。ブース向けに曲の背景カード（OpenAI の Web 検索を強制、出典を照合した事実だけ保存、trackId ごとにイベントをまたいで使い回し、1日の生成数に上限）も作る。投稿時に作り、取りこぼした曲はブースの一覧読み込みのついでに裏で作る |
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版（`magi/` が呼ぶ）。secret: `MAGI_API_KEY`、`CLIENT_API_KEY` |
-| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（出力の言語の判定。無ければ手元の規則）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
+| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（発言の分類と会話の初回の言語判定。無ければ手元の規則）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
+| `workers/magi2`（env.eval） | tk-st-magi2-eval | `magi2-eval.tk.st/magi2*` | 評価専用（DB未作成）。専用DB `tk-st-magi2-eval-db` とAccessを先に設定し、手動で `--env eval` を付けて公開する。通常のdeploy-worker.ymlには入れず、評価後の片付けはmagi2/README.mdに従う |
 | `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。secret: `GAME_OPENAI_API_KEY` |
 
 ## ビルドとテスト
@@ -242,7 +243,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   画像・推論・ストリーミング）をなぞっているので、呼び出し方を変えたらそちらも合わせる。
 - **magi2 の人格設定**: `workers/magi2/personas.js` が人格の骨格プロンプト、用途ごとの推論強度、
   トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
-  - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はOpenAIだけに送る。
+  - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はサイト案内固定で、チャットと同じ3人格の2回討議とmediumの統合を使う。対応通知 `site_debate=1` が無い旧画面には409を返し、AIや利用回数を使わない。
     検索候補は `.github/scripts/site-search-index.py` が公開HTMLから作る `data/site-search.json`（生成物、手で編集しない）。
     `build.sh` は出荷するHTMLから毎回生成する。手元では `python -B .github/scripts/site-search-index.py` で更新する。
     noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。
@@ -250,7 +251,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
     AIの検索や MAGI の話題から外したいページは、ページを noindex にする。
     回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。検索内容はログ・通知・DBに残さない。
-    MAGI はサイトの案内役も兼ねる（`SITE_GUIDE`／`siteGuide`）。画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ったときだけ、
+    MAGI はサイトの案内役も兼ねる（`SITE_GUIDE`／`siteGuide`）。分類対応の画面では、今回のintent・site_pagesと画面の許可を確認してから索引・一覧・ページ選択を使う（musicとdj/requestは省く）。画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ったときだけ、
     3人格に場面といまのページを、統合人格に `data/site-search.json` から作るページ一覧（日刊の号を除く）を足す。
     `dj/request/` は送らない（選曲の相談にサイトの話を混ぜない）。新しい画面で MAGI を使うときは、送るかどうかを決めること。
   人間向けの別形式（以前の `persona.yaml` のようなもの）を並べて二重管理にしないこと。
@@ -265,7 +266,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     会社ごとの推論の切り方やトークン上限の名前の違いは `src/index.js` の `requestBody` に閉じている。
     1人格が失敗しても（障害・安全フィルター・キー未設定・時間切れ）その人格を `[NO RESPONSE]` にして
     残りで討議と統合を続け、全員が失敗したときだけエラーにする。
-  - **討議の回数**: 第1回・第2回の後、統合人格が判定し（`DEBATE`、Luna・推論 low）、答えを変えうる論点が残っていれば
+  - **討議の回数**: 新契約のsite・musicは第2回で統合する。consultと旧契約は、第2回の後から統合人格が判定し（`DEBATE`、Luna・推論 low）、答えを変えうる論点が残っていれば
     答えられる人格にだけ聞き返して最大5回まで回す。基準は「一致したか」ではない（価値観の違いは統合で本人が決める）。
     第3回以降は、リクエストに `adaptive_debate: true` を付けた画面だけ（配布済みの古いアプリは2回のまま）。
     MAGI を使う画面を足すときは、`ask` イベントと履歴の `followups` に対応してから付ける（詳細は magi2 の README.md）。
@@ -282,9 +283,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     「System & Privacy」と `dj/request/` の送信先の説明も直すこと。Gemini はいま無料枠のキーで動いている
     （入力が Google の製品改善とモデルの学習に使われ、人が読むこともある）。注意文はそれに合わせてあるので、
     有料枠に切り替えたら説明も直すこと。
-  - **出力の言語**: 会話ごとに1回、直近のユーザーの発言の文字だけを TypeSafe AI（Jev）に送って言語を決め、
-    3人格・統合・討議の判定・タイトル・予測に同じ指定を付ける（`LANGUAGE_DETECT`。画像・状況説明・AI の回答は送らない）。
-    決まらなければ手元の規則（`REPLY_LANGUAGE`）に戻す。Jev は4社目の送り先なので、上の説明にも載せてある。
+  - **分類と言語**: `classification_state: true` の一般会話は、TypeSafe AI（Jev）へ初回4問・継続3問を1回で送り、最新本文を分類し、初回だけ最初のユーザー本文から言語を決める。DJはmusic固定で、初回の言語1問だけ。旧画面はリクエストごとの言語1問を維持する。
+    3人格・統合・討議の判定・タイトル・予測に同じ言語指定を付ける（`INTENT_CLASSIFY`／`classification.js`。画像・状況説明・AIの回答は分類に送らない）。会話ごとの言語を画面に保存・復元し、分類結果・本文・ハッシュをD1に保存しない。
+    決まらなければ手元の規則（`REPLY_LANGUAGE`）とUI言語で初回に固定する。Jev は4社目の送り先なので、上の説明にも載せてある。
   - 次の質問の予測: リクエストに `suggest: true` を付けると、統合の答えの後に軽量モデル（`openai.luna`・推論なし）で
     利用者が次に送りそうな質問を1つ作り、`suggest` イベントで送ってから `done` にする（失敗・4秒超えなら送らずに終える）。
     いま付けているのはトップページの MAGI、`magi-app/www/app.js`、`dj/request/` の「AIに相談」。どれも空の入力欄に薄く重ね、
@@ -341,6 +342,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
   許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。例外は、magi2 が Capacitor アプリの
   `https://localhost` オリジンも正規表現で許可していることと、games が手元確認用に `http://127.0.0.1:5500` を許可していること。
+
+- dj-requestの開発用Originは `DJ_LOCAL_DEV="true"`・WorkerのURLがHTTP(S)ループバック・ページのOriginがHTTP(S)localhostの3条件がそろう場合だけ追加許可する。本番設定はfalse。ローカル起動はrouteによるhost書換えを避けるため `--local-upstream localhost:8788` を付ける。
 
 ## セキュリティ上の注意
 

@@ -2,6 +2,9 @@ name               = "tk-st-dj-request"
 main               = "src/index.js"
 compatibility_date = "2025-01-01"
 
+[vars]
+DJ_LOCAL_DEV = "false"
+
 [[d1_databases]]
 binding       = "DB"
 database_name = "dj-request-db"

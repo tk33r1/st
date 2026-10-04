@@ -1,7 +1,8 @@
-import { DEBATE, DEFAULTS, LANGUAGE_DETECT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
+import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote } from '../classification.js';
 import bundledContext from '../../../data/magi-context.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -255,14 +256,18 @@ function requestBody(cfg, { messages, stream, temperature, response_format }) {
 async function callModel({ env, messages, cfg, stream, signal, temperature, response_format }) {
   const provider = PROVIDERS[cfg.provider];
   const body = requestBody(cfg, { messages, stream, temperature, response_format });
+  if (typeof env.evalObserve === 'function' && stream) body.stream_options = { include_usage: true };
   const key = env[provider.key];
   if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
+  if (cfg.provider === 'google' && env.recordGoogleUsage) env.recordGoogleUsage(env.modelUsagePurpose || 'chat', 'attempt');
   const res = await fetch(provider.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
     body: JSON.stringify(body),
     signal,
   });
+  if (cfg.provider === 'google' && res.status === 429 && env.recordGoogleUsage) env.recordGoogleUsage(env.modelUsagePurpose || 'chat', 'limited');
+  if (typeof env.evalObserve === 'function') env.evalObserve(cfg.provider, cfg.model, res.clone(), !!stream);
   // 失敗は残高切れ・キーの失効でないかを見る（本文は呼び出し側も読むので複製を渡す）
   // 検索では本文の分類を待つ。先に戻ると検索の後処理がabortし、複製した本文も読めなくなる。
   // メールの送信はフック内のwaitUntilで行うので、ここでは待たない。
@@ -336,6 +341,7 @@ async function sendAlert(env, log, key, subject, lines, redact = false) {
 // 検索は本文を判定にだけ使い、例外・本文をログにも通知にも渡さない。
 function searchUpstream(env, ctx, log, purpose) {
   return Object.assign(Object.create(env), {
+    modelUsagePurpose: purpose === '404検索' ? '404' : 'chat',
     onUpstreamError: async (provider, res) => {
       let body = '';
       try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
@@ -365,6 +371,11 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (Object.keys(body).length !== 2 || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
       const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
       if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
+      const params = new URL(request.url).searchParams;
+      if ([...params.keys()].some(k => k !== 'site_debate') || params.getAll('site_debate').length > 1
+        || (params.has('site_debate') && params.get('site_debate') !== '1')) return fail(400, 'invalid_site_debate');
+      if (!params.has('site_debate')) return httpError(409, { stage: 'bad_request', code: 'site_search_update_required',
+        message: 'ページを再読み込みしてください', retryable: false }, requestId, cors);
       if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
       const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
       if (signal.aborted) throw searchFailure('cancelled');
@@ -379,9 +390,11 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       }
       if (signal.aborted) throw searchFailure('cancelled');
       const upstream = searchUpstream(env, ctx, log, '404検索');
-      const result = await selectSitePages({ query, locale: body.locale, pages, cards, signal, log,
+      const result = await selectSitePages({ query, locale: body.locale, pages, cards, chat: true, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      return jsonResponse({ request_id: requestId, ...result }, cors, 200, { 'Cache-Control': 'no-store' });
+      const answer = await runDiscussion({ upstream, cards, plainMessages: [{ role: 'user', content: query }],
+        langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: () => {}, log: stage => log('site_search', stage) });
+      return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) { log('site_search', 'unavailable'); return fail(503, 'search_unavailable'); }
   finally { log('site_search', 'elapsed_ms', Date.now() - started); }
@@ -403,7 +416,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
       throw stageError('persona_call', `${cfg.provider}_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
-    const text = stripCharCount((choice.message?.content || '').trim());
+    const text = classifySlice(stripCharCount((choice.message?.content || '').trim()), DEFAULTS.persona_response_max_chars);
     log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
     if (text) return text;
     // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない
@@ -461,44 +474,6 @@ function replyLanguageNote(messages) {
 }
 const withLangNote = (prompt, langNote) => langNote ? `${prompt}\n\n${langNote}` : prompt;
 
-// 出力の言語を Jev で決める（personas.js の LANGUAGE_DETECT）。決まらなければ手元の規則の結果（fallback）を返す。
-// 例外は投げない（判定が無くても会話は進める）。画面が付けた状況説明を足す前の会話（plainMessages）から、
-// ユーザーの発言の文字だけを送る
-async function detectReplyLanguage(env, plainMessages, fallback, signal, log) {
-  const key = env[LANGUAGE_DETECT.key];
-  const texts = plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content).trim()).filter(Boolean)
-    .slice(-LANGUAGE_DETECT.messages).map(t => t.slice(0, LANGUAGE_DETECT.message_max_chars));
-  if (!key || !texts.length) return fallback;
-  try {
-    const res = await fetch(LANGUAGE_DETECT.endpoint, {
-      method: 'POST', signal,
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({
-        model: LANGUAGE_DETECT.model.model,
-        state: { earlier_messages: texts.slice(0, -1), latest_message: texts[texts.length - 1] },
-        questions: { language: {
-          type: 'choice', instructions: LANGUAGE_DETECT.instructions,
-          criteria: Object.fromEntries(Object.entries(LANGUAGE_DETECT.languages).map(([code, l]) => [code, l.criteria])),
-        } },
-      }),
-    });
-    if (!res.ok) {
-      // 残高切れ・キーの失効はメールで知らせる（黙って手元の規則に戻るので、画面からは気づきにくい）
-      if (env.onUpstreamError) await env.onUpstreamError('typesafe', res.clone());
-      log('language', `HTTP ${res.status}`);
-      await res.body?.cancel().catch(() => {});
-      return fallback;
-    }
-    const answer = (await res.json()).answers?.language || {};
-    const lang = LANGUAGE_DETECT.languages[answer.choice];
-    log('language', answer.choice, `confidence=${answer.confidence}`);
-    if (!lang || !lang.name || !(answer.confidence >= LANGUAGE_DETECT.min_confidence)) return fallback;
-    return answer.choice === 'ja' ? REPLY_LANGUAGE.ja : REPLY_LANGUAGE.named(lang.name);
-  } catch (e) {
-    log('language', 'failed', e && (e.name || e.message));
-    return fallback;
-  }
-}
 
 // 次の質問の予測（非クリティカル：失敗・時間切れでも null）。
 // 会話は1本の文字起こしにして渡す（チャットの形のまま渡すと、モデルが AI の続きとして答えてしまう）。
@@ -801,25 +776,180 @@ async function readChatInput(request) {
     const first = messages.findIndex(m => m.role === 'user');
     messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
-  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page };
+  const newContract = body.classification_state === true;
+  const entry = body.entry === 'dj-request' ? 'dj-request' : 'chat';
+  const replyLanguage = newContract ? cleanReplyLanguage(body.reply_language) : null;
+  let seed = typeof body.language_seed === 'string' ? body.language_seed : classifySlice(contentText(plainMessages.find(m => m.role === 'user').content), INTENT_CLASSIFY.language_seed_max_chars);
+  if (newContract && !replyLanguage) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
+  if (!newContract || replyLanguage) seed = null;
+  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
+    newContract, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
+function siteSelectionNote(choice) {
+  if (choice.status === 'failed') return SITE_SEARCH.failed_note;
+  return SITE_SEARCH.synth_header + '\n' + SITE_SEARCH.answer_note + '\n' + JSON.stringify({
+    status: choice.status, pages: choice.results.map(({ title, description }) => ({ title, description })),
+    daily: choice.daily ? { media: choice.daily.media, query: choice.daily.query } : null,
+  });
+}
+
+async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
+  theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
+  pagesPromise = null, page = null, music = false, signal, send, log }) {
+  const stop = { signal };
+  const history = messages.slice(0, -1);
+  const lastContent = messages.at(-1).content;
+  const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
+  const noteLang = c => langNote ? joinContent(c, langNote) : c;
+  const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+  // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
+  const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
+  if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
+
+  // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
+  const personas = PERSONAS.map(p => withCard(p, cards))
+    .map(p => guide ? { ...p, system_prompt: `${p.system_prompt}\n\n${guide.persona}` } : p)
+    .map(p => ({ ...p, system_prompt: withLangNote(p.system_prompt
+      + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
+      + (pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : ''), langNote) }));
+
+  // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
+  // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
+  const absent = (p, round, reason) => {
+    log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
+    send('persona', { round, codename: p.codename, name: p.name, text: PERSONA_ABSENT, absent: true });
+  };
+
+  // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
+  // 各人格の意見は回ごとに views（[{ round, text, ask }]）へ積む。最後の要素がいまの考え
+  const debateStarted = Date.now();
+  log('persona_call', 'round1 start');
+  const r1 = await withTimeout(personaTimeoutMs, signal =>
+    Promise.allSettled(personas.map(async (p) => {
+      // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
+      const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(lastContent)), signal, log, 1, personaTemp);
+      send('persona', { round: 1, codename: p.codename, name: p.name, text });
+      return { ...p, r1: text, views: [{ round: 1, text }] };
+    })), stop.signal);
+  const opinions = [];
+  r1.forEach((r, i) => {
+    if (r.status === 'fulfilled') { opinions.push(r.value); return; }
+    absent(personas[i], 1, r.reason);
+    if (!newContract) absent(personas[i], 2);
+  });
+  // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
+  if (!opinions.length) throw r1[0].reason;
+  log('persona_call', 'round1 ok', `personas=${opinions.length}`);
+
+  // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
+  // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
+  log('persona_call', 'round2 start');
+  await withTimeout(personaTimeoutMs, signal =>
+    Promise.all(opinions.map(async (p) => {
+      const others = opinions.filter(o => o.codename !== p.codename)
+        .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
+      if (!others) { if (!newContract) absent(p, 2); return; }
+      // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
+      const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
+      try {
+        const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
+        p.views.push({ round: 2, text });
+        send('persona', { round: 2, codename: p.codename, name: p.name, text });
+      } catch (e) { absent(p, 2, e); }
+    })), stop.signal);
+  log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
+
+  // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
+  // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
+  // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
+  const maxRounds = adaptive && !shortDebate && (!newContract || opinions.length > 1) ? DEBATE.max_rounds : 2;
+  let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
+  for (let round = 3; round <= maxRounds && !stop.signal.aborted; round++) {
+    if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
+    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: DEBATE.system_prompt(round - 1, maxRounds) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
+    const judgement = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
+      system: judgeSystem, input: judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename),
+    }, signal, log), stop.signal);
+    if (judgement && judgement.assessment) assessment = judgement.assessment;
+    log('debate', `after r${round - 1}`, !judgement ? 'judge failed' : judgement.questions.length ? `ask ${judgement.questions.map(q => q.target).join(',')}` : 'answer');
+    // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
+    if (!judgement || !judgement.questions.length) { send('judge', { round: round - 1, action: 'answer' }); break; }
+    // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
+    const asked = judgement.questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
+    send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });
+    await withTimeout(personaTimeoutMs, signal =>
+      Promise.all(asked.map(async ({ p, ask }) => {
+        const own = p.views.map(v => `${viewLabel(v)}: ${v.text}`).join('\n');
+        const others = opinions.filter(o => o.codename !== p.codename)
+          .map(o => `- ${o.name}（${o.codename}）: ${o.views[o.views.length - 1].text}`).join('\n');
+        const qmsg = `${lastUser}\n\n[あなたのこれまでの意見]\n${own}`
+          + (others ? `\n\n[他の人格のいまの意見]\n${others}` : '')
+          + `\n\n[3人の議論をまとめる Shinya Takeda から、あなたへの問い（第${round}回）]\n${ask}`
+          + '\n\n[この問いに、自分の関心と価値観から答えよ。考えが変わったなら変わったと言い、変わらないなら理由を足す。これまでの意見の繰り返しは避ける]';
+        try {
+          const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
+          p.views.push({ round, text, ask });
+          send('persona', { round, codename: p.codename, name: p.name, text });
+        } catch (e) { absent(p, round, e); }
+      })), stop.signal);
+    lastRound = round;
+  }
+
+  // --- 統合コール（推論あり・stream）---
+  // 判定のメモ（一致・対立とその扱い）と、上限で打ち切ったことも添える
+  const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
+    + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
+    + (adaptive && !shortDebate && lastRound === maxRounds ? `\n\n[討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える]` : '');
+  // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
+  const bias = theme ? SYNTH_BIAS[theme] : null;
+  if (bias) log('synthesizer_call', 'bias', theme);
+
+  if (pagesPromise) {
+    try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, stop.signal); }
+    catch (_) {  }
+    if (stop.signal.aborted) throw searchFailure('cancelled');
+  }
+  // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
+  if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
+  const hasPages = pageChoice && (pageChoice.results.length || pageChoice.daily);
+  const synthMessages = [
+    // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
+    { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
+    ...(bias ? [{ role: 'system', content: bias }] : []),
+    ...(guide ? [{ role: 'system', content: guide.synth }] : []),
+    ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
+    ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
+    ...history,
+    { role: 'user', content: withImages(noteLang(augmented), lastImages) },
+  ];
+
+  const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
+    log('synthesizer_call', 'start');
+    const synthRes = await callModel({ env: upstream, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
+    if (!synthRes.ok) {
+      const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
+      throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
+    }
+
+    return readSynthesis(synthRes.body, send);
+}, stop.signal);
+log('synthesizer_call', 'ok');
+if (hasPages && !stop.signal.aborted) send('pages', chatPageEvent(pageChoice));
+return answer;}
+
 async function handleChat(request, env, ctx, { requestId, cors, log }) {
-  let messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page;
-  try { ({ messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page } = await readChatInput(request)); }
+  let input;
+  try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
+  let { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page, newContract, entry, replyLanguage, seed, uiLanguage } = input;
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {
     onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
   });
-  // 人格カードの取得と出力の言語の判定は、レート制限の DB 処理と並行して始めておく（どちらも reject しない）。
-  // 言語は Jev で決め、決まらなければ手元の規則の結果（readChatInput の langNote）を使う。断るときは判定も止める
   const cardsPromise = getPersonaCards(ctx, log);
-  const langStop = new AbortController();
-  const langPromise = withTimeout(LANGUAGE_DETECT.timeout_ms,
-    signal => detectReplyLanguage(upstream, plainMessages, langNote, signal, log), langStop.signal);
-  const refuse = (res) => { langStop.abort(); return res; };
+  const refuse = res => res;
 
   // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
   if (env.DB) {
@@ -862,20 +992,31 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
   const stop = new AbortController();
+  const stopRequest = () => stop.abort();
+  if (request.signal.aborted) stop.abort();
+  else request.signal.addEventListener('abort', stopRequest, { once: true });
   const pageStop = new AbortController();
   const stopPages = () => pageStop.abort();
   stop.signal.addEventListener('abort', stopPages, { once: true });
   const stream = new ReadableStream({
     cancel() { log('client', 'cancelled'); stop.abort(); },
-    async start(controller) {
+    start(controller) {
       const enc = new TextEncoder();
       let closed = false;
       const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
       const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
 
-      try {
+      ctx.waitUntil((async () => { try {
         // 出力の言語（3人格・統合・討議の判定・タイトル・予測の全部に同じものを付ける）
-        langNote = await langPromise;
+        const classified = await withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
+          profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
+          seed, replyLanguage, uiLanguage, fallback: langNote,
+        }, signal, log), stop.signal);
+        if (stop.signal.aborted) throw searchFailure('cancelled');
+        langNote = classified.langNote;
+        const classification = classified.classification;
+        if (newContract) send('classification', classification);
+        const shortDebate = newContract && ['site', 'music'].includes(classification.intent);
         const history = messages.slice(0, -1);
         const lastContent = messages[messages.length - 1].content;
         // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
@@ -902,13 +1043,14 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         // サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
         // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
         const searchOn = env.SITE_SEARCH_ENABLED === 'true';
-        const wantPages = wantSitePages && searchOn && env.DB && lastUser.trim();
-        const indexPromise = searchOn && (page || wantPages) ? getSitePages(ctx, 'ja', pageStop.signal).catch(() => null) : null;
+        const allowPages = !newContract || (entry !== 'dj-request' && classification.intent !== 'music' && classification.site_pages !== 'no' && wantSitePages);
+        const wantPages = allowPages && wantSitePages && searchOn && env.DB && lastUser.trim();
+        const indexPromise = searchOn && (!newContract || env.DB) && ((allowPages && page) || wantPages) ? getSitePages(ctx, 'ja', pageStop.signal).catch(() => null) : null;
         const cards = await cardsPromise;
         // サイト案内（画面が page を送ったときだけ）。3人格を長く待たせないよう、索引は短い期限で待つ。
         // 取れなければ一覧なしで、場面の説明だけを足す
         let guide = null;
-        if (page) {
+        if (page && (!newContract || classification.intent !== 'music')) {
           let pages = null;
           try { pages = await searchDeadline(SITE_GUIDE.wait_ms, () => indexPromise, stop.signal); } catch (_) {}
           if (stop.signal.aborted) throw searchFailure('cancelled');
@@ -920,148 +1062,25 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (wantPages) {
           const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
           pagesPromise = (async () => {
-            const locale = /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
+            const locale = newContract ? classification.reply_language.code === 'ja' ? 'ja' : 'en'
+              : /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
             // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
             if (!await indexPromise) throw searchFailure('list_fetch');
             const pages = await getSitePages(ctx, locale, pageStop.signal);
             return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true, current: guide && guide.current,
+              purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
               signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
           })().catch(() => { log('site_search', 'omitted'); return null; });
         }
 
-        // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
-        const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
-        if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
-
-        // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-        const personas = PERSONAS.map(p => withCard(p, cards))
-          .map(p => guide ? { ...p, system_prompt: `${p.system_prompt}\n\n${guide.persona}` } : p)
-          .map(p => ({ ...p, system_prompt: withLangNote(p.system_prompt, langNote) }));
-
-        // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
-        // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
-        const absent = (p, round, reason) => {
-          log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
-          send('persona', { round, codename: p.codename, name: p.name, text: PERSONA_ABSENT, absent: true });
-        };
-
-        // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
-        // 各人格の意見は回ごとに views（[{ round, text, ask }]）へ積む。最後の要素がいまの考え
-        const debateStarted = Date.now();
-        log('persona_call', 'round1 start');
-        const r1 = await withTimeout(personaTimeoutMs, signal =>
-          Promise.allSettled(personas.map(async (p) => {
-            // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
-            const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(lastContent)), signal, log, 1, personaTemp);
-            send('persona', { round: 1, codename: p.codename, name: p.name, text });
-            return { ...p, r1: text, views: [{ round: 1, text }] };
-          })), stop.signal);
-        const opinions = [];
-        r1.forEach((r, i) => {
-          if (r.status === 'fulfilled') { opinions.push(r.value); return; }
-          absent(personas[i], 1, r.reason);
-          absent(personas[i], 2);
-        });
-        // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
-        if (!opinions.length) throw r1[0].reason;
-        log('persona_call', 'round1 ok', `personas=${opinions.length}`);
-
-        // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
-        // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
-        log('persona_call', 'round2 start');
-        await withTimeout(personaTimeoutMs, signal =>
-          Promise.all(opinions.map(async (p) => {
-            const others = opinions.filter(o => o.codename !== p.codename)
-              .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
-            if (!others) { absent(p, 2); return; }
-            // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
-            const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
-            try {
-              const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
-              p.views.push({ round: 2, text });
-              send('persona', { round: 2, codename: p.codename, name: p.name, text });
-            } catch (e) { absent(p, 2, e); }
-          })), stop.signal);
-        log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
-
-        // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
-        // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
-        // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
-        const maxRounds = adaptive ? DEBATE.max_rounds : 2;
-        let assessment = '', lastRound = 2;
-        for (let round = 3; round <= maxRounds && !stop.signal.aborted; round++) {
-          if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
-          const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: DEBATE.system_prompt(round - 1, maxRounds) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
-          const verdict = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
-            system: judgeSystem, input: judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename),
-          }, signal, log), stop.signal);
-          if (verdict && verdict.assessment) assessment = verdict.assessment;
-          log('debate', `after r${round - 1}`, !verdict ? 'judge failed' : verdict.questions.length ? `ask ${verdict.questions.map(q => q.target).join(',')}` : 'answer');
-          // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
-          if (!verdict || !verdict.questions.length) { send('judge', { round: round - 1, action: 'answer' }); break; }
-          // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
-          const asked = verdict.questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
-          send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });
-          await withTimeout(personaTimeoutMs, signal =>
-            Promise.all(asked.map(async ({ p, ask }) => {
-              const own = p.views.map(v => `${viewLabel(v)}: ${v.text}`).join('\n');
-              const others = opinions.filter(o => o.codename !== p.codename)
-                .map(o => `- ${o.name}（${o.codename}）: ${o.views[o.views.length - 1].text}`).join('\n');
-              const qmsg = `${lastUser}\n\n[あなたのこれまでの意見]\n${own}`
-                + (others ? `\n\n[他の人格のいまの意見]\n${others}` : '')
-                + `\n\n[3人の議論をまとめる Shinya Takeda から、あなたへの問い（第${round}回）]\n${ask}`
-                + '\n\n[この問いに、自分の関心と価値観から答えよ。考えが変わったなら変わったと言い、変わらないなら理由を足す。これまでの意見の繰り返しは避ける]';
-              try {
-                const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
-                p.views.push({ round, text, ask });
-                send('persona', { round, codename: p.codename, name: p.name, text });
-              } catch (e) { absent(p, round, e); }
-            })), stop.signal);
-          lastRound = round;
-        }
-
-        // --- 統合コール（推論あり・stream）---
-        // 判定のメモ（一致・対立とその扱い）と、上限で打ち切ったことも添える
-        const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
-          + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
-          + (adaptive && lastRound === maxRounds ? `\n\n[討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える]` : '');
-        // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
-        const bias = theme ? SYNTH_BIAS[theme] : null;
-        if (bias) log('synthesizer_call', 'bias', theme);
         let pageChoice = null;
-        if (pagesPromise) {
-          try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, stop.signal); }
-          catch (_) { pageStop.abort(); }
-          if (stop.signal.aborted) throw searchFailure('cancelled');
+        if (newContract && classification.intent === 'site' && pagesPromise) {
+          pageChoice = await pagesPromise || { status: 'failed', results: [], daily: null };
+          pagesPromise = null;
         }
-        // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
-        if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
-        const hasPages = pageChoice && (pageChoice.results.length || pageChoice.daily);
-        const synthMessages = [
-          // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
-          { role: 'system', content: withCard(SYNTHESIZER, cards, PERSONA_CONTEXT.synth_header).system_prompt },
-          ...(bias ? [{ role: 'system', content: bias }] : []),
-          ...(guide ? [{ role: 'system', content: guide.synth }] : []),
-          ...(hasPages ? [{ role: 'system', content: SITE_SEARCH.synth_header + '\n' + JSON.stringify({
-            pages: pageChoice.results.map(({ title, description }) => ({ title, description })),
-            daily: pageChoice.daily ? { media: pageChoice.daily.media, query: pageChoice.daily.query } : null,
-          }) }] : []),
-          ...history,
-          { role: 'user', content: withImages(noteLang(augmented), lastImages) },
-        ];
-
-        const answer = await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async (signal) => {
-          log('synthesizer_call', 'start');
-          const synthRes = await callModel({ env: upstream, cfg: DEFAULTS.models.synthesizer, stream: true, signal, messages: synthMessages });
-          if (!synthRes.ok) {
-            const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
-            throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
-          }
-
-          return readSynthesis(synthRes.body, send);
-        }, stop.signal);
-        log('synthesizer_call', 'ok');
-        if (hasPages && !stop.signal.aborted) send('pages', chatPageEvent(pageChoice));
+        const answer = await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,
+          adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, music: newContract && classification.intent === 'music',
+          signal: stop.signal, send, log });
         // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
         if (wantSuggest) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
@@ -1089,7 +1108,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
       } finally {
         pageStop.abort();
         stop.signal.removeEventListener('abort', stopPages);
-      }
+        request.signal.removeEventListener('abort', stopRequest);
+      } })());
     },
   });
 
@@ -1144,7 +1164,14 @@ export default {
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
-    if (isSiteSearch) return handleSiteSearch(request, env, ctx, context);
-    return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
+    // 入力・IPを含まないGeminiの試行数と429だけをUTC日単位で記録。記録失敗で回答を止めない。
+    const usageEnv = Object.assign(Object.create(env), { recordGoogleUsage(purpose, state) {
+      if (!env.DB) return;
+      const task = countUp(env.DB, `usage:google:${purpose}:${state}`, new Date().toISOString().slice(0, 10), Number.MAX_SAFE_INTEGER)
+        .catch(() => log('model_usage', 'record_failed', purpose, state));
+      ctx.waitUntil(task);
+    } });
+    if (isSiteSearch) return handleSiteSearch(request, usageEnv, ctx, context);
+    return isReaction ? handleReaction(request, env, context) : handleChat(request, usageEnv, ctx, context);
   },
 };

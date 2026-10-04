@@ -37,3 +37,7 @@ npx wrangler deploy --config dj-request/wrangler.toml
 `node .github/scripts/test-dj-transitions.mjs`で、実曲テストの入力・質問・結果との一致、DBキャッシュ・同時実行・予算・失敗時処理、ブースの順位更新を確認する。Node 22.13以上の組み込みSQLiteを使い、外部API・本番DBには接続しない。
 
 承認された実曲再テストの結果は`dj/booth/jev-evaluation.md`。比較用の旧NEXTは`.github/scripts/fixtures/dj-next-rule.js`に保存しており、本番の順位計算では使わない。
+
+## AI相談のローカル確認
+
+受付Workerとmagi2を両方起動し、localhostページの `?api=http://localhost:8787&req_api=http://localhost:8788` で接続する。受付Workerの非追跡 `.dev.vars` だけ `DJ_LOCAL_DEV="true"` にし、`wrangler dev` へ `--local-upstream localhost:8788` を付ける。DB初期化・イベント作成・Origin条件はmagi2のREADMEとルートの検証計画3節に従う。本番の設定はfalseで維持する。

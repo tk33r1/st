@@ -4,7 +4,7 @@ AI APIで使うモデルID・画面の表示名の正本は `config/ai-models.js
 各設定はAPIに送るモデルID `id` と、画面用の名称 `display_name` を必ず持つ。
 3社とも画面は `display_name` を使い、APIには `id` を送る。
 実運用で直接モデルを選ぶプロバイダーは OpenAI・DeepSeek・Google（Gemini）の3社と、magi2 の言語の判定に使う
-TypeSafe AI（Jev。magi2の言語判定、日刊ニトリのSNS採否、日刊ニトリ・リテールテックのニュース採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
+TypeSafe AI（Jev。magi2の発言分類・初回言語判定、日刊ニトリのSNS採否、日刊ニトリ・リテールテックのニュース採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 Jev はモデル一覧の API が無く、`jev-latest` は版を追う固定のエイリアスなので、更新の監視はせずスモークテストだけを行う（`PROVIDERS` の `watch: False`）。
 
@@ -58,13 +58,13 @@ PR本文にも同じ手順を出す。
 | OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
 | OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問）。同じ呼び方の magi2 のタイトル要約と次の質問の予測もここで代表させる |
 | OpenAI | 推論 medium・ストリーミング | magi2 の統合（上位モデルでは組織認証を求められることがある） |
-| OpenAI | Chat Completions・推論なし・temperature 0.4・strictなJSONスキーマ（nullableな日刊検索）、300／120トークン | 404のAI検索・MAGIチャットのサイト案内。本番の `SITE_SEARCH` を読み、両スキーマと `daily` のnull／オブジェクトを試す |
+| OpenAI | Chat Completions・推論なし・temperature 0.4・strictなJSONスキーマ（nullableな日刊検索）、120トークン | 404とチャットの共通ページ選択。本番の `SITE_SEARCH` を読み、`daily` のnull／オブジェクトを試す |
 | OpenAI | 推論 low（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定。本番の `DEBATE` を読む |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成（OpenAI が失敗したときのフォールバック） |
 | DeepSeek | 推論なし（`thinking` disabled）・temperature 1.3・top_p・画像入力 | magi2 の Enthusiast |
 | Google | 推論 minimal（Gemini 3 系は切れない）・temperature 1.3・top_p・画像入力 | magi2 の Humanist |
-| TypeSafe | System One API の choice 質問。本番の `LANGUAGE_DETECT` の指示と選択肢で、英字の混ざった日本語・日本語の名前を含む英語・前の発言を引き継ぐ「OK」の3通りが正しく判定されるか | magi2 の言語の判定 |
+| TypeSafe | System One API の choice 質問。本番の `INTENT_CLASSIFY` と共通の組立てで初回4問・継続3問・DJ初回1問・旧画面1問を確認。答えの形と明確な例のchoiceを検査し、確信度の閾値は品質評価で確認する | magi2 の発言分類・初回言語判定と旧画面の互換経路 |
 | TypeSafe | System One APIのnoul質問。本番の `nitori_social_filter.py` の採否基準で、テレビ台・通常の贈り物を採用し、PR・株を除外できるか | 日刊ニトリのX・TikTok内容判定 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` の採否基準で、食品売り場の技術導入と英語の店舗技術記事を採用し、食品紹介のみ・一般AI記事を除外できるか | 日刊リテールテックの国内・海外ニュース候補 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` のニトリ用採否基準で、英語の出店・N＋を採用し、投資推奨・同名別物を除外できるか（ブランド名救済前の判定） | 日刊ニトリの国内・海外ニュース候補 |
@@ -101,3 +101,5 @@ python .github/scripts/ai_models.py smoke
 認証環境変数・URL・チャネルの版番号パターン・スモークテストを追加する。
 モデル一覧を提供しない会社は、公式の変更履歴を機械取得できるか確認し、できなければ自動更新の
 対象にせず、停止予定を人間が確認する運用にする。
+
+MAGIのJev smokeは `magi-search-config.mjs` が本番と同じ `INTENT_CLASSIFY` と `classificationPayload` から初回4問・継続3問・DJと旧画面の言語1問を組み立てる。回答の形と明確なケースのchoiceを検査し、確信度の閾値は品質評価で確認する。404とチャットのページ選択はcommentを含まない共通スキーマを使う。

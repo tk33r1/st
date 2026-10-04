@@ -214,25 +214,22 @@ def smoke_openai_debate_judge(url, api_key, model, config):
 
 def smoke_openai_site_search(url, api_key, model, config):
     """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
-    for mode in ('search', 'chat'):
-        # nullableなdailyの両側を試し、strict+anyOfを実際に受け付けることを確認する。
-        for daily in (None, {'media': 'nitori', 'query': '出店'}):
-            expected = {'selections': ['tool:7'], 'daily': daily}
-            if mode == 'search':
-                expected['comment'] = 'PDF Studioでまとめられます。'
-            response = post_json(url, api_key, {
-                'model': model, 'stream': False, 'store': False,
-                'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
-                'reasoning_effort': config['model']['reasoning_effort'],
-                'temperature': config['temperature'], 'top_p': config['top_p'],
-                'max_completion_tokens': config['model']['max_tokens'] if mode == 'search' else config['chat_max_tokens'],
-                'response_format': config['formats'][mode],
-            })
-            choice = response.get('choices', [{}])[0]
-            if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-                raise RuntimeError('サイト案内の応答が正常完了しませんでした')
-            if json.loads(message_content(response)) != expected:
-                raise RuntimeError('サイト案内のスキーマ疎通で期待した応答が得られませんでした')
+    # nullableなdailyの両側を試し、strict+anyOfを実際に受け付けることを確認する。
+    for daily in (None, {'media': 'nitori', 'query': '出店'}):
+        expected = {'selections': ['tool:7'], 'daily': daily}
+        response = post_json(url, api_key, {
+            'model': model, 'stream': False, 'store': False,
+            'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
+            'reasoning_effort': config['model']['reasoning_effort'],
+            'temperature': config['temperature'], 'top_p': config['top_p'],
+            'max_completion_tokens': config['chat_max_tokens'],
+            'response_format': config['formats']['chat'],
+        })
+        choice = response.get('choices', [{}])[0]
+        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+            raise RuntimeError('サイト案内の応答が正常完了しませんでした')
+        if json.loads(message_content(response)) != expected:
+            raise RuntimeError('サイト案内のスキーマ疎通で期待した応答が得られませんでした')
 
 
 OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
@@ -318,24 +315,19 @@ def smoke_google(url, api_key, model):
 
 
 def smoke_typesafe(url, api_key, model):
-    """言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
-    config = magi_config()['language']
-    cases = [
-        ({'earlier_messages': [], 'latest_message': '今週末、ツーリングとDJの練習、どっちに時間を使うべき？'}, 'ja'),
-        ({'earlier_messages': [], 'latest_message': 'What do you think of サカナクション?'}, 'en'),
-        ({'earlier_messages': ['DJを始めたいんだけど何を買えばいい？'], 'latest_message': 'OK'}, 'ja'),
-    ]
-    for state, expected in cases:
-        body = post_json(url, api_key, {
-            'model': model, 'state': state,
-            'questions': {'language': {'type': 'choice', 'instructions': config['instructions'], 'criteria': config['criteria']}},
-        })
-        try:
-            choice = body['answers']['language']['choice']
-        except (KeyError, TypeError) as e:
-            raise RuntimeError(f'判定の答えを取得できません: {str(body)[:500]}') from e
-        if choice != expected:
-            raise RuntimeError(f'言語の判定が {expected} ではなく {choice} でした: {state["latest_message"]}')
+    """複数問の分類と言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
+    config = magi_config()
+    for case in config['classify_smoke']:
+        payload = {**case['payload'], 'model': model}
+        body = post_json(url, api_key, payload)
+        for name, question in payload['questions'].items():
+            answer = body.get('answers', {}).get(name, {})
+            confidence = answer.get('confidence')
+            if answer.get('choice') not in question['criteria'] or not isinstance(confidence, (int, float)) or isinstance(confidence, bool) or not (0 <= confidence <= 1):
+                raise RuntimeError(f'Jevの{name}回答の形式が不正です')
+        for name, expected in case['expected'].items():
+            if body['answers'][name]['choice'] != expected:
+                raise RuntimeError(f'Jevの{name}が明確なケースの期待値と異なります')
     from nitori_social_filter import MIN_PROBABILITY, parse_probability, request_payload
     social_cases = [
         ('ニトリのテレビ台を買った。配線が隠せて便利！', True),

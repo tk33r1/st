@@ -116,7 +116,7 @@
               "name": "AIへ相談した内容は、どこに送られますか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。返答の言語を決めるため、相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
+                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話の最初に返答の言語を決めるため、最初の相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
               }
             },
             {
@@ -1679,7 +1679,7 @@
     <div class="dj-modal__body ai-info-card">
       <ul>
         <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
-        <li>返答の言語を決めるため、直近の相談文だけを <strong>TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します（リクエスト状況は送りません）。同社は API の入力をモデルの学習に利用しないとしています。</li>
+        <li>返答の言語を決めるため、会話の最初の相談文だけを <strong>TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します（リクエスト状況は送りません）。同社は API の入力をモデルの学習に利用しないとしています。</li>
         <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
         <li>1日の利用上限のため、<strong>IP アドレス</strong>を日ごとの回数としてデータベースに記録します（相談の中身は記録しません）。</li>
         <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
@@ -1730,7 +1730,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">AIへ相談した内容は、どこに送られますか？</summary>
           <div class="request-faq-answer">
-            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。返答の言語を決めるため、相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
+            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話の最初に返答の言語を決めるため、最初の相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
           </div>
         </details>
         <details class="request-faq-item">
@@ -1779,7 +1779,17 @@
   <script src="../../dj/assets/dj-request-core.js?v=20261002"></script>
   <script src="./catalog.js?v=20261001"></script>
   <script>
-    const API = '/dj/api/req';
+    function localApiOrigin(name, fallback) {
+      if (!['http:', 'https:'].includes(location.protocol) || location.hostname !== 'localhost') return fallback;
+      var raw = new URLSearchParams(location.search).get(name);
+      if (!raw) return fallback;
+      try {
+        var url = new URL(raw);
+        return ['http:', 'https:'].includes(url.protocol) && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+          && url.pathname === '/' && !url.username && !url.password && !url.search && !url.hash ? url.origin : fallback;
+      } catch (_) { return fallback; }
+    }
+    const API = localApiOrigin('req_api', '') + '/dj/api/req';
     const {
       $, $$, appleHref, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs,
       hhmm, storage, ymd,
@@ -2951,7 +2961,7 @@
        先に流れ、続いて統合された「Shinya Takeda」の回答が delta で届く。人格の
        プロンプトは Worker 側にあるので、DJ の文脈（イベント名・かかった曲・
        得意ジャンル）は送る窓の最初のユーザー発言の前置きとして渡す。 */
-    const MAGI_API = 'https://workers.tk.st/magi2/chat';
+    const MAGI_API = localApiOrigin('api', 'https://workers.tk.st') + '/magi2/chat';
     /* Worker は段階（初回・討議・判定・統合）が終わるまで何も送らないので、いちばん長い
        統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る。
        討議の回数は統合人格の判定で最大5回まで増える（同 DEBATE）が、回ごとに何か届くので延びない */
@@ -3040,17 +3050,57 @@
 
     /* SSE を event / data ブロックに切り分けて handlers に流す。
        onChunk は本文のかたまりが届くたびに呼ぶ（無通信の見張りを延ばすため） */
-    async function parseSSE(body, handlers, onChunk) {
+    // AGENT_CLASSIFY_BEGIN
+var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
+function cleanReplyLanguage(v) {
+  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
+  if (v.code === 'other') {
+    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
+      || /[<>\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
+  }
+  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
+    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
+  return { version: 1, code: v.code, source: v.source };
+}
+function classificationFields(history, language, ui, entry) {
+  var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
+  var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
+  var seed = text.slice(0, 500);
+  if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
+  var state = cleanReplyLanguage(language);
+  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
+    entry === 'dj-request' ? {} : { magi_panel: false },
+    state ? { reply_language: state } : { language_seed: seed });
+}
+function receiveClassification(state, ev, d) {
+  if (ev === 'title' || ev === 'error') return;
+  if (ev === 'classification') {
+    var language = cleanReplyLanguage(d && d.reply_language);
+    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
+      || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
+      || d.magi_candidate !== false || !language
+      || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
+    state.classified = true; state.language = language;
+  } else {
+    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
+    state.started = true;
+  }
+}
+// AGENT_CLASSIFY_END
+async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false;
+      const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null };
       const block = (text) => {
         let ev = 'message', data = '';
         text.split('\n').forEach(line => {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
+        receiveClassification(classificationState, ev, parsed);
         if (handlers[ev]) handlers[ev](parsed);
         return ev === 'done' || ev === 'error';
       };
@@ -3212,6 +3262,7 @@
       /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
          ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
+      const sendConversation = conv || (conv = newConsult(content));
       chatCtrl = ctrl;
       ctrl.signal.addEventListener('abort', () => thinking.cancel(), { once: true });
       let timedOut = false, to = null;
@@ -3221,13 +3272,13 @@
       };
       watch();
       const bodyEl = turn.querySelector('.ab');
-      let reply = '', failure = null, suggestion = '', completed = false;
+      let reply = '', failure = null, suggestion = '', completed = false, classified = false;
 
       try {
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true, adaptive_debate: true }),
+          body: JSON.stringify(Object.assign({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true, adaptive_debate: true }, classificationFields([{ role: 'user', content: sendConversation.first || content }], sendConversation.reply_language, 'ja', 'dj-request'))),
           signal: ctrl.signal,
         });
         watch();
@@ -3237,11 +3288,14 @@
           failure = (env && env.message) || '相談できませんでした（HTTP ' + res.status + '）。';
         } else {
           await parseSSE(res.body, {
+            replyLanguage: cleanReplyLanguage(sendConversation.reply_language),
+            classification: d => { if (conv === sendConversation && chatCtrl === ctrl) { classified = true; sendConversation.reply_language = cleanReplyLanguage(d.reply_language); storeConsult(sendConversation); } },
             persona: (d) => {
               const card = turn.querySelector('.pcard[data-cn="' + String(d.codename || '').replace(/"/g, '') + '"]');
               if (!card) return;
               const round = Number(d.round) || 1;
-              if (round >= 2) card.classList.remove('thinking');
+              if (round >= 2 || d.absent) card.classList.remove('thinking');
+              if (classified && d.absent && round === 1) roundSlot(card, 2)?.remove();
               // 討議に加われなかった回は枠を出さない。初回で失敗したなら初回の枠に印が出ているし、
               // 討議だけ抜けたなら前の回の意見がそのまま統合に使われている。聞き返した回は問いの枠ごと外す
               if (d.absent && round >= 2) { if (round >= 3) roundSlot(card, round)?.remove(); return; }
@@ -3266,7 +3320,7 @@
               turn.querySelector('details.debate summary').textContent = '統合人格が聞き返しています…（第' + round + '回）';
               chatScroll();
             },
-            integrated: (d) => { reply += d.delta || ''; if (reply.trim()) thinking.finish(); bodyEl.textContent = reply; chatScroll(); },
+            integrated: (d) => { turn.querySelectorAll('.pcard.thinking').forEach(c => c.classList.remove('thinking')); reply += d.delta || ''; if (reply.trim()) thinking.finish(); bodyEl.textContent = reply; chatScroll(); },
             // 次の相談の予測。回答が最後まで届いたときだけ使う（下の成功の分岐）
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
             done: () => { completed = true; },
@@ -3383,13 +3437,13 @@
           id: typeof t.id === 'string' && t.id ? t.id : c.id + '-' + i,
           picks: validPicks(t.picks) ? t.picks : null,
         }));
-      return { ...rest, turns };
+      return { ...rest, turns, reply_language: cleanReplyLanguage(c.reply_language) };
     }
 
     const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
       .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns))
       .map(normalizeConsult)
-      .filter((c) => c.turns.length);
+      .filter((c) => c.turns.length || c.reply_language);
 
     // 件数と文字数の上限に収めて書く。入り切らなければ古い会話から捨てる（最新の1件は残す）
     function writeConsults(list) {
@@ -3453,7 +3507,7 @@
       [card.dataset.cn, [
         ...[1, 2].map((r) => {
           const slot = roundSlot(card, r);
-          return slot.hidden ? null : slot.querySelector('.px').textContent;
+          return !slot || slot.hidden ? null : slot.querySelector('.px').textContent;
         }),
         ...[...card.querySelectorAll('.pr')].filter((slot) => Number(slot.dataset.round) >= 3).map((slot) => ({
           round: Number(slot.dataset.round), ask: slot.querySelector('.pa').textContent, text: slot.querySelector('.px').textContent,

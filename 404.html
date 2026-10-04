@@ -154,7 +154,7 @@
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
         <span id="ai-thinking" hidden></span>
         <div class="ai-disclosure-row">
-          <p class="ai-disclosure" data-ja="検索語とサイトのページ一覧を OpenAI に送ります。押すまで送信しません。" data-en="Your search and the site's page list are sent to OpenAI only when you press the button."></p>
+          <p class="ai-disclosure" data-ja="検索語と必要な公開ページ情報・人格カードを OpenAI・DeepSeek・Google に送り、3人格が2回討議して答えます。押すまで送信しません。" data-en="When you press the button, your search and relevant public page information and persona cards are sent to OpenAI, DeepSeek and Google for two rounds of discussion."></p>
           <button type="button" class="ai-info" id="ai-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
           </button>
@@ -210,7 +210,9 @@
         <h2 id="ai-info-title" data-ja="AI検索とプライバシー" data-en="AI search and privacy">AI検索とプライバシー</h2>
         <button type="button" class="ai-info-close" id="ai-info-close" aria-label="閉じる" autofocus><span aria-hidden="true">×</span></button>
       </div>
-      <p id="ai-info-text" data-ja="検索語と公開済みのページ一覧・自己像カードをOpenAI APIへ送ります。APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, the public page list, and a public self-image card are sent to the OpenAI API. API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
+      <p id="ai-info-text" data-ja="検索語と必要な公開ページ情報・人格カードをOpenAI・DeepSeek・Google GeminiのAPIへ送ります。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。DeepSeekは中国のサーバーに保存し学習に使うことがあります。Google Geminiの無料枠では製品改善・学習に利用され、人が読むことがあります。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, relevant public page information, and public persona cards are sent to the OpenAI, DeepSeek and Google Gemini APIs. OpenAI API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. DeepSeek stores data on servers in China and may use it for training. Google Gemini free-tier inputs may be used to improve products and train models, and reviewed by humans. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
+      <p class="ai-disclosure" data-ja="AI検索は全利用者で共有する1日の上限があります。ご自身の上限に達していなくても利用できない場合があります。通常検索は引き続き使えます。" data-en="AI search has a shared daily limit. It may be unavailable even if you have not reached your own limit. Regular search remains available."></p>
+      <p><a href="https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html">DeepSeek privacy</a> · <a href="https://ai.google.dev/gemini-api/terms">Google Gemini terms</a></p>
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
     </div>
   </dialog>
@@ -508,17 +510,22 @@
         ac.signal.addEventListener('abort', function () { thinking.cancel(); }, { once: true });
         var answered = false;
         var timer;
-        var expired = new Promise(function (_, reject) { timer = setTimeout(function () { ac.abort(); reject(new Error('Timeout')); }, 15000); });
+        var expired = new Promise(function (_, reject) { timer = setTimeout(function () { ac.abort(); reject(new Error('Timeout')); }, 165000); });
         byId('ai-run').disabled = true; byId('ai-cancel').hidden = false; byId('ai-result').hidden = true;
         setAIStatus(aiText.thinking, true);
         send('not_found_ai_used');
         try {
           var origin = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://workers.tk.st';
-          var res = await Promise.race([fetch(origin + '/magi2/site-search', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          var res = await Promise.race([fetch(origin + '/magi2/site-search?site_debate=1', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify({ query: query, locale: lang }) }), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!res.ok) {
-            setAIStatus(res.status === 429 ? aiText.limited : aiText.unavailable);
+            var errorBody = await Promise.race([res.json().catch(function () { return {}; }), expired]);
+            if (generation !== ai.generation || ac.signal.aborted) return;
+            var code = errorBody.error && errorBody.error.code;
+            setAIStatus(code === 'site_search_update_required' ? (lang === 'ja' ? 'ページを再読み込みしてください。' : 'Please reload this page.')
+              : code === 'global_daily_limit_exceeded' ? (lang === 'ja' ? 'AI検索の共有上限に達しました。通常検索は引き続き使えます。' : 'The shared daily AI search limit has been reached. Regular search remains available.')
+              : res.status === 429 ? aiText.limited : aiText.unavailable);
             send('not_found_ai_result', { status: res.status === 429 ? 'limited' : 'error', count: 0 });
             if (res.status === 429) byId('ai-run').disabled = true;
             return;

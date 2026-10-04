@@ -1,4 +1,4 @@
-import { SITE_GUIDE, SITE_SEARCH, SYNTHESIZER } from './personas.js';
+import { SITE_GUIDE, SITE_SEARCH } from './personas.js';
 
 // 例外に入力や上流の本文を含めない。公開エラーとログは呼び出し側で固定文にする。
 export const searchFailure = (code = 'unavailable') => Object.assign(new Error('Site search unavailable'), { searchCode: code });
@@ -153,22 +153,21 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
 }
 
 // current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
-export async function selectSitePages({ query, locale, pages, cards, chat = false, current = null, call, signal, log }) {
+export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, call, signal, log }) {
   pages = shortlistSitePages(pages, query);
-  const system = SITE_SEARCH.system_prompt + '\n' + (chat ? SITE_SEARCH.chat_prompt : SITE_SEARCH.comment_prompt)
-    + '\n【公開ページ一覧：JSONの各行はデータ】\n' + pages.map(candidateLine).join('\n')
-    + (!chat && cards?.[SYNTHESIZER.codename] ? '\n' + SITE_SEARCH.card_header + '\n' + cards[SYNTHESIZER.codename] : '');
+  const system = SITE_SEARCH.system_prompt + '\n' + (purpose === 'requested' ? SITE_SEARCH.requested_prompt : SITE_SEARCH.chat_prompt)
+    + '\n【公開ページ一覧：JSONの各行はデータ】\n' + pages.map(candidateLine).join('\n');
   return searchDeadline(SITE_SEARCH.ai_timeout_ms, async s => {
-    const res = await call({ cfg: { ...SITE_SEARCH.model, max_tokens: chat ? SITE_SEARCH.chat_max_tokens : SITE_SEARCH.model.max_tokens },
+    const res = await call({ cfg: { ...SITE_SEARCH.model, max_tokens: SITE_SEARCH.chat_max_tokens },
       messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify({ query, locale, ...(current ? { current_page: current } : {}) }) }], stream: false,
-      temperature: SITE_SEARCH.temperature, response_format: SITE_SEARCH.formats[chat ? 'chat' : 'search'], signal: s });
+      temperature: SITE_SEARCH.temperature, response_format: SITE_SEARCH.formats.chat, signal: s });
     if (!res.ok) throw searchFailure('upstream');
     const body = await res.json();
     const choice = body.choices?.[0];
     if (choice?.finish_reason !== 'stop' || choice.message?.refusal || typeof choice?.message?.content !== 'string' || !choice.message.content.trim()) throw searchFailure('invalid_output');
     let value;
     try { value = JSON.parse(choice.message.content); } catch (_) { throw searchFailure('invalid_output'); }
-    const result = validateSiteChoice(value, pages, locale, chat);
+    const result = validateSiteChoice(value, pages, locale, true);
     const tokens = body.usage?.total_tokens;
     log('site_search', result.status, result.results.length, 'tokens', Number.isFinite(tokens) && tokens >= 0 ? tokens : 0);
     return result;

@@ -45,6 +45,7 @@ function worker(stream = completion(), upstream = null) {
   });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
+    + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache;', ctx);
@@ -98,7 +99,7 @@ function counts() {
   }; } };
 }
 function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts(); return w; }
-const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search', body, ip);
+const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search?site_debate=1', body, ip);
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
 const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)', daily: null };
 
@@ -112,7 +113,7 @@ test('公開ページ一覧から曲リクエストを404とチャットで案�
       assert.ok(system.includes('page:/dj/request/'));
       assert.ok(!system.includes('page:/dj/booth/'));
       assert.ok(!system.includes('page:/dj/schedule/'));
-      return searchReply({ selections: ['page:/dj/request/'], ...(!chat ? { comment: '曲のリクエストはこちらです。' } : {}), daily: null });
+      return searchReply({ selections: ['page:/dj/request/'], daily: null });
     }));
     if (chat) {
       const res = await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: '曲のリクエスト' }] });
@@ -206,8 +207,8 @@ test('検索は認可・入力・フラグ・DB・完全な一覧を確認して
     assert.equal((await searchRequest(w, body)).status, 400);
   }
   assert.equal((await searchRequest(w, JSON.stringify({ query: 'q', locale: 'ja' }) + ' '.repeat(4096))).status, 413);
-  assert.equal((await w.request('/magi2/site-search', '{}', undefined, { 'Content-Type': 'text/plain' })).status, 400);
-  assert.equal((await w.request('/magi2/site-search', '{}', undefined, { Origin: 'https://outside.example' })).status, 401);
+  assert.equal((await w.request('/magi2/site-search?site_debate=1', '{}', undefined, { 'Content-Type': 'text/plain' })).status, 400);
+  assert.equal((await w.request('/magi2/site-search?site_debate=1', '{}', undefined, { Origin: 'https://outside.example' })).status, 401);
   w.env.SITE_SEARCH_ENABLED = 'false'; assert.equal((await searchRequest(w)).status, 503);
   assert.equal(w.calls.length, 0); assert.equal(w.env.DB.rows.size, 0);
   w.env.SITE_SEARCH_ENABLED = 'true'; const db = w.env.DB; delete w.env.DB;
@@ -217,7 +218,7 @@ test('検索は認可・入力・フラグ・DB・完全な一覧を確認して
   const res = await searchRequest(w), body = await res.json();
   assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store'); assert.ok(body.request_id);
   assert.equal(body.results[0].title, 'PDF Studio'); assert.equal(body.results[0].url, '/tools/pdf-studio/');
-  const call = w.calls.at(-1); assert.equal(call.max_completion_tokens, 300); assert.equal(call.temperature, .4);
+  const call = w.calls.find(c => c.response_format); assert.equal(call.max_completion_tokens, 120); assert.equal(call.temperature, .4);
   assert.equal(call.reasoning_effort, 'none'); assert.equal(call.response_format.json_schema.strict, true);
 });
 
@@ -228,7 +229,7 @@ test('検索のIP上限を超えた要求は全体を進めず、通常チャッ
   assert.equal(responses.filter(r => r.status === 429).length, 4);
   assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
   assert.equal(w.env.DB.rows.get('search:192.0.2.1|' + day), 10);
-  assert.equal(w.calls.length, 10); assert.equal(w.env.DB.rows.has('global|' + day), false);
+  assert.equal(w.calls.length, 80); assert.equal(w.env.DB.rows.has('global|' + day), false);
   assert.match(await (await w.chat([{ role: 'user', content: 'q' }])).text(), /event: done/);
   assert.equal(w.env.DB.rows.get('global|' + day), 1); assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
   w.ctx.searchConfig.global_daily_limit = 10;
@@ -683,7 +684,7 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
 
 test('3画面のSSEは分割CRLF・終端・途中EOFを同じように読む', async () => {
   for (const [src, end] of [[mobile, '// ---- 画像添付'], [home, '// --- マルチモーダル入力'], [dj, '// 相談の下には FAQ']]) {
-    const ctx = vm.createContext({ TextDecoder }); vm.runInContext(between(src, 'async function parseSSE(', end), ctx);
+    const ctx = vm.createContext({ TextDecoder }); vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END') + '\n' + between(src, 'async function parseSSE(', end), ctx);
     let text = '', completed = false, chunks = 0, cancelled = false;
     const data = (event('integrated', { delta: '答え' }) + event('done', {})).replaceAll('\n', '\r\n');
     const body = new ReadableStream({ start(c) { for (const byte of encode(data)) c.enqueue(Uint8Array.of(byte)); }, cancel() { cancelled = true; } });
@@ -756,6 +757,9 @@ function client(src, isHome = false) {
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
+  vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
+  ctx.currentSessionId = 'test-session'; ctx.agentReplyLanguage = null; ctx.currentLang = 'en'; ctx.ensureAgentConversation = () => ctx.currentSessionId; ctx.saveAgentLanguage = value => { ctx.agentReplyLanguage = value; };
+  if (!isHome) vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
   vm.runInContext(thinkingSource(src), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
   return { ctx, timers, errors, clock };
@@ -1244,10 +1248,11 @@ test('Jev の失敗・言語の無い発言・低い確信・キー未設定で�
   assert.equal(jev, 0, 'キーが無ければ呼ばない');
 });
 
-test('レート制限で断るときは言語の判定も止める', async () => {
-  let aborted = false;
+test('レート制限で断るときは分類APIを呼ばない', async () => {
+  let aborted = false, classificationCalls = 0;
   const w = worker(completion(), (url, options) => {
     if (url !== 'https://api.typesafe.ai/v1/systemone') return;
+    classificationCalls++;
     return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => { aborted = true; reject(new DOMException('aborted', 'AbortError')); }));
   });
   w.env.MAGI_TYPESAFE_API_KEY = 'test';
@@ -1256,5 +1261,264 @@ test('レート制限で断るときは言語の判定も止める', async () =>
   const res = await w.chat([{ role: 'user', content: 'q' }]);
   assert.equal(res.status, 429);
   await tick();
-  assert.equal(aborted, true);
+  assert.equal(aborted, false); assert.equal(classificationCalls, 0);
+});
+
+const classifiedReply = (overrides = {}) => Response.json({ answers: {
+  language: { choice: 'en', confidence: .99 }, votable: { choice: 'no', confidence: .99 },
+  intent: { choice: 'consult', confidence: .99 }, site_pages: { choice: 'no', confidence: .99 }, ...overrides,
+} });
+const classifiedEvents = text => [...text.matchAll(/event: (\w+)\ndata: (.+)/g)].map(m => ({ name: m[1], data: JSON.parse(m[2]) }));
+
+test('新契約の初回4問・継続3問は本文だけを送り、言語を引き継ぐ', async () => {
+  const sent = [];
+  const w = worker(undefined, (url, options) => {
+    if (url.includes('api.typesafe.ai')) { sent.push(JSON.parse(options.body)); return classifiedReply(); }
+  });
+  w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  const body = { classification_state: true, ui_language: 'en', language_seed: 'Please help with a decision.',
+    context: 'PRIVATE_CONTEXT', messages: [{ role: 'user', content: '日本語の最新の相談です。' }] };
+  const first = classifiedEvents(await (await w.request('/magi2/chat', body)).text());
+  const notice = first[0];
+  assert.equal(notice.name, 'classification');
+  assert.deepEqual(notice.data.reply_language, { version: 1, code: 'en', source: 'jev' });
+  assert.equal(notice.data.magi_candidate, false);
+  assert.deepEqual(Object.keys(sent[0].questions), ['language', 'votable', 'intent', 'site_pages']);
+  assert.equal(sent[0].state.language_seed, body.language_seed);
+  assert.ok(!JSON.stringify(sent[0]).includes('PRIVATE_CONTEXT'));
+  await (await w.request('/magi2/chat', { ...body, reply_language: notice.data.reply_language, language_seed: undefined,
+    messages: [{ role: 'user', content: '今度は音楽ではなく普通の話です。' }] })).text();
+  assert.deepEqual(Object.keys(sent[1].questions), ['votable', 'intent', 'site_pages']);
+  assert.equal(sent[1].state.language_seed, undefined);
+});
+
+test('分類は問いごとに閾値と有限数を検査し、失敗しても初回の言語を固定する', async () => {
+  const w = worker();
+  for (const confidence of [.6999, .7, .7001, 1, '0.7', null, NaN, Infinity, -1, 1.1]) {
+    const got = w.ctx.acceptedChoice('votable', { choice: 'yes', confidence });
+    assert.equal(got, typeof confidence === 'number' && Number.isFinite(confidence) && confidence >= .7 && confidence <= 1 ? 'yes' : null);
+  }
+  assert.equal(w.ctx.acceptedChoice('intent', { choice: 'music', confidence: .5 }), 'music');
+  for (const [seed, ui, code, source] of [['日本語の相談です。', 'en', 'ja', 'rule'], ['Please help me.', 'ja', 'other', 'sample'], ['OK', 'en', 'en', 'ui'], ['', 'ja', 'ja', 'ui']]) {
+    const language = w.ctx.fixedLanguage(seed, ui);
+    assert.equal(language.code, code); assert.equal(language.source, source);
+    assert.ok(w.ctx.cleanReplyLanguage(language));
+  }
+  for (const value of [{ version: 1, code: 'xx', source: 'jev' }, { version: 1, code: 'ja', source: 'sample' },
+    { version: 1, code: 'fr', source: 'ui' }, { version: 1, code: 'other', source: 'sample', sample: 'a\u202Eb' }]) assert.equal(w.ctx.cleanReplyLanguage(value), null);
+});
+
+test('site/musicは2回討議、consultは従来の判定、旧DJは現行契約を維持する', async () => {
+  for (const intent of ['site', 'music', 'consult']) {
+    const w = worker(undefined, (url, options) => {
+      if (url.includes('api.typesafe.ai')) return classifiedReply({ intent: { choice: intent, confidence: .99 } });
+      const payload = options?.body && JSON.parse(options.body);
+      if (payload?.response_format?.json_schema?.name === 'debate_judge') return searchReply({ assessment: 'ready', action: 'answer', questions: [] });
+    });
+    w.env.MAGI_TYPESAFE_API_KEY = 'test';
+    const text = await (await w.request('/magi2/chat', { classification_state: true, ui_language: 'en', adaptive_debate: true,
+      messages: [{ role: 'user', content: 'Help me with this.' }] })).text();
+    assert.match(text, /event: done/);
+    assert.equal(classifiedEvents(text).filter(e => e.name === 'persona').length, 6);
+    assert.equal(classifiedEvents(text).some(e => e.name === 'judge'), intent === 'consult');
+    assert.equal(w.calls.some(c => JSON.stringify(c).includes('【音楽・DJ・選曲の相談】')), intent === 'music');
+  }
+  const { sent, text } = await chatWithJev(() => jevReply('ja'), [{ role: 'user', content: '曲を相談したい' }], { entry: 'dj-request' });
+  assert.deepEqual(Object.keys(sent[0].questions), ['language']); assert.doesNotMatch(text, /event: classification/);
+});
+
+test('新DJはmusic/no/no固定で初回だけ言語を聞き、継続時はJevを呼ばない', async () => {
+  const sent = [];
+  const w = worker(undefined, (url, options) => {
+    if (url.includes('api.typesafe.ai')) { sent.push(JSON.parse(options.body)); return classifiedReply(); }
+  });
+  w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  const body = { entry: 'dj-request', classification_state: true, ui_language: 'ja', context: 'PRIVATE_DJ_CONTEXT',
+    language_seed: 'Please recommend music.', messages: [{ role: 'user', content: 'この曲に賛成？' }] };
+  const events = classifiedEvents(await (await w.request('/magi2/chat', body)).text());
+  const notice = events[0].data;
+  assert.equal(notice.intent, 'music'); assert.equal(notice.votable, 'no'); assert.equal(notice.site_pages, 'no');
+  assert.deepEqual(Object.keys(sent[0].questions), ['language']);
+  assert.deepEqual(sent[0].state, { language_seed: body.language_seed });
+  await (await w.request('/magi2/chat', { ...body, reply_language: notice.reply_language })).text();
+  assert.equal(sent.length, 1);
+});
+
+test('site_pagesの拒否とmusicでは索引や一覧を送らず、siteは検証済み候補を討議前に渡す', async () => {
+  for (const [intent, choice] of [['site', 'yes'], ['site', 'no'], ['music', 'yes']]) {
+    let indexCalls = 0;
+    const w = enableSearch(worker(undefined, (url, options) => {
+      if (url.endsWith('/site-search.json')) { indexCalls++; return Response.json(guideIndex); }
+      if (url.includes('api.typesafe.ai')) return classifiedReply({ intent: { choice: intent, confidence: .99 }, site_pages: { choice, confidence: .99 } });
+    }));
+    w.env.MAGI_TYPESAFE_API_KEY = 'test';
+    const text = await (await w.request('/magi2/chat', { classification_state: true, page: '/', site_pages: true,
+      messages: [{ role: 'user', content: 'PDFをまとめたいです。' }] })).text();
+    assert.match(text, /event: done/);
+    assert.equal(indexCalls > 0, intent === 'site' && choice === 'yes');
+    const personalities = w.calls.filter(c => !c.stream && !c.response_format && c.max_completion_tokens !== 48);
+    if (intent === 'site' && choice === 'yes') assert.ok(personalities.every(c => JSON.stringify(c).includes('PDF Studio')));
+    else assert.ok(!w.calls.some(c => JSON.stringify(c).includes('サイトのページ一覧')));
+  }
+});
+
+test('新契約は呼んでいない第2回のabsentを補わず、単独応答も判定せず統合する', async () => {
+  const w = worker(undefined, url => /deepseek|googleapis/.test(url) ? new Response('unavailable', { status: 400 }) : undefined);
+  const events = classifiedEvents(await (await w.request('/magi2/chat', { classification_state: true, adaptive_debate: true,
+    messages: [{ role: 'user', content: 'Help me think.' }] })).text());
+  assert.equal(events.filter(e => e.name === 'persona').length, 3);
+  assert.equal(events.filter(e => e.name === 'persona' && e.data.round !== 1).length, 0);
+  assert.equal(events.some(e => ['ask', 'judge'].includes(e.name)), false);
+  assert.equal(events.at(-1).name, 'done');
+});
+
+test('404の対応通知の欠落・重複・不正値はAIも回数も使わず、新通知は共通討議8回を使う', async () => {
+  const w = enableSearch(worker());
+  for (const [suffix, status] of [['', 409], ['?site_debate=0', 400], ['?site_debate=1&site_debate=1', 400], ['?site_debate=1&mode=site', 400]]) {
+    const res = await w.request('/magi2/site-search' + suffix, { query: 'PDFをまとめたい', locale: 'ja' });
+    assert.equal(res.status, status);
+    if (status === 409) assert.equal((await res.json()).error.retryable, false);
+  }
+  assert.equal(w.calls.length, 0); assert.equal(w.env.DB.rows.size, 0);
+  const res = await searchRequest(w); assert.equal(res.status, 200);
+  assert.equal(w.calls.length, 8); assert.equal(w.calls.at(-1).reasoning_effort, 'medium');
+  assert.equal((await res.json()).comment, 'answer');
+});
+
+test('画面の共通分類処理は3画面で一致し、順序違反を拒否し、旧Workerと未知イベントを受け止める', async () => {
+  const block = src => between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END');
+  assert.equal(block(home), block(mobile)); assert.equal(block(home), block(dj));
+  const ctx = vm.createContext({ TextDecoder });
+  vm.runInContext(block(home) + '\n' + between(home, 'async function parseSSE(', '// --- マルチモーダル入力'), ctx);
+  const notice = { version: 1, intent: 'consult', site_pages: 'no', votable: 'no', magi_candidate: false,
+    reply_language: { version: 1, code: 'en', source: 'ui' } };
+  for (const sequence of [event('classification', notice) + event('classification', notice),
+    event('persona', {}) + event('classification', notice), event('motion', {})]) {
+    await assert.rejects(ctx.parseSSE(new Response(sequence).body, {}), /invalid_classification|unexpected_magi_event/);
+  }
+  let received = 0;
+  await ctx.parseSSE(new Response('event: future\ndata: invalid JSON\n\n' + event('title', {}) + event('classification', notice)
+    + event('integrated', { delta: 'answer' }) + event('done', {}) + event('classification', notice)).body, { classification() { received++; } });
+  assert.equal(received, 1);
+  const history = [{ role: 'user', content: 'First sentence.' }, { role: 'user', content: 'Different language.' }];
+  assert.equal(ctx.classificationFields(history, null, 'en').language_seed, 'First sentence.');
+  assert.equal(ctx.classificationFields(history, notice.reply_language, 'ja').language_seed, undefined);
+});
+
+
+test('回答が失敗しても受信済みの会話言語を保存し、次の送信で判定し直さない', async () => {
+  const language = { version: 1, code: 'en', source: 'jev' };
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    const c = client(src, isHome), bodies = [], stored = new Map();
+    c.ctx.safeStore = (key, value) => { stored.set(key, value); };
+    vm.runInContext(between(src, 'function saveAgentLanguage(', 'function archiveCurrentHistory('), c.ctx);
+    c.ctx.fetch = async (_, options) => { bodies.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, handlers) => { handlers.classification({ reply_language: language }); throw new Error('connection failed'); };
+    await c.ctx.agentSend();
+    assert.equal(c.ctx.agentHistory.length, 0);
+    assert.equal(stored.get('magi_current_language').id, 'test-session');
+    assert.equal(stored.get('magi_current_language').reply_language.code, 'en');
+    c.ctx.agentInput.value = '日本語で続ける';
+    c.ctx.parseSSE = async (_, handlers) => { handlers.integrated({ delta: 'answer' }); handlers.done(); };
+    await c.ctx.agentSend();
+    assert.deepEqual(bodies[1].reply_language, language);
+    assert.equal(Object.hasOwn(bodies[1], 'language_seed'), false);
+    const helper = isHome ? between(src, 'const personaCardsHTML =', 'const agentTurnEl =') : between(src, 'function personaCardsHTML(', '// トップのインスクリプション');
+    // 保存と書き出しに未実施回の印を補わない。
+    assert.match(src, /round2 === '…'\) delete debateData\[cn\]\.round2/);
+    assert.match(helper, isHome ? /!deb\.round2 \|\| deb\.round2 === '…'/ : /r2has \? '' : ' hidden'/);
+  }
+});
+
+test('DJの開発用Originはフラグ・Workerホスト・ページOriginの3条件をすべて要求する', () => {
+  const ctx = vm.createContext({ URL, ALLOWED_ORIGINS: ['https://tk.st', 'https://www.tk.st'] });
+  vm.runInContext(between(read('workers/dj-request/src/index.js'), 'function allowedRequestOrigin(', 'function corsHeaders('), ctx);
+  const allow = (origin, host, value) => ctx.allowedRequestOrigin(origin, { url: host + '/dj/api/req/board' }, { DJ_LOCAL_DEV: value });
+  for (const host of ['http://localhost:8788', 'http://127.0.0.1:8788', 'http://[::1]:8788']) assert.equal(allow('http://localhost:8000', host, 'true'), true);
+  for (const flag of [undefined, 'false', true]) assert.equal(allow('http://localhost:8000', 'http://localhost:8788', flag), false);
+  assert.equal(allow('http://localhost:8000', 'http://tk.st', 'true'), false);
+  for (const origin of ['http://127.0.0.1:8000', 'http://localhost.attacker.test', 'null']) assert.equal(allow(origin, 'http://localhost:8788', 'true'), false);
+  assert.equal(allow('https://tk.st', 'https://tk.st', undefined), true);
+});
+
+test('DJの接続先上書きはlocalhostページで独立に検査し、資格情報・外部ホスト・パスを拒否する', () => {
+  const ctx = vm.createContext({ URL, URLSearchParams, location: { protocol: 'http:', hostname: 'localhost', search: '' } });
+  vm.runInContext(between(dj, 'function localApiOrigin(', 'const API ='), ctx);
+  for (const dest of ['http://127.0.0.1:8787', 'http://[::1]:8787', 'http://localhost:8787']) {
+    ctx.location.search = '?api=' + encodeURIComponent(dest); assert.equal(ctx.localApiOrigin('api', 'production'), dest);
+  }
+  for (const dest of ['https://external.test', 'http://user:pass@localhost:8787', 'http://localhost:8787/path', 'http://localhost:8787/?x=1', 'http://localhost:8787/#a']) {
+    ctx.location.search = '?api=' + encodeURIComponent(dest); assert.equal(ctx.localApiOrigin('api', 'production'), 'production');
+  }
+  ctx.location.search = '?api=http://localhost:8787&req_api=https://external.test';
+  assert.equal(ctx.localApiOrigin('api', 'production'), 'http://localhost:8787'); assert.equal(ctx.localApiOrigin('req_api', ''), '');
+  ctx.location.hostname = 'tk.st'; assert.equal(ctx.localApiOrigin('api', 'production'), 'production');
+});
+
+test('要求されたページ選びに失敗したら候補なしと説明せず、未完了のDJ相談の言語も復元対象にする', async () => {
+  const w = worker(undefined, (url, options) => {
+    if (String(url).includes('api.typesafe.ai')) return classifiedReply({ intent: { choice: 'site', confidence: .99 }, site_pages: { choice: 'yes', confidence: .99 } });
+    if (!String(url).includes('api.openai.com')) return;
+    const body = JSON.parse(options.body);
+    if (body.response_format?.json_schema?.name === 'site_chat') return new Response('failed', { status: 500 });
+  });
+  enableSearch(w); w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  await (await w.request('/magi2/chat', { classification_state: true, site_pages: true, page: '/', messages: [{ role: 'user', content: 'Find a tool.' }] })).text();
+  assert.equal(w.calls.filter(b => b.stream).length, 1);
+  assert.equal(w.calls.filter(b => b.messages && !b.stream && !b.response_format && b.max_completion_tokens !== 48).every(b => JSON.stringify(b.messages).includes('候補が存在しないとは判断できない')), true);
+  assert.match(dj, /c\.turns\.length \|\| c\.reply_language/);
+});
+
+
+test('会話IDがない言語メタデータは新しい会話へ引き継がない', () => {
+  for (const src of [home, mobile]) {
+    const ctx = vm.createContext({ currentSessionId: null,
+      safeGet: () => JSON.stringify({ id: null, reply_language: { version: 1, code: 'en', source: 'ui' } }),
+      safeParse: JSON.parse });
+    vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
+    vm.runInContext(between(src, 'var agentLanguageMeta =', 'function ensureAgentConversation('), ctx);
+    assert.equal(ctx.agentReplyLanguage, null);
+  }
+});
+
+test('Geminiの試行と429は用途別に匿名で数え、記録失敗で回答を止めない', async () => {
+  let googleCalls = 0;
+  const w = worker(undefined, (url) => {
+    if (!String(url).includes('generativelanguage.googleapis.com')) return;
+    googleCalls++;
+    if (googleCalls === 1) return new Response('rate limit', { status: 429 });
+  });
+  const rows = new Map();
+  w.env.DB = { prepare(sql) { return { bind(key, day, limit) { return { async first() {
+    if (key.startsWith('usage:google:')) {
+      assert.match(key, /^usage:google:(chat|404):(attempt|limited)$/);
+      assert.match(day, /^\d{4}-\d{2}-\d{2}$/); assert.equal(limit, Number.MAX_SAFE_INTEGER);
+      rows.set(key, (rows.get(key) || 0) + 1);
+    }
+    return { count: 1 };
+  } }; } }; } };
+  const first = await w.chat([{ role: 'user', content: 'Hello' }]);
+  assert.match(await first.text(), /event: done/); await Promise.all(w.waits);
+  assert.equal(rows.get('usage:google:chat:attempt'), googleCalls);
+  assert.equal(rows.get('usage:google:chat:limited'), 1);
+  // 入口が設定する実際の記録フックも実行する。失敗はwaitUntil内で吸収する。
+  w.env.DB = { prepare() { return { bind(key) { return { first() { return key.startsWith('usage:google:')
+    ? Promise.reject(new Error('database unavailable')) : Promise.resolve({ count: 1 }); } }; } }; } };
+  const response = await w.chat([{ role: 'user', content: 'Hello' }]);
+  assert.match(await response.text(), /event: done/); await Promise.all(w.waits);
+});
+
+test('文字数指定を外した人格の長い応答で次の討議入力を膨らませない', async () => {
+  const w = worker(undefined, (url, options) => {
+    if (!options?.body) return;
+    const body = JSON.parse(options.body);
+    if (!body.stream && !body.response_format && [512, 1024].includes(body.max_tokens || body.max_completion_tokens)) {
+      return Response.json({ choices: [{ finish_reason: 'stop', message: { content: '家'.repeat(5000) } }] });
+    }
+  });
+  const text = await (await w.chat([{ role: 'user', content: 'Help me think.' }])).text();
+  const events = [...text.matchAll(/event: persona\ndata: (.+)/g)].map(m => JSON.parse(m[1]));
+  assert.equal(events.length, 6);
+  assert(events.every(e => e.text.length === w.ctx.defaults.persona_response_max_chars));
+  assert.match(text, /event: done/);
 });

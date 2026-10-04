@@ -1,9 +1,9 @@
 # magi2 統合設計書 — Jev 分類・会話の言語・MAGI モード
 
-統合設計（2026-10-04）。実装前。MAGI モードと Jev 分類の設計を統合し、最新の要件を反映した。統合前の設計書は削除済み。仕様の正本は本ファイル。
+第1公開の実装済み（2026-10-05）。分類・会話の言語・通常site/music・404の正本はコード。第2公開のMAGI採決・パネル・演出は未実装で、本ファイルを設計の正本とする。統合前の設計書は削除済み。第1公開の評価結果は [workers/magi2/第1公開評価.md](workers/magi2/第1公開評価.md)。
 1〜7章は MAGI の画面・採決・検証への案内、8章は仕様索引、9〜14章は Jev の分類・共通サイト案内・言語の引き継ぎ・音楽相談・移行。
 検証の筋書き・評価用入力・合格条件の正本は [magi2検証計画.md](magi2検証計画.md)。仕様本文と検証の細目を重複管理しない。
-実装・公開後は冒頭を「実装済み（日付）。正本はコード」に変え、以後は直さない。
+公開済みの範囲は以後コード・READMEを更新し、第2公開の未実装範囲だけ本設計を更新する。
 
 トップページと MAGI アプリの MAGI チャット（magi2）に、エヴァンゲリオンの MAGI のように3人格が議題へ投票し、多数決で「承認」「否決」「保留」を決める MAGI モードを足す。審議アニメーションと決議を通してMAGIを体験できるようにする（4章）。
 モードは画面で選ばず、Worker が TypeSafe AI の Jev の分類と議題化から自動で決める（9.3）。あわせて、会話の言語を初回に固定し（10章）、サイト案内と音楽相談の討議を最大2回にし（9.4）、404のAI検索を共通の討議へ移す（9.6）。
@@ -808,7 +808,7 @@ Cloudflare管理画面で変数だけを変更した場合は、次の設定フ�
 
 DBの作成と `schema.sql` の適用後、`workers/` から `npx wrangler deploy --config magi2/wrangler.toml --env eval` でこの環境だけを出す。`deploy-worker.yml` の選択肢には加えず、通常の本番デプロイと分ける。評価用ホスト・DBの一致とAccessによる拒否を確認してから計測する。接続は評価ツールがAccessの[サービス認証](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/)と既存の `x-api-key` を付けて行い、認証値を公開ページやログへ入れない。遅延の筋書きは通信経路の確認に使い、実AIの速度・品質の測定と分ける（検証計画6.1）。
 
-評価終了後は結果を記録し、評価用のWorker・DBの名前とIDを確認してから、`workers/` で `npx wrangler delete --name tk-st-magi2-eval --config magi2/wrangler.toml --env eval`、`npx wrangler d1 delete tk-st-magi2-eval-db --config magi2/wrangler.toml --env eval` を順に実行する（[Workerの削除](https://developers.cloudflare.com/workers/wrangler/commands/workers/#delete)・[D1の削除](https://developers.cloudflare.com/workers/wrangler/commands/d1/#d1-delete)）。Worker名は `--name` で固定し、環境指定だけに削除対象の選択を任せない。Worker側のsecretも残さず、評価ホストのDNSとAccess設定・評価専用サービストークンを片付ける。本番や他用途と共有するAPIキー・設定は削除しない。継続利用する場合は用途と次回の利用日・片付け予定日を記録し、Accessの制限を維持する。
+評価終了後は結果を記録し、評価用のWorker・DBの名前とIDを確認してから、`workers/` で `npx wrangler delete tk-st-magi2-eval --config magi2/wrangler.toml --env eval`、`npx wrangler d1 delete tk-st-magi2-eval-db --config magi2/wrangler.toml --env eval` を順に実行する（[Workerの削除](https://developers.cloudflare.com/workers/wrangler/commands/workers/#delete)・[D1の削除](https://developers.cloudflare.com/workers/wrangler/commands/d1/#d1-delete)）。Worker名は位置引数で固定し、環境指定だけに削除対象の選択を任せない。Worker側のsecretも残さず、評価ホストのDNSとAccess設定・評価専用サービストークンを片付ける。本番や他用途と共有するAPIキー・設定は削除しない。継続利用する場合は用途と次回の利用日・片付け予定日を記録し、Accessの制限を維持する。
 
 ## 7. 検証
 
@@ -1025,6 +1025,7 @@ API や画面の `mode` 指定・保存済みの前回の `mode` は今回の経
 - `/magi2/site-search` のJSON契約（`request_id`・`status`・`results`・`comment`・`daily`）を維持する。統合本文を `comment` に入れ、リンク・日刊検索は選択結果を既存の検証処理で組み立てる。旧コメント専用の120/240文字制限は共通統合の文字数指定に統一し、画面も折り返して全文を表示する。
   `no_results` は検証済みのページ候補が0件、かつ検証済みのdailyもnullの場合だけとする。ページ候補が0件でも日刊検索があれば `results`。共通の討議・統合にこの選択結果を伝え、選択外のページや機能をあるように案内せず、候補なしを人格カードの推測で覆さない。状態・リンクを統合本文から再判定しない。本人のプロフィールの事実は9.2の根拠で答えられるが、それをリンク候補が存在する根拠にはしない。未実施の検索や取得失敗も「見当たらない」と扱わず、404の索引・ページ選択・統合の失敗は既存のエラー契約で返す。
 - Origin検査・受付条件・検索専用の記録先（`search:<IP>`・`search:global`）と保存方針は維持し、1回の検索を1回だけ数える。IP別上限は10回/日を維持し、`SITE_SEARCH.global_daily_limit` は初期上限20回/日へ下げる（旧300回/日から変更）。20回ならモデル呼出しは通常160回・再試行込み最大280回/日だが、回数と金額は別に評価する。公開前に検証計画6.1の費用・Google枠の条件を満たすよう必要ならさらに下げ、増枠は別途評価する。
+  Googleは無料枠を維持し、通常チャットの300質問上限を変えず、実利用量とHTTP 429で管理する。Geminiの試行数・429をchat/404別に入力やIPを含まない日次記録として残す。両入口が上限まで使われる場合の枠は保証せず、競合時は404上限を縮小・0にして停止する（検証計画6.1）。
   共通処理側でチャットの利用回数を重ねて数えたり、検索語・応答・討議本文をDB・ログ・通知へ残したりしない。チャットの全体上限300回/日は変更しない。
   この全体上限は費用・共有枠を守る初期の制限で、2人が各10回使えば他の利用者もそのUTC日はAI検索を使えなくなる。404のAI検索の説明に、日「AI検索は全利用者で共有する1日の上限があります。ご自身の上限に達していなくても利用できない場合があります。通常検索は引き続き使えます。」、英 "AI search has a shared daily limit. It may be unavailable even if you have not reached your own limit. Regular search remains available." を載せる。
   `global_daily_limit_exceeded` のときも共有上限と通常検索を日英で案内し、自動再送しない。全体上限の運用通知は既存の送信抑止（UTC日ごとに成功した通知は1通まで）を維持する。上限到達日が続けば毎日届くことは意図した運用とし、本文や検索語は含めない。

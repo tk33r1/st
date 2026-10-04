@@ -3220,7 +3220,7 @@
               "name": "What is MAGI, and where do my messages go?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the message text to TypeSafe AI to detect the reply language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
               }
             },
             {
@@ -4168,8 +4168,8 @@
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
         question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
-        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the message text to TypeSafe AI to detect the reply language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
-        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ、返答の言語の判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ、発言の分類と会話の初回の言語判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
         sec: 'magi',
@@ -7274,7 +7274,7 @@
         <div class="persona-card${debate ? '' : ' thinking'}" data-codename="${p.codename}">
           <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
           <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
-          <div class="persona-round" data-round="2"${deb.round2 === '…' ? ' hidden' : ''}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
+          <div class="persona-round" data-round="2"${!deb.round2 || deb.round2 === '…' ? ' hidden' : ''}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2 || '…')}</div></div>
           ${(Array.isArray(deb.followups) ? deb.followups : []).map(followupHTML).join('')}
           ${reactionBarHTML(p.codename)}
         </div>`;
@@ -7471,17 +7471,57 @@
       }
       agentScroll();
     }
-    async function parseSSE(body, handlers, onChunk) {
+    // AGENT_CLASSIFY_BEGIN
+var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
+function cleanReplyLanguage(v) {
+  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
+  if (v.code === 'other') {
+    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
+      || /[<>\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
+  }
+  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
+    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
+  return { version: 1, code: v.code, source: v.source };
+}
+function classificationFields(history, language, ui, entry) {
+  var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
+  var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
+  var seed = text.slice(0, 500);
+  if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
+  var state = cleanReplyLanguage(language);
+  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
+    entry === 'dj-request' ? {} : { magi_panel: false },
+    state ? { reply_language: state } : { language_seed: seed });
+}
+function receiveClassification(state, ev, d) {
+  if (ev === 'title' || ev === 'error') return;
+  if (ev === 'classification') {
+    var language = cleanReplyLanguage(d && d.reply_language);
+    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
+      || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
+      || d.magi_candidate !== false || !language
+      || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
+    state.classified = true; state.language = language;
+  } else {
+    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
+    state.started = true;
+  }
+}
+// AGENT_CLASSIFY_END
+async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false;
+      const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null };
       const block = (text) => {
         let ev = 'message', data = '';
         text.split('\n').forEach(line => {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
+        receiveClassification(classificationState, ev, parsed);
         if (handlers[ev]) handlers[ev](parsed);
         return ev === 'done' || ev === 'error';
       };
@@ -7753,14 +7793,15 @@
       saveCurrentHistory();
 
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
-      let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
+      let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…', followups: [] }]));
 
       // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
       const ctrl = new AbortController();
+      const conversationId = ensureAgentConversation();
       const gen = agentGen; agentCtrl = ctrl;
       ctrl.signal.addEventListener('abort', () => thinking.cancel(), { once: true });
-      const dropped = () => gen !== agentGen;
+      const dropped = () => gen !== agentGen || conversationId !== currentSessionId;
       let idleTimer = null;
       const watch = (ms = 70000) => {
         clearTimeout(idleTimer);
@@ -7772,7 +7813,7 @@
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
         const outbound = prepareAgentMessages(agentHistory, sendContent);
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }), signal: ctrl.signal });
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, currentLang, 'chat'))), signal: ctrl.signal });
         if (dropped()) return;
         watch();
         if (!res.ok || !res.body) {
@@ -7784,6 +7825,8 @@
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
+            replyLanguage: agentReplyLanguage,
+            classification: d => { if (!dropped()) { classified = true; saveAgentLanguage(d.reply_language); } },
             title: (d) => { if (d && d.text && !dropped()) setAgentTitle(d.text); },
             persona: (d) => {
               if (dropped()) return;
@@ -7791,7 +7834,8 @@
               if (!card) return;
               const slot = card.querySelector(`.persona-round[data-round="${Number(d.round) || 1}"]`);
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
-              if (d.round >= 2) card.classList.remove('thinking');
+              if (d.round >= 2 || d.absent) card.classList.remove('thinking');
+              if (classified && d.absent && d.round === 1) card.querySelector('.persona-round[data-round="2"]')?.remove();
               agentScroll();
               const deb = debateData[d.codename];
               if (!deb) return;
@@ -7812,7 +7856,7 @@
               });
               agentScroll();
             },
-            integrated: (d) => { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
+            integrated: (d) => { if (dropped()) return; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
             error: (d) => { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
@@ -7855,6 +7899,7 @@
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
+        Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
         agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
         saveCurrentHistory();
@@ -8067,11 +8112,23 @@
 
     // 現在のセッションの一意ID（ページロードごとに1つ、New Conversationでリセット）
     let currentSessionId = safeGet('magi_current_session_id') || null;
+    var agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
+    var agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+    function ensureAgentConversation() {
+      if (!currentSessionId) { currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); safeStore('magi_current_session_id', currentSessionId); }
+      return currentSessionId;
+    }
+    function saveAgentLanguage(value) {
+      agentReplyLanguage = cleanReplyLanguage(value);
+      safeStore('magi_current_language', { id: currentSessionId, reply_language: agentReplyLanguage });
+      syncCurrentToSaved();
+    }
+
 
     function archiveCurrentHistory() {
       // syncCurrentToSaved が既にリアルタイム保存しているので、ここでは
       // currentSessionId をリセットするだけ（次の会話は新しいセッションになる）。
-      currentSessionId = null;
+      currentSessionId = null; agentReplyLanguage = null; safeRemove('magi_current_language');
       safeRemove('magi_current_session_id');
     }
 
@@ -8100,7 +8157,7 @@
         id: currentSessionId,
         timestamp: Date.now(),
         title: title,
-        history: [...agentHistory]
+        history: [...agentHistory], reply_language: cleanReplyLanguage(agentReplyLanguage)
       }, MAX_SAVED_SESSIONS);
       safeStore('magi_saved_sessions', sessions);
 
@@ -8187,6 +8244,7 @@
       // ロードしたセッションを現在のセッションとして追跡
       currentSessionId = session.id;
       safeStore('magi_current_session_id', currentSessionId);
+      saveAgentLanguage(session.reply_language);
       renderHistoryToLog(agentHistory);
       updateAgentActionButtons();
     }
@@ -8216,7 +8274,7 @@
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
             <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong>, <strong class="text-normal">DeepSeek API</strong> and <strong class="text-normal">Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong class="text-normal">sent to all three</strong>.', '<strong class="text-normal">OpenAI API</strong>・<strong class="text-normal">DeepSeek API</strong>・<strong class="text-normal">Gemini API</strong>を使用しています。人格ごとに別の API で動くため、入力内容（画像を含む）は<strong class="text-normal">3社すべてへ送信</strong>されます。')}</li>
             <li>${tr('OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong class="text-normal">used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong class="text-normal">stored on servers in China and may be used to train its models</strong>.', 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：<strong class="text-normal">Google の製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります</strong>。DeepSeek：<strong class="text-normal">中国のサーバーに保存され、同社のモデルの学習に利用されることがあります</strong>。')}</li>
-            <li>${tr('To decide which language to answer in, the text of your last few messages (not images) is also sent to <strong class="text-normal">TypeSafe AI</strong> (Jev, a classification model). TypeSafe states that it does not train models on API inputs.', '返答の言語を決めるため、直近の数件の発言の文字（画像は除く）を <strong class="text-normal">TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します。同社は API の入力をモデルの学習に利用しないとしています。')}</li>
+            <li>${tr('To classify each request, the latest user message and up to two earlier user messages are also sent to <strong class="text-normal">TypeSafe AI</strong> (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.', '毎回の発言を分類するため、今回の本文と直近2件までのユーザー本文を <strong class="text-normal">TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信し、初回の言語判定には最初の発言だけを使います。画像・AIの回答・DJの状況説明は送りません。言語はブラウザ内の会話ごとに保存し、分類結果はサイトのDBには保存しません。同社は API の入力をモデルの学習に利用しないとしています。')}</li>
             <li class="text-red-500 font-semibold">${tr('DO NOT input any confidential or personal information.', '機密情報や個人情報は絶対に入力しないでください。')}</li>
           </ul>
         </div>`);

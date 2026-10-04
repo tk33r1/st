@@ -2,6 +2,7 @@
 
 人格・呼び出し設定は `personas.js`、モデル ID と表示名は `config/ai-models.json` が正本。
 人格カードの生成と更新はルートの `AGENTS.md` を参照。
+人格の本文は120字の指示を維持し、指示を外した長い応答も `DEFAULTS.persona_response_max_chars`（4000字）で制限して討議の入力が膨らまないようにする。
 
 ## リアクションDBの移行
 
@@ -29,7 +30,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 ## 討議の回数（最大5回）
 
-3人格は第1回（初回意見）と第2回（互いの初回意見を見ての討議）を必ず行い、その後は統合人格（本人）が判定して回数を決める。
+新契約のsite・musicと404は、第1回（各自の意見）と第2回（他人格の意見を見て再回答）の後に統合する。consultと旧契約では、その後も統合人格（本人）が判定して回数を決める。新契約で第1回に1人だけ答えた場合は第2回を省き、呼んでいない回の欠席通知は送らない。
 値と判定のプロンプトは `personas.js` の `DEBATE`、判定のモデルは `DEFAULTS.models.judge`（Luna・推論 low・strict な JSON スキーマ）。
 
 ```
@@ -62,30 +63,25 @@ npx wrangler deploy --config magi2/wrangler.toml
 画面は履歴の `debate` に、聞き返された回を `followups: [{ round, ask, text }]` として足して送る。Worker は人格の過去の意見に、
 その中でいちばん新しいものを使う。
 
-## 出力の言語（TypeSafe AI の Jev）
+## 発言分類と会話の言語
 
-3人格・統合・討議の判定・タイトル・予測に付ける出力の言語は、会話ごとに1回だけ Jev で決める（`personas.js` の `LANGUAGE_DETECT`）。
-手元の規則（`REPLY_LANGUAGE`）は、英字が1語でも混ざった日本語（「DJを始めたい」「PDFを結合したい」）を日本語と言い切れず、
-言語の見分けをモデルに任せる指示に回していた。そのとき DeepSeek が英語や中国語で答えた（2026-10-04、DJ を含む3問×2回で6回中5回。
-「日本語」と明示すると0回）。
+`personas.js` の `INTENT_CLASSIFY` と `classification.js` を本番・実装前確認・週次smokeで共有する。
+`classification_state: true` のトップページ・アプリでは初回にlanguage/votable/intent/site_pagesの4問、継続では言語を省いた3問をJevへ1回で送る。
+分類は最新本文全体（1,000文字まで）と直近2件までのユーザー本文、言語は最初のユーザー本文（500文字まで）を使う。画像・AI回答・状況説明は分類に送らない。
+DJは `entry: dj-request` によりmusic/no/no固定で、言語の初回1問だけ。旧画面は従来のリクエストごとの言語1問を使う。
 
-- 送るのは直近3件のユーザーの発言の文字だけ（1件500文字まで）。画像・画面の状況説明（DJ の相談の材料）・AI の回答は送らない。
-  最新の発言で判定し、「OK」や名前・絵文字だけの返事は前の発言の言語を引き継ぐ。
-- 選択肢は ISO 639-1 の全183言語（`languages.js`。Intl.DisplayNames から作った英語名と自称）と「その他」。
-  23言語に絞っていたときは、無い言語を近い言語に寄せた（ノルウェー語→スウェーデン語、マレー語→インドネシア語、
-  カタルーニャ語→フランス語。そのまま別の言語で答えてしまう）。中国語は簡体と繁体をまとめ、文字の種類は利用者に合わせさせる
-  （分けると繁体を簡体と取り違えた）。
-- 日本語なら `REPLY_LANGUAGE.ja`、ほかは `REPLY_LANGUAGE.named(言語名)` を付ける。
-- キー未設定・失敗・1秒の時間切れ・確信度0.5未満・「その他」では、これまでの手元の規則に戻す。会話は止めない。
-- レート制限の確認と並行して呼び、断るときは判定も止める。401・402・403 と残高不足の 429 は、ほかの会社と同じくメールで知らせる。
-- 実測（2026-10-04）：1回 約170ms（最大350ms）、約3,800入力トークン（$0.042／100万トークン、1回 約$0.0002）。
-  77文の試験（日英の混在・前の発言の引き継ぎ・近い言語どうしを含む）で76件正解。外したのは短いカタルーニャ語の1文で、
-  フランス語と五分五分になる（確信度0.5前後。0.5未満なら手元の規則に戻る）。
+- 問いごとに選択肢と有限の0〜1のconfidenceを検査し、language/intent/site_pagesは0.5、votableは0.7以上を採用する。
+- 言語を引き継ぐ `reply_language` はversion・code・sourceを検査する。初回に失敗しても日本語の規則、固定した短いsample、UI言語で確定し、次のターンには再判定しない。
+- 利用回数制限を通ってから分類し、対応画面へ `classification` を本流・タイトルより先に1回だけ送る。停止・切断は分類も止める。
+- 会話ごとの言語はブラウザ内の現在の会話と保存会話に残す。受信後に回答が失敗しても言語を消さず、新しい会話で初期化する。
+- 分類結果・本文・ハッシュをD1へ保存しない。ログはプロファイル・問い・choice・confidence・時間・失敗だけ。
+- 第1段階は採決を無効にし、`magi_candidate: false` を返す。MAGIの採決・演出・履歴は次の実装段階（[進捗](実装進捗.md)）。
 
 ```sh
-cd workers
-npx wrangler secret put MAGI_TYPESAFE_API_KEY --config magi2/wrangler.toml
+node .github/scripts/probe-jev-classify.mjs
 ```
+
+本番と同じ問いで初回4問・継続3問を各20回、DJ・旧画面の言語1問も確認する。キーは環境変数か非追跡の `.dev.vars` から読み、本文やキーを出力しない。
 
 ## 上流の残高切れの通知
 
@@ -113,8 +109,8 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 
 ## 404のAI検索とチャットのサイト案内
 
-`POST /magi2/site-search` は `{ query, locale: 'ja' | 'en' }`（200文字・本文4KiBまで）を受け取る。
-公開HTMLから自動生成した `data/site-search.json` を取得・検証した後、OpenAIに最大3件のIDと短いひとことを選ばせ、照合したIDからリンクを作る。
+`POST /magi2/site-search?site_debate=1` は `{ query, locale: 'ja' | 'en' }`（200文字・本文4KiBまで）を受け取る。
+公開HTMLから自動生成した `data/site-search.json` を取得・検証した後、OpenAIに最大3件のIDを選ばせ、照合したリンク候補を3人格の2回討議とmediumの統合へ渡す。リンクは照合済みIDから、commentは統合本文から作る。通常は選択1回・人格6回・統合1回の計8回。
 URLやタイトルをAIに生成させない。失敗は503で、該当なしの正常応答と分ける。応答は `no-store`。
 
 対象はtk.stで公開されるHTMLのうちnoindex以外。404・転送用・別URLをcanonicalとする重複ページ・MAGIのアプリの本体（`/magi-app/www/`）も除く。
@@ -124,14 +120,15 @@ URLやタイトルをAIに生成させない。失敗は503で、該当なしの
 `.github/scripts/site-search-index.py` がタイトル・説明を抽出し、ツール・ゲーム・Glitchは既存JSONのタグや説明も使う。
 `build.sh` は公開ファイルを揃えた後に再生成するため、新しいページをWorkerへ手動登録する必要はない。
 手元の生成物は `python -B .github/scripts/site-search-index.py` で更新する（手で編集しない）。
-公開時は静的サイトを先に反映し、`https://tk.st/data/site-search.json` が取得できることを確認してからmagi2をデプロイする。
+新しい404契約の公開はWorker→対応済み404の順。旧404には409・site_search_update_requiredを返し、AIも回数も使わない。新版404はこの応答で再読み込みを案内する。事前に本番相当経路の時間・費用・Google枠の評価を通す。未達ならWorkerと404をともに現行のまま維持する。
 AIへは名前・説明・URLとの一致で順位をつけた最大40件・16,000文字分を渡す。主な入口11件は必ず入れ、日刊の号は5件まで。英語の機能語は数えない。
 AIの選択IDは、実際に渡した候補内で検証する。ページ本文の検索・自動翻訳は行わない。
 
-- 404検索は既存の `countUp` と `rate_limit` を利用し、UTC日ごとに `search:<IP>`（10回）→ `search:global`（300回）の順に数える。表・移行の追加はない。
+- 404検索は既存の `countUp` と `rate_limit` を利用し、UTC日ごとに `search:<IP>`（10回）→ `search:global`（20回）の順に数える。表・移行の追加はない。
 - 入力・認可・停止フラグ・一覧取得の失敗では数えない。AI開始後の失敗・0件・キャンセルは数える。全体上限で断った場合のIP回数は戻さない。
 - `site_pages: true` の通常チャットは、最新本文の先頭500文字だけでページを選び、統合に添えた同じ候補を `pages` イベントで返す。通常チャットの上限内で行い、`search:` は使わない。DB未設定時は案内を省く。
-- 討議と並列に開始し、統合前には最大2秒だけ待つ。失敗・遅延では検索だけを省く。停止・切断・全員欠席では検索も中止する。
+- 新契約の一覧取得・選択・リンク通知は画面の許可があり、site_pagesがnoでなく、music・DJでない通常経路だけで行う。短い場面説明は一覧とは分ける。
+- 通常siteは討議前に選択を確定して候補を全員へ渡す。consultに任意のリンクを添える選択は討議と並列に開始し、統合前には最大2秒だけ待つ。失敗・遅延では検索だけを省く。停止・切断・全員欠席では検索も中止する。
 - 両画面は回答の `done` 後だけリンクを表示する。リンクはその場だけで、履歴や次回の要求には含めない。
 - サイト案内: 画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ると、「このページは何？」「tk.st とは？」に答えられるよう、
   3人格の system に場面といまのページ（索引の題名と説明。アプリは `SITE_GUIDE.app`）を、統合人格に同じ索引から作るページ一覧を足す
@@ -142,7 +139,7 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 - 一覧の有効期間は10分、古い一覧は24時間まで使用して裏で更新する。索引全体を検証して差し替え（検査済みの一覧を日英別に保持）、失敗後は1分あける。noindexへの変更・削除もこの更新周期で反映する。
 - 検索語・ひとこと・上流本文はDB／ログ／Resendに残さない。検索用の運用通知は会社・HTTPコード・用途のみ。通知抑制は既存の `alert:<会社>:<HTTP>`、検索の全体上限は `alert:site-search-global` を使う。
 
-公開フラグは現在オン。Workerの `wrangler.toml` の `SITE_SEARCH_ENABLED = "true"`、次に404の `AI_SEARCH_ENABLED = true` で有効化する。
+公開フラグの既定はオン。Workerの `wrangler.toml` の `SITE_SEARCH_ENABLED = "true"`、次に404の `AI_SEARCH_ENABLED = true` で有効化する。
 停止はWorkerを先に `false` にする。通常チャットは続く。公開前に本番スモークテスト、設計書の20件の品質評価・費用見積もり、GTM設定を確認する。
 ネイティブアプリは `npm run sync` と再ビルド後、実機でリンクが開くことを確認する。
 
@@ -157,5 +154,37 @@ python -B .github/scripts/preview-404-ai.py
 ```
 
 回帰検証は外部APIを呼ばず、NodeとPython標準のSQLiteを使う。本番のAPI互換性は週次のモデルスモークテストで確認する。
-404の画面確認は `http://localhost:4215/missing/`。プレビューだけでフラグを有効にし、AI・解析の外部通信を行わない。検索語 `mock-none`／`mock-limit`／`mock-error`／`mock-daily`／`mock-slow` で状態を模擬できる。
+404の画面確認は `http://localhost:4215/missing/`。プレビューだけでフラグを有効にし、AI・解析の外部通信を行わない。検索語 `mock-none`／`mock-limit`／`mock-error`／`mock-daily`／`mock-slow`／`mock-global`／`mock-update` で状態を模擬できる。
 PWAの更新は `www/sw.js` のキャッシュを更新する。ネイティブアプリは変更した `www/` を同期して再ビルドする。
+
+## ローカルとCloudflare評価環境
+
+初期化と起動はworkers/で行う。新しいローカルDBにはschemaだけを流し、既存DBには必要なmigrationだけを適用する。
+
+```sh
+npx wrangler d1 execute tk-st-magi2-db --local --file magi2/schema.sql --config magi2/wrangler.toml
+npx wrangler dev --local --port 8787 --config magi2/wrangler.toml
+npx wrangler d1 execute dj-request-db --local --file dj-request/schema.sql --config dj-request/wrangler.toml
+npx wrangler dev --local --port 8788 --local-upstream localhost:8788 --config dj-request/wrangler.toml
+```
+
+受付Workerの非追跡dj-request/.dev.varsにDJ_LOCAL_DEV="true"を設定し、/adminでイベントを開く。
+別のターミナルでリポジトリのルートを静的配信し、ページはhttp://localhostで開く。
+DJのapiとreq_apiはlocalhostページだけでループバックのオリジンを指定できる。詳細はルートの検証計画3節。
+
+評価環境はwrangler.tomlのenv.eval（tk-st-magi2-eval、magi2-eval.tk.st/magi2*、DBはtk-st-magi2-eval-db）。専用DBを作ってそのIDを設定する。本番DBのIDを使わない。
+先にDNSとCloudflare Accessを設定し、評価専用secretを--env evalへ設定する。本番のDB・通知先を使わず、deploy-worker.ymlの選択肢にも加えない。
+Accessサービス認証とAPIキーを環境変数に設定してeval-site-search.mjsを使う。--delayは149秒成功と150秒打切りの通信確認で、AIの品質・速度とは分ける。
+評価終了後はWorker名を固定して `npx wrangler delete tk-st-magi2-eval --config magi2/wrangler.toml --env eval`、次に評価DBだけを削除し、評価DNS・Access・専用トークンを片付ける。継続利用する場合は用途と次回の利用日・片付け予定日を記録する。
+
+## Gemini無料枠の運用
+
+無料枠（確認時15 RPM・250,000 TPM・500 RPD）で、通常チャットと404検索を共有する。通常チャットの300質問/日は維持するが、複数回の討議と再試行があるため300質問が全て成功する枠の保証はない。
+`rate_limit` に `usage:google:chat:attempt`・`usage:google:404:attempt` と、それぞれの `limited`（HTTP 429）をUTC日付で記録する。本文・利用者IPは含めず、記録失敗で回答を止めない。回数はこのWorkerのAPI試行数で、Googleの実際の消費量や同じプロジェクトの他の利用はAI Studioで確認する。Googleのリセット時刻とは異なる。
+
+```sh
+# workers/ で実行。集計行だけを読み、利用者の記録は出さない。
+npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --command "SELECT ip AS metric, day, count FROM rate_limit WHERE ip LIKE 'usage:google:%' ORDER BY day DESC, ip LIMIT 28"
+```
+
+429や枠の競合が続く場合は、`personas.js` の `SITE_SEARCH.global_daily_limit` を20から下げる。0で404のAI検索だけ停止する。変更をコミットし、magi2を再デプロイする。ブラウザ内の通常検索とチャットは続く。残高・割当量を示す上流429の通知は既存の1日1通の通知に従う。

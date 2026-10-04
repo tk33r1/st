@@ -208,8 +208,20 @@ function persistReactions() { safeStore('magi_current_history', agentHistory); s
 // One id per active conversation (reset on New conversation). The current
 // conversation is synced into magi_saved_sessions in real time.
 var currentSessionId = safeGet('magi_current_session_id') || null;
+var agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
+var agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+function ensureAgentConversation() {
+  if (!currentSessionId) { currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); safeStore('magi_current_session_id', currentSessionId); }
+  return currentSessionId;
+}
+function saveAgentLanguage(value) {
+  agentReplyLanguage = cleanReplyLanguage(value);
+  safeStore('magi_current_language', { id: currentSessionId, reply_language: agentReplyLanguage });
+  syncCurrentToSaved();
+}
+
 function archiveCurrentHistory() {
-  currentSessionId = null;
+  currentSessionId = null; agentReplyLanguage = null; safeRemove('magi_current_language');
   safeRemove('magi_current_session_id');
 }
 function syncCurrentToSaved() {
@@ -225,7 +237,7 @@ function syncCurrentToSaved() {
     currentSessionId = 'session_' + Date.now();
     safeStore('magi_current_session_id', currentSessionId);
   }
-  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice() });
+  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage) });
   if (sessions.length > 50) sessions.pop();
   safeStore('magi_saved_sessions', sessions);
   if (document.getElementById('agent-history-list')) renderSavedSessionsList();
@@ -335,8 +347,16 @@ function renderHistoryToLog(history) {
 function showSplashIfEmpty() {
   if (!agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
 }
+function cleanHistory(history) {
+  return Array.isArray(history) ? history.filter(function (m) {
+    return m && (m.role === 'assistant' ? typeof m.content === 'string' : m.role === 'user'
+      && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
+        return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
+      })));
+  }) : [];
+}
 function initAgent() {
-  agentHistory = safeParse(safeGet('magi_current_history'), []);
+  agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
   setAgentTitle(safeGet('magi_current_title') || '');
   if (agentHistory && agentHistory.length > 0) renderHistoryToLog(agentHistory);
   else showSplashIfEmpty();
@@ -388,18 +408,58 @@ function renderAgentError(env) {
 }
 
 // ---- SSE --------------------------------------------------------------------
+// AGENT_CLASSIFY_BEGIN
+var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
+function cleanReplyLanguage(v) {
+  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
+  if (v.code === 'other') {
+    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
+      || /[<>\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
+  }
+  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
+    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
+  return { version: 1, code: v.code, source: v.source };
+}
+function classificationFields(history, language, ui, entry) {
+  var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
+  var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
+  var seed = text.slice(0, 500);
+  if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
+  var state = cleanReplyLanguage(language);
+  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
+    entry === 'dj-request' ? {} : { magi_panel: false },
+    state ? { reply_language: state } : { language_seed: seed });
+}
+function receiveClassification(state, ev, d) {
+  if (ev === 'title' || ev === 'error') return;
+  if (ev === 'classification') {
+    var language = cleanReplyLanguage(d && d.reply_language);
+    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
+      || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
+      || d.magi_candidate !== false || !language
+      || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
+    state.classified = true; state.language = language;
+  } else {
+    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
+    state.started = true;
+  }
+}
+// AGENT_CLASSIFY_END
 async function parseSSE(body, handlers, onChunk) {
   const reader = body.getReader(), dec = new TextDecoder();
   let buf = '', skipLF = false;
+      const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null };
   const block = (text) => {
     let ev = 'message', data = '';
     text.split('\n').forEach(line => {
       if (line.startsWith('event:')) ev = line.slice(6).trim();
       else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
     });
-    if (!data) return false;
+    if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
     const parsed = JSON.parse(data.replace(/\n$/, ''));
-    if (handlers[ev]) handlers[ev](parsed);
+    receiveClassification(classificationState, ev, parsed);
+        if (handlers[ev]) handlers[ev](parsed);
     return ev === 'done' || ev === 'error';
   };
   try {
@@ -623,14 +683,15 @@ async function agentSend() {
 
   agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
   setAgentStopMode(true);
-  var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null;
+  var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
 
   var ctrl = new AbortController();
+  var conversationId = ensureAgentConversation();
   var gen = agentGen; agentCtrl = ctrl;
   ctrl.signal.addEventListener('abort', function () { thinking.cancel(); }, { once: true });
-  var dropped = function () { return gen !== agentGen; };
+  var dropped = function () { return gen !== agentGen || conversationId !== currentSessionId; };
   var idleTimer = null;
   var watch = function (ms) {
     clearTimeout(idleTimer);
@@ -642,7 +703,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }),
+      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat'))),
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -656,6 +717,8 @@ async function agentSend() {
       turn.remove(); renderAgentError(env); errored = true;
     } else {
       await parseSSE(res.body, {
+        replyLanguage: agentReplyLanguage,
+        classification: function (d) { if (!dropped()) { classified = true; saveAgentLanguage(d.reply_language); } },
         title: function (d) { if (d && d.text && !dropped()) setAgentTitle(d.text); },
         persona: function (d) {
           if (dropped()) return;
@@ -664,7 +727,8 @@ async function agentSend() {
           if (!card) return;
           var slot = card.querySelector('.persona-round[data-round="' + (Number(d.round) || 1) + '"]');
           if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
-          if (d.round >= 2) card.classList.remove('thinking');
+          if (d.round >= 2 || d.absent) card.classList.remove('thinking');
+          if (classified && d.absent && d.round === 1) card.querySelector('.persona-round[data-round="2"]')?.remove();
           agentScroll();
           var deb = debateData[d.codename];
           if (!deb) return;
@@ -689,7 +753,7 @@ async function agentSend() {
           });
           agentScroll();
         },
-        integrated: function (d) { if (dropped()) return; reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
+        integrated: function (d) { if (dropped()) return; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); reply += d.delta || ''; if (reply.trim()) thinking.finish(); replyBody.textContent = reply; agentScroll(); },
         error: function (d) { if (dropped()) return; thinking.cancel(); errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
         // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
@@ -728,6 +792,7 @@ async function agentSend() {
     renderAgentPages(replyEl, sitePages);
     announceAgent('MAGI replied. ' + reply);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
+    Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
@@ -955,11 +1020,12 @@ function loadSavedSession(id) {
   if (!session) return;
   dropAgentRequest();
   agentBusy = false;
-  agentHistory = session.history.slice();
+  agentHistory = cleanHistory(session.history);
   safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
   currentSessionId = session.id;
   safeStore('magi_current_session_id', currentSessionId);
+  saveAgentLanguage(session.reply_language);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false;
   setAgentSuggestion('');
@@ -967,7 +1033,7 @@ function loadSavedSession(id) {
   updateAgentActionButtons();
 }
 function deleteSavedSession(id) {
-  if (currentSessionId === id) { currentSessionId = null; safeRemove('magi_current_session_id'); }
+  if (currentSessionId === id) archiveCurrentHistory();
   var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   sessions = sessions.filter(function (s) { return s.id !== id; });
   safeStore('magi_saved_sessions', sessions);
@@ -987,7 +1053,7 @@ function showInfoPanel() {
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
     + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
     + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong>used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
-    + '<li>To decide which language to answer in, the text of your last few messages (not images) is also sent to <strong>TypeSafe AI</strong> (Jev, a classification model). TypeSafe states that it does not train models on API inputs.</li>'
+    + '<li>To classify each request, the latest user message and up to two earlier user messages are also sent to <strong>TypeSafe AI</strong> (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.</li>'
     + '<li class="warn">DO NOT input any confidential or personal information.</li>'
     + '</ul>');
 }

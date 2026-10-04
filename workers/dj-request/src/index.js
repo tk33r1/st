@@ -76,8 +76,14 @@ const URL_DOMAINS = {
   preview: ['itunes.apple.com'],
 };
 
-function corsHeaders(origin) {
-  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+function allowedRequestOrigin(origin, request, env) {
+  const url = new URL(request.url);
+  return ALLOWED_ORIGINS.includes(origin) || (env.DJ_LOCAL_DEV === 'true'
+    && ['http:', 'https:'].includes(url.protocol) && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    && /^https?:\/\/localhost(?::\d+)?$/.test(origin));
+}
+function corsHeaders(origin, allowed) {
+  const allow = allowed ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
@@ -1580,7 +1586,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
-    const cors = corsHeaders(origin);
+    const allowed = allowedRequestOrigin(origin, request, env);
+    const cors = corsHeaders(origin, allowed);
     const fullPath = url.pathname.replace(/\/+$/, '');
     const path = fullPath.startsWith(API_BASE) ? (fullPath.slice(API_BASE.length) || '/') : '';
     const method = request.method;
@@ -1591,10 +1598,10 @@ export default {
     // GET は直アクセス等で Origin が付かない場合もあるため、付いている場合のみ検証する。
     const isWrite = ['POST', 'PATCH', 'DELETE'].includes(method);
     if (isWrite) {
-      if (!ALLOWED_ORIGINS.includes(origin)) {
+      if (!origin || !allowed) {
         return json({ error: 'forbidden' }, 403, cors);
       }
-    } else if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    } else if (origin && !allowed) {
       return json({ error: 'forbidden' }, 403, cors);
     }
 

@@ -10,6 +10,7 @@ routes = [
 [vars]
 # 404のAI検索とチャットのサイト案内を有効化。停止時はWorkerを先にfalseにする（通常チャットは続く）。
 SITE_SEARCH_ENABLED = "true"
+MAGI_MODE_ENABLED = "false"
 
 [[d1_databases]]
 binding       = "DB"
@@ -23,7 +24,7 @@ database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 #      wrangler secret put MAGI_OPENAI_API_KEY   --config workers/magi2/wrangler.toml  # Strategist・統合・タイトル
 #      wrangler secret put MAGI_DEEPSEEK_API_KEY --config workers/magi2/wrangler.toml  # Enthusiast
 #      wrangler secret put MAGI_GEMINI_API_KEY   --config workers/magi2/wrangler.toml  # Humanist（いまは無料枠のキー。入力が学習に使われる。有料枠に替えたら注意文も直す）
-#   (任意) 発言の言語の判定（personas.js の LANGUAGE_DETECT。無ければ手元の規則で判定する）
+#   (任意) 発言の意図と会話の初回の言語判定（personas.js の INTENT_CLASSIFY。無ければ手元の規則で判定する）
 #      wrangler secret put MAGI_TYPESAFE_API_KEY --config workers/magi2/wrangler.toml  # TypeSafe AI（Jev）
 #   (任意) 外部クライアント許可用: wrangler secret put CLIENT_API_KEY ...
 #   (任意) 上流の残高切れ・キーの失効をメールで知らせる（無ければログに出すだけ。README.md）
@@ -31,3 +32,22 @@ database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 #      wrangler secret put ALERT_TO       --config workers/magi2/wrangler.toml  # 受け取るアドレス（カンマ区切りで複数可）
 #      wrangler secret put ALERT_FROM     --config workers/magi2/wrangler.toml  # 例: MAGI <magi@tk.st>（Resend で認証済みのドメイン）
 #   4) wrangler deploy --config workers/magi2/wrangler.toml
+
+# 評価専用。先にDNS/Accessを設定し、DBを作成して下の未設定IDを置換する。
+# 本番の通知先・DB・secretは継承しない。手動で --env eval を付けて出す。
+[env.eval]
+name = "tk-st-magi2-eval"
+main = "src/eval.js"
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "magi2-eval.tk.st/magi2*", zone_name = "tk.st" }]
+
+[env.eval.vars]
+SITE_SEARCH_ENABLED = "true"
+MAGI_MODE_ENABLED = "false"
+
+[[env.eval.d1_databases]]
+binding = "DB"
+database_name = "tk-st-magi2-eval-db"
+# 2026-10-05の評価用DBは片付け済み。新しい専用DBを作ってから置換する。
+database_id = "00000000-0000-0000-0000-000000000000"
