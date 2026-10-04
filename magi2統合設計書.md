@@ -1,6 +1,6 @@
 # magi2 統合設計書 — Jev 分類・会話の言語・MAGI モード
 
-統合設計（2026-10-04）。実装前。`MAGIモード設計書.md` と `magi2-jev分類設計書.md` を統合し、最新の要件を反映した。仕様の正本は本ファイル。
+統合設計（2026-10-04）。実装前。MAGI モードと Jev 分類の設計を統合し、最新の要件を反映した。統合前の設計書は削除済み。仕様の正本は本ファイル。
 1〜7章は MAGI の画面・採決・検証への案内、8章は決定事項、9〜14章は Jev の分類・言語の引き継ぎ・音楽相談・移行。
 検証の筋書き・評価用入力・合格条件の正本は [magi2検証計画.md](magi2検証計画.md)。仕様本文と検証の細目を重複管理しない。
 実装・公開後は冒頭を「実装済み（日付）。正本はコード」に変え、以後は直さない。
@@ -30,7 +30,7 @@ Jev は初回に言語・賛否の議題か・会話の種類・サイト案内�
 ## 2. 対象範囲
 
 - 対象: トップページの MAGI ドック、MAGI アプリ（`magi-app/www/`。PWA と Capacitor の Android／iOS）、`workers/magi2`、`dj/request/` の「AIに相談」の送受信・会話メタデータ。
-- `dj/request/` は音楽相談として統一するが、MAGI パネルは出さない。`workers/dj-request`・カタログの照合・iTunes 検索・BPM 推定、旧 MAGI は対象外。
+- `dj/request/` は音楽相談として統一するが、MAGI パネルは出さない。`workers/dj-request` は12章の開発時だけの Origin 許可を対象とし、受付の業務処理・カタログの照合・iTunes 検索・BPM 推定、旧 MAGI は対象外。
 - 全画面がモード指定のトップレベル `mode` を送らない。履歴内の `mode` は過去の記録としてだけ扱う。Worker が分類から経路を決める。新しい画面は演出への対応を `magi_panel: true` で知らせるが、これはモード指定ではない（5.1・14）。
   分類はレート制限と並行して始め、SSE の本流の前に待つ。言語判定と分類をまとめるので追加の Jev 呼び出しはしないが、待ち時間が常に0になるという意味ではない。
 - やらないこと: 全会一致を求める議決、利用者による議題の手直し、効果音、票の重み付け、条件つきの決議、
@@ -703,7 +703,9 @@ export const MAGI_MODE = {
 `workers/magi2/wrangler.toml` の `[vars]` に `MAGI_MODE_ENABLED = "false"` を追加し、第2公開で `"true"` にする。
 Workerは `env.MAGI_MODE_ENABLED === 'true'` のときだけ採決を許可する。未設定・`"false"`・真偽値trueなど、それ以外は無効。リクエストに上書き項目は作らない。
 手元の評価は同じソース・同じ設定ファイルを使い、同じディレクトリの非追跡 `workers/magi2/.dev.vars` に `MAGI_MODE_ENABLED="true"` を置いて起動する（[Cloudflareのローカル変数](https://developers.cloudflare.com/workers/local-development/environment-variables/)）。
-本番を止めるときは `[vars]` の値を `"false"` にしてWorkerを再デプロイする。以後受け付けるターンは通常回答へ進み、言語固定・分類・musicの短縮は継続する。進行中の採決は途中で通常回答へ切り替えない。
+本番を止めるときは `[vars]` の値を `"false"` にした変更をコミットし、そのコミットを `deploy-worker.yml` で `magi2` を選んで出すか、同じコミットの `workers/` から `npx wrangler deploy --config magi2/wrangler.toml` で出す。コミットや静的サイトの公開だけではWorkerの値は変わらない。
+Cloudflare管理画面で変数だけを変更した場合は、次の設定ファイルによるデプロイで戻りうるため、設定ファイルにも停止を反映する。
+以後受け付けるターンは通常回答へ進み、言語固定・分類・musicの短縮は継続する。進行中の採決は途中で通常回答へ切り替えない。
 
 各人格と `SYNTHESIZER` の `role: { chat, magi }` は、それぞれの定義の中に持つ。
 `vote_tag` は形の定義だけに使う。各読み取りで `new RegExp(MAGI_MODE.vote_tag.source, MAGI_MODE.vote_tag.flags)` を作り、`matchAll` で全タグを数える。
@@ -753,16 +755,18 @@ Workerは `env.MAGI_MODE_ENABLED === 'true'` のときだけ採決を許可す�
 | `workers/magi2/personas.js` | `INTENT_CLASSIFY`・`MUSIC_CONSULT`（14章）、`MAGI_MODE`、各人格と `SYNTHESIZER` の `role: { chat, magi }`、`DEFAULTS.models.motion`・`vote_reader`、`PERSONA_GUIDE` の `theme` とコメント（5.9）。`LANGUAGE_DETECT` は統合して二重管理しない |
 | `workers/magi2/src/index.js` | 入力と言語の検査、Jev の複数問・新旧プロファイル・フォールバック、分類の適用、`classification` の送信。議題化・票の取得と読取状態の確定通知・集計・MAGI の判定と統合、`integrated_end`、履歴の取り込み、music の短縮経路、サイト添付の制御 |
 | `workers/magi2/site-search.js` | `siteGuide` の場面説明と一覧添付を分け、9.4の同じ許可条件で統合の一覧とリンク選択を制御する |
-| `dj/request/index.html` | `entry: 'dj-request'`・言語情報の送信、`classification` の受信、相談ごとの言語の保存・復元・初期化。第1回から統合へ進み、不要な第2回のカード・待機表示を出さない。アプリと同じlocalhost限定の評価用API向け先を追加（12章）。「System & Privacy」相当の説明を更新。カタログ連携とリクエスト受付 Worker は変えない |
+| `dj/request/index.html` | `entry: 'dj-request'`・言語情報の送信、`classification` の受信、相談ごとの言語の保存・復元・初期化。第1回から統合へ進み、不要な第2回のカード・待機表示を出さない。localhost限定の評価用 `api`・`req_api` を追加（12章）。「System & Privacy」相当の説明を更新。カタログ連携は変えない |
+| `workers/dj-request/src/index.js`・`wrangler.toml` | 第1公開で12章の開発専用 Origin 許可を追加。CORSヘッダーと受付の検査を同じ条件へそろえる。`[vars]` の `DJ_LOCAL_DEV` は `"false"`。受付・曲照合の業務処理は変えない |
+| `workers/dj-request/README.md` | 開発専用の設定と、検証計画3節のローカルDB・イベント作成手順への案内 |
 | `workers/magi2/README.md` | Jev の複数判定・初回言語固定・音楽相談の短縮・旧画面のプロファイル・分類をDBに保存しない方針・プライバシーの説明。MAGI モードの節（環境変数での有効化・停止・ローカル評価、イベント、タグの規則、集計と状態、失敗の扱い、判定の基準の違い） |
-| `.github/scripts/test-magi2.mjs` | 検証計画の単体検証（分類・言語・音楽・新旧互換性・段階公開、票の読取状態、Worker と画面の共通ブロック・接続処理） |
+| `.github/scripts/test-magi2.mjs` | 検証計画の単体検証（分類・言語・音楽・新旧互換性・段階公開、票の読取状態、Worker と画面の共通ブロック・接続処理、DJの開発専用 Origin 許可） |
 | `.github/scripts/preview-magi-mode.py` | 新規。アニメーションのプレビュー用の模擬 API（7.4） |
 | `.github/scripts/eval-magi-mode.mjs` | 新規。通常経路と採決経路の所要時間を、7.3の同じ条件で比較する評価専用スクリプト |
 | `.github/scripts/ai_models.py` | 第1公開で `smoke_typesafe` を本番の `INTENT_CLASSIFY` にそろえ、一般会話の初回4問・継続3問、DJ初回1問、旧画面の言語1問を試す。ほかの TypeSafe 利用箇所の smoke は維持する。第2公開で議題化（`motion_format`）と票の読み取り（`vote_reader_format`）の本番スキーマ・推論強度・出力上限を試す。細目は検証計画7節 |
 | `.github/scripts/magi-search-config.mjs` | 第1公開で `LANGUAGE_DETECT` の読込を `INTENT_CLASSIFY` の本番の問い・条件・各プロファイルへ置換。サイト検索・討議判定の既存出力も維持する。第2公開で議題化・票の読み取りのスキーマと呼出し設定も抽出する |
 | `workers/magi2/wrangler.toml` | `[vars]` に `MAGI_MODE_ENABLED` を追加。第1公開は `"false"`、第2公開は `"true"`。旧言語設定名のコメントも更新する |
 | `workers/magi2/languages.js`・`.github/AI_MODELS.md` | 旧設定名を説明するコメント・運用説明を更新。シークレット名は変えない |
-| `AGENTS.md` | 実装時に Jev の分類・初回だけの言語判定・music 固定・モードの自動決定・正本の場所を追記。「XSS 対策」に MAGI の議題文だけ `<` `>` を残す例外と5.2の描画・書き出しを明記する |
+| `AGENTS.md` | 実装時に Jev の分類・初回だけの言語判定・music 固定・モードの自動決定・正本の場所を追記。「XSS 対策」に MAGI の議題文だけ `<` `>` を残す例外と5.2の描画・書き出しを明記する。「CORS 方針」にDJの開発専用 Origin 許可と本番の許可範囲を変えないことを追記する |
 
 公開は2段階に分ける。
 
@@ -1073,8 +1077,11 @@ Jev の `language` はその会話に検査済みの `reply_language` が無い�
   MAGI の採決で `SYNTH_BIAS` を外す規則とは分ける。
 - 通常musicの短縮が確定した画面では、不要な第2回の空欄・考え中表示を残さず、第1回終了から統合へ進んだことが分かる表示にする。サイト側の通常 music も同じ。
   有効な `classification` を受信し、通常経路（候補false、または `motion` の却下）が確定してから短縮表示を使う。分類通知の無い旧Workerでは従来の第2回以降を表示する。
-- dj/requestの現行 `MAGI_API` は本番URLの固定値なので、第1公開の画面検証用にアプリと同じlocalhost限定の `?api` を追加する。
-  ページも指定先もHTTP(S)で、ホストがlocalhost・127.0.0.1・[::1]のいずれかの場合だけ使い、URLの資格情報・query・hashは許さない。通常の公開ページは常に既存の本番URLを使う。モードや分類結果を上書きする用途にはしない。
+- DJのローカル検証では、MAGIとリクエスト受付の両Workerを動かす。第1公開で `?api` はMAGIのオリジン、`?req_api` は受付用Workerのオリジンを指定できるようにする。前者に `/magi2/chat`、後者に `/dj/api/req` を付け、受付の `/board` を含む全呼出しで同じ接続先を使う。起動・DB初期化・イベントの作成は検証計画3節を正本とする。
+  ページはHTTP(S)の `localhost` に限定し、指定先はHTTP(S)のループバック（localhost・127.0.0.1・[::1]）だけ許す。指定URLのパスは `/` のみ、資格情報・query・hashは許さない。指定ごとに検査し、不正・未指定の場合はそれぞれ既存の本番向け先（MAGIの本番URL／相対パス `/dj/api/req`）へ戻す。公開ページでは両指定を無視する。モードや分類結果を上書きする用途にはしない。
+  magi2の `APP_ORIGIN_RE` は変えない。トップページ・アプリも、検証ページは `http://localhost:…` で開く。127.0.0.1・[::1]で開いたページは現行CORSの許可対象ではなく、本計画の検証対象にしない（指定先ホストの許可と、ページのOriginの許可は別）。
+- 受付用Workerは `env.DJ_LOCAL_DEV === 'true'`、Worker自身のリクエストURLがHTTP(S)のループバック、ページのOriginがHTTP(S)の `localhost`（任意のポート）の3条件を満たす場合だけ開発用Originを追加許可する。CORSヘッダー・OPTIONS・GET・書込みのOrigin検査で同じ許可判定を使う。書込みのOrigin必須は維持する。
+  本番の `[vars]` は `DJ_LOCAL_DEV = "false"`、手元の `workers/dj-request/.dev.vars` だけ `"true"` とする。未設定や真偽値trueは無効で、仮に本番で文字列 `"true"` を設定しても、Workerのホストがループバックではないのでlocalhostを許可しない。tk.st／www.tk.stの既存許可は維持する。
 
 ## 13. 送り先・保存・説明
 

@@ -15,7 +15,7 @@
 
 ## 1. 構文と単体（外部 API を呼ばない）
 
-- `node --check workers/magi2/src/index.js`、`index.html` の script の構文チェック（AGENTS.md の手順）、`node --check magi-app/www/app.js`。
+- `node --check workers/magi2/src/index.js`・`workers/dj-request/src/index.js`、`index.html`・`dj/request/index.html` の script の構文チェック（AGENTS.md の手順）、`node --check magi-app/www/app.js`。
 - 第1公開から、同じ `test-magi2.mjs` の既存機能の回帰と本計画5節の対象項目を通す。
 - 以下は第2公開のMAGI固有項目。外部モデルの応答は固定した模擬結果へ差し替え、指示・送信材料・応答の検査・経路・表示だけを確かめる。AIが実際に正しく判断・生成するかは本計画3節・6.2節で評価する。
 - `node --test .github/scripts/test-magi2.mjs` に次を足す。
@@ -110,7 +110,7 @@
 - `MAGI_MODE_ENABLED="false"` で明示的な賛否を送ってもパネル・決議が出ず、通常回答と停止・予測・入力の解除が動く。
 - 再読み込み、保存会話の復元・切替、履歴のtrim後も会話ごとの言語が維持される。新しい会話／相談だけ初期化され、別の会話の言語を引き継がない。
   dj/requestではイベント切替・新規相談・相談履歴の復元も確認する。localStorage不可ではメモリ内で継続し、再読み込みをまたぐ保持を保証しない。
-- 新画面＋旧Worker、旧画面＋新Workerを確認し、旧Workerの第2回以降を表示できる。旧画面のDJは従来の討議を維持する。
+- 本計画3節の旧版の起動手順で、新画面＋旧Worker、旧画面＋新Workerを確認し、旧Workerの第2回以降を表示できる。旧画面のDJは従来の討議を維持する。
 - FAQ／「System & Privacy」の送り先・言語の保存範囲の説明を確認する。PWAを更新し、アプリは同期・再ビルドしたAPKをAndroid実機で確認する。
 
 ### 2.2 第2公開
@@ -122,11 +122,60 @@
 
 ## 3. 本番の API での評価と合格条件
 
-**評価環境**: 本番へデプロイする前の同じソースを、`workers/` から `npx wrangler dev --local --config magi2/wrangler.toml` で起動する。
-本番の上流AI APIを使い、`workers/magi2/.dev.vars` に手元用のキーと `MAGI_MODE_ENABLED="true"` を設定する。第1公開の確認と停止時の回帰は値を `"false"` にして起動し直す。
-この非追跡ファイルをWranglerがローカルで読み込む（統合設計書5.9）。キーをコード・設計書・評価結果へ記載せず、本番の `[vars]` を評価のために変更しない。
-接続先は `http://localhost:8787`。トップページは既存の `MAGI_ORIGIN`、アプリは `?api=http://localhost:8787`、dj/requestは実装時に追加する同じlocalhost限定の `?api` で接続する（統合設計書12章）。
-本計画4節の模擬APIと同じポートを使うため同時には起動しない。実AIの評価と模擬プレビューの結果を混ぜない。
+**評価環境**: 以下は実装後の手順。本番へデプロイする前の同じソースで、静的サーバー・magi2・dj-requestを別々に起動する。受付のイベントもローカルDBだけで作り、本番のイベントは切り替えない。
+
+1. 共通のWranglerが未導入なら `workers/` で `npm ci` を実行する。`workers/magi2/.dev.vars` に手元用の3社のキーと `MAGI_TYPESAFE_API_KEY`、`MAGI_MODE_ENABLED="true"` を置く。第1公開の確認と停止時の回帰は値を `"false"` にして起動し直す。
+   `workers/dj-request/.dev.vars` には `DJ_LOCAL_DEV="true"` を置く。この計画の `/board` とイベント操作は受付用Workerの上流AIキーを必要としない。曲の投稿も試す場合は同Workerの既存の設定手順に従う。
+   非追跡の `.dev.vars` をWranglerが読み込む。キーをコード・設計書・評価結果へ記載せず、本番の `[vars]` を評価のために変更しない。
+2. `workers/` で新規の評価用ローカルD1を初期化する。DB初期化と起動で同じ `--persist-to` を使う。magi2の `rate_limit` が無いと全要求が500になり、DJの `events` が無いと受付状況を取れないため、起動前に済ませる。
+
+   ```powershell
+   npx wrangler d1 execute tk-st-magi2-db --local --file magi2/schema.sql --config magi2/wrangler.toml --persist-to .wrangler/magi2-eval
+   npx wrangler d1 execute dj-request-db --local --file dj-request/schema.sql --config dj-request/wrangler.toml --persist-to .wrangler/dj-request-eval
+   ```
+
+   両 `schema.sql` は現行の全列・テーブルを含むので、新規DBへ既存のマイグレーションを重ねて流さない。古いローカルDBを再利用する場合だけ、適用済みの列・テーブルを照合し、各Workerの未適用のマイグレーションを番号順に一度ずつ同じ保存先へ適用する。`schema.sql` の再実行だけでは既存テーブルの不足列は増えない。
+3. `workers/` の別々のターミナルで以下を起動する。
+
+   ```powershell
+   npx wrangler dev --local --port 8787 --config magi2/wrangler.toml --persist-to .wrangler/magi2-eval
+   npx wrangler dev --local --port 8788 --config dj-request/wrangler.toml --persist-to .wrangler/dj-request-eval
+   ```
+
+   リポジトリのルートの別ターミナルで `python -m http.server 8000 --bind localhost` を起動する。検証ページは必ず `http://localhost:8000` で開き、127.0.0.1・[::1]・file:では開かない（統合設計書12章のOrigin条件）。アプリは `/magi-app/www/?api=http://localhost:8787`、トップページは `/`（既存の `MAGI_ORIGIN`）、DJは次で開く。
+
+   ```text
+   http://localhost:8000/dj/request/?api=http://localhost:8787&req_api=http://localhost:8788
+   ```
+
+4. DJで送信する前に、ローカルの管理APIでイベントAを開く。`/admin` という画面ではなく、`POST /dj/api/req/admin/event` を使う。PowerShellでは以下を実行し、返った `code` を記録する。
+
+   ```powershell
+   Invoke-RestMethod -Method Post -Uri 'http://localhost:8788/dj/api/req/admin/event' -Headers @{Origin='http://localhost:8000'} -ContentType 'application/json' -Body '{"title":"MAGI検証A"}'
+   ```
+
+   ページを再読込みし、`/board` が `event.open: true` を返して相談欄のロックが解除されることを確認する。新規相談・復元の確認後、同じAPIでイベントBを作り、新しい相談の言語が初期化されることを試す。Aへ戻すときは `POST /dj/api/req/admin/events/{Aのcode}/reopen` に同じOriginを付け、Aで保存した相談を履歴から開き直して言語が復元されることを確認する。イベントが変わるだけで既存の相談の言語は初期化しない（10.3）。
+   受付終了も `PATCH /dj/api/req/admin/event` に `{"status":"closed"}` を送り、相談がロックされることを確認する。開いているイベントが無いときのロックを、MAGIの接続障害と取り違えない。
+
+実AIの評価では本番の上流AI APIを呼ぶ。本計画4節の模擬APIはmagi2と同じ8787を使うため同時には起動せず、評価結果を混ぜない。日次上限は `personas.js` の現行値に従う。評価一式で上限を超える場合は、別のバッチに入る前にローカルWorkerの処理を終えて停止し、次の操作で評価用DBのカウンタだけを初期化する。同じ設定で再起動し、初期化した区切りを結果に記録する。上限の応答を確かめるバッチでは初期化しない。
+
+```powershell
+# workers/ で、上記と同じローカル保存先だけを操作する。
+npx wrangler d1 execute tk-st-magi2-db --local --config magi2/wrangler.toml --persist-to .wrangler/magi2-eval --command 'DELETE FROM rate_limit'
+```
+
+**旧版との比較**: 実装開始時に変更前のコミットSHAを記録する。リポジトリのルートで `git worktree add --detach ../tk.st-magi2-legacy OLD_COMMIT_SHA`（記録したSHAへ置換）を実行する。旧チェックアウトの `workers/` で必要なら `npm ci`、同版の `magi2/.dev.vars` に手元のキーを設定し、その版のスキーマでDBを作る。
+
+```powershell
+npx wrangler d1 execute tk-st-magi2-db --local --file magi2/schema.sql --config magi2/wrangler.toml --persist-to .wrangler/magi2-legacy
+npx wrangler dev --local --port 8787 --config magi2/wrangler.toml --persist-to .wrangler/magi2-legacy
+```
+
+新Workerを止めてから旧Workerを8787で起動し、8000の新画面で「新画面＋旧Worker」を確認する。逆の組合せは、旧Workerを止めて新Workerを8787で起動し直し、静的サーバーを旧チェックアウトのルートへ切り替える。受付用Workerは新しい開発用の8788を共通で使う。
+新版と旧版の画面は別のブラウザプロファイルで確認する。画面の版を切り替えるときはService Workerの登録解除とキャッシュ削除を済ませ、対象コミットのスクリプトが読み込まれていることを確かめる。会話の復元の検証に使う保存データは別途用意する。
+旧DJには向け先指定がないため、その評価用チェックアウトのHTMLだけ、`MAGI_API` を `http://localhost:8787/magi2/chat`、`API` を `http://localhost:8788/dj/api/req` に差し替える。旧コミットとの差分がこの2定数だけであることを記録し、Worker・送信契約・表示の処理は旧版のまま検証する。この評価用変更は公開・マージしない。
+
+Androidの実機のlocalhostは端末自身を指す。ローカル評価には、配布用と分けた評価専用コピーで固定APIオリジンだけを `http://localhost:8787` にしたAPKを作り、`adb reverse tcp:8787 tcp:8787` でPCのWorkerへつなぐ。localhostへのHTTP通信は評価用のデバッグ設定だけで許可し、Nativeでの `?api` 無効化は維持する。評価用APKを配布せず、配布用は固定の本番URL・元の通信設定へ戻して同期・再ビルドし、その差分と接続先を確認する。
 
 評価用の入力は、議題になる入力30件（行動の可否の問い20件・提案や主張への賛否を明示的に問う文10件）と、議題にならない入力10件を用意する。
 平叙文の提案・主張そのものは議題になる30件へ入れない。
@@ -275,9 +324,10 @@ Jev・Lunaの返答は模擬結果とする。第1公開は分類・言語・通
   環境変数は未設定・false・真偽値true・"TRUE"などでは無効で、文字列"true"だけ有効。無効時も初回4問・継続3問を呼び、votable=yes・0.7以上でもmagi_candidate:false・議題化呼出し0になる。
   LANGUAGE_DETECT の実行時参照・旧モックを残さず、設定抽出が新しい本番の問い・プロファイルを返すことを検証する。
 - 画面（両公開）: 3つの呼び出し元が同じ言語状態の形を送受信し、DJ の曲照合・リクエスト追加に分類値を混ぜない。
-  DJの評価用API向け先は、ページと指定先の両方がlocalhostのHTTP(S)である場合だけ採用する。公開ページ、外部ホスト・資格情報・query・hashの指定は本番URLへ戻す。
+  DJの `api`・`req_api` をそれぞれ12章の条件で検査し、localhostページからのループバック指定だけ採用する。公開ページ、127.0.0.1・[::1]で開いたページ、外部ホスト・資格情報・ルート以外のパス・query・hashの指定は、それぞれ既存の向け先へ戻す。片方の不正がもう片方の有効指定を消さず、`/board` も指定した受付用Workerを使う。
   新画面の通常music・DJは第1回のあと統合へ進み、第2回のカード・待機表示を残さない。MAGIのmusicと旧画面は短縮しない。
   新画面でも分類通知の無い旧Workerにつないだ場合は、第2回以降を従来どおり表示する。第2公開で候補trueから却下され通常musicへ進んだ場合だけ、却下後に短縮表示へ切り替える。
+- DJの開発用Origin（両公開）: 許可関数とfetchを模擬で検証し、12章の3条件がそろう場合だけlocalhostの任意ポートを通す。環境変数が無い・false・真偽値trueの場合、公開ホストへのリクエスト、外部Originは追加許可しない。既存のtk.st許可と、書込みでOriginが無ければ拒否する挙動を維持する。OPTIONS・GET・POST・PATCH・DELETEのCORSヘッダーと受付の判定が一致する。
 
 
 ## 6. 分類・言語の API と画面の評価
