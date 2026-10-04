@@ -219,6 +219,7 @@ Androidの実機のlocalhostは端末自身を指す。ローカル評価には�
 Cloudflare経路の評価は設計§6.2の環境を使う。`workers/` で `npx wrangler d1 create tk-st-magi2-eval-db` を実行し、発行されたIDを評価用bindingへ設定してから `npx wrangler d1 execute tk-st-magi2-eval-db --remote --file magi2/schema.sql --config magi2/wrangler.toml --env eval` で初期化する。DNS・Access・評価用secretを用意し、同節の `--env eval` のデプロイで評価環境だけを出す。未認証の要求がWorkerへ届かず、評価用DBと本番DBが異なることを先に確認する。標準のデプロイworkflowで評価を本番へ出さない。
 `eval-site-search.mjs` で `https://magi2-eval.tk.st/magi2/site-search?site_debate=1` を呼び、既存の外部APIキーとAccessの認証値はローカルの環境変数からヘッダーに付ける。通常入力の実AI評価と、評価専用入口での149秒応答・150秒打切りの通信確認を分けて記録する。画面の165秒待ち・中止は計画§2.1の模擬APIでも確認し、模擬値を実AIの時間集計へ含めない。
 実AI評価をIP別・全体の上限内のバッチに分け、すべての評価要求が終了してから、必要なら評価用DBだけの `rate_limit` を初期化する。接続先DBの名前・IDを確認し、`--env eval` を明示する。初期化の区切りは記録し、上限を確認するバッチでは行わない。本番DBや本番の上限は評価のために変更しない。
+評価終了後は設計§6.2に従って評価環境を片付け、結果に削除済みか継続利用かを記録する。
 
 評価用の入力は、議題になる入力30件（行動の可否の問い20件・提案や主張への賛否を明示的に問う文10件）と、議題にならない入力10件を用意する。
 平叙文の提案・主張そのものは議題になる30件へ入れない。
