@@ -156,7 +156,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     書く。数分かかる取得を、翌日 02:05 の日刊ニトリの発行から外すため前日に回している。
   - `deploy-worker.yml`（手動のみ）: 選んだ Worker を `wrangler deploy` で出す（`dry-run` ならバンドルの確認だけ）。
     リポジトリ Secrets に `CLOUDFLARE_API_TOKEN`（テンプレート「Edit Cloudflare Workers」で作り、ゾーン tk.st の
-    Workers Routes の編集権限を含める）と `CLOUDFLARE_ACCOUNT_ID` を置く。Worker の secret は Cloudflare 側のまま使う。
+    Workers Routes の編集権限を含める）と `CLOUDFLARE_ACCOUNT_ID` を置く。`dj-request` の DB 更新には対象アカウントの
+    `Account > D1 > Edit` も追加する（上記テンプレートには含まれない）。DB 更新後、リポジトリ Secret `TYPESAFE_API_KEY` が
+    あれば Worker へ同期し、それ以外の既存 secret は Cloudflare 側のまま使う。
     Worker を足したら `options` にも足す。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。

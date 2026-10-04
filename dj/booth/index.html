@@ -738,7 +738,7 @@
     }
 
     /* ===== 繋ぎ候補 =====
-       いま流している曲（最後に再生済にした曲）から、BPM とキーの相性で次の候補を並べる */
+       いま流している曲（最後に再生済にした曲）から、音楽的な相性といいねで次の候補を並べる */
     .nextbox {
       display: flex;
       flex-direction: column;
@@ -1017,7 +1017,7 @@
       <aside class="rail">
         <section class="nextbox" aria-live="polite">
           <h2>NEXT — 繋ぎ候補</h2>
-          <p class="base" id="nextBase">再生済にした曲を起点に、BPM とキーの相性で候補を出します</p>
+          <p class="base" id="nextBase">再生済にした曲を起点に、音楽的な相性といいねで候補を出します</p>
           <ol id="nextList"></ol>
         </section>
         <section class="tapbox">
@@ -1110,7 +1110,9 @@
   <script src="../../dj/assets/dj-modal.js?v=20261001b"></script>
   <script src="../../dj/assets/dj-request-core.js?v=20261002"></script>
   <script src="./audio-analysis.js?v=20261002"></script>
-  <script>
+  <script type="module">
+    import { effBpm, bpmForMix, songCamelot, keyFit, bpmFit, likePoints, totalPoints, transitionSignature }
+      from './transition-score.js?v=20261004_1';
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
     const {
@@ -1143,48 +1145,6 @@
 
     const songLabel = (s) => (s.artist ? s.artist + ' — ' : '') + s.title;
 
-    /* GetSongBPM はハーフタイム表記を返すことがある（HUMBLE. が 76、
-       Don't Stop Me Now が 80）。rekordbox は倍の値を出すので、90 未満は
-       倍に読み替える。カードの「×2」表記と BPM 順の基準をここで揃える。 */
-    const effBpm = (raw) => {
-      const b = Math.round(raw || 0);
-      return b && b < 90 ? b * 2 : b;
-    };
-
-    /* 並べ替えと繋ぎ候補で使う BPM。タップで手入れした値だけは読み替えない（cardHTML の bpmChip と同じ考え）。
-       規則を1か所に置き、BPM 順の並びと NEXT の候補が食い違わないようにする */
-    const bpmForMix = (s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null;
-
-    /* キャメロット（"11A"）は文字列のままだと 10A → 11A → 1A と並ぶ。
-       数字→文字の順に直すとホイールの並びになり、隣り合うキーが近くに来る。 */
-    const parseCamelot = (c) => {
-      const t = String(c || '').trim().toUpperCase();
-      const n = parseInt(t, 10), ab = t.slice(-1);
-      if (!(n >= 1 && n <= 12) || (ab !== 'A' && ab !== 'B')) return null;
-      return { n, mode: ab };
-    };
-
-    /* camelot が空で songKey（"F#m"）だけ届くことがある。カードはキーを
-       出しているのに末尾へ落ちる、という食い違いを避けるため五度圏から
-       番号を割り出す。C=8B を起点に完全五度ごとに +1 で回るので
-       (pc * 7 + 7) % 12 + 1。短調は平行長調（+3 半音）の番号を借りる。
-       式は audio-analysis.js の camelotNo と同じだが、あちらが読めなくても
-       一覧が動くよう、ここにも持っておく。 */
-    const PITCH = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    const keyCamelot = (k) => {
-      const m = /^([A-Ga-g])([#b♯♭]?)(m|min|minor)?$/.exec(String(k || '').trim());
-      if (!m) return null;
-      const minor = !!m[3];
-      let pc = PITCH[m[1].toUpperCase()];
-      if (m[2] === '#' || m[2] === '♯') pc += 1;
-      else if (m[2]) pc -= 1;
-      if (minor) pc += 3;
-      const n = (((pc * 7 + 7) % 12) + 12) % 12 + 1;
-      return { n, mode: minor ? 'A' : 'B' };
-    };
-
-    /* 表示が camelot と songKey の両方を見せている以上、並びも両方見る。 */
-    const songCamelot = (s) => parseCamelot(s.camelot) || keyCamelot(s.songKey);
     const songKeyRank = (s) => {
       const c = songCamelot(s);
       return c ? c.n * 2 + (c.mode === 'B' ? 1 : 0) : null;
@@ -1856,43 +1816,8 @@
     }
 
     /* ── 繋ぎ候補 ─────────────────────────
-       起点は最後に再生済にした曲。新着と採用済から、BPM とキー（Camelot）の相性で3曲選ぶ。
-       繋ぎ方の型もここで決める（LLM には訊かない。数値から機械的に決まることだから）。
-       背景カードに出典つきの「沸く所」や「AI の見立て」があれば添える。 */
-
-    function keyFit(a, b) {
-      const x = songCamelot(a), y = songCamelot(b);
-      if (!x || !y) return { score: 2, label: 'キー不明' };
-      const d = (y.n - x.n + 12) % 12;
-      if (d === 0) return x.mode === y.mode ? { score: 0, label: '同じキー' } : { score: 1, label: '平行調' };
-      if (x.mode === y.mode) {
-        if (d === 1) return { score: 1, label: '+1 上げる' };
-        if (d === 11) return { score: 1, label: '−1 落ち着かせる' };
-        if (d === 2) return { score: 2, label: '+2 ブースト' };
-        if (d === 7) return { score: 2, label: '半音上げ' };
-      } else if (d === 1 || d === 11) {
-        return { score: 2, label: '斜め（少し濁る）' };
-      }
-      return { score: 4, label: 'キーが合わない' };
-    }
-
-    /* 次の曲の BPM が今の曲からどれだけ離れているか。倍・半分で数えたほうが近ければそちらで */
-    function bpmFit(a, b) {
-      const x = bpmForMix(a), y = bpmForMix(b);
-      if (!x || !y) return null;
-      let best = null;
-      for (const m of [1, 2, 0.5]) {
-        const pct = (y * m - x) / x * 100;
-        if (!best || Math.abs(pct) < Math.abs(best.pct)) best = { pct, m, bpm: y };
-      }
-      return best;
-    }
-
-    const bpmPenalty = (bf) => {
-      if (!bf) return 3;
-      const p = Math.abs(bf.pct);
-      return (p <= 3 ? 0 : p <= 6 ? 1 : p <= 10 ? 2.5 : 4) + (bf.m !== 1 ? 0.5 : 0);
-    };
+       起点は最後に再生済にした曲。Jevの音楽評価70点＋いいね30点で3曲選ぶ。
+       繋ぎ方の目安は従来のBPM・キー計算から表示する。 */
 
     function mixPlan(bf, kf) {
       if (!bf) return 'BPM 不明 — プレビューで確かめてから';
@@ -1915,31 +1840,78 @@
       paintHTML('#nextList', list);
     }
 
+    const nextScores = new Map();
+    let nextScope = '', nextInFlight = false, nextRetryAt = 0, nextError = '';
+    function ensureNextScores(base, candidates) {
+      const wanted = new Map(candidates.map((s) => [s.id, transitionSignature(base, s)]));
+      const scope = JSON.stringify([tapCode, base.id, [...wanted]]);
+      if (scope !== nextScope) {
+        nextScope = scope; nextRetryAt = 0; nextError = '';
+      }
+      if (nextInFlight || Date.now() < nextRetryAt || [...wanted.values()].every((key) => nextScores.has(key))) return;
+      nextInFlight = true;
+      nextRetryAt = Date.now() + 3000;
+      const ids = new Set([base.id, ...candidates.map((s) => s.id)]);
+      const tapBpms = Object.fromEntries([...tapMap].filter(([id]) => ids.has(id)));
+      apiJson('/admin/next', { method: 'POST', timeout: 30000, json: { eventCode: tapCode, baseId: base.id, tapBpms } })
+        .then((data) => {
+          // 起点・イベント・曲情報が変わったら、遅れて届いた順位を描かない。
+          if (scope !== nextScope) return;
+          if (data.eventCode !== tapCode || data.baseId !== base.id || !Array.isArray(data.scores)) throw new Error('評価の応答が不正です');
+          let failed = false;
+          for (const result of data.scores) {
+            if (wanted.get(result.songId) !== result.signature) continue;
+            if (result.status === 'ok' && typeof result.score === 'number' && Number.isFinite(result.score)
+              && result.score >= 0 && result.score <= 1) {
+              nextScores.set(result.signature, result.score);
+            } else if (result.status === 'failed' || result.status === 'unavailable') failed = true;
+          }
+          nextError = failed ? '相性の評価を取得できません。しばらくしてから再度確認します' : '';
+          nextRetryAt = Date.now() + (failed ? 30000 : 1000);
+        })
+        .catch((error) => {
+          if (scope !== nextScope) return;
+          nextError = '相性の評価を取得できません。しばらくしてから再度確認します';
+          nextRetryAt = Date.now() + (error.status === 409 ? 1000 : 30000);
+        })
+        .finally(() => { nextInFlight = false; renderNext(); });
+    }
+
     function renderNext() {
       const base = songs.filter((s) => s.status === 'played' && s.playedAt)
         .sort((a, b) => (asDate(b.playedAt) || 0) - (asDate(a.playedAt) || 0))[0];
       if (!base) {
-        paintNext(esc('再生済にした曲を起点に、BPM とキーの相性で候補を出します'), '');
+        nextScope = '';
+        paintNext(esc('再生済にした曲を起点に、音楽的な相性といいねで候補を出します'), '');
         return;
       }
       const bb = bpmForMix(base);
       const baseHTML = 'NOW <b>' + esc(base.title) + '</b> · ' +
         esc((bb ? Math.round(bb) + ' BPM' : 'BPM 不明') + ' · ' + (base.camelot || base.songKey || 'キー不明'));
 
-      const picks = songs
-        .filter((s) => s.id !== base.id && (s.status === 'queued' || s.status === 'pending'))
+      const candidates = songs.filter((s) => s.id !== base.id && (s.status === 'queued' || s.status === 'pending'));
+      if (!candidates.length) {
+        nextScope = '';
+        paintNext(baseHTML, '<li class="blank">候補になる曲（新着・採用済）がありません</li>');
+        return;
+      }
+      ensureNextScores(base, candidates);
+      // 新着の評価待ちや一部の失敗があっても、取得済みの候補は使えるようにする。
+      const evaluated = candidates.filter((s) => nextScores.has(transitionSignature(base, s)));
+      const remaining = candidates.length - evaluated.length;
+      const notice = remaining ? '<li class="blank">' + esc('評価済み ' + evaluated.length + ' / ' + candidates.length +
+        '曲 · 未評価 ' + remaining + '曲。' + (nextError || '相性を評価中')) + '</li>' : '';
+      const picks = evaluated
         .map((s) => {
           const bf = bpmFit(base, s), kf = keyFit(base, s);
-          const fit = bpmPenalty(bf) + kf.score;
-          // 人気（いいね・同じ曲のリクエスト）と、採用済かどうかは軽く効かせるだけ
-          const pop = Math.min(1.5, 0.3 * (s.likes || 0) + 0.3 * Math.max(0, (s.votes || 0) - 1));
-          return { s, bf, kf, fit, score: fit - pop - (s.status === 'queued' ? 0.5 : 0) };
+          const musical = nextScores.get(transitionSignature(base, s));
+          return { s, bf, kf, musical, score: totalPoints(musical, s.likes || 0) };
         })
-        .sort((a, b) => a.score - b.score)
+        .sort((a, b) => b.score - a.score)
         .slice(0, 3);
 
-      paintNext(baseHTML, picks.length ? picks.map(({ s, bf, kf, fit }) => {
-        const cls = fit <= 1 ? '' : fit <= 3 ? ' meh' : ' bad';
+      paintNext(baseHTML, picks.map(({ s, bf, kf, musical, score }) => {
+        const cls = musical >= 0.75 ? '' : musical >= 0.5 ? ' meh' : ' bad';
         const bpmText = bf
           ? Math.round(bf.bpm) + ' BPM (' + (bf.pct >= 0 ? '+' : '−') + Math.abs(bf.pct).toFixed(1) + '%)'
           : 'BPM 不明';
@@ -1949,11 +1921,12 @@
         return '<li class="cand" data-id="' + s.id + '">' +
           '<span class="t trunc">' + esc(s.title) + '</span>' +
           '<span class="a trunc">' + esc((s.artist || '不明') + (s.status === 'queued' ? ' · 採用済' : '')) + '</span>' +
+          '<span class="how">' + esc(score.toFixed(1) + '点 · 相性 ' + (70 * musical).toFixed(1) + ' + いいね ' + likePoints(s.likes || 0).toFixed(1)) + '</span>' +
           '<span class="fit' + cls + '">' + esc(bpmText + ' · ' + (key ? key + '（' + kf.label + '）' : kf.label)) + '</span>' +
           '<span class="how">' + esc(mixPlan(bf, kf)) + '</span>' +
           (hint ? '<span class="hint">' + esc(hint) + '</span>' : '') +
           '</li>';
-      }).join('') : '<li class="blank">候補になる曲（新着・採用済）がありません</li>');
+      }).join('') + notice);
     }
 
     // 候補を押したら、その曲のカードへ（タブも切り替える）
@@ -2115,7 +2088,7 @@
     let tapCode = null;      // 保存を紐づけるイベントコード
 
     // Number.isFinite は数値以外にも false を返すので、型の確認を兼ねる
-    const validTapBpm = (value) => Number.isFinite(value) && value > 0;
+    const validTapBpm = (value) => Number.isFinite(value) && value > 0 && value <= 1000;
 
     /* 実測値は回ごとに持ち、直近 TAP_KEEP 回ぶんだけ残す。過去の回に戻したときに、
        その回で叩いた値も戻ってくるように。並びは古い順で、最後に書いた回が末尾。

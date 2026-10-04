@@ -7,7 +7,8 @@ name: Deploy Worker
 #   CLOUDFLARE_API_TOKEN  … Cloudflare の API トークン（テンプレート「Edit Cloudflare Workers」で作る。ルートを持つ
 #                           Worker があるので、ゾーン tk.st の Workers Routes の編集権限も要る）
 #   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
-# Worker の secret（IP_SALT など）は Cloudflare 側に入っているもののまま使われ、ここでは触らない。
+# dj-request の DB 更新には Account > D1 > Edit も追加する（上記テンプレートには含まれない）。
+# Worker の既存 secret は維持する。dj-request の TYPESAFE_API_KEY はリポジトリ Secret があれば同期する。
 # dry-run は Secrets なしで動く（バンドルできるかだけ確かめる）。
 
 on:
@@ -50,6 +51,35 @@ jobs:
       working-directory: workers
       run: npm ci --no-audit --no-fund
 
+    - name: Validate Cloudflare credentials
+      if: ${{ !inputs.dry-run }}
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+          echo "::error::リポジトリ Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID を登録してください"
+          exit 1
+        fi
+
+    # DB更新が通ってからキーを設定する。権限不足なら既存のキーを変更せず止める。
+    # dry-runでは本番を変更しない。
+    - name: Prepare DJ NEXT
+      if: ${{ inputs.worker == 'dj-request' && !inputs.dry-run }}
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: |
+        if ! npx wrangler d1 execute dj-request-db --remote --config dj-request/wrangler.toml --file dj-request/migrations/0008_transition_scores.sql; then
+          echo "::error::DJ NEXTのDB更新に失敗しました。CLOUDFLARE_API_TOKEN に Account > D1 > Edit があるか確認し、上のエラーを解消して再実行してください"
+          exit 1
+        fi
+        if [ -n "$TYPESAFE_API_KEY" ]; then
+          printf '%s' "$TYPESAFE_API_KEY" | npx wrangler secret put TYPESAFE_API_KEY --config dj-request/wrangler.toml
+        fi
+
     - name: Deploy
       working-directory: workers
       env:
@@ -61,9 +91,5 @@ jobs:
         if [ "$DRY_RUN" = "true" ]; then
           npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/bundle" --config "$WORKER/wrangler.toml"
           exit 0
-        fi
-        if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-          echo "::error::リポジトリ Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID を登録してください"
-          exit 1
         fi
         npx wrangler deploy --config "$WORKER/wrangler.toml"

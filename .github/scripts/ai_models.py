@@ -318,7 +318,7 @@ def smoke_google(url, api_key, model):
 
 
 def smoke_typesafe(url, api_key, model):
-    """magi2の言語判定と、日刊のSNS・ニュース採否を本番の指示・形式で確認する。"""
+    """言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
     config = magi_config()['language']
     cases = [
         ({'earlier_messages': [], 'latest_message': '今週末、ツーリングとDJの練習、どっちに時間を使うべき？'}, 'ja'),
@@ -373,7 +373,30 @@ def smoke_typesafe(url, api_key, model):
         ))
         if (news_gate.parse_probability(body) >= news_gate.MIN_PROBABILITY) != expected:
             raise RuntimeError('ニトリのニュース採否が期待と異なります')
-    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物'
+    # 2026-10-04の実曲比較で承認されたHome→Battle Scars／ロッキーのテーマ。
+    # 質問はWorkerの正本を読む。曲名はstateへ送らない。
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('dj_transition_eval', REPO_ROOT / '.github/scripts/eval-dj-transitions.py')
+    dj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dj)
+    home = dict(title='Home', artist='', variant='', genre='ポップ', originalYear=2026, releaseYear=2026,
+                bpm=93.9, camelot='5B', songKey='Eb', bpmSrc='est', keySrc='est')
+    candidates = [
+        dict(title='Battle Scars', artist='', variant='', genre='ヒップホップ／ラップ', originalYear=2012,
+             releaseYear=2012, bpm=84, camelot='5B', songKey='Eb', bpmSrc='deezer', keySrc='est'),
+        dict(title='ロッキーのテーマ', artist='', variant='', genre='クラシック', originalYear=1976,
+             releaseYear=2015, bpm=98.2, camelot='8A', songKey='Am', bpmSrc='est', keySrc='est'),
+    ]
+    pairs = [{'from': home, 'to': candidate} for candidate in candidates]
+    scores = []
+    for pair, features in zip(pairs, dj.current_features(pairs)):
+        pair['features'] = features
+        body = post_json(url, api_key, {'model': model, 'state': dj.state_for(pair, 'anonymous'),
+                                       'questions': {'transition': dj.QUESTION}})
+        scores.append(dj.parse_score(body)[0])
+    if scores[0] <= scores[1]:
+        raise RuntimeError('DJの実曲Scoreの順位が承認された比較と異なります')
+    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
 
 
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。

@@ -15,6 +15,7 @@
  *
  * ブースAPI（鍵なしの公開。ページをどこからもリンクしないことで運用上隠す）
  *   GET   /dj/api/req/admin/songs        全件（ひとこと・内部ステータス込み）
+ *   POST  /dj/api/req/admin/next         Jevの音楽評価（起点ID・イベントコード・タップBPMのみ受ける）
  *   PATCH /dj/api/req/admin/songs/:id    ステータス更新
  *   POST  /dj/api/req/admin/event        新しいイベントを開始（前の回は締まる。reopen で戻せる）
  *   PATCH /dj/api/req/admin/event        受付の開始／停止
@@ -49,6 +50,7 @@
 
 // モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む（.github/AI_MODELS.md）
 import aiModels from '../../../config/ai-models.json';
+import { transitionScores } from './transitions.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 const API_BASE = '/dj/api/req';
@@ -1300,6 +1302,41 @@ async function describeMissing(env, rows) {
 }
 
 /* ── 管理 ───────────────────────────────── */
+async function adminNext(request, env, cors) {
+  const body = await readJson(request);
+  if (!body || !Number.isSafeInteger(body.baseId) || body.baseId <= 0
+    || typeof body.eventCode !== 'string' || !body.tapBpms || Array.isArray(body.tapBpms)
+    || typeof body.tapBpms !== 'object' || Object.keys(body.tapBpms).length > 100) {
+    return json({ error: 'bad_request' }, 400, cors);
+  }
+  const ev = await currentEvent(env);
+  if (!ev || body.eventCode !== ev.code) return json({ error: 'stale_event' }, 409, cors);
+  // クライアントからはIDとタップBPMだけ受ける。評価対象とメタデータはDBで決める。
+  const result = await env.DB.prepare(`SELECT s.id, s.variant, s.genre, s.release_year, s.bpm,
+      s.song_key, s.camelot, s.bpm_src, s.key_src, s.status, s.played_at, i.card AS info_card
+    FROM songs s LEFT JOIN song_info i ON i.track_id = s.track_id
+    WHERE s.event_code = ? ORDER BY s.id DESC`).bind(ev.code).all();
+  const songs = result.results.map((row) => {
+    let card = null;
+    try { card = JSON.parse(row.info_card || 'null'); } catch { /* 壊れたカードの年代は不明 */ }
+    const tap = body.tapBpms[row.id];
+    return { id: row.id, variant: row.variant, genre: row.genre, releaseYear: row.release_year,
+      originalYear: card?.originalYear ?? null, bpm: row.bpm, songKey: row.song_key, camelot: row.camelot,
+      bpmSrc: row.bpm_src, keySrc: row.key_src, status: row.status, playedAt: row.played_at,
+      ...(typeof tap === 'number' && Number.isFinite(tap) && tap > 0 && tap <= 1000 ? { bpm: tap, bpmTapped: true } : {}) };
+  });
+  const base = songs.filter((song) => song.status === 'played' && song.playedAt)
+    .sort((a, b) => b.playedAt.localeCompare(a.playedAt))[0];
+  if (!base || base.id !== body.baseId) return json({ error: 'stale_base' }, 409, cors);
+  const candidates = songs.filter((song) => song.id !== base.id && ['pending', 'queued'].includes(song.status));
+  try {
+    const scores = await transitionScores(env, base, candidates, aiModels.typesafe.jev.id);
+    return json({ eventCode: ev.code, baseId: base.id, scores }, 200, cors);
+  } catch {
+    return json({ error: 'transition_unavailable', message: '相性の評価を取得できませんでした' }, 503, cors);
+  }
+}
+
 async function adminSongs(env, cors, ctx) {
   const ev = await currentEvent(env);
   if (!ev) return json({ event: null, songs: [] }, 200, cors);
@@ -1583,6 +1620,7 @@ export default {
       if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors, ctx);
 
       if (path === '/admin/songs' && method === 'GET')    return await adminSongs(env, cors, ctx);
+      if (path === '/admin/next' && method === 'POST')    return await adminNext(request, env, cors);
       if (path === '/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
       if (path === '/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
       if (path === '/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
