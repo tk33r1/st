@@ -62,6 +62,7 @@ Jev は初回に言語・賛否の議題か・会話の種類・サイト案内�
 
 モードは Worker が自動で決めるので、画面にトグルは置かない。入力欄の案内の変化もない。
 採決の代わりに説明がほしければ「採決せず、直前の議題の判断材料を整理して」と入力できる。これは9.2の通常相談として分類し、会話の言語と文脈を引き継ぐ。
+この言い方をトップページのFAQとアプリの「System & Privacy」に1行載せる（例:「採決ではなく説明がほしいときは『採決せず、直前の議題の判断材料を整理して』と入力できます」）。
 画面から分類を上書きする項目は追加しない。
 送信してから審議になるか分かるまでの間（Jev 判定＋議題化、目安1〜2秒）は、いまの「考え中」の表示のままとする。
 審議になったら `motion` イベントを受けてターンの先頭に審議パネルを挿入し（4.3）、審議にならなければ通常のターンとして描く。
@@ -180,6 +181,7 @@ MAGI モードのターンの並び（上から）:
 
 - 第1回の票は有効票として集計に使う（5.4）。ただし第2回の応答が届くまでは確定前なので、枠は青のまま小さな文字で示す。
   第2回を求めて応答が無ければ「前回の票」になる。5.4の1人格だけの経路は第2回を待たず、`verdict` で第1回の採用票と最終状態を示す。
+  第2回は第1回に応答した人格だけを対象とし、初回がabsentの人格を審議中へ戻したり、未実施回の審議記録を作ったりしない。
 - `persona.vote_state: 'pending'` のときだけ「票を確認中」と出す。同じ回の `final` を受け取ったら、票あり・判定できない・応答なしへ更新する。
   第1回で有効票が確定しても、採決前の青い塗りと初回票の補足は上記のとおり維持する。票の読取中と、討議の継続待ちは区別する（5.3）。
 - 枠の色だけに頼らないよう（色覚の多様性）、どの状態も文字を添える。
@@ -418,7 +420,7 @@ CSS 変数（`--magi-*`）へ渡す場合もこの値から設定し、CSS に�
 
 | 項目 | 内容 | 用途 |
 | --- | --- | --- |
-| `entry` | `chat` または `dj-request` | 新しい dj/request は後者を送る。省略時の旧画面互換は12章 |
+| `entry` | `chat` または `dj-request`。省略はchat | 新しい dj/request は後者を送る。旧画面はentryによらず9.1の旧プロファイル |
 | `magi_panel` | 第2公開のトップページ・アプリだけ `true`。第1公開・それ以外・省略は `false` | 演出対応の通知。MAGI 判定の結果を利用者が指定する項目ではない |
 | `classification_state` | 新しい3画面は `true` | `classification` イベントと会話の言語の引き継ぎに対応していることの通知 |
 | `reply_language` | 会話に保存した10章の検査済みオブジェクト。未確定なら省略 | 有効な値があれば Jev の言語の問いを外す |
@@ -508,6 +510,7 @@ MAGI モードの役目（3人格共通の骨子。人格ごとの口調は気�
 `pending` は票なしを確定した状態ではなく、各回の読取終了までに必ず解消する。`final` の `vote: null` は確定した無効票または応答なし。
 両者は既存の `absent: true` で区別し、応答なしだけに付ける。本文の空・「応答なし」という文言で判別しない。タグを落として本文が空になった不正票も、absent が無ければ判定できない票として扱う。
 absent がtrueなら vote はnull・vote_stateはfinalとし、それ以外の組み合わせは拒否する。
+MAGIでは実際に応答を求めた回の失敗だけにabsent通知を送る。呼んでいない第2回以降の「応答なし」を表示用に補って送らない（第1回の失敗人格・1人格だけの経路・聞き返されなかった人格を含む）。
 同じ `(回, 人格)` の初回通知は pending または final。再送での変更は pending→final だけを受け付け、`text` は変えない。同一の通知の再送は重複として扱う。
 final を pending に戻す通知や食い違う final は順序違反（5.8）。状態の欠落・未知の値・pending と有効票の組み合わせも拒否する。
 読取状態は通信・表示用に限り、履歴の最終票は4.5の形式を維持する。Worker は全員の読取終了を待ってから次の回・判定・集計へ進む。
@@ -679,12 +682,11 @@ MAGI モードの役目:
 
 ### 5.9 設定の置き場所（`personas.js`）
 
-Worker のプロンプトと値の正本は `personas.js`。モデル ID は `config/ai-models.json` のまま（`DEFAULTS.models` に `motion` と `vote_reader` を足し、どちらも `openai.luna`）。
+Worker のプロンプトと処理の値の正本は `personas.js`。運用上の有効化だけは環境変数 `MAGI_MODE_ENABLED` に分ける。モデル ID は `config/ai-models.json` のまま（`DEFAULTS.models` に `motion` と `vote_reader` を足し、どちらも `openai.luna`）。
 画面の演出の時間・色は4.3の共通ブロックに置く。
 
 ```js
 export const MAGI_MODE = {
-  enabled: true,                              // 第1公開ではfalse、第2公開のWorkerからtrue（6章）
   motion_ms: 4000, vote_reader_ms: 4000,
   motion_max_chars: 120,                       // これを超えたら votable: false（切り詰めない）
   motion_reference_max_chars: 500,             // 参考の1往復。各本文が上限を超えるなら往復を省く
@@ -697,6 +699,11 @@ export const MAGI_MODE = {
   synth_cap_note: (max) => '...',              // 5.6 の打ち切りの一文
 };
 ```
+
+`workers/magi2/wrangler.toml` の `[vars]` に `MAGI_MODE_ENABLED = "false"` を追加し、第2公開で `"true"` にする。
+Workerは `env.MAGI_MODE_ENABLED === 'true'` のときだけ採決を許可する。未設定・`"false"`・真偽値trueなど、それ以外は無効。リクエストに上書き項目は作らない。
+手元の評価は同じソース・同じ設定ファイルを使い、同じディレクトリの非追跡 `workers/magi2/.dev.vars` に `MAGI_MODE_ENABLED="true"` を置いて起動する（[Cloudflareのローカル変数](https://developers.cloudflare.com/workers/local-development/environment-variables/)）。
+本番を止めるときは `[vars]` の値を `"false"` にしてWorkerを再デプロイする。以後受け付けるターンは通常回答へ進み、言語固定・分類・musicの短縮は継続する。進行中の採決は途中で通常回答へ切り替えない。
 
 各人格と `SYNTHESIZER` の `role: { chat, magi }` は、それぞれの定義の中に持つ。
 `vote_tag` は形の定義だけに使う。各読み取りで `new RegExp(MAGI_MODE.vote_tag.source, MAGI_MODE.vote_tag.flags)` を作り、`matchAll` で全タグを数える。
@@ -746,21 +753,23 @@ export const MAGI_MODE = {
 | `workers/magi2/personas.js` | `INTENT_CLASSIFY`・`MUSIC_CONSULT`（14章）、`MAGI_MODE`、各人格と `SYNTHESIZER` の `role: { chat, magi }`、`DEFAULTS.models.motion`・`vote_reader`、`PERSONA_GUIDE` の `theme` とコメント（5.9）。`LANGUAGE_DETECT` は統合して二重管理しない |
 | `workers/magi2/src/index.js` | 入力と言語の検査、Jev の複数問・新旧プロファイル・フォールバック、分類の適用、`classification` の送信。議題化・票の取得と読取状態の確定通知・集計・MAGI の判定と統合、`integrated_end`、履歴の取り込み、music の短縮経路、サイト添付の制御 |
 | `workers/magi2/site-search.js` | `siteGuide` の場面説明と一覧添付を分け、9.4の同じ許可条件で統合の一覧とリンク選択を制御する |
-| `dj/request/index.html` | `entry: 'dj-request'`・言語情報の送信、`classification` の受信、相談ごとの言語の保存・復元・初期化。第1回から統合へ進み、不要な第2回のカード・待機表示を出さない。「System & Privacy」相当の説明を更新。カタログ連携とリクエスト受付 Worker は変えない |
-| `workers/magi2/README.md` | Jev の複数判定・初回言語固定・音楽相談の短縮・旧画面のプロファイル・分類をDBに保存しない方針・プライバシーの説明。MAGI モードの節（イベント、タグの規則、集計と状態、失敗の扱い、判定の基準の違い） |
+| `dj/request/index.html` | `entry: 'dj-request'`・言語情報の送信、`classification` の受信、相談ごとの言語の保存・復元・初期化。第1回から統合へ進み、不要な第2回のカード・待機表示を出さない。アプリと同じlocalhost限定の評価用API向け先を追加（12章）。「System & Privacy」相当の説明を更新。カタログ連携とリクエスト受付 Worker は変えない |
+| `workers/magi2/README.md` | Jev の複数判定・初回言語固定・音楽相談の短縮・旧画面のプロファイル・分類をDBに保存しない方針・プライバシーの説明。MAGI モードの節（環境変数での有効化・停止・ローカル評価、イベント、タグの規則、集計と状態、失敗の扱い、判定の基準の違い） |
 | `.github/scripts/test-magi2.mjs` | 検証計画の単体検証（分類・言語・音楽・新旧互換性・段階公開、票の読取状態、Worker と画面の共通ブロック・接続処理） |
 | `.github/scripts/preview-magi-mode.py` | 新規。アニメーションのプレビュー用の模擬 API（7.4） |
 | `.github/scripts/eval-magi-mode.mjs` | 新規。通常経路と採決経路の所要時間を、7.3の同じ条件で比較する評価専用スクリプト |
 | `.github/scripts/ai_models.py` | 第1公開で `smoke_typesafe` を本番の `INTENT_CLASSIFY` にそろえ、一般会話の初回4問・継続3問、DJ初回1問、旧画面の言語1問を試す。ほかの TypeSafe 利用箇所の smoke は維持する。第2公開で議題化（`motion_format`）と票の読み取り（`vote_reader_format`）の本番スキーマ・推論強度・出力上限を試す。細目は検証計画7節 |
 | `.github/scripts/magi-search-config.mjs` | 第1公開で `LANGUAGE_DETECT` の読込を `INTENT_CLASSIFY` の本番の問い・条件・各プロファイルへ置換。サイト検索・討議判定の既存出力も維持する。第2公開で議題化・票の読み取りのスキーマと呼出し設定も抽出する |
-| `workers/magi2/languages.js`・`wrangler.toml`・`.github/AI_MODELS.md` | 旧設定名を説明するコメント・運用説明を更新。シークレット名は変えない |
+| `workers/magi2/wrangler.toml` | `[vars]` に `MAGI_MODE_ENABLED` を追加。第1公開は `"false"`、第2公開は `"true"`。旧言語設定名のコメントも更新する |
+| `workers/magi2/languages.js`・`.github/AI_MODELS.md` | 旧設定名を説明するコメント・運用説明を更新。シークレット名は変えない |
 | `AGENTS.md` | 実装時に Jev の分類・初回だけの言語判定・music 固定・モードの自動決定・正本の場所を追記。「XSS 対策」に MAGI の議題文だけ `<` `>` を残す例外と5.2の描画・書き出しを明記する |
 
 公開は2段階に分ける。
 
-1. **分類・会話の言語固定・通常音楽相談の短縮**: Worker は `MAGI_MODE.enabled: false` とし、全リクエストを通常経路へ送る。画面は `classification_state: true`、`magi_panel: false` で通知と会話の言語の保存に対応する。
+1. **分類・会話の言語固定・通常音楽相談の短縮**: Worker は `MAGI_MODE_ENABLED="false"` とし、全リクエストを通常経路へ送る。画面は `classification_state: true`、`magi_panel: false` で通知と会話の言語の保存に対応する。
    第2回を省く音楽相談の表示もこの段階で更新する。演出の完成を待たず、分類・言語・短縮の検証を通して公開できる。
-2. **MAGI の採決・演出・履歴**: 手元・評価用Workerだけで `MAGI_MODE.enabled: true` として静止パネルで採決を先に検証する。演出と録画解析を完成させてから本番Workerの同設定をtrueにする。その後、トップページ・アプリが `magi_panel: true` を送る。
+   Jevへの問いは9.1どおり初回4問・継続3問を維持し、votableも聞く。ただし有効化の条件がfalseなので採決候補の通知は常にfalse。評価は検証計画の公開段階表に従う。
+2. **MAGI の採決・演出・履歴**: 5.9のローカル設定で `MAGI_MODE_ENABLED="true"` として静止パネルで採決を先に検証する。検証計画の第2公開の条件と演出・録画解析を通してから本番の `[vars]` を `"true"` にする。その後、トップページ・アプリが `magi_panel: true` を送る。
    第1公開の画面は引き続き通常経路で動く。静止表示は動きを減らす設定に使い、完成した MAGI の既定の体験は審議アニメーションとする。
 
 各段階は Worker → トップページ・dj/request → アプリの同期・再ビルドの順で公開する。段階ごとの HTML 増分と通過した検証を記録する。
@@ -804,7 +813,7 @@ export const MAGI_MODE = {
 | 決めたこと | 書いた節 |
 | --- | --- |
 | Jev の初回4問・継続3問をそれぞれ1回にまとめ、Worker が MAGI を最優先で適用する | 5・9 |
-| MAGI 候補は Jev の votable=yes かつその確信度0.7以上だけ。0.7未満・no・uncertain・不正値・失敗は通常回答 | 5.2・9.2・9.3・14.3 |
+| MAGI 候補は環境変数・画面の対応通知・Jevの条件がそろう場合だけ。votable=yesかつその確信度0.7以上が必須 | 5.2・5.9・9.2・9.3・14.3 |
 | MAGI はターンごとに自動判定し、トグル・モード指定・判定を上書きする操作は作らない | 3・4.1・5.1・9.3 |
 | dj/request は music 固定。言語だけ初回に判定し、継続では Jev を呼ばない | 9.1・12 |
 | 会話の言語は初回の結果または代替値で確定し、話題変更・停止・復元・履歴の trim 後も引き継ぐ | 10 |
@@ -849,7 +858,9 @@ export const MAGI_MODE = {
 ただし、言語が未確定で `language_seed` に本文がある場合（古い会話を開き直して画像だけ送る場合など）は、言語だけを1回判定する。
 最新の本文も言語の種も無い場合・キー未設定なら呼ばない。画像自体は Jev の材料にしない。
 `classification_state: true` の画面だけが初回固定の契約に参加する。旧画面への互換性は14章で分ける。
-旧画面は intent・site_pages・votable を聞かず、音楽の短縮も適用しない。旧 DJ の識別は12章を使い、music の役割とサイト案内除外は維持するが、討議回数は受信した `adaptive_debate` に従う現行のまま。
+第1公開や運用停止中でも、新画面の一般会話は同じ4問／3問を聞く。votableの判定と採決の有効化は分け、無効時の `magi_candidate` はfalseにする。
+旧画面は intent・site_pages・votable を聞かず、音楽の短縮も適用しない。旧DJも同じ旧プロファイルで、`MUSIC_CONSULT` は付けず、討議回数は受信した `adaptive_debate` に従う現行のまま。
+旧画面の `context`・`page`・案内フラグは現行どおり扱い、DJを識別する推測の規則は追加しない。
 
 **材料**:
 
@@ -906,8 +917,9 @@ MAGI の入口に使うのは `answers.votable.confidence` だけ。言語・int
 
 上から最初に当てはまる経路へ進む。
 
+0. `classification_state !== true` は9.1の旧プロファイルへ進む。entryやcontextから新しい音楽経路へ移さない。
 1. `entry: dj-request` は `intent: music`・`site_pages: no`・`votable: no` 固定。賛否の質問であっても採決へは入らない。
-2. それ以外で Worker の `MAGI_MODE.enabled === true`、Jev の `answers.votable.choice === 'yes'`、かつその `confidence` が有限の数値で0.7以上1以下、かつ `classification_state` と `magi_panel` が両方 `true` なら MAGI 候補として5.2の議題化を行う。
+2. それ以外で Worker の `env.MAGI_MODE_ENABLED === 'true'`、Jev の `answers.votable.choice === 'yes'`、かつその `confidence` が有限の数値で0.7以上1以下、かつ `classification_state` と `magi_panel` が両方 `true` なら MAGI 候補として5.2の議題化を行う。
    `intent: music` でもこの順序を優先する。音楽についての議題も通常の MAGI と同じ討議を行い、music を理由に短縮しない（1人格だけの共通の例外は5.4）。
 3. 議題化で `votable: true` なら MAGI の採決へ。`false`・失敗なら `motion` で却下を知らせ、同じ分類結果で通常回答へ。
    Jev を再呼び出ししない。分類の `votable` は候補の判定、`motion.votable` は実際に採決へ進めるかの判定なので混同しない。
@@ -1049,9 +1061,8 @@ Jev の `language` はその会話に検査済みの `reply_language` が無い�
 ## 12. 音楽相談と dj/request の統一
 
 `entry: dj-request` を正式な識別とし、`context` の内容を分類の根拠にしない。新しい dj/request は明示的にこの値を送る。
-旧画面との移行期間だけ、entry が無く、検査済みの非空 `context` があり、page が無い経路を既存の DJ 相談として扱う。
-明示的な `entry: chat` があればこの旧判定は適用しない。「context がある呼び出しはすべて音楽」とする一般規則にはしない。
-以下の初回だけの言語判定と短縮は新契約のDJに適用する。旧画面として識別したDJは9.1の言語1問・現行の討議回数を維持する。
+本章は `classification_state: true` の新契約が対象。entryの省略はchatとし、contextの有無からDJへ振り分けない。
+旧DJは9.1の旧プロファイルへ進み、従来のcontextはそのまま渡す。新しい音楽用見出しも短縮も適用しない。
 
 - DJ の発言分類は `music / no / no` 固定。初回に言語だけを Jev に聞き、継続では Jev を使わない。
 - 討議の短縮は9.4、MAGI との優先順位は9.3に従い、トップページ・アプリと DJ で通常の音楽相談の処理を共有する。
@@ -1062,6 +1073,8 @@ Jev の `language` はその会話に検査済みの `reply_language` が無い�
   MAGI の採決で `SYNTH_BIAS` を外す規則とは分ける。
 - 通常musicの短縮が確定した画面では、不要な第2回の空欄・考え中表示を残さず、第1回終了から統合へ進んだことが分かる表示にする。サイト側の通常 music も同じ。
   有効な `classification` を受信し、通常経路（候補false、または `motion` の却下）が確定してから短縮表示を使う。分類通知の無い旧Workerでは従来の第2回以降を表示する。
+- dj/requestの現行 `MAGI_API` は本番URLの固定値なので、第1公開の画面検証用にアプリと同じlocalhost限定の `?api` を追加する。
+  ページも指定先もHTTP(S)で、ホストがlocalhost・127.0.0.1・[::1]のいずれかの場合だけ使い、URLの資格情報・query・hashは許さない。通常の公開ページは常に既存の本番URLを使う。モードや分類結果を上書きする用途にはしない。
 
 ## 13. 送り先・保存・説明
 
@@ -1069,6 +1082,8 @@ Jev の `language` はその会話に検査済みの `reply_language` が無い�
 - 新契約の2ターン目以降は言語を問い直さず、分類のために本文を送る。新契約のdj/request は言語が確定した後は Jev へ送らない。旧画面の送信範囲は9.1の言語1問の契約を維持する。
 - 会話の確定言語とsampleは画面のメタデータへ保存する。分類結果・分類材料・材料のハッシュはD1へ保存しない。
 - `log('classify', …)` はプロファイル・問い名・choice・confidence・所要時間・失敗を記録し、ユーザー本文・種・sample はログに出さない。
+  第1公開でもvotableの検査済みchoice・confidenceを記録し、yesかつ0.7以上の候補相当率を集計できる。実際の採決は無効のまま。
+  このログだけでは判定の正誤・誤発動率は分からない。品質は検証計画の評価用入力で確かめ、本文や履歴を測定のために保存しない。
 - 「System & Privacy」と README の説明を「発言の言語と意図の判定」に直し、会話の初回だけ言語を決めること、分類に送る本文の範囲、
   言語の保存先と、分類結果をDBへ保存しないことを説明する。DJ の説明も自分の経路では言語だけであることを反映する。
 - 利用者への UI に分類のパラメータ名や確信度を並べない。審議に入った時だけパネルで分かり、通常回答はそのまま会話として読めるようにする。
@@ -1105,7 +1120,7 @@ export const MUSIC_CONSULT = { system_note: '...' }; // 固定するのは役目
 | 旧 | 旧 | 現行のまま |
 
 旧画面＋新 Worker の問い・材料・討議は9.1の旧プロファイルに従い、music の短縮は適用しない。
-第1公開では `MAGI_MODE.enabled: false` を優先し、対応通知を両方送る外部クライアントでも候補trueや採決のイベントは返さない。
+第1公開では `env.MAGI_MODE_ENABLED !== 'true'` を優先し、対応通知を両方送る外部クライアントでも候補trueや採決のイベントは返さない。
 `classification_state` と `magi_panel` は両方を検査し、MAGI 対応の条件は両方 true とする。未知の通知を無視できることだけを互換性の保証にしない。
 新旧で機能が未適用となる範囲を区別し、移行前の画面にも言語の初回固定が保証されるとは書かない。
 新画面で `classification` が無く通常回答の本流が始まった場合は旧 Worker の互換経路とし、後から MAGI のイベントが届いたら順序違反。
