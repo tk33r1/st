@@ -882,7 +882,7 @@ Cloudflare管理画面で変数だけを変更した場合は、次の設定フ�
 [TypeSafe のAPIスキーマ](https://api.typesafe.ai/openapi.json)は、同じ `state` に対する複数の名前付き `questions` を1回で受け、同じ名前の `answers` を返す。
 質問の判定はまとめて取得し、適用の優先順位は Worker のコードで決める。「MAGI の判定が先」は、Jev を段階的に2回呼ぶ意味ではない。
 
-[公式OpenAPI](https://api.typesafe.ai/openapi.json)と[APIリファレンス](https://docs.typesafe.ai/api)（2026-10-04確認）では、複数の問いを1リクエストで受け付け、choiceごとにconfidenceを返し、stateの任意のオブジェクト項目を許す。`language_seed` は専用のAPI項目ではなくstate内のデータで、参照する問いのinstructionsに明記する。183言語＋otherを含む4問の実測は未完了で、検証計画0節を実装前の条件とする。
+[公式OpenAPI](https://api.typesafe.ai/openapi.json)と[APIリファレンス](https://docs.typesafe.ai/api)（2026-10-04確認）では、複数の問いを1リクエストで受け付け、choiceごとにconfidenceを返し、stateの任意のオブジェクト項目を許す。`language_seed` は専用のAPI項目ではなくstate内のデータで、参照する問いのinstructionsに明記する。暫定の問いによる4問・3問の疎通も成功した（検証計画0節の調査記録）。本番用設定での反復計測は未完了で、同節を実装前の条件とする。
 
 | 経路 | 会話の言語が未確定 | 言語を引き継いだ後 |
 | --- | --- | --- |
