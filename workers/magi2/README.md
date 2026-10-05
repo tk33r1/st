@@ -27,7 +27,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 - リクエスト全体は12MiB、画像は1枚5MiB・合計8MiBまで。枚数は1発言4枚・履歴込み8枚。
 - 画面は古い画像を送信対象から除いて直近8枚を残す。端末に保存した履歴は変更しない。
 - 統合は空でない本文、`finish_reason: stop`、`[DONE]` がそろったときだけ正常完了する。
-- 画面は `done` を受け取った回答だけ保存し、接続30秒・開始後の無通信70秒で入力を戻す。
+- 通常回答は `done` 後に保存する。MAGI採決では受信済みの決議を保持し、説明の完了は `integrated_end` で区別する。接続30秒・開始後の無通信70秒で入力を戻す。
 
 ## 討議の回数（最大5回）
 
@@ -52,7 +52,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 - 討議の開始から `budget_ms`（90秒）を過ぎたら次の回を始めない。判定の失敗・時間切れ（`judge_ms`）は「答える」として扱う。
 - 変更前の実測（2026-10-04、手元から本番の API）：判定は1回 約2.5秒（推論トークン 60〜170）。ふだんの質問は第2回の後の判定で答えに進んでいた。
 
-画面がリクエストに `adaptive_debate: true` を付けたときだけ第3回以降を行う（トップページ・アプリ・`dj/request/` は付けている）。
+通常経路では、画面がリクエストに `adaptive_debate: true` を付けたときだけ第3回以降を行う（トップページ・アプリ・`dj/request/` は付けている）。
 第2回を省いた経路は、第1回の意見だけが残り、第2回の枠を出さず、考え中を解除して統合回答を表示する。設計§9.4の「第1回から統合へ進んだことが分かる表示」はこの組合せを指し、追加のラベルは設けない。
 付けない画面は第2回で止め、判定もしない。配布済みの古いアプリは第3回以降の `persona` イベントを初回の意見として保存してしまうため。
 
@@ -77,7 +77,7 @@ DJは `entry: dj-request` によりmusic/no/no固定で、言語の初回1問だ
 - 人格カード取得・分類は利用回数の確認と並行して始める。確認後に、対応画面へ `classification` を本流・タイトルより先に1回だけ送る。拒否・停止・切断時は分類も止める。
 - 会話ごとの言語はブラウザ内の現在の会話と保存会話に残す。受信後に回答が失敗しても言語を消さず、新しい会話で初期化する。
 - 分類結果・本文・ハッシュをD1へ保存しない。ログはプロファイル・問い・choice・confidence・時間・失敗だけ。
-- 第1段階は採決を無効にし、`magi_candidate: false` を返す。MAGIの採決・演出・履歴は次の実装段階（[進捗](実装進捗.md)）。
+- 第1段階は採決を無効にし、`magi_candidate: false` を返す。MAGIの採決・演出・履歴は実装済みで公開前の評価中（[進捗](実装進捗.md)）。
 
 ```sh
 node .github/scripts/probe-jev-classify.mjs
@@ -108,6 +108,32 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 
 画面は生成中に送信ボタンを停止ボタン（■）に変え、押すと接続を切る。Worker はストリームの `cancel` で
 続きの人格・統合・予測の呼び出しを止める（タブを閉じたときも同じ）。止めた質問は入力欄に戻す。
+
+## MAGI採決（第2公開）
+
+本番の `MAGI_MODE_ENABLED` は公開評価が終わるまで `"false"`。手元の `.dev.vars` に文字列 `"true"` を設定すると、両対応通知 `classification_state: true`・`magi_panel: true` を持つ一般会話で、Jevが明示的な賛否の問いを確信度0.7以上と判定した場合に議題化する。却下・失敗時は元の分類の通常経路に戻る。DJと404は採決へ入らない。
+
+議題化・タグ読取・多数決は `magi-mode.js`、指示と時間・スキーマは `personas.js`。3人格の初回・再回答と最大5回の聞き返しを使い、各人格の最新の有効票から2票以上で承認／否決、それ以外は保留にする。読取待ちの `persona` は `vote_state: pending`、票なしの確定も含め必ず `final` を再送する。過去票はタグではなく「承認／否決／票なし」として渡す。
+
+決議を `verdict` で先に送り、統合は採決を選び直さず根拠を説明する。テーマの重み付け・ページ選択・サイト案内は採決へ混ぜない。正常な説明の終端を `integrated_end`、予測を含めた全受信の終端を `done` で通知する。決議前の中止は往復を除去、決議後の中止は決議を保存し、説明未完なら `reason_missing: true`、説明完了済みなら全文を保持する。
+
+両画面の `MAGI_PRESENTATION_CORE` は時間・色と純粋な演出進行、`MAGI_VIEW` は描画・時計・スクロールを担当する。一致は単体検証で守る。票は600ms以上の間合い、最後の状態適用から600ms後に決議、その強調完了後に説明を表示する。非表示・動き軽減・停止は最新状態へ即時反映し、保存は演出から独立させる。履歴は静止パネルと折りたたんだ審議記録で復元する。
+
+```sh
+# 外部APIなし。トップページとPWAで mock-approve / mock-reject / mock-hold 等を送信
+python -B .github/scripts/preview-magi-mode.py
+# 保存済みの手元のキーで合成入力だけを評価。結果は非追跡の workers/.wrangler/
+node .github/scripts/eval-magi-mode.mjs --mode=motion
+node .github/scripts/eval-magi-mode.mjs --mode=entry
+node .github/scripts/eval-magi-mode.mjs --mode=reader
+node .github/scripts/eval-magi-mode.mjs --mode=paired --batch=1
+# 指定した合成入力だけ再評価する。結果ファイルは全件評価と分ける
+node .github/scripts/eval-magi-mode.mjs --mode=pilot --cases=1,16
+# 票と判定だけ模擬にし、理由なし・保留・前回票の説明を実APIで確認
+node .github/scripts/eval-magi-mode.mjs --mode=special
+```
+
+pairedは10組ずつ（batch 1〜3）通常回答と採決を交互に比較し、Google上限エラーで中断する。API観測はVM内の本番処理を通し、カード・索引・D1は手元の固定値で置き換える。Cloudflareの通信評価・実機・録画解析・本人による演出確認の代わりにはしない。公開手順と未確認事項は実装進捗・第2公開評価を参照。
 
 ## 404のAI検索とチャットのサイト案内
 

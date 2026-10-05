@@ -46,6 +46,7 @@ function worker(stream = completion(), upstream = null) {
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
     + strip(read('workers/magi2/classification.js')) + '\n'
+    + strip(read('workers/magi2/magi-mode.js')) + '\n'
     + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache;', ctx);
@@ -673,6 +674,8 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
   const original = JSON.stringify(history);
   for (const src of [mobile, home]) {
     const ctx = vm.createContext({ AGENT_MAX_HISTORY: 12 });
+    vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+    ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
     vm.runInContext(between(src, 'function prepareAgentMessages(', 'async function agentSend('), ctx);
     const messages = ctx.prepareAgentMessages(history, history.at(-1).content);
     const images = messages.flatMap(m => Array.isArray(m.content) ? m.content.filter(p => p.type === 'image_url') : []);
@@ -758,6 +761,9 @@ function client(src, isHome = false) {
     archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
+  vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+  ctx.agentSendSequence = 0;
+  ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
   ctx.currentSessionId = 'test-session'; ctx.agentReplyLanguage = null; ctx.currentLang = 'en'; ctx.ensureAgentConversation = () => ctx.currentSessionId; ctx.saveAgentLanguage = value => { ctx.agentReplyLanguage = value; };
   if (!isHome) vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
   vm.runInContext(thinkingSource(src), ctx);
@@ -1365,6 +1371,37 @@ test('分類は問いごとに閾値と有限数を検査し、失敗しても�
     { version: 1, code: 'fr', source: 'ui' }, { version: 1, code: 'other', source: 'sample', sample: 'a\u202Eb' }]) assert.equal(w.ctx.cleanReplyLanguage(value), null);
 });
 
+test('言語sampleはWorkerと3画面で全12双方向制御を拒否し、通常の文字は引き継ぐ', async () => {
+  const w = worker();
+  const controls = [0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069];
+  const sample = text => ({ version: 1, code: 'other', source: 'sample', sample: text });
+  for (const src of [home, mobile, dj]) {
+    const ctx = vm.createContext({ TextDecoder });
+    vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
+    for (const code of controls) {
+      const value = sample('α' + String.fromCodePoint(code) + 'β');
+      assert.equal(w.ctx.cleanReplyLanguage(value), null);
+      assert.equal(ctx.cleanReplyLanguage(value), null);
+      assert.equal(ctx.classificationFields([], value, 'en').reply_language, undefined);
+      assert.throws(() => ctx.receiveClassification({ started: false, classified: false }, 'classification', {
+        version: 1, intent: 'consult', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: value,
+      }), /invalid_classification/);
+    }
+    for (const text of ['مرحبا بالعالم', 'α\u200dβ']) {
+      assert.equal(w.ctx.cleanReplyLanguage(sample(text)).sample, text);
+      assert.equal(ctx.cleanReplyLanguage(sample(text)).sample, text);
+    }
+  }
+  const fallback = w.ctx.fixedLanguage('مرحبا\u061c بالعالم', 'en');
+  assert.equal(fallback.code, 'en'); assert.equal(fallback.source, 'ui');
+});
+
+test('PWAの初回キャッシュとHTMLは同じ版のアプリJSを読む', () => {
+  const html = read('magi-app/www/index.html'), sw = read('magi-app/www/sw.js');
+  const version = html.match(/src="app\.js\?v=([^"]+)"/)[1];
+  assert.ok(sw.includes('./app.js?v=' + version));
+});
+
 test('site/musicは2回討議、consultは従来の判定、旧DJは現行契約を維持する', async () => {
   for (const intent of ['site', 'music', 'consult']) {
     const w = worker(undefined, (url, options) => {
@@ -1489,6 +1526,34 @@ test('回答が失敗しても受信済みの会話言語を保存し、次の�
   }
 });
 
+test('トップページとアプリは保存が禁止されても同じ会話の言語をメモリで引き継ぐ', async () => {
+  const language = { version: 1, code: 'en', source: 'jev' };
+  for (const [src, isHome] of [[home, true], [mobile, false]]) {
+    const c = client(src, isHome), bodies = [];
+    c.ctx.localStorage = {
+      getItem() { throw new DOMException('blocked', 'SecurityError'); },
+      setItem() { throw new DOMException('blocked', 'SecurityError'); },
+      removeItem() { throw new DOMException('blocked', 'SecurityError'); },
+    };
+    const helpers = isHome
+      ? between(src, '    const safeParse =', '    const verBadge =')
+      : between(src, 'function safeParse(', 'var genMid');
+    // 保存の安全ラッパーと実際の言語保存処理を使う。DOMと通信だけを差し替える。
+    vm.runInContext(helpers + '\n' + between(src, 'function saveAgentLanguage(', 'function archiveCurrentHistory('), c.ctx);
+    c.ctx.fetch = async (_, options) => { bodies.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, handlers) => {
+      if (bodies.length === 1) handlers.classification({ reply_language: language });
+      handlers.integrated({ delta: 'answer' }); handlers.done();
+    };
+    await c.ctx.agentSend();
+    c.ctx.agentInput.value = '日本語で続きを相談する';
+    await c.ctx.agentSend();
+    assert.deepEqual(bodies[1].reply_language, language);
+    assert.equal(Object.hasOwn(bodies[1], 'language_seed'), false);
+    assert.equal(c.errors.length, 0);
+  }
+});
+
 test('DJの開発用Originはフラグ・Workerホスト・ページOriginの3条件をすべて要求する', () => {
   const ctx = vm.createContext({ URL, ALLOWED_ORIGINS: ['https://tk.st', 'https://www.tk.st'] });
   vm.runInContext(between(read('workers/dj-request/src/index.js'), 'function allowedRequestOrigin(', 'function corsHeaders('), ctx);
@@ -1540,6 +1605,19 @@ test('会話IDがない言語メタデータは新しい会話へ引き継がな
   }
 });
 
+test('アプリの保存言語の復元時には、言語コード一覧が初期化されている', () => {
+  const end=mobile.indexOf('function ensureAgentConversation(');
+  const prefix=mobile.slice(0,end);
+  const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout,clearTimeout,
+    ResizeObserver:class { observe(){} },
+    window:{},location:{protocol:'http:',hostname:'localhost',search:''},
+    document:{getElementById:()=>({...element(),addEventListener(){}})},
+    localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
+      ?JSON.stringify({id:'saved',reply_language:{version:1,code:'en',source:'ui'}}):null;}}
+  });
+  vm.runInContext(prefix,c);assert.equal(c.agentReplyLanguage.code,'en');
+});
+
 test('Geminiの試行と429は用途別に匿名で数え、記録失敗で回答を止めない', async () => {
   let googleCalls = 0;
   const w = worker(undefined, (url) => {
@@ -1582,76 +1660,234 @@ test('文字数指定を外した人格の長い応答で次の討議入力を�
   assert.match(text, /event: done/);
 });
 
-test('言語sampleはWorkerと3画面で全12双方向制御を拒否し、通常の文字は引き継ぐ', async () => {
-  const w = worker();
-  const controls = [0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069];
-  const sample = text => ({ version: 1, code: 'other', source: 'sample', sample: text });
-  for (const src of [home, mobile, dj]) {
-    const ctx = vm.createContext({ TextDecoder });
-    vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
-    for (const code of controls) {
-      const value = sample('α' + String.fromCodePoint(code) + 'β');
-      assert.equal(w.ctx.cleanReplyLanguage(value), null);
-      assert.equal(ctx.cleanReplyLanguage(value), null);
-      assert.equal(ctx.classificationFields([], value, 'en').reply_language, undefined);
-      assert.throws(() => ctx.receiveClassification({ started: false, classified: false }, 'classification', {
-        version: 1, intent: 'consult', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: value,
-      }), /invalid_classification/);
-    }
-    for (const text of ['مرحبا بالعالم', 'α\u200dβ']) {
-      assert.equal(w.ctx.cleanReplyLanguage(sample(text)).sample, text);
-      assert.equal(ctx.cleanReplyLanguage(sample(text)).sample, text);
-    }
-  }
-  const fallback = w.ctx.fixedLanguage('مرحبا\u061c بالعالم', 'en');
-  assert.equal(fallback.code, 'en'); assert.equal(fallback.source, 'ui');
-});
-
-test('PWAの初回キャッシュとHTMLは同じ版のアプリJSを読む', () => {
-  const html = read('magi-app/www/index.html'), sw = read('magi-app/www/sw.js');
-  const version = html.match(/src="app\.js\?v=([^"]+)"/)[1];
-  assert.ok(sw.includes('./app.js?v=' + version));
-});
-
-
-test('トップページとアプリは保存が禁止されても同じ会話の言語をメモリで引き継ぐ', async () => {
-  const language = { version: 1, code: 'en', source: 'jev' };
-  for (const [src, isHome] of [[home, true], [mobile, false]]) {
-    const c = client(src, isHome), bodies = [];
-    c.ctx.localStorage = {
-      getItem() { throw new DOMException('blocked', 'SecurityError'); },
-      setItem() { throw new DOMException('blocked', 'SecurityError'); },
-      removeItem() { throw new DOMException('blocked', 'SecurityError'); },
-    };
-    const helpers = isHome
-      ? between(src, '    const safeParse =', '    const verBadge =')
-      : between(src, 'function safeParse(', 'var genMid');
-    // 保存の安全ラッパーと実際の言語保存処理を使う。DOMと通信だけを差し替える。
-    vm.runInContext(helpers + '\n' + between(src, 'function saveAgentLanguage(', 'function archiveCurrentHistory('), c.ctx);
-    c.ctx.fetch = async (_, options) => { bodies.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
-    c.ctx.parseSSE = async (_, handlers) => {
-      if (bodies.length === 1) handlers.classification({ reply_language: language });
-      handlers.integrated({ delta: 'answer' }); handlers.done();
-    };
-    await c.ctx.agentSend();
-    c.ctx.agentInput.value = '日本語で続きを相談する';
-    await c.ctx.agentSend();
-    assert.deepEqual(bodies[1].reply_language, language);
-    assert.equal(Object.hasOwn(bodies[1], 'language_seed'), false);
-    assert.equal(c.errors.length, 0);
-  }
-});
-
-
-test('アプリの保存言語の復元時には、言語コード一覧が初期化されている', () => {
-  const end=mobile.indexOf('function ensureAgentConversation(');
-  const prefix=mobile.slice(0,end);
-  const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout,clearTimeout,
-    ResizeObserver:class { observe(){} },
-    window:{},location:{protocol:'http:',hostname:'localhost',search:''},
-    document:{getElementById:()=>({...element(),addEventListener(){}})},
-    localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
-      ?JSON.stringify({id:'saved',reply_language:{version:1,code:'en',source:'ui'}}):null;}}
+function magiWorker(settings = {}) {
+  const api = [], rounds = {};
+  const w = worker(completion(settings.answer || '私は実行の利点を重視した。ただ、費用への懸念は残る。'), (url, options) => {
+    if (url.includes('api.typesafe.ai')) return classifiedReply({ votable: { choice:'yes', confidence: settings.confidence ?? .9 } });
+    const b=JSON.parse(options.body);api.push(b);
+    const format=b.response_format?.json_schema?.name;
+    const json=v=>Response.json({choices:[{message:{content:JSON.stringify(v)},finish_reason:'stop'}]});
+    if(format==='magi_motion') return settings.motionResponse || json(settings.motion ?? {motion:'条件が合えば実行する',votable:true});
+    if(format==='magi_votes') return settings.readerResponse || json({votes:settings.reader || []});
+    if(format==='debate_judge') return json(settings.judge ? settings.judge(b) : {assessment:'理由は十分',action:'answer',questions:[]});
+    const codename=['MELCHIOR-1','BALTHASAR-2','CASPER-3'].find(k => b.messages[0]?.content.includes('面の1つ「'+({ 'MELCHIOR-1':'Enthusiast', 'BALTHASAR-2':'Humanist', 'CASPER-3':'Strategist' }[k])+'」（'+k+'）'));
+    if(codename){const round=rounds[codename]=(rounds[codename]||0)+1;
+      if(settings.absent?.(codename,round))return new Response('unavailable',{status:429});
+      return Response.json({choices:[{message:{content:settings.raw ? settings.raw(codename,round) : '[VOTE:APPROVE]\n理由'},finish_reason:'stop'}]});}
   });
-  vm.runInContext(prefix,c);assert.equal(c.agentReplyLanguage.code,'en');
+  Object.assign(w.env,{MAGI_TYPESAFE_API_KEY:'test',MAGI_MODE_ENABLED:'true'});
+  w.run = (extra={})=>w.request('/magi2/chat',{classification_state:true,magi_panel:true,adaptive_debate:true,ui_language:'ja',
+    site_pages:true,page:'/',messages:[{role:'user',content:'条件が合えば実行すべき？'}],...extra}).then(r=>r.text()).then(classifiedEvents);
+  return Object.assign(w,{api,rounds});
+}
+
+test('MAGI採決: 票タグの装飾・理由・同値重複を受け付け、矛盾は読取へ回さない', () => {
+  const w=worker();
+  for(const raw of ['[VOTE:APPROVE] 理由','**[VOTE: APPROVE ]**','`[VOTE:APPROVE]`\n理由\n[VOTE:APPROVE]']){
+    const v=w.ctx.parseVote(raw);assert.equal(v.vote,'approve');assert.equal(v.vote_state,'final');assert.doesNotMatch(v.text,/VOTE/);
+  }
+  for(const raw of ['[VOTE:APPROVE][VOTE:REJECT]','[VOTE:]','[VOTE:APP ROVE]'])assert.equal(w.ctx.parseVote(raw).vote_state,'final');
+  for(const raw of ['本文\n[VOTE:APPROVE]','[VOTE：APPROVE]','賛成する'])assert.equal(w.ctx.parseVote(raw).vote_state,'pending');
+  assert.equal(w.ctx.parseVote('[VOTE:REJECT]').text,'');
+  w.ctx.parseVote('[VOTE:REJECT]');assert.equal(w.ctx.parseVote('[VOTE:APPROVE]').vote,'approve');
+});
+
+test('MAGI採決: 有効化・両通知・確信度を検査し、旧画面へ採決を送らない', async () => {
+  for(const cfg of [{flag:false},{flag:'false'},{flag:undefined},{magi_panel:false},{classification_state:false},{confidence:.699},{confidence:NaN}]){
+    const w=magiWorker(cfg);if('flag' in cfg)w.env.MAGI_MODE_ENABLED=cfg.flag;
+    const ev=await w.run(cfg);assert.ok(!ev.some(e=>e.name==='motion'||e.name==='verdict'));
+    assert.ok(!w.api.some(b=>b.response_format?.json_schema?.name==='magi_motion'));
+  }
+  const ev=await magiWorker({confidence:.7}).run();assert.equal(ev[0].data.magi_candidate,true);assert.ok(ev.some(e=>e.name==='verdict'));
+});
+
+test('MAGI採決: 討議から多数決・説明完了へ進み、採決中はサイト案内と重み付けを付けない', async () => {
+  const w=magiWorker(),ev=await w.run({theme:'dark',suggest:true});
+  const verdict=ev.find(e=>e.name==='verdict').data;assert.equal(verdict.result,'approve');assert.equal(verdict.rounds,2);assert.equal(verdict.tally.approve,3);
+  assert.ok(ev.findIndex(e=>e.name==='verdict')<ev.findIndex(e=>e.name==='integrated'));
+  assert.ok(ev.findIndex(e=>e.name==='integrated_end')<ev.findIndex(e=>e.name==='suggest'));
+  assert.equal(ev.filter(e=>e.name==='integrated_end').length,1);assert.equal(ev.at(-1).name,'done');
+  const synth=w.api.find(b=>b.stream);assert.doesNotMatch(JSON.stringify(synth),/サイトの案内|検証済みのサイト案内|比重|優先して/);
+  assert.ok(!ev.some(e=>e.name==='pages'));
+  const personas=ev.filter(e=>e.name==='persona');assert.equal(personas.length,6);assert.ok(personas.every(e=>e.data.vote_state==='final'&&e.data.vote==='approve'));
+  const second=w.api.filter(b=>!b.stream && b.messages.some(m=>typeof m.content==='string' && m.content.includes('[あなたの初回意見]')));
+  assert.equal(second.length,3);for(const b of second)assert.doesNotMatch(JSON.stringify(b.messages.slice(1)),/\[VOTE:/);
+});
+
+test('MAGI採決: 読取のunclear・失敗でもpendingをfinalで再送し、矛盾タグは読まない', async () => {
+  for(const readerResponse of [undefined,new Response('failed',{status:503})]){
+    const w=magiWorker({readerResponse,raw:k=>k==='MELCHIOR-1'?'私は賛成する':k==='BALTHASAR-2'?'[VOTE:APPROVE][VOTE:REJECT]':'[VOTE:REJECT] 理由'});
+    const ev=await w.run(),p=ev.filter(e=>e.name==='persona'&&e.data.codename==='MELCHIOR-1');
+    assert.deepEqual(p.map(e=>e.data.vote_state),['pending','final','pending','final']);
+    assert.ok(p.every(e=>e.data.vote===null));assert.ok(ev.filter(e=>e.name==='persona'&&e.data.codename==='BALTHASAR-2').every(e=>e.data.vote_state==='final'));
+    assert.equal(ev.find(e=>e.name==='verdict').data.result,'hold');
+  }
+});
+
+test('MAGI採決: タグのみでも応答に数え、単独応答は1回で保留、全欠席はエラー', async () => {
+  const noReason=await magiWorker({raw:()=>'[VOTE:APPROVE]'}).run();assert.equal(noReason.find(e=>e.name==='verdict').data.result,'approve');assert.equal(noReason.filter(e=>e.name==='persona').length,6);
+  const one=await magiWorker({absent:k=>k!=='CASPER-3'}).run();const v=one.find(e=>e.name==='verdict').data;
+  assert.equal(v.result,'hold');assert.equal(v.rounds,1);assert.equal(v.votes['CASPER-3'].state,'voted');assert.equal(one.filter(e=>e.name==='persona').length,3);assert.ok(!one.some(e=>e.name==='judge'));
+  const none=await magiWorker({absent:()=>true}).run();assert.equal(none.at(-1).name,'error');assert.ok(!none.some(e=>e.name==='verdict'));
+});
+
+test('MAGI採決: 聞き返した回の欠席は前回票を採用し、最大5回と判定の厳しさを維持する', async () => {
+  let judges=0;const w=magiWorker({judge:()=>({assessment:'条件を確認',action:'ask',questions:[{target:'MELCHIOR-1',question:'既知の条件で何を重視するか？'}]}),
+    absent:(k,r)=>k==='MELCHIOR-1'&&r>=3,raw:(k,r)=>k==='CASPER-3'?'[VOTE:REJECT]\n費用が大きい':'[VOTE:APPROVE]\n利点が大きい'});
+  const ev=await w.run({adaptive_debate:false}),v=ev.find(e=>e.name==='verdict').data;
+  assert.equal(v.rounds,5);assert.equal(v.votes['MELCHIOR-1'].state,'carried');assert.equal(v.votes['MELCHIOR-1'].round,2);assert.equal(v.votes['MELCHIOR-1'].issue,'no_response');
+  const js=w.api.filter(b=>b.response_format?.json_schema?.name==='debate_judge');assert.equal(js.length,3);
+  assert.match(js[0].messages[0].content,/票が変わる見込みは必須ではない/);assert.match(js[2].messages[0].content,/票が動きうる論点が残る場合だけ/);
+  assert.equal(ev.filter(e=>e.name==='persona'&&e.data.codename==='BALTHASAR-2').length,2);
+});
+
+test('MAGI採決: 議題化の却下・失敗は通常回答へ戻し、空・120字超・全12双方向制御を拒否する', async () => {
+  const cases=[{motion:'',votable:false}, {motion:'',votable:true},{motion:'a'.repeat(121),votable:true},
+    ...['\u061c','\u200e','\u200f','\u202a','\u202b','\u202c','\u202d','\u202e','\u2066','\u2067','\u2068','\u2069','\u0001'].map(c=>({motion:'条件'+c+'実行',votable:true}))];
+  for(const motion of cases){const ev=await magiWorker({motion}).run();assert.equal(ev.find(e=>e.name==='motion').data.votable,false);assert.ok(!ev.some(e=>e.name==='verdict'||e.name==='integrated_end'));assert.equal(ev.at(-1).name,'done');}
+  const w=worker();assert.equal(w.ctx.cleanMotion(' 予算 < 3万円\tなら実行 '),'予算 < 3万円 なら実行');assert.equal(w.ctx.cleanMotion('👨‍👩‍👧を守る'),'👨‍👩‍👧を守る');
+});
+
+test('MAGI採決: 議題化は直前1往復だけ参照し、上限超の往復と画像本体を送らない', async () => {
+  for(const ref of ['単一の提案','x'.repeat(501)]){
+    const w=magiWorker();await w.run({messages:[{role:'user',content:'古い質問'},{role:'assistant',content:'古い回答'},
+      {role:'user',content:'どんな案？'},{role:'assistant',content:ref},{role:'user',content:[{type:'text',text:'それを実施すべき？'},{type:'image_url',image_url:{url:'data:image/png;base64,AAAA'}}]}]});
+    const b=w.api.find(b=>b.response_format?.json_schema?.name==='magi_motion'),input=JSON.parse(b.messages[1].content);
+    assert.equal(input.reference.length,ref.length>500?0:2);assert.equal(input.has_image,true);assert.doesNotMatch(JSON.stringify(input),/古い質問|古い回答|base64/);
+  }
+});
+
+function coreClient(src=home){const block=between(src,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END');assert.ok(block.length>100);const c=vm.createContext({});vm.runInContext(block,c);return c;}
+const finalMagi = (result='approve') => ({ motion:'予算 < 3万円なら実行',result,tally:result==='hold'?{approve:1,reject:1,none:1}:result==='approve'?{approve:2,reject:1,none:0}:{approve:1,reject:2,none:0},rounds:2,reason_missing:false,
+  votes:Object.fromEntries(['MELCHIOR-1','BALTHASAR-2','CASPER-3'].map((k,i)=>[k,{vote:result==='hold'&&i===2?null:result==='reject'?(i===0?'approve':'reject'):(i===1?'reject':'approve'),round:result==='hold'&&i===2?null:2,state:result==='hold'&&i===2?'absent':'voted'}])) });
+
+test('MAGI採決: 共通演出の正本が両画面で存在し一致し、配色のコントラストを満たす', () => {
+  const block=s=>between(s,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END');assert.equal(block(home),block(mobile));
+  const c=coreClient(),color=c.MAGI_COLORS;
+  const lum=h=>{const a=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return a[0]*.2126+a[1]*.7152+a[2]*.0722;};
+  for(const k of ['blue','blue2','approve','reject','approveCarried','rejectCarried','gray','hatch','orange'])assert.ok((lum(color[k])+.05)/.05>=4.5,k);
+  assert.ok(Math.abs(lum(color.blue)-lum(color.blue2))<=.08);
+  assert.equal(between(home,'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'),between(read('magi-app/www/index.html'),'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'));
+  assert.doesNotMatch(between(home,'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'),/#[0-9a-f]{3,8}\b|opacity|transition|animation|filter:/i);
+});
+
+test('MAGI採決: 履歴は票数・結果・状態を検査し、不整合と禁止議題だけを捨てる', () => {
+  for(const src of [home,mobile]){const c=coreClient(src),v=finalMagi();assert.equal(c.magiClean(v).motion,v.motion);
+    for(const bad of [{...v,result:'reject'},{...v,motion:'比較\u202e'},{...v,tally:{approve:3,reject:0,none:0}},{...v,rounds:0},{...v,reason_missing:'false'}])assert.equal(c.magiClean(bad),null);
+    assert.equal(c.magiClean({motion:'',votable:false}).reason,'not_votable');assert.equal(c.magiClean({motion:'',votable:false,reason:'other'}),null);
+    const md=c.magiMarkdown(v,{});assert.match(md,/&lt;/);assert.ok(!md.includes('<'));
+  }
+});
+
+test('MAGI採決: 決議は最終状態の実適用から600ms、説明はさらに300ms待つ', () => {
+  for(const src of [home,mobile]){const c=coreClient(src);let o=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false,'initial');
+    o=c.magiStep(o.state,{event:'verdict',data:finalMagi()},100,true,false,'initial');assert.equal(o.frame.result,null);
+    o=c.magiStep(o.state,null,700,true,false,'initial');o=c.magiStep(o.state,null,1300,true,false,'initial');assert.equal(o.frame.ack,true);
+    const before=JSON.stringify(o.state);const a=c.magiStep(o.state,{event:'applied'},2000,true,false,'initial');assert.equal(JSON.stringify(o.state),before);
+    assert.equal(c.magiStep(a.state,null,2599,true,false).frame.result,null);
+    o=c.magiStep(a.state,null,2600,true,false);assert.equal(o.frame.result.result,'approve');assert.equal(o.frame.explanation,false);
+    assert.equal(c.magiStep(o.state,null,2899,true,false).frame.explanation,false);assert.equal(c.magiStep(o.state,null,2900,true,false).frame.explanation,true);
+  }
+});
+
+test('MAGI採決: 非表示・動き軽減・停止では待ち0、pending→finalを同じキューへまとめる', () => {
+  const c=coreClient();let o=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false);
+  o=c.magiStep(o.state,{event:'persona',data:{codename:'MELCHIOR-1',round:2,text:'理由',vote:null,vote_state:'pending'}},1,true,false);
+  o=c.magiStep(o.state,{event:'persona',data:{codename:'MELCHIOR-1',round:2,text:'理由',vote:null,vote_state:'final'}},2,true,false);
+  assert.equal(o.state.queue.length,1);assert.equal(o.state.queue[0].node.state,'unreadable');
+  for(const [visible,reduced] of [[false,false],[true,true]]){const z=c.magiStep(o.state,{event:'verdict',data:finalMagi()},3,visible,reduced);assert.equal(z.frame.explanation,true);assert.equal(z.next,null);assert.equal(z.state.queue.length,0);}
+  const z=c.magiStep(o.state,{event:'verdict',data:finalMagi()},3,true,false);assert.equal(c.magiStep(z.state,{event:'finish'},4,true,false).frame.explanation,true);
+});
+
+test('MAGI採決: 共通スロット先頭300msだけ消灯し、遅延や復帰で過去の明滅を再生しない', () => {
+  const c=coreClient();const init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
+  for(const [t,id,off] of [[2400,'MELCHIOR-1',true],[2699,'MELCHIOR-1',true],[2700,'MELCHIOR-1',false],[2999,'MELCHIOR-1',false],[3000,'BALTHASAR-2',true]]){
+    const o=c.magiStep(init,null,t,true,false,'initial');assert.equal(o.frame.nodes[id].color===c.MAGI_COLORS.off,off);
+  }
+  const hidden=c.magiStep(init,null,2410,false,false);assert.equal(hidden.frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.blue);
+  const back=c.magiStep(hidden.state,null,2420,true,false);assert.equal(back.frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.blue);
+  const late=c.magiStep(init,null,30000,true,false);assert.equal(late.state.queue.length,0);
+});
+
+test('MAGI採決: 独立した点滅検査で両案の全要素合成を1秒3回以下に保つ', () => {
+  const c=coreClient();const lum=h=>{const a=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return a[0]*.2126+a[1]*.7152+a[2]*.0722;};
+  for(const variant of ['initial','gentle'])for(let run=0;run<12;run++){
+    let state=null,previous=null,seed=42+run;const changes={},events=new Map();
+    const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+    const add=(t,e)=>events.set(t,[...(events.get(t)||[]),e]);
+    add(0,{event:'motion',data:{text:'実行'}});
+    for(const round of [1,2])for(const codename of c.MAGI_IDS){
+      const t=(round===1?700:4500)+Math.floor(random()*180)*10;
+      const data={codename,round,text:'理由',vote:null,vote_state:'pending'};
+      add(t,{event:'persona',data});add(t+10,{event:'persona',data:{...data,vote:round===1?'reject':'approve',vote_state:'final'}});
+      add(t+20,{event:'persona',data:{...data,vote:round===1?'reject':'approve',vote_state:'final'}});
+    }
+    add(10000,{event:'verdict',data:finalMagi()});
+    const hiddenAt=6500+Math.floor(random()*40)*10,reducedAt=7800+Math.floor(random()*40)*10;
+    for(let t=0;t<=16000;t+=10){
+      const visible=run===0||t<hiddenAt||t>=hiddenAt+100,reduced=run!==0&&t>=reducedAt&&t<reducedAt+100;
+      let o=c.magiStep(state,null,t,visible,reduced,variant);
+      for(const ev of events.get(t)||[])o=c.magiStep(o.state,ev,t,visible,reduced,variant);
+      if(o.frame.ack)o=c.magiStep(o.state,{event:'applied'},t,visible,reduced,variant);state=o.state;
+      const colors=Object.fromEntries(Object.entries(o.frame.nodes).map(([k,n])=>[k,n.color]));colors.verdict=o.frame.result?c.MAGI_COLORS[o.frame.result.result]:c.MAGI_COLORS.ground;
+      if(previous)for(const [k,color] of Object.entries(colors)){const delta=lum(color)-lum(previous[k]);if(Math.abs(delta)>=.1){(changes[k]||=[]).push({t,sign:Math.sign(delta)});}}
+      previous=colors;
+    }
+    const flashes=[];for(const rows of Object.values(changes))for(let i=1;i<rows.length;i++)if(rows[i].sign!==rows[i-1].sign){flashes.push(rows[i].t);i++;}
+    for(const start of flashes)assert.ok(flashes.filter(t=>t>=start&&t<start+1000).length<=3,variant+' seed '+(42+run)+' at '+start);
+  }
+});
+
+test('MAGI採決: SSEは通知・motion・各回final・決議・説明完了の順序を両画面で検査する', async () => {
+  for(const src of [home,mobile]){
+    const c=coreClient(src);c.TextDecoder=TextDecoder;
+    vm.runInContext(between(src,'// AGENT_CLASSIFY_BEGIN','// AGENT_CLASSIFY_END')+'\n'+between(src,'async function parseSSE(',src===home?'// --- マルチモーダル入力':'// ---- 画像添付'),c);
+    const notice={version:1,intent:'consult',site_pages:'no',votable:'yes',magi_candidate:true,reply_language:{version:1,code:'ja',source:'jev'}};
+    const prefix=event('classification',notice)+event('motion',{text:'予算 < 3万円なら実行',votable:true});
+    const votes=[1,2].flatMap(round=>c.MAGI_IDS.map(k=>event('persona',{codename:k,round,text:'理由',vote:k==='BALTHASAR-2'?'reject':'approve',vote_state:'final'}))).join('');
+    const body=prefix+votes+event('verdict',finalMagi())+event('integrated',{delta:'私は賛成した。'})+event('integrated_end',{})+event('done',{});
+    await c.parseSSE(new Response(body).body,{magiPanel:true});
+    for(const bad of [event('motion',{text:'実行',votable:true}),event('classification',notice)+event('persona',{}),prefix+event('verdict',finalMagi()),
+      prefix+votes+event('integrated',{delta:'bad'}),prefix+votes+event('verdict',finalMagi())+event('done',{}),
+      prefix+event('persona',{codename:'MELCHIOR-1',round:1,text:'理由',vote:null,vote_state:'pending'})+event('judge',{round:2})]){
+      await assert.rejects(c.parseSSE(new Response(bad).body,{magiPanel:true}),/invalid_magi/);
+    }
+  }
+});
+
+test('MAGI採決: 既に表示した再送を再演せず、読み取り中も前回の有効票を保持する', () => {
+  const c=coreClient();let o=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false);
+  const d={codename:'MELCHIOR-1',round:1,text:'理由',vote:'approve',vote_state:'final'};
+  o=c.magiStep(o.state,{event:'persona',data:d},1,true,false);assert.equal(o.state.serial,1);
+  o=c.magiStep(o.state,{event:'persona',data:d},700,true,false);assert.equal(o.state.serial,1);assert.equal(o.state.queue.length,0);
+  o=c.magiStep(o.state,{event:'persona',data:{...d,round:2,vote:null,vote_state:'pending'}},800,true,false);
+  assert.equal(o.state.latest[d.codename].vote,'approve');assert.equal(o.state.latest[d.codename].round,1);
+  o=c.magiStep(o.state,{event:'persona',data:{...d,round:2,vote:null}},801,true,false);
+  assert.equal(o.state.latest[d.codename].state,'carried');assert.equal(o.state.latest[d.codename].round,1);
+});
+
+test('MAGI採決: 両画面は決議後の停止・切断で完了した説明だけを保存し、古い会話を混ぜない', async () => {
+  for(const [src,isHome] of [[home,true],[mobile,false]])for(const ending of ['partial-error','partial-stop','complete-eof','complete-stop','done','switch']){
+    const c=client(src,isHome);let ready=false,resolve;let disposed=false;
+    c.ctx.document.hidden=false;
+    c.ctx.createMagiView=(_turn,options)=>({push(){},start(){},ready:()=>ready,
+      finish(){ready=true;options.explain();resolve?.();},wait(){return ready?Promise.resolve():new Promise(r=>{resolve=r;});},
+      dispose(){disposed=true;resolve?.();},explanationChanged(){}});
+    c.ctx.magiBadge=()=>{};c.ctx.fetch=async()=>({ok:true,body:{}});
+    c.ctx.parseSSE=async(_body,h)=>{
+      h.motion({text:finalMagi().motion,votable:true});h.verdict(finalMagi());h.integrated({delta:'完全な説明'});
+      if(ending.startsWith('complete')||ending==='done')h.integrated_end({});
+      if(ending.endsWith('stop'))c.ctx.agentCtrl.abort();
+      if(ending==='partial-error')h.error({code:'synthesis_error'});
+      if(ending==='done'){ready=true;await h.done();}
+      if(ending==='switch'){c.ctx.agentGen++;c.ctx.currentSessionId='another';c.ctx.agentHistory=[];c.ctx.agentBusy=false;}
+    };
+    await c.ctx.agentSend();assert.equal(disposed,true);
+    if(ending==='switch'){assert.equal(c.ctx.agentHistory.length,0);continue;}
+    assert.equal(c.ctx.agentHistory.length,2);const answer=c.ctx.agentHistory[1];
+    assert.equal(answer.mode,'magi');assert.equal(answer.magi.result,'approve');assert.equal(answer.magi.reason_missing,ending.startsWith('partial'));
+    if(ending.startsWith('partial'))assert.ok(!answer.content.includes('完全な説明'));
+    else assert.equal(answer.content,'完全な説明');
+    assert.equal(c.ctx.agentBusy,false);assert.equal(c.ctx.agentInput.disabled,false);
+  }
 });

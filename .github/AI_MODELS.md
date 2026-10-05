@@ -107,3 +107,5 @@ MAGIのJev smokeは `magi-search-config.mjs` が本番と同じ `INTENT_CLASSIFY
 3人格・統合は `DEFAULTS.models.persona`／`synthesizer` と本番の `requestBody` からリクエストを作る。更新候補の確認ではモデルIDだけを置換する。人格は途中終了でも空でない本文を受け付け、統合は正常なストリーム終端を必須とする。Jevには賛否の問い（yes）と通常相談（no）を含め、回答のtypeを送った問いと照合する。`test-magi-smoke.py` は外部APIを呼ばず、設定の引継ぎ・サイト選択の両指示・Jevの両choiceとtype・人格と統合の完了条件を確認し、push／PRのCIでも実行する。
 
 ページ選択は、本番の指示を使う4ケースで `daily` が全件nullでも失敗にしない。有効な日刊検索の有無はログに記録する。nullableの両側は、同じ本番スキーマ・推論・上限で指定JSONを返す2ケースとして独立に確認する。固定JSONの期待値を本番指示のケースへ適用しない。
+
+MAGI採決の議題化と票の読み取りも、同じ抽出で本番のスキーマ・推論強度・上限を使い、Lunaのsmokeで最小の構造化応答を確認する。判定品質とタグ率は `eval-magi-mode.mjs` の評価で別に測る。

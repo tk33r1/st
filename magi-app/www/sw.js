@@ -1,6 +1,6 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
-var CACHE = 'magi-shell-v26';
+var CACHE = 'magi-shell-v27';
 // Shell files, icons included (they are committed in www/).
 var CORE = [
   './', './index.html', './app.js?v=20261005_2', './manifest.webmanifest',

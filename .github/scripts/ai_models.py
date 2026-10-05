@@ -164,8 +164,9 @@ def smoke_openai(url, api_key, model):
     observations = smoke_openai_site_search(url, api_key, model, config)
     print('サイト選択smoke（日刊検索の有無は合否に使わない）: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
+    smoke_openai_magi(url, api_key, model, config['magi'])
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary/daily両形、討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary/daily両形、討議判定・MAGI議題化・票読取/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
@@ -210,6 +211,28 @@ def smoke_openai_debate_judge(url, api_key, model, config):
         raise RuntimeError('討議の判定の応答が正常完了しませんでした')
     if json.loads(message_content(response)) != expected:
         raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
+
+
+def smoke_openai_magi(url, api_key, model, config):
+    """採決の議題化と票読取。本番のスキーマ・推論・上限を使う疎通確認。"""
+    for name in ('motion', 'vote_reader'):
+        cfg = config[name]
+        response = post_json(url, api_key, {**cfg['body'], 'model': model})
+        choice = response.get('choices', [{}])[0]
+        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+            raise RuntimeError('MAGI ' + name + ' の応答が正常完了しませんでした')
+        value = json.loads(message_content(response))
+        if name == 'motion':
+            if value.get('votable') is not True or not isinstance(value.get('motion'), str) or not value['motion'].strip():
+                raise RuntimeError('MAGI議題化の疎通で期待した応答が得られませんでした')
+        else:
+            votes = value.get('votes')
+            allowed = cfg['format']['json_schema']['schema']['properties']['votes']['items']['properties']
+            if not isinstance(votes, list) or any(
+                not isinstance(v, dict) or v.get('codename') not in allowed['codename']['enum']
+                or v.get('vote') not in allowed['vote']['enum'] for v in votes
+            ) or [v.get('vote') for v in votes if v.get('codename') == 'CASPER-3'] != ['reject']:
+                raise RuntimeError('MAGI票読取の疎通で期待した応答が得られませんでした')
 
 
 def smoke_openai_site_search(url, api_key, model, config):

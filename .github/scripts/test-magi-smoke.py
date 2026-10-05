@@ -164,6 +164,26 @@ class MagiSmokeTest(unittest.TestCase):
                     with self.assertRaises(RuntimeError):
                         ai_models.validate_chat_stream(raw)
 
+    def test_magi_schema_smoke_uses_production_request_body(self):
+        config = copy.deepcopy(self.config['magi'])
+        sent = []
+        expected = [{'motion': 'Go for ramen tonight', 'votable': True},
+                    {'votes': [{'codename': 'CASPER-3', 'vote': 'reject'}]}]
+        for cfg in config.values():
+            cfg['body']['max_completion_tokens'] = 777
+            cfg['body']['temperature'] = .87
+        def post(url, key, body):
+            value = expected[len(sent)]
+            sent.append(body)
+            return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+        with patch.object(ai_models, 'post_json', side_effect=post):
+            ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', config)
+        for body, name in zip(sent, ['motion', 'vote_reader']):
+            self.assertEqual(body, {**config[name]['body'], 'model': 'candidate-for-test'})
+            self.assertEqual(body['response_format'], config[name]['format'])
+        self.assertIn(self.config['magi']['vote_reader']['prompt'], sent[1]['messages'][0]['content'])
+        self.assertNotIn('Write in English.', sent[1]['messages'][0]['content'])
+
 
 if __name__ == '__main__':
     unittest.main()

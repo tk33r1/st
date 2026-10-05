@@ -3063,14 +3063,14 @@ function cleanReplyLanguage(v) {
     || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
   return { version: 1, code: v.code, source: v.source };
 }
-function classificationFields(history, language, ui, entry) {
+function classificationFields(history, language, ui, entry, panel) {
   var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
   var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
   var seed = text.slice(0, 500);
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: false },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true },
     state ? { reply_language: state } : { language_seed: seed });
 }
 function receiveClassification(state, ev, d) {
@@ -3079,11 +3079,12 @@ function receiveClassification(state, ev, d) {
     var language = cleanReplyLanguage(d && d.reply_language);
     if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
       || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
-      || d.magi_candidate !== false || !language
+      || typeof d.magi_candidate !== 'boolean' || d.magi_candidate && (!state.panel || d.votable !== 'yes') || !language
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
-    state.classified = true; state.language = language;
+    state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
-    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
+    if (state.panel && typeof magiReceive === 'function') magiReceive(state, ev, d);
+    else if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
     state.started = true;
   }
 }
@@ -3091,7 +3092,7 @@ function receiveClassification(state, ev, d) {
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false;
-      const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null };
+      const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null, panel: handlers.magiPanel === true };
       const block = (text) => {
         let ev = 'message', data = '';
         text.split('\n').forEach(line => {

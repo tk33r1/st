@@ -331,7 +331,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     （カード無しで答えることはほぼ起きない）。同梱分はデプロイのたびに入れ替わるので、magi2 を出すときは先に `git pull` して最新のカードを取り込む。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
-  - **例外は曲リクエスト**（`workers/dj-request` と `dj/request/`・`dj/booth/`）。保存時に落とすのは制御文字と
+  - MAGI採決の議題は比較の意味を守るため `<` `>` を残す。禁止制御文字・双方向制御文字と長さはWorkerと両画面で検査する。
+    議題は `textContent`、SVGのラベルは `setAttribute` で入れ、`innerHTML` のテンプレートに組み込まない。Markdown書き出しもエスケープする。
+  - 曲リクエストも例外（`workers/dj-request` と `dj/request/`・`dj/booth/`）。保存時に落とすのは制御文字と
     長さの超過だけで、`<` `>` は残る。表示は一覧を `innerHTML` で組むので、来場者由来の値は必ず
     `escapeHTML`（`dj/assets/dj-request-core.js`。各ページでは `esc`）を通してから文字列に入れる。表示する値を足すときも同じ。
   - URL はエスケープでは防げない（`javascript:` がそのまま残る）。来場者が送った URL（`appleUrl`）を `href` や
