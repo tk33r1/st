@@ -420,7 +420,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
     const choice = (await res.json()).choices?.[0] || {};
     const text = classifySlice(stripCharCount((choice.message?.content || '').trim()), DEFAULTS.persona_response_max_chars);
     log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
-    if (text) return round && p.magi && choice.finish_reason === 'length' ? text + '…' : text;
+    if (text) return p.magi && choice.finish_reason === 'length' ? text + '…' : text;
     // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない
     if (attempt < 2 && choice.finish_reason !== 'content_filter') continue;
     throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
@@ -520,10 +520,11 @@ async function fetchSuggestion(env, convo, context, langNote, signal, log) {
 // --- 討議の判定（personas.js の DEBATE）---
 // 討議の記録。人格ごとに、これまでの回の意見を順に並べる（判定と統合で同じものを使う）。
 // views は [{ round, text, ask }]。ask は統合人格がその人格に向けた問い（第3回以降）
+const voteLabel = vote => vote === 'approve' ? '承認' : vote === 'reject' ? '否決' : '票なし';
+const viewBody = v => v.absent ? PERSONA_ABSENT : v.text || '（理由なし）';
 const viewLabel = (v) => v.round === 1 ? '初回' : v.round === 2 ? '討議後' : `第${v.round}回`;
 const debateRecord = (opinions) => opinions.map(o => `- ${o.name}（${o.codename}）\n`
-  + o.views.map(v => `  ${viewLabel(v)}${v.vote_state ? ` [${voteLabel(v.vote)}]` : ''}${v.ask ? `（自分の問い「${v.ask}」への答え）` : ''}: ${v.absent ? PERSONA_ABSENT : v.text || '（理由なし）'}`).join('\n')).join('\n');
-const voteLabel = vote => vote === 'approve' ? '承認' : vote === 'reject' ? '否決' : '票なし';
+  + o.views.map(v => `  ${viewLabel(v)}${v.vote_state ? ` [${voteLabel(v.vote)}]` : ''}${v.ask ? `（自分の問い「${v.ask}」への答え）` : ''}: ${viewBody(v)}`).join('\n')).join('\n');
 
 // 判定に渡す材料：画面の状況説明・今回より前の会話（直近）・今回の発言・討議の記録。
 // 画像は渡さない（討議の文字だけで判定する。画像は聞かれた人格が見直す）
@@ -797,6 +798,8 @@ function siteSelectionNote(choice) {
   });
 }
 
+const notVotable = reason => ({ text: '', votable: false, reason });
+
 async function createMotion(env, plainMessages, langNote, signal, log) {
   try {
     const last = plainMessages.at(-1), ref = plainMessages.slice(-3, -1);
@@ -810,11 +813,11 @@ async function createMotion(env, plainMessages, langNote, signal, log) {
     const c = (await res.json()).choices?.[0];
     if (c?.finish_reason !== 'stop') throw new Error('motion_incomplete');
     const v = JSON.parse(c.message.content);
-    if (v.votable === false) return { text: '', votable: false, reason: 'not_votable' };
+    if (v.votable === false) return notVotable('not_votable');
     const text = v.votable === true && cleanMotion(v.motion);
     if (!text) throw new Error('invalid_motion');
     return { text, votable: true };
-  } catch (e) { log('motion', 'failed', e.name); return { text: '', votable: false, reason: 'failed' }; }
+  } catch (e) { log('motion', 'failed', e.name); return notVotable('failed'); }
 }
 
 async function resolveVotes(env, opinions, round, motion, signal, send, log) {
@@ -879,7 +882,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       ...(motion ? { vote: v.vote, vote_state: v.vote_state } : {}) });
     return v;
   };
-  const votedText = v => motion ? `[${voteLabel(v.vote)}] ${v.absent ? PERSONA_ABSENT : v.text || '（理由なし）'}` : v.text;
+  const votedText = v => motion ? `[${voteLabel(v.vote)}] ${viewBody(v)}` : v.text;
   const initialContent = motion ? withImages(`${lastUser}\n\n【共通の議題】${motion}\n${MAGI_MODE.persona_rounds.first}`, lastImages) : lastContent;
 
   // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
@@ -891,7 +894,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       // 人格ごとの履歴（自分の過去の意見だけが assistant。統合人格の回答は前回の文脈として user 側に付ける）
       const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(initialContent)), signal, log, 1, personaTemp);
       const v = respond(p, 1, text);
-      return { ...p, r1: v.text, views: [v] };
+      return { ...p, views: [v] };
     })), stop.signal);
   const opinions = [];
   r1.forEach((r, i) => {
@@ -1096,7 +1099,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (newContract) send('classification', classification);
         const motionPromise = classification?.magi_candidate ? withTimeout(MAGI_MODE.motion_ms,
           signal => createMotion(upstream, plainMessages, langNote, signal, log), stop.signal)
-          .catch(() => ({ text: '', votable: false, reason: 'failed' })) : null;
+          .catch(() => notVotable('failed')) : null;
         const history = messages.slice(0, -1);
         const lastContent = messages[messages.length - 1].content;
         // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして

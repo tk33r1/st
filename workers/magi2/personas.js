@@ -222,6 +222,9 @@ PERSONAS.forEach(p => {
   p.role = { chat: '判定や採決はしない。自分の面から意見・感想や問いを返す。', magi: magiPersonaRole };
 });
 
+// 双方向制御文字（正規表現の文字クラスの中身）。言語サンプルと議題の入力検査で共有する
+export const BIDI_CONTROL_CHARS = '\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069';
+
 export const MAGI_MODE = {
   motion_ms: 4000, vote_reader_ms: 4000, motion_max_chars: 120, motion_reference_max_chars: 500, quorum: 2,
   vote_tag: /\[VOTE:([^\]\r\n]*)\]/gi,
