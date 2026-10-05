@@ -849,7 +849,6 @@ async function resolveVotes(env, opinions, round, motion, signal, send, log) {
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
   pagesPromise = null, page = null, music = false, motion = null, signal, send, log }) {
-  const stop = { signal };
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
@@ -860,11 +859,13 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
   // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-  const personas = PERSONAS.map(p => withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n' + p.role[motion ? 'magi' : 'chat'] }, cards))
-    .map(p => guide ? { ...p, system_prompt: `${p.system_prompt}\n\n${guide.persona}` } : p)
-    .map(p => ({ ...p, system_prompt: withLangNote(p.system_prompt
+  const personas = PERSONAS.map(p => {
+    const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
+    return { ...base, system_prompt: withLangNote(base.system_prompt
+      + (guide ? '\n\n' + guide.persona : '')
       + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
-      + (pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : ''), langNote) }));
+      + (pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : ''), langNote) };
+  });
 
   // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
   // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
@@ -877,7 +878,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   const records = {};
   const respond = (p, round, raw, ask) => {
     const v = { round, text: raw, ...(motion ? parseVote(raw) : {}), ...(ask ? { ask } : {}) };
-    (records[p.codename] ||= []).push(v);
+    if (motion) (records[p.codename] ||= []).push(v);
     send('persona', { round, codename: p.codename, name: p.name, text: v.text,
       ...(motion ? { vote: v.vote, vote_state: v.vote_state } : {}) });
     return v;
@@ -895,7 +896,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, noteLang(initialContent)), signal, log, 1, personaTemp);
       const v = respond(p, 1, text);
       return { ...p, views: [v] };
-    })), stop.signal);
+    })), signal);
   const opinions = [];
   r1.forEach((r, i) => {
     if (r.status === 'fulfilled') { opinions.push(r.value); return; }
@@ -905,7 +906,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
   if (!opinions.length) throw r1[0].reason;
   log('persona_call', 'round1 ok', `personas=${opinions.length}`);
-  if (motion) await resolveVotes(upstream, opinions, 1, motion, stop.signal, send, log);
+  if (motion) await resolveVotes(upstream, opinions, 1, motion, signal, send, log);
 
   // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
   // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
@@ -921,21 +922,21 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
         const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
         p.views.push(respond(p, 2, text));
       } catch (e) { absent(p, 2, e); }
-    })), stop.signal);
+    })), signal);
   log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
-  if (motion) await resolveVotes(upstream, opinions, 2, motion, stop.signal, send, log);
+  if (motion) await resolveVotes(upstream, opinions, 2, motion, signal, send, log);
 
   // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
   // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
   // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
   const maxRounds = (motion || adaptive && !shortDebate) && (!newContract || opinions.length > 1) ? DEBATE.max_rounds : 2;
   let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
-  for (let round = 3; round <= maxRounds && !stop.signal.aborted; round++) {
+  for (let round = 3; round <= maxRounds && !signal.aborted; round++) {
     if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
     const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
     const judgement = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
       system: judgeSystem, input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename),
-    }, signal, log), stop.signal);
+    }, signal, log), signal);
     if (judgement && judgement.assessment) assessment = judgement.assessment;
     log('debate', `after r${round - 1}`, !judgement ? 'judge failed' : judgement.questions.length ? `ask ${judgement.questions.map(q => q.target).join(',')}` : 'answer');
     // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
@@ -956,9 +957,9 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
           const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
           p.views.push(respond(p, round, text, ask));
         } catch (e) { absent(p, round, e); }
-      })), stop.signal);
+      })), signal);
     lastRound = round;
-    if (motion) await resolveVotes(upstream, opinions, round, motion, stop.signal, send, log);
+    if (motion) await resolveVotes(upstream, opinions, round, motion, signal, send, log);
   }
 
   const magiVerdict = motion ? magiTally(records, lastRound) : null;
@@ -976,9 +977,9 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (bias) log('synthesizer_call', 'bias', theme);
 
   if (pagesPromise) {
-    try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, stop.signal); }
+    try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal); }
     catch (_) {  }
-    if (stop.signal.aborted) throw searchFailure('cancelled');
+    if (signal.aborted) throw searchFailure('cancelled');
   }
   // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
   if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
@@ -1003,10 +1004,10 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     }
 
     return readSynthesis(synthRes.body, send);
-}, stop.signal);
+}, signal);
 log('synthesizer_call', 'ok');
 if (motion) send('integrated_end', {});
-if (hasPages && !stop.signal.aborted) send('pages', chatPageEvent(pageChoice));
+if (hasPages && !signal.aborted) send('pages', chatPageEvent(pageChoice));
 return answer;}
 
 async function handleChat(request, env, ctx, { requestId, cors, log }) {

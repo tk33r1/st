@@ -1,6 +1,6 @@
 import { BIDI_CONTROL_CHARS, MAGI_MODE, PERSONAS } from './personas.js';
 
-// \u6539\u884c\u30fb\u30bf\u30d6\u306f\u8a31\u3057\uff08\u5f8c\u3067\u7a7a\u767d\u306b\u3059\u308b\uff09\u3001\u305d\u308c\u4ee5\u5916\u306e\u5236\u5fa1\u6587\u5b57\u3068\u53cc\u65b9\u5411\u5236\u5fa1\u6587\u5b57\u3092\u62d2\u3080
+// 改行・タブは許し（後で空白にする）、それ以外の制御文字と双方向制御文字を拒む
 const bidiOrControl = new RegExp(`[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
 export function cleanMotion(text) {
   if (typeof text !== 'string' || bidiOrControl.test(text)) return null;
