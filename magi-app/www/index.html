@@ -26,10 +26,10 @@
       --surface-alt: #f9fafb;
       --surface-hover: #e5e7eb;
       --text-color: #1f2937;
-      --primary-color: #16a34a;
+      --primary-color: #15803d;
       --primary-bg: #dcfce7;
       --primary-bg-hover: #bbf7d0;
-      --secondary-color: #6b7280;
+      --secondary-color: #4b5563;
       --border-color: #d1d5db;
       --bpm: 60;
       --duration-fast: calc(0.1s * var(--phi));
@@ -135,15 +135,14 @@
     .icon-btn:hover, .icon-btn:active { color: var(--primary-color); background: var(--primary-bg); }
 
     #agent-log {
+      background:var(--bg-color);color:var(--text-color);
       flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       display: flex; flex-direction: column; gap: 0.5rem;
       padding: 0.75rem; font-size: 0.8rem; scroll-behavior: smooth;
-      background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0);
-      background-size: 18px 18px;
     }
     .agent-user { display: flex; justify-content: flex-end; }
-    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.4rem 0.7rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
+    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.4rem 0.7rem; border-radius: 2px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
     .agent-personas { display: grid; gap: 0.4rem; }
     .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.5rem 0.6rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
     .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite; }
@@ -229,13 +228,13 @@
     .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
     .magi-emblem .hl-flow { stroke: var(--primary-color); stroke-width: 1.618; stroke-dasharray: 5 15; stroke-linecap: round; filter: drop-shadow(0 0 2px var(--primary-color)); animation: magiFlow calc(60s / var(--bpm)) linear infinite; will-change: stroke-dashoffset; }
     .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
-    .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem 0 0.2rem; }
+    .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem auto 0.2rem; width: fit-content; border-block: 3px double var(--secondary-color); padding: 0.1rem 0.35rem; }
     .magi-sub { font-size: 11px; letter-spacing: 0.12em; color: var(--text-color); }
     .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; display: inline-flex; align-items: center; justify-content: center; }
     .magi-info-btn { display: inline-flex; align-items: center; justify-content: center; margin-left: 0.35rem; padding: 0; background: transparent; border: none; color: var(--secondary-color); cursor: pointer; transition: color var(--duration-fast); }
     .magi-info-btn:hover, .magi-info-btn:active { color: var(--primary-color); }
     .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 1rem; flex-wrap: wrap; }
-    .magi-node { font-size: 10px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.3rem 0.7rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
+    .magi-node { background: var(--surface-alt); font-size: 10px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 2px; padding: 0.3rem 0.7rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .magi-node:hover, .magi-node:active { color: var(--primary-color); border-color: var(--primary-color); }
     .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
     /* in normal flow below the nodes (it used to overlay the bottom padding, but the LLM / context / theme
@@ -328,6 +327,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261006_3"></script>
+  <script src="app.js?v=20261006_4"></script>
 </body>
 </html>

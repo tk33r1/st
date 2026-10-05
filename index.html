@@ -1908,14 +1908,13 @@
     /* #agentdock-resizer geometry + :hover live with #sidebar-resizer (same control). */
 
     #agent-log {
+      background:var(--bg-color);color:var(--text-color);
       scroll-behavior: smooth;
       display: flex;
       flex-direction: column;
       min-height: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
-      background-image: radial-gradient(circle at 1px 1px, rgba(74, 222, 128, 0.06) 1px, transparent 0);
-      background-size: 18px 18px;
     }
 
     .agent-user {
@@ -1927,7 +1926,7 @@
       display: inline-block;
       max-width: 85%;
       padding: 0.3rem 0.6rem;
-      border-radius: 8px 8px 2px 8px;
+      border-radius: 2px;
       background: var(--surface-hover);
       color: var(--text-color);
       word-break: break-word;
@@ -2291,11 +2290,7 @@
       display: inline-block;
     }
 
-    .magi-emblem .hx {
-      fill: var(--primary-bg);
-      stroke: var(--primary-color);
-      stroke-width: 2;
-    }
+    .magi-emblem .hx {fill:var(--primary-bg);stroke:var(--primary-color);stroke-width:2;}
 
     .magi-emblem .hl-bg {
       stroke: var(--primary-color);
@@ -2313,20 +2308,9 @@
       will-change: stroke-dashoffset;
     }
 
-    .magi-emblem .hn {
-      fill: var(--primary-color);
-      font-size: 13px;
-      font-weight: 700;
-    }
+    .magi-emblem .hn {fill:var(--primary-color);font-size:13px;font-weight:700;}
 
-    .magi-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      text-indent: 0.35em;
-      color: var(--primary-color);
-      margin: 0.6rem 0 0.2rem;
-    }
+    .magi-title {font-size:1.6rem;font-weight:700;letter-spacing:0.35em;text-indent:0.35em;color:var(--primary-color);margin:0.6rem auto 0.2rem;width:fit-content;border-block:3px double var(--secondary-color);padding:0.1rem 0.35rem;}
 
     .magi-sub {
       font-size: 10px;
@@ -2361,16 +2345,7 @@
       flex-wrap: wrap;
     }
 
-    .magi-node {
-      font-size: 9px;
-      letter-spacing: 0.06em;
-      color: var(--secondary-color);
-      border: 1px solid var(--border-color);
-      border-radius: 9999px;
-      padding: 0.15rem 0.55rem;
-      cursor: pointer;
-      transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast);
-    }
+    .magi-node {background:var(--surface-alt);font-size:9px;letter-spacing:0.06em;color:var(--secondary-color);border:1px solid var(--border-color);border-radius:2px;padding:0.15rem 0.55rem;cursor:pointer;transition:color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast);}
 
     .magi-node:hover {
       color: var(--primary-color);
@@ -7286,16 +7261,16 @@
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
       + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
-      + '<polygon class="hx" points="60,14 77,24 77,44 60,54 43,44 43,24"/>'
-      + '<polygon class="hx" points="35,58 52,68 52,88 35,98 18,88 18,68"/>'
-      + '<polygon class="hx" points="85,58 102,68 102,88 85,98 68,88 68,68"/>'
-      + '<text class="hn" x="60" y="39" text-anchor="middle">1</text>'
-      + '<text class="hn" x="35" y="83" text-anchor="middle">2</text>'
-      + '<text class="hn" x="85" y="83" text-anchor="middle">3</text>'
+      + '<polygon class="hx" points="43,14 77,14 77,44 68,54 52,54 43,44"/>'
+      + '<polygon class="hx" points="18,58 40,58 52,68 52,98 18,98"/>'
+      + '<polygon class="hx" points="80,58 102,58 102,98 68,98 68,68"/>'
+      + '<text class="hn" x="60" y="39" text-anchor="middle">2</text>'
+      + '<text class="hn" x="35" y="83" text-anchor="middle">3</text>'
+      + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
       + '</svg>'
-      + '<div class="magi-title glow">MAGI</div>'
+      + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 4.0 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 4.3 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
