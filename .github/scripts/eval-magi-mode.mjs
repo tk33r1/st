@@ -10,9 +10,9 @@ const read = p => readFileSync(new URL(p, root), 'utf8');
 const mode = process.argv.find(a => a.startsWith('--mode='))?.slice(7) || 'pilot';
 assert(['pilot','motion','entry','reader','paired','special'].includes(mode));
 const batch = Number(process.argv.find(a => a.startsWith('--batch='))?.slice(8) || 0);
-assert(Number.isInteger(batch) && batch >= 0 && batch <= 6);
+assert(Number.isInteger(batch) && batch >= 0 && batch <= 8);
 const selected = (process.argv.find(a => a.startsWith('--cases='))?.slice(8) || '').split(',').filter(Boolean).map(Number);
-assert(selected.every(n => Number.isInteger(n) && n >= 1 && n <= 52));
+assert(selected.every(n => Number.isInteger(n) && n >= 1 && (n <= 52 || n >= 61 && n <= 80)));
 const fingerprint = createHash('sha256').update(['personas.js','classification.js','magi-mode.js','src/index.js'].map(p=>read('workers/magi2/'+p)).join('\n')).digest('hex');
 const saved = read('workers/magi2/.dev.vars');
 const env = { MAGI_MODE_ENABLED:'true', SITE_SEARCH_ENABLED:'true' };
@@ -104,6 +104,29 @@ const invitations=['ラーメン食べに行こうよ！','今夜一緒に出か
   .map((text,i)=>({id:41+i,text,language:i<5?'ja':'en',expected:false}));
 const bypass=[{id:51,text:'採決せず、直前の議題の判断材料を整理して',language:'ja',expected:false},
   {id:52,text:'Without taking a vote, outline the factors to consider for the previous proposal.',language:'en',expected:false}];
+// 計画§6.2の追加20件。通常相談・報告・引用・前の議題の条件整理を採決へ回さない。
+const ordinary=[
+  ['転職について迷っています。判断材料を整理して。','ja'],
+  ['仕事が忙しいので、無理なく休む方法を相談したい。','ja'],
+  ['ラーメンとカレー、それぞれの良いところを教えて。','ja'],
+  ['今日は本を10冊手放しました。','ja'],
+  ['今夜ラーメンを食べに行く予定です。','ja'],
+  ['私は会議をオンラインにする方がよいと思っています。','ja'],
+  ['今夜一緒にラーメンを食べに行こう。','ja'],
+  ['友人が「転職すべき？」と言っていました。その発言の意味を説明して。','ja'],
+  ['さっきの提案の費用と期限を整理して。採決はしないで。','ja'],
+  ['このサイトのPDFツールの使い方を教えて。','ja'],
+  ['I am weighing a job change. Help me organize the factors.','en'],
+  ['Work has been busy. How can I make time to rest?','en'],
+  ['Compare the advantages of ramen and curry.','en'],
+  ['I donated ten books today.','en'],
+  ['I plan to go for ramen tonight.','en'],
+  ['I think the meeting would work better online.','en'],
+  ['Let’s go for ramen together tonight.','en'],
+  ['My friend asked "Should I change jobs?" Explain what that question means.','en'],
+  ['Summarize the costs and deadline of the previous proposal without taking a vote.','en'],
+  ['Recommend a few songs for a relaxed opening DJ set.','en'],
+].map(([text,language],i)=>({id:61+i,text,language,expected:false}));
 // 他社APIでもCRCが正しい、合成の単一Tシャツ画像。利用者の画像は使わない。
 function pngFixture(){
   const chunk=(type,data)=>{const name=Buffer.from(type),length=Buffer.alloc(4),sum=Buffer.alloc(4);length.writeUInt32BE(data.length);
@@ -116,7 +139,7 @@ function pngFixture(){
 const pixel=pngFixture();
 function messages(c) { return [...(c.reference||[]),{role:'user',content:c.image?[{type:'text',text:c.text},{type:'image_url',image_url:{url:pixel}}]:c.text}]; }
 const special=['no-reasons','hold','carried'].map((fixture,i)=>({...positives[0],id:101+i,fixture}));
-const fixtureSet=mode==='special'?special:mode==='motion'?[...positives,...negatives]:mode==='entry'?[...positives,...negatives,...invitations,...bypass]:positives;
+const fixtureSet=mode==='special'?special:mode==='motion'?[...positives,...negatives]:mode==='entry'?[...positives,...negatives,...invitations,...bypass,...ordinary]:positives;
 const cases=selected.length?fixtureSet.filter(c=>selected.includes(c.id)):mode==='pilot'?positives.slice(0,2):batch?fixtureSet.slice((batch-1)*10,batch*10):fixtureSet;
 const reports=[];
 const target=new URL('workers/.wrangler/magi-'+mode+(selected.length?'-cases-'+selected.join('-'):batch?'-'+batch:'')+'.json',root);

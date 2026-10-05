@@ -6,7 +6,7 @@ import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 IDS = ['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3']
@@ -128,15 +128,8 @@ class Preview(SimpleHTTPRequestHandler):
             end = html.index('</head>')
             head = re.sub(r'<script\b[^>]*>[\s\S]*?</script>', '', html[:end])
             html = re.sub(r'<noscript\b[^>]*>[\s\S]*?</noscript>', '', head + html[end:])
-            if parse_qs(urlsplit(self.path).query).get('variant') == ['gentle']:
-                html = gentle(html)
-                if path.startswith('/magi-app/'):
-                    html = re.sub(r'src="(app\.js[^"\s]*)"', lambda m: 'src="'+m[1]+('&' if '?' in m[1] else '?')+'variant=gentle"', html)
             body = html.encode('utf-8'); self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8'); self.end_headers(); self.wfile.write(body)
             return
-        if path == '/magi-app/www/app.js' and parse_qs(urlsplit(self.path).query).get('variant') == ['gentle']:
-            body = gentle(file.read_text(encoding='utf-8')).encode()
-            self.send_response(200); self.send_header('Content-Type', 'text/javascript'); self.end_headers(); self.wfile.write(body); return
         return super().do_GET()
 
     def do_POST(self):
@@ -154,12 +147,8 @@ class Preview(SimpleHTTPRequestHandler):
             pass
 
 
-def gentle(text):
-    return re.sub(r'(MAGI_ANIMATION_VARIANT\s*=\s*)[\'\"]initial[\'\"]', r'\1"gentle"', text)
-
-
 if __name__ == '__main__':
     api = ThreadingHTTPServer(('127.0.0.1', 8787), Preview)
     threading.Thread(target=api.serve_forever, daemon=True).start()
-    print('MAGI preview: http://localhost:8000/  /magi-app/www/?api=http://localhost:8787 ; mock-approve etc.; ?variant=gentle to compare', flush=True)
+    print('MAGI preview: http://localhost:8000/  /magi-app/www/?api=http://localhost:8787 ; mock-approve / mock-slow / mock-hold', flush=True)
     ThreadingHTTPServer(('127.0.0.1', 8000), Preview).serve_forever()

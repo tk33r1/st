@@ -1763,10 +1763,11 @@ const finalMagi = (result='approve') => ({ motion:'予算 < 3万円なら実行'
 
 test('MAGI採決: 共通演出の正本が両画面で存在し一致し、配色のコントラストを満たす', () => {
   const block=s=>between(s,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END');assert.equal(block(home),block(mobile));
+  assert.equal(between(home,'// MAGI_VIEW_BEGIN','// MAGI_VIEW_END'),between(mobile,'// MAGI_VIEW_BEGIN','// MAGI_VIEW_END'));
   const c=coreClient(),color=c.MAGI_COLORS;
   const lum=h=>{const a=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return a[0]*.2126+a[1]*.7152+a[2]*.0722;};
-  for(const k of ['blue','blue2','approve','reject','approveCarried','rejectCarried','gray','hatch','orange'])assert.ok((lum(color[k])+.05)/.05>=4.5,k);
-  assert.ok(Math.abs(lum(color.blue)-lum(color.blue2))<=.08);
+  for(const k of ['blue','approve','reject','approveCarried','rejectCarried','gray','hatch','orange'])assert.ok((lum(color[k])+.05)/.05>=4.5,k);
+  assert.equal(color.approve,color.blue);assert.equal(color.blue2,undefined);
   assert.equal(between(home,'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'),between(read('magi-app/www/index.html'),'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'));
   assert.doesNotMatch(between(home,'/* MAGI_PANEL_CSS_BEGIN */','/* MAGI_PANEL_CSS_END */'),/#[0-9a-f]{3,8}\b|opacity|transition|animation|filter:/i);
 });
@@ -1799,43 +1800,45 @@ test('MAGI採決: 非表示・動き軽減・停止では待ち0、pending→fin
   const z=c.magiStep(o.state,{event:'verdict',data:finalMagi()},3,true,false);assert.equal(c.magiStep(z.state,{event:'finish'},4,true,false).frame.explanation,true);
 });
 
-test('MAGI採決: 共通スロット先頭300msだけ消灯し、遅延や復帰で過去の明滅を再生しない', () => {
-  const c=coreClient();const init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
-  for(const [t,id,off] of [[2400,'MELCHIOR-1',true],[2699,'MELCHIOR-1',true],[2700,'MELCHIOR-1',false],[2999,'MELCHIOR-1',false],[3000,'BALTHASAR-2',true]]){
-    const o=c.magiStep(init,null,t,true,false,'initial');assert.equal(o.frame.nodes[id].color===c.MAGI_COLORS.off,off);
+test('MAGI採決: 青と黒を人格ごとの周期で切り替え、復帰時に過去の明滅を連続再生しない', () => {
+  const c=coreClient(),init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
+  for(const [t,id,off] of [[720,'MELCHIOR-1',true],[839,'MELCHIOR-1',true],[840,'MELCHIOR-1',false],[959,'MELCHIOR-1',false],[960,'MELCHIOR-1',true],
+    [660,'BALTHASAR-2',true],[690,'BALTHASAR-2',false],[840,'BALTHASAR-2',true],
+    [960,'CASPER-3',true],[1139,'CASPER-3',true],[1140,'CASPER-3',false]]){
+    assert.equal(c.magiStep(init,null,t,true,false).frame.nodes[id].color===c.MAGI_COLORS.off,off,id+' '+t);
   }
-  const hidden=c.magiStep(init,null,2410,false,false);assert.equal(hidden.frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.blue);
-  const back=c.magiStep(hidden.state,null,2420,true,false);assert.equal(back.frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.blue);
-  const late=c.magiStep(init,null,30000,true,false);assert.equal(late.state.queue.length,0);
+  const hidden=c.magiStep(init,null,721,false,false);assert.equal(hidden.next,null);
+  for(const k of c.MAGI_IDS)assert.equal(hidden.frame.nodes[k].color,c.MAGI_COLORS.blue);
+  const back=c.magiStep(hidden.state,null,722,true,false);assert.equal(back.frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.blue);
+  assert.equal(c.magiStep(back.state,null,1440,true,false).frame.nodes['MELCHIOR-1'].color,c.MAGI_COLORS.off);
+  assert.equal(c.magiStep(init,null,30000,true,false).state.queue.length,0);
 });
 
-test('MAGI採決: 独立した点滅検査で両案の全要素合成を1秒3回以下に保つ', () => {
-  const c=coreClient();const lum=h=>{const a=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return a[0]*.2126+a[1]*.7152+a[2]*.0722;};
-  for(const variant of ['initial','gentle'])for(let run=0;run<12;run++){
-    let state=null,previous=null,seed=42+run;const changes={},events=new Map();
-    const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
-    const add=(t,e)=>events.set(t,[...(events.get(t)||[]),e]);
-    add(0,{event:'motion',data:{text:'実行'}});
-    for(const round of [1,2])for(const codename of c.MAGI_IDS){
-      const t=(round===1?700:4500)+Math.floor(random()*180)*10;
-      const data={codename,round,text:'理由',vote:null,vote_state:'pending'};
-      add(t,{event:'persona',data});add(t+10,{event:'persona',data:{...data,vote:round===1?'reject':'approve',vote_state:'final'}});
-      add(t+20,{event:'persona',data:{...data,vote:round===1?'reject':'approve',vote_state:'final'}});
+test('MAGI採決: 審議だけが青黒で明滅し、票・pending・結果・動き軽減は静止する', () => {
+  const c=coreClient(),init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
+  for(const t of [720,840,960,1250,1440,30000]){
+    const normal=c.magiStep(init,null,t,true,false);
+    for(const k of c.MAGI_IDS)assert.ok([c.MAGI_COLORS.blue,c.MAGI_COLORS.off].includes(normal.frame.nodes[k].color));
+    for(const node of [{state:'voted',vote:'approve',round:2},{state:'voted',vote:'reject',round:2},{state:'debating',vote:null,round:null,pending:true},{state:'absent',vote:null,round:null}]){
+      const s=JSON.parse(JSON.stringify(init));s.nodes['MELCHIOR-1']=s.latest['MELCHIOR-1']=node;
+      const expected=node.pending?c.MAGI_COLORS.blue:node.vote?c.MAGI_COLORS[node.vote]:c.MAGI_COLORS.gray;
+      assert.equal(c.magiStep(s,null,t,true,false).frame.nodes['MELCHIOR-1'].color,expected);
     }
-    add(10000,{event:'verdict',data:finalMagi()});
-    const hiddenAt=6500+Math.floor(random()*40)*10,reducedAt=7800+Math.floor(random()*40)*10;
-    for(let t=0;t<=16000;t+=10){
-      const visible=run===0||t<hiddenAt||t>=hiddenAt+100,reduced=run!==0&&t>=reducedAt&&t<reducedAt+100;
-      let o=c.magiStep(state,null,t,visible,reduced,variant);
-      for(const ev of events.get(t)||[])o=c.magiStep(o.state,ev,t,visible,reduced,variant);
-      if(o.frame.ack)o=c.magiStep(o.state,{event:'applied'},t,visible,reduced,variant);state=o.state;
-      const colors=Object.fromEntries(Object.entries(o.frame.nodes).map(([k,n])=>[k,n.color]));colors.verdict=o.frame.result?c.MAGI_COLORS[o.frame.result.result]:c.MAGI_COLORS.ground;
-      if(previous)for(const [k,color] of Object.entries(colors)){const delta=lum(color)-lum(previous[k]);if(Math.abs(delta)>=.1){(changes[k]||=[]).push({t,sign:Math.sign(delta)});}}
-      previous=colors;
-    }
-    const flashes=[];for(const rows of Object.values(changes))for(let i=1;i<rows.length;i++)if(rows[i].sign!==rows[i-1].sign){flashes.push(rows[i].t);i++;}
-    for(const start of flashes)assert.ok(flashes.filter(t=>t>=start&&t<start+1000).length<=3,variant+' seed '+(42+run)+' at '+start);
+    const reduced=c.magiStep(init,null,t,true,true);assert.equal(reduced.next,null);for(const k of c.MAGI_IDS)assert.equal(reduced.frame.nodes[k].color,c.MAGI_COLORS.blue);
   }
+  const done=c.magiStep(init,{event:'verdict',data:finalMagi()},100,true,false);
+  assert.equal(c.magiStep(done.state,{event:'finish'},101,true,false).frame.explanation,true);
+});
+
+test('MAGI採決: 青黒の切替時刻を予約し、票のキュー600msと決議前の間を短縮しない', () => {
+  const c=coreClient(),init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
+  let o=c.magiStep(init,null,720,true,false),samples=[];
+  while(samples.length<9){samples.push([o.next-30,o.frame.nodes['MELCHIOR-1'].color]);o=c.magiStep(o.state,null,o.next,true,false);}
+  assert.deepEqual(samples.map(x=>x[0]),[720,750,780,810,840,870,900,930,960]);
+  assert.deepEqual(samples.map(x=>x[1]),[...Array(4).fill(c.MAGI_COLORS.off),...Array(4).fill(c.MAGI_COLORS.blue),c.MAGI_COLORS.off]);
+  o=c.magiStep(init,{event:'verdict',data:finalMagi()},100,true,false);
+  assert.equal(o.state.nextSlot,700);assert.equal(o.frame.result,null);
+  assert.ok(!Object.values(o.frame.nodes).some(n=>n.color===c.MAGI_COLORS.off));
 });
 
 test('MAGI採決: SSEは通知・motion・各回final・決議・説明完了の順序を両画面で検査する', async () => {
