@@ -30,7 +30,8 @@ await vm.runInContext(`(async function () {
   const allPages = makeSitePages(smokeIndex);
   const page = allPages.find(p => p.url === '/tools/pdf-studio/');
   const portal = allPages.find(p => p.url === '/job/nitoridaily/');
-  if (!page || !portal) throw new Error('Site smoke candidate missing');
+  const retail = allPages.find(p => p.url === '/job/retailtechdaily/');
+  if (!page || !portal || !retail) throw new Error('Site smoke candidate missing');
   const guide = siteGuide('/', [page]);
   const temperature = Math.max(DEFAULTS.temperature, ...Object.values(PERSONA_TEMPERATURE));
   const messages = [{role: 'user', content: 'PDFを結合するページを案内して。説明は短く。'}];
@@ -47,7 +48,7 @@ await vm.runInContext(`(async function () {
   config.site_smoke = [];
   for (const purpose of ['requested', 'auxiliary']) for (const daily of [null, {media: 'nitori', query: '出店'}]) {
     let body;
-    const pages = [page, portal];
+    const pages = [page, portal, retail];
     const query = daily ? 'ニトリの出店ニュースを探して' : 'PDFを結合するページを探して';
     const expected = { selections: daily ? [] : [page.id], daily };
     await selectSitePages({query, locale: 'ja', purpose, pages, log() {},
@@ -57,6 +58,12 @@ await vm.runInContext(`(async function () {
       } });
     config.site_smoke.push({purpose, body, expected, pages: shortlistSitePages(pages, query)});
   }
+  // 判断の品質と分け、nullableの両側は指定したJSONを返す疎通で確認する。
+  config.site_schema_smoke = [null, {media: 'nitori', query: '出店'}].map(daily => {
+    const expected = {selections: [page.id], daily};
+    return {expected, body: {...config.site_smoke[0].body,
+      messages: [{role: 'user', content: 'Return exactly this JSON: ' + JSON.stringify(expected)}]}};
+  });
 })()`, ctx);
 if (process.argv.includes('--validate-site-smoke')) {
   ctx.smokeValues = JSON.parse(readFileSync(0, 'utf8'));
@@ -64,8 +71,7 @@ if (process.argv.includes('--validate-site-smoke')) {
     if (!Array.isArray(smokeValues) || smokeValues.length !== config.site_smoke.length) throw new Error('Site smoke response count mismatch');
     smokeValues.forEach((value, i) => {
       const test = config.site_smoke[i], result = validateSiteChoice(value, test.pages, 'ja', true);
-      if (result.results.length !== value.selections.length || (value.daily !== null && !result.daily)
-          || (value.daily === null) !== (test.expected.daily === null)) throw new Error('Invalid site smoke response');
+      if (result.results.length !== value.selections.length || (value.daily !== null && !result.daily)) throw new Error('Invalid site smoke response');
     });`, ctx);
   process.stdout.write('OK');
 } else process.stdout.write(JSON.stringify(ctx.config));

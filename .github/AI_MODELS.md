@@ -58,7 +58,7 @@ PR本文にも同じ手順を出す。
 | OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
 | OpenAI | 本番設定の人格、サイト候補を含む入力、画像なし／data URL画像あり | magi2 の Strategist。推論・トークン上限・揺らぎ・top_pを `DEFAULTS` と `PERSONA_TEMPERATURE` から読む |
 | OpenAI | 本番設定の推論・上限・ストリーミング、サイト候補を含む入力 | magi2 の統合。推論時にsamplingを送らない本番の組立てを使う |
-| OpenAI | 本番の選択指示・strictなJSONスキーマ、requested／auxiliaryそれぞれでdailyのnull／オブジェクト | 404とチャットの共通ページ選択。実際の `selectSitePages` でリクエストを組む |
+| OpenAI | 本番の選択指示4ケースと、dailyがnull／オブジェクトの固定JSON2ケース・strictなJSONスキーマ | 404とチャットの共通ページ選択。本番の指示では形式と実在IDだけを検査し、日刊検索の有無は記録する。nullableの両側は固定JSONで確認する |
 | OpenAI | 推論 low（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定。本番の `DEBATE` を読む |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成（OpenAI が失敗したときのフォールバック） |
@@ -104,4 +104,6 @@ python .github/scripts/ai_models.py smoke
 
 MAGIのJev smokeは `magi-search-config.mjs` が本番と同じ `INTENT_CLASSIFY` と `classificationPayload` から初回4問・継続3問・DJと旧画面の言語1問を組み立てる。回答の形と明確なケースのchoiceを検査し、確信度の閾値は品質評価で確認する。404とチャットのページ選択はcommentを含まない共通スキーマを使う。
 
-3人格・統合は `DEFAULTS.models.persona`／`synthesizer` と本番の `requestBody` からリクエストを作る。更新候補の確認ではモデルIDだけを置換する。Jevには賛否の問い（yes）と通常相談（no）を含める。`test-magi-smoke.py` は外部APIを呼ばず、設定の引継ぎ・サイト選択の両指示・Jevの両choice・応答の正常完了を確認し、push／PRのCIでも実行する。
+3人格・統合は `DEFAULTS.models.persona`／`synthesizer` と本番の `requestBody` からリクエストを作る。更新候補の確認ではモデルIDだけを置換する。人格は途中終了でも空でない本文を受け付け、統合は正常なストリーム終端を必須とする。Jevには賛否の問い（yes）と通常相談（no）を含め、回答のtypeを送った問いと照合する。`test-magi-smoke.py` は外部APIを呼ばず、設定の引継ぎ・サイト選択の両指示・Jevの両choiceとtype・人格と統合の完了条件を確認し、push／PRのCIでも実行する。
+
+ページ選択は、本番の指示を使う4ケースで `daily` が全件nullでも失敗にしない。有効な日刊検索の有無はログに記録する。nullableの両側は、同じ本番スキーマ・推論・上限で指定JSONを返す2ケースとして独立に確認する。固定JSONの期待値を本番指示のケースへ適用しない。

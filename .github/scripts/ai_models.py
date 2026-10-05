@@ -161,7 +161,8 @@ def smoke_openai(url, api_key, model):
     }))
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'openai', config)
-    smoke_openai_site_search(url, api_key, model, config)
+    observations = smoke_openai_site_search(url, api_key, model, config)
+    print('サイト選択smoke（日刊検索の有無は合否に使わない）: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_web_search(api_key, model)
     return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary/daily両形、討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
@@ -181,22 +182,16 @@ def smoke_magi_discussion(url, api_key, model, provider, config=None):
             continue
         body = {**persona['body'], 'model': model}
         # 画像なしのサイト案内と、既存の画像入力の疎通を両方残す。
-        expect_complete_message(post_json(url, api_key, body))
+        # 本番の人格呼出しは、上限終了でも空でない受信済み本文を使う。
+        message_content(post_json(url, api_key, body))
         image_body = {**body, 'messages': [*body['messages'], {'role': 'user', 'content': [
             {'type': 'text', 'text': 'Name the color of this image in one word.'},
             {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
         ]}]}
-        expect_complete_message(post_json(url, api_key, image_body))
+        message_content(post_json(url, api_key, image_body))
     synth = config['discussion']['synthesizer']
     if synth['provider'] == provider:
         post_json(url, api_key, {**synth['body'], 'model': model}, stream=True)
-
-
-def expect_complete_message(response):
-    choice = response.get('choices', [{}])[0]
-    if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-        raise RuntimeError('人格の応答が正常完了しませんでした')
-    return message_content(response)
 
 
 def smoke_openai_debate_judge(url, api_key, model, config):
@@ -219,7 +214,7 @@ def smoke_openai_debate_judge(url, api_key, model, config):
 
 def smoke_openai_site_search(url, api_key, model, config):
     """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
-    # requested/auxiliaryそれぞれでnullableなdailyの両側を本番の指示・組立てで試す。
+    # 本番の指示では受理・形式・実在IDだけを検査し、dailyの選択は記録する。
     values = []
     for case in config['site_smoke']:
         response = post_json(url, api_key, {**case['body'], 'model': model})
@@ -227,10 +222,20 @@ def smoke_openai_site_search(url, api_key, model, config):
         if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
             raise RuntimeError('サイト案内の応答が正常完了しませんでした')
         values.append(json.loads(message_content(response)))
-    # 本番の検査を使い、未知ID・壊れたdaily・nullableの片側しか返さない応答を拒否する。
+    # 本番の検査を使い、未知ID・壊れたdailyを拒否する。
     # 検索語や選択順の完全一致、リンクの関連性は週次の合否に使わない。
     subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'), '--validate-site-smoke'],
                    input=json.dumps(values), encoding='utf-8', check=True, capture_output=True)
+    # nullableの両側の受理は、判断を求めず固定JSONを返す別の2ケースで守る。
+    for case in config['site_schema_smoke']:
+        response = post_json(url, api_key, {**case['body'], 'model': model})
+        choice = response.get('choices', [{}])[0]
+        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+            raise RuntimeError('サイト選択のスキーマ疎通が正常完了しませんでした')
+        if json.loads(message_content(response)) != case['expected']:
+            raise RuntimeError('サイト選択のnullableスキーマ疎通で指定したJSONが得られませんでした')
+    return [{'purpose': case['purpose'], 'daily': value['daily'] is not None}
+            for case, value in zip(config['site_smoke'], values)]
 
 
 OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
@@ -301,6 +306,8 @@ def smoke_magi_classification(url, api_key, model, config=None):
         body = post_json(url, api_key, payload)
         for name, question in payload['questions'].items():
             answer = body.get('answers', {}).get(name, {})
+            if not isinstance(answer, dict) or answer.get('type') != question['type']:
+                raise RuntimeError(f'Jevの{name}回答のtypeが不正です')
             confidence = answer.get('confidence')
             if answer.get('choice') not in question['criteria'] or not isinstance(confidence, (int, float)) or isinstance(confidence, bool) or not (0 <= confidence <= 1):
                 raise RuntimeError(f'Jevの{name}回答の形式が不正です')

@@ -42,33 +42,63 @@ class MagiSmokeTest(unittest.TestCase):
 
     def test_site_requests_keep_prompts_and_settings(self):
         sent = []
-        cases = self.config['site_smoke']
+        cases = self.config['site_smoke'] + self.config['site_schema_smoke']
         def post(url, key, body):
             case = cases[len(sent)]
             sent.append(body)
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(case['expected'])}}]}
         with patch.object(ai_models, 'post_json', side_effect=post):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
-        self.assertEqual([c['purpose'] for c in cases], ['requested', 'requested', 'auxiliary', 'auxiliary'])
-        self.assertEqual([c['expected']['daily'] is None for c in cases], [True, False, True, False])
+        self.assertEqual([c['purpose'] for c in cases[:4]], ['requested', 'requested', 'auxiliary', 'auxiliary'])
+        self.assertEqual([c['expected']['daily'] is None for c in cases[4:]], [True, False])
         for body, case in zip(sent, cases):
             self.assertEqual(body, {**case['body'], 'model': 'candidate-for-test'})
-            self.assertNotIn('Return exactly', json.dumps(body))
-            self.assertIn('公開ページ一覧', body['messages'][0]['content'])
+            if 'purpose' in case:
+                self.assertNotIn('Return exactly', json.dumps(body))
+                self.assertIn('公開ページ一覧', body['messages'][0]['content'])
+            else:
+                self.assertIn('Return exactly', body['messages'][0]['content'])
+                self.assertEqual(body['response_format'], cases[0]['body']['response_format'])
         self.assertNotEqual(cases[0]['body']['messages'][0]['content'], cases[2]['body']['messages'][0]['content'])
 
     def test_site_validator_accepts_query_variation_and_rejects_unknown_ids(self):
-        cases = self.config['site_smoke']
+        cases = self.config['site_smoke'] + self.config['site_schema_smoke']
         def post(url, key, body):
             case = next(c for c in cases if c['body'] == {**body, 'model': c['body']['model']})
             value = copy.deepcopy(case['expected'])
-            if value['daily']:
+            if value['daily'] and 'purpose' in case:
                 value['daily']['query'] = '店舗'
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
         with patch.object(ai_models, 'post_json', side_effect=post):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
-        invalid = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'selections': ['unknown-id'], 'daily': None})}}]}
-        with patch.object(ai_models, 'post_json', return_value=invalid), self.assertRaises(ai_models.subprocess.CalledProcessError):
+        for value in [{'selections': ['unknown-id'], 'daily': None},
+                      {'selections': [], 'daily': {'media': 'unknown', 'query': '店舗'}}]:
+            with self.subTest(value=value):
+                invalid = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+                with patch.object(ai_models, 'post_json', return_value=invalid), self.assertRaises(ai_models.subprocess.CalledProcessError):
+                    ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
+
+    def test_daily_choice_is_observation_but_schema_both_sides_are_required(self):
+        cases = self.config['site_smoke'] + self.config['site_schema_smoke']
+        for daily in [None, {'media': 'nitori', 'query': '店舗'}, {'media': 'retail', 'query': '店舗'}]:
+            with self.subTest(daily=daily):
+                sent = []
+                def post(url, key, body):
+                    case = cases[len(sent)]
+                    sent.append(body)
+                    value = {'selections': [], 'daily': daily} if 'purpose' in case else case['expected']
+                    return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+                with patch.object(ai_models, 'post_json', side_effect=post):
+                    observations = ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
+                self.assertEqual([o['daily'] for o in observations], [daily is not None] * 4)
+                self.assertEqual(len(sent), 6)
+        sent = []
+        def missing_object(url, key, body):
+            case = cases[len(sent)]
+            sent.append(body)
+            value = {**case['expected'], 'daily': None}
+            return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+        with patch.object(ai_models, 'post_json', side_effect=missing_object), self.assertRaisesRegex(RuntimeError, 'nullable'):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
 
     def test_votable_both_choices_and_no_smoke_threshold(self):
@@ -86,16 +116,53 @@ class MagiSmokeTest(unittest.TestCase):
         def post(url, key, body):
             case = self.config['classify_smoke'][len(sent)]
             sent.append(body)
-            return {'answers': {name: {'choice': case['expected'].get(name, next(iter(question['criteria']))),
+            return {'answers': {name: {'type': question['type'], 'choice': case['expected'].get(name, next(iter(question['criteria']))),
                                       'confidence': .68} for name, question in body['questions'].items()}}
         with patch.object(ai_models, 'post_json', side_effect=post):
             observations = ai_models.smoke_magi_classification('mock', 'private', 'candidate-for-test', self.config)
         self.assertEqual(len(sent), len(self.config['classify_smoke']))
         self.assertEqual(len(observations), len(sent))
 
-    def test_truncated_persona_is_not_success(self):
-        with self.assertRaises(RuntimeError):
-            ai_models.expect_complete_message({'choices': [{'finish_reason': 'length', 'message': {'content': 'partial'}}]})
+    def test_persona_accepts_nonempty_partial_but_rejects_missing_text(self):
+        for provider in ['openai', 'deepseek', 'google']:
+            for content in ['partial', '', '   ', None]:
+                with self.subTest(provider=provider, content=content):
+                    response = {'choices': [{'finish_reason': 'length', 'message': {'content': content}}]}
+                    with patch.object(ai_models, 'post_json', return_value=response):
+                        if content == 'partial':
+                            ai_models.smoke_magi_discussion('mock', 'private', 'candidate-for-test', provider, self.config)
+                        else:
+                            with self.assertRaises(RuntimeError):
+                                ai_models.smoke_magi_discussion('mock', 'private', 'candidate-for-test', provider, self.config)
+
+    def test_classification_rejects_missing_or_wrong_type_in_every_profile(self):
+        for case_number, case in enumerate(self.config['classify_smoke'], 1):
+            for name in case['payload']['questions']:
+                for invalid in [None, 'score']:
+                    with self.subTest(case=case_number, question=name, invalid=invalid):
+                        answers = {key: {'type': question['type'],
+                                         'choice': case['expected'].get(key, next(iter(question['criteria']))),
+                                         'confidence': .68}
+                                   for key, question in case['payload']['questions'].items()}
+                        if invalid is None:
+                            answers[name].pop('type')
+                        else:
+                            answers[name]['type'] = invalid
+                        config = {'classify_smoke': [case]}
+                        with patch.object(ai_models, 'post_json', return_value={'answers': answers}), self.assertRaisesRegex(RuntimeError, 'type'):
+                            ai_models.smoke_magi_classification('mock', 'private', 'candidate-for-test', config)
+
+    def test_synthesis_still_requires_normal_stream_completion(self):
+        for finish, done in [('stop', True), ('length', True), ('stop', False)]:
+            with self.subTest(finish=finish, done=done):
+                raw = 'data: ' + json.dumps({'choices': [{'delta': {'content': 'answer'}, 'finish_reason': finish}]}) + '\n\n'
+                if done:
+                    raw += 'data: [DONE]\n\n'
+                if finish == 'stop' and done:
+                    ai_models.validate_chat_stream(raw)
+                else:
+                    with self.assertRaises(RuntimeError):
+                        ai_models.validate_chat_stream(raw)
 
 
 if __name__ == '__main__':
