@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 05 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 05 Oct 2026 04:53:37 +0900</lastBuildDate>
+    <pubDate>Tue, 06 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 06 Oct 2026 08:03:06 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月6日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261006/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261006/</guid>
+      <pubDate>Tue, 06 Oct 2026 08:00:00 +0900</pubDate>
+      <description>店頭の電子棚札や低コストのセルフレジ、郵便局のセルフ決済など、現場の案内・会計を効率化する店舗DXの具体策が相次いだ。 リテールメディアでは、個別運用とネットワーク配信をつなぐシステム連携が登場。広告在庫の活用と運用の柔軟性を両立する動きが進む。</description>
+    </item>
     <item>
       <title>2026年10月5日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261005/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260922/</guid>
       <pubDate>Tue, 22 Sep 2026 08:00:00 +0900</pubDate>
       <description>店舗の「物理資産」をどう作り替えるかが国内の焦点に。セブン-イレブンの撤去設備リユース、アルビスの北陸初ZEB店舗、カインズの都市型小型店と、出店・改装の設計思想そのものがコストと環境の両面から見直されている。 海外では供給網とラストマイルへの投資競争が顕著。ウェグマンズの1.1億ドル物流投資、コストコの外部配送網活用、食品ECのコールドチェーン再設計など、『届ける力』が小売の競争軸として前面に出た。</description>
-    </item>
-    <item>
-      <title>2026年9月21日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260921/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260921/</guid>
-      <pubDate>Mon, 21 Sep 2026 08:00:00 +0900</pubDate>
-      <description>セブン-イレブンが宅配アプリ『7NOW』に予約機能を搭載。コンビニデリバリーが「即時配送」から「計画購買」へ広がり、店舗在庫とピッキング人員を時間軸で平準化できるかが新たな競争軸となる。 キャッシュレスが進む一方で1円硬貨が増産される逆説は、現金とキャッシュレスが長期併存する現実を示す。釣銭・硬貨在庫という見えないコストが、セミセルフレジや釣銭機への投資判断を左右する。</description>
     </item>
   </channel>
 </rss>
