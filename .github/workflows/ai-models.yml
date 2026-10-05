@@ -24,3 +24,11 @@ jobs:
 
     - name: Check AI model registry
       run: python .github/scripts/ai_models.py check
+
+    - name: Set up Node for MAGI smoke configuration
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Check MAGI smoke request parity
+      run: python .github/scripts/test-magi-smoke.py

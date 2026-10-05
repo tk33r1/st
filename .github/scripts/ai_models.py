@@ -43,8 +43,6 @@ ACTIVE_GLOBS = (
 # Wrangler のバンドルには正本から取り込んだモデルIDが含まれるので、検査対象から外す。
 SKIP_DIRS = ('node_modules', 'vendor', 'android', 'ios', '.wrangler')
 
-# magi2 の3人格は UI テーマで temperature を揺らす（workers/magi2/personas.js の PERSONA_TEMPERATURE の最大値）。
-PERSONA_MAX_TEMPERATURE = 1.3
 JSON_MESSAGES = [
     {'role': 'system', 'content': 'Return only a JSON object.'},
     {'role': 'user', 'content': 'Return exactly {"ok":true}.'},
@@ -161,37 +159,44 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 32,
         'response_format': {'type': 'json_object'},
     }))
-    # magi2 の3人格：非推論、揺らぎの最大温度、top_p、画像付きの発言
-    message_content(post_json(url, api_key, {
-        'model': model,
-        'messages': [{'role': 'user', 'content': [
-            {'type': 'text', 'text': 'Name the color of this image in one word.'},
-            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
-        ]}],
-        'reasoning_effort': 'none',
-        'temperature': PERSONA_MAX_TEMPERATURE,
-        'top_p': 1.0,
-        'max_completion_tokens': 16,
-    }))
-    # magi2 の統合：推論あり、ストリーミング（上位モデルでは組織認証を求められることがある）
-    post_json(url, api_key, {
-        'model': model,
-        'messages': [{'role': 'user', 'content': 'Reply with OK.'}],
-        'reasoning_effort': 'medium',
-        'max_completion_tokens': 4096,  # magi2 の統合と同じ。推論ぶんの余裕も含む
-        'stream': True,
-    }, stream=True)
     config = magi_config()
+    smoke_magi_discussion(url, api_key, model, 'openai', config)
     smoke_openai_site_search(url, api_key, model, config)
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、サイト案内/strictスキーマ2種、討議の判定/推論low/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary/daily両形、討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
     """magi2 の本番の設定（personas.js）を Node で読み出す。"""
     return json.loads(subprocess.check_output(
         ['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs')], encoding='utf-8'))
+
+
+def smoke_magi_discussion(url, api_key, model, provider, config=None):
+    """本番のrequestBodyで組んだ3人格・統合。候補モデルを試すときはIDだけ置換する。"""
+    config = config if config is not None else magi_config()
+    for persona in config['discussion']['personas']:
+        if persona['provider'] != provider:
+            continue
+        body = {**persona['body'], 'model': model}
+        # 画像なしのサイト案内と、既存の画像入力の疎通を両方残す。
+        expect_complete_message(post_json(url, api_key, body))
+        image_body = {**body, 'messages': [*body['messages'], {'role': 'user', 'content': [
+            {'type': 'text', 'text': 'Name the color of this image in one word.'},
+            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
+        ]}]}
+        expect_complete_message(post_json(url, api_key, image_body))
+    synth = config['discussion']['synthesizer']
+    if synth['provider'] == provider:
+        post_json(url, api_key, {**synth['body'], 'model': model}, stream=True)
+
+
+def expect_complete_message(response):
+    choice = response.get('choices', [{}])[0]
+    if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+        raise RuntimeError('人格の応答が正常完了しませんでした')
+    return message_content(response)
 
 
 def smoke_openai_debate_judge(url, api_key, model, config):
@@ -214,22 +219,18 @@ def smoke_openai_debate_judge(url, api_key, model, config):
 
 def smoke_openai_site_search(url, api_key, model, config):
     """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
-    # nullableなdailyの両側を試し、strict+anyOfを実際に受け付けることを確認する。
-    for daily in (None, {'media': 'nitori', 'query': '出店'}):
-        expected = {'selections': ['tool:7'], 'daily': daily}
-        response = post_json(url, api_key, {
-            'model': model, 'stream': False, 'store': False,
-            'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
-            'reasoning_effort': config['model']['reasoning_effort'],
-            'temperature': config['temperature'], 'top_p': config['top_p'],
-            'max_completion_tokens': config['chat_max_tokens'],
-            'response_format': config['formats']['chat'],
-        })
+    # requested/auxiliaryそれぞれでnullableなdailyの両側を本番の指示・組立てで試す。
+    values = []
+    for case in config['site_smoke']:
+        response = post_json(url, api_key, {**case['body'], 'model': model})
         choice = response.get('choices', [{}])[0]
         if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
             raise RuntimeError('サイト案内の応答が正常完了しませんでした')
-        if json.loads(message_content(response)) != expected:
-            raise RuntimeError('サイト案内のスキーマ疎通で期待した応答が得られませんでした')
+        values.append(json.loads(message_content(response)))
+    # 本番の検査を使い、未知ID・壊れたdaily・nullableの片側しか返さない応答を拒否する。
+    # 検索語や選択順の完全一致、リンクの関連性は週次の合否に使わない。
+    subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'), '--validate-site-smoke'],
+                   input=json.dumps(values), encoding='utf-8', check=True, capture_output=True)
 
 
 OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
@@ -282,41 +283,19 @@ def smoke_deepseek(url, api_key, model):
         'max_tokens': 32,
         'response_format': {'type': 'json_object'},
     }))
-    # magi2 の Enthusiast：推論を切る、揺らぎの最大温度、top_p、画像付きの発言
-    message_content(post_json(url, api_key, {
-        'model': model,
-        'messages': [{'role': 'user', 'content': [
-            {'type': 'text', 'text': 'Name the color of this image in one word.'},
-            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
-        ]}],
-        'thinking': {'type': 'disabled'},
-        'temperature': PERSONA_MAX_TEMPERATURE,
-        'top_p': 1.0,
-        'max_tokens': 16,
-    }))
-    return 'JSON、推論なし/画像/高温/top_p'
+    smoke_magi_discussion(url, api_key, model, 'deepseek')
+    return 'JSON、MAGI人格/本番設定/サイト候補/画像あり・なし'
 
 
 def smoke_google(url, api_key, model):
-    # magi2 の Humanist：推論は最小（Gemini 3 系は切れない）、揺らぎの最大温度、top_p、画像付きの発言。
-    # 推論トークンも max_tokens に数えるので、本番と同じく余裕を持たせる
-    message_content(post_json(url, api_key, {
-        'model': model,
-        'messages': [{'role': 'user', 'content': [
-            {'type': 'text', 'text': 'Name the color of this image in one word.'},
-            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
-        ]}],
-        'reasoning_effort': 'minimal',
-        'temperature': PERSONA_MAX_TEMPERATURE,
-        'top_p': 1.0,
-        'max_tokens': 1024,
-    }))
-    return '推論minimal/画像/高温/top_p'
+    smoke_magi_discussion(url, api_key, model, 'google')
+    return 'MAGI人格/本番設定/サイト候補/画像あり・なし'
 
 
-def smoke_typesafe(url, api_key, model):
-    """複数問の分類と言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
-    config = magi_config()
+def smoke_magi_classification(url, api_key, model, config=None):
+    """分類のchoiceと形式を確認する。採用確信度の閾値は週次の合否に使わない。"""
+    config = config if config is not None else magi_config()
+    observations = []
     for case in config['classify_smoke']:
         payload = {**case['payload'], 'model': model}
         body = post_json(url, api_key, payload)
@@ -328,6 +307,15 @@ def smoke_typesafe(url, api_key, model):
         for name, expected in case['expected'].items():
             if body['answers'][name]['choice'] != expected:
                 raise RuntimeError(f'Jevの{name}が明確なケースの期待値と異なります')
+        observations.append({name: {'choice': answer['choice'], 'confidence': answer['confidence']}
+                             for name, answer in body['answers'].items() if name in payload['questions']})
+    return observations
+
+
+def smoke_typesafe(url, api_key, model):
+    """分類と言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
+    observations = smoke_magi_classification(url, api_key, model)
+    print('MAGI分類smoke（合成入力・確信度に採用閾値なし）: ' + json.dumps(observations, ensure_ascii=False))
     from nitori_social_filter import MIN_PROBABILITY, parse_probability, request_payload
     social_cases = [
         ('ニトリのテレビ台を買った。配線が隠せて便利！', True),
@@ -388,7 +376,7 @@ def smoke_typesafe(url, api_key, model):
         scores.append(dj.parse_score(body)[0])
     if scores[0] <= scores[1]:
         raise RuntimeError('DJの実曲Scoreの順位が承認された比較と異なります')
-    return '言語判定/choice/日英の混在と短い返事、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
+    return 'MAGI分類/初回4問・継続3問/votable yes・no、言語/日英・短い返事/DJ・旧画面、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
 
 
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。
