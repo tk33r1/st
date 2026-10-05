@@ -1944,7 +1944,7 @@ test('MAGI採決: 初回の読取不能は灰で静止し、確認中と有効�
     }
     for (const vote of ['approve', 'reject']) {
       const valid = c.magiStep(null, { event: 'persona', data: { ...d, vote, vote_state: 'final' } }, 1, true, true);
-      assert.equal(valid.frame.nodes[id].state, 'debating'); assert.equal(valid.frame.nodes[id].color, c.MAGI_COLORS.blue);
+      assert.equal(valid.frame.nodes[id].state, 'debating'); assert.equal(valid.frame.nodes[id].color, c.MAGI_COLORS[vote]);
     }
   }
 });
@@ -2092,15 +2092,17 @@ test('MAGI採決: 青と黒を人格ごとの周期で切り替え、復帰時�
   assert.equal(c.magiStep(init,null,30000,true,false).state.queue.length,0);
 });
 
-test('MAGI採決: 審議だけが青黒で明滅し、票・pending・結果・動き軽減は静止する', () => {
+test('MAGI採決: 決議前は最新票の色と黒で明滅し、決議・動き軽減で静止する', () => {
   const c=coreClient(),init=c.magiStep(null,{event:'motion',data:{text:'実行'}},0,true,false).state;
   for(const t of [720,840,960,1250,1440,30000]){
     const normal=c.magiStep(init,null,t,true,false);
     for(const k of c.MAGI_IDS)assert.ok([c.MAGI_COLORS.blue,c.MAGI_COLORS.off].includes(normal.frame.nodes[k].color));
-    for(const node of [{state:'voted',vote:'approve',round:2},{state:'voted',vote:'reject',round:2},{state:'debating',vote:null,round:null,pending:true},{state:'absent',vote:null,round:null}]){
+    for(const node of [{state:'voted',vote:'approve',round:2},{state:'voted',vote:'reject',round:2},{state:'debating',vote:null,round:null,pending:true},{state:'debating',vote:'reject',round:1,pending:true},{state:'carried',vote:'reject',round:1},{state:'absent',vote:null,round:null}]){
       const s=JSON.parse(JSON.stringify(init));s.nodes['MELCHIOR-1']=s.latest['MELCHIOR-1']=node;
-      const expected=node.pending?c.MAGI_COLORS.blue:node.vote?c.MAGI_COLORS[node.vote]:c.MAGI_COLORS.gray;
+      const base=node.vote?c.MAGI_COLORS[node.vote+(node.state==='carried'?'Carried':'')]:node.state==='debating'?c.MAGI_COLORS.blue:c.MAGI_COLORS.gray;
+      const expected=(node.state==='debating'||node.vote)&&t%c.MAGI_TIME.flicker[0]<c.MAGI_TIME.flicker[0]/2?c.MAGI_COLORS.off:base;
       assert.equal(c.magiStep(s,null,t,true,false).frame.nodes['MELCHIOR-1'].color,expected);
+      assert.equal(c.magiStep(s,null,t,true,true).frame.nodes['MELCHIOR-1'].color,base);
     }
     const reduced=c.magiStep(init,null,t,true,true);assert.equal(reduced.next,null);for(const k of c.MAGI_IDS)assert.equal(reduced.frame.nodes[k].color,c.MAGI_COLORS.blue);
   }
@@ -2170,6 +2172,43 @@ test('MAGI採決: 既に表示した再送を再演せず、読み取り中も�
   assert.equal(o.state.latest[d.codename].vote,'approve');assert.equal(o.state.latest[d.codename].round,1);
   o=c.magiStep(o.state,{event:'persona',data:{...d,round:2,vote:null}},801,true,false);
   assert.equal(o.state.latest[d.codename].state,'carried');assert.equal(o.state.latest[d.codename].round,1);
+});
+
+test('MAGI採決: 決議前も最新有効票の色を示し、再討議・確認中に青へ戻さない', () => {
+  for (const src of [home, mobile]) {
+    const c = coreClient(src), id = 'MELCHIOR-1';
+    let o = c.magiStep(null, { event: 'motion', data: { text: '実行' } }, 0, true, false);
+    const d = { codename: id, round: 1, text: '否決の理由', vote: 'reject', vote_state: 'final' };
+    o = c.magiStep(o.state, { event: 'persona', data: d }, 1, true, false);
+    for (const t of [1, 120, 720, 840, 960]) {
+      const frame = c.magiStep(o.state, null, t, true, false).frame;
+      const expected=t>=301&&t%c.MAGI_TIME.flicker[0]<c.MAGI_TIME.flicker[0]/2?c.MAGI_COLORS.off:c.MAGI_COLORS.reject;
+      assert.equal(frame.result, null); assert.equal(frame.nodes[id].color, expected);
+    }
+    o = c.magiStep(o.state, { event: 'persona', data: { ...d, round: 2, vote: null, vote_state: 'pending' } }, 1600, true, false);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.reject);
+    o = c.magiStep(o.state, { event: 'persona', data: { ...d, round: 2, vote: 'approve' } }, 2200, true, false);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.approve);
+    o = c.magiStep(o.state, { event: 'ask', data: { round: 3, questions: [{ codename: id }] } }, 2800, true, false);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.approve);
+    o = c.magiStep(o.state, { event: 'persona', data: { ...d, round: 3, vote: null, vote_state: 'pending' } }, 3400, true, false);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.approve);
+    o = c.magiStep(o.state, { event: 'persona', data: { ...d, round: 3 } }, 4000, true, false);
+    assert.equal(o.frame.result, null); assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.reject);
+    for (const [visible, reduced] of [[false, false], [true, true]]) {
+      const instant = c.magiStep(o.state, null, 4100, visible, reduced);
+      assert.equal(instant.frame.nodes[id].color, c.MAGI_COLORS.reject); assert.equal(instant.next, null);
+    }
+    o = c.magiStep(o.state, { event: 'persona', data: { ...d, round: 4, vote: null } }, 4600, true, false);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.rejectCarried);
+    assert.equal(o.frame.nodes[id].vote, 'reject');
+    const final = finalMagi();
+    o = c.magiStep(o.state, { event: 'verdict', data: final }, 5200, true, true);
+    for (const t of [5520, 5640, 5760]) {
+      const frame = c.magiStep(o.state, null, t, true, false).frame;
+      for (const k of c.MAGI_IDS) assert.equal(frame.nodes[k].color, c.MAGI_COLORS[final.votes[k].vote]);
+    }
+  }
 });
 
 test('MAGI採決: 両画面は決議後の停止・切断で完了した説明だけを保存し、古い会話を混ぜない', async () => {

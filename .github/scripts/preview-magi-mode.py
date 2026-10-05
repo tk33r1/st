@@ -58,7 +58,7 @@ def fixtures(query, language):
             pending = unread and query != 'mock-vote-invalid'
             text = '' if query == 'mock-noreason' else '条件が合うなら実行したい。' if v == 'approve' else '費用への懸念が残る。'
             d = vote(k, r, v, text, absent, 'pending' if pending else 'final')
-            yield (0.01 if query == 'mock-burst' else 8 if query == 'mock-slow' and i == 2 else (3 if r == 1 and i == 0 else .8)), 'persona', d
+            yield (0.01 if query == 'mock-burst' else 8 if query == 'mock-slow' and i == 2 or query == 'mock-change' and r == 2 and i == 0 else (3 if r == 1 and i == 0 else .8)), 'persona', d
             if pending:
                 d = {**d, 'vote_state': 'final'}
                 yield .4, 'persona', d
