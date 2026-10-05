@@ -1,5 +1,264 @@
 [
   {
+    "date": "20261006",
+    "title": "2026年10月6日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "似鳥会長は2027年に160～170店、2028年以降は毎年200店の出店方針を示した。新店拡大を継続する計画は、店舗網と供給・運営体制を一体で強化する必要性を示す。 累計490万個を販売したもちもちクッションに、ワッフルとたい焼きの新作が登場。実績あるシリーズを親しみやすいモチーフで更新し、定番商品の継続的な話題化を狙う。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "似鳥会長は2027年に160～170店、2028年以降は毎年200店の出店方針を示した。新店拡大を継続する計画は、店舗網と供給・運営体制を一体で強化する必要性を示す。",
+      "累計490万個を販売したもちもちクッションに、ワッフルとたい焼きの新作が登場。実績あるシリーズを親しみやすいモチーフで更新し、定番商品の継続的な話題化を狙う。",
+      "N+のアプリ会員向けポイント施策や、Nシールドの使用感を伝える投稿から、会員接点の強化と、耐久性・快適性を実生活で実感できる商品価値の訴求が目立った。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "N+、アプリ会員限定で全アイテムのポイント最大7倍　10月9日から",
+        "original_title": "",
+        "source": "MANTANWEB",
+        "source_id": "JP-09",
+        "summary": "ニトリのアパレルブランドN+は、10月9日からアプリ会員を対象に、全アイテムのポイントを最大7倍とする企画を実施する。寒暖差が気になる秋の衣料需要を捉え、会員限定の特典を通じて来店や購入を促す内容として報じられた。",
+        "why_it_matters": "全品対象のポイント施策は、特定商品の値下げに頼らず、アプリ会員の購買動機を高める手段となる。N+の顧客接点をニトリの会員基盤と結び、衣料の利用・購買データを蓄積できれば、SPA型の商品企画や販促の改善にもつながる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "アプリ会員",
+          "ポイント施策"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBESDB6bTFpemlPckJHMVJ4N2ZmMTJGVkpWYzRETHF4ckptR0RUSW9SY2VZRk81UkZFNWZLd3pGRjFXUlFyUUFEMnRQUS1lbXZ6YnNyUnI0X1k2cDc3TnhCSm01cEw1QUllaWNOc0RKbzhPdHgwcmc?oc=5",
+        "source_pub_ts": 1791184489
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "累計490万個のもちもちクッションに、ワッフルとたい焼きの新作",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-19",
+        "summary": "ニトリのもちもちクッションシリーズが累計販売数490万個を突破し、新作としてワッフルとたい焼きのモチーフが加わった。ふんわりとした焼き菓子や和菓子を思わせる形を商品化し、既存シリーズの人気を生かしながら、売場やSNSで目を引く新たな選択肢を提案する。",
+        "why_it_matters": "大規模な販売実績を持つシリーズに新しい形を加えることで、既存顧客の買い足しと新規層への認知を同時に狙える。定番の触感価値に視覚的な楽しさを掛け合わせる商品開発は、比較購買されにくい低価格インテリア商品の話題化にも有効だ。",
+        "tags": [
+          "ニトリ",
+          "もちもちクッション",
+          "新商品",
+          "ヒット商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9JcTF0d0l4UUVjdzJhQl9ERmxwR2hHbzFuS0M0YXRpQkNrTFNUaEp6NGl0THpmUFFzMFhab1RWRFdQSWx2SmxQYVNVa1lIbkExYXAzYkJvejJBVEhJWWh0c0o2MW5vSmVFNEE?oc=5",
+        "source_pub_ts": 1791165602
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、2027年は160～170店出店へ　2028年から年200店を計画",
+        "original_title": "",
+        "source": "リアルエコノミー",
+        "source_id": "JP-14",
+        "summary": "北海道経営未来塾で、ニトリホールディングスの似鳥昭雄会長兼CEOが講演し、2027年に160～170店、2028年からは毎年200店を出店する方針を示した。事業会社社長に復帰した理由についても語ったと報じられており、今後の成長を支える出店計画として注目される。",
+        "why_it_matters": "年200店規模の出店は、物件確保だけでなく、物流網、人材育成、商品供給を同時に拡張する必要がある。製造・物流・小売を一体運営する強みを、出店スピードと既存店のサービス水準の両立に結び付けられるかが、計画実現の焦点となる。",
+        "tags": [
+          "ニトリ",
+          "出店計画",
+          "店舗展開",
+          "経営戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5kU1FwZWhNYlBYWDlTaklPS0plR3JEX2p1cGlZbkcwZC16VS14MWRjbzhsLTd5T0lUYUdpNldKQ3ZHSGJtTWl6SzhzTFBubGF4MmFleUVHRFhJdw?oc=5",
+        "source_pub_ts": 1791163800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「ぶさかわ」な表情が人気、ニトリの599円ネコ茶わんに反響",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-02",
+        "summary": "ニトリの599円のネコ柄茶わんが紹介され、表情のユニークさに加え、「軽くて扱いやすい」といった購入者の声や、複数購入したという反応が伝えられた。手に取りやすい価格と日常使いのしやすさを備えた食器として、デザイン面と実用面の双方が注目されている。",
+        "why_it_matters": "低価格で目を引くデザインに、軽さという使い勝手を組み合わせることで、日用品の買い替えや複数購入を促しやすい。生活者の声から機能面の評価も伝わるため、価格訴求だけでなく、使う場面を具体的に想像させる商品情報の発信が購買の後押しになる。",
+        "tags": [
+          "ニトリ",
+          "食器",
+          "低価格",
+          "商品開発"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9lV0liXzVxOTN0NVc2SlJuVWY4OUtpakZDRFRESVV0NkY3VmswMldTcUVuNWlIUjNQbTNra1A3Y0tHOE9vRGJhSmVHaU5FUzJBVzU1TGoxbzJZNGJnbmU3OE9ZTlVLbnV4d3hta2dLaDlEaDhJVXZLcTdQQy1jRlU?oc=5",
+        "source_pub_ts": 1791237877
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "吸盤付きの脚で安定、シンク周りを整えるニトリのキッチン用品",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-08",
+        "summary": "ニトリのキッチン用品が、シンク周りを片付けやすくする商品として紹介された。吸盤タイプのキャップが脚に付いて安定する点や、収納力が評価されているという。利用者の反応を交え、限られたキッチン空間で置き場所をつくり、周辺を整理する実用性に焦点を当てた記事だ。",
+        "why_it_matters": "キッチンの小さな不便を、安定性と収納という具体的な機能で解決する商品は、使用後の変化を伝えやすい。省スペース化や片付けやすさを生活シーンと結び付けて提案すれば、単品の機能比較にとどまらず、売場全体のキッチン収納提案にも広げられる。",
+        "tags": [
+          "ニトリ",
+          "キッチン用品",
+          "収納",
+          "生活者の声"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFB1UGdKTkJvdDViZXAyLXJMc3oyWGRweEVTZzVnNGNFcVdsQkhvYVlKWWxTNldIYTVOVUp1U25xVUJ4cHVacEVlTHVsM1Jya3pzY1IyUmZTY0ZacWVUWDE1RWljVURJMXZEX0p3?oc=5",
+        "source_pub_ts": 1791194400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "購入2年後も「頑丈で座り心地が良い」　Nシールドソファの愛用投稿に反響",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Nシールドのソファを購入して2年が経ったという利用者が、ペットによる日々の「耐久試験」を受けても頑丈で、座り心地が良く、汚れも拭き取りやすいと投稿した。購入後の具体的な使用感が伝わる内容で、投稿には2,084件のいいねと289件のリポストが集まった。",
+        "why_it_matters": "耐久性や手入れのしやすさは、購入前に判断しにくい一方、長期使用の実感が信頼につながる価値だ。ペットとの暮らしという具体的な場面が機能を説明しており、企業発信の仕様情報を、生活者の体験が補完する商品訴求の強さを示している。",
+        "tags": [
+          "ニトリ",
+          "Nシールド",
+          "ソファ",
+          "SNS話題"
+        ],
+        "url": "https://x.com/Billie_blklab/status/2106950144520601933",
+        "source_pub_ts": 1791198000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「Nウォームで寝すぎる」秋の昼寝と猫との添い寝を紹介する投稿",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "秋にニトリのNウォームを使ったところ、昼寝が長くなってしまったという利用者の投稿が反響を集めた。添い寝に来た猫の暖かさにも触れ、寝具の使い心地を日常の一場面として紹介している。投稿には576件のいいねと29件のリポストが付いた。",
+        "why_it_matters": "保温性を機能説明だけでなく、季節の変わり目の昼寝やペットとの暮らしとして描くことで、使う場面と心地よさが直感的に伝わる。生活者の投稿は、寝具の性能を具体的な体験に置き換え、季節商品の購入を検討する人の想像を助ける接点になる。",
+        "tags": [
+          "ニトリ",
+          "Nウォーム",
+          "寝具",
+          "SNS話題"
+        ],
+        "url": "https://x.com/lein_mana/status/2107007500545597464",
+        "source_pub_ts": 1791198000
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのNシールドのソファ購入から2年 ご覧の様に今だに抜き打ち耐久試験を定期的に実施してますが、本当に頑丈で座り心地良くて汚れも拭くだけで...",
+        "platform": "x",
+        "author": "@Billie_blklab",
+        "url": "https://x.com/Billie_blklab/status/2106950144520601933",
+        "likes": 2084,
+        "retweets": 289,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:30",
+        "captured_at": "",
+        "text": "ニトリのNシールドのソファ購入から2年 ご覧の様に今だに抜き打ち耐久試験を定期的に実施してますが、本当に頑丈で座り心地良くて汚れも拭くだけでサッと取れて飼い主もよく寝ちゃう快適な良いソファです pic.x.com/dPGI4nDwu7 x.com/billie_blklab/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ちょっち昼寝〜と思ったらこの時間、秋にニトリのNウォームで寝ると寝すぎていかん。添い寝しに来た猫があったかかったのもよくない。 pic.x....",
+        "platform": "x",
+        "author": "@lein_mana",
+        "url": "https://x.com/lein_mana/status/2107007500545597464",
+        "likes": 576,
+        "retweets": 29,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:18",
+        "captured_at": "",
+        "text": "ちょっち昼寝〜と思ったらこの時間、秋にニトリのNウォームで寝ると寝すぎていかん。添い寝しに来た猫があったかかったのもよくない。 pic.x.com/1AdkRrbrcb",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "みんな楽しそうなので社会人男性も便乗！ 棚を...棚を買おうと思っているのですが... 今日家具屋さんとかニトリとか見たけどピンとくるやつが...",
+        "platform": "x",
+        "author": "@kabokabo_fan",
+        "url": "https://x.com/kabokabo_fan/status/2106877020403896327",
+        "likes": 52,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 7:40",
+        "captured_at": "",
+        "text": "みんな楽しそうなので社会人男性も便乗！ 棚を...棚を買おうと思っているのですが... 今日家具屋さんとかニトリとか見たけどピンとくるやつがなく...😕 左のアクスタ置き場がとんでもねぇことになってる😢 右はぬい達が良い感じになってきてる #シャインポスターグッズ展 pic.x.com/S1tm9BNy9W",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "アニメイトのしおりの飾り方、ニトリのフォトフレームは高いな…と思って100均で探してたら、なんとA4フレームがジャストフィット！！！ ダイソ...",
+        "platform": "x",
+        "author": "@nuruma_M0_S",
+        "url": "https://x.com/nuruma_M0_S/status/2107082163799863685",
+        "likes": 50,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:15",
+        "captured_at": "",
+        "text": "アニメイトのしおりの飾り方、ニトリのフォトフレームは高いな…と思って100均で探してたら、なんとA4フレームがジャストフィット！！！ ダイソーの200円のA4クリアファイルが入るフレームだとピッタリ(両サイドは数ミリ隠れるけど) これならブレティア両方が１枚に収まります🥰 pic.x.com/nI3nx6YyTS",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "無印、UNIQLO、ニトリにお買い物に行くアイドルかわいい。",
+        "platform": "x",
+        "author": "@bellcherry1108",
+        "url": "https://x.com/bellcherry1108/status/2107004210076381234",
+        "likes": 44,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:05",
+        "captured_at": "",
+        "text": "無印、UNIQLO、ニトリにお買い物に行くアイドルかわいい。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリ、不買運動が始まり完全終了w",
+        "platform": "tiktok",
+        "author": "@user7018887354459",
+        "url": "https://www.tiktok.com/@user7018887354459.fan/video/7692328774003674375",
+        "likes": 1089,
+        "retweets": 30,
+        "views": 29400,
+        "comments": 67,
+        "posted_on": "2026-10-03 15:44",
+        "captured_at": "2026-10-05T21:02:33.780382+09:00",
+        "text": "ニトリ、不買運動が始まり完全終了w",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "Xでは、Nシールドのソファを2年使った耐久・手入れの感想や、Nウォームでの秋の昼寝など、実使用の場面を伴う投稿が反響を得た。一方TikTokでは「不買運動」を掲げる刺激的な動画が2.9万回再生されているが、再生数は内容の事実性や一般的な支持を示すものではない。",
+    "sns_why_it_matters": "Xの投稿は、耐久性や暖かさを生活者の具体的な体験として伝え、商品の機能理解を補う。一方、TikTokは強い否定表現でも再生が伸び得るため、閲覧数だけで評判を判断しないことが重要だ。媒体ごとの反応の質を見極め、実使用の声と話題の広がりを分けて把握したい。"
+  },
+  {
     "date": "20261005",
     "title": "2026年10月5日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリ関連の新商品報道では、旅行用品や収納用品など、日常の小さな不便を解消する手頃な商品が目立った。用途の分かりやすさと価格の伝え方が、購買検討の入口になっている。 秋冬新商品展示会を紹介するTikTok投稿は17.8万回超再生。実物を見せながら複数商品をテンポよく紹介する形式が、新商品の認知と生活場面の想像を広げている。",
