@@ -10,7 +10,7 @@ routes = [
 [vars]
 # 404のAI検索とチャットのサイト案内を有効化。停止時はWorkerを先にfalseにする（通常チャットは続く）。
 SITE_SEARCH_ENABLED = "true"
-MAGI_MODE_ENABLED = "false"
+MAGI_MODE_ENABLED = "true"
 
 [[d1_databases]]
 binding       = "DB"
@@ -44,7 +44,7 @@ routes = [{ pattern = "magi2-eval.tk.st/magi2*", zone_name = "tk.st" }]
 
 [env.eval.vars]
 SITE_SEARCH_ENABLED = "true"
-MAGI_MODE_ENABLED = "false"
+MAGI_MODE_ENABLED = "true"
 
 [[env.eval.d1_databases]]
 binding = "DB"
