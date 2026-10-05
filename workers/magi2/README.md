@@ -113,7 +113,7 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 
 本番の `MAGI_MODE_ENABLED` はWeb/PWAの第2公開で `"true"`。両対応通知 `classification_state: true`・`magi_panel: true` を持つ一般会話で、Jevが明示的な賛否の問いを確信度0.7以上と判定した場合に議題化する。却下・失敗時は元の分類の通常経路に戻る。DJと404は採決へ入らない。パネル未対応の旧画面は通常経路を保つ。
 
-Web/PWAとAndroid v4.1は公開済み。Androidは本人が実機で確認し、[配布入口](https://tk.st/magi-app/android/)から署名付きAPKを取得できる。iOSのビルド・実機確認は後続とする。採決を止める場合は本番の `[vars]` を `"false"` にしてコミットし、Workerを再デプロイする。画面や既存会話の履歴はそのまま使える。
+Web/PWAとAndroid v4.1は公開済み。Androidは本人が実機で確認し、[配布入口](https://tk.st/magi-app/android/)から署名付きAPKを取得できる。iPhoneには[Web版](https://tk.st/magi-app/www/)をSafariで開き、ホーム画面に追加する方法を案内する。iOSのビルド・実機確認はApp Store公開を希望する段階で着手する。採決を止める場合は本番の `[vars]` を `"false"` にしてコミットし、Workerを再デプロイする。画面や既存会話の履歴はそのまま使える。
 
 議題化・タグ読取・多数決は `magi-mode.js`、指示と時間・スキーマは `personas.js`。3人格の初回・再回答と最大5回の聞き返しを使い、各人格の最新の有効票から2票以上で承認／否決、それ以外は保留にする。読取待ちの `persona` は `vote_state: pending`、票なしの確定も含め必ず `final` を再送する。過去票はタグではなく「承認／否決／票なし」として渡す。
 

@@ -2417,17 +2417,6 @@
       align-self: center;
     }
 
-    .magi-android.disabled {
-      color: var(--secondary-color);
-      border-color: var(--border-color);
-      background: transparent;
-      cursor: not-allowed;
-      pointer-events: none;
-      opacity: 0.55;
-    }
-
-    .magi-android.disabled .l1 { color: var(--secondary-color) }
-
     .magi-android-text {
       display: flex;
       flex-direction: column;
@@ -3241,7 +3230,7 @@
               "name": "Is there a MAGI app?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Android app is on the MAGI start screen as an APK download. iOS is coming soon."
+                "text": "Android: download the APK from the MAGI start screen. iPhone: open tk.st/magi-app/www/ in Safari → Share → Add to Home Screen."
               }
             },
             {
@@ -4188,8 +4177,8 @@
         sec: 'magi',
         question: 'Is there a MAGI app?',
         question_ja: 'MAGI のアプリはありますか？',
-        answer: 'The Android app is on the MAGI start screen as an APK download. iOS is coming soon.',
-        answer_ja: 'Android 版は MAGI の起動画面から APK ファイルとしてダウンロードできます。iOS 版は準備中です。'
+        answer: 'Android: download the APK from the MAGI start screen. iPhone: open tk.st/magi-app/www/ in Safari → Share → Add to Home Screen.',
+        answer_ja: 'Android は起動画面から APK を取得できます。iPhone は tk.st/magi-app/www/ を Safari で開き、共有 →「ホーム画面に追加」で使えます。'
       },
       {
         sec: 'deep',
@@ -7319,13 +7308,13 @@
       + '</svg>'
       + '<span class="magi-android-text"><span class="l1">Android</span><span class="l2">' + tr('APK Download', 'APKダウンロード') + '</span></span>'
       + '</a>'
-      + '<span class="magi-android disabled" title="' + tr('iOS app — coming soon', 'iOSアプリ — 近日公開') + '" aria-disabled="true">'
+      + '<a href="/magi-app/www/#install" target="_blank" rel="noopener noreferrer" class="magi-android" title="' + tr('Use MAGI on iPhone', 'iPhoneでMAGIを使う') + '">'
       + '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">'
       + '<path d="M17.05 12.04c-.03-2.5 2.04-3.7 2.13-3.76-1.16-1.7-2.97-1.93-3.61-1.96-1.54-.16-3 .9-3.78.9-.78 0-1.97-.88-3.24-.86-1.67.03-3.21.97-4.07 2.46-1.73 3-.44 7.45 1.24 9.89.82 1.19 1.8 2.53 3.08 2.48 1.24-.05 1.71-.8 3.21-.8 1.49 0 1.92.8 3.23.77 1.33-.02 2.18-1.21 3-2.41.94-1.38 1.33-2.72 1.35-2.79-.03-.01-2.59-1-2.62-3.95z"/>'
       + '<path d="M14.6 4.84c.69-.83 1.15-1.99 1.02-3.14-.99.04-2.18.66-2.89 1.49-.64.73-1.2 1.91-1.05 3.03 1.1.09 2.23-.56 2.92-1.38z"/>'
       + '</svg>'
-      + '<span class="magi-android-text"><span class="l1">iOS</span><span class="l2">' + tr('App Download', 'アプリダウンロード') + '</span></span>'
-      + '</span>'
+      + '<span class="magi-android-text"><span class="l1">iPhone</span><span class="l2">' + tr('Web App', 'Web版') + '</span></span>'
+      + '</a>'
       + '</div>'
       + '</div>';
     const agentDockEl = document.getElementById('agentdock');
@@ -8113,7 +8102,7 @@ async function parseSSE(body, handlers, onChunk) {
     // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {
       // Android APK Download button
-      const androidLink = e.target.closest('.magi-android:not(.disabled)');
+      const androidLink = e.target.closest('.magi-android[href$="/android/"]');
       if (androidLink) {
         e.preventDefault();
         showApkDownloadModal();

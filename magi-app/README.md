@@ -28,6 +28,17 @@ magi-app/
 
 ## 1. Run as a web app / PWA
 
+The public web app is [https://tk.st/magi-app/www/](https://tk.st/magi-app/www/).
+For iPhone users, this PWA is the current distribution method. Open it in Safari,
+choose Share → Add to Home Screen, enable Open as Web App if shown, and tap Add.
+The start screen and More options menu include the instructions; the top-page
+iPhone button opens them directly. Chat requires an internet connection.
+
+Android users can also download the signed APK from
+[the Android download link](https://tk.st/magi-app/android/).
+Native iOS packaging is deferred until App Store distribution is requested;
+the steps below are retained for that future work.
+
 ```bash
 cd magi-app
 npm run serve        # serves www/ at http://localhost:5173

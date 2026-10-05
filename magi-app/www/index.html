@@ -82,6 +82,7 @@
     #agent-more-dropdown a:hover, #agent-more-dropdown a:active { color: var(--primary-color); background: var(--surface-hover); }
     #agent-more-dropdown button:disabled { opacity: 0.3; pointer-events: none; }
     #agent-more-dropdown hr { border: none; border-top: 1px solid var(--border-color); margin: 4px 0; width: 100%; }
+    #agent-more-dropdown [hidden] { display: none; }
 
     /* overlay panels (saved chats / info) */
     .agent-panel {
@@ -291,6 +292,7 @@
               <span>Download MD</span>
             </button>
             <hr />
+            <button id="btn-install-agent" type="button" hidden>Add to Home Screen</button>
             <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" title="Legacy MAGI deliberation (v1)">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               <span>Legacy MAGI</span>
@@ -326,6 +328,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261005_14"></script>
+  <script src="app.js?v=20261006_2"></script>
 </body>
 </html>

@@ -205,6 +205,9 @@ function reactionBarHTML(target) {
     + '</div>';
 }
 
+// インストール済みのPWA・ネイティブアプリには追加の案内を出さない。
+var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
+  && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
 var AGENT_HINT = '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
   + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
@@ -222,6 +225,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
+  + (WEB_INSTALL ? '<div class="magi-nodes"><button type="button" class="magi-node" data-install-agent>Add to Home Screen</button></div>' : '')
   + '</div>';
 
 // ---- Title ------------------------------------------------------------------
@@ -979,6 +983,7 @@ function closeEmojiPops() { document.querySelectorAll('.emoji-pop').forEach(func
 
 // ---- Click delegation -------------------------------------------------------
 agentLog.addEventListener('click', function (e) {
+  if (e.target.closest('[data-install-agent]')) { showInstallPanel(); return; }
   // splash: System & Privacy info button (next to the version string)
   if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
   // splash persona node
@@ -1050,7 +1055,7 @@ agentLog.addEventListener('click', function (e) {
 document.addEventListener('click', function (e) { if (!e.target.closest('.reaction-bar')) closeEmojiPops(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel', 'agent-install-panel'];
 function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); }); }
 function makeAgentPanel(id, title, bodyHTML) {
   if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
@@ -1068,6 +1073,17 @@ function showHistoryPanel() {
   var panel = makeAgentPanel('agent-history-panel', 'Saved Chats', '<div id="agent-history-list" style="display:flex;flex-direction:column;gap:0.4rem;"></div>');
   if (!panel) return;
   renderSavedSessionsList();
+}
+function showInstallPanel() {
+  var panel = makeAgentPanel('agent-install-panel', 'Use MAGI on iPhone',
+    '<ul>'
+    + '<li>Open <strong>tk.st/magi-app/www/</strong> in <strong>Safari</strong> on your iPhone.</li>'
+    + '<li>Tap <strong>Share</strong> (the square with an upward arrow). Depending on the Safari layout, open the page menu first.</li>'
+    + '<li>Choose <strong>Add to Home Screen</strong>. If it is missing, find it under <strong>Edit Actions</strong>.</li>'
+    + '<li>If shown, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>.</li>'
+    + '<li>Launch MAGI from its new Home Screen icon. Chat requires an internet connection.</li>'
+    + '</ul>');
+  if (panel) panel.querySelector('.agent-panel-close').focus();
 }
 var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
 function renderSavedSessionsList() {
@@ -1225,6 +1241,9 @@ document.getElementById('btn-history-agent').addEventListener('click', showHisto
 })();
 document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
 document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+var installBtn = document.getElementById('btn-install-agent');
+installBtn.hidden = !WEB_INSTALL;
+installBtn.addEventListener('click', showInstallPanel);
 
 document.getElementById('btn-theme').addEventListener('click', function () {
   var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -1244,3 +1263,4 @@ if ('serviceWorker' in navigator) {
 }
 
 initAgent();
+if (WEB_INSTALL && location.hash === '#install') showInstallPanel();

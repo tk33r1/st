@@ -1638,7 +1638,7 @@ test('アプリの保存言語の復元時には、言語コード一覧が初�
   const prefix=mobile.slice(0,end);
   const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout,clearTimeout,
     ResizeObserver:class { observe(){} },
-    window:{},location:{protocol:'http:',hostname:'localhost',search:''},
+    window:{matchMedia:()=>({matches:false})},navigator:{},location:{protocol:'http:',hostname:'localhost',search:''},
     document:{getElementById:()=>({...element(),addEventListener(){}})},
     localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
       ?JSON.stringify({id:'saved',reply_language:{version:1,code:'en',source:'ui'}}):null;}}
