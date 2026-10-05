@@ -859,12 +859,13 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
   // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
+  const personaPageNote = pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : '';
   const personas = PERSONAS.map(p => {
     const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
     return { ...base, system_prompt: withLangNote(base.system_prompt
       + (guide ? '\n\n' + guide.persona : '')
       + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
-      + (pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : ''), langNote) };
+      + personaPageNote, langNote) };
   });
 
   // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
@@ -929,7 +930,8 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
   // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
   // 時間の予算を過ぎたら次の回を始めない。判定に失敗したらその時点の討議で統合する
-  const maxRounds = (motion || adaptive && !shortDebate) && (!newContract || opinions.length > 1) ? DEBATE.max_rounds : 2;
+  const longDebate = !!motion || adaptive && !shortDebate;
+  const maxRounds = longDebate && (!newContract || opinions.length > 1) ? DEBATE.max_rounds : 2;
   let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
   for (let round = 3; round <= maxRounds && !signal.aborted; round++) {
     if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
@@ -971,7 +973,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
     + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
     + (magiVerdict ? `\n\n【共通の議題と確定した採決】${motion}\n${JSON.stringify(magiVerdict)}\n採決は変更せず、その根拠を説明する。` : '')
-    + ((motion || adaptive && !shortDebate) && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
+    + (longDebate && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
   // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
   const bias = !motion && theme ? SYNTH_BIAS[theme] : null;
   if (bias) log('synthesizer_call', 'bias', theme);
