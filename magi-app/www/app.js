@@ -33,6 +33,45 @@ var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
 
+// AGENT_CLASSIFY_BEGIN
+var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
+function cleanReplyLanguage(v) {
+  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
+  if (v.code === 'other') {
+    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
+      || /[<>\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
+  }
+  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
+    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
+  return { version: 1, code: v.code, source: v.source };
+}
+function classificationFields(history, language, ui, entry) {
+  var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
+  var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
+  var seed = text.slice(0, 500);
+  if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
+  var state = cleanReplyLanguage(language);
+  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
+    entry === 'dj-request' ? {} : { magi_panel: false },
+    state ? { reply_language: state } : { language_seed: seed });
+}
+function receiveClassification(state, ev, d) {
+  if (ev === 'title' || ev === 'error') return;
+  if (ev === 'classification') {
+    var language = cleanReplyLanguage(d && d.reply_language);
+    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
+      || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
+      || d.magi_candidate !== false || !language
+      || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
+    state.classified = true; state.language = language;
+  } else {
+    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
+    state.started = true;
+  }
+}
+// AGENT_CLASSIFY_END
+
 // Persona names (shown on the debate cards and the splash buttons). The descriptions (temperament, context,
 // theme) and the LLM behind each persona are not written here: they come from the Worker's /magi2/models
 // (source of truth: PERSONA_GUIDE in workers/magi2/personas.js, shared with tk.st), so they can change
@@ -408,44 +447,6 @@ function renderAgentError(env) {
 }
 
 // ---- SSE --------------------------------------------------------------------
-// AGENT_CLASSIFY_BEGIN
-var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
-function cleanReplyLanguage(v) {
-  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
-  if (v.code === 'other') {
-    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
-      || /[<>\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
-    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
-  }
-  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
-    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
-  return { version: 1, code: v.code, source: v.source };
-}
-function classificationFields(history, language, ui, entry) {
-  var first = history.filter(function (m) { return m && m.role === 'user'; })[0];
-  var text = first ? (typeof first.content === 'string' ? first.content : (first.content || []).filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n')) : '';
-  var seed = text.slice(0, 500);
-  if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
-  var state = cleanReplyLanguage(language);
-  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: false },
-    state ? { reply_language: state } : { language_seed: seed });
-}
-function receiveClassification(state, ev, d) {
-  if (ev === 'title' || ev === 'error') return;
-  if (ev === 'classification') {
-    var language = cleanReplyLanguage(d && d.reply_language);
-    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
-      || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
-      || d.magi_candidate !== false || !language
-      || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
-    state.classified = true; state.language = language;
-  } else {
-    if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
-    state.started = true;
-  }
-}
-// AGENT_CLASSIFY_END
 async function parseSSE(body, handlers, onChunk) {
   const reader = body.getReader(), dec = new TextDecoder();
   let buf = '', skipLF = false;

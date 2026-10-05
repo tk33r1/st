@@ -1,6 +1,7 @@
 // 固定した合成入力で公開前の分類品質を確認する。キー・応答本文は出力しない。
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import vm from 'node:vm';
 import { performance } from 'node:perf_hooks';
 const read = p => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
@@ -58,6 +59,7 @@ for (let i = 0; i < cases.length; i++) {
   const answers = Object.fromEntries(Object.keys(payload.questions).map(name => [name, ctx.accept(name, body.answers?.[name])]));
   results.push({ case: i + 1, expected: c.intent, intent: answers.intent || 'consult', language: answers.language,
     expected_language: c.language, site_pages: answers.site_pages, elapsed_ms: Math.round(performance.now() - started),
+    votable: answers.votable || 'uncertain',
     confidence: Object.fromEntries(Object.entries(body.answers || {}).map(([name, a]) => [name, a.confidence])), usage: body.usage });
   if ((i + 1) % 20 === 0) console.log(JSON.stringify({ completed: i + 1, total: cases.length }));
 }
@@ -67,9 +69,21 @@ const consultWrong = results.filter(r => r.expected === 'consult' && r.intent !=
 const unrelatedNotNo = results.filter(r => r.expected === 'consult' && r.site_pages !== 'no').length;
 const relevantNo = results.filter(r => r.expected === 'site' && r.site_pages === 'no').length;
 const times = results.map(r => r.elapsed_ms).sort((a, b) => a - b);
+const quantile = (values, fraction) => values[Math.ceil(values.length * fraction) - 1] ?? null;
+const confidences = Object.fromEntries(Object.keys(cfg.questions).map(name => {
+  const values = results.map(r => r.confidence[name]).filter(v => typeof v === 'number' && Number.isFinite(v)).sort((a, b) => a - b);
+  return [name, { count: values.length, min: values[0] ?? null, median: quantile(values, .5), p90: quantile(values, .9), max: values.at(-1) ?? null }];
+}));
+const candidates = results.filter(r => r.votable === 'yes').length;
+const output = new URL('../../workers/.wrangler/classification-audit.json', import.meta.url);
+mkdirSync(new URL('.', output), { recursive: true });
+writeFileSync(output, JSON.stringify({ date: new Date().toISOString(), revision: cfg.revision,
+  source_hash: createHash('sha256').update(['languages.js', 'personas.js', 'classification.js'].map(p => read('workers/magi2/' + p)).join('\n')).digest('hex'),
+  count: results.length, candidate_count: candidates, candidate_rate: candidates / results.length, confidences, results }, null, 2));
 console.log(JSON.stringify({ revision: cfg.revision, count: cases.length, intent_mistakes: mistakes,
   language_errors: languageErrors, consult_wrong: consultWrong.length, unrelated_not_no: unrelatedNotNo,
   relevant_no: relevantNo, median_ms: times[29], p90_ms: times[53], within_budget: times.filter(t => t <= cfg.timeout_ms).length / times.length,
+  candidate_count: candidates, candidate_rate: candidates / results.length, confidences,
   relevant_no_cases: results.filter(r => r.expected === 'site' && r.site_pages === 'no').map(r => ({ case: r.case, confidence: r.confidence.site_pages })),
   confusion: Object.fromEntries(Object.keys(groups).map(expected => [expected,
     Object.fromEntries(Object.keys(groups).map(actual => [actual, results.filter(r => r.expected === expected && r.intent === actual).length]))])) }));

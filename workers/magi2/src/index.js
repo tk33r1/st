@@ -948,8 +948,21 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   const upstream = Object.assign(Object.create(env), {
     onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
   });
+  const stop = new AbortController();
+  const stopRequest = () => stop.abort();
+  if (request.signal.aborted) stop.abort();
+  else request.signal.addEventListener('abort', stopRequest, { once: true });
+  // カードと分類は利用回数の確認と並行する。拒否・切断時は分類も止める。
   const cardsPromise = getPersonaCards(ctx, log);
-  const refuse = res => res;
+  const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
+    profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
+    seed, replyLanguage, uiLanguage, fallback: langNote,
+  }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
+  const refuse = res => {
+    stop.abort();
+    request.signal.removeEventListener('abort', stopRequest);
+    return res;
+  };
 
   // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
   if (env.DB) {
@@ -991,10 +1004,6 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
 
   // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
-  const stop = new AbortController();
-  const stopRequest = () => stop.abort();
-  if (request.signal.aborted) stop.abort();
-  else request.signal.addEventListener('abort', stopRequest, { once: true });
   const pageStop = new AbortController();
   const stopPages = () => pageStop.abort();
   stop.signal.addEventListener('abort', stopPages, { once: true });
@@ -1008,10 +1017,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
 
       ctx.waitUntil((async () => { try {
         // 出力の言語（3人格・統合・討議の判定・タイトル・予測の全部に同じものを付ける）
-        const classified = await withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
-          profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
-          seed, replyLanguage, uiLanguage, fallback: langNote,
-        }, signal, log), stop.signal);
+        const classificationResult = await classifyPromise;
+        if (classificationResult.error) throw classificationResult.error;
+        const classified = classificationResult.value;
         if (stop.signal.aborted) throw searchFailure('cancelled');
         langNote = classified.langNote;
         const classification = classified.classification;

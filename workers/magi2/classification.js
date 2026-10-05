@@ -35,7 +35,7 @@ export function classificationPayload({ profile = 'chat', texts = [], seed, hasL
   return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name, cfg.questions[name]])) };
 }
 
-const languageControl = /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/;
+const languageControl = /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/;
 export function cleanReplyLanguage(value) {
   if (!value || value.version !== 1 || typeof value.code !== 'string' || !Object.hasOwn(INTENT_CLASSIFY.languages, value.code)) return null;
   if (value.code === 'other') {

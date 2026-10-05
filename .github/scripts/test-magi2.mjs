@@ -1202,7 +1202,7 @@ test('3画面は adaptive_debate を付け、聞き返しの枠を描き、履�
   assert.match(dj, /followups: \(rounds \|\| \[\]\)\.slice\(2\)/);
 });
 
-// 発言の言語の判定（personas.js の LANGUAGE_DETECT）。Jev の口だけを差し替える
+// 発言の言語の判定（personas.js の INTENT_CLASSIFY）。Jev の口だけを差し替える
 const jevReply = (choice, confidence = 0.99) => Response.json({ model: 'jev-1.13.0', answers: { language: { type: 'choice', choice, confidence, probabilities: { [choice]: confidence } } } });
 async function chatWithJev(reply, messages, extra = {}) {
   const sent = [];
@@ -1248,20 +1248,77 @@ test('Jev の失敗・言語の無い発言・低い確信・キー未設定で�
   assert.equal(jev, 0, 'キーが無ければ呼ばない');
 });
 
-test('レート制限で断るときは分類APIを呼ばない', async () => {
-  let aborted = false, classificationCalls = 0;
-  const w = worker(completion(), (url, options) => {
+test('IP上限・全体上限・DB失敗で断るときは並行開始した分類を中止し、人格を呼ばない', async () => {
+  for (const failure of ['ip', 'global', 'db']) {
+    let aborted = 0, classificationCalls = 0;
+    const w = worker(completion(), (url, options) => {
+      if (url !== 'https://api.typesafe.ai/v1/systemone') return;
+      classificationCalls++;
+      return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => {
+        aborted++; reject(new DOMException('aborted', 'AbortError'));
+      }, { once: true }));
+    });
+    w.env.MAGI_TYPESAFE_API_KEY = 'test';
+    w.env.DB = failure === 'db' ? { prepare() { throw new Error('DB unavailable'); } } : counts();
+    if (failure === 'ip') w.ctx.defaults.daily_limit = 0;
+    if (failure === 'global') w.ctx.defaults.global_daily_limit = 0;
+    const res = await w.chat([{ role: 'user', content: 'q' }]);
+    assert.equal(res.status, failure === 'db' ? 500 : 429, failure);
+    await tick();
+    assert.equal(classificationCalls, 1, failure); assert.equal(aborted, 1, failure);
+    assert.equal(w.calls.length, 0, failure);
+  }
+});
+
+test('分類はDBの確認中に進み、確認が済むまでSSEと人格の処理を始めない', async () => {
+  let classified = false, releaseDb, enteredDb;
+  const entered = new Promise(resolve => { enteredDb = resolve; });
+  const held = new Promise(resolve => { releaseDb = resolve; });
+  const w = worker(completion(), url => {
     if (url !== 'https://api.typesafe.ai/v1/systemone') return;
-    classificationCalls++;
-    return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => { aborted = true; reject(new DOMException('aborted', 'AbortError')); }));
+    classified = true; return jevReply('en');
   });
   w.env.MAGI_TYPESAFE_API_KEY = 'test';
-  w.env.DB = counts();
-  w.ctx.defaults.daily_limit = 0;
-  const res = await w.chat([{ role: 'user', content: 'q' }]);
-  assert.equal(res.status, 429);
-  await tick();
-  assert.equal(aborted, false); assert.equal(classificationCalls, 0);
+  const db = counts();
+  w.env.DB = { prepare(sql) { const stmt = db.prepare(sql); return {
+    bind(...args) { stmt.bind(...args); return this; },
+    async first() { enteredDb(); await held; return stmt.first(); },
+    run() { return stmt.run(); },
+  }; } };
+  const pending = w.chat([{ role: 'user', content: 'Please help me.' }]);
+  await entered; await tick();
+  assert.equal(classified, true); assert.equal(w.calls.length, 0);
+  assert.equal(db.rows.size, 0);
+  releaseDb();
+  assert.match(await (await pending).text(), /event: done/);
+  assert.ok(w.calls.length > 0);
+});
+
+test('DBの確認中の接続切断でも分類を中止し、後から人格を呼ばない', async () => {
+  let aborted = false, releaseDb, enteredDb;
+  const entered = new Promise(resolve => { enteredDb = resolve; });
+  const held = new Promise(resolve => { releaseDb = resolve; });
+  const w = worker(completion(), (url, options) => {
+    if (url !== 'https://api.typesafe.ai/v1/systemone') return;
+    return new Promise((resolve, reject) => options.signal.addEventListener('abort', () => {
+      aborted = true; reject(new DOMException('aborted', 'AbortError'));
+    }, { once: true }));
+  });
+  w.env.MAGI_TYPESAFE_API_KEY = 'test';
+  w.env.DB = { prepare() { return {
+    bind() { return this; },
+    async first() { enteredDb(); await held; return { count: 1 }; },
+  }; } };
+  const controller = new AbortController();
+  const pending = w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/chat', {
+    method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: 'Please help me.' }] }), signal: controller.signal,
+  }), w.env, { waitUntil(p) { w.waits.push(p); } });
+  await entered;
+  controller.abort(); await tick(); assert.equal(aborted, true);
+  releaseDb();
+  assert.equal(await (await pending).text(), '');
+  assert.equal(w.calls.length, 0);
 });
 
 const classifiedReply = (overrides = {}) => Response.json({ answers: {
@@ -1345,7 +1402,7 @@ test('新DJはmusic/no/no固定で初回だけ言語を聞き、継続時はJev�
 });
 
 test('site_pagesの拒否とmusicでは索引や一覧を送らず、siteは検証済み候補を討議前に渡す', async () => {
-  for (const [intent, choice] of [['site', 'yes'], ['site', 'no'], ['music', 'yes']]) {
+  for (const [intent, choice] of [['site', 'yes'], ['site', 'no'], ['consult', 'no'], ['music', 'yes']]) {
     let indexCalls = 0;
     const w = enableSearch(worker(undefined, (url, options) => {
       if (url.endsWith('/site-search.json')) { indexCalls++; return Response.json(guideIndex); }
@@ -1356,6 +1413,8 @@ test('site_pagesの拒否とmusicでは索引や一覧を送らず、siteは検�
       messages: [{ role: 'user', content: 'PDFをまとめたいです。' }] })).text();
     assert.match(text, /event: done/);
     assert.equal(indexCalls > 0, intent === 'site' && choice === 'yes');
+    assert.equal(w.calls.some(c => c.response_format?.json_schema?.name === 'site_chat'), intent === 'site' && choice === 'yes');
+    assert.equal(/event: pages/.test(text), intent === 'site' && choice === 'yes');
     const personalities = w.calls.filter(c => !c.stream && !c.response_format && c.max_completion_tokens !== 48);
     if (intent === 'site' && choice === 'yes') assert.ok(personalities.every(c => JSON.stringify(c).includes('PDF Studio')));
     else assert.ok(!w.calls.some(c => JSON.stringify(c).includes('サイトのページ一覧')));
@@ -1521,4 +1580,78 @@ test('文字数指定を外した人格の長い応答で次の討議入力を�
   assert.equal(events.length, 6);
   assert(events.every(e => e.text.length === w.ctx.defaults.persona_response_max_chars));
   assert.match(text, /event: done/);
+});
+
+test('言語sampleはWorkerと3画面で全12双方向制御を拒否し、通常の文字は引き継ぐ', async () => {
+  const w = worker();
+  const controls = [0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069];
+  const sample = text => ({ version: 1, code: 'other', source: 'sample', sample: text });
+  for (const src of [home, mobile, dj]) {
+    const ctx = vm.createContext({ TextDecoder });
+    vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
+    for (const code of controls) {
+      const value = sample('α' + String.fromCodePoint(code) + 'β');
+      assert.equal(w.ctx.cleanReplyLanguage(value), null);
+      assert.equal(ctx.cleanReplyLanguage(value), null);
+      assert.equal(ctx.classificationFields([], value, 'en').reply_language, undefined);
+      assert.throws(() => ctx.receiveClassification({ started: false, classified: false }, 'classification', {
+        version: 1, intent: 'consult', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: value,
+      }), /invalid_classification/);
+    }
+    for (const text of ['مرحبا بالعالم', 'α\u200dβ']) {
+      assert.equal(w.ctx.cleanReplyLanguage(sample(text)).sample, text);
+      assert.equal(ctx.cleanReplyLanguage(sample(text)).sample, text);
+    }
+  }
+  const fallback = w.ctx.fixedLanguage('مرحبا\u061c بالعالم', 'en');
+  assert.equal(fallback.code, 'en'); assert.equal(fallback.source, 'ui');
+});
+
+test('PWAの初回キャッシュとHTMLは同じ版のアプリJSを読む', () => {
+  const html = read('magi-app/www/index.html'), sw = read('magi-app/www/sw.js');
+  const version = html.match(/src="app\.js\?v=([^"]+)"/)[1];
+  assert.ok(sw.includes('./app.js?v=' + version));
+});
+
+
+test('トップページとアプリは保存が禁止されても同じ会話の言語をメモリで引き継ぐ', async () => {
+  const language = { version: 1, code: 'en', source: 'jev' };
+  for (const [src, isHome] of [[home, true], [mobile, false]]) {
+    const c = client(src, isHome), bodies = [];
+    c.ctx.localStorage = {
+      getItem() { throw new DOMException('blocked', 'SecurityError'); },
+      setItem() { throw new DOMException('blocked', 'SecurityError'); },
+      removeItem() { throw new DOMException('blocked', 'SecurityError'); },
+    };
+    const helpers = isHome
+      ? between(src, '    const safeParse =', '    const verBadge =')
+      : between(src, 'function safeParse(', 'var genMid');
+    // 保存の安全ラッパーと実際の言語保存処理を使う。DOMと通信だけを差し替える。
+    vm.runInContext(helpers + '\n' + between(src, 'function saveAgentLanguage(', 'function archiveCurrentHistory('), c.ctx);
+    c.ctx.fetch = async (_, options) => { bodies.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, handlers) => {
+      if (bodies.length === 1) handlers.classification({ reply_language: language });
+      handlers.integrated({ delta: 'answer' }); handlers.done();
+    };
+    await c.ctx.agentSend();
+    c.ctx.agentInput.value = '日本語で続きを相談する';
+    await c.ctx.agentSend();
+    assert.deepEqual(bodies[1].reply_language, language);
+    assert.equal(Object.hasOwn(bodies[1], 'language_seed'), false);
+    assert.equal(c.errors.length, 0);
+  }
+});
+
+
+test('アプリの保存言語の復元時には、言語コード一覧が初期化されている', () => {
+  const end=mobile.indexOf('function ensureAgentConversation(');
+  const prefix=mobile.slice(0,end);
+  const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout,clearTimeout,
+    ResizeObserver:class { observe(){} },
+    window:{},location:{protocol:'http:',hostname:'localhost',search:''},
+    document:{getElementById:()=>({...element(),addEventListener(){}})},
+    localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
+      ?JSON.stringify({id:'saved',reply_language:{version:1,code:'en',source:'ui'}}):null;}}
+  });
+  vm.runInContext(prefix,c);assert.equal(c.agentReplyLanguage.code,'en');
 });

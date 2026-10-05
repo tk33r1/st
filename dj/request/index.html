@@ -3056,7 +3056,7 @@ function cleanReplyLanguage(v) {
   if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
   if (v.code === 'other') {
     if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
-      || /[<>\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+      || /[<>\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
     return { version: 1, code: 'other', source: 'sample', sample: v.sample };
   }
   if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
