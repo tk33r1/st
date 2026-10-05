@@ -1791,7 +1791,7 @@ function recordClient(src) {
   Object.assign(c, {
     AGENT_PERSONAS: [{ codename: 'MELCHIOR-1', name: 'Enthusiast' }],
     esc: value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
-    tr: en => en, pick: (item, key) => item[key], reactionBarHTML: () => '',
+    tr: en => en, currentLang: 'en', pick: (item, key) => item[key], reactionBarHTML: () => '',
     document: { createElement: element },
   });
   const cards = src === home
@@ -1950,9 +1950,11 @@ test('MAGI採決: 初回の読取不能は灰で静止し、確認中と有効�
 });
 
 test('MAGI採決: 理由なしの票は受信時も履歴復元も表示し、未実施の第2回は隠す', async () => {
-  for (const [src, isHome] of [[home, true], [mobile, false]]) {
+  // トップページは表示言語に合わせ、英語固定のアプリは英語で出す
+  for (const [src, isHome, ja] of [[home, true, true], [home, true, false], [mobile, false, false]]) {
     const render = recordClient(src), id = 'MELCHIOR-1', record = recordTurn();
-    const c = client(src, isHome);
+    const c = client(src, isHome), none = ja ? '（理由なし）' : '(no reason given)';
+    render.currentLang = c.ctx.currentLang = ja ? 'ja' : 'en'; c.ctx.document.documentElement.lang = render.currentLang;
     c.ctx.AGENT_PERSONAS = [{ codename: id }];
     const makeElement = () => {
       const el = element();
@@ -1970,16 +1972,16 @@ test('MAGI採決: 理由なしの票は受信時も履歴復元も表示し、�
     };
     await c.ctx.agentSend();
     assert.deepEqual(c.errors, []);
-    for (const slot of record.slots.slice(0, 2)) assert.equal(slot.body.textContent, '（理由なし）');
+    for (const slot of record.slots.slice(0, 2)) assert.equal(slot.body.textContent, none);
     const debate = c.ctx.agentHistory[1].debate;
     assert.equal(debate[id].round1, ''); assert.equal(debate[id].round2, '');
     debate[id].followups = [{ round: 3, ask: '理由は？', text: '', vote: 'reject' }];
     const html = render.personaCardsHTML(debate);
-    assert.equal((html.match(/（理由なし）/g) || []).length, 3);
+    assert.equal(html.split(none).length - 1, 3);
     assert.doesNotMatch(html, /data-round="2" hidden/);
     for (const missing of [undefined, '…']) {
       const html = render.personaCardsHTML({ [id]: { round1: '意見', round2: missing } });
-      assert.match(html, /data-round="2" hidden/); assert.doesNotMatch(html, /（理由なし）/);
+      assert.match(html, /data-round="2" hidden/); assert.equal(html.includes(none), false);
     }
   }
 });
@@ -2021,7 +2023,7 @@ test('両画面は第3回の再送で本文と票を同じ記録へ更新し、�
 test('MAGI採決: 変更バッジは最新の有効票と比較し、再送・読取不能・履歴復元でも一致する', () => {
   for (const src of [home, mobile]) {
     const c = recordClient(src), id = 'MELCHIOR-1', { turn, slots } = recordTurn();
-    const send = (round, vote, vote_state = 'final') => c.magiBadge(turn, { codename: id, round, vote, vote_state });
+    const send = (round, vote, vote_state = 'final') => c.magiBadge(turn, { codename: id, round, vote, vote_state }, true);
     const label = round => slots[round - 1].querySelector('.magi-vote-badge').textContent;
     send(1, 'reject'); send(2, null, 'pending'); assert.equal(label(2), '…');
     send(2, 'approve'); assert.equal(label(2), '否決→承認');
@@ -2035,6 +2037,36 @@ test('MAGI採決: 変更バッジは最新の有効票と比較し、再送・�
       round1: '', round1Vote: 'reject', round2: '', round2Vote: 'approve',
     } } }, { ja: true });
     assert.equal(restored.slots[1].querySelector('.magi-vote-badge').textContent, '否決→承認');
+  }
+});
+
+test('MAGI採決: 英語画面の審議記録と読み上げは賛否を英語で示し、パネルの漢字は保つ', () => {
+  for (const src of [home, mobile]) {
+    const c = recordClient(src), id = 'MELCHIOR-1', { turn, slots } = recordTurn();
+    const send = (round, vote, vote_state = 'final', absent) => c.magiBadge(turn, { codename: id, round, vote, vote_state, absent }, false);
+    const label = round => slots[round - 1].querySelector('.magi-vote-badge').textContent;
+    send(1, 'reject'); send(2, 'approve'); assert.equal(label(2), 'REJECTED→APPROVED');
+    send(3, null); assert.equal(label(3), 'NO VOTE');
+    send(4, null, 'final', true); assert.equal(label(4), 'NO RESPONSE');
+    const restored = recordTurn();
+    c.createMagiView = () => ({ push() {}, finish() {}, dispose() {} });
+    c.magiReplay(restored.turn, { magi: finalMagi(), debate: { [id]: { round1: '', round1Vote: 'reject', round2: '', round2Vote: 'approve' } } }, { ja: false });
+    assert.equal(restored.slots[1].querySelector('.magi-vote-badge').textContent, 'REJECTED→APPROVED');
+
+    const { c: vc, view, box } = viewClient(src, { ja: false }), aria = () => box.querySelector('svg').getAttribute('aria-label');
+    const d = { codename: id, text: '', vote_state: 'final' };
+    vc.document.hidden = true;
+    view.push('motion', { text: 'Go' });
+    view.push('persona', { ...d, round: 1, vote: 'approve' });
+    assert.match(aria(), /^Go \/ Deliberating \/ MELCHIOR-1: Initial: APPROVED/);
+    view.push('persona', { ...d, round: 2, vote: 'reject' });
+    view.push('ask', { round: 3, questions: [{ codename: id }] });
+    assert.match(aria(), /MELCHIOR-1: Round 2: REJECTED/);
+    view.push('verdict', finalMagi());
+    assert.match(aria(), /^Go \/ APPROVED \/ /);
+    assert.doesNotMatch(aria(), /承認|否決|保留|審議中/);
+    assert.equal(box.querySelector('[data-magi-verdict]').querySelector('.magi-mincho').textContent, '承認');
+    view.dispose();
   }
 });
 
@@ -2174,6 +2206,26 @@ test('MAGI採決: 既に表示した再送を再演せず、読み取り中も�
   assert.equal(o.state.latest[d.codename].state,'carried');assert.equal(o.state.latest[d.codename].round,1);
 });
 
+test('MAGI採決: 古い回の同一再送で最新票を戻さず、聞き返し中も最新の有効票の色を保つ', () => {
+  for (const src of [home, mobile]) {
+    const c = coreClient(src), id = 'MELCHIOR-1';
+    let o = c.magiStep(null, { event: 'motion', data: { text: '実行' } }, 0, true, false);
+    const r1 = { codename: id, round: 1, text: '反対の理由', vote: 'reject', vote_state: 'final' };
+    o = c.magiStep(o.state, { event: 'persona', data: r1 }, 1, true, false);
+    o = c.magiStep(o.state, { event: 'persona', data: { ...r1, round: 2, text: '賛成の理由', vote: 'approve' } }, 700, true, false);
+    o = c.magiStep(o.state, { event: 'persona', data: r1 }, 1400, true, false);
+    assert.equal(o.state.latest[id].vote, 'approve'); assert.equal(o.state.latest[id].round, 2);
+    o = c.magiStep(o.state, { event: 'ask', data: { round: 3, questions: [{ codename: id }] } }, 1500, true, false);
+    assert.equal(o.state.latest[id].vote, 'approve'); assert.equal(o.state.latest[id].round, 2);
+    for (const t of [2200, 2300, 2400, 2500]) {
+      const color = c.magiStep(o.state, null, t, true, false).frame.nodes[id].color;
+      assert.ok([c.MAGI_COLORS.approve, c.MAGI_COLORS.off].includes(color), `t=${t} ${color}`);
+    }
+    o = c.magiStep(o.state, null, 2200, true, true);
+    assert.equal(o.frame.nodes[id].color, c.MAGI_COLORS.approve);
+  }
+});
+
 test('MAGI採決: 決議前も最新有効票の色を示し、再討議・確認中に青へ戻さない', () => {
   for (const src of [home, mobile]) {
     const c = coreClient(src), id = 'MELCHIOR-1';
@@ -2208,6 +2260,41 @@ test('MAGI採決: 決議前も最新有効票の色を示し、再討議・確�
       const frame = c.magiStep(o.state, null, t, true, false).frame;
       for (const k of c.MAGI_IDS) assert.equal(frame.nodes[k].color, c.MAGI_COLORS[final.votes[k].vote]);
     }
+  }
+});
+
+test('MAGI採決: 第1回の1人格だけで決議し、説明が届かず終了しても考え中を残さない', async () => {
+  for (const [src, isHome] of [[home, true], [mobile, false]]) for (const ending of ['error', 'stop', 'disconnect']) {
+    const c = client(src, isHome), id = 'MELCHIOR-1';
+    let thinking = true;
+    const card = element(), turn = element(), replyEl = element(), body = element(), bar = element();
+    card.classList.remove = name => { if (name === 'thinking') thinking = false; };
+    turn.querySelectorAll = selector => selector === '.persona-card.thinking' && thinking ? [card] : [];
+    turn.querySelector = selector => selector.includes('data-codename=') ? (selector.includes(id) ? card : null)
+      : selector === '.agent-reply' ? replyEl : selector === '.agent-reply-body' ? body
+      : selector === '.agent-reply .reaction-bar' ? bar : element();
+    replyEl.querySelector = selector => selector === '.agent-reply-body' ? body : element();
+    c.ctx.AGENT_PERSONAS = [{ codename: id }]; c.ctx.agentTurnEl = () => turn;
+    if (!isHome) { const nodes = [element(), turn, replyEl]; c.ctx.document.createElement = () => nodes.shift() || element(); }
+    c.ctx.createMagiView = (_turn, options) => ({ push() {}, start() {}, ready: () => true,
+      finish() { options.explain(); }, dispose() {}, explanationChanged() {} });
+    c.ctx.magiBadge = () => {}; c.ctx.fetch = async () => ({ ok: true, body: {} });
+    const verdict = { ...finalMagi('hold'), rounds: 1, tally: { approve: 1, reject: 0, none: 2 },
+      votes: Object.fromEntries(['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3'].map(k => [k,
+        k === id ? { vote: 'approve', round: 1, state: 'voted' } : { vote: null, round: null, state: 'absent' }])) };
+    c.ctx.parseSSE = async (_body, h) => {
+      h.motion({ text: verdict.motion, votable: true });
+      h.persona({ codename: id, round: 1, text: '実行したい。', vote: 'approve', vote_state: 'final' });
+      assert.equal(thinking, true); h.verdict(verdict);
+      if (ending === 'error') h.error({ code: 'synthesis_error' });
+      else { if (ending === 'stop') c.ctx.agentStop(); throw new Error('connection closed'); }
+    };
+    await c.ctx.agentSend();
+    assert.equal(thinking, false, `${isHome ? 'home' : 'app'}: ${ending}`);
+    assert.equal(c.ctx.agentHistory.at(-1).magi.result, 'hold');
+    assert.equal(c.ctx.agentHistory.at(-1).magi.reason_missing, true);
+    assert.equal(body.textContent, 'Could not retrieve the resolution explanation');
+    assert.equal(c.ctx.agentBusy, false); assert.equal(c.ctx.agentInput.disabled, false);
   }
 });
 
