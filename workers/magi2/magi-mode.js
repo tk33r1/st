@@ -8,14 +8,16 @@ export function cleanMotion(text) {
   return clean && clean.length <= MAGI_MODE.motion_max_chars ? clean : null;
 }
 
+const voteAtStart = new RegExp('^[\\s*`]*' + MAGI_MODE.vote_tag.source, MAGI_MODE.vote_tag.flags.replace('g', ''));
+const voteDisplay = new RegExp('(?:\\*+|`+)?' + MAGI_MODE.vote_tag.source + '(?:\\*+|`+)?', MAGI_MODE.vote_tag.flags);
 export function parseVote(raw) {
   const tags = [...raw.matchAll(new RegExp(MAGI_MODE.vote_tag.source, MAGI_MODE.vote_tag.flags))];
   const values = tags.map(m => m[1].trim().toUpperCase());
   const invalid = values.some(v => !['APPROVE', 'REJECT'].includes(v)) || new Set(values).size > 1;
   const first = raw.split(/\r?\n/).find(l => l.trim()) || '';
-  const atStart = /^[\s*`]*\[VOTE:[^\]\r\n]*\]/i.test(first);
+  const atStart = voteAtStart.test(first);
   const vote = !invalid && tags.length && atStart ? values[0].toLowerCase() : null;
-  const text = raw.replace(/(?:\*+|`+)?\[VOTE:[^\]\r\n]*\](?:\*+|`+)?/gi, '').trim();
+  const text = raw.replace(voteDisplay, '').trim();
   return { text, vote, vote_state: vote || invalid ? 'final' : 'pending', raw };
 }
 
@@ -51,5 +53,5 @@ export function cleanMagiHistory(value) {
 }
 
 export function magiHistoryNote(value) {
-  return value && value.votable !== false ? `〔MAGI モードの採決。議題: ${value.motion}／決議: ${value.result}（賛成${value.tally.approve}・反対${value.tally.reject}・票なし${value.tally.none}）〕\n` : '';
+  return value && value.votable !== false ? `〔MAGI モードの採決。議題: ${value.motion}／決議: ${{ approve: '承認', reject: '否決', hold: '保留' }[value.result]}（賛成${value.tally.approve}・反対${value.tally.reject}・票なし${value.tally.none}）〕\n` : '';
 }

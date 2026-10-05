@@ -3,7 +3,7 @@ import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } 
 import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
-import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote } from '../classification.js';
+import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import bundledContext from '../../../data/magi-context.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -13,6 +13,8 @@ const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // (magi-app/) runs on https://localhost (capacitor.config iosScheme/androidScheme).
 const APP_ORIGIN_RE = /^(https?|capacitor|ionic):\/\/localhost(:\d+)?$/;
 const isAllowedOrigin = (o) => ALLOWED_ORIGINS.includes(o) || APP_ORIGIN_RE.test(o);
+const utcDay = () => new Date().toISOString().slice(0, 10);
+const requestIP = request => request.headers.get('CF-Connecting-IP') || 'unknown';
 
 function corsHeaders(origin) {
   const allow = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -283,6 +285,7 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
 const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
+const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
 const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
@@ -291,8 +294,7 @@ const PROVIDER_ROLES = {
 };
 async function alertUpstream(env, log, provider, res) {
   const body = (await res.text().catch(() => '')).slice(0, 500);
-  const billing = [401, 402, 403].includes(res.status) || (res.status === 429 && QUOTA_RE.test(body));
-  if (!billing) return;
+  if (!isBillingFailure(res.status, body)) return;
   log('upstream_alert', provider, res.status, body.slice(0, 200));
   await sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
     `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
@@ -312,7 +314,7 @@ async function alertUpstream(env, log, provider, res) {
 // 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ
 async function sendAlert(env, log, key, subject, lines, redact = false) {
   if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
-  const day = new Date().toISOString().slice(0, 10);
+  const day = utcDay();
   if (await countUp(env.DB, key, day, 1) == null) return; // 今日はもう送った
   let sent = false, res;
   try {
@@ -348,7 +350,7 @@ function searchUpstream(env, ctx, log, purpose) {
       let body = '';
       try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
       finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
-      if (![401, 402, 403].includes(res.status) && !(res.status === 429 && QUOTA_RE.test(body))) return;
+      if (!isBillingFailure(res.status, body)) return;
       log('site_search', 'upstream_alert', provider, res.status);
       ctx.waitUntil(sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
         `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
@@ -381,8 +383,8 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
       const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
       if (signal.aborted) throw searchFailure('cancelled');
-      const day = new Date().toISOString().slice(0, 10);
-      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const day = utcDay();
+      const ip = requestIP(request);
       if (await countUp(env.DB, 'search:' + ip, day, SITE_SEARCH.daily_limit) == null) return fail(429, 'daily_limit_exceeded');
       if (await countUp(env.DB, 'search:global', day, SITE_SEARCH.global_daily_limit) == null) {
         ctx.waitUntil(sendAlert(env, log, 'alert:site-search-global', '[MAGI] AI検索の本日の全体上限に達しました', [
@@ -457,9 +459,6 @@ async function fetchTitle(env, lastContent, langNote, signal, log) {
 // かなの文字があり、他言語の文字が混じらない発言だけは「日本語」と書く（漢字の多い日本語を中国語と取り違えないため）。
 // 混在文は固有名詞だけで言語を決めず、引用した文の主言語をモデルに判断させる。
 // 「・」「ー」や濁点など、Common/Inheritedの文字・記号は言語の根拠に数えない。
-const isLanguageLetter = (ch) => /\p{L}/u.test(ch) && !/[\p{Script=Common}\p{Script=Inherited}]/u.test(ch);
-const isKanaLetter = (ch) => /\p{L}/u.test(ch) && /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
-const isJapaneseLetter = (ch) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
 function replyLanguageNote(messages) {
   for (const m of [...messages].reverse()) {
     if (m.role !== 'user') continue;
@@ -696,7 +695,7 @@ async function handleReaction(request, env, { requestId, cors, log }) {
     return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = requestIP(request);
   const now = new Date().toISOString();
   try { await consumeReactionLimit(env.DB, ip, now); }
   catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
@@ -771,7 +770,8 @@ async function readChatInput(request) {
   // 予測には添える前の会話と状況説明を別に渡す（ユーザーの発言に混ぜると、状況説明の回答ルールを予測がなぞる）
   // 出力の言語は状況説明を足す前の会話で決める（状況説明は日本語なので、足した後だと日本語に見える）
   const plainMessages = messages;
-  const langNote = replyLanguageNote(plainMessages);
+  const newContract = body.classification_state === true;
+  const langNote = newContract ? null : replyLanguageNote(plainMessages);
   let context = null;
   if (body.context != null) {
     if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
@@ -780,12 +780,12 @@ async function readChatInput(request) {
     const first = messages.findIndex(m => m.role === 'user');
     messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
-  const newContract = body.classification_state === true;
   const entry = body.entry === 'dj-request' ? 'dj-request' : 'chat';
   const replyLanguage = newContract ? cleanReplyLanguage(body.reply_language) : null;
-  let seed = typeof body.language_seed === 'string' ? body.language_seed : classifySlice(contentText(plainMessages.find(m => m.role === 'user').content), INTENT_CLASSIFY.language_seed_max_chars);
-  if (newContract && !replyLanguage) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
-  if (!newContract || replyLanguage) seed = null;
+  const seed = newContract && !replyLanguage
+    ? typeof body.language_seed === 'string' ? body.language_seed : classifySlice(contentText(plainMessages.find(m => m.role === 'user').content), INTENT_CLASSIFY.language_seed_max_chars)
+    : null;
+  if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
   return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
     newContract, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
@@ -852,8 +852,10 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
+  // 日本語のカードやDJの状況説明で出力言語が変わらないよう、systemと今回の本文の両方に指定する。
   const noteLang = c => langNote ? joinContent(c, langNote) : c;
   const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+  if (lastImages.length) log('vision', `images=${lastImages.length}`);
   // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
   const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
   if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
@@ -979,8 +981,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (bias) log('synthesizer_call', 'bias', theme);
 
   if (pagesPromise) {
-    try { pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal); }
-    catch (_) {  }
+    pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
     if (signal.aborted) throw searchFailure('cancelled');
   }
   // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
@@ -1006,17 +1007,19 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     }
 
     return readSynthesis(synthRes.body, send);
-}, signal);
-log('synthesizer_call', 'ok');
-if (motion) send('integrated_end', {});
-if (hasPages && !signal.aborted) send('pages', chatPageEvent(pageChoice));
-return answer;}
+  }, signal);
+  log('synthesizer_call', 'ok');
+  if (motion) send('integrated_end', {});
+  if (hasPages && !signal.aborted) send('pages', chatPageEvent(pageChoice));
+  return answer;
+}
 
 async function handleChat(request, env, ctx, { requestId, cors, log }) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  let { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page, newContract, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  let langNote = input.langNote;
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {
@@ -1041,8 +1044,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
   if (env.DB) {
     try {
-      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      const day = new Date().toISOString().slice(0, 10);
+      const ip = requestIP(request);
+      const day = utcDay();
       const count = await countUp(env.DB, ip, day, DEFAULTS.daily_limit);
       log('rate_limit', ip, day, count ?? 'limit');
       if (count == null) {
@@ -1103,25 +1106,14 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         const motionPromise = classification?.magi_candidate ? withTimeout(MAGI_MODE.motion_ms,
           signal => createMotion(upstream, plainMessages, langNote, signal, log), stop.signal)
           .catch(() => notVotable('failed')) : null;
-        const history = messages.slice(0, -1);
-        const lastContent = messages[messages.length - 1].content;
-        // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
-        // R2 / 統合にも同じものを添え直す（人格が途中で画像を見失わないように）。
-        const lastUser = contentText(lastContent);
-        const lastImages = contentImages(lastContent);
-        // 出力の言語。指示とカードが日本語なので、英語の会話だと付けないと日本語で答える（3人格・統合・タイトル・予測の全部に付ける）。
-        // 3人格と統合は今回の発言の後ろに付ける（system の後ろだけだと、その後に読む日本語のカードや見本に負けて、CASPER は英語の質問の半分近くを日本語で答えた）。
-        // 3人格は system の後ろにも重ねる（DJ の相談のように日本語の状況説明が付くと、発言の後ろだけでは足りない）
-        const noteLang = (c) => langNote ? joinContent(c, langNote) : c;
-        if (lastImages.length) log('vision', `images=${lastImages.length}`);
-        // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
-        const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+        const lastUser = contentText(messages.at(-1).content);
 
         // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
         // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
         let titlePromise = null;
-        if (!history.some(m => m.role === 'assistant')) {
-          titlePromise = withTimeout(personaTimeoutMs, signal => fetchTitle(upstream, plainMessages[plainMessages.length - 1].content, langNote, signal, log), stop.signal)
+        if (!plainMessages.some(m => m.role === 'assistant')) {
+          const titleTimeoutMs = contentImages(plainMessages.at(-1).content).length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+          titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, plainMessages.at(-1).content, langNote, signal, log), stop.signal)
             .then(t => { if (t) send('title', { text: t }); })
             .catch(() => {});
         }
@@ -1259,7 +1251,7 @@ export default {
     // 入力・IPを含まないGeminiの試行数と429だけをUTC日単位で記録。記録失敗で回答を止めない。
     const usageEnv = Object.assign(Object.create(env), { recordGoogleUsage(purpose, state) {
       if (!env.DB) return;
-      const task = countUp(env.DB, `usage:google:${purpose}:${state}`, new Date().toISOString().slice(0, 10), Number.MAX_SAFE_INTEGER)
+      const task = countUp(env.DB, `usage:google:${purpose}:${state}`, utcDay(), Number.MAX_SAFE_INTEGER)
         .catch(() => log('model_usage', 'record_failed', purpose, state));
       ctx.waitUntil(task);
     } });

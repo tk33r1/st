@@ -48,11 +48,14 @@ export function cleanReplyLanguage(value) {
   return { version: 1, code: value.code, source: value.source };
 }
 
+export const isLanguageLetter = ch => /\p{L}/u.test(ch) && !/[\p{Script=Common}\p{Script=Inherited}]/u.test(ch);
+export const isKanaLetter = ch => /\p{L}/u.test(ch) && /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
+export const isJapaneseLetter = ch => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch);
+
 export function fixedLanguage(seed, ui = 'ja') {
   const text = String(seed || '').trim();
-  const letters = [...text].filter(ch => /\p{L}/u.test(ch) && !/[\p{Script=Common}\p{Script=Inherited}]/u.test(ch));
-  if (letters.some(ch => /[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch))
-    && letters.every(ch => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(ch))) return { version: 1, code: 'ja', source: 'rule' };
+  const letters = [...text].filter(isLanguageLetter);
+  if (letters.some(isKanaLetter) && letters.every(isJapaneseLetter)) return { version: 1, code: 'ja', source: 'rule' };
   if ((text.match(/[A-Za-z]+/g) || []).length >= 3 || letters.filter(ch => ch.codePointAt(0) > 127).length >= 2) {
     const sample = classifySlice(text.replace(/[\r\n\t]+/g, ' ').replace(/[<>]/g, ''), REPLY_LANGUAGE.sample_chars);
     const state = cleanReplyLanguage({ version: 1, code: 'other', source: 'sample', sample });
@@ -97,11 +100,10 @@ export async function classifyQuery(env, input, signal, log) {
       typeof answers[name]?.confidence === 'number' && Number.isFinite(answers[name].confidence) ? answers[name].confidence : null,
       Date.now() - started);
   }
+  const code = choices.language;
   if (profile === 'legacy') {
-    const code = choices.language;
     return { langNote: code && code !== 'other' ? languageNote({ code }) : fallback };
   }
-  const code = choices.language;
   const language = replyLanguage || (code && code !== 'other' ? { version: 1, code, source: 'jev' } : fixedLanguage(seed, uiLanguage));
   const dj = profile === 'dj-request';
   const noText = !(texts.at(-1) || '').trim();
