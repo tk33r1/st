@@ -15,7 +15,8 @@ routes = [
 SITE_SEARCH_ENABLED = "true"
 MAGI_MODE_ENABLED = "true"
 # 404 のサイト内検索の②（Jev）。"true" のときだけ動く。止めるときはこちらを先に false にする（画面は disabled を受けていまの動きに戻る）
-SITE_RANK_ENABLED = "false"
+# 2026-10-07 から、応答時間の測定のため画面より先に有効にしている（費用は全体の上限で抑える。assets/site-search-plan.md の T3.7）
+SITE_RANK_ENABLED = "true"
 
 [[d1_databases]]
 binding       = "DB"
