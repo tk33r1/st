@@ -116,11 +116,13 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   ```
 - Worker のローカル実行: `npx wrangler dev --local`（`workers/dj-schedule/wrangler.dev.toml`
   はローカル D1 用の設定例。同 README.md「ローカル確認」節を参照）。
-- npm を使うのは次の3つだけ:
+- npm を使うのは次の4つだけ:
   - `magi-app/`: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
   - `game/reverse-recaptcha/`: `npm ci` → `npm run build`（本番は `build.sh` がビルドする）。
     依存を変えたら `npm install` で `package-lock.json` も更新してコミットする（ずれると `npm ci` が通らない）。
   - `workers/`: 全 Worker 共通の wrangler だけ（`workers/package.json`）。`cd workers && npm ci` で入れる。
+  - `.github/scripts/`: 検証用の Playwright だけ（`.github/scripts/package.json`。版を固定）。`cd .github/scripts && npm ci` で入れ、ブラウザは手元なら `npx playwright install chromium`。
+    週次の `ai-model-watch.yml` は `npm ci` をしないので、smoke の経路で npm の依存を読まない（`assets/site-search-design.md` 10.5）。
 
 ## デプロイ
 
