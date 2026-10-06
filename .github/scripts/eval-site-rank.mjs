@@ -372,9 +372,12 @@ export function accuracyReport(record, file) {
     lines.push('', '### 2回で結果の変わった問い合わせ', '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
     const asSet = ids => ids.slice().sort().join(',');
     for (const method of methods) for (const t of thresholds) {
-      const [a, b] = [1, 2].map(run => q => rowsOf(method, run).get(q.id).byThreshold[t].ids);
-      const changed = queries.filter(q => asSet(a(q)) !== asSet(b(q))).map(q => q.id);
-      const reordered = queries.filter(q => asSet(a(q)) === asSet(b(q)) && a(q).join(',') !== b(q).join(',')).map(q => q.id);
+      const changed = [], reordered = [];
+      for (const q of queries) {
+        const [a, b] = [1, 2].map(run => rowsOf(method, run).get(q.id).byThreshold[t].ids);
+        if (asSet(a) !== asSet(b)) changed.push(q.id);
+        else if (a.join(',') !== b.join(',')) reordered.push(q.id);
+      }
       lines.push(`| ${method} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
     }
   }
@@ -510,15 +513,17 @@ export function logsReport(tailText, record, file) {
   }
   const lines = new Map();
   for (const e of events) for (const l of (e.logs || [])) if (Array.isArray(l.message) && l.message[1] === 'site_rank') lines.set(l.message[0], l.message);
-  // site_rank の行：[request_id, 'site_rank', status, reason, total, candidates, judged, above, index_ms, jev_ms, elapsed_ms, revision, index_hash, candidate_hash]
   const missing = [], mismatch = [], cached = [], jev = [], elapsed = [];
   let matched = 0;
   for (const r of record.rows) {
     const m = lines.get(r.request_id);
     if (!m) { missing.push(r.id); continue; }
-    if (m[9] === null) { cached.push(r.id); continue; }
-    jev.push(m[9]); elapsed.push(m[10]);
-    if (m[11] === record.revision && m[12] === record.index_hash && m[13] === record.candidate_hash && m[2] === r.worker_status && m[6] === m[5]) matched++;
+    // site_rank の行の並び（src/index.js の handleSiteRank の log）
+    const [, , status, , , candidates, judged, , , jevMs, elapsedMs, revision, indexHash, candidateHash] = m;
+    if (jevMs === null) { cached.push(r.id); continue; }
+    jev.push(jevMs); elapsed.push(elapsedMs);
+    if (revision === record.revision && indexHash === record.index_hash && candidateHash === record.candidate_hash
+      && status === r.worker_status && judged === candidates) matched++;
     else mismatch.push(r.id);
   }
   return [`## ブラウザの測定と Worker のログの突き合わせ（${file}）`, '',
