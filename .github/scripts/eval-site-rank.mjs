@@ -61,7 +61,7 @@ export function loadWorker() {
     fetch: (...args) => hooks.fetch(...args) });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
-    + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
+    + '\nglobalThis.magi = { SITE_RANK, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability, callRank,'
     + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });
 }
@@ -75,6 +75,8 @@ async function snapshotOf(magi, text) {
     indexHash: await magi.snapshotHash(snapshot), candidateHash: await magi.rankCandidateHash(snapshot),
     urlToId: new Map(targets.map(p => [p.url, p.id])) };
 }
+const LOCAL_INDEX = 'data/site-search.json';
+const localSnapshot = (magi, text = read(LOCAL_INDEX)) => snapshotOf(magi, text);
 async function productionIndex() {
   const res = await fetch(INDEX_URL, { headers: { 'Cache-Control': 'no-cache' } });
   assert.ok(res.ok, `本番の索引が取れない（HTTP ${res.status}）`);
@@ -130,8 +132,8 @@ export function checkQueries(data, targetIds, maxChars) {
 }
 
 // 評価セットを読み、形式を検査する。measure なら正解の固定（frozen）が無ければ止まる（正解は結果を見る前に決める）
-function loadQueries(magi, targets, measure, given = null) {
-  const data = given || JSON.parse(read(QUERIES));
+function loadQueries(magi, targets, measure) {
+  const data = JSON.parse(read(QUERIES));
   const summary = checkQueries(data, new Set(targets.map(p => p.id)), magi.SITE_RANK.query_max_chars);
   if (measure && !data.frozen) fail('正解を固定してから測る（rank-queries.json の frozen に日付を書く。設計書 10.4）');
   return { data, summary };
@@ -205,31 +207,26 @@ export function containsSearch() {
 // （基準なしは personas.js の問いから criteria を外しただけ）と、THRESHOLDS。final は確定した設定（question_language の
 // 基準付きの問いと threshold）だけで測る（T3.5 で使わない言語の文面を消した後も動くように。設計書 10.4 の手順3）
 function methodsFor(set, rank) {
-  if (set === 'final') return { methods: [{ name: `確定した設定（${rank.question_language}・基準付き）`, fixed: true }], thresholds: [rank.threshold] };
+  if (set === 'final') return { methods: [{ name: `確定した設定（${rank.question_language}・基準付き）`, lang: rank.question_language, criteria: true }], thresholds: [rank.threshold] };
   return { methods: Object.keys(rank.questions).flatMap(lang => [{ name: `基準付き・${lang}`, lang, criteria: true }, { name: `短い問い・${lang}`, lang, criteria: false }]),
     thresholds: THRESHOLDS };
 }
 async function withMethod(magi, method, run) {
   const rank = magi.SITE_RANK, saved = { lang: rank.question_language, question: rank.questions[method.lang], threshold: rank.threshold };
-  if (!method.fixed) {
-    rank.question_language = method.lang;
-    if (!method.criteria) rank.questions[method.lang] = { instructions: saved.question.instructions };
-  }
+  rank.question_language = method.lang;
+  if (!method.criteria) rank.questions[method.lang] = { instructions: saved.question.instructions };
   try { return await run(); }
-  finally {
-    rank.threshold = saved.threshold;
-    if (!method.fixed) { rank.question_language = saved.lang; rank.questions[method.lang] = saved.question; }
-  }
+  finally { rank.question_language = saved.lang; rank.questions[method.lang] = saved.question; rank.threshold = saved.threshold; }
 }
-// Jev の応答の本文から答えを読む。JSON でない・answers が無い本文は null（Worker も unavailable にする）
-function jevAnswers(text) {
-  let body;
-  try { body = JSON.parse(text); } catch (_) { return null; }
-  if (!body || typeof body !== 'object' || !body.answers || typeof body.answers !== 'object' || Array.isArray(body.answers)) return null;
-  return { model: typeof body.model === 'string' ? body.model : null, answers: body.answers };
+// 残した Jev の応答を Worker の callRank に流し直して答えを読む（応答の検査を Worker と同じにする）。
+// HTTP エラー・JSON でない 200・answers の無い本文・通信の失敗は null
+async function replayAnswers(magi, env, slot, signal) {
+  if (slot.text == null) return null;
+  magi.hooks.fetch = async () => new Response(slot.text, { status: slot.status });
+  try { return await magi.callRank(env, {}, signal, () => {}); } catch (_) { return null; }
 }
 
-export async function accuracy(magi, { data: given } = {}) {
+export async function accuracy(magi) {
   const key = typesafeKey(magi.SITE_RANK.key);
   if (!key) fail(`TypeSafe のキーが無いので精度は測らない（環境変数 ${magi.SITE_RANK.key} か、追跡外の workers/magi2/.dev.vars）`);
   const set = option('--set', 'tune'), runs = Number(option('--runs', '2'));
@@ -239,10 +236,11 @@ export async function accuracy(magi, { data: given } = {}) {
   const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
   const built = spawnSync(python, ['-B', '.github/scripts/site-search-index.py', '--output', fresh], { cwd: root, encoding: 'utf8' });
   if (built.status !== 0) fail(`索引を作り直せない（${python}）: ${built.stderr}`);
-  if (!readFileSync(fresh).equals(readFileSync(join(root, 'data/site-search.json')))) fail('手元の data/site-search.json が古い。python -B .github/scripts/site-search-index.py で作り直してから測る');
-  const local = await snapshotOf(magi, read('data/site-search.json'));
+  const current = readFileSync(join(root, LOCAL_INDEX));
+  if (!readFileSync(fresh).equals(current)) fail(`手元の ${LOCAL_INDEX} が古い。python -B .github/scripts/site-search-index.py で作り直してから測る`);
+  const local = await localSnapshot(magi, current.toString('utf8'));
   if (!local.rankReady) fail('手元の索引が②に使えない（rankReady が false）。site-search-index.py で作り直す');
-  const { data } = loadQueries(magi, local.targets, true, given);
+  const { data } = loadQueries(magi, local.targets, true);
   const queries = data.queries.filter(q => q.set === set);
   const env = { [magi.SITE_RANK.key]: key }, signal = new AbortController().signal;
   // いまの「含む」検索は、方式を比べる tune でだけ並べる
@@ -257,10 +255,10 @@ export async function accuracy(magi, { data: given } = {}) {
     for (const method of methods) {
       const rows = await withMethod(magi, method, async () => {
         // 1回目：本物の Jev を呼ぶ（Worker と同じ2秒の期限）。応答の本文を残し、閾値ごとの結果はそれを流し直して作る
-        const live = new Map();
+        let slot; // 1件ずつ順に呼ぶので、いまの問い合わせの記録は1つ
         magi.hooks.fetch = async (url, opts) => {
           assert.equal(url, magi.SITE_RANK.endpoint);
-          const { state } = JSON.parse(opts.body), slot = live.get(state.locale + ' ' + state.query), started = performance.now();
+          const started = performance.now();
           try {
             const res = await fetch(url, opts), text = await res.text();
             Object.assign(slot, { status: res.status, text, ms: performance.now() - started });
@@ -272,7 +270,7 @@ export async function accuracy(magi, { data: given } = {}) {
         // 429 の失敗が精度に混ざる
         const firsts = [];
         for (const q of queries) {
-          const slot = {}; live.set(q.locale + ' ' + q.query, slot);
+          slot = {};
           const r = await magi.rankSearch({ env, snapshot: local.snapshot, query: q.query, locale: q.locale, signal,
             onBilling: status => { billing = status; } });
           firsts.push({ q, slot, r });
@@ -281,18 +279,18 @@ export async function accuracy(magi, { data: given } = {}) {
         const out = [];
         for (const { q, slot, r } of firsts) {
           // 答えが読めなかった呼び出し（時間切れ・HTTP エラー・JSON でない 200 など）は、その問い合わせだけを失敗として分母に残す
-          const body = slot.status === 200 ? jevAnswers(slot.text) : null;
-          if (body?.model) models.add(body.model);
-          const probs = body && Object.fromEntries(local.targets.map((p, i) => [p.id, magi.rankProbability(body.answers[magi.rankId(i)])]));
+          const answers = await replayAnswers(magi, env, slot, signal);
+          if (answers) { const model = JSON.parse(slot.text).model; if (typeof model === 'string') models.add(model); }
+          const probs = answers && Object.fromEntries(local.targets.map((p, i) => [p.id, magi.rankProbability(answers[magi.rankId(i)])]));
           const byThreshold = {};
           for (const t of thresholds) {
-            if (!body) { byThreshold[t] = { status: 'failed', reason: r.status === 'failed' ? r.reason : 'unavailable', complete: false, ids: [] }; continue; }
+            if (!answers) { byThreshold[t] = { status: 'failed', reason: r.reason, complete: false, ids: [] }; continue; }
             magi.SITE_RANK.threshold = t; magi.clearRankCache();
             magi.hooks.fetch = async () => new Response(slot.text, { status: slot.status });
             const x = await magi.rankSearch({ env, snapshot: local.snapshot, query: q.query, locale: q.locale, signal, onBilling: () => {} });
             byThreshold[t] = { status: x.status, reason: x.reason, complete: x.complete, ids: x.results.map(v => local.urlToId.get(v.url)) };
           }
-          out.push({ id: q.id, http: slot.status ?? null, error: slot.error ?? null, answered: !!body, jev_ms: slot.ms == null ? null : Math.round(slot.ms),
+          out.push({ id: q.id, http: slot.status ?? null, error: slot.error ?? null, answered: !!answers, jev_ms: slot.ms == null ? null : Math.round(slot.ms),
             judged: r.searched?.judged ?? null, candidates: r.searched?.candidates ?? null, probs, byThreshold });
         }
         return out;
@@ -308,23 +306,32 @@ export async function accuracy(magi, { data: given } = {}) {
   console.log(accuracyReport(record, file));
 }
 
+// まとめの見出しに共通の項目（コミット、索引のハッシュ、正解の固定）
+const commitText = record => `${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}`;
+const hashLines = (record, prefix) => [`- ${prefix}index_hash ${record.index_hash}`, `- ${prefix}candidate_hash ${record.candidate_hash}`];
+const frozenText = record => `${record.frozen}（${ANNOTATORS[record.annotator] || record.annotator}）`;
+
 // 精度のまとめ（assets/site-search-evaluation.md に貼れる形）。生の記録だけから作る（--report で Jev を呼び直さずに出し直せる）
 export function accuracyReport(record, file) {
   const queries = record.queries || JSON.parse(read(QUERIES)).queries.filter(q => q.set === record.set); // 古い記録には問い合わせが無い
   const thresholds = record.thresholds, methods = [...new Set(record.measurements.map(m => m.method))];
-  const runs = record.runs, rowsOf = (method, run) => new Map(record.measurements.find(m => m.run === run && m.method === method).rows.map(r => [r.id, r]));
+  const runs = record.runs;
+  // 方式と回ごとの行（問い合わせの ID で引く）と、閾値ごとの点数は1回だけ作る
+  const rowMaps = new Map(record.measurements.map(m => [`${m.method}|${m.run}`, new Map(m.rows.map(r => [r.id, r]))]));
+  const rowsOf = (method, run) => rowMaps.get(`${method}|${run}`), scores = new Map();
+  const scoreOf = (method, run, t) => {
+    const key = `${method}|${run}|${t}`;
+    if (!scores.has(key)) scores.set(key, score(queries, q => rowsOf(method, run).get(q.id).byThreshold[t]));
+    return scores.get(key);
+  };
   const lines = [`## 精度（${record.set}、${queries.length}件、${runs}回）`, '',
-    `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、revision ${record.revision}、Jev ${record.models.join('・') || '不明'}`,
+    `- コミット ${commitText(record)}、revision ${record.revision}、Jev ${record.models.join('・') || '不明'}`,
     `- 設定の question_language ${record.question_language}、threshold ${record.threshold}`,
-    `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`,
-    `- 正解の固定 ${record.frozen}（${ANNOTATORS[record.annotator] || record.annotator}）、生の記録 ${file}`, ''];
+    ...hashLines(record, ''), `- 正解の固定 ${frozenText(record)}、生の記録 ${file}`, ''];
   for (let run = 1; run <= runs; run++) {
     lines.push(`### ${run}回目`, '', SCORE_HEAD);
     if (record.contains) lines.push(scoreRow('いまの「含む」検索', score(queries, q => ({ status: 'results', ids: record.contains[q.id] }))));
-    for (const method of methods) {
-      const byId = rowsOf(method, run);
-      for (const t of thresholds) lines.push(scoreRow(`${method} ${t}`, score(queries, q => byId.get(q.id).byThreshold[t])));
-    }
+    for (const method of methods) for (const t of thresholds) lines.push(scoreRow(`${method} ${t}`, scoreOf(method, run, t)));
     lines.push('');
   }
   if (thresholds.length > 1) {
@@ -345,7 +352,7 @@ export function accuracyReport(record, file) {
       }
       let best = null;
       for (const t of thresholds) {
-        const pass = Array.from({ length: runs }, (_, i) => i + 1).every(run => { const byId = rowsOf(method, run); return score(queries, q => byId.get(q.id).byThreshold[t]).pass; });
+        const pass = Array.from({ length: runs }, (_, i) => i + 1).every(run => scoreOf(method, run, t).pass);
         const margin = Math.round(Math.min(t - noneMax, correctMin - t) * 100) / 100;
         if (pass && (!best || margin > best.margin)) best = { t, margin };
         lines.push(`| ${method} | ${correctMin.toFixed(2)} | ${noneMax.toFixed(2)} | ${t} | ${pass ? '満たす' : '-'} | ${margin.toFixed(2)} |`);
@@ -365,9 +372,9 @@ export function accuracyReport(record, file) {
     lines.push('', '### 2回で結果の変わった問い合わせ', '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
     const asSet = ids => ids.slice().sort().join(',');
     for (const method of methods) for (const t of thresholds) {
-      const [a, b] = [1, 2].map(run => new Map([...rowsOf(method, run)].map(([id, r]) => [id, r.byThreshold[t].ids])));
-      const changed = queries.filter(q => asSet(a.get(q.id)) !== asSet(b.get(q.id))).map(q => q.id);
-      const reordered = queries.filter(q => asSet(a.get(q.id)) === asSet(b.get(q.id)) && a.get(q.id).join(',') !== b.get(q.id).join(',')).map(q => q.id);
+      const [a, b] = [1, 2].map(run => q => rowsOf(method, run).get(q.id).byThreshold[t].ids);
+      const changed = queries.filter(q => asSet(a(q)) !== asSet(b(q))).map(q => q.id);
+      const reordered = queries.filter(q => asSet(a(q)) === asSet(b(q)) && a(q).join(',') !== b(q).join(',')).map(q => q.id);
       lines.push(`| ${method} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
     }
   }
@@ -394,7 +401,8 @@ async function openRankPage() {
     const landing = await page.goto(`https://tk.st/site-rank-eval-${Date.now()}/`);
     assert.equal(landing.status(), 404, '404 のページが開けない');
     // 期限は画面と同じ（BROWSER_TIMEOUT_MS）。本文の読み取りまで含めて止める
-    const send = body => page.evaluate(async ({ url, body, timeout }) => {
+    // ②の要求（scope 'site'）を送る
+    const send = (query, locale) => page.evaluate(async ({ url, body, timeout }) => {
       const started = performance.now();
       try {
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -402,7 +410,7 @@ async function openRankPage() {
         const data = await res.json();
         return { http: res.status, data, ms: performance.now() - started };
       } catch (e) { return { http: null, error: e && e.name, ms: performance.now() - started }; }
-    }, { url: RANK_URL, body, timeout: BROWSER_TIMEOUT_MS });
+    }, { url: RANK_URL, body: { query, locale, mode: 'rank', scope: 'site' }, timeout: BROWSER_TIMEOUT_MS });
     return { version: instance.version(), blocked, send, close: () => instance.close() };
   } catch (e) { await instance.close(); throw e; }
 }
@@ -428,7 +436,7 @@ export function screenResult(magi, r, urlToId) {
 export async function probe() {
   const browser = await openRankPage();
   try {
-    const r = await browser.send({ query: PROBE_QUERY, locale: 'ja', mode: 'rank', scope: 'site' });
+    const r = await browser.send(PROBE_QUERY, 'ja');
     const d = r.data || {};
     console.log(JSON.stringify({ http: r.http, error: r.error ?? null, ms: Math.round(r.ms), request_id: d.request_id ?? null,
       status: d.status ?? null, reason: d.reason ?? null, error_code: d.error?.code ?? null, searched: d.searched ?? null, results: (d.results || []).length,
@@ -436,11 +444,11 @@ export async function probe() {
   } finally { await browser.close(); }
 }
 
-export async function browser(magi, { data: given } = {}) {
+export async function browser(magi) {
   const set = option('--set', 'final');
   if (!SETS.includes(set)) fail('--set は tune か final');
   const production = await snapshotOf(magi, await productionIndex());
-  const { data } = loadQueries(magi, production.targets, true, given);
+  const { data } = loadQueries(magi, production.targets, true);
   const queries = data.queries.filter(q => q.set === set);
   assert.ok(queries.length <= BROWSER_MAX);
   // 2回目は、1回目と UTC の別の日に測る（キャッシュの期限と、IP ごとの1日の回数を跨がないため。設計書 10.4）
@@ -458,7 +466,7 @@ export async function browser(magi, { data: given } = {}) {
   try {
     for (const q of queries) {
       if (record.rows.length) await new Promise(r => setTimeout(r, BROWSER_GAP_MS));
-      const r = await page.send({ query: q.query, locale: q.locale, mode: 'rank', scope: 'site' });
+      const r = await page.send(q.query, q.locale);
       const d = r.data || {};
       if (d.reason === 'disabled') throw new Error('本番の Worker の SITE_RANK_ENABLED が true になっていない（disabled）');
       // ②の応答はどれも { status, reason, … } の形。③の形のエラーは、②の無い Worker か認可の失敗なので測らない
@@ -475,9 +483,8 @@ export async function browser(magi, { data: given } = {}) {
   const s = score(queries, q => byId.get(q.id));
   const p95 = percentile(ms, 0.95);
   console.log([`## ブラウザの応答時間（${set}、${queries.length}件、${record.started}）`, '',
-    `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、手元の revision ${record.revision}、Chromium ${record.browser}`,
-    `- 本番の索引 index_hash ${record.index_hash}`, `- 本番の索引 candidate_hash ${record.candidate_hash}`,
-    `- 正解の固定 ${record.frozen}（${ANNOTATORS[record.annotator]}）`,
+    `- コミット ${commitText(record)}、手元の revision ${record.revision}、Chromium ${record.browser}`,
+    ...hashLines(record, '本番の索引 '), `- 正解の固定 ${frozenText(record)}`,
     `- 止めた通信の送り先 ${record.blocked.join('・') || 'なし'}`, `- 生の記録 ${file}（request_id を wrangler tail の site_rank の行と突き合わせ、jev_ms が null（キャッシュ）や rate_limited が混じっていないか、revision・candidate_hash が同じかを確かめる）`, '',
     `| p50 | p95 | 最大 | p95 が${P95_MAX_MS}ms 以内 |`, '| ---: | ---: | ---: | --- |',
     `| ${percentile(ms, 0.5)}ms | ${p95}ms | ${Math.max(...ms)}ms | ${p95 <= P95_MAX_MS ? '満たす' : '満たさない'} |`, '',
@@ -529,15 +536,15 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (modes.length !== 1) fail('使い方: node .github/scripts/eval-site-rank.mjs --check | --hash | --smoke-payload | --accuracy [--set tune|final] [--runs 2] | --report <生の記録> | --browser [--set final] | --logs <tail の JSON> <ブラウザの生の記録> | --probe');
   const magi = loadWorker();
   if (modes[0] === '--check') {
-    const local = await snapshotOf(magi, read('data/site-search.json'));
+    const local = await localSnapshot(magi);
     const { data, summary } = loadQueries(magi, local.targets, false);
     console.log(JSON.stringify({ ok: true, targets: local.targets.length, frozen: data.frozen || null, annotator: data.annotator, ...summary }));
   } else if (modes[0] === '--hash') {
     const show = s => ({ rank_ready: s.rankReady, targets: s.targets.length, index_hash: s.indexHash, candidate_hash: s.candidateHash });
-    const local = show(await snapshotOf(magi, read('data/site-search.json'))), production = show(await snapshotOf(magi, await productionIndex()));
+    const local = show(await localSnapshot(magi)), production = show(await snapshotOf(magi, await productionIndex()));
     console.log(JSON.stringify({ revision: magi.SITE_RANK.revision, local, production, candidate_hash_match: local.candidate_hash === production.candidate_hash }, null, 2));
   } else if (modes[0] === '--smoke-payload') {
-    const local = await snapshotOf(magi, read('data/site-search.json'));
+    const local = await localSnapshot(magi);
     assert.ok(local.rankReady, '手元の索引が②に使えない');
     const candidates = local.targets.map(magi.toRankCandidate);
     console.log(JSON.stringify({ endpoint: magi.SITE_RANK.endpoint, key: magi.SITE_RANK.key, threshold: magi.SITE_RANK.threshold,
