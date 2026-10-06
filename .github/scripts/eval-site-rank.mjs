@@ -26,6 +26,8 @@ const RANK_URL = 'https://workers.tk.st/magi2/site-search';
 const RAW_DIR = 'workers/.wrangler';
 const TYPES = ['keyword', 'sentence', 'paraphrase', 'english', 'self', 'none'];
 const SETS = ['tune', 'final'];
+// 正解を付けた人（PRD 7.1。誰が付けたかを記録に残す）
+const ANNOTATORS = { claude: 'Claude が付けた正解。本人は確かめていない', owner: '本人が付けた正解' };
 const THRESHOLDS = [0.3, 0.35, 0.4, 0.5, 0.6]; // 比べる閾値（PRD 7.1）
 const PASS = { hit: 0.8, shown: 0.15 };        // リリースの条件（PRD 7.1）：上位5件に正解80%以上、答えの無いもので結果15%以下
 const BROWSER_MAX = 50; // ブラウザの1回の測定の上限（設計書 10.4）。final はこれ以内にして、事前の選び直しを要らなくする
@@ -81,9 +83,10 @@ const workerQuery = q => Array.from(q).filter(c => !droppedChar(c)).join('').tri
 const isDate = s => /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
 
 export function checkQueries(data, targetIds, maxChars) {
-  assert.deepEqual(Object.keys(data).sort(), ['queries', 'reviewed', 'version'], '最上位のキーは version・reviewed・queries');
+  assert.deepEqual(Object.keys(data).sort(), ['annotator', 'frozen', 'queries', 'version'], '最上位のキーは version・frozen・annotator・queries');
   assert.equal(data.version, 1);
-  assert.ok(data.reviewed === '' || isDate(data.reviewed), 'reviewed は空（未確認）か YYYY-MM-DD');
+  assert.ok(data.frozen === '' || isDate(data.frozen), 'frozen は空（未固定）か YYYY-MM-DD');
+  assert.ok(typeof data.annotator === 'string' && Object.hasOwn(ANNOTATORS, data.annotator), `annotator は ${Object.keys(ANNOTATORS).join('・')} のどれか`);
   assert.ok(Array.isArray(data.queries));
   const ids = new Set(), keys = new Set();
   for (const q of data.queries) {
@@ -122,11 +125,11 @@ export function checkQueries(data, targetIds, maxChars) {
   return summary;
 }
 
-// 評価セットを読み、形式を検査する。measure なら本人の確認（reviewed）が無ければ止まる（正解は結果を見る前に決める）
+// 評価セットを読み、形式を検査する。measure なら正解の固定（frozen）が無ければ止まる（正解は結果を見る前に決める）
 function loadQueries(magi, targets, measure, given = null) {
   const data = given || JSON.parse(read(QUERIES));
   const summary = checkQueries(data, new Set(targets.map(p => p.id)), magi.SITE_RANK.query_max_chars);
-  if (measure && !data.reviewed) fail('評価セットを本人が確かめてから測る（rank-queries.json の reviewed に日付を書く）');
+  if (measure && !data.frozen) fail('正解を固定してから測る（rank-queries.json の frozen に日付を書く。設計書 10.4）');
   return { data, summary };
 }
 
@@ -243,7 +246,7 @@ export async function accuracy(magi, { data: given } = {}) {
   const { methods, thresholds } = methodsFor(set, magi.SITE_RANK);
   const models = new Set(), record = { kind: 'accuracy', ...gitState(), set, runs, started: new Date().toISOString(),
     revision: magi.SITE_RANK.revision, question_language: magi.SITE_RANK.question_language, threshold: magi.SITE_RANK.threshold,
-    index_hash: local.indexHash, candidate_hash: local.candidateHash, reviewed: data.reviewed, thresholds,
+    index_hash: local.indexHash, candidate_hash: local.candidateHash, frozen: data.frozen, annotator: data.annotator, thresholds,
     contains: contains && Object.fromEntries(queries.map(q => [q.id, contains(q.query)])), measurements: [] };
   let billing = null;
   for (let run = 1; run <= runs; run++) {
@@ -302,7 +305,7 @@ export async function accuracy(magi, { data: given } = {}) {
   const lines = [`## 精度（${set}、${queries.length}件、${runs}回）`, '',
     `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、revision ${record.revision}、Jev ${record.models.join('・') || '不明'}`,
     `- 設定の question_language ${record.question_language}、threshold ${record.threshold}`,
-    `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`, `- 評価セットの確認 ${data.reviewed}、生の記録 ${file}`, ''];
+    `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`, `- 正解の固定 ${data.frozen}（${ANNOTATORS[data.annotator]}）、生の記録 ${file}`, ''];
   for (let run = 1; run <= runs; run++) {
     lines.push(`### ${run}回目`, '', SCORE_HEAD);
     if (record.contains) lines.push(scoreRow('いまの「含む」検索', score(queries, q => ({ status: 'results', ids: record.contains[q.id] }))));
@@ -411,7 +414,7 @@ export async function browser(magi, { data: given } = {}) {
   }
   const page = await openRankPage();
   const record = { kind: 'browser', ...gitState(), set, started: new Date().toISOString(), browser: page.version,
-    revision: magi.SITE_RANK.revision, index_hash: production.indexHash, candidate_hash: production.candidateHash, reviewed: data.reviewed,
+    revision: magi.SITE_RANK.revision, index_hash: production.indexHash, candidate_hash: production.candidateHash, frozen: data.frozen, annotator: data.annotator,
     blocked: page.blocked, rows: [] };
   try {
     for (const q of queries) {
@@ -434,6 +437,7 @@ export async function browser(magi, { data: given } = {}) {
   console.log([`## ブラウザの応答時間（${set}、${queries.length}件、${record.started}）`, '',
     `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、手元の revision ${record.revision}、Chromium ${record.browser}`,
     `- 本番の索引 index_hash ${record.index_hash}`, `- 本番の索引 candidate_hash ${record.candidate_hash}`,
+    `- 正解の固定 ${record.frozen}（${ANNOTATORS[record.annotator]}）`,
     `- 止めた通信の送り先 ${record.blocked.join('・') || 'なし'}`, `- 生の記録 ${file}（request_id を wrangler tail の site_rank の行と突き合わせ、jev_ms が null（キャッシュ）や rate_limited が混じっていないか、revision・candidate_hash が同じかを確かめる）`, '',
     `| p50 | p95 | 最大 | p95 が${P95_MAX_MS}ms 以内 |`, '| ---: | ---: | ---: | --- |',
     `| ${percentile(ms, 0.5)}ms | ${p95}ms | ${Math.max(...ms)}ms | ${p95 <= P95_MAX_MS ? '満たす' : '満たさない'} |`, '',
@@ -449,7 +453,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (modes[0] === '--check') {
     const local = await snapshotOf(magi, read('data/site-search.json'));
     const { data, summary } = loadQueries(magi, local.targets, false);
-    console.log(JSON.stringify({ ok: true, targets: local.targets.length, reviewed: data.reviewed || null, ...summary }));
+    console.log(JSON.stringify({ ok: true, targets: local.targets.length, frozen: data.frozen || null, annotator: data.annotator, ...summary }));
   } else if (modes[0] === '--hash') {
     const show = s => ({ rank_ready: s.rankReady, targets: s.targets.length, index_hash: s.indexHash, candidate_hash: s.candidateHash });
     const local = show(await snapshotOf(magi, read('data/site-search.json'))), production = show(await snapshotOf(magi, await productionIndex()));

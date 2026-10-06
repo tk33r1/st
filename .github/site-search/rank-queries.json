@@ -1,6 +1,7 @@
 {
   "version": 1,
-  "reviewed": "",
+  "frozen": "2026-10-06",
+  "annotator": "claude",
   "queries": [
     { "id": "site-001", "set": "tune", "scope": "site", "locale": "ja", "type": "keyword", "query": "QR", "answers": ["tool:10"] },
     { "id": "site-002", "set": "tune", "scope": "site", "locale": "ja", "type": "keyword", "query": "PDF", "answers": ["tool:7"] },
