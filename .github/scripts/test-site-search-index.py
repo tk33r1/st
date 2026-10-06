@@ -70,6 +70,50 @@ class PublicIndex(unittest.TestCase):
         with self.assertRaises(ValueError):
             index.validate([good, {**good, 'url': '/b/'}])
 
+    def test_rank_fields_are_copied_from_source_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'data').mkdir()
+            sources = {
+                'tools': [{'id': 1, 'title': 'PDF Studio - PDF 結合ツール', 'url': 'https://tk.st/tools/pdf/', 'category': 'converter',
+                           'description': 'PDF を結合', 'tags': ['PDF', '結合', 3, '']}],
+                'game': [{'id': 2, 'title': 'Puzzle', 'url': 'https://tk.st/game/puzzle/', 'genre': 'puzzle', 'description': 'A puzzle'}],
+                'glitch': {'articles': [{'id': '001', 'title': '記事', 'excerpt': '抜粋', 'tags': ['AI']}]},
+            }
+            for name, rows in sources.items():
+                (root / 'data' / (name + '.json')).write_text(json.dumps(rows), encoding='utf-8')
+            pages = {'404.html': '<a data-entry="home" data-title-ja="トップ" href="/">', 'index.html': '<title>Home</title>',
+                     'tools/pdf/index.html': '<title>PDF</title>', 'game/puzzle/index.html': '<title>Puzzle</title>',
+                     'glitch/001/index.html': '<title>記事</title>'}
+            for path, html in pages.items():
+                (root / path).parent.mkdir(parents=True, exist_ok=True)
+                (root / path).write_text(html, encoding='utf-8')
+            by_url = {p['url']: p for p in index.generate(root, pages)['pages']}
+            tool, game, article = by_url['/tools/pdf/'], by_url['/game/puzzle/'], by_url['/glitch/001/']
+            # 表示の題名は副題を落とし、②の題名は全体。文字列でないタグと空のタグは落とす
+            self.assertEqual((tool['title'], tool['rank_title'], tool['tags'], tool['category']),
+                             ('PDF Studio', 'PDF Studio - PDF 結合ツール', ['PDF', '結合'], 'Converter'))
+            self.assertEqual((game['rank_title'], game['genre']), ('Puzzle', 'puzzle'))
+            self.assertNotIn('tags', game)
+            self.assertEqual((article['rank_title'], article['tags']), ('記事', ['AI']))
+            self.assertFalse(any(k in by_url['/'] for k in ('rank_title', 'tags', 'category', 'genre')))
+
+    def test_rank_fields_limits(self):
+        tool = {'id': 'tool:1', 'kind': 'tool', 'title': 'T', 'description': '', 'url': '/t/', 'detail': 'T',
+                'rank_title': 'T', 'tags': ['a'], 'category': 'Converter'}
+        index.validate([tool])
+        index.validate([{**tool, 'tags': []}])
+        for bad in ({'rank_title': 'x' * 161}, {'rank_title': ' '}, {'tags': 'PDF'}, {'tags': ['x'] * 13}, {'tags': ['x' * 41]},
+                    {'tags': ['']}, {'category': 'x' * 41}, {'category': None},
+                    {'rank_title': 'x' * 160, 'tags': ['y' * 40] * 6}):  # 説明以外で400文字を超える
+            with self.assertRaises(ValueError, msg=bad):
+                index.validate([{**tool, **bad}])
+        for kind, missing in (('tool', 'category'), ('game', 'genre'), ('article', 'tags')):
+            row = {**tool, 'id': kind + ':1', 'kind': kind, 'genre': 'g'}
+            row.pop(missing, None)
+            with self.assertRaises(ValueError, msg=(kind, missing)):
+                index.validate([row])
+
     def test_source_scope_matches_public_build(self):
         for path in ('workers/test/index.html', 'config/index.html', '.github/test.html',
                      'magi-app/src/index.html', 'game/reverse-recaptcha/src/index.html', 'tools/.private/index.html'):

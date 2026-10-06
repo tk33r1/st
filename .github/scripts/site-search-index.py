@@ -19,6 +19,11 @@ EXCLUDE = {'/magi-app/www/'}
 # Worker（workers/magi2/site-search.js の makeSitePages）の検査と同じ上限。合わない行があればビルドを止める
 KINDS = ('tool', 'game', 'article', 'page')
 LIMITS = {'id': 240, 'title': 160, 'description': 320, 'detail': 640}
+# 404 の Jev の検索（②）に渡す項目（assets/site-search-design.md 4章）。Worker の makeSitePages と同じ上限。
+# Jev に渡す1件は400文字まで。説明は Worker が切るが、それ以外（種類・題名・タグ・カテゴリー・ジャンル）だけで超える行は
+# 元の JSON を直すよう、ここでビルドを止める。
+RANK_FIELDS = {'tool': ('rank_title', 'tags', 'category'), 'game': ('rank_title', 'genre'), 'article': ('rank_title', 'tags')}
+RANK_LIMITS = {'rank_title': 160, 'tags': 12, 'tag': 40, 'category': 40, 'genre': 40, 'candidate': 400}
 URL_CHARS = set(string.ascii_letters + string.digits + "-._~!$&'()*+,;=:@/%")
 URL_SAFE = "/-._~!$&'()*+,;=:@"
 
@@ -93,10 +98,35 @@ def validate(pages):
             url in urls and 'duplicate url',
         ]
         errors += [f"{p['url']}: {name}" for name in problems if name]
+        errors += [f"{p['url']}: {name}" for name in rank_problems(p)]
         ids.add(p['id'])
         urls.add(url)
     if errors:
         raise ValueError('サイト検索の索引に Worker が受け付けない行がある: ' + ', '.join(errors[:10]))
+
+
+def rank_problems(p):
+    """②に渡す項目の形と長さ。種類ごとの必須項目が欠けた行も止める（Worker は欠けた索引では②を使わない）。"""
+    fields = RANK_FIELDS.get(p['kind'])
+    if not fields:
+        return []
+    problems = [f'{key} missing' for key in fields if key not in p]
+    if problems:
+        return problems
+    tags = p.get('tags', [])
+    if not isinstance(p['rank_title'], str) or not p['rank_title'].strip() or len(p['rank_title']) > RANK_LIMITS['rank_title']:
+        problems.append('rank_title')
+    if not isinstance(tags, list) or len(tags) > RANK_LIMITS['tags'] \
+            or any(not isinstance(t, str) or not t or len(t) > RANK_LIMITS['tag'] for t in tags):
+        problems.append('tags')
+    for key in ('category', 'genre'):
+        if key in fields and (not isinstance(p[key], str) or len(p[key]) > RANK_LIMITS[key]):
+            problems.append(key)
+    if not problems:
+        total = len(p['kind']) + len(p['rank_title']) + sum(map(len, tags)) + len(p.get('category', '')) + len(p.get('genre', ''))
+        if total > RANK_LIMITS['candidate']:
+            problems.append('rank candidate over 400 chars without description')
+    return problems
 
 
 def public_source(path):
@@ -178,6 +208,17 @@ def generate(root, paths):
         page = dict(id=identifier, kind=kind, title=shown or (title.split(' - ')[0] if kind == 'tool' else title),
                     description=description or (compact(hub.get('data-description-ja', ''), LIMITS['description']) if hub else ''),
                     url=url, detail=detail)
+        if kind in RANK_FIELDS:
+            # ②は副題を含む全体の題名と、タグ・カテゴリー・ジャンルを別の項目で使う（detail には混ぜない）。
+            # 長さは切らずに validate で確かめる（黙って切ると、元の JSON の直し忘れに気づけない）
+            page['rank_title'] = compact(row.get('title') or parsed.title, 10 ** 6)
+            if 'tags' in RANK_FIELDS[kind]:
+                page['tags'] = [t for t in (compact(t, 10 ** 6) for t in tags) if t]
+            if 'category' in RANK_FIELDS[kind]:
+                category = compact(str(row.get('category', '')), 10 ** 6)
+                page['category'] = category[:1].upper() + category[1:]  # /tools/ の絞り込みと同じ表記（converter → Converter）
+            if 'genre' in RANK_FIELDS[kind]:
+                page['genre'] = compact(str(row.get('genre', '')), 10 ** 6)
         if hub:
             # 英語の画面では、404.html の英語の名前と説明で見せる
             page.update(hub=True, title_en=compact(hub.get('data-title-en', ''), LIMITS['title']),
