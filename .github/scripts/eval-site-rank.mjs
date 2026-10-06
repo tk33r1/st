@@ -4,6 +4,7 @@
 //   --smoke-payload          週次の smoke（ai_models.py）が送る要求（決まった3問）を JSON で出す。npm の依存を読まない
 //   --accuracy [--set tune|final] [--runs 2]
 //                            Jev を直接呼んで精度を測る（MAGI_TYPESAFE_API_KEY。Worker の回数・キャッシュに当たらない）
+//   --report <生の記録>        精度の生の記録から、まとめを Jev を呼び直さずに出し直す
 //   --browser [--set final]  本物のブラウザから本番の Worker へ送り、送信から応答本文までを測る（Playwright）
 //   --probe                  測定の前に、ブラウザから本番の②へ評価セットに無い1問を送り、有効か・届くかだけを見る
 // 候補の変換・要求の組み立て・判定・並べ方・URL の検査は Worker の関数をそのまま使い、ここに別の変換や問いを書かない。
@@ -298,22 +299,57 @@ export async function accuracy(magi, { data: given } = {}) {
     }
   }
   record.models = [...models];
+  record.queries = queries; // --report で出し直せるように、測った問い合わせ（正解つき）も残す
   record.finished = new Date().toISOString();
   const file = writeRaw('accuracy', record);
+  console.log(accuracyReport(record, file));
+}
 
-  // まとめ（assets/site-search-evaluation.md に貼れる形）
-  const lines = [`## 精度（${set}、${queries.length}件、${runs}回）`, '',
+// 精度のまとめ（assets/site-search-evaluation.md に貼れる形）。生の記録だけから作る（--report で Jev を呼び直さずに出し直せる）
+export function accuracyReport(record, file) {
+  const queries = record.queries || JSON.parse(read(QUERIES)).queries.filter(q => q.set === record.set); // 古い記録には問い合わせが無い
+  const thresholds = record.thresholds, methods = [...new Set(record.measurements.map(m => m.method))];
+  const runs = record.runs, rowsOf = (method, run) => new Map(record.measurements.find(m => m.run === run && m.method === method).rows.map(r => [r.id, r]));
+  const lines = [`## 精度（${record.set}、${queries.length}件、${runs}回）`, '',
     `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、revision ${record.revision}、Jev ${record.models.join('・') || '不明'}`,
     `- 設定の question_language ${record.question_language}、threshold ${record.threshold}`,
-    `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`, `- 正解の固定 ${data.frozen}（${ANNOTATORS[data.annotator]}）、生の記録 ${file}`, ''];
+    `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`,
+    `- 正解の固定 ${record.frozen}（${ANNOTATORS[record.annotator] || record.annotator}）、生の記録 ${file}`, ''];
   for (let run = 1; run <= runs; run++) {
     lines.push(`### ${run}回目`, '', SCORE_HEAD);
     if (record.contains) lines.push(scoreRow('いまの「含む」検索', score(queries, q => ({ status: 'results', ids: record.contains[q.id] }))));
-    for (const m of record.measurements.filter(m => m.run === run)) {
-      const byId = new Map(m.rows.map(r => [r.id, r]));
-      for (const t of thresholds) lines.push(scoreRow(`${m.method} ${t}`, score(queries, q => byId.get(q.id).byThreshold[t])));
+    for (const method of methods) {
+      const byId = rowsOf(method, run);
+      for (const t of thresholds) lines.push(scoreRow(`${method} ${t}`, score(queries, q => byId.get(q.id).byThreshold[t])));
     }
     lines.push('');
+  }
+  if (thresholds.length > 1) {
+    // 閾値の余裕（設計書 10.4 の手順2）：2回を通した「正解のページの確率の最低」（答えのある問い合わせごとに、正解のうち
+    // 最も高い確率。答えが読めなかった問い合わせは0）と「答えの無い問い合わせで出た最も高い確率」の間で、
+    // 両側からの余裕の小さい方が最も大きい閾値を、2回とも条件を満たす閾値から選ぶ
+    lines.push('### 閾値の余裕', '', '| 方式 | 正解の最低 | 答え無しの最高 | 閾値 | 2回とも条件 | 余裕（小さい方） |', '| --- | ---: | ---: | ---: | --- | ---: |');
+    const picks = [];
+    for (const method of methods) {
+      let correctMin = 1, noneMax = 0;
+      for (let run = 1; run <= runs; run++) {
+        const byId = rowsOf(method, run);
+        for (const q of queries) {
+          const probs = byId.get(q.id).probs || {};
+          if (q.answers.length) correctMin = Math.min(correctMin, Math.max(0, ...q.answers.map(a => probs[a] ?? 0)));
+          else noneMax = Math.max(noneMax, ...Object.values(probs).map(v => v ?? 0));
+        }
+      }
+      let best = null;
+      for (const t of thresholds) {
+        const pass = Array.from({ length: runs }, (_, i) => i + 1).every(run => { const byId = rowsOf(method, run); return score(queries, q => byId.get(q.id).byThreshold[t]).pass; });
+        const margin = Math.round(Math.min(t - noneMax, correctMin - t) * 100) / 100;
+        if (pass && (!best || margin > best.margin)) best = { t, margin };
+        lines.push(`| ${method} | ${correctMin.toFixed(2)} | ${noneMax.toFixed(2)} | ${t} | ${pass ? '満たす' : '-'} | ${margin.toFixed(2)} |`);
+      }
+      picks.push(`${method}：${best ? `${best.t}（余裕 ${best.margin.toFixed(2)}）` : '条件を満たす閾値が無い'}`);
+    }
+    lines.push('', '規則で選ぶ閾値（方式ごと）：', '', ...picks.map(p => `- ${p}`), '');
   }
   lines.push('### 判定の欠けと Jev 単体の時間（直接呼んだもの。ブラウザの p95 の合否には使わない）', '',
     '| 回 | 方式 | 判定の欠けた問い合わせ | 失敗した呼び出し | p50 | p95 |', '| ---: | --- | ---: | ---: | ---: | ---: |');
@@ -326,13 +362,13 @@ export async function accuracy(magi, { data: given } = {}) {
     lines.push('', '### 2回で結果の変わった問い合わせ', '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
     const asSet = ids => ids.slice().sort().join(',');
     for (const method of methods) for (const t of thresholds) {
-      const [a, b] = [1, 2].map(run => new Map(record.measurements.find(m => m.run === run && m.method === method.name).rows.map(r => [r.id, r.byThreshold[t].ids])));
+      const [a, b] = [1, 2].map(run => new Map([...rowsOf(method, run)].map(([id, r]) => [id, r.byThreshold[t].ids])));
       const changed = queries.filter(q => asSet(a.get(q.id)) !== asSet(b.get(q.id))).map(q => q.id);
       const reordered = queries.filter(q => asSet(a.get(q.id)) === asSet(b.get(q.id)) && a.get(q.id).join(',') !== b.get(q.id).join(',')).map(q => q.id);
-      lines.push(`| ${method.name} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
+      lines.push(`| ${method} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
     }
   }
-  console.log(lines.join('\n'));
+  return lines.join('\n');
 }
 
 // 本物のブラウザ（Playwright の Chromium）で 404 のページ（Origin が https://tk.st）を開き、そこから本番の Worker へ送る。
@@ -447,8 +483,8 @@ export async function browser(magi, { data: given } = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const modes = ['--check', '--hash', '--smoke-payload', '--accuracy', '--browser', '--probe'].filter(m => process.argv.includes(m));
-  if (modes.length !== 1) fail('使い方: node .github/scripts/eval-site-rank.mjs --check | --hash | --smoke-payload | --accuracy [--set tune|final] [--runs 2] | --browser [--set final] | --probe');
+  const modes = ['--check', '--hash', '--smoke-payload', '--accuracy', '--report', '--browser', '--probe'].filter(m => process.argv.includes(m));
+  if (modes.length !== 1) fail('使い方: node .github/scripts/eval-site-rank.mjs --check | --hash | --smoke-payload | --accuracy [--set tune|final] [--runs 2] | --report <生の記録> | --browser [--set final] | --probe');
   const magi = loadWorker();
   if (modes[0] === '--check') {
     const local = await snapshotOf(magi, read('data/site-search.json'));
@@ -470,6 +506,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         return { payload, expect: expect.map(magi.rankId) };
       }) }));
   } else if (modes[0] === '--accuracy') await accuracy(magi);
+  else if (modes[0] === '--report') {
+    const file = option('--report');
+    if (!file) fail('--report には生の記録（workers/.wrangler/site-rank-accuracy-*.json）を渡す');
+    console.log(accuracyReport(JSON.parse(readFileSync(resolve(file), 'utf8')), file));
+  }
   else if (modes[0] === '--probe') await probe();
   else await browser(magi);
 }
