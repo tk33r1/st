@@ -48,8 +48,9 @@ function worker(stream = completion(), upstream = null) {
     + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/magi-mode.js')) + '\n'
     + strip(read('workers/magi2/site-search.js')) + '\n'
+    + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
-    + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache;', ctx);
+    + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test' };
   const request = async (path, body, ip = '192.0.2.1', headers = {}) => {
     const res = await ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
@@ -220,6 +221,152 @@ test('通知は signal で止まり、止めたら Resend を呼ばずに印を�
   const hook = w.ctx.searchUpstream(w.env, { waitUntil() { throw new Error('must not detach'); } }, log, 'サイト内検索', limit.signal);
   await hook.onUpstreamError('typesafe', fake, { billingFailure: true });
   assert.equal(read, false); assert.equal(resend.length, 2); assert.equal(db.rows.size, 0);
+});
+
+// --- 404 のサイト内検索の②（Jev。assets/site-search-design.md 10.1）---
+const JEV = 'https://api.typesafe.ai/v1/systemone';
+function rankWorker(jev, extra = null) {
+  const jevCalls = [], mails = [];
+  const w = worker(undefined, async (url, o) => {
+    if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
+    if (extra) { const r = await extra(url, o); if (r) return r; }
+    if (url === JEV) { const payload = JSON.parse(o.body); jevCalls.push(payload); return jev(payload, o); }
+  });
+  Object.assign(w.env, { SITE_RANK_ENABLED: 'true', MAGI_TYPESAFE_API_KEY: 'k', DB: counts() });
+  return Object.assign(w, { jevCalls, mails });
+}
+const rankRequest = (w, body = {}, ip, path = '/magi2/site-search') =>
+  w.request(path, { query: 'PDFをまとめたい', locale: 'ja', mode: 'rank', scope: 'site', ...body }, ip);
+const noul = v => ({ type: 'noul', noul: v });
+const answersFor = (payload, f) => Object.fromEntries(Object.keys(payload.questions).map((id, i) => [id, f(payload.state.candidates[id], i, id)]));
+const pdfOnly = p => Response.json({ answers: answersFor(p, c => noul(/^PDF Studio/.test(c.title) ? 0.9 : 0.1)) });
+const rankRows = w => [...w.env.DB.rows].filter(([k]) => k.startsWith('rank:'));
+
+test('②：要求の誤りは400で上流も回数も使わず、mode なしは③のまま', async () => {
+  const w = rankWorker(() => { throw new Error('must not call'); });
+  for (const body of [{ mode: 'x' }, { scope: 'tools' }, { extra: 1 }, { filters: {} }, { locale: 'fr' }, { query: 'x'.repeat(201) }, { query: '<>' }, { query: 5 }]) {
+    const res = await rankRequest(w, body); assert.equal(res.status, 400, JSON.stringify(body));
+    const data = await res.json(); assert.equal(data.status, 'failed'); assert.equal(data.reason, 'invalid_request'); assert.equal(data.searched, null);
+  }
+  assert.equal((await rankRequest(w, {}, undefined, '/magi2/site-search?site_debate=1')).status, 400);
+  assert.equal((await w.request('/magi2/site-search', '[]')).status, 400);
+  assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0);
+  assert.equal((await w.request('/magi2/site-search', { query: 'x', locale: 'ja' })).status, 409);
+});
+
+test('②：停止・キーなし・DBなし・索引の失敗や欠けではJevも回数も使わない', async () => {
+  for (const [env, reason] of [[{ SITE_RANK_ENABLED: 'false' }, 'disabled'], [{ SITE_RANK_ENABLED: undefined }, 'disabled'],
+    [{ MAGI_TYPESAFE_API_KEY: undefined }, 'unavailable'], [{ DB: undefined }, 'unavailable']]) {
+    const w = rankWorker(() => { throw new Error('must not call'); });
+    Object.assign(w.env, env);
+    const res = await rankRequest(w); assert.equal(res.status, 200);
+    assert.equal((await res.json()).reason, reason); assert.equal(w.jevCalls.length, 0);
+  }
+  const data = JSON.parse(read('data/site-search.json'));
+  for (const index of [null, { ...data, pages: data.pages.map(p => p.kind === 'tool' ? (({ category, ...rest }) => rest)(p) : p) }]) {
+    const w = rankWorker(() => { throw new Error('must not call'); }, url => url.endsWith('/site-search.json') ? (index ? Response.json(index) : new Response('x', { status: 500 })) : null);
+    const body = await (await rankRequest(w)).json();
+    assert.equal(body.reason, 'index_unavailable'); assert.equal(body.searched, null); assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0);
+  }
+});
+
+test('②：判定の欠けは0件にせず、全候補に判定があって閾値に届かないときだけ no_results', async () => {
+  const cases = [
+    [p => answersFor(p, c => noul(/^PDF Studio/.test(c.title) ? 0.9 : 0.1)), 'results', true, null, 35],
+    [p => answersFor(p, () => noul(0.1)), 'no_results', true, null, 35],
+    [p => answersFor(p, (c, i) => /^PDF Studio/.test(c.title) ? noul(0.9) : i % 2 ? {} : noul(0.1)), 'results', false, null, null],
+    [p => answersFor(p, (c, i) => i % 2 ? { type: 'score', noul: 0.9 } : noul(0.1)), 'failed', false, 'incomplete', null],
+    [p => answersFor(p, () => noul(1.5)), 'failed', false, 'incomplete', 0],
+    [p => answersFor(p, () => ({ type: 'noul', noul: '0.9' })), 'failed', false, 'incomplete', 0],
+    [p => ({ c99: noul(1) }), 'failed', false, 'incomplete', 0],
+  ];
+  for (const [answers, status, complete, reason, judged] of cases) {
+    const w = rankWorker(p => Response.json({ answers: answers(p) }));
+    const data = await (await rankRequest(w)).json();
+    assert.equal(data.status, status); assert.equal(data.complete, complete); assert.equal(data.reason, reason);
+    assert.equal(data.searched.total, 35); assert.equal(data.searched.candidates, 35);
+    if (judged !== null) assert.equal(data.searched.judged, judged);
+    if (status === 'results') assert.equal(data.results[0].url, '/tools/pdf-studio/');
+  }
+  // 最大5件。確率の値は返さない。英語の画面では英語の名前
+  const all = rankWorker(p => Response.json({ answers: answersFor(p, c => noul(c.kind === 'page' && c.title_en === 'Contact' ? 0.99 : 0.8)) }));
+  const en = await (await rankRequest(all, { locale: 'en' })).json();
+  assert.equal(en.results.length, 5); assert.equal(en.results[0].title, 'Contact'); assert.ok(!JSON.stringify(en).includes('0.99'));
+  // 本文が JSON でない・answers が無い応答は unavailable
+  for (const reply of [new Response('x'), Response.json({ answers: [] }), Response.json({})]) {
+    const w = rankWorker(() => reply.clone());
+    assert.equal((await (await rankRequest(w)).json()).reason, 'unavailable');
+  }
+});
+
+test('②：Jevの期限と、候補の変換の長さの規則', async () => {
+  const slow = rankWorker((p, o) => new Promise((_, reject) => o.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+  slow.ctx.rankConfig.jev_timeout_ms = 30;
+  const t = Date.now(), data = await (await rankRequest(slow)).json();
+  assert.equal(data.reason, 'timeout'); assert.ok(Date.now() - t < 1000); assert.equal(data.searched.total, 35);
+  const w = worker();
+  const long = w.ctx.toRankCandidate({ kind: 'page', title: 'T', title_en: 'T', description: 'あ'.repeat(500), description_en: 'e'.repeat(500) });
+  const length = c => Object.values(c).flat().reduce((n, v) => n + Array.from(v).length, 0);
+  assert.ok(length(long) <= 400); assert.equal(Array.from(long.description).length, 300); assert.ok(Array.from(long.description_en).length < 300);
+  const emoji = w.ctx.toRankCandidate({ kind: 'article', rank_title: 'T', description: '😀'.repeat(350), tags: [] });
+  assert.equal(Array.from(emoji.description).length, 300); assert.ok(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/.test(emoji.description));
+  assert.throws(() => w.ctx.toRankCandidate({ kind: 'tool', rank_title: 'x'.repeat(160), description: '', tags: Array(6).fill('y'.repeat(40)), category: 'C' }));
+  for (const [url, ok] of [['/tools/a/', true], ['//example.com/', false], ['https://example.com/', false], ['/\\example.com', false], ['/a/?q', false], ['/a/#x', false]])
+    assert.equal(w.ctx.rankSiteUrl(url) !== null, ok, url);
+});
+
+test('②：回数はIP→全体の順で、IPで断ると全体を進めず、キャッシュでも数える。③とは別', async () => {
+  const w = rankWorker(pdfOnly);
+  w.ctx.rankConfig.daily_limit = 2;
+  for (let i = 0; i < 2; i++) assert.equal((await rankRequest(w)).status, 200);
+  assert.equal(w.jevCalls.length, 1); // 2回目はキャッシュから
+  const limited = await rankRequest(w); assert.equal(limited.status, 429); assert.equal((await limited.json()).reason, 'rate_limited');
+  const global = rankRows(w).find(([k]) => k.startsWith('rank:global'))[1];
+  assert.equal(global, 2); assert.ok(![...w.env.DB.rows.keys()].some(k => k.startsWith('search:')));
+  Object.assign(w.env, { RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  w.ctx.rankConfig.global_daily_limit = 2;
+  const other = await rankRequest(w, {}, '192.0.2.9'); assert.equal(other.status, 429);
+  await Promise.all(w.waits); assert.equal(w.mails.length, 1); assert.match(w.mails[0].subject, /サイト内検索/);
+});
+
+test('②：完全な結果だけを10分キャッシュし、件数の上限で古いものから消す', async () => {
+  const partial = rankWorker(p => Response.json({ answers: answersFor(p, (c, i) => /^PDF Studio/.test(c.title) ? noul(0.9) : i % 2 ? {} : noul(0.1)) }));
+  await rankRequest(partial); await rankRequest(partial); assert.equal(partial.jevCalls.length, 2);
+  const w = rankWorker(pdfOnly);
+  w.ctx.rankConfig.cache_max_entries = 2;
+  for (const query of ['a', 'b', 'c', 'a']) await rankRequest(w, { query });
+  assert.equal(w.jevCalls.length, 4); // a は c で押し出された
+  await rankRequest(w, { query: 'c' }); assert.equal(w.jevCalls.length, 4);
+  w.ctx.rankConfig.revision++;
+  await rankRequest(w, { query: 'c' }); assert.equal(w.jevCalls.length, 5);
+  w.ctx.rankConfig.cache_ttl_ms = 0;
+  await rankRequest(w, { query: 'd' }); await rankRequest(w, { query: 'd' }); assert.equal(w.jevCalls.length, 7);
+});
+
+test('②：課金障害だけを通知し、検索語と上流の本文は応答・ログ・通知に出さない', async () => {
+  const secret = 'PRIVATE_RANK_TEXT';
+  for (const [reply, mailed] of [[() => new Response('payment ' + secret, { status: 402 }), true],
+    [() => new Response('insufficient_quota ' + secret, { status: 429 }), true], [() => new Response('slow down ' + secret, { status: 429 }), false]]) {
+    const logs = [], w = rankWorker(reply);
+    w.ctx.console.log = (...values) => logs.push(values);
+    Object.assign(w.env, { RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+    const text = await (await rankRequest(w, { query: secret })).text();
+    await Promise.all(w.waits);
+    assert.equal(JSON.parse(text).reason, 'unavailable'); assert.equal(w.mails.length, mailed ? 1 : 0);
+    assert.ok(!JSON.stringify([text, logs, w.mails]).includes(secret));
+    if (mailed) assert.ok(w.mails[0].text.includes('サイト内検索'));
+    const line = logs.find(l => l[1] === 'site_rank');
+    assert.equal(line[11], w.ctx.rankConfig.revision); assert.match(line[12], /^[0-9a-f]{64}$/); assert.match(line[13], /^[0-9a-f]{64}$/);
+  }
+});
+
+test('②：遅い要求本文の読み取りを期限で止め、読み取り中の reader を取り消す', async () => {
+  const w = worker();
+  let cancelled = false;
+  const body = new ReadableStream({ pull() { return new Promise(() => {}); }, cancel() { cancelled = true; } });
+  const request = new Request('https://workers.tk.st/magi2/site-search', { method: 'POST', body, duplex: 'half', headers: { 'Content-Type': 'application/json' } });
+  const ac = new AbortController(); setTimeout(() => ac.abort(), 20);
+  await assert.rejects(w.ctx.readJsonLimited(request, 4096, ac.signal)); assert.equal(cancelled, true);
 });
 
 test('出力言語は混在文を日本語に固定せず、記号や短い返答では直前の言語を維持する', () => {

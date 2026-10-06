@@ -82,7 +82,7 @@ const ENGLISH_STOP = new Set(['a', 'an', 'the', 'to', 'of', 'in', 'on', 'at', 'f
 const candidateLine = ({ id, kind, title, detail, hub }) => JSON.stringify({ id, kind, title, detail, ...(hub ? { hub: true } : {}) });
 // 語の先頭が一致すれば数える（tool → tools）。2文字以下の語（qr など）は完全一致だけ
 const hasWord = (words, term) => words.some(w => w === term || (term.length >= 3 && w.startsWith(term)));
-const dailyIssue = p => /^\/job\/(nitoridaily|retailtechdaily)\/\d{8}\/$/.test(p.url);
+export const dailyIssue = p => /^\/job\/(nitoridaily|retailtechdaily)\/\d{8}\/$/.test(p.url);
 // 文字の一致による点数。fields(item) が { title, detail } を返す。題名に当たれば重く、detail に当たれば軽く数える。
 // 返すのは元の順の [{ p, score, order }]（並べ替えは呼び出し側）。③のページ選びと②の同点の並びで共有する。
 export function scoreItems(items, query, fields) {
