@@ -101,7 +101,7 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 
 上の `disabled`・`unavailable` などは `reason` で、`status` はどれも `failed`。利用者の切断（`request.signal`）は 3〜9 のどこでも止め、数えた回数は戻さない（③と同じ）。自動の再試行はしない。
 
-**切断を知るための設定**：Cloudflare Workers の `request.signal` は、互換性フラグ `enable_request_signal` を付けたときだけ、利用者の切断で中止になる（[Cloudflare の変更履歴](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)）。いまの magi2 の `wrangler.toml` にはこのフラグが無いので、③の `searchDeadline(…, request.signal)` も、本番では切断で止まっていない（手元の Node の検証は `Request` の作りが違うので通る）。②と通知の「切断で止める」（PRD 5章・7.4）を成り立たせるため、`compatibility_flags = ["enable_request_signal"]` を足す。
+**切断を知るための設定**：Cloudflare Workers の `request.signal` は、互換性フラグ `enable_request_signal` を付けたときだけ、利用者の切断で中止になる（[Cloudflare の変更履歴](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)）。いまの magi2 の `wrangler.toml` にはこのフラグが無いので、③の `searchDeadline(…, request.signal)` も、本番では切断で止まっていない（手元の Node の検証は `Request` の作りが違うので通る）。②の「切断で索引の取得・Jev・本文の読み取りを止める」（PRD 5章・7.4）を成り立たせるため、`compatibility_flags = ["enable_request_signal"]` を足す。
 - チャットはストリームの取り消しでも止めているので、フラグを足すと、切断で止まるのが早くなるだけで、動きは変わらない。③は切断で討議を止めるようになる（もともとの設計どおり）。
 - 確かめ方：`npx wrangler dev`（手元の workerd はフラグを反映する）で②・③を送り、応答の前に接続を切って、Jev・各社への通信が止まることをログで見る（9章の3）。
 
@@ -604,7 +604,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 ### 10.5 smoke（`ai_models.py`）
 
-`eval-site-rank.mjs --smoke-payload` が、本番の関数で組み立てた要求（決まった3問）を JSON で出す。`smoke_typesafe` がそれを送り、全候補の答えが有効で、期待するページが閾値以上に入ることを確かめる。呼び出し方を変えたら、この出力も変わる。
+`eval-site-rank.mjs --smoke-payload` が、本番の関数で組み立てた要求（決まった3問）を JSON で出す。週次の `ai-model-watch.yml` は Node を入れるだけで `npm ci` をしないので、この経路は npm の依存を読まない。Playwright はブラウザの測定のときだけ `await import('playwright')` で読み、ファイルの先頭では import しない。`smoke_typesafe` がそれを送り、全候補の答えが有効で、期待するページが閾値以上に入ることを確かめる。呼び出し方を変えたら、この出力も変わる。
 
 ## 11. Phase 3 の方針
 
@@ -616,7 +616,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ## 12. 書き直す説明
 
 - `AGENTS.md`：magi2 の人格設定の節（404 のサイト内検索の流れに②と `SITE_RANK` を足す）、Workers 一覧の magi2 の secret（`MAGI_TYPESAFE_API_KEY` の用途に②）、Jev が4社目の送り先であることの説明。
-- `workers/magi2/README.md`：`/magi2/site-search` の `mode: 'rank'`、回数、停止の仕方。切断の検知に `enable_request_signal` が要ること（外すと②・③・通知が切断で止まらない）。
+- `workers/magi2/README.md`：`/magi2/site-search` の `mode: 'rank'`、回数、停止の仕方。切断の検知に `enable_request_signal` が要ること（外すと②・③の索引の取得・上流の呼び出しが切断で止まらない）。課金障害と確定した通知は、フラグに関係なく切断では止めず、5秒の期限で終わる（3.8）。
 - `AGENTS.md` の「ビルドとテスト」：npm を使う場所に `.github/scripts/`（Playwright。10.3）を足す。
 - `.github/JEV.md`：利用箇所の表の「サイト内検索（計画中）」を、コードの場所（`workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`）に直す。
 
