@@ -587,6 +587,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
   - 9章の4で、画面（404 の `RANK_ENABLED`）は false のまま、本番の Worker の `SITE_RANK_ENABLED` だけを true にする。画面からは呼ばれないので、利用者には見えない。費用は全体の上限（3,000回/日）で抑えられる。
   - Playwright の Chromium で `https://tk.st/` の存在しないパス（404 のページ。Origin が `https://tk.st` になる）を開き、`page.evaluate` で `assets/site-search.js` と同じ `fetch`（`Content-Type: application/json`、`credentials: 'omit'`、`referrerPolicy: 'no-referrer'`）を送る。`fetch` の直前から `res.json()` を読み終えるまでを `performance.now()` で測る（プリフライトも含む）。
   - 解析を汚さないよう、開く前に `localStorage` の `st-analytics` を `off` にし、解析の送り先は `route.abort()` で止める。
+  - 期限と応答の検査は画面に揃える（5.2 の8秒、5.3 の検査）。期限を超えた応答や、画面が描かない応答は `failed` として分母に残し、利用者に出せない結果を精度に数えない。
   - 測定の前に `--probe` で、評価セットに無い決まった1問を同じ経路で送り、②が有効か（`disabled` でないか）とブラウザから届くかだけを確かめる。評価セットの検索語で試すと、本番の測定が10分のキャッシュに当たる。②の形でない応答（②の無い Worker・認可の失敗）が返ったら、測定は止まる。
   - 1回の測定は50件以内で、Worker の検査・正規化後の `(scope, locale, query, filters)` が同じ要求を重複させない。対象は `final`（50件を超えたら、各種類・日英・答えの無いものの割合を保って50件を事前に選び、IDを記録する）。結果を見てから対象を選び直さない。
   - 2回目は、1回目の終了からキャッシュ期限（10分）を超えた UTC の別の日に測る。`revision`・Worker のコード・ブラウザの版・測定地点・変換後の全対象（`candidate_hash`）は2回とも同じにする。日刊の号だけが増えて `index_hash` が変わる場合は、②の全対象のハッシュが同じなら測定を続けてよい。対象や設定が変わったら2回ともやり直す。キャッシュのヒット・回数の上限による失敗を正常な検索の速さとして採用しない。

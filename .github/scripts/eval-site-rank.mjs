@@ -30,6 +30,8 @@ const THRESHOLDS = [0.3, 0.35, 0.4, 0.5, 0.6]; // 比べる閾値（PRD 7.1）
 const PASS = { hit: 0.8, shown: 0.15 };        // リリースの条件（PRD 7.1）：上位5件に正解80%以上、答えの無いもので結果15%以下
 const BROWSER_MAX = 50; // ブラウザの1回の測定の上限（設計書 10.4）。final はこれ以内にして、事前の選び直しを要らなくする
 const P95_MAX_MS = 1500;
+const BROWSER_TIMEOUT_MS = 8000; // 画面（assets/site-search.js）の期限（設計書 5.2）。これを超えた結果は利用者に出せないので、測定でも時間切れ
+const RANK_KINDS = ['page', 'tool', 'game', 'article']; // scope 'site' の結果の kind（日刊は Phase 3）
 const PROBE_QUERY = 'サイト内検索の評価の疎通確認'; // 評価セット・smoke と重ねない
 // smoke の決まった3問（評価セットとは重ねない）。期待するページが閾値以上に入ることを確かめる
 const SMOKE = [
@@ -54,7 +56,7 @@ export function loadWorker() {
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
     + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
-    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, clearRankCache: () => rankCache.clear() };', ctx);
+    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });
 }
 
@@ -163,14 +165,6 @@ const percentile = (values, p) => {
   return sorted[Math.min(sorted.length - 1, Math.ceil(p * sorted.length) - 1)];
 };
 const pct = (n, d) => d ? `${n}/${d}（${Math.round(n / d * 100)}%）` : '-';
-async function pool(items, size, run) {
-  const out = new Array(items.length);
-  let next = 0;
-  await Promise.all(Array.from({ length: Math.min(size, items.length) }, async () => {
-    while (next < items.length) { const i = next++; out[i] = await run(items[i], i); }
-  }));
-  return out;
-}
 
 // 答えのある問い合わせで上位5件に正解が入る割合と、答えの無い問い合わせで結果を出した割合。
 // 失敗（時間切れ・判定の欠け・上限など）も分母に残す（PRD 7.1）
@@ -267,12 +261,15 @@ export async function accuracy(magi, { data: given } = {}) {
           } catch (e) { slot.error = e && e.name; slot.ms = performance.now() - started; throw e; }
         };
         magi.clearRankCache();
-        const firsts = await pool(queries, 4, async q => {
+        // 1件ずつ順に呼ぶ。並べると Jev の毎秒のトークンの上限（JEV.md。1回 約1.2万トークン）に当たり、本番では起きない
+        // 429 の失敗が精度に混ざる
+        const firsts = [];
+        for (const q of queries) {
           const slot = {}; live.set(q.locale + ' ' + q.query, slot);
           const r = await magi.rankSearch({ env, snapshot: local.snapshot, query: q.query, locale: q.locale, signal,
             onBilling: status => { billing = status; } });
-          return { q, slot, r };
-        });
+          firsts.push({ q, slot, r });
+        }
         if (billing) fail(`Jev が HTTP ${billing} を返した（キーの失効か残高切れ）。測定を止める`);
         const out = [];
         for (const { q, slot, r } of firsts) {
@@ -322,11 +319,14 @@ export async function accuracy(magi, { data: given } = {}) {
     lines.push(`| ${m.run} | ${m.method} | ${m.rows.filter(r => r.answered && r.judged < r.candidates).length} | ${m.rows.filter(r => !r.answered).length} | ${percentile(ms, 0.5)}ms | ${percentile(ms, 0.95)}ms |`);
   }
   if (runs >= 2) {
-    lines.push('', '### 2回で結果の変わった問い合わせ（片方の回だけに出たページがある）', '', '| 方式 | 閾値 | 件数 | ID |', '| --- | ---: | ---: | --- |');
+    // 表示ページの増減（片方の回だけに出たページがある）は集合で比べ、同じページの順位だけの入れ替わりは別に数える
+    lines.push('', '### 2回で結果の変わった問い合わせ', '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
+    const asSet = ids => ids.slice().sort().join(',');
     for (const method of methods) for (const t of thresholds) {
-      const [a, b] = [1, 2].map(run => new Map(record.measurements.find(m => m.run === run && m.method === method.name).rows.map(r => [r.id, r.byThreshold[t].ids.join(',')])));
-      const flips = queries.filter(q => a.get(q.id) !== b.get(q.id)).map(q => q.id);
-      lines.push(`| ${method.name} | ${t} | ${flips.length} | ${flips.join(' ')} |`);
+      const [a, b] = [1, 2].map(run => new Map(record.measurements.find(m => m.run === run && m.method === method.name).rows.map(r => [r.id, r.byThreshold[t].ids])));
+      const changed = queries.filter(q => asSet(a.get(q.id)) !== asSet(b.get(q.id))).map(q => q.id);
+      const reordered = queries.filter(q => asSet(a.get(q.id)) === asSet(b.get(q.id)) && a.get(q.id).join(',') !== b.get(q.id).join(',')).map(q => q.id);
+      lines.push(`| ${method.name} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
     }
   }
   console.log(lines.join('\n'));
@@ -351,17 +351,34 @@ async function openRankPage() {
     const page = await context.newPage();
     const landing = await page.goto(`https://tk.st/site-rank-eval-${Date.now()}/`);
     assert.equal(landing.status(), 404, '404 のページが開けない');
-    const send = body => page.evaluate(async ({ url, body }) => {
+    // 期限は画面と同じ（BROWSER_TIMEOUT_MS）。本文の読み取りまで含めて止める
+    const send = body => page.evaluate(async ({ url, body, timeout }) => {
       const started = performance.now();
       try {
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-          credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000) });
+          credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(timeout) });
         const data = await res.json();
         return { http: res.status, data, ms: performance.now() - started };
       } catch (e) { return { http: null, error: e && e.name, ms: performance.now() - started }; }
-    }, { url: RANK_URL, body });
+    }, { url: RANK_URL, body, timeout: BROWSER_TIMEOUT_MS });
     return { version: instance.version(), blocked, send, close: () => instance.close() };
   } catch (e) { await instance.close(); throw e; }
+}
+
+// 画面（設計書 5.2・5.3）が描く結果として読む。画面が failed にする応答（期限切れ、200・429・400 以外、読めない本文、
+// 形の合わない本文、1行でも URL などが合わない結果）は、ここでも failed にする（利用者に出せない結果を精度に数えない）
+export function screenResult(magi, r, urlToId) {
+  const failed = reason => ({ status: 'failed', reason, ids: [] });
+  if (r.error) return failed(r.error === 'TimeoutError' ? 'timeout' : r.error === 'SyntaxError' ? 'unavailable' : 'network');
+  const d = r.data;
+  if (![200, 429, 400].includes(r.http) || !d || typeof d !== 'object' || Array.isArray(d)) return failed('unavailable');
+  if (!['results', 'no_results', 'failed'].includes(d.status) || typeof d.complete !== 'boolean'
+    || !Array.isArray(d.results) || d.results.length > magi.SITE_RANK.max_results) return failed('unavailable');
+  if (d.status === 'failed') return failed(typeof d.reason === 'string' ? d.reason : 'unavailable');
+  const ok = d.results.every(v => v && typeof v === 'object' && RANK_KINDS.includes(v.kind)
+    && typeof v.title === 'string' && typeof v.description === 'string' && magi.rankSiteUrl(v.url) === v.url);
+  if (!ok) return failed('unavailable');
+  return { status: d.status, reason: null, ids: d.results.map(v => urlToId.get(v.url) ?? `unknown:${v.url}`) };
 }
 
 // 測定の前の疎通の確認：評価セットに無い決まった1問を送り、②が有効か・ブラウザから届くかだけを見る
@@ -403,10 +420,10 @@ export async function browser(magi, { data: given } = {}) {
       if (d.reason === 'disabled') throw new Error('本番の Worker の SITE_RANK_ENABLED が true になっていない（disabled）');
       // ②の応答はどれも { status, reason, … } の形。③の形のエラーは、②の無い Worker か認可の失敗なので測らない
       if (d.error) throw new Error(`本番の Worker が②の形で答えない（HTTP ${r.http}、${d.error.code}）。--probe で確かめる`);
-      const ids = Array.isArray(d.results) ? d.results.map(v => production.urlToId.get(v.url) ?? `unknown:${v.url}`) : [];
+      const shown = screenResult(magi, r, production.urlToId);
       record.rows.push({ id: q.id, http: r.http, error: r.error ?? null, ms: Math.round(r.ms), request_id: d.request_id ?? null,
-        status: d.status ?? 'failed', reason: d.reason ?? d.error?.code ?? (r.error === 'SyntaxError' ? 'invalid_json' : r.error ? 'network' : null), complete: d.complete ?? false, searched: d.searched ?? null, ids });
-      console.error(`${q.id}: ${Math.round(r.ms)}ms ${d.status ?? r.error}`);
+        worker_status: d.status ?? null, worker_reason: d.reason ?? null, complete: d.complete ?? false, searched: d.searched ?? null, ...shown });
+      console.error(`${q.id}: ${Math.round(r.ms)}ms ${shown.status}${shown.reason ? ' ' + shown.reason : ''}`);
     }
   } finally { await page.close(); }
   record.finished = new Date().toISOString();
