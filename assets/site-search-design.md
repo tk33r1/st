@@ -139,15 +139,18 @@ export const SITE_RANK = {
 `site-search.js` のキャッシュをそのまま使い、次を足す。
 
 - `fetchSiteLists` は `res.text()` で受けてから `JSON.parse` し、本文の SHA-256 を `cache.hash` に置く（キャッシュのキーに使う。PRD 5章）。
-- `makeSitePages` は、4章の追加項目（`rank_title`・`tags`・`category`・`genre`）を検査して保持する。追加項目だけが合わない行は、その項目を落として行は残す（③は動き続ける）。
-- ②は、言語で名前を差し替える前の一覧（`cache.raw`）を使う。`tool`・`game`・`article` の全行に `rank_title` があるときだけ②を使える（`cache.rankReady`）。無ければ `failed`（`index_unavailable`）で、③はいまのまま。
+- `makeSitePages` は、4章の追加項目（`rank_title`・`tags`・`category`・`genre`）を検査して保持する。③のための寛容な検査はいまのまま（合わない行は飛ばし、追加項目だけが合わない行はその項目を落として行は残す）。
+- ②は、言語で名前を差し替える前の一覧（`cache.raw`）を使い、③とは別に索引が完全かを確かめる（`cache.rankReady`）。次のどれかに当たれば②は `index_unavailable` で、③はいまのまま動く。
+  - 索引の行のうち、`makeSitePages` が飛ばした行がある（元の `pages` の数と、検査を通った数が違う）。
+  - 種類ごとの必須項目が欠けた・落とされた行がある。`tool`：`rank_title`・`tags`・`category`。`game`：`rank_title`・`genre`。`article`：`rank_title`・`tags`。`tags` は空の配列でもよいが、配列であること。
+  - 欠けた行を除いて②を動かすと、取りこぼしを `complete: true` の0件として返してしまうため、部分的な索引では動かさない（PRD 3.2）。
 - 対象は日刊の号を除いた行。`tools`・`game` の scope は、その中の `kind` で絞る（Phase 3）。
 
 #### 日刊（Phase 3）
 
-- `https://tk.st/job/<媒体>/search-index.json` と、その `years` にある `search-index-<年>.json` を並列に取り、全部そろったときだけ使う。1つでも欠けたら失敗（PRD 3.4）。
+- `https://tk.st/job/<媒体>/search-index.json` を取り、その `records`（最新の年の記事）に、`years.slice(1)`（2番目以降の過去の年）の `search-index-<年>.json` の記事を足す。いまのブラウザの `loadSearchIndex(true)` と同じ範囲で、最新の年の年別ファイルは存在しない（2026-10-06 時点で両誌とも `years: ["2026"]`、年別ファイルは無い）。過去の年のファイルが1つでも取れなければ失敗（PRD 3.4）。
 - 媒体ごとにキャッシュする。期限は `site` と同じ（`SITE_SEARCH` の `list_ttl_ms`・`list_max_age_ms`・`list_retry_ms`）。取り直しに失敗したら、24時間以内の完全なものだけを使う。新旧の年のファイルを混ぜない。
-- ハッシュは、読んだ全ファイルの本文を決まった順（`search-index.json`、続いて年の新しい順）につないで作る。
+- ハッシュは、読んだ全ファイルの本文を決まった順（`search-index.json`、続いて `years.slice(1)` の順）につないで作る。
 - 記事の行は `date`（`/^\d{8}$/`）・`title`・`summary`・`category`・`region`（`JP`・`GLOBAL`）・`tags`・`url`（`/^\d{8}\/#art-\d+$/` で、先頭の日付が `date` と同じ）を確かめる。合わない行は飛ばして数をログに出す。
 - ID は `<媒体>:<日付>:<番号>`、URL は `/job/<媒体のディレクトリ>/<日付>/#art-<番号>`。
 
@@ -216,7 +219,7 @@ export const SITE_RANK = {
 - 返す項目は `{ kind, title, description, url }`。
   - `site` の行：題名と説明は③と同じく画面の言語に合わせる（英語の画面で `title_en` があればそれ）。題名は索引の `title`（ツールは副題を落とした短い名前）を使い、`rank_title` は使わない。
   - 日刊の記事：`kind: 'daily'`、題名、要約を160文字まで、URL は 3.5 の形。
-- `url` は返す直前にもう一度確かめる（`site`：`/` で始まりクエリ・フラグメントなし。日刊：3.5 の形と媒体の一致）。合わない行は飛ばし、そのときは `complete: false` にする（閾値を超えた行を隠したことになるため。キャッシュにも入れない）。飛ばした結果が0件になったら `failed`（`unavailable`）にして、`no_results` にしない。
+- `url` は返す直前にもう一度確かめる（`site`：`/^\/(?!\/)/` に合い、`https://tk.st` を基準に解決した origin が `https://tk.st` で、クエリ・フラグメントなし。日刊：3.5 の形と媒体の一致）。合わない行は飛ばし、そのときは `complete: false` にする（閾値を超えた行を隠したことになるため。キャッシュにも入れない）。飛ばした結果が0件になったら `failed`（`unavailable`）にして、`no_results` にしない。
 - `searched`：`{ total, candidates, judged }`。`total` は絞り込み後の対象の数、`candidates` は Jev に送った数、`judged` は有効な判定の数。`null` になる場合は 3.12。
 
 ### 3.10 キャッシュ
@@ -308,7 +311,9 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 - HTTP 200・429・400 の本文を読む（429 は `reason: 'rate_limited'`）。ほかの状態や、読めない本文は `failed`（`unavailable`）。
 - `status` が3つのどれか、`complete` が真偽値、`results` が5件以内の配列。
-- 各行：`kind` が決まった値、`title`・`description` が文字列、`url` が scope に合う形（`site`：`/` で始まり、クエリ・フラグメント・`\`・制御文字なし。日刊：`/job/<その媒体>/<8桁>/#art-<数字>` だけ）。
+- 各行：`kind` が決まった値、`title`・`description` が文字列、`url` が scope に合う形。
+  - `site`：いまの 404 の `aiHref` と同じ検査。`/^\/(?!\/)/` に合い（`//example.com/` を通さない）、`\`・空白・制御文字が無く、`new URL(url, 'https://tk.st')` の origin が `https://tk.st` で、クエリ・フラグメントが無い。
+  - 日刊：`/job/<その媒体>/<8桁>/#art-<数字>` だけ（同じく origin も確かめる）。
 - 1行でも合わなければ全体を `failed` として描かない（一部だけ描くと「ほかに無い」と読めるため）。
 - 描くのは `textContent` と `href` だけ。`innerHTML` は使わない。
 - 状態の文言は `status`（`role="status"`）に入れる。結果の欄へフォーカスを移さない。
@@ -423,8 +428,10 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ```js
 (function (w, l, h) {
   function take() {
-    // 8.1 の検査。検索語を取り出したら、URL から q を消して #archiveSearch にする。
-    // 取り出した語は w.STDailyHandoff に置く（daily-ui.js が読んだら null に戻す）。
+    // (1) 削除：URL に q（クエリのすべての q、または #q= のフラグメント）があれば、検査の結果に関係なく
+    //     すべての q と受け渡しのフラグメントを消して #archiveSearch にする。
+    // (2) 検査：消す前に取っておいた値を 8.1 で確かめ、通ったものだけを w.STDailyHandoff に置く
+    //     （daily-ui.js が読んだら null に戻す）。通らなければ何も置かない。
   }
   take();
   w.addEventListener('hashchange', function () { if (take()) w.dispatchEvent(new Event('st-daily-handoff')); });
@@ -432,6 +439,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ```
 
 - URL の整理は `history.replaceState(history.state, '', パス + qを除いたクエリ + '#archiveSearch')`。
+- **削除と検査を分ける**：重複した `q`、不正なエンコード、200文字超過など、受け取らない値でも URL からは必ず消す（PRD 6.1「安全に破棄」）。削除は検査より先に、例外が起きても行う（`try` の外で `replaceState`）。`decodeURIComponent` の失敗はその値を捨てるだけにする。
 - 計測を止めている人（`st-analytics` が `off`）にも同じ処理をする（次のページの参照元に残さないため）。
 - 号のページは `?q=` や `#q=` を受け取らないので、ポータルだけに置く。
 
@@ -495,7 +503,8 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 - 秘密：上流のエラーの本文に目印の検索語を入れても、応答・ログ・通知に出ない。
 - 通知：Resend が失敗・遅延しても②の応答（状態と速さ）は変わらず、切断後に Jev や通知の呼び出しが残らない。
 - 変換：3.7 の長さの規則（コードポイント、サロゲートペア、日刊の縮め方、手で直す JSON の超過は失敗）。
-- 索引：`rank_title` の無い行がある索引では②が `index_unavailable` で、③は動く。
+- 索引：`makeSitePages` が飛ばす行がある、または種類ごとの必須項目（3.5）が欠けた行がある索引では、②が `index_unavailable` で、③は動く。
+- URL：索引の `url` が `//example.com/` のような行は、②の結果に出ない。
 - 上書き：`SITE_RANK_CACHE`・`SITE_RANK_DAILY_LIMIT` が無ければ `SITE_RANK` の値を使う。数でない・0以下の `SITE_RANK_DAILY_LIMIT` は無視する。
 - `shortlistSitePages` の並びが、点数付けを切り出す前と同じ。
 
@@ -507,9 +516,10 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 `.github/scripts/test-site-search-ui.mjs`（新規）。`bash build.sh` の `_site` を手元のサーバーで出し、Worker への通信は Playwright の `route` で応答を差し替える。応答の種類（遅い・欠け・上限・停止など）は `preview-404-ai.py` の模擬の検索語と揃え、目で見る確認にも同じものを使えるようにする。
 
+- **応答の検査**：`url` が `//example.com/`・`https://example.com/`・`/\example.com`・クエリやフラグメント付き・別媒体の日刊の行を含む応答は、全体を `failed` にして描かない。
 - **②の状態**（PRD 3.1）：応答を遅らせて A → B、送信後の入力・言語の変更、A → B → A、②から③への切り替え、③の実行中の入力の変更、空入力・変換中の Enter。どれでも古い応答が描かれない。
 - **表示**：日英・明暗・幅320px・200%の拡大・キーボードだけの操作・読み上げの状態の行。
-- **URL**（PRD 6.1）：目印の検索語で、404 → 日刊、③・トップページ・アプリの日刊リンク、日刊のヘッダー・横断検索・タグ・絞り込み・号への移動、古い `?q=`、計測を止めた状態、JS 無効のヘッダー送信を通す。外へ出た通信（URL と本文）、`location.search`・`location.hash`、移った先の `document.referrer` に目印が無いこと。GA4 に `view_search_results` が無いこと。
+- **URL**（PRD 6.1）：目印の検索語で、404 → 日刊、③・トップページ・アプリの日刊リンク、日刊のヘッダー・横断検索・タグ・絞り込み・号への移動、古い `?q=`、計測を止めた状態、JS 無効のヘッダー送信を通す。受け取らない値（`?q=a&q=b`、`#q=%E0%A4`、201文字、`?q=` と `#q=` の両方）でも、URL から消え、計測・参照元に残らないことを確かめる。外へ出た通信（URL と本文）、`location.search`・`location.hash`、移った先の `document.referrer` に目印が無いこと。GA4 に `view_search_results` が無いこと。
   - 初回のページ計測に加え、クリック・履歴の変更（`replaceState`・`hashchange`）・フォームの送信の計測も見る。日刊の再読み込みで検索語が戻らないこと、`analytics.js` を先に読ませたページ（手元で作る）でも送られないことも確かめる。
   - 計測は本物の GTM・Ahrefs を読み込み、送信は記録してから `route.abort()` で止める（解析のデータを汚さない）。
   - 合否は本番の URL で決める（9章の5）。GTM のトリガーはホスト名で分けていることがある（`tk.st/tools/` の除外など）ので、手元の確認は事前の見当にとどめる。
