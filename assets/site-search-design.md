@@ -36,7 +36,7 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 | `workers/magi2/site-rank.js`（新規） | ②の本体（3章） | 1 |
 | `workers/magi2/site-search.js` | 索引の追加項目の保持、中身のハッシュ、点数付けの切り出し（3.5・3.6）。`daily.url` の形式（8.4） | 1 |
 | `workers/magi2/src/index.js` | `mode` による振り分け（3.1） | 1 |
-| `workers/magi2/wrangler.toml` | `SITE_RANK_ENABLED`（本番 `"false"`、eval `"true"`）。eval だけ評価用の上限とキャッシュの設定（10.4） | 1 |
+| `workers/magi2/wrangler.toml` | `SITE_RANK_ENABLED`（最初は `"false"`。応答時間の測定から `"true"`。9章） | 1 |
 | `.github/scripts/test-magi2.mjs` | ②の検証（10.1）。`site-rank.js` を読み込む一覧に足す | 1 |
 | `.github/site-search/rank-queries.json`（新規） | 評価セット（10.4） | 1 |
 | `.github/scripts/eval-site-rank.mjs`（新規） | 評価のスクリプト（10.4） | 1 |
@@ -104,6 +104,7 @@ export const SITE_RANK = {
   revision: 1,              // 問い・基準・閾値・変換を変えたら上げる（キャッシュのキーと評価の記録に入る）
   threshold: 0.35, max_results: 5,
   jev_timeout_ms: 2000,     // 呼び出しから応答本文の読み取りまで
+  alert_timeout_ms: 5000,   // 通知（上流の本文の読み取りと Resend への送信）の期限
   request_timeout_ms: 6000, // 要求全体（索引の取得を含む）
   daily_limit: 60, global_daily_limit: 3000,
   cache_ttl_ms: 10 * 60 * 1000, cache_max_entries: 256,
@@ -130,7 +131,7 @@ export const SITE_RANK = {
 ```
 
 - **問いの言語**：日本語（Phase 0 で測った文面）と、それを訳した英語（`INTENT_CLASSIFY` では英語の指示が最も正確だった）を、Phase 1 の `tune` で比べる（10.4）。上位5件に正解が入る割合が高い方を採り、同じなら答えの無い問い合わせへの誤表示が少ない方、それも同じなら日本語にする。決めたら `question_language` を書き換えて `revision` を上げ、使わない方の文面は消す。
-- 環境変数で上書きできるのは `SITE_RANK_CACHE`（`"off"` でキャッシュを使わない）と `SITE_RANK_DAILY_LIMIT`（IP ごとの上限）だけで、eval の Worker でだけ使う（10.4）。
+- 値は環境変数で上書きしない（停止の `SITE_RANK_ENABLED` だけを読む）。
 
 ### 3.5 索引の読み込み
 
@@ -151,7 +152,7 @@ export const SITE_RANK = {
 - `https://tk.st/job/<媒体>/search-index.json` を取り、その `records`（最新の年の記事）に、`years.slice(1)`（2番目以降の過去の年）の `search-index-<年>.json` の記事を足す。いまのブラウザの `loadSearchIndex(true)` と同じ範囲で、最新の年の年別ファイルは存在しない（2026-10-06 時点で両誌とも `years: ["2026"]`、年別ファイルは無い）。過去の年のファイルが1つでも取れなければ失敗（PRD 3.4）。
 - 媒体ごとにキャッシュする。期限は `site` と同じ（`SITE_SEARCH` の `list_ttl_ms`・`list_max_age_ms`・`list_retry_ms`）。取り直しに失敗したら、24時間以内の完全なものだけを使う。新旧の年のファイルを混ぜない。
 - ハッシュは、読んだ全ファイルの本文を決まった順（`search-index.json`、続いて `years.slice(1)` の順）につないで作る。
-- 記事の行は `date`（`/^\d{8}$/`）・`title`・`summary`・`category`・`region`（`JP`・`GLOBAL`）・`tags`・`url`（`/^\d{8}\/#art-\d+$/` で、先頭の日付が `date` と同じ）を確かめる。合わない行は飛ばして数をログに出す。
+- 記事の行は `date`（`/^\d{8}$/`）・`title`・`summary`・`category`・`region`（`JP`・`GLOBAL`）・`tags`・`url`（`/^\d{8}\/#art-\d+$/` で、先頭の日付が `date` と同じ）を確かめる。1行でも合わなければ、その取得は失敗として扱う（行を飛ばさない。飛ばした行が唯一の正解なら、完全な0件を返してしまうため）。失敗したら、24時間以内の完全なキャッシュがあればそれを使い、無ければ `index_unavailable`。合わなかった行の数はログに出す。
 - ID は `<媒体>:<日付>:<番号>`、URL は `/job/<媒体のディレクトリ>/<日付>/#art-<番号>`。
 
 ### 3.6 候補の選び方と点数
@@ -200,7 +201,12 @@ export const SITE_RANK = {
 
 - 候補の ID は並べた順に `c01`〜（2桁。`site` は35件、日刊は20件）。項目の ID や URL は送らない。
 - `searchDeadline(SITE_RANK.jev_timeout_ms, …, request.signal)` の中で、呼び出しと `res.json()` を済ませる。期限切れは `timeout`。
-- `!res.ok` のときは `unavailable`。残高切れ・キーの失効の通知は、`searchUpstream(env, ctx, log, 'サイト内検索')` の `onUpstreamError` に `res.clone()` を渡して `ctx.waitUntil` で走らせる（待たない。失敗はログに `alert_failed` だけ）。通知は②の結果にも速さにも響かない（PRD 5章）。
+- `!res.ok` のときは `unavailable`。残高切れ・キーの失効の通知は、`searchUpstream` の `onUpstreamError` に `res.clone()` を渡して `ctx.waitUntil` で走らせる（待たない。失敗はログに `alert_failed` だけ）。通知は②の結果にも速さにも響かない（PRD 5章）。
+- **通知にも中止と期限を渡す**：いまの `searchUpstream`・`sendAlert` は要求の中止を受け取らず、Resend への送信にも期限が無い。これでは切断後に通知の通信が残る（PRD 7.4）。
+  - `searchUpstream(env, ctx, log, purpose, signal)` と `sendAlert(env, log, key, subject, lines, redact, signal)` に、省略できる `signal` を足す。省略したときはいまの動き（③の呼び出し元は変えない）。
+  - ②は `request.signal` を渡す。上流の本文の読み取り（いまの `searchDeadline(2000, …)`）と Resend への `fetch` を、`searchDeadline(SITE_RANK.alert_timeout_ms, …, signal)` で囲む。切断か期限で両方の通信が止まる。
+  - 止まった通知は、`sendAlert` のいまの処理で「今日はもう送った」の印が消えるので、次の失敗のときにまた送られる。
+  - 全体の上限の通知（3.11 の `alert:site-rank-global`）も同じ `signal` と期限で送る。
 - 本文が JSON でない、`answers` が無い・オブジェクトでないときは `unavailable`。
 
 判定（答え1件）：`answers[id]` がオブジェクトで、`type === 'noul'`、`noul` が有限の数で 0〜1 のときだけ有効。送っていない ID の答えは見ない。
@@ -283,7 +289,7 @@ export const SITE_RANK = {
 const rank = STSiteSearch.rank({
   scope: 'site',
   condition: () => ({ query, locale, filters }),  // いまの条件。query は空・IME の変換中なら null を返す
-  keywordCount: () => total,                       // ①のいまの件数（誘導と計測に使う。PRD 3.1）
+  keywordCount: () => known ? total : null,         // ①のいまの件数。①が確定していなければ null（PRD 3.1）
   elements: { section, heading, list, status, note },
   labels: { kinds: {...}, texts: {...} },          // 種類の名前と状態の文言（日英はページが渡す）
   onRun: () => {},                                 // ②を送る直前（404 は③を止める）
@@ -324,11 +330,13 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 | イベント | 値 |
 | --- | --- |
-| `*_rank_run` | `keyword_count`（その時点の①の件数。6以上は6） |
+| `*_rank_run` | `keyword_state`（`'known'`・`'loading'`・`'failed'`）。`'known'` のときだけ `keyword_count`（その時点の①の件数。6以上は6） |
 | `*_rank_result` | `status`、`reason`、`count`、`complete` |
 | `*_rank_click` | `position` |
 
 `*` はページが決める（404 は `not_found`）。
+
+①と②の比較（PRD 8.2）は `keyword_state: 'known'` の行だけで行う。①が読み込み中・読み込み失敗のときは、①の件数は0でも「①が0件」ではない（いまの 404 の `total` はどちらでも0になる）ので、比較の分母から除く。
 
 ## 6. 404 の画面（Phase 2）
 
@@ -350,7 +358,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ### 6.2 Enter とキーボード
 
 - いまは、入力欄の Enter で①の先頭のリンクを開く。これを②の検索に変える（PRD 4.1）。②が使えないとき（6.1）は、いまのまま①の先頭を開く。
-- 検索ボタン・Enter では、まず①の待ち（100ms の `schedule`）を `flush()` で済ませてから `rank.run()` を呼ぶ（`keyword_count` をいまの入力の件数にするため）。
+- 検索ボタン・Enter では、まず①の待ち（100ms の `schedule`）を `flush()` で済ませてから `rank.run()` を呼ぶ（`keyword_count` をいまの入力の件数にするため）。`flush()` は一覧の読み込みを待たないので、404 の `keywordCount` は `state.jsonReady` が false、または `state.failures > 0` のとき null を返す（`keyword_state` は `'loading'`・`'failed'`）。
 - ↓で①・②の一覧へ移る動きは残す。②の欄があるときは②の先頭へ移る。一覧の中の Enter はリンクを開く（ブラウザの既定）。
 - IME の変換を確定する Enter では送らない（いまの `imeEvent` をそのまま使う）。
 - ②の一覧にも、①の一覧と同じキー操作（↑↓で移動、先頭で↑・Esc で入力欄へ）を付ける。②の末尾で↓なら①の先頭へ移る。
@@ -360,7 +368,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | 状況 | ③ |
 | --- | --- |
 | 入力が空・変換中 | 出さない |
-| ②を送る前（①が0件でも） | 出さない。①が0件なら「キーワードでは見つかりませんでした。検索ボタンで、意味の近いページを探します」と出し、検索ボタンを目立たせる |
+| ②を送る前（①が0件でも） | 出さない。①の件数が確定して0件のときだけ「キーワードでは見つかりませんでした。検索ボタンで、意味の近いページを探します」と出し、検索ボタンを目立たせる（読み込み中・失敗のときは、いまの「読み込み中」「読み込めなかった」の表示のまま） |
 | ②が `results`（`complete: true`） | 控えめに出す（`.ai-search.is-quiet`） |
 | ②が `results`（`complete: false`）・`no_results`・`failed` | 目立たせて出す |
 | ②の読み込み中 | 出さない（②と③を同時に動かさない） |
@@ -481,12 +489,12 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | --- | --- | --- |
 | 1 | 6.6 のイベントを 404 に足して出す（Phase 0） | GA4 で `count` が取れている。2週間ほど取る |
 | 2 | 索引の追加項目（4章）。Worker は知らない項目を読み捨てる | `test-site-search-index.py`、`bash build.sh` |
-| 3 | Worker の②（`SITE_RANK_ENABLED` は本番 false、eval true）。本番と eval に出す | `test-magi2.mjs`、`node --check`、eval で `mode: 'rank'` が答える |
-| 4 | 評価（10.4）で閾値と `revision` を決め、記録を `site-search-evaluation.md` に書く | PRD 7.1 のリリースの条件 |
+| 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false） | `test-magi2.mjs`、`node --check`、本番で `mode: 'rank'` が `disabled` を返し、③はいままで通り答える |
+| 4 | 評価（10.4）で閾値と `revision` を決め、記録を `site-search-evaluation.md` に書く。応答時間の測定の前に、本番の `SITE_RANK_ENABLED` を true にする（画面は false のまま。条件を満たさなければ false に戻す） | PRD 7.1 のリリースの条件。本番に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`） |
 | 5 | `update-modified.py` のトレーラー対応を先に出し、そのあと 8.4 の1・2と 8.5・8.6 を Pages に出す | 再生成の後に `sitemap.yml` が号の `dateModified` を書き換えない。10.3 の URL の検証（本番） |
 | 6 | 8.4 の3（アプリ） | PWA の更新、ネイティブの確認 |
 | 7 | 8.4 の4（Worker の `daily.url`） | 404・トップ・アプリで日刊のリンクが出る |
-| 8 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 1 から2週間以上たっている（PRD 8.1）。本番の magi2 に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`）。10.3 の画面の検証、PRD 7.4 |
+| 8 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 1 から2週間以上たっている（PRD 8.1）。10.3 の画面の検証、PRD 7.4 |
 
 止めるときは、Worker の `SITE_RANK_ENABLED` を先に false にする（画面は `disabled` を受けていまの動きに戻る）。そのあと画面の定数を false にする。
 
@@ -503,11 +511,10 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 - 期限：本文の届かない Jev の応答を2秒で打ち切る。切断で Jev の通信が止まる。
 - キャッシュ：`complete: false` と `failed` を入れない。索引のハッシュや `revision` が変わったら当たらない。257件目で最も古いものが消える。
 - 秘密：上流のエラーの本文に目印の検索語を入れても、応答・ログ・通知に出ない。
-- 通知：Resend が失敗・遅延しても②の応答（状態と速さ）は変わらず、切断後に Jev や通知の呼び出しが残らない。
+- 通知：Resend が失敗・遅延しても②の応答（状態と速さ）は変わらない。切断すると、Jev・上流の本文の読み取り・Resend の通信が止まる。Resend が応答しないときは5秒で止まり、印が消えて次の機会に送り直す。`signal` を渡さない③の通知はいまの動きのまま。
 - 変換：3.7 の長さの規則（コードポイント、サロゲートペア、日刊の縮め方、手で直す JSON の超過は失敗）。
 - 索引：`makeSitePages` が飛ばす行がある、または種類ごとの必須項目（3.5）が欠けた行がある索引では、②が `index_unavailable` で、③は動く。
 - URL：索引の `url` が `//example.com/` のような行は、②の結果に出ない。
-- 上書き：`SITE_RANK_CACHE`・`SITE_RANK_DAILY_LIMIT` が無ければ `SITE_RANK` の値を使う。数でない・0以下の `SITE_RANK_DAILY_LIMIT` は無視する。
 - `shortlistSitePages` の並びが、点数付けを切り出す前と同じ。
 
 ### 10.2 `test-site-search-index.py`
@@ -544,19 +551,25 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 - `type` は PRD 7.1 の種類（`keyword`・`sentence`・`paraphrase`・`english`・`self`・`none`）。`none` を全体の20%にし、`tune` と `final` の両方に各種類を入れる。
 - 問い合わせと正解は、結果を見る前に本人に確かめてもらう（PRD 7.1）。確かめた日を評価セットに書き（`"reviewed": "2026-10-xx"`）、スクリプトは無ければ止まる。
 - スクリプトは `test-magi2.mjs` と同じやり方で magi2 のファイルを読み込み（`personas.js` が JSON を import するため、Node の ESM では直接読めない）、`toRankCandidate`・要求の組み立て・判定を本番と同じ関数で使う。
-- 精度は Jev を直接呼んで測る（`MAGI_TYPESAFE_API_KEY`）。応答時間は eval の Worker（`magi2-eval.tk.st`、`mode: 'rank'`）へブラウザと同じ形で送って測る（PRD 7.1 の「送信から応答本文まで」）。
-- **eval の Worker の準備**：いまの `env.eval` は DB が未作成（`database_id` が仮の値）。`workers/magi2/README.md` の手順で専用 DB・Access・secret（`MAGI_TYPESAFE_API_KEY` を含む）を用意してから測り、終わったら同じ README の手順で片付ける。
-- **eval だけの設定**：60件以上を2回送ると IP の上限（60回）に当たり、10分のキャッシュに当たって「キャッシュを使わない検索」（PRD 7.1）にもならない。そこで `[env.eval.vars]` にだけ `SITE_RANK_CACHE = "off"` と `SITE_RANK_DAILY_LIMIT`（例：`"1000"`）を置く（3.4）。
+- **精度**は Jev を直接呼んで測る（`MAGI_TYPESAFE_API_KEY`）。Worker を通さないので、回数の上限やキャッシュに当たらない。
+- **応答時間**（PRD 7.1 の「ブラウザの送信から応答本文まで」）は、本物のブラウザから本番の Worker へ送って測る。
+  - 評価用の入口（`magi2-eval.tk.st`）は使わない。`src/eval.js` は OPTIONS を含むすべての要求に API キーを求め、Cloudflare Access も掛かっているので、ブラウザの CORS のプリフライトが通らない（401）。入口の認証を緩めるより、本番と同じ経路で測る方が正確で安全。
+  - 9章の4で、画面（404 の `RANK_ENABLED`）は false のまま、本番の Worker の `SITE_RANK_ENABLED` だけを true にする。画面からは呼ばれないので、利用者には見えない。費用は全体の上限（3,000回/日）で抑えられる。
+  - Playwright の Chromium で `https://tk.st/` の存在しないパス（404 のページ。Origin が `https://tk.st` になる）を開き、`page.evaluate` で `assets/site-search.js` と同じ `fetch`（`Content-Type: application/json`、`credentials: 'omit'`、`referrerPolicy: 'no-referrer'`）を送る。`fetch` の直前から `res.json()` を読み終えるまでを `performance.now()` で測る（プリフライトも含む）。
+  - 解析を汚さないよう、開く前に `localStorage` の `st-analytics` を `off` にし、解析の送り先は `route.abort()` で止める。
+  - キャッシュに当たらず IP の上限（60回/日）にも当たらないよう、1回の測定は50件以内で、各問い合わせを1回だけ送る。2回目は UTC の別の日に測る。対象は `final` の問い合わせ（50件を超えたら ID の順に50件）。
+  - 測る場所は手元（日本）。Phase 0 の Jev 単体の測定と同じ。
 - **比べる方式**（PRD 7.1）：
   - いまの「含む」検索：404 の `searchItems` を `test-magi2.mjs` と同じやり方で `404.html` から取り出して動かす（書き写さない）。
   - Jev の短い問い（基準なし）と、基準付きの問い。どちらも日英。
   - 閾値は 0.3・0.35・0.4・0.5・0.6。
 - **手順**：
   1. `tune` で問いの言語を決める（決め方は 3.4）。
-  2. 決めた言語で閾値を選ぶ。取りこぼした項目の説明を直したら（4章）、索引を作り直して `tune` を測り直す。
-  3. `final` を1回だけ測って合否を決める。その結果を見てから閾値や説明を直さない（直すなら評価セットから作り直す）。
-- **応答時間**：Jev 単体（直接呼んだときの時間）、索引の取得（3.11 のログの `index_ms`）、送信から応答本文まで（eval の Worker）を分けて記録する。失敗・時間切れも分母に入れる（PRD 7.1）。
-- 同じ条件で2回回す。生の記録は `workers/.wrangler/site-rank-<日時>.json`、まとめを `site-search-evaluation.md` に書く（コミット、索引のハッシュ、`revision`、モデルの応答の版）。
+  2. 決めた言語で閾値を選ぶ。取りこぼした項目の説明を直したら（4章）、索引を作り直して `tune` を測り直す。`tune` も設定ごとに2回測り、2回とも PRD 7.1 の条件を満たす閾値から選ぶ。
+  3. 設定（言語・閾値・`revision`・索引）を固定し、`final` を2回測る（PRD 7.3「同じ条件を2回」）。合格は、2回とも PRD 7.1 の条件を満たすこと。2回の平均では決めない。2回で閾値をまたいだ問い合わせ（片方だけ結果に出たもの）の数も記録する。
+  4. `final` の結果を見てから閾値や説明を直さない（直すなら評価セットから作り直す）。
+- **時間の記録**：Jev 単体（精度の測定で直接呼んだ時間）、索引の取得（本番の Worker のログの `index_ms`。`wrangler tail` で見る）、ブラウザの送信から応答本文まで、を分けて記録する。失敗・時間切れも分母に入れる（PRD 7.1）。
+- 生の記録は `workers/.wrangler/site-rank-<日時>.json`、まとめを `site-search-evaluation.md` に書く（コミット、索引のハッシュ、`revision`、モデルの応答の版、2回それぞれの数字）。
 
 ### 10.5 smoke（`ai_models.py`）
 
