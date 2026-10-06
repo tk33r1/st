@@ -72,8 +72,8 @@ M4 → M6 →（行き渡り）→ M7
 | T2.4 | `site-rank.js`：変換・候補・要求の組み立て・判定・結果・キャッシュ（scope は `site` だけ） | 3.6〜3.10 | Claude | L | 10.1 の判定・変換・キャッシュ・URL の検証が通る |
 | T2.5 | `index.js`：入口の振り分け、本文読み取りの期限と中止、`handleSiteRank`、回数・ログ・応答の形 | 3.1〜3.3・3.11・3.12 | Claude | M | 10.1 の入力・回数・期限の検証が通る。`mode` なしの③は、いまの検証がそのまま通る |
 | T2.6 | 通知に `signal` と期限：`searchUpstream`・`sendAlert` に省略できる引数を足す | 3.8 | Claude | M | 10.1 の通知の検証が通る。引数を省略した③・チャットの通知は変わらない |
-| T2.7 | `wrangler.toml`：`SITE_RANK_ENABLED = "false"` と `compatibility_flags = ["enable_request_signal"]`（本番と `env.eval`） | 3.3 | Claude | S | `npx wrangler deploy --dry-run --config magi2/wrangler.toml` が通る |
-| T2.8 | `test-magi2.mjs` に 10.1 の検証を足す（T2.4〜T2.6 と同時に書く） | 10.1 | Claude | M | `node --test` が通る |
+| T2.7 | `wrangler.toml`：`SITE_RANK_ENABLED = "false"` と `compatibility_flags = ["enable_request_signal"]`（本番と `env.eval`）。`workers/magi2/README.md` にフラグの理由を書く（外すと②・③・通知が切断で止まらない） | 3.3・12章 | Claude | S | `npx wrangler deploy --dry-run --config magi2/wrangler.toml` が通る |
+| T2.8 | `test-magi2.mjs` に 10.1 の検証を足す。検証は T2.1〜T2.6 のそれぞれのコミットに含め、ここでは抜けを埋める | 10.1 | Claude | M | `node --test` が通る |
 | T2.9 | `wrangler dev` で切断の確認 | 3.3 | Claude | S | ②・③・チャットで、応答の前に接続を切ると上流の通信が止まることをログで見る |
 | T2.10 | 本番へデプロイ | 9章の3 | 本人 | S | 本番で `mode: 'rank'` が `disabled` を返す。③とチャットがいままで通り答える |
 
@@ -87,7 +87,7 @@ M4 → M6 →（行き渡り）→ M7
 | T3.4 | `tune`：言語を決め、閾値を選ぶ。取りこぼした項目の説明を直したら索引を作り直して測り直す | 3.4・10.4 | 本人（キーが要る）＋ Claude（結果の読み取り・説明の直し） | M | 2回とも精度・誤表示率の条件を満たす閾値がある |
 | T3.5 | `SITE_RANK` を決めた値に（`question_language`・`threshold`・`revision`。使わない言語の文面を消す）。Worker を出し直す | 3.4 | Claude → 本人（デプロイ） | S | 本番の `revision` が評価と同じ |
 | T3.6 | `final` を2回（精度） | 10.4 | 本人 | S | 2回とも PRD 7.1 の精度・誤表示率の条件を満たす |
-| T3.7 | 本番の `SITE_RANK_ENABLED` を true にして（画面は false のまま）、ブラウザの応答時間を測る。2回目は UTC の別の日 | 9章の4・10.4 | 本人 | S | 2回とも p95 が1.5秒以内。本番に `MAGI_TYPESAFE_API_KEY` がある |
+| T3.7 | `wrangler.toml` の `SITE_RANK_ENABLED` を true にして（Claude）本番へ出し（本人。画面は出さない）、ブラウザの応答時間を測る。2回目は UTC の別の日 | 9章の4・10.4 | Claude → 本人 | S | 本番に `MAGI_TYPESAFE_API_KEY` がある。2回とも p95 が1.5秒以内で、同じ測定の精度・誤表示率も PRD 7.1 の条件を満たす |
 | T3.8 | 記録：`site-search-evaluation.md` に結果をまとめる。`ai_models.py` の smoke に②を足す | 10.4・10.5 | Claude | S | 記録にコミット・ハッシュ・`revision`・2回の数字がある。smoke が通る |
 
 - **合格しなかったら**：本番の `SITE_RANK_ENABLED` を false に戻し、原因（候補の説明・問い・閾値）を直して T3.4 からやり直す。`final` を見てから閾値を選び直す場合は、評価セットを作り直す（設計書 10.4）。
@@ -98,27 +98,30 @@ M4 → M6 →（行き渡り）→ M7
 | --- | --- | --- | --- | --- | --- |
 | T4.1 | `update-modified.py`：`Date-Sync: skip` のコミットを飛ばす。説明を冒頭に書く | 8.6 | Claude | S | 手元の一時リポジトリで、トレーラー付きのコミットが日時に使われない。先に `main` へ出す |
 | T4.2 | `daily-ui.js`：受け渡しの受け取り、ヘッダー検索とタグの処理、`q` を書かない、`location.search` の `q` を読む処理を消す | 8.3 | Claude | M | 手元で `#q=`・古い `?q=`・ヘッダー・タグが動く |
-| T4.3 | `daily_engine.py`：head の同期処理（削除と検査を分ける）、ヘッダーの検索欄、タグの `#q=`、`daily-ui.js?v=` | 8.2・8.3 | Claude | M | `test-daily-news.py` が通る。生成した HTML で受け取らない値も URL から消える |
+| T4.3 | `daily_engine.py`：head の同期処理（削除と検査を分ける）、ヘッダーの検索欄、タグの `#q=`、`daily-ui.js?v=` | 8.2・8.3 | Claude | M | `test-daily-news.py` が通る（生成の HTML は検査しないので、これだけでは足りない）。手元で `--rebuild` した HTML を T4.8 で確かめ、受け取らない値も URL から消える |
 | T4.4 | 404：日刊リンクを `#q=` に、③の日刊リンクの検査を新旧両方に | 8.4 の1 | Claude | S | 古い形は新しい形に直して `href` に入る |
 | T4.5 | トップページ（`index.html`。ページの中に書く）と `magi-app/www/app.js` の日刊リンクの検査 | 8.4 の1 | Claude | S | `test-magi2.mjs` の画面の検査が通る。トップページに外部スクリプトを足していない |
 | T4.6 | `analytics.js`：Ahrefs に `data-page-location` | 8.5 | Claude | S | Ahrefs の読み込みの属性に `#` 以降が載らない |
 | T4.7 | `preview-404-ai.py`：日刊リンクの模擬を新しい形に | 10.3 | Claude | S | 模擬の `mock-daily` で新しい形が出る |
 | T4.8 | `test-site-search-ui.mjs` の URL の部分（手元） | 10.3 | Claude | M | 目印の検索語が、外へ出る通信・URL・参照元に無い（手元の見当） |
-| T4.9 | 公開：T4.2〜T4.7 を `main` へ。続けて `generate-nitori-daily.py --rebuild`・`generate-retail-tech-daily.py --rebuild` の結果を、`Date-Sync: skip` 付きの1コミットで `main` へ | 8.6 | Claude（コミット）→ 本人（push の指示） | S | 日刊の bot の実行（01:55・02:05 JST）と重ならない時間に出す。`--rebuild` の差分に検索以外の変更が混ざったら分ける。`sitemap.yml` の後も号の `dateModified` が変わらない |
+| T4.9 | 公開：T4.2〜T4.7 のコミットと、`generate-nitori-daily.py --rebuild`・`generate-retail-tech-daily.py --rebuild` の結果（`Date-Sync: skip` 付きの1コミット）を、**1回の push** で `main` へ | 8.6 | Claude（コミット）→ 本人（push の指示） | S | 下の注を守る。日刊の bot の実行（01:55・02:05 JST）と重ならない時間に出す。`--rebuild` の差分に検索以外の変更が混ざったら別のコミットに分ける（同じ push に入れてよい）。`sitemap.yml` の後も号の `dateModified` が変わらない |
 | T4.10 | 本番の URL の検証（本物の GTM・Ahrefs） | 10.3 | Claude（届かなければ本人） | M | PRD 6.1 の受け入れ条件。GA4 に `view_search_results` が無い。検索語が載る計測があれば、本人が GTM でそのページの計測を止める |
+
+- **T4.9 を1回の push にする理由**：新しい `daily-ui.js` は URL の `q` を読まず、head の処理が渡す値だけを受け取る（設計書 8.3）。`daily-ui.js` や 404 の `#q=` のリンクだけが先に出ると、作り直す前の日刊の HTML（head の処理が無い）では、タグ・ヘッダー検索・404 からの受け渡しが動かない期間ができる。`daily-ui.js`・生成した HTML・404・トップページを同じ Pages のデプロイで出す。
 
 ### M5 404 の公開
 
 | ID | 作業 | 設計書 | 担当 | 規模 | 完了条件 |
 | --- | --- | --- | --- | --- | --- |
 | T5.1 | `assets/site-search.js`（共通部品） | 5章 | Claude | L | 状態・世代・応答の検査・計測が設計どおり |
-| T5.2 | 404 の画面：検索ボタン、②の欄、Enter とキー操作、③の出し方、①の重複除き、文言、ダイアログ、計測。`RANK_ENABLED` は false で入れる | 6章 | Claude | L | `RANK_ENABLED` が false の間は、いまと同じ動き。`node --check` が通る |
+| T5.2 | 404 の画面：検索ボタン、②の欄、Enter とキー操作、③の出し方、①の重複除き、文言、ダイアログ、計測。`RANK_ENABLED` は止めるための定数として持つ | 6章 | Claude | L | `RANK_ENABLED` を false にすると、いまと同じ動きに戻る。`node --check` が通る |
 | T5.3 | `preview-404-ai.py` に②の模擬（遅い・欠け・上限・停止・外部 URL） | 10.3 | Claude | S | 手元で各状態を目で見られる |
 | T5.4 | `test-site-search-ui.mjs` の②の状態・連携・表示 | 10.3 | Claude | M | PRD 3.1 と 7.4 の画面の条件が通る |
-| T5.5 | 説明を直す：`AGENTS.md`・`workers/magi2/README.md`・`.github/JEV.md` | 12章 | Claude | S | 送り先・回数・停止・`enable_request_signal` が書いてある |
-| T5.6 | 公開：`RANK_ENABLED` を true にして `main` へ | 9章の6 | 本人（指示） | S | 前提（M0 から2週間・M3 の合格・M4）を満たす。本番で②・③が動く |
+| T5.5 | 説明を直す：`AGENTS.md`・`workers/magi2/README.md`・`.github/JEV.md` | 12章 | Claude | S | 送り先・回数・停止が書いてある（`enable_request_signal` は T2.7 で書いた） |
+| T5.6 | 公開：T5.1〜T5.5 を、`RANK_ENABLED` を true にして1回の push で `main` へ | 9章の6 | 本人（指示） | S | 前提（M0 から2週間・M3 の合格・M4）を満たす。本番の `SITE_RANK_ENABLED` が true のまま（T3.7）。本番で②・③が動く |
 | T5.7 | 公開後の見守り（1〜2週間） | 8.2（PRD） | 本人＋ Claude | S | GA4 のイベント、Worker のログ（失敗の種類・判定なし）、Jev の費用、全体上限の通知 |
 
+- T5.1〜T5.5 は T5.6 まで作業ブランチに置き、`main` へ先に出さない。見出し・説明・ダイアログの文言も変わるので、②を出す前に一部だけ公開しないため。
 - **止め方**：Worker の `SITE_RANK_ENABLED` を false にして出す（画面は `disabled` を受けていまの動きに戻る）。そのあと `RANK_ENABLED` を false にする（設計書 9章）。
 
 ### M6 アプリの更新
