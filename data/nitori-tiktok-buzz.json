@@ -1,29 +1,35 @@
 {
-  "captured_at": "2026-10-05T21:02:33.780382+09:00",
-  "captured_date": "20261005",
+  "captured_at": "2026-10-06T20:48:02.849851+09:00",
+  "captured_date": "20261006",
   "window_days": 7,
   "min_views": 10000,
   "items": [
     {
-      "title": "【TikTokで2.9万回再生】ニトリ、不買運動が始まり完全終了w",
-      "description": "TikTokで再生数29,400回を集めた動画（いいね1,089 / コメント67）：\n「ニトリ、不買運動が始まり完全終了w」",
-      "source": "TikTok (@user7018887354459)",
-      "link": "https://www.tiktok.com/@user7018887354459.fan/video/7692328774003674375",
-      "pub_date": "2026-10-03 15:44",
-      "pub_ts": 1791009869.0,
+      "title": "【TikTokで2.6万回再生】NITORI - thiên đường nội thất & đồ gia dụng 🇯🇵👛✨ #nitori #ニトリ #noithat...",
+      "description": "TikTokで再生数26,200回を集めた動画（いいね595 / コメント2）：\n「NITORI - thiên đường nội thất & đồ gia dụng 🇯🇵👛✨ #nitori #ニトリ #noithatnhatban #nguoivietnamtainhatban🇯🇵 #cuocsongnhatban」",
+      "source": "TikTok (@kitty /•᷅•᷄\\੭)",
+      "link": "https://www.tiktok.com/@kittyojapan/video/7693165395804523796",
+      "pub_date": "2026-10-05 21:51",
+      "pub_ts": 1791204661.0,
       "is_sns_raw": true,
       "platform": "tiktok",
-      "author": "@user7018887354459",
-      "author_handle": "@user7018887354459.fan",
-      "hashtags": [],
-      "likes": 1089,
-      "retweets": 30,
-      "views": 29400,
-      "comments": 67,
-      "raw_text": "ニトリ、不買運動が始まり完全終了w",
+      "author": "@kitty /•᷅•᷄\\੭",
+      "author_handle": "@kittyojapan",
+      "hashtags": [
+        "nitori",
+        "ニトリ",
+        "noithatnhatban",
+        "nguoivietnamtainhatban🇯🇵",
+        "cuocsongnhatban"
+      ],
+      "likes": 595,
+      "retweets": 98,
+      "views": 26200,
+      "comments": 2,
+      "raw_text": "NITORI - thiên đường nội thất & đồ gia dụng 🇯🇵👛✨ #nitori #ニトリ #noithatnhatban #nguoivietnamtainhatban🇯🇵 #cuocsongnhatban",
       "consumer_filter": {
-        "signature": "917544be8fff08cf8624b687f6446247729bf1c24cebdf7afa089bc4dda5df5f",
-        "probability": 0.85
+        "signature": "5b14d632132c17f1940d9bd1a490e95ce7875ff888668969a638bfc3b7114ba0",
+        "probability": 0.65
       }
     }
   ]
