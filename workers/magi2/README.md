@@ -179,6 +179,20 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 停止はWorkerを先に `false` にする。通常チャットは続く。公開前に本番スモークテスト、設計書の20件の品質評価・費用見積もり、GTM設定を確認する。
 ネイティブアプリは `npm run sync` と再ビルド後、実機でリンクが開くことを確認する。
 
+### 切断の検知（`enable_request_signal`）
+
+`wrangler.toml` の `compatibility_flags = ["enable_request_signal"]` は外さない。Cloudflare Workers の `request.signal` は、
+このフラグがあるときだけ利用者の切断で中止になる。無いと、404 の検索（③と、Jev の検索の②）の索引の取得・上流の呼び出しが、
+利用者が離れても止まらない。課金障害の通知は、切断では止めず、独立した期限（`SITE_RANK.alert_timeout_ms`）で終える。
+手元の `wrangler dev` では、フラグがあっても切断が `request.signal` に伝わらない（2026-10-06、wrangler 4.147.0 で確認）。
+切断の確かめは本番で `wrangler tail` を見ながら行う（`assets/site-search-plan.md` の T2.10）。
+
+### サイト内検索の②（Jev）
+
+`mode: 'rank'` の要求で、索引の各ページに Jev で「目的を果たせる確率」を付けて並べる（設計は `assets/site-search-design.md`、
+設定の正本は `personas.js` の `SITE_RANK`）。`SITE_RANK_ENABLED = "true"` のときだけ動き、停止はこちらを先に `false` にする。
+回数は③と別に `rank:<IP>`・`rank:global` で数え、全体の上限の通知は `alert:site-rank-global`。
+
 ## ローカル検証のコマンド
 
 ```sh

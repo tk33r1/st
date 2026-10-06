@@ -6,6 +6,13 @@ export const searchSlice = (text, max) => Array.from(text).slice(0, max).join(''
 const clean = (s) => s.replace(/[\u0000-\u001f\u007f-\u009f]/g, '');
 const cache = { pages: null, fetchedAt: 0, retryAt: 0, refreshing: false };
 
+export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
+
+// 上流の失敗が残高切れ・キーの失効か（401・402・403 と、残高や枠の不足を示す 429。ただの回数制限の 429 は拾わない）。
+// ②（site-rank.js）と通知（src/index.js）で同じ判定を使う。
+export const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
+export const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
+
 // signalを無視する応答でも待ち続けない。本文読み取りを含む処理全体を囲む。
 export async function searchDeadline(ms, run, stop) {
   const ac = new AbortController();
@@ -18,6 +25,23 @@ export async function searchDeadline(ms, run, stop) {
   try { return await Promise.race([Promise.resolve().then(() => { if (ac.signal.aborted) throw searchFailure('cancelled'); return run(ac.signal); }), aborted]); }
   finally { clearTimeout(timer); ac.abort(); if (stop) stop.removeEventListener('abort', onStop); }
 }
+
+// ②（Jev の検索）に渡す項目。上限は site-search-index.py の RANK_FIELDS・RANK_LIMITS と同じ。
+export const RANK_FIELDS = { tool: ['rank_title', 'tags', 'category'], game: ['rank_title', 'genre'], article: ['rank_title', 'tags'] };
+const chars = s => Array.from(s).length;
+// 合う項目だけを残す（合わない項目は落とし、行は残す。③はこれらを使わないので動き続け、②は rankReady で止まる）
+function rankFields(p) {
+  if (!RANK_FIELDS[p.kind]) return {};
+  const out = {};
+  if (typeof p.rank_title === 'string' && p.rank_title.trim() && chars(p.rank_title) <= 160) out.rank_title = p.rank_title;
+  if (Array.isArray(p.tags) && p.tags.length <= 12 && p.tags.every(t => typeof t === 'string' && t && chars(t) <= 40)) out.tags = [...p.tags];
+  for (const key of ['category', 'genre']) if (typeof p[key] === 'string' && chars(p[key]) <= 40) out[key] = p[key];
+  return out;
+}
+// ②に使える完全な索引か。③の寛容な検査で飛ばした行がある、または種類ごとの必須項目が欠けた行があれば使わない
+// （欠けた行を除いて②を動かすと、取りこぼしを完全な0件として返してしまう。設計書 3.5）
+const rankReadyOf = (index, pages) => index.pages.length === pages.length
+  && pages.every(p => !RANK_FIELDS[p.kind] || RANK_FIELDS[p.kind].every(key => key in p));
 
 // 生成済みの公開HTML一覧（data/site-search.json）を検査する。合わない行だけ飛ばす（生成側の site-search-index.py が
 // 同じ条件で確かめてビルドを止めるので、ここで飛ぶのは想定外の行だけ）。形が違う・1件も残らない一覧ではAIを呼ばない。
@@ -40,7 +64,7 @@ export function makeSitePages(index) {
         || decoded.split('/').some(part => part === '.' || part === '..')) continue;
     ids.add(p.id); urls.add(p.url);
     pages.push({ id: p.id, kind: p.kind, title: p.title, description: p.description, url: p.url, detail: p.detail,
-      hub: p.hub === true, title_en: p.title_en || '', description_en: p.description_en || '' });
+      hub: p.hub === true, title_en: p.title_en || '', description_en: p.description_en || '', ...rankFields(p) });
   }
   if (!pages.length) throw searchFailure('invalid_list');
   return pages;
@@ -58,9 +82,10 @@ const ENGLISH_STOP = new Set(['a', 'an', 'the', 'to', 'of', 'in', 'on', 'at', 'f
 const candidateLine = ({ id, kind, title, detail, hub }) => JSON.stringify({ id, kind, title, detail, ...(hub ? { hub: true } : {}) });
 // 語の先頭が一致すれば数える（tool → tools）。2文字以下の語（qr など）は完全一致だけ
 const hasWord = (words, term) => words.some(w => w === term || (term.length >= 3 && w.startsWith(term)));
-const dailyIssue = p => /^\/job\/(nitoridaily|retailtechdaily)\/\d{8}\/$/.test(p.url);
-// 対象ページを削らず、AIに渡す分だけ絞る。
-export function shortlistSitePages(pages, query) {
+export const dailyIssue = p => /^\/job\/(nitoridaily|retailtechdaily)\/\d{8}\/$/.test(p.url);
+// 文字の一致による点数。fields(item) が { title, detail } を返す。題名に当たれば重く、detail に当たれば軽く数える。
+// 返すのは元の順の [{ p, score, order }]（並べ替えは呼び出し側）。③のページ選びと②の同点の並びで共有する。
+export function scoreItems(items, query, fields) {
   const q = searchText(query);
   const words = q.match(/[a-z0-9]+|[\p{Script=Han}\p{Script=Hiragana}ー]+/gu) || [];
   // 英語の機能語（a・to・is など）は数えない。英数字の語は語単位で照合する（"to" が "Nitori" に当たらないように）
@@ -72,8 +97,9 @@ export function shortlistSitePages(pages, query) {
       if (!stop.has(term)) terms.add(term);
     }
   }
-  const ranked = pages.map((p, order) => {
-    const title = searchText(p.title), detail = searchText(p.detail + ' ' + p.url);
+  return items.map((p, order) => {
+    const f = fields(p);
+    const title = searchText(f.title), detail = searchText(f.detail);
     const titleWords = title.match(/[a-z0-9]+/g) || [], detailWords = detail.match(/[a-z0-9]+/g) || [];
     let score = title.includes(q) ? 1000 : 0;
     for (const term of terms) {
@@ -82,7 +108,13 @@ export function shortlistSitePages(pages, query) {
       else if (ascii ? hasWord(detailWords, term) : detail.includes(term)) score += term.length * (ascii ? 20 : 1);
     }
     return { p, score, order };
-  }).sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
+  });
+}
+
+// 対象ページを削らず、AIに渡す分だけ絞る。
+export function shortlistSitePages(pages, query) {
+  const ranked = scoreItems(pages, query, p => ({ title: p.title, detail: p.detail + ' ' + p.url }))
+    .sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
   const selected = [], ids = new Set(); let chars = 0, issues = 0;
   function add(p) {
     const length = candidateLine(p).length + 1;
@@ -97,32 +129,48 @@ export function shortlistSitePages(pages, query) {
   return selected;
 }
 
-// キャッシュには検査済みの一覧を日英それぞれで置く（リクエストのたびに全件を検査し直さない）
+// キャッシュには索引のスナップショットを1つの物として置く：検査済みの一覧（日英と、言語で差し替える前の raw）、
+// 取得した本文（②のキャッシュのキーになるハッシュの元）、②に使えるか（rankReady）。全部そろってから差し替えるので、
+// 更新の途中でも古い一覧と新しいハッシュが組み合わさらない。要求は受け取ったスナップショットを最後まで使う。
+// ハッシュは②が初めて使うときに snapshotHash で1回だけ作る（③とチャットは使わないので、その分の待ちを足さない）。
 async function fetchSiteLists(signal) {
-  const index = await searchDeadline(SITE_SEARCH.list_timeout_ms, async (s) => {
+  const text = await searchDeadline(SITE_SEARCH.list_timeout_ms, async (s) => {
     const res = await fetch('https://tk.st/data/site-search.json', { signal: s });
     if (!res.ok) throw searchFailure('list_fetch');
-    return res.json();
+    return res.text();
   }, signal);
+  let index;
+  try { index = JSON.parse(text); } catch (_) { throw searchFailure('invalid_list'); }
   const pages = makeSitePages(index); // 一覧全体を検証してから差し替える。
-  cache.pages = { ja: localizeSitePages(pages, 'ja'), en: localizeSitePages(pages, 'en') };
-  cache.fetchedAt = Date.now(); cache.retryAt = 0;
-  return cache.pages;
+  const snapshot = { ja: localizeSitePages(pages, 'ja'), en: localizeSitePages(pages, 'en'), raw: pages,
+    text, rankReady: rankReadyOf(index, pages) };
+  cache.pages = snapshot; cache.fetchedAt = Date.now(); cache.retryAt = 0;
+  return snapshot;
 }
 const localePages = (pages, locale) => pages[locale === 'en' ? 'en' : 'ja'];
 
-export async function getSitePages(ctx, locale, signal) {
+const snapshotHashes = new WeakMap();
+export function snapshotHash(snapshot) {
+  if (!snapshotHashes.has(snapshot)) snapshotHashes.set(snapshot, sha256(snapshot.text));
+  return snapshotHashes.get(snapshot);
+}
+
+export async function getSiteSnapshot(ctx, signal) {
   const age = Date.now() - cache.fetchedAt;
   if (cache.pages && age <= SITE_SEARCH.list_max_age_ms) {
     if (age > SITE_SEARCH.list_ttl_ms && Date.now() >= cache.retryAt && !cache.refreshing) {
       cache.refreshing = true;
       ctx.waitUntil(fetchSiteLists().catch(() => { cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; }).finally(() => { cache.refreshing = false; }));
     }
-    return localePages(cache.pages, locale);
+    return cache.pages;
   }
   if (Date.now() < cache.retryAt) throw searchFailure('list_fetch');
-  try { return localePages(await fetchSiteLists(signal), locale); }
+  try { return await fetchSiteLists(signal); }
   catch (e) { if (e.searchCode !== 'cancelled') cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; throw searchFailure(e.searchCode || 'list_fetch'); }
+}
+
+export async function getSitePages(ctx, locale, signal) {
+  return localePages(await getSiteSnapshot(ctx, signal), locale);
 }
 
 export function validateSiteChoice(value, pages, locale, chat = false) {

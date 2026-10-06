@@ -1,6 +1,7 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_RANK, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
-import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
+import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
+import { rankCandidateHash, rankSearch, rankTargets } from '../site-rank.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
@@ -54,11 +55,14 @@ function inputError(err, requestId, cors) {
 }
 
 // Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
-async function readJsonLimited(request, maxBytes) {
+// signal（省略できる）で止めたら、読み取り中の reader を止める（待つ Promise を打ち切るだけでは読み取りが残る）
+async function readJsonLimited(request, maxBytes, signal = null) {
   const tooLarge = () => stageError('bad_request', 'request_too_large', 'リクエストサイズが上限を超えています', { http_status: 413, retryable: false });
   if (Number(request.headers.get('Content-Length')) > maxBytes) throw tooLarge();
   if (!request.body) throw stageError('bad_request', 'invalid_json', 'リクエストボディがありません', { retryable: false });
   const reader = request.body.getReader();
+  const onAbort = () => { reader.cancel().catch(() => {}); };
+  if (signal) { if (signal.aborted) onAbort(); else signal.addEventListener('abort', onAbort, { once: true }); }
   const dec = new TextDecoder();
   let size = 0, text = '';
   try {
@@ -72,7 +76,7 @@ async function readJsonLimited(request, maxBytes) {
     const body = JSON.parse(text + dec.decode());
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid body');
     return body;
-  } finally { reader.releaseLock(); }
+  } finally { signal?.removeEventListener('abort', onAbort); reader.releaseLock(); }
 }
 
 function checkText(text, maxChars, counters) {
@@ -81,7 +85,6 @@ function checkText(text, maxChars, counters) {
   if (counters.text > DEFAULTS.input.history_max_chars) throw stageError('bad_request', 'history_too_long', '会話の履歴が文字数の上限を超えています', { retryable: false });
 }
 
-const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
 
 // rate_limit の (key, period) の数を1つ進めて返す。limit に達していたら進めずに null を返す
 // （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
@@ -284,8 +287,6 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 401・402・403 と、残高や枠の不足を示す 429 を拾う（ただの回数制限の 429 は拾わない）。
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
-const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
-const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
 const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
@@ -311,14 +312,19 @@ async function alertUpstream(env, log, provider, res) {
 }
 
 // 通知メールを送る。key ごとに UTC の1日に1通（rate_limit に key の行を「送った」印として作る）。
-// 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ
-async function sendAlert(env, log, key, subject, lines, redact = false) {
+// 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ。
+// signal（省略できる）で止められる：印を取る前に止まっていれば何もしない。印を取った後に止まったら Resend を呼ばずに
+// 印を消す。送信の途中で止まったら送信を中止して印を消す（D1 の後始末は止めずに最後まで行う）
+async function sendAlert(env, log, key, subject, lines, redact = false, signal = null) {
   if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
+  if (signal?.aborted) return;
   const day = utcDay();
   if (await countUp(env.DB, key, day, 1) == null) return; // 今日はもう送った
   let sent = false, res;
   try {
+    if (signal?.aborted) return; // finally で印を消す
     res = await fetch('https://api.resend.com/emails', {
+      ...(signal ? { signal } : {}),
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -335,6 +341,8 @@ async function sendAlert(env, log, key, subject, lines, redact = false) {
     // HTTP エラーだけでなく、fetch 自体が通信例外で終わったときも次回に再試行できるよう戻す。
     if (!sent) await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
   }
+  // 成功の本文は使わないので取り消す（本文が止まっても通信を残さない。送った印はそのまま）
+  if (res && sent) await res.body?.cancel().catch(() => {});
   // エラー本文の受信が止まっても再試行を妨げないよう、印を解除してから本文を読む。
   if (res && !sent) {
     if (redact) { log('alert', 'mail failed', res.status); await res.body?.cancel().catch(() => {}); }
@@ -343,20 +351,35 @@ async function sendAlert(env, log, key, subject, lines, redact = false) {
 }
 
 // 検索は本文を判定にだけ使い、例外・本文をログにも通知にも渡さない。
-function searchUpstream(env, ctx, log, purpose) {
+// signal を渡すと（②の通知）、その signal で止まる通知を待って返す。渡さなければ（③とチャット）いままでどおり
+// ctx.waitUntil に任せて待たない。{ billingFailure: true } は、呼び出し元が課金障害と確かめ済みの印で、
+// 本文を読まずに状態だけで通知する（②は Jev の期限の中で本文を読み、確かめてから呼ぶ）。
+function searchUpstream(env, ctx, log, purpose, signal = null) {
   return Object.assign(Object.create(env), {
     modelUsagePurpose: purpose === '404検索' ? '404' : 'chat',
-    onUpstreamError: async (provider, res) => {
-      let body = '';
-      try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
-      finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
-      if (!isBillingFailure(res.status, body)) return;
+    onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
+      if (!billingFailure) {
+        let body = '';
+        try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
+        finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
+        if (!isBillingFailure(res.status, body)) return;
+      }
       log('site_search', 'upstream_alert', provider, res.status);
-      ctx.waitUntil(sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
+      const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
         `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
-      ], true).catch(() => log('site_search', 'alert_failed')));
+      ], true, signal).catch(() => log('site_search', 'alert_failed'));
+      if (signal) return task;
+      ctx.waitUntil(task);
     },
   });
+}
+
+// ②の通知：要求の切断とは別の期限（SITE_RANK.alert_timeout_ms）で必ず終える。通知全体を1つの Promise として
+// ctx.waitUntil に渡す（期限が来たら signal で中止し、sendAlert の後始末が終わるまで待つ）。通知の成否は②の結果に響かない
+function alertWithDeadline(ctx, log, ms, task) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  ctx.waitUntil(Promise.resolve().then(() => task(ac.signal)).catch(() => log('site_rank', 'alert_failed')).finally(() => clearTimeout(timer)));
 }
 
 async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
@@ -366,12 +389,16 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
     retryable: status === 503,
   }, requestId, cors);
   const started = Date.now();
+  let rank = false; // ②の要求は site_rank の1行だけを残す（③の elapsed_ms に混ぜない）
   try {
     return await searchDeadline(SITE_SEARCH.request_timeout_ms, async signal => {
       if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_json');
+      // 本文の受け付けは②・③とも6秒まで（遅い本文で待ち続けない）。②の残りの時間は、受付からの経過を引いて数える
       let body;
-      try { body = await readJsonLimited(request, SITE_SEARCH.request_bytes); }
-      catch (err) { return fail(err.envelope?.http_status || 400, err.envelope?.code || 'invalid_json'); }
+      try { body = await searchDeadline(SITE_RANK.request_timeout_ms, s => readJsonLimited(request, SITE_SEARCH.request_bytes, s), signal); }
+      catch (err) { return fail(err.envelope?.http_status || 400, err.envelope?.code || (err.searchCode === 'timeout' ? 'request_timeout' : 'invalid_json')); }
+      // mode のある要求は②。'rank' 以外の mode を③として動かさない
+      if (Object.hasOwn(body, 'mode')) { rank = true; return await handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started); }
       if (Object.keys(body).length !== 2 || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
       const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
       if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
@@ -400,8 +427,70 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
         langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: () => {}, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
-  } catch (_) { log('site_search', 'unavailable'); return fail(503, 'search_unavailable'); }
-  finally { log('site_search', 'elapsed_ms', Date.now() - started); }
+  } catch (_) {
+    // ②がここに来るのは切断だけ（②の期限は内側で応答する）。②の記録は handleSiteRank の1行に任せる
+    if (!rank) log('site_search', 'unavailable');
+    return fail(503, 'search_unavailable');
+  }
+  finally { if (!rank) log('site_search', 'elapsed_ms', Date.now() - started); }
+}
+
+// 404 のサイト内検索の②（Jev の検索。assets/site-search-design.md 3章）。
+// 応答はどれも { status, complete, reason, searched, results } の形。回数の上限は 429、要求の誤りは 400、ほかは 200。
+// 検索語・候補の中身・上流の本文はログにも通知にも出さない
+async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started) {
+  const info = { total: null, candidates: null, judged: null, above: 0, indexMs: null, jevMs: null, indexHash: null, candidateHash: null };
+  // 期限・切断で先に応答を返した後も、中の処理は signal の効かない待ち（D1 など）の間は進むので、ログは最初の1回だけ
+  let logged = false;
+  const reply = (httpStatus, r) => {
+    if (!logged) log('site_rank', r.status, r.reason, info.total, info.candidates, info.judged, info.above, info.indexMs, info.jevMs, Date.now() - started,
+      SITE_RANK.revision, info.indexHash, info.candidateHash);
+    logged = true;
+    return jsonResponse({ request_id: requestId, status: r.status, complete: r.complete, reason: r.reason, searched: r.searched, results: r.results },
+      cors, httpStatus, { 'Cache-Control': 'no-store' });
+  };
+  const searched = () => info.total === null ? null : { total: info.total, candidates: info.candidates ?? 0, judged: info.judged ?? 0 };
+  const fail = (reason, httpStatus = 200) => reply(httpStatus, { status: 'failed', complete: false, reason, searched: searched(), results: [] });
+  const raw = body.query;
+  const query = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() : '';
+  // いまは scope 'site' だけ（日刊・tools・game は Phase 3）。絞り込み（filters）も日刊用なので受け付けない
+  if (Object.keys(body).some(k => !['query', 'locale', 'mode', 'scope'].includes(k)) || body.mode !== 'rank' || body.scope !== 'site'
+    || !['ja', 'en'].includes(body.locale) || typeof raw !== 'string' || Array.from(raw).length > SITE_RANK.query_max_chars || !query
+    || new URL(request.url).search) return fail('invalid_request', 400);
+  if (env.SITE_RANK_ENABLED !== 'true') return fail('disabled');
+  if (!env.DB || !env[SITE_RANK.key]) return fail('unavailable');
+  try {
+    return await searchDeadline(Math.max(1, SITE_RANK.request_timeout_ms - (Date.now() - started)), async s => {
+      // signal を受け取らない待ち（ハッシュ・D1）の後で止まっていたら、回数も Jev も使わずに抜ける
+      const stopped = () => { if (s.aborted) throw searchFailure('cancelled'); };
+      const indexStarted = Date.now();
+      let snapshot;
+      try { snapshot = await getSiteSnapshot(ctx, s); } catch (e) { if (e.searchCode === 'cancelled') throw e; return fail('index_unavailable'); }
+      info.indexMs = Date.now() - indexStarted;
+      [info.indexHash, info.candidateHash] = await Promise.all([snapshotHash(snapshot), rankCandidateHash(snapshot)]);
+      stopped();
+      if (!snapshot.rankReady) return fail('index_unavailable');
+      // 回数は IP → 全体の順。IP で断った要求は全体を進めない。キャッシュから返すときも数える（キャッシュで上限を避けられない）
+      const day = utcDay(), ip = requestIP(request);
+      if (await countUp(env.DB, 'rank:' + ip, day, SITE_RANK.daily_limit) == null) return fail('rate_limited', 429);
+      stopped();
+      if (await countUp(env.DB, 'rank:global', day, SITE_RANK.global_daily_limit) == null) {
+        alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms, sig => sendAlert(env, log, 'alert:site-rank-global', '[MAGI] サイト内検索（Jev）の本日の全体上限に達しました', [
+          `UTC日付: ${day}`, `全体上限: ${SITE_RANK.global_daily_limit}`,
+        ], true, sig));
+        return fail('rate_limited', 429);
+      }
+      stopped();
+      info.total = rankTargets(snapshot).length;
+      // 課金障害と確かめた失敗だけ通知する。通知は要求の切断とは別の期限で終え、検索の結果と速さに響かせない
+      const onBilling = status => alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms,
+        sig => searchUpstream(env, ctx, log, 'サイト内検索', sig).onUpstreamError('typesafe', { status }, { billingFailure: true }));
+      const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling, progress: info });
+      Object.assign(info, { candidates: r.searched?.candidates ?? null, judged: r.searched?.judged ?? null, above: r.above, jevMs: r.jevMs });
+      if (r.cached) info.jevMs = null;
+      return reply(200, r);
+    }, signal);
+  } catch (e) { return fail(e.searchCode === 'timeout' ? 'timeout' : 'unavailable'); }
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。

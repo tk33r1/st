@@ -103,7 +103,7 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 
 **切断を知るための設定**：Cloudflare Workers の `request.signal` は、互換性フラグ `enable_request_signal` を付けたときだけ、利用者の切断で中止になる（[Cloudflare の変更履歴](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)）。いまの magi2 の `wrangler.toml` にはこのフラグが無いので、③の `searchDeadline(…, request.signal)` も、本番では切断で止まっていない（手元の Node の検証は `Request` の作りが違うので通る）。②の「切断で索引の取得・Jev・本文の読み取りを止める」（PRD 5章・7.4）を成り立たせるため、`compatibility_flags = ["enable_request_signal"]` を足す。
 - チャットはストリームの取り消しでも止めているので、フラグを足すと、切断で止まるのが早くなるだけで、動きは変わらない。③は切断で討議を止めるようになる（もともとの設計どおり）。
-- 確かめ方：`npx wrangler dev`（手元の workerd はフラグを反映する）で②・③を送り、応答の前に接続を切って、Jev・各社への通信が止まることをログで見る（9章の3）。
+- 確かめ方：手元の `wrangler dev` では、フラグがあっても切断が `request.signal` に伝わらない（2026-10-06、wrangler 4.147.0。手元の中継が接続を持ち続けるため）。そのため本番で確かめる：デプロイの後、`wrangler tail` を見ながら 404 の③を送り、数秒でキャンセルする。`site_search` の `elapsed_ms` がキャンセルまでの時間で終わり、各社への呼び出しが続かないこと（9章の3）。
 
 ### 3.4 設定（`personas.js` の `SITE_RANK`）
 
@@ -506,7 +506,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | --- | --- | --- |
 | 1 | 6.6 のイベントを 404 に足して出す（Phase 0） | GA4 で `count` が取れている。2週間ほど取る |
 | 2 | 索引の追加項目（4章）。Worker は知らない項目を読み捨てる | `test-site-search-index.py`、`bash build.sh` |
-| 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false。`enable_request_signal` を足す） | `test-magi2.mjs`、`node --check`、`wrangler dev` で切断したときに上流の通信が止まる（3.3）。本番で `mode: 'rank'` が `disabled` を返し、③とチャットはいままで通り答える |
+| 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false。`enable_request_signal` を足す） | `test-magi2.mjs`、`node --check`、本番で③をキャンセルしたときに上流の通信が止まる（3.3。`wrangler tail` で見る）。本番で `mode: 'rank'` が `disabled` を返し、③とチャットはいままで通り答える |
 | 4 | 評価（10.4）で閾値と `revision` を決め、記録を `site-search-evaluation.md` に書く。応答時間の測定の前に、本番の `SITE_RANK_ENABLED` を true にする（画面は false のまま。条件を満たさなければ false に戻す） | PRD 7.1 のリリースの条件。本番に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`） |
 | 5 | `update-modified.py` のトレーラー対応を先に出し、そのあと 8.4 の1・2と 8.5・8.6 を Pages に出す | 再生成の後に `sitemap.yml` が号の `dateModified` を書き換えない。10.3 の URL の検証（本番） |
 | 6 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 1 から2週間以上たっている（PRD 8.1）。10.3 の画面の検証、PRD 7.4 |
@@ -587,6 +587,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
   - 9章の4で、画面（404 の `RANK_ENABLED`）は false のまま、本番の Worker の `SITE_RANK_ENABLED` だけを true にする。画面からは呼ばれないので、利用者には見えない。費用は全体の上限（3,000回/日）で抑えられる。
   - Playwright の Chromium で `https://tk.st/` の存在しないパス（404 のページ。Origin が `https://tk.st` になる）を開き、`page.evaluate` で `assets/site-search.js` と同じ `fetch`（`Content-Type: application/json`、`credentials: 'omit'`、`referrerPolicy: 'no-referrer'`）を送る。`fetch` の直前から `res.json()` を読み終えるまでを `performance.now()` で測る（プリフライトも含む）。
   - 解析を汚さないよう、開く前に `localStorage` の `st-analytics` を `off` にし、解析の送り先は `route.abort()` で止める。
+  - 測定の前に `--probe` で、評価セットに無い決まった1問を同じ経路で送り、②が有効か（`disabled` でないか）とブラウザから届くかだけを確かめる。評価セットの検索語で試すと、本番の測定が10分のキャッシュに当たる。②の形でない応答（②の無い Worker・認可の失敗）が返ったら、測定は止まる。
   - 1回の測定は50件以内で、Worker の検査・正規化後の `(scope, locale, query, filters)` が同じ要求を重複させない。対象は `final`（50件を超えたら、各種類・日英・答えの無いものの割合を保って50件を事前に選び、IDを記録する）。結果を見てから対象を選び直さない。
   - 2回目は、1回目の終了からキャッシュ期限（10分）を超えた UTC の別の日に測る。`revision`・Worker のコード・ブラウザの版・測定地点・変換後の全対象（`candidate_hash`）は2回とも同じにする。日刊の号だけが増えて `index_hash` が変わる場合は、②の全対象のハッシュが同じなら測定を続けてよい。対象や設定が変わったら2回ともやり直す。キャッシュのヒット・回数の上限による失敗を正常な検索の速さとして採用しない。
   - 測る場所は手元（日本）。Phase 0 の Jev 単体の測定と同じ。
