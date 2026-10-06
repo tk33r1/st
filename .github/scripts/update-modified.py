@@ -11,6 +11,10 @@
 - **bot 自身のコミットは無視して日付を決める。** これがこのスクリプトの肝で、
   ワークフローが自分の push で再実行されても同じ値を書くだけ（＝差分なし）になり、
   commit が空振りしてループが止まる。無視しないと bot → bot → … と無限に回る。
+- **本文を変えない一括の作り直しも無視する。** コミットメッセージの末尾に git のトレーラー
+  `Date-Sync: skip` を付けたコミットは、bot のコミットと同じく日付の候補にしない
+  （テンプレートだけを直して日刊の全号を作り直すときなど。付けないと全ページの dateModified が
+  その日に揃い、本文が変わったように見える）。
 
 差分が無ければ何も書かないので、ワークフロー側の `git commit || exit 0` がそのまま
 終了条件として機能する。
@@ -47,11 +51,13 @@ def tracked_html():
 
 
 def last_human_commit(path):
-    """bot のコミットを飛ばして、そのファイルを最後に触った日時を JST で返す。"""
-    log = git('log', '--format=%cI\t%ae\t%ce', '--', path)
+    """bot のコミットと `Date-Sync: skip` のコミットを飛ばして、そのファイルを最後に触った日時を JST で返す。"""
+    log = git('log', '--format=%cI%x09%ae%x09%ce%x09%(trailers:key=Date-Sync,valueonly,separator=%x2C)', '--', path)
     for line in log.splitlines():
-        iso, author, committer = line.split('\t')
+        iso, author, committer, date_sync = line.split('\t')
         if author in BOT_EMAILS or committer in BOT_EMAILS:
+            continue
+        if 'skip' in (v.strip().lower() for v in date_sync.split(',')):
             continue
         return datetime.fromisoformat(iso).astimezone(JST).isoformat()
     return None  # 未コミット、または bot のコミットしか無い
