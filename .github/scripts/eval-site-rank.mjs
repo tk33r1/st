@@ -258,12 +258,13 @@ export async function accuracy(magi) {
         let slot; // 1件ずつ順に呼ぶので、いまの問い合わせの記録は1つ
         magi.hooks.fetch = async (url, opts) => {
           assert.equal(url, magi.SITE_RANK.endpoint);
-          const started = performance.now();
+          // 呼び出した時点の記録に書く（期限で打ち切った呼び出しの後始末が遅れて届いても、次の問い合わせに混ざらない）
+          const mine = slot, started = performance.now();
           try {
             const res = await fetch(url, opts), text = await res.text();
-            Object.assign(slot, { status: res.status, text, ms: performance.now() - started });
+            Object.assign(mine, { status: res.status, text, ms: performance.now() - started });
             return new Response(text, { status: res.status });
-          } catch (e) { slot.error = e && e.name; slot.ms = performance.now() - started; throw e; }
+          } catch (e) { mine.error = e && e.name; mine.ms = performance.now() - started; throw e; }
         };
         magi.clearRankCache();
         // 1件ずつ順に呼ぶ。並べると Jev の毎秒のトークンの上限（JEV.md。1回 約1.2万トークン）に当たり、本番では起きない
@@ -274,12 +275,13 @@ export async function accuracy(magi) {
           const r = await magi.rankSearch({ env, snapshot: local.snapshot, query: q.query, locale: q.locale, signal,
             onBilling: status => { billing = status; } });
           firsts.push({ q, slot, r });
+          if (billing) return null; // キーの失効か残高切れ。続けても失敗が増えるだけなので、次を呼ばない
         }
-        if (billing) fail(`Jev が HTTP ${billing} を返した（キーの失効か残高切れ）。測定を止める`);
         const out = [];
         for (const { q, slot, r } of firsts) {
           // 答えが読めなかった呼び出し（時間切れ・HTTP エラー・JSON でない 200 など）は、その問い合わせだけを失敗として分母に残す
-          const answers = await replayAnswers(magi, env, slot, signal);
+          // Worker が時間切れとした呼び出しは、期限の後に本文が届いていても失敗のまま（利用者には出ない）
+          const answers = r.reason === 'timeout' ? null : await replayAnswers(magi, env, slot, signal);
           if (answers) { const model = JSON.parse(slot.text).model; if (typeof model === 'string') models.add(model); }
           const probs = answers && Object.fromEntries(local.targets.map((p, i) => [p.id, magi.rankProbability(answers[magi.rankId(i)])]));
           const byThreshold = {};
@@ -295,6 +297,11 @@ export async function accuracy(magi) {
         }
         return out;
       });
+      if (!rows) {
+        // 途中で止めても、それまでに測った回・方式は生の記録に残す（まとめは作らない）
+        Object.assign(record, { aborted: `Jev HTTP ${billing}`, models: [...models], queries, finished: new Date().toISOString() });
+        fail(`Jev が HTTP ${billing} を返した（キーの失効か残高切れ）。測定を止めた。途中までの記録 ${writeRaw('accuracy', record)}`);
+      }
       record.measurements.push({ run, method: method.name, rows });
       console.error(`run ${run} ${method.name}: ${rows.length}件`);
     }
@@ -368,15 +375,16 @@ export function accuracyReport(record, file) {
     lines.push(`| ${m.run} | ${m.method} | ${m.rows.filter(r => r.answered && r.judged < r.candidates).length} | ${m.rows.filter(r => !r.answered).length} | ${percentile(ms, 0.5)}ms | ${percentile(ms, 0.95)}ms |`);
   }
   if (runs >= 2) {
-    // 表示ページの増減（片方の回だけに出たページがある）は集合で比べ、同じページの順位だけの入れ替わりは別に数える
-    lines.push('', '### 2回で結果の変わった問い合わせ', '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
+    // 表示ページの増減（どれかの回だけに出たページがある）は集合で比べ、同じページの順位だけの入れ替わりは別に数える。全部の回を比べる
+    lines.push('', `### ${runs}回で結果の変わった問い合わせ`, '', '| 方式 | 閾値 | 表示ページの増減 | ID | 順位だけの変化 | ID |', '| --- | ---: | ---: | --- | ---: | --- |');
     const asSet = ids => ids.slice().sort().join(',');
+    const kinds = (list, key) => new Set(list.map(key)).size;
     for (const method of methods) for (const t of thresholds) {
       const changed = [], reordered = [];
       for (const q of queries) {
-        const [a, b] = [1, 2].map(run => rowsOf(method, run).get(q.id).byThreshold[t].ids);
-        if (asSet(a) !== asSet(b)) changed.push(q.id);
-        else if (a.join(',') !== b.join(',')) reordered.push(q.id);
+        const byRun = Array.from({ length: runs }, (_, i) => rowsOf(method, i + 1).get(q.id).byThreshold[t].ids);
+        if (kinds(byRun, asSet) > 1) changed.push(q.id);
+        else if (kinds(byRun, ids => ids.join(',')) > 1) reordered.push(q.id);
       }
       lines.push(`| ${method} | ${t} | ${changed.length} | ${changed.join(' ')} | ${reordered.length} | ${reordered.join(' ')} |`);
     }
@@ -450,18 +458,20 @@ export async function probe() {
 export async function browser(magi) {
   const set = option('--set', 'final');
   if (!SETS.includes(set)) fail('--set は tune か final');
-  const production = await snapshotOf(magi, await productionIndex());
-  const { data } = loadQueries(magi, production.targets, true);
-  const queries = data.queries.filter(q => q.set === set);
-  assert.ok(queries.length <= BROWSER_MAX);
-  // 2回目は、1回目と UTC の別の日に測る（キャッシュの期限と、IP ごとの1日の回数を跨がないため。設計書 10.4）
+  // 2回目は、1回目と UTC の別の日に測る（キャッシュの期限と、IP ごとの1日の回数を跨がないため。設計書 10.4）。
+  // 同じ日に続けると、IP ごとの1日の回数の上限で後半が 429 になり、精度が下がって見える（10分以内ならキャッシュにも当たる）。
+  // 通信を始める前に確かめる
   const today = new Date().toISOString().slice(0, 10);
   let earlier = [];
   try { earlier = readdirSync(join(root, RAW_DIR)).filter(f => f.startsWith('site-rank-browser-')); } catch (_) {}
   for (const f of earlier) {
     const prev = JSON.parse(read(`${RAW_DIR}/${f}`));
-    if (prev.started.slice(0, 10) === today && prev.set === set) console.error(`注意: 同じ UTC の日（${today}）に測った記録がある（${f}）。2回目は別の日に測る`);
+    if (prev.started.slice(0, 10) === today && prev.set === set) fail(`同じ UTC の日（${today}）に測った記録がある（${f}）。2回目は別の日に測る（測り直すなら、その記録を退けてから）`);
   }
+  const production = await snapshotOf(magi, await productionIndex());
+  const { data } = loadQueries(magi, production.targets, true);
+  const queries = data.queries.filter(q => q.set === set);
+  assert.ok(queries.length <= BROWSER_MAX);
   const page = await openRankPage();
   const record = { kind: 'browser', ...gitState(), set, started: new Date().toISOString(), browser: page.version,
     revision: magi.SITE_RANK.revision, index_hash: production.indexHash, candidate_hash: production.candidateHash, frozen: data.frozen, annotator: data.annotator,
@@ -497,8 +507,8 @@ export async function browser(magi) {
 }
 
 // ブラウザの測定を Worker のログと突き合わせる（設計書 10.4「時間の記録」）。ログは測定の間に
-// `npx wrangler tail tk-st-magi2-api --format json > <ファイル>` で取ったもの。request_id ごとに、Jev を呼んだか（jev_ms が
-// null ならキャッシュ）、revision・index_hash・candidate_hash が測定と同じか、判定の欠けが無いかを見る
+// `npx wrangler tail tk-st-magi2-api --format json > <ファイル>` で取ったもの。request_id ごとに、revision・index_hash・
+// candidate_hash・状態が測定と同じか、Jev を呼んだか（キャッシュでないか）、失敗の種類、判定の欠けを見る
 export function logsReport(tailText, record, file) {
   const BACKSLASH = String.fromCodePoint(92), QUOTE = String.fromCodePoint(34);
   // wrangler tail の JSON は1件ずつ整形して続けて出るので、括弧の対応で1件ずつ切り出す
@@ -513,25 +523,35 @@ export function logsReport(tailText, record, file) {
   }
   const lines = new Map();
   for (const e of events) for (const l of (e.logs || [])) if (Array.isArray(l.message) && l.message[1] === 'site_rank') lines.set(l.message[0], l.message);
-  const missing = [], mismatch = [], cached = [], jev = [], elapsed = [];
+  // jev_ms が null なのは、キャッシュから返した検索（results・no_results）と、Jev を呼ぶ前に終わった失敗
+  // （回数の上限・索引の失敗・要求全体の時間切れ・切断など）。前者だけをキャッシュと数える
+  const missing = [], mismatch = [], cached = [], beforeJev = [], afterJev = [], partial = [], jev = [], elapsed = [];
   let matched = 0;
   for (const r of record.rows) {
     const m = lines.get(r.request_id);
     if (!m) { missing.push(r.id); continue; }
-    // site_rank の行の並び（src/index.js の handleSiteRank の log）
-    const [, , status, , , candidates, judged, , , jevMs, elapsedMs, revision, indexHash, candidateHash] = m;
-    if (jevMs === null) { cached.push(r.id); continue; }
-    jev.push(jevMs); elapsed.push(elapsedMs);
-    if (revision === record.revision && indexHash === record.index_hash && candidateHash === record.candidate_hash
-      && status === r.worker_status && judged === candidates) matched++;
-    else mismatch.push(r.id);
+    // site_rank の行の並び（src/index.js の handleSiteRank の log）。ハッシュは索引を読めなかった要求では null
+    const [, , status, reason, , candidates, judged, , , jevMs, elapsedMs, revision, indexHash, candidateHash] = m;
+    if (revision !== record.revision || status !== r.worker_status || (indexHash !== null && indexHash !== record.index_hash)
+      || (candidateHash !== null && candidateHash !== record.candidate_hash)) mismatch.push(r.id);
+    else if (jevMs === null) (status === 'failed' ? beforeJev : cached).push(status === 'failed' ? `${r.id}（${reason}）` : r.id);
+    else {
+      jev.push(jevMs); elapsed.push(elapsedMs);
+      if (status === 'failed') afterJev.push(`${r.id}（${reason}）`);
+      else if (judged < candidates) partial.push(r.id);
+      else matched++;
+    }
   }
   return [`## ブラウザの測定と Worker のログの突き合わせ（${file}）`, '',
-    `| 測定 | ログと一致 | ログが無い | キャッシュ（jev_ms が null） | 不一致（revision・ハッシュ・状態・判定の欠け） |`, '| ---: | ---: | ---: | ---: | ---: |',
-    `| ${record.rows.length} | ${matched} | ${missing.length} | ${cached.length} | ${mismatch.length} |`, '',
-    `- Worker の jev_ms：p50 ${percentile(jev, 0.5)}ms、p95 ${percentile(jev, 0.95)}ms。Worker の elapsed_ms：p50 ${percentile(elapsed, 0.5)}ms、p95 ${percentile(elapsed, 0.95)}ms`,
+    '| 測定 | Jev を呼んだ正常な検索 | ログが無い | キャッシュ | Jev を呼ぶ前の失敗 | Jev を呼んだ後の失敗 | 判定の欠け | 不一致（revision・ハッシュ・状態） |',
+    '| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    `| ${record.rows.length} | ${matched} | ${missing.length} | ${cached.length} | ${beforeJev.length} | ${afterJev.length} | ${partial.length} | ${mismatch.length} |`, '',
+    `- Worker の jev_ms：p50 ${percentile(jev, 0.5)}ms、p95 ${percentile(jev, 0.95)}ms。Worker の elapsed_ms（Jev を呼んだ要求）：p50 ${percentile(elapsed, 0.5)}ms、p95 ${percentile(elapsed, 0.95)}ms`,
     ...(missing.length ? [`- ログが無い：${missing.join(' ')}（wrangler tail の取りこぼし。キャッシュでないことはログでは確かめられない）`] : []),
     ...(cached.length ? [`- キャッシュ：${cached.join(' ')}（この回は条件を整えて測り直す）`] : []),
+    ...(beforeJev.length ? [`- Jev を呼ぶ前の失敗：${beforeJev.join(' ')}（rate_limited なら同じ日に測り過ぎ。測り直す）`] : []),
+    ...(afterJev.length ? [`- Jev を呼んだ後の失敗：${afterJev.join(' ')}`] : []),
+    ...(partial.length ? [`- 判定の欠け：${partial.join(' ')}`] : []),
     ...(mismatch.length ? [`- 不一致：${mismatch.join(' ')}（索引の反映や設定の食い違い。揃えて測り直す）`] : []),
   ].join('\n');
 }

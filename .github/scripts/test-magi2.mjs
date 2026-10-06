@@ -347,10 +347,10 @@ test('②：要求全体の期限では、送った候補の数を返し、ロ�
   assert.equal(data.reason, 'timeout'); assert.equal(w.jevCalls.length, 1);
   assert.equal(rankRows(w).find(([k]) => k.startsWith('rank:global'))[1], 1);
   assert.equal(logs.filter(l => l[1] === 'site_rank').length, 1); assert.equal(logs.filter(l => l[1] === 'site_search').length, 0);
-  // 利用者の切断でも、③の行（site_search）を残さない
-  const cut = rankWorker((p, o) => new Promise((_, reject) => o.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+  // 利用者の切断でも、③の行（site_search）を残さない。切断は Jev を呼んだところで起こす（時間に頼らない）
+  const ac = new AbortController();
+  const cut = rankWorker(() => { ac.abort(); return Promise.reject(new DOMException('aborted', 'AbortError')); });
   const cutLogs = []; cut.ctx.console.log = (...values) => cutLogs.push(values);
-  const ac = new AbortController(); setTimeout(() => ac.abort(), 30);
   await cut.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search', { method: 'POST', signal: ac.signal,
     headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.1' },
     body: JSON.stringify({ query: 'PDFをまとめたい', locale: 'ja', mode: 'rank', scope: 'site' }) }), cut.env, { waitUntil(p) { cut.waits.push(p); } });
