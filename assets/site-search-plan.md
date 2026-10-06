@@ -61,7 +61,7 @@
 | T2.1 | `site-search.js` の下ごしらえ：`sha256`・`isBillingFailure`・`QUOTA_RE` を移し、点数付けを `scoreItems` に切り出す | 3.6・3.13 | Claude | S | 動きは変えない。いまの `test-magi2.mjs` がそのまま通る |
 | T2.2 | 索引のスナップショット：本文のハッシュ、`makeSitePages` の追加項目、`cache.raw`・`rankReady`・`candidate_hash` | 3.5・3.11 | Claude | M | 不完全な索引で `rankReady` が false。③の寛容な検査は変わらない |
 | T2.3 | `personas.js` に `SITE_RANK`（日英の問いを両方持つ） | 3.4 | Claude | S | モデル ID の直書きが無い（`ai_models.py check`） |
-| T2.4 | `site-rank.js`：変換・候補・要求の組み立て・判定・結果・キャッシュ（scope は `site` だけ） | 3.6〜3.10 | Claude | L | 10.1 の判定・変換・キャッシュ・URL の検証が通る |
+| T2.4 | `site-rank.js`：変換・候補・要求の組み立て・判定・結果・キャッシュ（scope は `site` だけ）。`test-magi2.mjs` の読み込む一覧に足す（つなぐ順は設計書 3.13） | 3.6〜3.10・3.13 | Claude | L | 10.1 の判定・変換・キャッシュ・URL の検証が通る |
 | T2.5 | `index.js`：入口の振り分け、本文読み取りの期限と中止、`handleSiteRank`、回数・ログ・応答の形 | 3.1〜3.3・3.11・3.12 | Claude | M | 10.1 の入力・回数・期限の検証が通る。`mode` なしの③は、いまの検証がそのまま通る |
 | T2.6 | 通知に `signal` と期限：`searchUpstream`・`sendAlert` に省略できる引数を足す | 3.8 | Claude | M | 10.1 の通知の検証が通る。引数を省略した③・チャットの通知は変わらない |
 | T2.7 | `wrangler.toml`：`SITE_RANK_ENABLED = "false"` と `compatibility_flags = ["enable_request_signal"]`（本番と `env.eval`）。`workers/magi2/README.md` にフラグの理由を書く（外すと②・③・通知が切断で止まらない） | 3.3・12章 | Claude | S | `npx wrangler deploy --dry-run --config magi2/wrangler.toml` が通る |
@@ -95,7 +95,7 @@
 | T4.5 | トップページ（`index.html`。ページの中に書く）と `magi-app/www/app.js` の日刊リンクの検査 | 8.4 の1 | Claude | S | `test-magi2.mjs` の画面の検査が通る。トップページに外部スクリプトを足していない |
 | T4.6 | `analytics.js`：Ahrefs に `data-page-location` | 8.5 | Claude | S | Ahrefs の読み込みの属性に `#` 以降が載らない |
 | T4.7 | `preview-404-ai.py`：日刊リンクの模擬を新しい形に | 10.3 | Claude | S | 模擬の `mock-daily` で新しい形が出る |
-| T4.8 | `test-site-search-ui.mjs` の URL の部分（手元） | 10.3 | Claude | M | 目印の検索語が、外へ出る通信・URL・参照元に無い（手元の見当） |
+| T4.8 | `.github/scripts/package.json`（Playwright を版を固定）と `test-site-search-ui.mjs` の URL の部分（手元）。AGENTS.md の npm を使う場所に足す | 10.3・12章 | Claude | M | 目印の検索語が、外へ出る通信・URL・参照元に無い（手元の見当） |
 | T4.9 | 公開：T4.2〜T4.7 のコミットと、`generate-nitori-daily.py --rebuild`・`generate-retail-tech-daily.py --rebuild` の結果（`Date-Sync: skip` 付きの1コミット）を、**1回の push** で `main` へ | 8.6 | Claude（コミット）→ 本人（push の指示） | S | 下の注を守る。日刊の bot の実行（01:55・02:05 JST）と重ならない時間に出す。`--rebuild` の差分に検索以外の変更が混ざったら別のコミットに分ける（同じ push に入れてよい）。`sitemap.yml` の後も号の `dateModified` が変わらない |
 | T4.10 | 本番の URL の検証（本物の GTM・Ahrefs） | 10.3 | Claude（届かなければ本人） | M | PRD 6.1 の受け入れ条件。GA4 に `view_search_results` が無い。検索語が載る計測があれば、本人が GTM でそのページの計測を止める |
 
@@ -108,7 +108,7 @@
 | T5.1 | `assets/site-search.js`（共通部品） | 5章 | Claude | L | 状態・世代・応答の検査・計測が設計どおり |
 | T5.2 | 404 の画面：検索ボタン、②の欄、Enter とキー操作、③の出し方、①の重複除き、文言、ダイアログ、計測。`RANK_ENABLED` は止めるための定数として持つ | 6章 | Claude | L | `RANK_ENABLED` を false にすると、いまと同じ動きに戻る。`node --check` が通る |
 | T5.3 | `preview-404-ai.py` に②の模擬（遅い・欠け・上限・停止・外部 URL） | 10.3 | Claude | S | 手元で各状態を目で見られる |
-| T5.4 | `test-site-search-ui.mjs` の②の状態・連携・表示 | 10.3 | Claude | M | PRD 3.1 と 7.4 の画面の条件が通る |
+| T5.4 | `test-site-search-ui.mjs` の②の応答の検査・状態・連携・表示 | 10.3 | Claude | M | 外部 URL などを含む応答を描かない。PRD 3.1 と 7.4 の画面の条件が通る |
 | T5.5 | 説明を直す：`AGENTS.md`・`workers/magi2/README.md`・`.github/JEV.md` | 12章 | Claude | S | 送り先・回数・停止が書いてある（`enable_request_signal` は T2.7 で書いた） |
 | T5.6 | 公開：T5.1〜T5.5 を、`RANK_ENABLED` を true にして1回の push で `main` へ | 9章の6 | 本人（指示） | S | 前提（M0 から2週間・M3 の合格・M4）を満たす。本番の `SITE_RANK_ENABLED` が true のまま（T3.7）。本番で②・③が動き、止め方（下記）を確かめてある |
 | T5.7 | 公開後の見守り（1〜2週間） | 8.2（PRD） | 本人＋ Claude | S | GA4 のイベント、Worker のログ（失敗の種類・判定なし）、Jev の費用、全体上限の通知 |

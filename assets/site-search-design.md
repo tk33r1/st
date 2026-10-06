@@ -41,6 +41,8 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 | `.github/site-search/rank-queries.json`（新規） | 評価セット（10.4） | 1 |
 | `.github/scripts/eval-site-rank.mjs`（新規） | 評価のスクリプト（10.4） | 1 |
 | `.github/scripts/ai_models.py` | Jev の smoke に②の問いの形を足す（10.5） | 1 |
+| `.github/scripts/test-site-search-ui.mjs`（新規） | 画面と URL の検証（10.3） | 1・2 |
+| `.github/scripts/package.json`・`package-lock.json`（新規） | Playwright を版を固定して置く（10.3） | 1 |
 | `.github/scripts/daily_engine.py` | head の受け渡し処理、ヘッダーの検索欄、トピックのタグ（8章） | 1 |
 | `job/assets/daily-ui.js` | 受け渡しの受け取り、ヘッダー検索とタグの処理、`q` を URL に書かない（8章） | 1 |
 | `job/<媒体>/index.html`・全号 | `--rebuild` で再生成（8.6） | 1 |
@@ -542,7 +544,15 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 ### 10.3 画面の検証（Playwright）
 
-`.github/scripts/test-site-search-ui.mjs`（新規）。`bash build.sh` の `_site` を手元のサーバーで出し、Worker への通信は Playwright の `route` で応答を差し替える。応答の種類（遅い・欠け・上限・停止など）は `preview-404-ai.py` の模擬の検索語と揃え、目で見る確認にも同じものを使えるようにする。
+`.github/scripts/test-site-search-ui.mjs`（新規）。
+
+- **Playwright の置き場所**：いまはどの `package.json` にも無い。`.github/scripts/package.json` に `playwright` を版を固定して置き、`package-lock.json` もコミットする（`cd .github/scripts && npm ci`）。`eval-site-rank.mjs` のブラウザの測定（10.4）も同じものを使う。
+  - `workers/package.json` には足さない（AGENTS.md の「全 Worker 共通の wrangler だけ」を保ち、`deploy-worker.yml` の `npm ci` を重くしない）。
+  - ブラウザ本体は、手元では `npx playwright install chromium`、Claude Code の環境では入っている Chromium（`PLAYWRIGHT_BROWSERS_PATH`）を使う。
+  - `.github/` は `build.sh` が公開しないので、サイトには出ない。`node_modules/` は `.gitignore` 済み。
+  - AGENTS.md の「npm を使うのは次の3つだけ」に4つ目として書き足す（12章）。
+
+`bash build.sh` の `_site` を手元のサーバーで出し、Worker への通信は Playwright の `route` で応答を差し替える。応答の種類（遅い・欠け・上限・停止など）は `preview-404-ai.py` の模擬の検索語と揃え、目で見る確認にも同じものを使えるようにする。
 
 - **応答の検査**：`url` が `//example.com/`・`https://example.com/`・`/\example.com`・クエリやフラグメント付き・別媒体の日刊の行を含む応答は、全体を `failed` にして描かない。
 - **②の状態**（PRD 3.1）：応答を遅らせて A → B、送信後の入力・言語の変更、A → B → A、②から③への切り替え、③の実行中の入力の変更、空入力・変換中の Enter。どれでも古い応答が描かれない。
@@ -607,6 +617,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 - `AGENTS.md`：magi2 の人格設定の節（404 のサイト内検索の流れに②と `SITE_RANK` を足す）、Workers 一覧の magi2 の secret（`MAGI_TYPESAFE_API_KEY` の用途に②）、Jev が4社目の送り先であることの説明。
 - `workers/magi2/README.md`：`/magi2/site-search` の `mode: 'rank'`、回数、停止の仕方。切断の検知に `enable_request_signal` が要ること（外すと②・③・通知が切断で止まらない）。
+- `AGENTS.md` の「ビルドとテスト」：npm を使う場所に `.github/scripts/`（Playwright。10.3）を足す。
 - `.github/JEV.md`：利用箇所の表の「サイト内検索（計画中）」を、コードの場所（`workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`）に直す。
 
 ## 13. 決めたこと（2026-10-06）
@@ -616,5 +627,6 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 3. **上限の HTTP の状態**：③に揃えて 429 にする（3.12）。
 4. **応答時間の測り方**：本物のブラウザから本番の Worker へ送って測る。そのため、404 に出す前から本番の Worker の②を有効にする期間がある（画面からは呼ばれない。費用は全体の上限で抑える）。評価用の入口の認証は緩めない（10.4・9章の4）。
 5. **公開の順番**：404 の公開（9章の6）は、アプリの更新と Worker の日刊リンクの切り替え（9章の7・8）を待たない。検索語の漏れは 9章の5 で止まっている（9章）。
+6. **Playwright の置き場所**：`.github/scripts/package.json` に版を固定して置き、AGENTS.md の npm を使う場所に足す（10.3）。
 
 未決事項はいまのところ無い。
