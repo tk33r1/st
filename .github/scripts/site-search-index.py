@@ -244,7 +244,8 @@ def main():
     result = generate(root, paths)
     output = options.output or root / 'data/site-search.json'
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    # バイト列で書いて改行を LF に固定する（Windows で作り直しても全行の差分にならず、本番と同じ index_hash になる）
+    output.write_bytes((json.dumps(result, ensure_ascii=False, indent=2) + '\n').encode('utf-8'))
     print(f'site-search: {len(result["pages"])} pages → {output}')
 
 
