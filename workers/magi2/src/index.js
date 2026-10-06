@@ -341,6 +341,8 @@ async function sendAlert(env, log, key, subject, lines, redact = false, signal =
     // HTTP エラーだけでなく、fetch 自体が通信例外で終わったときも次回に再試行できるよう戻す。
     if (!sent) await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
   }
+  // 成功の本文は使わないので取り消す（本文が止まっても通信を残さない。送った印はそのまま）
+  if (res && sent) await res.body?.cancel().catch(() => {});
   // エラー本文の受信が止まっても再試行を妨げないよう、印を解除してから本文を読む。
   if (res && !sent) {
     if (redact) { log('alert', 'mail failed', res.status); await res.body?.cancel().catch(() => {}); }
@@ -425,7 +427,11 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
         langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: () => {}, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
-  } catch (_) { log('site_search', 'unavailable'); return fail(503, 'search_unavailable'); }
+  } catch (_) {
+    // ②がここに来るのは切断だけ（②の期限は内側で応答する）。②の記録は handleSiteRank の1行に任せる
+    if (!rank) log('site_search', 'unavailable');
+    return fail(503, 'search_unavailable');
+  }
   finally { if (!rank) log('site_search', 'elapsed_ms', Date.now() - started); }
 }
 

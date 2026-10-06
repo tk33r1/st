@@ -223,6 +223,21 @@ test('通知は signal で止まり、止めたら Resend を呼ばずに印を�
   assert.equal(read, false); assert.equal(resend.length, 2); assert.equal(db.rows.size, 0);
 });
 
+test('通知の成功応答の本文が止まっても取り消して終え、送った印は残す', { timeout: 2000 }, async () => {
+  let cancelled = false;
+  const w = worker(undefined, url => {
+    if (url !== 'https://api.resend.com/emails') return;
+    return new Response(new ReadableStream({
+      start(c) { c.enqueue(encode('{"id"')); }, pull() { return new Promise(() => {}); }, cancel() { cancelled = true; },
+    }), { status: 200 });
+  });
+  Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  const waits = [];
+  w.ctx.alertWithDeadline({ waitUntil(p) { waits.push(p); } }, () => {}, 1000, signal => w.ctx.sendAlert(w.env, () => {}, 'alert:ok', 's', ['l'], true, signal));
+  await Promise.all(waits);
+  assert.equal(cancelled, true); assert.equal(w.env.DB.rows.size, 1);
+});
+
 // --- 404 のサイト内検索の②（Jev。assets/site-search-design.md 10.1）---
 const JEV = 'https://api.typesafe.ai/v1/systemone';
 function rankWorker(jev, extra = null) {
@@ -332,6 +347,15 @@ test('②：要求全体の期限では、送った候補の数を返し、ロ�
   assert.equal(data.reason, 'timeout'); assert.equal(w.jevCalls.length, 1);
   assert.equal(rankRows(w).find(([k]) => k.startsWith('rank:global'))[1], 1);
   assert.equal(logs.filter(l => l[1] === 'site_rank').length, 1); assert.equal(logs.filter(l => l[1] === 'site_search').length, 0);
+  // 利用者の切断でも、③の行（site_search）を残さない
+  const cut = rankWorker((p, o) => new Promise((_, reject) => o.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+  const cutLogs = []; cut.ctx.console.log = (...values) => cutLogs.push(values);
+  const ac = new AbortController(); setTimeout(() => ac.abort(), 30);
+  await cut.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search', { method: 'POST', signal: ac.signal,
+    headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.1' },
+    body: JSON.stringify({ query: 'PDFをまとめたい', locale: 'ja', mode: 'rank', scope: 'site' }) }), cut.env, { waitUntil(p) { cut.waits.push(p); } });
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(cutLogs.filter(l => l[1] === 'site_rank').length, 1); assert.equal(cutLogs.filter(l => l[1] === 'site_search').length, 0);
 });
 
 test('②：回数はIP→全体の順で、IPで断ると全体を進めず、キャッシュでも数える。③とは別', async () => {
@@ -376,6 +400,23 @@ test('②：課金障害だけを通知し、検索語と上流の本文は応�
     if (mailed) assert.ok(w.mails[0].text.includes('サイト内検索'));
     const line = logs.find(l => l[1] === 'site_rank');
     assert.equal(line[11], w.ctx.rankConfig.revision); assert.match(line[12], /^[0-9a-f]{64}$/); assert.match(line[13], /^[0-9a-f]{64}$/);
+  }
+});
+
+test('②：429の本文は先頭4KiB（バイト）だけで課金障害を判定する', async () => {
+  const max = 4096, pad = n => 'あ'.repeat(n); // 「あ」は3バイト
+  // 4,200バイト目の印は読まない。4KiBの内側なら日本語の後ろでも拾う。チャンクの境目で文字が割れても読める
+  for (const [text, mailed, chunked] of [[pad(1400) + 'insufficient_quota', false], [pad(1300) + 'insufficient_quota', true],
+    [pad(1300) + 'insufficient_quota', true, true]]) {
+    const bytes = encode(text);
+    assert.equal(bytes.length > max, !mailed);
+    const w = rankWorker(() => new Response(chunked ? new ReadableStream({
+      start(c) { for (let i = 0; i < bytes.length; i += 1000) c.enqueue(bytes.subarray(i, i + 1000)); c.close(); },
+    }) : text, { status: 429 }));
+    Object.assign(w.env, { RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+    assert.equal(JSON.parse(await (await rankRequest(w)).text()).reason, 'unavailable');
+    await Promise.all(w.waits);
+    assert.equal(w.mails.length, mailed ? 1 : 0);
   }
 });
 

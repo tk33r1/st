@@ -72,7 +72,8 @@ export function rankProbability(answer) {
     && Number.isFinite(answer.noul) && answer.noul >= 0 && answer.noul <= 1 ? answer.noul : null;
 }
 
-// 本文を上限まで読む。中止されたら読み取り中の reader を止める（res.text() を期限で囲むだけでは止まらない）
+// 本文を上限のバイト数まで読む。中止されたら読み取り中の reader を止める（res.text() を期限で囲むだけでは止まらない）。
+// 上限を超えるチャンクは残りのバイト数で切ってからデコードする（上限で切れた文字の途中は捨てる）
 async function rankReadLimited(res, maxBytes, signal) {
   if (!res.body) return '';
   const reader = res.body.getReader(), dec = new TextDecoder();
@@ -83,11 +84,12 @@ async function rankReadLimited(res, maxBytes, signal) {
     while (size < maxBytes) {
       const { done, value } = await reader.read();
       if (done) break;
-      size += value.byteLength;
-      text += dec.decode(value, { stream: true });
+      const chunk = value.byteLength > maxBytes - size ? value.subarray(0, maxBytes - size) : value;
+      size += chunk.byteLength;
+      text += dec.decode(chunk, { stream: true });
     }
     await reader.cancel().catch(() => {});
-    return text.slice(0, maxBytes);
+    return text;
   } finally { signal.removeEventListener('abort', onAbort); reader.releaseLock(); }
 }
 
