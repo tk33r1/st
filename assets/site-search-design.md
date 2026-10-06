@@ -1,6 +1,6 @@
 # サイト内検索の刷新 設計書
 
-作成中（2026-10-06）。未実装。要件は [site-search.md](site-search.md)（確定）。
+作成中（2026-10-06）。未実装。要件は [site-search.md](site-search.md)（確定）、作業の順番と進み具合は [site-search-plan.md](site-search-plan.md)。
 
 この版は Phase 0〜2（404 に入れるまで）を詳しく書く。Phase 3（日刊2誌・`/tools/`・`/game/`）は方針だけを 11章に置き、Phase 2 の公開後に詳しくする。
 
