@@ -122,7 +122,7 @@ Jev のキーは秘密なので、ブラウザから直接は呼べない。キ�
 
 - **受け取るもの**：`{ query, locale, mode, scope }` だけ。日刊では、ページの絞り込み（カテゴリー・地域・月）も受け取る。値は決まった選択肢の中だけを許す。
 - **受け取らないもの**：項目の中身、閾値、問いの文面。費用に関わる値をクライアントに開けないため（AGENTS.md の方針）。
-- **返すもの**：`{ status: 'results' | 'no_results' | 'failed', complete, searched: { total, candidates, judged }, reason, results: [{ kind, title, description, url }] }`。最大5件。`complete` は「送った候補の判定が全部そろった」の意味で、全対象を探索した意味ではない。`reason` は成功時 `null`、失敗時は固定の理由コードとし、検索語や上流の本文は返さない。
+- **返すもの**：`{ status: 'results' | 'no_results' | 'failed', complete, searched: { total, candidates, judged }, reason, results: [{ kind, title, description, url }] }`。最大5件。`complete` は「送った候補の判定が全部そろった」の意味で、全対象を探索した意味ではない。`reason` は成功時 `null`、失敗時は固定の理由コード（`disabled`・`rate_limited`・`unavailable`・`timeout`・`incomplete`・`index_unavailable`・`invalid_request`）とし、検索語や上流の本文は返さない。画面は `rate_limited` と `disabled` だけを書き分け、ほかは同じ失敗の表示にする（3.1 の「上限」の状態）。
   - `url` はサイト内のパス（`/tools/pdf-studio/` の形）にそろえる。索引の `url` が `/` で始まるサイト内のパスかを、Worker でもう一度確かめる。
   - `searched.total` は対象の全体の数（日刊では絞り込みを通った記事の数）、`candidates` は Jev に聞いた候補の数、`judged` は有効な判定の数。`0 <= judged <= candidates <= total` を満たす。索引を取得できず総数が分からない失敗では `searched: null` とする。
   - 日刊の記事は媒体・日付・記事のアンカーから一意に識別する。URL は索引の相対 URL を固定の媒体パスを基準に解決し、`/job/<媒体>/<YYYYMMDD>/#art-<番号>` だけを許す。クエリ・別媒体・外部 URL は拒否する。日刊ではこのアンカーを保ち、同じ号の別記事を URL のパスだけで重複と判定しない。ブラウザも同じ検査を行い、文字列は `textContent` で描画する。
@@ -143,7 +143,7 @@ Jev の応答で、候補ごとの答えが `type: 'noul'` でないもの、`no
 - **「0件」と言えるのは、全候補に判定があり、どれも閾値に届かなかったときだけ**。
 - `complete: false` の結果と `failed` は、キャッシュしない（5章）。
 - Worker のログには、判定なしの件数を失敗の種類と一緒に残す（8.2）。
-- 完全な索引に対して絞り込みを行い、対象が0件だった場合は Jev を呼ばず、`no_results`・`complete: true`・`searched: { total: 0, candidates: 0, judged: 0 }` とする。索引の取得失敗や一部の年の欠落を、対象0件に変換しない。
+- 完全な索引に対して絞り込みを行い、対象が0件だった場合は Jev を呼ばず（回数は数える。5章のキャッシュと同じ扱い）、`no_results`・`complete: true`・`searched: { total: 0, candidates: 0, judged: 0 }` とする。索引の取得失敗や一部の年の欠落を、対象0件に変換しない。
 
 ### 3.3 Jev に渡すもの
 
@@ -160,7 +160,9 @@ Jev の応答で、候補ごとの答えが `type: 'noul'` でないもの、`no
 | `article`（Glitch） | 種類、題名、説明（`excerpt`）、タグ | `glitch.json` を索引に写したもの | ID、URL、画像、日付 |
 | 日刊の記事 | 題名、要約、カテゴリー、タグ、国内／海外 | `search-index*.json` | 編集部の見立て（`takeaway`。記事に無い解釈で当たるのを避ける）、配信元、日付、URL |
 
-- **長さ**：説明・要約は300文字、1件全体で400文字まで（送る文字列の値を Unicode のコードポイントで数える）。説明を短くする際は日本語・英語の末尾から削る。題名・タグなど説明以外だけで上限を超える項目は、生成時の検査を失敗させて元のデータを直す。Worker で想定外の超過を見つけた場合は検索を失敗とし、黙って候補を落として0件にしない。
+- **長さ**：説明・要約は300文字、1件全体で400文字まで（送る文字列の値を Unicode のコードポイントで数える）。説明を短くする際は日本語・英語の末尾から削る。
+  - `page`・`tool`・`game`・`article`（手で直す JSON が元）：題名・タグなど説明以外だけで上限を超える項目は、`site-search-index.py` の検査を失敗させて元のデータを直す。Worker で想定外の超過を見つけた場合は検索を失敗とし、黙って候補を落として0件にしない。
+  - 日刊の記事（毎日 bot が作る）：生成を止めると号の発行まで止まるので、検査で落とさない。Worker が決まった順で縮める（要約 → タグを末尾から → 題名の末尾）。縮めても候補から外さず、1件の超過で検索全体を失敗にしない。
 - **索引に足す項目**：`site-search-index.py` が、`tool`・`game`・`article` に `tags`・`category`・`genre`・副題を含む `rank_title` を、元の JSON から別の項目として写す。いまは `detail` に混ぜてあるか、索引に無い（ツールの題名は副題を落としている）。既存の表示・③に使う `title` と `detail` は変えない。`makeSitePages` も追加項目を検査して保持する。②に必要な項目がない旧索引を読んだ場合は②だけを利用不可とし、既存の③を維持する。
 - **変換は1か所**：上の表の変換は Worker の1つの関数（`toRankCandidate(item)`）にし、評価のスクリプトもその関数を import して使う（7.3）。評価と本番で、渡す中身が食い違わないようにするため。
 - 説明が薄い項目は、元の JSON の方を直す。たとえばゲームの説明は英語の1文だけで、「パズルがしたい」に当たる根拠がない。直す項目は、評価で取りこぼしたものから決める。
@@ -474,7 +476,7 @@ Phase 0 で残っているのは、いまの0件率を取ること（8.1）だ�
   - `index.html`・`magi-app/www/app.js`：日刊リンクの検査と旧URLの変換を更新する。トップページには外部スクリプトを追加せずインラインで直す。
   - `magi-app/www/index.html`・`magi-app/www/sw.js`：参照バージョンとPWAキャッシュを更新する。ネイティブは同期・再ビルドで確認する。
   - `job/assets/daily-ui.js`：headで取り出した語を受け取り、同じページでの受け渡し・ヘッダー送信に対応する。検索のあとに `q` を URL へ書かない。
-  - `.github/scripts/daily_engine.py`：同期のhead処理・ヘッダーの検索欄・トピックのタグを更新する。両媒体の既存ポータルと全号も再生成し、古いGETフォームとリンクを残さない。
+  - `.github/scripts/daily_engine.py`：同期のhead処理・ヘッダーの検索欄・トピックのタグを更新する。両媒体の既存ポータルと全号も再生成し（`--rebuild`）、古いGETフォームとリンクを残さない。全号を1回のコミットで書き換えると、`sitemap.yml` の `update-modified.py` が全号の `dateModified` とサイトマップの更新日をそのコミットの日時に揃える。本文は変わらないので、許容するか、このコミットだけ日時の同期から外すかを実装時に決める。
   - `assets/analytics.js`：Ahrefs に `data-page-location` を渡す。GTM・GA4の計測設定とCloudflare Web Analyticsの実際の送信も確認する。
   - 共通JSを変更したら参照する全ページの `?v=` を更新する。日刊の参照は生成側も合わせる。
 - **`404.html`**：
