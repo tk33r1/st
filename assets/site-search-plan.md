@@ -78,8 +78,8 @@
 | T2.6 | 通知に `signal` と期限：`searchUpstream`・`sendAlert` に省略できる引数を足す | 3.8 | Claude | M | 10.1 の通知の検証が通る。②の確定した通知は、切断では止まらず、独立した5秒の期限で終わる（要求の `signal` を渡さない）。引数を省略した③・チャットの通知は変わらない |
 | T2.7 | `wrangler.toml`：`SITE_RANK_ENABLED = "false"` と `compatibility_flags = ["enable_request_signal"]`（本番と `env.eval`）。`workers/magi2/README.md` にフラグの理由を書く（外すと②・③の索引の取得・上流の呼び出しが切断で止まらない。確定した通知はフラグに関係なく5秒の期限で終わる） | 3.3・12章 | Claude | S | `npx wrangler deploy --dry-run --config magi2/wrangler.toml` が通る |
 | T2.8 | `test-magi2.mjs` に 10.1 の検証を足す。検証は T2.1〜T2.6 のそれぞれのコミットに含め、ここでは抜けを埋める | 10.1 | Claude | M | `node --test` が通る |
-| T2.9 | `wrangler dev` で切断の確認 | 3.3 | Claude | S | ②・③・チャットで、応答の前に接続を切ると上流の通信が止まることをログで見る |
-| T2.10 | 本番へデプロイ | 9章の3 | 本人 | S | 本番で `mode: 'rank'` が `disabled` を返す。③とチャットがいままで通り答える |
+| T2.9 | `wrangler dev` で切断の確認 | 3.3 | Claude | S | 手元では確かめられないと分かった（下記）。確かめは T2.10 に移す |
+| T2.10 | 本番へデプロイ | 9章の3 | 本人 | S | 本番で `mode: 'rank'` が `disabled` を返す。③とチャットがいままで通り答える。`wrangler tail` を見ながら 404 の③を送って数秒でキャンセルし、`site_search` の `elapsed_ms` がキャンセルまでの時間で終わる（切断で止まる。設計書 3.3） |
 
 ### M3 評価と閾値の決定
 
@@ -158,8 +158,8 @@
 | TP.1 | 完了（2026-10-06） | `playwright@1.56.1`。この環境の Chromium（1194）と版が合うので `executablePath` は不要 |
 | T0.1 | 公開（2026-10-06） | 手元の Playwright で確認：止まって1.5秒で1回、`{ count }` だけ、同じ入力は1回、1ページ10回まで、一覧の読み込み失敗・変換中は送らない |
 | T0.2 | 未着手 | 取り始めた日： |
-| T1.1 | 実装済み・未公開 | ツール9・ゲーム8・記事5の22行に追加項目。`test-site-search-index.py`・`test-magi2.mjs`・`build.sh` が通る |
-| T2.1〜T2.9 | 未着手 | |
+| T1.1 | 公開（2026-10-06） | ツール9・ゲーム8・記事5の22行に追加項目。`test-site-search-index.py`・`test-magi2.mjs`・`build.sh` が通る |
+| T2.1〜T2.9 | 実装済み（2026-10-06） | T2.4・T2.5・T2.8 は1コミット（②の検証が両方にまたがるため）。`test-magi2.mjs` 117件が通る。`wrangler deploy --dry-run` が通る。T2.9：手元の `wrangler dev` では、フラグの有無にかかわらず切断が `request.signal` に伝わらなかった（最小の Worker で確認）。T2.10 で本番で確かめる |
 | T2.10 | 未着手 | |
 | T3.1 | 未着手 | |
 | T3.2 | 未着手 | |
