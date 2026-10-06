@@ -9,7 +9,8 @@
 // 候補の変換・要求の組み立て・判定・並べ方・URL の検査は Worker の関数をそのまま使い、ここに別の変換や問いを書かない。
 // キーは出力しない。生の記録は workers/.wrangler/（Git の管理外）に書く。
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -199,14 +200,32 @@ export function containsSearch() {
   return query => ctx.contains.searchItems(items, query).slice(0, 5).map(item => item.key);
 }
 
-// 比べる Jev の方式（PRD 7.1）：問いの言語（日英）× 基準の有無。基準なしは personas.js の問いから criteria を外しただけ
-const METHODS = ['ja', 'en'].flatMap(lang => [{ name: `基準付き・${lang}`, lang, criteria: true }, { name: `短い問い・${lang}`, lang, criteria: false }]);
+// 測る方式と閾値。tune は方式と閾値を比べる（PRD 7.1）：personas.js に文面のある問いの言語 × 基準の有無
+// （基準なしは personas.js の問いから criteria を外しただけ）と、THRESHOLDS。final は確定した設定（question_language の
+// 基準付きの問いと threshold）だけで測る（T3.5 で使わない言語の文面を消した後も動くように。設計書 10.4 の手順3）
+function methodsFor(set, rank) {
+  if (set === 'final') return { methods: [{ name: `確定した設定（${rank.question_language}・基準付き）`, fixed: true }], thresholds: [rank.threshold] };
+  return { methods: Object.keys(rank.questions).flatMap(lang => [{ name: `基準付き・${lang}`, lang, criteria: true }, { name: `短い問い・${lang}`, lang, criteria: false }]),
+    thresholds: THRESHOLDS };
+}
 async function withMethod(magi, method, run) {
   const rank = magi.SITE_RANK, saved = { lang: rank.question_language, question: rank.questions[method.lang], threshold: rank.threshold };
-  rank.question_language = method.lang;
-  if (!method.criteria) rank.questions[method.lang] = { instructions: saved.question.instructions };
+  if (!method.fixed) {
+    rank.question_language = method.lang;
+    if (!method.criteria) rank.questions[method.lang] = { instructions: saved.question.instructions };
+  }
   try { return await run(); }
-  finally { rank.question_language = saved.lang; rank.questions[method.lang] = saved.question; rank.threshold = saved.threshold; }
+  finally {
+    rank.threshold = saved.threshold;
+    if (!method.fixed) { rank.question_language = saved.lang; rank.questions[method.lang] = saved.question; }
+  }
+}
+// Jev の応答の本文から答えを読む。JSON でない・answers が無い本文は null（Worker も unavailable にする）
+function jevAnswers(text) {
+  let body;
+  try { body = JSON.parse(text); } catch (_) { return null; }
+  if (!body || typeof body !== 'object' || !body.answers || typeof body.answers !== 'object' || Array.isArray(body.answers)) return null;
+  return { model: typeof body.model === 'string' ? body.model : null, answers: body.answers };
 }
 
 export async function accuracy(magi, { data: given } = {}) {
@@ -214,18 +233,27 @@ export async function accuracy(magi, { data: given } = {}) {
   if (!key) fail(`TypeSafe のキーが無いので精度は測らない（環境変数 ${magi.SITE_RANK.key} か、追跡外の workers/magi2/.dev.vars）`);
   const set = option('--set', 'tune'), runs = Number(option('--runs', '2'));
   if (!SETS.includes(set) || !Number.isInteger(runs) || runs < 1) fail('--set は tune か final、--runs は1以上');
+  // 測る索引は、いまの公開 HTML から site-search-index.py で作り直したもの（PRD 7.1）。作り直して違えば止める
+  const fresh = join(mkdtempSync(join(tmpdir(), 'site-rank-')), 'site-search.json');
+  const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+  const built = spawnSync(python, ['-B', '.github/scripts/site-search-index.py', '--output', fresh], { cwd: root, encoding: 'utf8' });
+  if (built.status !== 0) fail(`索引を作り直せない（${python}）: ${built.stderr}`);
+  if (!readFileSync(fresh).equals(readFileSync(join(root, 'data/site-search.json')))) fail('手元の data/site-search.json が古い。python -B .github/scripts/site-search-index.py で作り直してから測る');
   const local = await snapshotOf(magi, read('data/site-search.json'));
   if (!local.rankReady) fail('手元の索引が②に使えない（rankReady が false）。site-search-index.py で作り直す');
   const { data } = loadQueries(magi, local.targets, true, given);
   const queries = data.queries.filter(q => q.set === set);
   const env = { [magi.SITE_RANK.key]: key }, signal = new AbortController().signal;
-  const contains = containsSearch();
+  // いまの「含む」検索は、方式を比べる tune でだけ並べる
+  const contains = set === 'tune' ? containsSearch() : null;
+  const { methods, thresholds } = methodsFor(set, magi.SITE_RANK);
   const models = new Set(), record = { kind: 'accuracy', ...gitState(), set, runs, started: new Date().toISOString(),
-    revision: magi.SITE_RANK.revision, index_hash: local.indexHash, candidate_hash: local.candidateHash, reviewed: data.reviewed,
-    contains: Object.fromEntries(queries.map(q => [q.id, contains(q.query)])), measurements: [] };
+    revision: magi.SITE_RANK.revision, question_language: magi.SITE_RANK.question_language, threshold: magi.SITE_RANK.threshold,
+    index_hash: local.indexHash, candidate_hash: local.candidateHash, reviewed: data.reviewed, thresholds,
+    contains: contains && Object.fromEntries(queries.map(q => [q.id, contains(q.query)])), measurements: [] };
   let billing = null;
   for (let run = 1; run <= runs; run++) {
-    for (const method of METHODS) {
+    for (const method of methods) {
       const rows = await withMethod(magi, method, async () => {
         // 1回目：本物の Jev を呼ぶ（Worker と同じ2秒の期限）。応答の本文を残し、閾値ごとの結果はそれを流し直して作る
         const live = new Map();
@@ -248,21 +276,19 @@ export async function accuracy(magi, { data: given } = {}) {
         if (billing) fail(`Jev が HTTP ${billing} を返した（キーの失効か残高切れ）。測定を止める`);
         const out = [];
         for (const { q, slot, r } of firsts) {
-          let probs = null;
-          if (slot.status === 200) {
-            const body = JSON.parse(slot.text);
-            if (body.model) models.add(body.model);
-            probs = Object.fromEntries(local.targets.map((p, i) => [p.id, magi.rankProbability(body.answers?.[magi.rankId(i)])]));
-          }
+          // 答えが読めなかった呼び出し（時間切れ・HTTP エラー・JSON でない 200 など）は、その問い合わせだけを失敗として分母に残す
+          const body = slot.status === 200 ? jevAnswers(slot.text) : null;
+          if (body?.model) models.add(body.model);
+          const probs = body && Object.fromEntries(local.targets.map((p, i) => [p.id, magi.rankProbability(body.answers[magi.rankId(i)])]));
           const byThreshold = {};
-          for (const t of THRESHOLDS) {
-            if (r.status === 'failed' && slot.status !== 200) { byThreshold[t] = { status: 'failed', reason: r.reason, complete: false, ids: [] }; continue; }
+          for (const t of thresholds) {
+            if (!body) { byThreshold[t] = { status: 'failed', reason: r.status === 'failed' ? r.reason : 'unavailable', complete: false, ids: [] }; continue; }
             magi.SITE_RANK.threshold = t; magi.clearRankCache();
             magi.hooks.fetch = async () => new Response(slot.text, { status: slot.status });
             const x = await magi.rankSearch({ env, snapshot: local.snapshot, query: q.query, locale: q.locale, signal, onBilling: () => {} });
             byThreshold[t] = { status: x.status, reason: x.reason, complete: x.complete, ids: x.results.map(v => local.urlToId.get(v.url)) };
           }
-          out.push({ id: q.id, http: slot.status ?? null, error: slot.error ?? null, jev_ms: slot.ms == null ? null : Math.round(slot.ms),
+          out.push({ id: q.id, http: slot.status ?? null, error: slot.error ?? null, answered: !!body, jev_ms: slot.ms == null ? null : Math.round(slot.ms),
             judged: r.searched?.judged ?? null, candidates: r.searched?.candidates ?? null, probs, byThreshold });
         }
         return out;
@@ -278,13 +304,14 @@ export async function accuracy(magi, { data: given } = {}) {
   // まとめ（assets/site-search-evaluation.md に貼れる形）
   const lines = [`## 精度（${set}、${queries.length}件、${runs}回）`, '',
     `- コミット ${record.commit}${record.dirty ? '（未コミットの変更あり）' : ''}、revision ${record.revision}、Jev ${record.models.join('・') || '不明'}`,
+    `- 設定の question_language ${record.question_language}、threshold ${record.threshold}`,
     `- index_hash ${record.index_hash}`, `- candidate_hash ${record.candidate_hash}`, `- 評価セットの確認 ${data.reviewed}、生の記録 ${file}`, ''];
-  const containsScore = score(queries, q => ({ status: 'results', ids: record.contains[q.id] }));
   for (let run = 1; run <= runs; run++) {
-    lines.push(`### ${run}回目`, '', SCORE_HEAD, scoreRow('いまの「含む」検索', containsScore));
+    lines.push(`### ${run}回目`, '', SCORE_HEAD);
+    if (record.contains) lines.push(scoreRow('いまの「含む」検索', score(queries, q => ({ status: 'results', ids: record.contains[q.id] }))));
     for (const m of record.measurements.filter(m => m.run === run)) {
       const byId = new Map(m.rows.map(r => [r.id, r]));
-      for (const t of THRESHOLDS) lines.push(scoreRow(`${m.method} ${t}`, score(queries, q => byId.get(q.id).byThreshold[t])));
+      for (const t of thresholds) lines.push(scoreRow(`${m.method} ${t}`, score(queries, q => byId.get(q.id).byThreshold[t])));
     }
     lines.push('');
   }
@@ -292,11 +319,11 @@ export async function accuracy(magi, { data: given } = {}) {
     '| 回 | 方式 | 判定の欠けた問い合わせ | 失敗した呼び出し | p50 | p95 |', '| ---: | --- | ---: | ---: | ---: | ---: |');
   for (const m of record.measurements) {
     const ms = m.rows.map(r => r.jev_ms).filter(v => v != null);
-    lines.push(`| ${m.run} | ${m.method} | ${m.rows.filter(r => r.http === 200 && r.judged < r.candidates).length} | ${m.rows.filter(r => r.http !== 200).length} | ${percentile(ms, 0.5)}ms | ${percentile(ms, 0.95)}ms |`);
+    lines.push(`| ${m.run} | ${m.method} | ${m.rows.filter(r => r.answered && r.judged < r.candidates).length} | ${m.rows.filter(r => !r.answered).length} | ${percentile(ms, 0.5)}ms | ${percentile(ms, 0.95)}ms |`);
   }
   if (runs >= 2) {
     lines.push('', '### 2回で結果の変わった問い合わせ（片方の回だけに出たページがある）', '', '| 方式 | 閾値 | 件数 | ID |', '| --- | ---: | ---: | --- |');
-    for (const method of METHODS) for (const t of THRESHOLDS) {
+    for (const method of methods) for (const t of thresholds) {
       const [a, b] = [1, 2].map(run => new Map(record.measurements.find(m => m.run === run && m.method === method.name).rows.map(r => [r.id, r.byThreshold[t].ids.join(',')])));
       const flips = queries.filter(q => a.get(q.id) !== b.get(q.id)).map(q => q.id);
       lines.push(`| ${method.name} | ${t} | ${flips.length} | ${flips.join(' ')} |`);
@@ -378,7 +405,7 @@ export async function browser(magi, { data: given } = {}) {
       if (d.error) throw new Error(`本番の Worker が②の形で答えない（HTTP ${r.http}、${d.error.code}）。--probe で確かめる`);
       const ids = Array.isArray(d.results) ? d.results.map(v => production.urlToId.get(v.url) ?? `unknown:${v.url}`) : [];
       record.rows.push({ id: q.id, http: r.http, error: r.error ?? null, ms: Math.round(r.ms), request_id: d.request_id ?? null,
-        status: d.status ?? 'failed', reason: d.reason ?? d.error?.code ?? (r.error ? 'network' : null), complete: d.complete ?? false, searched: d.searched ?? null, ids });
+        status: d.status ?? 'failed', reason: d.reason ?? d.error?.code ?? (r.error === 'SyntaxError' ? 'invalid_json' : r.error ? 'network' : null), complete: d.complete ?? false, searched: d.searched ?? null, ids });
       console.error(`${q.id}: ${Math.round(r.ms)}ms ${d.status ?? r.error}`);
     }
   } finally { await page.close(); }
