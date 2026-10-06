@@ -144,8 +144,9 @@ function rankCacheSet(key, value) {
 }
 
 // ②の本体（設計書 3.3 の6〜10）。回数は呼び出し元が先に数えている（キャッシュで上限を避けられないように）。
-// 返すのは { status, complete, reason, searched, results } と、ログ用の値（above・jevMs・cached）
-export async function rankSearch({ env, snapshot, query, locale, signal, onBilling }) {
+// 返すのは { status, complete, reason, searched, results } と、ログ用の値（above・jevMs・cached）。
+// progress（省略できる）には Jev に送る直前に候補の数を書く（要求全体の期限で途中で終わっても searched.candidates を返せるように）
+export async function rankSearch({ env, snapshot, query, locale, signal, onBilling, progress = {} }) {
   const targets = rankTargets(snapshot);
   const total = targets.length;
   const failed = (reason, candidates = 0, judged = 0) => ({ status: 'failed', complete: false, reason,
@@ -157,6 +158,7 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
   let candidates;
   try { candidates = targets.map(toRankCandidate); } catch (_) { return failed('index_unavailable'); }
   const scores = scoreItems(targets, query, rankScoreFields);
+  progress.candidates = candidates.length;
   const started = Date.now();
   let answers;
   try { answers = await callRank(env, rankPayload(query, locale, candidates), signal, onBilling); }

@@ -387,6 +387,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
     retryable: status === 503,
   }, requestId, cors);
   const started = Date.now();
+  let rank = false; // ②の要求は site_rank の1行だけを残す（③の elapsed_ms に混ぜない）
   try {
     return await searchDeadline(SITE_SEARCH.request_timeout_ms, async signal => {
       if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_json');
@@ -395,7 +396,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       try { body = await searchDeadline(SITE_RANK.request_timeout_ms, s => readJsonLimited(request, SITE_SEARCH.request_bytes, s), signal); }
       catch (err) { return fail(err.envelope?.http_status || 400, err.envelope?.code || (err.searchCode === 'timeout' ? 'request_timeout' : 'invalid_json')); }
       // mode のある要求は②。'rank' 以外の mode を③として動かさない
-      if (Object.hasOwn(body, 'mode')) return await handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started);
+      if (Object.hasOwn(body, 'mode')) { rank = true; return await handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started); }
       if (Object.keys(body).length !== 2 || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
       const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
       if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
@@ -425,7 +426,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) { log('site_search', 'unavailable'); return fail(503, 'search_unavailable'); }
-  finally { log('site_search', 'elapsed_ms', Date.now() - started); }
+  finally { if (!rank) log('site_search', 'elapsed_ms', Date.now() - started); }
 }
 
 // 404 のサイト内検索の②（Jev の検索。assets/site-search-design.md 3章）。
@@ -433,9 +434,12 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
 // 検索語・候補の中身・上流の本文はログにも通知にも出さない
 async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started) {
   const info = { total: null, candidates: null, judged: null, above: 0, indexMs: null, jevMs: null, indexHash: null, candidateHash: null };
+  // 期限・切断で先に応答を返した後も、中の処理は signal の効かない待ち（D1 など）の間は進むので、ログは最初の1回だけ
+  let logged = false;
   const reply = (httpStatus, r) => {
-    log('site_rank', r.status, r.reason, info.total, info.candidates, info.judged, info.above, info.indexMs, info.jevMs, Date.now() - started,
+    if (!logged) log('site_rank', r.status, r.reason, info.total, info.candidates, info.judged, info.above, info.indexMs, info.jevMs, Date.now() - started,
       SITE_RANK.revision, info.indexHash, info.candidateHash);
+    logged = true;
     return jsonResponse({ request_id: requestId, status: r.status, complete: r.complete, reason: r.reason, searched: r.searched, results: r.results },
       cors, httpStatus, { 'Cache-Control': 'no-store' });
   };
@@ -451,26 +455,31 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
   if (!env.DB || !env[SITE_RANK.key]) return fail('unavailable');
   try {
     return await searchDeadline(Math.max(1, SITE_RANK.request_timeout_ms - (Date.now() - started)), async s => {
+      // signal を受け取らない待ち（ハッシュ・D1）の後で止まっていたら、回数も Jev も使わずに抜ける
+      const stopped = () => { if (s.aborted) throw searchFailure('cancelled'); };
       const indexStarted = Date.now();
       let snapshot;
       try { snapshot = await getSiteSnapshot(ctx, s); } catch (e) { if (e.searchCode === 'cancelled') throw e; return fail('index_unavailable'); }
       info.indexMs = Date.now() - indexStarted;
       [info.indexHash, info.candidateHash] = await Promise.all([snapshotHash(snapshot), rankCandidateHash(snapshot)]);
+      stopped();
       if (!snapshot.rankReady) return fail('index_unavailable');
       // 回数は IP → 全体の順。IP で断った要求は全体を進めない。キャッシュから返すときも数える（キャッシュで上限を避けられない）
       const day = utcDay(), ip = requestIP(request);
       if (await countUp(env.DB, 'rank:' + ip, day, SITE_RANK.daily_limit) == null) return fail('rate_limited', 429);
+      stopped();
       if (await countUp(env.DB, 'rank:global', day, SITE_RANK.global_daily_limit) == null) {
         alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms, sig => sendAlert(env, log, 'alert:site-rank-global', '[MAGI] サイト内検索（Jev）の本日の全体上限に達しました', [
           `UTC日付: ${day}`, `全体上限: ${SITE_RANK.global_daily_limit}`,
         ], true, sig));
         return fail('rate_limited', 429);
       }
+      stopped();
       info.total = rankTargets(snapshot).length;
       // 課金障害と確かめた失敗だけ通知する。通知は要求の切断とは別の期限で終え、検索の結果と速さに響かせない
       const onBilling = status => alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms,
         sig => searchUpstream(env, ctx, log, 'サイト内検索', sig).onUpstreamError('typesafe', { status }, { billingFailure: true }));
-      const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling });
+      const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling, progress: info });
       Object.assign(info, { candidates: r.searched?.candidates ?? null, judged: r.searched?.judged ?? null, above: r.above, jevMs: r.jevMs });
       if (r.cached) info.jevMs = null;
       return reply(200, r);

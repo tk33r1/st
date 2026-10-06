@@ -315,6 +315,25 @@ test('②：Jevの期限と、候補の変換の長さの規則', async () => {
     assert.equal(w.ctx.rankSiteUrl(url) !== null, ok, url);
 });
 
+test('②：要求全体の期限では、送った候補の数を返し、ログは site_rank の1行だけ。期限の後は回数も Jev も使わない', async () => {
+  // Jev の途中で全体の期限が来たら、candidates は送った数
+  const slow = rankWorker((p, o) => new Promise((_, reject) => o.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))));
+  Object.assign(slow.ctx.rankConfig, { jev_timeout_ms: 1000, request_timeout_ms: 60 });
+  const late = await (await rankRequest(slow)).json();
+  assert.equal(late.reason, 'timeout'); assert.equal(JSON.stringify(late.searched), JSON.stringify({ total: 35, candidates: 35, judged: 0 }));
+  // signal の効かない D1 の待ちの間に期限が来たら、その後の回数・Jev・ログを残さない（キャッシュに当たる検索語でも）
+  const logs = [], w = rankWorker(pdfOnly), db = w.env.DB, prepare = db.prepare;
+  w.ctx.console.log = (...values) => logs.push(values);
+  await rankRequest(w); assert.equal(w.jevCalls.length, 1); logs.length = 0;
+  w.ctx.rankConfig.request_timeout_ms = 40;
+  w.env.DB = { ...db, prepare(sql) { const st = prepare.call(db, sql); const f = st.first; st.first = async () => { await new Promise(r => setTimeout(r, 80)); return f.call(st); }; return st; } };
+  const data = await (await rankRequest(w)).json();
+  await new Promise(r => setTimeout(r, 150));
+  assert.equal(data.reason, 'timeout'); assert.equal(w.jevCalls.length, 1);
+  assert.equal(rankRows(w).find(([k]) => k.startsWith('rank:global'))[1], 1);
+  assert.equal(logs.filter(l => l[1] === 'site_rank').length, 1); assert.equal(logs.filter(l => l[1] === 'site_search').length, 0);
+});
+
 test('②：回数はIP→全体の順で、IPで断ると全体を進めず、キャッシュでも数える。③とは別', async () => {
   const w = rankWorker(pdfOnly);
   w.ctx.rankConfig.daily_limit = 2;
