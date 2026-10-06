@@ -1,6 +1,9 @@
 name               = "tk-st-magi2-api"
 main               = "src/index.js"
 compatibility_date = "2025-01-01"
+# 利用者の切断で request.signal を中止にする。無いと②・③の索引の取得・上流の呼び出しが切断で止まらない
+# （課金障害の通知はこれとは別の期限で終える。README.md「サイト内検索の②」）
+compatibility_flags = ["enable_request_signal"]
 
 # `magi*` ルートとの衝突を避けるため、より具体的な `magi2*` で先取りする。
 routes = [
@@ -11,6 +14,8 @@ routes = [
 # 404のAI検索とチャットのサイト案内を有効化。停止時はWorkerを先にfalseにする（通常チャットは続く）。
 SITE_SEARCH_ENABLED = "true"
 MAGI_MODE_ENABLED = "true"
+# 404 のサイト内検索の②（Jev）。"true" のときだけ動く。止めるときはこちらを先に false にする（画面は disabled を受けていまの動きに戻る）
+SITE_RANK_ENABLED = "false"
 
 [[d1_databases]]
 binding       = "DB"
@@ -41,6 +46,7 @@ main = "src/eval.js"
 workers_dev = false
 preview_urls = false
 routes = [{ pattern = "magi2-eval.tk.st/magi2*", zone_name = "tk.st" }]
+compatibility_flags = ["enable_request_signal"]
 
 [env.eval.vars]
 SITE_SEARCH_ENABLED = "true"
