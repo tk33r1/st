@@ -308,14 +308,19 @@ async function alertUpstream(env, log, provider, res) {
 }
 
 // 通知メールを送る。key ごとに UTC の1日に1通（rate_limit に key の行を「送った」印として作る）。
-// 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ
-async function sendAlert(env, log, key, subject, lines, redact = false) {
+// 送れなかったら印を消し、次の機会にまた試す。secret が無ければログに出すだけ。
+// signal（省略できる）で止められる：印を取る前に止まっていれば何もしない。印を取った後に止まったら Resend を呼ばずに
+// 印を消す。送信の途中で止まったら送信を中止して印を消す（D1 の後始末は止めずに最後まで行う）
+async function sendAlert(env, log, key, subject, lines, redact = false, signal = null) {
   if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_TO || !env.ALERT_FROM) { log('alert', 'mail skipped (secret missing)', key); return; }
+  if (signal?.aborted) return;
   const day = utcDay();
   if (await countUp(env.DB, key, day, 1) == null) return; // 今日はもう送った
   let sent = false, res;
   try {
+    if (signal?.aborted) return; // finally で印を消す
     res = await fetch('https://api.resend.com/emails', {
+      ...(signal ? { signal } : {}),
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -340,20 +345,35 @@ async function sendAlert(env, log, key, subject, lines, redact = false) {
 }
 
 // 検索は本文を判定にだけ使い、例外・本文をログにも通知にも渡さない。
-function searchUpstream(env, ctx, log, purpose) {
+// signal を渡すと（②の通知）、その signal で止まる通知を待って返す。渡さなければ（③とチャット）いままでどおり
+// ctx.waitUntil に任せて待たない。{ billingFailure: true } は、呼び出し元が課金障害と確かめ済みの印で、
+// 本文を読まずに状態だけで通知する（②は Jev の期限の中で本文を読み、確かめてから呼ぶ）。
+function searchUpstream(env, ctx, log, purpose, signal = null) {
   return Object.assign(Object.create(env), {
     modelUsagePurpose: purpose === '404検索' ? '404' : 'chat',
-    onUpstreamError: async (provider, res) => {
-      let body = '';
-      try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
-      finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
-      if (!isBillingFailure(res.status, body)) return;
+    onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
+      if (!billingFailure) {
+        let body = '';
+        try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
+        finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
+        if (!isBillingFailure(res.status, body)) return;
+      }
       log('site_search', 'upstream_alert', provider, res.status);
-      ctx.waitUntil(sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
+      const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
         `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
-      ], true).catch(() => log('site_search', 'alert_failed')));
+      ], true, signal).catch(() => log('site_search', 'alert_failed'));
+      if (signal) return task;
+      ctx.waitUntil(task);
     },
   });
+}
+
+// ②の通知：要求の切断とは別の期限（SITE_RANK.alert_timeout_ms）で必ず終える。通知全体を1つの Promise として
+// ctx.waitUntil に渡す（期限が来たら signal で中止し、sendAlert の後始末が終わるまで待つ）。通知の成否は②の結果に響かない
+function alertWithDeadline(ctx, log, ms, task) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  ctx.waitUntil(Promise.resolve().then(() => task(ac.signal)).catch(() => log('site_rank', 'alert_failed')).finally(() => clearTimeout(timer)));
 }
 
 async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {

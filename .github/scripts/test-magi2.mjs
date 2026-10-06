@@ -189,6 +189,39 @@ test('②用の索引：追加項目を保ち、合わない項目だけ落と�
   }
 });
 
+test('通知は signal で止まり、止めたら Resend を呼ばずに印を消す。期限付きの通知は期限で終わる', async () => {
+  const resend = [];
+  const w = worker(undefined, (url, o) => {
+    if (url !== 'https://api.resend.com/emails') return;
+    resend.push(o);
+    return new Promise((_, reject) => o.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
+  });
+  Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  const log = () => {};
+  // 始める前に止まっていれば、印も取らない
+  const done = new AbortController(); done.abort();
+  await w.ctx.sendAlert(w.env, log, 'alert:x', 's', ['l'], true, done.signal);
+  assert.equal(w.env.DB.rows.size, 0); assert.equal(resend.length, 0);
+  // 印を取っている間に止まったら、Resend を呼ばずに印を消す
+  const during = new AbortController(), db = w.env.DB, first = db.prepare;
+  w.env.DB = { ...db, prepare(sql) { const st = first.call(db, sql); const f = st.first; st.first = async () => { const r = await f.call(st); during.abort(); return r; }; return st; } };
+  await w.ctx.sendAlert(w.env, log, 'alert:y', 's', ['l'], true, during.signal);
+  assert.equal(db.rows.size, 0); assert.equal(resend.length, 0);
+  w.env.DB = db;
+  // 応答しない Resend は期限で止め、印を消して終える（次の機会に送り直せる）
+  const waits = [];
+  w.ctx.alertWithDeadline({ waitUntil(p) { waits.push(p); } }, log, 20, signal => w.ctx.sendAlert(w.env, log, 'alert:z', 's', ['l'], true, signal));
+  await Promise.all(waits);
+  assert.equal(resend.length, 1); assert.equal(resend[0].signal.aborted, true); assert.equal(db.rows.size, 0);
+  // 課金障害と確かめ済みなら、本文を読まずに状態だけで通知し、signal を渡したときはその通知を待って返す
+  let read = false;
+  const fake = { status: 402, get body() { read = true; return null; }, text: async () => { read = true; return ''; } };
+  const limit = new AbortController(); setTimeout(() => limit.abort(), 20);
+  const hook = w.ctx.searchUpstream(w.env, { waitUntil() { throw new Error('must not detach'); } }, log, 'サイト内検索', limit.signal);
+  await hook.onUpstreamError('typesafe', fake, { billingFailure: true });
+  assert.equal(read, false); assert.equal(resend.length, 2); assert.equal(db.rows.size, 0);
+});
+
 test('出力言語は混在文を日本語に固定せず、記号や短い返答では直前の言語を維持する', () => {
   const w = worker();
   const ja = vm.runInContext('REPLY_LANGUAGE.ja', w.ctx);
