@@ -341,6 +341,8 @@ async function sendAlert(env, log, key, subject, lines, redact = false, signal =
     // HTTP エラーだけでなく、fetch 自体が通信例外で終わったときも次回に再試行できるよう戻す。
     if (!sent) await env.DB.prepare(`DELETE FROM rate_limit WHERE ip = ?1 AND day = ?2`).bind(key, day).run();
   }
+  // 送れたときは本文を使わないので取り消す（印は残す。読まずに終えると、本文が止まったときに通信が残る）
+  if (sent) await res.body?.cancel().catch(() => {});
   // エラー本文の受信が止まっても再試行を妨げないよう、印を解除してから本文を読む。
   if (res && !sent) {
     if (redact) { log('alert', 'mail failed', res.status); await res.body?.cancel().catch(() => {}); }

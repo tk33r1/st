@@ -379,6 +379,27 @@ test('②：課金障害だけを通知し、検索語と上流の本文は応�
   }
 });
 
+test('②：429 の本文は先頭 4KiB（バイト）だけで課金障害かを見る', async () => {
+  // 日本語は1文字3バイト。4,200バイト目の語は見ず、3,900バイト目の語は見る
+  for (const [prefix, mailed] of [['あ'.repeat(1400), false], ['あ'.repeat(1300), true]]) {
+    const w = rankWorker(() => new Response(prefix + 'insufficient_quota', { status: 429 }));
+    Object.assign(w.env, { RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+    assert.equal((await (await rankRequest(w)).json()).reason, 'unavailable');
+    await Promise.all(w.waits); assert.equal(w.mails.length, mailed ? 1 : 0, String(prefix.length));
+  }
+});
+
+test('通知が送れたら Resend の応答本文を取り消し、送った印は残す', async () => {
+  let cancelled = false;
+  const w = worker(undefined, url => url === 'https://api.resend.com/emails'
+    ? new Response(new ReadableStream({ cancel() { cancelled = true; } }), { status: 200 }) : undefined);
+  Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'k', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  const waits = [];
+  w.ctx.alertWithDeadline({ waitUntil(p) { waits.push(p); } }, () => {}, 1000, signal => w.ctx.sendAlert(w.env, () => {}, 'alert:ok', 's', ['l'], true, signal));
+  await Promise.all(waits);
+  assert.equal(cancelled, true); assert.equal(w.env.DB.rows.size, 1);
+});
+
 test('②：遅い要求本文の読み取りを期限で止め、読み取り中の reader を取り消す', async () => {
   const w = worker();
   let cancelled = false;
