@@ -26,6 +26,23 @@ export async function searchDeadline(ms, run, stop) {
   finally { clearTimeout(timer); ac.abort(); if (stop) stop.removeEventListener('abort', onStop); }
 }
 
+// ②（Jev の検索）に渡す項目。上限は site-search-index.py の RANK_FIELDS・RANK_LIMITS と同じ。
+export const RANK_FIELDS = { tool: ['rank_title', 'tags', 'category'], game: ['rank_title', 'genre'], article: ['rank_title', 'tags'] };
+const chars = s => Array.from(s).length;
+// 合う項目だけを残す（合わない項目は落とし、行は残す。③はこれらを使わないので動き続け、②は rankReady で止まる）
+function rankFields(p) {
+  if (!RANK_FIELDS[p.kind]) return {};
+  const out = {};
+  if (typeof p.rank_title === 'string' && p.rank_title.trim() && chars(p.rank_title) <= 160) out.rank_title = p.rank_title;
+  if (Array.isArray(p.tags) && p.tags.length <= 12 && p.tags.every(t => typeof t === 'string' && t && chars(t) <= 40)) out.tags = [...p.tags];
+  for (const key of ['category', 'genre']) if (typeof p[key] === 'string' && chars(p[key]) <= 40) out[key] = p[key];
+  return out;
+}
+// ②に使える完全な索引か。③の寛容な検査で飛ばした行がある、または種類ごとの必須項目が欠けた行があれば使わない
+// （欠けた行を除いて②を動かすと、取りこぼしを完全な0件として返してしまう。設計書 3.5）
+const rankReadyOf = (index, pages) => index.pages.length === pages.length
+  && pages.every(p => !RANK_FIELDS[p.kind] || RANK_FIELDS[p.kind].every(key => key in p));
+
 // 生成済みの公開HTML一覧（data/site-search.json）を検査する。合わない行だけ飛ばす（生成側の site-search-index.py が
 // 同じ条件で確かめてビルドを止めるので、ここで飛ぶのは想定外の行だけ）。形が違う・1件も残らない一覧ではAIを呼ばない。
 export function makeSitePages(index) {
@@ -47,7 +64,7 @@ export function makeSitePages(index) {
         || decoded.split('/').some(part => part === '.' || part === '..')) continue;
     ids.add(p.id); urls.add(p.url);
     pages.push({ id: p.id, kind: p.kind, title: p.title, description: p.description, url: p.url, detail: p.detail,
-      hub: p.hub === true, title_en: p.title_en || '', description_en: p.description_en || '' });
+      hub: p.hub === true, title_en: p.title_en || '', description_en: p.description_en || '', ...rankFields(p) });
   }
   if (!pages.length) throw searchFailure('invalid_list');
   return pages;
@@ -112,32 +129,48 @@ export function shortlistSitePages(pages, query) {
   return selected;
 }
 
-// キャッシュには検査済みの一覧を日英それぞれで置く（リクエストのたびに全件を検査し直さない）
+// キャッシュには索引のスナップショットを1つの物として置く：検査済みの一覧（日英と、言語で差し替える前の raw）、
+// 取得した本文（②のキャッシュのキーになるハッシュの元）、②に使えるか（rankReady）。全部そろってから差し替えるので、
+// 更新の途中でも古い一覧と新しいハッシュが組み合わさらない。要求は受け取ったスナップショットを最後まで使う。
+// ハッシュは②が初めて使うときに snapshotHash で1回だけ作る（③とチャットは使わないので、その分の待ちを足さない）。
 async function fetchSiteLists(signal) {
-  const index = await searchDeadline(SITE_SEARCH.list_timeout_ms, async (s) => {
+  const text = await searchDeadline(SITE_SEARCH.list_timeout_ms, async (s) => {
     const res = await fetch('https://tk.st/data/site-search.json', { signal: s });
     if (!res.ok) throw searchFailure('list_fetch');
-    return res.json();
+    return res.text();
   }, signal);
+  let index;
+  try { index = JSON.parse(text); } catch (_) { throw searchFailure('invalid_list'); }
   const pages = makeSitePages(index); // 一覧全体を検証してから差し替える。
-  cache.pages = { ja: localizeSitePages(pages, 'ja'), en: localizeSitePages(pages, 'en') };
-  cache.fetchedAt = Date.now(); cache.retryAt = 0;
-  return cache.pages;
+  const snapshot = { ja: localizeSitePages(pages, 'ja'), en: localizeSitePages(pages, 'en'), raw: pages,
+    text, rankReady: rankReadyOf(index, pages) };
+  cache.pages = snapshot; cache.fetchedAt = Date.now(); cache.retryAt = 0;
+  return snapshot;
 }
 const localePages = (pages, locale) => pages[locale === 'en' ? 'en' : 'ja'];
 
-export async function getSitePages(ctx, locale, signal) {
+const snapshotHashes = new WeakMap();
+export function snapshotHash(snapshot) {
+  if (!snapshotHashes.has(snapshot)) snapshotHashes.set(snapshot, sha256(snapshot.text));
+  return snapshotHashes.get(snapshot);
+}
+
+export async function getSiteSnapshot(ctx, signal) {
   const age = Date.now() - cache.fetchedAt;
   if (cache.pages && age <= SITE_SEARCH.list_max_age_ms) {
     if (age > SITE_SEARCH.list_ttl_ms && Date.now() >= cache.retryAt && !cache.refreshing) {
       cache.refreshing = true;
       ctx.waitUntil(fetchSiteLists().catch(() => { cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; }).finally(() => { cache.refreshing = false; }));
     }
-    return localePages(cache.pages, locale);
+    return cache.pages;
   }
   if (Date.now() < cache.retryAt) throw searchFailure('list_fetch');
-  try { return localePages(await fetchSiteLists(signal), locale); }
+  try { return await fetchSiteLists(signal); }
   catch (e) { if (e.searchCode !== 'cancelled') cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; throw searchFailure(e.searchCode || 'list_fetch'); }
+}
+
+export async function getSitePages(ctx, locale, signal) {
+  return localePages(await getSiteSnapshot(ctx, signal), locale);
 }
 
 export function validateSiteChoice(value, pages, locale, chat = false) {

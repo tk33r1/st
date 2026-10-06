@@ -169,6 +169,26 @@ test('英語の画面では主な入口を英語名で返し、検査済みの�
   assert.equal(await w.ctx.getSitePages({ waitUntil() {} }, 'en'), en);
 });
 
+test('②用の索引：追加項目を保ち、合わない項目だけ落とし、欠けた索引では②を使わない。ハッシュはスナップショットに1つ', async () => {
+  const w = worker(), data = JSON.parse(read('data/site-search.json'));
+  const tool = data.pages.find(p => p.kind === 'tool');
+  const kept = w.ctx.makeSitePages(data).find(p => p.id === tool.id);
+  assert.equal(JSON.stringify([kept.rank_title, kept.tags, kept.category]), JSON.stringify([tool.rank_title, tool.tags, tool.category]));
+  // 合わない追加項目は落とすが、行は③のために残す
+  const broken = w.ctx.makeSitePages({ ...data, pages: data.pages.map(p => p.id === tool.id ? { ...p, tags: ['x'.repeat(41)] } : p) });
+  assert.equal(broken.length, data.pages.length); assert.equal('tags' in broken.find(p => p.id === tool.id), false);
+  const snapshot = await w.ctx.getSiteSnapshot({ waitUntil() {} });
+  assert.equal(snapshot.rankReady, true); assert.equal(snapshot.ja, await w.ctx.getSitePages({ waitUntil() {} }, 'ja'));
+  const expected = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(snapshot.text))), b => b.toString(16).padStart(2, '0')).join('');
+  assert.equal(await w.ctx.snapshotHash(snapshot), expected); assert.equal(w.ctx.snapshotHash(snapshot), w.ctx.snapshotHash(snapshot));
+  // 項目の欠けた行・③が飛ばす行がある索引では rankReady が false
+  for (const pages of [data.pages.map(p => p.id === tool.id ? { ...p, category: undefined } : p),
+    [...data.pages, { ...data.pages[0], url: '//outside/' }], data.pages.map(p => p.kind === 'game' ? (({ genre, ...rest }) => rest)(p) : p)]) {
+    const v = worker(undefined, url => url.endsWith('/site-search.json') ? Response.json({ version: 1, pages }) : undefined);
+    assert.equal((await v.ctx.getSiteSnapshot({ waitUntil() {} })).rankReady, false);
+  }
+});
+
 test('出力言語は混在文を日本語に固定せず、記号や短い返答では直前の言語を維持する', () => {
   const w = worker();
   const ja = vm.runInContext('REPLY_LANGUAGE.ja', w.ctx);
