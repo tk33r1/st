@@ -6,6 +6,8 @@
 //                            Jev を直接呼んで精度を測る（MAGI_TYPESAFE_API_KEY。Worker の回数・キャッシュに当たらない）
 //   --report <生の記録>        精度の生の記録から、まとめを Jev を呼び直さずに出し直す
 //   --browser [--set final]  本物のブラウザから本番の Worker へ送り、送信から応答本文までを測る（Playwright）
+//   --logs <tail の JSON> <ブラウザの生の記録>
+//                            ブラウザの測定を、測定中に wrangler tail --format json で取った Worker のログと突き合わせる
 //   --probe                  測定の前に、ブラウザから本番の②へ評価セットに無い1問を送り、有効か・届くかだけを見る
 // 候補の変換・要求の組み立て・判定・並べ方・URL の検査は Worker の関数をそのまま使い、ここに別の変換や問いを書かない。
 // キーは出力しない。生の記録は workers/.wrangler/（Git の管理外）に書く。
@@ -33,6 +35,7 @@ const THRESHOLDS = [0.3, 0.35, 0.4, 0.5, 0.6]; // 比べる閾値（PRD 7.1）
 const PASS = { hit: 0.8, shown: 0.15 };        // リリースの条件（PRD 7.1）：上位5件に正解80%以上、答えの無いもので結果15%以下
 const BROWSER_MAX = 50; // ブラウザの1回の測定の上限（設計書 10.4）。final はこれ以内にして、事前の選び直しを要らなくする
 const P95_MAX_MS = 1500;
+const BROWSER_GAP_MS = 1500; // 要求の間を空ける（続けて送ると wrangler tail がログを取りこぼす。待ちは応答時間に入らない）
 const BROWSER_TIMEOUT_MS = 8000; // 画面（assets/site-search.js）の期限（設計書 5.2）。これを超えた結果は利用者に出せないので、測定でも時間切れ
 const RANK_KINDS = ['page', 'tool', 'game', 'article']; // scope 'site' の結果の kind（日刊は Phase 3）
 const PROBE_QUERY = 'サイト内検索の評価の疎通確認'; // 評価セット・smoke と重ねない
@@ -454,6 +457,7 @@ export async function browser(magi, { data: given } = {}) {
     blocked: page.blocked, rows: [] };
   try {
     for (const q of queries) {
+      if (record.rows.length) await new Promise(r => setTimeout(r, BROWSER_GAP_MS));
       const r = await page.send({ query: q.query, locale: q.locale, mode: 'rank', scope: 'site' });
       const d = r.data || {};
       if (d.reason === 'disabled') throw new Error('本番の Worker の SITE_RANK_ENABLED が true になっていない（disabled）');
@@ -482,9 +486,47 @@ export async function browser(magi, { data: given } = {}) {
     `- この回の条件（p95・上位5件の正解・答えの無いものでの結果の3つ）：${p95 <= P95_MAX_MS && s.pass ? 'すべて満たす' : '満たさない'}`].join('\n'));
 }
 
+// ブラウザの測定を Worker のログと突き合わせる（設計書 10.4「時間の記録」）。ログは測定の間に
+// `npx wrangler tail tk-st-magi2-api --format json > <ファイル>` で取ったもの。request_id ごとに、Jev を呼んだか（jev_ms が
+// null ならキャッシュ）、revision・index_hash・candidate_hash が測定と同じか、判定の欠けが無いかを見る
+export function logsReport(tailText, record, file) {
+  const BACKSLASH = String.fromCodePoint(92), QUOTE = String.fromCodePoint(34);
+  // wrangler tail の JSON は1件ずつ整形して続けて出るので、括弧の対応で1件ずつ切り出す
+  const events = [];
+  let depth = 0, start = -1, inStr = false, esc = false;
+  for (let i = 0; i < tailText.length; i++) {
+    const c = tailText[i];
+    if (inStr) { if (esc) esc = false; else if (c === BACKSLASH) esc = true; else if (c === QUOTE) inStr = false; continue; }
+    if (c === QUOTE) { inStr = true; continue; }
+    if (c === '{') { if (!depth) start = i; depth++; }
+    else if (c === '}') { depth--; if (!depth && start >= 0) { try { events.push(JSON.parse(tailText.slice(start, i + 1))); } catch (_) {} start = -1; } }
+  }
+  const lines = new Map();
+  for (const e of events) for (const l of (e.logs || [])) if (Array.isArray(l.message) && l.message[1] === 'site_rank') lines.set(l.message[0], l.message);
+  // site_rank の行：[request_id, 'site_rank', status, reason, total, candidates, judged, above, index_ms, jev_ms, elapsed_ms, revision, index_hash, candidate_hash]
+  const missing = [], mismatch = [], cached = [], jev = [], elapsed = [];
+  let matched = 0;
+  for (const r of record.rows) {
+    const m = lines.get(r.request_id);
+    if (!m) { missing.push(r.id); continue; }
+    if (m[9] === null) { cached.push(r.id); continue; }
+    jev.push(m[9]); elapsed.push(m[10]);
+    if (m[11] === record.revision && m[12] === record.index_hash && m[13] === record.candidate_hash && m[2] === r.worker_status && m[6] === m[5]) matched++;
+    else mismatch.push(r.id);
+  }
+  return [`## ブラウザの測定と Worker のログの突き合わせ（${file}）`, '',
+    `| 測定 | ログと一致 | ログが無い | キャッシュ（jev_ms が null） | 不一致（revision・ハッシュ・状態・判定の欠け） |`, '| ---: | ---: | ---: | ---: | ---: |',
+    `| ${record.rows.length} | ${matched} | ${missing.length} | ${cached.length} | ${mismatch.length} |`, '',
+    `- Worker の jev_ms：p50 ${percentile(jev, 0.5)}ms、p95 ${percentile(jev, 0.95)}ms。Worker の elapsed_ms：p50 ${percentile(elapsed, 0.5)}ms、p95 ${percentile(elapsed, 0.95)}ms`,
+    ...(missing.length ? [`- ログが無い：${missing.join(' ')}（wrangler tail の取りこぼし。キャッシュでないことはログでは確かめられない）`] : []),
+    ...(cached.length ? [`- キャッシュ：${cached.join(' ')}（この回は条件を整えて測り直す）`] : []),
+    ...(mismatch.length ? [`- 不一致：${mismatch.join(' ')}（索引の反映や設定の食い違い。揃えて測り直す）`] : []),
+  ].join('\n');
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const modes = ['--check', '--hash', '--smoke-payload', '--accuracy', '--report', '--browser', '--probe'].filter(m => process.argv.includes(m));
-  if (modes.length !== 1) fail('使い方: node .github/scripts/eval-site-rank.mjs --check | --hash | --smoke-payload | --accuracy [--set tune|final] [--runs 2] | --report <生の記録> | --browser [--set final] | --probe');
+  const modes = ['--check', '--hash', '--smoke-payload', '--accuracy', '--report', '--browser', '--logs', '--probe'].filter(m => process.argv.includes(m));
+  if (modes.length !== 1) fail('使い方: node .github/scripts/eval-site-rank.mjs --check | --hash | --smoke-payload | --accuracy [--set tune|final] [--runs 2] | --report <生の記録> | --browser [--set final] | --logs <tail の JSON> <ブラウザの生の記録> | --probe');
   const magi = loadWorker();
   if (modes[0] === '--check') {
     const local = await snapshotOf(magi, read('data/site-search.json'));
@@ -510,6 +552,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const file = option('--report');
     if (!file) fail('--report には生の記録（workers/.wrangler/site-rank-accuracy-*.json）を渡す');
     console.log(accuracyReport(JSON.parse(readFileSync(resolve(file), 'utf8')), file));
+  }
+  else if (modes[0] === '--logs') {
+    const i = process.argv.indexOf('--logs'), [tail, file] = process.argv.slice(i + 1, i + 3);
+    if (!tail || !file) fail('--logs には wrangler tail の JSON と、ブラウザの生の記録（workers/.wrangler/site-rank-browser-*.json）を渡す');
+    console.log(logsReport(readFileSync(resolve(tail), 'utf8'), JSON.parse(readFileSync(resolve(file), 'utf8')), file));
   }
   else if (modes[0] === '--probe') await probe();
   else await browser(magi);
