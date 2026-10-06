@@ -1,6 +1,6 @@
 import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
-import { chatPageEvent, getSitePages, searchDeadline, searchFailure, searchSlice, selectSitePages, siteGuide } from '../site-search.js';
+import { chatPageEvent, getSitePages, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide } from '../site-search.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
@@ -81,7 +81,6 @@ function checkText(text, maxChars, counters) {
   if (counters.text > DEFAULTS.input.history_max_chars) throw stageError('bad_request', 'history_too_long', '会話の履歴が文字数の上限を超えています', { retryable: false });
 }
 
-const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
 
 // rate_limit の (key, period) の数を1つ進めて返す。limit に達していたら進めずに null を返す
 // （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
@@ -284,8 +283,6 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 401・402・403 と、残高や枠の不足を示す 429 を拾う（ただの回数制限の 429 は拾わない）。
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
-const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
-const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
 const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・統合・タイトル・次の質問の予測。統合が止まると会話全体が止まる）',
   deepseek: 'DeepSeek（MELCHIOR-1）',

@@ -6,6 +6,13 @@ export const searchSlice = (text, max) => Array.from(text).slice(0, max).join(''
 const clean = (s) => s.replace(/[\u0000-\u001f\u007f-\u009f]/g, '');
 const cache = { pages: null, fetchedAt: 0, retryAt: 0, refreshing: false };
 
+export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
+
+// 上流の失敗が残高切れ・キーの失効か（401・402・403 と、残高や枠の不足を示す 429。ただの回数制限の 429 は拾わない）。
+// ②（site-rank.js）と通知（src/index.js）で同じ判定を使う。
+export const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
+export const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
+
 // signalを無視する応答でも待ち続けない。本文読み取りを含む処理全体を囲む。
 export async function searchDeadline(ms, run, stop) {
   const ac = new AbortController();
@@ -59,8 +66,9 @@ const candidateLine = ({ id, kind, title, detail, hub }) => JSON.stringify({ id,
 // 語の先頭が一致すれば数える（tool → tools）。2文字以下の語（qr など）は完全一致だけ
 const hasWord = (words, term) => words.some(w => w === term || (term.length >= 3 && w.startsWith(term)));
 const dailyIssue = p => /^\/job\/(nitoridaily|retailtechdaily)\/\d{8}\/$/.test(p.url);
-// 対象ページを削らず、AIに渡す分だけ絞る。
-export function shortlistSitePages(pages, query) {
+// 文字の一致による点数。fields(item) が { title, detail } を返す。題名に当たれば重く、detail に当たれば軽く数える。
+// 返すのは元の順の [{ p, score, order }]（並べ替えは呼び出し側）。③のページ選びと②の同点の並びで共有する。
+export function scoreItems(items, query, fields) {
   const q = searchText(query);
   const words = q.match(/[a-z0-9]+|[\p{Script=Han}\p{Script=Hiragana}ー]+/gu) || [];
   // 英語の機能語（a・to・is など）は数えない。英数字の語は語単位で照合する（"to" が "Nitori" に当たらないように）
@@ -72,8 +80,9 @@ export function shortlistSitePages(pages, query) {
       if (!stop.has(term)) terms.add(term);
     }
   }
-  const ranked = pages.map((p, order) => {
-    const title = searchText(p.title), detail = searchText(p.detail + ' ' + p.url);
+  return items.map((p, order) => {
+    const f = fields(p);
+    const title = searchText(f.title), detail = searchText(f.detail);
     const titleWords = title.match(/[a-z0-9]+/g) || [], detailWords = detail.match(/[a-z0-9]+/g) || [];
     let score = title.includes(q) ? 1000 : 0;
     for (const term of terms) {
@@ -82,7 +91,13 @@ export function shortlistSitePages(pages, query) {
       else if (ascii ? hasWord(detailWords, term) : detail.includes(term)) score += term.length * (ascii ? 20 : 1);
     }
     return { p, score, order };
-  }).sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
+  });
+}
+
+// 対象ページを削らず、AIに渡す分だけ絞る。
+export function shortlistSitePages(pages, query) {
+  const ranked = scoreItems(pages, query, p => ({ title: p.title, detail: p.detail + ' ' + p.url }))
+    .sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
   const selected = [], ids = new Set(); let chars = 0, issues = 0;
   function add(p) {
     const length = candidateLine(p).length + 1;
