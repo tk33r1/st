@@ -338,11 +338,12 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 [検索欄] [検索]
   検索ボタンを押すと、検索語を TypeSafe AI に送ってページを並べ替えます。
 検索結果（②）              ← 新しい欄。②を送るまで出さない
-キーワードに一致（①）       ← いまの一覧。②に出たページは除く
+キーワードに一致（①）       ← いまの一覧。②に出たページは除く（下記）
 日刊ブリーフで「…」を探す   ← #q= の形（8章）
 [Shinya Takeda AI に聞く]（③）
 ```
 
+- ①から除くページは、②の `url` と①の `href` を、いまの `pathKey(pathParts(safeDecode(…)))` で同じ形にして比べる（エンコードの違いで重複を見落とさない）。①の件数の表示と `keyword_count` は除く前の件数のままにする。
 - `<script src="/assets/site-search.js?v=…">` を、末尾のインラインのスクリプトより前に置く（404 はどの深さでも同じファイルなので、ルートからのパスにする）。
 - 画面の定数 `RANK_ENABLED`（`AI_SEARCH_ENABLED` の隣）。false のとき、または Worker が `disabled` を返したときは、検索ボタンと②の欄を隠し、いまの動き（①が0件で③）に戻す。
 
@@ -368,6 +369,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 - ③を押したら `rank.cancel()`、②を送るときは `onRun` で `resetAI()`。同時には動かない。
 - ③は、いまの `ai.generation` と入力のたびの `resetAI()` で古い応答を捨てており、これで PRD 3.1 を満たす。
+- ②も同じ所で止める。入力欄の `input` と `compositionstart` の処理で、いまの `resetAI()` と並べて `rank.invalidate()` を呼ぶ。
 - ③はいまのまま `search:` の上限と `site_debate=1` を使う。③の処理（`ai-run` のクリック）は変えない。
 - 表示の条件は `syncAI` で決めている（いまは①が0件のとき）。`syncAI` に②の状態を渡し、上の表で決めるように書き換える。①の一覧の読み込み失敗（`state.failures`）で③を止めるいまの条件は、②が使えないときだけに残す。
 
@@ -463,7 +465,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 ### 8.5 `assets/analytics.js`
 
-- Ahrefs の `<script>` に `data-page-location` を付け、`location.pathname + location.search` を渡す（SAFE TOOLS と同じ）。
+- Ahrefs の `<script>` に `data-page-location` を付け、`location.pathname + location.search` を渡す（SAFE TOOLS と同じ）。`analytics.js` を読む全ページに効くので、日刊以外のページでも Ahrefs にフラグメント（Glitch の見出しへのリンクなど）が載らなくなる。計測の上で困る使い方はいまのところ無い。
 - GTM・GA4 の設定はリポジトリに無いので、10.3 の検証で実際の送信を見て決める。検索語が載る送信があれば、その計測をそのページで止める（PRD 11章の12）。
 
 ### 8.6 全号の再生成
@@ -484,7 +486,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | 5 | `update-modified.py` のトレーラー対応を先に出し、そのあと 8.4 の1・2と 8.5・8.6 を Pages に出す | 再生成の後に `sitemap.yml` が号の `dateModified` を書き換えない。10.3 の URL の検証（本番） |
 | 6 | 8.4 の3（アプリ） | PWA の更新、ネイティブの確認 |
 | 7 | 8.4 の4（Worker の `daily.url`） | 404・トップ・アプリで日刊のリンクが出る |
-| 8 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 10.3 の画面の検証、PRD 7.4 |
+| 8 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 1 から2週間以上たっている（PRD 8.1）。本番の magi2 に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`）。10.3 の画面の検証、PRD 7.4 |
 
 止めるときは、Worker の `SITE_RANK_ENABLED` を先に false にする（画面は `disabled` を受けていまの動きに戻る）。そのあと画面の定数を false にする。
 
