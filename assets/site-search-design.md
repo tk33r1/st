@@ -36,7 +36,7 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 | `workers/magi2/site-rank.js`（新規） | ②の本体（3章） | 1 |
 | `workers/magi2/site-search.js` | 索引の追加項目の保持、中身のハッシュ、点数付けの切り出し（3.5・3.6）。`daily.url` の形式（8.4） | 1 |
 | `workers/magi2/src/index.js` | `mode` による振り分け（3.1） | 1 |
-| `workers/magi2/wrangler.toml` | `SITE_RANK_ENABLED`（最初は `"false"`。応答時間の測定から `"true"`。9章） | 1 |
+| `workers/magi2/wrangler.toml` | `SITE_RANK_ENABLED`（最初は `"false"`。応答時間の測定から `"true"`。9章）。`compatibility_flags = ["enable_request_signal"]`（3.3。本番と `env.eval` の両方） | 1 |
 | `.github/scripts/test-magi2.mjs` | ②の検証（10.1）。`site-rank.js` を読み込む一覧に足す | 1 |
 | `.github/site-search/rank-queries.json`（新規） | 評価セット（10.4） | 1 |
 | `.github/scripts/eval-site-rank.mjs`（新規） | 評価のスクリプト（10.4） | 1 |
@@ -95,6 +95,10 @@ TypeSafe AI（Jev）  POST https://api.typesafe.ai/v1/systemone
 11. ログを残して返す（3.11・3.12）。
 
 上の `disabled`・`unavailable` などは `reason` で、`status` はどれも `failed`。利用者の切断（`request.signal`）は 3〜9 のどこでも止め、数えた回数は戻さない（③と同じ）。自動の再試行はしない。
+
+**切断を知るための設定**：Cloudflare Workers の `request.signal` は、互換性フラグ `enable_request_signal` を付けたときだけ、利用者の切断で中止になる（[Cloudflare の変更履歴](https://developers.cloudflare.com/changelog/post/2025-05-22-handle-request-cancellation/)）。いまの magi2 の `wrangler.toml` にはこのフラグが無いので、③の `searchDeadline(…, request.signal)` も、本番では切断で止まっていない（手元の Node の検証は `Request` の作りが違うので通る）。②と通知の「切断で止める」（PRD 5章・7.4）を成り立たせるため、`compatibility_flags = ["enable_request_signal"]` を足す。
+- チャットはストリームの取り消しでも止めているので、フラグを足すと、切断で止まるのが早くなるだけで、動きは変わらない。③は切断で討議を止めるようになる（もともとの設計どおり）。
+- 確かめ方：`npx wrangler dev`（手元の workerd はフラグを反映する）で②・③を送り、応答の前に接続を切って、Jev・各社への通信が止まることをログで見る（9章の3）。
 
 ### 3.4 設定（`personas.js` の `SITE_RANK`）
 
@@ -489,7 +493,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | --- | --- | --- |
 | 1 | 6.6 のイベントを 404 に足して出す（Phase 0） | GA4 で `count` が取れている。2週間ほど取る |
 | 2 | 索引の追加項目（4章）。Worker は知らない項目を読み捨てる | `test-site-search-index.py`、`bash build.sh` |
-| 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false） | `test-magi2.mjs`、`node --check`、本番で `mode: 'rank'` が `disabled` を返し、③はいままで通り答える |
+| 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false。`enable_request_signal` を足す） | `test-magi2.mjs`、`node --check`、`wrangler dev` で切断したときに上流の通信が止まる（3.3）。本番で `mode: 'rank'` が `disabled` を返し、③とチャットはいままで通り答える |
 | 4 | 評価（10.4）で閾値と `revision` を決め、記録を `site-search-evaluation.md` に書く。応答時間の測定の前に、本番の `SITE_RANK_ENABLED` を true にする（画面は false のまま。条件を満たさなければ false に戻す） | PRD 7.1 のリリースの条件。本番に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`） |
 | 5 | `update-modified.py` のトレーラー対応を先に出し、そのあと 8.4 の1・2と 8.5・8.6 を Pages に出す | 再生成の後に `sitemap.yml` が号の `dateModified` を書き換えない。10.3 の URL の検証（本番） |
 | 6 | 8.4 の3（アプリ） | PWA の更新、ネイティブの確認 |
@@ -585,7 +589,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ## 12. 書き直す説明
 
 - `AGENTS.md`：magi2 の人格設定の節（404 のサイト内検索の流れに②と `SITE_RANK` を足す）、Workers 一覧の magi2 の secret（`MAGI_TYPESAFE_API_KEY` の用途に②）、Jev が4社目の送り先であることの説明。
-- `workers/magi2/README.md`：`/magi2/site-search` の `mode: 'rank'`、回数、停止の仕方。
+- `workers/magi2/README.md`：`/magi2/site-search` の `mode: 'rank'`、回数、停止の仕方。切断の検知に `enable_request_signal` が要ること（外すと②・③・通知が切断で止まらない）。
 - `.github/JEV.md`：利用箇所の表の「サイト内検索（計画中）」を、コードの場所（`workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`）に直す。
 
 ## 13. 決めたこと（2026-10-06）
@@ -593,5 +597,6 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 1. **全号の再生成と更新日**：日時の同期から外す（8.6）。
 2. **問いの言語**：英語の方が精度が高ければ英語にする（3.4）。
 3. **上限の HTTP の状態**：③に揃えて 429 にする（3.12）。
+4. **応答時間の測り方**：本物のブラウザから本番の Worker へ送って測る。そのため、404 に出す前から本番の Worker の②を有効にする期間がある（画面からは呼ばれない。費用は全体の上限で抑える）。評価用の入口の認証は緩めない（10.4・9章の4）。
 
 未決事項はいまのところ無い。
