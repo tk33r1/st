@@ -434,6 +434,18 @@
       var imeEnterHeld = false;
       var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
+      // ①の件数だけを送る（いまの0件率を取るため）。入力が1.5秒止まり、一覧を読み終えていて失敗が無いときだけ。
+      // 検索語は送らず、同じ入力を二度送らない。1ページ10回まで。
+      var keywordCount = { timer: null, last: null, sent: 0 };
+      function cancelKeywordCount() { clearTimeout(keywordCount.timer); keywordCount.timer = null; }
+      function scheduleKeywordCount(query, total) {
+        cancelKeywordCount();
+        if (!query || !state.jsonReady || state.failures || keywordCount.sent >= 10 || query === keywordCount.last) return;
+        keywordCount.timer = setTimeout(function () {
+          keywordCount.timer = null; keywordCount.last = query; keywordCount.sent++;
+          send('not_found_keyword_count', { count: Math.min(total, 6) });
+        }, 1500);
+      }
       // 公開フラグ。URLなどから切り替えられない。停止はWorker側を先に行う。
       var AI_SEARCH_ENABLED = true;
       var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
@@ -632,14 +644,15 @@
         status.textContent = notices.join(' ');
         byId('results').hidden = !state.displayed.length && heading.hidden;
         syncAI(query, total);
+        scheduleKeywordCount(query, total);
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
       function renderWhenReady() { if (!composing && inputTimer === null) render(); }
       byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); });
-      input.addEventListener('compositionstart', function () { resetAI(); composing = true; clearTimeout(inputTimer); inputTimer = null; });
+      input.addEventListener('compositionstart', function () { resetAI(); cancelKeywordCount(); composing = true; clearTimeout(inputTimer); inputTimer = null; });
       input.addEventListener('compositionend', function () { composing = false; schedule(); });
-      input.addEventListener('input', function () { resetAI(); if (!composing) schedule(); });
+      input.addEventListener('input', function () { resetAI(); cancelKeywordCount(); if (!composing) schedule(); });
       function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
       // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
       // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。
