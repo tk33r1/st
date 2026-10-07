@@ -54,3 +54,4 @@ jobs:
         name: site-rank-browser
         path: workers/.wrangler/site-rank-browser-*.json
         if-no-files-found: ignore
+        include-hidden-files: true  # workers/.wrangler は名前が . で始まり、既定では拾われない
