@@ -191,7 +191,13 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 
 `mode: 'rank'` の要求で、索引の各ページに Jev で「目的を果たせる確率」を付けて並べる（設計は `assets/site-search-design.md`、
 設定の正本は `personas.js` の `SITE_RANK`）。`SITE_RANK_ENABLED = "true"` のときだけ動き、停止はこちらを先に `false` にする。
-回数は③と別に `rank:<IP>`・`rank:global` で数え、全体の上限の通知は `alert:site-rank-global`。
+回数は③と別に `rank:<IP>`・`rank:global` で数え（1日に IP ごと60回・全体3,000回。値は `SITE_RANK`）、全体の上限の通知は `alert:site-rank-global`。
+
+- 要求は `POST /magi2/site-search`（クエリなし）に `{ query, locale, mode: 'rank', scope: 'site' }`。応答は `{ request_id, status, complete, reason, searched, results }` で、
+  上限は 429、要求の誤りは 400、それ以外の失敗（`disabled`・`unavailable`・`index_unavailable`・`timeout`）は 200 の `status: 'failed'`。検索語はログ・DB・通知に残さない。
+- 画面は `assets/site-search.js`（送信・状態・応答の検査・描画・計測）と、404 の `RANK_ENABLED`。Worker が `disabled` を返すと、画面は検索ボタンと②の欄を隠していまの動き（①が0件で③）に戻る。
+- **止め方**：先に Worker の `SITE_RANK_ENABLED` を `"false"` にして出し、その後で 404 の `RANK_ENABLED` を false にする（逆にすると、出したままの画面が②を送り続ける間がある）。
+- 応答時間は `.github/workflows/site-rank-browser.yml`（Actions のランナーのブラウザから本番へ）、精度は `node .github/scripts/eval-site-rank.mjs --accuracy` で測る。
 
 ## ローカル検証のコマンド
 

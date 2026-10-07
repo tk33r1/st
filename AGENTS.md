@@ -31,7 +31,7 @@
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン）。巨大かつ高頻度で編集される |
 | `data/` | データ（JSON）だけを置く。ここに置いたものはすべて公開される。手で直す正本は `tools.json`・`game.json`（一覧）と `glitch.json`（記事メタ）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily/`・`retail-tech-daily/`（日刊の号データ。年ごとの `<YYYY>.json`。読み書きは `daily_engine.py` の `load_history`/`save_history` を通す）、`nitori-tiktok-buzz.json`（日刊ニトリ用の TikTok の取得結果） |
-| `assets/` | 区画をまたいで使う自前のコードと、取り込んだ外部物。`analytics.js`（GTM と Ahrefs の読み込み。ID はここにだけ書く）、`buy-me-oil.js`（寄付ウィジェット。`oil-price.json` は自分の場所から `../data/` を引く）、`bijutsu-shisui.js`+`.css`（DJ の各ページと `anniversary/mitsuki32/` の背景演出）、`vendor/`・`fonts/`（取り込んだライブラリとフォント。後述「SAFE TOOLS の通信制限」） |
+| `assets/` | 区画をまたいで使う自前のコードと、取り込んだ外部物。`analytics.js`（GTM と Ahrefs の読み込み。ID はここにだけ書く）、`site-search.js`（404 のサイト内検索の②の部品、`window.STSiteSearch`。日刊・ツール・ゲームにも広げる予定）、`buy-me-oil.js`（寄付ウィジェット。`oil-price.json` は自分の場所から `../data/` を引く）、`bijutsu-shisui.js`+`.css`（DJ の各ページと `anniversary/mitsuki32/` の背景演出）、`vendor/`・`fonts/`（取り込んだライブラリとフォント。後述「SAFE TOOLS の通信制限」） |
 | `files/` | ダウンロード用の資料（PDF）。トップページからリンクしている。旧 `data/` の URL は `_redirects` で 301（インスクリプション版のトップページが旧 URL を持っているので外さない） |
 | `tools/` | ブラウザ内完結のツール群（SAFE TOOLS）。共通部品は `tools/assets/`: `tools-ui.js`+`tools-ui.css`（共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みのほか、テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印も受け持つので、ページ側に書かない）、`tools-base.css`（土台のリセットとアイコン寸法などの部品クラス。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない |
 | `images/` | `contents/`（ページ内の画像。区画ごとに分ける: `dj/`、`glitch/<記事番号>/`、`motovlog/`）、`favicons/`（ファビコンと apple-touch-icon。iOS は SVG を使えないので、SVG とは別に 180px の PNG を置く）、`ogp/`（各ページの OGP 画像、2400×1260。ツールなどの分は手元で `.github/scripts/ogp/` のスクリプトを叩いて作る（同 `README.md`）。手で描き直さない。日刊の号別カードは日刊の workflow が `images/ogp/<media_id>/<YYYYMMDD>.webp` に作る） |
@@ -91,7 +91,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 | `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `IP_SALT`, `SONGBPM_KEY`, `OPENAI_API_KEY`。ブース向けに曲の背景カード（OpenAI の Web 検索を強制、出典を照合した事実だけ保存、trackId ごとにイベントをまたいで使い回し、1日の生成数に上限）も作る。投稿時に作り、取りこぼした曲はブースの一覧読み込みのついでに裏で作る |
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版（`magi/` が呼ぶ）。secret: `MAGI_API_KEY`、`CLIENT_API_KEY` |
-| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（発言の分類と会話の初回の言語判定。無ければ手元の規則）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
+| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（発言の分類と会話の初回の言語判定、404 のサイト内検索の②。無ければ手元の規則、②は使えない）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
 | `workers/magi2`（env.eval） | tk-st-magi2-eval | `magi2-eval.tk.st/magi2*` | 評価専用（DB未作成）。専用DB `tk-st-magi2-eval-db` とAccessを先に設定し、手動で `--env eval` を付けて公開する。通常のdeploy-worker.ymlには入れず、評価後の片付けはmagi2/README.mdに従う |
 | `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。secret: `GAME_OPENAI_API_KEY` |
 
@@ -256,6 +256,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `build.sh` は出荷するHTMLから毎回生成する。手元では `python -B .github/scripts/site-search-index.py` で更新する。
     noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。
     主な入口は `404.html` の常設入口（`data-entry`）が正本で、noindexでも索引に入れ、日英の名前を持たせる（入口を足すなら `data-entry` を書く）。
+    404 の検索ボタン（②）は同じ入口に `mode: 'rank'` を送り、索引の各ページを TypeSafe AI（Jev）で判定して並べる（`SITE_RANK`／`site-rank.js`、画面の部品は `assets/site-search.js`）。
+    止めるときは Worker の `SITE_RANK_ENABLED` を先に false にし、その後で 404 の `RANK_ENABLED` を false にする（magi2 の README.md）。
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
     AIの検索や MAGI の話題から外したいページは、ページを noindex にする。
     回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。検索内容はログ・通知・DBに残さない。

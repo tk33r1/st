@@ -14,7 +14,7 @@ Jev は TypeSafe AI の判定専用のモデル（System One モデル）。文�
 | 日刊ニトリの SNS 投稿の採否 | `noul` 1問 | `.github/scripts/nitori_social_filter.py` | [sns-jev-evaluation.md](../job/nitoridaily/sns-jev-evaluation.md) |
 | 日刊2誌のニュース候補の採否 | `noul` 1問（基準付き） | `.github/scripts/daily_news_filter.py` | [news-jev-evaluation.md](../job/nitoridaily/news-jev-evaluation.md) |
 | DJ ブースの次の曲の相性 | `score`（5段階） | `workers/dj-request/src/transitions.js` | [jev-evaluation.md](../dj/booth/jev-evaluation.md) |
-| サイト内検索（計画中） | `noul` を候補の数だけ1回に | [assets/site-search.md](../assets/site-search.md) | [site-search-evaluation.md](../assets/site-search-evaluation.md) |
+| 404 のサイト内検索の② | `noul` を候補の数だけ1回に | `workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`（画面は `assets/site-search.js`） | [site-search-evaluation.md](../assets/site-search-evaluation.md) |
 
 ## キーと設定
 
@@ -86,7 +86,7 @@ Jev は TypeSafe AI の判定専用のモデル（System One モデル）。文�
   - Worker：`onUpstreamError`
   - Actions：`typesafe_alert.py`
 - 通常の回数制限の429・通信障害・5xx は通知しない。その回だけ、手元の規則に切り替える。
-- 待ち時間は用途に合わせて短く切る。いまの値は、分類 1秒、サイト内検索（計画）2秒、日刊の判定 8秒、DJ 7秒。
+- 待ち時間は用途に合わせて短く切る。いまの値は、分類 1秒、サイト内検索 2秒、日刊の判定 8秒、DJ 7秒。
 
 ## 使い方の知見（評価から）
 
