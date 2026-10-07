@@ -342,10 +342,38 @@ def smoke_magi_classification(url, api_key, model, config=None):
     return observations
 
 
+def smoke_site_rank(url, api_key, model):
+    """404のサイト内検索の②。要求は eval-site-rank.mjs が本番の関数と手元の索引で組む（npm の依存を読まない。設計書 10.5）。"""
+    config = json.loads(subprocess.check_output(
+        ['node', str(REPO_ROOT / '.github/scripts/eval-site-rank.mjs'), '--smoke-payload'], encoding='utf-8'))
+    if config['endpoint'] != url:
+        raise RuntimeError('サイト内検索の呼び出し先がsmokeと異なります')
+    observations = []
+    for case in config['cases']:
+        payload = {**case['payload'], 'model': model}
+        answers = post_json(url, api_key, payload).get('answers', {})
+        # Workerは判定の欠けた応答を使わない（rankProbability）。全候補の答えが有効かを見る
+        probabilities = {}
+        for name in payload['questions']:
+            answer = answers.get(name) if isinstance(answers, dict) else None
+            value = answer.get('noul') if isinstance(answer, dict) and answer.get('type') == 'noul' else None
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not (0 <= value <= 1):
+                raise RuntimeError(f'サイト内検索の{name}の答えが不正です')
+            probabilities[name] = value
+        query = payload['state']['query']
+        if any(probabilities[name] < config['threshold'] for name in case['expect']):
+            raise RuntimeError(f'サイト内検索「{query}」で期待するページが閾値未満です')
+        observations.append({'query': query, 'expect': {name: probabilities[name] for name in case['expect']},
+                             'shown': sum(v >= config['threshold'] for v in probabilities.values())})
+    return observations
+
+
 def smoke_typesafe(url, api_key, model):
-    """分類と言語判定、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
+    """分類と言語判定、サイト内検索、日刊の採否、DJの相性Scoreを本番の指示・形式で確認する。"""
     observations = smoke_magi_classification(url, api_key, model)
     print('MAGI分類smoke（合成入力・確信度に採用閾値なし）: ' + json.dumps(observations, ensure_ascii=False))
+    observations = smoke_site_rank(url, api_key, model)
+    print('サイト内検索smoke（閾値以上の件数は合否に使わない）: ' + json.dumps(observations, ensure_ascii=False))
     from nitori_social_filter import MIN_PROBABILITY, parse_probability, request_payload
     social_cases = [
         ('ニトリのテレビ台を買った。配線が隠せて便利！', True),
@@ -406,7 +434,7 @@ def smoke_typesafe(url, api_key, model):
         scores.append(dj.parse_score(body)[0])
     if scores[0] <= scores[1]:
         raise RuntimeError('DJの実曲Scoreの順位が承認された比較と異なります')
-    return 'MAGI分類/初回4問・継続3問/votable yes・no、言語/日英・短い返事/DJ・旧画面、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
+    return 'MAGI分類/初回4問・継続3問/votable yes・no、言語/日英・短い返事/DJ・旧画面、サイト内検索/noul/全候補・日英3問、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
 
 
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。

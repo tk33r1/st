@@ -167,7 +167,8 @@
 | T3.4 | 完了（2026-10-06） | `tune` を2回（失敗0件、`jev-1.13.0`）。言語は日本語・基準付き（日英とも上位5件の正解100%、誤表示は日本語の方が少ない）、閾値は 0.4（0.3〜0.6 のどれも2回とも条件を満たし、正解の最低 0.60 と答え無しの最高 0.23 の両側からの余裕が最大）。条件を満たす閾値が複数あるときの選び方が設計書に無かったので、10.4 の手順2に足し、`eval-site-rank.mjs` のまとめに「閾値の余裕」を出すようにした（`--report` で生の記録から出し直せる）。取りこぼしが無かったので説明は直していない。結果は `site-search-evaluation.md` の Phase 1 |
 | T3.5 | 完了（2026-10-07） | `question_language: 'ja'`（変わらず）、`threshold: 0.4`、`revision: 2`、英語の文面を消した。`main`（`39eeea40`）から出した（Version `1e06ce40`）。`--probe` の要求の `site_rank` のログで revision 2 を確かめた |
 | T3.6 | 完了（2026-10-07） | `final` を2回：上位5件に正解 32/32、答えの無いもので結果 0/8、失敗0件（2回とも PRD 7.1 の精度・誤表示率の条件を満たす）。測定の `candidate_hash` は本番の `site-search.json` から作ったものと一致（`72ed536f…`）。結果は `site-search-evaluation.md` |
-| T3.7〜T3.8 | 未着手 | |
+| T3.7 | 変更は `main` に入れた（`d862fb46`） | `SITE_RANK_ENABLED = "true"`。デプロイとブラウザの測定は本人（測定は手元の日本から。Claude の環境からは `workers.tk.st` に届かない）。手順：`git pull` → `cd workers && npx wrangler deploy --config magi2/wrangler.toml` → `node .github/scripts/eval-site-rank.mjs --probe`（`disabled` でないこと）→ `wrangler tail` を開いたまま `--browser`。2回目は UTC の別の日 |
+| T3.8 | smoke は実装済み（2026-10-07） | `ai_models.py` の `smoke_typesafe` に②（`smoke_site_rank`）。`--smoke-payload` の3問を送り、全候補の答えの形と期待するページが閾値以上かを見る。`post_json` を模擬して、`.github/scripts/node_modules` を外した状態で通ること、閾値未満・答えの欠け・呼び出し先の違いで止まることを確かめた（キーが無いので本物の Jev には送っていない）。記録は T3.7 の後 |
 | T4.1 | 実装済み・未公開 | 一時リポジトリで確認（トレーラー付きは飛ばす。大文字小文字は問わない）。いまの履歴では変更前と同じ結果 |
 | T4.2〜T4.8 | 未着手 | |
 | T4.9〜T4.10 | 未着手 | |
