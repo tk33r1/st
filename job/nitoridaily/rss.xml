@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 07 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 07 Oct 2026 06:29:59 +0900</lastBuildDate>
+    <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 08 Oct 2026 06:50:56 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月8日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261008/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261008/</guid>
+      <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
+      <description>北大とニトリのAI研究は、インテリアの好みを定量化し、理想の住空間とのギャップを可視化するもの。提案販売や住まい起点の顧客理解につながる可能性がある。 家具リサイクルでは年間1万トン超という処理量目標が示された。既報の施設計画に具体的な規模が加わり、販売後の回収・再資源化の実行力が焦点となる。</description>
+    </item>
     <item>
       <title>2026年10月7日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261007/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260923/</guid>
       <pubDate>Wed, 23 Sep 2026 08:00:00 +0900</pubDate>
       <description>ニトリのアパレルブランド「N+」がサンリオのハローキティと初コラボを発表。PBアパレルにキャラクターIPを取り込み、衣食住を横断したクロスセルと新規ファン層の獲得を狙う動きが鮮明になった。 349円からの超軽量皿、1990円のドア掛けミラー、999円のネコ型ケーキスタンドなど、低価格ながら実用性とデザイン性を両立した商品がSNSで相次ぎ好評。「省スペース」「映え」「揃え買い」が支持の共通軸となっている。</description>
-    </item>
-    <item>
-      <title>2026年9月22日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260922/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260922/</guid>
-      <pubDate>Tue, 22 Sep 2026 08:00:00 +0900</pubDate>
-      <description>ニトリが自社EC「ニトリネットマーケットプレイス」を本格始動。自前の製造・物流・店舗網を土台に外部出品者の在庫を取り込み、品揃えを一気に拡張して購買単価とLTVの向上を狙う、SPAのEC戦略における新たな軸となる動きだ。 「秋の感謝祭」の期間限定価格や、撥水・防汚ソファカバー、デコホームの「香り繋がるシリーズ」など、価格訴求と機能・体験型PBの投入が同時進行。秋冬商戦の立ち上がりに向け、集客と付加価値の両輪で需要を取りにいく構えが見える。</description>
     </item>
   </channel>
 </rss>
