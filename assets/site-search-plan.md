@@ -91,7 +91,7 @@
 | T3.4 | `tune`：言語を決め、閾値を選ぶ。取りこぼした項目の説明を直したら索引を作り直して測り直す。直した元の JSON（`game.json` など）は `main` へ出し、本番の索引に載るのを待つ。説明は `/tools/`・`/game/`・404 の一覧にもそのまま出る。`tools.json` を直すと、push のたびに動く `magi-context.yml` が人格カードを作り直す（OpenAI の費用が少しかかる） | 3.4・10.4 | 本人（キーが要る）＋ Claude（結果の読み取り・説明の直し） | M | 2回とも精度・誤表示率の条件を満たす閾値がある |
 | T3.5 | `SITE_RANK` を決めた値に（`question_language`・`threshold`・`revision`。使わない言語の文面を消す）。Worker を出し直す | 3.4 | Claude → 本人（デプロイ） | S | 本番の `revision` が評価と同じ |
 | T3.6 | `final` を2回（精度） | 10.4 | 本人 | S | 2回とも PRD 7.1 の精度・誤表示率の条件を満たす。測定に使った索引が本番と同じ。本番の `https://tk.st/data/site-search.json` から作った `candidate_hash` と、測定に使った索引のものが一致する（この時点の本番の Worker は②を止めていて `disabled` を返し、索引を読まないので、Worker のログでは比べられない） |
-| T3.7 | `wrangler.toml` の `SITE_RANK_ENABLED` を true にして本番へ出し（画面は出さない）、ブラウザの応答時間を測る。2回目は UTC の別の日 | 9章の4・10.4 | Claude（変更）→ 本人（デプロイ・測定） | S | 本番に `MAGI_TYPESAFE_API_KEY` がある。本番の Worker のログの `revision`・`candidate_hash` が T3.6 と同じ（②を有効にした後なのでログに出る）（違えば `index_unavailable` か条件の不一致なので、索引の反映を待って測り直す）。2回とも p95 が1.5秒以内で、同じ測定の精度・誤表示率も PRD 7.1 の条件を満たす |
+| T3.7 | `wrangler.toml` の `SITE_RANK_ENABLED` を true にして本番へ出し（画面は出さない）、ブラウザの応答時間を測る。2回目は UTC の別の日 | 9章の4・10.4 | Claude（変更・Actions での測定）→ 本人（デプロイ） | S | 本番に `MAGI_TYPESAFE_API_KEY` がある。本番の Worker のログの `revision`・`candidate_hash` が T3.6 と同じ（②を有効にした後なのでログに出る）（違えば `index_unavailable` か条件の不一致なので、索引の反映を待って測り直す）。2回とも p95 が1.5秒以内で、同じ測定の精度・誤表示率も PRD 7.1 の条件を満たす |
 | T3.8 | 記録：`site-search-evaluation.md` に結果をまとめる。`ai_models.py` の smoke に②を足す | 10.4・10.5 | Claude | S | 記録にコミット・ハッシュ・`revision`・2回の数字がある。`ai_models.py smoke` が、npm の依存を入れない状態で通る |
 
 - **合格しなかったら**：本番の `SITE_RANK_ENABLED` を false に戻し、原因（候補の説明・問い・閾値）を直して T3.4 からやり直す。`final` を見てから閾値を選び直す場合は、評価セットを作り直す（設計書 10.4）。
@@ -123,7 +123,7 @@
 | T5.4 | `test-site-search-ui.mjs` の②の応答の検査・状態・連携・表示 | 10.3 | Claude | M | 外部 URL などを含む応答を描かない。PRD 3.1 と 7.4 の画面の条件が通る |
 | T5.5 | 説明を直す：`AGENTS.md`・`workers/magi2/README.md`・`.github/JEV.md` | 12章 | Claude | S | 送り先・回数・停止が書いてある（`enable_request_signal` は T2.7 で書いた） |
 | T5.6 | 公開：T5.1〜T5.5 を、`RANK_ENABLED` を true にして1回の push で `main` へ | 9章の6 | 本人（指示） | S | 前提（M0 から2週間・M3 の合格・M4）を満たす。本番の `SITE_RANK_ENABLED` が true のまま（T3.7）。本番で②・③が動き、止め方（下記）を確かめてある |
-| T5.7 | 公開後の見守り（1〜2週間） | 8.2（PRD） | 本人＋ Claude | S | GA4 のイベント、Worker のログ（失敗の種類・判定なし）、Jev の費用、全体上限の通知 |
+| T5.7 | 公開後の見守り（1〜2週間） | 8.2（PRD） | 本人＋ Claude | S | GA4 のイベント、Worker のログ（失敗の種類・判定なし、②の `elapsed_ms`。T3.7 を米国のランナーで測ったので、日本からの実際の速さもここで見る）、Jev の費用、全体上限の通知 |
 
 - T5.1〜T5.5 は T5.6 まで `main` へ出さない（文言も変わるので、②より先に一部だけ公開しない）。ブランチの扱いは 1章の「公開の単位とブランチ」。
 - **止め方**：Worker の `SITE_RANK_ENABLED` を false にして出す（画面は `disabled` を受けていまの動きに戻る）。そのあと `RANK_ENABLED` を false にする（設計書 9章）。
@@ -167,7 +167,7 @@
 | T3.4 | 完了（2026-10-06） | `tune` を2回（失敗0件、`jev-1.13.0`）。言語は日本語・基準付き（日英とも上位5件の正解100%、誤表示は日本語の方が少ない）、閾値は 0.4（0.3〜0.6 のどれも2回とも条件を満たし、正解の最低 0.60 と答え無しの最高 0.23 の両側からの余裕が最大）。条件を満たす閾値が複数あるときの選び方が設計書に無かったので、10.4 の手順2に足し、`eval-site-rank.mjs` のまとめに「閾値の余裕」を出すようにした（`--report` で生の記録から出し直せる）。取りこぼしが無かったので説明は直していない。結果は `site-search-evaluation.md` の Phase 1 |
 | T3.5 | 完了（2026-10-07） | `question_language: 'ja'`（変わらず）、`threshold: 0.4`、`revision: 2`、英語の文面を消した。`main`（`39eeea40`）から出した（Version `1e06ce40`）。`--probe` の要求の `site_rank` のログで revision 2 を確かめた |
 | T3.6 | 完了（2026-10-07） | `final` を2回：上位5件に正解 32/32、答えの無いもので結果 0/8、失敗0件（2回とも PRD 7.1 の精度・誤表示率の条件を満たす）。測定の `candidate_hash` は本番の `site-search.json` から作ったものと一致（`72ed536f…`）。結果は `site-search-evaluation.md` |
-| T3.7 | デプロイ済み・測定待ち（2026-10-07） | `SITE_RANK_ENABLED = "true"`（`d862fb46`）。`main`（`334b08f9`）から Actions の `deploy-worker.yml` で出した（Version `b54408be`。ログの bindings で `SITE_RANK_ENABLED ("true")` を確かめた）。ブラウザの測定は本人（手元の日本から。Claude の環境からは `workers.tk.st` に届かない）：`node .github/scripts/eval-site-rank.mjs --probe`（`disabled` でないこと）→ `wrangler tail` を開いたまま `--browser`。2回目は UTC の別の日 |
+| T3.7 | デプロイ済み・測定待ち（2026-10-07） | `SITE_RANK_ENABLED = "true"`（`d862fb46`）。`main`（`334b08f9`）から Actions の `deploy-worker.yml` で出した（Version `b54408be`。ログの bindings で `SITE_RANK_ENABLED ("true")` を確かめた）。ブラウザの測定は、本人の判断で手元（日本）から GitHub Actions のランナーに変えた（設計書 10.4。Claude が `site-rank-browser.yml` を起動する）。2回目は UTC の別の日 |
 | T3.8 | smoke は実装済み（2026-10-07） | `ai_models.py` の `smoke_typesafe` に②（`smoke_site_rank`）。`--smoke-payload` の3問を送り、全候補の答えの形と期待するページが閾値以上かを見る。`post_json` を模擬して、`.github/scripts/node_modules` を外した状態で通ること、閾値未満・答えの欠け・呼び出し先の違いで止まることを確かめた（キーが無いので本物の Jev には送っていない）。記録は T3.7 の後 |
 | T4.1 | 実装済み・未公開 | 一時リポジトリで確認（トレーラー付きは飛ばす。大文字小文字は問わない）。いまの履歴では変更前と同じ結果 |
 | T4.2〜T4.8 | 実装済み・未公開（2026-10-07） | 1作業1コミット。T4.2 `daily-ui.js`（`STDailyHandoff` と `st-daily-handoff`、ヘッダー検索とポータルのタグをその場で検索、号のページからはポータルの `#q=` へ、`q` を書く処理と読む処理を削除）。T4.3 `daily_engine.py`（ポータルの head に同期処理、ヘッダーの `name="q"` を外す、タグを `#q=`・`../#q=`、`daily-ui.js?v=20261007_1`）。T4.4 404 の「日刊ブリーフで探す」を `#q=`、`aiHref` が新旧の形を受けて新しい形で返す。T4.5 トップページとアプリの `renderAgentPages` も同じ（アプリの `?v=` と `sw.js` は T6.1）。T4.6 `analytics.js` の Ahrefs に `data-page-location`。T4.7 `mock-daily` を新しい形に。T4.8 `test-site-search-ui.mjs`（URL の部分。`--root` で出す場所を選ぶ）。確かめたこと：`test-magi2.mjs` 121件・`test-daily-news.py` が通る。手元で `--rebuild` した HTML（確認後に戻した）で `test-site-search-ui.mjs --root .` の14の場面が通り、作り直す前の HTML では13の場面が NG になる（検査が効く）。この環境からは GTM・Ahrefs が 403 で読めず、計測が送る通信そのものは確かめていない（T4.10 で本番を見る）。`analytics.js` を直接ではなく Ahrefs を直に読むページ（glitch・game など）は 8.5 の範囲外で、検索語は URL に載らない |

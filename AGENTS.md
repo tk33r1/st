@@ -163,6 +163,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `Account > D1 > Edit` も追加する（上記テンプレートには含まれない）。DB 更新後、リポジトリ Secret `TYPESAFE_API_KEY` が
     あれば Worker へ同期し、それ以外の既存 secret は Cloudflare 側のまま使う。
     Worker を足したら `options` にも足す。
+  - `site-rank-browser.yml`（手動のみ）: 404 のサイト内検索の②の応答時間を、ランナーのブラウザから本番の Worker へ送って測る
+    （`eval-site-rank.mjs --probe` → `--browser`。生の記録は成果物。`assets/site-search-design.md` 10.4）。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が MAGI の人格カードを作り直して

@@ -1,0 +1,56 @@
+name: Site Rank Browser Timing
+
+# 404 のサイト内検索の②（Jev）の応答時間を、本物のブラウザから本番の Worker へ送って測る（assets/site-search-design.md 10.4、
+# 計画書 T3.7）。手動のときだけ動かす。2回目は UTC の別の日に起動する。
+# 本番の Worker の SITE_RANK_ENABLED が true のときだけ測れる（false なら --probe の結果を見て止まる）。
+# Worker は Origin（https://tk.st の 404 のページから送る）で受けるので、キーは要らない。費用は Jev の約40回分。
+# 生の記録（workers/.wrangler/site-rank-browser-*.json）は成果物として残す。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-rank-browser
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install Playwright
+      working-directory: .github/scripts
+      run: |
+        npm ci --no-audit --no-fund
+        npx playwright install --with-deps chromium
+
+    # どの Cloudflare の拠点で受けたかを残す（IP は出さない）
+    - name: Show Cloudflare location
+      run: curl -sS https://tk.st/cdn-cgi/trace | grep -E '^(colo|loc|http|tls)='
+
+    - name: Probe
+      run: |
+        node .github/scripts/eval-site-rank.mjs --probe | tee "$RUNNER_TEMP/probe.json"
+        node -e "const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')); if (d.reason==='disabled' || !['results','no_results'].includes(d.status)) { console.error('::error::②が有効でないか、届かない'); process.exit(1); }" "$RUNNER_TEMP/probe.json"
+
+    - name: Measure final set
+      run: |
+        set -o pipefail
+        node .github/scripts/eval-site-rank.mjs --browser --set final | tee "$RUNNER_TEMP/browser.md"
+        cat "$RUNNER_TEMP/browser.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload raw record
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: site-rank-browser
+        path: workers/.wrangler/site-rank-browser-*.json
+        if-no-files-found: ignore
