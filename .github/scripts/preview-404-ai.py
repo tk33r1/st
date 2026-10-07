@@ -47,7 +47,7 @@ class Preview(SimpleHTTPRequestHandler):
         comment = 'You can combine PDFs with my PDF Studio.' if data['locale'] == 'en' else 'PDFをまとめるなら、私のPDF Studioが使えます。'
         body = {'request_id': 'local-preview', 'status': 'no_results' if none else 'results', 'comment': None if none else comment,
                 'results': [] if none else [{'id': 'tool:7', 'kind': 'tool', 'title': 'PDF Studio', 'description': 'サーバーレスPDF編集ツール', 'url': '/tools/pdf-studio/'}],
-                'daily': {'media': 'nitori', 'query': '出店', 'url': '/job/nitoridaily/?q=%E5%87%BA%E5%BA%97#archiveSearch'} if query == 'mock-daily' else None}
+                'daily': {'media': 'nitori', 'query': '出店', 'url': '/job/nitoridaily/#q=%E5%87%BA%E5%BA%97'} if query == 'mock-daily' else None}
         if query in ('mock-global', 'mock-update'):
             body = {'error': {'code': 'global_daily_limit_exceeded' if query == 'mock-global' else 'site_search_update_required', 'retryable': False}}
         self.send_response(status); self.send_header('Content-Type', 'application/json'); self.end_headers()
