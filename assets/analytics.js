@@ -30,5 +30,6 @@
   }
 
   loadScript('https://www.googletagmanager.com/gtm.js?id=' + GTM_ID);
-  loadScript('https://analytics.ahrefs.com/analytics.js', { 'data-key': AHREFS_KEY });
+  // Ahrefs は URL を丸ごと送るので、パスとクエリだけを渡して # 以降（日刊の検索語の #q= など）を載せない（SAFE TOOLS と同じ）
+  loadScript('https://analytics.ahrefs.com/analytics.js', { 'data-key': AHREFS_KEY, 'data-page-location': w.location.pathname + w.location.search });
 })(window, document);
