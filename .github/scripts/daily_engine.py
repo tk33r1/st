@@ -228,7 +228,7 @@ def render_site_header(config, brand_href, search_action, menu_links, sibling_pr
       <div class="header-actions">
         <form class="header-search" action="{esc(search_action)}" method="get" role="search">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <input type="search" id="headerSearchInput" autocomplete="off" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
         </form>
         <div class="header-menu">
@@ -290,8 +290,47 @@ def render_page_footer(config, media_href, faq_href, rss_href):
   </a>'''
 
 
+# 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
+DAILY_UI_VERSION = '20261007_1'
+
+# ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
+# URL に q（クエリのすべての q、または #q=）があれば、受け取るかどうかに関係なく先に消して #archiveSearch にし、
+# 確かめた値だけを window.STDailyHandoff に置く（daily-ui.js が読んで横断検索を走らせる）。
+# 計測を止めている人にも同じ処理をする（次のページの参照元に残さないため）
+DAILY_HANDOFF_SCRIPT = r"""<script>
+(function (w, l, h) {
+  function check(raw) {
+    var v;
+    try { v = decodeURIComponent(raw); } catch (e) { return null; }
+    v = v.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+    return v.length >= 1 && v.length <= 200 ? v : null;
+  }
+  function take() {
+    var parts = l.search.replace(/^\?/, '').split('&'), qs = [], rest = [], i, key, name;
+    for (i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      key = parts[i].split('=')[0];
+      try { name = decodeURIComponent(key.replace(/\+/g, ' ')); } catch (e) { name = key; }
+      if (name === 'q') qs.push(parts[i].slice(key.length + 1)); else rest.push(parts[i]);
+    }
+    var frag = l.hash.indexOf('#q=') === 0 ? l.hash.slice(3) : null;
+    if (!qs.length && frag === null) return false;
+    try { h.replaceState(h.state, '', l.pathname + (rest.length ? '?' + rest.join('&') : '') + '#archiveSearch'); } catch (e) {}
+    var v = null;
+    if (frag !== null) v = frag.indexOf('&') < 0 && frag.indexOf('#') < 0 ? check(frag) : null;
+    else if (qs.length === 1) v = check(qs[0].replace(/\+/g, ' '));
+    if (v === null) return false;
+    w.STDailyHandoff = v;
+    return true;
+  }
+  take();
+  w.addEventListener('hashchange', function () { if (take()) w.dispatchEvent(new Event('st-daily-handoff')); });
+})(window, location, history);
+</script>"""
+
+
 def render_head(config, rel, title, social_title, description, canonical,
-                og_type, og_image, jsonld_str, extra_links=()):
+                og_type, og_image, jsonld_str, extra_links=(), handoff=False):
     """号ページとポータルで共通の <head>。
 
     canonical / og / twitter に同じ値を三重に書く形なので、片方だけ直して
@@ -299,10 +338,12 @@ def render_head(config, rel, title, social_title, description, canonical,
     （号ページは '../../../'、ポータルは '../../'）。
     social_title は <title> と違い " | tk.st" の有無が媒体・ページで異なるため別引数。
     extra_links は canonical 直後に差し込む <link> タグ（ポータルの RSS alternate 等）。
+    handoff はポータルだけ True（検索語の受け渡し。号のページは ?q= も #q= も受け取らない）。
     """
     extra_html = ''.join('  ' + tag + '\n' for tag in extra_links)
+    handoff_html = '  ' + DAILY_HANDOFF_SCRIPT.replace('\n', '\n  ') + '\n' if handoff else ''
     return f"""  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{handoff_html}  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="{rel}assets/analytics.js" async></script>
   <title>{title}</title>
   <meta name="description" content="{description}">
@@ -1574,7 +1615,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
         tags_html = ''.join(
-            f'<span class="topic-tag-wrap"><a class="topic-tag" href="../?q={urllib.parse.quote(str(tag))}#archiveSearch">#{esc(tag)}</a>'
+            f'<span class="topic-tag-wrap"><a class="topic-tag" href="../#q={urllib.parse.quote(str(tag), safe='')}">#{esc(tag)}</a>'
             f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button></span>'
             for tag in (art.get('tags', []) or []) if str(tag).strip()
         )
@@ -1801,7 +1842,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   {site_footer_html}
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>
 """
@@ -1906,7 +1947,7 @@ def render_top_index_html(config, articles_history):
     # initTopicWatch が .topic-watch-btn を全件まとめて拾うので JS 側の追加も要らない。
     trend_items = ''.join(
         f'<li><span class="topic-tag-wrap">'
-        f'<a class="topic-tag" href="?q={urllib.parse.quote(tag)}#archiveSearch">#{esc(tag)}<strong>{count}件</strong></a>'
+        f'<a class="topic-tag" href="#q={urllib.parse.quote(tag, safe='')}">#{esc(tag)}<strong>{count}件</strong></a>'
         f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button>'
         f'</span></li>'
         for tag, count in trend_counts.most_common(8)
@@ -2072,6 +2113,7 @@ def render_top_index_html(config, articles_history):
         og_image=config['portal_ogp_image'],
         jsonld_str=portal_jsonld_str,
         extra_links=[f'<link rel="alternate" type="application/rss+xml" title="{config["media_name"]} RSS" href="{base_url}rss.xml">'],
+        handoff=True,
     )
 
     featured_html = f"""
@@ -2158,7 +2200,7 @@ def render_top_index_html(config, articles_history):
   {site_footer_html}
 
   <script src="../../assets/buy-me-oil.js"></script>
-  <script src="../../job/assets/daily-ui.js"></script>
+  <script src="../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>
 """
