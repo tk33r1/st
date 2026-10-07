@@ -1,6 +1,7 @@
 // サイト内検索の画面の検証（assets/site-search-design.md 10.3）。手元の Playwright で動かす。
 //   node .github/scripts/test-site-search-ui.mjs [--root _site]
-// 先に `bash build.sh` で _site を作る（--root . ならリポジトリをそのまま出す）。存在しないパスには 404.html を 404 で返す。
+//   node .github/scripts/test-site-search-ui.mjs --base https://tk.st   … 本番を相手にする（計画書 T4.10。Actions の site-search-url.yml）
+// 手元では先に `bash build.sh` で _site を作る（--root . ならリポジトリをそのまま出す）。存在しないパスには 404.html を 404 で返す。
 // いまあるのは URL の部分（PRD 6.1。計画書 T4.8）：目印の検索語が、外へ出る通信（URL と本文）・location・移った先の
 // document.referrer に残らないことを、404 → 日刊、③の日刊リンク、日刊のヘッダー・横断検索・タグ・絞り込み・号への移動、
 // 古い ?q=、受け取らない値、計測を止めた状態、JS 無効のヘッダー送信、再読み込みで確かめる。
@@ -14,8 +15,9 @@ import { fileURLToPath } from 'node:url';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const option = (name, fallback) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : fallback; };
+const remote = option('--base', null);
 const root = resolve(repo, option('--root', '_site'));
-if (!existsSync(join(root, '404.html'))) {
+if (!remote && !existsSync(join(root, '404.html'))) {
   console.error(`${root} に 404.html が無い。先に bash build.sh を実行する（または --root . でリポジトリをそのまま出す）`);
   process.exit(1);
 }
@@ -47,11 +49,12 @@ function serve() {
 }
 
 const { chromium } = await import('playwright');
-const server = await serve();
-const BASE = `http://127.0.0.1:${server.address().port}`;
+const server = remote ? null : await serve();
+const BASE = remote ? remote.replace(/\/$/, '') : `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 const failures = [];
 const analyticsLoaded = new Set(), analyticsFailed = new Set();
+const allRequests = []; // まとめ用（送り先ごとの件数と GA4 のイベント名）
 const check = (ok, message) => { if (!ok) failures.push(message); };
 const marked = s => typeof s === 'string' && s.toLowerCase().includes(MARK);
 
@@ -62,7 +65,7 @@ async function newContext({ js = true, analyticsOff = false, worker = null } = {
   if (analyticsOff) await context.addInitScript(() => { try { localStorage.setItem('st-analytics', 'off'); } catch (_) {} });
   await context.route('**/*', async route => {
     const req = route.request(), url = req.url();
-    if (url.startsWith(BASE + '/')) return route.continue();
+    if (url.startsWith(BASE + '/') && !url.startsWith(BASE + '/cdn-cgi/')) return route.continue(); // /cdn-cgi/ は Cloudflare の計測の送り先
     let body = null;
     try { body = req.postData(); } catch (_) { body = '(読めない本文)'; }
     log.push({ url, body, referer: (await req.allHeaders()).referer || null, search: SEARCH_API.test(url) });
@@ -88,7 +91,9 @@ function checkLog(name, log) {
     }
     check(!marked(r.url), `${name}: 外への通信の URL に目印がある（${r.url.slice(0, 160)}）`);
     check(!marked(r.body), `${name}: 外への通信の本文に目印がある（${r.url.slice(0, 160)}）`);
-    check(!marked(r.referer), `${name}: 外への通信の参照元に目印がある（${r.url.slice(0, 160)}）`);
+    // 同じサイトの /cdn-cgi/（Cloudflare の先読み speculation など）の参照元は見ない。古い ?q= はページを開く要求そのもので
+    // すでに tk.st に届いている（外部へ出るのではない）。URL と本文は見る（Cloudflare Web Analytics の送信など）
+    if (!r.url.startsWith(BASE + '/cdn-cgi/')) check(!marked(r.referer), `${name}: 外への通信の参照元に目印がある（${r.url.slice(0, 160)}）`);
     check(!/[?&]en=view_search_results(?:&|$)/.test(r.url) && !/(?:^|[&\n])en=view_search_results(?:&|$)/.test(r.body || ''),
       `${name}: GA4 に view_search_results が送られた`);
   }
@@ -164,6 +169,16 @@ for (const [label, off] of [['', false], ['（計測を止めた状態）', true
     await leaveToIssue(name, page);
   });
 }
+
+// ポータルを開いたまま #q= に変える（hashchange。計測の履歴の変更の扱いも見る）
+scenario('日刊ポータルの中で #q= に変える', {}, async (page, name) => {
+  await page.goto(BASE + PORTAL); await settle(page);
+  await page.evaluate(q => { location.hash = '#q=' + encodeURIComponent(q); }, QUERY);
+  await page.waitForTimeout(800);
+  check(await portalInput(page) === QUERY, `${name}: 横断検索に検索語が入らない`);
+  await checkLocation(name, page);
+  await leaveToIssue(name, page);
+});
 
 scenario('日刊ポータルの古い ?q=', {}, async (page, name) => {
   await page.goto(BASE + PORTAL + '?q=' + encodeURIComponent(QUERY) + '#archiveSearch'); await settle(page);
@@ -258,14 +273,21 @@ for (const { name, options, fn } of scenarios) {
   page.on('pageerror', e => errors.push(String(e)));
   try { await fn(page, name); } catch (e) { failures.push(`${name}: ${e.message.split('\n')[0]}`); }
   checkLog(name, log);
+  allRequests.push(...log);
   for (const e of errors) failures.push(`${name}: ページのエラー ${e}`);
   console.log(`${failures.some(f => f.startsWith(name + ':') || f.startsWith(name + '（')) ? 'NG' : 'ok'}  ${name}（外への通信 ${log.length}件）`);
   await context.close();
 }
 await browser.close();
-server.close();
+server?.close();
 
 console.log(`\n計測のスクリプト：読み込めた ${[...analyticsLoaded].join('・') || 'なし'}／読み込めなかった ${[...analyticsFailed].join('・') || 'なし'}`);
+const hosts = new Map();
+for (const r of allRequests) { const h = new URL(r.url).host + (r.url.startsWith(BASE + '/cdn-cgi/') ? new URL(r.url).pathname : ''); hosts.set(h, (hosts.get(h) || 0) + 1); }
+console.log('止めた外への通信：' + ([...hosts].map(([h, n]) => `${h} ${n}件`).join('・') || 'なし'));
+const events = new Set();
+for (const r of allRequests) for (const text of [r.url, r.body || '']) for (const m of text.matchAll(/(?:^|[?&\n])en=([^&\s]+)/g)) events.add(decodeURIComponent(m[1]));
+console.log('GA4 のイベント：' + ([...events].sort().join('・') || 'なし'));
 if (!analyticsLoaded.size) console.log('注意：計測のスクリプトを読み込めなかったので、計測が送るはずの通信は確かめられていない（手元の見当。合否は本番の URL で決める）');
 if (failures.length) { console.log('\n' + failures.map(f => '- ' + f).join('\n')); process.exit(1); }
 console.log('URL の検証：すべて通った');

@@ -1,0 +1,34 @@
+name: Site Search URL Check
+
+# 検索語が URL・参照元・計測に残らないことを、本番の tk.st で本物の GTM・Ahrefs を読み込んで確かめる
+# （assets/site-search-design.md 10.3、計画書 T4.10）。手動のときだけ動かす。
+# 計測の送信は記録してから止める（GA4・Ahrefs・Cloudflare Web Analytics のデータを汚さない）。③の Worker への要求も
+# テストが応答を差し替えるので、本番の Worker は呼ばない。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install Playwright
+      working-directory: .github/scripts
+      run: |
+        npm ci --no-audit --no-fund
+        npx playwright install --with-deps chromium
+
+    - name: Check production URLs
+      run: |
+        set -o pipefail
+        node .github/scripts/test-site-search-ui.mjs --base https://tk.st | tee "$RUNNER_TEMP/url.md"
+        { echo '```'; cat "$RUNNER_TEMP/url.md"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
