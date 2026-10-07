@@ -172,11 +172,12 @@
         // 送ったときの世代と条件のままのときだけ描く（A → B → A でも最初の A の応答は描かない）
         if (mine !== generation || keyOf(conditionNow()) !== key) return;
         clearTimeout(timer); timer = null; controller = null;
+        // 描く前に確定させる（描画の onState でページが settled() を読むため）
+        settled = { key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete };
         if (result.reason === 'disabled') {
           self.disabled = true; clear(); shownKey = null; ranKey = null;
           setState('idle');
         } else render(result);
-        settled = { key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete };
         track('rank_result', { status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete });
         call('onSettle', settled);
       })();
