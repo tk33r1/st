@@ -170,7 +170,7 @@
 | T3.7 | 変更は `main` に入れた（`d862fb46`） | `SITE_RANK_ENABLED = "true"`。デプロイとブラウザの測定は本人（測定は手元の日本から。Claude の環境からは `workers.tk.st` に届かない）。手順：`git pull` → `cd workers && npx wrangler deploy --config magi2/wrangler.toml` → `node .github/scripts/eval-site-rank.mjs --probe`（`disabled` でないこと）→ `wrangler tail` を開いたまま `--browser`。2回目は UTC の別の日 |
 | T3.8 | smoke は実装済み（2026-10-07） | `ai_models.py` の `smoke_typesafe` に②（`smoke_site_rank`）。`--smoke-payload` の3問を送り、全候補の答えの形と期待するページが閾値以上かを見る。`post_json` を模擬して、`.github/scripts/node_modules` を外した状態で通ること、閾値未満・答えの欠け・呼び出し先の違いで止まることを確かめた（キーが無いので本物の Jev には送っていない）。記録は T3.7 の後 |
 | T4.1 | 実装済み・未公開 | 一時リポジトリで確認（トレーラー付きは飛ばす。大文字小文字は問わない）。いまの履歴では変更前と同じ結果 |
-| T4.2〜T4.8 | 未着手 | |
+| T4.2〜T4.8 | 実装済み・未公開（2026-10-07） | 1作業1コミット。T4.2 `daily-ui.js`（`STDailyHandoff` と `st-daily-handoff`、ヘッダー検索とポータルのタグをその場で検索、号のページからはポータルの `#q=` へ、`q` を書く処理と読む処理を削除）。T4.3 `daily_engine.py`（ポータルの head に同期処理、ヘッダーの `name="q"` を外す、タグを `#q=`・`../#q=`、`daily-ui.js?v=20261007_1`）。T4.4 404 の「日刊ブリーフで探す」を `#q=`、`aiHref` が新旧の形を受けて新しい形で返す。T4.5 トップページとアプリの `renderAgentPages` も同じ（アプリの `?v=` と `sw.js` は T6.1）。T4.6 `analytics.js` の Ahrefs に `data-page-location`。T4.7 `mock-daily` を新しい形に。T4.8 `test-site-search-ui.mjs`（URL の部分。`--root` で出す場所を選ぶ）。確かめたこと：`test-magi2.mjs` 121件・`test-daily-news.py` が通る。手元で `--rebuild` した HTML（確認後に戻した）で `test-site-search-ui.mjs --root .` の14の場面が通り、作り直す前の HTML では13の場面が NG になる（検査が効く）。この環境からは GTM・Ahrefs が 403 で読めず、計測が送る通信そのものは確かめていない（T4.10 で本番を見る）。`analytics.js` を直接ではなく Ahrefs を直に読むページ（glitch・game など）は 8.5 の範囲外で、検索語は URL に載らない |
 | T4.9〜T4.10 | 未着手 | |
 | T5.1〜T5.5 | 未着手 | |
 | T5.6〜T5.7 | 未着手 | |
