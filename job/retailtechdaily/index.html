@@ -2,6 +2,36 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>
+  (function (w, l, h) {
+    function check(raw) {
+      var v;
+      try { v = decodeURIComponent(raw); } catch (e) { return null; }
+      v = v.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+      return v.length >= 1 && v.length <= 200 ? v : null;
+    }
+    function take() {
+      var parts = l.search.replace(/^\?/, '').split('&'), qs = [], rest = [], i, key, name;
+      for (i = 0; i < parts.length; i++) {
+        if (!parts[i]) continue;
+        key = parts[i].split('=')[0];
+        try { name = decodeURIComponent(key.replace(/\+/g, ' ')); } catch (e) { name = key; }
+        if (name === 'q') qs.push(parts[i].slice(key.length + 1)); else rest.push(parts[i]);
+      }
+      var frag = l.hash.indexOf('#q=') === 0 ? l.hash.slice(3) : null;
+      if (!qs.length && frag === null) return false;
+      try { h.replaceState(h.state, '', l.pathname + (rest.length ? '?' + rest.join('&') : '') + '#archiveSearch'); } catch (e) {}
+      var v = null;
+      if (frag !== null) v = frag.indexOf('&') < 0 && frag.indexOf('#') < 0 ? check(frag) : null;
+      else if (qs.length === 1) v = check(qs[0].replace(/\+/g, ' '));
+      if (v === null) return false;
+      w.STDailyHandoff = v;
+      return true;
+    }
+    take();
+    w.addEventListener('hashchange', function () { if (take()) w.dispatchEvent(new Event('st-daily-handoff')); });
+  })(window, location, history);
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="../../assets/analytics.js" async></script>
   <title>日刊リテールテック／流通DXの速報ニュース | Retail Tech Daily</title>
@@ -519,7 +549,7 @@
       <div class="header-actions">
         <form class="header-search" action="./#archiveSearch" method="get" role="search">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <input type="search" id="headerSearchInput" autocomplete="off" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
         </form>
         <div class="header-menu">
@@ -582,7 +612,7 @@
     </section>
     <section class="trend-section" aria-labelledby="trendTitle">
       <div class="section-head"><h2 class="section-title" id="trendTitle">直近7号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
-      <ul class="trend-list"><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2#archiveSearch">#リテールメディア<strong>10件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E5%BA%97%E8%88%97DX#archiveSearch">#店舗DX<strong>5件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8#archiveSearch">#セルフレジ<strong>4件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=AI#archiveSearch">#AI<strong>4件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E6%AC%A1%E4%B8%96%E4%BB%A3%E6%B1%BA%E6%B8%88#archiveSearch">#次世代決済<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="次世代決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E5%BA%83%E5%91%8A%E5%8A%B9%E6%9E%9C%E6%B8%AC%E5%AE%9A#archiveSearch">#広告効果測定<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="広告効果測定" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E8%B3%BC%E8%B2%B7%E3%83%87%E3%83%BC%E3%82%BF#archiveSearch">#購買データ<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="購買データ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="?q=%E5%BA%97%E5%86%85UX#archiveSearch">#店内UX<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="店内UX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li></ul>
+      <ul class="trend-list"><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア<strong>10件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E5%BA%97%E8%88%97DX">#店舗DX<strong>5件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ<strong>4件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=AI">#AI<strong>4件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E6%AC%A1%E4%B8%96%E4%BB%A3%E6%B1%BA%E6%B8%88">#次世代決済<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="次世代決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E5%BA%83%E5%91%8A%E5%8A%B9%E6%9E%9C%E6%B8%AC%E5%AE%9A">#広告効果測定<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="広告効果測定" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E8%B3%BC%E8%B2%B7%E3%83%87%E3%83%BC%E3%82%BF">#購買データ<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="購買データ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li><li><span class="topic-tag-wrap"><a class="topic-tag" href="#q=%E5%BA%97%E5%86%85UX">#店内UX<strong>3件</strong></a><button type="button" class="topic-watch-btn" data-watch-topic="店内UX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></li></ul>
       <div class="watch-panel">
         <h3>ウォッチ中のテーマ</h3>
         <div id="watchTopics" class="watch-topics"><span class="watch-empty">上の注目テーマや記事タグの ☆ からテーマを登録できます。</span></div>
@@ -1070,6 +1100,6 @@
   </a>
 
   <script src="../../assets/buy-me-oil.js"></script>
-  <script src="../../job/assets/daily-ui.js"></script>
+  <script src="../../job/assets/daily-ui.js?v=20261007_1"></script>
 </body>
 </html>
