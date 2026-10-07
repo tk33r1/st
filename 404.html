@@ -506,10 +506,18 @@
           var u = new URL(value, 'https://tk.st');
           if (u.origin !== 'https://tk.st') return null;
           if (daily) {
-            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname) || u.hash !== '#archiveSearch'
-              || Array.from(u.searchParams.keys()).join(',') !== 'q' || !u.searchParams.get('q')) return null;
+            // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）。古い ?q=…#archiveSearch も受け取り、新しい形に直す
+            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname)) return null;
+            var raw;
+            if (!u.search && u.hash.indexOf('#q=') === 0 && !/[&#]/.test(u.hash.slice(3))) {
+              try { raw = decodeURIComponent(u.hash.slice(3)); } catch (_) { return null; }
+            } else if (u.hash === '#archiveSearch' && Array.from(u.searchParams.keys()).join(',') === 'q') raw = u.searchParams.get('q');
+            else return null;
+            var q = stripControls(raw).trim();
+            if (!q || q.length > 200) return null;
+            return u.pathname + '#q=' + encodeURIComponent(q);
           } else if (u.search || u.hash) return null;
-          return u.pathname + u.search + u.hash;
+          return u.pathname;
         } catch (_) { return null; }
       }
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
@@ -608,7 +616,7 @@
           dailyEntries.forEach(function (entry, i) {
             var link = byId(i === 0 ? 'nitori-search' : 'retail-search');
             link.textContent = entry.title + ' →';
-            link.href = entry.href + '?q=' + encodeURIComponent(query) + '#archiveSearch';
+            link.href = entry.href + '#q=' + encodeURIComponent(query);
           });
           if (!state.jsonReady) notices.push(text.searchLoading);
           else if (state.failures === 3) notices.push(text.failed);

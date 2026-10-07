@@ -2595,3 +2595,20 @@ test('MAGI採決: 両画面は決議後の停止・切断で完了した説明�
     assert.equal(body.textContent,expected);assert.equal(!!bar.removed,partial);
   }
 });
+
+test('404 の日刊リンクの検査は #q= と古い ?q= の両方を通し、新しい形にして返す', () => {
+  const page = read('404.html');
+  const ctx = vm.createContext({ URL });
+  vm.runInContext(between(page, 'function stripControls(', '\n') + '\n' + between(page, 'function aiHref(', "byId('ai-request')"), ctx);
+  const q = encodeURIComponent('出店 計画');
+  assert.equal(ctx.aiHref('/job/nitoridaily/#q=' + q, true), '/job/nitoridaily/#q=' + q);
+  assert.equal(ctx.aiHref('/job/retailtechdaily/?q=' + q + '#archiveSearch', true), '/job/retailtechdaily/#q=' + q);
+  assert.equal(ctx.aiHref('/job/retailtechdaily/?q=a+b#archiveSearch', true), '/job/retailtechdaily/#q=a%20b');
+  for (const bad of ['/job/nitoridaily/?q=a&q=b#archiveSearch', '/job/nitoridaily/?q=a&x=1#archiveSearch', '/job/nitoridaily/?q=a',
+    '/job/nitoridaily/#q=a%26b&c', '/job/nitoridaily/#q=%E3%8', '/job/nitoridaily/#q=', '/job/nitoridaily/#q=%01',
+    '/job/nitoridaily/?x=1#q=a', '/job/nitoridaily/#q=' + 'a'.repeat(201), '/job/other/#q=a', '//evil.test/job/nitoridaily/#q=a']) {
+    assert.equal(ctx.aiHref(bad, true), null, bad);
+  }
+  assert.equal(ctx.aiHref('/tools/pdf-studio/', false), '/tools/pdf-studio/');
+  assert.equal(ctx.aiHref('/tools/pdf-studio/#q=a', false), null);
+});
