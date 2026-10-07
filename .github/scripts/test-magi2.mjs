@@ -825,6 +825,19 @@ test('両画面のリンク検証とラベルの描画は一致し、サイト�
     assert.equal(reply.children[0].children.length, 1);
     assert.equal(reply.children[0].children[0].children[0].textContent, '<script>label</script>');
     assert.equal(reply.children[0].children[0].rel, 'noopener noreferrer');
+    // 日刊は #q= と古い ?q=…#archiveSearch の両方を受け、新しい形にしてから href に入れる
+    const q = encodeURIComponent('出店 計画');
+    for (const [url, href] of [
+      ['https://tk.st/job/nitoridaily/#q=' + q, 'https://tk.st/job/nitoridaily/#q=' + q],
+      ['https://tk.st/job/retailtechdaily/?q=' + q + '#archiveSearch', 'https://tk.st/job/retailtechdaily/#q=' + q],
+      ['https://tk.st/job/retailtechdaily/#q=a%26b&c', null], ['https://tk.st/job/retailtechdaily/#q=%E3%8', null],
+      ['https://tk.st/job/retailtechdaily/?q=a&q=b#archiveSearch', null], ['https://tk.st/job/retailtechdaily/?x=1#q=a', null],
+      ['https://tk.st/job/retailtechdaily/#q=%01', null], ['https://tk.st/job/retailtechdaily/#q=' + 'a'.repeat(201), null],
+    ]) {
+      const box = node();
+      ctx.renderAgentPages(box, { pages: [], daily: { media: 'retail', query: 'AI', url } });
+      assert.equal(box.children[0]?.children[0].href ?? null, href, url);
+    }
   }
 });
 

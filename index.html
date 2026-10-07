@@ -7721,11 +7721,19 @@ async function parseSSE(body, handlers, onChunk) {
         try {
           var u = new URL(raw);
           if (u.origin !== 'https://tk.st' || u.username || u.password) return;
+          var href = u.href;
           if (daily) {
-            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname) || u.hash !== '#archiveSearch'
-              || Array.from(u.searchParams.keys()).join(',') !== 'q' || !u.searchParams.get('q')) return;
+            // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）。古い ?q=…#archiveSearch も受け取り、新しい形に直す
+            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname)) return;
+            var q;
+            if (!u.search && u.hash.indexOf('#q=') === 0 && !/[&#]/.test(u.hash.slice(3))) q = decodeURIComponent(u.hash.slice(3));
+            else if (u.hash === '#archiveSearch' && Array.from(u.searchParams.keys()).join(',') === 'q') q = u.searchParams.get('q');
+            else return;
+            q = q.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+            if (!q || q.length > 200) return;
+            href = u.origin + u.pathname + '#q=' + encodeURIComponent(q);
           } else if (u.search || u.hash) return;
-          var a = document.createElement('a'); a.className = 'agent-page'; a.href = u.href;
+          var a = document.createElement('a'); a.className = 'agent-page'; a.href = href;
           a.target = '_blank'; a.rel = 'noopener noreferrer';
           var name = document.createElement('strong'); name.textContent = title; a.appendChild(name);
           if (description) { var desc = document.createElement('span'); desc.textContent = description; a.appendChild(desc); }
