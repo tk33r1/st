@@ -391,7 +391,7 @@
 
   function initArchiveSearch() {
     const form = document.getElementById('archiveSearchForm');
-    if (!form) return;
+    if (!form) return null;
     const query = document.getElementById('archiveSearchInput');
     const category = document.getElementById('archiveCategoryFilter');
     const region = document.getElementById('archiveRegionFilter');
@@ -437,19 +437,60 @@
       results.replaceChildren();
       matched.slice(0, 100).forEach(function(record) { results.appendChild(createSearchResult(record)); });
       status.textContent = matched.length + '件見つかりました' + (matched.length > 100 ? '（先頭100件を表示）' : '') + '。';
-      try {
-        const url = new URL(window.location.href);
-        if (query.value) url.searchParams.set('q', query.value); else url.searchParams.delete('q');
-        window.history.replaceState({}, '', url);
-      } catch (err) {}
+      // 検索語は URL に書かない（参照元や計測に載せない。assets/site-search-design.md 8.3）
     }
 
     form.addEventListener('submit', runSearch);
     [category, region, month].forEach(function(control) { control.addEventListener('change', runSearch); });
-    try {
-      const initial = new URLSearchParams(window.location.search).get('q');
-      if (initial) { query.value = initial; runSearch(); }
-    } catch (e) {}
+
+    // ヘッダー検索・タグ・受け渡しから、検索語を入れて走らせ、検索欄へ移る
+    return function searchFor(text) {
+      query.value = text;
+      runSearch();
+      document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
+    };
+  }
+
+  // 検索語の取り出し（受け取る側の検査は head の処理。ここでは送る前に制御文字を除いて200文字に収める）
+  function cleanQuery(value) {
+    return String(value || '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, 200);
+  }
+
+  // URL の q は head の同期処理（daily_engine.py）だけが扱い、確かめた検索語を window.STDailyHandoff に置く。
+  // ヘッダー検索とタグは、ポータルならその場で検索し、号のページならポータルの #q= へ移る（?q= を作らない）
+  function initSearchHandoff(searchFor) {
+    const header = document.querySelector('.header-search');
+    if (header) {
+      header.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = header.querySelector('input[type="search"]');
+        const text = cleanQuery(input && input.value);
+        if (searchFor) {
+          if (text) searchFor(text);
+          else document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+        const portal = new URL(header.getAttribute('action') || './', window.location.href);
+        window.location.href = portal.href.split('#')[0] + (text ? '#q=' + encodeURIComponent(text) : '#archiveSearch');
+      });
+    }
+    if (!searchFor) return;
+    document.querySelectorAll('a.topic-tag[href^="#q="]').forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        let text = '';
+        try { text = cleanQuery(decodeURIComponent(link.getAttribute('href').slice(3))); } catch (err) { return; }
+        if (!text) return;
+        e.preventDefault();
+        searchFor(text);
+      });
+    });
+    function takeHandoff() {
+      const text = typeof window.STDailyHandoff === 'string' ? window.STDailyHandoff : '';
+      window.STDailyHandoff = null;
+      if (text) searchFor(text);
+    }
+    window.addEventListener('st-daily-handoff', takeHandoff);
+    takeHandoff();
   }
 
   function initTopicWatch(watch) {
@@ -609,7 +650,7 @@
     initViewMode();
     initIssueFilters(watch);
     initSharing();
-    initArchiveSearch();
+    initSearchHandoff(initArchiveSearch());
     initTopicWatch(watch);
     initWatchFeed(watch);
     initRssCopy();
