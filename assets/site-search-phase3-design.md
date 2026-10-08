@@ -116,8 +116,9 @@ HTTP・`status`・`reason` は Phase 2 と同じ。日刊の成功では `search
 
 - 日刊の受け渡し（`#q=`、古い `?q=`）は Phase 2 のまま。ツール・ゲーム一覧の head にも同じ処理（単一の値・200コードポイント・不正なエンコードと競合の検査）を足し、計測より先に URL から消す。取り出した値は①の初期条件にだけ使う。
 - ②の POST は `credentials: 'omit'`・`referrerPolicy: 'no-referrer'`（Phase 2 の部品のまま）。
-- 計測のイベントは `daily_rank_run`・`daily_rank_result`・`daily_rank_click`（`media` を付ける）。`daily_rank_run` にだけ伏せ字の `search_term` を付ける。result に検索語・URL・題名・確率を入れない。①の `daily_search` は変えない。
-- **GTM**：いまのトリガーのイベント名 `^(not_found_.*|daily_search)$` は新しいイベントを拾わない。公開の前に本人が `^(not_found_.*|daily_.*)$` に直す（実装計画書 P3-T12）。拾えていることを本番の通信で確かめる。
+- 計測のイベントは `daily_rank_run`・`daily_rank_result`・`daily_rank_click`。値は 404 の②と同じ名前だけを使う（`keyword_state`・`keyword_count`・`status`・`reason`・`count`・`complete`・`position`・`search_term`。GTM に登録済み）。媒体は GA4 のページの URL で分かるので、`media` のような新しい値は足さない（足すと GTM の変数とタグの値も足す必要がある）。`daily_rank_run` にだけ伏せ字の `search_term` を付ける。result に検索語・URL・題名・確率を入れない。
+- ①の `daily_search` は変えない。送るのは①を実行したとき（受け渡し・タグ・絞り込み・Enter）だけで、入力中のドロップダウンの更新では送らない（1文字ごとに送らない。Phase 2 PRD 8.3）。
+- **GTM**：本人がトリガーのイベント名を `^(not_found_.*|daily_.*)$` に直して公開した（2026-10-09）。`daily_rank_*` も拾える。公開後に本番の通信で届いていることを確かめる（検証計画書 V14）。
 - Worker のログは scope を足し、件数・時間・reason・revision・index_hash・candidate_hash だけを残す。filters の原文、検索語、キャッシュのキー、候補の本文、上流のエラーの本文は残さない。candidate_hash は絞り込み前の全記事の `[id, toRankCandidate(item)]` を ID 順に並べた digest。
 
 ## 8. 回数・キャッシュ・停止
