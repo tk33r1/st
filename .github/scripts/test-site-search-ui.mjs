@@ -318,6 +318,18 @@ scenario('JS 無効のヘッダー送信', { js: false }, async (page, name) => 
   check(!marked(page.url()), `${name}: JS 無効の送信で URL に検索語が入る（${page.url()}）`);
 });
 
+// 404 の計測（Phase 0。計画書 T0.2）：①の件数のイベントが dataLayer に入り、GTM が GA4 へ送るか。
+// GA4 へ送ったかはまとめの「GA4 のイベント」に出る（本物の GTM を読めたときだけ分かる）
+scenario('404 の計測：not_found_keyword_count', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.fill('#query', 'pdf');
+  await page.waitForTimeout(2500); // 入力が1.5秒止まったら送る
+  const events = await page.evaluate(() => (window.dataLayer || []).filter(e => e && typeof e.event === 'string').map(e => ({ ...e })));
+  const hit = events.find(e => e.event === 'not_found_keyword_count');
+  check(hit && hit.count === 1, `${name}: dataLayer に not_found_keyword_count（count 1）が入らない`);
+  await page.waitForTimeout(5000); // GA4 はまとめて送るので待つ
+});
+
 // ---- ②（計画書 T5.4。設計書 5章・6章、PRD 3.1・7.4） ----
 const FAILED_JA = 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。';
 
@@ -503,6 +515,7 @@ console.log('止めた外への通信：' + ([...hosts].map(([h, n]) => `${h} ${
 const events = new Set();
 for (const r of allRequests) for (const text of [r.url, r.body || '']) for (const m of text.matchAll(/(?:^|[?&\n])en=([^&\s]+)/g)) events.add(decodeURIComponent(m[1]));
 console.log('GA4 のイベント：' + ([...events].sort().join('・') || 'なし'));
+for (const e of ['not_found_keyword_count', 'not_found_search_used']) console.log(`  ${e}：GA4 へ${events.has(e) ? '送った' : '送っていない'}`);
 if (!analyticsLoaded.size) console.log('注意：計測のスクリプトを読み込めなかったので、計測が送るはずの通信は確かめられていない（手元の見当。合否は本番の URL で決める）');
 if (skipped.length) console.log(`②が出ていないので飛ばした場面：${skipped.length}件`);
 if (failures.length) { console.log('\n' + failures.map(f => '- ' + f).join('\n')); process.exit(1); }
