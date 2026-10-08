@@ -419,6 +419,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 ### 6.5 計測
 
 - ②：5.4 のイベント（`not_found_rank_run` など）。
+- 検索語（PRD 8.3、2026-10-08）：部品（5.4）は検索語を渡さないまま、404 の `track` が `not_found_rank_run` に `search_term` を足す。`not_found_keyword_count`・`not_found_ai_used` にも足す。伏せ字と100文字の切り詰めはページの1つの関数で行う。
 - ③：いまの `not_found_ai_used` に `after`（`'rank_results'`・`'rank_partial'`・`'rank_none'`・`'rank_failed'`・`'no_rank'`）を足す（PRD 8.2 の「③に進んだ割合」）。押した時点の②の状態を `rank.cancel()` より前に取り、入力が同じ②の確定結果についてだけ分類する。入力変更後の `stale` と②の未実行は `no_rank` とする。
 
 ### 6.6 いまの値を取るイベント（Phase 0）
@@ -510,7 +511,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 | 3 | Worker の②を本番に出す（`SITE_RANK_ENABLED` は false。`enable_request_signal` を足す） | `test-magi2.mjs`、`node --check`、本番で③をキャンセルしたときに上流の通信が止まる（3.3。`wrangler tail` で見る）。本番で `mode: 'rank'` が `disabled` を返し、③とチャットはいままで通り答える |
 | 4 | 評価（10.4）で閾値と `revision` を決め、記録を `site-search-evaluation.md` に書く。応答時間の測定の前に、本番の `SITE_RANK_ENABLED` を true にする（画面は false のまま。条件を満たさなければ false に戻す） | PRD 7.1 のリリースの条件。本番に `MAGI_TYPESAFE_API_KEY` がある（AGENTS.md では任意の secret で、無いと②は常に `unavailable`） |
 | 5 | `update-modified.py` のトレーラー対応を先に出し、そのあと 8.4 の1・2と 8.5・8.6 を Pages に出す | 再生成の後に `sitemap.yml` が号の `dateModified` を書き換えない。10.3 の URL の検証（本番） |
-| 6 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | 1 から2週間以上たっている（PRD 8.1）。10.3 の画面の検証、PRD 7.4 |
+| 6 | 404 の画面（6章）。`RANK_ENABLED` を true にして、Worker の `SITE_RANK_ENABLED` を true にする | M3 の合格と 5（1 の2週間は待たない。2026-10-08 に本人が決めた。PRD 8.1）。もとは「1 から2週間以上たっている」（PRD 8.1）。10.3 の画面の検証、PRD 7.4 |
 | 7 | 8.4 の3（アプリ） | PWA の更新、ネイティブの確認 |
 | 8 | 8.4 の4（Worker の `daily.url`） | 7 の更新が行き渡っている。404・トップ・アプリで日刊のリンクが出る |
 

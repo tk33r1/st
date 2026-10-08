@@ -37,7 +37,7 @@
 | M2 | Worker の②（止めた状態で本番へ） | 3 | M1 |
 | M3 | 評価と閾値の決定 | 4 | M2、P |
 | M4 | 検索語を URL に残さない | 5 | P |
-| M5 | 404 の公開 | 6 | M0 から2週間、M3 の合格、M4 |
+| M5 | 404 の公開 | 6 | M3 の合格、M4（M0 の2週間は待たない。2026-10-08 に本人が決めた。PRD 8.1） |
 | M6 | アプリの更新 | 7 | M4 |
 | M7 | Worker の日刊リンクを新しい形に | 8 | M6 が行き渡る |
 
@@ -122,7 +122,8 @@
 | T5.3 | `preview-404-ai.py` に②の模擬（遅い・欠け・上限・停止・外部 URL） | 10.3 | Claude | S | 手元で各状態を目で見られる |
 | T5.4 | `test-site-search-ui.mjs` の②の応答の検査・状態・連携・表示 | 10.3 | Claude | M | 外部 URL などを含む応答を描かない。PRD 3.1 と 7.4 の画面の条件が通る |
 | T5.5 | 説明を直す：`AGENTS.md`・`workers/magi2/README.md`・`.github/JEV.md` | 12章 | Claude | S | 送り先・回数・停止が書いてある（`enable_request_signal` は T2.7 で書いた） |
-| T5.6 | 公開：T5.1〜T5.5 を、`RANK_ENABLED` を true にして1回の push で `main` へ | 9章の6 | 本人（指示） | S | 前提（M0 から2週間・M3 の合格・M4）を満たす。本番の `SITE_RANK_ENABLED` が true のまま（T3.7）。本番で②・③が動き、止め方（下記）を確かめてある |
+| T5.6 | 公開：T5.1〜T5.5 を、`RANK_ENABLED` を true にして1回の push で `main` へ | 9章の6 | 本人（指示） | S | 前提（M3 の合格・M4）を満たす（M0 の2週間は待たない）。本番の `SITE_RANK_ENABLED` が true のまま（T3.7）。本番で②・③が動き、止め方（下記）を確かめてある |
+| T5.8 | 検索語の計測：404 の `not_found_keyword_count`・`not_found_rank_run`・`not_found_ai_used` と日刊の横断検索（`daily_search`）に `search_term`（伏せ字にしてから100文字まで）。404 のダイアログと日刊の検索欄の近くに説明。`test-site-search-ui.mjs` の目印の検査を `search_term` だけ許すように直す。日刊は `--rebuild`（`Date-Sync: skip`） | PRD 8.3 | Claude → 本人（GTM に `search_term` を足す） | M | GA4 に `search_term` が届き、URL・参照元・Ahrefs・ほかの値には検索語が載らない。メールアドレスと長い数字が伏せ字になる |
 | T5.7 | 公開後の見守り（1〜2週間） | 8.2（PRD） | 本人＋ Claude | S | GA4 のイベント、Worker のログ（失敗の種類・判定なし、②の `elapsed_ms`。T3.7 を米国のランナーで測ったので、日本からの実際の速さもここで見る）、Jev の費用、全体上限の通知 |
 
 - T5.1〜T5.5 は T5.6 まで `main` へ出さない（文言も変わるので、②より先に一部だけ公開しない）。ブランチの扱いは 1章の「公開の単位とブランチ」。
