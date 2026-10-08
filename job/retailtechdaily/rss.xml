@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 08 Oct 2026 06:45:53 +0900</lastBuildDate>
+    <pubDate>Fri, 09 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 09 Oct 2026 06:44:55 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月9日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261009/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261009/</guid>
+      <pubDate>Fri, 09 Oct 2026 08:00:00 +0900</pubDate>
+      <description>インタセクトとユーシーカードが無人店舗でのクレジットカードのタッチ決済に対応し、入店から決済までを非接触・カード一枚で完結させる動きが広がっています。 需要予測では住関連データなど外部データを取り込んで精度を高める動きが目立ち、AI需要予測の実装が高度化しています。</description>
+    </item>
     <item>
       <title>2026年10月8日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261008/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260925/</guid>
       <pubDate>Fri, 25 Sep 2026 08:00:00 +0900</pubDate>
       <description>コンビニ3陣営がリテールメディアを成長の柱に据え、提携・新会社で広告と購買データの収益化を加速。ベストバイがコネクテッドTVを軸に据えるなど、小売の収益源が売上高から広告・データへ移る流れが国内外で同時進行した。 省人化・無人化の実装が本格化。三洋堂書店40店舗のAI顔認証による無人営業、郵便局のセルフレジ決済、カスハラ対策義務化を見据えた店舗DXなど、現場のオペレーション改革が規制と人手不足を追い風に広がっている。</description>
-    </item>
-    <item>
-      <title>2026年9月24日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260924/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260924/</guid>
-      <pubDate>Thu, 24 Sep 2026 08:00:00 +0900</pubDate>
-      <description>AI活用は「導入するか」から「どう制御し信頼を得るか」の段階へ。クローガーやシュナックスがAI買い物支援を本格化させる一方、米国では不適切なAIレコメンドによる消費者離れが顕在化。日本でもローソンが生成AI発案の商品を投入し、AI活用の巧拙が明暗を分け始めた。 生活防衛と価格戦略が再燃。低所得世帯の経済的不安の高まりや食品インフレ再燃を受け、値下げやPB強化など価格訴求の重要性が増している。所得層ごとの消費分極化が小売の売上構造を変えつつある。</description>
     </item>
   </channel>
 </rss>
