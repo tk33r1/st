@@ -96,8 +96,11 @@ async function newContext({ js = true, analyticsOff = false, worker = null, real
 const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.[a-z.]+$/; // 国別のドメイン（www.google.ca など）も Google シグナルの送り先
 const withoutSearchTerm = (r, text) => typeof text === 'string' && GOOGLE_MEASUREMENT.test(new URL(r.url).host)
   ? text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g, '$1') : text;
+// 伏せ字にするはずの値（404 の計測の場面で入力する）。生のままでは、どの通信にも出てはいけない
+const PII = ['a.b@example.com', 'a.b%40example.com', '090-1234-5678', '090%2D1234%2D5678', '1234-5678'];
 function checkLog(name, log) {
   for (const raw of log) {
+    for (const v of PII) check(!(raw.url || '').includes(v) && !(raw.body || '').includes(v), `${name}: 伏せるはずの値（${v}）が外への通信に出た（${raw.url.slice(0, 120)}）`);
     const r = { ...raw, url: withoutSearchTerm(raw, raw.url), body: withoutSearchTerm(raw, raw.body) };
     if (r.search) {
       check(!marked(r.url), `${name}: 検索の Worker への URL に目印がある（${r.url}）`);
@@ -553,6 +556,8 @@ console.log('止めた外への通信：' + ([...hosts].map(([h, n]) => `${h} ${
 const events = new Set();
 for (const r of allRequests) for (const text of [r.url, r.body || '']) for (const m of text.matchAll(/(?:^|[?&\n])en=([^&\s]+)/g)) events.add(decodeURIComponent(m[1]));
 console.log('GA4 のイベント：' + ([...events].sort().join('・') || 'なし'));
+const terms = allRequests.flatMap(r => [r.url, r.body || ''].flatMap(t => [...t.matchAll(/(?:^|[?&\n])ep\.search_term=([^&\n]*)/g)].map(m => { try { return decodeURIComponent(m[1].replace(/\+/g, ' ')); } catch (_) { return m[1]; } })));
+console.log(`GA4 の search_term：${terms.length}件（例：${[...new Set(terms)].slice(0, 3).join('／') || 'なし'}）`);
 for (const e of ['not_found_keyword_count', 'not_found_search_used', 'not_found_rank_run', 'daily_search']) console.log(`  ${e}：GA4 へ${events.has(e) ? '送った' : '送っていない'}`);
 if (!analyticsLoaded.size) console.log('注意：計測のスクリプトを読み込めなかったので、計測が送るはずの通信は確かめられていない（手元の見当。合否は本番の URL で決める）');
 if (skipped.length) console.log(`②が出ていないので飛ばした場面：${skipped.length}件`);
