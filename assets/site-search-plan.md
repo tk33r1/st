@@ -134,7 +134,7 @@
 | ID | 作業 | 設計書 | 担当 | 規模 | 完了条件 |
 | --- | --- | --- | --- | --- | --- |
 | T6.1 | `magi-app/www/index.html` の `app.js?v=` と `sw.js` のキャッシュ名を上げる | 8.4 の3 | Claude | S | PWA を開き直すと新しい `app.js` になり、チャットの日刊リンクが出る |
-| T6.2 | ネイティブ：`npm run sync`・再ビルド・配布 | 8.4 の3 | 本人 | M | ストアの更新が出る |
+| T6.2 | ネイティブ：`npm run sync`・再ビルド・配布 | 8.4 の3 | 本人 | M | 署名付き Android APK の更新が GitHub Releases に出る（現在の配布方法は `magi-app/README.md`） |
 
 ### M7 Worker の日刊リンクを新しい形に
 
@@ -178,7 +178,7 @@
 | T5.6 | 公開（2026-10-08） | `RANK_ENABLED = true` にして `main`（`d19a204`）へ。M0 の2週間は待たない（本人の判断。PRD 8.1）。公開後の `site-search-url.yml`（run `37718718456`）で、②の22場面と本番の Worker での検索（「書類のPDFをひとつにまとめる」→ PDF Studio）が本番の 404 で通り、GA4 に `not_found_rank_run`・`not_found_rank_result` が届いた。止め方（Worker の `SITE_RANK_ENABLED` を先に false）は、`disabled` を返す応答の模擬で画面が元に戻ることを確かめた（本番の Worker は止めていない） |
 | T5.7 | 未着手 | |
 | T6.1 | 公開（2026-10-08） | `app.js?v=20261008_1`、`magi-shell-v44`。T5.6 と同じ push で出した |
-| T6.2 | 公開（2026-10-08） | 本人が PC で Android v4.4（versionCode 44、v4.3 と同じ署名）を作り、GitHub の Release `v4.4` に出した（`/magi-app/android/` は最新の Release を指す）。日刊リンクは新旧両方の形を受け取る |
+| T6.2 | 公開（2026-10-08） | 本人が PC で Android v4.4（versionCode 44、v4.3 と同じ署名）を作り、GitHub の Release `v4.4` に出した（`/magi-app/android/` は最新の Release を指す）。日刊リンクは新旧両方の形を受け取る。配布元は main（381a967d）。v1/v2 署名、APK 内の全 www ファイルと配布元の一致、日刊リンクの新旧形式と不正リンクの拒否、公開後の APK の SHA-256 を確認。SHA-256 は [リリースの説明](https://github.com/tk33r1/st/releases/tag/v4.4) に記録 |
 | T5.8 | 完了（2026-10-08） | 404 の `not_found_keyword_count`・`not_found_rank_run`・`not_found_ai_used` と、日刊の横断検索の `daily_search` に `search_term`（メールアドレスと長い数字を伏せ字、100文字まで）。404 の説明（検索ボタンの下の一文とダイアログの段落）、日刊の検索欄の下の一文（`--rebuild` は `Date-Sync: skip`）。日刊は計測を止めた人には送らない。`test-site-search-ui.mjs` は GA4 の `ep.search_term` の値だけを許して目印を探す。本人が GTM に `search_term` の変数とタグの値を足し、トリガーのイベント名を `^(not_found_.*|daily_search)$` にした。その後の `site-search-url.yml`（run `37722652623`）で、`search_term` 50件と `daily_search` が GA4 へ送られ、伏せるはずのメールアドレス・電話番号はどの通信にも生のまま出なかった |
 | 404 の検索欄 | 公開（2026-10-08） | 本人の要望で Google・Amazon の形に変えた。虫眼鏡を欄の中に置き、入力中の①は欄の下のドロップダウン（↑↓・Enter・Esc）、検索した後（Enter・虫眼鏡）に②・①・③・日刊ブリーフの順でページに出す。日刊ブリーフは③の下へ。候補のクリックは `not_found_result_click` の `mode: 'suggest'`（設計書 6.1・6.2） |
 | T7.1〜T7.2 | 公開（2026-10-08） | 本人の判断で v4.4 の公開直後に進めた。先に Worker（`validateSiteChoice` の `daily.url` を `portal.url + '#q=' + …`）を `deploy-worker.yml`（run `37766909070`）で出し、その後で 404 の `aiHref`・トップページと `magi-app/www/app.js` の `renderAgentPages` から古い `?q=…#archiveSearch` の受け取りを消した（`app.js?v=20261008_2`、`magi-shell-v45`）。v4.3 以前の APK は日刊のリンクを出さないだけ（壊れはしない）。日刊ポータル側の古い `?q=` の受け取りは、外からのリンクのために残す |
