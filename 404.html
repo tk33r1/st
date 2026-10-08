@@ -508,7 +508,8 @@
       function cancelKeywordCount() { clearTimeout(keywordCount.timer); keywordCount.timer = null; }
       function scheduleKeywordCount(query, total) {
         cancelKeywordCount();
-        if (!query || !state.jsonReady || state.failures || keywordCount.sent >= 10 || query === keywordCount.last) return;
+        // 変換中（未確定の文字）は送らない。確定後の描き直しで改めて数える
+        if (composing || !query || !state.jsonReady || state.failures || keywordCount.sent >= 10 || query === keywordCount.last) return;
         keywordCount.timer = setTimeout(function () {
           keywordCount.timer = null; keywordCount.last = query; keywordCount.sent++;
           send('not_found_keyword_count', { count: Math.min(total, 6), search_term: analyticsTerm(query) });
@@ -713,12 +714,13 @@
           li.appendChild(a); suggestList.appendChild(li);
         });
         if (note) { var p = document.createElement('li'); p.className = 'suggest-note'; p.setAttribute('role', 'presentation'); p.textContent = note; suggestList.appendChild(p); }
-        var show = suggest.open && !!query && !searched(query) && !composing && suggestList.children.length > 0;
-        suggestList.hidden = !show; input.setAttribute('aria-expanded', show ? 'true' : 'false');
-        input.removeAttribute('aria-activedescendant');
+        var show = suggest.open && !!query && !searched(query) && suggestList.children.length > 0;
+        suggestList.hidden = !show;
+        if (input.getAttribute('aria-expanded') !== String(show)) input.setAttribute('aria-expanded', String(show));
+        if (input.hasAttribute('aria-activedescendant')) input.removeAttribute('aria-activedescendant');
       }
+      // 変換中（未確定の文字）も描く（候補は Google などと同じく未確定の文字で出す）。②・③と計測は確定まで動かさない
       function render() {
-        if (composing) return;
         if (list.contains(document.activeElement)) input.focus({ preventScroll: true });
         list.replaceChildren();
         state.displayed = [];
@@ -796,9 +798,9 @@
       byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); runSearch(); });
       // 入力が変わったら入力中の形に戻す。前後の空白だけの違いなら、検索した後の形のまま
       function changed() { cancelKeywordCount(); suggest.open = true; if (state.searchedQuery !== currentQuery()) { resetAI(); state.searchedQuery = null; } }
-      input.addEventListener('compositionstart', function () { changed(); composing = true; clearTimeout(inputTimer); inputTimer = null; closeSuggest(); if (rank) rank.invalidate(); });
+      input.addEventListener('compositionstart', function () { changed(); composing = true; if (rank) rank.invalidate(); });
       input.addEventListener('compositionend', function () { composing = false; suggest.open = true; schedule(); if (rank) rank.invalidate(); });
-      input.addEventListener('input', function () { changed(); if (!composing) schedule(); if (rank) rank.invalidate(); });
+      input.addEventListener('input', function () { changed(); schedule(); if (rank) rank.invalidate(); });
       input.addEventListener('focus', function () { if (currentQuery() && !searched(currentQuery())) { suggest.open = true; render(); } });
       // ドロップダウンの外を押したら閉じる。候補を押したときは、入力欄のフォーカスを外さずにリンクへ移る
       suggestList.addEventListener('mousedown', function (event) { event.preventDefault(); });

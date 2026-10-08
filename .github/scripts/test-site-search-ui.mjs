@@ -646,6 +646,25 @@ scenario('404 の入力中の候補：↑↓・Enter・Esc・外を押す', {}, 
   check(mode === 'suggest:1', `${name}: 候補のクリックの計測が mode=suggest でない（${mode}）`);
 });
 
+// 変換中（未確定の文字）でも候補を出す。計測・②は確定まで送らない（CDP で IME の入力を再現する）
+scenario('404 の入力中の候補：日本語の変換中', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.focus('#query');
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.imeSetComposition', { text: 'ツール', selectionStart: 3, selectionEnd: 3 });
+  await page.waitForTimeout(1800);
+  const v = await page.evaluate(() => ({ value: document.getElementById('query').value, open: !document.getElementById('suggest-list').hidden,
+    options: document.querySelectorAll('#suggest-list [role="option"]').length,
+    events: (window.dataLayer || []).filter(e => e && /^not_found_(keyword_count|rank_run)$/.test(e.event)).map(e => e.event) }));
+  check(v.value === 'ツール' && v.open && v.options > 0, `${name}: 変換中に候補が出ない（${JSON.stringify(v)}）`);
+  check(!v.events.length, `${name}: 変換中に計測か②を送った（${v.events.join('・')}）`);
+  await cdp.send('Input.insertText', { text: 'ツール' }); // 確定
+  await page.waitForTimeout(1800);
+  const after = await page.evaluate(() => ({ open: !document.getElementById('suggest-list').hidden,
+    events: (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').length }));
+  check(after.open && after.events === 1, `${name}: 確定後に候補か計測が続かない（${JSON.stringify(after)}）`);
+});
+
 for (const { name, options, fn } of scenarios) {
   const { context, log } = await newContext(options);
   const page = await context.newPage();
