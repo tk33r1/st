@@ -181,8 +181,9 @@
           <ul class="result-list" id="rank-list" aria-labelledby="rank-heading"></ul>
           <p class="status rank-note" id="rank-note" hidden></p>
         </div>
-        <p class="status" id="rank-status" role="status" aria-atomic="true"></p>
       </div>
+      <!-- 読み上げの状態の行は隠す欄の外に置き、常に読み上げの対象にしておく（中に置くと、欄を出したのと同時に入れた「探しています」が読まれない） -->
+      <p class="status" id="rank-status" role="status" aria-atomic="true"></p>
       <div class="results" id="results">
         <h2 id="result-heading" hidden></h2>
         <ul class="result-list" id="result-list" aria-labelledby="result-heading"></ul>
@@ -266,8 +267,8 @@
       var lang = 'ja';
       try { if (navigator.language) lang = /^ja/i.test(navigator.language) ? 'ja' : 'en'; } catch (_) { /* 静的HTMLと同じ日本語 */ }
       var messages = {
-        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ', keywordResults: 'キーワードに一致', keywordNone: 'キーワードに一致するページはありません', rankHint: 'キーワードに一致するページはありません。Enter で、意味の近いページを探します', suggestCount: '件の候補', search: '検索' },
-        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page', keywordResults: 'Keyword matches', keywordNone: 'No keyword matches', rankHint: 'No keyword matches. Press Enter to look for related pages', suggestCount: ' suggestions', search: 'Search' }
+        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ', keywordResults: 'キーワードに一致', keywordNone: 'キーワードに一致するページはありません', rankHint: 'キーワードに一致するページはありません。Enter で、意味の近いページを探します', suggestCount: function (n) { return n + '件の候補'; }, search: '検索' },
+        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page', keywordResults: 'Keyword matches', keywordNone: 'No keyword matches', rankHint: 'No keyword matches. Press Enter to look for related pages', suggestCount: function (n) { return n + (n === 1 ? ' suggestion' : ' suggestions'); }, search: 'Search' }
       };
       var text = messages[lang];
       var byId = function (id) { return document.getElementById(id); };
@@ -602,7 +603,7 @@
       }
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       byId('ai-run').addEventListener('click', async function () {
-        if (!ai.eligible || ai.controller || composing || input.value.slice(0, 200).trim() !== ai.query) return;
+        if (!ai.eligible || ai.controller || composing || currentQuery() !== ai.query) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
         if (rank) rank.cancel();
@@ -690,7 +691,7 @@
       //   入力中：キーワードに一致するページ（①）を検索欄の下のドロップダウンに出す。ページには結果を出さない
       //   検索した後（Enter・虫眼鏡）：②・①・③・日刊ブリーフの順にページに出す。入力を変えたら入力中の形に戻る
       var suggestList = byId('suggest-list');
-      var suggest = { open: false, active: -1, items: [] };
+      var suggest = { open: false, active: -1 };
       function currentQuery() { return input.value.slice(0, 200).trim(); }
       function searched(query) { return !!query && state.searchedQuery === query; }
       function setActive(index) {
@@ -704,7 +705,7 @@
         suggest.open = false; suggestList.hidden = true; input.setAttribute('aria-expanded', 'false'); setActive(-1);
       }
       function renderSuggest(query, items, note) {
-        suggestList.replaceChildren(); suggest.items = items; suggest.active = -1;
+        suggestList.replaceChildren(); suggest.active = -1;
         items.forEach(function (item, index) {
           var li = document.createElement('li'), a = document.createElement('a'), title = document.createElement('span');
           li.className = 'suggest-option'; li.id = 'suggest-' + index; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
@@ -729,7 +730,7 @@
         var total = 0;
         var ranking = rankAvailable();
         var done = searched(query);
-        var suggestions = [], suggestNote = '';
+        var dropdownItems = [], suggestNote = '';
         state.mode = !query ? 'suggestion' : 'search';
         heading.hidden = true;
         if (query) {
@@ -746,7 +747,7 @@
           else {
             var matches = searchItems(state.items, query);
             total = matches.length;
-            suggestions = matches.slice(0, 6);
+            dropdownItems = matches.slice(0, 6);
             if (!total) suggestNote = ranking ? text.rankHint : text.noResults;
             if (done) {
               // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
@@ -757,8 +758,8 @@
               notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
                 : ranking ? text.keywordNone : text.noResults);
               if (total > 5) notices.push(text.limit);
-            } else notices.push(total + text.suggestCount);
-            if (!state.searchUsed) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
+            } else notices.push(text.suggestCount(total));
+            if (!state.searchUsed && !composing) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
           }
         } else if (!state.candidatesReady) notices.push(text.candidatesLoading);
         else {
@@ -771,7 +772,7 @@
           li.firstChild.dataset.position = index + 1;
           list.appendChild(li);
         });
-        renderSuggest(query, done ? [] : suggestions, done ? '' : suggestNote);
+        renderSuggest(query, done ? [] : dropdownItems, done ? '' : suggestNote);
         // 入力中の件数は読み上げだけ（見た目はドロップダウン）
         status.textContent = notices.join(' ');
         status.classList.toggle('visually-hidden', !!query && !done);
@@ -786,11 +787,11 @@
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
-      function renderWhenReady() { if (!composing && inputTimer === null) render(); }
+      function renderWhenReady() { if (inputTimer === null) render(); }
       // 検索（Enter・虫眼鏡）。①の待ちを済ませてから②を送る（keyword_count をいまの入力の件数にするため。設計書 6.2）
       function runSearch() {
         var query = currentQuery();
-        if (!query || composing) return;
+        if (!query || composing || imeEnterHeld) return;
         state.searchedQuery = query; closeSuggest(); flush();
         if (rankAvailable()) rank.run();
       }
@@ -871,7 +872,7 @@
         rank = STSiteSearch.rank({
           scope: 'site',
           // Worker が落とす文字（制御文字と < >。site-rank.js の rankQuery）だけの入力は送らない（400 で失敗表示になるため）
-          condition: function () { var q = input.value.slice(0, 200).trim(); return !composing && q.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() ? { query: q, locale: lang } : null; },
+          condition: function () { var q = currentQuery(); return !composing && q.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() ? { query: q, locale: lang } : null; },
           keywordState: function () { return !state.jsonReady ? 'loading' : state.failures > 0 ? 'failed' : 'known'; },
           keywordCount: function () { return state.jsonReady && state.failures === 0 ? state.total : null; },
           elements: { section: byId('rank-results'), heading: byId('rank-heading'), list: rankList, status: byId('rank-status'), note: byId('rank-note') },
@@ -880,17 +881,17 @@
             texts: lang === 'ja'
               ? { heading: '検索結果', loading: '意味の近いページを探しています…', noResults: '意味の近いページは見つかりませんでした。', partial: '一部の候補を判定できませんでした。',
                   failed: 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。', rateLimited: '今日の検索の上限に達しました。キーワードの一致は使えます。',
-                  stale: 'Enter で探し直せます。', count: function (n) { return n + '件のページが見つかりました。'; } }
+                  stale: '', count: function (n) { return n + '件のページが見つかりました。'; } }
               : { heading: 'Results', loading: 'Looking for related pages…', noResults: 'No related pages were found.', partial: 'Some pages could not be checked.',
                   failed: 'Results are not available right now. Keyword matches and Shinya Takeda AI still work.', rateLimited: "You have reached today's search limit. Keyword matches still work.",
-                  stale: 'Press Enter to search again.', count: function (n) { return n + (n === 1 ? ' related page found.' : ' related pages found.'); } }
+                  stale: '', count: function (n) { return n + (n === 1 ? ' related page found.' : ' related pages found.'); } }
           },
           onRun: function () { resetAI(); },
           // 状態が変わったら①（重複の除き）と③の出し方を描き直す
           onState: function () { renderWhenReady(); },
           // 部品は検索語を渡さないので、検索した操作のイベントにだけページが足す（設計書 6.5）
           track: function (event, values) {
-            if (event === 'rank_run') values = Object.assign({}, values, { search_term: analyticsTerm(input.value.slice(0, 200).trim()) });
+            if (event === 'rank_run') values = Object.assign({}, values, { search_term: analyticsTerm(currentQuery()) });
             send('not_found_' + event, values);
           }
         });

@@ -326,7 +326,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 - `run()`：条件が null なら何もしない。`generation` を1つ進め、前の通信を `AbortController` で止め、`onRun()` を呼び、送ったときの条件のキー（`JSON.stringify` した条件）を覚えて `loading` にする。
 - `invalidate()` と `cancel()`：`generation` を進めて通信を止め、結果と読み込み中の表示を消す。以前②を実行した条件から入力・言語・絞り込みが変わり、入力が空でない場合は `stale` にする。`stale` のままさらに入力を変えても維持する。空入力なら何も出さず `idle` に戻す。IMEの変換中は通知・③を隠し、確定後に状態を反映する（PRD 3.1）。
-- ③への切り替えに使う `cancel()` は、入力が有効なら `stale` にして③を押せる状態を維持する。③の実行中は「Enter で探し直せます」を出さない。状態変更時は①の表示も更新し、②との重複を除いたリンクを復元する。②の完了時も①を更新するが、①の判定と除く前の件数は変えない。
+- ③への切り替えに使う `cancel()` は、入力が有効なら `stale` にして③を押せる状態を維持する。404 は `stale` の文言を空にしている（6.4）。状態変更時は①の表示も更新し、②との重複を除いたリンクを復元する。②の完了時も①を更新するが、①の判定と除く前の件数は変えない。
 - 応答が届いたら、`generation` が送ったときのままで、いまの条件のキーが送ったときと同じときだけ描く。違えば捨てる。A → B → A と戻しても、最初の A の応答は `generation` が違うので描かない。
 - ブラウザ側の期限は8秒（Worker の6秒に通信の余裕を足す）。切れたら `failed`（`timeout`）。
 - 404 の画面の言語は読み込み時に決まり、途中で変わらない。言語を切り替えられる画面（Phase 3 のページ）では、切り替えで `invalidate()` を呼ぶ。
@@ -375,6 +375,8 @@ Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄
 
 - 画面は3つの形をとる。入力が空なら「もしかして」をページに出す。入力中（いまの入力が検索した語と違う）はドロップダウンだけを開き、②・①・③・日刊の欄を隠す。
   検索した後（`state.searchedQuery` がいまの入力と同じ）はドロップダウンを閉じ、上の順にページへ出す。入力を変えたら入力中の形に戻る（前後の空白だけの違いなら戻らない）。
+- ②の状態の行（`#rank-status`、`role="status"`）は②の欄の外に置き、常に読み上げの対象にしておく。
+- 変換を確定した Enter を押し続けたとき（キーの繰り返しがフォームの暗黙の送信を起こす）は、キーを離すまで検索しない（`imeEnterHeld`）。
 - 日本語の変換中（未確定の文字）も、その文字で候補を出す（Google などと同じ）。変換中は②・③を出さず、`not_found_keyword_count` も確定まで送らない。変換中の↑↓・Enter は IME に任せる。
 - ドロップダウンは `role="combobox"` の入力と `role="listbox"` の一覧。件数は読み上げだけの状態の行（`#search-status`）に出す。①が0件なら候補の代わりに案内（6.3）を1行出す。
 
@@ -420,7 +422,7 @@ Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄
 | `results` で `complete: false` | 一部の候補を判定できませんでした。 | Some pages could not be checked. |
 | `failed` | いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。 | Results are not available right now. Keyword matches and Shinya Takeda AI still work. |
 | `rate_limited` | 今日の検索の上限に達しました。キーワードの一致は使えます。 | You have reached today's search limit. Keyword matches still work. |
-| `stale` | Enter で探し直せます。 | Press Enter to search again. |
+| `stale` | 出さない（入力を変えると入力中の形に戻り、②の欄ごと隠れるため） | — |
 | 検索欄の説明 | 検索すると（Enter・虫眼鏡）、検索語を TypeSafe AI に送ってページを並べ替えます。入力中は送りません。 | When you search (Enter or the magnifier), your query is sent to TypeSafe AI to rank pages. Nothing is sent while you type. |
 | ①が0件（ドロップダウン） | キーワードに一致するページはありません。Enter で、意味の近いページを探します | No keyword matches. Press Enter to look for related pages |
 | ③の説明（いまの文を直す） | このボタンを押すと、検索語と必要な公開ページ情報・人格カードを OpenAI・DeepSeek・Google に送り、3人格が2回討議して答えます。 | When you press this button, your search and relevant public page information and persona cards are sent to OpenAI, DeepSeek and Google for two rounds of discussion. |

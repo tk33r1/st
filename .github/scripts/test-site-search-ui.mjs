@@ -468,7 +468,7 @@ rankScenario('状態：A → B → A（最初の A の応答を描かない）',
   await page.fill('#query', 'A'); await page.waitForTimeout(1500);
   const v = await rankView(page);
   check(v.rank.length === 0, `${name}: 最初の A の応答を描いた`);
-  check(v.rankStatus === 'Enter で探し直せます。', `${name}: stale の文言が出ない（${v.rankStatus}）`);
+  check(v.rankStatus === '', `${name}: stale の文言が出ない（${v.rankStatus}）`);
   check(!v.area && !v.ai, `${name}: 入力を変えた後も②の欄か③が出ている（入力中の形に戻らない）`);
   await page.press('#query', 'Enter'); await page.waitForTimeout(1500);
   check((await rankView(page)).rank.join() === '結果:A', `${name}: 入力を戻して Enter で送り直さない`);
@@ -504,7 +504,7 @@ rankScenario('状態：②から③へ・③の実行中に入力を変える', 
   await page.fill('#query', 'B'); await page.waitForTimeout(1500);
   v = await rankView(page);
   check(!v.aiResult, `${name}: 入力を変えた後に古い③の応答を描いた`);
-  check(v.rankStatus === 'Enter で探し直せます。' && !v.ai && !v.area, `${name}: ③の後に入力を変えたとき stale と入力中の形にならない`);
+  check(v.rankStatus === '' && !v.ai && !v.area, `${name}: ③の後に入力を変えたとき stale と入力中の形にならない`);
 });
 
 rankScenario('状態：同じ語の Enter の連打で送り直さない', { worker: echo(() => 600) }, async (page, name) => {
@@ -520,7 +520,7 @@ rankScenario('状態：入力のイベント無しで値が変わっても読み
   await page.evaluate(() => { document.getElementById('query').value = 'B'; }); // 自動入力などを模す（input イベント無し）
   await page.waitForTimeout(1200);
   const v = await rankView(page);
-  check(v.rank.length === 0 && v.rankStatus === 'Enter で探し直せます。', `${name}: 読み込み中のまま止まった、または古い応答を描いた（${v.rankStatus}）`);
+  check(v.rank.length === 0 && v.rankStatus === '', `${name}: 読み込み中のまま止まった、または古い応答を描いた（${v.rankStatus}）`);
 });
 rankScenario('状態：Worker が落とす文字だけの入力は送らない', { worker: echo(() => 0) }, async (page, name) => {
   await typeAndRun(page, '<<>>');
@@ -663,6 +663,23 @@ scenario('404 の入力中の候補：日本語の変換中', {}, async (page, n
   const after = await page.evaluate(() => ({ open: !document.getElementById('suggest-list').hidden,
     events: (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').length }));
   check(after.open && after.events === 1, `${name}: 確定後に候補か計測が続かない（${JSON.stringify(after)}）`);
+});
+
+// 変換を確定した Enter を押し続けても検索しない（キーの自動の繰り返しは、フォームの暗黙の送信を起こす）
+scenario('404 の検索：変換を確定した Enter の押し続けで検索しない', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.fill('#query', 'しゅうのう'); await page.waitForTimeout(150);
+  // 確定の Enter（変換中の keydown）を模す
+  await page.evaluate(() => document.getElementById('query').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, isComposing: true })));
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, autoRepeat: true, text: '\r' });
+  await page.waitForTimeout(300);
+  const held = await page.evaluate(() => ({ searched: !document.getElementById('daily-search').hidden,
+    run: (window.dataLayer || []).some(e => e && e.event === 'not_found_rank_run') }));
+  check(!held.searched && !held.run, `${name}: 押し続けの Enter で検索した（${JSON.stringify(held)}）`);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  check(await page.locator('#daily-search').isVisible(), `${name}: キーを離した後の Enter で検索しない`);
 });
 
 for (const { name, options, fn } of scenarios) {
