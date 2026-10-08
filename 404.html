@@ -91,10 +91,9 @@
     .suggest-option a:hover, .suggest-option[aria-selected="true"] a { background: var(--hover); text-decoration: none; }
     .suggest-option .result-title { overflow-wrap: anywhere; }
     .suggest-note { padding: 10px 16px; font-size: 14px; color: var(--muted); }
-    .rank-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .rank-disclosure { flex: 1; font-size: 13px; color: var(--muted); }
+    .search-label-row { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; }
+    .search-label-row label { margin: 0; }
     .rank-note:not(:empty) { margin-top: 8px; }
-    .search-note { margin-top: 4px; font-size: 13px; color: var(--muted); }
     .ai-search { margin-top: 20px; padding: 16px; border: 1px solid var(--accent); border-radius: 10px; }
     .ai-search.is-quiet { border-color: var(--border); }
     .ai-search button { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
@@ -102,8 +101,9 @@
     .ai-disclosure, .ai-mark, .ai-ask { font-size: 13px; color: var(--muted); }
     .ai-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
     .ai-disclosure { margin: 0; flex: 1; }
-    .ai-search .ai-info, .rank-disclosure-row .ai-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--accent); }
-    .ai-search .ai-info:hover, .rank-disclosure-row .ai-info:hover { background: var(--hover); }
+    .ai-search .ai-info, .search-label-row .ai-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--accent); }
+    .ai-search .ai-info:hover, .search-label-row .ai-info:hover { background: var(--hover); }
+    .search-label-row .ai-info { margin-block: -10px; }
     .ai-info svg { width: 22px; height: 22px; }
     .ai-info-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 20px 60px #0005; }
     .ai-info-dialog::backdrop { background: #0008; }
@@ -156,7 +156,13 @@
     </header>
     <section class="search" id="search" aria-labelledby="search-label" hidden>
       <form id="search-form" role="search">
-        <label id="search-label" for="query" data-ja="サイト内のページを探す" data-en="Find pages on this site">サイト内のページを探す</label>
+        <!-- 送り先・計測の説明はダイアログにまとめ、見出しの横のインフォメーションマークから開く（入力中の候補が欄の下を覆うため） -->
+        <div class="search-label-row">
+          <label id="search-label" for="query" data-ja="サイト内のページを探す" data-en="Find pages on this site">サイト内のページを探す</label>
+          <button type="button" class="ai-info" id="search-info-open" aria-label="検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
+          </button>
+        </div>
         <div class="search-box" id="search-box">
           <input id="query" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest-list" maxlength="200" autocomplete="off" spellcheck="false" placeholder="キーワードや、やりたいことを入力" data-placeholder-ja="キーワードや、やりたいことを入力" data-placeholder-en="Enter keywords or what you want to do" aria-describedby="search-status">
           <button type="submit" class="search-submit" id="search-submit" aria-label="検索" title="検索">
@@ -165,14 +171,6 @@
           <!-- 入力中の候補（①。キーワードに一致するページ）。Enter か虫眼鏡で検索すると閉じて、結果をページに出す -->
           <ul class="suggest-list" id="suggest-list" role="listbox" hidden></ul>
         </div>
-        <div class="rank-disclosure-row" id="rank-disclosure-row" hidden>
-          <p class="rank-disclosure" data-ja="検索すると（Enter・虫眼鏡）、検索語を TypeSafe AI に送ってページを並べ替えます。入力中は送りません。" data-en="When you search (Enter or the magnifier), your query is sent to TypeSafe AI to rank pages. Nothing is sent while you type."></p>
-          <button type="button" class="ai-info" id="rank-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
-          </button>
-        </div>
-        <!-- 入力が止まったときにも送るので、②の有無にかかわらず出す（PRD 8.3） -->
-        <p class="search-note" data-ja="入力した検索語は、アクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。" data-en="Search terms you enter are recorded in our analytics (Google Analytics), with email addresses and phone numbers masked."></p>
       </form>
       <!-- ②（TypeSafe AI で並べ替えた検索結果）。描画は assets/site-search.js。検索した後だけ出す（入力中は候補のドロップダウン） -->
       <div id="rank-area" hidden>
@@ -196,7 +194,7 @@
         <span id="ai-thinking" hidden></span>
         <div class="ai-disclosure-row">
           <p class="ai-disclosure" data-ja="このボタンを押すと、検索語と必要な公開ページ情報・人格カードを OpenAI・DeepSeek・Google に送り、3人格が2回討議して答えます。" data-en="When you press the button, your search and relevant public page information and persona cards are sent to OpenAI, DeepSeek and Google for two rounds of discussion."></p>
-          <button type="button" class="ai-info" id="ai-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
+          <button type="button" class="ai-info" id="ai-info-open" aria-label="検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
           </button>
         </div>
@@ -249,12 +247,12 @@
   <dialog class="ai-info-dialog" id="ai-info-dialog" aria-labelledby="ai-info-title" aria-describedby="ai-info-text">
     <div class="ai-info-content">
       <div class="ai-info-header">
-        <h2 id="ai-info-title" data-ja="AI検索とプライバシー" data-en="AI search and privacy">AI検索とプライバシー</h2>
+        <h2 id="ai-info-title" data-ja="検索とプライバシー" data-en="Search and privacy">検索とプライバシー</h2>
         <button type="button" class="ai-info-close" id="ai-info-close" aria-label="閉じる" autofocus><span aria-hidden="true">×</span></button>
       </div>
-      <p id="rank-info-text" data-ja="検索すると（Enter・虫眼鏡）、検索語と公開ページの情報を TypeSafe AI（Jev）のAPIへ送り、ページを並べ替えます。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。" data-en="When you search (Enter or the magnifier), your query and public page information are sent to the TypeSafe AI (Jev) API to rank pages. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States."></p>
+      <p id="rank-info-text" data-ja="検索すると（Enter・虫眼鏡）、検索語と公開ページの情報を TypeSafe AI（Jev）のAPIへ送り、ページを並べ替えます。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。" data-en="When you search (Enter or the magnifier), your query and public page information are sent to the TypeSafe AI (Jev) API to rank pages. Nothing is sent while you type. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States."></p>
       <p id="analytics-info-text" data-ja="検索語はアクセス解析（Google アナリティクス）に記録し、よく探される言葉やページの不足を調べるのに使います。メールアドレスと電話番号のような長い数字は伏せてから送ります。" data-en="Search terms are recorded in our analytics (Google Analytics) to learn what people look for and which pages are missing. Email addresses and long numbers such as phone numbers are masked before sending."></p>
-      <p id="ai-info-text" data-ja="検索語と必要な公開ページ情報・人格カードをOpenAI・DeepSeek・Google GeminiのAPIへ送ります。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。DeepSeekは中国のサーバーに保存し学習に使うことがあります。Google Geminiの無料枠では製品改善・学習に利用され、人が読むことがあります。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, relevant public page information, and public persona cards are sent to the OpenAI, DeepSeek and Google Gemini APIs. OpenAI API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. DeepSeek stores data on servers in China and may use it for training. Google Gemini free-tier inputs may be used to improve products and train models, and reviewed by humans. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
+      <p id="ai-info-text" data-ja="「Shinya Takeda AI に聞く」を押すと、検索語と必要な公開ページ情報・人格カードをOpenAI・DeepSeek・Google GeminiのAPIへ送ります。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。DeepSeekは中国のサーバーに保存し学習に使うことがあります。Google Geminiの無料枠では製品改善・学習に利用され、人が読むことがあります。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="When you press “Ask Shinya Takeda AI”, your search, relevant public page information, and public persona cards are sent to the OpenAI, DeepSeek and Google Gemini APIs. OpenAI API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. DeepSeek stores data on servers in China and may use it for training. Google Gemini free-tier inputs may be used to improve products and train models, and reviewed by humans. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
       <p class="ai-disclosure" data-ja="AI検索は全利用者で共有する1日の上限があります。ご自身の上限に達していなくても利用できない場合があります。通常検索は引き続き使えます。" data-en="AI search has a shared daily limit. It may be unavailable even if you have not reached your own limit. Regular search remains available."></p>
       <p><a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI privacy</a> · <a href="https://cdn.deepseek.com/policies/en-US/deepseek-privacy-policy.html">DeepSeek privacy</a> · <a href="https://ai.google.dev/gemini-api/terms">Google Gemini terms</a></p>
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
@@ -276,9 +274,9 @@
       document.querySelectorAll('[data-ja][data-en]').forEach(function (node) { node.textContent = node.dataset[lang]; });
       var infoDialog = byId('ai-info-dialog');
       var infoOpen = byId('ai-info-open');
-      infoOpen.setAttribute('aria-label', lang === 'ja' ? 'AI検索とプライバシーについて' : 'About AI search and privacy');
+      infoOpen.setAttribute('aria-label', lang === 'ja' ? '検索とプライバシーについて' : 'About search and privacy');
       byId('ai-info-close').setAttribute('aria-label', lang === 'ja' ? '閉じる' : 'Close');
-      [infoOpen, byId('rank-info-open')].forEach(function (button) {
+      [infoOpen, byId('search-info-open')].forEach(function (button) {
         button.setAttribute('aria-label', infoOpen.getAttribute('aria-label'));
         button.addEventListener('click', function () { infoDialog.showModal(); });
       });
@@ -780,7 +778,7 @@
         byId('rank-area').hidden = !(ranking && done);
         byId('daily-search').hidden = !done;
         state.total = total;
-        ['rank-disclosure-row', 'rank-info-text'].forEach(function (id) { byId(id).hidden = !ranking; });
+        byId('rank-info-text').hidden = !ranking;
         byId('search-submit').classList.toggle('is-suggested', ranking && !!query && !done && state.jsonReady && state.failures === 0 && total === 0);
         syncAI(query, total);
         scheduleKeywordCount(query, total);

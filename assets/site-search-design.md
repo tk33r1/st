@@ -363,9 +363,9 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄の外の「検索」ボタンとページの中の候補をやめた）。
 
 ```
+サイト内のページを探す (i)  ← 送り先・計測の説明はダイアログ（「検索とプライバシー」）にまとめ、見出しの横から開く
 [検索欄 ……………… 🔍]      ← 虫眼鏡は欄の中。押すか Enter で検索する
   ├ 候補（①・最大6件）     ← 入力中だけ、欄の下に重ねて開くドロップダウン。ページには結果を出さない
-  検索すると（Enter・虫眼鏡）、検索語を TypeSafe AI に送ってページを並べ替えます。入力中は送りません。
 ── 検索した後だけ ──
 検索結果（②）
 キーワードに一致（①）       ← 上位5件。②に出たページは除く（下記）
@@ -423,11 +423,10 @@ Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄
 | `failed` | いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。 | Results are not available right now. Keyword matches and Shinya Takeda AI still work. |
 | `rate_limited` | 今日の検索の上限に達しました。キーワードの一致は使えます。 | You have reached today's search limit. Keyword matches still work. |
 | `stale` | 出さない（入力を変えると入力中の形に戻り、②の欄ごと隠れるため） | — |
-| 検索欄の説明 | 検索すると（Enter・虫眼鏡）、検索語を TypeSafe AI に送ってページを並べ替えます。入力中は送りません。 | When you search (Enter or the magnifier), your query is sent to TypeSafe AI to rank pages. Nothing is sent while you type. |
 | ①が0件（ドロップダウン） | キーワードに一致するページはありません。Enter で、意味の近いページを探します | No keyword matches. Press Enter to look for related pages |
 | ③の説明（いまの文を直す） | このボタンを押すと、検索語と必要な公開ページ情報・人格カードを OpenAI・DeepSeek・Google に送り、3人格が2回討議して答えます。 | When you press this button, your search and relevant public page information and persona cards are sent to OpenAI, DeepSeek and Google for two rounds of discussion. |
 
-ダイアログ（「AI検索とプライバシー」）に TypeSafe AI の段落を足す：入力をモデルの学習に使わない、保持期間は明示されていない、米国のサーバーで処理する。プライバシーポリシーへのリンクを付ける。
+ダイアログ（「検索とプライバシー」。旧「AI検索とプライバシー」）に TypeSafe AI の段落を足す：入力をモデルの学習に使わない、保持期間は明示されていない、米国のサーバーで処理する。プライバシーポリシーへのリンクを付ける。
 
 ### 6.5 計測
 

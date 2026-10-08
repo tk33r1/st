@@ -164,7 +164,7 @@ const aiBody = { request_id: 'local', status: 'no_results', comment: null, resul
 // ②の画面の様子
 async function rankView(page) {
   return page.evaluate(() => ({
-    state: document.getElementById('rank-disclosure-row').hidden ? 'off' : 'on',
+    state: document.getElementById('rank-info-text').hidden ? 'off' : 'on',
     suggest: document.getElementById('suggest-list').hidden ? [] : [...document.querySelectorAll('#suggest-list [role="option"] a')].map(a => a.getAttribute('href')),
     area: !document.getElementById('rank-area').hidden,
     rank: [...document.querySelectorAll('#rank-list .result-title')].map(e => e.textContent),
@@ -181,7 +181,7 @@ async function rankView(page) {
 // ②の場面は、②が出ているときだけ（本番で未公開なら飛ばす）
 const rankScenario = (name, options, fn) => scenarios.push({ name: '②：' + name, options, fn: async (page, label) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
-  if (!(await page.evaluate(() => { const e = document.getElementById('rank-disclosure-row'); return !!e && !e.hidden; }))) { skipped.push(label); return; }
+  if (!(await page.evaluate(() => { const e = document.getElementById('rank-info-text'); return !!e && !e.hidden; }))) { skipped.push(label); return; }
   await fn(page, label);
 } });
 const skipped = [];
@@ -366,7 +366,9 @@ scenario('404 の計測：search_term は伏せ字にして送る', {}, async (p
   await page.waitForTimeout(2500);
   const date = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => e.search_term))).at(-1);
   check(date === '2026-10-08 号', `${name}: 日付まで伏せ字にした（${date}）`);
-  check(await page.locator('.search-note').isVisible(), `${name}: 計測の説明の一文が出ていない`);
+  check(await page.locator('#search-info-open').isVisible() && !(await page.evaluate(() => document.getElementById('analytics-info-text').hidden)), `${name}: 計測の説明（見出しの横のインフォメーションマークとダイアログの段落）が無い`);
+  await page.click('#search-info-open');
+  check(await page.evaluate(() => document.getElementById('ai-info-dialog').open), `${name}: インフォメーションマークでダイアログが開かない`);
 });
 for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
   scenario('日刊の計測：daily_search' + label, { analyticsOff: off }, async (page, name) => {
@@ -575,8 +577,8 @@ rankScenario('停止：disabled なら検索ボタンと②の欄を隠し、い
   const v = await rankView(page);
   check(v.state === 'off' && v.rankStatus === '', `${name}: 検索ボタンか②の文言が残る`);
   check(v.ai && !v.aiQuiet, `${name}: ①が0件で③が出ない（いまの動き）`);
-  check(!(await page.evaluate(() => document.getElementById('rank-disclosure-row').hidden === false)), `${name}: ②の説明が残る`);
-  check(await page.locator('.search-note').isVisible(), `${name}: ②を止めると計測の説明の一文まで消える`);
+  check(await page.evaluate(() => document.getElementById('rank-info-text').hidden), `${name}: ダイアログに②の説明が残る`);
+  check(await page.locator('#search-info-open').isVisible(), `${name}: ②を止めるとインフォメーションマークまで消える`);
 });
 
 // 本番の Worker で②を1回だけ送る（--base のときだけ。Jev を1回呼ぶ。評価セット・smoke と重ねない語）
