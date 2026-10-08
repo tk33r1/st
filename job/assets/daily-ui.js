@@ -472,10 +472,12 @@
   }
 
   // 計測に載せる検索語（PRD 8.3。404 と同じ）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
-  // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）
+  // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）。
+  // 日付（2026-10-08・20261008 など。日刊の号を探す語）は伏せない
+  const DATE_LIKE = /^(19|20)\d{2}([\s.\-]?)(0?[1-9]|1[0-2])\2(0?[1-9]|[12]\d|3[01])$/;
   function analyticsTerm(value) {
     const term = cleanQuery(value).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
-      .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, '[number]').trim();
+      .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, function(m) { return DATE_LIKE.test(m) ? m : '[number]'; }).trim();
     return Array.from(term).slice(0, 100).join('');
   }
 
@@ -644,7 +646,17 @@
     }
     watch.onChange(render);
     loadSearchIndex(false).then(function(loaded) {
-      records = loaded || [];
+      // 読めなかったときは「新着なし」と見せない（横断検索と同じ。次にページを開いたときに読み直す）
+      if (!loaded) {
+        if (watch.size()) {
+          container.hidden = false;
+          statusEl.textContent = 'ウォッチ中のテーマの新着を読み込めませんでした。';
+          listEl.replaceChildren();
+          if (seenBtn) seenBtn.hidden = true;
+        }
+        return;
+      }
+      records = loaded;
       latestDate = records.reduce(function(max, record) {
         const date = String(record.date || '');
         return date > max ? date : max;

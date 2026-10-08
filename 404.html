@@ -87,6 +87,7 @@
     .rank-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
     .rank-disclosure { flex: 1; font-size: 13px; color: var(--muted); }
     .rank-note:not(:empty) { margin-top: 8px; }
+    .search-note { margin-top: 4px; font-size: 13px; color: var(--muted); }
     .ai-search { margin-top: 20px; padding: 16px; border: 1px solid var(--accent); border-radius: 10px; }
     .ai-search.is-quiet { border-color: var(--border); }
     .ai-search button { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
@@ -154,11 +155,13 @@
           <button type="submit" class="search-button" id="rank-run" hidden data-ja="検索" data-en="Search">検索</button>
         </div>
         <div class="rank-disclosure-row" id="rank-disclosure-row" hidden>
-          <p class="rank-disclosure" data-ja="検索ボタンを押すと、検索語を TypeSafe AI に送ってページを並べ替えます。検索語はアクセス解析にも記録します。" data-en="When you press Search, your query is sent to TypeSafe AI to rank pages. Search terms are also recorded in our analytics."></p>
+          <p class="rank-disclosure" data-ja="検索ボタンを押すと、検索語を TypeSafe AI に送ってページを並べ替えます。" data-en="When you press Search, your query is sent to TypeSafe AI to rank pages."></p>
           <button type="button" class="ai-info" id="rank-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
           </button>
         </div>
+        <!-- 入力が止まったときにも送るので、②の有無にかかわらず出す（PRD 8.3） -->
+        <p class="search-note" data-ja="入力した検索語は、アクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。" data-en="Search terms you enter are recorded in our analytics (Google Analytics), with email addresses and phone numbers masked."></p>
       </form>
       <!-- ②（TypeSafe AI で並べ替えた検索結果）。描画は assets/site-search.js -->
       <div class="results" id="rank-results" hidden>
@@ -243,7 +246,7 @@
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
     </div>
   </dialog>
-  <script src="/assets/site-search.js?v=20261008_3"></script>
+  <script src="/assets/site-search.js?v=20261008_4"></script>
   <script>
     (function () {
       'use strict';
@@ -282,10 +285,12 @@
       function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
       function stripControls(value) { return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ''); }
       // 計測に載せる検索語（PRD 8.3）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
-      // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）
+      // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）。
+      // 日付（2026-10-08・20261008 など。日刊の号を探す語）は伏せない
+      var DATE_LIKE = /^(19|20)\d{2}([\s.\-]?)(0?[1-9]|1[0-2])\2(0?[1-9]|[12]\d|3[01])$/;
       function analyticsTerm(value) {
         var term = stripControls(String(value || '')).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
-          .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, '[number]').trim();
+          .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, function (m) { return DATE_LIKE.test(m) ? m : '[number]'; }).trim();
         return Array.from(term).slice(0, 100).join('');
       }
       function normalize(value) {
@@ -485,7 +490,7 @@
       var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
       // ①の件数だけを送る（いまの0件率を取るため）。入力が1.5秒止まり、一覧を読み終えていて失敗が無いときだけ。
-      // 検索語は送らず、同じ入力を二度送らない。1ページ10回まで。
+      // 検索語は伏せ字にして search_term で送る（PRD 8.3）。同じ入力を二度送らない。1ページ10回まで。
       var keywordCount = { timer: null, last: null, sent: 0 };
       function cancelKeywordCount() { clearTimeout(keywordCount.timer); keywordCount.timer = null; }
       function scheduleKeywordCount(query, total) {
@@ -773,7 +778,8 @@
       if (RANK_ENABLED && window.STSiteSearch) {
         rank = STSiteSearch.rank({
           scope: 'site',
-          condition: function () { var q = input.value.slice(0, 200).trim(); return !composing && q ? { query: q, locale: lang } : null; },
+          // Worker が落とす文字（制御文字と < >。site-rank.js の rankQuery）だけの入力は送らない（400 で失敗表示になるため）
+          condition: function () { var q = input.value.slice(0, 200).trim(); return !composing && q.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() ? { query: q, locale: lang } : null; },
           keywordState: function () { return !state.jsonReady ? 'loading' : state.failures > 0 ? 'failed' : 'known'; },
           keywordCount: function () { return state.jsonReady && state.failures === 0 ? state.total : null; },
           elements: { section: byId('rank-results'), heading: byId('rank-heading'), list: rankList, status: byId('rank-status'), note: byId('rank-note') },

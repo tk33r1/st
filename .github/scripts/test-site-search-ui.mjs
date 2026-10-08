@@ -357,6 +357,11 @@ scenario('404 の計測：search_term は伏せ字にして送る', {}, async (p
   await page.waitForTimeout(2500);
   const wide = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => e.search_term))).at(-1);
   check(wide === PII_WIDE_MASKED, `${name}: 全角の電話番号が伏せ字になっていない（${wide}）`);
+  await page.fill('#query', '２０２６－１０－０８ 号');
+  await page.waitForTimeout(2500);
+  const date = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => e.search_term))).at(-1);
+  check(date === '2026-10-08 号', `${name}: 日付まで伏せ字にした（${date}）`);
+  check(await page.locator('.search-note').isVisible(), `${name}: 計測の説明の一文が出ていない`);
 });
 for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
   scenario('日刊の計測：daily_search' + label, { analyticsOff: off }, async (page, name) => {
@@ -393,6 +398,15 @@ scenario('日刊の索引の取得失敗', {}, async (page, name) => {
   await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(800);
   v = await page.evaluate(() => ({ status: document.getElementById('archiveSearchStatus').textContent, events: (window.dataLayer || []).filter(e => e && e.event === 'daily_search').length }));
   check(/件見つかりました/.test(v.status) && v.events === 1, `${name}: 直った後の検索で読み直さない（${JSON.stringify(v)}）`);
+});
+
+// ウォッチ中のテーマの新着：索引が読めないとき「新着なし」と見せない
+scenario('日刊のウォッチの新着の取得失敗', {}, async (page, name) => {
+  await page.addInitScript(() => { try { localStorage.setItem('daily_watch_topics:' + 'nitoridaily', JSON.stringify(['ニトリ'])); } catch (_) {} });
+  await page.route('**/job/nitoridaily/search-index*.json', route => route.fulfill({ status: 503, body: '' }));
+  await page.goto(BASE + PORTAL); await settle(page);
+  const v = await page.evaluate(() => ({ hidden: document.getElementById('watchFeed').hidden, status: document.getElementById('watchFeedStatus').textContent }));
+  check(!v.hidden && /読み込めませんでした/.test(v.status), `${name}: 失敗が「新着なし」に見える（${JSON.stringify(v)}）`);
 });
 
 // ---- ②（計画書 T5.4。設計書 5章・6章、PRD 3.1・7.4） ----
@@ -486,6 +500,26 @@ rankScenario('状態：②から③へ・③の実行中に入力を変える', 
   check(v.rankStatus === '検索ボタンで探し直せます。' && v.ai, `${name}: ③の後に入力を変えたとき stale と③にならない`);
 });
 
+rankScenario('状態：同じ語の Enter の連打で送り直さない', { worker: echo(() => 600) }, async (page, name) => {
+  await page.fill('#query', 'A'); await page.waitForTimeout(150);
+  for (let i = 0; i < 3; i++) { await page.press('#query', 'Enter'); await page.waitForTimeout(100); }
+  await page.waitForTimeout(900);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  const v = await rankView(page);
+  check(v.events.filter(e => e.event === 'not_found_rank_run').length === 1 && v.rank.join() === '結果:A', `${name}: 連打で②を送り直した（${v.events.filter(e => e.event === 'not_found_rank_run').length}回）`);
+});
+rankScenario('状態：入力のイベント無しで値が変わっても読み込み中のまま止まらない', { worker: echo(() => 800) }, async (page, name) => {
+  await typeAndRun(page, 'A', 100);
+  await page.evaluate(() => { document.getElementById('query').value = 'B'; }); // 自動入力などを模す（input イベント無し）
+  await page.waitForTimeout(1200);
+  const v = await rankView(page);
+  check(v.rank.length === 0 && v.rankStatus === '検索ボタンで探し直せます。', `${name}: 読み込み中のまま止まった、または古い応答を描いた（${v.rankStatus}）`);
+});
+rankScenario('状態：Worker が落とす文字だけの入力は送らない', { worker: echo(() => 0) }, async (page, name) => {
+  await typeAndRun(page, '<<>>');
+  check(!(await rankView(page)).events.some(e => e.event === 'not_found_rank_run'), `${name}: < > だけの入力で②を送った`);
+});
+
 // 連携と計測
 rankScenario('連携：①から②のページを除き、入力の変更で戻す', { worker: mockWorker({ rank: () => ({ body: rankBody([row('PDF Studio')]) }), ai: () => ({ body: aiBody }) }) }, async (page, name) => {
   await page.fill('#query', 'pdf'); await page.waitForTimeout(300);
@@ -534,6 +568,7 @@ rankScenario('停止：disabled なら検索ボタンと②の欄を隠し、い
   check(v.state === 'off' && v.rankStatus === '', `${name}: 検索ボタンか②の文言が残る`);
   check(v.ai && !v.aiQuiet, `${name}: ①が0件で③が出ない（いまの動き）`);
   check(!(await page.evaluate(() => document.getElementById('rank-disclosure-row').hidden === false)), `${name}: ②の説明が残る`);
+  check(await page.locator('.search-note').isVisible(), `${name}: ②を止めると計測の説明の一文まで消える`);
 });
 
 // 本番の Worker で②を1回だけ送る（--base のときだけ。Jev を1回呼ぶ。評価セット・smoke と重ねない語）

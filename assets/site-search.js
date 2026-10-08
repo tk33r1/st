@@ -143,8 +143,11 @@
       if (self.disabled) return;
       var c = conditionNow();
       if (!c) return;
+      var key = keyOf(c);
+      // 同じ条件で読み込み中・結果を出している間は送り直さない（Enter の連打で回数と Jev を使わない）。失敗の後は送り直せる
+      if (key === shownKey && ['loading', 'results', 'no_results'].indexOf(self.state) >= 0) return;
       stop();
-      var mine = generation, key = keyOf(c);
+      var mine = generation;
       var ac = new AbortController(); controller = ac;
       clear(); shownKey = key; ranKey = key; settled = null;
       call('onRun');
@@ -174,8 +177,10 @@
           result = failed(timedOut() ? 'timeout' : 'unavailable');
         }
         // 送ったときの世代と条件のままのときだけ描く（A → B → A でも最初の A の応答は描かない）
-        if (mine !== generation || keyOf(conditionNow()) !== key) return;
+        if (mine !== generation) return;
         clearTimeout(timer); timer = null; controller = null;
+        // 入力のイベント無しで条件が変わっていた（自動入力など）。描かずに stale にする（読み込み中のまま止めない）
+        if (keyOf(conditionNow()) !== key) { self.invalidate(); return; }
         // 描く前に確定させる（描画の onState でページが settled() を読むため）
         settled = { key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete };
         if (result.reason === 'disabled') {
