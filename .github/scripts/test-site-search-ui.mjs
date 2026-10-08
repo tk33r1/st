@@ -93,7 +93,7 @@ async function newContext({ js = true, analyticsOff = false, worker = null, real
 }
 
 // 検索語を送ってよいのは GA4 のイベントの search_term だけ（PRD 8.3）。その値を除いてから目印を探す
-const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.com$/;
+const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.[a-z.]+$/; // 国別のドメイン（www.google.ca など）も Google シグナルの送り先
 const withoutSearchTerm = (r, text) => typeof text === 'string' && GOOGLE_MEASUREMENT.test(new URL(r.url).host)
   ? text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g, '$1') : text;
 function checkLog(name, log) {
