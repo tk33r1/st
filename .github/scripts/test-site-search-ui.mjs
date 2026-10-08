@@ -94,8 +94,9 @@ const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com
 const withoutSearchTerm = (r, text) => typeof text === 'string' && GOOGLE_MEASUREMENT.test(new URL(r.url).host)
   ? text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g, '$1') : text;
 // 伏せ字にするはずの値（計測の場面で入力する）。URL と本文をデコードしてから探す（エンコードの違いで見逃さない）
-const PII = ['a.b@example.com', '090-1234-5678'];
+const PII = ['a.b@example.com', '090-1234-5678', '０９０１２３４５６７８', '09012345678'];
 const PII_QUERY = 'メール a.b@example.com 090-1234-5678 収納', PII_MASKED = 'メール [email] [number] 収納';
+const PII_WIDE = '電話番号 ０９０１２３４５６７８', PII_WIDE_MASKED = '電話番号 [number]'; // 全角の数字（NFKC で半角にしてから伏せる）
 function decoded(text) {
   let t = (text || '').replace(/\+/g, ' ');
   for (let i = 0; i < 2; i++) { try { t = decodeURIComponent(t); } catch (_) { break; } }
@@ -352,6 +353,10 @@ scenario('404 の計測：search_term は伏せ字にして送る', {}, async (p
   await page.waitForTimeout(2500);
   const hit = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => ({ ...e })))).at(-1);
   check(hit && hit.search_term === PII_MASKED, `${name}: search_term が伏せ字になっていない（${hit && hit.search_term}）`);
+  await page.fill('#query', PII_WIDE);
+  await page.waitForTimeout(2500);
+  const wide = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => e.search_term))).at(-1);
+  check(wide === PII_WIDE_MASKED, `${name}: 全角の電話番号が伏せ字になっていない（${wide}）`);
 });
 for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
   scenario('日刊の計測：daily_search' + label, { analyticsOff: off }, async (page, name) => {
@@ -365,11 +370,30 @@ for (const [label, off] of [['', false], ['（計測を止めた状態）', true
       await page.fill('#archiveSearchInput', PII_QUERY); await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(300);
       const last = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'daily_search').map(e => e.search_term))).at(-1);
       check(last === PII_MASKED, `${name}: 日刊の search_term が伏せ字になっていない（${last}）`);
+      await page.fill('#archiveSearchInput', PII_WIDE); await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(300);
+      const wide = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'daily_search').map(e => e.search_term))).at(-1);
+      check(wide === PII_WIDE_MASKED, `${name}: 日刊の全角の電話番号が伏せ字になっていない（${wide}）`);
     }
     await checkLocation(name, page);
     await page.waitForTimeout(3000);
   });
 }
+
+// 日刊の索引が読めないとき：「0件」と表示・計測せず、次の検索で読み直す
+scenario('日刊の索引の取得失敗', {}, async (page, name) => {
+  let fail = true;
+  await page.route('**/job/nitoridaily/search-index*.json', route => fail ? route.fulfill({ status: 503, body: '' }) : route.fallback());
+  await page.goto(BASE + PORTAL); await settle(page);
+  await page.fill('#archiveSearchInput', 'ニトリ'); await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(500);
+  let v = await page.evaluate(() => ({ status: document.getElementById('archiveSearchStatus').textContent, results: document.querySelectorAll('#archiveSearchResults article, #archiveSearchResults a').length,
+    events: (window.dataLayer || []).filter(e => e && e.event === 'daily_search').length }));
+  check(/読み込めませんでした/.test(v.status) && !/件見つかりました/.test(v.status), `${name}: 失敗が「0件」と表示される（${v.status}）`);
+  check(v.results === 0 && v.events === 0, `${name}: 失敗したのに結果か daily_search が出た（${JSON.stringify(v)}）`);
+  fail = false;
+  await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(800);
+  v = await page.evaluate(() => ({ status: document.getElementById('archiveSearchStatus').textContent, events: (window.dataLayer || []).filter(e => e && e.event === 'daily_search').length }));
+  check(/件見つかりました/.test(v.status) && v.events === 1, `${name}: 直った後の検索で読み直さない（${JSON.stringify(v)}）`);
+});
 
 // ---- ②（計画書 T5.4。設計書 5章・6章、PRD 3.1・7.4） ----
 const FAILED_JA = 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。';

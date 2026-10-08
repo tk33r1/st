@@ -364,8 +364,12 @@
           if (!response.ok) throw new Error('HTTP ' + response.status);
           return response.json();
         })
-        .then(function(payload) { return payload && Array.isArray(payload.records) ? payload : null; })
-        .catch(function() { return null; });
+        .then(function(payload) {
+          if (!payload || !Array.isArray(payload.records)) throw new Error('Invalid index');
+          return payload;
+        })
+        // 失敗した取得は覚えない（次の検索・ページの表示で読み直す）
+        .catch(function() { delete indexFiles[name]; return null; });
     }
     return indexFiles[name];
   }
@@ -416,9 +420,8 @@
     async function ensureIndex() {
       if (records) return records;
       status.textContent = '検索インデックスを読み込んでいます…';
-      const loaded = await loadSearchIndex(true);
-      if (!loaded) status.textContent = '検索データを読み込めませんでした。';
-      records = loaded || [];
+      // 読めなかったときは null を返し、覚えない（「0件」と表示・計測しない。次の検索で読み直す）
+      records = await loadSearchIndex(true);
       return records;
     }
 
@@ -426,6 +429,11 @@
       if (e) e.preventDefault();
       filterArchiveByMonth();
       const data = await ensureIndex();
+      if (!data) {
+        results.replaceChildren();
+        status.textContent = '検索データを読み込めませんでした。もう一度検索すると読み直します。';
+        return;
+      }
       const q = normalizeSearch(query.value);
       const matched = data.filter(function(record) {
         const haystack = normalizeSearch([record.title, record.summary, record.takeaway, record.source, record.category].concat(record.tags || []).join(' '));
@@ -463,9 +471,11 @@
     };
   }
 
-  // 計測に載せる検索語（PRD 8.3。404 と同じ）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る
+  // 計測に載せる検索語（PRD 8.3。404 と同じ）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
+  // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）
   function analyticsTerm(value) {
-    const term = cleanQuery(value).replace(/[^\s@]+@[^\s@]+/g, '[email]').replace(/\+?\d[\d\s().-]{6,}\d/g, '[number]').trim();
+    const term = cleanQuery(value).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
+      .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, '[number]').trim();
     return Array.from(term).slice(0, 100).join('');
   }
 

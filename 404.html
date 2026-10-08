@@ -281,9 +281,11 @@
 
       function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
       function stripControls(value) { return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ''); }
-      // 計測に載せる検索語（PRD 8.3）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る
+      // 計測に載せる検索語（PRD 8.3）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
+      // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）
       function analyticsTerm(value) {
-        var term = stripControls(String(value || '')).replace(/[^\s@]+@[^\s@]+/g, '[email]').replace(/\+?\d[\d\s().-]{6,}\d/g, '[number]').trim();
+        var term = stripControls(String(value || '')).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
+          .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, '[number]').trim();
         return Array.from(term).slice(0, 100).join('');
       }
       function normalize(value) {
