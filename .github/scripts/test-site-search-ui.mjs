@@ -513,6 +513,29 @@ rankScenario('状態：同じ語の Enter の連打で送り直さない', { wor
   const v = await rankView(page);
   check(v.events.filter(e => e.event === 'not_found_rank_run').length === 1 && v.rank.join() === '結果:A', `${name}: 連打で②を送り直した（${v.events.filter(e => e.event === 'not_found_rank_run').length}回）`);
 });
+// 失敗の後は送り直せるので、キーの自動の繰り返し（フォームの暗黙の送信）で送り直さない
+rankScenario('状態：失敗の後に Enter を押し続けても送り直さない', { worker: mockWorker({ rank: () => ({ status: 503, body: {} }) }) }, async (page, name) => {
+  await page.fill('#query', 'A'); await page.waitForTimeout(150); await page.focus('#query');
+  const cdp = await page.context().newCDPSession(page);
+  const key = { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' };
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', ...key }); await page.waitForTimeout(200);
+  for (let i = 0; i < 3; i++) { await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', ...key, autoRepeat: true }); await page.waitForTimeout(200); }
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+  const runs = (await rankView(page)).events.filter(e => e.event === 'not_found_rank_run').length;
+  check(runs === 1, `${name}: 押し続けで②を送り直した（${runs}回）`);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  check((await rankView(page)).events.filter(e => e.event === 'not_found_rank_run').length === 2, `${name}: キーを離した後の Enter で送り直さない`);
+});
+// ②の到着で①を描き直しても、操作中のリンクのフォーカスを入力欄へ戻さない。②へ移ったページなら②の同じリンクへ
+for (const [label, rows, expected] of [['①に残るリンク', [row('MAGI', '/magi/', 'page')], '#result-list'], ['②へ移るリンク', [row('PDF Studio')], '#rank-list']]) {
+  rankScenario('表示：②の到着で' + label + 'のフォーカスを保つ', { worker: mockWorker({ rank: () => ({ delay: 1000, body: rankBody(rows) }) }) }, async (page, name) => {
+    await typeAndRun(page, 'pdf', 200);
+    await page.focus('#result-list a[href="/tools/pdf-studio/"]');
+    await page.waitForFunction(() => document.querySelectorAll('#rank-list a').length > 0, null, { timeout: 3000 }).catch(() => {});
+    const where = await page.evaluate(() => { const a = document.activeElement; return (a.closest('#result-list') ? '#result-list' : a.closest('#rank-list') ? '#rank-list' : '#' + a.id) + ' ' + (a.getAttribute('href') || ''); });
+    check(where === expected + ' /tools/pdf-studio/', `${name}: フォーカスが PDF Studio に残らない（${where}）`);
+  });
+}
 rankScenario('状態：入力のイベント無しで値が変わっても読み込み中のまま止まらない', { worker: echo(() => 800) }, async (page, name) => {
   await typeAndRun(page, 'A', 100);
   await page.evaluate(() => { document.getElementById('query').value = 'B'; }); // 自動入力などを模す（input イベント無し）

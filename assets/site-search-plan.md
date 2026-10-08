@@ -3,7 +3,7 @@
 作成（2026-10-06）。進めながら「進み具合」（5章）を更新する。要件は [site-search.md](site-search.md)（PRD）、作り方は [site-search-design.md](site-search-design.md)（設計書）。
 
 - この計画書に書くのは、作業の単位・順番・完了条件・担当・進み具合だけ。中身は設計書の節を参照し、ここで決め直さない。設計を変えるときは先に設計書を直す。
-- 対象は Phase 0〜2（404 の公開）と、その後のアプリ・Worker の移行（設計書 9章の 1〜8）。Phase 3（日刊2誌・`/tools/`・`/game/`）は、Phase 2 の公開後に設計書を詳しくしてから計画する。
+- 対象は Phase 0〜2（404 の公開）と、その後のアプリ・Worker の移行（設計書 9章の 1〜8）。Phase 3（日刊2誌・`/tools/`・`/game/`）は別資料で管理する。2026-10-09 に [PRD](site-search-phase3-prd.md)・[設計書](site-search-phase3-design.md)・[実装計画書](site-search-phase3-plan.md)・[検証計画書](site-search-phase3-verification.md) の草案作成に着手した。Phase 3 の機能実装・評価・公開は未着手。
 
 ## 1. 進め方
 

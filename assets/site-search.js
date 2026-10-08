@@ -74,7 +74,7 @@
     var self = { state: 'idle', disabled: false };
     var generation = 0, controller = null, timer = null;
     var shownKey = null;  // いま描いている（または読み込み中の）条件のキー
-    var ranKey = null;    // 最後に②を実行した条件のキー
+    var hasRun = false;  // 以前②を実行したか（入力の変更で stale にするため）
     var settled = null;   // 最後に確定した結果 { key, status, reason, count, complete }
 
     function conditionNow() {
@@ -129,13 +129,13 @@
     // 入力などが変わったとき（設計書 5.2）。前後の空白だけの違いなど、条件のキーが同じなら何もしない
     function reset(force) {
       // まだ②を送っていなければ、入力のたびにすることは無い
-      if (!force && self.state === 'idle' && ranKey === null && !controller) return;
+      if (!force && self.state === 'idle' && !hasRun && !controller) return;
       var c = conditionNow(), key = keyOf(c);
       if (!force && key !== null && key === shownKey) return;
       stop(); clear(); shownKey = null;
       if (self.disabled) { setState('idle'); return; }
       // 以前②を実行していれば、空でない入力では stale にして③と検索ボタンを使える状態を保つ。③に切り替えるときは文言を出さない
-      if (c && ranKey !== null) setState('stale', force ? '' : labels.texts.stale);
+      if (c && hasRun) setState('stale', force ? '' : labels.texts.stale);
       else setState('idle');
     }
 
@@ -149,7 +149,7 @@
       stop();
       var mine = generation;
       var ac = new AbortController(); controller = ac;
-      clear(); shownKey = key; ranKey = key; settled = null;
+      clear(); shownKey = key; hasRun = true; settled = null;
       call('onRun');
       var keywordState = 'known';
       try { keywordState = options.keywordState(); } catch (_) { keywordState = 'failed'; }
@@ -184,7 +184,7 @@
         // 描く前に確定させる（描画の onState でページが settled() を読むため）
         settled = { key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete };
         if (result.reason === 'disabled') {
-          self.disabled = true; clear(); shownKey = null; ranKey = null;
+          self.disabled = true; clear(); shownKey = null; hasRun = false;
           setState('idle');
         } else render(result);
         track('rank_result', { status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete });

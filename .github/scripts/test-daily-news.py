@@ -98,7 +98,7 @@ class NewsFilterTests(unittest.TestCase):
         self.assertIn(jp_rescued, index.values())
         self.assertIn(gl_rescued, index.values())
         for mode in ('missing_keys', 'providers_failed'):
-            with self.subTest(mode=mode), patch.dict('os.environ', {'OPENAI_API_KEY': '' if mode == 'missing_keys' else 'test', 'DEEPSEEK_API_KEY': '' if mode == 'missing_keys' else 'test'}), patch.object(engine, 'call_llm_api', side_effect=RuntimeError('test outage')):
+            with self.subTest(mode=mode), patch.dict('os.environ', {'ANTHROPIC_API_KEY': '' if mode == 'missing_keys' else 'test', 'OPENAI_API_KEY': '' if mode == 'missing_keys' else 'test', 'DEEPSEEK_API_KEY': '' if mode == 'missing_keys' else 'test'}), patch.object(engine, 'call_anthropic_api', side_effect=RuntimeError('test outage')), patch.object(engine, 'call_llm_api', side_effect=RuntimeError('test outage')):
                 result = engine.analyze_news_with_fallback(nitori.CONFIG, candidates, '2026-10-04', '2026-10-03')
             self.assertEqual([article['url'] for article in result['articles']], [jp_accepted['link'], gl_accepted['link']])
             self.assertEqual(len(result['sns_buzz']), 1)
@@ -285,6 +285,79 @@ class NewsFilterTests(unittest.TestCase):
         self.assertEqual(candidates['JP'], [accepted])
         self.assertCountEqual(judged, [rejected['title'], accepted['title'], duplicate['title']])
 
+
+
+class DailyGenerationTests(unittest.TestCase):
+    def test_provider_priority_and_fallback_for_both_media(self):
+        hosts = ['api.anthropic.com', 'api.openai.com', 'api.deepseek.com']
+        candidates = dict(JP=[item('ニトリ店舗の自動化', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
+        valid = {'articles': [{'source_id': 'JP-01', 'region': 'JP', 'title': '店舗の自動化'}]}
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for winner in range(4):
+                calls = []
+                def response(request, **kwargs):
+                    host = engine.urllib.parse.urlparse(request.full_url).hostname
+                    calls.append(host)
+                    if hosts.index(host) < winner:
+                        raise urllib.error.HTTPError(request.full_url, 503, 'outage', {}, io.BytesIO(b'outage'))
+                    if host == hosts[0]:
+                        body = {'stop_reason': 'end_turn', 'content': [{'type': 'thinking', 'thinking': 'private'}, {'type': 'text', 'text': json.dumps(valid)}]}
+                    else:
+                        body = {'choices': [{'message': {'content': json.dumps(valid)}}]}
+                    return io.BytesIO(json.dumps(body).encode())
+                with self.subTest(media=config['media_name'], winner=winner), patch.dict('os.environ', {
+                    'ANTHROPIC_API_KEY': 'test', 'OPENAI_API_KEY': 'test', 'DEEPSEEK_API_KEY': 'test',
+                    'ANTHROPIC_MODEL': '', 'OPENAI_MODEL': '', 'DEEPSEEK_MODEL': '',
+                }), patch.object(engine.urllib.request, 'urlopen', side_effect=response):
+                    result = engine.analyze_news_with_fallback(config, candidates, '2026-10-09', '2026-10-08')
+                    self.assertEqual(calls, hosts[:winner + 1])
+                    self.assertEqual(result['engine_type'], ('anthropic', 'openai', 'deepseek', 'fallback')[winner])
+                    if winner < 3:
+                        self.assertEqual(result['articles'][0]['url'], candidates['JP'][0]['link'])
+
+    def test_anthropic_missing_key_or_bad_response_uses_openai(self):
+        candidates = dict(JP=[item('店舗の自動化', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for mode in ('missing_key', 'invalid_json', 'empty_articles', 'truncated', 'refusal', 'no_text'):
+                def response(request, **kwargs):
+                    body = {'stop_reason': 'end_turn', 'content': [{'type': 'text', 'text': '{"articles":[]}'}]}
+                    if mode == 'invalid_json':
+                        body['content'][0]['text'] = 'not json'
+                    elif mode in ('truncated', 'refusal'):
+                        body['stop_reason'] = 'max_tokens' if mode == 'truncated' else 'refusal'
+                    elif mode == 'no_text':
+                        body['content'] = [{'type': 'thinking', 'thinking': '{}'}]
+                    return io.BytesIO(json.dumps(body).encode())
+                with self.subTest(media=config['media_name'], mode=mode), patch.dict('os.environ', {
+                    'ANTHROPIC_API_KEY': '' if mode == 'missing_key' else 'test',
+                    'OPENAI_API_KEY': 'test', 'DEEPSEEK_API_KEY': 'test',
+                }), patch.object(engine.urllib.request, 'urlopen', side_effect=response) as native, patch.object(engine, 'call_llm_api', return_value={'articles': [{'source_id': 'JP-01'}]}) as compatible:
+                    result = engine.analyze_news_with_fallback(config, candidates, '2026-10-09', '2026-10-08')
+                    self.assertEqual(result['engine_type'], 'openai')
+                    self.assertEqual(native.call_count, 0 if mode == 'missing_key' else 1)
+                    self.assertEqual(compatible.call_count, 1)
+
+    def test_anthropic_auth_payload_and_text_blocks(self):
+        def response(request, **kwargs):
+            payload = json.loads(request.data)
+            self.assertEqual(request.get_header('X-api-key'), 'test-key')
+            self.assertEqual(request.get_header('Anthropic-version'), '2023-06-01')
+            self.assertIsNone(request.get_header('Authorization'))
+            self.assertEqual(payload['messages'], [{'role': 'user', 'content': 'test prompt'}])
+            self.assertEqual(payload['thinking'], {'type': 'adaptive'})
+            self.assertEqual(payload['output_config'], {'effort': 'medium'})
+            self.assertEqual(payload['max_tokens'], 16384)
+            for field in ('temperature', 'top_p', 'top_k', 'response_format', 'reasoning_effort'):
+                self.assertNotIn(field, payload)
+            body = {'stop_reason': 'end_turn', 'content': [
+                {'type': 'thinking', 'thinking': 'not JSON'},
+                {'type': 'text', 'text': '```json\n{"ok":'},
+                {'type': 'text', 'text': 'true}\n```'},
+            ]}
+            return io.BytesIO(json.dumps(body).encode())
+        with patch.object(engine.urllib.request, 'urlopen', side_effect=response):
+            self.assertEqual(engine.call_anthropic_api('https://api.anthropic.com/v1/messages',
+                             'test-key', 'test-model', 'test prompt', 'test-agent'), {'ok': True})
 
 
 class RebuildOutputTest(unittest.TestCase):

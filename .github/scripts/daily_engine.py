@@ -292,7 +292,9 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261008_3'
+DAILY_UI_VERSION = '20261009_1'
+SEARCH_ANALYTICS_VERSION = '20261009_1'
+DAILY_CSS_VERSION = '20261009_1'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
 # URL に q（クエリのすべての q、または #q=）があれば、受け取るかどうかに関係なく先に消して #archiveSearch にし、
@@ -374,7 +376,7 @@ def render_head(config, rel, title, social_title, description, canonical,
   <script type="application/ld+json">
 {jsonld_str}
   </script>
-  <link rel="stylesheet" href="{rel}job/assets/{config['css_file']}">"""
+  <link rel="stylesheet" href="{rel}job/assets/{config['css_file']}?v={DAILY_CSS_VERSION}">"""
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -859,6 +861,43 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
     return prompt, candidate_index
 
 
+def call_anthropic_api(endpoint, api_key, model_name, prompt_content, user_agent):
+    """Messages API の推論ブロックを除き、完了した JSON 本文だけを読む。"""
+    payload = {
+        "model": model_name,
+        "max_tokens": 16384,
+        "system": "You are a professional editorial curator and analyst. Return only valid JSON adhering strictly to the requested schema.",
+        "messages": [{"role": "user", "content": prompt_content}],
+        # Haiku の推論は medium。非既定の temperature / top_p / top_k は送れない。
+        "thinking": {"type": "adaptive"},
+        "output_config": {"effort": "medium"},
+    }
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Content-Type': 'application/json',
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
+            'User-Agent': user_agent,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f"HTTP {e.code}: {detail}") from e
+    if body.get('stop_reason') != 'end_turn':
+        raise RuntimeError(f"Anthropic 応答が完了していません: {body.get('stop_reason')}")
+    raw_text = ''.join(block.get('text', '') for block in body.get('content', [])
+                       if block.get('type') == 'text').strip()
+    if raw_text.startswith('```'):
+        raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+        raw_text = re.sub(r'\s*```$', '', raw_text)
+    return json.loads(raw_text)
+
+
 def call_llm_api(endpoint, api_key, model_name, prompt_content, user_agent):
     payload = {
         "model": model_name,
@@ -1002,9 +1041,17 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
             print(f"[WARN] モデル設定を読めません: {e}", file=sys.stderr)
             return ''
 
+    anthropic_model = configured_model('anthropic', 'haiku', 'ANTHROPIC_MODEL')
     openai_model = configured_model('openai', 'luna', 'OPENAI_MODEL')
     deepseek_model = configured_model('deepseek', 'flash', 'DEEPSEEK_MODEL')
     providers = [
+        {
+            "name": "Anthropic",
+            "model": anthropic_model,
+            "key": os.environ.get('ANTHROPIC_API_KEY', '').strip(),
+            "url": "https://api.anthropic.com/v1/messages",
+            "badge_label": f"Anthropic ({anthropic_model})"
+        },
         {
             "name": "OpenAI",
             "model": openai_model,
@@ -1027,7 +1074,8 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
             continue
         print(f" -> 試行中: {p['name']} ({p['model']})...")
         try:
-            res = call_llm_api(p['url'], p['key'], p['model'], prompt, config['user_agent'])
+            call_api = call_anthropic_api if p['name'] == 'Anthropic' else call_llm_api
+            res = call_api(p['url'], p['key'], p['model'], prompt, config['user_agent'])
             if res and res.get('articles'):
                 print(f"[SUCCESS] {p['name']} による生成が成功しました！")
                 resolve_source_urls(res, candidate_index)
@@ -1843,6 +1891,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   {site_footer_html}
 
   <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../assets/search-analytics.js?v={SEARCH_ANALYTICS_VERSION}"></script>
   <script src="../../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>
@@ -2202,6 +2251,7 @@ def render_top_index_html(config, articles_history):
   {site_footer_html}
 
   <script src="../../assets/buy-me-oil.js"></script>
+  <script src="../../assets/search-analytics.js?v={SEARCH_ANALYTICS_VERSION}"></script>
   <script src="../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>

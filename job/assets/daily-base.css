@@ -425,6 +425,18 @@ a {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
 }
 
+/* Claude のテラコッタ。小さな文字は読みやすい暗めの派生色にする。 */
+.engine-anthropic {
+  border-color: rgba(217, 119, 87, 0.3);
+  color: #a14e36;
+  background: rgba(217, 119, 87, 0.05);
+}
+
+.engine-anthropic .engine-dot {
+  background: #d97757;
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.14);
+}
+
 .engine-openai {
   border-color: rgba(13, 148, 136, 0.3);
   color: #0f766e;

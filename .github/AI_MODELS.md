@@ -2,8 +2,8 @@
 
 AI APIで使うモデルID・画面の表示名の正本は `config/ai-models.json`（プロバイダー → 用途チャネル → モデル設定）。
 各設定はAPIに送るモデルID `id` と、画面用の名称 `display_name` を必ず持つ。
-3社とも画面は `display_name` を使い、APIには `id` を送る。
-実運用で直接モデルを選ぶプロバイダーは OpenAI・DeepSeek・Google（Gemini）の3社と、magi2 の言語の判定に使う
+MAGIの3社の画面は `display_name` を使い、APIには `id` を送る。日刊の生成元バッジは実際に使ったプロバイダーとIDを記録する。
+実運用で直接モデルを選ぶプロバイダーは Anthropic・OpenAI・DeepSeek・Google（Gemini）の4社と、magi2 の言語の判定に使う
 TypeSafe AI（Jev。magi2の発言分類・初回言語判定、日刊ニトリのSNS採否、日刊ニトリ・リテールテックのニュース採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 Jev はモデル一覧の API が無く、`jev-latest` は版を追う固定のエイリアスなので、更新の監視はせずスモークテストだけを行う（`PROVIDERS` の `watch: False`）。
@@ -11,12 +11,16 @@ Jev の API の形・料金・規約・使い方の知見は [JEV.md](JEV.md) �
 
 ## 仕組み
 
-- Pythonの生成処理は `ai_model_registry.py` から正本を読む。`OPENAI_MODEL` /
+- Pythonの生成処理は `ai_model_registry.py` から正本を読む。`ANTHROPIC_MODEL` / `OPENAI_MODEL` /
   `DEEPSEEK_MODEL` はローカルで別モデルを試す場合だけの上書き手段で、GitHub Actionsの
   実運用workflowでは設定しない。日刊生成は正本を読めなくてもルールベースで号を出す。
+- 日刊ニトリ・リテールテックの生成は **Claude Haiku 5.5 → GPT-6 Luna → DeepSeek V4.1 Flash → ルールベース** の順。
+  キー未設定・API失敗・JSON不正・記事なしの場合は次へ進む。AnthropicはMessages APIを使い、
+  適応的推論 medium・最大16,384出力トークンで呼ぶ。途中終了・拒否・本文なしも失敗として扱い、推論ブロックは本文に混ぜない。
+  日刊生成と週次のモデル検査にはRepository Secretの `ANTHROPIC_API_KEY` を渡す。
 - Cloudflare Worker（`workers/magi2`・`workers/games`・`workers/dj-request`）は正本のJSONを `import` する。
   wrangler がデプロイ時にバンドルへ取り込むので、正本を変えたら再デプロイで反映される。
-- 正本にはモデルIDと表示名だけを置く。モデル一覧・公式のモデル詳細・Chat CompletionsのURL、APIキーの環境変数、
+- 正本にはモデルIDと表示名だけを置く。モデル一覧・公式のモデル詳細・生成APIのURL、APIキーの環境変数、
   版番号のパターン、スモークテストの中身といったプロバイダー固有の知識は `ai_models.py` の
   `PROVIDERS` にまとめてある。
 - `ai-models.yml` は `config/`・`.github/`・`workers/` を触るpushとPRで、正本の形式と、
@@ -28,9 +32,9 @@ Jev の API の形・料金・規約・使い方の知見は [JEV.md](JEV.md) �
 1. **現在のモデルのスモークテスト**。DeepSeekの `flash` チャネルはIDが固定のエイリアスで、
    中身はDeepSeek側で黙って差し替わるため、候補の有無にかかわらず毎週試す。
 2. **更新候補の検知**。各社の `/models` APIを見て、OpenAIは同じLuna系列のより新しい世代番号
-   （`6` と `6.0` は同じ版として扱う）を、Googleは同じFlash-Lite系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
+   （`6` と `6.0` は同じ版として扱う）を、AnthropicはHaiku系列、GoogleはFlash-Lite系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
    候補はその場でスモークテストにかけ、**合格したものだけ**を正本に書く。
-   OpenAI・Googleは限定した系列の公式表記（`GPT-<版> Luna`・`Gemini <版> Flash-Lite`）に合わせて
+   Anthropic・OpenAI・Googleは限定した系列の公式表記（`Claude Haiku <版>`・`GPT-<版> Luna`・`Gemini <版> Flash-Lite`）に合わせて
    `display_name` も同時に更新する。
    DeepSeekは公式の「Models & Pricing」のモデルID列と「MODEL VERSION」行を対応させ、
    使用中のエイリアスの実モデル名を取得する。表示名が変わった場合もスモークテストに通ったものだけを
@@ -55,14 +59,15 @@ PR本文にも同じ手順を出す。
 
 | プロバイダー | 試すこと | なぞっている利用箇所 |
 | --- | --- | --- |
-| OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（一次プロバイダー） |
+| Anthropic | 本番と共通のMessages API・適応的推論 medium（sampling指定なし）・JSON本文・正常終了 | 日刊生成（一次プロバイダー） |
+| OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（Anthropic が失敗したときのフォールバック） |
 | OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
 | OpenAI | 本番設定の人格、サイト候補を含む入力、画像なし／data URL画像あり | magi2 の Strategist。推論・トークン上限・揺らぎ・top_pを `DEFAULTS` と `PERSONA_TEMPERATURE` から読む |
 | OpenAI | 本番設定の推論・上限・ストリーミング、サイト候補を含む入力 | magi2 の統合。推論時にsamplingを送らない本番の組立てを使う |
 | OpenAI | 本番の選択指示4ケースと、dailyがnull／オブジェクトの固定JSON2ケース・strictなJSONスキーマ | 404とチャットの共通ページ選択。本番の指示では形式と実在IDだけを検査し、日刊検索の有無は記録する。nullableの両側は固定JSONで確認する |
 | OpenAI | 推論 low（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定。本番の `DEBATE` を読む |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
-| DeepSeek | temperature 0.2・JSON出力 | 日刊生成（OpenAI が失敗したときのフォールバック） |
+| DeepSeek | temperature 0.2・JSON出力 | 日刊生成（Anthropic・OpenAI が失敗したときのフォールバック） |
 | DeepSeek | 本番設定の推論・上限・揺らぎ・top_p、サイト候補を含む画像なし／画像あり入力 | magi2 の Enthusiast |
 | Google | 本番設定の推論・上限・揺らぎ・top_p、サイト候補を含む画像なし／画像あり入力 | magi2 の Humanist |
 | TypeSafe | System One API の choice 質問。本番の `INTENT_CLASSIFY` と共通の組立てで初回4問・継続3問・DJ初回1問・旧画面1問を確認。答えの形と明確な例のchoiceを検査し、確信度の閾値は品質評価で確認する | magi2 の発言分類・初回言語判定と旧画面の互換経路 |
@@ -71,7 +76,7 @@ PR本文にも同じ手順を出す。
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` の採否基準で、食品売り場の技術導入と英語の店舗技術記事を採用し、食品紹介のみ・一般AI記事を除外できるか | 日刊リテールテックの国内・海外ニュース候補 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` のニトリ用採否基準で、英語の出店・N＋を採用し、投資推奨・同名別物を除外できるか（ブランド名救済前の判定） | 日刊ニトリの国内・海外ニュース候補 |
 
-OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
+Anthropicのモデル一覧は `ANTHROPIC_API_KEY`、OpenAIは `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
 `TYPESAFE_API_KEY` は Worker の `MAGI_TYPESAFE_API_KEY` と同じキーでよい。
 Actionsの日刊生成・TikTok取得・週次スモークテストでも、TypeSafeが401・402・403、または残高・枠不足の429を
 返したら `typesafe_alert.py` がResendでメール通知する（通常の回数制限の429・通信障害・5xxは対象外）。

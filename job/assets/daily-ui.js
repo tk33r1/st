@@ -1,6 +1,6 @@
 /**
  * Daily Brief 共通 UI インタラクション (job/assets/daily-ui.js)
- * 依存ゼロ・Vanilla JS / 完全自給自足型
+ * Vanilla JS。検索語の計測は assets/search-analytics.js を先に読む。
  */
 (function() {
   'use strict';
@@ -452,7 +452,8 @@
     // 横断検索の計測（PRD 8.3）。同じ語は続けて送らない（絞り込みだけを変えたとき）。計測を止めている人には送らない
     let lastTracked = null;
     function trackSearch(value, count) {
-      const term = analyticsTerm(value);
+      // 共通部品が読めない場合は計測だけを省き、検索は続ける。
+      const term = window.STSearchAnalytics ? window.STSearchAnalytics.term(cleanQuery(value)) : '';
       if (!term || term === lastTracked) return;
       try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (e) {}
       lastTracked = term;
@@ -469,16 +470,6 @@
       runSearch();
       document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
     };
-  }
-
-  // 計測に載せる検索語（PRD 8.3。404 と同じ）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
-  // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）。
-  // 日付（2026-10-08・20261008 など。日刊の号を探す語）は伏せない
-  const DATE_LIKE = /^(19|20)\d{2}([\s.\-]?)(0?[1-9]|1[0-2])\2(0?[1-9]|[12]\d|3[01])$/;
-  function analyticsTerm(value) {
-    const term = cleanQuery(value).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
-      .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, function(m) { return DATE_LIKE.test(m) ? m : '[number]'; }).trim();
-    return Array.from(term).slice(0, 100).join('');
   }
 
   // 検索語の取り出し（受け取る側の検査は head の処理。ここでは送る前に制御文字を除いて200文字に収める）

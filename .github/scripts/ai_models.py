@@ -11,6 +11,7 @@ import struct
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 import zlib
 from datetime import datetime, timezone
@@ -142,6 +143,19 @@ def expect_ok_json(body):
 
 
 # スモークテストは実運用の呼び出し方を最小の形でなぞる。呼び出し方を変えたらここも直すこと。
+def smoke_anthropic(url, api_key, model):
+    # 日刊と同じ Messages API の組立て・推論・応答検査を使う。
+    from daily_engine import call_anthropic_api
+    try:
+        parsed = call_anthropic_api(url, api_key, model, 'Return exactly {"ok":true}.',
+                                    'tk.st-ai-model-smoke/1.0')
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise RuntimeError(f'Anthropic の JSON 応答を取得できません: {e}') from e
+    if not isinstance(parsed, dict) or parsed.get('ok') is not True:
+        raise RuntimeError(f'期待した JSON 応答ではありません: {str(parsed)[:500]}')
+    return 'Messages API/適応的推論 medium/JSON/正常終了'
+
+
 def smoke_openai(url, api_key, model):
     # 日刊生成：既定と同じ medium 推論、JSON出力。GPT-6 は推論時に temperature を送れない。
     expect_ok_json(post_json(url, api_key, {
@@ -443,6 +457,15 @@ def smoke_typesafe(url, api_key, model):
 # channels の値は版番号を抜き出すパターンで、より新しい版がモデル一覧に出たら更新候補にする。
 # None はIDが固定のエイリアス。互換性に加え、公式のモデル詳細で背後の版も確認する。
 PROVIDERS = {
+    'anthropic': {
+        'key_env': 'ANTHROPIC_API_KEY',
+        'models_url': 'https://api.anthropic.com/v1/models?limit=1000',
+        'chat_url': 'https://api.anthropic.com/v1/messages',
+        # 日付付きスナップショットを新しい世代番号と誤認しない。
+        'channels': {'haiku': re.compile(r'claude-haiku-(\d+(?:-\d{1,2})?)')},
+        'display_name_template': 'Claude Haiku {version}',
+        'smoke': smoke_anthropic,
+    },
     'openai': {
         'key_env': 'OPENAI_API_KEY',
         'models_url': 'https://api.openai.com/v1/models',
@@ -548,13 +571,37 @@ def api_key_for(provider, pconf):
 
 
 def fetch_models(provider, pconf, api_key):
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'tk.st-ai-model-watch/1.0',
+    }
+    if provider == 'anthropic':
+        headers.update({'x-api-key': api_key, 'anthropic-version': '2023-06-01'})
+    else:
+        headers['Authorization'] = f'Bearer {api_key}'
+    by_id = {}
+    url = pconf['models_url']
+    while url:
+        body = fetch_models_page(provider, url, headers)
+        models = body.get('data') if isinstance(body, dict) else None
+        if not isinstance(models, list):
+            raise RuntimeError(f'{provider}: モデル一覧の data が配列ではありません')
+        by_id.update({m['id'].removeprefix('models/'): m for m in models
+                      if isinstance(m, dict) and m.get('id')})
+        if provider == 'anthropic' and body.get('has_more'):
+            cursor = body.get('last_id')
+            if not cursor or not models:
+                raise RuntimeError(f'{provider}: モデル一覧のページ情報が不正です')
+            url = pconf['models_url'] + '&after_id=' + urllib.parse.quote(cursor, safe='')
+        else:
+            url = None
+    return by_id
+
+
+def fetch_models_page(provider, url, headers):
     request = urllib.request.Request(
-        pconf['models_url'],
-        headers={
-            'Authorization': f'Bearer {api_key}',
-            'Accept': 'application/json',
-            'User-Agent': 'tk.st-ai-model-watch/1.0',
-        },
+        url,
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -564,14 +611,11 @@ def fetch_models(provider, pconf, api_key):
         raise RuntimeError(f'{provider}: モデル一覧が HTTP {e.code}: {detail}') from e
     except (OSError, json.JSONDecodeError) as e:
         raise RuntimeError(f'{provider}: モデル一覧の取得に失敗: {e}') from e
-    models = body.get('data') if isinstance(body, dict) else None
-    if not isinstance(models, list):
-        raise RuntimeError(f'{provider}: モデル一覧の data が配列ではありません')
-    return {m['id'].removeprefix('models/'): m for m in models if isinstance(m, dict) and m.get('id')}
+    return body
 
 
 def version_key(pattern, model):
-    parts = [int(part) for part in pattern.fullmatch(model).group(1).split('.')]
+    parts = [int(part) for part in re.split(r'[.-]', pattern.fullmatch(model).group(1))]
     while len(parts) > 1 and parts[-1] == 0:  # gpt-6 と gpt-6.0 を同じ版として扱う
         parts.pop()
     return tuple(parts)
@@ -582,7 +626,7 @@ def versioned_display_name(pconf, channel, model):
     match = pconf['channels'][channel].fullmatch(model)
     if not match:
         raise RuntimeError(f'表示名を組み立てられないモデルIDです: {model}')
-    return pconf['display_name_template'].format(version=match.group(1))
+    return pconf['display_name_template'].format(version=match.group(1).replace('-', '.'))
 
 
 class ModelDetailsParser(HTMLParser):
@@ -701,8 +745,9 @@ def update_registry():
             live = by_id.get(current)
             if not live:
                 problems.append(f'{label}: 現在のモデル {current} が一覧にありません')
-            elif live.get('shutdown_date'):
-                problems.append(f'{label}: {current} の停止予定日は {live["shutdown_date"]}')
+            elif live.get('shutdown_date') or live.get('retires_at'):
+                retirement = live.get('shutdown_date') or live['retires_at']
+                problems.append(f'{label}: {current} の停止予定日は {retirement}')
             status = '' if live else '（⚠ 一覧にない）'
             if pattern is None:
                 report.append(f'- {label}: エイリアス `{current}`{status}')
@@ -737,7 +782,10 @@ def update_registry():
                 continue
             entry['id'] = candidate
             entry['display_name'] = display_name
-            workers_to_deploy.update(('magi2', 'games', 'dj-request') if provider == 'openai' else ('magi2',))
+            if provider == 'openai':
+                workers_to_deploy.update(('magi2', 'games', 'dj-request'))
+            elif provider == 'google':
+                workers_to_deploy.add('magi2')
             changes.append(f'{label}: `{current}` → `{candidate}`（スモークテスト合格: {detail}）')
             report.append(f'- {label}: 更新候補 `{current}` → `{candidate}`')
 
@@ -749,13 +797,16 @@ def update_registry():
             '## マージ後の反映',
             '',
             'GitHub Actionsの生成処理はmainへの反映後から新設定を使います。表示名だけの変更ではAPI用のIDは変わりません。',
-            '変更が関係するCloudflare Workerを手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
-            '',
-            '```bash',
-            'cd workers',
-            *(f'npx wrangler deploy --config {worker}/wrangler.toml' for worker in sorted(workers_to_deploy)),
-            '```',
         ])
+        if workers_to_deploy:
+            report.extend([
+                '変更が関係するCloudflare Workerを手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
+                '',
+                '```bash',
+                'cd workers',
+                *(f'npx wrangler deploy --config {worker}/wrangler.toml' for worker in sorted(workers_to_deploy)),
+                '```',
+            ])
         REGISTRY_PATH.write_text(
             json.dumps(registry, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline=''
         )

@@ -257,7 +257,8 @@
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
     </div>
   </dialog>
-  <script src="/assets/site-search.js?v=20261008_4"></script>
+  <script src="/assets/search-analytics.js?v=20261009_1"></script>
+  <script src="/assets/site-search.js?v=20261009_1"></script>
   <script>
     (function () {
       'use strict';
@@ -292,18 +293,11 @@
       var rankList = byId('rank-list');
       var heading = byId('result-heading');
       var status = byId('search-status');
+      // 共通部品が読めない場合は検索語を計測へ渡さず、検索は続ける。
+      var analyticsTerm = window.STSearchAnalytics ? window.STSearchAnalytics.term : function () { return ''; };
 
       function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
       function stripControls(value) { return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ''); }
-      // 計測に載せる検索語（PRD 8.3）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る。
-      // 先に NFKC で全角の数字・記号を半角にし、区切りには長音「ー」やマイナス「−」なども含める（全角で書いた電話番号も伏せる）。
-      // 日付（2026-10-08・20261008 など。日刊の号を探す語）は伏せない
-      var DATE_LIKE = /^(19|20)\d{2}([\s.\-]?)(0?[1-9]|1[0-2])\2(0?[1-9]|[12]\d|3[01])$/;
-      function analyticsTerm(value) {
-        var term = stripControls(String(value || '')).normalize('NFKC').replace(/[^\s@]+@[^\s@]+/g, '[email]')
-          .replace(/\+?\d[\d\s().\-\u2010-\u2015\u2212\u30fc]{6,}\d/g, function (m) { return DATE_LIKE.test(m) ? m : '[number]'; }).trim();
-        return Array.from(term).slice(0, 100).join('');
-      }
       function normalize(value) {
         return value.normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); }).replace(/[\s_-]+/gu, ' ').trim();
       }
@@ -495,7 +489,7 @@
         count.textContent = lang === 'ja' ? items.length + '件' : items.length + (section === 'glitch' ? ' articles' : section === 'game' ? ' games' : ' tools');
         count.hidden = false;
       }
-      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], displayed: [], mode: 'suggestion', searchUsed: false, total: 0, searchedQuery: null };
+      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], mode: 'suggestion', searchUsed: false, total: 0, searchedQuery: null };
       var composing = false;
       var imeEnterHeld = false;
       var inputTimer = null;
@@ -699,10 +693,12 @@
         if (input.hasAttribute('aria-activedescendant')) input.removeAttribute('aria-activedescendant');
       }
       // 変換中（未確定の文字）も描く（候補は Google などと同じく未確定の文字で出す）。②・③と計測は確定まで動かさない
+      function linkKey(href) { return pathKey(pathParts(safeDecode(href))); }
       function render() {
-        if (list.contains(document.activeElement)) input.focus({ preventScroll: true });
+        // 描き直しで消えるリンクにフォーカスがあれば、描いた後で同じ行き先のリンク（②へ移っていれば②）へ戻す。無ければ入力欄へ
+        var focusedKey = list.contains(document.activeElement) ? linkKey(document.activeElement.getAttribute('href') || '') : null;
         list.replaceChildren();
-        state.displayed = [];
+        var displayed = [];
         var query = currentQuery();
         var notices = [];
         var total = 0;
@@ -729,10 +725,10 @@
             if (!total) suggestNote = ranking ? text.rankHint : text.noResults;
             if (done) {
               // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
-              var ranked = ranking ? new Set(rank.hrefs().map(function (href) { return pathKey(pathParts(safeDecode(href))); })) : null;
-              state.displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
+              var ranked = ranking ? new Set(rank.hrefs().map(linkKey)) : null;
+              displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
               heading.textContent = ranking ? text.keywordResults : text.results;
-              heading.hidden = ranking && !state.displayed.length;
+              heading.hidden = ranking && !displayed.length;
               notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
                 : ranking ? text.keywordNone : text.noResults);
               if (total > 5) notices.push(text.limit);
@@ -741,11 +737,11 @@
           }
         } else if (!state.candidatesReady) notices.push(text.candidatesLoading);
         else {
-          state.displayed = state.candidates;
-          if (state.displayed.length) { heading.textContent = text.suggestions; heading.hidden = false; }
+          displayed = state.candidates;
+          if (displayed.length) { heading.textContent = text.suggestions; heading.hidden = false; }
         }
         if (state.jsonReady && state.failures && (query || state.candidatesReady) && (state.failures < 3 || !query)) notices.push(state.failures === 3 ? text.listsFailed : text.partial);
-        state.displayed.forEach(function (item, index) {
+        displayed.forEach(function (item, index) {
           var li = resultItem(item.href, item.title, item.description, item.kind !== 'entry' ? text[item.kind] : '');
           li.firstChild.dataset.position = index + 1;
           list.appendChild(li);
@@ -754,7 +750,7 @@
         // 入力中の件数は読み上げだけ（見た目はドロップダウン）
         status.textContent = notices.join(' ');
         status.classList.toggle('visually-hidden', !!query && !done);
-        byId('results').hidden = !state.displayed.length && heading.hidden;
+        byId('results').hidden = !displayed.length && heading.hidden;
         byId('rank-area').hidden = !(ranking && done);
         byId('daily-search').hidden = !done;
         state.total = total;
@@ -762,6 +758,10 @@
         byId('search-submit').classList.toggle('is-suggested', ranking && !!query && !done && state.jsonReady && state.failures === 0 && total === 0);
         syncAI(query, total);
         scheduleKeywordCount(query, total);
+        if (focusedKey !== null) {
+          var same = function (container) { return !container.closest('[hidden]') && Array.from(container.querySelectorAll('a')).find(function (a) { return linkKey(a.getAttribute('href')) === focusedKey; }); };
+          (same(list) || same(rankList) || input).focus({ preventScroll: true });
+        }
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
@@ -788,8 +788,12 @@
       function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
       // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
       // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。
+      // 押し続けの Enter（自動の繰り返し）は、検索欄の中ではフォームの暗黙の送信とボタンの押下を止める（失敗の後の送り直しを重ねない）。
+      // 変換中のキーには触れない（IME の確定を妨げない）。
       document.addEventListener('keydown', function (event) {
-        if (enterKey(event) && (composing || event.isComposing || event.keyCode === 229)) imeEnterHeld = true;
+        if (!enterKey(event)) return;
+        if (composing || event.isComposing || event.keyCode === 229) imeEnterHeld = true;
+        else if (event.repeat && byId('search-form').contains(event.target)) event.preventDefault();
       }, true);
       document.addEventListener('keyup', function (event) { if (enterKey(event)) imeEnterHeld = false; }, true);
       window.addEventListener('blur', function () { imeEnterHeld = false; });
