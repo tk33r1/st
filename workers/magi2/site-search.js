@@ -196,8 +196,10 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
     }
     if (!daily) comment = null;
   }
-  return { status: selected.length || daily ? 'results' : 'no_results', comment: comment || null, daily,
-    results: selected.map(id => { const { kind, title, description, url } = byId.get(id); return { id, kind, title, description, url }; }) };
+  // 日刊の検索語付きリンクを出すときは、同じ日刊のトップ（検索語の無いリンク）を重ねて出さない
+  const shown = daily ? selected.filter(id => byId.get(id).url !== daily.url.split('#')[0]) : selected;
+  return { status: shown.length || daily ? 'results' : 'no_results', comment: comment || null, daily,
+    results: shown.map(id => { const { kind, title, description, url } = byId.get(id); return { id, kind, title, description, url }; }) };
 }
 
 // current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。

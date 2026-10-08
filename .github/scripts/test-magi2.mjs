@@ -542,6 +542,14 @@ test('AIの未知ID・日刊の不正値・コメントの記号を検証し、�
   }
   const daily = w.ctx.validateSiteChoice({ selections: [], comment: 'ニュースです', daily: { media: 'retail', query: ' ＡＩ ' } }, pages, 'en');
   assert.equal(daily.status, 'results'); assert.equal(daily.daily.query, 'AI'); assert.equal(daily.daily.url, '/job/retailtechdaily/#q=AI');
+  // 検索語付きの日刊リンクを出すときは、同じ日刊のトップを選んでいても出さない（もう一方の日刊と、ほかのページは残す）
+  const portalId = url => pages.find(p => p.url === url).id;
+  const both = w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/'), portalId('/job/retailtechdaily/'), 'tool:7'], daily: { media: 'nitori', query: '出店' } }, pages, 'ja', true);
+  assert.deepEqual(both.results.map(r => r.url), ['/job/retailtechdaily/', pages.find(p => p.id === 'tool:7').url]);
+  assert.equal(both.daily.url, '/job/nitoridaily/#q=' + encodeURIComponent('出店'));
+  const portalOnly = w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/')], daily: { media: 'nitori', query: '出店' } }, pages, 'ja', true);
+  assert.equal(portalOnly.status, 'results'); assert.equal(portalOnly.results.length, 0); assert.ok(portalOnly.daily);
+  assert.equal(w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/')], daily: null }, pages, 'ja', true).results[0].url, '/job/nitoridaily/');
 });
 
 test('検索の空応答・拒否・出力上限・JSON不正・本文受信の遅れは503で、開始済みの回数は戻さない', async () => {
