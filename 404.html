@@ -243,7 +243,7 @@
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
     </div>
   </dialog>
-  <script src="/assets/site-search.js?v=20261008_2"></script>
+  <script src="/assets/site-search.js?v=20261008_3"></script>
   <script>
     (function () {
       'use strict';
@@ -458,6 +458,17 @@
         }).slice(0, 3).map(function (candidate) { return candidate.item; });
       }
 
+      // 結果の1行（①・③で共通。②は assets/site-search.js が同じ形で描く）。計測の属性は呼び出し側で a に付ける
+      function resultItem(href, titleText, descriptionText, kindText) {
+        var li = document.createElement('li'), a = document.createElement('a'), content = document.createElement('span'), title = document.createElement('span');
+        a.href = href; a.className = 'result-link';
+        title.className = 'result-title'; title.textContent = titleText; content.appendChild(title);
+        if (descriptionText) { var description = document.createElement('span'); description.className = 'description'; description.textContent = descriptionText; content.appendChild(description); }
+        a.appendChild(content);
+        if (kindText) { var kind = document.createElement('span'); kind.className = 'kind'; kind.textContent = kindText; a.appendChild(kind); }
+        li.appendChild(a);
+        return li;
+      }
       function makeLink(item) { var link = document.createElement('a'); link.href = item.href; link.textContent = item.title; return link; }
       function fillCard(section, items) {
         var target = byId('list-' + section);
@@ -608,11 +619,9 @@
           if (rows.length !== data.results.length) throw new Error('Invalid links');
           byId('ai-list').replaceChildren();
           rows.forEach(function (p, i) {
-            var li = document.createElement('li'), a = document.createElement('a'), content = document.createElement('span'), title = document.createElement('span'), desc = document.createElement('span'), kind = document.createElement('span');
-            a.href = aiHref(p.url, false); a.className = 'result-link'; a.dataset.aiTarget = 'result'; a.dataset.aiPosition = i + 1;
-            title.className = 'result-title'; title.textContent = p.title; desc.className = 'description'; desc.textContent = p.description;
-            kind.className = 'kind'; kind.textContent = text[p.kind] || (lang === 'ja' ? 'ページ' : 'Page');
-            content.appendChild(title); content.appendChild(desc); a.appendChild(content); a.appendChild(kind); li.appendChild(a); byId('ai-list').appendChild(li);
+            var li = resultItem(aiHref(p.url, false), p.title, p.description, text[p.kind]);
+            li.firstChild.dataset.aiTarget = 'result'; li.firstChild.dataset.aiPosition = i + 1;
+            byId('ai-list').appendChild(li);
           });
           var daily = data.daily, dailyLink = byId('ai-daily'); dailyLink.hidden = true;
           if (daily) {
@@ -698,17 +707,9 @@
         }
         if (state.jsonReady && state.failures && (query || state.candidatesReady) && (state.failures < 3 || !query)) notices.push(state.failures === 3 ? text.listsFailed : text.partial);
         state.displayed.forEach(function (item, index) {
-          var li = document.createElement('li');
-          var link = makeLink(item);
-          link.textContent = '';
-          link.className = 'result-link';
-          link.dataset.position = index + 1;
-          var content = document.createElement('span');
-          var title = document.createElement('span'); title.className = 'result-title'; title.textContent = item.title; content.appendChild(title);
-          if (item.description) { var description = document.createElement('span'); description.className = 'description'; description.textContent = item.description; content.appendChild(description); }
-          link.appendChild(content);
-          if (item.kind !== 'entry') { var kind = document.createElement('span'); kind.className = 'kind'; kind.textContent = text[item.kind]; link.appendChild(kind); }
-          li.appendChild(link); list.appendChild(li);
+          var li = resultItem(item.href, item.title, item.description, item.kind !== 'entry' ? text[item.kind] : '');
+          li.firstChild.dataset.position = index + 1;
+          list.appendChild(li);
         });
         status.textContent = notices.join(' ');
         byId('results').hidden = !state.displayed.length && heading.hidden;

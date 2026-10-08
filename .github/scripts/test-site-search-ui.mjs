@@ -215,6 +215,8 @@ scenario('404 → ③ → 日刊のリンク', {
   const link = page.locator('#ai-daily');
   await link.waitFor({ state: 'visible' });
   check(/^\/job\/nitoridaily\/#q=/.test(await link.getAttribute('href')), `${name}: 古い形の日刊リンクが #q= に直っていない`);
+  const aiRow = await page.evaluate(() => { const a = document.querySelector('#ai-list .result-link'); return a && [a.getAttribute('href'), a.dataset.aiTarget, a.dataset.aiPosition, a.querySelector('.result-title').textContent, a.querySelector('.kind').textContent].join('|'); });
+  check(aiRow === '/tools/pdf-studio/|result|1|PDF Studio|ツール', `${name}: ③の結果の行の形が違う（${aiRow}）`);
   await Promise.all([page.waitForURL(u => u.pathname === PORTAL), link.click()]);
   await settle(page);
   check(await portalInput(page) === MARK + ' 出店', `${name}: ポータルの横断検索に検索語が入らない`);

@@ -18,6 +18,7 @@
   var KINDS = { site: ['page', 'tool', 'game', 'article'], tools: ['tool'], game: ['game'], nitori: ['daily'], retail: ['daily'] };
   var DAILY_DIRS = { nitori: 'nitoridaily', retail: 'retailtechdaily' };
   var STATUSES = ['results', 'no_results', 'failed'];
+  var READ_STATUSES = [200, 429, 400]; // 本文を読む HTTP の状態（設計書 5.3）。ほかは読まずに failed（unavailable）
   function failed(reason) { return { status: 'failed', reason: reason, complete: false, rows: [] }; }
 
   function endpoint() {
@@ -54,6 +55,14 @@
       rows.push({ kind: row.kind, title: row.title, description: row.description, href: href });
     }
     return { status: data.status, reason: null, complete: data.complete, rows: rows };
+  }
+
+  // HTTP の状態と本文から、画面に出す結果を決める。429 の失敗は理由に関係なく rate_limited（評価もこれを使う）
+  function readResponse(status, data, scope) {
+    if (READ_STATUSES.indexOf(status) < 0) return failed('unavailable');
+    var result = readResult(data, scope);
+    if (status === 429 && result.status === 'failed') result.reason = 'rate_limited';
+    return result;
   }
 
   function rank(options) {
@@ -158,13 +167,9 @@
         try {
           var res = await fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
             credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal });
-          if ([200, 429, 400].indexOf(res.status) < 0) result = failed('unavailable');
-          else {
-            var data;
-            try { data = await res.json(); } catch (e) { if (timedOut()) throw e; data = null; }
-            result = readResult(data, scope);
-            if (res.status === 429 && result.status === 'failed') result.reason = 'rate_limited';
-          }
+          var data = null;
+          if (READ_STATUSES.indexOf(res.status) >= 0) { try { data = await res.json(); } catch (e) { if (timedOut()) throw e; } }
+          result = readResponse(res.status, data, scope);
         } catch (_) {
           result = failed(timedOut() ? 'timeout' : 'unavailable');
         }
@@ -201,5 +206,5 @@
     return self;
   }
 
-  w.STSiteSearch = { rank: rank, readResult: readResult, resultHref: resultHref };
+  w.STSiteSearch = { rank: rank, readResponse: readResponse };
 })(window);

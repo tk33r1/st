@@ -58,7 +58,7 @@ export function loadWorker() {
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
     + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
-    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, clearRankCache: () => rankCache.clear() };', ctx);
+    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, rankQuery, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });
 }
 
@@ -77,12 +77,10 @@ async function productionIndex() {
   return res.text();
 }
 
-// Worker（handleSiteRank）が検索語から落とす文字：制御文字と < >
-const droppedChar = c => { const n = c.codePointAt(0); return n < 0x20 || (n >= 0x7f && n <= 0x9f) || c === '<' || c === '>'; };
-const workerQuery = q => Array.from(q).filter(c => !droppedChar(c)).join('').trim();
 const isDate = s => /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
 
-export function checkQueries(data, targetIds, maxChars) {
+// rankQuery は Worker の正規化（site-rank.js）。評価セットは Worker が直さない形で書く
+export function checkQueries(data, targetIds, maxChars, rankQuery) {
   assert.deepEqual(Object.keys(data).sort(), ['annotator', 'frozen', 'queries', 'version'], '最上位のキーは version・frozen・annotator・queries');
   assert.equal(data.version, 1);
   assert.ok(data.frozen === '' || isDate(data.frozen), 'frozen は空（未固定）か YYYY-MM-DD');
@@ -99,7 +97,7 @@ export function checkQueries(data, targetIds, maxChars) {
     assert.equal(q.scope, 'site', at + 'scope は site だけ（Phase 2）');
     assert.ok(['ja', 'en'].includes(q.locale), at + 'locale');
     assert.ok(TYPES.includes(q.type), at + 'type');
-    assert.ok(typeof q.query === 'string' && q.query === workerQuery(q.query), at + '検索語は Worker が直さない形で書く（制御文字・< >・前後の空白なし）');
+    assert.ok(typeof q.query === 'string' && q.query === rankQuery(q.query), at + '検索語は Worker が直さない形で書く（制御文字・< >・前後の空白なし）');
     const len = Array.from(q.query).length;
     assert.ok(len >= 1 && len <= maxChars, at + `検索語は1〜${maxChars}文字`);
     // 同じ要求を重ねない（ブラウザの測定でキャッシュに当たらないように。tune と final の間でも重ねない）
@@ -128,7 +126,7 @@ export function checkQueries(data, targetIds, maxChars) {
 // 評価セットを読み、形式を検査する。measure なら正解の固定（frozen）が無ければ止まる（正解は結果を見る前に決める）
 function loadQueries(magi, targets, measure, given = null) {
   const data = given || JSON.parse(read(QUERIES));
-  const summary = checkQueries(data, new Set(targets.map(p => p.id)), magi.SITE_RANK.query_max_chars);
+  const summary = checkQueries(data, new Set(targets.map(p => p.id)), magi.SITE_RANK.query_max_chars, magi.rankQuery);
   if (measure && !data.frozen) fail('正解を固定してから測る（rank-queries.json の frozen に日付を書く。設計書 10.4）');
   return { data, summary };
 }
@@ -403,23 +401,22 @@ async function openRankPage() {
   } catch (e) { await instance.close(); throw e; }
 }
 
-// 画面（設計書 5.2・5.3）が描く結果として読む。応答の検査は画面の部品（assets/site-search.js の readResult）をそのまま使い、
-// 書き写さない（期限切れ、200・429・400 以外、読めない本文、形の合わない本文、1行でも URL などが合わない結果は failed）
-let pageReadResult = null;
-function readResultOfPage() {
-  if (!pageReadResult) {
+// 画面（設計書 5.2・5.3）が描く結果として読む。HTTP の状態と本文の検査は画面の部品（assets/site-search.js の readResponse）を
+// そのまま使い、書き写さない（期限切れ、200・429・400 以外、読めない本文、形の合わない本文、1行でも URL などが合わない結果は failed）
+let pageReadResponse = null;
+function readResponseOfPage() {
+  if (!pageReadResponse) {
     const ctx = vm.createContext({ URL, location: { hostname: 'tk.st' } });
     ctx.window = ctx;
     vm.runInContext(read('assets/site-search.js'), ctx);
-    pageReadResult = ctx.STSiteSearch.readResult;
+    pageReadResponse = ctx.STSiteSearch.readResponse;
   }
-  return pageReadResult;
+  return pageReadResponse;
 }
 export function screenResult(magi, r, urlToId) {
   const failed = reason => ({ status: 'failed', reason, ids: [] });
   if (r.error) return failed(r.error === 'TimeoutError' ? 'timeout' : r.error === 'SyntaxError' ? 'unavailable' : 'network');
-  if (![200, 429, 400].includes(r.http)) return failed('unavailable');
-  const v = readResultOfPage()(r.data, 'site');
+  const v = readResponseOfPage()(r.http, r.data, 'site');
   if (v.status === 'failed') return failed(v.reason);
   return { status: v.status, reason: null, ids: v.rows.map(row => urlToId.get(row.href) ?? `unknown:${row.href}`) };
 }

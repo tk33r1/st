@@ -12,6 +12,10 @@ const rankTotal = c => rankValues(c).reduce((n, v) => n + rankLength(v), 0);
 // Jev に渡す候補1件（設計書 3.7）。ID・URL・detail は渡さない。長さは値の文字列のコードポイントの合計で数え、
 // 説明は300文字まで、全体は400文字まで。超えたら英語の説明 → 日本語の説明の順に末尾から削る。
 // それでも超える行は元の JSON を直す必要がある（生成側が先に止める）ので、失敗にする（黙って候補を落とさない）。
+// ②の検索語の正規化（設計書 3.2）：制御文字と < > を除いて前後の空白を落とす。③の正規化（site-search.js）とは別の規則。
+// 評価（eval-site-rank.mjs）も評価セットの検査にこの関数を使う
+export const rankQuery = raw => typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() : '';
+
 export function toRankCandidate(item) {
   const max = SITE_RANK.description_max_chars;
   let c;

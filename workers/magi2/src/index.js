@@ -1,7 +1,7 @@
 import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_RANK, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
-import { rankCandidateHash, rankSearch, rankTargets } from '../site-rank.js';
+import { rankCandidateHash, rankQuery, rankSearch, rankTargets } from '../site-rank.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
@@ -452,7 +452,7 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
   const searched = () => info.total === null ? null : { total: info.total, candidates: info.candidates ?? 0, judged: info.judged ?? 0 };
   const fail = (reason, httpStatus = 200) => reply(httpStatus, { status: 'failed', complete: false, reason, searched: searched(), results: [] });
   const raw = body.query;
-  const query = typeof raw === 'string' ? raw.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() : '';
+  const query = rankQuery(raw);
   // いまは scope 'site' だけ（日刊・tools・game は Phase 3）。絞り込み（filters）も日刊用なので受け付けない
   if (Object.keys(body).some(k => !['query', 'locale', 'mode', 'scope'].includes(k)) || body.mode !== 'rank' || body.scope !== 'site'
     || !['ja', 'en'].includes(body.locale) || typeof raw !== 'string' || Array.from(raw).length > SITE_RANK.query_max_chars || !query
