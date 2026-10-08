@@ -191,7 +191,7 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
       const query = clean(d.query).normalize('NFKC').replace(/\s/g, '');
       if (Array.from(query).length >= 2 && Array.from(query).length <= 15 && !/:\/\/|[<>]/.test(query) && !query.includes(d.media === 'nitori' ? 'ニトリ' : 'リテールテック')) {
         const portal = pages.find(p => p.url === (d.media === 'nitori' ? '/job/nitoridaily/' : '/job/retailtechdaily/'));
-        if (portal) daily = { media: d.media, query, url: portal.url + '?q=' + encodeURIComponent(query) + '#archiveSearch' };
+        if (portal) daily = { media: d.media, query, url: portal.url + '#q=' + encodeURIComponent(query) };
       }
     }
     if (!daily) comment = null;
