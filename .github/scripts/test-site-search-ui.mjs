@@ -2,7 +2,9 @@
 //   node .github/scripts/test-site-search-ui.mjs [--root _site]
 //   node .github/scripts/test-site-search-ui.mjs --base https://tk.st   … 本番を相手にする（計画書 T4.10。Actions の site-search-url.yml）
 // 手元では先に `bash build.sh` で _site を作る（--root . ならリポジトリをそのまま出す）。存在しないパスには 404.html を 404 で返す。
-// いまあるのは URL の部分（PRD 6.1。計画書 T4.8）：目印の検索語が、外へ出る通信（URL と本文）・location・移った先の
+// ②の場面（計画書 T5.4）：応答の検査・状態と世代・①③との連携と計測・表示・停止。手元では 404 の RANK_ENABLED を true にして出し、
+// Worker への要求は route で応答を差し替える。本番（--base）では、②が公開されていなければ②の場面を飛ばす。
+// URL の部分（PRD 6.1。計画書 T4.8）：目印の検索語が、外へ出る通信（URL と本文）・location・移った先の
 // document.referrer に残らないことを、404 → 日刊、③の日刊リンク、日刊のヘッダー・横断検索・タグ・絞り込み・号への移動、
 // 古い ?q=、受け取らない値、計測を止めた状態、JS 無効のヘッダー送信、再読み込みで確かめる。
 // 計測は本物の GTM・Ahrefs を読み込み、ほかの外への通信はすべて記録してから止める（解析のデータを汚さない）。
@@ -41,7 +43,9 @@ function serve() {
     if (file !== root && !file.startsWith(root + sep)) file = null;
     if (file && existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
     const found = file && existsSync(file) && statSync(file).isFile();
-    const body = readFileSync(found ? file : join(root, '404.html'));
+    let body = readFileSync(found ? file : join(root, '404.html'));
+    // 公開前の②を確かめるため、404 は RANK_ENABLED を true にして出す（T5.6 で本体も true になる）
+    if (!found) body = Buffer.from(body.toString('utf8').replace('var RANK_ENABLED = false;', 'var RANK_ENABLED = true;'));
     res.writeHead(found ? 200 : 404, { 'Content-Type': (found ? TYPES[extname(file)] : TYPES['.html']) || 'application/octet-stream' });
     res.end(body);
   });
@@ -59,12 +63,17 @@ const check = (ok, message) => { if (!ok) failures.push(message); };
 const marked = s => typeof s === 'string' && s.toLowerCase().includes(MARK);
 
 // 外への通信の記録。手元のサーバーへの要求（目印を URL に入れて開くものを含む）は数えない
-async function newContext({ js = true, analyticsOff = false, worker = null } = {}) {
-  const context = await browser.newContext({ javaScriptEnabled: js, locale: 'ja-JP' });
+async function newContext({ js = true, analyticsOff = false, worker = null, locale = 'ja-JP', viewport = null, colorScheme = 'light', lists = null } = {}) {
+  const context = await browser.newContext({ javaScriptEnabled: js, locale, colorScheme, ...(viewport ? { viewport } : {}) });
   const log = [];
   if (analyticsOff) await context.addInitScript(() => { try { localStorage.setItem('st-analytics', 'off'); } catch (_) {} });
   await context.route('**/*', async route => {
     const req = route.request(), url = req.url();
+    // ①の一覧（404 が読む JSON）を遅らせる・1つ失敗させる（keyword_state の検査）
+    if (lists && /\/data\/(tools|game|glitch)\.json$/.test(new URL(url).pathname)) {
+      if (lists === 'fail' && url.endsWith('/tools.json')) return route.fulfill({ status: 500, body: '' });
+      if (lists === 'slow') await new Promise(ok => setTimeout(ok, 3000));
+    }
     if (url.startsWith(BASE + '/') && !url.startsWith(BASE + '/cdn-cgi/')) return route.continue(); // /cdn-cgi/ は Cloudflare の計測の送り先
     let body = null;
     try { body = req.postData(); } catch (_) { body = '(読めない本文)'; }
@@ -119,6 +128,48 @@ async function portalInput(page) { return page.locator('#archiveSearchInput').in
 
 const scenarios = [];
 const scenario = (name, options, fn) => scenarios.push({ name, options, fn });
+
+// Worker の差し替え。rank・ai は要求の本文を受けて { status?, body, delay? } を返す
+function mockWorker({ rank, ai }) {
+  return async route => {
+    const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST' };
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    let body = {};
+    try { body = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
+    const handler = body.mode === 'rank' ? rank : ai;
+    const reply = handler ? await handler(body) : { status: 503, body: {} };
+    if (reply.delay) await new Promise(ok => setTimeout(ok, reply.delay));
+    try { await route.fulfill({ status: reply.status || 200, headers, contentType: 'application/json', body: JSON.stringify(reply.body) }); } catch (_) { /* 中止された要求 */ }
+  };
+}
+const rankBody = (results, extra = {}) => ({ request_id: 'local', status: results.length ? 'results' : 'no_results', complete: true, reason: null,
+  searched: { total: 35, candidates: 35, judged: 35 }, results, ...extra });
+const row = (title, url = '/tools/pdf-studio/', kind = 'tool') => ({ kind, title, description: title + ' の説明', url });
+const aiBody = { request_id: 'local', status: 'no_results', comment: null, results: [], daily: null };
+
+// ②の画面の様子
+async function rankView(page) {
+  return page.evaluate(() => ({
+    state: document.getElementById('rank-run').hidden ? 'off' : 'on',
+    rank: [...document.querySelectorAll('#rank-list .result-title')].map(e => e.textContent),
+    rankHrefs: [...document.querySelectorAll('#rank-list a')].map(a => a.getAttribute('href')),
+    rankStatus: document.getElementById('rank-status').textContent,
+    keyword: [...document.querySelectorAll('#result-list a')].map(a => a.getAttribute('href')),
+    keywordStatus: document.getElementById('search-status').textContent,
+    ai: !document.getElementById('ai-search').hidden, aiQuiet: document.getElementById('ai-search').classList.contains('is-quiet'),
+    aiResult: !document.getElementById('ai-result').hidden,
+    images: document.querySelectorAll('#rank-results img').length,
+    events: (window.dataLayer || []).filter(e => e && typeof e.event === 'string' && /^not_found_(rank_|ai_used)/.test(e.event)).map(e => ({ ...e })),
+  }));
+}
+// ②の場面は、②が出ているときだけ（本番で未公開なら飛ばす）
+const rankScenario = (name, options, fn) => scenarios.push({ name: '②：' + name, options, fn: async (page, label) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  if (!(await page.locator('#rank-run').count()) || !(await page.evaluate(() => !document.getElementById('rank-run').hidden))) { skipped.push(label); return; }
+  await fn(page, label);
+} });
+const skipped = [];
+async function typeAndRun(page, value, wait = 300) { await page.fill('#query', value); await page.waitForTimeout(150); await page.press('#query', 'Enter'); await page.waitForTimeout(wait); }
 const PORTAL = '/job/nitoridaily/';
 async function anyIssue(page) {
   await page.goto(BASE + PORTAL); await settle(page);
@@ -138,13 +189,14 @@ scenario('404 → 日刊（①の下の「日刊ブリーフで探す」）', {}
 });
 
 scenario('404 → ③ → 日刊のリンク', {
-  worker: route => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
-    body: JSON.stringify({ request_id: 'local', status: 'results', comment: null,
+  worker: mockWorker({ rank: () => ({ body: rankBody([]) }), ai: () => ({ body: { request_id: 'local', status: 'results', comment: null,
       results: [{ id: 'tool:7', kind: 'tool', title: 'PDF Studio', description: 'PDF', url: '/tools/pdf-studio/' }],
-      daily: { media: 'nitori', query: MARK + ' 出店', url: '/job/nitoridaily/?q=' + encodeURIComponent(MARK + ' 出店') + '#archiveSearch' } }) }),
+      daily: { media: 'nitori', query: MARK + ' 出店', url: '/job/nitoridaily/?q=' + encodeURIComponent(MARK + ' 出店') + '#archiveSearch' } } }) }),
 }, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
   await page.fill('#query', MARK + 'zz');
+  // ②が使えるときは、②を送った後に③が出る（設計書 6.3）
+  if (await page.locator('#rank-run').isVisible()) { await page.waitForTimeout(200); await page.press('#query', 'Enter'); }
   await page.locator('#ai-run').waitFor({ state: 'visible' });
   await page.click('#ai-run');
   const link = page.locator('#ai-daily');
@@ -266,6 +318,180 @@ scenario('JS 無効のヘッダー送信', { js: false }, async (page, name) => 
   check(!marked(page.url()), `${name}: JS 無効の送信で URL に検索語が入る（${page.url()}）`);
 });
 
+// 404 の計測（Phase 0。計画書 T0.2）：①の件数のイベントが dataLayer に入り、GTM が GA4 へ送るか。
+// GA4 へ送ったかはまとめの「GA4 のイベント」に出る（本物の GTM を読めたときだけ分かる）
+scenario('404 の計測：not_found_keyword_count', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.fill('#query', 'pdf');
+  await page.waitForTimeout(2500); // 入力が1.5秒止まったら送る
+  const events = await page.evaluate(() => (window.dataLayer || []).filter(e => e && typeof e.event === 'string').map(e => ({ ...e })));
+  const hit = events.find(e => e.event === 'not_found_keyword_count');
+  check(hit && hit.count === 1, `${name}: dataLayer に not_found_keyword_count（count 1）が入らない`);
+  await page.waitForTimeout(5000); // GA4 はまとめて送るので待つ
+});
+
+// ---- ②（計画書 T5.4。設計書 5章・6章、PRD 3.1・7.4） ----
+const FAILED_JA = 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。';
+
+// 応答の検査：1行でも URL などが合わなければ全体を描かない（設計書 5.3）
+const BAD_ROWS = [
+  ['//example.com/', row('外部1', '//example.com/')], ['https://example.com/', row('外部2', 'https://example.com/')],
+  ['/\\example.com', row('外部3', '/\\example.com')], ['クエリ付き', row('クエリ', '/tools/pdf-studio/?x=1')],
+  ['フラグメント付き', row('フラグメント', '/tools/pdf-studio/#x')], ['javascript:', row('js', 'javascript:alert(1)')],
+  ['日刊の行（site では出さない）', row('日刊', '/job/nitoridaily/20261007/#art-1', 'daily')],
+  ['知らない kind', row('謎', '/tools/pdf-studio/', 'secret')],
+];
+for (const [label, bad] of BAD_ROWS) {
+  rankScenario('応答の検査：' + label, { worker: mockWorker({ rank: () => ({ body: rankBody([row('正しい行'), bad]) }) }) }, async (page, name) => {
+    await typeAndRun(page, 'pdf');
+    const v = await rankView(page);
+    check(v.rank.length === 0, `${name}: 合わない行を含む応答を描いた（${v.rank.join('・')}）`);
+    check(v.rankStatus === FAILED_JA, `${name}: 失敗の文言が出ない（${v.rankStatus}）`);
+    const result = v.events.filter(e => e.event === 'not_found_rank_result').at(-1);
+    check(result && result.status === 'failed' && result.reason === 'unavailable', `${name}: 計測が failed（unavailable）でない`);
+  });
+}
+rankScenario('応答の検査：形の合わない本文・HTTP の状態', { worker: mockWorker({ rank: b => (
+  b.query === 'q1' ? { body: { status: 'results', results: [row('complete が無い')] } }
+  : b.query === 'q2' ? { body: rankBody(Array.from({ length: 6 }, (_, i) => row('多すぎる' + i))) }
+  : b.query === 'q3' ? { status: 500, body: rankBody([row('500')]) }
+  : b.query === 'q4' ? { status: 429, body: { request_id: 'x', status: 'failed', complete: false, reason: 'rate_limited', searched: null, results: [] } }
+  : { body: rankBody([row('<img src=x onerror="window.__xss=1">')]) }) }) }, async (page, name) => {
+  for (const q of ['q1', 'q2', 'q3']) {
+    await typeAndRun(page, q);
+    const v = await rankView(page);
+    check(v.rank.length === 0 && v.rankStatus === FAILED_JA, `${name}: ${q} を描いた、または失敗の文言が出ない`);
+  }
+  await typeAndRun(page, 'q4');
+  check((await rankView(page)).rankStatus === '今日の検索の上限に達しました。キーワードの一致は使えます。', `${name}: 上限の文言が出ない`);
+  await typeAndRun(page, 'q5');
+  const v = await rankView(page);
+  check(v.rank[0] === '<img src=x onerror="window.__xss=1">' && v.images === 0 && !(await page.evaluate(() => window.__xss)), `${name}: 題名を文字として描いていない`);
+});
+
+// 状態と世代：古い応答を描かない（PRD 3.1）
+const echo = delayFor => mockWorker({ rank: b => ({ delay: delayFor(b.query), body: rankBody([row('結果:' + b.query)]) }), ai: () => ({ body: aiBody }) });
+rankScenario('状態：遅い A の後に B', { worker: echo(q => q === 'A' ? 1500 : 0) }, async (page, name) => {
+  await typeAndRun(page, 'A', 100);
+  check((await rankView(page)).rankStatus === '意味の近いページを探しています…', `${name}: 読み込み中の文言が出ない`);
+  await typeAndRun(page, 'B', 2000);
+  const v = await rankView(page);
+  check(v.rank.join() === '結果:B', `${name}: B の結果だけを描いていない（${v.rank.join('・')}）`);
+});
+rankScenario('状態：A → B → A（最初の A の応答を描かない）', { worker: echo(q => q === 'A' ? 1200 : 0) }, async (page, name) => {
+  await typeAndRun(page, 'A', 100);
+  await page.fill('#query', 'B'); await page.waitForTimeout(150);
+  await page.fill('#query', 'A'); await page.waitForTimeout(1500);
+  const v = await rankView(page);
+  check(v.rank.length === 0, `${name}: 最初の A の応答を描いた`);
+  check(v.rankStatus === '検索ボタンで探し直せます。', `${name}: stale の文言が出ない（${v.rankStatus}）`);
+  check(v.ai, `${name}: stale で③が出ない`);
+});
+rankScenario('状態：送信後に入力を変える・空入力', { worker: echo(() => 800) }, async (page, name) => {
+  await typeAndRun(page, 'A', 100);
+  await page.fill('#query', ''); await page.waitForTimeout(1200);
+  let v = await rankView(page);
+  check(v.rank.length === 0 && v.rankStatus === '' && !v.ai, `${name}: 空入力で②の結果・文言・③が残る`);
+  const before = (await rankView(page)).events.filter(e => e.event === 'not_found_rank_run').length;
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  v = await rankView(page);
+  check(v.events.filter(e => e.event === 'not_found_rank_run').length === before, `${name}: 空入力の Enter で②を送った`);
+});
+rankScenario('状態：変換中の Enter で送らない', { worker: echo(() => 0) }, async (page, name) => {
+  await page.fill('#query', 'しゅうのう'); await page.waitForTimeout(150);
+  await page.evaluate(() => document.getElementById('query').dispatchEvent(new CompositionEvent('compositionstart')));
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  let v = await rankView(page);
+  check(!v.events.some(e => e.event === 'not_found_rank_run'), `${name}: 変換中の Enter で②を送った`);
+  await page.evaluate(() => document.getElementById('query').dispatchEvent(new CompositionEvent('compositionend')));
+  await page.waitForTimeout(300);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  v = await rankView(page);
+  check(v.rank.join() === '結果:しゅうのう', `${name}: 確定後の Enter で②を送らない`);
+});
+rankScenario('状態：②から③へ・③の実行中に入力を変える', { worker: mockWorker({ rank: b => ({ body: rankBody([row('結果:' + b.query)]) }), ai: () => ({ delay: 1200, body: { ...aiBody, comment: '答え' } }) }) }, async (page, name) => {
+  await typeAndRun(page, 'A');
+  await page.click('#ai-run'); await page.waitForTimeout(150);
+  let v = await rankView(page);
+  check(v.rank.length === 0 && v.rankStatus === '', `${name}: ③を始めても②の結果か文言が残る`);
+  check(v.events.filter(e => e.event === 'not_found_ai_used').at(-1)?.after === 'rank_results', `${name}: ③の after が rank_results でない`);
+  await page.fill('#query', 'B'); await page.waitForTimeout(1500);
+  v = await rankView(page);
+  check(!v.aiResult, `${name}: 入力を変えた後に古い③の応答を描いた`);
+  check(v.rankStatus === '検索ボタンで探し直せます。' && v.ai, `${name}: ③の後に入力を変えたとき stale と③にならない`);
+});
+
+// 連携と計測
+rankScenario('連携：①から②のページを除き、入力の変更で戻す', { worker: mockWorker({ rank: () => ({ body: rankBody([row('PDF Studio')]) }), ai: () => ({ body: aiBody }) }) }, async (page, name) => {
+  await page.fill('#query', 'pdf'); await page.waitForTimeout(300);
+  const keywordBefore = (await rankView(page)).keyword;
+  check(keywordBefore.includes('/tools/pdf-studio/'), `${name}: ①に PDF Studio が無い（前提）`);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  let v = await rankView(page);
+  check(!v.keyword.includes('/tools/pdf-studio/'), `${name}: ②に出たページが①に残る`);
+  check(v.keywordStatus === (await page.evaluate(() => document.getElementById('search-status').textContent)) && /件見つかりました/.test(v.keywordStatus), `${name}: ①の件数の表示が消えた`);
+  check(v.ai && v.aiQuiet, `${name}: 完全な結果で③が控えめに出ない`);
+  await page.fill('#query', 'pdf '); await page.waitForTimeout(300);
+  check((await rankView(page)).rank.length === 1, `${name}: 前後の空白だけの違いで②の結果を消した`);
+  await page.fill('#query', 'pd'); await page.waitForTimeout(300);
+  v = await rankView(page);
+  check(v.keyword.includes('/tools/pdf-studio/') && v.rank.length === 0, `${name}: 入力の変更で①が戻らない`);
+  await page.fill('#query', 'p'); await page.waitForTimeout(300);
+  v = await rankView(page);
+  check(v.rankStatus === '検索ボタンで探し直せます。' && v.ai && !(await page.locator('#ai-run').isDisabled()), `${name}: 続けて入力を変えると stale の③を押せない`);
+  await page.click('#ai-run'); await page.waitForTimeout(200);
+  check((await rankView(page)).events.filter(e => e.event === 'not_found_ai_used').at(-1)?.after === 'no_rank', `${name}: stale からの③の after が no_rank でない`);
+});
+rankScenario('計測：①が0件で②を送る前は③を出さず、検索ボタンを目立たせる', { worker: echo(() => 0) }, async (page, name) => {
+  await page.fill('#query', MARK + 'なし'); await page.waitForTimeout(300);
+  const v = await rankView(page);
+  check(!v.ai, `${name}: ②を送る前に③が出る`);
+  check(/検索ボタンで、意味の近いページを探します/.test(v.keywordStatus), `${name}: 検索ボタンへの案内が出ない（${v.keywordStatus}）`);
+  check(await page.evaluate(() => document.getElementById('rank-run').classList.contains('is-suggested')), `${name}: 検索ボタンが目立たない`);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+  const run = (await rankView(page)).events.find(e => e.event === 'not_found_rank_run');
+  check(run && run.keyword_state === 'known' && run.keyword_count === 0, `${name}: rank_run の keyword_state・keyword_count が違う（${JSON.stringify(run)}）`);
+  check(!JSON.stringify((await rankView(page)).events).includes(MARK), `${name}: 計測に検索語が載る`);
+});
+for (const [label, mode, expected] of [['読み込み中', 'slow', 'loading'], ['一部失敗', 'fail', 'failed']]) {
+  rankScenario('計測：①が' + label + 'の keyword_state', { worker: echo(() => 0), lists: mode }, async (page, name) => {
+    await page.fill('#query', 'pdf'); await page.waitForTimeout(150); await page.press('#query', 'Enter'); await page.waitForTimeout(300);
+    const run = (await rankView(page)).events.find(e => e.event === 'not_found_rank_run');
+    check(run && run.keyword_state === expected && !('keyword_count' in run), `${name}: keyword_state が ${expected} でない、または件数が付く（${JSON.stringify(run)}）`);
+  });
+}
+rankScenario('停止：disabled なら検索ボタンと②の欄を隠し、いまの動きに戻る', { worker: mockWorker({ rank: () => ({ body: { request_id: 'x', status: 'failed', complete: false, reason: 'disabled', searched: null, results: [] } }), ai: () => ({ body: aiBody }) }) }, async (page, name) => {
+  await typeAndRun(page, MARK + 'なし');
+  const v = await rankView(page);
+  check(v.state === 'off' && v.rankStatus === '', `${name}: 検索ボタンか②の文言が残る`);
+  check(v.ai && !v.aiQuiet, `${name}: ①が0件で③が出ない（いまの動き）`);
+  check(!(await page.evaluate(() => document.getElementById('rank-disclosure-row').hidden === false)), `${name}: ②の説明が残る`);
+});
+
+// 表示：日英・暗い配色・320px・キーボード・読み上げの状態の行
+rankScenario('表示：英語', { locale: 'en-US', worker: echo(() => 0) }, async (page, name) => {
+  await typeAndRun(page, 'pdf');
+  const t = await page.evaluate(() => ({ heading: document.getElementById('rank-heading').textContent, button: document.getElementById('rank-run').textContent, status: document.getElementById('rank-status').textContent }));
+  check(t.heading === 'Results' && t.button === 'Search' && /related page/.test(t.status), `${name}: 英語の文言でない（${JSON.stringify(t)}）`);
+});
+rankScenario('表示：幅320px・暗い配色で横にはみ出さない', { viewport: { width: 320, height: 800 }, colorScheme: 'dark', worker: echo(() => 0) }, async (page, name) => {
+  await typeAndRun(page, 'とても長い検索語'.repeat(10));
+  const w = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  check(w.scroll <= w.client, `${name}: 横にはみ出す（${w.scroll} > ${w.client}）`);
+});
+rankScenario('表示：キーボードだけで②・①を行き来し、状態の行が読み上げられる', { worker: mockWorker({ rank: () => ({ body: rankBody([row('ページ1', '/magi/', 'page'), row('ページ2', '/dj/', 'page')]) }) }) }, async (page, name) => {
+  await page.focus('#query'); await page.keyboard.type('pdf'); await page.waitForTimeout(200);
+  await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+  const focused = () => page.evaluate(() => document.activeElement && (document.activeElement.getAttribute('href') || document.activeElement.id));
+  check(await focused() === 'query', `${name}: ②の後にフォーカスが入力欄から動いた`);
+  await page.keyboard.press('ArrowDown'); check(await focused() === '/magi/', `${name}: ↓で②の先頭へ移らない`);
+  await page.keyboard.press('ArrowDown'); check(await focused() === '/dj/', `${name}: ②の中を↓で移れない`);
+  await page.keyboard.press('ArrowDown'); check(await focused() === '/tools/pdf-studio/', `${name}: ②の末尾の↓で①の先頭へ移らない`);
+  await page.keyboard.press('Escape'); check(await focused() === 'query', `${name}: Esc で入力欄へ戻らない`);
+  const role = await page.evaluate(() => { const el = document.getElementById('rank-status'); return el.getAttribute('role') + ':' + (el.closest('[hidden]') ? 'hidden' : 'shown'); });
+  check(role === 'status:shown', `${name}: ②の状態の行が role="status" で常にある状態でない（${role}）`);
+});
+
 for (const { name, options, fn } of scenarios) {
   const { context, log } = await newContext(options);
   const page = await context.newPage();
@@ -275,7 +501,8 @@ for (const { name, options, fn } of scenarios) {
   checkLog(name, log);
   allRequests.push(...log);
   for (const e of errors) failures.push(`${name}: ページのエラー ${e}`);
-  console.log(`${failures.some(f => f.startsWith(name + ':') || f.startsWith(name + '（')) ? 'NG' : 'ok'}  ${name}（外への通信 ${log.length}件）`);
+  const mark = skipped.includes(name) ? 'skip' : failures.some(f => f.startsWith(name + ':') || f.startsWith(name + '（')) ? 'NG' : 'ok';
+  console.log(`${mark}  ${name}（外への通信 ${log.length}件）`);
   await context.close();
 }
 await browser.close();
@@ -288,6 +515,8 @@ console.log('止めた外への通信：' + ([...hosts].map(([h, n]) => `${h} ${
 const events = new Set();
 for (const r of allRequests) for (const text of [r.url, r.body || '']) for (const m of text.matchAll(/(?:^|[?&\n])en=([^&\s]+)/g)) events.add(decodeURIComponent(m[1]));
 console.log('GA4 のイベント：' + ([...events].sort().join('・') || 'なし'));
+for (const e of ['not_found_keyword_count', 'not_found_search_used']) console.log(`  ${e}：GA4 へ${events.has(e) ? '送った' : '送っていない'}`);
 if (!analyticsLoaded.size) console.log('注意：計測のスクリプトを読み込めなかったので、計測が送るはずの通信は確かめられていない（手元の見当。合否は本番の URL で決める）');
+if (skipped.length) console.log(`②が出ていないので飛ばした場面：${skipped.length}件`);
 if (failures.length) { console.log('\n' + failures.map(f => '- ' + f).join('\n')); process.exit(1); }
-console.log('URL の検証：すべて通った');
+console.log('画面の検証：すべて通った');
