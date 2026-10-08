@@ -437,7 +437,19 @@
       results.replaceChildren();
       matched.slice(0, 100).forEach(function(record) { results.appendChild(createSearchResult(record)); });
       status.textContent = matched.length + '件見つかりました' + (matched.length > 100 ? '（先頭100件を表示）' : '') + '。';
-      // 検索語は URL に書かない（参照元や計測に載せない。assets/site-search-design.md 8.3）
+      // 検索語は URL に書かない（参照元に載せない。assets/site-search-design.md 8.3）。計測にはイベントの値でだけ送る（PRD 8.3）
+      trackSearch(query.value, matched.length);
+    }
+
+    // 横断検索の計測（PRD 8.3）。同じ語は続けて送らない（絞り込みだけを変えたとき）。計測を止めている人には送らない
+    let lastTracked = null;
+    function trackSearch(value, count) {
+      const term = analyticsTerm(value);
+      if (!term || term === lastTracked) return;
+      try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (e) {}
+      lastTracked = term;
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'daily_search', search_term: term, count: Math.min(count, 6) });
     }
 
     form.addEventListener('submit', runSearch);
@@ -449,6 +461,12 @@
       runSearch();
       document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
     };
+  }
+
+  // 計測に載せる検索語（PRD 8.3。404 と同じ）。メールアドレスと、電話番号・カード番号のような長い数字の並びを伏せ、100文字で切る
+  function analyticsTerm(value) {
+    const term = cleanQuery(value).replace(/[^\s@]+@[^\s@]+/g, '[email]').replace(/\+?\d[\d\s().-]{6,}\d/g, '[number]').trim();
+    return Array.from(term).slice(0, 100).join('');
   }
 
   // 検索語の取り出し（受け取る側の検査は head の処理。ここでは送る前に制御文字を除いて200文字に収める）
