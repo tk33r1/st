@@ -49,8 +49,9 @@ class MagiSmokeTest(unittest.TestCase):
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(case['expected'])}}]}
         with patch.object(ai_models, 'post_json', side_effect=post):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
-        self.assertEqual([c['purpose'] for c in cases[:4]], ['requested', 'requested', 'auxiliary', 'auxiliary'])
-        self.assertEqual([c['expected']['daily'] is None for c in cases[4:]], [True, False])
+        self.assertEqual([c['purpose'] for c in cases[:2]], ['requested', 'auxiliary'])
+        self.assertEqual([len(c['expected']['selections']) for c in cases[2:]], [1, 0])
+        self.assertTrue(all(set(c['expected']) == {'selections'} for c in cases))
         for body, case in zip(sent, cases):
             self.assertEqual(body, {**case['body'], 'model': 'candidate-for-test'})
             if 'purpose' in case:
@@ -66,39 +67,36 @@ class MagiSmokeTest(unittest.TestCase):
         def post(url, key, body):
             case = next(c for c in cases if c['body'] == {**body, 'model': c['body']['model']})
             value = copy.deepcopy(case['expected'])
-            if value['daily'] and 'purpose' in case:
-                value['daily']['query'] = '店舗'
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
         with patch.object(ai_models, 'post_json', side_effect=post):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
-        for value in [{'selections': ['unknown-id'], 'daily': None},
-                      {'selections': [], 'daily': {'media': 'unknown', 'query': '店舗'}}]:
+        # 未知のIDと、やめた daily の項目が付いた古い形を拒否する
+        for value in [{'selections': ['unknown-id']},
+                      {'selections': [], 'daily': {'media': 'nitori', 'query': '店舗'}}]:
             with self.subTest(value=value):
                 invalid = {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
                 with patch.object(ai_models, 'post_json', return_value=invalid), self.assertRaises(ai_models.subprocess.CalledProcessError):
                     ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
 
-    def test_daily_choice_is_observation_but_schema_both_sides_are_required(self):
+    def test_selection_count_is_observation_but_schema_both_sides_are_required(self):
         cases = self.config['site_smoke'] + self.config['site_schema_smoke']
-        for daily in [None, {'media': 'nitori', 'query': '店舗'}, {'media': 'retail', 'query': '店舗'}]:
-            with self.subTest(daily=daily):
-                sent = []
-                def post(url, key, body):
-                    case = cases[len(sent)]
-                    sent.append(body)
-                    value = {'selections': [], 'daily': daily} if 'purpose' in case else case['expected']
-                    return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
-                with patch.object(ai_models, 'post_json', side_effect=post):
-                    observations = ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
-                self.assertEqual([o['daily'] for o in observations], [daily is not None] * 4)
-                self.assertEqual(len(sent), 6)
         sent = []
-        def missing_object(url, key, body):
+        def post(url, key, body):
             case = cases[len(sent)]
             sent.append(body)
-            value = {**case['expected'], 'daily': None}
+            value = {'selections': []} if 'purpose' in case else case['expected']
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
-        with patch.object(ai_models, 'post_json', side_effect=missing_object), self.assertRaisesRegex(RuntimeError, 'nullable'):
+        with patch.object(ai_models, 'post_json', side_effect=post):
+            observations = ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
+        self.assertEqual([o['selections'] for o in observations], [0, 0])
+        self.assertEqual(len(sent), 4)
+        sent = []
+        def wrong_shape(url, key, body):
+            case = cases[len(sent)]
+            sent.append(body)
+            value = {'selections': ['x']} if 'purpose' not in case else case['expected']
+            return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+        with patch.object(ai_models, 'post_json', side_effect=wrong_shape), self.assertRaisesRegex(RuntimeError, 'スキーマ疎通'):
             ai_models.smoke_openai_site_search('mock', 'private', 'candidate-for-test', self.config)
 
     def test_votable_both_choices_and_no_smoke_threshold(self):

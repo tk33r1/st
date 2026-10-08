@@ -167,7 +167,7 @@ def smoke_openai(url, api_key, model):
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_magi(url, api_key, model, config['magi'])
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary/daily両形、討議判定・MAGI議題化・票読取/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary、討議判定・MAGI議題化・票読取/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
@@ -238,7 +238,7 @@ def smoke_openai_magi(url, api_key, model, config):
 
 def smoke_openai_site_search(url, api_key, model, config):
     """404とチャットの本番スキーマ・推論強度・温度・出力上限をそのまま試す。"""
-    # 本番の指示では受理・形式・実在IDだけを検査し、dailyの選択は記録する。
+    # 本番の指示では受理・形式・実在IDだけを検査し、選んだ件数は記録する。
     values = []
     for case in config['site_smoke']:
         response = post_json(url, api_key, {**case['body'], 'model': model})
@@ -246,19 +246,19 @@ def smoke_openai_site_search(url, api_key, model, config):
         if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
             raise RuntimeError('サイト案内の応答が正常完了しませんでした')
         values.append(json.loads(message_content(response)))
-    # 本番の検査を使い、未知ID・壊れたdailyを拒否する。
+    # 本番の検査を使い、未知ID・余計な項目を拒否する。
     # 検索語や選択順の完全一致、リンクの関連性は週次の合否に使わない。
     subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'), '--validate-site-smoke'],
                    input=json.dumps(values), encoding='utf-8', check=True, capture_output=True)
-    # nullableの両側の受理は、判断を求めず固定JSONを返す別の2ケースで守る。
+    # 選択が空と1件の両側の受理は、判断を求めず固定JSONを返す別の2ケースで守る。
     for case in config['site_schema_smoke']:
         response = post_json(url, api_key, {**case['body'], 'model': model})
         choice = response.get('choices', [{}])[0]
         if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
             raise RuntimeError('サイト選択のスキーマ疎通が正常完了しませんでした')
         if json.loads(message_content(response)) != case['expected']:
-            raise RuntimeError('サイト選択のnullableスキーマ疎通で指定したJSONが得られませんでした')
-    return [{'purpose': case['purpose'], 'daily': value['daily'] is not None}
+            raise RuntimeError('サイト選択のスキーマ疎通で指定したJSONが得られませんでした')
+    return [{'purpose': case['purpose'], 'selections': len(value['selections'])}
             for case, value in zip(config['site_smoke'], values)]
 
 

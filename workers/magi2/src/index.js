@@ -883,7 +883,6 @@ function siteSelectionNote(choice) {
   if (choice.status === 'failed') return SITE_SEARCH.failed_note;
   return SITE_SEARCH.synth_header + '\n' + SITE_SEARCH.answer_note + '\n' + JSON.stringify({
     status: choice.status, pages: choice.results.map(({ title, description }) => ({ title, description })),
-    daily: choice.daily ? { media: choice.daily.media, query: choice.daily.query } : null,
   });
 }
 
@@ -1075,7 +1074,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   }
   // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
   if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
-  const hasPages = pageChoice && (pageChoice.results.length || pageChoice.daily);
+  const hasPages = pageChoice && pageChoice.results.length;
   const synthMessages = [
     // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
     { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + SYNTHESIZER.role[motion ? 'magi' : 'chat'] }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
@@ -1248,7 +1247,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
 
         let pageChoice = null;
         if (!motion && newContract && classification.intent === 'site' && pagesPromise) {
-          pageChoice = await pagesPromise || { status: 'failed', results: [], daily: null };
+          pageChoice = await pagesPromise || { status: 'failed', results: [] };
           pagesPromise = null;
         }
         const answer = await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,

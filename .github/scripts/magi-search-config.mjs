@@ -59,11 +59,11 @@ await vm.runInContext(`(async function () {
           ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) },
   };
   config.site_smoke = [];
-  for (const purpose of ['requested', 'auxiliary']) for (const daily of [null, {media: 'nitori', query: '出店'}]) {
+  for (const purpose of ['requested', 'auxiliary']) {
     let body;
     const pages = [page, portal, retail];
-    const query = daily ? 'ニトリの出店ニュースを探して' : 'PDFを結合するページを探して';
-    const expected = { selections: daily ? [] : [page.id], daily };
+    const query = 'PDFを結合するページを探して';
+    const expected = { selections: [page.id] };
     await selectSitePages({query, locale: 'ja', purpose, pages, log() {},
       async call(options) {
         body = requestBody(options.cfg, options);
@@ -71,9 +71,9 @@ await vm.runInContext(`(async function () {
       } });
     config.site_smoke.push({purpose, body, expected, pages: shortlistSitePages(pages, query)});
   }
-  // 判断の品質と分け、nullableの両側は指定したJSONを返す疎通で確認する。
-  config.site_schema_smoke = [null, {media: 'nitori', query: '出店'}].map(daily => {
-    const expected = {selections: [page.id], daily};
+  // 判断の品質と分け、選択が空と1件の両側は指定したJSONを返す疎通で確認する。
+  config.site_schema_smoke = [[page.id], []].map(selections => {
+    const expected = {selections};
     return {expected, body: {...config.site_smoke[0].body,
       messages: [{role: 'user', content: 'Return exactly this JSON: ' + JSON.stringify(expected)}]}};
   });
@@ -84,7 +84,7 @@ if (process.argv.includes('--validate-site-smoke')) {
     if (!Array.isArray(smokeValues) || smokeValues.length !== config.site_smoke.length) throw new Error('Site smoke response count mismatch');
     smokeValues.forEach((value, i) => {
       const test = config.site_smoke[i], result = validateSiteChoice(value, test.pages, 'ja', true);
-      if (result.results.length !== value.selections.length || (value.daily !== null && !result.daily)) throw new Error('Invalid site smoke response');
+      if (result.results.length !== value.selections.length) throw new Error('Invalid site smoke response');
     });`, ctx);
   process.stdout.write('OK');
 } else process.stdout.write(JSON.stringify(ctx.config));

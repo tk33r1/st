@@ -120,7 +120,7 @@
     .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
     .ai-ask { font-family: ui-monospace, monospace; margin: 8px 0; }
     #ai-list { margin-top: 12px; }
-    .ai-followups a, #ai-daily { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
+    .ai-followups a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
     .explore { margin-top: 36px; }
     .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 16px; }
     details { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
@@ -200,7 +200,6 @@
         </div>
         <div id="ai-result" hidden>
           <div class="ai-answer"><strong>Shinya Takeda AI</strong> <span class="ai-mark" data-ja="AIによる応答" data-en="AI-generated">AIによる応答</span><p class="ai-ask" id="ai-ask" aria-hidden="true"></p><p id="ai-comment"></p></div>
-          <a id="ai-daily" hidden></a>
           <ul class="result-list" id="ai-list"></ul>
           <p class="ai-followups"><a id="ai-request" hidden data-ai-target="request" data-ja="要望を送る →" data-en="Send a request →">要望を送る →</a><a href="/" data-ai-target="magi" data-ja="続きを MAGI で話す →" data-en="Keep talking on MAGI →">続きを MAGI で話す →</a></p>
         </div>
@@ -579,22 +578,11 @@
         ai.query = query; ai.eligible = true; byId('ai-search').hidden = false;
         byId('ai-search').classList.toggle('is-quiet', rankAfter() === 'rank_results');
       }
-      function aiHref(value, daily) {
+      function aiHref(value) {
         if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return null;
         try {
           var u = new URL(value, 'https://tk.st');
-          if (u.origin !== 'https://tk.st') return null;
-          if (daily) {
-            // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）
-            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname)) return null;
-            var raw;
-            if (!u.search && u.hash.indexOf('#q=') === 0 && !/[&#]/.test(u.hash.slice(3))) {
-              try { raw = decodeURIComponent(u.hash.slice(3)); } catch (_) { return null; }
-            } else return null;
-            var q = stripControls(raw).trim();
-            if (!q || q.length > 200) return null;
-            return u.pathname + '#q=' + encodeURIComponent(q);
-          } else if (u.search || u.hash) return null;
+          if (u.origin !== 'https://tk.st' || u.search || u.hash) return null;
           return u.pathname;
         } catch (_) { return null; }
       }
@@ -634,23 +622,14 @@
           var data = await Promise.race([res.json(), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!data || !['results', 'no_results'].includes(data.status) || !Array.isArray(data.results) || data.results.length > 3) throw new Error('Invalid response');
-          var rows = data.results.filter(function (p) { return p && typeof p.title === 'string' && typeof p.description === 'string' && ['tool', 'game', 'article', 'page'].includes(p.kind) && aiHref(p.url, false); });
+          var rows = data.results.filter(function (p) { return p && typeof p.title === 'string' && typeof p.description === 'string' && ['tool', 'game', 'article', 'page'].includes(p.kind) && aiHref(p.url); });
           if (rows.length !== data.results.length) throw new Error('Invalid links');
           byId('ai-list').replaceChildren();
           rows.forEach(function (p, i) {
-            var li = resultItem(aiHref(p.url, false), p.title, p.description, text[p.kind]);
+            var li = resultItem(aiHref(p.url), p.title, p.description, text[p.kind]);
             li.firstChild.dataset.aiTarget = 'result'; li.firstChild.dataset.aiPosition = i + 1;
             byId('ai-list').appendChild(li);
           });
-          var daily = data.daily, dailyLink = byId('ai-daily'); dailyLink.hidden = true;
-          if (daily) {
-            if (!['nitori', 'retail'].includes(daily.media) || typeof daily.query !== 'string' || !aiHref(daily.url, true)) throw new Error('Invalid daily');
-            if (compact(daily.query.toLowerCase()) !== compact(query.toLowerCase())) {
-              dailyLink.href = aiHref(daily.url, true); dailyLink.dataset.aiTarget = 'daily'; dailyLink.hidden = false;
-              var name = daily.media === 'nitori' ? (lang === 'ja' ? '日刊ニトリ' : 'Daily Nitori') : (lang === 'ja' ? '日刊リテールテック' : 'Daily Retail Tech');
-              dailyLink.textContent = lang === 'ja' ? name + 'で「' + daily.query + '」を探す →' : 'Search ' + name + ' for “' + daily.query + '” →';
-            }
-          }
           var chars = Array.from(query);
           byId('ai-ask').textContent = '~$ ask "' + chars.slice(0, 40).join('') + (chars.length > 40 ? '…' : '') + '"';
           byId('ai-comment').textContent = typeof data.comment === 'string' ? data.comment : data.status === 'no_results' ? aiText.none : '';

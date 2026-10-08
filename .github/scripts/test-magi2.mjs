@@ -39,7 +39,7 @@ function worker(stream = completion(), upstream = null) {
       if (replaced) return replaced;
       if (/^https:\/\/tk\.st\/data\/(tools|game|glitch|site-search)\.json$/.test(url)) return Response.json(JSON.parse(read('data/' + url.split('/').at(-1))));
       const body = JSON.parse(options.body); calls.push(body);
-      if (body.response_format?.type === 'json_schema') return Response.json({ choices: [{ message: { content: JSON.stringify({ selections: ['tool:7'], ...(body.response_format.json_schema.name === 'site_search' ? { comment: 'PDF Studioでまとめられます。' } : {}), daily: null }) }, finish_reason: 'stop' }] });
+      if (body.response_format?.type === 'json_schema') return Response.json({ choices: [{ message: { content: JSON.stringify({ selections: ['tool:7'], ...(body.response_format.json_schema.name === 'site_search' ? { comment: 'PDF Studioでまとめられます。' } : {}) }) }, finish_reason: 'stop' }] });
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
     },
   });
@@ -103,7 +103,7 @@ function counts() {
 function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts(); return w; }
 const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search?site_debate=1', body, ip);
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
-const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)', daily: null };
+const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)' };
 
 test('公開ページ一覧から曲リクエストを404とチャットで案内し、送った候補以外のIDは採用しない', async () => {
   for (const chat of [false, true]) {
@@ -115,7 +115,7 @@ test('公開ページ一覧から曲リクエストを404とチャットで案�
       assert.ok(system.includes('page:/dj/request/'));
       assert.ok(!system.includes('page:/dj/booth/'));
       assert.ok(!system.includes('page:/dj/schedule/'));
-      return searchReply({ selections: ['page:/dj/request/'], daily: null });
+      return searchReply({ selections: ['page:/dj/request/'] });
     }));
     if (chat) {
       const res = await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: '曲のリクエスト' }] });
@@ -148,7 +148,7 @@ test('索引の不正な行と重複は飛ばし、全部不正なら拒否し�
   const candidateLine = vm.runInContext('candidateLine', w.ctx);
   assert.ok(shortlist.map(p => candidateLine(p) + '\n').join('').length <= w.ctx.searchConfig.candidate_max_chars);
   const omitted = many.find(p => !shortlist.some(x => x.id === p.id));
-  assert.throws(() => w.ctx.validateSiteChoice({ selections: [omitted.id], comment: '案内', daily: null }, shortlist, 'ja'));
+  assert.throws(() => w.ctx.validateSiteChoice({ selections: [omitted.id], comment: '案内' }, shortlist, 'ja'));
 });
 
 test('英語の機能語では点を付けず、英数字は語単位で照合する', () => {
@@ -537,19 +537,10 @@ test('AIの未知ID・日刊の不正値・コメントの記号を検証し、�
   assert.equal(mixed.results.length, 1); assert.equal(mixed.comment, null);
   assert.ok(w.ctx.validateSiteChoice(validSearch, pages, 'ja').comment.includes('(>_<)'));
   for (const comment of ['https://outside.example', '<script>', 'www.fake.test', 'x'.repeat(121), 'link](path)', '`code`']) assert.equal(w.ctx.validateSiteChoice({ ...validSearch, comment }, pages, 'ja').comment, null);
-  for (const daily of [{ media: 'other', query: 'AI' }, { media: 'nitori', query: 'ニトリ出店' }, { media: 'retail', query: 'x' }, { media: 'retail', query: 'https://x.y' }, { media: 'nitori', query: '<xx>' }, {}]) {
-    const r = w.ctx.validateSiteChoice({ ...validSearch, daily }, pages, 'ja'); assert.equal(r.daily, null); assert.equal(r.comment, null); assert.equal(r.results.length, 1);
-  }
-  const daily = w.ctx.validateSiteChoice({ selections: [], comment: 'ニュースです', daily: { media: 'retail', query: ' ＡＩ ' } }, pages, 'en');
-  assert.equal(daily.status, 'results'); assert.equal(daily.daily.query, 'AI'); assert.equal(daily.daily.url, '/job/retailtechdaily/#q=AI');
-  // 検索語付きの日刊リンクを出すときは、同じ日刊のトップを選んでいても出さない（もう一方の日刊と、ほかのページは残す）
-  const portalId = url => pages.find(p => p.url === url).id;
-  const both = w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/'), portalId('/job/retailtechdaily/'), 'tool:7'], daily: { media: 'nitori', query: '出店' } }, pages, 'ja', true);
-  assert.deepEqual(both.results.map(r => r.url), ['/job/retailtechdaily/', pages.find(p => p.id === 'tool:7').url]);
-  assert.equal(both.daily.url, '/job/nitoridaily/#q=' + encodeURIComponent('出店'));
-  const portalOnly = w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/')], daily: { media: 'nitori', query: '出店' } }, pages, 'ja', true);
-  assert.equal(portalOnly.status, 'results'); assert.equal(portalOnly.results.length, 0); assert.ok(portalOnly.daily);
-  assert.equal(w.ctx.validateSiteChoice({ selections: [portalId('/job/nitoridaily/')], daily: null }, pages, 'ja', true).results[0].url, '/job/nitoridaily/');
+  // 日刊の検索語付きリンク（daily）は 2026-10-08 にやめた。古い形の応答（daily の項目付き）は形式の不正として扱う
+  assert.throws(() => w.ctx.validateSiteChoice({ ...validSearch, daily: null }, pages, 'ja'));
+  assert.throws(() => w.ctx.validateSiteChoice({ selections: [], daily: { media: 'nitori', query: '出店' } }, pages, 'ja', true));
+  assert.ok(!('daily' in w.ctx.validateSiteChoice({ selections: ['tool:7'] }, pages, 'ja', true)));
 });
 
 test('検索の空応答・拒否・出力上限・JSON不正・本文受信の遅れは503で、開始済みの回数は戻さない', async () => {
@@ -698,7 +689,7 @@ test('遅いページ選びだけを中止し、後から返っても統合や�
   const w = enableSearch(worker(undefined, async (_, o) => {
     if (!o?.body || !JSON.parse(o.body).response_format) return;
     o.signal.addEventListener('abort', () => { aborted = true; });
-    await delay(60); return searchReply({ selections: ['tool:7'], daily: null });
+    await delay(60); return searchReply({ selections: ['tool:7'] });
   }));
   w.ctx.searchConfig.chat_wait_ms = 10;
   const text = await (await w.request('/magi2/chat', { site_pages: true, messages: [{ role: 'user', content: 'q' }] })).text();
@@ -789,7 +780,7 @@ test('ページ選びに今のページの題名を渡し、今のページそ�
     if (url.endsWith('/site-search.json')) { indexFetches++; return Response.json(guideIndex); }
     if (!o?.body || !JSON.parse(o.body).response_format) return;
     selector = JSON.parse(o.body);
-    return searchReply({ selections: ['page:tools', 'tool:7'], daily: null });
+    return searchReply({ selections: ['page:tools', 'tool:7'] });
   }));
   const text = await (await w.request('/magi2/chat', { site_pages: true, page: '/tools/', messages: [{ role: 'user', content: 'このページは何？' }] })).text();
   assert.equal(JSON.parse(selector.messages.at(-1).content).current_page, 'TOOLS_TITLE');
@@ -806,7 +797,7 @@ test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替え�
       c.ctx.renderAgentPages = (_, data) => renders.push(data);
       c.ctx.fetch = async (_, o) => { outbound.push(JSON.parse(o.body)); return { ok: true, body: {} }; };
       c.ctx.parseSSE = async (_, h) => {
-        h.integrated({ delta: 'answer' }); h.pages({ pages: [{ title: 'PDF Studio' }], daily: null }); assert.equal(renders.length, 0);
+        h.integrated({ delta: 'answer' }); h.pages({ pages: [{ title: 'PDF Studio' }] }); assert.equal(renders.length, 0);
         if (mode === 'error') h.error({ code: 'failed' });
         if (mode === 'switch') { c.ctx.agentGen++; c.ctx.agentHistory = []; c.ctx.agentBusy = false; }
         if (mode !== 'eof') h.done();
@@ -829,23 +820,15 @@ test('両画面のリンク検証とラベルの描画は一致し、サイト�
       { kind: 'tool', title: '<script>label</script>', description: '<img>', url: 'https://tk.st/tools/pdf-studio/' },
       { kind: 'tool', title: 'bad', description: '', url: 'https://tk.st.evil.test/tools/a/' },
       { kind: 'page', title: 'bad', description: '', url: 'https://tk.st/?q=private' },
-    ], daily: { media: 'retail', query: 'AI', url: 'https://tk.st/job/retailtechdaily/?q=AI#archiveSearch' } });
+    ] });
     assert.equal(reply.children[0].children.length, 1);
     assert.equal(reply.children[0].children[0].children[0].textContent, '<script>label</script>');
     assert.equal(reply.children[0].children[0].rel, 'noopener noreferrer');
-    // 日刊は #q= だけを受ける（古い ?q=…#archiveSearch は T7.1 で受け取りをやめた）
-    const q = encodeURIComponent('出店 計画');
-    for (const [url, href] of [
-      ['https://tk.st/job/nitoridaily/#q=' + q, 'https://tk.st/job/nitoridaily/#q=' + q],
-      ['https://tk.st/job/retailtechdaily/?q=' + q + '#archiveSearch', null],
-      ['https://tk.st/job/retailtechdaily/#q=a%26b&c', null], ['https://tk.st/job/retailtechdaily/#q=%E3%8', null],
-      ['https://tk.st/job/retailtechdaily/?q=a&q=b#archiveSearch', null], ['https://tk.st/job/retailtechdaily/?x=1#q=a', null],
-      ['https://tk.st/job/retailtechdaily/#q=%01', null], ['https://tk.st/job/retailtechdaily/#q=' + 'a'.repeat(201), null],
-    ]) {
-      const box = node();
-      ctx.renderAgentPages(box, { pages: [], daily: { media: 'retail', query: 'AI', url } });
-      assert.equal(box.children[0]?.children[0].href ?? null, href, url);
-    }
+    // 日刊の検索語付きリンク（daily）はやめた。古い Worker が送っても描かず、ページのリンクもクエリ・フラグメント付きは拒否する
+    const box = node();
+    ctx.renderAgentPages(box, { pages: [{ kind: 'page', title: 'x', description: '', url: 'https://tk.st/job/nitoridaily/#q=a' }],
+      daily: { media: 'retail', query: 'AI', url: 'https://tk.st/job/retailtechdaily/#q=AI' } });
+    assert.equal(box.children.length, 0);
   }
 });
 
@@ -2617,20 +2600,15 @@ test('MAGI採決: 両画面は決議後の停止・切断で完了した説明�
   }
 });
 
-test('404 の日刊リンクの検査は #q= だけを通す（古い ?q= は通さない）', () => {
+test('404 の③のリンクの検査はサイト内のパスだけを通す（日刊の検索語付きリンクは描かない）', () => {
   const page = read('404.html');
   const ctx = vm.createContext({ URL });
-  vm.runInContext(between(page, 'function stripControls(', '\n') + '\n' + between(page, 'function aiHref(', "byId('ai-request')"), ctx);
-  const q = encodeURIComponent('出店 計画');
-  assert.equal(ctx.aiHref('/job/nitoridaily/#q=' + q, true), '/job/nitoridaily/#q=' + q);
-  for (const bad of ['/job/retailtechdaily/?q=' + q + '#archiveSearch', '/job/retailtechdaily/?q=a+b#archiveSearch', '/job/nitoridaily/?q=a&q=b#archiveSearch', '/job/nitoridaily/?q=a&x=1#archiveSearch', '/job/nitoridaily/?q=a',
-    '/job/nitoridaily/#q=a%26b&c', '/job/nitoridaily/#q=%E3%8', '/job/nitoridaily/#q=', '/job/nitoridaily/#q=%01',
-    '/job/nitoridaily/?x=1#q=a', '/job/nitoridaily/#q=' + 'a'.repeat(201), '/job/other/#q=a', '//evil.test/job/nitoridaily/#q=a']) {
-    assert.equal(ctx.aiHref(bad, true), null, bad);
-  }
-  assert.equal(ctx.aiHref('/tools/pdf-studio/', false), '/tools/pdf-studio/');
-  assert.equal(ctx.aiHref('/tools/pdf-studio/#q=a', false), null);
+  vm.runInContext(between(page, 'function aiHref(', "byId('ai-request')"), ctx);
+  assert.equal(ctx.aiHref('/tools/pdf-studio/'), '/tools/pdf-studio/');
+  for (const bad of ['/tools/pdf-studio/#q=a', '/job/nitoridaily/#q=a', '/job/nitoridaily/?q=a#archiveSearch', '//evil.test/', 'https://evil.test/']) assert.equal(ctx.aiHref(bad), null, bad);
+  assert.ok(!page.includes('ai-daily') && !page.includes('data.daily'));
 });
+
 
 test('MAGI の版の表示はトップページ・アプリ・magi-app/package.json で同じ（Android の versionName もこれにそろえる）', () => {
   const shown = src => [...src.matchAll(/class="magi-ver">ver (\d+\.\d+) /g)].map(m => m[1]);

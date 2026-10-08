@@ -159,7 +159,7 @@ function mockWorker({ rank, ai }) {
 const rankBody = (results, extra = {}) => ({ request_id: 'local', status: results.length ? 'results' : 'no_results', complete: true, reason: null,
   searched: { total: 35, candidates: 35, judged: 35 }, results, ...extra });
 const row = (title, url = '/tools/pdf-studio/', kind = 'tool') => ({ kind, title, description: title + ' の説明', url });
-const aiBody = { request_id: 'local', status: 'no_results', comment: null, results: [], daily: null };
+const aiBody = { request_id: 'local', status: 'no_results', comment: null, results: [] };
 
 // ②の画面の様子
 async function rankView(page) {
@@ -207,9 +207,10 @@ scenario('404 → 日刊（③の下の「日刊ブリーフで探す」）', {}
   await leaveToIssue(name, page);
 });
 
-scenario('404 → ③ → 日刊のリンク', {
+scenario('404 → ③ の結果の行', {
   worker: mockWorker({ rank: () => ({ body: rankBody([]) }), ai: () => ({ body: { request_id: 'local', status: 'results', comment: null,
       results: [{ id: 'tool:7', kind: 'tool', title: 'PDF Studio', description: 'PDF', url: '/tools/pdf-studio/' }],
+      // 日刊の検索語付きリンク（daily）はやめた。古い Worker が送っても描かない
       daily: { media: 'nitori', query: MARK + ' 出店', url: '/job/nitoridaily/#q=' + encodeURIComponent(MARK + ' 出店') } } }) }),
 }, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
@@ -218,17 +219,12 @@ scenario('404 → ③ → 日刊のリンク', {
   await page.waitForTimeout(200); await page.press('#query', 'Enter');
   await page.locator('#ai-run').waitFor({ state: 'visible' });
   await page.click('#ai-run');
-  const link = page.locator('#ai-daily');
-  await link.waitFor({ state: 'visible' });
-  check(/^\/job\/nitoridaily\/#q=/.test(await link.getAttribute('href')), `${name}: ③の日刊リンクが #q= の形でない`);
+  await page.locator('#ai-list .result-link').first().waitFor({ state: 'visible' });
   const aiRow = await page.evaluate(() => { const a = document.querySelector('#ai-list .result-link'); return a && [a.getAttribute('href'), a.dataset.aiTarget, a.dataset.aiPosition, a.querySelector('.result-title').textContent, a.querySelector('.kind').textContent].join('|'); });
   check(aiRow === '/tools/pdf-studio/|result|1|PDF Studio|ツール', `${name}: ③の結果の行の形が違う（${aiRow}）`);
-  await Promise.all([page.waitForURL(u => u.pathname === PORTAL), link.click()]);
-  await settle(page);
-  check(await portalInput(page) === MARK + ' 出店', `${name}: ポータルの横断検索に検索語が入らない`);
-  await checkLocation(name, page);
-  await leaveToIssue(name, page);
+  check(!(await page.evaluate(() => [...document.querySelectorAll('#ai-result a')].some(a => (a.getAttribute('href') || '').includes('#q=')))), `${name}: ③に日刊の検索語付きリンクが出た`);
 });
+
 
 for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
   scenario('日刊ポータルの #q=' + label, { analyticsOff: off }, async (page, name) => {

@@ -210,7 +210,7 @@ python -B .github/scripts/preview-404-ai.py
 ```
 
 回帰検証は外部APIを呼ばず、NodeとPython標準のSQLiteを使う。本番のAPI互換性は週次のモデルスモークテストで確認する。
-404の画面確認は `http://localhost:4215/missing/`。プレビューだけでフラグを有効にし、AI・解析の外部通信を行わない。検索語 `mock-none`／`mock-limit`／`mock-error`／`mock-daily`／`mock-slow`／`mock-global`／`mock-update` で状態を模擬できる。
+404の画面確認は `http://localhost:4215/missing/`。プレビューだけでフラグを有効にし、AI・解析の外部通信を行わない。検索語 `mock-none`／`mock-limit`／`mock-error`／`mock-slow`／`mock-global`／`mock-update` で状態を模擬できる。
 PWAの更新は `www/sw.js` のキャッシュを更新する。ネイティブアプリは変更した `www/` を同期して再ビルドする。
 
 ## ローカルとCloudflare評価環境

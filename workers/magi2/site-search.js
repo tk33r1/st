@@ -123,7 +123,7 @@ export function shortlistSitePages(pages, query) {
     if (dailyIssue(p) && issues >= SITE_SEARCH.candidate_issue_limit) return;
     selected.push(p); ids.add(p.id); chars += length; issues += dailyIssue(p) ? 1 : 0;
   }
-  // 主な入口（日刊の検索引き継ぎに要る2媒体を含む）は、ページが増えても必ず候補に入れる。
+  // 主な入口は、ページが増えても必ず候補に入れる。
   pages.filter(p => p.hub).forEach(add);
   ranked.forEach(({ p }) => add(p));
   return selected;
@@ -174,7 +174,7 @@ export async function getSitePages(ctx, locale, signal) {
 }
 
 export function validateSiteChoice(value, pages, locale, chat = false) {
-  const expected = chat ? ['selections', 'daily'] : ['selections', 'comment', 'daily'];
+  const expected = chat ? ['selections'] : ['selections', 'comment'];
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== expected.length || expected.some(k => !(k in value))
       || !Array.isArray(value.selections) || value.selections.length > 3 || value.selections.some(id => typeof id !== 'string')
       || new Set(value.selections).size !== value.selections.length || (!chat && typeof value.comment !== 'string')) throw searchFailure('invalid_output');
@@ -184,22 +184,8 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
   let comment = chat ? null : clean(value.comment).trim();
   if (comment && (Array.from(comment).length > SITE_SEARCH.comment_max_chars[locale] || /:\/\/|www\.|\]\(|`|<[a-z/!]/i.test(comment))) comment = null;
   if (selected.length !== value.selections.length) comment = null;
-  let daily = null;
-  if (value.daily !== null) {
-    const d = value.daily;
-    if (d && typeof d === 'object' && !Array.isArray(d) && Object.keys(d).length === 2 && ['nitori', 'retail'].includes(d.media) && typeof d.query === 'string') {
-      const query = clean(d.query).normalize('NFKC').replace(/\s/g, '');
-      if (Array.from(query).length >= 2 && Array.from(query).length <= 15 && !/:\/\/|[<>]/.test(query) && !query.includes(d.media === 'nitori' ? 'ニトリ' : 'リテールテック')) {
-        const portal = pages.find(p => p.url === (d.media === 'nitori' ? '/job/nitoridaily/' : '/job/retailtechdaily/'));
-        if (portal) daily = { media: d.media, query, url: portal.url + '#q=' + encodeURIComponent(query) };
-      }
-    }
-    if (!daily) comment = null;
-  }
-  // 日刊の検索語付きリンクを出すときは、同じ日刊のトップ（検索語の無いリンク）を重ねて出さない
-  const shown = daily ? selected.filter(id => byId.get(id).url !== daily.url.split('#')[0]) : selected;
-  return { status: shown.length || daily ? 'results' : 'no_results', comment: comment || null, daily,
-    results: shown.map(id => { const { kind, title, description, url } = byId.get(id); return { id, kind, title, description, url }; }) };
+  return { status: selected.length ? 'results' : 'no_results', comment: comment || null,
+    results: selected.map(id => { const { kind, title, description, url } = byId.get(id); return { id, kind, title, description, url }; }) };
 }
 
 // current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
@@ -251,5 +237,5 @@ export function siteGuide(page, pages) {
 }
 
 export function chatPageEvent(result) {
-  return { pages: result.results.map(p => ({ ...p, url: 'https://tk.st' + p.url })), daily: result.daily ? { ...result.daily, url: 'https://tk.st' + result.daily.url } : null };
+  return { pages: result.results.map(p => ({ ...p, url: 'https://tk.st' + p.url })) };
 }

@@ -502,6 +502,7 @@ Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄
 3. **アプリの更新**：`magi-app/www/` の `?v=` と `sw.js` のキャッシュ名を上げ、PWA とネイティブ（`npm run sync` と再ビルド）を出す。古いアプリは新しい形を通さず、日刊のリンクを出さないだけ（壊れはしない）。
 4. **Worker を新しい形にする**：アプリの更新が行き渡ってから、`validateSiteChoice` の `daily.url` を `portal.url + '#q=' + encodeURIComponent(query)` にする。
    2026-10-08 に済ませた。Worker を出した後で、1 で足した古い形の受け取りを3つの画面から消した（日刊ポータルの古い `?q=` は、外からのリンクのために残す）。
+   同じ日のうちに、AI の `daily` リンク自体をやめた（PRD 8.3「AI の `daily` リンクの廃止」）。ページ選びの JSON から `daily` を外し、`validateSiteChoice` は `daily` の項目付きの応答を形式の不正として扱う。404 の③と、トップページ・アプリの `renderAgentPages` からも描く処理を消した（`app.js?v=20261008_4`、`magi-shell-v47`）。古いアプリには `daily` が届かないので、出なくなるだけ。
 
 ### 8.5 `assets/analytics.js`
 

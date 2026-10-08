@@ -48,12 +48,6 @@ const cases = Object.entries(groups).flatMap(([intent, texts]) => texts.map((tex
 })));
 // consultの前半は日英が5文ずつ。言語の期待値も先に固定する。
 for (let i = 0; i < 20; i++) cases[i].language = i < 5 || (i >= 10 && i < 15) ? 'ja' : 'en';
-// 「日刊」と書かないニュースの質問（サイトに日刊ブリーフがあるので site）と、ニトリ・ニュースの語を含む一般の相談（2026-10-08 に追加）
-for (const [text, intent, language] of [
-  ['ニトリの出店のニュースある？', 'site', 'ja'], ['リテールテックの最新ニュースを教えて', 'site', 'ja'], ['小売のセルフレジの動向は？', 'site', 'ja'],
-  ['ニトリの値下げのニュースを知りたい', 'site', 'ja'], ['Any news about Nitori opening new stores?', 'site', 'en'],
-  ['ニトリで買ったソファの手入れ方法は？', 'consult', 'ja'], ['ニュースを読む習慣をつけたい', 'consult', 'ja'], ['How do I stop doomscrolling the news?', 'consult', 'en'],
-]) cases.push({ text, intent, language });
 const results = [];
 for (let i = 0; i < cases.length; i++) {
   const c = cases[i];

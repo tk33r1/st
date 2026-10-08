@@ -2,7 +2,7 @@
 """404のAI検索を外部通信なしで画面確認する。python -B .github/scripts/preview-404-ai.py
 
 http://localhost:4215/missing/ を開く。検索語 mock-none / mock-limit / mock-error は各状態、
-mock-daily は日刊、mock-slow は遅い応答、mock-global は共有上限、mock-update は更新要求を模擬する。?lang=en で英語表示。
+mock-slow は遅い応答、mock-global は共有上限、mock-update は更新要求を模擬する。?lang=en で英語表示。
 検索（Enter・虫眼鏡。②）も同じ検索語で模擬する：mock-none は該当なし、mock-limit は上限、mock-error は失敗、mock-slow は3秒、
 mock-partial は一部を判定できない、mock-disabled は停止（②の欄と説明が消える）、mock-evil は外部 URL（描かずに失敗）。
 ほかの語は2件の結果を返す。
@@ -51,8 +51,7 @@ class Preview(SimpleHTTPRequestHandler):
         none = query == 'mock-none'
         comment = 'You can combine PDFs with my PDF Studio.' if data['locale'] == 'en' else 'PDFをまとめるなら、私のPDF Studioが使えます。'
         body = {'request_id': 'local-preview', 'status': 'no_results' if none else 'results', 'comment': None if none else comment,
-                'results': [] if none else [{'id': 'tool:7', 'kind': 'tool', 'title': 'PDF Studio', 'description': 'サーバーレスPDF編集ツール', 'url': '/tools/pdf-studio/'}],
-                'daily': {'media': 'nitori', 'query': '出店', 'url': '/job/nitoridaily/#q=%E5%87%BA%E5%BA%97'} if query == 'mock-daily' else None}
+                'results': [] if none else [{'id': 'tool:7', 'kind': 'tool', 'title': 'PDF Studio', 'description': 'サーバーレスPDF編集ツール', 'url': '/tools/pdf-studio/'}]}
         if query in ('mock-global', 'mock-update'):
             body = {'error': {'code': 'global_daily_limit_exceeded' if query == 'mock-global' else 'site_search_update_required', 'retryable': False}}
         self.send_json(status, body)

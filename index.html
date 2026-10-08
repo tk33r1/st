@@ -7716,36 +7716,19 @@ async function parseSSE(body, handlers, onChunk) {
       // リンクはこの回答の表示だけ。履歴・次の質問・保存会話へは入れない。
       if (!data || !Array.isArray(data.pages) || data.pages.length > 3) return;
       var panel = document.createElement('div'); panel.className = 'agent-pages';
-      function add(title, description, raw, daily) {
+      function add(title, description, raw) {
         if (typeof title !== 'string' || typeof description !== 'string' || typeof raw !== 'string') return;
         try {
           var u = new URL(raw);
-          if (u.origin !== 'https://tk.st' || u.username || u.password) return;
-          var href = u.href;
-          if (daily) {
-            // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）
-            if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname)) return;
-            var q;
-            if (!u.search && u.hash.indexOf('#q=') === 0 && !/[&#]/.test(u.hash.slice(3))) q = decodeURIComponent(u.hash.slice(3));
-            else return;
-            q = q.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
-            if (!q || q.length > 200) return;
-            href = u.origin + u.pathname + '#q=' + encodeURIComponent(q);
-          } else if (u.search || u.hash) return;
-          var a = document.createElement('a'); a.className = 'agent-page'; a.href = href;
+          if (u.origin !== 'https://tk.st' || u.username || u.password || u.search || u.hash) return;
+          var a = document.createElement('a'); a.className = 'agent-page'; a.href = u.href;
           a.target = '_blank'; a.rel = 'noopener noreferrer';
           var name = document.createElement('strong'); name.textContent = title; a.appendChild(name);
           if (description) { var desc = document.createElement('span'); desc.textContent = description; a.appendChild(desc); }
           panel.appendChild(a);
         } catch (_) {}
       }
-      data.pages.forEach(function (p) { if (p && ['tool', 'game', 'article', 'page'].includes(p.kind)) add(p.title, p.description, p.url, false); });
-      var d = data.daily;
-      if (d && ['nitori', 'retail'].includes(d.media) && typeof d.query === 'string') {
-        var ja = document.documentElement.lang === 'ja';
-        var name = d.media === 'nitori' ? (ja ? '日刊ニトリ' : 'Daily Nitori') : (ja ? '日刊リテールテック' : 'Daily Retail Tech');
-        add(ja ? name + 'で「' + d.query + '」を探す →' : 'Search ' + name + ' for “' + d.query + '” →', '', d.url, true);
-      }
+      data.pages.forEach(function (p) { if (p && ['tool', 'game', 'article', 'page'].includes(p.kind)) add(p.title, p.description, p.url); });
       if (panel.children.length) replyEl.appendChild(panel);
     }
 
