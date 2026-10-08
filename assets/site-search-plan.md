@@ -179,7 +179,7 @@
 | T5.7 | 未着手 | |
 | T6.1 | 公開（2026-10-08） | `app.js?v=20261008_1`、`magi-shell-v44`。T5.6 と同じ push で出した |
 | T6.2 | 未着手 | |
-| T5.8 | 実装済み（2026-10-08） | 404 の `not_found_keyword_count`・`not_found_rank_run`・`not_found_ai_used` と、日刊の横断検索の `daily_search` に `search_term`（メールアドレスと長い数字を伏せ字、100文字まで）。404 の説明（検索ボタンの下の一文とダイアログの段落）、日刊の検索欄の下の一文（`--rebuild` は `Date-Sync: skip`）。日刊は計測を止めた人には送らない。`test-site-search-ui.mjs` は GA4 の `ep.search_term` の値だけを許して目印を探す。本人が GTM に `search_term` の変数・タグの値を足し、トリガーを `not_found_|daily_search` にする |
+| T5.8 | 完了（2026-10-08） | 404 の `not_found_keyword_count`・`not_found_rank_run`・`not_found_ai_used` と、日刊の横断検索の `daily_search` に `search_term`（メールアドレスと長い数字を伏せ字、100文字まで）。404 の説明（検索ボタンの下の一文とダイアログの段落）、日刊の検索欄の下の一文（`--rebuild` は `Date-Sync: skip`）。日刊は計測を止めた人には送らない。`test-site-search-ui.mjs` は GA4 の `ep.search_term` の値だけを許して目印を探す。本人が GTM に `search_term` の変数とタグの値を足し、トリガーのイベント名を `^(not_found_.*|daily_search)$` にした。その後の `site-search-url.yml`（run `37722652623`）で、`search_term` 50件と `daily_search` が GA4 へ送られ、伏せるはずのメールアドレス・電話番号はどの通信にも生のまま出なかった |
 | T7.1〜T7.2 | 未着手 | |
 
 最初に進めるのは T0.1（2週間の計測を早く始めるため）、続けて TP.1・T1.1・T4.1。
