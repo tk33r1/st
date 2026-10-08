@@ -164,7 +164,9 @@ const aiBody = { request_id: 'local', status: 'no_results', comment: null, resul
 // ②の画面の様子
 async function rankView(page) {
   return page.evaluate(() => ({
-    state: document.getElementById('rank-run').hidden ? 'off' : 'on',
+    state: document.getElementById('rank-disclosure-row').hidden ? 'off' : 'on',
+    suggest: document.getElementById('suggest-list').hidden ? [] : [...document.querySelectorAll('#suggest-list [role="option"] a')].map(a => a.getAttribute('href')),
+    area: !document.getElementById('rank-area').hidden,
     rank: [...document.querySelectorAll('#rank-list .result-title')].map(e => e.textContent),
     rankHrefs: [...document.querySelectorAll('#rank-list a')].map(a => a.getAttribute('href')),
     rankStatus: document.getElementById('rank-status').textContent,
@@ -179,7 +181,7 @@ async function rankView(page) {
 // ②の場面は、②が出ているときだけ（本番で未公開なら飛ばす）
 const rankScenario = (name, options, fn) => scenarios.push({ name: '②：' + name, options, fn: async (page, label) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
-  if (!(await page.locator('#rank-run').count()) || !(await page.evaluate(() => !document.getElementById('rank-run').hidden))) { skipped.push(label); return; }
+  if (!(await page.evaluate(() => { const e = document.getElementById('rank-disclosure-row'); return !!e && !e.hidden; }))) { skipped.push(label); return; }
   await fn(page, label);
 } });
 const skipped = [];
@@ -190,9 +192,12 @@ async function anyIssue(page) {
   return page.locator('[data-archive-month] a').first().getAttribute('href').then(h => new URL(h, BASE + PORTAL).pathname);
 }
 
-scenario('404 → 日刊（①の下の「日刊ブリーフで探す」）', {}, async (page, name) => {
+scenario('404 → 日刊（③の下の「日刊ブリーフで探す」）', {}, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
   await page.fill('#query', QUERY);
+  // 入力中は出さず、検索した後（Enter）に出す
+  check(!(await page.locator('#nitori-search').isVisible()), `${name}: 入力中に日刊ブリーフの欄が出ている`);
+  await page.press('#query', 'Enter');
   const link = page.locator('#nitori-search');
   await link.waitFor({ state: 'visible' });
   await Promise.all([page.waitForURL(u => u.pathname === PORTAL), link.click()]);
@@ -209,8 +214,8 @@ scenario('404 → ③ → 日刊のリンク', {
 }, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
   await page.fill('#query', MARK + 'zz');
-  // ②が使えるときは、②を送った後に③が出る（設計書 6.3）
-  if (await page.locator('#rank-run').isVisible()) { await page.waitForTimeout(200); await page.press('#query', 'Enter'); }
+  // ③は検索した後（Enter）に出る（設計書 6.3）
+  await page.waitForTimeout(200); await page.press('#query', 'Enter');
   await page.locator('#ai-run').waitFor({ state: 'visible' });
   await page.click('#ai-run');
   const link = page.locator('#ai-daily');
@@ -463,8 +468,10 @@ rankScenario('状態：A → B → A（最初の A の応答を描かない）',
   await page.fill('#query', 'A'); await page.waitForTimeout(1500);
   const v = await rankView(page);
   check(v.rank.length === 0, `${name}: 最初の A の応答を描いた`);
-  check(v.rankStatus === '検索ボタンで探し直せます。', `${name}: stale の文言が出ない（${v.rankStatus}）`);
-  check(v.ai, `${name}: stale で③が出ない`);
+  check(v.rankStatus === 'Enter で探し直せます。', `${name}: stale の文言が出ない（${v.rankStatus}）`);
+  check(!v.area && !v.ai, `${name}: 入力を変えた後も②の欄か③が出ている（入力中の形に戻らない）`);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(1500);
+  check((await rankView(page)).rank.join() === '結果:A', `${name}: 入力を戻して Enter で送り直さない`);
 });
 rankScenario('状態：送信後に入力を変える・空入力', { worker: echo(() => 800) }, async (page, name) => {
   await typeAndRun(page, 'A', 100);
@@ -497,7 +504,7 @@ rankScenario('状態：②から③へ・③の実行中に入力を変える', 
   await page.fill('#query', 'B'); await page.waitForTimeout(1500);
   v = await rankView(page);
   check(!v.aiResult, `${name}: 入力を変えた後に古い③の応答を描いた`);
-  check(v.rankStatus === '検索ボタンで探し直せます。' && v.ai, `${name}: ③の後に入力を変えたとき stale と③にならない`);
+  check(v.rankStatus === 'Enter で探し直せます。' && !v.ai && !v.area, `${name}: ③の後に入力を変えたとき stale と入力中の形にならない`);
 });
 
 rankScenario('状態：同じ語の Enter の連打で送り直さない', { worker: echo(() => 600) }, async (page, name) => {
@@ -513,7 +520,7 @@ rankScenario('状態：入力のイベント無しで値が変わっても読み
   await page.evaluate(() => { document.getElementById('query').value = 'B'; }); // 自動入力などを模す（input イベント無し）
   await page.waitForTimeout(1200);
   const v = await rankView(page);
-  check(v.rank.length === 0 && v.rankStatus === '検索ボタンで探し直せます。', `${name}: 読み込み中のまま止まった、または古い応答を描いた（${v.rankStatus}）`);
+  check(v.rank.length === 0 && v.rankStatus === 'Enter で探し直せます。', `${name}: 読み込み中のまま止まった、または古い応答を描いた（${v.rankStatus}）`);
 });
 rankScenario('状態：Worker が落とす文字だけの入力は送らない', { worker: echo(() => 0) }, async (page, name) => {
   await typeAndRun(page, '<<>>');
@@ -523,30 +530,31 @@ rankScenario('状態：Worker が落とす文字だけの入力は送らない',
 // 連携と計測
 rankScenario('連携：①から②のページを除き、入力の変更で戻す', { worker: mockWorker({ rank: () => ({ body: rankBody([row('PDF Studio')]) }), ai: () => ({ body: aiBody }) }) }, async (page, name) => {
   await page.fill('#query', 'pdf'); await page.waitForTimeout(300);
-  const keywordBefore = (await rankView(page)).keyword;
-  check(keywordBefore.includes('/tools/pdf-studio/'), `${name}: ①に PDF Studio が無い（前提）`);
+  const typing = await rankView(page);
+  check(typing.suggest.includes('/tools/pdf-studio/'), `${name}: 入力中の候補に PDF Studio が無い（前提）`);
+  check(!typing.keyword.length && !typing.area && !typing.ai, `${name}: 入力中にページへ結果か②・③を出している`);
   await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   let v = await rankView(page);
   check(!v.keyword.includes('/tools/pdf-studio/'), `${name}: ②に出たページが①に残る`);
   check(/件見つかりました/.test(v.keywordStatus), `${name}: ①の件数の表示が消えた`);
   check(v.ai && v.aiQuiet, `${name}: 完全な結果で③が控えめに出ない`);
   await page.fill('#query', 'pdf '); await page.waitForTimeout(300);
-  check((await rankView(page)).rank.length === 1, `${name}: 前後の空白だけの違いで②の結果を消した`);
+  v = await rankView(page);
+  check(v.rank.length === 1 && v.area && v.suggest.length === 0, `${name}: 前後の空白だけの違いで②の結果を消した`);
   await page.fill('#query', 'pd'); await page.waitForTimeout(300);
   v = await rankView(page);
-  check(v.keyword.includes('/tools/pdf-studio/') && v.rank.length === 0, `${name}: 入力の変更で①が戻らない`);
-  await page.fill('#query', 'p'); await page.waitForTimeout(300);
+  check(v.suggest.includes('/tools/pdf-studio/') && v.rank.length === 0 && !v.area, `${name}: 入力の変更で入力中の候補に戻らない`);
+  await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   v = await rankView(page);
-  check(v.rankStatus === '検索ボタンで探し直せます。' && v.ai && !(await page.locator('#ai-run').isDisabled()), `${name}: 続けて入力を変えると stale の③を押せない`);
-  await page.click('#ai-run'); await page.waitForTimeout(200);
-  check((await rankView(page)).events.filter(e => e.event === 'not_found_ai_used').at(-1)?.after === 'no_rank', `${name}: stale からの③の after が no_rank でない`);
+  check(v.rank.length === 1 && !v.keyword.includes('/tools/pdf-studio/') && v.ai, `${name}: 検索し直すと②・①・③がそろわない`);
 });
 rankScenario('計測：①が0件で②を送る前は③を出さず、検索ボタンを目立たせる', { worker: echo(() => 0) }, async (page, name) => {
   await page.fill('#query', MARK + 'なし'); await page.waitForTimeout(300);
   const v = await rankView(page);
   check(!v.ai, `${name}: ②を送る前に③が出る`);
-  check(/検索ボタンで、意味の近いページを探します/.test(v.keywordStatus), `${name}: 検索ボタンへの案内が出ない（${v.keywordStatus}）`);
-  check(await page.evaluate(() => document.getElementById('rank-run').classList.contains('is-suggested')), `${name}: 検索ボタンが目立たない`);
+  const note = await page.evaluate(() => { const e = document.querySelector('#suggest-list:not([hidden]) .suggest-note'); return e ? e.textContent : ''; });
+  check(/Enter で、意味の近いページを探します/.test(note), `${name}: 候補の欄に Enter への案内が出ない（${note}）`);
+  check(await page.evaluate(() => document.getElementById('search-submit').classList.contains('is-suggested')), `${name}: 検索ボタンが目立たない`);
   await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   const run = (await rankView(page)).events.find(e => e.event === 'not_found_rank_run');
   check(run && run.keyword_state === 'known' && run.keyword_count === 0, `${name}: rank_run の keyword_state・keyword_count が違う（${JSON.stringify(run)}）`);
@@ -582,7 +590,7 @@ if (remote) rankScenario('本番の Worker で検索する', { worker: route => 
 // 表示：日英・暗い配色・320px・キーボード・読み上げの状態の行
 rankScenario('表示：英語', { locale: 'en-US', worker: echo(() => 0) }, async (page, name) => {
   await typeAndRun(page, 'pdf');
-  const t = await page.evaluate(() => ({ heading: document.getElementById('rank-heading').textContent, button: document.getElementById('rank-run').textContent, status: document.getElementById('rank-status').textContent }));
+  const t = await page.evaluate(() => ({ heading: document.getElementById('rank-heading').textContent, button: document.getElementById('search-submit').getAttribute('aria-label'), status: document.getElementById('rank-status').textContent }));
   check(t.heading === 'Results' && t.button === 'Search' && /related page/.test(t.status), `${name}: 英語の文言でない（${JSON.stringify(t)}）`);
 });
 rankScenario('表示：幅320px・暗い配色で横にはみ出さない', { viewport: { width: 320, height: 800 }, colorScheme: 'dark', worker: echo(() => 0) }, async (page, name) => {
@@ -601,6 +609,41 @@ rankScenario('表示：キーボードだけで②・①を行き来し、状態
   await page.keyboard.press('Escape'); check(await focused() === 'query', `${name}: Esc で入力欄へ戻らない`);
   const role = await page.evaluate(() => { const el = document.getElementById('rank-status'); return el.getAttribute('role') + ':' + (el.closest('[hidden]') ? 'hidden' : 'shown'); });
   check(role === 'status:shown', `${name}: ②の状態の行が role="status" で常にある状態でない（${role}）`);
+});
+
+// 入力中の候補（検索欄の下のドロップダウン。Google などと同じ操作）
+scenario('404 の入力中の候補：↑↓・Enter・Esc・外を押す', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.focus('#query'); await page.keyboard.type('pdf'); await page.waitForTimeout(300);
+  const view = () => page.evaluate(() => {
+    const q = document.getElementById('query'), list = document.getElementById('suggest-list');
+    return { open: !list.hidden, expanded: q.getAttribute('aria-expanded'), active: q.getAttribute('aria-activedescendant'),
+      selected: [...list.querySelectorAll('[aria-selected="true"]')].map(e => e.id), results: !document.getElementById('results').hidden,
+      daily: !document.getElementById('daily-search').hidden, hrefs: [...list.querySelectorAll('[role="option"] a')].map(a => a.getAttribute('href')) };
+  });
+  let v = await view();
+  check(v.open && v.expanded === 'true' && v.hrefs.includes('/tools/pdf-studio/'), `${name}: 入力中に候補のドロップダウンが開かない（${JSON.stringify(v)}）`);
+  check(!v.results && !v.daily, `${name}: 入力中にページへ結果か日刊ブリーフの欄を出している`);
+  await page.keyboard.press('ArrowDown'); v = await view();
+  check(v.active === 'suggest-0' && v.selected.join() === 'suggest-0', `${name}: ↓で先頭の候補を選ばない（${JSON.stringify(v)}）`);
+  await page.keyboard.press('ArrowUp'); v = await view();
+  check(!v.active && !v.selected.length, `${name}: 先頭で↑を押すと入力に戻らない`);
+  await page.keyboard.press('Escape'); v = await view();
+  check(!v.open && v.expanded === 'false', `${name}: Esc で閉じない`);
+  await page.keyboard.press('ArrowDown'); v = await view();
+  check(v.open && v.active === 'suggest-0', `${name}: 閉じた後の↓で開き直さない`);
+  await page.mouse.click(5, 5); v = await view();
+  check(!v.open, `${name}: 外を押しても閉じない`);
+  await page.focus('#query'); await page.keyboard.press('ArrowDown');
+  const target = (await view()).hrefs[0];
+  await Promise.all([page.waitForURL(u => u.pathname === target), page.keyboard.press('Enter')]);
+  // クリックの計測は、移動を止めて確かめる
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.fill('#query', 'pdf'); await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelector('#suggest-list a').addEventListener('click', e => e.preventDefault()));
+  await page.click('#suggest-list a');
+  const mode = await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_result_click').map(e => e.mode + ':' + e.position).join());
+  check(mode === 'suggest:1', `${name}: 候補のクリックの計測が mode=suggest でない（${mode}）`);
 });
 
 for (const { name, options, fn } of scenarios) {

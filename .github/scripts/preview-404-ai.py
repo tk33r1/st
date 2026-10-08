@@ -3,8 +3,8 @@
 
 http://localhost:4215/missing/ を開く。検索語 mock-none / mock-limit / mock-error は各状態、
 mock-daily は日刊、mock-slow は遅い応答、mock-global は共有上限、mock-update は更新要求を模擬する。?lang=en で英語表示。
-検索ボタン（②）も同じ検索語で模擬する：mock-none は該当なし、mock-limit は上限、mock-error は失敗、mock-slow は3秒、
-mock-partial は一部を判定できない、mock-disabled は停止（検索ボタンと②の欄が消える）、mock-evil は外部 URL（描かずに失敗）。
+検索（Enter・虫眼鏡。②）も同じ検索語で模擬する：mock-none は該当なし、mock-limit は上限、mock-error は失敗、mock-slow は3秒、
+mock-partial は一部を判定できない、mock-disabled は停止（②の欄と説明が消える）、mock-evil は外部 URL（描かずに失敗）。
 ほかの語は2件の結果を返す。
 本番ファイル・フラグは変更せず、解析スクリプトも読み込まない。
 """

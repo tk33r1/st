@@ -79,11 +79,18 @@
     .daily-search { margin-top: 16px; font-size: 14px; }
     .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
     .daily-query { overflow-wrap: anywhere; }
-    .search-row { display: flex; gap: 8px; }
-    .search-row input { flex: 1; min-width: 0; }
-    .search-button { flex: 0 0 auto; min-width: 72px; min-height: 52px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
-    .search-button:hover { background: var(--hover); }
-    .search-button.is-suggested { border-color: var(--accent); background: var(--accent); color: var(--surface); }
+    .search-box { position: relative; }
+    .search-box input { padding-right: 56px; }
+    .search-box input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+    .search-submit { position: absolute; top: 4px; right: 4px; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--accent); cursor: pointer; }
+    .search-submit svg { width: 22px; height: 22px; }
+    .search-submit:hover { background: var(--hover); }
+    .search-submit.is-suggested { background: var(--accent); color: var(--surface); }
+    .suggest-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10; max-height: 60vh; overflow-y: auto; padding: 4px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0003; }
+    .suggest-option a { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 16px; color: var(--text); text-decoration: none; }
+    .suggest-option a:hover, .suggest-option[aria-selected="true"] a { background: var(--hover); text-decoration: none; }
+    .suggest-option .result-title { overflow-wrap: anywhere; }
+    .suggest-note { padding: 10px 16px; font-size: 14px; color: var(--muted); }
     .rank-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
     .rank-disclosure { flex: 1; font-size: 13px; color: var(--muted); }
     .rank-note:not(:empty) { margin-top: 8px; }
@@ -150,12 +157,16 @@
     <section class="search" id="search" aria-labelledby="search-label" hidden>
       <form id="search-form" role="search">
         <label id="search-label" for="query" data-ja="サイト内のページを探す" data-en="Find pages on this site">サイト内のページを探す</label>
-        <div class="search-row">
-          <input id="query" type="search" maxlength="200" autocomplete="off" spellcheck="false" placeholder="キーワードや、やりたいことを入力" data-placeholder-ja="キーワードや、やりたいことを入力" data-placeholder-en="Enter keywords or what you want to do" aria-controls="result-list" aria-describedby="search-status">
-          <button type="submit" class="search-button" id="rank-run" hidden data-ja="検索" data-en="Search">検索</button>
+        <div class="search-box" id="search-box">
+          <input id="query" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest-list" maxlength="200" autocomplete="off" spellcheck="false" placeholder="キーワードや、やりたいことを入力" data-placeholder-ja="キーワードや、やりたいことを入力" data-placeholder-en="Enter keywords or what you want to do" aria-describedby="search-status">
+          <button type="submit" class="search-submit" id="search-submit" aria-label="検索" title="検索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+          </button>
+          <!-- 入力中の候補（①。キーワードに一致するページ）。Enter か虫眼鏡で検索すると閉じて、結果をページに出す -->
+          <ul class="suggest-list" id="suggest-list" role="listbox" hidden></ul>
         </div>
         <div class="rank-disclosure-row" id="rank-disclosure-row" hidden>
-          <p class="rank-disclosure" data-ja="検索ボタンを押すと、検索語を TypeSafe AI に送ってページを並べ替えます。" data-en="When you press Search, your query is sent to TypeSafe AI to rank pages."></p>
+          <p class="rank-disclosure" data-ja="検索すると（Enter・虫眼鏡）、検索語を TypeSafe AI に送ってページを並べ替えます。入力中は送りません。" data-en="When you search (Enter or the magnifier), your query is sent to TypeSafe AI to rank pages. Nothing is sent while you type."></p>
           <button type="button" class="ai-info" id="rank-info-open" aria-label="AI検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
           </button>
@@ -163,20 +174,21 @@
         <!-- 入力が止まったときにも送るので、②の有無にかかわらず出す（PRD 8.3） -->
         <p class="search-note" data-ja="入力した検索語は、アクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。" data-en="Search terms you enter are recorded in our analytics (Google Analytics), with email addresses and phone numbers masked."></p>
       </form>
-      <!-- ②（TypeSafe AI で並べ替えた検索結果）。描画は assets/site-search.js -->
-      <div class="results" id="rank-results" hidden>
-        <h2 id="rank-heading" hidden></h2>
-        <ul class="result-list" id="rank-list" aria-labelledby="rank-heading"></ul>
-        <p class="status rank-note" id="rank-note" hidden></p>
+      <!-- ②（TypeSafe AI で並べ替えた検索結果）。描画は assets/site-search.js。検索した後だけ出す（入力中は候補のドロップダウン） -->
+      <div id="rank-area" hidden>
+        <div class="results" id="rank-results" hidden>
+          <h2 id="rank-heading" hidden></h2>
+          <ul class="result-list" id="rank-list" aria-labelledby="rank-heading"></ul>
+          <p class="status rank-note" id="rank-note" hidden></p>
+        </div>
+        <p class="status" id="rank-status" role="status" aria-atomic="true"></p>
       </div>
-      <p class="status" id="rank-status" role="status" aria-atomic="true"></p>
       <div class="results" id="results">
         <h2 id="result-heading" hidden></h2>
         <ul class="result-list" id="result-list" aria-labelledby="result-heading"></ul>
       </div>
       <!-- 読み上げの通知が落ちないよう、状態の行は隠す要素の外に置き、常に存在させる。 -->
       <p class="status" id="search-status" role="status" aria-atomic="true"></p>
-      <p class="daily-search" id="daily-search" hidden><span class="daily-query" id="daily-query"></span> <a id="nitori-search" href="/job/nitoridaily/"></a> <span aria-hidden="true">·</span> <a id="retail-search" href="/job/retailtechdaily/"></a></p>
       <div class="ai-search" id="ai-search" hidden>
         <button type="button" id="ai-run" data-ja="Shinya Takeda AI に聞く" data-en="Ask Shinya Takeda AI">Shinya Takeda AI に聞く</button>
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
@@ -195,6 +207,7 @@
         </div>
       </div>
       <p class="status" id="ai-status" role="status" aria-atomic="true"></p>
+      <p class="daily-search" id="daily-search" hidden><span class="daily-query" id="daily-query"></span> <a id="nitori-search" href="/job/nitoridaily/"></a> <span aria-hidden="true">·</span> <a id="retail-search" href="/job/retailtechdaily/"></a></p>
     </section>
     <noscript><p>下の一覧からお選びください。</p></noscript>
     <section class="explore" aria-labelledby="explore-heading">
@@ -238,7 +251,7 @@
         <h2 id="ai-info-title" data-ja="AI検索とプライバシー" data-en="AI search and privacy">AI検索とプライバシー</h2>
         <button type="button" class="ai-info-close" id="ai-info-close" aria-label="閉じる" autofocus><span aria-hidden="true">×</span></button>
       </div>
-      <p id="rank-info-text" data-ja="検索ボタンを押すと、検索語と公開ページの情報を TypeSafe AI（Jev）のAPIへ送り、ページを並べ替えます。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。" data-en="When you press Search, your query and public page information are sent to the TypeSafe AI (Jev) API to rank pages. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States."></p>
+      <p id="rank-info-text" data-ja="検索すると（Enter・虫眼鏡）、検索語と公開ページの情報を TypeSafe AI（Jev）のAPIへ送り、ページを並べ替えます。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。" data-en="When you search (Enter or the magnifier), your query and public page information are sent to the TypeSafe AI (Jev) API to rank pages. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States."></p>
       <p id="analytics-info-text" data-ja="検索語はアクセス解析（Google アナリティクス）に記録し、よく探される言葉やページの不足を調べるのに使います。メールアドレスと電話番号のような長い数字は伏せてから送ります。" data-en="Search terms are recorded in our analytics (Google Analytics) to learn what people look for and which pages are missing. Email addresses and long numbers such as phone numbers are masked before sending."></p>
       <p id="ai-info-text" data-ja="検索語と必要な公開ページ情報・人格カードをOpenAI・DeepSeek・Google GeminiのAPIへ送ります。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。DeepSeekは中国のサーバーに保存し学習に使うことがあります。Google Geminiの無料枠では製品改善・学習に利用され、人が読むことがあります。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・ログには残しません。Resendへの運用通知にも検索内容は載せません。" data-en="Your search, relevant public page information, and public persona cards are sent to the OpenAI, DeepSeek and Google Gemini APIs. OpenAI API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. DeepSeek stores data on servers in China and may use it for training. Google Gemini free-tier inputs may be used to improve products and train models, and reviewed by humans. Your IP is recorded to limit usage. Searches and replies are not stored in the site's database or logs, or included in operational emails via Resend."></p>
       <p class="ai-disclosure" data-ja="AI検索は全利用者で共有する1日の上限があります。ご自身の上限に達していなくても利用できない場合があります。通常検索は引き続き使えます。" data-en="AI search has a shared daily limit. It may be unavailable even if you have not reached your own limit. Regular search remains available."></p>
@@ -253,8 +266,8 @@
       var lang = 'ja';
       try { if (navigator.language) lang = /^ja/i.test(navigator.language) ? 'ja' : 'en'; } catch (_) { /* 静的HTMLと同じ日本語 */ }
       var messages = {
-        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ', keywordResults: 'キーワードに一致', keywordNone: 'キーワードに一致するページはありません', rankHint: 'キーワードでは見つかりませんでした。検索ボタンで、意味の近いページを探します' },
-        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page', keywordResults: 'Keyword matches', keywordNone: 'No keyword matches', rankHint: 'No keyword matches. Press Search to look for related pages' }
+        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ', keywordResults: 'キーワードに一致', keywordNone: 'キーワードに一致するページはありません', rankHint: 'キーワードに一致するページはありません。Enter で、意味の近いページを探します', suggestCount: '件の候補', search: '検索' },
+        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page', keywordResults: 'Keyword matches', keywordNone: 'No keyword matches', rankHint: 'No keyword matches. Press Enter to look for related pages', suggestCount: ' suggestions', search: 'Search' }
       };
       var text = messages[lang];
       var byId = function (id) { return document.getElementById(id); };
@@ -484,7 +497,7 @@
         count.textContent = lang === 'ja' ? items.length + '件' : items.length + (section === 'glitch' ? ' articles' : section === 'game' ? ' games' : ' tools');
         count.hidden = false;
       }
-      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], displayed: [], mode: 'suggestion', searchUsed: false, total: 0 };
+      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], displayed: [], mode: 'suggestion', searchUsed: false, total: 0, searchedQuery: null };
       var composing = false;
       var imeEnterHeld = false;
       var inputTimer = null;
@@ -504,7 +517,7 @@
       // 公開フラグ。URLなどから切り替えられない。停止はWorker側を先に行う。
       var AI_SEARCH_ENABLED = true;
       // ②（TypeSafe AI で並べ替える検索）の公開フラグ。止めるときは Worker の SITE_RANK_ENABLED を先に false にする
-      // （画面は disabled を受けていまの動きに戻る）。false なら検索ボタンと②の欄を出さず、いまの動き（①が0件で③）のまま
+      // （画面は disabled を受けていまの動きに戻る）。false なら②の欄と説明を出さず、いまの動き（①が0件で③）のまま
       var RANK_ENABLED = true;
       var rank = null;
       function rankAvailable() { return !!rank && !rank.disabled; }
@@ -560,7 +573,7 @@
         return ['results', 'no_results', 'failed', 'stale'].includes(rank.state);
       }
       function syncAI(query, total) {
-        var eligible = AI_SEARCH_ENABLED && query && !composing && aiAllowed(total);
+        var eligible = AI_SEARCH_ENABLED && searched(query) && !composing && aiAllowed(total);
         if (!eligible) { if (ai.eligible) resetAI(); return; }
         if (ai.query !== query) resetAI();
         ai.query = query; ai.eligible = true; byId('ai-search').hidden = false;
@@ -671,18 +684,52 @@
         send('not_found_ai_click', values);
       }
       byId('ai-search').addEventListener('click', recordAIClick); byId('ai-search').addEventListener('auxclick', recordAIClick);
+      // 画面は3つの形をとる（Google などの検索欄と同じ）。
+      //   空の入力：404 ならではの「もしかして」をページに出す
+      //   入力中：キーワードに一致するページ（①）を検索欄の下のドロップダウンに出す。ページには結果を出さない
+      //   検索した後（Enter・虫眼鏡）：②・①・③・日刊ブリーフの順にページに出す。入力を変えたら入力中の形に戻る
+      var suggestList = byId('suggest-list');
+      var suggest = { open: false, active: -1, items: [] };
+      function currentQuery() { return input.value.slice(0, 200).trim(); }
+      function searched(query) { return !!query && state.searchedQuery === query; }
+      function setActive(index) {
+        var options = Array.from(suggestList.querySelectorAll('[role="option"]'));
+        suggest.active = options.length ? Math.max(-1, Math.min(options.length - 1, index)) : -1;
+        options.forEach(function (option, i) { option.setAttribute('aria-selected', i === suggest.active ? 'true' : 'false'); });
+        if (suggest.active >= 0) { input.setAttribute('aria-activedescendant', options[suggest.active].id); options[suggest.active].scrollIntoView({ block: 'nearest' }); }
+        else input.removeAttribute('aria-activedescendant');
+      }
+      function closeSuggest() {
+        suggest.open = false; suggestList.hidden = true; input.setAttribute('aria-expanded', 'false'); setActive(-1);
+      }
+      function renderSuggest(query, items, note) {
+        suggestList.replaceChildren(); suggest.items = items; suggest.active = -1;
+        items.forEach(function (item, index) {
+          var li = document.createElement('li'), a = document.createElement('a'), title = document.createElement('span');
+          li.className = 'suggest-option'; li.id = 'suggest-' + index; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
+          a.href = item.href; a.tabIndex = -1; a.dataset.position = index + 1;
+          title.className = 'result-title'; title.textContent = item.title; a.appendChild(title);
+          if (item.kind !== 'entry') { var kind = document.createElement('span'); kind.className = 'kind'; kind.textContent = text[item.kind]; a.appendChild(kind); }
+          li.appendChild(a); suggestList.appendChild(li);
+        });
+        if (note) { var p = document.createElement('li'); p.className = 'suggest-note'; p.setAttribute('role', 'presentation'); p.textContent = note; suggestList.appendChild(p); }
+        var show = suggest.open && !!query && !searched(query) && !composing && suggestList.children.length > 0;
+        suggestList.hidden = !show; input.setAttribute('aria-expanded', show ? 'true' : 'false');
+        input.removeAttribute('aria-activedescendant');
+      }
       function render() {
         if (composing) return;
         if (list.contains(document.activeElement)) input.focus({ preventScroll: true });
         list.replaceChildren();
         state.displayed = [];
-        var query = input.value.slice(0, 200).trim();
+        var query = currentQuery();
         var notices = [];
         var total = 0;
         var ranking = rankAvailable();
-        state.mode = query ? 'search' : 'suggestion';
+        var done = searched(query);
+        var suggestions = [], suggestNote = '';
+        state.mode = !query ? 'suggestion' : 'search';
         heading.hidden = true;
-        byId('daily-search').hidden = !query;
         if (query) {
           var shownQuery = Array.from(query);
           var quoted = shownQuery.slice(0, 40).join('') + (shownQuery.length > 40 ? '…' : '');
@@ -692,19 +739,23 @@
             link.textContent = entry.title + ' →';
             link.href = entry.href + '#q=' + encodeURIComponent(query);
           });
-          if (!state.jsonReady) notices.push(text.searchLoading);
-          else if (state.failures === 3) notices.push(text.failed);
+          if (!state.jsonReady) { suggestNote = text.searchLoading; notices.push(text.searchLoading); }
+          else if (state.failures === 3) { suggestNote = text.failed; notices.push(text.failed); }
           else {
             var matches = searchItems(state.items, query);
             total = matches.length;
-            // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
-            var ranked = ranking ? new Set(rank.hrefs().map(function (href) { return pathKey(pathParts(safeDecode(href))); })) : null;
-            state.displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
-            heading.textContent = ranking ? text.keywordResults : text.results;
-            heading.hidden = ranking && !state.displayed.length;
-            notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
-              : !ranking ? text.noResults : rank.state === 'idle' ? text.rankHint : text.keywordNone);
-            if (total > 5) notices.push(text.limit);
+            suggestions = matches.slice(0, 6);
+            if (!total) suggestNote = ranking ? text.rankHint : text.noResults;
+            if (done) {
+              // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
+              var ranked = ranking ? new Set(rank.hrefs().map(function (href) { return pathKey(pathParts(safeDecode(href))); })) : null;
+              state.displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
+              heading.textContent = ranking ? text.keywordResults : text.results;
+              heading.hidden = ranking && !state.displayed.length;
+              notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
+                : ranking ? text.keywordNone : text.noResults);
+              if (total > 5) notices.push(text.limit);
+            } else notices.push(total + text.suggestCount);
             if (!state.searchUsed) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
           }
         } else if (!state.candidatesReady) notices.push(text.candidatesLoading);
@@ -718,22 +769,41 @@
           li.firstChild.dataset.position = index + 1;
           list.appendChild(li);
         });
+        renderSuggest(query, done ? [] : suggestions, done ? '' : suggestNote);
+        // 入力中の件数は読み上げだけ（見た目はドロップダウン）
         status.textContent = notices.join(' ');
+        status.classList.toggle('visually-hidden', !!query && !done);
         byId('results').hidden = !state.displayed.length && heading.hidden;
+        byId('rank-area').hidden = !(ranking && done);
+        byId('daily-search').hidden = !done;
         state.total = total;
-        ['rank-run', 'rank-disclosure-row', 'rank-info-text'].forEach(function (id) { byId(id).hidden = !ranking; });
-        byId('rank-run').classList.toggle('is-suggested', ranking && !!query && rank.state === 'idle' && state.jsonReady && state.failures === 0 && total === 0);
+        ['rank-disclosure-row', 'rank-info-text'].forEach(function (id) { byId(id).hidden = !ranking; });
+        byId('search-submit').classList.toggle('is-suggested', ranking && !!query && !done && state.jsonReady && state.failures === 0 && total === 0);
         syncAI(query, total);
         scheduleKeywordCount(query, total);
       }
       function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
       function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
       function renderWhenReady() { if (!composing && inputTimer === null) render(); }
-      // 検索ボタン。①の待ちを済ませてから②を送る（keyword_count をいまの入力の件数にするため。設計書 6.2）
-      byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); if (rankAvailable() && !composing) { flush(); rank.run(); } });
-      input.addEventListener('compositionstart', function () { resetAI(); cancelKeywordCount(); composing = true; clearTimeout(inputTimer); inputTimer = null; if (rank) rank.invalidate(); });
-      input.addEventListener('compositionend', function () { composing = false; schedule(); if (rank) rank.invalidate(); });
-      input.addEventListener('input', function () { resetAI(); cancelKeywordCount(); if (!composing) schedule(); if (rank) rank.invalidate(); });
+      // 検索（Enter・虫眼鏡）。①の待ちを済ませてから②を送る（keyword_count をいまの入力の件数にするため。設計書 6.2）
+      function runSearch() {
+        var query = currentQuery();
+        if (!query || composing) return;
+        state.searchedQuery = query; closeSuggest(); flush();
+        if (rankAvailable()) rank.run();
+      }
+      byId('search-submit').setAttribute('aria-label', text.search); byId('search-submit').title = text.search;
+      byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); runSearch(); });
+      // 入力が変わったら入力中の形に戻す。前後の空白だけの違いなら、検索した後の形のまま
+      function changed() { cancelKeywordCount(); suggest.open = true; if (state.searchedQuery !== currentQuery()) { resetAI(); state.searchedQuery = null; } }
+      input.addEventListener('compositionstart', function () { changed(); composing = true; clearTimeout(inputTimer); inputTimer = null; closeSuggest(); if (rank) rank.invalidate(); });
+      input.addEventListener('compositionend', function () { composing = false; suggest.open = true; schedule(); if (rank) rank.invalidate(); });
+      input.addEventListener('input', function () { changed(); if (!composing) schedule(); if (rank) rank.invalidate(); });
+      input.addEventListener('focus', function () { if (currentQuery() && !searched(currentQuery())) { suggest.open = true; render(); } });
+      // ドロップダウンの外を押したら閉じる。候補を押したときは、入力欄のフォーカスを外さずにリンクへ移る
+      suggestList.addEventListener('mousedown', function (event) { event.preventDefault(); });
+      document.addEventListener('mousedown', function (event) { if (!byId('search-box').contains(event.target)) closeSuggest(); });
+      input.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== input) closeSuggest(); }, 0); });
       function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
       // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
       // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。
@@ -746,13 +816,33 @@
         return composing || event.isComposing || event.keyCode === 229 || (enterKey(event) && (imeEnterHeld || event.repeat));
       }
       input.addEventListener('keydown', function (event) {
-        if (imeEvent(event) || (event.key !== 'ArrowDown' && event.key !== 'Enter')) return;
-        event.preventDefault();
-        flush();
-        // ②が使えるときの Enter は②の検索（設計書 6.2）。使えないときと空の入力は、いまのまま①の先頭を開く
-        if (event.key === 'Enter' && rankAvailable() && input.value.slice(0, 200).trim()) { rank.run(); return; }
-        var first = (rankAvailable() && rankList.querySelector('a')) || list.querySelector('a');
-        if (first) { if (event.key === 'ArrowDown') first.focus(); else first.click(); }
+        if (imeEvent(event)) return;
+        var open = !suggestList.hidden;
+        if (event.key === 'Escape' && open) { event.preventDefault(); closeSuggest(); return; }
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter') return;
+        var query = currentQuery();
+        // 入力中：↑↓で候補を選び、Enter で選んだ候補へ移る。選んでいなければ検索する
+        if (event.key !== 'Enter' && query && !searched(query)) {
+          event.preventDefault();
+          if (!open) { suggest.open = true; flush(); setActive(event.key === 'ArrowDown' ? 0 : -1); return; }
+          setActive(suggest.active + (event.key === 'ArrowDown' ? 1 : -1));
+          return;
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          var chosen = open && suggest.active >= 0 && suggestList.querySelectorAll('[role="option"] a')[suggest.active];
+          if (chosen) { chosen.click(); return; }
+          if (query) { runSearch(); return; }
+          var firstCandidate = list.querySelector('a');
+          if (firstCandidate) firstCandidate.click();
+          return;
+        }
+        // 検索した後・空の入力：↓で結果（②、続けて①）へ移る
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          var first = (rankAvailable() && rankList.querySelector('a')) || list.querySelector('a');
+          if (first) first.focus();
+        }
       });
       // ①・②の一覧のキー操作（↑↓で移動、先頭で↑・Esc で入力欄へ）。②の末尾で↓なら①の先頭へ（設計書 6.2）
       function bindListKeys(container, next) {
@@ -771,10 +861,10 @@
       bindListKeys(list, null);
       function recordClick(event) {
         var link = event.target.closest('a[data-position]');
-        if (link && (event.type !== 'auxclick' || event.button === 1)) send('not_found_result_click', { mode: state.mode, position: Number(link.dataset.position) });
+        if (!link || (event.type === 'auxclick' && event.button !== 1)) return;
+        send('not_found_result_click', { mode: suggestList.contains(link) ? 'suggest' : state.mode, position: Number(link.dataset.position) });
       }
-      list.addEventListener('click', recordClick);
-      list.addEventListener('auxclick', recordClick);
+      [list, suggestList].forEach(function (el) { el.addEventListener('click', recordClick); el.addEventListener('auxclick', recordClick); });
       if (RANK_ENABLED && window.STSiteSearch) {
         rank = STSiteSearch.rank({
           scope: 'site',
@@ -788,15 +878,15 @@
             texts: lang === 'ja'
               ? { heading: '検索結果', loading: '意味の近いページを探しています…', noResults: '意味の近いページは見つかりませんでした。', partial: '一部の候補を判定できませんでした。',
                   failed: 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。', rateLimited: '今日の検索の上限に達しました。キーワードの一致は使えます。',
-                  stale: '検索ボタンで探し直せます。', count: function (n) { return n + '件のページが見つかりました。'; } }
+                  stale: 'Enter で探し直せます。', count: function (n) { return n + '件のページが見つかりました。'; } }
               : { heading: 'Results', loading: 'Looking for related pages…', noResults: 'No related pages were found.', partial: 'Some pages could not be checked.',
                   failed: 'Results are not available right now. Keyword matches and Shinya Takeda AI still work.', rateLimited: "You have reached today's search limit. Keyword matches still work.",
-                  stale: 'Press Search to search again.', count: function (n) { return n + (n === 1 ? ' related page found.' : ' related pages found.'); } }
+                  stale: 'Press Enter to search again.', count: function (n) { return n + (n === 1 ? ' related page found.' : ' related pages found.'); } }
           },
           onRun: function () { resetAI(); },
           // 状態が変わったら①（重複の除き）と③の出し方を描き直す
           onState: function () { renderWhenReady(); },
-          // 部品は検索語を渡さないので、検索ボタンのイベントにだけページが足す（設計書 6.5）
+          // 部品は検索語を渡さないので、検索した操作のイベントにだけページが足す（設計書 6.5）
           track: function (event, values) {
             if (event === 'rank_run') values = Object.assign({}, values, { search_term: analyticsTerm(input.value.slice(0, 200).trim()) });
             send('not_found_' + event, values);
