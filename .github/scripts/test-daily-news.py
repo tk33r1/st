@@ -286,5 +286,18 @@ class NewsFilterTests(unittest.TestCase):
         self.assertCountEqual(judged, [rejected['title'], accepted['title'], duplicate['title']])
 
 
+
+class RebuildOutputTest(unittest.TestCase):
+    def test_rss_is_kept_when_only_build_date_differs(self):
+        import tempfile, os
+        feed = '<rss><channel><lastBuildDate>Wed, 07 Oct 2026 06:00:00 +0900</lastBuildDate><item>a</item></channel></rss>'
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'rss.xml')
+            self.assertFalse(engine._same_except_build_date(path, feed))  # ファイルが無ければ書く
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(feed)
+            self.assertTrue(engine._same_except_build_date(path, feed.replace('06:00:00', '09:30:00')))
+            self.assertFalse(engine._same_except_build_date(path, feed.replace('<item>a</item>', '<item>b</item>')))
+
 if __name__ == '__main__':
     unittest.main()

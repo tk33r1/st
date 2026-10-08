@@ -7,6 +7,7 @@ Retail Tech Daily Brief, Nitori Daily Brief などの日刊ニュースメディ
 """
 
 import argparse
+import contextlib
 import email.utils
 import html
 import json
@@ -2304,40 +2305,48 @@ def write_issue_page(config, articles_history, index):
 
 
 _BUILD_DATE_RE = re.compile(r'<lastBuildDate>[^<]*</lastBuildDate>')
-_DATE_MODIFIED_RE = re.compile(r'("dateModified"\s*:\s*")([^"]*)')
+def _load_update_modified():
+    """update-modified.py（JSON-LD の dateModified を git の日時に合わせる）の正規表現を借りる。規則を二重に持たない。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('update_modified', os.path.join(SCRIPT_DIR, 'update-modified.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def _page_paths(job_dir):
-    """ポータルと全号のページ。"""
-    paths = [os.path.join(job_dir, 'index.html')]
-    for name in sorted(os.listdir(job_dir)):
-        page = os.path.join(job_dir, name, 'index.html')
-        if re.fullmatch(r'\d{8}', name) and os.path.isfile(page):
-            paths.append(page)
-    return paths
+def _date_modified_values(text, module):
+    """JSON-LD のブロックの中の dateModified の値を、出てくる順に返す。"""
+    return [d.group(0)[len(d.group(1)):] for m in module.LD_BLOCK.finditer(text) for d in module.DATE_FIELD.finditer(m.group(2))]
 
 
+@contextlib.contextmanager
 def keep_date_modified(job_dir):
-    """--rebuild の前後で、既存のページの JSON-LD の dateModified を元の値のまま残す。
-    dateModified は update-modified.py が git の日時に合わせているので、本文を変えない作り直しで生成器の値に戻さない
-    （作り直しのコミットには Date-Sync: skip を付ける）。戻り値を呼ぶと、作り直した後のページに元の値を書き戻す。"""
+    """--rebuild のあいだ、既存のページの JSON-LD の dateModified を元の値のまま残す。
+    dateModified は sitemap.yml（update-modified.py）が git の日時に合わせた値で、本文を変えない作り直しで生成器の値に戻さない
+    （作り直しのコミットには Date-Sync: skip を付ける）。手元の浅い clone では git の履歴から日時を決め直せないので、作り直す前の値を控える。
+    途中で失敗しても、それまでに書いたページを元の値に戻す。"""
+    module = _load_update_modified()
+    names = sorted(os.listdir(job_dir)) if os.path.isdir(job_dir) else []
+    paths = [os.path.join(job_dir, 'index.html')] + [os.path.join(job_dir, n, 'index.html') for n in names if re.fullmatch(r'\d{8}', n)]
     before = {}
-    for path in _page_paths(job_dir):
-        with open(path, encoding='utf-8', newline='') as f:
-            before[path] = [m.group(2) for m in _DATE_MODIFIED_RE.finditer(f.read())]
-
-    def restore():
+    for path in paths:
+        if os.path.isfile(path):
+            with open(path, encoding='utf-8', newline='') as f:
+                before[path] = _date_modified_values(f.read(), module)
+    try:
+        yield
+    finally:
         for path, values in before.items():
             with open(path, encoding='utf-8', newline='') as f:
                 text = f.read()
-            if len(_DATE_MODIFIED_RE.findall(text)) != len(values):
-                continue  # 構造化データの形が変わったページは生成器の値のまま
+            if len(_date_modified_values(text, module)) != len(values):
+                print(f"::warning::{os.path.relpath(path, REPO_ROOT)} は JSON-LD の dateModified の数が変わったので、生成器の値のまま", file=sys.stderr)
+                continue
             it = iter(values)
-            updated = _DATE_MODIFIED_RE.sub(lambda m: m.group(1) + next(it), text)
+            updated = module.LD_BLOCK.sub(lambda m: m.group(1) + module.DATE_FIELD.sub(lambda d: d.group(1) + next(it), m.group(2)) + m.group(3), text)
             if updated != text:
                 with open(path, 'w', encoding='utf-8', newline='') as f:
                     f.write(updated)
-    return restore
 
 
 def _same_except_build_date(path, content):
@@ -2357,6 +2366,7 @@ def write_collection_outputs(config, articles_history):
         ('index.html', clean_generated_text(render_top_index_html(config, articles_history))),
         ('rss.xml', clean_generated_text(generate_rss_xml(config, articles_history))),
     )
+    written = []
     for filename, content in outputs:
         path = os.path.join(job_dir, filename)
         # 号が増えていない作り直し（--rebuild）で、RSS の lastBuildDate だけが変わるのを避ける。
@@ -2365,8 +2375,10 @@ def write_collection_outputs(config, articles_history):
             continue
         with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
+        written.append(filename)
     for filename, payload in build_search_index(config, articles_history).items():
         write_json_atomic(os.path.join(job_dir, filename), payload, separators=(',', ':'))
+    return written
 
 
 def run_daily_pipeline(config):
@@ -2389,15 +2401,14 @@ def run_daily_pipeline(config):
             save_history(data_dir, articles_history)
             print(f" -> 旧号のSNS出典URLを修復してJSONへ反映: {len(repaired_indices)} 号")
 
-        restore_dates = keep_date_modified(job_dir)
-        for i in range(len(articles_history)):
-            date_key = write_issue_page(config, articles_history, i)
-            print(f" -> 再生成: {date_key}号 HTML")
-
-        write_collection_outputs(config, articles_history)
-        restore_dates()
+        with keep_date_modified(job_dir):
+            for i in range(len(articles_history)):
+                date_key = write_issue_page(config, articles_history, i)
+                print(f" -> 再生成: {date_key}号 HTML")
+            written = write_collection_outputs(config, articles_history)
         print(f" -> 再生成: トップポータル index.html")
-        print(f" -> 再生成: rss.xml")
+        print(" -> 再生成: rss.xml" if 'rss.xml' in written else " -> rss.xml は lastBuildDate 以外に変わりがないので、そのまま")
+        print(" -> 既存のページの dateModified は作り直す前の値のまま")
         print(f" -> 再生成: search-index.json")
         print("=== Rebuild 完了 ===")
         return
