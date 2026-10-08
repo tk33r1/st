@@ -63,7 +63,7 @@ const check = (ok, message) => { if (!ok) failures.push(message); };
 const marked = s => typeof s === 'string' && s.toLowerCase().includes(MARK);
 
 // 外への通信の記録。手元のサーバーへの要求（目印を URL に入れて開くものを含む）は数えない
-async function newContext({ js = true, analyticsOff = false, worker = null, locale = 'ja-JP', viewport = null, colorScheme = 'light', lists = null } = {}) {
+async function newContext({ js = true, analyticsOff = false, worker = null, realWorker = false, locale = 'ja-JP', viewport = null, colorScheme = 'light', lists = null } = {}) {
   const context = await browser.newContext({ javaScriptEnabled: js, locale, colorScheme, ...(viewport ? { viewport } : {}) });
   const log = [];
   if (analyticsOff) await context.addInitScript(() => { try { localStorage.setItem('st-analytics', 'off'); } catch (_) {} });
@@ -79,6 +79,7 @@ async function newContext({ js = true, analyticsOff = false, worker = null, loca
     try { body = req.postData(); } catch (_) { body = '(読めない本文)'; }
     log.push({ url, body, referer: (await req.allHeaders()).referer || null, search: SEARCH_API.test(url) });
     if (SEARCH_API.test(url) && worker) return worker(route);
+    if (SEARCH_API.test(url) && realWorker) return route.continue(); // 本番の Worker へそのまま送る（本番を相手にするときの1場面だけ）
     if (ANALYTICS_SCRIPTS.some(r => r.test(url))) {
       try {
         const res = await route.fetch();
@@ -466,6 +467,14 @@ rankScenario('停止：disabled なら検索ボタンと②の欄を隠し、い
   check(v.state === 'off' && v.rankStatus === '', `${name}: 検索ボタンか②の文言が残る`);
   check(v.ai && !v.aiQuiet, `${name}: ①が0件で③が出ない（いまの動き）`);
   check(!(await page.evaluate(() => document.getElementById('rank-disclosure-row').hidden === false)), `${name}: ②の説明が残る`);
+});
+
+// 本番の Worker で②を1回だけ送る（--base のときだけ。Jev を1回呼ぶ。評価セット・smoke と重ねない語）
+if (remote) rankScenario('本番の Worker で検索する', { realWorker: true }, async (page, name) => {
+  await page.fill('#query', '書類のPDFをひとつにまとめる'); await page.waitForTimeout(150); await page.press('#query', 'Enter');
+  await page.waitForFunction(() => !['', '意味の近いページを探しています…'].includes(document.getElementById('rank-status').textContent), null, { timeout: 10000 }).catch(() => {});
+  const v = await rankView(page);
+  check(v.rankHrefs.includes('/tools/pdf-studio/'), `${name}: PDF Studio が②に出ない（${v.rankStatus}／${v.rankHrefs.join('・')}）`);
 });
 
 // 表示：日英・暗い配色・320px・キーボード・読み上げの状態の行

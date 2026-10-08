@@ -480,7 +480,7 @@
       var AI_SEARCH_ENABLED = true;
       // ②（TypeSafe AI で並べ替える検索）の公開フラグ。止めるときは Worker の SITE_RANK_ENABLED を先に false にする
       // （画面は disabled を受けていまの動きに戻る）。false なら検索ボタンと②の欄を出さず、いまの動き（①が0件で③）のまま
-      var RANK_ENABLED = false;
+      var RANK_ENABLED = true;
       var rank = null;
       function rankAvailable() { return !!rank && !rank.disabled; }
       var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
