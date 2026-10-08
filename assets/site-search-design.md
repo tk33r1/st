@@ -627,6 +627,8 @@ Google や Amazon の検索欄と同じ形にする（2026-10-08 に、検索欄
 
 ## 11. Phase 3 の方針
 
+> 2026-10-09 の本人のレビューで、Phase 3 は日刊2誌の②に絞った（日刊の③、ツール・ゲーム一覧の②・③は作らない）。正本は [Phase 3 PRD](site-search-phase3-prd.md) と [Phase 3 設計書](site-search-phase3-design.md)。この節は当初の方針として残す。
+
 - **共通部品**：`site-search.js` に③を移す（Phase 2 では③の本体を404に残し、部品は②だけを持つ）。404 も部品の③を使うように揃える。
 - **`/tools/`・`/game/`**：scope `tools`・`game` を開ける（3.2）。①はいまのカードの絞り込みのまま、上に②の欄。`/tools/` は CSP の `connect-src` に `https://workers.tk.st` を足し、説明を直す（PRD 10.2）。
 - **日刊**：3.5・3.6 の日刊の部分を実装する。①と②の重なりは記事のアンカーまで含めて判定する（同じ号の別記事を重複にしない。PRD 3.2）。`filters` を受け取り、`no_results` で調べた範囲を出す（PRD 4.3）。③は `SITE_SEARCH` の上限まで候補を広げる（PRD 10.1）。`daily_engine.py` のポータルに送信の説明を足す。
