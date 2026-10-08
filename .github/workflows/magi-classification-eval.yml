@@ -1,0 +1,39 @@
+name: MAGI Classification Eval
+
+# magi2 の発言分類（TypeSafe AI の Jev。personas.js の INTENT_CLASSIFY）を、固定した合成入力で確かめる（.github/JEV.md 6）。
+# 手動のときだけ動かす。問い・基準を変えたら、変える前（main）と変えた後（ブランチ）で1回ずつ回して比べる。
+# キーはリポジトリ Secret の TYPESAFE_API_KEY。費用は Jev の約70回分。生の記録は成果物として残す（入力は合成文だけ）。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magi-classification-eval
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Evaluate
+      env:
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-classification.mjs
+
+    - name: Keep the record
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: classification-audit
+        path: workers/.wrangler/classification-audit.json
+        include-hidden-files: true
+        if-no-files-found: ignore

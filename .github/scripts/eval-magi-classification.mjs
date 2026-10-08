@@ -10,7 +10,8 @@ const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g,
 vm.runInContext(['languages.js', 'personas.js', 'classification.js'].map(p => strip(read('workers/magi2/' + p))).join('\n')
   + '\nglobalThis.cfg=INTENT_CLASSIFY;globalThis.payload=classificationPayload;globalThis.accept=acceptedChoice;', ctx);
 const cfg = ctx.cfg;
-const saved = read('workers/magi2/.dev.vars');
+let saved = '';
+try { saved = read('workers/magi2/.dev.vars'); } catch (_) { /* Actions では環境変数から読む */ }
 const key = process.env[cfg.key] || saved.match(/^\s*MAGI_TYPESAFE_API_KEY\s*=\s*(.*?)\s*$/m)?.[1].replace(/^(['"])(.*)\1$/, '$2');
 assert(key, 'TypeSafe key is required');
 // 各群20文。ラベルはAPIを呼ぶ前に固定し、失敗後に変更しない。
@@ -47,6 +48,12 @@ const cases = Object.entries(groups).flatMap(([intent, texts]) => texts.map((tex
 })));
 // consultの前半は日英が5文ずつ。言語の期待値も先に固定する。
 for (let i = 0; i < 20; i++) cases[i].language = i < 5 || (i >= 10 && i < 15) ? 'ja' : 'en';
+// 「日刊」と書かないニュースの質問（サイトに日刊ブリーフがあるので site）と、ニトリ・ニュースの語を含む一般の相談（2026-10-08 に追加）
+for (const [text, intent, language] of [
+  ['ニトリの出店のニュースある？', 'site', 'ja'], ['リテールテックの最新ニュースを教えて', 'site', 'ja'], ['小売のセルフレジの動向は？', 'site', 'ja'],
+  ['ニトリの値下げのニュースを知りたい', 'site', 'ja'], ['Any news about Nitori opening new stores?', 'site', 'en'],
+  ['ニトリで買ったソファの手入れ方法は？', 'consult', 'ja'], ['ニュースを読む習慣をつけたい', 'consult', 'ja'], ['How do I stop doomscrolling the news?', 'consult', 'en'],
+]) cases.push({ text, intent, language });
 const results = [];
 for (let i = 0; i < cases.length; i++) {
   const c = cases[i];
@@ -82,7 +89,7 @@ writeFileSync(output, JSON.stringify({ date: new Date().toISOString(), revision:
   count: results.length, candidate_count: candidates, candidate_rate: candidates / results.length, confidences, results }, null, 2));
 console.log(JSON.stringify({ revision: cfg.revision, count: cases.length, intent_mistakes: mistakes,
   language_errors: languageErrors, consult_wrong: consultWrong.length, unrelated_not_no: unrelatedNotNo,
-  relevant_no: relevantNo, median_ms: times[29], p90_ms: times[53], within_budget: times.filter(t => t <= cfg.timeout_ms).length / times.length,
+  relevant_no: relevantNo, median_ms: quantile(times, .5), p90_ms: quantile(times, .9), within_budget: times.filter(t => t <= cfg.timeout_ms).length / times.length,
   candidate_count: candidates, candidate_rate: candidates / results.length, confidences,
   relevant_no_cases: results.filter(r => r.expected === 'site' && r.site_pages === 'no').map(r => ({ case: r.case, confidence: r.confidence.site_pages })),
   confusion: Object.fromEntries(Object.keys(groups).map(expected => [expected,
