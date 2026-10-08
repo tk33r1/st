@@ -18,6 +18,7 @@
   var KINDS = { site: ['page', 'tool', 'game', 'article'], tools: ['tool'], game: ['game'], nitori: ['daily'], retail: ['daily'] };
   var DAILY_DIRS = { nitori: 'nitoridaily', retail: 'retailtechdaily' };
   var STATUSES = ['results', 'no_results', 'failed'];
+  function failed(reason) { return { status: 'failed', reason: reason, complete: false, rows: [] }; }
 
   function endpoint() {
     var host = w.location.hostname;
@@ -39,7 +40,6 @@
 
   // 応答の本文を画面に出せる形にする。1行でも合わなければ全体を failed にする（一部だけ描くと「ほかに無い」と読めるため）
   function readResult(data, scope) {
-    var failed = function (reason) { return { status: 'failed', reason: reason, complete: false, rows: [] }; };
     if (!data || typeof data !== 'object' || Array.isArray(data)) return failed('unavailable');
     if (STATUSES.indexOf(data.status) < 0 || typeof data.complete !== 'boolean' || !Array.isArray(data.results) || data.results.length > MAX_RESULTS) return failed('unavailable');
     if (data.status === 'failed') return failed(typeof data.reason === 'string' ? data.reason : 'unavailable');
@@ -67,7 +67,6 @@
     var shownKey = null;  // いま描いている（または読み込み中の）条件のキー
     var ranKey = null;    // 最後に②を実行した条件のキー
     var settled = null;   // 最後に確定した結果 { key, status, reason, count, complete }
-    var hrefs = [];
 
     function conditionNow() {
       var c = null;
@@ -81,7 +80,6 @@
       el.heading.hidden = true;
       el.section.hidden = true;
       if (el.note) { el.note.textContent = ''; el.note.hidden = true; }
-      hrefs = [];
     }
     function setState(next, message) {
       self.state = next;
@@ -107,7 +105,6 @@
           if (row.description) { var desc = document.createElement('span'); desc.className = 'description'; desc.textContent = row.description; content.appendChild(desc); }
           kind.className = 'kind'; kind.textContent = labels.kinds[row.kind] || '';
           a.appendChild(content); a.appendChild(kind); li.appendChild(a); el.list.appendChild(li);
-          hrefs.push(row.href);
         });
         el.heading.textContent = texts.heading; el.heading.hidden = false; el.section.hidden = false;
         var partial = result.complete ? '' : texts.partial;
@@ -122,6 +119,8 @@
 
     // 入力などが変わったとき（設計書 5.2）。前後の空白だけの違いなど、条件のキーが同じなら何もしない
     function reset(force) {
+      // まだ②を送っていなければ、入力のたびにすることは無い
+      if (!force && self.state === 'idle' && ranKey === null && !controller) return;
       var c = conditionNow(), key = keyOf(c);
       if (!force && key !== null && key === shownKey) return;
       stop(); clear(); shownKey = null;
@@ -159,7 +158,7 @@
         try {
           var res = await fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
             credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal });
-          if ([200, 429, 400].indexOf(res.status) < 0) result = { status: 'failed', reason: 'unavailable', complete: false, rows: [] };
+          if ([200, 429, 400].indexOf(res.status) < 0) result = failed('unavailable');
           else {
             var data;
             try { data = await res.json(); } catch (e) { if (timedOut()) throw e; data = null; }
@@ -167,7 +166,7 @@
             if (res.status === 429 && result.status === 'failed') result.reason = 'rate_limited';
           }
         } catch (_) {
-          result = { status: 'failed', reason: timedOut() ? 'timeout' : 'unavailable', complete: false, rows: [] };
+          result = failed(timedOut() ? 'timeout' : 'unavailable');
         }
         // 送ったときの世代と条件のままのときだけ描く（A → B → A でも最初の A の応答は描かない）
         if (mine !== generation || keyOf(conditionNow()) !== key) return;
@@ -189,7 +188,7 @@
       return settled && self.state !== 'stale' && self.state !== 'loading' && settled.key === keyOf(conditionNow()) ? settled : null;
     };
     // いま描いている②の URL（①から重複を除くため）
-    self.hrefs = function () { return hrefs.slice(); };
+    self.hrefs = function () { return Array.from(el.list.querySelectorAll('a'), function (a) { return a.getAttribute('href'); }); };
 
     function recordClick(event) {
       var a = event.target.closest && event.target.closest('a[data-rank-position]');

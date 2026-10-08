@@ -4,6 +4,7 @@
 import argparse
 import base64
 import json
+import math
 import os
 import re
 import struct
@@ -351,13 +352,14 @@ def smoke_site_rank(url, api_key, model):
     observations = []
     for case in config['cases']:
         payload = {**case['payload'], 'model': model}
-        answers = post_json(url, api_key, payload).get('answers', {})
+        answers = post_json(url, api_key, payload).get('answers')
+        answers = answers if isinstance(answers, dict) else {}
         # Workerは判定の欠けた応答を使わない（rankProbability）。全候補の答えが有効かを見る
         probabilities = {}
         for name in payload['questions']:
-            answer = answers.get(name) if isinstance(answers, dict) else None
+            answer = answers.get(name)
             value = answer.get('noul') if isinstance(answer, dict) and answer.get('type') == 'noul' else None
-            if not isinstance(value, (int, float)) or isinstance(value, bool) or not (0 <= value <= 1):
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or not (0 <= value <= 1):
                 raise RuntimeError(f'サイト内検索の{name}の答えが不正です')
             probabilities[name] = value
         query = payload['state']['query']

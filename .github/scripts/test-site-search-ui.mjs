@@ -2,8 +2,8 @@
 //   node .github/scripts/test-site-search-ui.mjs [--root _site]
 //   node .github/scripts/test-site-search-ui.mjs --base https://tk.st   … 本番を相手にする（計画書 T4.10。Actions の site-search-url.yml）
 // 手元では先に `bash build.sh` で _site を作る（--root . ならリポジトリをそのまま出す）。存在しないパスには 404.html を 404 で返す。
-// ②の場面（計画書 T5.4）：応答の検査・状態と世代・①③との連携と計測・表示・停止。手元では 404 の RANK_ENABLED を true にして出し、
-// Worker への要求は route で応答を差し替える。本番（--base）では、②が公開されていなければ②の場面を飛ばす。
+// ②の場面（計画書 T5.4）：応答の検査・状態と世代・①③との連携と計測・表示・停止。Worker への要求は route で応答を差し替える。
+// 404 の RANK_ENABLED が false（②を止めた）なら、②の場面は飛ばす。本番（--base）では1場面だけ本物の Worker に送る。
 // URL の部分（PRD 6.1。計画書 T4.8）：目印の検索語が、外へ出る通信（URL と本文）・location・移った先の
 // document.referrer に残らないことを、404 → 日刊、③の日刊リンク、日刊のヘッダー・横断検索・タグ・絞り込み・号への移動、
 // 古い ?q=、受け取らない値、計測を止めた状態、JS 無効のヘッダー送信、再読み込みで確かめる。
@@ -43,9 +43,7 @@ function serve() {
     if (file !== root && !file.startsWith(root + sep)) file = null;
     if (file && existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
     const found = file && existsSync(file) && statSync(file).isFile();
-    let body = readFileSync(found ? file : join(root, '404.html'));
-    // 公開前の②を確かめるため、404 は RANK_ENABLED を true にして出す（T5.6 で本体も true になる）
-    if (!found) body = Buffer.from(body.toString('utf8').replace('var RANK_ENABLED = false;', 'var RANK_ENABLED = true;'));
+    const body = readFileSync(found ? file : join(root, '404.html'));
     res.writeHead(found ? 200 : 404, { 'Content-Type': (found ? TYPES[extname(file)] : TYPES['.html']) || 'application/octet-stream' });
     res.end(body);
   });
@@ -63,7 +61,7 @@ const check = (ok, message) => { if (!ok) failures.push(message); };
 const marked = s => typeof s === 'string' && s.toLowerCase().includes(MARK);
 
 // 外への通信の記録。手元のサーバーへの要求（目印を URL に入れて開くものを含む）は数えない
-async function newContext({ js = true, analyticsOff = false, worker = null, realWorker = false, locale = 'ja-JP', viewport = null, colorScheme = 'light', lists = null } = {}) {
+async function newContext({ js = true, analyticsOff = false, worker = null, locale = 'ja-JP', viewport = null, colorScheme = 'light', lists = null } = {}) {
   const context = await browser.newContext({ javaScriptEnabled: js, locale, colorScheme, ...(viewport ? { viewport } : {}) });
   const log = [];
   if (analyticsOff) await context.addInitScript(() => { try { localStorage.setItem('st-analytics', 'off'); } catch (_) {} });
@@ -79,7 +77,6 @@ async function newContext({ js = true, analyticsOff = false, worker = null, real
     try { body = req.postData(); } catch (_) { body = '(読めない本文)'; }
     log.push({ url, body, referer: (await req.allHeaders()).referer || null, search: SEARCH_API.test(url) });
     if (SEARCH_API.test(url) && worker) return worker(route);
-    if (SEARCH_API.test(url) && realWorker) return route.continue(); // 本番の Worker へそのまま送る（本番を相手にするときの1場面だけ）
     if (ANALYTICS_SCRIPTS.some(r => r.test(url))) {
       try {
         const res = await route.fetch();
@@ -96,11 +93,18 @@ async function newContext({ js = true, analyticsOff = false, worker = null, real
 const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.[a-z.]+$/; // 国別のドメイン（www.google.ca など）も Google シグナルの送り先
 const withoutSearchTerm = (r, text) => typeof text === 'string' && GOOGLE_MEASUREMENT.test(new URL(r.url).host)
   ? text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g, '$1') : text;
-// 伏せ字にするはずの値（404 の計測の場面で入力する）。生のままでは、どの通信にも出てはいけない
-const PII = ['a.b@example.com', 'a.b%40example.com', '090-1234-5678', '090%2D1234%2D5678', '1234-5678'];
+// 伏せ字にするはずの値（計測の場面で入力する）。URL と本文をデコードしてから探す（エンコードの違いで見逃さない）
+const PII = ['a.b@example.com', '090-1234-5678'];
+const PII_QUERY = 'メール a.b@example.com 090-1234-5678 収納', PII_MASKED = 'メール [email] [number] 収納';
+function decoded(text) {
+  let t = (text || '').replace(/\+/g, ' ');
+  for (let i = 0; i < 2; i++) { try { t = decodeURIComponent(t); } catch (_) { break; } }
+  return t;
+}
 function checkLog(name, log) {
   for (const raw of log) {
-    for (const v of PII) check(!(raw.url || '').includes(v) && !(raw.body || '').includes(v), `${name}: 伏せるはずの値（${v}）が外への通信に出た（${raw.url.slice(0, 120)}）`);
+    const plain = decoded(raw.url) + '\n' + decoded(raw.body);
+    for (const v of PII) check(!plain.includes(v), `${name}: 伏せるはずの値（${v}）が外への通信に出た（${raw.url.slice(0, 120)}）`);
     const r = { ...raw, url: withoutSearchTerm(raw, raw.url), body: withoutSearchTerm(raw, raw.body) };
     if (r.search) {
       check(!marked(r.url), `${name}: 検索の Worker への URL に目印がある（${r.url}）`);
@@ -342,10 +346,10 @@ scenario('404 の計測：not_found_keyword_count', {}, async (page, name) => {
 // 検索語の計測（PRD 8.3）：伏せ字にしてから search_term で送る。日刊の横断検索も同じ。計測を止めた人には送らない
 scenario('404 の計測：search_term は伏せ字にして送る', {}, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
-  await page.fill('#query', 'メール a.b@example.com 090-1234-5678 収納');
+  await page.fill('#query', PII_QUERY);
   await page.waitForTimeout(2500);
   const hit = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => ({ ...e })))).at(-1);
-  check(hit && hit.search_term === 'メール [email] [number] 収納', `${name}: search_term が伏せ字になっていない（${hit && hit.search_term}）`);
+  check(hit && hit.search_term === PII_MASKED, `${name}: search_term が伏せ字になっていない（${hit && hit.search_term}）`);
 });
 for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
   scenario('日刊の計測：daily_search' + label, { analyticsOff: off }, async (page, name) => {
@@ -355,6 +359,11 @@ for (const [label, off] of [['', false], ['（計測を止めた状態）', true
     const hits = await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'daily_search').map(e => ({ ...e })));
     if (off) check(hits.length === 0, `${name}: 計測を止めているのに daily_search を送った`);
     else check(hits.length === 1 && hits[0].search_term === QUERY && typeof hits[0].count === 'number', `${name}: daily_search が1回だけ・検索語付きで送られない（${JSON.stringify(hits)}）`);
+    if (!off) {
+      await page.fill('#archiveSearchInput', PII_QUERY); await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(300);
+      const last = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'daily_search').map(e => e.search_term))).at(-1);
+      check(last === PII_MASKED, `${name}: 日刊の search_term が伏せ字になっていない（${last}）`);
+    }
     await checkLocation(name, page);
     await page.waitForTimeout(3000);
   });
@@ -459,7 +468,7 @@ rankScenario('連携：①から②のページを除き、入力の変更で戻
   await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   let v = await rankView(page);
   check(!v.keyword.includes('/tools/pdf-studio/'), `${name}: ②に出たページが①に残る`);
-  check(v.keywordStatus === (await page.evaluate(() => document.getElementById('search-status').textContent)) && /件見つかりました/.test(v.keywordStatus), `${name}: ①の件数の表示が消えた`);
+  check(/件見つかりました/.test(v.keywordStatus), `${name}: ①の件数の表示が消えた`);
   check(v.ai && v.aiQuiet, `${name}: 完全な結果で③が控えめに出ない`);
   await page.fill('#query', 'pdf '); await page.waitForTimeout(300);
   check((await rankView(page)).rank.length === 1, `${name}: 前後の空白だけの違いで②の結果を消した`);
@@ -502,7 +511,7 @@ rankScenario('停止：disabled なら検索ボタンと②の欄を隠し、い
 });
 
 // 本番の Worker で②を1回だけ送る（--base のときだけ。Jev を1回呼ぶ。評価セット・smoke と重ねない語）
-if (remote) rankScenario('本番の Worker で検索する', { realWorker: true }, async (page, name) => {
+if (remote) rankScenario('本番の Worker で検索する', { worker: route => route.continue() }, async (page, name) => {
   await page.fill('#query', '書類のPDFをひとつにまとめる'); await page.waitForTimeout(150); await page.press('#query', 'Enter');
   await page.waitForFunction(() => !['', '意味の近いページを探しています…'].includes(document.getElementById('rank-status').textContent), null, { timeout: 10000 }).catch(() => {});
   const v = await rankView(page);

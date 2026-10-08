@@ -34,7 +34,6 @@ const PASS = { hit: 0.8, shown: 0.15 };        // リリースの条件（PRD 7.
 const BROWSER_MAX = 50; // ブラウザの1回の測定の上限（設計書 10.4）。final はこれ以内にして、事前の選び直しを要らなくする
 const P95_MAX_MS = 1500;
 const BROWSER_TIMEOUT_MS = 8000; // 画面（assets/site-search.js）の期限（設計書 5.2）。これを超えた結果は利用者に出せないので、測定でも時間切れ
-const RANK_KINDS = ['page', 'tool', 'game', 'article']; // scope 'site' の結果の kind（日刊は Phase 3）
 const PROBE_QUERY = 'サイト内検索の評価の疎通確認'; // 評価セット・smoke と重ねない
 // smoke の決まった3問（評価セットとは重ねない）。期待するページが閾値以上に入ることを確かめる
 const SMOKE = [
@@ -404,20 +403,25 @@ async function openRankPage() {
   } catch (e) { await instance.close(); throw e; }
 }
 
-// 画面（設計書 5.2・5.3）が描く結果として読む。画面が failed にする応答（期限切れ、200・429・400 以外、読めない本文、
-// 形の合わない本文、1行でも URL などが合わない結果）は、ここでも failed にする（利用者に出せない結果を精度に数えない）
+// 画面（設計書 5.2・5.3）が描く結果として読む。応答の検査は画面の部品（assets/site-search.js の readResult）をそのまま使い、
+// 書き写さない（期限切れ、200・429・400 以外、読めない本文、形の合わない本文、1行でも URL などが合わない結果は failed）
+let pageReadResult = null;
+function readResultOfPage() {
+  if (!pageReadResult) {
+    const ctx = vm.createContext({ URL, location: { hostname: 'tk.st' } });
+    ctx.window = ctx;
+    vm.runInContext(read('assets/site-search.js'), ctx);
+    pageReadResult = ctx.STSiteSearch.readResult;
+  }
+  return pageReadResult;
+}
 export function screenResult(magi, r, urlToId) {
   const failed = reason => ({ status: 'failed', reason, ids: [] });
   if (r.error) return failed(r.error === 'TimeoutError' ? 'timeout' : r.error === 'SyntaxError' ? 'unavailable' : 'network');
-  const d = r.data;
-  if (![200, 429, 400].includes(r.http) || !d || typeof d !== 'object' || Array.isArray(d)) return failed('unavailable');
-  if (!['results', 'no_results', 'failed'].includes(d.status) || typeof d.complete !== 'boolean'
-    || !Array.isArray(d.results) || d.results.length > magi.SITE_RANK.max_results) return failed('unavailable');
-  if (d.status === 'failed') return failed(typeof d.reason === 'string' ? d.reason : 'unavailable');
-  const ok = d.results.every(v => v && typeof v === 'object' && RANK_KINDS.includes(v.kind)
-    && typeof v.title === 'string' && typeof v.description === 'string' && magi.rankSiteUrl(v.url) === v.url);
-  if (!ok) return failed('unavailable');
-  return { status: d.status, reason: null, ids: d.results.map(v => urlToId.get(v.url) ?? `unknown:${v.url}`) };
+  if (![200, 429, 400].includes(r.http)) return failed('unavailable');
+  const v = readResultOfPage()(r.data, 'site');
+  if (v.status === 'failed') return failed(v.reason);
+  return { status: v.status, reason: null, ids: v.rows.map(row => urlToId.get(row.href) ?? `unknown:${row.href}`) };
 }
 
 // 測定の前の疎通の確認：評価セットに無い決まった1問を送り、②が有効か・ブラウザから届くかだけを見る
@@ -430,6 +434,8 @@ export async function probe() {
     console.log(JSON.stringify({ http: r.http, error: r.error ?? null, ms: Math.round(r.ms), request_id: d.request_id ?? null,
       status: d.status ?? null, reason: d.reason ?? null, error_code: d.error?.code ?? null, searched: d.searched ?? null, results: (d.results || []).length,
       chromium: browser.version, blocked: browser.blocked }, null, 2));
+    // ②が止まっている・届かない・②の形で答えないときは失敗で終える（Actions の測定の前の確認に使う）
+    if (d.reason === 'disabled' || !['results', 'no_results'].includes(d.status)) { console.error('②が有効でないか、届かない'); process.exitCode = 1; }
   } finally { await browser.close(); }
 }
 

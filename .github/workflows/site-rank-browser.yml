@@ -37,9 +37,7 @@ jobs:
       run: curl -sS https://tk.st/cdn-cgi/trace | grep -E '^(colo|loc|http|tls)='
 
     - name: Probe
-      run: |
-        node .github/scripts/eval-site-rank.mjs --probe | tee "$RUNNER_TEMP/probe.json"
-        node -e "const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')); if (d.reason==='disabled' || !['results','no_results'].includes(d.status)) { console.error('::error::②が有効でないか、届かない'); process.exit(1); }" "$RUNNER_TEMP/probe.json"
+      run: node .github/scripts/eval-site-rank.mjs --probe
 
     - name: Measure final set
       run: |

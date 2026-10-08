@@ -243,7 +243,7 @@
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
     </div>
   </dialog>
-  <script src="/assets/site-search.js?v=20261008_1"></script>
+  <script src="/assets/site-search.js?v=20261008_2"></script>
   <script>
     (function () {
       'use strict';
@@ -261,9 +261,10 @@
       var infoOpen = byId('ai-info-open');
       infoOpen.setAttribute('aria-label', lang === 'ja' ? 'AI検索とプライバシーについて' : 'About AI search and privacy');
       byId('ai-info-close').setAttribute('aria-label', lang === 'ja' ? '閉じる' : 'Close');
-      infoOpen.addEventListener('click', function () { infoDialog.showModal(); });
-      byId('rank-info-open').setAttribute('aria-label', infoOpen.getAttribute('aria-label'));
-      byId('rank-info-open').addEventListener('click', function () { infoDialog.showModal(); });
+      [infoOpen, byId('rank-info-open')].forEach(function (button) {
+        button.setAttribute('aria-label', infoOpen.getAttribute('aria-label'));
+        button.addEventListener('click', function () { infoDialog.showModal(); });
+      });
       byId('ai-info-close').addEventListener('click', function () { infoDialog.close(); });
       infoDialog.addEventListener('click', function (event) {
         var rect = infoDialog.getBoundingClientRect();
@@ -540,16 +541,12 @@
         if (!rankAvailable()) return state.jsonReady && state.failures === 0 && total === 0;
         return ['results', 'no_results', 'failed', 'stale'].includes(rank.state);
       }
-      function aiQuiet() {
-        var settled = rankAvailable() && rank.state === 'results' ? rank.settled() : null;
-        return !!(settled && settled.complete);
-      }
       function syncAI(query, total) {
         var eligible = AI_SEARCH_ENABLED && query && !composing && aiAllowed(total);
         if (!eligible) { if (ai.eligible) resetAI(); return; }
         if (ai.query !== query) resetAI();
         ai.query = query; ai.eligible = true; byId('ai-search').hidden = false;
-        byId('ai-search').classList.toggle('is-quiet', aiQuiet());
+        byId('ai-search').classList.toggle('is-quiet', rankAfter() === 'rank_results');
       }
       function aiHref(value, daily) {
         if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return null;
@@ -666,6 +663,7 @@
         var query = input.value.slice(0, 200).trim();
         var notices = [];
         var total = 0;
+        var ranking = rankAvailable();
         state.mode = query ? 'search' : 'suggestion';
         heading.hidden = true;
         byId('daily-search').hidden = !query;
@@ -684,12 +682,12 @@
             var matches = searchItems(state.items, query);
             total = matches.length;
             // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
-            var ranked = rankAvailable() ? new Set(rank.hrefs().map(function (href) { return pathKey(pathParts(safeDecode(href))); })) : null;
+            var ranked = ranking ? new Set(rank.hrefs().map(function (href) { return pathKey(pathParts(safeDecode(href))); })) : null;
             state.displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
-            heading.textContent = rankAvailable() ? text.keywordResults : text.results;
-            heading.hidden = rankAvailable() && !state.displayed.length;
+            heading.textContent = ranking ? text.keywordResults : text.results;
+            heading.hidden = ranking && !state.displayed.length;
             notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
-              : !rankAvailable() ? text.noResults : rank.state === 'idle' ? text.rankHint : text.keywordNone);
+              : !ranking ? text.noResults : rank.state === 'idle' ? text.rankHint : text.keywordNone);
             if (total > 5) notices.push(text.limit);
             if (!state.searchUsed) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
           }
@@ -715,10 +713,8 @@
         status.textContent = notices.join(' ');
         byId('results').hidden = !state.displayed.length && heading.hidden;
         state.total = total;
-        byId('rank-run').hidden = !rankAvailable();
-        byId('rank-disclosure-row').hidden = !rankAvailable();
-        byId('rank-info-text').hidden = !rankAvailable();
-        byId('rank-run').classList.toggle('is-suggested', rankAvailable() && !!query && rank.state === 'idle' && state.jsonReady && state.failures === 0 && total === 0);
+        ['rank-run', 'rank-disclosure-row', 'rank-info-text'].forEach(function (id) { byId(id).hidden = !ranking; });
+        byId('rank-run').classList.toggle('is-suggested', ranking && !!query && rank.state === 'idle' && state.jsonReady && state.failures === 0 && total === 0);
         syncAI(query, total);
         scheduleKeywordCount(query, total);
       }
@@ -750,24 +746,21 @@
         var first = (rankAvailable() && rankList.querySelector('a')) || list.querySelector('a');
         if (first) { if (event.key === 'ArrowDown') first.focus(); else first.click(); }
       });
-      // ②の一覧も①と同じキー操作。②の末尾で↓なら①の先頭へ
-      rankList.addEventListener('keydown', function (event) {
-        if (imeEvent(event)) { if (event.key === 'Enter') event.preventDefault(); return; }
-        var links = Array.from(rankList.querySelectorAll('a'));
-        var index = links.indexOf(event.target);
-        if (index < 0) return;
-        if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) { event.preventDefault(); input.focus({ preventScroll: true }); }
-        else if (event.key === 'ArrowDown' && index === links.length - 1) { var next = list.querySelector('a'); if (next) { event.preventDefault(); next.focus(); } }
-        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); links[index + (event.key === 'ArrowDown' ? 1 : -1)].focus(); }
-      });
-      list.addEventListener('keydown', function (event) {
-        if (imeEvent(event)) { if (event.key === 'Enter') event.preventDefault(); return; }
-        var links = Array.from(list.querySelectorAll('a'));
-        var index = links.indexOf(event.target);
-        if (index < 0) return;
-        if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) { event.preventDefault(); input.focus({ preventScroll: true }); }
-        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); links[Math.max(0, Math.min(links.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))].focus(); }
-      });
+      // ①・②の一覧のキー操作（↑↓で移動、先頭で↑・Esc で入力欄へ）。②の末尾で↓なら①の先頭へ（設計書 6.2）
+      function bindListKeys(container, next) {
+        container.addEventListener('keydown', function (event) {
+          if (imeEvent(event)) { if (event.key === 'Enter') event.preventDefault(); return; }
+          var links = Array.from(container.querySelectorAll('a'));
+          var index = links.indexOf(event.target);
+          if (index < 0) return;
+          var after = next && event.key === 'ArrowDown' && index === links.length - 1 && next.querySelector('a');
+          if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) { event.preventDefault(); input.focus({ preventScroll: true }); }
+          else if (after) { event.preventDefault(); after.focus(); }
+          else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); links[Math.max(0, Math.min(links.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))].focus(); }
+        });
+      }
+      bindListKeys(rankList, list);
+      bindListKeys(list, null);
       function recordClick(event) {
         var link = event.target.closest('a[data-position]');
         if (link && (event.type !== 'auxclick' || event.button === 1)) send('not_found_result_click', { mode: state.mode, position: Number(link.dataset.position) });

@@ -30,7 +30,7 @@ class Preview(SimpleHTTPRequestHandler):
         for script in reversed(scripts[:-1]):
             html = html[:script.start()] + html[script.end():]
         html = re.sub(r'<noscript>[\s\S]*?</noscript>', '', html)
-        html = html.replace('var AI_SEARCH_ENABLED = false;', 'var AI_SEARCH_ENABLED = true;').replace('var RANK_ENABLED = false;', 'var RANK_ENABLED = true;')
+        html = html.replace('var AI_SEARCH_ENABLED = false;', 'var AI_SEARCH_ENABLED = true;')
         if 'lang=en' in self.path:
             html = html.replace("if (navigator.language)", "if (false)").replace("var lang = 'ja';", "var lang = 'en';")
         mock = "<script>const originalFetch=window.fetch;window.fetch=(url,opts)=>originalFetch(String(url).split('?')[0].endsWith('/magi2/site-search')?'/__site-search':url,opts);</script>"
@@ -55,6 +55,9 @@ class Preview(SimpleHTTPRequestHandler):
                 'daily': {'media': 'nitori', 'query': '出店', 'url': '/job/nitoridaily/#q=%E5%87%BA%E5%BA%97'} if query == 'mock-daily' else None}
         if query in ('mock-global', 'mock-update'):
             body = {'error': {'code': 'global_daily_limit_exceeded' if query == 'mock-global' else 'site_search_update_required', 'retryable': False}}
+        self.send_json(status, body)
+
+    def send_json(self, status, body):
         self.send_response(status); self.send_header('Content-Type', 'application/json'); self.end_headers()
         try:
             self.wfile.write(json.dumps(body, ensure_ascii=False).encode('utf-8'))
@@ -80,11 +83,7 @@ class Preview(SimpleHTTPRequestHandler):
             status = 429 if query == 'mock-limit' else 200
         elif query == 'mock-evil':
             body['results'] = rows[:1] + [{'kind': 'page', 'title': 'evil', 'description': '', 'url': '//example.com/'}]
-        self.send_response(status); self.send_header('Content-Type', 'application/json'); self.end_headers()
-        try:
-            self.wfile.write(json.dumps(body, ensure_ascii=False).encode('utf-8'))
-        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-            pass
+        self.send_json(status, body)
 
 
 if __name__ == '__main__':

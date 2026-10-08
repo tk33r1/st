@@ -140,7 +140,7 @@
 
 | ID | 作業 | 設計書 | 担当 | 規模 | 完了条件 |
 | --- | --- | --- | --- | --- | --- |
-| T7.1 | `validateSiteChoice` の `daily.url` を `#q=` に。検証を直す | 8.4 の4 | Claude | S | `test-magi2.mjs` が通る |
+| T7.1 | `validateSiteChoice` の `daily.url` を `#q=` に。検証を直す。あわせて 404 の `aiHref`・トップページと `magi-app/www/app.js` の `renderAgentPages` から、古い `?q=…#archiveSearch` を受け取る分かれ道を消す（T4.4・T4.5 の移行用。古いアプリが残る間は消さない） | 8.4 の4 | Claude | S | `test-magi2.mjs` が通る |
 | T7.2 | デプロイ | 9章の8 | 本人 | S | M6 が行き渡っている。404・トップ・アプリで日刊リンクが出る |
 
 ## 4. 危ないところ
