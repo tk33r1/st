@@ -44,7 +44,7 @@
 | `anniversary/` | 記念日ページ |
 | `workers/` | Cloudflare Workers（下表）。`workers/package.json` は全 Worker 共通の wrangler |
 | `config/` | AI モデル設定の正本 `ai-models.json`（後述「AIモデル設定」） |
-| `magi-app/` | MAGI モバイルアプリ。`www/` が出荷物 |
+| `magi-app/` | MAGI モバイルアプリ。`www/` が出荷物。画面の版の表示（`www/app.js` とトップページの `ver X.Y`）・`package.json` の version・Android の versionName は常に同じ値にする（`magi-app/README.md`「Release」） |
 | `build.sh` | Cloudflare Pages のビルド（後述「公開範囲」「デプロイ」） |
 
 ### ファイルの置き場所

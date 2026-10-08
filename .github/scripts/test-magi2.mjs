@@ -2623,3 +2623,11 @@ test('404 の日刊リンクの検査は #q= だけを通す（古い ?q= は通
   assert.equal(ctx.aiHref('/tools/pdf-studio/', false), '/tools/pdf-studio/');
   assert.equal(ctx.aiHref('/tools/pdf-studio/#q=a', false), null);
 });
+
+test('MAGI の版の表示はトップページ・アプリ・magi-app/package.json で同じ（Android の versionName もこれにそろえる）', () => {
+  const shown = src => [...src.matchAll(/class="magi-ver">ver (\d+\.\d+) /g)].map(m => m[1]);
+  const home = shown(read('index.html')), app = shown(read('magi-app/www/app.js'));
+  const pkg = JSON.parse(read('magi-app/package.json')).version.split('.').slice(0, 2).join('.');
+  assert.equal(home.length, 1); assert.equal(app.length, 1);
+  assert.equal(home[0], pkg); assert.equal(app[0], pkg);
+});
