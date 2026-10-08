@@ -92,8 +92,13 @@ async function newContext({ js = true, analyticsOff = false, worker = null, real
   return { context, log };
 }
 
+// 検索語を送ってよいのは GA4 のイベントの search_term だけ（PRD 8.3）。その値を除いてから目印を探す
+const GOOGLE_MEASUREMENT = /(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.com$/;
+const withoutSearchTerm = (r, text) => typeof text === 'string' && GOOGLE_MEASUREMENT.test(new URL(r.url).host)
+  ? text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g, '$1') : text;
 function checkLog(name, log) {
-  for (const r of log) {
+  for (const raw of log) {
+    const r = { ...raw, url: withoutSearchTerm(raw, raw.url), body: withoutSearchTerm(raw, raw.body) };
     if (r.search) {
       check(!marked(r.url), `${name}: 検索の Worker への URL に目印がある（${r.url}）`);
       check(!marked(r.referer), `${name}: 検索の Worker への参照元に目印がある`);
@@ -331,6 +336,27 @@ scenario('404 の計測：not_found_keyword_count', {}, async (page, name) => {
   await page.waitForTimeout(5000); // GA4 はまとめて送るので待つ
 });
 
+// 検索語の計測（PRD 8.3）：伏せ字にしてから search_term で送る。日刊の横断検索も同じ。計測を止めた人には送らない
+scenario('404 の計測：search_term は伏せ字にして送る', {}, async (page, name) => {
+  await page.goto(BASE + '/no-such-page/'); await settle(page);
+  await page.fill('#query', 'メール a.b@example.com 090-1234-5678 収納');
+  await page.waitForTimeout(2500);
+  const hit = (await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'not_found_keyword_count').map(e => ({ ...e })))).at(-1);
+  check(hit && hit.search_term === 'メール [email] [number] 収納', `${name}: search_term が伏せ字になっていない（${hit && hit.search_term}）`);
+});
+for (const [label, off] of [['', false], ['（計測を止めた状態）', true]]) {
+  scenario('日刊の計測：daily_search' + label, { analyticsOff: off }, async (page, name) => {
+    await page.goto(BASE + PORTAL); await settle(page);
+    await page.fill('#archiveSearchInput', QUERY); await page.press('#archiveSearchInput', 'Enter'); await page.waitForTimeout(500);
+    await page.selectOption('#archiveRegionFilter', 'JP'); await page.waitForTimeout(300); // 絞り込みだけの変更では送り直さない
+    const hits = await page.evaluate(() => (window.dataLayer || []).filter(e => e && e.event === 'daily_search').map(e => ({ ...e })));
+    if (off) check(hits.length === 0, `${name}: 計測を止めているのに daily_search を送った`);
+    else check(hits.length === 1 && hits[0].search_term === QUERY && typeof hits[0].count === 'number', `${name}: daily_search が1回だけ・検索語付きで送られない（${JSON.stringify(hits)}）`);
+    await checkLocation(name, page);
+    await page.waitForTimeout(3000);
+  });
+}
+
 // ---- ②（計画書 T5.4。設計書 5章・6章、PRD 3.1・7.4） ----
 const FAILED_JA = 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。';
 
@@ -452,7 +478,10 @@ rankScenario('計測：①が0件で②を送る前は③を出さず、検索�
   await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   const run = (await rankView(page)).events.find(e => e.event === 'not_found_rank_run');
   check(run && run.keyword_state === 'known' && run.keyword_count === 0, `${name}: rank_run の keyword_state・keyword_count が違う（${JSON.stringify(run)}）`);
-  check(!JSON.stringify((await rankView(page)).events).includes(MARK), `${name}: 計測に検索語が載る`);
+  // 検索語は search_term にだけ載る（PRD 8.3）
+  const ev = (await rankView(page)).events;
+  check(!JSON.stringify(ev.map(({ search_term, ...rest }) => rest)).includes(MARK), `${name}: search_term 以外の計測の値に検索語が載る`);
+  check(ev.find(e => e.event === 'not_found_rank_run')?.search_term === MARK + 'なし', `${name}: rank_run に search_term が付かない`);
 });
 for (const [label, mode, expected] of [['読み込み中', 'slow', 'loading'], ['一部失敗', 'fail', 'failed']]) {
   rankScenario('計測：①が' + label + 'の keyword_state', { worker: echo(() => 0), lists: mode }, async (page, name) => {
@@ -524,7 +553,7 @@ console.log('止めた外への通信：' + ([...hosts].map(([h, n]) => `${h} ${
 const events = new Set();
 for (const r of allRequests) for (const text of [r.url, r.body || '']) for (const m of text.matchAll(/(?:^|[?&\n])en=([^&\s]+)/g)) events.add(decodeURIComponent(m[1]));
 console.log('GA4 のイベント：' + ([...events].sort().join('・') || 'なし'));
-for (const e of ['not_found_keyword_count', 'not_found_search_used']) console.log(`  ${e}：GA4 へ${events.has(e) ? '送った' : '送っていない'}`);
+for (const e of ['not_found_keyword_count', 'not_found_search_used', 'not_found_rank_run', 'daily_search']) console.log(`  ${e}：GA4 へ${events.has(e) ? '送った' : '送っていない'}`);
 if (!analyticsLoaded.size) console.log('注意：計測のスクリプトを読み込めなかったので、計測が送るはずの通信は確かめられていない（手元の見当。合否は本番の URL で決める）');
 if (skipped.length) console.log(`②が出ていないので飛ばした場面：${skipped.length}件`);
 if (failures.length) { console.log('\n' + failures.map(f => '- ' + f).join('\n')); process.exit(1); }

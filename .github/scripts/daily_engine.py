@@ -291,7 +291,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261007_1'
+DAILY_UI_VERSION = '20261008_1'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
 # URL に q（クエリのすべての q、または #q=）があれば、受け取るかどうかに関係なく先に消して #archiveSearch にし、
@@ -1978,6 +1978,7 @@ def render_top_index_html(config, articles_history):
         <button type="submit">検索</button>
       </form>
       <p class="archive-search-status" id="archiveSearchStatus" aria-live="polite"></p>
+      <p class="archive-search-status">検索語はアクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。</p>
       <div class="archive-search-results" id="archiveSearchResults"></div>
     </section>'''
 
