@@ -821,15 +821,15 @@ test('両画面のリンク検証とラベルの描画は一致し、サイト�
       { kind: 'tool', title: '<script>label</script>', description: '<img>', url: 'https://tk.st/tools/pdf-studio/' },
       { kind: 'tool', title: 'bad', description: '', url: 'https://tk.st.evil.test/tools/a/' },
       { kind: 'page', title: 'bad', description: '', url: 'https://tk.st/?q=private' },
-    ], daily: { media: 'retail', query: 'AI', url: 'https://tk.st/job/retailtechdaily/?q=AI&extra=x#archiveSearch' } });
+    ], daily: { media: 'retail', query: 'AI', url: 'https://tk.st/job/retailtechdaily/?q=AI#archiveSearch' } });
     assert.equal(reply.children[0].children.length, 1);
     assert.equal(reply.children[0].children[0].children[0].textContent, '<script>label</script>');
     assert.equal(reply.children[0].children[0].rel, 'noopener noreferrer');
-    // 日刊は #q= と古い ?q=…#archiveSearch の両方を受け、新しい形にしてから href に入れる
+    // 日刊は #q= だけを受ける（古い ?q=…#archiveSearch は T7.1 で受け取りをやめた）
     const q = encodeURIComponent('出店 計画');
     for (const [url, href] of [
       ['https://tk.st/job/nitoridaily/#q=' + q, 'https://tk.st/job/nitoridaily/#q=' + q],
-      ['https://tk.st/job/retailtechdaily/?q=' + q + '#archiveSearch', 'https://tk.st/job/retailtechdaily/#q=' + q],
+      ['https://tk.st/job/retailtechdaily/?q=' + q + '#archiveSearch', null],
       ['https://tk.st/job/retailtechdaily/#q=a%26b&c', null], ['https://tk.st/job/retailtechdaily/#q=%E3%8', null],
       ['https://tk.st/job/retailtechdaily/?q=a&q=b#archiveSearch', null], ['https://tk.st/job/retailtechdaily/?x=1#q=a', null],
       ['https://tk.st/job/retailtechdaily/#q=%01', null], ['https://tk.st/job/retailtechdaily/#q=' + 'a'.repeat(201), null],
@@ -2609,15 +2609,13 @@ test('MAGI採決: 両画面は決議後の停止・切断で完了した説明�
   }
 });
 
-test('404 の日刊リンクの検査は #q= と古い ?q= の両方を通し、新しい形にして返す', () => {
+test('404 の日刊リンクの検査は #q= だけを通す（古い ?q= は通さない）', () => {
   const page = read('404.html');
   const ctx = vm.createContext({ URL });
   vm.runInContext(between(page, 'function stripControls(', '\n') + '\n' + between(page, 'function aiHref(', "byId('ai-request')"), ctx);
   const q = encodeURIComponent('出店 計画');
   assert.equal(ctx.aiHref('/job/nitoridaily/#q=' + q, true), '/job/nitoridaily/#q=' + q);
-  assert.equal(ctx.aiHref('/job/retailtechdaily/?q=' + q + '#archiveSearch', true), '/job/retailtechdaily/#q=' + q);
-  assert.equal(ctx.aiHref('/job/retailtechdaily/?q=a+b#archiveSearch', true), '/job/retailtechdaily/#q=a%20b');
-  for (const bad of ['/job/nitoridaily/?q=a&q=b#archiveSearch', '/job/nitoridaily/?q=a&x=1#archiveSearch', '/job/nitoridaily/?q=a',
+  for (const bad of ['/job/retailtechdaily/?q=' + q + '#archiveSearch', '/job/retailtechdaily/?q=a+b#archiveSearch', '/job/nitoridaily/?q=a&q=b#archiveSearch', '/job/nitoridaily/?q=a&x=1#archiveSearch', '/job/nitoridaily/?q=a',
     '/job/nitoridaily/#q=a%26b&c', '/job/nitoridaily/#q=%E3%8', '/job/nitoridaily/#q=', '/job/nitoridaily/#q=%01',
     '/job/nitoridaily/?x=1#q=a', '/job/nitoridaily/#q=' + 'a'.repeat(201), '/job/other/#q=a', '//evil.test/job/nitoridaily/#q=a']) {
     assert.equal(ctx.aiHref(bad, true), null, bad);

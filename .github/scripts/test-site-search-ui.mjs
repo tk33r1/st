@@ -210,7 +210,7 @@ scenario('404 → 日刊（③の下の「日刊ブリーフで探す」）', {}
 scenario('404 → ③ → 日刊のリンク', {
   worker: mockWorker({ rank: () => ({ body: rankBody([]) }), ai: () => ({ body: { request_id: 'local', status: 'results', comment: null,
       results: [{ id: 'tool:7', kind: 'tool', title: 'PDF Studio', description: 'PDF', url: '/tools/pdf-studio/' }],
-      daily: { media: 'nitori', query: MARK + ' 出店', url: '/job/nitoridaily/?q=' + encodeURIComponent(MARK + ' 出店') + '#archiveSearch' } } }) }),
+      daily: { media: 'nitori', query: MARK + ' 出店', url: '/job/nitoridaily/#q=' + encodeURIComponent(MARK + ' 出店') } } }) }),
 }, async (page, name) => {
   await page.goto(BASE + '/no-such-page/'); await settle(page);
   await page.fill('#query', MARK + 'zz');
@@ -220,7 +220,7 @@ scenario('404 → ③ → 日刊のリンク', {
   await page.click('#ai-run');
   const link = page.locator('#ai-daily');
   await link.waitFor({ state: 'visible' });
-  check(/^\/job\/nitoridaily\/#q=/.test(await link.getAttribute('href')), `${name}: 古い形の日刊リンクが #q= に直っていない`);
+  check(/^\/job\/nitoridaily\/#q=/.test(await link.getAttribute('href')), `${name}: ③の日刊リンクが #q= の形でない`);
   const aiRow = await page.evaluate(() => { const a = document.querySelector('#ai-list .result-link'); return a && [a.getAttribute('href'), a.dataset.aiTarget, a.dataset.aiPosition, a.querySelector('.result-title').textContent, a.querySelector('.kind').textContent].join('|'); });
   check(aiRow === '/tools/pdf-studio/|result|1|PDF Studio|ツール', `${name}: ③の結果の行の形が違う（${aiRow}）`);
   await Promise.all([page.waitForURL(u => u.pathname === PORTAL), link.click()]);

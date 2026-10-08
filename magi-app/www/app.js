@@ -636,11 +636,10 @@ function renderAgentPages(replyEl, data) {
       if (u.origin !== 'https://tk.st' || u.username || u.password) return;
       var href = u.href;
       if (daily) {
-        // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）。古い ?q=…#archiveSearch も受け取り、新しい形に直す
+        // 日刊の受け渡しは #q=（assets/site-search-design.md 8.1）
         if (!['/job/nitoridaily/', '/job/retailtechdaily/'].includes(u.pathname)) return;
         var q;
         if (!u.search && u.hash.indexOf('#q=') === 0 && !/[&#]/.test(u.hash.slice(3))) q = decodeURIComponent(u.hash.slice(3));
-        else if (u.hash === '#archiveSearch' && Array.from(u.searchParams.keys()).join(',') === 'q') q = u.searchParams.get('q');
         else return;
         q = q.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
         if (!q || q.length > 200) return;
