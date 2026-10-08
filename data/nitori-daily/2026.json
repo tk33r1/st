@@ -1,5 +1,246 @@
 [
   {
+    "date": "20261009",
+    "title": "2026年10月9日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリの似鳥会長がAI家具の開発加速と接客ロボットの数年内導入を示し、SPAの企画・販売データを活かした商品開発の進化が鮮明になった シンガポールで7店舗目となる大型商業施設内店舗が発表され、海外店舗網の定着フェーズと店舗展開の着実な拡大が確認された",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリの似鳥会長がAI家具の開発加速と接客ロボットの数年内導入を示し、SPAの企画・販売データを活かした商品開発の進化が鮮明になった",
+      "シンガポールで7店舗目となる大型商業施設内店舗が発表され、海外店舗網の定着フェーズと店舗展開の着実な拡大が確認された",
+      "防臭ゴミ箱やクッションマットなど低価格帯の日常雑貨が口コミで支持を広げ、生活者の不満解消と情緒的価値が反響の起点になっている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ会長が語る「AI家具」開発の加速、接客ロボットは数年内に",
+        "original_title": "",
+        "source": "北海道新聞デジタル",
+        "source_id": "JP-04",
+        "summary": "ニトリの似鳥昭雄会長が都内での講演で、AIを活用した家具開発を加速させる方針を示した。ベッドやソファなどの製品へのAI活用を進めるとともに、接客ロボットについては数年内の導入を見込むとした。製造から販売まで自社で一貫して手がけるSPAモデルを背景に、企画・設計段階からデータを取り込み、商品開発のスピードと精度を高める狙いがうかがえる。",
+        "why_it_matters": "SPAは企画・調達・販売のデータを一元的に持つため、AIとの親和性が高い構造的強みである。好みの定量化など顧客データと商品設計が結びつけば、売れ残りリスクの低減や『自分に合う家具』という体験価値の向上につながる。一方で、AI家具が話題先行にならないよう、実際の使用感や価格との両立が問われる。接客ロボットは店舗運営の変革と人手不足対策の両面で試金石となる。",
+        "tags": [
+          "ニトリ",
+          "AI",
+          "商品開発",
+          "SPA",
+          "接客ロボット"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5WWHlLeHY1dWFnS19vSEJWTl9QS2JidERWUHREaXc3Y2M5cHdhZ0N3Si1QdDd0ejVzaWdPT0pZemRRczJKak1aNzMxdF94d3Nvb3BWUXptYlVLUQ?oc=5",
+        "source_pub_ts": 1791463651
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、シンガポールに7店舗目「NITORI JURONG POINT店」を出店",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-12",
+        "summary": "ニトリは、シンガポールの大型商業施設Jurong Point内に7店舗目となる「NITORI JURONG POINT店」を出店すると発表した。同国では店舗網を着実に広げており、家具やインテリア雑貨を中心に現地の住環境に合わせた品揃えを提供する。大型商業施設への出店を重ねることで、認知拡大と来店動線の確保を図る狙いがある。",
+        "why_it_matters": "海外店の拡大は、SPAとしての国際展開の再現性を測る重要な指標になる。シンガポールは都市型のコンパクト住宅が多く、省スペース商品やNプラスの価格帯が受け入れられるかが鍵となる。大型商業施設への出店は集客力を活かせる一方、賃料や在庫配分の効率が収益を左右する。7店舗という数字は、単発の試行ではなく定着フェーズに入ったことを示している。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "シンガポール",
+          "店舗展開"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFA1ekR3VHlZQkEtMEJQWFEtX3VrY0pCakhmMDRYbVYta3FlLWR1aDFBa3U3Rm9Ib3pSM0FLaERPNHpIOHV1V0R6M0dkYkwwSWFfY3M2cm5jS2lneURReG5kNTFvbXlDamMwZ2c?oc=5",
+        "source_pub_ts": 1791432001
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、ライブコマースは「売ること」より「顧客の声」を活用",
+        "original_title": "",
+        "source": "日流ウェブ",
+        "source_id": "JP-16",
+        "summary": "日流ウェブの連載「成功企業に聞くライブコマース活用術」で、ニトリとメディキュットの取り組みが紹介された。ニトリはライブコマースを商品を売り込む場に限定せず、視聴者から寄せられた声を商品改善や情報発信に生かしている。配信を通じて生活者の使い方や悩みを収集し、次の企画や売り場づくりへ還元する循環を重視している。",
+        "why_it_matters": "ライブコマースを即時の販売手段ではなく、顧客接点と声の収集装置として位置づけている点が特徴的だ。SPAはメーカーと小売の距離が近く、生活者の一次情報を商品開発に直結させやすい。ただし声の収集が一過性のイベントに終われば効果は限定的であり、フィードバックを商品企画の仕組みとして定着させられるかが問われる。",
+        "tags": [
+          "ニトリ",
+          "ライブコマース",
+          "顧客の声",
+          "DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE45RnIySG9LXzJJY1RORUFCemlUWDhkN2RaV0NjMHdaTmlhMkd6RGlmUUV2dlRucmxSeG1ycVZ2RFZqNUhWZnJjSWdlZ0FrNzVYU1FvbTJjb3g?oc=5",
+        "source_pub_ts": 1791417827
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "1台で10役をこなす「マルチポット 2.2L」、ニトリが9月中旬から販売",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-13",
+        "summary": "ニトリが、1台で10役をこなす多機能設計をうたう「マルチポット 2.2L」を9月中旬から販売していることが分かった。調理機能を1台に集約することで、キッチンの省スペース化や調理家電の買い替え需要の取り込みを狙う商品と位置づけられる。家具やインテリアで培った生活動線の知見を、キッチン家電の提案に広げる一手とみられる。",
+        "why_it_matters": "多機能調理家電は専業メーカーとの競合が激しいカテゴリだが、ニトリは生活空間の提案力を強みに差別化を図れる。SPAとして企画から販売までを一貫させれば、仕様変更や販売施策を素早く行える。ただし家電は実用評価や口コミが購買を大きく左右するため、発売後のレビューや返品傾向を注視し、機能訴求の実態を検証することが重要だ。",
+        "tags": [
+          "ニトリ",
+          "マルチポット",
+          "キッチン家電",
+          "新商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE8taXAzOTQyWTZCX1dXUTUxQmkyVjR2cVJ2WnRCNTF1aEVTX2FQdTBwLTFRZFQyQ1JGTTBjUnBZMFlsV0VFdmJTSGsxb3FKbUticFlzRV9tWnlmZk9fR2c?oc=5",
+        "source_pub_ts": 1791426396
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "1990円の防臭ゴミ箱に「何も匂わない」と高評価、ペダルの快適さも支持",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-11",
+        "summary": "ねとらぼリサーチの投稿では、ニトリの1990円の防臭ゴミ箱に「何も匂わない事に驚いた」といった声が寄せられた。ペダル操作が快適で、料理をしながら片手で捨てられる使い勝手も評価されている。日常的に触れる生活用品の不満を解消する商品として、生活者に受け止められていることがうかがえる。",
+        "why_it_matters": "ゴミ箱は単価が低くても毎日触れる製品であり、防臭やペダル操作といった日常の不満解消が口コミを生みやすい。2000円前後の価格で機能面の満足度を高める手法は、ニトリの『価格以上の機能』という価値提案を体現している。こうした低単価・高頻度の商品で評価が積み上がると、ブランド全体への信頼にもつながる。ただし口コミは短期の実使用の声であり、長期使用での耐久性も併せて追う必要がある。",
+        "tags": [
+          "ニトリ",
+          "ゴミ箱",
+          "ヒット商品",
+          "口コミ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9rSFlweHBnbk5QNUkybno3WXdBMzhYc2tUeHBPWXdZTlJ5NXVYZVJ4Z3JSRVJ0OUdIdjQ2LVVXbUhIWVNyTHp6WWdqSnFXTU1XRVJfa3JTRkJkUV9YZFVScG5ZSdIBaEFVX3lxTE5TN1g3bllmZ0dtQmYxQnR0NFZwWUVBVTBzV3o4Uk5fMG5pZzVDcmExUGlFbzhmVFh3NDVMUDVpbklqZmJYdUVfYjI1TzZHT0xSaGQ4eEdhRjNiX2F4UDFKLVYtT3NmVy1o?oc=5",
+        "source_pub_ts": 1791434367
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "クッションマットの縁を噛んで遊ぶ愛犬の姿に514いいね、生活雑貨が遊び道具に",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "X上で、ニトリのクッションマットの縁を愛犬が捲って噛み、持ってきて遊ぶ様子を写した投稿が514いいねを集めた。本来は床に敷いて足元を守る生活雑貨が、ペットにとっては遊びの対象になるという意外性が共感を呼んだ。飼い主の暮らしぶりを素直に切り取った投稿として、ペットとの日常を支える商品への関心が広がっている。",
+        "why_it_matters": "ペットと暮らす世帯では、家具や雑貨を『ペットに壊されにくいか』『噛まれても安全か』という視点で選ぶ傾向が強まっている。今回の反響は、クッションマットが単なる敷物ではなく、生活者の愛着やペットとの時間を演出する要素として受け止められていることを示す。商品開発では耐久性や素材の安全性、縁の固定力などを訴求することで共感をさらに高める余地がある。",
+        "tags": [
+          "ニトリ",
+          "ペット",
+          "SNS",
+          "クッションマット"
+        ],
+        "url": "https://x.com/jijicat0308/status/2108065022459228584",
+        "source_pub_ts": 1791457200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ホテルスタイル枕かと思った」、手頃なニトリ枕に上質な寝室像を重ねる声",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-03",
+        "summary": "Xでは、ニトリの枕を見て「ホテルスタイル枕かと思った」という投稿が129いいねを集めた。ホテルの寝具を思わせる見た目が、手頃な価格の寝具にも上質な寝心地を期待させたことがうかがえる。寝具は睡眠の質に直結するため、見た目の印象が購買の決め手になりやすい領域である。",
+        "why_it_matters": "寝具は『高級感』と『手頃さ』の両立が購買の鍵になる領域で、ホテルライクという言葉は生活者が理想とする寝室像を端的に表している。ニトリの寝具は価格を抑えつつ品質感を訴求できる強みがあるが、こうした比較語による反響を売り場の見せ方や商品ラインナップに反映できるかが重要だ。SNSでの『似ている』という表現は、商品の見え方を分析する手がかりにもなる。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "枕",
+          "SNS"
+        ],
+        "url": "https://x.com/129Ym_afilia/status/2108158185463005409",
+        "source_pub_ts": 1791457200
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのクッションマットの縁。 捲って噛んで持ってきて遊ぶ… pic.x.com/ywtUSEgHZf",
+        "platform": "x",
+        "author": "@jijicat0308",
+        "url": "https://x.com/jijicat0308/status/2108065022459228584",
+        "likes": 514,
+        "retweets": 59,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:20",
+        "captured_at": "",
+        "text": "ニトリのクッションマットの縁。 捲って噛んで持ってきて遊ぶ… pic.x.com/ywtUSEgHZf",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリさん ありがとう pic.x.com/qRCiq66ZfT",
+        "platform": "x",
+        "author": "@skyk_mr0512",
+        "url": "https://x.com/skyk_mr0512/status/2108149027070210178",
+        "likes": 361,
+        "retweets": 14,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:54",
+        "captured_at": "",
+        "text": "ニトリさん ありがとう pic.x.com/qRCiq66ZfT",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリのホテルスタイル枕かと思っターー x.com/kana_afilia/st…",
+        "platform": "x",
+        "author": "@129Ym_afilia",
+        "url": "https://x.com/129Ym_afilia/status/2108158185463005409",
+        "likes": 129,
+        "retweets": 8,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:30",
+        "captured_at": "",
+        "text": "ニトリのホテルスタイル枕かと思っターー x.com/kana_afilia/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "昨日の流れ リサイクルショップ ニトリ 業務スーパー 家具が決まらない センスある人は サラッと決めるんやろなぁ😅 がっとんで ラーメン、餃...",
+        "platform": "x",
+        "author": "@kuro2jzgte",
+        "url": "https://x.com/kuro2jzgte/status/2108190117252997149",
+        "likes": 74,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:37",
+        "captured_at": "",
+        "text": "昨日の流れ リサイクルショップ ニトリ 業務スーパー 家具が決まらない センスある人は サラッと決めるんやろなぁ😅 がっとんで ラーメン、餃子、チャーハン で、お家でカツオの漬けで、チビチビ そして、狙われるカツオ🐟 #ラーメン こっそり #チワワ #夜ご飯 pic.x.com/TP0VYnf6hF",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリで買ったテーブル、初期不良があって返品交換依頼しようとニトリネットログインできなくなって鬱… 新手の詐欺にでもあった気分…",
+        "platform": "x",
+        "author": "@rs__7__",
+        "url": "https://x.com/rs__7__/status/2108171119887102391",
+        "likes": 69,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:22",
+        "captured_at": "",
+        "text": "ニトリで買ったテーブル、初期不良があって返品交換依頼しようとニトリネットログインできなくなって鬱… 新手の詐欺にでもあった気分…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "今回のX投稿は、愛犬との遊びやホテル風の枕など、ニトリ商品を暮らしの中で楽しむ様子への共感が中心だ。『ありがとう』という感謝の投稿も反響を集めた一方、オンラインでの返品交換時にログインできず困惑する声もあり、購入体験の良し悪しが評価を分けている。",
+    "sns_why_it_matters": "商品の機能だけでなく、ペットとの時間や寝室の上質感といった情緒的価値が口コミの起点になっている。一方、会員ログインや返品手続きのつまずきはEC上の信頼を損ないかねないため、購入後の導線を含めたUX改善が商品力と同等に重要になる。生活者の声を商品企画とサービス設計の両面に還流させる仕組みが求められる。"
+  },
+  {
     "date": "20261008",
     "title": "2026年10月8日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "北大とニトリのAI研究は、インテリアの好みを定量化し、理想の住空間とのギャップを可視化するもの。提案販売や住まい起点の顧客理解につながる可能性がある。 家具リサイクルでは年間1万トン超という処理量目標が示された。既報の施設計画に具体的な規模が加わり、販売後の回収・再資源化の実行力が焦点となる。",
