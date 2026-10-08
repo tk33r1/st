@@ -45,7 +45,7 @@ export default {
       if (request.signal.aborted) stop(); else request.signal.addEventListener('abort', stop, { once: true });
     });
     return Response.json(expired ? { error: { code: 'search_unavailable', retryable: true } }
-      : { request_id: crypto.randomUUID(), status: 'no_results', results: [], daily: null, comment: 'Evaluation fixture.' },
+      : { request_id: crypto.randomUUID(), status: 'no_results', results: [], comment: 'Evaluation fixture.' },
     { status: expired ? 503 : 200, headers: { 'Cache-Control': 'no-store' } });
   },
 };

@@ -1073,7 +1073,11 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     if (signal.aborted) throw searchFailure('cancelled');
   }
   // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
-  if (pageChoice && page) pageChoice = { ...pageChoice, results: pageChoice.results.filter(p => p.url !== page) };
+  if (pageChoice && page) {
+    const results = pageChoice.results.filter(p => p.url !== page);
+    // 除いて空になったら「見当たらない」として統合人格に伝える（結果がある扱いのまま空の一覧を渡さない）
+    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
+  }
   const hasPages = pageChoice && pageChoice.results.length;
   const synthMessages = [
     // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ

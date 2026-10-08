@@ -788,6 +788,18 @@ test('ページ選びに今のページの題名を渡し、今のページそ�
   const lines = text.split(String.fromCharCode(10));
   const pages = JSON.parse(lines[lines.indexOf('event: pages') + 1].slice('data: '.length)).pages.map(p => p.url);
   assert.deepEqual(pages, ['https://tk.st/tools/pdf-studio/']);
+  // 今のページだけを選んだときは、除いた後を「見当たらない」として統合人格に渡し、リンクの欄を出さない
+  const bodies = [];
+  const only = enableSearch(worker(undefined, (url, o) => {
+    if (url.endsWith('/site-search.json')) return Response.json(guideIndex);
+    if (o?.body) bodies.push(JSON.parse(o.body));
+    if (!o?.body || !JSON.parse(o.body).response_format) return;
+    return searchReply({ selections: ['page:tools'] });
+  }));
+  const onlyText = await (await only.request('/magi2/chat', { site_pages: true, page: '/tools/', messages: [{ role: 'user', content: 'このページは何？' }] })).text();
+  assert.ok(!onlyText.includes('event: pages'));
+  const notes = bodies.flatMap(b => (b.messages || []).map(m => m.content)).filter(c => typeof c === 'string' && c.includes('"pages":[]'));
+  assert.ok(notes.length && notes.every(c => c.includes('"status":"no_results"')), '空の一覧を results のまま渡した');
 });
 
 test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替えなら捨て、履歴へ保存しない', async () => {
