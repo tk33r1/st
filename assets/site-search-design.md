@@ -499,6 +499,7 @@ rank.state;         // 'idle' | 'loading' | 'results' | 'no_results' | 'failed' 
 
 - `python .github/scripts/generate-nitori-daily.py --rebuild` と `generate-retail-tech-daily.py --rebuild` で、ポータルと全号を作り直す。
 - `--rebuild` は古い号の SNS の出典 URL を直して JSON に書き戻すことがある。差分を見て、検索以外の変更が混ざったら別のコミットに分ける。
+- `--rebuild` は、号の JSON-LD の `dateModified` と RSS の `lastBuildDate` を前の値のまま残す（2026-10-08。`daily_engine.py` の `keep_date_modified`・`_same_except_build_date`）。前は生成器の値に戻るので手で戻していた。
 - **日時の同期から外す**：再生成のコミットの末尾に `Date-Sync: skip`（git のトレーラー）を付ける。`update-modified.py` の `last_human_commit` は、bot のコミットと同じくこのコミットを飛ばす（`git log --format` に `%(trailers:key=Date-Sync,valueonly)` を足す）。号のページは bot のコミットしか持たないので、`dateModified` はいまの値のまま残る。本文を変えない一括の作り直しに使える仕組みとして、スクリプトの冒頭の説明にも書く。
   - サイトマップの `lastmod` は外せず、1回だけ全号で新しくなる。`sitemap.yml` の外部の action（`cicirello/generate-sitemap`）が生の git の日時を使うためで、置き換えはこの変更の範囲外とする。
 

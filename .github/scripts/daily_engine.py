@@ -2303,6 +2303,53 @@ def write_issue_page(config, articles_history, index):
     return date_key
 
 
+_BUILD_DATE_RE = re.compile(r'<lastBuildDate>[^<]*</lastBuildDate>')
+_DATE_MODIFIED_RE = re.compile(r'("dateModified"\s*:\s*")([^"]*)')
+
+
+def _page_paths(job_dir):
+    """ポータルと全号のページ。"""
+    paths = [os.path.join(job_dir, 'index.html')]
+    for name in sorted(os.listdir(job_dir)):
+        page = os.path.join(job_dir, name, 'index.html')
+        if re.fullmatch(r'\d{8}', name) and os.path.isfile(page):
+            paths.append(page)
+    return paths
+
+
+def keep_date_modified(job_dir):
+    """--rebuild の前後で、既存のページの JSON-LD の dateModified を元の値のまま残す。
+    dateModified は update-modified.py が git の日時に合わせているので、本文を変えない作り直しで生成器の値に戻さない
+    （作り直しのコミットには Date-Sync: skip を付ける）。戻り値を呼ぶと、作り直した後のページに元の値を書き戻す。"""
+    before = {}
+    for path in _page_paths(job_dir):
+        with open(path, encoding='utf-8', newline='') as f:
+            before[path] = [m.group(2) for m in _DATE_MODIFIED_RE.finditer(f.read())]
+
+    def restore():
+        for path, values in before.items():
+            with open(path, encoding='utf-8', newline='') as f:
+                text = f.read()
+            if len(_DATE_MODIFIED_RE.findall(text)) != len(values):
+                continue  # 構造化データの形が変わったページは生成器の値のまま
+            it = iter(values)
+            updated = _DATE_MODIFIED_RE.sub(lambda m: m.group(1) + next(it), text)
+            if updated != text:
+                with open(path, 'w', encoding='utf-8', newline='') as f:
+                    f.write(updated)
+    return restore
+
+
+def _same_except_build_date(path, content):
+    """既存のフィードと、lastBuildDate の行を除いて同じか。"""
+    try:
+        with open(path, encoding='utf-8') as f:
+            current = f.read()
+    except FileNotFoundError:
+        return False
+    return _BUILD_DATE_RE.sub('', current) == _BUILD_DATE_RE.sub('', content)
+
+
 def write_collection_outputs(config, articles_history):
     """ポータル、RSS、検索インデックスをまとめて書き出す。"""
     job_dir = config['job_dir']
@@ -2311,7 +2358,12 @@ def write_collection_outputs(config, articles_history):
         ('rss.xml', clean_generated_text(generate_rss_xml(config, articles_history))),
     )
     for filename, content in outputs:
-        with open(os.path.join(job_dir, filename), 'w', encoding='utf-8') as f:
+        path = os.path.join(job_dir, filename)
+        # 号が増えていない作り直し（--rebuild）で、RSS の lastBuildDate だけが変わるのを避ける。
+        # 書き換えると、読者や RSS リーダーに「フィードが更新された」と見えるため（中身が同じなら前の日時のまま残す）
+        if filename == 'rss.xml' and _same_except_build_date(path, content):
+            continue
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
     for filename, payload in build_search_index(config, articles_history).items():
         write_json_atomic(os.path.join(job_dir, filename), payload, separators=(',', ':'))
@@ -2337,11 +2389,13 @@ def run_daily_pipeline(config):
             save_history(data_dir, articles_history)
             print(f" -> 旧号のSNS出典URLを修復してJSONへ反映: {len(repaired_indices)} 号")
 
+        restore_dates = keep_date_modified(job_dir)
         for i in range(len(articles_history)):
             date_key = write_issue_page(config, articles_history, i)
             print(f" -> 再生成: {date_key}号 HTML")
 
         write_collection_outputs(config, articles_history)
+        restore_dates()
         print(f" -> 再生成: トップポータル index.html")
         print(f" -> 再生成: rss.xml")
         print(f" -> 再生成: search-index.json")
