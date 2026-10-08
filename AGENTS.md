@@ -167,6 +167,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     （`eval-site-rank.mjs --probe` → `--browser`。生の記録は成果物。`assets/site-search-design.md` 10.4）。
   - `site-search-url.yml`（手動のみ）: 検索語が URL・参照元・計測に残らないことを、本番の tk.st で本物の GTM・Ahrefs を読み込んで確かめる
     （`test-site-search-ui.mjs --base https://tk.st`。計測の送信は記録してから止める）。
+  - `magi-classification-eval.yml`（手動のみ）: magi2 の発言分類（Jev）を固定の合成文で確かめる（`eval-magi-classification.mjs`。リポジトリ Secret の `TYPESAFE_API_KEY`）。問い・基準を変えたら、変える前と後で回して比べる。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が MAGI の人格カードを作り直して
