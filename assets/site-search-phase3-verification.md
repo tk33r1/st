@@ -335,3 +335,14 @@ T06からT10の簡素化までを見直し、生成側の型検査と企業名�
 - 既存380記事の補完語と順序は変更前および保存済みの値と一致。生成した索引は公開用ファイル・固定fixtureとバイト単位で一致し、generationはnitori `021c767db6e4df27`・retail `13d28fe0e9fcb24d`のまま。fixtureのmanifestは生成規則のソースハッシュだけを更新。固定120問・正解・filters・split・両版の索引は変更していない。
 
 検証：日刊Python32件・評価器24件が通過。補完前後のfixtureのCLI検査とJS構文・差分検査が成功。補完後のtuneの候補recallは両媒体24/24を維持。final・実APIは未評価。ログとtuneの候補記録は非追跡のworkers/.wrangler/fix-review-*・daily-rank-candidates-*へ保存。公開用データ・HTML・ブラウザ資産・Workerのコードと停止設定は変更していない。この修正は未push・本番未反映。
+
+### 7.16 T09・T10・レビュー修正の本番反映（2026-10-09）
+
+本人の「本番反映して」の指示で、T09 `5e0607d1`・T10 `8cb98854`・簡素化 `2f443234`・レビュー修正 `8d56741c`をmainへpushした。日刊②の停止設定を維持し、実APIの評価と有効化は行っていない。
+
+- 公開前に最新mainを取得し、追加の号・他の変更が無いことを確認。Worker150件・日刊Python32件・評価器24件・画面100場面が通過。build.sh成功（653ファイル）。出荷する履歴JSONと両誌の索引が、検査済みの履歴・索引と一致。
+- magi2の本番デプロイ成功。Version `1a181c67-d462-4c52-bba0-5f97e0788eb3`、225.34KiB（gzip 63.34KiB）。本番DB・ルートと`SITE_RANK_SCOPES="site"`を確認。modelsは200のJSON、両日刊scopeは200・failed/disabled・searched:null・cached:false。
+- [Cloudflare Pages](https://dash.cloudflare.com/28a9a66a67a07a598cb99f7cc0ab54ed/pages/view/st/8e40e2e7-9f98-4faa-982f-e2ceecac040d)の対象コミット`8d56741c`・Deployment `8e40e2e7-9f98-4faa-982f-e2ceecac040d`の公開成功をGitHubのcheckでも確認。AIモデル検査・人格カード・sitemapのActionsも成功。
+- 17:53 JSTに本番の両ポータルをブラウザで確認。nitori176記事・generation `021c767db6e4df27`、retail204記事・generation `13d28fe0e9fcb24d`。索引と共通JSが手元の公開物と一致。入力候補は最大6件でAPIなし、明示Enterは停止応答を受け①が使える。連続Enterで再送せず、検索語はURLに残らず、ページエラーなし。
+
+本番の画面確認では解析を停止している。手元の100場面でもGTM・Ahrefsを読み込めず、実計測を含むprivacyの合格には数えない。生の証跡は非追跡のworkers/.wrangler/t10-production-*へ保存。公開後のmainにも追加変更が無いことを確認した。次はT11で、日刊②の停止とT11〜T13の公開条件を維持。
