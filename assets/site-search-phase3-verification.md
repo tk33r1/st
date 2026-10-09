@@ -112,13 +112,14 @@ site のセットは変えず、`.github/site-search/phase3-rank-queries.json` �
 | --- | --- |
 | 現行のコード・データ・Phase 2 の契約の調査 | 実施済み |
 | V00 の資料の点検 | 本人のレビューの決定を反映済み |
-| Phase 3 のテストの作成 | T03〜T08の境界・generation・一覧の受け渡し・両ポータルの画面を追加。全年度の合成データはPythonとWorkerテスト内で両媒体×3年分。fixtureファイル・評価セットは未着手 |
+| Phase 3 のテストの作成 | T03〜T08の境界・generation・一覧の受け渡し・両ポータルの画面を追加。T09で固定した380記事・120問と両媒体×3年度の合成fixture・模擬評価器18件を追加。7.12 |
 | V12（T03） | 模擬Workerで確認済み。本番Workerの公開成功、Versionと読み取り専用の疎通を確認。実利用の回数を100回まで消費する試験は行っていない |
 | V09・V13（T04） | 手元・出荷物・本番URLで一覧の6場面を確認済み。コードレビュー時の手元と公開後の本番では、GTM・Ahrefsを実際に読み込み、計測の送信を記録して停止 |
 | V03・V11（T05の生成側） | 全年度で共通のgeneration、過去年だけの変更、空の索引、再生成の安定性、既存の日刊画面の互換を確認済み。Worker側は7.2〜7.3で模擬検証済み。画面の版の照合は7.4で模擬検証済み |
 | 出荷の確認 | 簡素化後も `build.sh` 成功（653ファイル）。Pagesのビルド成功。本番の両誌の索引が出荷内容と一致（176記事・204記事）。generation以外の既存項目は変更前と一致 |
 | T06〜T07のWorker側 | 7.2〜7.3に記録。全体の回帰148件通過 |
 | T08の画面 | 7.4〜7.6に記録。両誌の模擬検証・本番反映済み。日刊②は停止設定を維持 |
+| V05の準備（T09） | 固定セット・評価CLIを実装。tuneの候補recallはnitori19/24・retail20/24で90%未満。T10の条件に該当。final・Jevの精度・本番速度は未実測 |
 | その他のV01〜V14・実 API の測定・日刊②の公開の検証 | 未実施 |
 
 実行したコマンド（2026-10-09、基点 `27fae390`、未コミットのT03〜T05）：
@@ -280,3 +281,20 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - 公開後のsitemap botの`7b132e69`はsitemapだけを更新。号本文・dateModified・索引・人格カードは変わっていない。手元にも取り込み済み。
 
 生の証跡は非追跡の`workers/.wrangler/daily-fixes-production-*`へ保存。本番反映は完了。次はT09で、日刊②の有効化には引き続きT11〜T13の合格が必要。
+
+### 7.12 T09の固定セットと評価CLI（2026-10-09）
+
+元コミット`9b0dd28bc3eeebfbd41dc2ba27033d1760666c75`の公開索引を`.github/site-search/fixtures/phase3/`へ固定した。nitori176記事・retail204記事、両誌とも現在保存済みの全年度は2026年だけ。実際の複数年度の精度を測ったとは扱わない。正解はCodexが候補選び・APIの結果を見る前に、条件を当てた全記事の題名・要約から付けた（本人未確認）。
+
+- `phase3-rank-queries.json`は各媒体tune30・final30の計120問。各splitの答え無しは6問、keyword・sentence・paraphrase・englishも各6問。古い記事、商品・経営、month/category/region、同じ号の別記事、字の重ならない正解を含む。速度の24問も各finalから事前に固定した（英語5問・答え無し6問を含む）。
+- 元コミット、固定日、担当、全ファイルのSHA-256、generation・index_hash・candidate_hashを保存。fixtureはバイト単位で元コミットと一致し、Gitの改行変換を止めた。公開索引・号本文・地域の値は変更していない。
+- `eval-daily-rank.mjs`はWorkerの全年度の検査・filters・20候補・変換・問い・確率・閾値・並び・URL検査を使用。オフラインのcheck/plan/candidatesと、Jevを直接呼ぶaccuracy、保存済み記録のreport、本番ブラウザのprobe/browserを実装。新しいnpm依存はない。siteのCLIの処理は変更せず、共通の読み込み・キー・ブラウザ・応答検査をexportして借りた。
+- 各run・各問の候補ID・確率・HTTP・失敗・Jev応答のモデル版・usage・時間・生の本文と、問い・コード・設定・索引のhashを記録する。tuneの閾値比較は1応答を再生し、追加のAPI呼び出しはしない。部分記録を保持し、欠けた問や失敗を分母から除かない。精度の2回を平均して合格にはしない。
+- 速度の各要求にrequest_id・generation・cached・N/M/J・complete・結果ID・時間を保存。キャッシュ・版ずれ・rate_limited・index_updating・記録の欠落を不成立とし、失敗/timeoutは実時間と8秒の大きい方でp95へ入れる。2回目の同一UTC日・24問・hashとVersion ID・キャッシュ期限＋余裕を検査し、既知の測定の1媒体50回/日と重複も確認する。共有上限の残量はunknownと記録する。本番の実行は未実施。
+- 両媒体×3年度の合成fixtureを別に用意。年末年始・閏日・同じ号の別アンカー・長文・Unicode・20件を超える対象と、混版・欠落・暦・媒体・重複・制御文字を検証。合成fixtureを精度の分母に混ぜない。
+
+手元のtuneの候補recallはnitori **19/24（79.2%）**、retail **20/24（83.3%）**。ともに90%未満でT10の条件に該当する。これはJevの判定精度ではない。正解やfinalを候補の結果に合わせて直していない。finalのrecall・精度は未評価。
+
+`--plan --set tune --runs 2`で各媒体60要求、現在の候補・問いでnitori約$0.0593、retail約$0.0616の概算を確認。入力トークン数をpayloadのUTF-8バイト数と置いた概算で、実usageとは異なる。公式料金の照合日とURLをCLIに残す。T10後と実測直前に見積もり・モデル・契約・料金を再確認する。詳しい使い方・固定セットの根拠は[README](../.github/site-search/fixtures/phase3/README.md)。
+
+検証：`node --test .github/scripts/test-daily-rank.mjs`18件、`test-magi2.mjs`150件通過。`eval-daily-rank.mjs --check`、両媒体のplan・tune candidates、既存`eval-site-rank.mjs --check`・`--smoke-payload`が成功。JS構文・`ai_models.py check`・`git diff --check`も成功。最新origin/mainは基点と同じで、新しい号の追加は無し。実API・本番へは送信していない。生の記録は非追跡の`workers/.wrangler/daily-rank-*`へ保存。このT09は未push。次はT10で、日刊②の停止とT11〜T13の公開条件を維持。

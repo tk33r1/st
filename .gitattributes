@@ -3,3 +3,6 @@
 # 記録と食い違う（.github/scripts/vendor/fetch-vendor.js --check で確かめる）。
 assets/vendor/** -text
 assets/fonts/** -text
+
+# 日刊検索の固定索引は本文そのものをハッシュに使うため、OSによる改行変換を止める。
+.github/site-search/fixtures/phase3/** -text

@@ -1,0 +1,29 @@
+{
+  "media": "nitoridaily",
+  "generation": "a1b2",
+  "year": "2025",
+  "records": [
+    {
+      "date": "20251231",
+      "title": "前年の特別な電動米びつ",
+      "summary": "検索用の境界データ。",
+      "category": "商品・サービス",
+      "region": "JP",
+      "tags": [
+        "試験"
+      ],
+      "url": "20251231/#art-1"
+    },
+    {
+      "date": "20251231",
+      "title": "同じ号の別記事",
+      "summary": "検索用の境界データ。",
+      "category": "デジタル・AI",
+      "region": "GLOBAL",
+      "tags": [
+        "試験"
+      ],
+      "url": "20251231/#art-2"
+    }
+  ]
+}

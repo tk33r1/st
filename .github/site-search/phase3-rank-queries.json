@@ -1,0 +1,2045 @@
+{
+  "version": 1,
+  "frozen": "2026-10-09",
+  "annotator": "codex",
+  "source_commit": "9b0dd28bc3eeebfbd41dc2ba27033d1760666c75",
+  "indexes": {
+    "nitori": {
+      "generation": "2063db70449ba414",
+      "years": [
+        "2026"
+      ],
+      "records": 176,
+      "index_hash": "17b3886e1961c691294c9f16d4be962945914a3c3a2bfe13009334121df34c03",
+      "candidate_hash": "db605b91262402a1d263d3e76967b365f1bfdf95ede8e33191026ee1f6c7effc",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "ba02eb091cb1656b766fe7dbae4405c7f58522a462c4949f4f60d6156be66a57"
+        }
+      ]
+    },
+    "retail": {
+      "generation": "88e2025867b34429",
+      "years": [
+        "2026"
+      ],
+      "records": 204,
+      "index_hash": "81693a5ad13996f7210aab9979f1ee25d5e8db598c17cd84c599cf7263fcf000",
+      "candidate_hash": "2cf3b6417fe718c843c75c3afa0d4e0946e5dc0f1a2ac69e543dbab6dfaf5ab5",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "7857fa1de6087556762f8dc0c822ac904e3f372ddd73de0fe26ea7e5d0f27c19"
+        }
+      ]
+    }
+  },
+  "timing": {
+    "nitori": [
+      "nitori-031",
+      "nitori-032",
+      "nitori-033",
+      "nitori-034",
+      "nitori-037",
+      "nitori-038",
+      "nitori-039",
+      "nitori-040",
+      "nitori-041",
+      "nitori-043",
+      "nitori-044",
+      "nitori-045",
+      "nitori-046",
+      "nitori-049",
+      "nitori-050",
+      "nitori-051",
+      "nitori-052",
+      "nitori-054",
+      "nitori-055",
+      "nitori-056",
+      "nitori-057",
+      "nitori-058",
+      "nitori-059",
+      "nitori-060"
+    ],
+    "retail": [
+      "retail-031",
+      "retail-032",
+      "retail-033",
+      "retail-034",
+      "retail-037",
+      "retail-038",
+      "retail-039",
+      "retail-040",
+      "retail-041",
+      "retail-043",
+      "retail-044",
+      "retail-045",
+      "retail-046",
+      "retail-049",
+      "retail-050",
+      "retail-051",
+      "retail-052",
+      "retail-054",
+      "retail-055",
+      "retail-056",
+      "retail-057",
+      "retail-058",
+      "retail-059",
+      "retail-060"
+    ]
+  },
+  "queries": [
+    {
+      "id": "nitori-001",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Cuebus ロボット倉庫",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260929:2"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリ店舗の限られた空間をロボット倉庫に　Cuebusと実証開始"
+    },
+    {
+      "id": "nitori-002",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Connector for Mirakl CROSS MALL",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260918:2"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: フラッグシップ、Mirakl導入モールとCROSS MALLを連携する「Connector for Mirakl」をニトリに提供開始"
+    },
+    {
+      "id": "nitori-003",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "1合ずつ出る米びつ",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "nitoridaily:20260917:5"
+      ],
+      "coverage": [
+        "product",
+        "month"
+      ],
+      "note": "題名・要約で確認: 「計量カップを使わなくてよくなった」ニトリの“1合ずつ出る米びつ”が大好評"
+    },
+    {
+      "id": "nitori-004",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Bill One タイ 14拠点",
+      "filters": {
+        "category": "デジタル・EC・アプリ"
+      },
+      "answers": [
+        "nitoridaily:20260915:1"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "category"
+      ],
+      "note": "題名・要約で確認: ニトリリテールタイ、全14拠点でBill One導入——海外経理を標準化"
+    },
+    {
+      "id": "nitori-005",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "香港 マリタイム・スクエア",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "nitoridaily:20260918:9"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "region"
+      ],
+      "note": "題名・要約で確認: ニトリ、香港「マリタイム・スクエア」に出店——アジア都市部で存在感を拡大"
+    },
+    {
+      "id": "nitori-006",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "デコネコチャーム",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261007:2"
+      ],
+      "coverage": [
+        "product",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: ニトリの「デコネコチャーム」が話題　699円で手に取りやすい猫モチーフ商品"
+    },
+    {
+      "id": "nitori-007",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "AI家具の開発と数年内の接客ロボット導入を語った記事",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261009:1"
+      ],
+      "coverage": [
+        "business",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: ニトリ会長が語る「AI家具」開発の加速、接客ロボットは数年内に"
+    },
+    {
+      "id": "nitori-008",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "シンガポール7店舗目のJurong Point出店",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261009:2"
+      ],
+      "coverage": [
+        "business",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: ニトリ、シンガポールに7店舗目「NITORI JURONG POINT店」を出店"
+    },
+    {
+      "id": "nitori-009",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "2028年から毎年200店を出店する計画",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261006:3"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリ、2027年は160～170店出店へ　2028年から年200店を計画"
+    },
+    {
+      "id": "nitori-010",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "2028年度に稼働する施設で家具を年間1万トン再資源化",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261008:2"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリ、家具を年間1万トン超再資源化へ　2028年度に施設稼働"
+    },
+    {
+      "id": "nitori-011",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "9月既存店売上高が3カ月連続で前年を超えた記事",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261003:2"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリHD、9月既存店売上高が3カ月連続で前年超え"
+    },
+    {
+      "id": "nitori-012",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "N+アプリ会員のポイントが最大7倍になる企画",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261006:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: N+、アプリ会員限定で全アイテムのポイント最大7倍　10月9日から"
+    },
+    {
+      "id": "nitori-013",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "社員の意欲低下を個人ではなく職場の仕組みから防ぐ話",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260930:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: 「静かな退職」をどう防ぐか、元ニトリ人事責任者が語る組織づくり"
+    },
+    {
+      "id": "nitori-014",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "留守でも玄関で荷物を受け取り再配達を減らしたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260930:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 70L収納、積み重ねもできるネット限定の宅配ボックス"
+    },
+    {
+      "id": "nitori-015",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "髪を乾かす間に腕を休ませて両手を空けたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261004:3",
+        "nitoridaily:20260926:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 髪を乾かしながら両手が使える、ニトリの壁掛けハンズフリードライヤー / ハンズフリードライヤー、宙に浮く電動チェア——ニトリ新商品が提案する「新しい暮らし」"
+    },
+    {
+      "id": "nitori-016",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "販売店で第二種電気工事士の実技試験に備える講習を受けたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260924:4"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: 島忠、第二種電気工事士の技能試験対策講習を一般向けに開始——店舗を「学びと体験の場」へ"
+    },
+    {
+      "id": "nitori-017",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "ECで扱うジャンルを五つから八つへ増やしたニュース",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260929:3",
+        "nitoridaily:20260918:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリネットのマーケットプレイス、取扱カテゴリーを5から8へ拡大 / ニトリネットマーケットプレイスが本格始動——食品・アウトドア・生花を追加し取扱カテゴリーを5から8へ拡大"
+    },
+    {
+      "id": "nitori-018",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "旅行先で持ち歩けるスヌーピーのスパバッグ",
+      "filters": {
+        "month": "202610"
+      },
+      "answers": [
+        "nitoridaily:20261005:1"
+      ],
+      "coverage": [
+        "product",
+        "month"
+      ],
+      "note": "題名・要約で確認: デコホームにスヌーピー商品6アイテム、旅行で使えるスパバッグなどを紹介"
+    },
+    {
+      "id": "nitori-019",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "stop employees mentally checking out at work",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260930:1"
+      ],
+      "coverage": [
+        "business",
+        "no_overlap"
+      ],
+      "note": "題名・要約で確認: 「静かな退職」をどう防ぐか、元ニトリ人事責任者が語る組織づくり"
+    },
+    {
+      "id": "nitori-020",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "standardize invoice handling across fourteen Thai offices",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260915:1"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリリテールタイ、全14拠点でBill One導入——海外経理を標準化"
+    },
+    {
+      "id": "nitori-021",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "receive parcels when nobody is at home",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260930:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 70L収納、積み重ねもできるネット限定の宅配ボックス"
+    },
+    {
+      "id": "nitori-022",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "process demand forecasts four times faster on Oracle cloud",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260916:1"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリ、オラクル導入で需要予測処理を約4分の1に——基幹系刷新でSPAの判断を高速化"
+    },
+    {
+      "id": "nitori-023",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "expand furniture recycling with a new facility",
+      "filters": {
+        "month": "202610"
+      },
+      "answers": [
+        "nitoridaily:20261008:2",
+        "nitoridaily:20261004:1"
+      ],
+      "coverage": [
+        "business",
+        "month"
+      ],
+      "note": "題名・要約で確認: ニトリ、家具を年間1万トン超再資源化へ　2028年度に施設稼働 / 廃棄家具の8割を資源へ、ニトリが国内最大級のリサイクル施設"
+    },
+    {
+      "id": "nitori-024",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "offer a public course for the electrician practical exam",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260924:4"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: 島忠、第二種電気工事士の技能試験対策講習を一般向けに開始——店舗を「学びと体験の場」へ"
+    },
+    {
+      "id": "nitori-025",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "ニトリ全店舗のリアルタイム在庫をこの画面で確認したい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-026",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "家具を買うための住宅ローン金利比較",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-027",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "東京の明日の天気予報",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-028",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "Nウォームのアレルギー治療効果",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-029",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "ニトリの2024年度の連結決算短信PDF",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-030",
+      "set": "tune",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "none",
+      "query": "how to mine bitcoin at home",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-031",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "ちふれ もっちり保湿",
+      "filters": {
+        "category": "商品開発・ヒット商品",
+        "month": "202609"
+      },
+      "answers": [
+        "nitoridaily:20260921:1",
+        "nitoridaily:20260917:3"
+      ],
+      "coverage": [
+        "product",
+        "category",
+        "month"
+      ],
+      "note": "題名・要約で確認: ニトリ、ちふれと初の共同開発スキンケアを999円から投入——PB美容の中核カテゴリーへ / ニトリ×ちふれが初コラボ、999円からの「もっちり保湿シリーズ」で秋の乾燥ケア"
+    },
+    {
+      "id": "nitori-032",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "福島御山店",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260916:3"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリ、福島県に「福島御山店」を2027年3月開業へ"
+    },
+    {
+      "id": "nitori-033",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "札幌・北海道GXファンド",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261001:5"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリなど3社が札幌・北海道GXファンドに出資　参加は17社、総額61億円に"
+    },
+    {
+      "id": "nitori-034",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "ハローキティ 全4型",
+      "filters": {
+        "month": "202610"
+      },
+      "answers": [
+        "nitoridaily:20261001:4"
+      ],
+      "coverage": [
+        "product",
+        "month"
+      ],
+      "note": "題名・要約で確認: ニトリ×ハローキティ、初のアパレルコレクション　全4型を展開"
+    },
+    {
+      "id": "nitori-035",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Pavilion Damansara Heights",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261001:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ニトリ、マレーシア15店舗目を発表　Pavilion Damansara Heightsに出店"
+    },
+    {
+      "id": "nitori-036",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "699円 ティッシュケース",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260915:5"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 最後の1枚まで取り出しやすい、699円ティッシュケースの工夫"
+    },
+    {
+      "id": "nitori-037",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "ライブコマースで集めた顧客の声を商品改善に使う記事",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261009:3"
+      ],
+      "coverage": [
+        "business",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: ニトリ、ライブコマースは「売ること」より「顧客の声」を活用"
+    },
+    {
+      "id": "nitori-038",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "ニトリネットで食品・アウトドア・生花の取り扱いを開始",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "nitoridaily:20260918:1"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "month"
+      ],
+      "note": "題名・要約で確認: ニトリネットマーケットプレイスが本格始動——食品・アウトドア・生花を追加し取扱カテゴリーを5から8へ拡大"
+    },
+    {
+      "id": "nitori-039",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "夜間バッチを6時間弱から約1時間半に短縮した基幹刷新",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260917:1"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリ、基幹システムをOCIへ移行——夜間バッチを6時間弱から約1時間半へ短縮"
+    },
+    {
+      "id": "nitori-040",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "中国事業の今期黒字化が達成可能とする白井社長の発言",
+      "filters": {
+        "region": "JP"
+      },
+      "answers": [
+        "nitoridaily:20260918:3"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "region"
+      ],
+      "note": "題名・要約で確認: ニトリHD白井社長、中国事業の今期黒字化「達成可」——不況下でも小型店を軸に出店を加速"
+    },
+    {
+      "id": "nitori-041",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "小型家電を無料回収する店舗を広げた取り組み",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260912:6"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリ、小型家電の無料リサイクル回収を実施する店舗を拡大"
+    },
+    {
+      "id": "nitori-042",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "N+が島忠ホームズ葛西に江戸川区内初出店",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260912:1"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: 島忠ホームズ葛西にニトリ系アパレル「N＋」、江戸川区内へ初出店"
+    },
+    {
+      "id": "nitori-043",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "木を洗う手間を減らしレンジで蒸し料理を作りたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260927:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 「木製じゃないから手入れが楽！」レンジで使えるせいろ——ニトリの時短調理グッズが週5利用の声"
+    },
+    {
+      "id": "nitori-044",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "台を買い足さずに高さを変えて洗濯物を出し入れするかご",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20261007:4"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 高さを調整できるニトリの洗濯バスケット　台を別に用意せず使える設計"
+    },
+    {
+      "id": "nitori-045",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "家族の衣類を一つに吊るせる1990円の傘型の物干し",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260915:3"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 「これ一つで全部干せる」ニトリの1,990円パラソル型物干しに高評価"
+    },
+    {
+      "id": "nitori-046",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "ペットの汚れからソファを守り買い替えを避けたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260912:3",
+        "nitoridaily:20260922:4"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 引っかき傷・汚れに強い「ストレッチソファカバー」発売、ペット世帯の悩みに応える / ニトリ新作「ソファカバー」、撥水・防汚加工でペット家庭の味方に"
+    },
+    {
+      "id": "nitori-047",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "パンの形をした椅子で背もたれの角度を変えてくつろぎたい",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260915:4"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 巨大食パン型の低反発座椅子、14段階リクライニングで話題"
+    },
+    {
+      "id": "nitori-048",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "ほとんどの食器を置き換えたという洗いやすく割れにくいお皿",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260913:1"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 「ほとんどの食器をこれに替えました」ニトリの“楽に洗える皿”に絶賛の声"
+    },
+    {
+      "id": "nitori-049",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "share order stock and shipping data between Mirakl and CROSS MALL",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260918:2"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: フラッグシップ、Mirakl導入モールとCROSS MALLを連携する「Connector for Mirakl」をニトリに提供開始"
+    },
+    {
+      "id": "nitori-050",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "open a store in Hong Kong Maritime Square",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "nitoridaily:20260918:9"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "region"
+      ],
+      "note": "題名・要約で確認: ニトリ、香港「マリタイム・スクエア」に出店——アジア都市部で存在感を拡大"
+    },
+    {
+      "id": "nitori-051",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "measure ideal room preferences using artificial intelligence and a university",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "nitoridaily:20260916:2"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "month"
+      ],
+      "note": "題名・要約で確認: ニトリ、AIで「理想のインテリア」を数値化——北海道大学と共同研究"
+    },
+    {
+      "id": "nitori-052",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "dry a full seven kilogram washing load on an X shaped rack",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260912:4"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: 「7kgの洗濯機満タンでも余裕で干せる」ニトリのX型物干しに共感の声"
+    },
+    {
+      "id": "nitori-053",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "trust survey ranking of furniture retailers",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260915:2"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ニトリが「信頼している家具・インテリアチェーン」首位に——2026年調査"
+    },
+    {
+      "id": "nitori-054",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "english",
+      "query": "twenty twenty seven opening of Fukushima Miyama branch",
+      "filters": {},
+      "answers": [
+        "nitoridaily:20260916:3"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "no_overlap"
+      ],
+      "note": "題名・要約で確認: ニトリ、福島県に「福島御山店」を2027年3月開業へ"
+    },
+    {
+      "id": "nitori-055",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "防臭ゴミ箱の医学的な感染症予防効果",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-056",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "デコネコの公式3Dプリンター用データ",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-057",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "N+で販売する子供用ランドセル",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-058",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "家具の配送先住所をこの画面で変更したい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-059",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "ja",
+      "type": "none",
+      "query": "ニトリの2035年の店舗数実績",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "nitori-060",
+      "set": "final",
+      "scope": "nitori",
+      "locale": "en",
+      "type": "none",
+      "query": "book a flight to Singapore",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-001",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "keyword",
+      "query": "teppay",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261007:2"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: JR東日本、新コード決済「teppay」を10月20日に開始"
+    },
+    {
+      "id": "retail-002",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "ADAPTIS エディオン 2000台",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261002:5"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: NTTデータ、エディオンにモバイル決済端末2,000台を提供"
+    },
+    {
+      "id": "retail-003",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Sparky",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20261009:5"
+      ],
+      "coverage": [
+        "product",
+        "anchor",
+        "region"
+      ],
+      "note": "題名・要約で確認: AIがウォルマートを変革中、その先頭をAIアシスタント「Sparky」が担う"
+    },
+    {
+      "id": "retail-004",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "VRシェルフ",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261008:4"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: ヤマザワとBIPROGY、VRシェルフで買い物支援の実験"
+    },
+    {
+      "id": "retail-005",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Too Good To Go ベイシア",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "retailtechdaily:20260928:1"
+      ],
+      "coverage": [
+        "business",
+        "month"
+      ],
+      "note": "題名・要約で確認: ベイシア、食品ロス削減アプリを東京・埼玉の3店舗に導入"
+    },
+    {
+      "id": "retail-006",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Universal Cart",
+      "filters": {
+        "category": "グローバル先端トレンド",
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20260912:5"
+      ],
+      "coverage": [
+        "product",
+        "old",
+        "category",
+        "region"
+      ],
+      "note": "題名・要約で確認: Google、複数ECを横断する「Universal Cart（ユニバーサルカート）」機能を発表"
+    },
+    {
+      "id": "retail-007",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "無人店舗に専用アプリなしでクレジットカードのタッチで入店・決済",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261009:1"
+      ],
+      "coverage": [
+        "product",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: インタセクト、ユーシーカードと連携し無人店舗でクレジットカードのタッチ決済に対応"
+    },
+    {
+      "id": "retail-008",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "イオンモール公式アプリのAIエージェントが店舗や商品を提案",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261007:4"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: イオンモール、公式アプリを刷新　AIエージェントが店舗や商品を提案"
+    },
+    {
+      "id": "retail-009",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "SCIを使って広告配信前に投資対効果を分析するパッケージ",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261007:3"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: DearOneとインテージ、リテールメディア広告の「事前分析パッケージ」を提供"
+    },
+    {
+      "id": "retail-010",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "True Dataが住関連データを広げて需要予測を強化",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261009:2"
+      ],
+      "coverage": [
+        "business",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: True Data、住関連データを拡張し需要予測を強化"
+    },
+    {
+      "id": "retail-011",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "ローソンが2026年度に100店舗へ止水板を追加",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261003:5"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ローソン、2026年度に100店舗へ止水板を追加導入"
+    },
+    {
+      "id": "retail-012",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "アダストリアのささげ業務を3人から1人にしたAI共創ブランド",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261002:4"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: アダストリア、AI共創の新ブランドで商品撮影・登録業務を3人から1人に"
+    },
+    {
+      "id": "retail-013",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "スーパー各社が同じ便で商品を運び積載率を13〜38％改善",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260925:3"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: SM物流研究会、首都圏の共同配送で積載率13〜38%向上"
+    },
+    {
+      "id": "retail-014",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "書店約40店舗で顔を確認して入退店と会計を無人にする取り組み",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260925:2"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: HOUSEIの無人店舗ソリューション、三洋堂書店40店舗がスマート無人営業化"
+    },
+    {
+      "id": "retail-015",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "紙に書いた玩具の希望をデジタルのカタログに取り込みたい",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261007:6"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: Targetのデジタル版ホリデーカタログ、玩具を特集　手書きの願いリストも取り込み可能に"
+    },
+    {
+      "id": "retail-016",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "個人のデータで値段を変えないと明言した小売の経営者",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260929:7"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: ウォルマートCEO、個人データを使った個別価格設定は「行わない」と表明"
+    },
+    {
+      "id": "retail-017",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "施設をまたいで忘れ物を探し電話での照会を減らす仕組み",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260916:5"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: パルコ、池袋・渋谷店に「落とし物クラウドfind」——施設横断検索で問い合わせ対応を効率化"
+    },
+    {
+      "id": "retail-018",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "食欲を抑える薬の普及で食品の売れ方が変わる話",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260923:8"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: GLP-1薬が世界の食品価値730億ドルを脅かす——肥満治療薬が食の消費構造を変える"
+    },
+    {
+      "id": "retail-019",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "manage stock replenishment at a US department store",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20260920:6"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "no_overlap",
+        "region"
+      ],
+      "note": "題名・要約で確認: メイシーズ、AI在庫補充ツールを導入——百貨店の在庫最適化へ"
+    },
+    {
+      "id": "retail-020",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "receive groceries within one hour at Walmart",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20261009:6"
+      ],
+      "coverage": [
+        "product",
+        "region"
+      ],
+      "note": "題名・要約で確認: ウォルマート、ホリデー商戦に向け1時間で受け取れるエクスプレス受取サービスを開始"
+    },
+    {
+      "id": "retail-021",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "electronic shelf labels guide shoppers to products",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261006:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: ウォルマート、電子棚札で店内の商品探しを支援"
+    },
+    {
+      "id": "retail-022",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "support rural shopping with a municipality in Ena",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260929:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: 中部薬品、岐阜県恵那市と買い物支援の実証事業を開始"
+    },
+    {
+      "id": "retail-023",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "annual digital sales reach thirty three billion at Costco",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260926:7"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: コストコのデジタル売上が2026年に330億ドル、前年比20％超で成長"
+    },
+    {
+      "id": "retail-024",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "predict warehouse workload at a logistics company",
+      "filters": {
+        "category": "サプライチェーン・店舗自動化"
+      },
+      "answers": [
+        "retailtechdaily:20261002:1"
+      ],
+      "coverage": [
+        "business",
+        "category"
+      ],
+      "note": "題名・要約で確認: NTTロジスコ、需要予測を倉庫の作業量見積もりに活用"
+    },
+    {
+      "id": "retail-025",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "全小売企業の未公開AIモデルの重みをダウンロードしたい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-026",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "リテールメディア広告の個人情報削除申請フォーム",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-027",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "ビットコインの秘密鍵の復元方法",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-028",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "量子計算機を用いた2023年のレジ暗号破り実験",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-029",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "イオン岩手FDCの入荷予約をこの画面で行いたい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-030",
+      "set": "tune",
+      "scope": "retail",
+      "locale": "en",
+      "type": "none",
+      "query": "write a Python tutorial for image segmentation",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-031",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "7NOW 予約",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "retailtechdaily:20260921:1",
+        "retailtechdaily:20260916:4"
+      ],
+      "coverage": [
+        "product",
+        "old",
+        "month"
+      ],
+      "note": "題名・要約で確認: セブン-イレブン、宅配アプリ『7NOW』に予約機能を新搭載 / セブンイレブン、「7NOW」に予約機能——受け取り時間を選べる購買体験へ"
+    },
+    {
+      "id": "retail-032",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "Harps AI部門長",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20260914:9"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "region"
+      ],
+      "note": "題名・要約で確認: 米食品スーパーHarps、初の「AI部門長」を任命"
+    },
+    {
+      "id": "retail-033",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "トレッサ横浜 駐車場",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260929:2"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: アイシン、トレッサ横浜で駐車場管理支援システムの実験を開始"
+    },
+    {
+      "id": "retail-034",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "RFID ユニクロ",
+      "filters": {
+        "category": "SNS話題・生活者のリアル"
+      },
+      "answers": [
+        "retailtechdaily:20260918:5"
+      ],
+      "coverage": [
+        "product",
+        "old",
+        "category"
+      ],
+      "note": "題名・要約で確認: 「えっ、もう終わり？」ユニクロのセルフレジが一瞬で会計できる理由と潜むリスク"
+    },
+    {
+      "id": "retail-035",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "ローソン 生成AI 商品3品",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260924:1"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: ローソン、生成AIが発案した商品3品を発売——企画の上流にAIを組み込む"
+    },
+    {
+      "id": "retail-036",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "keyword",
+      "query": "HANZO まねきねこ 720店舗",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260930:2"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: カラオケまねきねこ、約720店舗に自動発注システムを導入"
+    },
+    {
+      "id": "retail-037",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "ファミマが全国1万6500店のPOSでレジ業務を2割削減",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260919:1"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: ファミマ、全国約1万6500店のレジを刷新 レジ業務を1日2割削減へ"
+    },
+    {
+      "id": "retail-038",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "トライアルとスギ薬局がリテールメディアの共通指標を策定",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261001:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: トライアルとスギ薬局、企業横断のリテールメディア研究会を設立　共通指標を策定へ"
+    },
+    {
+      "id": "retail-039",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "りんくうアウトレットでAI警備と人流データ活用を実験",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261008:3"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: りんくうプレミアム・アウトレット、AI警備と人流データ活用を実験"
+    },
+    {
+      "id": "retail-040",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "ウエルシアアプリでイオンの健康サービスからサポを提供",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261006:1"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: ウエルシアアプリでイオンの健康サービス「からサポ」を提供開始"
+    },
+    {
+      "id": "retail-041",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "3COINSの台湾1号店を誠品生活に出店",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260924:5"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: パルグループHD、3COINS台湾1号店「誠品生活武昌店」を9月12日オープン"
+    },
+    {
+      "id": "retail-042",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "sentence",
+      "query": "アマゾンがメタのMuseから自社を除外するよう求めた記事",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260923:6"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: アマゾン、メタのAIエージェント「Muse」からの自社除外を要請——ECとAIの主導権争いが表面化"
+    },
+    {
+      "id": "retail-043",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "売れ残った食品を減らすためベイシアが外部のアプリを導入",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260928:1"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: ベイシア、食品ロス削減アプリを東京・埼玉の3店舗に導入"
+    },
+    {
+      "id": "retail-044",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "ホームセンターがチャットとAIで月17時間の仕事を減らした事例",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260921:3",
+        "retailtechdaily:20260913:2"
+      ],
+      "coverage": [
+        "business",
+        "old"
+      ],
+      "note": "題名・要約で確認: カインズ、AI×Slackで月17時間削減と売上向上を両立 / カインズが実践する「AI×Slack」活用術、月17時間の工数削減と売上向上を両立"
+    },
+    {
+      "id": "retail-045",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "既存のコーヒー機器を広告接点にして収益を得るコンビニ",
+      "filters": {
+        "month": "202609"
+      },
+      "answers": [
+        "retailtechdaily:20260930:1"
+      ],
+      "coverage": [
+        "business",
+        "month"
+      ],
+      "note": "題名・要約で確認: ファミマ、新型コーヒーマシンを活用したリテールメディアを開始"
+    },
+    {
+      "id": "retail-046",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "品川駅で花をスキャンせず手に取って買える実験",
+      "filters": {
+        "region": "JP"
+      },
+      "answers": [
+        "retailtechdaily:20260926:1",
+        "retailtechdaily:20261001:2"
+      ],
+      "coverage": [
+        "product",
+        "region"
+      ],
+      "note": "題名・要約で確認: 品川エキナカに6日間限定——生花や鉄道グッズを「スキャンレス」で購入、TTG・日比谷花壇・JR東が実証 / 品川駅にレジ待ち・商品スキャン不要の無人決済ストア　6日間限定で展開"
+    },
+    {
+      "id": "retail-047",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "フォーティエンスが天候やSNSを需要予測に取り入れる記事",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260923:1"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: フォーティエンス、消費財向け需要予測をAIで支援——食品・日用品の欠品と過剰在庫を同時に抑制"
+    },
+    {
+      "id": "retail-048",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "paraphrase",
+      "query": "店が違っても商品を一つの買い物かごでまとめて注文したい",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260912:5"
+      ],
+      "coverage": [
+        "product",
+        "old"
+      ],
+      "note": "題名・要約で確認: Google、複数ECを横断する「Universal Cart（ユニバーサルカート）」機能を発表"
+    },
+    {
+      "id": "retail-049",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "automatic replenishment at Macy's",
+      "filters": {
+        "region": "GLOBAL"
+      },
+      "answers": [
+        "retailtechdaily:20260920:6"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "region"
+      ],
+      "note": "題名・要約で確認: メイシーズ、AI在庫補充ツールを導入——百貨店の在庫最適化へ"
+    },
+    {
+      "id": "retail-050",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "sell Coach products through Gemini and AI Mode",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260925:7"
+      ],
+      "coverage": [
+        "business"
+      ],
+      "note": "題名・要約で確認: タペストリー、グーグルのGeminiアプリとAIモード経由で商品販売へ"
+    },
+    {
+      "id": "retail-051",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "Instacart live store visibility for manufacturers",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260929:5"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: Instacart、食品小売とメーカーに全店舗の状況をリアルタイムで可視化"
+    },
+    {
+      "id": "retail-052",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "TikTok adds AI product discovery and one click checkout",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20261008:8"
+      ],
+      "coverage": [
+        "product",
+        "anchor"
+      ],
+      "note": "題名・要約で確認: TikTok、AI商品発見とワンクリック決済を追加へ"
+    },
+    {
+      "id": "retail-053",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "an unattended shop inside a public library in Hachioji",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260926:4"
+      ],
+      "coverage": [
+        "product"
+      ],
+      "note": "題名・要約で確認: 日販、図書館内の無人ショップ「TOSHOP」を八王子に10月3日オープン"
+    },
+    {
+      "id": "retail-054",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "english",
+      "query": "a senior leader to oversee artificial intelligence at a regional food chain",
+      "filters": {},
+      "answers": [
+        "retailtechdaily:20260914:9"
+      ],
+      "coverage": [
+        "business",
+        "old",
+        "no_overlap"
+      ],
+      "note": "題名・要約で確認: 米食品スーパーHarps、初の「AI部門長」を任命"
+    },
+    {
+      "id": "retail-055",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "コストコの会員パスワードをリセットしたい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-056",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "全店のリアルタイム電子棚札価格一覧",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-057",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "GLP-1の薬剤用量を処方してほしい",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-058",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "パルコ落とし物管理の社内ログイン認証情報",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-059",
+      "set": "final",
+      "scope": "retail",
+      "locale": "ja",
+      "type": "none",
+      "query": "2024年の火星有人店舗のPOS実績",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    },
+    {
+      "id": "retail-060",
+      "set": "final",
+      "scope": "retail",
+      "locale": "en",
+      "type": "none",
+      "query": "download Meta Muse source code",
+      "filters": {},
+      "answers": [],
+      "coverage": [],
+      "note": "絞り込み後の全記事の題名・要約に、要求を満たす情報・操作機能はない。類似する話題だけでは正解にしない。"
+    }
+  ]
+}

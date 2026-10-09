@@ -58,7 +58,8 @@ export function loadWorker() {
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'search-scope.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
     + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
-    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, rankQuery, clearRankCache: () => rankCache.clear() };', ctx);
+    + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, rankQuery, makeDailySnapshot, filterDailyItems,'
+    + ' normalizeScopeFilters, searchScope, rankScopeConfig, shortlistRankDaily, dailyResultUrl, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });
 }
 
@@ -136,7 +137,7 @@ function option(name, fallback) {
   const i = process.argv.indexOf(name);
   return i < 0 ? fallback : process.argv[i + 1];
 }
-function typesafeKey(name) {
+export function typesafeKey(name) {
   const placeholder = v => !v || /^x+$/.test(v) || /^sk-x+$/.test(v);
   for (const v of [process.env[name], process.env.TYPESAFE_API_KEY]) if (!placeholder(v)) return v;
   let text = '';
@@ -150,7 +151,7 @@ function typesafeKey(name) {
   }
   return null;
 }
-function gitState() {
+export function gitState() {
   const git = args => spawnSync('git', args, { cwd: root, encoding: 'utf8' }).stdout.trim();
   return { commit: git(['rev-parse', 'HEAD']), dirty: git(['status', '--porcelain']) !== '' };
 }
@@ -371,7 +372,7 @@ export function accuracyReport(record, file) {
 // 本物のブラウザ（Playwright の Chromium）で 404 のページ（Origin が https://tk.st）を開き、そこから本番の Worker へ送る。
 // assets/site-search.js と同じ fetch を送り、送信の直前から res.json() を読み終えるまでを測る（プリフライトを含む）。
 // 解析を汚さない：計測を止める設定を先に入れ、tk.st と Worker 以外への通信は止める
-async function openRankPage() {
+export async function openRankPage() {
   const { chromium } = await import('playwright'); // ブラウザの測定のときだけ読む（smoke の経路は npm の依存を読まない）
   const instance = await chromium.launch();
   const blocked = [];
@@ -404,7 +405,7 @@ async function openRankPage() {
 // 画面（設計書 5.2・5.3）が描く結果として読む。HTTP の状態と本文の検査は画面の部品（assets/site-search.js の readResponse）を
 // そのまま使い、書き写さない（期限切れ、200・429・400 以外、読めない本文、形の合わない本文、1行でも URL などが合わない結果は failed）
 let pageReadResponse = null;
-function readResponseOfPage() {
+export function readResponseOfPage() {
   if (!pageReadResponse) {
     const ctx = vm.createContext({ URL, location: { hostname: 'tk.st' } });
     ctx.window = ctx;
