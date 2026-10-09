@@ -194,3 +194,13 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 実行結果：`node .github/scripts/test-site-search-ui.mjs --root _site`の全94場面が通過（既存58・新規36）。仕上げで不正なタグを取得失敗にする検査も追加し、両媒体の版の混在・復旧の2場面を再実行して通過。`node --test .github/scripts/test-magi2.mjs`は148件、`test-daily-news.py`は22件、`test-site-search-index.py`は5件通過。`eval-site-rank.mjs --check`・`ai_models.py check`・変更したJS/Pythonと全58HTMLのインラインJSの構文検査・`git diff --check`が成功。`build.sh`も成功（653ファイル）。
 
 実API・本番へは送っていない。手元ではGTM・Ahrefsのスクリプトを読み込めず、dataLayerと模擬POSTの検査まで。実際の解析の送信と本番privacyの合格はT13で確認する。`SITE_RANK_SCOPES="site"`は変更していない。日刊②の精度・本番の応答時間・公開の条件は引き続き未達。次はT09。
+
+### 7.5 T08の簡素化（2026-10-09）
+
+検索の機能を保ったまま、絞り込み3項目の参照と日英文言を使い回し、結果リンクの二重設定とgeneration差異の案内の重複を整理した。検索の順序・応答の検査・中止・計測の項目は変更していない。受け渡しテンプレートのインデントも既存の出力にそろえた。
+
+- 共通のdaily-uiとsite-searchの参照を`20261009_3`に更新。CSSとsearch-analyticsの版は従来のまま。全57日刊HTMLは、この2つのJSの参照バージョン以外が変更前とバイト単位で一致し、全55号の本文・dateModifiedと両誌の索引を保持した。
+- `node .github/scripts/test-site-search-ui.mjs --root _site`：全94場面通過。`test-daily-news.py`は22件、`test-site-search-index.py`は5件通過。変更したJS/Pythonの構文検査と`git diff --check`が成功。
+- `build.sh`成功（653ファイル）。変更した58HTMLと共通JSの2ファイルが出荷物とバイト単位で一致することを確認。
+
+未公開。実API・本番へは送っていない。計測スクリプトの実通信は7.4と同じく未確認。`SITE_RANK_SCOPES="site"`を維持し、公開の条件は変更していない。日付を保持するためコミットに`Date-Sync: skip`を付ける。次はT09。

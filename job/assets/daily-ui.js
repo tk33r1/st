@@ -331,7 +331,7 @@
     return String(value || '').toLocaleLowerCase('ja').replace(/\s+/g, '');
   }
 
-  function createSearchResult(record) {
+  function createSearchResult(record, href) {
     const article = document.createElement('article');
     article.className = 'archive-result-card';
     const meta = document.createElement('p');
@@ -340,7 +340,7 @@
     meta.textContent = [date, record.region === 'GLOBAL' ? '海外' : '国内', record.category, record.source_kind, record.source].filter(Boolean).join(' / ');
     const title = document.createElement('h3');
     const link = document.createElement('a');
-    link.href = record.url;
+    link.href = href;
     link.textContent = record.title;
     title.appendChild(link);
     const summary = document.createElement('p');
@@ -418,6 +418,7 @@
     const category = document.getElementById('archiveCategoryFilter');
     const region = document.getElementById('archiveRegionFilter');
     const month = document.getElementById('archiveMonthFilter');
+    const filterControls = [category, region, month];
     const status = document.getElementById('archiveSearchStatus');
     const results = document.getElementById('archiveSearchResults');
     const keywordHeading = document.getElementById('archiveKeywordTitle');
@@ -432,8 +433,8 @@
     let composing = false, imeEnterHeld = false, rank = null;
     let lastTracked = null;
     const locale = function() { return document.documentElement.lang === 'en' ? 'en' : 'ja'; };
-    const texts = function() {
-      return locale() === 'en' ? {
+    const searchTexts = {
+      en: {
         heading: 'Search results', keyword: 'Keyword matches', loading: 'Looking for related articles…',
         stale: 'Press Enter to also find related articles.', failed: 'Search could not finish. Please try again.',
         rateLimited: 'The search limit has been reached. Please try again later.',
@@ -445,7 +446,8 @@
         noKeyword: 'No keyword matches. Press Enter to find related articles.',
         indexLoading: 'Loading the search index…', indexFailed: 'Search data could not be loaded. Search again to retry.',
         keywordCount: function(n) { return n + ' articles found' + (n > 100 ? ' (first 100 shown)' : '') + '.'; }
-      } : {
+      },
+      ja: {
         heading: '検索結果', keyword: 'キーワードに一致', loading: '意味の近い記事を探しています…',
         stale: 'Enter で、意味の近い記事も探します。', failed: '検索を完了できませんでした。もう一度お試しください。',
         rateLimited: '検索の利用上限に達しました。時間をおいてお試しください。',
@@ -457,8 +459,9 @@
         noKeyword: 'キーワードに一致する記事はありません。Enter で、意味の近い記事を探します。',
         indexLoading: '検索インデックスを読み込んでいます…', indexFailed: '検索データを読み込めませんでした。もう一度検索すると読み直します。',
         keywordCount: function(n) { return n + '件見つかりました' + (n > 100 ? '（先頭100件を表示）' : '') + '。'; }
-      };
+      }
     };
+    const texts = function() { return searchTexts[locale()]; };
     const labels = { texts: texts(), kinds: { daily: '記事' } };
     // 日刊本文は原文のまま。検索欄の案内は②に渡す言語に合わせる。
     const translations = [
@@ -470,7 +473,7 @@
       [document.querySelector('#archiveRankInfo a'), 'TypeSafe AI privacy policy'],
       [document.getElementById('archiveRankInfo').nextElementSibling, 'Search terms are recorded in Google Analytics, with email addresses and phone numbers masked. Nothing is sent if analytics is turned off.'],
       [document.getElementById('archiveRankPrivacy'), 'Your IP address is recorded to limit usage. Queries and replies are not stored in the site database, operational logs or notifications.']
-    ].concat([category, region, month].map(function(control) { return [control.options[0], 'All']; }),
+    ].concat(filterControls.map(function(control) { return [control.options[0], 'All']; }),
       [[region.options[1], 'Domestic'], [region.options[2], 'Overseas']]);
     const originalTexts = translations.map(function(pair) { return pair[0].textContent; });
     const originalPlaceholder = query.placeholder;
@@ -486,7 +489,7 @@
     }
     function condition() {
       const filters = {};
-      [category, region, month].forEach(function(control) { if (control.value) filters[control.dataset.filter] = control.value; });
+      filterControls.forEach(function(control) { if (control.value) filters[control.dataset.filter] = control.value; });
       return { query: cleanQuery(query.value), locale: locale(), filters: filters, generation: snapshot ? snapshot.generation : undefined };
     }
     function viewKey() { const c = condition(); return JSON.stringify([c.query, c.locale, c.filters]); }
@@ -557,7 +560,7 @@
       const duplicates = new Set(rank ? rank.hrefs() : []);
       results.replaceChildren();
       matched.slice(0, 100).filter(function(record) { return !duplicates.has(href(record)); }).forEach(function(record) {
-        const card = createSearchResult(record); card.querySelector('a').href = href(record); results.appendChild(card);
+        results.appendChild(createSearchResult(record, href(record)));
       });
       keywordHeading.textContent = texts().keyword;
       status.textContent = snapshot ? texts().keywordCount(matched.length) : texts().indexFailed;
@@ -657,7 +660,7 @@
       }
     });
     document.addEventListener('mousedown', function(e) { if (!form.querySelector('.archive-searchbox').contains(e.target)) closeSuggestions(); });
-    [category, region, month].forEach(function(control) {
+    filterControls.forEach(function(control) {
       control.addEventListener('change', function() { if (rank) rank.invalidate(); runKeywordSearch(false); });
     });
     const dialog = document.getElementById('archiveSearchInfo');
