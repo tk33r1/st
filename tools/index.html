@@ -9,6 +9,38 @@
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
        足すときは、ここを広げる前に同梱（assets/vendor/）で済まないかを考えること -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <script>
+  // 検索語を計測より先にURLから除き、一覧の初期条件にだけ渡す。
+  (function (w, l, h) {
+    function check(raw) {
+      var v;
+      try { v = decodeURIComponent(raw); } catch (e) { return null; }
+      v = v.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+      var length = Array.from(v).length;
+      return length >= 1 && length <= 200 ? v : null;
+    }
+    function take() {
+      var parts = l.search.replace(/^\?/, '').split('&'), qs = [], rest = [], i, key, name;
+      for (i = 0; i < parts.length; i++) {
+        if (!parts[i]) continue;
+        key = parts[i].split('=')[0];
+        try { name = decodeURIComponent(key.replace(/\+/g, ' ')); } catch (e) { name = key; }
+        if (name === 'q') qs.push(parts[i].slice(key.length + 1)); else rest.push(parts[i]);
+      }
+      var frag = l.hash.indexOf('#q=') === 0 ? l.hash.slice(3) : null;
+      if (!qs.length && frag === null) return false;
+      try { h.replaceState(h.state, '', l.pathname + (rest.length ? '?' + rest.join('&') : '') + (frag === null ? l.hash : '')); } catch (e) { return false; }
+      var v = null;
+      if (frag !== null && !qs.length && frag.indexOf('&') < 0 && frag.indexOf('#') < 0) v = check(frag);
+      else if (frag === null && qs.length === 1) v = check(qs[0].replace(/\+/g, ' '));
+      if (v === null) return false;
+      w.STListHandoff = v;
+      return true;
+    }
+    take();
+    w.addEventListener('hashchange', function () { if (take()) w.dispatchEvent(new Event('st-list-handoff')); });
+  })(window, location, history);
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0D2F4F">
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは tools/assets/tools-ui.js の ANALYTICS_KEY と同じ） -->
@@ -1013,9 +1045,11 @@
       if (window.lucide) lucide.createIcons();
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialQuery = urlParams.get('q');
-    if (initialQuery) searchInput.value = initialQuery;
+    if (window.STListHandoff) searchInput.value = window.STListHandoff;
+    window.addEventListener('st-list-handoff', () => {
+      searchInput.value = window.STListHandoff;
+      updateView();
+    });
 
     loadTools();
 

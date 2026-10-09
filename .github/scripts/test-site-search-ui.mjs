@@ -1,5 +1,6 @@
 // サイト内検索の画面の検証（assets/site-search-design.md 10.3）。手元の Playwright で動かす。
 //   node .github/scripts/test-site-search-ui.mjs [--root _site]
+//   node .github/scripts/test-site-search-ui.mjs --root . --match 一覧   … 指定した名前の場面だけ
 //   node .github/scripts/test-site-search-ui.mjs --base https://tk.st   … 本番を相手にする（計画書 T4.10。Actions の site-search-url.yml）
 // 手元では先に `bash build.sh` で _site を作る（--root . ならリポジトリをそのまま出す）。存在しないパスには 404.html を 404 で返す。
 // ②の場面（計画書 T5.4）：応答の検査・状態と世代・①③との連携と計測・表示・停止。Worker への要求は route で応答を差し替える。
@@ -18,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const option = (name, fallback) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : fallback; };
 const remote = option('--base', null);
+const match = option('--match', '');
 const root = resolve(repo, option('--root', '_site'));
 if (!remote && !existsSync(join(root, '404.html'))) {
   console.error(`${root} に 404.html が無い。先に bash build.sh を実行する（または --root . でリポジトリをそのまま出す）`);
@@ -185,6 +187,71 @@ const rankScenario = (name, options, fn) => scenarios.push({ name: '②：' + na
   await fn(page, label);
 } });
 const skipped = [];
+
+// Phase 3 S2：一覧の①だけへ受け渡す。計測より先の除去と、不正値の除去も確かめる。
+for (const section of ['tools', 'game']) {
+  const path = '/' + section + '/';
+  const countSelector = section === 'tools' ? '#tool-count' : '#game-count';
+  const cards = section === 'tools' ? '#tool-grid > a' : '#game-grid .card-actions a';
+  const field = section === 'tools' ? 'category' : 'genre';
+  const group = section === 'tools' ? '#category-filter' : '#genre-filter';
+  for (const fragment of [false, true]) {
+    scenario(`一覧 ${section} の ${fragment ? '#q=' : '?q='}`, {}, async (page, name) => {
+      const suffix = fragment ? '?keep=1#q=' + encodeURIComponent(QUERY) : '?keep=1&q=' + encodeURIComponent(QUERY) + '#shelf';
+      page.on('request', req => check(!SEARCH_API.test(req.url()), `${name}: Workerへ検索を送った`));
+      await page.goto(BASE + path + suffix); await settle(page);
+      check(await page.locator('#search-input').inputValue() === QUERY, `${name}: ①に検索語が入らない`);
+      const loc = await checkLocation(name, page);
+      check(loc.search === '?keep=1' && loc.hash === (fragment ? '' : '#shelf'), `${name}: 他の条件を変えた`);
+      const aiSearch = await page.evaluate(() => (window.dataLayer || []).some(e => /(?:rank_run|ai_used)$/.test(e?.event || '')));
+      check(!aiSearch, `${name}: AIの検索を送った`);
+      // 実際のカードの絞り込み・並べ替えが、URLに検索語を戻さず動く。
+      const records = await page.evaluate(async s => (await (await fetch('/data/' + s + '.json')).json()), section);
+      const list = Array.isArray(records) ? records : records.items;
+      const query = list[0].title;
+      await page.fill('#search-input', query); await page.waitForTimeout(250);
+      const countLabel = page.locator(countSelector);
+      const count = Number(await countLabel.textContent());
+      check(count > 0 && count <= list.length, `${name}: カードの絞り込みが動かない`);
+      await page.selectOption('#sort-select', 'oldest');
+      check(Number(await countLabel.textContent()) === count, `${name}: 並べ替えで件数が変わる`);
+      await page.fill('#search-input', ''); await page.waitForTimeout(250);
+      const urls = await page.locator(cards).evaluateAll(links => links.map(a => a.href));
+      check(JSON.stringify(urls) === JSON.stringify([...list].sort((a, b) => a.id - b.id).map(r => r.url)), `${name}: oldestの順が違う`);
+      await page.selectOption('#sort-select', 'newest');
+      const newest = await page.locator(cards).evaluateAll(links => links.map(a => a.href));
+      check(JSON.stringify(newest) === JSON.stringify([...urls].reverse()), `${name}: newestの順が違う`);
+      await page.locator(group + ' button').nth(1).click();
+      const chosen = await page.locator(group + ' [aria-pressed="true"]').textContent();
+      const expectedCount = list.filter(r => String(r[field]).toLowerCase() === chosen.toLowerCase()).length;
+      check(Number(await countLabel.textContent()) === expectedCount, `${name}: カテゴリー・ジャンルで絞り込めない`);
+      // 同じページでの受け渡しも URL から消す。
+      await page.evaluate(q => { location.hash = '#q=' + encodeURIComponent(q); }, QUERY);
+      await page.waitForTimeout(200);
+      check(await page.locator('#search-input').inputValue() === QUERY, `${name}: hashchangeで①に渡らない`);
+      await checkLocation(name, page);
+      await page.reload(); await settle(page);
+      check(await page.locator('#search-input').inputValue() === '', `${name}: 再読み込みで検索語が復元された`);
+    });
+  }
+  scenario(`一覧 ${section} の受け取らない値と200コードポイント`, { analyticsOff: true }, async (page, name) => {
+    for (const suffix of [`?q=${MARK}&q=x`, `?q=${MARK}#q=x`, `#q=${MARK}%E0%A4`, `?q=${MARK}%E0%A4`,
+      '#q=' + MARK + 'a'.repeat(201 - MARK.length), `#q=${MARK}&x=1`, '?q=', '#q=%00']) {
+      await page.goto(BASE + path + suffix); await settle(page);
+      await checkLocation(name, page);
+      check(await page.locator('#search-input').inputValue() === '', `${name}: 不正な値を受け取った`);
+    }
+    const unicode = '🧺'.repeat(200);
+    await page.goto(BASE + path + '#q=' + encodeURIComponent(unicode)); await settle(page);
+    check(await page.locator('#search-input').inputValue() === unicode, `${name}: 200コードポイントを拒否した`);
+    await page.goto(BASE + path + '#q=' + encodeURIComponent(unicode + '🧺')); await settle(page);
+    check(await page.locator('#search-input').inputValue() === unicode, `${name}: 不正なhashchangeで①を書き換えた`);
+    const loc = await page.evaluate(() => location.hash);
+    check(loc === '', `${name}: 長すぎるフラグメントが残る`);
+    await page.reload(); await settle(page);
+    check(await page.locator('#search-input').inputValue() === '', `${name}: 不正値の除去後に①が復元された`);
+  });
+}
 async function typeAndRun(page, value, wait = 300) { await page.fill('#query', value); await page.waitForTimeout(150); await page.press('#query', 'Enter'); await page.waitForTimeout(wait); }
 const PORTAL = '/job/nitoridaily/';
 async function anyIssue(page) {
@@ -703,7 +770,9 @@ scenario('404 の検索：変換を確定した Enter の押し続けで検索�
   check(await page.locator('#daily-search').isVisible(), `${name}: キーを離した後の Enter で検索しない`);
 });
 
-for (const { name, options, fn } of scenarios) {
+const selectedScenarios = scenarios.filter(s => s.name.includes(match));
+assert.ok(selectedScenarios.length, `指定した場面がない: ${match}`);
+for (const { name, options, fn } of selectedScenarios) {
   const { context, log } = await newContext(options);
   const page = await context.newPage();
   const errors = [];
