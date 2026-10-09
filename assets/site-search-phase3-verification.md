@@ -112,12 +112,13 @@ site のセットは変えず、`.github/site-search/phase3-rank-queries.json` �
 | --- | --- |
 | 現行のコード・データ・Phase 2 の契約の調査 | 実施済み |
 | V00 の資料の点検 | 本人のレビューの決定を反映済み |
-| Phase 3 のテストの作成 | T03〜T05の境界・generation・一覧の受け渡しを追加。全年度の合成データはPythonテスト内で両媒体×3年分。fixtureファイル・評価セットは未着手 |
+| Phase 3 のテストの作成 | T03〜T07の境界・generation・一覧の受け渡しを追加。全年度の合成データはPythonとWorkerテスト内で両媒体×3年分。fixtureファイル・評価セットは未着手 |
 | V12（T03） | 模擬Workerで確認済み。本番Workerの公開成功、Versionと読み取り専用の疎通を確認。実利用の回数を100回まで消費する試験は行っていない |
 | V09・V13（T04） | 手元・出荷物・本番URLで一覧の6場面を確認済み。コードレビュー時の手元と公開後の本番では、GTM・Ahrefsを実際に読み込み、計測の送信を記録して停止 |
-| V03・V11（T05の生成側） | 全年度で共通のgeneration、過去年だけの変更、空の索引、再生成の安定性、既存の日刊画面の互換を確認済み。版の混在・取得失敗を検査するWorker・画面は未実装 |
+| V03・V11（T05の生成側） | 全年度で共通のgeneration、過去年だけの変更、空の索引、再生成の安定性、既存の日刊画面の互換を確認済み。Worker側は7.2〜7.3で模擬検証済み。画面の版の照合は未実装 |
 | 出荷の確認 | 簡素化後も `build.sh` 成功（653ファイル）。Pagesのビルド成功。本番の両誌の索引が出荷内容と一致（176記事・204記事）。generation以外の既存項目は変更前と一致 |
-| その他のV01〜V14・実 API の測定・公開の検証 | 未実施 |
+| T06〜T07のWorker側 | 7.2〜7.3に記録。全体の回帰148件通過 |
+| その他のV01〜V14・実 API の測定・日刊②の公開の検証 | 未実施 |
 
 実行したコマンド（2026-10-09、基点 `27fae390`、未コミットのT03〜T05）：
 
@@ -158,3 +159,19 @@ Pythonは22件、模擬Workerは3件、既存の日刊ポータルは5場面が�
 - `search-scope.js`・`personas.js` のNode構文検査と `git diff --check` が成功。実API・本番のWorkerは呼んでいない。
 
 V01〜V03のWorker内部の検査を確認した。HTTPでの契約・回数・停止・候補はT07、画面の版の照合はT08、精度・応答時間はT11〜T12で確認する。
+
+### 7.3 T07の手元検証（2026-10-09）
+
+日刊のscopeをAPIへ接続し、候補・変換・応答・キャッシュ・停止・ログを実装した。設定は `SITE_RANK_SCOPES="site"` のまま。未設定もsiteだけで、全体の停止が優先する。日刊の問い・閾値0.4・revision 1は初期値で、精度は未評価。
+
+- `test-magi2.mjs` に日刊②の13件を追加。HTTPの型と範囲、停止時の索引・回数・Jevなし、文字の一致と新しさによる20件、要約300・合計400コードポイント、両媒体のN/M/J・generation・cached・最大5件を確認。
+- `node --test .github/scripts/test-magi2.mjs`：最終変更の全148件通過（T06の12件・T07の13件を含む）。既存の404・MAGI・アプリの回帰も通過。
+- 3つのfilterと実在する値の組み合わせの0件、古い版の更新待ち、更新後の新しい月・カテゴリー、未知の値の400、取得失敗を確認。更新待ち・要求の誤りでは回数を消費しない。
+- 完全な結果・0件のキャッシュ、欠けた判定の扱い、キーのscope・revision・locale・filters・全年度hash、媒体の取り違えの拒否、404と共通のIP→全体の回数を確認。
+- 全体の期限とHTTP要求の切断、索引の中止・裏で更新しないこと、ログが1回で検索語・filtersの原文を含まないことを確認。
+- 公開済みの `cf556607` と比較し、siteの35候補の `candidate_hash` と日英2例の送信payloadが一致。siteの問い・閾値・revisionは変更していない。
+- `node .github/scripts/eval-site-rank.mjs --check` と `python -B .github/scripts/ai_models.py check` が成功。評価CLIと週次smokeの読み込みに新しいWorker部品を追加したが、npm依存は増やしていない。
+- `wrangler deploy --config magi2/wrangler.toml --dry-run --outdir .wrangler/phase3-dry-run` が成功（224.77KiB、gzip 63.23KiB）。ログ先は手元の `WRANGLER_LOG_PATH` でリポジトリ内の `.wrangler/phase3-logs` にした。
+- Workerの変更した4つのJSのNode構文検査と `git diff --check` が成功。実API・本番へは送信していない。
+
+V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の応答時間・画面・privacy・公開の合格を意味しない。次はT08。

@@ -56,7 +56,7 @@ export function loadWorker() {
     TextEncoder, TextDecoder, AbortController, URL, crypto: webcrypto, setTimeout, clearTimeout, console,
     fetch: (...args) => hooks.fetch(...args) });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
-  vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
+  vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'search-scope.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
     + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
     + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, rankQuery, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });

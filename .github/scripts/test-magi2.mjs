@@ -513,6 +513,230 @@ const answersFor = (payload, f) => Object.fromEntries(Object.keys(payload.questi
 const pdfOnly = p => Response.json({ answers: answersFor(p, c => noul(/^PDF Studio/.test(c.title) ? 0.9 : 0.1)) });
 const rankRows = w => [...w.env.DB.rows].filter(([k]) => k.startsWith('rank:'));
 
+function dailyRankWorker(jev = p => Response.json({ answers: answersFor(p, () => noul(0.9)) }), extra = null) {
+  const indexes = { nitori: dailyFiles(), retail: dailyFiles('retailtechdaily') }, indexRequests = [];
+  const w = rankWorker(jev, async (url, options) => {
+    if (extra) { const r = await extra(url, options); if (r) return r; }
+    const match = /^https:\/\/tk\.st\/job\/(nitoridaily|retailtechdaily)\/(search-index(?:-\d{4})?\.json)$/.exec(url);
+    if (!match) return;
+    const scope = match[1] === 'nitoridaily' ? 'nitori' : 'retail';
+    indexRequests.push(url);
+    const index = indexes[scope].get(match[2]);
+    return index ? Response.json(index) : new Response('', { status: 404 });
+  });
+  w.env.SITE_RANK_SCOPES = 'site,nitori,retail';
+  return { ...w, indexes, indexRequests };
+}
+const dailyRankRequest = (w, body = {}, ip) => rankRequest(w, { scope: 'nitori', query: '収納の新商品', ...body }, ip);
+
+test('日刊②：HTTPの要求を検査し、型・未知のキー・年月・generation・別scopeは回数とJevを使わず拒否する', async () => {
+  const w = dailyRankWorker();
+  for (const body of [{ scope: 'game' }, { scope: 'tools' }, { scope: '__proto__' }, { scope: null }, { filters: null }, { filters: [] },
+    { filters: { category: null } }, { filters: { category: '😀'.repeat(41) } }, { filters: { month: '202613' } }, { filters: { region: '海外' } },
+    { filters: { limit: 1 } }, { generation: null }, { generation: 'zz' }, { generation: 'a'.repeat(33) }, { generation: 'a1\n' },
+    { query: '😀'.repeat(201) }, { query: '<>\n' }, { locale: 'fr' }, { extra: true }]) {
+    const res = await dailyRankRequest(w, body);
+    assert.equal(res.status, 400, JSON.stringify(body)); assert.equal((await res.json()).reason, 'invalid_request');
+  }
+  assert.equal(w.indexRequests.length, 0); assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0);
+  assert.equal((await rankRequest(w, { generation: 'a1' })).status, 400);
+  assert.equal((await dailyRankRequest(w, { query: '😀'.repeat(200) })).status, 200);
+});
+
+test('日刊②：未設定はsiteのみ、scopeごとの停止と全体の停止では索引・回数・Jevを使わない', async () => {
+  for (const env of [{ SITE_RANK_SCOPES: undefined }, { SITE_RANK_SCOPES: 'site' }, { SITE_RANK_SCOPES: '' },
+    { SITE_RANK_ENABLED: 'false', SITE_RANK_SCOPES: 'site,nitori,retail' }]) {
+    const w = dailyRankWorker(); Object.assign(w.env, env);
+    const body = await (await dailyRankRequest(w)).json();
+    assert.equal(body.reason, 'disabled'); assert.equal(body.cached, false);
+    assert.equal(w.indexRequests.length, 0); assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0);
+  }
+  const w = dailyRankWorker(pdfOnly); w.env.SITE_RANK_SCOPES = ' site , retail ';
+  assert.equal((await (await dailyRankRequest(w)).json()).reason, 'disabled');
+  const site = await (await rankRequest(w)).json();
+  assert.equal(site.status, 'results'); assert.equal(site.searched.total, 35); assert.equal(site.results[0].url, '/tools/pdf-studio/');
+  assert.equal(w.indexRequests.length, 0);
+});
+
+test('日刊②：候補は点数・日付・記事番号で20件を選び、不足は最新の記事で補う', () => {
+  const { ctx } = worker(), files = dailyFiles(), head = files.get('search-index.json'), base = head.records[0];
+  head.records = Array.from({ length: 25 }, (_, i) => ({ ...base, title: '一般記事', summary: '', tags: [], url: `20261009/#art-${25 - i}` }));
+  const old = files.get('search-index-2025.json').records[0];
+  Object.assign(old, { title: 'MagicProductの情報', summary: '', tags: [], takeaway: '別の検索語', source: '出典' });
+  const snapshot = ctx.makeDailySnapshot('nitori', dailyPairs(files));
+  const selected = ctx.shortlistRankDaily(snapshot.raw, 'MagicProduct', 'nitori');
+  assert.equal(selected.length, 20); assert.equal(new Set(selected.map(r => r.p.id)).size, 20);
+  assert.equal(selected[0].p.date, '20251009');
+  assert.equal(JSON.stringify(selected.slice(1).map(r => r.p.article)), JSON.stringify(Array.from({ length: 19 }, (_, i) => i + 1)));
+  const fallback = ctx.shortlistRankDaily(snapshot.raw, 'UnknownQuery', 'nitori');
+  assert.ok(fallback.every(r => r.p.date === '20261009'));
+  assert.equal(JSON.stringify(fallback.map(r => r.p.article)), JSON.stringify(Array.from({ length: 20 }, (_, i) => i + 1)));
+  const withSource = snapshot.raw.map(p => p.date === '20251009' ? { ...p, title: '', takeaway: 'UnknownQuery', source: 'UnknownQuery' } : p);
+  assert.ok(ctx.shortlistRankDaily(withSource, 'UnknownQuery', 'nitori').every(r => r.p.date === '20261009'));
+  // 同じ語は題名への一致を要約・タグ・カテゴリーへの一致より重く数える。
+  const pair = [{ ...snapshot.raw[0], title: 'MagicProduct', summary: '' }, { ...snapshot.raw[1], title: '一般記事', summary: 'MagicProduct' }];
+  assert.equal(ctx.shortlistRankDaily(pair, 'MagicProduct', 'nitori')[0].p.id, pair[0].id);
+});
+
+test('日刊②：候補の変換は要約300・全体400コードポイントに収め、日付・URL・見立て・出典を送らない', () => {
+  const { ctx } = worker(), files = dailyFiles(), snapshot = ctx.makeDailySnapshot('nitori', dailyPairs(files));
+  const item = { ...snapshot.raw[0], title: '😀'.repeat(500), summary: '😀'.repeat(500), tags: ['一'.repeat(200), '二'.repeat(200)] };
+  const candidate = ctx.toRankCandidate(item);
+  assert.equal(JSON.stringify(Object.keys(candidate)), JSON.stringify(['kind', 'title', 'summary', 'category', 'tags', 'region']));
+  assert.equal(candidate.region, '国内'); assert.ok(candidate.title.length > 0); assert.equal(candidate.summary, '');
+  assert.equal(candidate.tags.length, 0);
+  const total = Object.values(candidate).flat().reduce((n, s) => n + Array.from(s).length, 0);
+  assert.equal(total, 400);
+  const normal = ctx.toRankCandidate({ ...snapshot.raw[0], summary: '😀'.repeat(500), region: 'GLOBAL' });
+  assert.equal(Array.from(normal.summary).length, 300); assert.equal(normal.region, '海外');
+  const payload = ctx.rankPayload('知りたい内容', 'en', [normal], 'nitori');
+  assert.ok(payload.questions.c01.instructions.includes('記事で知りたいこと'));
+  assert.ok(!payload.questions.c01.instructions.includes('知りたい内容'));
+  assert.ok(payload.questions.c01.criteria.true && payload.questions.c01.criteria.false);
+});
+
+test('日刊②：両媒体のN/M/J・generation・cachedと最大5件を返し、媒体のリンクと日付順を保つ', async () => {
+  const w = dailyRankWorker();
+  for (const [scope, media] of [['nitori', 'nitoridaily'], ['retail', 'retailtechdaily']]) {
+    const head = w.indexes[scope].get('search-index.json'), base = head.records[0];
+    head.records = Array.from({ length: 25 }, (_, i) => ({ ...base, url: `20261009/#art-${25 - i}` }));
+    const data = await (await dailyRankRequest(w, { scope })).json();
+    assert.equal(data.status, 'results'); assert.equal(data.complete, true); assert.equal(data.cached, false);
+    assert.deepEqual(data.searched, { total: 27, candidates: 20, judged: 20, generation: 'a1' });
+    assert.equal(data.results.length, 5);
+    assert.deepEqual(data.results.map(r => r.url), Array.from({ length: 5 }, (_, i) => `/job/${media}/20261009/#art-${i + 1}`));
+    assert.ok(data.results.every(r => r.kind === 'daily' && Array.from(r.description).length <= 160));
+  }
+  assert.equal(w.jevCalls.length, 2);
+  assert.ok(w.jevCalls.every(p => Object.keys(p.state.candidates).length === 20));
+});
+
+test('日刊②：3つのfilterと正常な0件を扱い、未知のカテゴリー・月・取得失敗は回数の前で止める', async () => {
+  const w = dailyRankWorker(), head = w.indexes.nitori.get('search-index.json'), base = head.records[0];
+  head.records.push({ ...base, url: '20261009/#art-2', category: '物流', region: 'GLOBAL' });
+  const one = await (await dailyRankRequest(w, { filters: { category: '物流', month: '202610', region: 'GLOBAL' } })).json();
+  assert.deepEqual(one.searched, { total: 1, candidates: 1, judged: 1, generation: 'a1' });
+  const none = await (await dailyRankRequest(w, { filters: { category: '物流', region: 'JP' } })).json();
+  assert.equal(none.status, 'no_results'); assert.equal(none.complete, true);
+  assert.deepEqual(none.searched, { total: 0, candidates: 0, judged: 0, generation: 'a1' });
+  assert.equal(w.jevCalls.length, 1); assert.ok(rankRows(w).every(([, count]) => count === 2));
+  const countBefore = JSON.stringify(rankRows(w));
+  const updating = await (await dailyRankRequest(w, { filters: { month: '202611' }, generation: 'b2' })).json();
+  assert.equal(updating.reason, 'index_updating'); assert.equal(JSON.stringify(rankRows(w)), countBefore);
+  w.ctx.dailyCache.get('nitori').retryAt = 0;
+  const bad = await dailyRankRequest(w, { filters: { category: '存在しない' } });
+  assert.equal(bad.status, 400); assert.equal((await bad.json()).reason, 'invalid_request');
+  w.ctx.dailyCache.get('nitori').retryAt = 0;
+  assert.equal((await dailyRankRequest(w, { filters: { month: '202611' } })).status, 400);
+  assert.equal(JSON.stringify(rankRows(w)), countBefore);
+  w.ctx.dailyCache.get('nitori').retryAt = 0; w.indexes.nitori.delete('search-index-2025.json');
+  assert.equal((await (await dailyRankRequest(w, { generation: 'b2' })).json()).reason, 'index_updating');
+  assert.equal(JSON.stringify(rankRows(w)), countBefore); assert.equal(w.jevCalls.length, 1);
+  const failed = dailyRankWorker(); failed.indexes.nitori.get('search-index-2025.json').generation = 'b2';
+  assert.equal((await (await dailyRankRequest(failed)).json()).reason, 'index_unavailable'); assert.equal(rankRows(failed).length, 0);
+});
+
+test('日刊②：完全な結果と0件だけをscope・revision・locale・filters・全年度のhashでキャッシュする', async () => {
+  const w = dailyRankWorker(p => Response.json({ answers: answersFor(p, () => noul(0.1)) }));
+  const run = async body => (await dailyRankRequest(w, body)).json();
+  assert.equal((await run({})).cached, false);
+  assert.equal((await run({ filters: {} })).cached, true);
+  assert.equal((await run({ filters: { category: '', month: '' } })).cached, true);
+  assert.equal((await run({ filters: { category: '新商品', month: '202610', region: 'JP' } })).cached, false);
+  assert.equal((await run({ filters: { region: 'JP', month: '202610', category: '新商品' } })).cached, true);
+  assert.equal((await run({ scope: 'retail' })).cached, false);
+  assert.equal((await run({ locale: 'en' })).cached, false);
+  w.ctx.rankConfig.scopes.nitori.revision++;
+  assert.equal((await run({})).cached, false);
+  assert.equal((await run({ scope: 'retail' })).cached, true);
+  const state = w.ctx.dailyCache.get('nitori'); state.retryAt = 0;
+  for (const index of w.indexes.nitori.values()) index.generation = 'b2';
+  w.indexes.nitori.get('search-index-2025.json').records[0].summary = '過去の記事を更新';
+  const changed = await run({ generation: 'b2' });
+  assert.equal(changed.cached, false); assert.equal(changed.searched.generation, 'b2');
+  assert.equal(w.jevCalls.length, 6); assert.ok(rankRows(w).every(([, count]) => count === 10));
+});
+
+test('日刊②：新しい版の月・カテゴリーを取り直して検索し、使用したgenerationを返す', async () => {
+  const w = dailyRankWorker();
+  await dailyRankRequest(w);
+  for (const index of w.indexes.nitori.values()) index.generation = 'b2';
+  const head = w.indexes.nitori.get('search-index.json');
+  head.records.push({ ...head.records[0], date: '20261101', url: '20261101/#art-1', category: '新分類' });
+  w.ctx.dailyCache.get('nitori').retryAt = 0;
+  const data = await (await dailyRankRequest(w, { generation: 'b2', filters: { category: '新分類', month: '202611' } })).json();
+  assert.equal(data.status, 'results'); assert.equal(data.cached, false);
+  assert.deepEqual(data.searched, { total: 1, candidates: 1, judged: 1, generation: 'b2' });
+  assert.equal(data.results[0].url, '/job/nitoridaily/20261101/#art-1');
+  assert.equal(w.indexRequests.length, 6); assert.equal(w.jevCalls.length, 2);
+});
+
+test('日刊②：HTTP要求の切断で索引の通信を止め、回数とJevへ進まず、裏で更新を続けない', async () => {
+  let indexSignal, indexStarted;
+  const started = new Promise(resolve => { indexStarted = resolve; });
+  const w = dailyRankWorker(undefined, (url, options) => {
+    if (!url.includes('/job/nitoridaily/')) return;
+    indexSignal = options.signal; indexStarted();
+    return new Promise(() => {});
+  });
+  const ac = new AbortController();
+  const pending = w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search', { method: 'POST', signal: ac.signal,
+    headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'rank', scope: 'nitori', query: '収納', locale: 'ja' }),
+  }), w.env, { waitUntil(p) { w.waits.push(p); } });
+  await started; ac.abort(); await pending; await tick();
+  assert.equal(indexSignal.aborted, true); assert.equal(w.ctx.dailyCache.get('nitori').snapshot, null);
+  assert.equal(w.ctx.dailyCache.get('nitori').refreshing, false);
+  assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0); assert.equal(w.waits.length, 0);
+});
+
+test('日刊②：判定が欠けた結果はcomplete:false、欠けた0件はfailedにし、どちらもキャッシュしない', async () => {
+  for (const positive of [true, false]) {
+    const w = dailyRankWorker(p => Response.json({ answers: answersFor(p, (_, i) => i === 0 ? noul(positive ? 0.9 : 0.1) : {}) }));
+    for (let i = 0; i < 2; i++) {
+      const data = await (await dailyRankRequest(w)).json();
+      assert.equal(data.status, positive ? 'results' : 'failed'); assert.equal(data.complete, false); assert.equal(data.cached, false);
+      assert.equal(data.searched.judged, 1); assert.equal(data.searched.candidates, 3);
+      if (!positive) assert.equal(data.reason, 'incomplete');
+    }
+    assert.equal(w.jevCalls.length, 2);
+  }
+});
+
+test('日刊②：結果の1件でもID・URL・日付・媒体が崩れたら全体を失敗にする', async () => {
+  for (const mutation of [{ url: '/job/retailtechdaily/20261009/#art-1' }, { id: 'retailtechdaily:20261009:1' },
+    { date: '20260229' }, { article: 0 }, { kind: 'page' }]) {
+    const w = dailyRankWorker(), snapshot = w.ctx.makeDailySnapshot('nitori', dailyPairs(w.indexes.nitori));
+    Object.assign(snapshot.raw[1], mutation);
+    const data = await w.ctx.rankSearch({ env: w.env, snapshot, scope: 'nitori', query: '収納', locale: 'ja', onBilling() {} });
+    assert.equal(data.status, 'failed'); assert.equal(data.complete, false); assert.equal(data.reason, 'index_unavailable'); assert.equal(data.results.length, 0);
+  }
+});
+
+test('日刊②：siteと両誌はIP→全体の回数を共有し、キャッシュでも数え、IP超過で全体を進めない', async () => {
+  const w = dailyRankWorker(); w.ctx.rankConfig.daily_limit = 2;
+  assert.equal((await (await dailyRankRequest(w)).json()).cached, false);
+  assert.equal((await (await dailyRankRequest(w)).json()).cached, true);
+  assert.equal((await dailyRankRequest(w, { scope: 'retail' })).status, 429);
+  assert.equal((await rankRequest(w)).status, 429);
+  assert.ok(rankRows(w).every(([, count]) => count === 2)); assert.equal(w.jevCalls.length, 1);
+});
+
+test('日刊②：全体の期限でもN/M/Jとgenerationを返し、scope・件数・hashだけを1回記録する', async () => {
+  const w = dailyRankWorker(() => new Promise(() => {})), logs = [];
+  w.ctx.console.log = (...values) => logs.push(values);
+  w.ctx.rankConfig.request_timeout_ms = 25; w.ctx.rankConfig.jev_timeout_ms = 100;
+  const data = await (await dailyRankRequest(w, { query: 'QUERY_MARKER', filters: { category: '新商品' } })).json();
+  assert.equal(data.reason, 'timeout'); assert.equal(data.cached, false);
+  assert.deepEqual(data.searched, { total: 3, candidates: 3, judged: 0, generation: 'a1' });
+  const log = logs.filter(line => line[1] === 'site_rank');
+  assert.equal(log.length, 1); assert.equal(log[0][11], 1); assert.equal(log[0][14], 'nitori');
+  assert.match(log[0][12], /^[a-f0-9]{64}$/); assert.match(log[0][13], /^[a-f0-9]{64}$/);
+  assert.ok(!JSON.stringify(logs).includes('QUERY_MARKER')); assert.ok(!JSON.stringify(logs).includes('新商品'));
+  const rows = JSON.stringify(rankRows(w)); await delay(110);
+  assert.equal(JSON.stringify(rankRows(w)), rows); assert.equal(logs.filter(line => line[1] === 'site_rank').length, 1);
+});
+
 test('②：要求の誤りは400で上流も回数も使わず、mode なしは③のまま', async () => {
   const w = rankWorker(() => { throw new Error('must not call'); });
   for (const body of [{ mode: 'x' }, { scope: 'tools' }, { extra: 1 }, { filters: {} }, { locale: 'fr' }, { query: 'x'.repeat(201) }, { query: '<>' }, { query: 5 }]) {

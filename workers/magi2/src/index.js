@@ -2,6 +2,7 @@ import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, 
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankTargets } from '../site-rank.js';
+import { filterDailyItems, getDailySnapshot, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
@@ -440,24 +441,31 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
 // 検索語・候補の中身・上流の本文はログにも通知にも出さない
 async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started) {
   const info = { total: null, candidates: null, judged: null, above: 0, indexMs: null, jevMs: null, indexHash: null, candidateHash: null };
+  const scope = body.scope, daily = scope === 'nitori' || scope === 'retail';
+  let config, filters, generation;
   // 期限・切断で先に応答を返した後も、中の処理は signal の効かない待ち（D1 など）の間は進むので、ログは最初の1回だけ
   let logged = false;
   const reply = (httpStatus, r) => {
     if (!logged) log('site_rank', r.status, r.reason, info.total, info.candidates, info.judged, info.above, info.indexMs, info.jevMs, Date.now() - started,
-      SITE_RANK.revision, info.indexHash, info.candidateHash);
+      config?.revision ?? SITE_RANK.revision, info.indexHash, info.candidateHash, typeof scope === 'string' && ['site', 'nitori', 'retail'].includes(scope) ? scope : 'invalid');
     logged = true;
-    return jsonResponse({ request_id: requestId, status: r.status, complete: r.complete, reason: r.reason, searched: r.searched, results: r.results },
+    return jsonResponse({ request_id: requestId, status: r.status, complete: r.complete, reason: r.reason, searched: r.searched, results: r.results,
+      ...(daily ? { cached: r.cached === true } : {}) },
       cors, httpStatus, { 'Cache-Control': 'no-store' });
   };
-  const searched = () => info.total === null ? null : { total: info.total, candidates: info.candidates ?? 0, judged: info.judged ?? 0 };
+  const searched = () => info.total === null ? null : { total: info.total, candidates: info.candidates ?? 0, judged: info.judged ?? 0,
+    ...(daily ? { generation: info.generation } : {}) };
   const fail = (reason, httpStatus = 200) => reply(httpStatus, { status: 'failed', complete: false, reason, searched: searched(), results: [] });
   const raw = body.query;
   const query = rankQuery(raw);
-  // いまは scope 'site' だけ（日刊・tools・game は Phase 3）。絞り込み（filters）も日刊用なので受け付けない
-  if (Object.keys(body).some(k => !['query', 'locale', 'mode', 'scope'].includes(k)) || body.mode !== 'rank' || body.scope !== 'site'
+  if (Object.keys(body).some(k => !['query', 'locale', 'mode', 'scope', ...(daily ? ['filters', 'generation'] : [])].includes(k)) || body.mode !== 'rank'
     || !['ja', 'en'].includes(body.locale) || typeof raw !== 'string' || Array.from(raw).length > SITE_RANK.query_max_chars || !query
     || new URL(request.url).search) return fail('invalid_request', 400);
-  if (env.SITE_RANK_ENABLED !== 'true') return fail('disabled');
+  try {
+    config = rankScopeConfig(scope);
+    filters = normalizeScopeFilters(scope, body.filters); generation = scopeGeneration(scope, body.generation);
+  } catch (_) { return fail('invalid_request', 400); }
+  if (!rankScopeEnabled(env, scope)) return fail('disabled');
   if (!env.DB || !env[SITE_RANK.key]) return fail('unavailable');
   try {
     return await searchDeadline(Math.max(1, SITE_RANK.request_timeout_ms - (Date.now() - started)), async s => {
@@ -465,11 +473,16 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       const stopped = () => { if (s.aborted) throw searchFailure('cancelled'); };
       const indexStarted = Date.now();
       let snapshot;
-      try { snapshot = await getSiteSnapshot(ctx, s); } catch (e) { if (e.searchCode === 'cancelled') throw e; return fail('index_unavailable'); }
+      try { snapshot = daily ? await getDailySnapshot(scope, { filters, generation, signal: s }) : await getSiteSnapshot(ctx, s); }
+      catch (e) {
+        if (e.searchCode === 'cancelled') throw e;
+        return fail(e.searchCode === 'invalid_request' ? 'invalid_request' : e.searchCode === 'index_updating' ? 'index_updating' : 'index_unavailable', e.searchCode === 'invalid_request' ? 400 : 200);
+      }
       info.indexMs = Date.now() - indexStarted;
-      [info.indexHash, info.candidateHash] = await Promise.all([snapshotHash(snapshot), rankCandidateHash(snapshot)]);
+      [info.indexHash, info.candidateHash] = await Promise.all([snapshot.indexHash || snapshotHash(snapshot), rankCandidateHash(snapshot)]);
       stopped();
-      if (!snapshot.rankReady) return fail('index_unavailable');
+      if (!daily && !snapshot.rankReady) return fail('index_unavailable');
+      if (daily) { info.total = filterDailyItems(snapshot, filters).length; info.generation = snapshot.generation; }
       // 回数は IP → 全体の順。IP で断った要求は全体を進めない。キャッシュから返すときも数える（キャッシュで上限を避けられない）
       const day = utcDay(), ip = requestIP(request);
       if (await countUp(env.DB, 'rank:' + ip, day, SITE_RANK.daily_limit) == null) return fail('rate_limited', 429);
@@ -481,11 +494,11 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
         return fail('rate_limited', 429);
       }
       stopped();
-      info.total = rankTargets(snapshot).length;
+      if (!daily) info.total = rankTargets(snapshot).length;
       // 課金障害と確かめた失敗だけ通知する。通知は要求の切断とは別の期限で終え、検索の結果と速さに響かせない
       const onBilling = status => alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms,
         sig => searchUpstream(env, ctx, log, 'サイト内検索', sig).onUpstreamError('typesafe', { status }, { billingFailure: true }));
-      const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling, progress: info });
+      const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling, progress: info, scope, filters: daily ? filters : null });
       Object.assign(info, { candidates: r.searched?.candidates ?? null, judged: r.searched?.judged ?? null, above: r.above, jevMs: r.jevMs });
       if (r.cached) info.jevMs = null;
       return reply(200, r);

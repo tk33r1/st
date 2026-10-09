@@ -23,6 +23,17 @@ export function searchScope(name) {
   return SEARCH_SCOPES[name];
 }
 
+export function rankScopeConfig(scope) {
+  searchScope(scope);
+  return scope === 'site' ? SITE_RANK : SITE_RANK.scopes[scope];
+}
+
+export function rankScopeEnabled(env, scope) {
+  searchScope(scope);
+  return env.SITE_RANK_ENABLED === 'true'
+    && (env.SITE_RANK_SCOPES === undefined ? ['site'] : String(env.SITE_RANK_SCOPES).split(',').map(s => s.trim())).includes(scope);
+}
+
 export function normalizeScopeFilters(scope, value) {
   const { media } = searchScope(scope);
   if (value === undefined) return {};
@@ -53,6 +64,15 @@ function dailyDate(value) {
   const year = Number(value.slice(0, 4)), month = Number(value.slice(4, 6)), day = Number(value.slice(6));
   const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
   return day >= 1 && day <= [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+}
+
+// 結果を返す直前にもID・日付・記事番号・媒体・URLの一致を確かめる。上流の返したリンクは使わない。
+export function dailyResultUrl(scope, item) {
+  const { media } = searchScope(scope);
+  if (!media || item.kind !== 'daily' || !dailyDate(item.date) || !Number.isSafeInteger(item.article) || item.article < 1
+    || item.id !== `${media}:${item.date}:${item.article}`) return null;
+  const url = `/job/${media}/${item.date}/#art-${item.article}`;
+  return item.url === url ? url : null;
 }
 
 function dailyIndex(text) {
