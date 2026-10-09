@@ -267,3 +267,16 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - daily-uiの版を`20261009_5`へ更新し、両誌を再生成。全57日刊HTMLはこの参照以外が変更前とバイト単位で一致し、全55号の本文・dateModifiedと索引を保持。`build.sh`成功（653ファイル）。変更した58公開ファイルは出荷物とバイト単位で一致。画面側のコミットに`Date-Sync: skip`を付ける。
 
 この修正は未push・本番未反映。実APIの判定は行っていない。初回の並行要求のPromise共有は今回の対象から外した。`SITE_RANK_SCOPES="site"`とT11〜T13の公開条件を維持。生の証跡は非追跡の`workers/.wrangler/daily-fixes-*`に保存。次はT09。
+
+### 7.11 レビュー指摘の修正の本番反映（2026-10-09）
+
+本人の「本番反映して」の指示で、`284e9212`（Worker）・`beac050e`（画面と生成側）を反映した。日刊②の停止設定`SITE_RANK_SCOPES="site"`を維持し、有効化とJevの実判定は行っていない。
+
+- 最新mainを取得し、人格カード・新しい号の追加が無いことを確認してからWorkerをデプロイ。Version `106b3f83-0fe6-48b5-9d83-a3405118ab2e`、224.89KiB（gzip 63.26KiB）。本番DB・ルート・停止設定が一致。modelsは200のJSON、両誌の正しいrank要求は200・`failed/disabled`・`searched:null`・`cached:false`。
+- mainへpushし、Cloudflare Pagesの公開成功を確認。対象`beac050e`、Deployment `e8d87229-b242-47ef-91a1-3e0eac766c47`。AIモデル検査・人格カード・sitemapのActionsも成功。
+- 16:04 JSTに本番の両ポータルを確認。入力候補は最大6件でAPIなし、明示Enterで本物のWorkerから停止応答を受け、①を利用できる。連続Enterで再送せず、検索語がURLに残らず、ページエラーなし。
+- 両誌のheadと共通JSは出荷内容と一致。nitori `2063db70449ba414`（176記事）、retail `88e2025867b34429`（204記事）。daily-uiは`20261009_5`、site-searchは`20261009_4`。両最新号のHTMLもCloudflareの解析・チャレンジの差し込みだけを除けば出荷内容と一致し、記事本文とdateModifiedを保持。
+- 本番の日刊ポータルの受け渡し5場面が通過。本物のGTM・Ahrefsを読み込み、解析の送信を記録して停止。`daily_search`・`daily_rank_run/result`を観測。停止中の画面と受け渡しの確認であり、日刊②を有効化した精度・応答時間・privacyの合格には数えない。
+- 公開後のsitemap botの`7b132e69`はsitemapだけを更新。号本文・dateModified・索引・人格カードは変わっていない。手元にも取り込み済み。
+
+生の証跡は非追跡の`workers/.wrangler/daily-fixes-production-*`へ保存。本番反映は完了。次はT09で、日刊②の有効化には引き続きT11〜T13の合格が必要。
