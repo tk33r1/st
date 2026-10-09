@@ -1,5 +1,70 @@
 [
   {
+    "date": "20261010",
+    "title": "2026年10月10日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジでの万引き手口（スキャン飛ばし、バーコード偽装、カート上段だけの精算）が問題化し、カメラやAIによる抑止策が焦点になっている。 リテールメディアは、メーカーと小売の共創をテーマとする業界イベントの開催が決まり、協業の具体像をめぐる議論が本格化しそうだ。",
+    "count": 2,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジでの万引き手口（スキャン飛ばし、バーコード偽装、カート上段だけの精算）が問題化し、カメラやAIによる抑止策が焦点になっている。",
+      "リテールメディアは、メーカーと小売の共創をテーマとする業界イベントの開催が決まり、協業の具体像をめぐる議論が本格化しそうだ。",
+      "無人店舗のタッチ決済や小売横断のリテールメディア研究会は既報のため除外し、今回は新たな展開のある国内ニュースに絞った。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "セルフレジで万引きが目立つ、「スキャン飛ばし」「バーコード偽装」の手口にカメラやAIで対策",
+        "original_title": "",
+        "source": "読売新聞",
+        "source_id": "JP-01",
+        "summary": "読売新聞は、セルフレジでの万引きが目立つ問題を報じた。「スキャン飛ばし」「バーコード偽装」「カート上段だけ精算」といった手口が挙げられ、客の“うっかり”と“わざと”の見極めが難しいことが課題とされる。その抑止策として、カメラやAIの導入が進んでいることを伝えている。",
+        "why_it_matters": "セルフレジは省人化の切り札である一方、不正の余地も生む。うっかりと意図的な行為を区別しにくいため、顧客を疑う運用では店舗体験を損ねかねない。カメラやAIによる検知は、精算漏れの兆候を機械的に捉え、スタッフの対応を絞り込む手段として有効だ。今後は抑止効果と顧客の使い勝手を両立させる設計が、セルフレジ拡大の成否を分けるだろう。",
+        "tags": [
+          "セルフレジ",
+          "万引き対策",
+          "AI監視",
+          "店内オペレーション"
+        ],
+        "search_terms": [
+          "セルフレジ 万引き対策",
+          "self-checkout shoplifting prevention",
+          "スキャン漏れ 検知AI",
+          "store camera AI loss prevention"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBKQTZhZVU4bUpEV0FGNG9ISHlhMnR4cHNiNUZPQmtXNU5jaHQ3ZFhjRUNBaTRrWDI2RzJMMDZGQUJ6NGcyazVfdEVqTGpIRFdGTHVKcnE1ZlhXbTRwTjFLTllZTXRQZVFWSUVfOGdJd3hOQQ?oc=5",
+        "source_pub_ts": 1791532800
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "Retail Media Summit、11月11〜12日開催 メーカーと小売の共創がテーマに",
+        "original_title": "",
+        "source": "DIGIDAY［日本版］",
+        "source_id": "JP-05",
+        "summary": "DIGIDAY［日本版］は、「Retail Media Summit」が11月11日と12日に開催されると報じた。テーマはメーカーと小売の共創を生むリテールメディアの本質とされ、広告枠の提供にとどまらない協業のあり方が主題になる。リテールメディアの取り組みを業界横断で捉え直す機会として、関係者の注目を集めそうだ。",
+        "why_it_matters": "リテールメディアは、小売の購買データを起点に広告を提供する仕組みとして拡大している。ただ、メーカーと小売の間で成果指標や役割分担が定まらず、伸び悩む事例もある。カンファレンスで共創の具体像が示されれば、メディア事業を検討する小売企業にとって実務的な判断材料になる。自社データの活用範囲と、メーカーとの共同設計をどう組み立てるかが問われる。",
+        "tags": [
+          "リテールメディア",
+          "メーカー連携",
+          "カンファレンス"
+        ],
+        "search_terms": [
+          "リテールメディア 共創",
+          "retail media summit",
+          "retail media collaboration",
+          "小売 メーカー 協業 広告"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5vby1RRExLQVI5VkoxM3QzOFpoRDlJRlpUdHRQSDNJRkdmcWJrTUw0enJab1VsRjdENHM0d3NWR01IcUJkSkJUWU5QMFlhTlZHWndzQVl1dDlIY24wMnA1ems2XzRZWF9XYVE?oc=5",
+        "source_pub_ts": 1791500409
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261009",
     "title": "2026年10月9日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "インタセクトとユーシーカードが無人店舗でのクレジットカードのタッチ決済に対応し、入店から決済までを非接触・カード一枚で完結させる動きが広がっています。 需要予測では住関連データなど外部データを取り込んで精度を高める動きが目立ち、AI需要予測の実装が高度化しています。",
