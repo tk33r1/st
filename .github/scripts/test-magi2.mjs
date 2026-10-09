@@ -273,9 +273,9 @@ test('日刊scope：10分で更新し、更新失敗でも完全な旧版を24�
   assert.equal(state.snapshot, old);
 });
 
-test('日刊scope：画面のgeneration・未知のカテゴリーと月は取り直しの合図だけにし、更新できなければindex_updating', async () => {
+test('日刊scope：版ずれは既知の絞り込みへ応答し、未知のカテゴリーと月は更新が必要', async () => {
   const w = dailyWorker(), old = await w.ctx.getDailySnapshot('nitori');
-  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), { searchCode: 'index_updating' });
+  assert.equal(await w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), old);
   await assert.rejects(w.ctx.getDailySnapshot('nitori', { filters: { month: '202611' } }), { searchCode: 'index_updating' });
   assert.equal(w.requests.length, 3);
   for (const index of w.files.values()) index.generation = 'b2';
@@ -292,6 +292,45 @@ test('日刊scope：画面のgeneration・未知のカテゴリーと月は取�
   w.advance(w.ctx.searchConfig.list_retry_ms); w.files.delete('search-index-2025.json');
   await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'c3' }), { searchCode: 'index_updating' });
   assert.equal(w.ctx.dailyCache.get('nitori').snapshot.generation, 'b2');
+});
+
+test('日刊scope：古いタブにも完全な版を返し、60秒の内側は再取得せず未知の絞り込みは待たせる', async () => {
+  const w = dailyWorker(); await w.ctx.getDailySnapshot('nitori');
+  for (const elapsed of [1000, 60000, 1000, 60000]) {
+    w.advance(elapsed);
+    const before = w.requests.length;
+    assert.equal((await w.ctx.getDailySnapshot('nitori', { generation: 'f0f0', filters: { category: '新商品' } })).generation, 'a1');
+    assert.equal(w.ctx.dailyCache.get('nitori').snapshot.generation, 'a1');
+    assert.equal(w.requests.length - before, elapsed === 60000 ? 3 : 0);
+    await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'f0f0', filters: { month: '202611' } }), { searchCode: 'index_updating' });
+  }
+  const state = w.ctx.dailyCache.get('nitori');
+  w.ctx.dailyNow = state.fetchedAt + w.ctx.searchConfig.list_max_age_ms + 1;
+  state.retryAt = w.ctx.dailyNow + w.ctx.searchConfig.list_retry_ms;
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'f0f0' }), { searchCode: 'index_updating' });
+});
+
+test('日刊scope：初回取得の中断後はすぐ再試行でき、強制更新の中断は再取得の制限を保つ', async () => {
+  const files = dailyFiles(); let blocked = true, requests = 0;
+  const w = worker(undefined, (url) => {
+    requests++;
+    return blocked ? new Promise(() => {}) : Response.json(files.get(url.split('/').at(-1)));
+  });
+  const cancel = async (options = {}) => {
+    const ac = new AbortController(), pending = w.ctx.getDailySnapshot('nitori', { ...options, signal: ac.signal });
+    await tick(); ac.abort(); await assert.rejects(pending, { searchCode: 'cancelled' });
+  };
+  await cancel();
+  assert.equal(w.ctx.dailyCache.get('nitori').retryAt, 0);
+  blocked = false;
+  const old = await w.ctx.getDailySnapshot('nitori');
+  const state = w.ctx.dailyCache.get('nitori'); state.retryAt = 0; blocked = true;
+  await cancel({ generation: 'b2' });
+  assert.ok(state.retryAt > Date.now());
+  const before = requests;
+  assert.equal(await w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), old);
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { filters: { category: '未知' } }), { searchCode: 'index_updating' });
+  assert.equal(requests, before);
 });
 
 test('日刊scope：初回取得の失敗・本文上限・索引全体の期限・切断では一部の版を確定しない', async () => {
@@ -344,11 +383,13 @@ test('日刊scope：更新中の並行要求と切断で、一部の版や遅れ
   const ac = new AbortController(), pending = w.ctx.getDailySnapshot('nitori', { signal: ac.signal });
   await tick();
   assert.equal(await w.ctx.getDailySnapshot('nitori'), old);
-  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), { searchCode: 'index_updating' });
+  assert.equal(await w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), old);
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'b2', filters: { month: '202611' } }), { searchCode: 'index_updating' });
   ac.abort(); await assert.rejects(pending, { searchCode: 'cancelled' });
   for (const index of files.values()) index.generation = 'b2';
   releases.forEach(resolve => resolve()); await tick();
   assert.equal(state.snapshot, old); assert.equal(state.refreshing, false); assert.equal(w.waits.length, 0);
+  assert.equal(state.retryAt, 0);
 });
 
 test('日刊scope：公開索引の実データも全件検査できる', () => {

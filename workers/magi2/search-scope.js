@@ -190,7 +190,7 @@ async function fetchDailySnapshot(scope, signal) {
 }
 
 // 更新は要求の期限・切断に従う。全ファイルとハッシュがそろうまで共有状態を差し替えない。
-// 更新中の別の要求は、完全な旧版が使える場合だけそれを受け取る。版の更新が必要なら index_updating。
+// 画面と版が違っても、既知の絞り込みなら完全な旧版を使える。未知の絞り込みは更新を待つ。
 export async function getDailySnapshot(scope, { filters = {}, generation, signal } = {}) {
   if (!searchScope(scope).media) throw searchFailure('invalid_request');
   filters = normalizeScopeFilters(scope, filters);
@@ -198,14 +198,16 @@ export async function getDailySnapshot(scope, { filters = {}, generation, signal
   if (signal?.aborted) throw searchFailure('cancelled');
   if (!dailySnapshots.has(scope)) dailySnapshots.set(scope, { snapshot: null, fetchedAt: 0, retryAt: 0, refreshing: false });
   const state = dailySnapshots.get(scope), now = Date.now(), age = now - state.fetchedAt;
-  const forced = state.snapshot && ((generation && generation !== state.snapshot.generation) || dailyUnknownFilter(state.snapshot, filters));
+  const unknownFilter = state.snapshot && dailyUnknownFilter(state.snapshot, filters);
+  const forced = state.snapshot && ((generation && generation !== state.snapshot.generation) || unknownFilter);
   const usable = state.snapshot && age <= SITE_SEARCH.list_max_age_ms;
   if (!forced && usable && age <= SITE_SEARCH.list_ttl_ms) return state.snapshot;
   if (state.refreshing || now < state.retryAt) {
+    if (usable && !unknownFilter) return state.snapshot;
     if (forced) throw searchFailure('index_updating');
-    if (usable) return state.snapshot;
     throw searchFailure('index_unavailable');
   }
+  const previousRetryAt = state.retryAt;
   state.refreshing = true;
   state.retryAt = now + SITE_SEARCH.list_retry_ms;
   let snapshot;
@@ -214,7 +216,11 @@ export async function getDailySnapshot(scope, { filters = {}, generation, signal
     if (signal?.aborted) throw searchFailure('cancelled');
     state.snapshot = snapshot; state.fetchedAt = Date.now();
   } catch (e) {
-    if (e.searchCode === 'cancelled' || signal?.aborted) throw searchFailure('cancelled');
+    if (e.searchCode === 'cancelled' || signal?.aborted) {
+      // 強制更新の中断は制限を残し、偽の版で再取得を繰り返させない。
+      if (!forced) state.retryAt = previousRetryAt;
+      throw searchFailure('cancelled');
+    }
     state.retryAt = Date.now() + SITE_SEARCH.list_retry_ms;
     if (forced) throw searchFailure('index_updating');
     if (state.snapshot && Date.now() - state.fetchedAt <= SITE_SEARCH.list_max_age_ms) return state.snapshot;
