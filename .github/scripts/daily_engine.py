@@ -2459,12 +2459,16 @@ def _same_except_build_date(path, content):
     return _BUILD_DATE_RE.sub('', current) == _BUILD_DATE_RE.sub('', content)
 
 
-def write_search_indexes(config, articles_history):
-    """全年度の索引だけを作り直す。号の本文・ポータル・RSS・履歴には触れない。"""
-    files = build_search_index(config, articles_history)
+def _write_search_index_files(config, files):
+    """構築・検査済みの索引を保存する。"""
     for filename, payload in files.items():
         write_json_atomic(os.path.join(config['job_dir'], filename), payload, separators=(',', ':'))
     return list(files)
+
+
+def write_search_indexes(config, articles_history):
+    """全年度の索引だけを作り直す。号の本文・ポータル・RSS・履歴には触れない。"""
+    return _write_search_index_files(config, build_search_index(config, articles_history))
 
 
 def backfill_search_terms(config, articles_history, *, dry_run=False):
@@ -2478,10 +2482,10 @@ def backfill_search_terms(config, articles_history, *, dry_run=False):
                 article['search_terms'] = fallback_search_terms(article)
                 count += 1
     # 保存前に全年度を検査。不正な既存値を黙って置き換えない。
-    build_search_index(config, updated)
+    files = build_search_index(config, updated)
     if not dry_run:
         save_history(config['data_dir'], updated)
-        write_search_indexes(config, updated)
+        _write_search_index_files(config, files)
     return count
 
 

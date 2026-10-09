@@ -107,19 +107,20 @@ def fallback_search_terms(article):
     normalize = lambda s: unicodedata.normalize('NFKC', s).casefold()
     title = normalize(article.get('title', '') or '')
     summary = normalize(article.get('summary', '') or '')
-    found = []
+    title_hits, summary_hits = [], []
     def matches(text, key):
         # AIをretailやchairの途中、ECをelectronicの途中に当てない。
         if key.isascii():
             return re.search(r'(?<![a-z0-9])' + re.escape(key) + r'(?![a-z0-9])', text) is not None
         return key in text
-    for order, (patterns, english, japanese) in enumerate(CONCEPTS):
+    for patterns, english, japanese in CONCEPTS:
         keys = [normalize(p) for p in patterns.split('|')]
-        weight = 2 if any(matches(title, p) for p in keys) else 1 if any(matches(summary, p) for p in keys) else 0
-        if weight:
-            found.append((-weight, order, english, japanese))
-    found.sort()
-    terms = [r[2] for r in found[:3]] + [r[3] for r in found[:2]]
+        if any(matches(title, p) for p in keys):
+            title_hits.append((english, japanese))
+        elif any(matches(summary, p) for p in keys):
+            summary_hits.append((english, japanese))
+    found = title_hits + summary_hits
+    terms = [english for english, _ in found[:3]] + [japanese for _, japanese in found[:2]]
     # 未知の題材は事実を補わず、元のタグ・カテゴリー・題名を短い語として使う。
     for term in [*(article.get('tags', []) or []), article.get('category', ''), article.get('title', ''), 'ニュース記事', '日刊ブリーフ', '記事の要約']:
         if len(terms) >= 3:

@@ -21,7 +21,8 @@ const synthetic = (magi, scope, mutate = () => {}) => dailySnapshot(magi, scope,
 const query = (scope, text = '前年の特別な電動米びつ', filters = {}) => ({ id: scope + '-001', scope, locale: 'ja', query: text, filters });
 
 test('固定380記事・120問・splitごとの6件の答え無し、速度の24問を検査する', async () => {
-  const magi = loadWorker(), snapshots = await loadFixtures(magi, data);
+  const magi = loadWorker(), { snapshots, termsSourceHash } = await loadFixtures(magi, data);
+  assert.equal(termsSourceHash, null);
   const summary = checkDailyQueries(magi, data, snapshots);
   assert.equal(snapshots.nitori.records, 176); assert.equal(snapshots.retail.records, 204);
   for (const scope of ['nitori', 'retail']) {
@@ -37,7 +38,7 @@ test('固定380記事・120問・splitごとの6件の答え無し、速度の24
 });
 
 test('正解・条件・重複・0件・答え無し・split・速度セットの改変を拒否する', async () => {
-  const magi = loadWorker(), snapshots = await loadFixtures(magi, data);
+  const magi = loadWorker(), { snapshots } = await loadFixtures(magi, data);
   const changes = [
     d => { d.queries[0].answers = ['nitoridaily:20240101:999']; },
     d => { d.queries[0].filters = { region: 'EU' }; },
@@ -59,7 +60,9 @@ test('正解・条件・重複・0件・答え無し・split・速度セット�
 });
 
 test('語を足した固定索引でも120問の正解・本文とJevの変換を保持し、元のhashと混ぜない', async () => {
-  const magi = loadWorker(), original = await loadFixtures(magi, data), enriched = await loadFixtures(magi, data, { indexSet: 'terms' });
+  const magi = loadWorker(), { snapshots: original } = await loadFixtures(magi, data);
+  const { snapshots: enriched, termsSourceHash } = await loadFixtures(magi, data, { indexSet: 'terms' });
+  assert.equal(termsSourceHash, JSON.parse(read(`${fixtures}/with-search-terms/indexes.json`)).terms_source_sha256);
   assert.deepEqual(checkDailyQueries(magi, data, enriched), checkDailyQueries(magi, data, original));
   for (const scope of ['nitori', 'retail']) {
     assert.equal(enriched[scope].candidate_hash, original[scope].candidate_hash);
@@ -269,10 +272,12 @@ test('疎通2回＋本測定48回の上限と重複を確認し、共有残量�
 });
 
 test('CLIのオフライン経路はキーを読まず、回数と費用を示し、曖昧な引数を拒否する', () => {
-  for (const scope of ['nitori', 'retail']) {
-    const r = spawnSync(process.execPath, ['.github/scripts/eval-daily-rank.mjs', '--plan', '--scope', scope, '--set', 'tune', '--runs', '2'], { cwd: root, encoding: 'utf8' });
+  for (const scope of ['nitori', 'retail']) for (const indexSet of ['original', 'terms']) {
+    const r = spawnSync(process.execPath, ['.github/scripts/eval-daily-rank.mjs', '--plan', '--scope', scope, '--set', 'tune', '--runs', '2', '--index-set', indexSet], { cwd: root, encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr); const plan = JSON.parse(r.stdout);
     assert.equal(plan.requests, 60); assert.equal(plan.questions_max, 20); assert.ok(plan.conservative_cost_usd > 0); assert.match(plan.estimate, /未呼び出し/);
+    assert.equal(plan.index_set, indexSet);
+    assert.equal(plan.terms_source_sha256, indexSet === 'terms' ? JSON.parse(read(`${fixtures}/with-search-terms/indexes.json`)).terms_source_sha256 : null);
   }
   for (const args of [['--accuracy'], ['--check', '--plan'], ['--check', '--oops'], ['--plan', '--scope', 'nitori', '--scope', 'retail'], ['--browser', '--scope', 'nitori']]) {
     const r = spawnSync(process.execPath, ['.github/scripts/eval-daily-rank.mjs', ...args], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 1);
