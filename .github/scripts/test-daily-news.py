@@ -360,6 +360,56 @@ class DailyGenerationTests(unittest.TestCase):
                              'test-key', 'test-model', 'test prompt', 'test-agent'), {'ok': True})
 
 
+class SearchGenerationTests(unittest.TestCase):
+    def history(self):
+        return [
+            {'date': '20260101', 'articles': [{'title': '新年の収納 🧺', 'summary': 'e\u0301と家具', 'tags': ['収納']}]},
+            {'date': '20251231', 'articles': [{'title': '年末の店舗', 'region': 'GLOBAL'}]},
+            {'date': '20240229', 'articles': [{'title': 'うるう日の記事'}, {'title': '同じ号の別記事'}]},
+        ]
+
+    def test_generation_is_shared_by_all_years_and_stable_on_rebuild(self):
+        for config in (nitori.CONFIG, daily.CONFIG):
+            with self.subTest(media=config['media_id']):
+                history = self.history()
+                files = engine.build_search_index(config, history)
+                self.assertEqual(files, engine.build_search_index(config, list(reversed(history))))
+                self.assertEqual(files['search-index.json']['years'], ['2026', '2025', '2024'])
+                generations = {payload['generation'] for payload in files.values()}
+                self.assertEqual(len(generations), 1)
+                self.assertRegex(generations.pop(), r'^[0-9a-f]{16}$')
+                # 過去の年だけの更新も、全ファイルの版を更新する。
+                history[-1]['articles'][0]['summary'] = '過去の記事の追記'
+                updated = engine.build_search_index(config, history)
+                for filename in files:
+                    self.assertNotEqual(files[filename]['generation'], updated[filename]['generation'])
+                self.assertEqual(files['search-index.json']['records'], updated['search-index.json']['records'])
+                self.assertEqual([r['url'] for r in files['search-index-2024.json']['records']],
+                                 ['20240229/#art-1', '20240229/#art-2'])
+
+    def test_empty_index_has_generation_and_media_is_part_of_generation(self):
+        first = engine.build_search_index(nitori.CONFIG, [])['search-index.json']
+        second = engine.build_search_index(daily.CONFIG, [])['search-index.json']
+        self.assertEqual(first['years'], [])
+        self.assertEqual(first['records'], [])
+        self.assertRegex(first['generation'], r'^[0-9a-f]{16}$')
+        self.assertNotEqual(first['generation'], second['generation'])
+
+    def test_index_only_rebuild_preserves_pages_and_writes_every_year(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            portal = Path(directory, 'index.html')
+            portal.write_text('<script type="application/ld+json">{"dateModified":"2026-10-09"}</script>', encoding='utf-8')
+            before = portal.read_bytes()
+            config = {**nitori.CONFIG, 'job_dir': directory}
+            files = engine.write_search_indexes(config, self.history())
+            self.assertEqual(portal.read_bytes(), before)
+            snapshots = [json.loads(Path(directory, name).read_text(encoding='utf-8')) for name in files]
+            self.assertEqual(len(snapshots), 3)
+            self.assertEqual(len({s['generation'] for s in snapshots}), 1)
+            self.assertEqual(sorted(p.name for p in Path(directory).iterdir()), sorted(['index.html'] + files))
+
+
 class RebuildOutputTest(unittest.TestCase):
     def test_rss_is_kept_when_only_build_date_differs(self):
         import tempfile, os

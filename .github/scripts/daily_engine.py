@@ -9,6 +9,7 @@ Retail Tech Daily Brief, Nitori Daily Brief などの日刊ニュースメディ
 import argparse
 import contextlib
 import email.utils
+import hashlib
 import html
 import json
 import os
@@ -1269,9 +1270,10 @@ def build_search_index(config, articles_history):
     号が増えても1ファイルが育ち続けないよう年ごとに分ける。search-index.json には最新の年の
     記事と年の一覧（years、新しい順）を入れ、それより前の年は search-index-<年>.json に置く。
     ポータルを開くたびに読むのは search-index.json だけ（job/assets/daily-ui.js）。
+    全年度の内容から1回だけ generation を作り、すべてのファイルに同じ値を付ける。
     """
     records_by_year = defaultdict(list)
-    for issue in articles_history:
+    for issue in sorted(articles_history, key=lambda x: x.get('date', ''), reverse=True):
         date_key = issue.get('date', '')
         records = records_by_year[str(date_key)[:4]]
         for idx, art in enumerate(issue.get('articles', []) or [], 1):
@@ -1288,11 +1290,14 @@ def build_search_index(config, articles_history):
                 'url': f"{date_key}/#art-{idx}",
             })
     years = sorted(records_by_year, reverse=True)
-    if not years:
-        return {'search-index.json': {'media': config['media_id'], 'years': [], 'records': []}}
-    files = {'search-index.json': {'media': config['media_id'], 'years': years, 'records': records_by_year[years[0]]}}
+    files = {'search-index.json': {'media': config['media_id'], 'years': years,
+                                 'records': records_by_year[years[0]] if years else []}}
     for year in years[1:]:
         files[f'search-index-{year}.json'] = {'media': config['media_id'], 'year': year, 'records': records_by_year[year]}
+    canonical = json.dumps(files, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    generation = hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]
+    for payload in files.values():
+        payload['generation'] = generation
     return files
 
 
@@ -2409,6 +2414,14 @@ def _same_except_build_date(path, content):
     return _BUILD_DATE_RE.sub('', current) == _BUILD_DATE_RE.sub('', content)
 
 
+def write_search_indexes(config, articles_history):
+    """全年度の索引だけを作り直す。号の本文・ポータル・RSS・履歴には触れない。"""
+    files = build_search_index(config, articles_history)
+    for filename, payload in files.items():
+        write_json_atomic(os.path.join(config['job_dir'], filename), payload, separators=(',', ':'))
+    return list(files)
+
+
 def write_collection_outputs(config, articles_history):
     """ポータル、RSS、検索インデックスをまとめて書き出す。"""
     job_dir = config['job_dir']
@@ -2426,26 +2439,32 @@ def write_collection_outputs(config, articles_history):
         with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
         written.append(filename)
-    for filename, payload in build_search_index(config, articles_history).items():
-        write_json_atomic(os.path.join(job_dir, filename), payload, separators=(',', ':'))
+    write_search_indexes(config, articles_history)
     return written
 
 
 def run_daily_pipeline(config):
     parser = argparse.ArgumentParser(description=f"{config['media_name']} Pipeline")
     parser.add_argument('--date', type=str, default='', help='Target issue date in YYYYMMDD format')
-    parser.add_argument('--rebuild', action='store_true', help='Rebuild HTML and RSS from existing JSON')
+    rebuild = parser.add_mutually_exclusive_group()
+    rebuild.add_argument('--rebuild', action='store_true', help='Rebuild HTML and RSS from existing JSON')
+    rebuild.add_argument('--rebuild-search-index', action='store_true', help='Rebuild only search indexes from existing JSON')
     parser.add_argument('--dry-run', action='store_true', help='Collect candidates and display them without AI summarization')
     args = parser.parse_args()
 
     data_dir = config['data_dir']
     job_dir = config['job_dir']
-    if args.rebuild:
-        print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
+    if args.rebuild or args.rebuild_search_index:
+        if args.rebuild:
+            print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
         articles_history = load_history(data_dir)
         if not articles_history:
             print(f"[ERROR] {data_dir} に号がありません。", file=sys.stderr)
             sys.exit(1)
+        if args.rebuild_search_index:
+            files = write_search_indexes(config, articles_history)
+            print(f" -> 索引だけを再生成: {', '.join(files)}")
+            return
         repaired_indices = repair_history_source_links(articles_history)
         if repaired_indices:
             save_history(data_dir, articles_history)
