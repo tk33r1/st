@@ -118,7 +118,7 @@ site のセットは変えず、`.github/site-search/phase3-rank-queries.json` �
 | V03・V11（T05の生成側） | 全年度で共通のgeneration、過去年だけの変更、空の索引、再生成の安定性、既存の日刊画面の互換を確認済み。Worker側は7.2〜7.3で模擬検証済み。画面の版の照合は7.4で模擬検証済み |
 | 出荷の確認 | 簡素化後も `build.sh` 成功（653ファイル）。Pagesのビルド成功。本番の両誌の索引が出荷内容と一致（176記事・204記事）。generation以外の既存項目は変更前と一致 |
 | T06〜T07のWorker側 | 7.2〜7.3に記録。全体の回帰148件通過 |
-| T08の画面 | 7.4に記録。両誌の模擬検証済み。未公開 |
+| T08の画面 | 7.4〜7.6に記録。両誌の模擬検証・本番反映済み。日刊②は停止設定を維持 |
 | その他のV01〜V14・実 API の測定・日刊②の公開の検証 | 未実施 |
 
 実行したコマンド（2026-10-09、基点 `27fae390`、未コミットのT03〜T05）：
@@ -204,3 +204,16 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - `build.sh`成功（653ファイル）。変更した58HTMLと共通JSの2ファイルが出荷物とバイト単位で一致することを確認。
 
 未公開。実API・本番へは送っていない。計測スクリプトの実通信は7.4と同じく未確認。`SITE_RANK_SCOPES="site"`を維持し、公開の条件は変更していない。日付を保持するためコミットに`Date-Sync: skip`を付ける。次はT09。
+
+### 7.6 T06〜T08と簡素化の本番反映（2026-10-09）
+
+本人の「本番環境反映して」の指示で、`20e7c18c`・`f015496f`・`6e8636d1`・`5890beef`を反映した。`SITE_RANK_SCOPES="site"`を維持し、日刊②の有効化・実APIの評価は行っていない。
+
+- Workerを先に手元のwranglerで本番へデプロイ。Version `ddbc64d1-bce5-4d16-bbc6-4bade6c506e2`、224.77KiB（gzip 63.23KiB）。本番DB・ルートと停止設定が一致。`GET /magi2/models`は200。両誌への合成要求は200・`failed/disabled`・`searched:null`・`cached:false`で、Jevや回数を使う経路には入らない。
+- mainへpush後、Cloudflare Pagesの公開成功をGitHubのチェックで確認。Deployment `57a9221c-4f38-47fc-98ff-6a2c40cdcfcc`、対象`5890beef`。AIモデル検査・sitemap・人格カードworkflowも成功。
+- 14:16 JSTにブラウザから両ポータルを確認。入力候補は最大6件・APIなし、明示Enterは本物のWorkerから`disabled`を受けて②を隠し、①は利用可能。連続Enterで再送しない。URLに検索語を残さず、ページエラーなし。実APIの判定は行っていない。
+- 公開された両誌のheadは出荷内容と一致。nitori `2063db70449ba414`（176記事）、retail `88e2025867b34429`（204記事）。共通JSの2ファイルも内容と`20261009_3`の参照が一致。存在しないURLは404で、新版site-searchを参照。
+- `node .github/scripts/test-site-search-ui.mjs --base https://tk.st --match 日刊ポータル`の5場面通過。`#q=`・旧`?q=`・ヘッダー・タグ・絞り込みと解析停止を確認。本物のGTM・Ahrefsを読み込み、解析の送信を記録して停止した。GA4の`daily_search`・`daily_rank_run/result`を観測。これは停止中の画面と受け渡しの確認であり、有効化した日刊②のprivacy・精度・応答時間の合格には数えない。
+- push前後にリモートmainを取得。新しい号・人格カードは無し。sitemap botの`767b6c71`はsitemapだけの更新で、号本文とdateModified・索引は変わっていない。bot更新を手元にも取り込んだ。
+
+生の画面記録とログは非追跡の`workers/.wrangler/`に保存。次はT09。日刊②の有効化には引き続きT11〜T13の合格が必要。

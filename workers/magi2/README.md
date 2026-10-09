@@ -189,6 +189,8 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 
 ### サイト内検索の②（Jev）
 
+2026-10-09に日刊2誌のscopeも本番へ配置したが、精度・応答時間の評価が未完了のため`SITE_RANK_SCOPES="site"`で停止中。未設定もsiteだけ。媒体を許すときは`nitori`・`retail`をカンマ区切りで足し、媒体だけを止めるときはその値を外して再デプロイする。全体の`SITE_RANK_ENABLED=false`が優先。日刊の停止応答は`disabled`で、索引・回数・Jevを使わず、画面は①を続ける。評価と有効化の条件は[Phase 3計画書](../../assets/site-search-phase3-plan.md)に記録。以下は既存のsiteの契約。
+
 `mode: 'rank'` の要求で、索引の各ページに Jev で「目的を果たせる確率」を付けて並べる（設計は `assets/site-search-design.md`、
 設定の正本は `personas.js` の `SITE_RANK`）。`SITE_RANK_ENABLED = "true"` のときだけ動き、停止はこちらを先に `false` にする。
 回数は③と別に `rank:<IP>`・`rank:global` で数え（1日に IP ごと60回・全体3,000回。値は `SITE_RANK`）、全体の上限の通知は `alert:site-rank-global`。
