@@ -240,3 +240,16 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - `build.sh`成功（653ファイル）。変更した58HTMLと共通JSの2ファイルが出荷物とバイト単位で一致。日付を保つため画面側のコミットに`Date-Sync: skip`を付ける。
 
 この簡素化は未公開。実API・本番へは送っていない。手元ではGTM・Ahrefsを読み込めず、解析の検査はdataLayerまで。日刊②の停止設定と後続の評価・有効化の条件は維持。
+
+### 7.9 追加簡素化の本番反映（2026-10-09）
+
+本人の「本番環境反映して」の指示で、Workerの`c758670d`と画面の`24872851`を本番へ反映した。日刊②の`SITE_RANK_SCOPES="site"`を維持し、Jevによる日刊の判定は有効化していない。
+
+- Workerを先にデプロイ。Version `30941fba-c221-4258-89d3-cca026cda584`、224.71KiB（gzip 63.20KiB）。本番DB・ルート・停止設定を確認。modelsは200のJSON、両誌の合成要求は200・`failed/disabled`・`searched:null`・`cached:false`。
+- mainへpushし、Cloudflare Pagesの公開成功を確認。対象`24872851`、Deployment `5408a779-4c21-4fd0-811d-dd9458db8862`。モデル検査・人格カード・sitemapのActionsも成功。
+- 14:56 JSTに本番の両ポータルをブラウザで確認。入力候補は最大6件・APIなし、明示Enterで本物のWorkerから停止応答を受け、①は利用可能。連続Enterで再送せず、URLは検索語なし、ページエラーなし。
+- 両誌のheadと共通JSの2ファイルは手元の出荷内容と一致。nitori `2063db70449ba414`（176記事）、retail `88e2025867b34429`（204記事）。全参照の新版は`20261009_4`。本番404も404の応答で新版site-searchを参照。
+- 本番の日刊ポータルの受け渡し5場面が通過。本物のGTM・Ahrefsを読み込み、解析の送信を記録して停止。`daily_search`・`daily_rank_run/result`を観測した。Jevの判定を含む日刊②の精度・応答時間・privacyの合格とは分ける。
+- push前後に最新mainを確認。新しい号・人格カードは無し。sitemap botの`a3e4c182`はsitemapだけを更新し、号本文・dateModified・索引は変わっていない。手元へ取り込み済み。
+
+生の証跡は非追跡の`workers/.wrangler/phase3-simplify-production-*`に保存。追加簡素化の公開は完了。次はT09で、日刊②の有効化の条件は維持。
