@@ -527,6 +527,19 @@ test('検索のIP上限を超えた要求は全体を進めず、通常チャッ
   assert.equal(w.env.DB.rows.get('search:global|' + day), 10);
 });
 
+test('Phase 3：③の全体100回とIPごとの10回を別々に守る', async () => {
+  const w = enableSearch(worker()), day = new Date().toISOString().slice(0, 10);
+  assert.equal(w.ctx.searchConfig.daily_limit, 10);
+  assert.equal(w.ctx.searchConfig.global_daily_limit, 100);
+  w.env.DB.rows.set('search:global|' + day, 99);
+  assert.equal((await searchRequest(w)).status, 200);
+  assert.equal(w.env.DB.rows.get('search:global|' + day), 100);
+  const calls = w.calls.length;
+  assert.equal((await searchRequest(w, undefined, '192.0.2.2')).status, 429);
+  assert.equal(w.env.DB.rows.get('search:global|' + day), 100);
+  assert.equal(w.calls.length, calls);
+});
+
 test('AIの未知ID・日刊の不正値・コメントの記号を検証し、実在するURLだけを作る', () => {
   const w = worker(), pages = w.ctx.makeSitePages(JSON.parse(read('data/site-search.json')));
   assert.equal(pages.length, JSON.parse(read('data/site-search.json')).pages.length);

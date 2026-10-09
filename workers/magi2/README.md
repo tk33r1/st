@@ -160,7 +160,7 @@ URLやタイトルをAIに生成させない。失敗は503で、該当なしの
 AIへは名前・説明・URLとの一致で順位をつけた最大40件・16,000文字分を渡す。主な入口11件は必ず入れ、日刊の号は5件まで。英語の機能語は数えない。
 AIの選択IDは、実際に渡した候補内で検証する。ページ本文の検索・自動翻訳は行わない。
 
-- 404検索は既存の `countUp` と `rate_limit` を利用し、UTC日ごとに `search:<IP>`（10回）→ `search:global`（20回）の順に数える。表・移行の追加はない。
+- 404検索は既存の `countUp` と `rate_limit` を利用し、UTC日ごとに `search:<IP>`（10回）→ `search:global`（100回）の順に数える。表・移行の追加はない。
 - 入力・認可・停止フラグ・一覧取得の失敗では数えない。AI開始後の失敗・0件・キャンセルは数える。全体上限で断った場合のIP回数は戻さない。
 - `site_pages: true` の通常チャットは、最新本文の先頭500文字だけでページを選び、統合に添えた同じ候補を `pages` イベントで返す。通常チャットの上限内で行い、`search:` は使わない。DB未設定時は案内を省く。
 - 新契約の一覧取得・選択・リンク通知は画面の許可があり、site_pagesがnoでなく、music・DJでない通常経路だけで行う。短い場面説明は一覧とは分ける。
@@ -243,4 +243,4 @@ Accessサービス認証とAPIキーを環境変数に設定してeval-site-sear
 npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --command "SELECT ip AS metric, day, count FROM rate_limit WHERE ip LIKE 'usage:google:%' ORDER BY day DESC, ip LIMIT 28"
 ```
 
-429や枠の競合が続く場合は、`personas.js` の `SITE_SEARCH.global_daily_limit` を20から下げる。0で404のAI検索だけ停止する。変更をコミットし、magi2を再デプロイする。ブラウザ内の通常検索とチャットは続く。残高・割当量を示す上流429の通知は既存の1日1通の通知に従う。
+429や枠の競合が続く場合は、`personas.js` の `SITE_SEARCH.global_daily_limit` を100から下げる。0で404のAI検索だけ停止する。変更をコミットし、magi2を再デプロイする。ブラウザ内の通常検索とチャットは続く。残高・割当量を示す上流429の通知は既存の1日1通の通知に従う。

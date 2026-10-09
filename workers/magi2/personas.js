@@ -32,7 +32,7 @@ const searchSchema = (comment) => ({
 export const SITE_SEARCH = {
   model: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 300 },
   chat_max_tokens: 120, temperature: 0.4,
-  daily_limit: 10, global_daily_limit: 20,
+  daily_limit: 10, global_daily_limit: 100,
   request_bytes: 4096, query_max_chars: 200, chat_query_max_chars: 500,
   comment_max_chars: { ja: 120, en: 240 },
   candidate_limit: 40, candidate_max_chars: 16000, candidate_issue_limit: 5,
