@@ -1,5 +1,302 @@
 [
   {
+    "date": "20261010",
+    "title": "2026年10月10日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリがインドで2店舗目となる「NITORI Sky City Mall Mumbai店」の出店を発表し、シンガポール・インドの新店舗が10月15日にオープンすると報じられるなど、海外店舗展開が加速しています。 家電の1対1回収による処分費0円の仕組みや、伸縮フリーラックの値下げ、夏物クリアランスの拡大など、購入の不安や価格を下げる施策が目立ちました。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリがインドで2店舗目となる「NITORI Sky City Mall Mumbai店」の出店を発表し、シンガポール・インドの新店舗が10月15日にオープンすると報じられるなど、海外店舗展開が加速しています。",
+      "家電の1対1回収による処分費0円の仕組みや、伸縮フリーラックの値下げ、夏物クリアランスの拡大など、購入の不安や価格を下げる施策が目立ちました。",
+      "SNSでは初期不良への丁寧な対応や、妊娠期の生活課題への共感など、購入後の体験と生活者の悩みに寄り添う商品が反響の中心になっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、インドで2店舗目を出店　「NITORI Sky City Mall Mumbai店」を発表",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-08",
+        "summary": "ニトリはインドへの2店舗目として「NITORI Sky City Mall Mumbai店」の出店を発表しました。関連報道では、シンガポールとインドの新店舗が10月15日にオープンするとされています。SPAとして現地のニーズに合わせた品揃えを展開しつつ、海外店舗網を広げる動きが鮮明になっています。",
+        "why_it_matters": "インドは人口規模と住宅需要の伸びが期待される市場で、2店舗目の出店は単発の進出ではなく本格展開の段階に入ったことを示します。企画・製造・物流を一体で持つSPAモデルを海外でも再現できるかが焦点です。今後は現地の住環境や価格感度に合わせた商品の最適化と、店舗の認知形成が成否を左右するでしょう。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "インド"
+        ],
+        "search_terms": [
+          "ニトリ インド 新店舗 出店",
+          "Nitori India store opening",
+          "Nitori Mumbai Sky City Mall"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE12WmNIUk80VE9NYVNadnVybGhjd2RDUXgwQVBPMzBlOW1PcmRvQUN1U2RYbzlCZURfY3pIVmFtMzQxUExxUXNETHpSX0J1cW1oaXd2WjNQb2lQYjcwTWpsRmRsWWgtWEJpTFE?oc=5",
+        "source_pub_ts": 1791518401
+      },
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリで家電を買えば処分代0円に？他社製品も持ち込める1対1回収の仕組み",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-03",
+        "summary": "ニトリで家電を購入すると処分代が0円になる可能性があり、その仕組みとして「1対1回収」が取り上げられました。他社製品も持ち込める点が特徴とされ、買い替え時の手間や費用の負担を軽減するサービスとして注目されています。詳しい条件や手続きは記事で確認できます。",
+        "why_it_matters": "家電は大型で処分の手間が買い替えの障壁になりやすく、回収をセットにしたサービスは購入動機を強める有効な施策です。他社製品も対象とする点は、ニトリを家電の買い替え窓口として位置づける狙いがうかがえます。今後は回収物流の効率化と、家電カテゴリの来店・購入転換をどう数値化するかが鍵になります。",
+        "tags": [
+          "ニトリ",
+          "家電",
+          "物流",
+          "サービス"
+        ],
+        "search_terms": [
+          "ニトリ 家電 処分 回収",
+          "Nitori appliance disposal service",
+          "appliance take-back logistics"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE8zQVFsTE5mQzlEUEcwWk8zaHh1MXJBbDZnQVVxX0lWaHhHVWxZMmFpbFJUQkEtdy1NT1dCaTVrWUItTE5iMWR2NGttWGZud0RsMzNZ?oc=5",
+        "source_pub_ts": 1791543836
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの今冬の新製品「新Nウォーム」は冬の睡眠問題を解決できるか",
+        "original_title": "",
+        "source": "マイベスト",
+        "source_id": "JP-05",
+        "summary": "ニトリの今冬の新製品「新Nウォーム」について、保温性だけでなく睡眠の質の改善にも寄与するのかが検証されました。寝具の暖かさと眠りの快適さの関係を整理し、冬場に睡眠の悩みを抱える生活者にとっての選び方の視点が示されています。マイベストが製品の特徴を読み解いています。",
+        "why_it_matters": "保温一辺倒から眠りの質へと価値軸を広げる提案は、ニトリが得意とする機能性寝具の差別化につながります。冬物は季節性が強いため、発売時期と訴求の一致が販売を左右します。生活者の体験談を交えたPRで、寝具の悩みを解決する定番商品として定着できるかが注目点です。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "冬物",
+          "商品開発"
+        ],
+        "search_terms": [
+          "ニトリ 新Nウォーム 冬の寝具",
+          "Nitori warm bedding winter",
+          "winter sleep comfort bedding"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBFNWtEV2hLNW84dUVTbTlWSENMdE5KYWE4LVJtNVllOF95UTlIcHhSZU1LVEZabmpKSmcyY0dMTU81Y0VKQ3IyWWtfOEN0QQ?oc=5",
+        "source_pub_ts": 1791523617
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリの伸縮フリーラック、1490円から1290円へ　高さと幅の調整で人気",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-07",
+        "summary": "ニトリの伸縮フリーラックが1490円から1290円へ価格を見直され、ねとらぼリサーチの口コミで人気を集めています。「高さも幅もぴったり」「スペースを有効活用できて満足」といった声が寄せられ、狭い空間でも収納を増やせる点が評価されています。値下げと伸縮設計の組み合わせが購入の後押しになっているようです。",
+        "why_it_matters": "同等の機能を保ちつつ価格を下げた点は、低価格帯の実用品でも価格を武器にする戦略の表れです。伸縮式は収納スペースの制約に応じて使えるため、単身世帯や狭小住戸向けの訴求と相性が良好です。口コミで評価される機能性を価格で後押しする流れは、PB商品の回転率向上に寄与するでしょう。",
+        "tags": [
+          "ニトリ",
+          "価格戦略",
+          "収納",
+          "PB"
+        ],
+        "search_terms": [
+          "ニトリ 伸縮フリーラック 値下げ",
+          "Nitori adjustable shelf rack price",
+          "compact storage rack affordable"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9BUFY2b1Uwb1VfdjRqOXBFUTA1WmtsOU9RSVc4N0FPTTZoYUdPWXA4RFdjSmtXT2tYQ3l2QkM3MTRNM3pBZEhkTG1pNHhXQk9icmZpSGFlQ0FlY05sb0xlU3A1VdIBaEFVX3lxTFBCMVJzTXNFVEJzdFJpR3p0TUZ3bkZZOVVJRkdjdm9GRXFocXQ5cWN4SnQyQ2xRRWFDTE1LbEpCeVRndlE1UjMyZkpONXVhQnNsNXozalBOTWtUU1JtRzVPbElwR3ZNT2V4?oc=5",
+        "source_pub_ts": 1791520200
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ、夏物クリアランス対象を拡大　500アイテム追加で最大50％値下げ",
+        "original_title": "",
+        "source": "朝日新聞",
+        "source_id": "JP-10",
+        "summary": "ニトリが夏物商品のクリアランス対象を拡大し、8月31日から500アイテムを追加したと報じられました。対象は最大2,000アイテムに及び、最大50％の値下げが行われています。在庫の循環を早めながら季節商品の販売を進める狙いがうかがえる施策です。",
+        "why_it_matters": "季節の終わりに在庫を機動的に値下げで消化する手法は、SPAの在庫回転と価格戦略の両立を示す典型例です。大幅値下げは集客力がある一方、定価販売との整合性や利益率への影響を見極める必要があります。需要予測と製造計画の精度が、こうした施策の効果を左右します。",
+        "tags": [
+          "ニトリ",
+          "クリアランス",
+          "価格戦略",
+          "在庫"
+        ],
+        "search_terms": [
+          "ニトリ 夏物 クリアランス 値下げ",
+          "Nitori summer clearance discount",
+          "seasonal inventory markdown strategy"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBrWl9lR1NQUGtaR3V6anFiYUVnWGVYbGFPUWc0YkFmaTdUY1ZwM0lLZGxzcDBJTnVBVkc1QjktR3V3RDNtdlhpT0M0UkxGOXhSUGhWN21lVC1wMlE?oc=5",
+        "source_pub_ts": 1791478918
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ソファからニトリの1万円台チェアに乗り換え　「もっと早く欲しかった」の声",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ソファ中心の暮らしからニトリの1万円台チェアに変えた生活者の体験が、ねとらぼリサーチで紹介されました。「あまりの心地よさに感動し購入」「もっと早く欲しかった」といった声が集まり、座り心地への満足度の高さがうかがえます。低価格帯でも体験価値を伝えられる商品として反響を呼んでいます。",
+        "why_it_matters": "ソファから椅子への移行は、椅子を生活の中心に据える提案の余地があることを示しています。1万円台という手に取りやすい価格で座り心地の体験を提供できたことが、購入の決め手になっています。店頭やSNSで実際の座り心地を伝える導線が、ヒットの再現性を高めるでしょう。",
+        "tags": [
+          "ニトリ",
+          "チェア",
+          "商品開発",
+          "生活者の声"
+        ],
+        "search_terms": [
+          "ニトリ チェア 座り心地 口コミ",
+          "Nitori chair comfort review",
+          "affordable chair living room"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE4yWnRBNkE0bEJCTmt0OHRYV01SN19QdG5wTHhzeFFPZnBVdWc3Y0JxYWhFV1BKQmxEcmZmN3lySVBMd3lyYXNYWkw4YnI1VU5xbmJEejY3eHhqR0ZhX0lyclZYd9IBaEFVX3lxTE83OHBDeE5QWnZhTzk5Qmw3Sm9oZ1g2Rm1yVHBlY20xTTRpdnpheUlyMTBXcm8ydmtDVzAyUFhvTW5oc2d4NG4wNGN1YXFJeTVDY1JPak8wNUdxUHFwcWdvelROak5xN3Fi?oc=5",
+        "source_pub_ts": 1791531000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「妊娠中に出会いたかった」ニトリ商品に共感の声、Xで382いいね",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "Xで「妊娠中に出会いたかった」という投稿が382いいねを集めました。画像付きの投稿で、ニトリの商品が妊娠中の生活の悩みに寄り添うものとして受け止められたことがうかがえます。具体的な商品名は本文から特定できませんが、生活者の強い共感が示された投稿です。",
+        "why_it_matters": "妊娠・育児期は身体の負担や限られた空間での生活が続くため、機能や動線に寄り添う商品は強い共感を生みます。あったら助かったという実感は口コミ拡散の起点になりやすく、ライフステージ別の提案を商品企画に組み込む価値があります。生活課題の解決を言語化して届けることが重要です。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "生活者の声",
+          "ライフステージ"
+        ],
+        "search_terms": [
+          "妊娠中 ニトリ 共感 投稿",
+          "pregnancy Nitori product review",
+          "life stage home products"
+        ],
+        "url": "https://x.com/meronpen1/status/2108312335622562171",
+        "source_pub_ts": 1791543600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "初期不良への丁寧な対応に「安心」の声　組立サービスも評価される",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "Xで、ニトリの対応が丁寧だったという投稿が210いいねを集めました。投稿者は初期不良が多い型だったと述べつつ、組立も対応してもらえる点を安心材料として挙げています。購入後のトラブル時の対応と組立サービスが、顧客満足を支えていることがうかがえます。",
+        "why_it_matters": "初期不良は購入後の信頼を左右する重要な接点で、丁寧な対応は再購入やブランド評価に直結します。組立サービスを含めた購入後の体験設計は、大型家具をネットで買う際の不安を和らげる要素です。店舗・EC・配送を一体で管理するSPAならではの一貫対応を、見える形で伝えることが重要です。",
+        "tags": [
+          "ニトリ",
+          "カスタマーサポート",
+          "組立サービス",
+          "SNS"
+        ],
+        "search_terms": [
+          "ニトリ 初期不良 対応 丁寧",
+          "Nitori customer service assembly",
+          "furniture after-sales service"
+        ],
+        "url": "https://x.com/rs__7__/status/2108454771439120652",
+        "source_pub_ts": 1791543600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "やばい、流石にニトリが本気出しすぎている… pic.x.com/JqI6f2pTWV",
+        "platform": "x",
+        "author": "@ibashodesign",
+        "url": "https://x.com/ibashodesign/status/2108424501130318118",
+        "likes": 457,
+        "retweets": 21,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:09",
+        "captured_at": "",
+        "text": "やばい、流石にニトリが本気出しすぎている… pic.x.com/JqI6f2pTWV",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "えーーっと、ニトリさん。 これは妊娠中に出会いたかった😭 pic.x.com/gdBUp9Hui9 x.com/meronpen1/stat…",
+        "platform": "x",
+        "author": "@meronpen1",
+        "url": "https://x.com/meronpen1/status/2108312335622562171",
+        "likes": 382,
+        "retweets": 17,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 6:43",
+        "captured_at": "",
+        "text": "えーーっと、ニトリさん。 これは妊娠中に出会いたかった😭 pic.x.com/gdBUp9Hui9 x.com/meronpen1/stat…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリは丁寧にご対応いただきました！ 初期不良が多い型みたい。 組立もしてくれるみたいだから、安心。",
+        "platform": "x",
+        "author": "@rs__7__",
+        "url": "https://x.com/rs__7__/status/2108454771439120652",
+        "likes": 210,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:09",
+        "captured_at": "",
+        "text": "ニトリは丁寧にご対応いただきました！ 初期不良が多い型みたい。 組立もしてくれるみたいだから、安心。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリのダイニングボード、照明置いたら一気に雰囲気出て素敵だ…！ pic.x.com/MXqDwcrxry",
+        "platform": "x",
+        "author": "@ibashodesign",
+        "url": "https://x.com/ibashodesign/status/2108477062428455094",
+        "likes": 120,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:37",
+        "captured_at": "",
+        "text": "ニトリのダイニングボード、照明置いたら一気に雰囲気出て素敵だ…！ pic.x.com/MXqDwcrxry",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "カエルちゃん、写真撮るよー。 うん、「ニトリのたためる収納ボックス」しっかりしてて、いいね！ あ、💚ちゃん。昨日完成したエビフライバッグね。...",
+        "platform": "x",
+        "author": "@FIRST__THREAD",
+        "url": "https://x.com/FIRST__THREAD/status/2108488972410491031",
+        "likes": 43,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:25",
+        "captured_at": "",
+        "text": "カエルちゃん、写真撮るよー。 うん、「ニトリのたためる収納ボックス」しっかりしてて、いいね！ あ、💚ちゃん。昨日完成したエビフライバッグね。うん、いいね！ うん💛ちゃん…はガチャガチャ1発で出てきたスヌーピーだね。うん、いいね！ …うん、今日もみんな元気… …集合写真って知ってる？ pic.x.com/yH0qZEMOtX",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "本日のSNS投稿は、ダイニングボードや収納ボックス、初期不良への対応など、ニトリの商品・サービスに対する生活者の具体的な体験談が中心です。反響は「本気出しすぎ」といった驚きや、照明を置いて雰囲気が変わったといった空間演出への共感に広がっています。",
+    "sns_why_it_matters": "投稿からは、商品そのものの機能に加え、購入後の対応や暮らしの場面での使い方が共感を生んでいることが読み取れます。収納や照明など生活空間を豊かにする提案は、写真付きで発信されやすく拡散の起点になります。購入前の提案だけでなく、組立やアフターケアまで含めた体験設計が評価の差を生むでしょう。"
+  },
+  {
     "date": "20261009",
     "title": "2026年10月9日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリの似鳥会長がAI家具の開発加速と接客ロボットの数年内導入を示し、SPAの企画・販売データを活かした商品開発の進化が鮮明になった シンガポールで7店舗目となる大型商業施設内店舗が発表され、海外店舗網の定着フェーズと店舗展開の着実な拡大が確認された",
