@@ -816,6 +816,28 @@ if (!remote) {
   }
   for (const [media, scope] of [['nitoridaily', 'nitori'], ['retailtechdaily', 'retail']]) {
     const head = fixture(media, 110);
+    scenario(`日刊② ${scope} 古いタブの索引は次の検索で読み直す`, { analyticsOff: true }, async (page, name) => {
+      const old = fixture(media), fresh = { ...old, generation: 'abcdef', records: [...old.records,
+        { ...old.records[0], url: '20261009/#art-13', title: '新しい収納の記事' }] };
+      let current = old, reads = 0;
+      await indices(page, media, old, () => { reads++; return current; });
+      const calls = await workerFor(page, () => response(media, fresh));
+      await openDaily(page, media); await page.fill(INPUT, '収納');
+      await page.waitForSelector('#archiveSuggestions [role="option"]');
+      current = fresh;
+      await page.press(INPUT, 'Enter'); await page.waitForSelector(RANK_LIST); await page.waitForTimeout(150);
+      check(calls.length === 1 && calls[0].generation === old.generation, name + ': 初回の版が違う');
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('12件'), name + ': 確定済みの①を失った');
+      const before = reads;
+      await page.waitForTimeout(150);
+      check(reads === before && calls.length === 1, name + ': 自動で索引の再取得か②の再送をした');
+      await page.press(INPUT, 'Enter'); await page.waitForTimeout(250);
+      check(reads > before && calls.length === 2 && calls[1].generation === fresh.generation, name + ': 次の検索で版を更新しない');
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('13件'), name + ': 新しい①を検索しない');
+      check(await page.evaluate(() => document.activeElement.id === 'archiveSearchInput'), name + ': 入力のフォーカスを失った');
+      await page.press(INPUT, 'Enter'); await page.waitForTimeout(150);
+      check(calls.length === 2, name + ': 版がそろっても同じ条件を再送した');
+    });
     scenario(`日刊② ${scope} 検索文字列の再利用でも全項目・大小文字・空白の一致を保つ`, { analyticsOff: true }, async (page, name) => {
       const data = fixture(media, 6);
       const fields = ['title', 'summary', 'takeaway', 'source', 'category', 'tags'];
@@ -1058,7 +1080,7 @@ if (!remote) {
         if (kind === 'all-none') check(text.includes('この条件の記事には'), name + ': 全対象の該当なしが違う');
         if (kind === 'some-none') check(text.includes('対象 110 件') && text.includes('20 件を調べ'), name + ': 一部候補を全記事と見せた');
         if (kind === 'partial') check(note.includes('3 件を判定') && note.includes('一部の候補'), name + ': 判定の欠けを示していない');
-        if (kind === 'mismatch') check(note.includes('最新の号の反映を待っています'), name + ': 版の相違がない');
+        if (kind === 'mismatch') check(note.includes('版が異なります') && note.includes('次の検索'), name + ': 版の相違と再取得を案内しない');
         if (kind === 'updating') check(text.includes('最新の号を反映しています') && calls.length === 1, name + ': 更新中の案内か自動再送が違う');
         if (kind === 'invalid') check(text.includes('完了できません') && await page.locator(RANK_LIST).count() === 0, name + ': 別媒体のリンクを描いた');
         if (kind === 'disabled') {

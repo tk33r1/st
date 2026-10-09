@@ -429,7 +429,7 @@
     const archiveEmpty = document.getElementById('archiveEmpty');
     const scope = media === 'nitoridaily' ? 'nitori' : 'retail';
     const recordText = new WeakMap();
-    let snapshot = null, pending = null, attempted = false;
+    let snapshot = null, pending = null, attempted = false, indexNeedsRefresh = false;
     let serial = 0, shown = null, matched = [], active = -1;
     let composing = false, imeEnterHeld = false, rank = null;
     let lastTracked = null;
@@ -440,7 +440,7 @@
         stale: 'Press Enter to also find related articles.', failed: 'Search could not finish. Please try again.',
         rateLimited: 'The search limit has been reached. Please try again later.',
         indexUpdating: 'The latest issue is being added. Please try again in a little while.',
-        generationMismatch: 'Waiting for the latest issue to be reflected.', partial: 'Some candidates could not be judged.',
+        generationMismatch: 'The search index versions differ. The index will be refreshed on your next search.', partial: 'Some candidates could not be judged.',
         count: function(n) { return n + ' related articles found.'; },
         coverage: function(s) { return 'Of ' + s.total + ' articles in this scope, ' + s.candidates + ' candidates were selected by wording and recency; ' + s.judged + ' were judged.'; },
         noResults: function(s) { return s.candidates === s.total ? 'No related articles were found in this scope.' : 'Of ' + s.total + ' articles in this scope, ' + s.candidates + ' candidates were checked by wording and recency, but no related articles were found.'; },
@@ -454,7 +454,7 @@
         stale: 'Enter で、意味の近い記事も探します。', failed: '検索を完了できませんでした。もう一度お試しください。',
         rateLimited: '検索の利用上限に達しました。時間をおいてお試しください。',
         indexUpdating: '最新の号を反映しています。少したってからもう一度お試しください。',
-        generationMismatch: '最新の号の反映を待っています。', partial: '一部の候補の判定がそろいませんでした。',
+        generationMismatch: '検索索引の版が異なります。次の検索で読み直します。', partial: '一部の候補の判定がそろいませんでした。',
         count: function(n) { return n + '件見つかりました。'; },
         coverage: function(s) { return '対象 ' + s.total + ' 件のうち、文字の近い記事と新しい記事 ' + s.candidates + ' 件を候補に選び、' + s.judged + ' 件を判定しました。'; },
         noResults: function(s) { return s.candidates === s.total ? 'この条件の記事には、意味の近いものは見つかりませんでした。' : '対象 ' + s.total + ' 件のうち、文字の近い記事と新しい記事 ' + s.candidates + ' 件を調べましたが、意味の近い記事は見つかりませんでした。'; },
@@ -549,6 +549,10 @@
       form.classList.toggle('no-keyword', !!snapshot && !rows.length);
     }
     async function ensureIndex(retry) {
+      if (retry && indexNeedsRefresh) {
+        snapshot = null; indexNeedsRefresh = false;
+        indexEpoch++; indexFiles.clear();
+      }
       if (snapshot) return snapshot;
       if (pending) return pending;
       if (attempted && !retry) return null;
@@ -601,6 +605,10 @@
       elements: { section: document.getElementById('archiveRankResults'), heading: document.getElementById('archiveRankTitle'),
         list: document.getElementById('archiveRankList'), note: document.getElementById('archiveRankNote'), status: rankStatus },
       onRun: closeSuggestions,
+      onSettle: function(result) {
+        // 確定済みの①は保ち、次の検索で索引を取り直す。版の大小はハッシュから判断できない。
+        if (snapshot && result.searched && result.searched.generation !== snapshot.generation) indexNeedsRefresh = true;
+      },
       onState: function() {
         rankArea.hidden = shown !== viewKey() || rank.disabled;
         document.getElementById('archiveRankInfo').hidden = rank.disabled;

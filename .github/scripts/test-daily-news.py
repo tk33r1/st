@@ -363,10 +363,31 @@ class DailyGenerationTests(unittest.TestCase):
 class SearchGenerationTests(unittest.TestCase):
     def history(self):
         return [
-            {'date': '20260101', 'articles': [{'title': '新年の収納 🧺', 'summary': 'e\u0301と家具', 'tags': ['収納']}]},
-            {'date': '20251231', 'articles': [{'title': '年末の店舗', 'region': 'GLOBAL'}]},
-            {'date': '20240229', 'articles': [{'title': 'うるう日の記事'}, {'title': '同じ号の別記事'}]},
+            {'date': '20260101', 'articles': [{'title': '新年の収納 🧺', 'category': '新商品', 'summary': 'e\u0301と家具', 'tags': ['収納']}]},
+            {'date': '20251231', 'articles': [{'title': '年末の店舗', 'category': '店舗', 'region': 'GLOBAL'}]},
+            {'date': '20240229', 'articles': [{'title': 'うるう日の記事', 'category': '店舗'}, {'title': '同じ号の別記事', 'category': '店舗'}]},
         ]
+
+    def test_invalid_search_fields_stop_generation_before_writing_indexes(self):
+        import tempfile
+        invalid = [('title', ''), ('title', ' \n'), ('title', ' \ufeff \ufeff '), ('title', None),
+                   ('category', ''), ('category', None), ('category', '🧺' * 41),
+                   ('category', '店舗\x00'), ('category', '店舗\x85'),
+                   ('tags', ['']), ('tags', [None]), ('tags', '店舗')]
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for field, value in invalid:
+                with self.subTest(media=config['media_id'], field=field, value=value), tempfile.TemporaryDirectory() as directory:
+                    history = self.history()
+                    history[0]['articles'][0][field] = value
+                    path = Path(directory, 'search-index.json')
+                    path.write_bytes(b'previous index')
+                    with self.assertRaisesRegex(ValueError, field):
+                        engine.write_search_indexes({**config, 'job_dir': directory}, history)
+                    self.assertEqual(path.read_bytes(), b'previous index')
+                    self.assertEqual([p.name for p in Path(directory).iterdir()], ['search-index.json'])
+        history = self.history()
+        history[0]['articles'][0]['category'] = '🧺' * 40
+        self.assertEqual(engine.build_search_index(nitori.CONFIG, history)['search-index.json']['records'][0]['category'], '🧺' * 40)
 
     def test_generation_is_shared_by_all_years_and_stable_on_rebuild(self):
         for config in (nitori.CONFIG, daily.CONFIG):

@@ -293,7 +293,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261009_4'
+DAILY_UI_VERSION = '20261009_5'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261009_4'
 DAILY_CSS_VERSION = '20261009_2'
@@ -1279,7 +1279,7 @@ def build_search_index(config, articles_history):
         date_key = issue.get('date', '')
         records = records_by_year[str(date_key)[:4]]
         for idx, art in enumerate(issue.get('articles', []) or [], 1):
-            records.append({
+            record = {
                 'date': date_key,
                 'title': art.get('title', ''),
                 'summary': art.get('summary', ''),
@@ -1290,7 +1290,20 @@ def build_search_index(config, articles_history):
                 'region': normalize_region(art.get('region')),
                 'tags': art.get('tags', []) or [],
                 'url': f"{date_key}/#art-{idx}",
-            })
+            }
+            # Worker の索引検査とそろえ、不正な1記事で②だけが停止する公開を防ぐ。
+            title, category, tags = record['title'], record['category'], record['tags']
+            invalid = []
+            if not isinstance(title, str) or not title.replace('\ufeff', '').strip():
+                invalid.append('title')
+            if (not isinstance(category, str) or not category or len(category) > 40
+                    or any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in category)):
+                invalid.append('category')
+            if not isinstance(tags, list) or any(not isinstance(tag, str) or not tag for tag in tags):
+                invalid.append('tags')
+            if invalid:
+                raise ValueError(f"{config['media_id']}/{date_key}/art-{idx}: invalid search fields: {', '.join(invalid)}")
+            records.append(record)
     years = sorted(records_by_year, reverse=True)
     files = {'search-index.json': {'media': config['media_id'], 'years': years,
                                  'records': records_by_year[years[0]] if years else []}}
