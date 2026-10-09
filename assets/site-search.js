@@ -33,8 +33,12 @@
     try { url = new URL(value, 'https://tk.st'); } catch (_) { return null; }
     if (url.origin !== 'https://tk.st' || url.search) return null;
     if (DAILY_DIRS[scope]) {
-      var pattern = new RegExp('^/job/' + DAILY_DIRS[scope] + '/\\d{8}/$');
-      return pattern.test(url.pathname) && /^#art-\d+$/.test(url.hash) ? url.pathname + url.hash : null;
+      var pattern = new RegExp('^/job/' + DAILY_DIRS[scope] + '/(\\d{8})/#art-([1-9]\\d*)$');
+      var match = pattern.exec(value);
+      if (!match || match[0] !== value || !Number.isSafeInteger(Number(match[2]))) return null;
+      var date = match[1], iso = date.slice(0, 4) + '-' + date.slice(4, 6) + '-' + date.slice(6);
+      var parsed = new Date(iso + 'T00:00:00Z');
+      return Number(date.slice(0, 4)) > 0 && !isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === iso ? value : null;
     }
     return url.hash ? null : url.pathname;
   }
@@ -43,18 +47,30 @@
   function readResult(data, scope) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return failed('unavailable');
     if (STATUSES.indexOf(data.status) < 0 || typeof data.complete !== 'boolean' || !Array.isArray(data.results) || data.results.length > MAX_RESULTS) return failed('unavailable');
-    if (data.status === 'failed') return failed(typeof data.reason === 'string' ? data.reason : 'unavailable');
+    var daily = !!DAILY_DIRS[scope], searched = data.searched;
+    if (daily) {
+      if (typeof data.cached !== 'boolean' || (data.status === 'failed' && (data.complete || data.results.length))) return failed('unavailable');
+      if (searched !== null || data.status !== 'failed') {
+        if (!searched || !['total', 'candidates', 'judged'].every(function (k) { return Number.isSafeInteger(searched[k]) && searched[k] >= 0; })
+          || searched.judged > searched.candidates || searched.candidates > searched.total || searched.candidates > 20
+          || typeof searched.generation !== 'string' || !/^[a-f0-9]{1,32}$/i.test(searched.generation) || /[^a-f0-9]/i.test(searched.generation)
+          || (data.status !== 'failed' && (data.complete !== (searched.judged === searched.candidates) || data.results.length > searched.judged))) return failed('unavailable');
+      }
+      if (data.status === 'no_results' && !data.complete) return failed('unavailable');
+    }
+    if (data.status === 'failed') return Object.assign(failed(typeof data.reason === 'string' ? data.reason : 'unavailable'), daily ? { searched: searched, cached: data.cached } : {});
     if (data.status === 'no_results' && data.results.length) return failed('unavailable');
     if (data.status === 'results' && !data.results.length) return failed('unavailable');
-    var rows = [];
+    var rows = [], hrefs = new Set();
     for (var i = 0; i < data.results.length; i++) {
       var row = data.results[i];
       if (!row || typeof row !== 'object' || KINDS[scope].indexOf(row.kind) < 0 || typeof row.title !== 'string' || typeof row.description !== 'string') return failed('unavailable');
       var href = resultHref(row.url, scope);
-      if (!href) return failed('unavailable');
+      if (!href || (daily && (!row.title.trim() || hrefs.has(href)))) return failed('unavailable');
+      hrefs.add(href);
       rows.push({ kind: row.kind, title: row.title, description: row.description, href: href });
     }
-    return { status: data.status, reason: null, complete: data.complete, rows: rows };
+    return Object.assign({ status: data.status, reason: null, complete: data.complete, rows: rows }, daily ? { searched: searched, cached: data.cached } : {});
   }
 
   // HTTP の状態と本文から、画面に出す結果を決める。429 の失敗は理由に関係なく rate_limited（評価もこれを使う）
@@ -82,7 +98,7 @@
       try { c = options.condition(); } catch (_) { c = null; }
       return c && typeof c.query === 'string' && c.query ? c : null;
     }
-    function keyOf(c) { return c ? JSON.stringify([c.query, c.locale, c.filters || null]) : null; }
+    function keyOf(c) { return c ? JSON.stringify([c.query, c.locale, c.filters || null].concat(DAILY_DIRS[scope] ? [c.generation || null] : [])) : null; }
 
     function clear() {
       el.list.replaceChildren();
@@ -102,7 +118,7 @@
       clearTimeout(timer); timer = null;
     }
 
-    function render(result) {
+    function render(result, condition) {
       clear();
       var texts = labels.texts;
       if (result.status === 'results') {
@@ -116,13 +132,15 @@
           a.appendChild(content); a.appendChild(kind); li.appendChild(a); el.list.appendChild(li);
         });
         el.heading.textContent = texts.heading; el.heading.hidden = false; el.section.hidden = false;
-        var partial = result.complete ? '' : texts.partial;
+        var partial = [typeof texts.coverage === 'function' ? texts.coverage(result.searched) : '', result.complete ? '' : texts.partial,
+          result.searched && condition.generation && condition.generation !== result.searched.generation ? texts.generationMismatch : ''].filter(Boolean).join(' ');
         if (el.note) { el.note.textContent = partial; el.note.hidden = !partial; }
         setState('results', [texts.count(result.rows.length), el.note ? '' : partial].filter(Boolean).join(' '));
       } else if (result.status === 'no_results') {
-        setState('no_results', texts.noResults);
+        var none = typeof texts.noResults === 'function' ? texts.noResults(result.searched) : texts.noResults;
+        setState('no_results', [none, result.searched && condition.generation && condition.generation !== result.searched.generation ? texts.generationMismatch : ''].filter(Boolean).join(' '));
       } else {
-        setState('failed', result.reason === 'rate_limited' ? texts.rateLimited : texts.failed);
+        setState('failed', result.reason === 'rate_limited' ? texts.rateLimited : result.reason === 'index_updating' && texts.indexUpdating ? texts.indexUpdating : texts.failed);
       }
     }
 
@@ -163,6 +181,7 @@
       setState('loading', labels.texts.loading);
       var body = { query: c.query, locale: c.locale, mode: 'rank', scope: scope };
       if (c.filters) body.filters = c.filters;
+      if (DAILY_DIRS[scope] && c.generation) body.generation = c.generation;
       timer = setTimeout(function () { ac.abort(); }, TIMEOUT_MS);
       var timedOut = function () { return ac.signal.aborted && mine === generation; };
       (async function () {
@@ -182,11 +201,11 @@
         // 入力のイベント無しで条件が変わっていた（自動入力など）。描かずに stale にする（読み込み中のまま止めない）
         if (keyOf(conditionNow()) !== key) { self.invalidate(); return; }
         // 描く前に確定させる（描画の onState でページが settled() を読むため）
-        settled = { key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete };
+        settled = Object.assign({ key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete }, DAILY_DIRS[scope] ? { searched: result.searched, cached: result.cached } : {});
         if (result.reason === 'disabled') {
           self.disabled = true; clear(); shownKey = null; hasRun = false;
           setState('idle');
-        } else render(result);
+        } else render(result, c);
         track('rank_result', { status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete });
         call('onSettle', settled);
       })();

@@ -106,7 +106,8 @@ function decoded(text) {
 }
 function checkLog(name, log) {
   for (const raw of log) {
-    const plain = decoded(raw.url) + '\n' + decoded(raw.body);
+    // Worker の本文には明示検索の原文を送る。伏せ字の検査は URL と解析など、原文を送らない先に限る。
+    const plain = decoded(raw.url) + '\n' + (raw.search ? '' : decoded(raw.body));
     for (const v of PII) check(!plain.includes(v), `${name}: 伏せるはずの値（${v}）が外への通信に出た（${raw.url.slice(0, 120)}）`);
     const r = { ...raw, url: withoutSearchTerm(raw, raw.url), body: withoutSearchTerm(raw, raw.body) };
     if (r.search) {
@@ -769,6 +770,301 @@ scenario('404 の検索：変換を確定した Enter の押し続けで検索�
   await page.press('#query', 'Enter'); await page.waitForTimeout(300);
   check(await page.locator('#daily-search').isVisible(), `${name}: キーを離した後の Enter で検索しない`);
 });
+
+// Phase 3 T08：模擬索引・模擬 Worker だけで両媒体の画面を検証する。
+if (!remote) {
+  const INPUT = '#archiveSearchInput', RANK_LIST = '#archiveRankList a';
+  const dailyEvents = page => page.evaluate(() => (window.dataLayer || []).filter(e => /^daily_/.test(e?.event || '')).map(e => ({ ...e })));
+  const dailyHead = media => JSON.parse(readFileSync(join(root, 'job', media, 'search-index.json')));
+  function fixture(media, count = 12) {
+    const head = dailyHead(media), original = head.records[0];
+    return { media, generation: '1234567890abcdef', years: ['2026'], records: Array.from({ length: count }, (_, i) => ({
+      ...original, date: '20261009', title: '収納の記事 ' + (i + 1), summary: '暮らしを整える収納の記事。',
+      takeaway: '', source: '出典', tags: ['収納'], region: i % 2 ? 'GLOBAL' : 'JP', url: '20261009/#art-' + (i + 1)
+    })) };
+  }
+  async function indices(page, media, head, read = null) {
+    await page.context().route('**/job/' + media + '/search-index*.json', async route => {
+      const name = new URL(route.request().url()).pathname.split('/').pop();
+      const value = read ? await read(name, head, route.request()) : head;
+      if (value === null) return route.fulfill({ status: 500, body: '' });
+      await route.fulfill({ json: value });
+    });
+  }
+  function response(media, head, patch = {}) {
+    return { status: 'results', complete: true, cached: false,
+      searched: { total: head.records.length, candidates: Math.min(head.records.length, 20), judged: Math.min(head.records.length, 20), generation: head.generation },
+      results: [{ kind: 'daily', title: '意味の近い収納', description: '収納の記事です。', url: '/job/' + media + '/20261009/#art-1' }], ...patch };
+  }
+  async function workerFor(page, getResponse) {
+    const calls = [];
+    await page.context().route(SEARCH_API, async route => {
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type' } });
+      const req = route.request(), headers = await req.allHeaders();
+      assert.ok(!headers.referer && !headers.cookie, '日刊②のPOSTに参照元かCookieが付いている');
+      assert.ok(!new URL(req.url()).search, '日刊②のURLに検索条件が付いている');
+      const body = JSON.parse(req.postData()); calls.push(body);
+      const payload = await getResponse(body, calls.length);
+      try { await route.fulfill({ json: payload, headers: { 'Access-Control-Allow-Origin': '*' } }); } catch (_) { /* 切断された古い要求 */ }
+    });
+    return calls;
+  }
+  async function openDaily(page, media, suffix = '') { await page.goto(BASE + '/job/' + media + '/' + suffix); await settle(page); }
+  async function explicitDaily(page, q = '収納') {
+    await page.fill(INPUT, q); await page.press(INPUT, 'Enter');
+    await page.waitForFunction(() => document.getElementById('archiveRankInfo').hidden || (document.getElementById('archiveRankStatus').textContent && !document.getElementById('archiveRankStatus').textContent.includes('探しています')));
+  }
+  for (const [media, scope] of [['nitoridaily', 'nitori'], ['retailtechdaily', 'retail']]) {
+    const head = fixture(media, 110);
+    scenario(`日刊② ${scope} 入力候補と明示送信・全件数・重複・フォーカス`, {}, async (page, name) => {
+      await indices(page, media, head);
+      const calls = await workerFor(page, async () => { await page.waitForTimeout(250); return response(media, head); });
+      await openDaily(page, media); await page.fill(INPUT, '収納');
+      await page.waitForSelector('#archiveSuggestions [role="option"]');
+      check(await page.locator('#archiveSuggestions [role="option"]').count() === 6, name + ': 候補が6件でない');
+      check(calls.length === 0 && (await dailyEvents(page)).length === 0, name + ': 入力だけで送信した');
+      await page.press(INPUT, 'ArrowDown');
+      check(await page.locator(INPUT).getAttribute('aria-activedescendant') === 'archive-option-0', name + ': 候補を選べない');
+      await page.press(INPUT, 'Escape');
+      check(await page.locator(INPUT).getAttribute('aria-expanded') === 'false', name + ': Escで閉じない');
+      await page.press(INPUT, 'Enter'); await page.waitForSelector('#archiveSearchResults a');
+      await page.locator('#archiveSearchResults a').first().focus();
+      await page.waitForSelector(RANK_LIST);
+      check(calls.length === 1 && calls[0].scope === scope && calls[0].generation === head.generation && calls[0].locale === 'ja', name + ': 要求の範囲・版が違う');
+      const links = await page.locator('#archiveSearchResults a').evaluateAll(as => as.map(a => a.getAttribute('href')));
+      check(links.length === 99 && !links.includes('/job/' + media + '/20261009/#art-1') && links.includes('/job/' + media + '/20261009/#art-2'), name + ': 100件の上限かアンカーの重複除去が違う');
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('110件'), name + ': 除去前の件数でない');
+      check(await page.evaluate(() => document.activeElement.closest('#archiveRankList') !== null), name + ': 同じ記事へフォーカスを戻していない');
+      await page.press(INPUT, 'Enter'); await page.waitForTimeout(300);
+      check(calls.length === 1, name + ': 同じ条件を再送した');
+      const events = await dailyEvents(page);
+      check(events.filter(e => e.event === 'daily_search').length === 1, name + ': ①を重複計測した');
+      const run = events.find(e => e.event === 'daily_rank_run');
+      check(run?.keyword_state === 'known' && run.keyword_count === 6 && run.search_term === '収納' && !('media' in run), name + ': ②の計測が違う');
+      check(events.some(e => e.event === 'daily_rank_result' && e.complete === true && e.count === 1), name + ': ②の結果計測がない');
+      await page.fill(INPUT, ' 収納 ');
+      check(await page.locator('#archiveSearchResults').isVisible(), name + ': 前後の空白で入力中へ戻った');
+      await page.fill(INPUT, '収納別');
+      check(!await page.locator('#archiveSearchResults').isVisible() && !await page.locator('#archiveRank').isVisible(), name + ': 入力変更で旧結果を隠していない');
+    });
+    scenario(`日刊② ${scope} 受け渡し・タグ・ウォッチ・絞り込みは①だけ`, {}, async (page, name) => {
+      await indices(page, media, head);
+      const calls = await workerFor(page, () => response(media, head));
+      await page.context().addInitScript(m => localStorage.setItem('daily_watch_topics:' + m, JSON.stringify(['収納'])), media);
+      await openDaily(page, media, '#q=' + encodeURIComponent('収納'));
+      check(calls.length === 0 && await page.locator('#archiveSearchResults a').count() === 100, name + ': 受け渡しで②を送った');
+      check((await page.locator('#archiveRankStatus').textContent()).includes('Enter'), name + ': 受け渡しの案内がない');
+      await page.selectOption('#archiveRegionFilter', 'GLOBAL');
+      await page.selectOption('#archiveCategoryFilter', head.records[0].category);
+      await page.selectOption('#archiveMonthFilter', '202610'); await page.waitForTimeout(150);
+      check(calls.length === 0 && await page.locator('#archiveSearchResults a').count() === 55, name + ': 絞り込みで②を送った');
+      await page.locator('.archive-search-submit').click(); await page.waitForSelector(RANK_LIST);
+      check(calls.length === 1 && calls[0].filters.region === 'GLOBAL' && calls[0].filters.category === head.records[0].category && calls[0].filters.month === '202610', name + ': 条件が②と一致しない');
+      await page.selectOption('#archiveRegionFilter', 'JP'); await page.waitForTimeout(150);
+      check(calls.length === 1 && !await page.locator('#archiveRankResults').isVisible(), name + ': 絞り込みで再送したか旧結果が残る');
+      await page.locator('.topic-tag[href^="#q="]').first().click(); await page.waitForTimeout(150);
+      check(calls.length === 1, name + ': タグで②を送った');
+      // ウォッチは本物の保存キー・登録処理を通す。
+      await page.locator('.topic-watch-btn').first().click();
+      await page.locator('.watch-topic-search').first().click(); await page.waitForTimeout(150);
+      check(calls.length === 1, name + ': ウォッチで②を送った');
+    });
+    scenario(`日刊② ${scope} 受け渡しの200コードポイント`, { analyticsOff: true }, async (page, name) => {
+      await indices(page, media, head); const calls = await workerFor(page, () => response(media, head));
+      const unicode = '🧺'.repeat(200);
+      for (const prefix of ['#q=', '?q=']) {
+        await openDaily(page, media, prefix + encodeURIComponent(unicode));
+        check(await page.locator(INPUT).inputValue() === unicode, name + ': 200コードポイントを受け取らない');
+        check(calls.length === 0, name + ': 受け渡しで②を送った');
+        await openDaily(page, media, prefix + encodeURIComponent(unicode + '🧺'));
+        check(await page.locator(INPUT).inputValue() === (prefix === '#q=' ? unicode : '') && !(await page.evaluate(() => location.hash.includes('q=') || location.search.includes('q='))), name + ': 長すぎる値を受け取ったかURLに残る');
+      }
+      // 号のヘッダーからも200文字を途中で切らずにポータルへ渡す。
+      await page.goto(BASE + '/job/' + media + '/20261009/'); await settle(page);
+      await page.fill('.header-search input', unicode);
+      await Promise.all([page.waitForURL(new RegExp('/job/' + media + '/(?:#archiveSearch)?$')), page.locator('.header-search input').press('Enter')]);
+      await page.waitForTimeout(150);
+      check(await page.locator(INPUT).inputValue() === unicode && calls.length === 0, name + ': 号からの受け渡しが欠けた');
+    });
+    scenario(`日刊② ${scope} IMEと確定Enterの押し続け・空入力`, {}, async (page, name) => {
+      await indices(page, media, head); const calls = await workerFor(page, () => response(media, head));
+      await openDaily(page, media); await page.focus(INPUT);
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Input.imeSetComposition', { text: '収納', selectionStart: 2, selectionEnd: 2 });
+      await page.waitForSelector('#archiveSuggestions [role="option"]');
+      check(calls.length === 0 && (await dailyEvents(page)).length === 0, name + ': 変換中に送信した');
+      await page.evaluate(() => document.getElementById('archiveSearchInput').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, isComposing: true })));
+      await cdp.send('Input.insertText', { text: '収納' });
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, autoRepeat: true, text: '\r' });
+      await page.waitForTimeout(150); check(calls.length === 0, name + ': 確定Enterで検索した');
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+      await page.press(INPUT, 'Enter'); await page.waitForSelector(RANK_LIST);
+      check(calls.length === 1, name + ': 確定後に検索できない');
+      await page.fill(INPUT, ' '); await page.press(INPUT, 'Enter'); await page.locator('.archive-search-submit').click();
+      check(calls.length === 1, name + ': 空入力を送った');
+    });
+    scenario(`日刊② ${scope} 候補をEnterで開く・外を押して閉じる・①0件`, { analyticsOff: true }, async (page, name) => {
+      await indices(page, media, head); const calls = await workerFor(page, () => response(media, head));
+      await openDaily(page, media); await page.fill(INPUT, '存在しない語');
+      await page.waitForSelector('#archiveSuggestions [role="presentation"]');
+      check((await page.locator('#archiveSuggestions').textContent()).includes('Enter'), name + ': ①0件の案内がない');
+      check(await page.locator('#archiveSearchForm').evaluate(e => e.classList.contains('no-keyword')), name + ': 虫眼鏡を目立たせていない');
+      await page.locator('#archiveSearchTitle').click();
+      check(await page.locator(INPUT).getAttribute('aria-expanded') === 'false', name + ': 外を押しても閉じない');
+      await page.fill(INPUT, '収納'); await page.waitForSelector('#archiveSuggestions [role="option"]');
+      await page.press(INPUT, 'ArrowUp');
+      check(await page.locator(INPUT).getAttribute('aria-activedescendant') === 'archive-option-5', name + ': 上矢印で末尾を選べない');
+      await page.press(INPUT, 'ArrowDown');
+      await Promise.all([page.waitForURL(/20261009\/#art-1$/), page.press(INPUT, 'Enter')]);
+      check(calls.length === 0, name + ': 候補のEnterで②を送った');
+    });
+    scenario(`日刊② ${scope} A→B→Aと読み込み中の①を破棄`, {}, async (page, name) => {
+      let heads = 0;
+      await indices(page, media, head, async (file, value) => { heads++; if (heads > 1) await page.waitForTimeout(250); return value; });
+      const calls = await workerFor(page, async (_, n) => { await page.waitForTimeout(n === 1 ? 350 : 50); return response(media, head, { results: [{ ...response(media, head).results[0], title: '応答 ' + n }] }); });
+      await openDaily(page, media); await page.fill(INPUT, '収納A'); await page.press(INPUT, 'Enter');
+      await page.fill(INPUT, '収納B'); await page.fill(INPUT, '収納A');
+      await page.waitForTimeout(450);
+      check(calls.length === 0 && (await dailyEvents(page)).length === 0, name + ': 読み込み前の①を描画・計測した');
+      await page.press(INPUT, 'Enter'); await page.waitForFunction(() => (window.dataLayer || []).some(e => e?.event === 'daily_rank_run'));
+      await page.fill(INPUT, '収納B'); await page.fill(INPUT, '収納A'); await page.press(INPUT, 'Enter');
+      await page.waitForSelector(RANK_LIST); await page.waitForTimeout(400);
+      check((await page.locator(RANK_LIST).textContent()).includes('応答 2'), name + ': 最初のAを描いた');
+      check((await dailyEvents(page)).filter(e => e.event === 'daily_rank_result').length === 1, name + ': 古い応答を計測した');
+      await page.evaluate(() => { document.documentElement.lang = 'en'; });
+      check(!await page.locator('#archiveRank').isVisible(), name + ': 言語変更で無効にしない');
+      await page.press(INPUT, 'Enter'); await page.waitForSelector(RANK_LIST);
+      check(calls.at(-1).locale === 'en' && await page.locator('#archiveRankTitle').textContent() === 'Search results' && await page.locator('#archiveKeywordTitle').textContent() === 'Keyword matches', name + ': 新しい言語で送信・表示しない');
+      check(await page.locator('#archiveSearchInfoTitle').textContent() === 'Search and privacy', name + ': 英語の説明がない');
+    });
+    scenario(`日刊② ${scope} 版の混在・全年度の欠落・明示操作で復旧`, {}, async (page, name) => {
+      const multi = fixture(media); multi.years = ['2026', '2025', '2024'];
+      const old = year => ({ ...multi, records: [{ ...multi.records[0], date: year + '1009', url: year + '1009/#art-1' }] });
+      let reads = 0, phase = 'mixed';
+      await indices(page, media, multi, (file, value) => {
+        reads++;
+        if (file === 'search-index.json') return phase === 'invalid' ? { ...value, records: [{ ...value.records[0], tags: '不正なタグ' }] } : value;
+        if (phase === 'missing' && file.includes('2024')) return null;
+        return { ...old(file.includes('2025') ? '2025' : '2024'), generation: phase === 'mixed' ? 'badbad' : multi.generation };
+      });
+      const calls = await workerFor(page, () => response(media, multi));
+      await openDaily(page, media); await page.fill(INPUT, '収納'); await page.waitForTimeout(200);
+      const failedReads = reads; await page.fill(INPUT, '収納別'); await page.waitForTimeout(100);
+      check(reads === failedReads, name + ': 入力中に自動再試行した');
+      phase = 'missing'; await page.press(INPUT, 'Enter'); await page.waitForTimeout(200);
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('読み込めません') && await page.locator('#archiveSearchResults a').count() === 0, name + ': 部分的な索引を出した');
+      check(!(await dailyEvents(page)).some(e => e.event === 'daily_search'), name + ': 取得失敗を0件として計測した');
+      phase = 'invalid'; await page.press(INPUT, 'Enter'); await page.waitForTimeout(150);
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('読み込めません'), name + ': 不正な記事で画面が止まる');
+      phase = 'ok'; await page.fill(INPUT, '収納'); await page.press(INPUT, 'Enter'); await page.waitForSelector('#archiveSearchResults a');
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('14件') && calls.at(-1).generation === multi.generation, name + ': 全年度を読み直していない');
+    });
+    scenario(`日刊② ${scope} 応答のN/M/J・型・URLを検査`, { analyticsOff: true }, async (page, name) => {
+      await indices(page, media, head); await openDaily(page, media);
+      const base = response(media, head);
+      const verdict = await page.evaluate(({ base, scope, media }) => {
+        const clone = () => JSON.parse(JSON.stringify(base));
+        const bad = [];
+        for (const [key, value] of [['total', -1], ['total', 19], ['candidates', 21], ['candidates', 2.5], ['judged', 21], ['judged', -1], ['generation', 'bad!'], ['generation', 'ab\n']]) {
+          const body = clone(); body.searched[key] = value; bad.push(body);
+        }
+        for (const url of ['https://tk.st/job/' + media + '/20261009/#art-1', '/job/' + media + '/20260230/#art-1',
+          '/job/' + media + '/20261009/#art-0', '/job/' + media + '/20261009/#art-9007199254740992',
+          '/job/' + media + '/20261009/?q=x#art-1', '/job/' + media + '/20261009/../20261009/#art-1',
+          '/job/' + media + '/20261009/#art-1\n', '/job/' + media + '/20261009/#art-%31']) {
+          const body = clone(); body.results[0].url = url; bad.push(body);
+        }
+        for (const patch of [{ cached: null }, { cached: undefined }, { complete: false }, { searched: null },
+          { status: 'failed' }, { status: 'no_results', complete: false, results: [] },
+          { results: [base.results[0], base.results[0]] }, { results: [{ ...base.results[0], kind: 'article' }] },
+          { results: [{ ...base.results[0], title: ' ' }] }]) bad.push(Object.assign(clone(), patch));
+        return { bad: bad.map(body => window.STSiteSearch.readResponse(200, body, scope).status),
+          good: window.STSiteSearch.readResponse(200, base, scope).status,
+          limited: window.STSiteSearch.readResponse(429, { status: 'failed', reason: 'upstream', complete: false, results: [], searched: null, cached: false }, scope).reason };
+      }, { base, scope, media });
+      check(verdict.good === 'results' && verdict.limited === 'rate_limited' && verdict.bad.every(status => status === 'failed'), name + ': 不正な応答を受け入れた');
+    });
+    scenario(`日刊② ${scope} ウォッチの一部索引を全年度として使わない`, { analyticsOff: true }, async (page, name) => {
+      const multi = fixture(media); multi.years = ['2026', '2025', '2024'];
+      multi.records = [{ ...multi.records[0], date: '20260109', url: '20260109/#art-1' }];
+      const older = year => ({ ...multi, records: [{ ...multi.records[0], date: year + '1209', url: year + '1209/#art-1' }] });
+      let broken = true, heads = 0;
+      await indices(page, media, multi, file => {
+        if (file === 'search-index.json') { heads++; return multi; }
+        if (file.includes('2024') && broken) return null;
+        return older(file.includes('2025') ? '2025' : '2024');
+      });
+      await workerFor(page, () => response(media, multi)); await openDaily(page, media);
+      check(heads === 1, name + ': 初期のウォッチでheadを重ねて読んだ');
+      await page.fill(INPUT, '収納'); await page.waitForTimeout(150);
+      await page.press(INPUT, 'Enter'); await page.waitForTimeout(150);
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('読み込めません') && await page.locator('#archiveSearchResults a').count() === 0, name + ': ウォッチを全年度の検査済みと扱った');
+      broken = false; await page.press(INPUT, 'Enter'); await page.waitForSelector('#archiveSearchResults a');
+      check((await page.locator('#archiveSearchStatus').textContent()).includes('3件'), name + ': 完全な版へ復旧できない');
+    });
+    scenario(`日刊② ${scope} 伏せ字・click・共通計測がない場合`, {}, async (page, name) => {
+      await indices(page, media, head); const calls = await workerFor(page, () => response(media, head));
+      await openDaily(page, media); await explicitDaily(page, PII_QUERY); await page.waitForSelector(RANK_LIST);
+      check(calls[0].query === PII_QUERY, name + ': 明示検索の原文がWorkerへ渡らない');
+      const events = await dailyEvents(page), run = events.find(e => e.event === 'daily_rank_run');
+      check(run?.search_term === PII_MASKED && events.find(e => e.event === 'daily_search')?.search_term === PII_MASKED, name + ': 伏せ字でない');
+      check(!JSON.stringify(events).includes('a.b@example.com'), name + ': 計測に原文が出た');
+      // 移動を止め、click 計測の位置だけを確かめる。
+      await page.evaluate(() => document.getElementById('archiveRankList').addEventListener('click', e => e.preventDefault()));
+      await page.locator(RANK_LIST).click();
+      const clicked = (await dailyEvents(page)).find(e => e.event === 'daily_rank_click');
+      check(clicked?.position === 1 && !('search_term' in clicked), name + ': clickの値が違う');
+      await page.evaluate(() => { window.STSearchAnalytics = undefined; });
+      await explicitDaily(page, '個人 a.b@example.com'); await page.waitForSelector(RANK_LIST);
+      const runs = (await dailyEvents(page)).filter(e => e.event === 'daily_rank_run');
+      check(runs.length === 2 && !('search_term' in runs.at(-1)), name + ': 計測部品がないときに原文を送った');
+    });
+    for (const kind of ['all-none', 'some-none', 'partial', 'mismatch', 'updating', 'invalid', 'disabled']) {
+      scenario(`日刊② ${scope} 応答 ${kind}`, { analyticsOff: true }, async (page, name) => {
+        await indices(page, media, head);
+        let body = response(media, head);
+        if (kind === 'all-none' || kind === 'some-none') {
+          body.status = 'no_results'; body.results = [];
+          if (kind === 'all-none') body.searched = { ...body.searched, total: 12, candidates: 12, judged: 12 };
+        }
+        if (kind === 'partial') { body.complete = false; body.searched.judged = 3; }
+        if (kind === 'mismatch') body.searched.generation = 'abcdef';
+        if (kind === 'updating' || kind === 'disabled') body = { status: 'failed', reason: kind === 'updating' ? 'index_updating' : 'disabled', complete: false, results: [], searched: null, cached: false };
+        if (kind === 'invalid') body.results[0].url = '/job/' + (media === 'nitoridaily' ? 'retailtechdaily' : 'nitoridaily') + '/20261009/#art-1';
+        const calls = await workerFor(page, () => body);
+        await openDaily(page, media); await explicitDaily(page); await page.waitForTimeout(150);
+        const note = await page.locator('#archiveRankNote').textContent(), text = await page.locator('#archiveRankStatus').textContent();
+        if (kind === 'all-none') check(text.includes('この条件の記事には'), name + ': 全対象の該当なしが違う');
+        if (kind === 'some-none') check(text.includes('対象 110 件') && text.includes('20 件を調べ'), name + ': 一部候補を全記事と見せた');
+        if (kind === 'partial') check(note.includes('3 件を判定') && note.includes('一部の候補'), name + ': 判定の欠けを示していない');
+        if (kind === 'mismatch') check(note.includes('最新の号の反映を待っています'), name + ': 版の相違がない');
+        if (kind === 'updating') check(text.includes('最新の号を反映しています') && calls.length === 1, name + ': 更新中の案内か自動再送が違う');
+        if (kind === 'invalid') check(text.includes('完了できません') && await page.locator(RANK_LIST).count() === 0, name + ': 別媒体のリンクを描いた');
+        if (kind === 'disabled') {
+          check(!await page.locator('#archiveRank').isVisible() && await page.locator('#archiveSearchResults a').count() === 100, name + ': 停止で①が使えない');
+          await page.press(INPUT, 'Enter'); await page.waitForTimeout(150); check(calls.length === 1, name + ': 停止後も送った');
+        }
+        check((await dailyEvents(page)).length === 0, name + ': 計測停止なのに送った');
+      });
+    }
+    scenario(`日刊② ${scope} 320px・ダーク・説明・キーボード`, { viewport: { width: 320, height: 800 }, colorScheme: 'dark', analyticsOff: true }, async (page, name) => {
+      await indices(page, media, head); await workerFor(page, () => response(media, head));
+      await openDaily(page, media); await page.fill(INPUT, '収納'); await page.waitForSelector('#archiveSuggestions [role="option"]');
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + ': 横にはみ出す');
+      await page.locator('#archiveSearchInfoOpen').click();
+      check(await page.locator('#archiveSearchInfo').isVisible() && await page.evaluate(() => document.activeElement.id === 'archiveSearchInfoClose'), name + ': 説明へフォーカスが移らない');
+      await page.keyboard.press('Escape');
+      check(await page.evaluate(() => document.activeElement.id === 'archiveSearchInfoOpen'), name + ': 説明を閉じても戻らない');
+      await page.fill(INPUT, '収納'); await page.locator('.archive-search-submit').click(); await page.waitForSelector(RANK_LIST);
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + ': 結果が横にはみ出す');
+      const size = await page.locator('.archive-search-submit').boundingBox(); check(size.width >= 44 && size.height >= 44, name + ': 虫眼鏡が44px未満');
+      if (process.argv.includes('--screenshots')) { await page.locator('#archiveSearch').scrollIntoViewIfNeeded(); await page.screenshot({ path: join(repo, 'workers/.wrangler/' + scope + '-t08-dark.png') }); }
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.evaluate(() => { document.body.style.zoom = '2'; });
+      check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + ': 200%で横にはみ出す' + JSON.stringify(await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth, offenders: [...document.querySelectorAll('#archiveSearch *')].filter(e => e.getBoundingClientRect().right > innerWidth).slice(0,5).map(e => e.outerHTML.slice(0,100)) }))));
+    });
+  }
+}
 
 const selectedScenarios = scenarios.filter(s => s.name.includes(match));
 assert.ok(selectedScenarios.length, `指定した場面がない: ${match}`);

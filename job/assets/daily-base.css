@@ -2915,13 +2915,14 @@ a {
 
 .archive-search-form {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(130px, 1fr)) auto;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
 }
 
 .archive-search-form label {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 5px;
   color: var(--ink-3);
@@ -2930,23 +2931,16 @@ a {
 }
 
 .archive-search-form input,
-.archive-search-form select,
-.archive-search-form > button {
-  min-height: 42px;
+.archive-search-form select {
+  min-height: 44px;
+  min-width: 0;
+  width: 100%;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink);
   padding: 8px 10px;
   font: inherit;
-}
-
-.archive-search-form > button {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fff;
-  cursor: pointer;
-  font-weight: 700;
 }
 
 .archive-search-status {
@@ -2956,6 +2950,58 @@ a {
   font-family: var(--font-mono);
   font-size: 10.5px;
 }
+
+.archive-search [hidden] { display: none !important; }
+.archive-searchbox { position: relative; min-width: 0; }
+.archive-searchbox input { width: 100%; padding-right: 58px; font-size: 16px; }
+.archive-searchbox input::-webkit-search-cancel-button { display: none; }
+.archive-search-submit, .archive-info-button, .archive-info-head button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--primary-ink); cursor: pointer;
+}
+.archive-search-submit { position: absolute; right: 1px; top: 0; }
+.archive-search-submit svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+.no-keyword .archive-search-submit { background: var(--ink); color: var(--surface); }
+.archive-info-button { font-size: 20px; }
+.archive-search button:focus-visible, .archive-search a:focus-visible,
+.archive-search input:focus-visible, .archive-search select:focus-visible {
+  outline: 2px solid var(--primary-ink); outline-offset: 2px;
+}
+.archive-search .archive-visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.archive-suggestions {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: min(360px, 50vh); overflow-y: auto; margin: 0; padding: 4px;
+  list-style: none; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+  background: var(--surface); box-shadow: 0 8px 24px #0002; color: var(--ink);
+}
+.archive-suggestions a { display: block; min-height: 44px; padding: 10px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.archive-suggestions [aria-selected="true"], .archive-suggestions [role="option"]:hover { background: var(--surface-2); }
+.archive-suggestions [role="presentation"] { padding: 12px; font-size: 12px; line-height: 1.7; }
+#archiveKeywordTitle, #archiveRankTitle { margin-top: 20px; font-size: 16px; }
+.archive-rank-list { list-style: none; padding: 0; margin: 12px 0; }
+.archive-rank-list li + li { margin-top: 8px; }
+.archive-rank-list .result-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 44px; padding: 16px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  background: var(--surface); overflow-wrap: anywhere;
+}
+.archive-rank-list .result-title { display: block; font-weight: 700; font-size: 14px; line-height: 1.55; }
+.archive-rank-list .description { display: block; color: var(--ink-2); font-size: 12px; line-height: 1.7; margin-top: 6px; }
+.archive-rank-list .kind { flex-shrink: 0; color: var(--ink-3); font-size: 10px; }
+.archive-search-info {
+  width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto;
+  margin: auto; padding: 20px; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink); font-size: 13px; line-height: 1.8;
+}
+.archive-search-info::backdrop { background: #0008; }
+.archive-info-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.archive-info-head h2 { font-size: 17px; }
+.archive-info-head button { font-size: 24px; }
+.archive-search-info p + p { margin-top: 12px; }
+.archive-search-info a { text-decoration: underline; }
 
 .archive-search-results {
   display: grid;
