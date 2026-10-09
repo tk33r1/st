@@ -119,7 +119,7 @@ site のセットは変えず、`.github/site-search/phase3-rank-queries.json` �
 | 出荷の確認 | 簡素化後も `build.sh` 成功（653ファイル）。Pagesのビルド成功。本番の両誌の索引が出荷内容と一致（176記事・204記事）。generation以外の既存項目は変更前と一致 |
 | T06〜T07のWorker側 | 7.2〜7.3に記録。全体の回帰148件通過 |
 | T08の画面 | 7.4〜7.6に記録。両誌の模擬検証・本番反映済み。日刊②は停止設定を維持 |
-| V05の準備（T09） | 固定セット・評価CLIを実装。tuneの候補recallはnitori19/24・retail20/24で90%未満。T10の条件に該当。final・Jevの精度・本番速度は未実測 |
+| V04・V05の準備（T09〜T10） | 固定セット・CLIとsearch_termsを実装。T10後のtuneの候補recallは両誌24/24。Jevの候補変換は保持。final・Jevの精度・本番速度は未実測。7.12〜7.13 |
 | その他のV01〜V14・実 API の測定・日刊②の公開の検証 | 未実施 |
 
 実行したコマンド（2026-10-09、基点 `27fae390`、未コミットのT03〜T05）：
@@ -298,3 +298,21 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 `--plan --set tune --runs 2`で各媒体60要求、現在の候補・問いでnitori約$0.0593、retail約$0.0616の概算を確認。入力トークン数をpayloadのUTF-8バイト数と置いた概算で、実usageとは異なる。公式料金の照合日とURLをCLIに残す。T10後と実測直前に見積もり・モデル・契約・料金を再確認する。詳しい使い方・固定セットの根拠は[README](../.github/site-search/fixtures/phase3/README.md)。
 
 検証：`node --test .github/scripts/test-daily-rank.mjs`18件、`test-magi2.mjs`150件通過。`eval-daily-rank.mjs --check`、両媒体のplan・tune candidates、既存`eval-site-rank.mjs --check`・`--smoke-payload`が成功。JS構文・`ai_models.py check`・`git diff --check`も成功。最新origin/mainは基点と同じで、新しい号の追加は無し。実API・本番へは送信していない。生の記録は非追跡の`workers/.wrangler/daily-rank-*`へ保存。このT09は未push。次はT10で、日刊②の停止とT11〜T13の公開条件を維持。
+
+### 7.13 T10の言い換え語と過去分の補完（2026-10-09）
+
+T09のtuneで90%未満だったため、設計書5.1のsearch_termsを実装した。今後の号は既存のLLM呼び出しの出力に3〜5語を加え、追加のAPI呼び出しは行わない。過去分はLLMではなく、本文にある概念の日本語・英語の辞書で一度補完した。評価の検索語・正解IDを生成処理から読まない。生成が欠けた・不正な語を返した場合も、APIを呼び直さず同じ規則で補う。
+
+- 生成側とWorkerで、任意のsearch_termsの配列・3〜5語・各60コードポイント・重複なし・制御文字なしを検査。語の無い旧索引も読める。語があるのに不正な1行は、索引全体の取得失敗にする。語はsummary・tags・categoryと同じ軽い重みで候補選びにだけ使い、Jevの変換・画面①・結果の本文に足さない。
+- `--backfill-search-terms`を両生成CLIへ追加。load_history/save_historyを通し、全年度の構築を検査してから保存。既存の語は上書きせず、不正な既存値は保存前に止める。dry-run・2回目の0件・X投稿IDを含む履歴の保持・HTML/RSSの保持を検証。
+- 全380記事（nitori176・retail204）を補完。Gitの元データと比べ、履歴JSONはsearch_terms以外が完全に一致。全57日刊HTML・両RSSは変更前とバイト単位で一致し、号本文・dateModified・公開URL・記事番号を保持。HTML/JSの参照の更新は不要。コミットにDate-Sync: skipを付ける。
+- 日刊のrevisionをそれぞれ1→2へ更新。閾値0.4・20候補・問いは維持。siteのrevision・閾値・候補・問いと、SITE_RANK_SCOPES="site"は変更していない。
+- `with-search-terms/`へ補完後の全年度の索引とmanifestを固定。元のT09のfixture、120問の問い・正解・filters・split・速度24問はバイト単位で保持。manifestに元のindex_hash・補完規則のSHA-256・補完後のgeneration/hashを保存し、CLIの`--index-set terms`で明示して使う。Jevのcandidate_hashは両媒体ともT09と同じ。最初の語の一致ゼロという条件は、語を足す前の題名・要約で検査する。
+
+補完後のtuneの候補recallは両誌 **24/24（100%）**。元のnitori19/24・retail20/24から改善し、T10の候補選びの条件を満たした。finalの候補recall・Jevの精度・本番の速度を合格と扱わない。次の実測の索引はnitori `021c767db6e4df27`、retail `13d28fe0e9fcb24d`。詳しい手順は[補完後のfixture README](../.github/site-search/fixtures/phase3/with-search-terms/README.md)。
+
+検証：評価器23件、模擬Worker150件、Pythonの日刊28件・索引5件通過。画面は既存98場面が通過し、新規の言い換え語の2場面もテストの呼び出し名を直して個別に再実行し通過（計100場面）。①のドロップダウン・横断検索が語を使わず、明示した②だけを送ることを両媒体で確認。手元でGTM・Ahrefsを読み込めず、実計測のprivacyの合格には数えない。
+
+build.sh成功（653ファイル）。履歴JSON・索引・全日刊HTML/RSSが出荷物と一致。wranglerのdry-run成功（225.34KiB、gzip 63.34KiB）、本番の停止設定を維持。JS構文・既存site評価CLIのcheck・AIモデル設定・差分検査も成功。補完前に最新mainを取得し、日刊の追加が無いことを確認した。実API・本番へは送っていない。生のログは非追跡のworkers/.wrangler/t10-*・daily-rank-*に保存。
+
+補完後のtuneを2回なら各媒体60要求。現在のpayloadで概算はnitori約$0.0593、retail約$0.0616（UTF-8バイト数を入力トークン数と置いた概算）。単価・モデル・契約は実測直前に再確認する。このT10は未push・本番未反映。次はT11で、日刊②の停止とT11〜T13の公開条件を維持。

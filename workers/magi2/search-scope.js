@@ -120,6 +120,9 @@ export function makeDailySnapshot(scope, files) {
         || /[\u0000-\u001f\u007f-\u009f]/.test(record.category)
         || !['JP', 'GLOBAL'].includes(record.region) || !Array.isArray(record.tags)
         || record.tags.some(t => typeof t !== 'string' || !t)
+        || ('search_terms' in record && (!Array.isArray(record.search_terms) || record.search_terms.length < 3 || record.search_terms.length > 5
+          || record.search_terms.some(t => typeof t !== 'string' || !t.trim() || Array.from(t).length > 60 || /[\u0000-\u001f\u007f-\u009f]/.test(t))
+          || new Set(record.search_terms).size !== record.search_terms.length))
         || ['takeaway', 'source', 'source_kind'].some(k => k in record && typeof record[k] !== 'string')
         || typeof record.url !== 'string') throw searchFailure('index_unavailable');
       // 完全一致で相対 URL を検査するため、遡り・外部 URL・エンコード・別媒体のリンクも通らない。
@@ -130,7 +133,8 @@ export function makeDailySnapshot(scope, files) {
       if (ids.has(id) || urls.has(url)) throw searchFailure('index_unavailable');
       ids.add(id); urls.add(url); categories.add(record.category); months.add(record.date.slice(0, 6));
       raw.push({ id, kind: 'daily', date: record.date, article, url, title: record.title, summary: record.summary,
-        category: record.category, region: record.region, tags: [...record.tags] });
+        category: record.category, region: record.region, tags: [...record.tags],
+        ...('search_terms' in record ? { search_terms: [...record.search_terms] } : {}) });
     }
   }
   return { scope, media, generation: head.generation, raw, categories, months, text: JSON.stringify(files) };

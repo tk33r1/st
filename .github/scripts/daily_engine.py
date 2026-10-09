@@ -23,6 +23,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 from ai_model_registry import model_id_with_override
+from daily_search_terms import fallback_search_terms, prepare_search_terms, valid_search_terms
 
 # Windows コンソール等の UTF-8 出力安全化
 if hasattr(sys.stdout, 'reconfigure'):
@@ -825,6 +826,9 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
   {config['prompt_categories']}
 - 各記事には、選定元の候補に付いている "id" をそのまま "source_id" として必ず出力してください。
   出典URLはシステム側が id から復元します。URLの推測・生成・出力は一切しないでください。
+- 各記事に検索用の短い語 "search_terms" を3〜5個付けてください（重複なし、各60文字以内、改行なし）。
+  題名・要約で確認できる意味の日本語の言い換えと英語を含め、同じ文字の繰り返しを避けてください。
+  記事に無い事実・数値・機能・手続きは補わないでください。既存の要約と同時に出力し、別の呼び出しは行いません。
 
 【国内ニュース候補】:
 {json.dumps(jp_sample, ensure_ascii=False, indent=2)}
@@ -846,7 +850,8 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
       "source_id": "選定元候補のid（例: JP-03）",
       "summary": "要約（140〜240文字）",
       "why_it_matters": "示唆・考察（120〜200文字）",
-      "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)}
+      "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)},
+      "search_terms": ["内容に即した日本語の言い換え", "English synonym", "English topic"]
     }},
     {{
       "region": "GLOBAL",
@@ -857,7 +862,8 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
       "source_id": "選定元候補のid（例: GL-02）",
       "summary": "要約（140〜240文字）",
       "why_it_matters": "示唆・考察（120〜200文字）",
-      "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)}
+      "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)},
+      "search_terms": ["内容に即した日本語の言い換え", "English synonym", "English topic"]
     }}
   ]{sns_output_fields}
 }}"""
@@ -1103,7 +1109,7 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
     elif 'sns_buzz' not in final_res:
         final_res['sns_buzz'] = []
 
-    return final_res
+    return prepare_search_terms(final_res)
 
 
 def build_sns_buzz_items(extra_items, config):
@@ -1301,6 +1307,11 @@ def build_search_index(config, articles_history):
                 invalid.append('category')
             if not isinstance(tags, list) or any(not isinstance(tag, str) or not tag for tag in tags):
                 invalid.append('tags')
+            if 'search_terms' in art:
+                if not valid_search_terms(art['search_terms']):
+                    invalid.append('search_terms')
+                else:
+                    record['search_terms'] = list(art['search_terms'])
             if invalid:
                 raise ValueError(f"{config['media_id']}/{date_key}/art-{idx}: invalid search fields: {', '.join(invalid)}")
             records.append(record)
@@ -2456,6 +2467,24 @@ def write_search_indexes(config, articles_history):
     return list(files)
 
 
+def backfill_search_terms(config, articles_history, *, dry_run=False):
+    """過去分の語だけを補う。load/save_historyを通し、本文・RSS・HTMLには触れない。"""
+    import copy
+    updated = copy.deepcopy(articles_history)
+    count = 0
+    for issue in updated:
+        for article in issue.get('articles', []) or []:
+            if 'search_terms' not in article:
+                article['search_terms'] = fallback_search_terms(article)
+                count += 1
+    # 保存前に全年度を検査。不正な既存値を黙って置き換えない。
+    build_search_index(config, updated)
+    if not dry_run:
+        save_history(config['data_dir'], updated)
+        write_search_indexes(config, updated)
+    return count
+
+
 def write_collection_outputs(config, articles_history):
     """ポータル、RSS、検索インデックスをまとめて書き出す。"""
     job_dir = config['job_dir']
@@ -2483,18 +2512,23 @@ def run_daily_pipeline(config):
     rebuild = parser.add_mutually_exclusive_group()
     rebuild.add_argument('--rebuild', action='store_true', help='Rebuild HTML and RSS from existing JSON')
     rebuild.add_argument('--rebuild-search-index', action='store_true', help='Rebuild only search indexes from existing JSON')
+    rebuild.add_argument('--backfill-search-terms', action='store_true', help='Fill missing search terms and rebuild indexes, without changing HTML')
     parser.add_argument('--dry-run', action='store_true', help='Collect candidates and display them without AI summarization')
     args = parser.parse_args()
 
     data_dir = config['data_dir']
     job_dir = config['job_dir']
-    if args.rebuild or args.rebuild_search_index:
+    if args.rebuild or args.rebuild_search_index or args.backfill_search_terms:
         if args.rebuild:
             print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
         articles_history = load_history(data_dir)
         if not articles_history:
             print(f"[ERROR] {data_dir} に号がありません。", file=sys.stderr)
             sys.exit(1)
+        if args.backfill_search_terms:
+            count = backfill_search_terms(config, articles_history, dry_run=args.dry_run)
+            print(f" -> 検索用の語を{'確認（未保存）' if args.dry_run else '補完'}: {count} 記事。HTML・RSSは変更なし")
+            return
         if args.rebuild_search_index:
             files = write_search_indexes(config, articles_history)
             print(f" -> 索引だけを再生成: {', '.join(files)}")

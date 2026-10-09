@@ -547,8 +547,8 @@ export const SITE_RANK = {
   daily_limit: 60, global_daily_limit: 3000,
   cache_ttl_ms: 10 * 60 * 1000, cache_max_entries: 256,
   scopes: {
-    nitori: { revision: 1, threshold: 0.4, candidates: 20, questions: dailyRankQuestions },
-    retail: { revision: 1, threshold: 0.4, candidates: 20, questions: dailyRankQuestions },
+    nitori: { revision: 2, threshold: 0.4, candidates: 20, questions: dailyRankQuestions },
+    retail: { revision: 2, threshold: 0.4, candidates: 20, questions: dailyRankQuestions },
   },
   // 日刊の全年度の取得。仮の防御上限（Phase 3 の評価で確定する）。期限・保持時間は SITE_SEARCH と共通。
   daily_index_max_bytes: 8 * 1024 * 1024, daily_index_max_records: 20000, daily_index_max_years: 100,

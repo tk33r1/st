@@ -58,7 +58,49 @@ test('正解・条件・重複・0件・答え無し・split・速度セット�
   for (const change of changes) { const changed = copy(data); change(changed); assert.throws(() => checkDailyQueries(magi, changed, snapshots)); }
 });
 
+test('語を足した固定索引でも120問の正解・本文とJevの変換を保持し、元のhashと混ぜない', async () => {
+  const magi = loadWorker(), original = await loadFixtures(magi, data), enriched = await loadFixtures(magi, data, { indexSet: 'terms' });
+  assert.deepEqual(checkDailyQueries(magi, data, enriched), checkDailyQueries(magi, data, original));
+  for (const scope of ['nitori', 'retail']) {
+    assert.equal(enriched[scope].candidate_hash, original[scope].candidate_hash);
+    assert.notEqual(enriched[scope].index_hash, original[scope].index_hash);
+    assert.notEqual(enriched[scope].generation, original[scope].generation);
+    assert.deepEqual(copy(enriched[scope].snapshot.raw.map(({ search_terms, ...p }) => p)), copy(original[scope].snapshot.raw));
+  }
+  const wrong = copy(data); wrong.indexes.nitori.index_hash = '0'.repeat(64);
+  await assert.rejects(loadFixtures(magi, wrong, { indexSet: 'terms' }));
+  await assert.rejects(loadFixtures(magi, data, { indexSet: 'other' }));
+});
+
 for (const scope of ['nitori', 'retail']) {
+  test(scope + ': 言い換え語は古い記事を候補に入れ、Jevの内容・ハッシュ・filtersを変えない', async () => {
+    const magi = loadWorker(), original = await synthetic(magi, scope);
+    const terms = ['home storage', '片付け', 'organize rooms'];
+    const enriched = await synthetic(magi, scope, (f, name) => { if (name === 'search-index-2025.json') f.records[0].search_terms = terms; });
+    const q = query(scope, 'home storage'), oldId = `${magi.searchScope(scope).media}:20251231:1`;
+    assert.ok(!queryCandidates(magi, original, q).ids.includes(oldId));
+    assert.ok(queryCandidates(magi, enriched, q).ids.includes(oldId));
+    assert.ok(!queryCandidates(magi, enriched, query(scope, q.query, { month: '202601' })).ids.includes(oldId));
+    assert.equal(original.candidate_hash, enriched.candidate_hash); assert.notEqual(original.index_hash, enriched.index_hash);
+    const old = enriched.snapshot.raw.find(p => p.id === oldId);
+    assert.deepEqual(copy(old.search_terms), terms);
+    assert.ok(!('search_terms' in magi.toRankCandidate(old)));
+    assert.ok(!JSON.stringify(queryCandidates(magi, enriched, q).payload).includes('home storage","片付け'));
+    const comparison = [{ ...old, title: 'home storage', search_terms: undefined }, old];
+    const ranked = magi.shortlistRankDaily(comparison, q.query, scope);
+    assert.ok(ranked[0].score > ranked[1].score, '題名より軽い重み');
+  });
+
+  test(scope + ': 省略された語は従来どおり、不正な語・件数・制御文字・重複は索引全体を拒否する', async () => {
+    const magi = loadWorker();
+    for (const terms of [null, 'word', [], ['one', 'two'], ['a','b','c','d','e','f'], ['a','a','b'],
+      ['a','b', ''], ['a','b', '\ufeff'], ['a','b', 4], ['a','b','x\x00'], ['a','b','x\x85'], ['a','b','🧺'.repeat(61)]]) {
+      await assert.rejects(synthetic(magi, scope, f => { f.records[0].search_terms = terms; }), indexFailure);
+    }
+    const accepted = await synthetic(magi, scope, f => { f.records[0].search_terms = ['収納', 'home storage', '🧺'.repeat(60)]; });
+    assert.equal(accepted.records, 25);
+  });
+
   test(scope + ': 全3年度・閏日・年境界・同じ号の別アンカー・長文とUnicodeをWorkerで読む', async () => {
     const magi = loadWorker(), local = await synthetic(magi, scope);
     assert.equal(local.records, 25); assert.deepEqual(local.years, ['2026', '2025', '2024']);
@@ -205,7 +247,7 @@ test('速度記録は画面の検査を通し、request_id・N/M/J・generation�
 });
 
 test('速度の2回目は同一UTC日・同じ版・24問・キャッシュ期限と余裕を要求する', () => {
-  const keys = ['scope', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version'];
+  const keys = ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version'];
   const current = { kind: 'browser', run: 2, ...Object.fromEntries(keys.map(k => [k, 'same'])), queries: Array.from({ length: 24 }, (_, i) => ({ id: String(i) })) };
   const previous = { ...current, run: 1, valid: true, started: '2026-10-09T01:00:00Z', finished: '2026-10-09T01:01:00Z', rows: current.queries };
   checkPrevious(previous, current, new Date('2026-10-09T01:12:00Z'), 600000);

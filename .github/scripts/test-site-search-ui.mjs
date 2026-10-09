@@ -816,6 +816,18 @@ if (!remote) {
   }
   for (const [media, scope] of [['nitoridaily', 'nitori'], ['retailtechdaily', 'retail']]) {
     const head = fixture(media, 110);
+    scenario(`日刊② ${scope} 言い換え語は①の入力候補・横断検索に使わない`, { analyticsOff: true }, async (page, name) => {
+      const data = fixture(media);
+      data.records.forEach(r => { r.search_terms = ['receive parcels', '荷物の受け取り', 'parcel delivery']; });
+      await indices(page, media, data);
+      const calls = await workerFor(page, () => response(media, data));
+      await openDaily(page, media); await page.fill(INPUT, 'parcels');
+      await page.waitForSelector('#archiveSuggestions [role="presentation"]');
+      check(await page.locator('#archiveSuggestions a').count() === 0 && calls.length === 0, name + ': 言い換え語で①の候補か②の自動送信が増えた');
+      await explicitDaily(page, 'parcels'); await page.waitForSelector(RANK_LIST);
+      check(/0件/.test(await page.locator('#archiveSearchStatus').textContent()), name + ': ①が言い換え語を検索した');
+      check(calls.length === 1 && calls[0].scope === scope && !('search_terms' in calls[0]), name + ': 明示した②の条件が違う');
+    });
     scenario(`日刊② ${scope} 古いタブの索引は次の検索で読み直す`, { analyticsOff: true }, async (page, name) => {
       const old = fixture(media), fresh = { ...old, generation: 'abcdef', records: [...old.records,
         { ...old.records[0], url: '20261009/#art-13', title: '新しい収納の記事' }] };

@@ -766,12 +766,13 @@ test('日刊②：siteと両誌はIP→全体の回数を共有し、キャッ�
 test('日刊②：全体の期限でもN/M/Jとgenerationを返し、scope・件数・hashだけを1回記録する', async () => {
   const w = dailyRankWorker(() => new Promise(() => {})), logs = [];
   w.ctx.console.log = (...values) => logs.push(values);
+  w.ctx.rankConfig.scopes.nitori.revision = 3; // siteのrevisionと違っても、媒体のrevisionを記録する。
   w.ctx.rankConfig.request_timeout_ms = 25; w.ctx.rankConfig.jev_timeout_ms = 100;
   const data = await (await dailyRankRequest(w, { query: 'QUERY_MARKER', filters: { category: '新商品' } })).json();
   assert.equal(data.reason, 'timeout'); assert.equal(data.cached, false);
   assert.deepEqual(data.searched, { total: 3, candidates: 3, judged: 0, generation: 'a1' });
   const log = logs.filter(line => line[1] === 'site_rank');
-  assert.equal(log.length, 1); assert.equal(log[0][11], 1); assert.equal(log[0][14], 'nitori');
+  assert.equal(log.length, 1); assert.equal(log[0][11], 3); assert.equal(log[0][14], 'nitori');
   assert.match(log[0][12], /^[a-f0-9]{64}$/); assert.match(log[0][13], /^[a-f0-9]{64}$/);
   assert.ok(!JSON.stringify(logs).includes('QUERY_MARKER')); assert.ok(!JSON.stringify(logs).includes('新商品'));
   const rows = JSON.stringify(rankRows(w)); await delay(110);

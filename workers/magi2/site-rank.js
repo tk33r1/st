@@ -67,7 +67,7 @@ export function rankCandidateHash(snapshot) {
 }
 
 // 同じ確率のときの並び（設計書 3.6）。索引の detail は使わない（ページ内の見出しで点が付かないように）
-const rankScoreFields = p => p.kind === 'daily' ? { title: p.title, detail: [p.summary, ...p.tags, p.category].join(' ') } : ({
+const rankScoreFields = p => p.kind === 'daily' ? { title: p.title, detail: [p.summary, ...p.tags, p.category, ...(p.search_terms || [])].join(' ') } : ({
   title: [p.rank_title || p.title, p.title_en || ''].join(' '),
   detail: [p.description, p.description_en || '', ...(p.tags || []), p.category || '', p.genre || ''].join(' '),
 });

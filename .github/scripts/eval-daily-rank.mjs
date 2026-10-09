@@ -41,12 +41,20 @@ export async function dailySnapshot(magi, scope, readFile) {
     urlToId: new Map(snapshot.raw.map(p => [p.url, p.id])) };
 }
 
-export async function loadFixtures(magi, data) {
+export async function loadFixtures(magi, data, { indexSet = 'original' } = {}) {
+  assert.ok(['original', 'terms'].includes(indexSet), '--index-set original|terms');
+  const manifest = indexSet === 'terms' ? JSON.parse(read(`${FIXTURES}/with-search-terms/indexes.json`)) : null;
+  if (manifest) {
+    assert.equal(manifest.version, 1);
+    assert.equal(manifest.terms_source_sha256, hash(read('.github/scripts/daily_search_terms.py').replace(/\r\n/g, '\n')), '言い換え語の生成規則が固定時と違う');
+    for (const scope of SCOPES) assert.equal(manifest.parent_index_hashes[scope], data.indexes[scope].index_hash);
+  }
   const snapshots = {};
   for (const scope of SCOPES) {
-    snapshots[scope] = await dailySnapshot(magi, scope, name => read(`${FIXTURES}/${scope}/${name}`));
+    snapshots[scope] = await dailySnapshot(magi, scope, name => read(`${FIXTURES}/${manifest ? 'with-search-terms/' : ''}${scope}/${name}`));
     const { generation, years, records, index_hash, candidate_hash, files } = snapshots[scope];
-    assert.deepEqual(data.indexes[scope], { generation, years, records, index_hash, candidate_hash, files }, scope + ': 固定索引が変更された');
+    assert.deepEqual((manifest || data).indexes[scope], { generation, years, records, index_hash, candidate_hash, files }, scope + ': 固定索引が変更された');
+    if (manifest) assert.equal(candidate_hash, data.indexes[scope].candidate_hash, '言い換え語でJevの候補変換を変えない');
   }
   return snapshots;
 }
@@ -81,7 +89,10 @@ export function checkDailyQueries(magi, data, snapshots) {
     assert.equal(q.type === 'none', q.answers.length === 0);
     assert.ok(Array.isArray(q.coverage) && new Set(q.coverage).size === q.coverage.length && q.coverage.every(c => COVERAGE.includes(c)));
     assert.ok(typeof q.note === 'string' && q.note.trim());
-    if (q.coverage.includes('no_overlap')) assert.ok(q.answers.some(id => magi.shortlistRankDaily([targets.find(p => p.id === id)], q.query, q.scope)[0].score === 0), q.id + ': 字の重ならない正解が無い');
+    if (q.coverage.includes('no_overlap')) assert.ok(q.answers.some(id => {
+      const { search_terms, ...original } = targets.find(p => p.id === id);
+      return magi.shortlistRankDaily([original], q.query, q.scope)[0].score === 0;
+    }), q.id + ': 元の題名・要約に字の重ならない正解が無い');
   }
   for (const scope of SCOPES) {
     summary[scope] = {};
@@ -222,7 +233,7 @@ export function timingRow(magi, q, response, local) {
 
 export function checkPrevious(previous, current, now, ttl) {
   assert.equal(previous.kind, 'browser'); assert.equal(previous.run, 1); assert.equal(current.run, 2);
-  for (const key of ['scope', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version']) assert.equal(previous[key], current[key], '2回の条件が違う: ' + key);
+  for (const key of ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version']) assert.equal(previous[key], current[key], '2回の条件が違う: ' + key);
   assert.equal(previous.started.slice(0, 10), now.toISOString().slice(0, 10), '2回は同じUTC日');
   assert.ok(now.getTime() - Date.parse(previous.finished) >= ttl + 60000, '前回の終了から10分以上と余裕を空ける');
   assert.ok(previous.valid, '前回が不成立');
@@ -244,7 +255,7 @@ const option = (args, name, fallback) => { const i = args.indexOf(name); return 
 export async function main(args = process.argv.slice(2)) {
   const modes = ['--check', '--plan', '--candidates', '--accuracy', '--report', '--probe', '--browser'].filter(m => args.includes(m));
   assert.equal(modes.length, 1, 'モードを1つ指定: --check | --plan | --candidates | --accuracy | --report <記録> | --probe | --browser');
-  const known = new Set([...modes, '--scope', '--set', '--runs', '--run', '--previous', '--worker-version']);
+  const known = new Set([...modes, '--scope', '--set', '--runs', '--run', '--previous', '--worker-version', '--index-set']);
   const seen = new Set();
   for (let i = 0; i < args.length; i++) {
     assert.ok(known.has(args[i]) && !seen.has(args[i]), '知らない引数または重複: ' + args[i]); seen.add(args[i]);
@@ -256,14 +267,19 @@ export async function main(args = process.argv.slice(2)) {
     assert.equal(record.kind, 'accuracy', '精度の生記録を指定する');
     console.log(accuracyReport(record)); return;
   }
-  const magi = loadWorker(), data = JSON.parse(read(QUERIES)), snapshots = await loadFixtures(magi, data);
+  const indexSet = option(args, '--index-set', 'original');
+  const magi = loadWorker(), data = JSON.parse(read(QUERIES)), snapshots = await loadFixtures(magi, data, { indexSet });
   const summary = checkDailyQueries(magi, data, snapshots);
-  if (mode === '--check') { console.log(JSON.stringify({ ok: true, frozen: data.frozen, annotator: data.annotator, indexes: data.indexes, summary }, null, 2)); return; }
+  if (mode === '--check') {
+    const indexes = Object.fromEntries(Object.entries(snapshots).map(([scope, { snapshot, urlToId, ...metadata }]) => [scope, metadata]));
+    console.log(JSON.stringify({ ok: true, index_set: indexSet, frozen: data.frozen, annotator: data.annotator, indexes, summary }, null, 2)); return;
+  }
   const scope = option(args, '--scope'); assert.ok(SCOPES.includes(scope), '--scope nitori|retail を明示する');
   const set = option(args, '--set', mode === '--browser' || mode === '--probe' ? 'final' : 'tune'); assert.ok(SETS.includes(set));
   const runs = Number(option(args, '--runs', '2')); assert.ok([1, 2].includes(runs), '--runs 1|2');
   const local = snapshots[scope], queries = data.queries.filter(q => q.scope === scope && q.set === set);
-  const metadata = provenance(magi, data, local, scope, set);
+  const metadata = { ...provenance(magi, data, local, scope, set), index_set: indexSet,
+    terms_source_sha256: indexSet === 'terms' ? hash(read('.github/scripts/daily_search_terms.py').replace(/\r\n/g, '\n')) : null };
   const candidates = queries.map(q => ({ id: q.id, ...queryCandidates(magi, local, q) }));
   if (mode === '--plan') {
     const bytes = candidates.reduce((n, r) => n + Buffer.byteLength(JSON.stringify(r.payload), 'utf8'), 0) * runs;

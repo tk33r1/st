@@ -361,6 +361,118 @@ class DailyGenerationTests(unittest.TestCase):
 
 
 class SearchGenerationTests(unittest.TestCase):
+    def test_search_terms_validation_matches_worker_limits(self):
+        from daily_search_terms import valid_search_terms
+        self.assertTrue(valid_search_terms(['収納', 'home storage', '🧺' * 60]))
+        invalid = [None, '', [], ['one', 'two'], list('abcdef'), ['a', 'a', 'b'],
+                   ['a', 'b', ''], ['a', 'b', '\ufeff'], ['a', 'b', None],
+                   ['a', 'b', 'x\x00'], ['a', 'b', 'x\x85'], ['a', 'b', '🧺' * 61]]
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for value in invalid:
+                with self.subTest(media=config['media_id'], value=value):
+                    self.assertFalse(valid_search_terms(value))
+                    history = self.history()
+                    history[0]['articles'][0]['search_terms'] = value
+                    with self.assertRaisesRegex(ValueError, 'search_terms'):
+                        engine.build_search_index(config, history)
+
+    def test_existing_llm_call_generates_terms_without_a_second_request(self):
+        import copy
+        from daily_search_terms import valid_search_terms
+        candidates = dict(JP=[item('店舗の収納', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
+        article = {'source_id': 'JP-01', 'region': 'JP', 'category': '商品', 'title': '片付けのための収納',
+                   'summary': '住まいを整理する家具。', 'tags': ['収納']}
+        for config in (nitori.CONFIG, daily.CONFIG):
+            prompt, _ = engine.build_prompt(config, candidates, '2026-10-09', '2026-10-08')
+            self.assertIn('"search_terms"', prompt)
+            for terms in (None, [], ['整理', 'organize rooms', 'home storage']):
+                result = {'articles': [copy.deepcopy(article)]}
+                if terms is not None:
+                    result['articles'][0]['search_terms'] = terms
+                with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test', 'ANTHROPIC_MODEL': '', 'OPENAI_API_KEY': 'test'}), \
+                        patch.object(engine, 'call_anthropic_api', return_value=result) as first, \
+                        patch.object(engine, 'call_llm_api') as second:
+                    generated = engine.analyze_news_with_fallback(config, candidates, '2026-10-09', '2026-10-08')
+                first.assert_called_once()
+                second.assert_not_called()
+                self.assertTrue(valid_search_terms(generated['articles'][0]['search_terms']))
+                if terms:
+                    self.assertEqual(generated['articles'][0]['search_terms'], terms)
+
+    def test_rule_based_terms_are_grounded_and_deterministic(self):
+        from daily_search_terms import fallback_search_terms, prepare_search_terms, valid_search_terms
+        samples = [('静かな退職', 'disengaged employees'), ('宅配ボックス', 'receive parcels'),
+                   ('需要予測', 'demand forecasts'), ('電子棚札', 'electronic shelf labels'),
+                   ('未知のニュース', 'ニュース記事')]
+        for title, term in samples:
+            article = {'title': title, 'summary': '', 'category': '商品', 'tags': []}
+            terms = fallback_search_terms(article)
+            self.assertTrue(valid_search_terms(terms))
+            self.assertEqual(terms, fallback_search_terms(article))
+            self.assertIn(term, terms)
+            self.assertEqual(prepare_search_terms({'articles': [article]})['articles'][0]['search_terms'], terms)
+        for title in ('Retail', 'chair', 'electronic', 'proposal'):
+            terms = fallback_search_terms({'title': title, 'summary': '', 'category': '試験', 'tags': []})
+            self.assertNotIn('artificial intelligence', terms)
+            self.assertNotIn('online shopping', terms)
+            self.assertNotIn('checkout systems', terms)
+
+    def test_backfill_preserves_history_except_terms_and_never_rebuilds_pages(self):
+        import copy
+        import tempfile
+        from daily_search_terms import valid_search_terms
+        for config in (nitori.CONFIG, daily.CONFIG):
+            with tempfile.TemporaryDirectory() as directory:
+                data_dir, job_dir = Path(directory, 'data'), Path(directory, 'job')
+                data_dir.mkdir(); job_dir.mkdir()
+                config = {**config, 'data_dir': str(data_dir), 'job_dir': str(job_dir)}
+                history = self.history()
+                history[0]['x_post_id'] = 'unchanged-post-id'
+                history[0]['articles'][0]['search_terms'] = ['整理', 'organize rooms', 'home storage']
+                original = copy.deepcopy(history)
+                input_before = copy.deepcopy(history)
+                engine.save_history(config['data_dir'], history)
+                (job_dir / 'index.html').write_bytes(b'existing portal')
+                (job_dir / 'rss.xml').write_bytes(b'existing feed')
+                old_files = {p.name: p.read_bytes() for p in data_dir.iterdir()}
+                self.assertEqual(engine.backfill_search_terms(config, history, dry_run=True), 3)
+                self.assertEqual({p.name: p.read_bytes() for p in data_dir.iterdir()}, old_files)
+                self.assertEqual(engine.backfill_search_terms(config, history), 3)
+                updated = engine.load_history(config['data_dir'])
+                for issue in updated:
+                    for article in issue['articles']:
+                        self.assertTrue(valid_search_terms(article.pop('search_terms')))
+                for issue in original:
+                    for article in issue['articles']:
+                        article.pop('search_terms', None)
+                self.assertEqual(updated, original)
+                self.assertEqual(history, input_before)
+                self.assertEqual(history[0]['articles'][0]['search_terms'], ['整理', 'organize rooms', 'home storage'])
+                self.assertNotIn('search_terms', history[1]['articles'][0])
+                stored = engine.load_history(config['data_dir'])
+                self.assertEqual(engine.backfill_search_terms(config, stored), 0)
+                self.assertEqual((job_dir / 'index.html').read_bytes(), b'existing portal')
+                self.assertEqual((job_dir / 'rss.xml').read_bytes(), b'existing feed')
+                files = engine.build_search_index(config, stored)
+                self.assertEqual(len({f['generation'] for f in files.values()}), 1)
+                self.assertTrue(all('search_terms' in r for f in files.values() for r in f['records']))
+
+    def test_bad_existing_terms_stop_backfill_before_history_or_indexes_are_written(self):
+        import tempfile
+        for config in (nitori.CONFIG, daily.CONFIG):
+            with tempfile.TemporaryDirectory() as directory:
+                data_dir, job_dir = Path(directory, 'data'), Path(directory, 'job')
+                data_dir.mkdir(); job_dir.mkdir()
+                config = {**config, 'data_dir': str(data_dir), 'job_dir': str(job_dir)}
+                history = self.history()
+                history[-1]['articles'][0]['search_terms'] = []
+                engine.save_history(config['data_dir'], history)
+                (job_dir / 'search-index.json').write_bytes(b'previous index')
+                old = {str(p): p.read_bytes() for p in Path(directory).rglob('*') if p.is_file()}
+                with self.assertRaisesRegex(ValueError, 'search_terms'):
+                    engine.backfill_search_terms(config, history)
+                self.assertEqual({str(p): p.read_bytes() for p in Path(directory).rglob('*') if p.is_file()}, old)
+
     def history(self):
         return [
             {'date': '20260101', 'articles': [{'title': '新年の収納 🧺', 'category': '新商品', 'summary': 'e\u0301と家具', 'tags': ['収納']}]},

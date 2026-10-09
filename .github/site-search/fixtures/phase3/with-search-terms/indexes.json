@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "parent_index_hashes": {
+    "nitori": "17b3886e1961c691294c9f16d4be962945914a3c3a2bfe13009334121df34c03",
+    "retail": "81693a5ad13996f7210aab9979f1ee25d5e8db598c17cd84c599cf7263fcf000"
+  },
+  "terms_source_sha256": "5002a7fcfa71db6fd9fbe996772f6d0243264d973c594cfa5707c9f8d1a1181b",
+  "indexes": {
+    "nitori": {
+      "generation": "021c767db6e4df27",
+      "years": [
+        "2026"
+      ],
+      "records": 176,
+      "index_hash": "b2f55a85e41a780780965e11777aafb6f3f4aa6cb5ba947acacdfd0a5415e132",
+      "candidate_hash": "db605b91262402a1d263d3e76967b365f1bfdf95ede8e33191026ee1f6c7effc",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "be8ee87fcdedae69ce7fe5697255c4aa8692fa639fd94279f0a890fa758fda8d"
+        }
+      ]
+    },
+    "retail": {
+      "generation": "13d28fe0e9fcb24d",
+      "years": [
+        "2026"
+      ],
+      "records": 204,
+      "index_hash": "71d1dae64cd6b8d8efcb1f4cdaa9a1fabaab80a737852c31dfafb87c901f53da",
+      "candidate_hash": "2cf3b6417fe718c843c75c3afa0d4e0946e5dc0f1a2ac69e543dbab6dfaf5ab5",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "e31add58359eae40dca36107eb465a9064299a53333ad38b9703b89c29076719"
+        }
+      ]
+    }
+  }
+}
