@@ -147,3 +147,14 @@ Pythonは22件、模擬Workerは3件、既存の日刊ポータルは5場面が�
 - **本番の索引**：ブラウザ経由で出荷したJSON全体と一致を確認。nitori `2063db70449ba414`（176記事）、retail `88e2025867b34429`（204記事）。通常のPython HTTPクライアントは403となったため、ブラウザで照合した。
 
 公開に伴うsitemap botのコミット `2dda2f14` はsitemapの更新だけで、索引・号の本文は変更していない。上の公開の証跡はT03〜T05だけのもの。日刊②の精度・応答時間・停止の合格には数えない。
+
+### 7.2 T06の手元検証（2026-10-09）
+
+`workers/magi2/search-scope.js` を追加。scopeと媒体の固定の対応、filters・generation、全年度の索引の検査・取得、媒体ごとのキャッシュを実装した。APIへの接続と公開はT07以後。
+
+- `node --test --test-name-pattern="日刊scope" .github/scripts/test-magi2.mjs`：12件通過。両媒体×3年の合成データ、最大4並列、head1回、版の混在・欠落・重複・不正な日付とURL、UTF-8の合計バイトと記事数・年数、10分・24時間・60秒の境界、generationの更新の合図、本文の遅れ・切断・並行要求を確認。
+- 実データの両誌（176記事・204記事）を同じ検査に通した。generationの値をPythonの方式で計算し直していない。
+- `node --test .github/scripts/test-magi2.mjs`：新規10件を含む133件通過。その後、本文受信と並行要求の2件を追加し、新規12件を再実行して通過。
+- `search-scope.js`・`personas.js` のNode構文検査と `git diff --check` が成功。実API・本番のWorkerは呼んでいない。
+
+V01〜V03のWorker内部の検査を確認した。HTTPでの契約・回数・停止・候補はT07、画面の版の照合はT08、精度・応答時間はT11〜T12で確認する。

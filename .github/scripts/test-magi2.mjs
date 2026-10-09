@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { webcrypto } from 'node:crypto';
+import { webcrypto, createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
@@ -48,9 +48,10 @@ function worker(stream = completion(), upstream = null) {
     + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/magi-mode.js')) + '\n'
     + strip(read('workers/magi2/site-search.js')) + '\n'
+    + strip(read('workers/magi2/search-scope.js')) + '\n'
     + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
-    + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK;', ctx);
+    + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test' };
   const request = async (path, body, ip = '192.0.2.1', headers = {}) => {
     const res = await ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
@@ -104,6 +105,261 @@ function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts
 const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search?site_debate=1', body, ip);
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
 const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)' };
+
+// 日刊②の索引は全年度を1つの版として扱う。外部 API・日刊の生成 API は使わない。
+function dailyFiles(media = 'nitoridaily', generation = 'a1', years = ['2026', '2025', '2024']) {
+  const record = (year, article = 1) => ({ date: year + '1009', title: '収納の新商品', summary: '省スペースの収納用品',
+    takeaway: '編集部の見立て', source: '出典', source_kind: '報道・解説', category: '新商品', region: 'JP', tags: ['収納'], url: year + `1009/#art-${article}` });
+  return new Map([['search-index.json', { media, generation, years, records: years.length ? [record(years[0])] : [] }],
+    ...years.slice(1).map(year => [`search-index-${year}.json`, { media, generation, year, records: [record(year)] }])]);
+}
+const dailyPairs = files => [...files].map(([name, index]) => [name, JSON.stringify(index)]);
+function dailyWorker(files = dailyFiles()) {
+  const requests = [];
+  const w = worker(undefined, (url, options) => {
+    const match = /^https:\/\/tk\.st\/job\/(nitoridaily|retailtechdaily)\/(search-index(?:-\d{4})?\.json)$/.exec(url);
+    if (!match) return;
+    requests.push({ media: match[1], file: match[2], signal: options.signal });
+    const index = files.get(match[2]);
+    return index ? Response.json(index) : new Response('', { status: 404 });
+  });
+  // 仮想時計で10分・24時間・60秒の境界を待たずに確かめる。
+  w.ctx.dailyNow = 100000000;
+  vm.runInContext('globalThis.Date = class extends Date { static now() { return dailyNow; } };', w.ctx);
+  return { ...w, requests, files, advance(ms) { w.ctx.dailyNow += ms; } };
+}
+
+test('日刊scope：固定の媒体、filtersの型とキー、暦、generationを検査してキー順をそろえる', () => {
+  const { ctx } = worker();
+  assert.equal(ctx.searchScope('nitori').media, 'nitoridaily');
+  assert.equal(ctx.searchScope('retail').media, 'retailtechdaily');
+  for (const scope of ['tools', 'game', '__proto__', 'constructor', '', null, 3]) assert.throws(() => ctx.searchScope(scope), { searchCode: 'invalid_request' });
+  assert.equal(JSON.stringify(ctx.normalizeScopeFilters('nitori', { month: '202610', region: 'JP', category: '新商品' })), '{"category":"新商品","region":"JP","month":"202610"}');
+  for (const value of [undefined, {}, { category: '', region: '', month: '' }]) assert.equal(JSON.stringify(ctx.normalizeScopeFilters('nitori', value)), '{}');
+  assert.equal(ctx.normalizeScopeFilters('retail', { category: '😀'.repeat(40) }).category.length, 80);
+  for (const value of [null, [], 1, new Date(), new (class Filters {})(), { unknown: '' }, { category: '😀'.repeat(41) }, { category: '\n' },
+    { region: '海外' }, { region: null }, { month: '202613' }, { month: '202600' }, { month: '000010' }, { month: 202610 }, { month: '2026-10' }, { month: '202610\n' }]) {
+    assert.throws(() => ctx.normalizeScopeFilters('nitori', value), { searchCode: 'invalid_request' });
+  }
+  assert.equal(JSON.stringify(ctx.normalizeScopeFilters('site', undefined)), '{}');
+  assert.throws(() => ctx.normalizeScopeFilters('site', {}), { searchCode: 'invalid_request' });
+  assert.equal(ctx.scopeGeneration('nitori', 'A1'), 'A1');
+  for (const value of ['', 'g', 'a'.repeat(33), 'a1\n', null, 1]) assert.throws(() => ctx.scopeGeneration('nitori', value), { searchCode: 'invalid_request' });
+  assert.throws(() => ctx.scopeGeneration('site', 'a1'), { searchCode: 'invalid_request' });
+});
+
+test('日刊scope：両誌の全年度を検査し、記事IDとリンクを組み立て、3つのfilterを当てる', () => {
+  const { ctx } = worker();
+  for (const [scope, media] of [['nitori', 'nitoridaily'], ['retail', 'retailtechdaily']]) {
+    const files = dailyFiles(media);
+    const records = files.get('search-index.json').records;
+    records.push({ ...records[0], url: '20261009/#art-2', category: '物流', region: 'GLOBAL' });
+    const snapshot = ctx.makeDailySnapshot(scope, dailyPairs(files));
+    assert.equal(snapshot.raw.length, 4);
+    assert.equal(snapshot.raw[0].id, media + ':20261009:1');
+    assert.equal(snapshot.raw[0].url, `/job/${media}/20261009/#art-1`);
+    assert.equal(snapshot.raw[0].kind, 'daily');
+    assert.equal(ctx.filterDailyItems(snapshot, { category: '物流', region: 'GLOBAL', month: '202610' }).length, 1);
+    // 各値は実在するが、組み合わせが0件でも索引の誤りにしない。
+    assert.equal(ctx.filterDailyItems(snapshot, { category: '物流', region: 'JP' }).length, 0);
+    assert.equal(ctx.filterDailyItems(snapshot, {}).length, 4);
+    const empty = ctx.makeDailySnapshot(scope, dailyPairs(dailyFiles(media, 'a1', [])));
+    assert.equal(empty.raw.length, 0);
+  }
+});
+
+test('日刊scope：混在・欠落・重複・不正な行は1件も読み捨てず、索引全体を拒否する', () => {
+  const { ctx } = worker();
+  const reject = mutate => {
+    const files = dailyFiles(); mutate(files);
+    assert.throws(() => ctx.makeDailySnapshot('nitori', dailyPairs(files)), { searchCode: 'index_unavailable' });
+  };
+  reject(files => files.get('search-index-2025.json').generation = 'b2');
+  reject(files => files.delete('search-index-2024.json'));
+  reject(files => files.get('search-index-2025.json').media = 'retailtechdaily');
+  reject(files => files.get('search-index-2025.json').year = '2024');
+  reject(files => files.get('search-index.json').years = ['2025', '2026', '2024']);
+  reject(files => files.get('search-index.json').years = ['2026', '2026', '2024']);
+  reject(files => files.get('search-index.json').years[0] = '2026/../../');
+  reject(files => files.get('search-index.json').generation = 'not-hex');
+  reject(files => files.get('search-index.json').records.push(files.get('search-index.json').records[0]));
+  reject(files => files.get('search-index.json').records[0].date = '20251009');
+  reject(files => files.get('search-index.json').records[0].summary = null);
+  reject(files => files.get('search-index.json').records[0].tags = [1]);
+  reject(files => files.get('search-index.json').records[0].region = 'US');
+  for (const url of ['20261009/#art-0', '20261009/#art-01', '20261009/#art-1?x=1', '20261008/#art-1',
+    'https://evil.test/20261009/#art-1', '/job/retailtechdaily/20261009/#art-1', '../20261009/#art-1',
+    '20261009//#art-1', '20261009\\#art-1', '20261009/#art-%31', '20261009/#art-%2531', '20261009/#art-1\n',
+    '20261009/#art-9007199254740992']) reject(files => files.get('search-index.json').records[0].url = url);
+  for (const date of ['20260229', '20260431', '20261301', '00000101', '20260001', '20260100', '19000229']) {
+    reject(files => Object.assign(files.get('search-index.json').records[0], { date, url: date + '/#art-1' }));
+  }
+  const leap = dailyFiles('nitoridaily', 'a1', ['2000']);
+  Object.assign(leap.get('search-index.json').records[0], { date: '20000229', url: '20000229/#art-1' });
+  assert.equal(ctx.makeDailySnapshot('nitori', dailyPairs(leap)).raw.length, 1);
+  assert.throws(() => ctx.makeDailySnapshot('nitori', [['search-index.json', '{']]), { searchCode: 'index_unavailable' });
+  assert.throws(() => ctx.makeDailySnapshot('nitori', [['search-index.json', '{}']]), { searchCode: 'index_unavailable' });
+});
+
+test('日刊scope：本文の合計バイト・記事数・年数の上限を守る', () => {
+  const w = worker(), files = dailyFiles(), pairs = dailyPairs(files);
+  const bytes = pairs.reduce((n, [, text]) => n + encode(text).byteLength, 0);
+  w.ctx.rankConfig.daily_index_max_bytes = bytes;
+  assert.equal(w.ctx.makeDailySnapshot('nitori', pairs).raw.length, 3);
+  w.ctx.rankConfig.daily_index_max_bytes = bytes - 1;
+  assert.throws(() => w.ctx.makeDailySnapshot('nitori', pairs), { searchCode: 'index_unavailable' });
+  w.ctx.rankConfig.daily_index_max_bytes = bytes;
+  w.ctx.rankConfig.daily_index_max_records = 2;
+  assert.throws(() => w.ctx.makeDailySnapshot('nitori', pairs), { searchCode: 'index_unavailable' });
+  w.ctx.rankConfig.daily_index_max_records = 3;
+  w.ctx.rankConfig.daily_index_max_years = 2;
+  assert.throws(() => w.ctx.makeDailySnapshot('nitori', pairs), { searchCode: 'index_unavailable' });
+});
+
+test('日刊scope：headは1回、過去年は最大4並列で固定URLから取得し、本文の順でhashを確定する', async () => {
+  const files = dailyFiles('nitoridaily', 'a1', ['2026', '2025', '2024', '2023', '2022', '2021', '2020']);
+  let active = 0, maximum = 0;
+  const seen = [];
+  const w = worker(undefined, async (url, options) => {
+    assert.equal(options.headers['Cache-Control'], 'no-cache');
+    assert.match(url, /^https:\/\/tk\.st\/job\/nitoridaily\/search-index(?:-\d{4})?\.json$/);
+    const name = url.split('/').at(-1); seen.push(name);
+    active++; maximum = Math.max(maximum, active);
+    await delay(name.includes('2025') ? 15 : 5); active--;
+    return Response.json(files.get(name));
+  });
+  const snapshot = await w.ctx.getDailySnapshot('nitori');
+  assert.equal(snapshot.raw.length, 7); assert.equal(maximum, 4);
+  assert.equal(seen.filter(name => name === 'search-index.json').length, 1);
+  assert.equal(snapshot.text, JSON.stringify(dailyPairs(files)));
+  assert.equal(snapshot.indexHash, createHash('sha256').update(snapshot.text).digest('hex'));
+  assert.equal(w.waits.length, 0);
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), snapshot);
+  assert.equal(seen.length, 7);
+});
+
+test('日刊scope：整合した旧版は取得中に更新されても確定し、媒体とsiteのキャッシュを分ける', async () => {
+  const files = dailyFiles();
+  const w = worker(undefined, (url) => {
+    const media = url.includes('/retailtechdaily/') ? 'retailtechdaily' : 'nitoridaily';
+    const name = url.split('/').at(-1), index = { ...files.get(name), media };
+    if (name === 'search-index-2025.json') files.get('search-index.json').generation = 'b2';
+    // 取得済みのheadと過去年が一致するa1は、最新headがb2になっても完全な版。
+    return Response.json(index);
+  });
+  const old = await w.ctx.getDailySnapshot('nitori'); assert.equal(old.generation, 'a1');
+  files.get('search-index-2025.json').generation = 'b2'; files.get('search-index-2024.json').generation = 'b2';
+  const retail = await w.ctx.getDailySnapshot('retail'); assert.equal(retail.generation, 'b2');
+  assert.equal(retail.media, 'retailtechdaily');
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old);
+  assert.equal(w.ctx.searchCache.pages, null);
+});
+
+test('日刊scope：10分で更新し、更新失敗でも完全な旧版を24時間まで使い、60秒は再取得しない', async () => {
+  const w = dailyWorker();
+  const old = await w.ctx.getDailySnapshot('nitori');
+  w.advance(w.ctx.searchConfig.list_ttl_ms);
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old); assert.equal(w.requests.length, 3);
+  w.advance(1); w.files.delete('search-index-2025.json');
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old); const failed = w.requests.length;
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old); assert.equal(w.requests.length, failed);
+  w.advance(w.ctx.searchConfig.list_retry_ms);
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old); assert.ok(w.requests.length > failed);
+  const state = w.ctx.dailyCache.get('nitori');
+  w.ctx.dailyNow = state.fetchedAt + w.ctx.searchConfig.list_max_age_ms;
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old);
+  w.advance(1);
+  await assert.rejects(w.ctx.getDailySnapshot('nitori'), { searchCode: 'index_unavailable' });
+  assert.equal(state.snapshot, old);
+});
+
+test('日刊scope：画面のgeneration・未知のカテゴリーと月は取り直しの合図だけにし、更新できなければindex_updating', async () => {
+  const w = dailyWorker(), old = await w.ctx.getDailySnapshot('nitori');
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), { searchCode: 'index_updating' });
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { filters: { month: '202611' } }), { searchCode: 'index_updating' });
+  assert.equal(w.requests.length, 3);
+  for (const index of w.files.values()) index.generation = 'b2';
+  const head = w.files.get('search-index.json');
+  head.records.push({ ...head.records[0], date: '20261101', url: '20261101/#art-1', category: '新分類' });
+  w.advance(w.ctx.searchConfig.list_retry_ms);
+  const fresh = await w.ctx.getDailySnapshot('nitori', { generation: 'b2', filters: { category: '新分類', month: '202611' } });
+  assert.equal(fresh.generation, 'b2'); assert.notEqual(fresh, old);
+  w.advance(w.ctx.searchConfig.list_retry_ms);
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { filters: { category: '存在しない' } }), { searchCode: 'invalid_request' });
+  w.advance(w.ctx.searchConfig.list_retry_ms);
+  // クライアントの版を真正性の根拠にしない。最新の整合した版b2を返せばよい。
+  assert.equal((await w.ctx.getDailySnapshot('nitori', { generation: 'c3' })).generation, 'b2');
+  w.advance(w.ctx.searchConfig.list_retry_ms); w.files.delete('search-index-2025.json');
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'c3' }), { searchCode: 'index_updating' });
+  assert.equal(w.ctx.dailyCache.get('nitori').snapshot.generation, 'b2');
+});
+
+test('日刊scope：初回取得の失敗・本文上限・索引全体の期限・切断では一部の版を確定しない', async () => {
+  const missing = dailyWorker(); missing.files.delete('search-index-2025.json');
+  await assert.rejects(missing.ctx.getDailySnapshot('nitori'), { searchCode: 'index_unavailable' });
+  assert.equal(missing.ctx.dailyCache.get('nitori').snapshot, null);
+  const limited = dailyWorker(); limited.ctx.rankConfig.daily_index_max_bytes = 20;
+  await assert.rejects(limited.ctx.getDailySnapshot('nitori'), { searchCode: 'index_unavailable' });
+  assert.equal(limited.requests.length, 1); assert.equal(limited.ctx.dailyCache.get('nitori').snapshot, null);
+  const files = dailyFiles(), releases = [];
+  const blocked = worker(undefined, async (url, options) => {
+    if (url.endsWith('/search-index.json')) return Response.json(files.get('search-index.json'));
+    await new Promise(resolve => { releases.push(resolve); });
+    assert.equal(options.signal.aborted, true);
+    return Response.json(files.get(url.split('/').at(-1)));
+  });
+  blocked.ctx.searchConfig.list_timeout_ms = 25;
+  await assert.rejects(blocked.ctx.getDailySnapshot('nitori'), { searchCode: 'index_unavailable' });
+  assert.equal(blocked.ctx.dailyCache.get('nitori').snapshot, null); releases.forEach(resolve => resolve()); await tick();
+  assert.equal(blocked.ctx.dailyCache.get('nitori').snapshot, null);
+  let signal;
+  const cancelled = worker(undefined, async (_, options) => { signal = options.signal; return new Promise(() => {}); });
+  const ac = new AbortController(), pending = cancelled.ctx.getDailySnapshot('nitori', { signal: ac.signal });
+  await tick(); ac.abort();
+  await assert.rejects(pending, { searchCode: 'cancelled' });
+  assert.equal(signal.aborted, true); assert.equal(cancelled.ctx.dailyCache.get('nitori').snapshot, null);
+  assert.equal(cancelled.ctx.dailyCache.get('nitori').refreshing, false);
+});
+
+test('日刊scope：本文受信の遅れも期限で止め、readerを取り消す', async () => {
+  let cancelled = false;
+  const w = worker(undefined, () => new Response(new ReadableStream({
+    start(c) { c.enqueue(encode('{"media":')); }, pull() { return new Promise(() => {}); }, cancel() { cancelled = true; },
+  })));
+  w.ctx.searchConfig.list_timeout_ms = 20;
+  await assert.rejects(w.ctx.getDailySnapshot('nitori'), { searchCode: 'index_unavailable' });
+  assert.equal(cancelled, true); assert.equal(w.ctx.dailyCache.get('nitori').snapshot, null);
+});
+
+test('日刊scope：更新中の並行要求と切断で、一部の版や遅れて届いた版をキャッシュへ入れない', async () => {
+  const files = dailyFiles(), releases = [];
+  let updating = false;
+  const w = worker(undefined, async (url) => {
+    if (updating) await new Promise(resolve => releases.push(resolve));
+    return Response.json(files.get(url.split('/').at(-1)));
+  });
+  const old = await w.ctx.getDailySnapshot('nitori');
+  const state = w.ctx.dailyCache.get('nitori'); state.fetchedAt -= w.ctx.searchConfig.list_ttl_ms + 1; state.retryAt = 0;
+  updating = true;
+  const ac = new AbortController(), pending = w.ctx.getDailySnapshot('nitori', { signal: ac.signal });
+  await tick();
+  assert.equal(await w.ctx.getDailySnapshot('nitori'), old);
+  await assert.rejects(w.ctx.getDailySnapshot('nitori', { generation: 'b2' }), { searchCode: 'index_updating' });
+  ac.abort(); await assert.rejects(pending, { searchCode: 'cancelled' });
+  for (const index of files.values()) index.generation = 'b2';
+  releases.forEach(resolve => resolve()); await tick();
+  assert.equal(state.snapshot, old); assert.equal(state.refreshing, false); assert.equal(w.waits.length, 0);
+});
+
+test('日刊scope：公開索引の実データも全件検査できる', () => {
+  const { ctx } = worker();
+  for (const [scope, media] of [['nitori', 'nitoridaily'], ['retail', 'retailtechdaily']]) {
+    const text = read(`job/${media}/search-index.json`), head = JSON.parse(text);
+    const snapshot = ctx.makeDailySnapshot(scope, [['search-index.json', text], ...head.years.slice(1).map(year => [`search-index-${year}.json`, read(`job/${media}/search-index-${year}.json`)])]);
+    assert.ok(snapshot.raw.length >= head.records.length);
+    assert.equal(snapshot.generation, head.generation);
+  }
+});
 
 test('公開ページ一覧から曲リクエストを404とチャットで案内し、送った候補以外のIDは採用しない', async () => {
   for (const chat of [false, true]) {

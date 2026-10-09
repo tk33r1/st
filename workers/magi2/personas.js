@@ -537,6 +537,9 @@ export const SITE_RANK = {
   daily_limit: 60, global_daily_limit: 3000,
   cache_ttl_ms: 10 * 60 * 1000, cache_max_entries: 256,
   daily_candidates: 20,
+  // 日刊の全年度の取得。仮の防御上限（Phase 3 の評価で確定する）。期限・保持時間は SITE_SEARCH と共通。
+  daily_index_max_bytes: 8 * 1024 * 1024, daily_index_max_records: 20000, daily_index_max_years: 100,
+  daily_index_parallel: 4,
   query_max_chars: 200, description_max_chars: 300, candidate_max_chars: 400, result_description_max_chars: 160,
   question_language: 'ja',
   questions: {
