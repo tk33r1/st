@@ -1,6 +1,6 @@
 # サイト内検索 Phase 3 検証計画書
 
-草案（2026-10-09）。同日の本人のレビューで範囲を「日刊2誌の②」に絞った。資料の点検のほかは未実施。
+実装開始（2026-10-09）。同日の本人のレビューで範囲を「日刊2誌の②」に絞った。T03〜T05は実装・公開済み。同範囲の正本はコード。日刊②と実 API の精度・速度の検証は未実施。
 
 対象と期待値は [PRD](site-search-phase3-prd.md)、仕組みは [設計書](site-search-phase3-design.md)、作業の順番は [実装計画書](site-search-phase3-plan.md)。本書でケース・環境・合格条件・証跡を固定する。Phase 2 のテストの成功を Phase 3 の合格として数えない。
 
@@ -112,7 +112,38 @@ site のセットは変えず、`.github/site-search/phase3-rank-queries.json` �
 | --- | --- |
 | 現行のコード・データ・Phase 2 の契約の調査 | 実施済み |
 | V00 の資料の点検 | 本人のレビューの決定を反映済み |
-| fixture・評価セット・Phase 3 のテストの作成 | 未着手 |
-| V01〜V14 の機能の検証・実 API の測定・公開の検証 | 未実施 |
+| Phase 3 のテストの作成 | T03〜T05の境界・generation・一覧の受け渡しを追加。全年度の合成データはPythonテスト内で両媒体×3年分。fixtureファイル・評価セットは未着手 |
+| V12（T03） | 模擬Workerで確認済み。本番Workerの公開成功、Versionと読み取り専用の疎通を確認。実利用の回数を100回まで消費する試験は行っていない |
+| V09・V13（T04） | 手元・出荷物・本番URLで一覧の6場面を確認済み。コードレビュー時の手元と公開後の本番では、GTM・Ahrefsを実際に読み込み、計測の送信を記録して停止 |
+| V03・V11（T05の生成側） | 全年度で共通のgeneration、過去年だけの変更、空の索引、再生成の安定性、既存の日刊画面の互換を確認済み。版の混在・取得失敗を検査するWorker・画面は未実装 |
+| 出荷の確認 | 簡素化後も `build.sh` 成功（653ファイル）。Pagesのビルド成功。本番の両誌の索引が出荷内容と一致（176記事・204記事）。generation以外の既存項目は変更前と一致 |
+| その他のV01〜V14・実 API の測定・公開の検証 | 未実施 |
 
-次は、独立した T03（V12）・T04（V09・V13）と、日刊の T05（V03・V11）から始める。
+実行したコマンド（2026-10-09、基点 `27fae390`、未コミットのT03〜T05）：
+
+```sh
+python -B .github/scripts/generate-nitori-daily.py --rebuild-search-index
+python -B .github/scripts/generate-retail-tech-daily.py --rebuild-search-index
+python -B .github/scripts/test-daily-news.py
+node --test --test-name-pattern='検索は認可|検索のIP上限|Phase 3' .github/scripts/test-magi2.mjs
+node .github/scripts/test-site-search-ui.mjs --root . --match 一覧
+node .github/scripts/test-site-search-ui.mjs --root . --match 日刊ポータル
+bash build.sh
+node .github/scripts/test-site-search-ui.mjs --root _site --match 一覧
+git diff --check
+```
+
+Pythonは22件、模擬Workerは3件、既存の日刊ポータルは5場面が通った。両一覧のインラインJSと `personas.js` もNodeの構文検査を実施。WindowsのGit Bashでは、手元の呼び出しで標準コマンドのPATHと `python3` を補ってビルドした（リポジトリのビルド設定は変更なし）。この手元検証では本番へ送っていない。公開後の確認は7.1に記録した。次はT06の検証を追加する。
+
+同日の簡素化で、再生成の2モードの履歴読み込み・空データの検査を共通化し、両一覧の文字数の重複計算と画面テストの繰り返しを整理した。Python22件と手元の一覧6場面を再実行して通過。再生成の両モードと空データの終了を模擬で確認し、実データの索引だけの再生成では両誌の出力が変更前とバイト単位で一致した。headの受け渡しはインラインのまま。この時点では簡素化後の出荷ビルドと実計測は未確認だった（以後の確認は7.1）。
+
+### 7.1 T03〜T05の公開（2026-10-09）
+
+本人の「本番反映して」の指示により公開した。コードは `6d070f56`（T03）・`c50ead30`（T04）・`20cb42cf`（T05）の3コミット。最新の人格カードを含むmainを確認してからpushし、デプロイした。日刊②は公開していない。
+
+- **Pages**：`20cb42cf3bee8f667f63a11e00f26fbe4203b088`、deployment `9a43c43f-0234-440b-be25-150f2c8dc306`。GitHubのCloudflare Pagesチェックが2026-10-09 12:07:37 JSTに成功。
+- **magi2**：[Deploy Worker実行](https://github.com/tk33r1/st/actions/runs/37877808474)、同じコミットから `worker=magi2`・`dry-run=false`。2026-10-09 12:07:43 JSTに公開成功。Version `fe2d3f16-1463-4738-976c-e809bd77a78e`。`/magi2/models` は本番でHTTP 200・正常なJSON。
+- **本番の一覧**：`node .github/scripts/test-site-search-ui.mjs --base https://tk.st --match 一覧` の6場面が通過。GTM・Ahrefsを読み込めた。記録したGA4のイベントは `page_view`・`user_engagement`。URL・本文・参照元への目印の漏れを検出せず、検索のWorkerへの送信も無し。計測の送信は記録して止めた。
+- **本番の索引**：ブラウザ経由で出荷したJSON全体と一致を確認。nitori `2063db70449ba414`（176記事）、retail `88e2025867b34429`（204記事）。通常のPython HTTPクライアントは403となったため、ブラウザで照合した。
+
+公開に伴うsitemap botのコミット `2dda2f14` はsitemapの更新だけで、索引・号の本文は変更していない。上の公開の証跡はT03〜T05だけのもの。日刊②の精度・応答時間・停止の合格には数えない。
