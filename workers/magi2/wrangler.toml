@@ -19,6 +19,9 @@ MAGI_MODE_ENABLED = "true"
 SITE_RANK_ENABLED = "true"
 # 日刊②は精度・応答時間・画面の検証が済むまで外す。未設定もsiteだけ。媒体ごとの停止にも使う。
 SITE_RANK_SCOPES = "site"
+# 本番測定だけでscopeを一時的に足すときは、同じscopeをSITE_RANK_EVAL_SCOPESにも指定する。
+# その媒体はsecret SITE_RANK_EVAL_KEYをx-api-keyで送る要求だけ許す。通常の画面はdisabledのまま。
+# 測定後はこの正本（siteのみ）で再デプロイし、測定キーを削除する。
 
 [[d1_databases]]
 binding       = "DB"

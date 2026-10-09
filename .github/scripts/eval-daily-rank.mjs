@@ -233,7 +233,7 @@ export function timingRow(magi, q, response, local) {
 
 export function checkPrevious(previous, current, now, ttl) {
   assert.equal(previous.kind, 'browser'); assert.equal(previous.run, 1); assert.equal(current.run, 2);
-  for (const key of ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version']) assert.equal(previous[key], current[key], '2回の条件が違う: ' + key);
+  for (const key of ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version', 'protected_evaluation']) assert.equal(previous[key], current[key], '2回の条件が違う: ' + key);
   assert.equal(previous.started.slice(0, 10), now.toISOString().slice(0, 10), '2回は同じUTC日');
   assert.ok(now.getTime() - Date.parse(previous.finished) >= ttl + 60000, '前回の終了から10分以上と余裕を空ける');
   assert.ok(previous.valid, '前回が不成立');
@@ -255,13 +255,17 @@ const option = (args, name, fallback) => { const i = args.indexOf(name); return 
 export async function main(args = process.argv.slice(2)) {
   const modes = ['--check', '--plan', '--candidates', '--accuracy', '--report', '--probe', '--browser'].filter(m => args.includes(m));
   assert.equal(modes.length, 1, 'モードを1つ指定: --check | --plan | --candidates | --accuracy | --report <記録> | --probe | --browser');
-  const known = new Set([...modes, '--scope', '--set', '--runs', '--run', '--previous', '--worker-version', '--index-set']);
+  const known = new Set([...modes, '--scope', '--set', '--runs', '--run', '--previous', '--worker-version', '--index-set', '--eval-key', '--cancel-after']);
   const seen = new Set();
   for (let i = 0; i < args.length; i++) {
     assert.ok(known.has(args[i]) && !seen.has(args[i]), '知らない引数または重複: ' + args[i]); seen.add(args[i]);
-    if (!modes.includes(args[i]) || args[i] === '--report') { assert.ok(args[i + 1] && !args[i + 1].startsWith('--')); i++; }
+    if ((!modes.includes(args[i]) && args[i] !== '--eval-key') || args[i] === '--report') { assert.ok(args[i + 1] && !args[i + 1].startsWith('--')); i++; }
   }
   const mode = modes[0];
+  const protectedEvaluation = args.includes('--eval-key');
+  const cancelAfter = args.includes('--cancel-after') ? Number(option(args, '--cancel-after')) : null;
+  assert.ok(!protectedEvaluation || ['--probe', '--browser'].includes(mode), '--eval-key は本番のprobe/browserだけ');
+  assert.ok(cancelAfter === null || (mode === '--probe' && Number.isInteger(cancelAfter) && cancelAfter > 0 && cancelAfter < 8000), '--cancel-after はprobeの1〜7999msだけ');
   if (mode === '--report') {
     const record = JSON.parse(readFileSync(resolve(option(args, '--report')), 'utf8'));
     assert.equal(record.kind, 'accuracy', '精度の生記録を指定する');
@@ -312,7 +316,8 @@ export async function main(args = process.argv.slice(2)) {
   const timing = data.timing[scope].map(id => queries.find(q => q.id === id));
   const selected = mode === '--probe' ? [{ id: `${scope}-probe-${run}`, scope, locale: 'ja', filters: {}, query: `日刊検索の疎通確認 ${scope} ${run}` }] : timing;
   const record = { kind: mode === '--probe' ? 'probe' : 'browser', ...metadata, worker_version: version, run,
-    started: new Date().toISOString(), queries: selected, rows: [] };
+    started: new Date().toISOString(), queries: selected, rows: [], protected_evaluation: protectedEvaluation,
+    ...(cancelAfter === null ? {} : { cancel_after_ms: cancelAfter }) };
   if (mode === '--browser' && run === 2) {
     const previous = option(args, '--previous'); assert.ok(previous, '--run 2 には --previous <前回の記録>');
     checkPrevious(JSON.parse(readFileSync(resolve(previous), 'utf8')), record, new Date(), magi.SITE_RANK.cache_ttl_ms);
@@ -325,10 +330,13 @@ export async function main(args = process.argv.slice(2)) {
     assert.ok(r.ok); return r.text();
   });
   assert.equal(production.index_hash, local.index_hash, '本番の全年度の索引がfixtureと違う');
-  const page = await openRankPage(); record.browser = page.version; record.blocked = page.blocked;
+  const apiKey = protectedEvaluation ? process.env.SITE_RANK_EVAL_KEY : null;
+  assert.ok(!protectedEvaluation || apiKey, 'SITE_RANK_EVAL_KEY が無い');
+  const page = await openRankPage({ apiKey }); record.browser = page.version; record.blocked = page.blocked;
   try {
     for (const q of selected) {
-      const response = await page.send({ mode: 'rank', scope, query: q.query, locale: q.locale, filters: q.filters, generation: local.generation });
+      const response = await page.send({ mode: 'rank', scope, query: q.query, locale: q.locale, filters: q.filters, generation: local.generation },
+        cancelAfter === null ? {} : { timeout: cancelAfter });
       record.rows.push(timingRow(magi, q, response, local));
     }
   } finally {

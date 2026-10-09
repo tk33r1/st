@@ -466,6 +466,9 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
     filters = normalizeScopeFilters(scope, body.filters); generation = scopeGeneration(scope, body.generation);
   } catch (_) { return fail('invalid_request', 400); }
   if (!rankScopeEnabled(env, scope)) return fail('disabled');
+  // 本番測定中の媒体は専用キー付きの要求だけ許し、公開画面は停止したままにする。
+  if (daily && String(env.SITE_RANK_EVAL_SCOPES || '').split(',').map(s => s.trim()).includes(scope)
+    && (!env.SITE_RANK_EVAL_KEY || request.headers.get('x-api-key') !== env.SITE_RANK_EVAL_KEY)) return fail('disabled');
   if (!env.DB || !env[SITE_RANK.key]) return fail('unavailable');
   try {
     return await searchDeadline(Math.max(1, SITE_RANK.request_timeout_ms - (Date.now() - started)), async s => {

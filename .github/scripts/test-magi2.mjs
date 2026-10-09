@@ -599,6 +599,36 @@ test('日刊②：未設定はsiteのみ、scopeごとの停止と全体の停�
   assert.equal(w.indexRequests.length, 0);
 });
 
+test('日刊②：本番測定中の媒体は専用キーだけ許し、通常画面を索引・回数・Jevより前に止める', async () => {
+  for (const scope of ['nitori', 'retail']) {
+    const w = dailyRankWorker();
+    w.env.SITE_RANK_EVAL_SCOPES = ' site , ' + scope;
+    const body = { scope, mode: 'rank', query: '収納', locale: 'ja' };
+    for (const secret of [undefined, '', 'private-eval-key']) {
+      w.env.SITE_RANK_EVAL_KEY = secret;
+      for (const key of [undefined, 'wrong', secret]) {
+        if (secret && key === secret) continue;
+        const result = await (await w.request('/magi2/site-search', body, undefined, key ? { 'x-api-key': key } : {})).json();
+        assert.equal(result.reason, 'disabled'); assert.equal(result.cached, false); assert.equal(result.searched, null);
+      }
+    }
+    assert.equal(w.indexRequests.length, 0); assert.equal(w.jevCalls.length, 0); assert.equal(rankRows(w).length, 0);
+    w.env.SITE_RANK_EVAL_KEY = 'private-eval-key';
+    const result = await (await w.request('/magi2/site-search', body, undefined, { 'x-api-key': w.env.SITE_RANK_EVAL_KEY })).json();
+    assert.equal(result.status, 'results'); assert.equal(result.searched.candidates, 3);
+    assert.equal(JSON.stringify(result).includes(w.env.SITE_RANK_EVAL_KEY), false);
+    const calls = w.jevCalls.length, countsBefore = JSON.stringify(rankRows(w));
+    delete w.env.SITE_RANK_EVAL_KEY;
+    assert.equal((await (await w.request('/magi2/site-search', body)).json()).reason, 'disabled');
+    assert.equal(w.jevCalls.length, calls); assert.equal(JSON.stringify(rankRows(w)), countsBefore);
+  }
+  const w = dailyRankWorker(); w.env.SITE_RANK_EVAL_SCOPES = 'site,nitori';
+  assert.equal((await (await rankRequest(w)).json()).status, 'results'); // siteには測定制限を掛けない
+  assert.equal((await (await dailyRankRequest(w, { scope: 'retail' })).json()).status, 'results');
+  w.env.SITE_RANK_ENABLED = 'false'; w.env.SITE_RANK_EVAL_KEY = 'key';
+  assert.equal((await (await w.request('/magi2/site-search', { mode: 'rank', scope: 'nitori', query: '収納', locale: 'ja' }, undefined, { 'x-api-key': 'key' })).json()).reason, 'disabled');
+});
+
 test('日刊②：候補は点数・日付・記事番号で20件を選び、不足は最新の記事で補う', () => {
   const { ctx } = worker(), files = dailyFiles(), head = files.get('search-index.json'), base = head.records[0];
   head.records = Array.from({ length: 25 }, (_, i) => ({ ...base, title: '一般記事', summary: '', tags: [], url: `20261009/#art-${25 - i}` }));

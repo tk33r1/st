@@ -276,7 +276,7 @@ test('速度記録は画面の検査を通し、request_id・N/M/J・generation�
 });
 
 test('速度の2回目は同一UTC日・同じ版・24問・キャッシュ期限と余裕を要求する', () => {
-  const keys = ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version'];
+  const keys = ['scope', 'index_set', 'terms_source_sha256', 'generation', 'index_hash', 'candidate_hash', 'query_hash', 'code_hash', 'config_hash', 'worker_version', 'protected_evaluation'];
   const current = { kind: 'browser', run: 2, ...Object.fromEntries(keys.map(k => [k, 'same'])), queries: Array.from({ length: 24 }, (_, i) => ({ id: String(i) })) };
   const previous = { ...current, run: 1, valid: true, started: '2026-10-09T01:00:00Z', finished: '2026-10-09T01:01:00Z', rows: current.queries };
   checkPrevious(previous, current, new Date('2026-10-09T01:12:00Z'), 600000);
@@ -305,7 +305,9 @@ test('CLIのオフライン経路はキーを読まず、回数と費用を示�
     assert.equal(plan.index_set, indexSet);
     assert.equal(plan.terms_source_sha256, indexSet === 'terms' ? JSON.parse(read(`${fixtures}/with-search-terms/indexes.json`)).terms_source_sha256 : null);
   }
-  for (const args of [['--accuracy'], ['--check', '--plan'], ['--check', '--oops'], ['--plan', '--scope', 'nitori', '--scope', 'retail'], ['--browser', '--scope', 'nitori']]) {
+  for (const args of [['--accuracy'], ['--check', '--plan'], ['--check', '--oops'], ['--plan', '--scope', 'nitori', '--scope', 'retail'], ['--browser', '--scope', 'nitori'],
+    ['--check', '--eval-key'], ['--accuracy', '--eval-key'], ['--check', '--cancel-after', '100'],
+    ['--probe', '--cancel-after', '0'], ['--probe', '--cancel-after', '8000'], ['--probe', '--cancel-after', '1.5'], ['--browser', '--cancel-after', '100']]) {
     const r = spawnSync(process.execPath, ['.github/scripts/eval-daily-rank.mjs', ...args], { cwd: root, encoding: 'utf8' }); assert.equal(r.status, 1);
   }
 });

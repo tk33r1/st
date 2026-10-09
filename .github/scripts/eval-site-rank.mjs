@@ -372,7 +372,7 @@ export function accuracyReport(record, file) {
 // 本物のブラウザ（Playwright の Chromium）で 404 のページ（Origin が https://tk.st）を開き、そこから本番の Worker へ送る。
 // assets/site-search.js と同じ fetch を送り、送信の直前から res.json() を読み終えるまでを測る（プリフライトを含む）。
 // 解析を汚さない：計測を止める設定を先に入れ、tk.st と Worker 以外への通信は止める
-export async function openRankPage() {
+export async function openRankPage({ apiKey = null } = {}) {
   const { chromium } = await import('playwright'); // ブラウザの測定のときだけ読む（smoke の経路は npm の依存を読まない）
   const instance = await chromium.launch();
   const blocked = [];
@@ -389,15 +389,15 @@ export async function openRankPage() {
     const landing = await page.goto(`https://tk.st/site-rank-eval-${Date.now()}/`);
     assert.equal(landing.status(), 404, '404 のページが開けない');
     // 期限は画面と同じ（BROWSER_TIMEOUT_MS）。本文の読み取りまで含めて止める
-    const send = body => page.evaluate(async ({ url, body, timeout }) => {
+    const send = (body, { timeout = BROWSER_TIMEOUT_MS } = {}) => page.evaluate(async ({ url, body, timeout, apiKey }) => {
       const started = performance.now();
       try {
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) }, body: JSON.stringify(body),
           credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(timeout) });
         const data = await res.json();
         return { http: res.status, data, ms: performance.now() - started };
       } catch (e) { return { http: null, error: e && e.name, ms: performance.now() - started }; }
-    }, { url: RANK_URL, body, timeout: BROWSER_TIMEOUT_MS });
+    }, { url: RANK_URL, body, timeout, apiKey });
     return { version: instance.version(), blocked, send, close: () => instance.close() };
   } catch (e) { await instance.close(); throw e; }
 }
