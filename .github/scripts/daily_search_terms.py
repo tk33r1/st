@@ -94,6 +94,15 @@ CONCEPTS = [
     ('AI|人工知能|生成AI', 'artificial intelligence', '人工知能の活用'),
 ]
 
+# 短い企業名は、別のカタカナ語や一般的な概念の一部には当てない。
+NAME_PATTERNS = {
+    'メタ': re.compile(r'(?<![ァ-ヺー])メタ(?![ァ-ヺー]|認知|分析|情報|思考)'),
+    'コーチ': re.compile(r'(?<![ァ-ヺー])コーチ(?![ァ-ヺー])'),
+}
+COACH_BRAND_CONTEXT = re.compile(
+    r'タペストリー|ブランド|服飾|ファッション|バッグ|財布|革製品|鞄|'
+    r'\b(?:tapestry|brand|fashion|handbags?|bags?|wallets?|leather)\b')
+
 
 def valid_search_terms(value):
     return (isinstance(value, list) and 3 <= len(value) <= 5
@@ -109,11 +118,16 @@ def fallback_search_terms(article):
     summary = normalize(article.get('summary', '') or '')
     title_hits, summary_hits = [], []
     def matches(text, key):
+        if key in NAME_PATTERNS:
+            return NAME_PATTERNS[key].search(text) is not None
         # AIをretailやchairの途中、ECをelectronicの途中に当てない。
         if key.isascii():
             return re.search(r'(?<![a-z0-9])' + re.escape(key) + r'(?![a-z0-9])', text) is not None
         return key in text
     for patterns, english, japanese in CONCEPTS:
+        # coach は接客の指導などにも使われるため、服飾の文脈が必要。
+        if english == 'Coach' and not COACH_BRAND_CONTEXT.search(title + ' ' + summary):
+            continue
         keys = [normalize(p) for p in patterns.split('|')]
         if any(matches(title, p) for p in keys):
             title_hits.append((english, japanese))

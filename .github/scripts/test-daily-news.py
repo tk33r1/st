@@ -417,6 +417,32 @@ class SearchGenerationTests(unittest.TestCase):
             self.assertNotIn('online shopping', terms)
             self.assertNotIn('checkout systems', terms)
 
+    def test_ambiguous_company_names_do_not_match_compounds_or_training(self):
+        from daily_search_terms import fallback_search_terms, valid_search_terms
+        samples = [
+            ('小売店がメタバースで仮想店舗を開設', '', 'Meta', False),
+            ('メタデータを管理するAIシステム', '', 'Meta', False),
+            ('メタ認知を使った人材育成', '', 'Meta', False),
+            ('アマゾン、メタのAIエージェントから除外を要請', '', 'Meta', True),
+            ('Metaがメタバースの事業を発表', '', 'Meta', True),
+            ('メタ・プラットフォームズの決算', '', 'Meta', True),
+            ('店長が新人の接客をコーチング', '', 'Coach', False),
+            ('服飾ブランドで接客をコーチング', '', 'Coach', False),
+            ('接客のコーチ役を配置', '', 'Coach', False),
+            ('A coach trains employees', '', 'Coach', False),
+            ('コーチが新作バッグを発表', '', 'Coach', True),
+            ('Coach announces handbags', '', 'Coach', True),
+            ('コーチの新展開', 'タペストリーの服飾ブランド。', 'Coach', True),
+            ('服飾ブランド・コーチの新展開', '', 'Coach', True),
+        ]
+        for title, summary, company, expected in samples:
+            with self.subTest(title=title):
+                terms = fallback_search_terms({'title': title, 'summary': summary, 'category': '話題', 'tags': []})
+                self.assertTrue(valid_search_terms(terms))
+                self.assertEqual(company in terms, expected)
+                if not expected:
+                    self.assertNotIn('大手IT企業' if company == 'Meta' else '服飾ブランド', terms)
+
     def test_backfill_preserves_history_except_terms_and_never_rebuilds_pages(self):
         import copy
         import tempfile
@@ -486,6 +512,7 @@ class SearchGenerationTests(unittest.TestCase):
                    ('category', ''), ('category', None), ('category', '🧺' * 41),
                    ('category', '店舗\x00'), ('category', '店舗\x85'),
                    ('tags', ['']), ('tags', [None]), ('tags', '店舗')]
+        invalid += [(field, value) for field in ('summary', 'source') for value in (None, 0, False, [], {})]
         for config in (nitori.CONFIG, daily.CONFIG):
             for field, value in invalid:
                 with self.subTest(media=config['media_id'], field=field, value=value), tempfile.TemporaryDirectory() as directory:
@@ -500,6 +527,85 @@ class SearchGenerationTests(unittest.TestCase):
         history = self.history()
         history[0]['articles'][0]['category'] = '🧺' * 40
         self.assertEqual(engine.build_search_index(nitori.CONFIG, history)['search-index.json']['records'][0]['category'], '🧺' * 40)
+        for field in ('summary', 'source'):
+            history[0]['articles'][0].pop(field, None)
+        record = engine.build_search_index(nitori.CONFIG, history)['search-index.json']['records'][0]
+        self.assertEqual(record['summary'], '')
+        self.assertEqual(record['source'], '')
+
+    def test_bad_article_fields_stop_every_pipeline_before_any_output(self):
+        import tempfile
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for mode in ([], ['--rebuild'], ['--rebuild-search-index'], ['--backfill-search-terms']):
+                for field in ('summary', 'source'):
+                    with self.subTest(media=config['media_id'], mode=mode, field=field), tempfile.TemporaryDirectory() as directory:
+                        config = {**config, 'data_dir': str(Path(directory, 'data')), 'job_dir': str(Path(directory, 'job'))}
+                        history = self.history()
+                        article = history[0]['articles'][0]
+                        article[field] = None
+                        with patch('sys.argv', ['daily', '--date', '20261010', *mode]), \
+                                patch.object(engine, 'load_history', return_value=history), \
+                                patch.object(engine, 'gather_all_candidate_news', return_value={}), \
+                                patch.object(engine, 'analyze_news_with_fallback', return_value={'articles': [article]}), \
+                                patch.object(engine, 'repair_history_source_links', return_value={0}), \
+                                patch.object(engine, 'save_history') as save, \
+                                patch.object(engine, 'write_issue_page') as issue, \
+                                patch.object(engine, 'write_json_atomic') as index, \
+                                patch.object(engine, 'render_top_index_html') as portal, \
+                                patch.object(engine, 'generate_rss_xml') as rss, \
+                                patch.object(engine, 'trigger_daily_ogp_generation') as ogp:
+                            with self.assertRaisesRegex(ValueError, field):
+                                engine.run_daily_pipeline(config)
+                            for output in (save, issue, index, portal, rss, ogp):
+                                output.assert_not_called()
+                        self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_collection_validation_keeps_existing_portal_and_feed(self):
+        import tempfile
+        for field in ('summary', 'source'):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                config = {**nitori.CONFIG, 'job_dir': directory}
+                for name in ('index.html', 'rss.xml', 'search-index.json'):
+                    Path(directory, name).write_bytes(b'previous output')
+                history = self.history()
+                history[0]['articles'][0][field] = None
+                with patch.object(engine, 'render_top_index_html') as portal, patch.object(engine, 'generate_rss_xml') as rss:
+                    with self.assertRaisesRegex(ValueError, field):
+                        engine.write_collection_outputs(config, history)
+                    portal.assert_not_called(); rss.assert_not_called()
+                self.assertTrue(all(path.read_bytes() == b'previous output' for path in Path(directory).iterdir()))
+
+    def test_valid_publish_and_rebuild_save_the_validated_search_indexes(self):
+        import copy
+        import tempfile
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for mode in ([], ['--rebuild']):
+                with self.subTest(media=config['media_id'], mode=mode), tempfile.TemporaryDirectory() as directory:
+                    config = {**config, 'data_dir': str(Path(directory, 'data')), 'job_dir': str(Path(directory, 'job'))}
+                    Path(config['job_dir']).mkdir()
+                    history = self.history()
+                    engine.save_history(config['data_dir'], history)
+                    article = copy.deepcopy(history[0]['articles'][0])
+                    with patch('sys.argv', ['daily', '--date', '20261010', *mode]), \
+                            patch.object(engine, 'gather_all_candidate_news', return_value={}), \
+                            patch.object(engine, 'analyze_news_with_fallback', return_value={'articles': [article]}), \
+                            patch.object(engine, 'repair_history_source_links', return_value=set()), \
+                            patch.object(engine, 'write_issue_page', return_value='20261010'), \
+                            patch.object(engine, 'render_top_index_html', return_value='<main>portal</main>'), \
+                            patch.object(engine, 'generate_rss_xml', return_value='<rss>feed</rss>'), \
+                            patch.object(engine, 'trigger_daily_ogp_generation'):
+                        engine.run_daily_pipeline(config)
+                    stored = engine.load_history(config['data_dir'])
+                    if mode:
+                        self.assertEqual(stored, history)
+                    else:
+                        self.assertEqual(stored[0]['date'], '20261010')
+                        self.assertEqual(stored[0]['articles'], [article])
+                        self.assertEqual(stored[1:], history)
+                    for name, payload in engine.build_search_index(config, stored).items():
+                        self.assertEqual(json.loads(Path(config['job_dir'], name).read_text(encoding='utf-8')), payload)
+                    self.assertEqual(Path(config['job_dir'], 'index.html').read_text(encoding='utf-8'), '<main>portal</main>\n')
+                    self.assertEqual(Path(config['job_dir'], 'rss.xml').read_text(encoding='utf-8'), '<rss>feed</rss>\n')
 
     def test_generation_is_shared_by_all_years_and_stable_on_rebuild(self):
         for config in (nitori.CONFIG, daily.CONFIG):

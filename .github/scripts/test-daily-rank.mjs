@@ -75,6 +75,32 @@ test('語を足した固定索引でも120問の正解・本文とJevの変換�
   await assert.rejects(loadFixtures(magi, data, { indexSet: 'other' }));
 });
 
+test('接客のコーチング20記事があっても、古いCoachブランド記事を候補から落とさない', async () => {
+  const script = `
+import sys, json, importlib.util
+sys.path.insert(0, '.github/scripts')
+from daily_engine import build_search_index
+from daily_search_terms import fallback_search_terms
+spec = importlib.util.spec_from_file_location('nitori', '.github/scripts/generate-nitori-daily.py')
+module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+def article(title):
+    value = {'title': title, 'summary': '', 'category': '話題', 'tags': []}
+    value['search_terms'] = fallback_search_terms(value)
+    return value
+history = [
+    {'date': '20261010', 'articles': [article('店舗スタッフの接客をコーチング') for _ in range(20)]},
+    {'date': '20260910', 'articles': [article('コーチが新作バッグを発表')]},
+]
+print(json.dumps(build_search_index(module.CONFIG, history), ensure_ascii=False))
+`;
+  const files = JSON.parse(execFileSync('python', ['-B', '-c', script], { cwd: root, encoding: 'utf8' }));
+  const magi = loadWorker(), local = await dailySnapshot(magi, 'nitori', name => JSON.stringify(files[name]));
+  assert.equal(local.records, 21);
+  const candidates = queryCandidates(magi, local, query('nitori', 'Coach'));
+  assert.equal(candidates.ids.length, 20);
+  assert.equal(candidates.ids[0], 'nitoridaily:20260910:1');
+});
+
 for (const scope of ['nitori', 'retail']) {
   test(scope + ': 言い換え語は古い記事を候補に入れ、Jevの内容・ハッシュ・filtersを変えない', async () => {
     const magi = loadWorker(), original = await synthetic(magi, scope);

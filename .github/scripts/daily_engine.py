@@ -1300,6 +1300,9 @@ def build_search_index(config, articles_history):
             # Worker の索引検査とそろえ、不正な1記事で②だけが停止する公開を防ぐ。
             title, category, tags = record['title'], record['category'], record['tags']
             invalid = []
+            for field in ('summary', 'source', 'takeaway', 'source_kind'):
+                if not isinstance(record[field], str):
+                    invalid.append(field)
             if not isinstance(title, str) or not title.replace('\ufeff', '').strip():
                 invalid.append('title')
             if (not isinstance(category, str) or not category or len(category) > 40
@@ -2489,8 +2492,11 @@ def backfill_search_terms(config, articles_history, *, dry_run=False):
     return count
 
 
-def write_collection_outputs(config, articles_history):
+def write_collection_outputs(config, articles_history, *, search_files=None):
     """ポータル、RSS、検索インデックスをまとめて書き出す。"""
+    # 呼び出し側で検査済みなら再利用し、直接呼ぶ場合も書き出す前に検査する。
+    if search_files is None:
+        search_files = build_search_index(config, articles_history)
     job_dir = config['job_dir']
     outputs = (
         ('index.html', clean_generated_text(render_top_index_html(config, articles_history))),
@@ -2506,7 +2512,7 @@ def write_collection_outputs(config, articles_history):
         with open(path, 'w', encoding='utf-8') as f:
             f.write(content)
         written.append(filename)
-    write_search_indexes(config, articles_history)
+    _write_search_index_files(config, search_files)
     return written
 
 
@@ -2538,6 +2544,7 @@ def run_daily_pipeline(config):
             print(f" -> 索引だけを再生成: {', '.join(files)}")
             return
         repaired_indices = repair_history_source_links(articles_history)
+        search_files = build_search_index(config, articles_history)
         if repaired_indices:
             save_history(data_dir, articles_history)
             print(f" -> 旧号のSNS出典URLを修復してJSONへ反映: {len(repaired_indices)} 号")
@@ -2546,7 +2553,7 @@ def run_daily_pipeline(config):
             for i in range(len(articles_history)):
                 date_key = write_issue_page(config, articles_history, i)
                 print(f" -> 再生成: {date_key}号 HTML")
-            written = write_collection_outputs(config, articles_history)
+            written = write_collection_outputs(config, articles_history, search_files=search_files)
         print(f" -> 再生成: トップポータル index.html")
         print(" -> 再生成: rss.xml" if 'rss.xml' in written else " -> rss.xml は lastBuildDate 以外に変わりがないので、そのまま")
         print(" -> 既存のページの dateModified は作り直す前の値のまま")
@@ -2606,6 +2613,8 @@ def run_daily_pipeline(config):
     articles_history.append(new_issue)
     articles_history.sort(key=lambda x: x['date'], reverse=True)
     repaired_indices = repair_history_source_links(articles_history)
+    # 不正な索引を含む号は、履歴・隣接号・ポータル・RSSのどれも保存しない。
+    search_files = build_search_index(config, articles_history)
 
     print("[3/3] ファイル出力中...")
     save_history(data_dir, articles_history)
@@ -2623,7 +2632,7 @@ def run_daily_pipeline(config):
     for i in sorted(indices_to_render):
         write_issue_page(config, articles_history, i)
 
-    write_collection_outputs(config, articles_history)
+    write_collection_outputs(config, articles_history, search_files=search_files)
 
     trigger_daily_ogp_generation(config, target_date_key)
     print(f"=== 完了: {config['media_name']} ({target_date_key}号 / Engine: {ai_result.get('generated_by')}) ===")
