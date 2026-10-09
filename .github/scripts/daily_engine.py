@@ -293,9 +293,9 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261009_3'
+DAILY_UI_VERSION = '20261009_4'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
-SITE_SEARCH_VERSION = '20261009_3'
+SITE_SEARCH_VERSION = '20261009_4'
 DAILY_CSS_VERSION = '20261009_2'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。

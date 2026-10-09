@@ -816,6 +816,27 @@ if (!remote) {
   }
   for (const [media, scope] of [['nitoridaily', 'nitori'], ['retailtechdaily', 'retail']]) {
     const head = fixture(media, 110);
+    scenario(`日刊② ${scope} 検索文字列の再利用でも全項目・大小文字・空白の一致を保つ`, { analyticsOff: true }, async (page, name) => {
+      const data = fixture(media, 6);
+      const fields = ['title', 'summary', 'takeaway', 'source', 'category', 'tags'];
+      const values = ['Café Title', 'Summary Only', 'Takeaway Only', 'Source Only', 'Category Only', '日本 語'];
+      data.records = data.records.map((record, i) => ({ ...record, title: '記事 ' + i, summary: '', takeaway: '', source: '', tags: [],
+        [fields[i]]: fields[i] === 'tags' ? [values[i]] : values[i] }));
+      await indices(page, media, data);
+      const calls = await workerFor(page, () => response(media, data));
+      await openDaily(page, media);
+      for (const [i, text] of ['CAFÉTITLE', 'summaryonly', 'TAKEAWAY ONLY', 'source only', 'CATEGORYONLY', '日本　語'].entries()) {
+        await page.fill(INPUT, text); await page.waitForSelector('#archiveSuggestions [role="option"]');
+        const hrefs = await page.locator('#archiveSuggestions a').evaluateAll(as => as.map(a => a.getAttribute('href')));
+        check(JSON.stringify(hrefs) === JSON.stringify(['/job/' + media + '/20261009/#art-' + (i + 1)]), name + ': ' + fields[i] + 'の一致が変わった');
+      }
+      await page.fill(INPUT, 'ＣＡＦÉＴＩＴＬＥ'); await page.waitForSelector('#archiveSuggestions [role="presentation"]');
+      check(await page.locator('#archiveSuggestions a').count() === 0, name + ': 従来にない全角の正規化をした');
+      await page.fill(INPUT, 'sourceonly'); await page.selectOption('#archiveRegionFilter', 'GLOBAL');
+      await page.waitForSelector('#archiveSearchResults a');
+      check(await page.locator('#archiveSearchResults a').count() === 1 && (await page.locator('#archiveSearchResults a').getAttribute('href')).endsWith('#art-4'), name + ': 絞り込みの①が変わった');
+      check(calls.length === 0, name + ': 入力・絞り込みで②を送った');
+    });
     scenario(`日刊② ${scope} 入力候補と明示送信・全件数・重複・フォーカス`, {}, async (page, name) => {
       await indices(page, media, head);
       const calls = await workerFor(page, async () => { await page.waitForTimeout(250); return response(media, head); });

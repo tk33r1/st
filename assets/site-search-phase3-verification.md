@@ -227,3 +227,16 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - 変更したWorkerの3JSの構文検査と`git diff --check`が成功。wranglerのdry-run成功（224.71KiB、gzip 63.20KiB）。
 
 公開関数の入力の契約を保つため、filtersの再正規化は残した。siteの0件の扱い・媒体ごとの設定も維持。`SITE_RANK_SCOPES="site"`は変更していない。実API・本番へは送信していない。この簡素化は未公開。
+
+### 7.8 提案を採用した画面の簡素化（2026-10-09）
+
+日刊①の検索文字列を索引の読み込み時に一度だけ正規化し、記事をキーにしたWeakMapから使い回す。元のrecordsと本文は書き換えず、タイトル・要約・要点・出典・カテゴリー・タグの一致と大小文字・空白の規則を維持。候補描画は条件を一度だけ組み立てる。
+
+- Enter判定・②の送信可能な条件・伏せ字・入力と言語変更のリセット・停止時の0件の日英文言を共通化。計測停止の判定がlastTracked更新より先に行われる順序はそのまま残した。
+- generation・年・URLの重複する正規表現の検査を整理。日刊URLは固定のパスの検査を先に行い、siteのURL検査は維持。
+- `test-site-search-ui.mjs`に両媒体各1場面を追加。6項目それぞれの一致、大文字小文字・日本語の空白・従来どおり全角英字を変換しないこと、地域の絞り込みと入力中に送信しないことを確認。
+- `node .github/scripts/test-site-search-ui.mjs --root _site`：全96場面通過（既存94・追加2）。Pythonは`test-daily-news.py`22件・`test-site-search-index.py`5件通過。変更したJS/Pythonの構文検査と`git diff --check`が成功。
+- 共通daily-uiとsite-searchの参照を`20261009_4`へ更新。全57日刊HTMLはこの2つのJSの版以外が変更前とバイト単位で一致し、全55号の本文・dateModifiedと両誌の索引を保持。CSSとsearch-analyticsの版は変更なし。
+- `build.sh`成功（653ファイル）。変更した58HTMLと共通JSの2ファイルが出荷物とバイト単位で一致。日付を保つため画面側のコミットに`Date-Sync: skip`を付ける。
+
+この簡素化は未公開。実API・本番へは送っていない。手元ではGTM・Ahrefsを読み込めず、解析の検査はdataLayerまで。日刊②の停止設定と後続の評価・有効化の条件は維持。

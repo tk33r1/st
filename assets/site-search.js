@@ -29,17 +29,17 @@
   // 結果の URL の検査（設計書 5.3）。合えば href に入れる値を返し、合わなければ null
   function resultHref(value, scope) {
     if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000- \u007f]/.test(value)) return null;
-    var url;
-    try { url = new URL(value, 'https://tk.st'); } catch (_) { return null; }
-    if (url.origin !== 'https://tk.st' || url.search) return null;
     if (DAILY_DIRS[scope]) {
       var pattern = new RegExp('^/job/' + DAILY_DIRS[scope] + '/(\\d{8})/#art-([1-9]\\d*)$');
       var match = pattern.exec(value);
-      if (!match || match[0] !== value || !Number.isSafeInteger(Number(match[2]))) return null;
+      if (!match || !Number.isSafeInteger(Number(match[2]))) return null;
       var date = match[1], iso = date.slice(0, 4) + '-' + date.slice(4, 6) + '-' + date.slice(6);
       var parsed = new Date(iso + 'T00:00:00Z');
       return Number(date.slice(0, 4)) > 0 && !isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === iso ? value : null;
     }
+    var url;
+    try { url = new URL(value, 'https://tk.st'); } catch (_) { return null; }
+    if (url.origin !== 'https://tk.st' || url.search) return null;
     return url.hash ? null : url.pathname;
   }
 
@@ -53,7 +53,7 @@
       if (searched !== null || data.status !== 'failed') {
         if (!searched || !['total', 'candidates', 'judged'].every(function (k) { return Number.isSafeInteger(searched[k]) && searched[k] >= 0; })
           || searched.judged > searched.candidates || searched.candidates > searched.total || searched.candidates > 20
-          || typeof searched.generation !== 'string' || !/^[a-f0-9]{1,32}$/i.test(searched.generation) || /[^a-f0-9]/i.test(searched.generation)
+          || typeof searched.generation !== 'string' || !/^[a-f0-9]{1,32}$/i.test(searched.generation)
           || (data.status !== 'failed' && (data.complete !== (searched.judged === searched.candidates) || data.results.length > searched.judged))) return failed('unavailable');
       }
       if (data.status === 'no_results' && !data.complete) return failed('unavailable');
