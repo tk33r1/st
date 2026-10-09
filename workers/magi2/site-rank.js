@@ -155,7 +155,7 @@ export function rankSiteUrl(url) {
 // キーは検索語を含む条件の SHA-256 で、検索語そのものは持たない。値は応答の本体（検索語を含まない）
 const rankCache = new Map();
 async function rankCacheKey(scope, locale, query, filters, snapshot) {
-  return sha256(JSON.stringify([rankScopeConfig(scope).revision, scope, locale, query, filters || null, snapshot.indexHash || await snapshotHash(snapshot)]));
+  return sha256(JSON.stringify([rankScopeConfig(scope).revision, scope, locale, query, filters || null, await snapshotHash(snapshot)]));
 }
 function rankCacheGet(key) {
   const now = Date.now();

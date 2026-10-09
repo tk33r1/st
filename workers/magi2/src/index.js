@@ -2,7 +2,7 @@ import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, 
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankTargets } from '../site-rank.js';
-import { filterDailyItems, getDailySnapshot, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
+import { filterDailyItems, getDailySnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
@@ -441,13 +441,13 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
 // 検索語・候補の中身・上流の本文はログにも通知にも出さない
 async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started) {
   const info = { total: null, candidates: null, judged: null, above: 0, indexMs: null, jevMs: null, indexHash: null, candidateHash: null };
-  const scope = body.scope, daily = scope === 'nitori' || scope === 'retail';
+  const scope = body.scope, daily = isDailyScope(scope);
   let config, filters, generation;
   // 期限・切断で先に応答を返した後も、中の処理は signal の効かない待ち（D1 など）の間は進むので、ログは最初の1回だけ
   let logged = false;
   const reply = (httpStatus, r) => {
     if (!logged) log('site_rank', r.status, r.reason, info.total, info.candidates, info.judged, info.above, info.indexMs, info.jevMs, Date.now() - started,
-      config?.revision ?? SITE_RANK.revision, info.indexHash, info.candidateHash, typeof scope === 'string' && ['site', 'nitori', 'retail'].includes(scope) ? scope : 'invalid');
+      config?.revision ?? SITE_RANK.revision, info.indexHash, info.candidateHash, isSearchScope(scope) ? scope : 'invalid');
     logged = true;
     return jsonResponse({ request_id: requestId, status: r.status, complete: r.complete, reason: r.reason, searched: r.searched, results: r.results,
       ...(daily ? { cached: r.cached === true } : {}) },
@@ -476,10 +476,11 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       try { snapshot = daily ? await getDailySnapshot(scope, { filters, generation, signal: s }) : await getSiteSnapshot(ctx, s); }
       catch (e) {
         if (e.searchCode === 'cancelled') throw e;
-        return fail(e.searchCode === 'invalid_request' ? 'invalid_request' : e.searchCode === 'index_updating' ? 'index_updating' : 'index_unavailable', e.searchCode === 'invalid_request' ? 400 : 200);
+        const code = e.searchCode;
+        return fail(code === 'invalid_request' || code === 'index_updating' ? code : 'index_unavailable', code === 'invalid_request' ? 400 : 200);
       }
       info.indexMs = Date.now() - indexStarted;
-      [info.indexHash, info.candidateHash] = await Promise.all([snapshot.indexHash || snapshotHash(snapshot), rankCandidateHash(snapshot)]);
+      [info.indexHash, info.candidateHash] = await Promise.all([snapshotHash(snapshot), rankCandidateHash(snapshot)]);
       stopped();
       if (!daily && !snapshot.rankReady) return fail('index_unavailable');
       if (daily) { info.total = filterDailyItems(snapshot, filters).length; info.generation = snapshot.generation; }

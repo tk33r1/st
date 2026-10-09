@@ -232,7 +232,7 @@ test('日刊scope：headは1回、過去年は最大4並列で固定URLから取
   assert.equal(snapshot.raw.length, 7); assert.equal(maximum, 4);
   assert.equal(seen.filter(name => name === 'search-index.json').length, 1);
   assert.equal(snapshot.text, JSON.stringify(dailyPairs(files)));
-  assert.equal(snapshot.indexHash, createHash('sha256').update(snapshot.text).digest('hex'));
+  assert.equal(await w.ctx.snapshotHash(snapshot), createHash('sha256').update(snapshot.text).digest('hex'));
   assert.equal(w.waits.length, 0);
   assert.equal(await w.ctx.getDailySnapshot('nitori'), snapshot);
   assert.equal(seen.length, 7);

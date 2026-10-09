@@ -217,3 +217,13 @@ V01〜V04・V06〜V07のWorker側の模擬検証であり、精度・本番の�
 - push前後にリモートmainを取得。新しい号・人格カードは無し。sitemap botの`767b6c71`はsitemapだけの更新で、号本文とdateModified・索引は変わっていない。bot更新を手元にも取り込んだ。
 
 生の画面記録とログは非追跡の`workers/.wrangler/`に保存。次はT09。日刊②の有効化には引き続きT11〜T13の合格が必要。
+
+### 7.7 提案を採用したWorkerの簡素化（2026-10-09）
+
+本人の「おすすめだと思われる分だけ実施して」の指示で、日刊のsnapshot.indexHashを廃止し、既存のsnapshotHashへ統一した。取得の期限内でハッシュを確定する順序は保持し、同じWeakMapのPromiseを使い回す。scopeの判定はSEARCH_SCOPESから行い、エラーの対応付けと重複する正規表現の検査を整理した。
+
+- JSの末尾固定の正規表現（mなし）が末尾の改行を拒否することを実行確認。日付の妥当性・記事番号の範囲・URLの媒体一致・generationの一致は維持。
+- `node --test .github/scripts/test-magi2.mjs`：全148件通過。日刊の索引・ハッシュ・HTTP・キャッシュ・回数・期限・切断と、既存site・MAGIの回帰を確認。`eval-site-rank.mjs --check`も成功。
+- 変更したWorkerの3JSの構文検査と`git diff --check`が成功。wranglerのdry-run成功（224.71KiB、gzip 63.20KiB）。
+
+公開関数の入力の契約を保つため、filtersの再正規化は残した。siteの0件の扱い・媒体ごとの設定も維持。`SITE_RANK_SCOPES="site"`は変更していない。実API・本番へは送信していない。この簡素化は未公開。

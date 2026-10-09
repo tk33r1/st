@@ -1,5 +1,5 @@
 import { SITE_RANK, SITE_SEARCH } from './personas.js';
-import { searchDeadline, searchFailure, sha256 } from './site-search.js';
+import { searchDeadline, searchFailure, snapshotHash } from './site-search.js';
 
 // 入力から URL を作らない。scope と媒体のディレクトリの対応はここだけに持つ。
 const SEARCH_SCOPES = Object.freeze({
@@ -13,13 +13,21 @@ const scopeObject = value => {
   const prototype = Object.getPrototypeOf(value);
   return prototype === null || Object.getPrototypeOf(prototype) === null;
 };
-const scopeHex = value => typeof value === 'string' && value.length >= 1 && value.length <= 32 && !/[^a-f0-9]/i.test(value);
-const scopeYear = value => typeof value === 'string' && value.length === 4 && /^\d{4}$/.test(value) && Number(value) > 0;
-const scopeMonth = value => typeof value === 'string' && value.length === 6 && /^\d{6}$/.test(value)
+const scopeHex = value => typeof value === 'string' && /^[a-f0-9]{1,32}$/i.test(value);
+const scopeYear = value => typeof value === 'string' && /^\d{4}$/.test(value) && Number(value) > 0;
+const scopeMonth = value => typeof value === 'string' && /^\d{6}$/.test(value)
   && scopeYear(value.slice(0, 4)) && Number(value.slice(4)) >= 1 && Number(value.slice(4)) <= 12;
 
+export function isSearchScope(name) {
+  return typeof name === 'string' && Object.hasOwn(SEARCH_SCOPES, name);
+}
+
+export function isDailyScope(name) {
+  return isSearchScope(name) && !!SEARCH_SCOPES[name].media;
+}
+
 export function searchScope(name) {
-  if (typeof name !== 'string' || !Object.hasOwn(SEARCH_SCOPES, name)) throw searchFailure('invalid_request');
+  if (!isSearchScope(name)) throw searchFailure('invalid_request');
   return SEARCH_SCOPES[name];
 }
 
@@ -60,7 +68,7 @@ export function scopeGeneration(scope, value) {
 }
 
 function dailyDate(value) {
-  if (typeof value !== 'string' || value.length !== 8 || !/^\d{8}$/.test(value) || !scopeMonth(value.slice(0, 6))) return false;
+  if (typeof value !== 'string' || !/^\d{8}$/.test(value) || !scopeMonth(value.slice(0, 6))) return false;
   const year = Number(value.slice(0, 4)), month = Number(value.slice(4, 6)), day = Number(value.slice(6));
   const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
   return day >= 1 && day <= [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
@@ -117,7 +125,7 @@ export function makeDailySnapshot(scope, files) {
       // 完全一致で相対 URL を検査するため、遡り・外部 URL・エンコード・別媒体のリンクも通らない。
       const match = /^(\d{8})\/#art-([1-9]\d*)$/.exec(record.url);
       const article = match && Number(match[2]);
-      if (!match || match[0] !== record.url || match[1] !== record.date || !Number.isSafeInteger(article)) throw searchFailure('index_unavailable');
+      if (!match || match[1] !== record.date || !Number.isSafeInteger(article)) throw searchFailure('index_unavailable');
       const id = `${media}:${record.date}:${article}`, url = `/job/${media}/${record.url}`;
       if (ids.has(id) || urls.has(url)) throw searchFailure('index_unavailable');
       ids.add(id); urls.add(url); categories.add(record.category); months.add(record.date.slice(0, 6));
@@ -175,7 +183,7 @@ async function fetchDailySnapshot(scope, signal) {
       }
     }));
     const snapshot = makeDailySnapshot(scope, files);
-    snapshot.indexHash = await sha256(snapshot.text);
+    await snapshotHash(snapshot);
     if (s.aborted) throw searchFailure('cancelled');
     return snapshot;
   }, signal);
