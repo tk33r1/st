@@ -189,7 +189,11 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 
 ### サイト内検索の②（Jev）
 
-2026-10-09に日刊2誌のscopeも本番へ配置したが、精度・応答時間の評価が未完了のため`SITE_RANK_SCOPES="site"`で停止中。未設定もsiteだけ。媒体を許すときは`nitori`・`retail`をカンマ区切りで足し、媒体だけを止めるときはその値を外して再デプロイする。全体の`SITE_RANK_ENABLED=false`が優先。日刊の停止応答は`disabled`で、索引・回数・Jevを使わず、画面は①を続ける。評価と有効化の条件は[Phase 3計画書](../../assets/site-search-phase3-plan.md)に記録。以下は既存のsiteの契約。
+日刊2誌の②は`scope=nitori|retail`、`filters`（category・month・region）、画面の索引の`generation`を送る。`SITE_RANK_SCOPES="site,nitori,retail"`で両誌と404を有効にする。未設定もsiteだけ。媒体だけを止めるときは値からその媒体を外してWorkerを先に再デプロイする。全体の`SITE_RANK_ENABLED=false`が優先。停止応答はdisabledで、索引・回数・Jevを使わず、開いたままの画面も①を続ける。復帰は媒体を戻してデプロイし、画面を再読み込みする。
+
+日刊は全年度の索引を完全に検査し、絞り込み後の全件数Nから候補最大20件Mを選び、Jevで判定した件数Jとともに画面へ返す。対象0件・索引の取得失敗を分け、別の媒体のリンクを許さない。検索語・公開記事の情報をTypeSafeへ送るのはEnter・虫眼鏡の明示操作だけ。入力中・受け渡し・絞り込みでは送らない。検索語はURL・参照元・運用ログ・DB・通知へ残さない。GA4のsearch_termはメール・電話番号を伏せ字にし、計測停止時は送らない。
+
+評価と公開の証跡は[Phase 3公開評価](../../assets/site-search-phase3-release-evaluation.md)。一時的な本番測定では測る媒体を`SITE_RANK_EVAL_SCOPES`にも指定し、secret `SITE_RANK_EVAL_KEY`をx-api-keyで送る要求だけを許す。通常画面はdisabledとなる。評価後は一時変数とキーを削除する。以下は既存のsiteの契約。
 
 `mode: 'rank'` の要求で、索引の各ページに Jev で「目的を果たせる確率」を付けて並べる（設計は `assets/site-search-design.md`、
 設定の正本は `personas.js` の `SITE_RANK`）。`SITE_RANK_ENABLED = "true"` のときだけ動き、停止はこちらを先に `false` にする。

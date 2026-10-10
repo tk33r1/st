@@ -258,6 +258,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。
     主な入口は `404.html` の常設入口（`data-entry`）が正本で、noindexでも索引に入れ、日英の名前を持たせる（入口を足すなら `data-entry` を書く）。
     404 の検索ボタン（②）は同じ入口に `mode: 'rank'` を送り、索引の各ページを TypeSafe AI（Jev）で判定して並べる（`SITE_RANK`／`site-rank.js`、画面の部品は `assets/site-search.js`）。
+    日刊2誌の②も同じ入口で、`scope: nitori|retail` と `filters`・`generation` を送る。明示検索でだけ送信し、日刊の③は設けない。
+    正本は `search-scope.js`・`site-rank.js`・`SITE_RANK.scopes`。対象は全年度、候補は最大20件。媒体ごとの有効化・停止は `SITE_RANK_SCOPES` で行い、回数は404の②と共有する。停止は索引・回数・Jevより前で行い、①は利用可能。
     止めるときは Worker の `SITE_RANK_ENABLED` を先に false にし、その後で 404 の `RANK_ENABLED` を false にする（magi2 の README.md）。
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
     AIの検索や MAGI の話題から外したいページは、ページを noindex にする。

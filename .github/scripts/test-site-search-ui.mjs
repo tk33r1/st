@@ -771,8 +771,8 @@ scenario('404 の検索：変換を確定した Enter の押し続けで検索�
   check(await page.locator('#daily-search').isVisible(), `${name}: キーを離した後の Enter で検索しない`);
 });
 
-// Phase 3 T08：模擬索引・模擬 Worker だけで両媒体の画面を検証する。
-if (!remote) {
+// Phase 3：本番の画面でも模擬索引・模擬Workerを使い、実GTM・Ahrefsの通信を検査する。
+{
   const INPUT = '#archiveSearchInput', RANK_LIST = '#archiveRankList a';
   const dailyEvents = page => page.evaluate(() => (window.dataLayer || []).filter(e => /^daily_/.test(e?.event || '')).map(e => ({ ...e })));
   const dailyHead = media => JSON.parse(readFileSync(join(root, 'job', media, 'search-index.json')));

@@ -14,6 +14,7 @@ Jev は TypeSafe AI の判定専用のモデル（System One モデル）。文�
 | 日刊ニトリの SNS 投稿の採否 | `noul` 1問 | `.github/scripts/nitori_social_filter.py` | [sns-jev-evaluation.md](../job/nitoridaily/sns-jev-evaluation.md) |
 | 日刊2誌のニュース候補の採否 | `noul` 1問（基準付き） | `.github/scripts/daily_news_filter.py` | [news-jev-evaluation.md](../job/nitoridaily/news-jev-evaluation.md) |
 | DJ ブースの次の曲の相性 | `score`（5段階） | `workers/dj-request/src/transitions.js` | [jev-evaluation.md](../dj/booth/jev-evaluation.md) |
+| 日刊2誌の意味検索② | `noul`を候補最大20件分まとめて1回 | `workers/magi2/search-scope.js`・`site-rank.js`、`personas.js`の`SITE_RANK.scopes`（画面は`job/assets/daily-ui.js`） | [Phase 3公開評価](../assets/site-search-phase3-release-evaluation.md) |
 | 404 のサイト内検索の② | `noul` を候補の数だけ1回に | `workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`（画面は `assets/site-search.js`） | [site-search-evaluation.md](../assets/site-search-evaluation.md) |
 
 ## キーと設定
