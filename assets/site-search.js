@@ -84,9 +84,10 @@
   function rank(options) {
     var scope = options.scope;
     if (!KINDS[scope]) throw new Error('Unknown scope');
-    var el = options.elements, labels = options.labels;
-    var call = function (name, value) { if (typeof options[name] === 'function') { try { options[name](value); } catch (_) { /* ページの処理の失敗で部品を止めない */ } } };
-    var track = function (event, values) { if (typeof options.track === 'function') { try { options.track(event, values); } catch (_) { /* 計測は画面から独立 */ } } };
+    var el = options.elements, labels = options.labels, daily = !!DAILY_DIRS[scope];
+    // ページの処理（計測を含む）の失敗で部品を止めない
+    var call = function (name, a, b) { if (typeof options[name] === 'function') { try { options[name](a, b); } catch (_) {} } };
+    var track = function (event, values) { call('track', event, values); };
     var self = { state: 'idle', disabled: false };
     var generation = 0, controller = null, timer = null;
     var shownKey = null;  // いま描いている（または読み込み中の）条件のキー
@@ -98,7 +99,7 @@
       try { c = options.condition(); } catch (_) { c = null; }
       return c && typeof c.query === 'string' && c.query ? c : null;
     }
-    function keyOf(c) { return c ? JSON.stringify([c.query, c.locale, c.filters || null].concat(DAILY_DIRS[scope] ? [c.generation || null] : [])) : null; }
+    function keyOf(c) { return c ? JSON.stringify([c.query, c.locale, c.filters || null].concat(daily ? [c.generation || null] : [])) : null; }
 
     function clear() {
       el.list.replaceChildren();
@@ -181,7 +182,7 @@
       setState('loading', labels.texts.loading);
       var body = { query: c.query, locale: c.locale, mode: 'rank', scope: scope };
       if (c.filters) body.filters = c.filters;
-      if (DAILY_DIRS[scope] && c.generation) body.generation = c.generation;
+      if (daily && c.generation) body.generation = c.generation;
       timer = setTimeout(function () { ac.abort(); }, TIMEOUT_MS);
       var timedOut = function () { return ac.signal.aborted && mine === generation; };
       (async function () {
@@ -201,7 +202,7 @@
         // 入力のイベント無しで条件が変わっていた（自動入力など）。描かずに stale にする（読み込み中のまま止めない）
         if (keyOf(conditionNow()) !== key) { self.invalidate(); return; }
         // 描く前に確定させる（描画の onState でページが settled() を読むため）
-        settled = Object.assign({ key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete }, DAILY_DIRS[scope] ? { searched: result.searched, cached: result.cached } : {});
+        settled = Object.assign({ key: key, status: result.status, reason: result.reason, count: result.rows.length, complete: result.complete }, daily ? { searched: result.searched, cached: result.cached } : {});
         if (result.reason === 'disabled') {
           self.disabled = true; clear(); shownKey = null; hasRun = false;
           setState('idle');

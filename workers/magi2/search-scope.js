@@ -14,6 +14,11 @@ const scopeObject = value => {
   return prototype === null || Object.getPrototypeOf(prototype) === null;
 };
 const scopeHex = value => typeof value === 'string' && /^[a-f0-9]{1,32}$/i.test(value);
+const scopeControl = /[\u0000-\u001f\u007f-\u009f]/;
+const scopeCategory = value => typeof value === 'string' && !!value && Array.from(value).length <= 40 && !scopeControl.test(value);
+const scopeTerms = value => Array.isArray(value) && value.length >= 3 && value.length <= 5
+  && value.every(t => typeof t === 'string' && !!t.trim() && Array.from(t).length <= 60 && !scopeControl.test(t))
+  && new Set(value).size === value.length;
 const scopeYear = value => typeof value === 'string' && /^\d{4}$/.test(value) && Number(value) > 0;
 const scopeMonth = value => typeof value === 'string' && /^\d{6}$/.test(value)
   && scopeYear(value.slice(0, 4)) && Number(value.slice(4)) >= 1 && Number(value.slice(4)) <= 12;
@@ -53,7 +58,7 @@ export function normalizeScopeFilters(scope, value) {
     const v = value[key];
     if (typeof v !== 'string') throw searchFailure('invalid_request');
     if (!v) continue;
-    if ((key === 'category' && (Array.from(v).length > 40 || /[\u0000-\u001f\u007f-\u009f]/.test(v)))
+    if ((key === 'category' && !scopeCategory(v))
       || (key === 'region' && !['JP', 'GLOBAL'].includes(v)) || (key === 'month' && !scopeMonth(v))) throw searchFailure('invalid_request');
     filters[key] = v;
   }
@@ -116,13 +121,10 @@ export function makeDailySnapshot(scope, files) {
     for (const record of index.records) {
       if (!scopeObject(record) || !dailyDate(record.date) || record.date.slice(0, 4) !== year
         || typeof record.title !== 'string' || !record.title.trim() || typeof record.summary !== 'string'
-        || typeof record.category !== 'string' || !record.category || Array.from(record.category).length > 40
-        || /[\u0000-\u001f\u007f-\u009f]/.test(record.category)
+        || !scopeCategory(record.category)
         || !['JP', 'GLOBAL'].includes(record.region) || !Array.isArray(record.tags)
         || record.tags.some(t => typeof t !== 'string' || !t)
-        || ('search_terms' in record && (!Array.isArray(record.search_terms) || record.search_terms.length < 3 || record.search_terms.length > 5
-          || record.search_terms.some(t => typeof t !== 'string' || !t.trim() || Array.from(t).length > 60 || /[\u0000-\u001f\u007f-\u009f]/.test(t))
-          || new Set(record.search_terms).size !== record.search_terms.length))
+        || ('search_terms' in record && !scopeTerms(record.search_terms))
         || ['takeaway', 'source', 'source_kind'].some(k => k in record && typeof record[k] !== 'string')
         || typeof record.url !== 'string') throw searchFailure('index_unavailable');
       // 完全一致で相対 URL を検査するため、遡り・外部 URL・エンコード・別媒体のリンクも通らない。

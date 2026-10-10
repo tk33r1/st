@@ -183,26 +183,25 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
   const noResults = (candidates = 0, judged = 0) => ({ status: 'no_results', complete: true, reason: null,
     searched: searched(candidates, judged), results: [], above: 0 });
   const failed = (reason, candidates = 0, judged = 0) => ({ status: 'failed', complete: false, reason,
-    searched: searched(candidates, judged), results: [], above: 0, jevMs: null, cached: false });
-  if (!daily && !total) return { ...noResults(), jevMs: null, cached: false };
+    searched: searched(candidates, judged), results: [], above: 0 });
+  // キャッシュには jevMs・cached を除いた値を置き、返すときに足す
+  const fresh = (value, jevMs = null) => ({ ...value, jevMs, cached: false });
+  if (!daily && !total) return fresh(noResults());
   const key = await rankCacheKey(scope, locale, query, filters, snapshot);
+  const store = (value, jevMs = null) => { rankCacheSet(key, value); return fresh(value, jevMs); };
   if (signal?.aborted) throw searchFailure('cancelled');
   const hit = rankCacheGet(key);
   if (hit) return { ...hit, jevMs: null, cached: true };
-  if (!total) {
-    const none = noResults();
-    rankCacheSet(key, none);
-    return { ...none, jevMs: null, cached: false };
-  }
+  if (!total) return store(noResults());
   const scores = daily ? shortlistRankDaily(targets, query, scope) : scoreItems(targets, query, rankScoreFields);
   const selected = scores.map(r => r.p);
   let candidates;
-  try { candidates = selected.map(toRankCandidate); } catch (_) { return failed('index_unavailable'); }
+  try { candidates = selected.map(toRankCandidate); } catch (_) { return fresh(failed('index_unavailable')); }
   progress.candidates = candidates.length;
   const started = Date.now();
   let answers;
   try { answers = await callRank(env, rankPayload(query, locale, candidates, scope), signal, onBilling); }
-  catch (e) { return { ...failed(e.searchCode === 'timeout' ? 'timeout' : 'unavailable', candidates.length), jevMs: Date.now() - started }; }
+  catch (e) { return fresh(failed(e.searchCode === 'timeout' ? 'timeout' : 'unavailable', candidates.length), Date.now() - started); }
   const jevMs = Date.now() - started;
   const probs = selected.map((_, i) => rankProbability(answers[rankId(i)]));
   const judged = probs.filter(p => p !== null).length;
@@ -211,23 +210,21 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
     .sort((a, b) => b.prob - a.prob || b.score - a.score || (daily ? rankDailyOrder(a, b) : Number(b.p.hub) - Number(a.p.hub) || a.order - b.order));
   let complete = judged === selected.length;
   if (!above.length) {
-    if (!complete) return { ...failed('incomplete', candidates.length, judged), jevMs };
-    const none = noResults(candidates.length, judged);
-    rankCacheSet(key, none);
-    return { ...none, jevMs, cached: false };
+    if (!complete) return fresh(failed('incomplete', candidates.length, judged), jevMs);
+    return store(noResults(candidates.length, judged), jevMs);
   }
   // 表示の題名・説明は③と同じく画面の言語に合わせる（英語の画面では英語の名前があればそれ）
   const shown = new Map((daily ? snapshot.raw : snapshot[locale === 'en' ? 'en' : 'ja']).map(p => [p.id, p]));
   const results = [];
   for (const { p } of above) {
     const url = daily ? dailyResultUrl(scope, p) : rankSiteUrl(p.url), view = shown.get(p.id);
-    if (daily && (!url || !view)) return { ...failed('index_unavailable', candidates.length, judged), jevMs };
+    if (daily && (!url || !view)) return fresh(failed('index_unavailable', candidates.length, judged), jevMs);
     if (!url || !view) { complete = false; continue; } // 閾値を超えた行を隠したことになるので、完全とは言わない
     if (results.length < SITE_RANK.max_results) results.push({ kind: p.kind, title: view.title,
       description: daily ? searchSlice(view.summary, SITE_RANK.result_description_max_chars) : view.description, url });
   }
-  if (!results.length) return { ...failed('unavailable', candidates.length, judged), jevMs };
+  if (!results.length) return fresh(failed('unavailable', candidates.length, judged), jevMs);
   const value = { status: 'results', complete, reason: null, searched: searched(candidates.length, judged), results, above: above.length };
   if (complete) rankCacheSet(key, value);
-  return { ...value, jevMs, cached: false };
+  return fresh(value, jevMs);
 }

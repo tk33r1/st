@@ -359,6 +359,7 @@
   const indexFiles = new Map();
   const media = location.pathname.split('/')[2];
   let indexEpoch = 0;
+  function resetIndexFiles() { indexEpoch++; indexFiles.clear(); }
   async function fetchIndexFile(name) {
     const response = await fetch(name, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Index HTTP ' + response.status);
@@ -406,7 +407,7 @@
       return { records: records, generation: head.generation, complete: all };
     } catch (_) {
       // 混在・欠落の年も Promise ごと捨て、次の明示操作まで取り直さない。
-      if (epoch === indexEpoch) { indexEpoch++; indexFiles.clear(); }
+      if (epoch === indexEpoch) resetIndexFiles();
       return null;
     }
   }
@@ -551,7 +552,7 @@
     async function ensureIndex(retry) {
       if (retry && indexNeedsRefresh) {
         snapshot = null; indexNeedsRefresh = false;
-        indexEpoch++; indexFiles.clear();
+        resetIndexFiles();
       }
       if (snapshot) return snapshot;
       if (pending) return pending;
@@ -584,17 +585,16 @@
         (same || query).focus({ preventScroll: true });
       }
     }
+    // 計測を止めていれば送らずに false を返す
     function track(event, values) {
-      try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (_) {}
+      try { if (localStorage.getItem('st-analytics') === 'off') return false; } catch (_) {}
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push(Object.assign({ event: event }, values));
+      return true;
     }
     function trackSearch(value, count) {
       const term = analyticsTerm(value);
-      if (!term || term === lastTracked) return;
-      try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (_) {}
-      lastTracked = term;
-      track('daily_search', { search_term: term, count: Math.min(count, 6) });
+      if (term && term !== lastTracked && track('daily_search', { search_term: term, count: Math.min(count, 6) })) lastTracked = term;
     }
     function analyticsTerm(value) { return window.STSearchAnalytics ? window.STSearchAnalytics.term(value) : ''; }
     if (window.STSiteSearch) rank = window.STSiteSearch.rank({
@@ -640,7 +640,7 @@
     }
     async function runExplicitSearch() {
       if (imeEnterHeld || !rankCondition()) return;
-      if (await runKeywordSearch(true)) { closeSuggestions(); if (rank) rank.run(); }
+      if (await runKeywordSearch(true) && rank) rank.run();
     }
     function changed() {
       if (shown === viewKey()) return;
