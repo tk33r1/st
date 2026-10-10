@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "frozen": "2026-10-10",
+  "source_commit": "160cccc4e1c1fb4cfb509dfdcf442014a1d4b6f5",
+  "query_hash": "07d2868bce1e6df80243f456812f39242bdd31847718c3c3e553b110b8617a82",
+  "parent_index_hashes": {
+    "nitori": "17b3886e1961c691294c9f16d4be962945914a3c3a2bfe13009334121df34c03",
+    "retail": "81693a5ad13996f7210aab9979f1ee25d5e8db598c17cd84c599cf7263fcf000"
+  },
+  "terms_source_sha256": "6edde2f834cc470b146466b930cd508bb0be74e1f3b052d3d4682e3f1c3ee493",
+  "indexes": {
+    "nitori": {
+      "generation": "342e37c82e45fa11",
+      "years": [
+        "2026"
+      ],
+      "records": 184,
+      "index_hash": "b4c2874482b7f82552f6f89eeb967f8927f7f800e466208f8b43e2ceaee5a576",
+      "candidate_hash": "d2d7ca9ae561b89e895e8830a5f267923ff12de134247c20f3fd9523344070b4",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "1c9f797ea04714de8d63c1b3dde32aa6d35c749ebd07abaa1b9c99bc917c84a8"
+        }
+      ]
+    },
+    "retail": {
+      "generation": "3532957787af2d77",
+      "years": [
+        "2026"
+      ],
+      "records": 206,
+      "index_hash": "ab3a3ff63547f784218e710f72153face3a8400d2926b1b142c7d13da0818f10",
+      "candidate_hash": "35e5d87b00af56c3e100c40d66a19219c66f757003d0e29e54be6894f8bbfd3b",
+      "files": [
+        {
+          "name": "search-index.json",
+          "sha256": "c95ca12ac92041288d8408ff09a385dccec692512c4eea2e03d342bbf02cdd57"
+        }
+      ]
+    }
+  }
+}

@@ -20,6 +20,20 @@ const synthetic = (magi, scope, mutate = () => {}) => dailySnapshot(magi, scope,
 });
 const query = (scope, text = '前年の特別な電動米びつ', filters = {}) => ({ id: scope + '-001', scope, locale: 'ja', query: text, filters });
 
+test('公開日ごとの固定索引は旧fixtureを保持し、問いの変更と任意のパスを拒否する', async () => {
+  const magi = loadWorker();
+  const { snapshots, indexSource } = await loadFixtures(magi, data, { indexSet: '20261010' });
+  assert.deepEqual(checkDailyQueries(magi, data, snapshots).retail.final, { total: 30, answered: 24, none: 6 });
+  assert.equal(snapshots.nitori.records, 184); assert.equal(snapshots.retail.records, 206);
+  assert.equal(indexSource.index_frozen, '2026-10-10');
+  assert.equal(snapshots.retail.generation, '3532957787af2d77');
+  const changed = copy(data); changed.queries[0].note += '変更';
+  await assert.rejects(loadFixtures(magi, changed, { indexSet: '20261010' }), /固定した問い/);
+  for (const indexSet of ['../20261010', '20260230', '20261010/retail']) await assert.rejects(loadFixtures(magi, data, { indexSet }), /index-set/);
+  const old = await loadFixtures(magi, data, { indexSet: 'terms' });
+  assert.equal(old.snapshots.retail.records, 204);
+});
+
 test('固定380記事・120問・splitごとの6件の答え無し、速度の24問を検査する', async () => {
   const magi = loadWorker(), { snapshots, termsSourceHash } = await loadFixtures(magi, data);
   assert.equal(termsSourceHash, null);

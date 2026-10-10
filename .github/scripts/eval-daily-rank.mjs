@@ -42,21 +42,29 @@ export async function dailySnapshot(magi, scope, readFile) {
 }
 
 export async function loadFixtures(magi, data, { indexSet = 'original' } = {}) {
-  assert.ok(['original', 'terms'].includes(indexSet), '--index-set original|terms');
-  const manifest = indexSet === 'terms' ? JSON.parse(read(`${FIXTURES}/with-search-terms/indexes.json`)) : null;
+  const dated = /^\d{8}$/.test(indexSet) && dateValid(indexSet.slice(0, 4) + '-' + indexSet.slice(4, 6) + '-' + indexSet.slice(6));
+  assert.ok(['original', 'terms'].includes(indexSet) || dated, '--index-set original|terms|YYYYMMDD');
+  const directory = dated ? `publications/${indexSet}/` : indexSet === 'terms' ? 'with-search-terms/' : '';
+  const manifest = directory ? JSON.parse(read(`${FIXTURES}/${directory}indexes.json`)) : null;
   if (manifest) {
     assert.equal(manifest.version, 1);
     assert.equal(manifest.terms_source_sha256, hash(read('.github/scripts/daily_search_terms.py').replace(/\r\n/g, '\n')), '言い換え語の生成規則が固定時と違う');
     for (const scope of SCOPES) assert.equal(manifest.parent_index_hashes[scope], data.indexes[scope].index_hash);
+    if (dated) {
+      assert.equal(manifest.frozen.replace(/-/g, ''), indexSet);
+      assert.match(manifest.source_commit, /^[a-f0-9]{40}$/);
+      assert.equal(manifest.query_hash, digest(data), '固定した問い・正解が更新時と違う');
+    }
   }
   const snapshots = {};
   for (const scope of SCOPES) {
-    snapshots[scope] = await dailySnapshot(magi, scope, name => read(`${FIXTURES}/${manifest ? 'with-search-terms/' : ''}${scope}/${name}`));
+    snapshots[scope] = await dailySnapshot(magi, scope, name => read(`${FIXTURES}/${directory}${scope}/${name}`));
     const { generation, years, records, index_hash, candidate_hash, files } = snapshots[scope];
     assert.deepEqual((manifest || data).indexes[scope], { generation, years, records, index_hash, candidate_hash, files }, scope + ': 固定索引が変更された');
-    if (manifest) assert.equal(candidate_hash, data.indexes[scope].candidate_hash, '言い換え語でJevの候補変換を変えない');
+    if (indexSet === 'terms') assert.equal(candidate_hash, data.indexes[scope].candidate_hash, '言い換え語でJevの候補変換を変えない');
   }
-  return { snapshots, termsSourceHash: manifest?.terms_source_sha256 ?? null };
+  return { snapshots, termsSourceHash: manifest?.terms_source_sha256 ?? null,
+    ...(dated ? { indexSource: { index_source_commit: manifest.source_commit, index_frozen: manifest.frozen } } : {}) };
 }
 
 export function checkDailyQueries(magi, data, snapshots) {
@@ -273,7 +281,7 @@ export async function main(args = process.argv.slice(2)) {
   }
   const indexSet = option(args, '--index-set', 'original');
   const magi = loadWorker(), data = JSON.parse(read(QUERIES));
-  const { snapshots, termsSourceHash } = await loadFixtures(magi, data, { indexSet });
+  const { snapshots, termsSourceHash, indexSource } = await loadFixtures(magi, data, { indexSet });
   const summary = checkDailyQueries(magi, data, snapshots);
   if (mode === '--check') {
     const indexes = Object.fromEntries(Object.entries(snapshots).map(([scope, { snapshot, urlToId, ...metadata }]) => [scope, metadata]));
@@ -284,7 +292,7 @@ export async function main(args = process.argv.slice(2)) {
   const runs = Number(option(args, '--runs', '2')); assert.ok([1, 2].includes(runs), '--runs 1|2');
   const local = snapshots[scope], queries = data.queries.filter(q => q.scope === scope && q.set === set);
   const metadata = { ...provenance(magi, data, local, scope, set), index_set: indexSet,
-    terms_source_sha256: termsSourceHash };
+    terms_source_sha256: termsSourceHash, ...indexSource };
   const candidates = queries.map(q => ({ id: q.id, ...queryCandidates(magi, local, q) }));
   if (mode === '--plan') {
     const bytes = candidates.reduce((n, r) => n + Buffer.byteLength(JSON.stringify(r.payload), 'utf8'), 0) * runs;
