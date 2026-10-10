@@ -361,6 +361,80 @@ class DailyGenerationTests(unittest.TestCase):
 
 
 class SearchGenerationTests(unittest.TestCase):
+    def test_generated_optional_fields_are_repaired_before_terms_and_publication(self):
+        import tempfile
+        from daily_search_terms import valid_search_terms
+        candidates = dict(JP=[item('店舗の収納', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
+        categories = [None, '', ' \ufeff ', '🧺' * 41, '店舗\x00', '店舗\x85', 1]
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for category in categories:
+                with self.subTest(media=config['media_id'], category=category), tempfile.TemporaryDirectory() as directory:
+                    config = {**config, 'data_dir': str(Path(directory, 'data')), 'job_dir': str(Path(directory, 'job'))}
+                    Path(config['job_dir']).mkdir()
+                    article = {'source_id': 'JP-01', 'title': '店舗の収納', 'summary': None,
+                               'tags': ['', None, ' \ufeff ', '収納'], 'source': None}
+                    if category is not None:
+                        article['category'] = category
+                    with patch('sys.argv', ['daily', '--date', '20261009']), \
+                            patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test', 'ANTHROPIC_MODEL': ''}), \
+                            patch.object(engine, 'gather_all_candidate_news', return_value=candidates), \
+                            patch.object(engine, 'call_anthropic_api', return_value={'articles': [article]}) as first, \
+                            patch.object(engine, 'call_llm_api') as second, \
+                            patch.object(engine, 'trigger_daily_ogp_generation') as ogp:
+                        engine.run_daily_pipeline(config)
+                    first.assert_called_once(); second.assert_not_called(); ogp.assert_called_once()
+                    stored = engine.load_history(config['data_dir'])
+                    repaired = stored[0]['articles'][0]
+                    self.assertEqual(repaired['category'], config['sample_category'])
+                    self.assertEqual(repaired['tags'], ['収納'])
+                    self.assertEqual(repaired['summary'], '')
+                    self.assertEqual(repaired['source'], candidates['JP'][0]['source'])
+                    self.assertTrue(valid_search_terms(repaired['search_terms']))
+                    index = json.loads(Path(config['job_dir'], 'search-index.json').read_text(encoding='utf-8'))
+                    self.assertEqual(index, engine.build_search_index(config, stored)['search-index.json'])
+                    page = Path(config['job_dir'], '20261009', 'index.html').read_text(encoding='utf-8')
+                    self.assertIn(f'data-category="{config["sample_category"]}"', page)
+                    self.assertIn(config['sample_category'], Path(config['job_dir'], 'index.html').read_text(encoding='utf-8'))
+                    self.assertIn('<item>', Path(config['job_dir'], 'rss.xml').read_text(encoding='utf-8'))
+
+    def test_generated_field_preparation_preserves_valid_content_and_repairs_bad_types(self):
+        import copy
+        valid = {'title': '店舗の収納', 'summary': '住まいの整理', 'source': '媒体', 'category': '🧺' * 40,
+                 'tags': ['収納', ' furniture '], 'search_terms': ['収納', 'home storage', 'organize rooms']}
+        for config in (nitori.CONFIG, daily.CONFIG):
+            result = {'articles': [copy.deepcopy(valid)]}
+            self.assertEqual(engine.prepare_article_fields(config, result), {'articles': [valid]})
+            for tags in (None, '収納', 1, {}):
+                result = {'articles': [{**valid, 'summary': None, 'source': None, 'category': None, 'tags': tags}]}
+                repaired = engine.prepare_article_fields(config, result)['articles'][0]
+                self.assertEqual(repaired['category'], config['sample_category'])
+                self.assertEqual(repaired['tags'], [])
+                self.assertEqual(repaired['summary'], '')
+                self.assertEqual(repaired['source'], '')
+
+    def test_month_filter_matches_indexed_articles_and_keeps_empty_issues_in_archive(self):
+        import re
+        for config in (nitori.CONFIG, daily.CONFIG):
+            history = [
+                {'date': '20261001', 'count': 0, 'articles': []},
+                {'date': '20260930', 'count': 0, 'articles': []},
+                {'date': '20260929', 'count': 1, 'articles': [{'title': '店舗の収納', 'category': '店舗'}]},
+                {'date': '20260801', 'count': 0},
+                {'date': '20260701', 'count': 1, 'articles': [{'title': '昔の店舗', 'category': '店舗'}]},
+            ]
+            for issues, expected in ((history, ['202609', '202607']), (history[:2], []), ([], [])):
+                with self.subTest(media=config['media_id'], months=expected):
+                    page = engine.render_top_index_html(config, issues)
+                    select = re.search(r'<select id="archiveMonthFilter"[^>]*>(.*?)</select>', page).group(1)
+                    months = re.findall(r'<option value="(\d{6})">', select)
+                    indexed = {record['date'][:6] for payload in engine.build_search_index(config, issues).values() for record in payload['records']}
+                    self.assertEqual(months, expected)
+                    self.assertEqual(set(months), indexed)
+            self.assertIn('href="20260930/"', engine.render_top_index_html(config, history))
+            history[0]['articles'] = [{'title': '今月の店舗', 'category': '店舗'}]
+            history[0]['count'] = 1
+            self.assertIn('<option value="202610">', engine.render_top_index_html(config, history))
+
     def test_search_terms_validation_matches_worker_limits(self):
         from daily_search_terms import valid_search_terms
         self.assertTrue(valid_search_terms(['収納', 'home storage', '🧺' * 60]))

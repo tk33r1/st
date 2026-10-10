@@ -1038,6 +1038,28 @@ def resolve_source_urls(result, candidate_index):
     return result
 
 
+def valid_search_category(category):
+    return (isinstance(category, str) and bool(category) and len(category) <= 40
+            and not any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in category))
+
+
+def prepare_article_fields(config, result):
+    """新規号の任意項目を整え、LLMの欠落で発行が止まるのを防ぐ。過去号は補正しない。"""
+    for article in result.get('articles', []) or []:
+        category = article.get('category')
+        if not valid_search_category(category) or not category.replace('\ufeff', '').strip():
+            article['category'] = config['sample_category']
+        tags = article.get('tags', [])
+        if isinstance(tags, list):
+            article['tags'] = [tag for tag in tags if isinstance(tag, str) and tag.replace('\ufeff', '').strip()]
+        else:
+            article['tags'] = []
+        for field in ('summary', 'source'):
+            if field in article and not isinstance(article[field], str):
+                article[field] = ''
+    return result
+
+
 def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_str):
     print("[2/3] AI要約・インサイト生成プロセスを開始...")
     prompt, candidate_index = build_prompt(config, candidates, target_date_str, yesterday_str)
@@ -1109,7 +1131,8 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
     elif 'sns_buzz' not in final_res:
         final_res['sns_buzz'] = []
 
-    return prepare_search_terms(final_res)
+    # 語の補完もsummary・tagsを読むため、その前に表示用の任意項目を整える。
+    return prepare_search_terms(prepare_article_fields(config, final_res))
 
 
 def build_sns_buzz_items(extra_items, config):
@@ -1305,8 +1328,7 @@ def build_search_index(config, articles_history):
                     invalid.append(field)
             if not isinstance(title, str) or not title.replace('\ufeff', '').strip():
                 invalid.append('title')
-            if (not isinstance(category, str) or not category or len(category) > 40
-                    or any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in category)):
+            if not valid_search_category(category):
                 invalid.append('category')
             if not isinstance(tags, list) or any(not isinstance(tag, str) or not tag for tag in tags):
                 invalid.append('tags')
@@ -2010,7 +2032,9 @@ def render_top_index_html(config, articles_history):
         str(art.get('category')) for issue in articles_history for art in issue.get('articles', [])
         if art.get('category')
     })
-    all_months = sorted({str(issue.get('date', ''))[:6] for issue in articles_history if issue.get('date')}, reverse=True)
+    # ②が受け付けるのは記事のある月。0本の号はバックナンバーには残す。
+    all_months = sorted({str(issue.get('date', ''))[:6] for issue in articles_history
+                         if issue.get('date') and issue.get('articles')}, reverse=True)
     category_options = ''.join(f'<option value="{esc(cat)}">{esc(cat)}</option>' for cat in all_categories)
     month_options = ''.join(
         f'<option value="{month}">{month[:4]}年{int(month[4:6])}月</option>' for month in all_months
