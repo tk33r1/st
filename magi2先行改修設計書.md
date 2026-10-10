@@ -35,7 +35,7 @@
 
 - 通信方式の WebSocket への切り替え（0 の効果を見てから A で検討する）。
 - 討議を閉じても続ける・通知する、その他のネイティブ機能、Capacitor の版上げ（B）。
-- MELCHIOR-1・CASPER-3 と、判定・タイトル・次の質問の予測・議題化・票の読み取りのモデル変更。
+- MELCHIOR-1・CASPER-3 のモデル変更。
 - 404 の AI 検索の統合のモデル変更（テーマを送らないので Luna のまま）。
 - トップページのテーマの決め方の変更（いつもライトで始まる）。
 - Play ストアでの配布、iOS のネイティブ版。
@@ -50,7 +50,7 @@
 | 公開の順 | 0 → 2 → 1。送り先の説明を Worker から配る受け口を APK に入れてから、モデルを変える（2章・5.6。レビューの指摘による、2026-10-09） |
 | アイコン | トップページの紋章に合わせて描き直し、テーマアイコンに対応する（5.2・5.3） |
 | 回答の受信 | 期限の延長・Worker からの合図・まとめて届いたときの再生（3章） |
-| モデル | BALTHASAR-2 は Haiku 5.5。統合はライト Luna・ダーク Haiku（`dj/request/` は常にダークなので Haiku。曲名の正確さは検証で確かめる）（4.1） |
+| モデル | BALTHASAR-2 は Haiku 5.5。統合はライト Luna・ダーク Haiku（`dj/request/` は常にダークなので Haiku。曲名の正確さは検証で確かめる）（4.1）。人格カードと X の素材の要約も Haiku 5.5（4.13）。タイトル・予測・議題化・票の読み取り・ページ選びなどの裏方も Haiku 5.5（4.14） |
 | 答え直し | 統合人格が失敗したら、もう一方のモデルで答え直す（Haiku → Luna、Luna → Haiku）。3人格は答え直さない（4.4） |
 | BALTHASAR の揺らぎ | 代わりの仕掛けは入れず、「テーマによらず安定して答える人格」とする（4.3） |
 | アプリのテーマ | 起動時は端末の設定、読めなければ時刻で決める（4.12） |
@@ -145,13 +145,14 @@
 | CASPER-3 | GPT-6 Luna | 変更なし |
 | 統合（ライト・テーマなし・404 検索） | GPT-6 Luna（推論 medium） | 変更なし。失敗したら Haiku（4.4） |
 | 統合（ダーク。`dj/request/` を含む） | GPT-6 Luna（推論 medium） | **Claude Haiku 5.5（adaptive thinking・effort medium）**。失敗したら Luna（4.4） |
-| 判定・タイトル・予測・議題化・票の読み取り | GPT-6 Luna | 変更なし |
+| 判定・タイトル・予測・議題化・票の読み取り・ページ選び | GPT-6 Luna | **Claude Haiku 5.5**（4.14） |
+| 人格カード・X の素材の要約 | GPT-6 Luna | **Claude Haiku 5.5**（4.13） |
 
 3人格は会社を分ける方針（答えの癖と間違え方をばらけさせる）を保つ: DeepSeek・Anthropic・OpenAI。
 
 ### 4.2 Anthropic の呼び出し
 
-- **正本**: [config/ai-models.json](config/ai-models.json) に `"anthropic": { "haiku": { "id": "claude-haiku-5-5", "display_name": "Claude Haiku 5.5" } }`。モデルIDはここにだけ書く（`ai_models.py check` が検出する）。
+- **正本**: [config/ai-models.json](config/ai-models.json) の `anthropic.haiku`（`claude-haiku-5-5`）は、日刊ブリーフの生成のために足してある（2026-10-10 時点）。magi2 もこれを読む。モデルIDはここにだけ書く（`ai_models.py check` が検出する）。
 - **呼び出し先**: `personas.js` の `PROVIDERS` に `anthropic: { endpoint: 'https://api.anthropic.com/v1/messages', key: 'MAGI_ANTHROPIC_API_KEY' }`。
   見出しは `x-api-key` と `anthropic-version: 2023-06-01`（今の `callModel` は全社 `Authorization: Bearer` なので、会社で分ける）。
 - **形式**: Anthropic の Messages API を、ほかの会社と同じく `fetch` で呼ぶ（OpenAI 互換の窓口は推論・effort・拒否の扱いが対応しないので使わない。SDK は Worker に依存を足さないため使わない）。
@@ -222,13 +223,12 @@
 
 ### 4.8 週次の新モデルの検知と動作確認
 
-[ai_models.py](.github/scripts/ai_models.py) の `PROVIDERS` に `anthropic` を足す。
+[ai_models.py](.github/scripts/ai_models.py) の `PROVIDERS` には、日刊ブリーフのために `anthropic` がすでにある（モデル一覧からの新しい Haiku の検知と、日刊の呼び出しの形の `smoke_anthropic`）。ここに magi2 と人格カードの呼び出しの形を足す。
 
-- **検知**: `GET https://api.anthropic.com/v1/models`。チャネル `haiku` は `claude-haiku-(\d+)-(\d+)` で版を取り、新しい Haiku を候補にする。表示名は API の `display_name`。
-  候補は動作確認に通ったものだけを正本に書いて PR にする（今の仕組み）。
+- **検知**: 今の仕組みのまま（チャネル `haiku`、表示名の作り方も今のまま）。候補は動作確認に通ったものだけを正本に書いて PR にする。
 - **動作確認**: `DEFAULTS` の値で、BALTHASAR（推論なし・画像なし／あり）とダークの統合（adaptive・ストリーミング、`message_stop` と `end_turn` まで）をなぞる。
   本文は `magi-search-config.mjs` が `requestBody` から作る（4.2）。`config.discussion` に `synthesizer_dark` を足し、[test-magi-smoke.py](.github/scripts/test-magi-smoke.py) に Anthropic の本文の検査を足す。
-- **Secrets**: リポジトリ Secret `ANTHROPIC_API_KEY`（登録済み）を `ai-model-watch.yml` の smoke と discover に渡す。
+- **Secrets**: リポジトリ Secret `ANTHROPIC_API_KEY` は `ai-model-watch.yml` にすでに渡してある。
 
 ### 4.9 Gemini を外す
 
@@ -249,7 +249,8 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | トップページ・`app.js` の画像の送り先のコメント | 同上 | 1 |
 | アプリの「System & Privacy」 | 1日1回 GitHub に新しい版を問い合わせること（届くのは IP アドレスなどの通常の通信情報で、会話は送らない） | 2 |
 | [AGENTS.md](AGENTS.md) | magi2 の secret（`MAGI_GEMINI_API_KEY` → `MAGI_ANTHROPIC_API_KEY`）、人格の会社の割り当て、Gemini の注記、「入力は3社すべてに送られる」、`ai-models.yml`／`ai-model-watch.yml` の会社、`magi-app/` の `android/` の扱い | 1・2 |
-| [.github/AI_MODELS.md](.github/AI_MODELS.md) | Anthropic の追加と Google の削除、スモークテストの表 | 1 |
+| [.github/AI_MODELS.md](.github/AI_MODELS.md) | Anthropic の追加と Google の削除、スモークテストの表（人格カードの要約を含む） | 1 |
+| [AGENTS.md](AGENTS.md) の「MAGI の人格カード」と「次の質問の予測」 | 要約のモデルが Haiku 5.5 であること、`magi-context.yml`・`magi-x-posts.yml` の鍵、予測が `openai.luna` から `anthropic.haiku` に変わること | 1 |
 | [workers/magi2/README.md](workers/magi2/README.md) | secret、モデル、SSE の合図 | 0・1 |
 | [magi-app/README.md](magi-app/README.md) | 更新通知、アイコンとテーマアイコンの作り方、`android/` を Git で管理すること、リリースの手順（タグ `vX.Y`） | 2 |
 
@@ -272,6 +273,45 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
   4. 起動後に端末の設定が変わったら、ボタンで切り替えていなければ追従する。
 - 最初の描画の前に決める（`<html data-theme="dark">` の固定をやめ、描画前の小さなスクリプトで決める）。古い `magi_theme` は起動時に消す。
 - 起動時のテーマは、2 の画面と APK で入れる（5.4 の APK の変更と一緒に、1 より先に）。APK 4.4 は今の動きのまま。
+
+### 4.13 人格カードを作るモデル
+
+人格カード（`data/magi-context.json`）を作る [magi-context.py](.github/scripts/magi-context.py) の要約を、GPT-6 Luna から Claude Haiku 5.5 に変える（本人の決定、2026-10-10）。
+
+- 呼び出し: 今の `call_openai`（Chat Completions・`reasoning_effort: 'none'`・`temperature: 0.2`・`max_completion_tokens: 4000`）を、Anthropic の Messages API の呼び出しに替える。
+  Python の標準ライブラリ（`urllib`）で呼ぶ今の作りのまま（依存を足さない）。モデルIDは `ai_model_registry.py` から `anthropic.haiku` を読む。
+  - 推論は切る（`thinking: { type: 'disabled' }`・effort low）。`temperature` は送れない（4.2 の制約）。今の 0.2 より出力が揺れやすいので、カードの文字数・形の検査（今の検査）で止める。
+  - 切れたかどうかは、今の `finish_reason` の代わりに `stop_reason` が `max_tokens` かどうかで見る。再試行の規則（429・5xx）は今のまま。拒否（`refusal`）は再試行せずに止める（Worker は前回のカードで動き続ける）。
+- 鍵: `magi-context.yml` に、登録済みのリポジトリ Secret `ANTHROPIC_API_KEY` を渡す（`OPENAI_API_KEY` は X の素材の処理が使うので残す）。
+- 素材（サイトの本文・X の投稿・関心の要約）は公開している内容で、送り先が OpenAI から Anthropic に変わるだけ。
+- 週次の動作確認（`ai_models.py` の smoke）に、この呼び出しの形を足す（AGENTS.md の約束）。
+- 切り替えた最初の実行は `force` で全人格を作り直し、変更前のカードと並べて本人が読む（計画§3.2）。
+- [magi-x-posts.py](.github/scripts/magi-x-posts.py) の AI（画像の説明・返信や引用の相手の要約・いいねとフォローの要約）も Haiku 5.5 に替える（本人の決定、2026-10-10）。
+  画像は今 OpenAI に URL のまま渡しているので、Anthropic の画像の指定（`source: { type: 'url', url }`）で渡す（X の画像の URL を Anthropic が取りに行けるかは計画§0 で確かめ、取れなければ取得してから base64 で渡す）。
+  `magi-x-posts.yml` にも `ANTHROPIC_API_KEY` を渡す。
+- Anthropic の呼び出し（見出し・推論の切り方・応答の検査・再試行）は、日刊ブリーフの `daily_engine.call_anthropic_api` と人格カード・X の素材とで同じものを使えるよう、共通の部品にまとめる（同じ呼び出しを3か所に書かない）。
+
+### 4.14 汎用の役割のモデル
+
+利用者の質問に答える人格と統合とは別の、裏方の AI の役割も、GPT-6 Luna から Haiku 5.5 に替える（性能が高く安いため。本人の決定、2026-10-10）。
+
+| 役割（`DEFAULTS.models` など） | 今 | 変更後 | 注意 |
+| --- | --- | --- | --- |
+| タイトルの要約（`titler`） | Luna・推論なし | Haiku・推論なし | 失敗してもタイトルが付かないだけ（今どおり） |
+| 次の質問の予測（`suggester`） | Luna・推論なし・`temperature` 0.7 | Haiku・推論なし | `temperature` を送れないので、ばらつきは指示の文で出す。4秒の期限は今のまま |
+| 議題化（`motion`） | Luna・推論なし・JSON の形の指定 | Haiku・推論なし・JSON の形の指定 | 4秒の期限 |
+| 票の読み取り（`vote_reader`） | Luna・推論なし・JSON の形の指定 | Haiku・推論なし・JSON の形の指定 | 4秒の期限 |
+| サイトのページ選び（`SITE_SEARCH.model`。404 とチャット） | Luna・推論なし・JSON の形の指定・`temperature` 0.4 | Haiku・推論なし・JSON の形の指定 | `temperature` を送れない |
+| 討議の判定（`judge`） | Luna・推論 low・JSON | Haiku・推論 low・JSON | A3 で Jev に置き換わるまでの間 |
+
+- **替えないもの**: CASPER-3（人格ごとに会社を分けるため）、ライトの統合（テーマで分ける決定）、ライトの Web で確かめる答え（A。OpenAI の Responses API の検索）。
+  MAGI の外の、ゲームの共通 API（`workers/games`）と DJ ブースの曲の背景カード（`workers/dj-request`）は、本書では替えない。
+  Haiku 5.5 の Web 検索が使えると確かめた後に替える（本人の判断、2026-10-10。[A 対話改修設計書](magi2対話改修設計書.md) 5.7）。
+- **JSON の形の指定**: 今は OpenAI の `response_format`（json_schema・strict）を使っている。Anthropic の構造化出力（`output_config.format` の json_schema）に替え、変換は `requestBody` に閉じる。
+  Haiku 5.5 が構造化出力に対応しているかを計画§0 で確かめる（対応していなければ、その役割は Luna のままにして本人に知らせる）。
+- **失敗したとき**: どれも今は「失敗したらその機能を省いて続ける」作り（議題化の失敗は通常の回答、票の読み取りの失敗は読めない票、ページ選びの失敗はリンクなし）。
+  Anthropic が止まると、これらが BALTHASAR と同時に落ちるので、HTTP のエラーですぐに失敗したときに限り、期限の残りで Luna を1回呼び直す（期限は延ばさない）。
+- 週次の動作確認に、これらの呼び出しの形を足す（AGENTS.md の約束）。
 
 ## 5. 公開 2: アプリの先行版
 
@@ -349,7 +389,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | 2-4 | 版を 4.6 に揃えて push → APK を作って署名 → GitHub Releases に `v4.6` → 本人が実機で確かめ、4.4 の利用者に入れ直しを伝える（5.5） | 画面・APK（4.6） |
 | 1-1 | 正本・呼び出し・応答の読み取り（4.2） | — |
 | 1-2 | BALTHASAR（4.3）、統合と答え直し（4.4）、人格の説明と `themes`（4.5・4.6）、通知（4.7） | — |
-| 1-3 | 週次の監視（4.8）、Gemini の撤去（4.9）、`PRIVACY` と固定の説明・文書（4.10） | — |
+| 1-3 | 週次の監視（4.8）、Gemini の撤去（4.9）、`PRIVACY` と固定の説明・文書（4.10）、人格カードと X の素材のモデル（4.13）、汎用の役割のモデル（4.14） | — |
 | 1-4 | 本人: Console で利用上限を設定し、Limits を記録する（secret とリポジトリ Secret は登録済み）。4.4 の利用者が 4.6 に入れ直したことを確かめる | — |
 | 1-5 | Worker → 画面 → `ai-model-watch.yml` を手動で1回 | Worker・画面（4.7） |
 
