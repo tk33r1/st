@@ -361,6 +361,61 @@ class DailyGenerationTests(unittest.TestCase):
 
 
 class SearchGenerationTests(unittest.TestCase):
+    def test_invalid_titles_are_dropped_before_sources_and_terms_and_issue_still_publishes(self):
+        import copy
+        import tempfile
+        candidates = dict(JP=[item('店舗の収納', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
+        bad = [{'source_id': 'JP-999'}] + [{'title': title, 'source_id': 'JP-999'}
+               for title in (None, '', ' \ufeff ', 123, False, [], {})] + [None, '記事', 1]
+        valid = {'title': '店舗の収納', 'source_id': 'JP-01', 'why_it_matters': 123}
+        for config in (nitori.CONFIG, daily.CONFIG):
+            for keep_valid in (True, False):
+                with self.subTest(media=config['media_id'], keep_valid=keep_valid), tempfile.TemporaryDirectory() as directory:
+                    config = {**config, 'data_dir': str(Path(directory, 'data')), 'job_dir': str(Path(directory, 'job'))}
+                    Path(config['job_dir']).mkdir()
+                    result = {'articles': copy.deepcopy(bad) + ([copy.deepcopy(valid)] if keep_valid else []),
+                              'executive_summary': [None, 123, '有効な要点'], 'sns_buzz': None, 'sns_summary': None, 'sns_why_it_matters': 123}
+                    warnings = io.StringIO()
+                    with patch('sys.argv', ['daily', '--date', '20261009']), \
+                            patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test', 'ANTHROPIC_MODEL': ''}), \
+                            patch.object(engine, 'gather_all_candidate_news', return_value=candidates), \
+                            patch.object(engine, 'call_anthropic_api', return_value=result) as first, \
+                            patch.object(engine, 'call_llm_api') as second, \
+                            patch.object(engine, 'trigger_daily_ogp_generation') as ogp, redirect_stderr(warnings):
+                        engine.run_daily_pipeline(config)
+                    first.assert_called_once(); second.assert_not_called(); ogp.assert_called_once()
+                    self.assertEqual(warnings.getvalue().count('題名が不正なため除外'), len(bad))
+                    issue = engine.load_history(config['data_dir'])[0]
+                    self.assertEqual(issue['count'], int(keep_valid))
+                    self.assertEqual(issue['executive_summary'], ['有効な要点'])
+                    self.assertEqual(issue['sns_summary'], '')
+                    self.assertEqual(issue['sns_why_it_matters'], '')
+                    self.assertEqual(issue['sns_buzz'], [])
+                    index = json.loads(Path(config['job_dir'], 'search-index.json').read_text(encoding='utf-8'))
+                    self.assertEqual(len(index['records']), int(keep_valid))
+                    page = Path(config['job_dir'], '20261009', 'index.html').read_text(encoding='utf-8')
+                    if keep_valid:
+                        self.assertEqual(issue['articles'][0]['why_it_matters'], '')
+                        self.assertEqual(index['records'][0]['url'], '20261009/#art-1')
+                        self.assertIn('id="art-1"', page)
+                        self.assertNotIn('id="art-2"', page)
+                    else:
+                        self.assertEqual(issue['articles'], [])
+                        self.assertNotIn('id="art-1"', page)
+                    for name in ('index.html', 'rss.xml'):
+                        self.assertTrue(Path(config['job_dir'], name).is_file())
+
+    def test_issue_optional_field_types_and_bad_article_lists_are_repaired(self):
+        valid = {'title': '記事', 'category': '店舗', 'tags': []}
+        for summary in (None, '要点', 123, {}, [None, 123, '有効な要点']):
+            result = {'articles': [dict(valid)], 'executive_summary': summary}
+            prepared = engine.prepare_article_fields(nitori.CONFIG, result)
+            self.assertEqual(prepared['executive_summary'], ['有効な要点'] if isinstance(summary, list) else [])
+        for articles in (None, '記事', 123, {}):
+            with redirect_stderr(io.StringIO()):
+                result = engine.prepare_article_fields(nitori.CONFIG, {'articles': articles})
+            self.assertEqual(result['articles'], [])
+
     def test_generated_optional_fields_are_repaired_before_terms_and_publication(self):
         import tempfile
         from daily_search_terms import valid_search_terms

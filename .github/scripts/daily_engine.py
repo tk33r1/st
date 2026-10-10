@@ -1044,8 +1044,17 @@ def valid_search_category(category):
 
 
 def prepare_article_fields(config, result):
-    """新規号の任意項目を整え、LLMの欠落で発行が止まるのを防ぐ。過去号は補正しない。"""
-    for article in result.get('articles', []) or []:
+    """新規号の不正な記事を除き、任意項目を整える。過去号は補正しない。"""
+    articles = result.get('articles', []) or []
+    if not isinstance(articles, list):
+        print('[WARN] articlesが配列でないため、記事を除外します。', file=sys.stderr)
+        articles = []
+    kept = []
+    for position, article in enumerate(articles, 1):
+        title = article.get('title') if isinstance(article, dict) else None
+        if not isinstance(title, str) or not title.replace('\ufeff', '').strip():
+            print(f'[WARN] 記事{position}: 題名が不正なため除外します。', file=sys.stderr)
+            continue
         category = article.get('category')
         if not valid_search_category(category) or not category.replace('\ufeff', '').strip():
             article['category'] = config['sample_category']
@@ -1054,9 +1063,17 @@ def prepare_article_fields(config, result):
             article['tags'] = [tag for tag in tags if isinstance(tag, str) and tag.replace('\ufeff', '').strip()]
         else:
             article['tags'] = []
-        for field in ('summary', 'source'):
+        for field in ('summary', 'source', 'why_it_matters'):
             if field in article and not isinstance(article[field], str):
                 article[field] = ''
+        kept.append(article)
+    result['articles'] = kept
+    if 'executive_summary' in result:
+        summary = result['executive_summary']
+        result['executive_summary'] = [text for text in summary if isinstance(text, str)] if isinstance(summary, list) else []
+    for field in ('sns_summary', 'sns_why_it_matters'):
+        if field in result and not isinstance(result[field], str):
+            result[field] = ''
     return result
 
 
@@ -1109,6 +1126,8 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
             res = call_api(p['url'], p['key'], p['model'], prompt, config['user_agent'])
             if res and res.get('articles'):
                 print(f"[SUCCESS] {p['name']} による生成が成功しました！")
+                # 出典不明の題名も警告表示で読むため、その前に不正な記事を除く。
+                prepare_article_fields(config, res)
                 resolve_source_urls(res, candidate_index)
                 res['generated_by'] = p['badge_label']
                 res['engine_type'] = p['name'].lower()
@@ -1119,20 +1138,16 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
 
     if not final_res:
         print("[INFO] AI未設定またはAPI失敗のため、ルールベースに切り替えます。")
-        fb = config['fallback_fn'](candidates, yesterday_str)
+        fb = prepare_article_fields(config, config['fallback_fn'](candidates, yesterday_str))
         fb['generated_by'] = 'Rule-based Engine (Fallback)'
         fb['engine_type'] = 'fallback'
         final_res = fb
 
-    # EXTRAソース（例: Yahoo! リアルタイム検索バズ等）があれば、独立したSNSバズ枠として整形・保持
+    # バズカードは収集済みの投稿だけから作る。LLMのsns_buzz（nullや不正な行を含みうる）は採らない。
     extra_items = candidates.get('EXTRA', [])
-    if extra_items:
-        final_res['sns_buzz'] = build_sns_buzz_items(extra_items, config)
-    elif 'sns_buzz' not in final_res:
-        final_res['sns_buzz'] = []
+    final_res['sns_buzz'] = build_sns_buzz_items(extra_items, config) if extra_items else []
 
-    # 語の補完もsummary・tagsを読むため、その前に表示用の任意項目を整える。
-    return prepare_search_terms(prepare_article_fields(config, final_res))
+    return prepare_search_terms(final_res)
 
 
 def build_sns_buzz_items(extra_items, config):
