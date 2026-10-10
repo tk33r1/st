@@ -504,7 +504,6 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
         sig => searchUpstream(env, ctx, log, 'サイト内検索', sig).onUpstreamError('typesafe', { status }, { billingFailure: true }));
       const r = await rankSearch({ env, snapshot, query, locale: body.locale, signal: s, onBilling, progress: info, scope, filters: daily ? filters : null });
       Object.assign(info, { candidates: r.searched?.candidates ?? null, judged: r.searched?.judged ?? null, above: r.above, jevMs: r.jevMs });
-      if (r.cached) info.jevMs = null;
       return reply(200, r);
     }, signal);
   } catch (e) { return fail(e.searchCode === 'timeout' ? 'timeout' : 'unavailable'); }

@@ -107,7 +107,7 @@ export function makeDailySnapshot(scope, files) {
   if (files.reduce((sum, f) => sum + new TextEncoder().encode(f[1]).byteLength, 0) > SITE_RANK.daily_index_max_bytes) throw searchFailure('index_unavailable');
   const head = dailyHead(scope, files[0][1]);
   if (files.length !== Math.max(1, head.years.length)) throw searchFailure('index_unavailable');
-  const raw = [], ids = new Set(), urls = new Set(), categories = new Set(), months = new Set();
+  const raw = [], ids = new Set(), categories = new Set(), months = new Set();
   for (let i = 0; i < files.length; i++) {
     const [filename, text] = files[i], year = head.years[i], index = i === 0 ? head : dailyIndex(text);
     if ((i > 0 && (filename !== `search-index-${year}.json` || index.year !== year))
@@ -130,8 +130,8 @@ export function makeDailySnapshot(scope, files) {
       const article = match && Number(match[2]);
       if (!match || match[1] !== record.date || !Number.isSafeInteger(article)) throw searchFailure('index_unavailable');
       const id = `${media}:${record.date}:${article}`, url = `/job/${media}/${record.url}`;
-      if (ids.has(id) || urls.has(url)) throw searchFailure('index_unavailable');
-      ids.add(id); urls.add(url); categories.add(record.category); months.add(record.date.slice(0, 6));
+      if (ids.has(id)) throw searchFailure('index_unavailable');
+      ids.add(id); categories.add(record.category); months.add(record.date.slice(0, 6));
       raw.push({ id, kind: 'daily', date: record.date, article, url, title: record.title, summary: record.summary,
         category: record.category, region: record.region, tags: [...record.tags],
         ...('search_terms' in record ? { search_terms: [...record.search_terms] } : {}) });

@@ -180,15 +180,17 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
   const targets = daily ? filterDailyItems(snapshot, filters) : rankTargets(snapshot);
   const total = targets.length;
   const searched = (candidates, judged) => ({ total, candidates, judged, ...(daily ? { generation: snapshot.generation } : {}) });
+  const noResults = (candidates = 0, judged = 0) => ({ status: 'no_results', complete: true, reason: null,
+    searched: searched(candidates, judged), results: [], above: 0 });
   const failed = (reason, candidates = 0, judged = 0) => ({ status: 'failed', complete: false, reason,
     searched: searched(candidates, judged), results: [], above: 0, jevMs: null, cached: false });
-  if (!daily && !total) return { status: 'no_results', complete: true, reason: null, searched: searched(0, 0), results: [], above: 0, jevMs: null, cached: false };
+  if (!daily && !total) return { ...noResults(), jevMs: null, cached: false };
   const key = await rankCacheKey(scope, locale, query, filters, snapshot);
   if (signal?.aborted) throw searchFailure('cancelled');
   const hit = rankCacheGet(key);
   if (hit) return { ...hit, jevMs: null, cached: true };
   if (!total) {
-    const none = { status: 'no_results', complete: true, reason: null, searched: searched(0, 0), results: [], above: 0 };
+    const none = noResults();
     rankCacheSet(key, none);
     return { ...none, jevMs: null, cached: false };
   }
@@ -210,7 +212,7 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
   let complete = judged === selected.length;
   if (!above.length) {
     if (!complete) return { ...failed('incomplete', candidates.length, judged), jevMs };
-    const none = { status: 'no_results', complete: true, reason: null, searched: searched(candidates.length, judged), results: [], above: 0 };
+    const none = noResults(candidates.length, judged);
     rankCacheSet(key, none);
     return { ...none, jevMs, cached: false };
   }
