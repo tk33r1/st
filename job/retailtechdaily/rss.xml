@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 10 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 10 Oct 2026 06:26:12 +0900</lastBuildDate>
+    <pubDate>Sun, 11 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 11 Oct 2026 05:27:10 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月11日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261011/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261011/</guid>
+      <pubDate>Sun, 11 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ファミリーマートが新たなリテールメディアを開始し、コンビニの顧客接点を広告媒体として活用する動きが広がっています。 ローソンはマルチコピー機の設置を自治体施設へ拡大しており、店舗の外に生活インフラとしての接点を増やす取り組みが進んでいます。</description>
+    </item>
     <item>
       <title>2026年10月10日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261010/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260927/</guid>
       <pubDate>Sun, 27 Sep 2026 08:00:00 +0900</pubDate>
       <description>セルフレジ・無人店舗の「光と影」が同時に可視化された一日。韓国ではバーコード読み取り偽装や試着室での隠匿など無人店舗の窃盗被害が相次ぎ、日本ではセルフレジの操作性やマナーをめぐるSNS論争が継続。省人化投資は、防犯・UI設計まで含めた運用設計が収益を左右する段階に入った。 海外では「AI棚」が台頭し、電子棚札（ESL）とセンサー・AIを組み合わせた棚が在庫可視化・動的価格・販促配信の店舗内データ基盤へと進化。店舗DXの主戦場がレジから棚へ移り、リテールメディアと需要予測の起点を誰が握るかが競争軸になる。</description>
-    </item>
-    <item>
-      <title>2026年9月26日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260926/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260926/</guid>
-      <pubDate>Sat, 26 Sep 2026 08:00:00 +0900</pubDate>
-      <description>チェックアウト変革が加速。品川駅ナカのスキャンレス購入実証や図書館内の無人ショップなど、無人・非対面の新店舗モデルが相次ぎ、同時にセルフレジをめぐる生活者の分断もSNSで顕在化した。 AI活用は二面性が鮮明。食品・日用品のAI需要予測は迅速実装が進む一方、海外では「食品小売のAIはハイプ段階」との冷静な評価も出ており、実効性の見極めが経営課題に。</description>
     </item>
   </channel>
 </rss>
