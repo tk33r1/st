@@ -5,7 +5,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { loadWorker } from './eval-site-rank.mjs';
+import { performance } from 'node:perf_hooks';
+import vm from 'node:vm';
+import { loadWorker, sendRankRequest, screenResult, readResponseOfPage } from './eval-site-rank.mjs';
 import { dailySnapshot, loadFixtures, checkDailyQueries, queryCandidates, candidateScore, resultScore,
   measureAccuracy, accuracyReport, timingRow, checkPrevious, checkTimingBudget, percentile } from './eval-daily-rank.mjs';
 
@@ -267,6 +269,40 @@ test('精度レポートは各runを分け、モデル版・欠落・候補の�
   assert.match(report, /本人未確認/); assert.match(report, /候補に正解 0\/1/); assert.match(report, /mock-version/); assert.match(report, /"failed":1/);
 });
 
+test('ブラウザの計時は本文と画面の応答検査を含み、3媒体の不正なURLを拒否する', async () => {
+  for (const scope of ['site', 'nitori', 'retail']) for (const invalid of [false, true]) {
+    let clock = 0, sent;
+    const url = scope === 'site' ? '/tools/' : `/job/${scope === 'nitori' ? 'nitoridaily' : 'retailtechdaily'}/20261010/#art-1`;
+    const body = { status: 'results', complete: true, cached: false, request_id: 'mock', reason: null,
+      searched: { total: 1, candidates: 1, judged: 1, generation: 'a1' },
+      results: [{ kind: scope === 'site' ? 'tool' : 'daily', title: 'テスト', description: '説明', url: invalid ? 'https://example.org/' : url }] };
+    const context = vm.createContext({ URL, AbortSignal, performance: { now: () => clock },
+      fetch: async (_url, options) => { sent = options; clock += 10;
+        return { status: 200, json: async () => { clock += 21; return body; } }; } });
+    context.window = context;
+    vm.runInContext(read('assets/site-search.js'), context);
+    const validate = context.STSiteSearch.readResponse;
+    context.STSiteSearch.readResponse = (...args) => { const result = validate(...args); clock += 37; return result; };
+    vm.runInContext(`globalThis.send = ${sendRankRequest.toString()}`, context);
+    const result = await context.send({ url: 'https://rank.invalid/', body: { scope, query: 'テスト' }, timeout: 8000, apiKey: 'mock' });
+    assert.equal(result.ms, 68); assert.equal(result.http, 200);
+    assert.equal(result.checked.status, invalid ? 'failed' : 'results');
+    if (invalid) assert.equal(result.checked.reason, 'unavailable');
+    else assert.equal(result.checked.rows[0].href, url);
+    assert.equal(sent.credentials, 'omit'); assert.equal(sent.referrerPolicy, 'no-referrer');
+    assert.equal(sent.headers['x-api-key'], 'mock'); assert.equal(JSON.parse(sent.body).scope, scope);
+  }
+});
+
+test('ブラウザの本文取得中の時間切れでも経過時間とエラーを保持する', async () => {
+  let clock = 0;
+  const context = vm.createContext({ AbortSignal, performance: { now: () => clock },
+    fetch: async () => ({ status: 200, json: async () => { clock = 8000; throw { name: 'TimeoutError' }; } }) });
+  vm.runInContext(`globalThis.send = ${sendRankRequest.toString()}`, context);
+  const result = await context.send({ url: 'https://rank.invalid/', body: { scope: 'site' }, timeout: 8000 });
+  assert.equal(result.ms, 8000); assert.equal(result.http, null); assert.equal(result.error, 'TimeoutError');
+});
+
 test('速度記録は画面の検査を通し、request_id・N/M/J・generation・cachedを残す', async () => {
   const magi = loadWorker(), local = await synthetic(magi, 'nitori'), q = query('nitori');
   const expected = queryCandidates(magi, local, q), p = local.snapshot.raw.find(p => p.id === expected.ids[0]);
@@ -274,7 +310,7 @@ test('速度記録は画面の検査を通し、request_id・N/M/J・generation�
     searched: { total: expected.total, candidates: expected.ids.length, judged: expected.ids.length, generation: local.generation },
     results: [{ kind: 'daily', title: p.title, description: p.summary, url: p.url }] };
   const valid = timingRow(magi, q, { http: 200, data: body, ms: 123 }, local);
-  assert.equal(valid.request_id, 'req-test'); assert.equal(valid.ms, 123); assert.equal(valid.cached, false); assert.equal(valid.invalid.length, 0);
+  assert.equal(valid.request_id, 'req-test'); assert.ok(valid.ms >= 123); assert.equal(valid.cached, false); assert.equal(valid.invalid.length, 0);
   assert.deepEqual(copy(valid.ids), [p.id]);
   const changes = [b => { b.cached = true; }, b => { b.searched.generation = 'ffff'; }, b => { delete b.request_id; },
     b => { b.searched.total++; }, b => { b.searched.judged = 21; },
@@ -285,8 +321,29 @@ test('速度記録は画面の検査を通し、request_id・N/M/J・generation�
     const r = timingRow(magi, q, { http: reason === 'rate_limited' ? 429 : 200, ms: 9, data: { ...body, status: 'failed', complete: false, results: [], reason } }, local);
     assert.ok(r.invalid.includes(reason)); assert.equal(r.status, 'failed'); assert.equal(r.ms, 8000);
   }
-  assert.equal(timingRow(magi, q, { http: null, error: 'TimeoutError', ms: 8500 }, local).ms, 8500);
+  assert.ok(timingRow(magi, q, { http: null, error: 'TimeoutError', ms: 8500 }, local).ms >= 8500);
   assert.equal(percentile(Array.from({ length: 24 }, (_, i) => i + 1), 0.95), 23);
+});
+
+test('ブラウザで検査済みの応答に評価用の照合時間を加え、検査を二重に行わない', async t => {
+  const magi = loadWorker(), local = await synthetic(magi, 'nitori'), q = query('nitori');
+  const expected = queryCandidates(magi, local, q), p = local.snapshot.raw.find(p => p.id === expected.ids[0]);
+  const body = { status: 'results', complete: true, cached: false, request_id: 'mock', reason: null,
+    searched: { total: expected.total, candidates: expected.ids.length, judged: expected.ids.length, generation: local.generation },
+    results: [{ kind: 'daily', title: p.title, description: p.summary, url: p.url }] };
+  const checked = readResponseOfPage()(200, body, 'nitori');
+  Object.defineProperty(body, 'results', { get() { throw new Error('検査済みの本文を再検査している'); } });
+  let clock = 100;
+  t.mock.method(performance, 'now', () => { const now = clock; clock += 45; return now; });
+  try {
+    const daily = timingRow(magi, q, { http: 200, data: body, checked, ms: 123 }, local);
+    assert.equal(daily.ms, 168); assert.equal(daily.status, 'results');
+    assert.deepEqual(copy(daily.ids), [p.id]);
+    const site = screenResult(magi, { ms: 123, checked,
+      get data() { throw new Error('検査済みの本文を再検査している'); } }, local.urlToId);
+    assert.equal(site.ms, 168); assert.equal(site.status, 'results');
+    assert.deepEqual(copy(site.ids), [p.id]);
+  } finally { t.mock.restoreAll(); }
 });
 
 test('速度の2回目は同一UTC日・同じ版・24問・キャッシュ期限と余裕を要求する', () => {

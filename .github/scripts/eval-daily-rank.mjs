@@ -222,7 +222,8 @@ export function accuracyReport(record) {
 }
 
 export function timingRow(magi, q, response, local) {
-  const body = response.data || {}, parsed = readResponseOfPage()(response.http, body, q.scope);
+  const started = performance.now();
+  const body = response.data || {}, parsed = response.checked || readResponseOfPage()(response.http, body, q.scope);
   const failed = response.error || parsed.status === 'failed';
   const ids = failed ? [] : parsed.rows.map(r => local.urlToId.get(r.href));
   const invalid = [];
@@ -233,10 +234,12 @@ export function timingRow(magi, q, response, local) {
   if (typeof body.request_id !== 'string' || !body.request_id) invalid.push('request_id_missing');
   const expected = queryCandidates(magi, local, q);
   if (body.searched?.total !== expected.total || body.searched?.candidates !== expected.ids.length) invalid.push('coverage_mismatch');
+  // ブラウザの本文・応答検査に、評価用のID・版・件数の照合時間だけを足す（ブラウザとの受け渡し時間は含めない）。
+  const ms = response.ms + performance.now() - started;
   return { id: q.id, http: response.http, request_id: body.request_id ?? null, generation: body.searched?.generation ?? null,
     cached: body.cached ?? null, complete: body.complete ?? false, searched: body.searched ?? null,
     status: invalid.length ? 'failed' : parsed.status, reason: invalid.join(',') || null, invalid,
-    ids: invalid.length ? [] : ids, ms: failed || invalid.length ? Math.max(response.ms, 8000) : response.ms };
+    ids: invalid.length ? [] : ids, ms: failed || invalid.length ? Math.max(ms, 8000) : ms };
 }
 
 export function checkPrevious(previous, current, now, ttl) {

@@ -5,7 +5,7 @@
 //   --accuracy [--set tune|final] [--runs 2]
 //                            Jev を直接呼んで精度を測る（MAGI_TYPESAFE_API_KEY。Worker の回数・キャッシュに当たらない）
 //   --report <生の記録>        精度の生の記録から、まとめを Jev を呼び直さずに出し直す
-//   --browser [--set final]  本物のブラウザから本番の Worker へ送り、送信から応答本文までを測る（Playwright）
+//   --browser [--set final]  本物のブラウザから本番の Worker へ送り、送信から応答検査の完了までを測る（Playwright）
 //   --probe                  測定の前に、ブラウザから本番の②へ評価セットに無い1問を送り、有効か・届くかだけを見る
 // 候補の変換・要求の組み立て・判定・並べ方・URL の検査は Worker の関数をそのまま使い、ここに別の変換や問いを書かない。
 // キーは出力しない。生の記録は workers/.wrangler/（Git の管理外）に書く。
@@ -370,8 +370,20 @@ export function accuracyReport(record, file) {
 }
 
 // 本物のブラウザ（Playwright の Chromium）で 404 のページ（Origin が https://tk.st）を開き、そこから本番の Worker へ送る。
-// assets/site-search.js と同じ fetch を送り、送信の直前から res.json() を読み終えるまでを測る（プリフライトを含む）。
+// assets/site-search.js と同じ fetch と応答検査を、送信直前から計時する（プリフライトを含む）。
 // 解析を汚さない：計測を止める設定を先に入れ、tk.st と Worker 以外への通信は止める
+// page.evaluate で実行するため、この関数はブラウザのグローバルと引数だけを使う。
+export async function sendRankRequest({ url, body, timeout, apiKey }) {
+  const started = performance.now();
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) }, body: JSON.stringify(body),
+      credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(timeout) });
+    const data = await res.json();
+    const checked = window.STSiteSearch.readResponse(res.status, data, body.scope);
+    return { http: res.status, data, checked, ms: performance.now() - started };
+  } catch (e) { return { http: null, error: e && e.name, ms: performance.now() - started }; }
+}
+
 export async function openRankPage({ apiKey = null } = {}) {
   const { chromium } = await import('playwright'); // ブラウザの測定のときだけ読む（smoke の経路は npm の依存を読まない）
   const instance = await chromium.launch();
@@ -388,16 +400,10 @@ export async function openRankPage({ apiKey = null } = {}) {
     const page = await context.newPage();
     const landing = await page.goto(`https://tk.st/site-rank-eval-${Date.now()}/`);
     assert.equal(landing.status(), 404, '404 のページが開けない');
-    // 期限は画面と同じ（BROWSER_TIMEOUT_MS）。本文の読み取りまで含めて止める
-    const send = (body, { timeout = BROWSER_TIMEOUT_MS } = {}) => page.evaluate(async ({ url, body, timeout, apiKey }) => {
-      const started = performance.now();
-      try {
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) }, body: JSON.stringify(body),
-          credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(timeout) });
-        const data = await res.json();
-        return { http: res.status, data, ms: performance.now() - started };
-      } catch (e) { return { http: null, error: e && e.name, ms: performance.now() - started }; }
-    }, { url: RANK_URL, body, timeout, apiKey });
+    // 公開ページのアセット版に依存せず、評価対象の手元の部品を同じブラウザで使う。
+    await page.addScriptTag({ content: read('assets/site-search.js') });
+    // 期限は画面と同じ（BROWSER_TIMEOUT_MS）。本文の読み取りを含めて止める。
+    const send = (body, { timeout = BROWSER_TIMEOUT_MS } = {}) => page.evaluate(sendRankRequest, { url: RANK_URL, body, timeout, apiKey });
     return { version: instance.version(), blocked, send, close: () => instance.close() };
   } catch (e) { await instance.close(); throw e; }
 }
@@ -415,11 +421,13 @@ export function readResponseOfPage() {
   return pageReadResponse;
 }
 export function screenResult(magi, r, urlToId) {
-  const failed = reason => ({ status: 'failed', reason, ids: [] });
+  const started = performance.now();
+  const result = (status, reason, ids) => ({ status, reason, ids, ms: r.ms + performance.now() - started });
+  const failed = reason => result('failed', reason, []);
   if (r.error) return failed(r.error === 'TimeoutError' ? 'timeout' : r.error === 'SyntaxError' ? 'unavailable' : 'network');
-  const v = readResponseOfPage()(r.http, r.data, 'site');
+  const v = r.checked || readResponseOfPage()(r.http, r.data, 'site');
   if (v.status === 'failed') return failed(v.reason);
-  return { status: v.status, reason: null, ids: v.rows.map(row => urlToId.get(row.href) ?? `unknown:${row.href}`) };
+  return result(v.status, null, v.rows.map(row => urlToId.get(row.href) ?? `unknown:${row.href}`));
 }
 
 // 測定の前の疎通の確認：評価セットに無い決まった1問を送り、②が有効か・ブラウザから届くかだけを見る
@@ -464,9 +472,9 @@ export async function browser(magi, { data: given } = {}) {
       // ②の応答はどれも { status, reason, … } の形。③の形のエラーは、②の無い Worker か認可の失敗なので測らない
       if (d.error) throw new Error(`本番の Worker が②の形で答えない（HTTP ${r.http}、${d.error.code}）。--probe で確かめる`);
       const shown = screenResult(magi, r, production.urlToId);
-      record.rows.push({ id: q.id, http: r.http, error: r.error ?? null, ms: Math.round(r.ms), request_id: d.request_id ?? null,
-        worker_status: d.status ?? null, worker_reason: d.reason ?? null, complete: d.complete ?? false, searched: d.searched ?? null, ...shown });
-      console.error(`${q.id}: ${Math.round(r.ms)}ms ${shown.status}${shown.reason ? ' ' + shown.reason : ''}`);
+      record.rows.push({ id: q.id, http: r.http, error: r.error ?? null, request_id: d.request_id ?? null,
+        worker_status: d.status ?? null, worker_reason: d.reason ?? null, complete: d.complete ?? false, searched: d.searched ?? null, ...shown, ms: Math.round(shown.ms) });
+      console.error(`${q.id}: ${Math.round(shown.ms)}ms ${shown.status}${shown.reason ? ' ' + shown.reason : ''}`);
     }
   } finally { await page.close(); }
   record.finished = new Date().toISOString();
