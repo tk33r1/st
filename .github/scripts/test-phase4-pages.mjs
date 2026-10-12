@@ -212,7 +212,10 @@ try {
     await page.locator('#activitybar .act-btn[data-act="search"]').click();
     await page.waitForFunction(()=>document.getElementById('search-form').dataset.stSearchOwned==='1');
     assert.equal(await page.evaluate(()=>document.getElementById('search-form').parentElement.classList.contains('search-box')),true,'借りた欄を動かさない');
-    await page.keyboard.type('dj');await page.waitForSelector('.st-search-suggestions:not([hidden]) .st-search-command-option');
+    // 候補の枠は名前・説明の一致だけ（help の FAQ 本文には各コマンドの名前があるので、本文の一致まで出すと関係ないコマンドが並ぶ）。
+    await page.keyboard.type('timeline');await page.waitForSelector('.st-search-suggestions:not([hidden]) .st-search-command-option');
+    assert.deepEqual(await page.evaluate(()=>[...document.querySelectorAll('.st-search-command-option')].map(o=>o.textContent.replace(/Command$/,''))),['timeline'],'本文だけの一致を候補の枠に出さない');
+    await page.locator('#search-input').fill('');await page.keyboard.type('dj');await page.waitForSelector('.st-search-suggestions:not([hidden]) .st-search-command-option');
     const kinds=await page.evaluate(()=>[...document.querySelectorAll('.st-search-suggestions [role="option"]')].map(o=>o.classList.contains('st-search-command-option')?'command':o.classList.contains('st-search-submit-option')?'go':'page'));
     assert.equal(kinds[0],'go');assert.ok(kinds.indexOf('page')<0 || kinds.lastIndexOf('command')<kinds.indexOf('page'),'候補の枠でコマンドをページより前に出す');
     assert.ok(kinds.filter(k=>k==='command').length<=3);assert.equal(await page.locator('#search-results').isHidden(),true,'インラインの結果は隠す');
@@ -222,7 +225,7 @@ try {
     assert.equal(await page.evaluate(()=>{const c=document.querySelector('#search-shared .st-search-commands'),h=document.querySelector('#search-shared .st-search-local>h3');return !!(c.compareDocumentPosition(h)&Node.DOCUMENT_POSITION_FOLLOWING);}),true,'結果でもコマンドを件数の見出しより前に出す');
     await page.locator(`#search-shared .st-search-commands [data-command="${first}"]`).click();
     await page.waitForFunction(c=>document.body.innerText.includes(c),first);assert.equal(posts.length,1,'コマンドの実行で②を送らない');
-    await page.evaluate(()=>window.setLanguage?.('ja'));await page.waitForFunction(()=>document.getElementById('search-input').placeholder==='コマンドとページを検索');
+    await page.evaluate(()=>window.setLanguage?.('ja'));await page.waitForFunction(()=>document.getElementById('search-input').placeholder==='ST を検索');
     assert.deepEqual(errors,[]);await page.close();
     const fallback=await browser.newPage({viewport:{width:1280,height:900}}),fallbackPosts=[];await offline(fallback,fallbackPosts);
     await fallback.route('**/assets/search-ui.js*',route=>route.abort());await fallback.goto(origin+'/',{waitUntil:'domcontentloaded'});

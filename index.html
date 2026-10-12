@@ -1506,7 +1506,7 @@
     /* Search: the box is a form so the shared site search (tk.st only) can borrow it;
        inline, it is still the plain command filter. */
     .search-box { position: relative; }
-    #search-form { display: flex; margin: 0; }
+    #search-form { position: relative; display: flex; margin: 0; }
     #search-form #search-input { flex: 1; min-width: 0; border-radius: 4px 0 0 4px; }
     #search-input::-webkit-search-cancel-button { display: none; }
     #search-form .search-submit { flex: 0 0 2rem; padding: 0; background: var(--surface-alt); color: var(--text-color);
@@ -1532,7 +1532,7 @@
     /* Desktop keeps the side bar's density; on touch-sized screens the 44px targets of the shared design stay. */
     @media (min-width: 768px) {
       #search-form #search-input.st-search-input { min-height: 0; padding-right: 2rem; }
-      #search-form .st-search-clear { right: 2rem; width: 2rem; }
+      #search-form .st-search-clear { right: 2rem; width: 2rem; min-height: 0; }
       #search-form .st-search-submit { min-width: 2rem; width: 2rem; flex: 0 0 2rem; min-height: 0; }
       #view-search .st-search-suggestions :is(.st-search-link, .st-search-search-for, .st-search-command-option) { min-height: 32px; padding: .35rem .6rem; }
       #view-search .st-search-info { min-width: 28px; width: 28px; }
@@ -7054,14 +7054,18 @@
     // stay first. Loaded only when the view is first used, and never off tk.st (the inscribed copy keeps the
     // inline command filter above), so this page still carries no external code of its own.
     const SHARED_SEARCH_ASSETS = ['search-ui.css?v=20261012_15', 'japanese-search.js?v=20261012_8', 'site-search.js?v=20261011_1',
-      'search-ui.js?v=20261012_15', 'search-data.js?v=20261012_8'];
+      'search-ui.js?v=20261012_16', 'search-data.js?v=20261012_8'];
     const sharedSearchAllowed = (location.protocol === 'https:' && location.hostname === 'tk.st')
       || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     const PAGE_KINDS = { tool: ['Tool', 'ツール'], game: ['Game', 'ゲーム'], article: ['Article', '記事'], page: ['Page', 'ページ'] };
-    function findSidebarCommands(query) {
+    // Suggestions match a command's name and description only; the output text (e.g. the FAQ behind `help`, which
+    // mentions every other command) would otherwise surface unrelated commands. After Enter the results also take
+    // output-text matches, ranked after the name/description ones.
+    function findSidebarCommands(query, { list } = {}) {
       const q = (query || '').trim().toLowerCase(); if (!q) return [];
-      const order = (c) => c.startsWith(q) ? 0 : c.includes(q) ? 1 : 2;
-      return availableCmdKeys().filter(c => (SEARCH_INDEX[c] || '').includes(q))
+      const label = (c) => (c + ' ' + (cmdMeta(c).desc || []).join(' ')).toLowerCase();
+      const order = (c) => c.startsWith(q) ? 0 : c.includes(q) ? 1 : label(c).includes(q) ? 2 : 3;
+      return availableCmdKeys().filter(c => list === 'suggest' ? label(c).includes(q) : (SEARCH_INDEX[c] || '').includes(q))
         .sort((a, b) => order(a) - order(b) || a.localeCompare(b))
         .map(c => ({ id: c, label: c, description: cdesc(c) }));
     }
@@ -7079,12 +7083,12 @@
         const box = document.getElementById('search-shared');
         const search = STSearchUI.mount(box, STSearchData.createAdapter('site', {
           input: searchForm, results: box, locale: currentLang === 'ja' ? 'ja' : 'en',
-          placeholder: { ja: 'コマンドとページを検索', en: 'Search commands and pages' },
+          placeholder: { ja: 'ST を検索', en: 'Search ST' },
           renderSuggestion: (record) => PAGE_KINDS[record.kind] ? tr(...PAGE_KINDS[record.kind]) : '',
           commands: { find: findSidebarCommands, run: runSidebarCommand }
         }));
         // applyChrome() swaps these on a language change; point them at the new wording so it does not undo it.
-        Object.assign(searchInput.dataset, { enPh: 'Search commands and pages', jaPh: 'コマンドとページを検索', enAria: 'Search commands and pages', jaAria: 'コマンドとページを検索' });
+        Object.assign(searchInput.dataset, { enPh: 'Search ST', jaPh: 'ST を検索', enAria: 'Search commands and pages', jaAria: 'コマンドとページを検索' });
         searchCount.textContent = ''; searchCount.hidden = true; searchResults.replaceChildren(); searchResults.hidden = true;
         new MutationObserver(() => search.setLocale(currentLang === 'ja' ? 'ja' : 'en')).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
       } catch (err) { /* keep the inline command filter */ }

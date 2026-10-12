@@ -190,10 +190,11 @@
       const counts=sort && sort!=='relevance'?null:adapter.promoted?.(keyOf(query));if(!counts?.size) return result;
       const top=[],rest=[];for(const row of result.rows) (counts.has(links.get(row.id))?top:rest).push(row);top.sort((a,b)=>counts.get(links.get(b.id))-counts.get(links.get(a.id)));return {rows:[...top,...rest],total:result.total};
     }
-    // コマンドの検索はページに任せる（{id,label,description} の配列）。壊れた値は捨て、例外でも検索を止めない。
-    function findCommands(query) {
+    // コマンドの検索はページに任せる（{id,label,description} の配列）。list は 'suggest'（候補の枠）か 'results'（確定後）で、
+    // 候補の枠では名前・説明の一致だけ、確定後は本文の一致も、のように一覧ごとに絞れる。壊れた値は捨て、例外でも検索を止めない。
+    function findCommands(query,list) {
       if(!query || typeof adapter.commands?.find!=='function') return [];
-      try {const found=adapter.commands.find(query);return Array.isArray(found)?found.filter(c=>c && typeof c.id==='string' && c.id && typeof c.label==='string'):[];}catch(_) {return [];}
+      try {const found=adapter.commands.find(query,{list});return Array.isArray(found)?found.filter(c=>c && typeof c.id==='string' && c.id && typeof c.label==='string'):[];}catch(_) {return [];}
     }
     function runCommand(commandId) {closeDropdown();try {adapter.commands?.run?.(commandId);}catch(_) {}}
     function commandItem(parent,command,option) {
@@ -209,7 +210,7 @@
       const query=input.value.trim();lookupSort='relevance';const suggested=engine && Array.from(keyOf(query)).length<=200?promote(engine.search(query,activeFilters()),query,'relevance'):{rows:[],total:0};
       suggestions.replaceChildren();const first=node('li','st-search-result st-search-submit-option',suggestions);first.id=id+'-search-option';first.setAttribute('role','option');
       node('span','st-search-search-for',first).textContent=words[locale].search(query);
-      findCommands(query).slice(0,3).forEach((command,i)=>{commandItem(suggestions,command,true).id=id+'-command-'+i;});
+      findCommands(query,'suggest').slice(0,3).forEach((command,i)=>{commandItem(suggestions,command,true).id=id+'-command-'+i;});
       suggested.rows.slice(0,6).forEach((row,i)=>addRow(suggestions,row,true,i));
       suggestionMessage.textContent=baseState==='failed'?words[locale].baseFailed:baseState==='loading' || (!suggested.total && !['ready','failed'].includes(readingState))?words[locale].loading:'';
       suggestionMessage.hidden=!suggestionMessage.textContent;activeSuggestion=-1;suggestArea.hidden=!dropdown || !query;input.setAttribute('aria-expanded',String(!suggestArea.hidden));input.removeAttribute('aria-activedescendant');showStates();
@@ -240,7 +241,7 @@
     }
     function renderResults() {
       const t=words[locale],readingPending=!['ready','failed'].includes(readingState),related=rankRows.filter(r=>!dedupeIds.has(r.id));
-      const commands=committed?findCommands(committed):[];commandArea.hidden=!commands.length;commandHeading.textContent=t.commands;commandList.replaceChildren();
+      const commands=committed?findCommands(committed,'results'):[];commandArea.hidden=!commands.length;commandHeading.textContent=t.commands;commandList.replaceChildren();
       commands.slice(0,expandedCommands?commands.length:3).forEach(command=>commandItem(commandList,command,false));
       commandMore.hidden=commands.length<=3 || expandedCommands;commandMore.textContent=t.allCommands(commands.length);
       const mainAI=baseState==='ready' && !readingPending && matched.total===0 && related.length>0;
