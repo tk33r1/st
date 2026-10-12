@@ -98,12 +98,12 @@ try {
         },loadReadings:async()=>data.readings};
       const adapter=adapterMode?STSearchData.createAdapter('nitori',{onConditions:c=>{lastCondition=c.query;}}):fake;
       const ui=STSearchUI.mount(document.getElementById('search'),adapter);
-      const field=document.querySelector('.st-search-input');
+      const field=document.querySelector('.st-search-input');field.focus();
       // 準備の途中でも入力イベントを処理し、最後の条件で描く。
       const early=setInterval(()=>{field.value=field.value==='収納'?'家電':'収納';field.dispatchEvent(new Event('input',{bubbles:true}));},60);
       await ui.ready;clearInterval(early);clearInterval(timer);const prepareMs=performance.now()-start;
       if(window.phase4MemoryMark)await phase4MemoryMark('ready');
-      const preparedInput=field.value,conditionPreserved=lastCondition===preparedInput;
+      const preparedInput=field.value,conditionPreserved=lastCondition==='' && field.value===preparedInput;
       await new Promise(resolve=>requestAnimationFrame(resolve));observer.disconnect();
       const queries=['n','ｋ','にｔ','かでｎ','ニトリ','家電','収納','shuunou','が','か\u3099','new','nitori 収納','セルフレジ','ぴぴ','架空xyz無該当','家電 価格','コーヒー','ni','ka','にと'];
       const run=async()=>{
@@ -112,7 +112,7 @@ try {
           const query=queries[i%queries.length],began=performance.now();field.value=query;field.dispatchEvent(new Event('input',{bubbles:true}));
           void document.querySelector('.st-search-suggestions').offsetHeight;
           const elapsed=performance.now()-began;times.push(elapsed);
-          details.push({query,ms:elapsed,candidates:document.querySelectorAll('.st-search-suggestions li').length,total:ui.state.total});
+          details.push({query,ms:elapsed,candidates:document.querySelectorAll('.st-search-suggestions a').length,total:ui.state.total});
           await new Promise(resolve=>requestAnimationFrame(resolve));
         }
         const first=times.slice(0,20).sort((a,b)=>a-b);times.sort((a,b)=>a-b);

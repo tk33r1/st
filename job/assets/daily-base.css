@@ -3083,3 +3083,30 @@ a {
     margin-left: 0;
   }
 }
+/* 日刊検索はヘッダーの一本。候補はoverflowのあるフォームの外に重ねる。 */
+/* 欄は動かさず、直後の候補の枠（display:contents）を .header-actions を基準に重ねる。 */
+.header-actions{position:relative;--border:var(--rule);--accent:var(--primary)}
+.header-actions .st-search-control-external{color:var(--ink)}
+.header-search{position:relative;height:44px}
+.header-search .st-search-input{border:0;min-height:44px;padding:0 44px 0 12px}
+.header-search .st-search-submit{min-width:44px;height:44px;width:44px;border:0}
+.header-search .st-search-clear{right:44px;height:44px;width:44px;background:var(--surface)}
+.header-actions .st-search-suggestions{color:var(--ink);background:var(--surface);border-color:var(--rule-strong);box-shadow:var(--shadow-md);min-width:360px;left:auto;right:0}
+.header-actions .st-search-notice{font-size:11px}.header-actions .st-search-list{font-family:var(--font-sans);font-size:14px}
+.daily-header-search-runtime{position:absolute}.daily-header-search-runtime .st-search-results{display:none}
+.st-search{--border:var(--rule);--accent:var(--primary);color:var(--ink)}
+.st-search-privacy-details{background:var(--surface);color:var(--ink);border-color:var(--rule)}
+.archive-search-hint{background:transparent;border:0;font:inherit;color:var(--ink-3);cursor:pointer;text-align:left;min-height:44px}
+.st-search-local>.st-search-list>.st-search-result{border-color:var(--rule)}
+.st-search-local .archive-row{grid-template-columns:110px 1fr;padding:18px 0}
+.st-search-local .archive-date{font:12px var(--font-mono);color:var(--ink-3)}
+.st-search-filters select{border-color:var(--rule-strong);background:var(--surface)}
+@media(max-width:720px){
+ .header-actions:has(.header-search.is-focused){width:100%}
+ .header-inner:has(.header-search.is-focused)>.brand,.header-actions:has(.header-search.is-focused)>:not(.header-search):not(.st-search-control){display:none}
+ .header-actions .header-search.is-focused{width:100%}
+ .header-actions .st-search-suggestions{left:calc(-1 * var(--gutter));right:calc(-1 * var(--gutter));min-width:0;width:auto}
+ .header-search:not(.is-focused) .st-search-clear{display:none}
+ .header-search input{font-size:16px}
+ .st-search-local .archive-row{grid-template-columns:90px 1fr;gap:12px}
+}

@@ -15,7 +15,7 @@ try {
       if(url.pathname==='/search/api/rank')posts++;return route.continue();
     });
     const page=await ctx.newPage();await page.goto('https://tk.st/'+scope+'/',{waitUntil:'domcontentloaded'});
-    await page.locator('.st-search-data-status').filter({hasText:'文字と読みで検索できます'}).waitFor();
+    await page.waitForFunction(()=>document.querySelector('[data-st-search-readings=ready]'));
     const field=page.locator('.st-search-input');await field.fill(query);
     await page.locator('.st-search-suggestions li').first().waitFor();assert.equal(posts,0);
     const responsePromise=page.waitForResponse(r=>new URL(r.url()).pathname==='/search/api/rank' && r.request().method()==='POST');
@@ -23,6 +23,9 @@ try {
     assert.equal(response.status(),200);assert.equal(payload.reason,'disabled');assert.equal(payload.complete,false);assert.equal(payload.searched,null);
     await page.locator('.st-search-rank-status').filter({hasText:'停止中'}).waitFor();
     assert.ok(await page.locator('.st-search-suggestions li').count());
+    assert.equal(await page.locator('.st-search-semantic').isVisible(),false);
+    assert.equal(await page.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),false);
+    await field.fill(query+' ');assert.equal(await page.locator('.st-search-notice span').textContent(),'Enter で検索');
     // 明示検索で①の全候補も開くため、停止後はその表示を検査する。
     const count=await page.locator('.st-search-local .st-search-link').count();
     assert.ok(count>0);await field.press('Enter');await page.waitForTimeout(100);assert.equal(posts,1);

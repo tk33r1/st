@@ -1,22 +1,42 @@
-/* 4画面で共通の検索表示。ページ側では結果行の書式を上書きしない。 */
-.st-search{--search-border:var(--border,#555);--search-accent:var(--accent,#15803d);color:var(--text,var(--ink,#212529));background:var(--surface,var(--screen,transparent));font:400 1rem/1.6 system-ui,sans-serif;text-align:left;max-width:72rem;margin:1.5rem auto;padding:1rem;border:1px solid var(--search-border);border-radius:.5rem}
-.st-search *{box-sizing:border-box}
-.st-search [hidden]{display:none!important}
-.st-search-form{display:grid;gap:.75rem}.st-search-label{display:block;font-size:.85em}
-.st-search-input-row{display:flex;gap:.5rem;align-items:stretch}
-.st-search-input{min-width:0;flex:1;background:transparent;color:inherit;border:1px solid var(--search-border);border-radius:.35rem;padding:.75rem;font:inherit}
-.st-search-button,.st-search-filters select{background:transparent;color:inherit;border:1px solid var(--search-border);border-radius:.35rem;padding:.6rem .8rem;font:inherit;cursor:pointer}
-.st-search-button:disabled{cursor:default;opacity:.6}
-.st-search :is(a,button,input,select):focus-visible{outline:2px solid var(--search-accent);outline-offset:3px}
-.st-search-filters{display:flex;flex-wrap:wrap;gap:.75rem}.st-search-filters label{display:grid;gap:.25rem;font-size:.85em}
-.st-search-heading{font:inherit;font-weight:700;margin:1.25rem 0 .5rem}
-.st-search-list{list-style:none;margin:.5rem 0;padding:0;border-top:1px solid var(--search-border)}
-.st-search-result{border-bottom:1px solid var(--search-border);margin:0;padding:0}
-.st-search-link{display:grid;gap:.3rem;padding:.75rem .5rem;color:inherit;text-decoration:none;overflow-wrap:anywhere}
-.st-search-link:hover,.st-search-result[aria-selected="true"]{background:color-mix(in srgb,var(--search-accent) 10%,transparent)}
-.st-search-title{color:var(--search-accent)}.st-search-description{font-size:.85em;line-height:1.6}
-.st-search-count,.st-search-data-status,.st-search-rank-status,.st-search-coverage,.st-search-privacy{font-size:.8em;line-height:1.6;margin:.6rem 0}
-.st-search-privacy{margin-top:1.25rem;opacity:.8}
-.st-search .st-search-privacy-details{font-size:.8em;line-height:1.6;background:transparent;border:0;border-radius:0;padding:0;margin:0;box-shadow:none}.st-search .st-search-privacy-details summary{cursor:pointer;display:list-item;padding:0;min-height:0;border:0}
+/* 共通の配置。色・字体・カードの見た目はページに従う。 */
+.st-search{color:inherit;font:inherit;text-align:left;margin:1.5rem 0}
+.st-search *, .st-search-control *{box-sizing:border-box}
+.st-search [hidden],.st-search-control [hidden]{display:none!important}
+.st-search-control{position:relative;min-width:0;scroll-margin-top:5rem}
+.st-search-control-external{display:contents}
+.st-search-form{margin:0}.st-search-input-row{display:flex;position:relative;align-items:stretch}
+.st-search-input{min-width:0;flex:1;padding:.7rem 3rem .7rem .9rem;background:var(--surface,transparent);color:inherit;border:1px solid var(--border,currentColor);font:inherit;min-height:44px}
+.st-search-input::-webkit-search-cancel-button,.st-search-input::-webkit-search-decoration{display:none}
+.st-search-button,.st-search-filters select{color:inherit;font:inherit;cursor:pointer;background:transparent;border:1px solid var(--border,currentColor);padding:.5rem .7rem;min-height:44px}
+.st-search-submit{min-width:44px;width:44px;flex:0 0 44px;padding:0;display:grid;place-items:center}
+.st-search-submit svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2}
+.st-search-clear{position:absolute;right:44px;top:0;bottom:0;width:44px;border:0;font-size:1.5rem;padding:0}
+.st-search-label,.st-search-visually-hidden{position:absolute!important;width:1px;height:1px;padding:0!important;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0!important}
+.st-search :is(a,button,input,select):focus-visible,.st-search-control :is(a,button,input):focus-visible{outline:2px solid var(--accent,currentColor);outline-offset:3px}
+.st-search-suggestions{position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);color:inherit;border:1px solid var(--border,currentColor);max-height:60vh;overflow:auto}
+.st-search-list{list-style:none;margin:0;padding:0}
+.st-search-suggestions .st-search-result{border:0;margin:0;padding:0}
+.st-search-suggestions .st-search-link,.st-search-search-for,.st-search-semantic .st-search-link{display:flex;gap:.75rem;align-items:center;padding:.65rem .8rem;min-height:44px;color:inherit;text-decoration:none}
+.st-search-title{min-width:0;flex:1;overflow-wrap:anywhere}
+.st-search-suggestions .st-search-title,.st-search-semantic .st-search-title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.st-search-kind{font-size:.75em;flex-shrink:0}.st-search-submit-option{cursor:pointer}
+.st-search-result[aria-selected="true"],.st-search-suggestions .st-search-result:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+.st-search-notice{display:flex;align-items:center;gap:.5rem;border-top:1px solid var(--border,currentColor);font-size:.75em;padding:.3rem .7rem;line-height:1.5}
+.st-search-info{flex-shrink:0;min-width:44px;width:44px;border:0;padding:0;font-size:1.1rem}
+.st-search-filters{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:1rem 0}.st-search-filters :is(label,[role="group"]){display:flex;align-items:center;gap:.5rem;font-size:.85em}
+.st-search-heading{font:inherit;font-weight:700;margin:1rem 0 .5rem;scroll-margin-top:6rem}
+.st-search-local>.st-search-list>.st-search-result{margin:0;border-bottom:1px solid var(--border,currentColor)}
+.st-search-local>.st-search-list>.st-search-result>.st-search-link{display:grid;gap:.25rem;padding:.8rem .5rem;color:inherit;text-decoration:none}
+.st-search-description{font-size:.85em;line-height:1.6}.st-search-more{display:block;margin:1rem auto}
+.st-search-semantic{position:relative;border:1px solid var(--border,currentColor);margin:.75rem 0;padding:.5rem .75rem;min-height:calc(44px * 3 + 7rem)}
+.st-search-semantic:has(.st-search-retry-area:not([hidden])){min-height:0;border:0;padding:0}
+.st-search-semantic .st-search-heading{font-size:.85em;margin:0 0 .5rem}
+.st-search-semantic .st-search-result{height:44px}
+.st-search-semantic.is-expanded .st-search-result{height:auto;min-height:44px}
+.st-search-semantic.is-loading .st-search-list{height:132px;background:linear-gradient(transparent 10%,color-mix(in srgb,currentColor 8%,transparent) 10% 80%,transparent 80%);background-size:100% 44px}
+.st-search-retry-area{display:flex;align-items:center;gap:.5rem}.st-search-empty,.st-search-suggestion-message{padding:.7rem 0;font-size:.9em}
+.st-search-privacy-details{color:inherit;background:var(--surface);border:1px solid var(--border,currentColor);padding:1.5rem;width:min(38rem,calc(100vw - 2rem));max-height:85vh;overflow:auto;margin:auto;font:inherit}
+.st-search-privacy-details::backdrop{background:#0008}.st-search-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.st-search-dialog-head h2{font:inherit;font-weight:700}.st-search-privacy-details p{margin:1rem 0;font-size:.85em;line-height:1.8}.st-search-privacy-details a{text-decoration:underline}
+@media(max-width:720px){.st-search-notice{font-size:.7em}.st-search-filters{gap:.5rem}.st-search-filters :is(label,[role="group"]){max-width:100%}.st-search-filters select{max-width:100%;min-width:0}}
 .site-tree ul{list-style:none;padding-left:1.2rem}.site-tree>ul{padding-left:0}.site-tree li{border-left:1px solid var(--border,#555);margin:.6rem 0;padding-left:.75rem}.site-tree-label{overflow-wrap:anywhere}.site-tree details{margin-top:.3rem}.site-tree summary{cursor:pointer;font-size:.8em}.site-tree a{color:var(--accent,#55d4b0);text-decoration:none}.site-tree a:hover{text-decoration:underline}
-@media(max-width:480px){.st-search-input-row{flex-wrap:wrap}.st-search-input{flex-basis:70%}.st-search-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}

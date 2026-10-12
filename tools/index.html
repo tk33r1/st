@@ -480,8 +480,23 @@
       .fact { border: 0; background: none; padding: 0; font-size: 10px; }
       #tool-grid { grid-template-columns: 1fr; }
     }
+
+    /* 共通検索の操作に、このページのカードと装飾を合わせる。 */
+    .st-search-control{--surface:var(--bg);font-family:var(--font-mono)}
+    .st-search-input-row{border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+    .st-search-input{border:0}.st-search-submit{border:0;border-left:1px solid var(--border)}
+    .st-search-suggestions{background:var(--bg);border-radius:8px;box-shadow:0 12px 28px #0003}
+    .st-search-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:24px}
+    .st-search-local>.st-search-card-grid>.st-search-result{border:0;min-width:0}
+    .st-search-card-grid .tool-card{height:100%}
+    .st-search-kind[data-category]::before{content:'●';margin-right:.5em;color:var(--accent)}
+    .st-search-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+    .st-search-chip{font:inherit;min-height:44px;border:1px solid var(--border);padding:.5rem .8rem;background:transparent;color:inherit;border-radius:6px;cursor:pointer}
+    .st-search-chip[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+    .st-search-semantic,.st-search-privacy-details{background:var(--bg)}
+    @media(max-width:600px){.st-search-card-grid{grid-template-columns:1fr}}
   </style>
-  <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_13">
 </head>
 
 <body>
@@ -620,7 +635,7 @@
   </button>
   <script src="/assets/japanese-search.js?v=20261012_8"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_8"></script>
+  <script src="/assets/search-ui.js?v=20261012_13"></script>
   <script src="/assets/search-data.js?v=20261012_8"></script>
   <script src="../assets/buy-me-oil.js"></script>
   <script>
@@ -836,6 +851,17 @@
     let catalogueQuery = '', catalogueSort = 'newest';
     showSkeletons(6);
     const searchUI = STSearchUI.mount(document.getElementById('list-search'), STSearchData.createAdapter('tools', {
+      placeholder:{ja:'ツールを検索（例: PDF、QR、CSV）'},filtersBeforeSearch:['category'],filterChips:true,
+      classes:{list:'st-search-card-grid'},
+      renderSuggestion(record) {const span=document.createElement('span');span.className='st-search-kind';span.textContent=record.category;span.dataset.category=record.category.toLowerCase();return span;},
+      renderItem(record,ctx) {
+        if(ctx.compact) return null;
+        const pageRecord=records.find(r=>r.id===record.numericId);if(!pageRecord) return null;
+        const card=createCard({...pageRecord,url:ctx.href,external:false});
+        card.dataset.stPrimary='';
+        return card;
+      },
+
       onData(rows) {
         records = normalizeRecords(rows.map(r => ({ ...r, id: r.numericId, url: r.href, category: r.category.toLowerCase() })));
         const sorted = [...records].sort((a,b) => b.id-a.id);

@@ -108,6 +108,30 @@ try {
     console.log(`${media}/20261011: 旧号→旧ポータルの受け渡しと非送信を確認`);
     await page.close();
   }
+  // Phase 4のHTMLとページ側JSは固定し、共通UIだけ最新版へ差し替える。
+  for(const [scope,path,query] of [['site','/404.html','Thought'],['tools','/tools/','PDF'],['game','/game/','tetris'],['nitori','/job/nitoridaily/','収納'],['retail','/job/retailtechdaily/','AI']]) {
+    const page=await browser.newPage(),errors=[],posts=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
+    await page.route('**/*',async route=>{
+      const url=new URL(route.request().url());if(url.origin!==origin) {await route.abort();return;}
+      if(url.pathname==='/search/api/rank') {
+        const body=route.request().postDataJSON();posts.push(body);
+        await route.fulfill({json:{status:'no_results',complete:true,cached:false,results:[],searched:{scope,filters:body.filters,generation:body.generation,total:20,candidates:20,judged:20}}});return;
+      }
+      const file=url.pathname.slice(1)+(url.pathname.endsWith('/')?'index.html':'');let body;
+      try {
+        if(file==='assets/search-ui.js' || file==='assets/search-ui.css' || file==='assets/site-search.js') body=readFileSync(file);
+        else if(/readings|site-keyword/.test(file)) body=readFileSync('_site/'+file);
+        else body=execFileSync('git',['show','HEAD:'+file],{maxBuffer:16*1024*1024,stdio:['ignore','pipe','ignore']});
+        await route.fulfill({body,contentType:file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':'text/html; charset=utf-8'});
+      }catch(_) {await route.fulfill({status:404,body:''});}
+    });
+    await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('[data-st-search-readings=ready]'));
+    const field=page.locator('.st-search-input');await field.fill(query);assert.equal(posts.length,0);await field.press('Enter');
+    await page.waitForFunction(()=>document.querySelector('.st-search-semantic').hidden);
+    assert.ok(await page.locator('.st-search-local > ul > li').count()>0);assert.equal(posts.length,1);assert.deepEqual(errors,[]);
+    await page.close();console.log(scope+': Phase 4のHTML＋新共通UI');
+  }
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve=>server.close(resolve));

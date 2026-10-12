@@ -58,7 +58,7 @@ async function context(off=false,allowLive=false,dailySearchEventsOnly=false) {
   })().catch(async error=>{routingErrors.push(error.message);await route.abort().catch(()=>{});}));
   return {ctx,log,posts};
 }
-const ready=page=>page.locator('.st-search-data-status').filter({hasText:/文字と読みで検索できます|Text and reading search is ready/}).waitFor();
+const ready=page=>page.waitForFunction(()=>document.querySelector('[data-st-search-readings=ready]'));
 const locationSafe=async page=>assert.ok(!decode(await page.evaluate(()=>location.href)).includes(marker),'検索語をURLに残さない');
 function checkLog(log) {
   for(const entry of log) {
@@ -91,7 +91,7 @@ try {
     await ready(page);const field=page.locator('.st-search-input');
     await field.fill(query+' '+pii);assert.equal(posts.length,0);
     const sort=page.locator('[data-sort]');if(await sort.locator('option').count()>1)await sort.selectOption({index:1});
-    const filter=page.locator('[data-filter]').first();if(await filter.locator('option').count()>1)await filter.selectOption({index:1});
+    const filter=page.locator('[data-filter]:visible').first();if(await filter.locator('option').count()>1)await filter.selectOption({index:1});
     assert.equal(posts.length,0);await field.press('Enter');
     await page.locator('.st-search-rank-status').filter({hasText:/停止中|disabled/}).waitFor();assert.equal(posts.length,1);
     await locationSafe(page);await page.waitForTimeout(1000);checkLog(log);
@@ -115,9 +115,10 @@ try {
       if(scope==='nitori' || scope==='retail') {
         const link=page.locator('[data-archive-month] a').first();const issue=await link.getAttribute('href');
         await page.goto(new URL(issue,page.url()).href,{waitUntil:'domcontentloaded'});
-        const header=page.locator('.header-search input[type=search]');await header.fill(query);await header.press('Enter');
+        const header=page.locator('.header-search input[type=search]');await header.fill(query);await page.waitForFunction(()=>document.querySelector('.header-search').dataset.stSearchOwned==='1');await header.press('Enter');
         await page.waitForURL(url=>url.pathname===path);await ready(page);assert.equal(await field.inputValue(),query);
-        await locationSafe(page);assert.equal(posts.length,1);
+        await locationSafe(page);assert.equal(posts.length,2);assert.equal(await page.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);
+        await page.getByRole('button',{name:'検索をやめる',exact:true}).click();
         await page.locator('[data-archive-month] a').first().click();
         await page.waitForURL(url=>/\/\d{8}\/$/.test(url.pathname));
         assert.ok(!decode(await page.evaluate(()=>document.referrer)).includes(marker));await locationSafe(page);

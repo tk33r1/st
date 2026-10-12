@@ -370,6 +370,10 @@
     }
   }
 
+  function searchArticleDate(record) {
+    return record.date.slice(0,4)+'-'+record.date.slice(4,6)+'-'+record.date.slice(6,8);
+  }
+
   function initArchiveSearch() {
     const container = document.getElementById('archiveCommonSearch');
     if (!container || !window.STSearchUI || !window.STSearchData) return null;
@@ -377,35 +381,85 @@
     const scope = media === 'nitoridaily' ? 'nitori' : 'retail';
     const archiveRows = Array.from(document.querySelectorAll('[data-archive-month]'));
     const search = STSearchUI.mount(container, STSearchData.createAdapter(scope, {
-      locale: locale(),
+      locale: locale(),input:document.querySelector('.header-search'),results:container,
+      placeholder:{ja:'記事を検索',en:'Search articles'},filtersBeforeSearch:['month'],analyticsNotice:true,
+      renderSuggestion:searchArticleDate,
+      renderItem:renderSearchArticle,
+      onResults({open}) {
+        const hint=document.getElementById('archiveSearchHint');if(hint) hint.hidden=open;
+      },
       onConditions(condition) {
         let visible = 0;
         archiveRows.forEach(row => {
-          row.hidden = !!condition.filters.month && row.dataset.archiveMonth !== condition.filters.month;
+          row.hidden = !!condition.query || (!!condition.filters.month && row.dataset.archiveMonth !== condition.filters.month);
           if (!row.hidden) visible++;
         });
         const empty = document.getElementById('archiveEmpty');
-        if (empty) empty.hidden = visible > 0;
+        if (empty) empty.hidden = !!condition.query || visible > 0;
       },
       track(event, values) {
         try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (_) {}
         if (event === 'rank_run') {
-          const term = window.STSearchAnalytics ? STSearchAnalytics.term(container.querySelector('input[type="search"]').value) : '';
+          const term = window.STSearchAnalytics ? STSearchAnalytics.term(search.state.query) : '';
           if (term) values = Object.assign({}, values, { search_term: term });
         }
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(Object.assign({ event: 'daily_' + event }, values));
       }
     }));
-    const dialog = document.getElementById('archiveSearchInfo');
-    document.getElementById('archiveSearchInfoOpen').addEventListener('click', () => dialog.showModal());
-    document.getElementById('archiveSearchInfoClose').addEventListener('click', () => dialog.close());
-    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+    // 古いHTMLのダイアログも、新しい共通説明へ接続する。
+    document.getElementById('archiveSearchInfo')?.remove();
+    const info=document.getElementById('archiveSearchInfoOpen');
+    info?.addEventListener('click',()=>search.openPrivacy(info));
+    document.getElementById('archiveSearchHint')?.addEventListener('click',()=>search.focus());
+    document.querySelector('.header-search')._stSearch=search;
     new MutationObserver(() => search.setLocale(locale())).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-    return function searchFor(text) {
-      search.setQuery(cleanQuery(text));
+    return function searchFor(text,options) {
+      search.setQuery(cleanQuery(text),options);
       document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
     };
+  }
+
+  function renderSearchArticle(record,ctx) {
+    if(ctx.compact) return null;
+    const link=document.createElement('a');link.href=ctx.href;link.dataset.stPrimary='';link.className='archive-row';
+    const date=document.createElement('time');date.className='archive-date';date.textContent=searchArticleDate(record);link.append(date);
+    const body=document.createElement('span');body.className='archive-body';
+    const title=document.createElement('span');title.className='archive-title';title.textContent=record.title;body.append(title);link.append(body);return link;
+  }
+
+  // 号のページは、欄に触れたときだけ共通検索と索引を読む。失敗時も従来の確定は使える。
+  function initIssueSearch(header) {
+    if(!header || document.getElementById('archiveCommonSearch')) return;
+    let started=false;
+    async function load() {
+      if(started) return;started=true;
+      try {
+        const version='20261012_13',files=['search-analytics.js?v=20261009_1','japanese-search.js?v=20261012_8','site-search.js?v=20261011_1','search-ui.js?v='+version,'search-data.js?v=20261012_8'];
+        await new Promise((resolve,reject)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='/assets/search-ui.css?v='+version;style.onload=resolve;style.onerror=reject;document.head.append(style);});
+        for(const file of files) await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/assets/'+file;script.onload=resolve;script.onerror=reject;document.head.append(script);});
+        const scope=media==='nitoridaily'?'nitori':'retail',container=document.createElement('div');container.className='daily-header-search-runtime';header.after(container);
+        const search=STSearchUI.mount(container,STSearchData.createAdapter(scope,{
+          input:header,locale:document.documentElement.lang==='en'?'en':'ja',placeholder:{ja:'記事を検索',en:'Search articles'},analyticsNotice:true,
+          renderSuggestion:searchArticleDate,
+          onSubmit({query}) {
+            const text=cleanQuery(query);
+            if(text) {try {sessionStorage.setItem('st-search-explicit',JSON.stringify({scope,query:STJapaneseSearch.normalize(text).trim(),at:Date.now()}));}catch(_) {}}
+            else {try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}}
+            goToPortal(header,text);
+          }
+        }));
+        header._stSearch=search;
+        new MutationObserver(()=>search.setLocale(document.documentElement.lang==='en'?'en':'ja')).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+      }catch(_) { /* 候補なしでポータルへ移る従来の動作を保つ。 */ }
+    }
+    const input=header.querySelector('input[type="search"]');input.addEventListener('focus',load,{once:true});input.addEventListener('input',load,{once:true});
+    if(document.activeElement===input || input.value) load();
+  }
+
+  function goToPortal(header,text) {
+    const portal=new URL(header.getAttribute('action') || './',location.href);
+    location.href=portal.href.split('#')[0]+(text?'#q='+encodeURIComponent(text):'#archiveSearch');
   }
 
   // 検索語の取り出し（受け取る側の検査は head の処理。ここでは送る前に制御文字を除いて200文字に収める）
@@ -418,8 +472,21 @@
   function initSearchHandoff(searchFor) {
     const header = document.querySelector('.header-search');
     if (header) {
+      let composing=false,imeEnterHeld=false;
+      const input=header.querySelector('input[type="search"]');
+      input.addEventListener('compositionstart',()=>{composing=true;header._stComposing=true;});
+      input.addEventListener('compositionend',()=>{composing=false;header._stComposing=false;});
+      header.addEventListener('keydown',e=>{
+        if(e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter') return;
+        if(composing || e.isComposing || e.keyCode===229) {imeEnterHeld=true;header._stImeEnterHeld=true;return;}
+        if(imeEnterHeld || e.repeat) e.preventDefault();
+      },true);
+      document.addEventListener('keyup',e=>{if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {imeEnterHeld=false;header._stImeEnterHeld=false;}});
+      window.addEventListener('blur',()=>{imeEnterHeld=false;header._stImeEnterHeld=false;});
       header.addEventListener('submit', function(e) {
+        if(header.dataset.stSearchOwned) return;
         e.preventDefault();
+        if(composing || imeEnterHeld) return;
         const input = header.querySelector('input[type="search"]');
         const text = cleanQuery(input && input.value);
         if (searchFor) {
@@ -427,9 +494,14 @@
           else document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
           return;
         }
-        const portal = new URL(header.getAttribute('action') || './', window.location.href);
-        window.location.href = portal.href.split('#')[0] + (text ? '#q=' + encodeURIComponent(text) : '#archiveSearch');
+        try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+        goToPortal(header,text);
       });
+      initIssueSearch(header);
+      header.dataset.stFallbackReady='1';
+      if(searchFor && typeof window.STDailyPendingSearch==='string') {
+        searchFor(window.STDailyPendingSearch);delete window.STDailyPendingSearch;
+      }
     }
     if (!searchFor) return;
     document.querySelectorAll('a.topic-tag[href^="#q="]').forEach(function(link) {
@@ -444,7 +516,7 @@
     function takeHandoff() {
       const text = typeof window.STDailyHandoff === 'string' ? window.STDailyHandoff : '';
       window.STDailyHandoff = null;
-      if (text) searchFor(text);
+      if (text) searchFor(text,{handoff:true});
     }
     window.addEventListener('st-daily-handoff', takeHandoff);
     takeHandoff();

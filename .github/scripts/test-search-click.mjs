@@ -7,6 +7,7 @@ import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 import {webcrypto,createHash} from 'node:crypto';
+import {chromium} from 'playwright';
 const read=path=>readFileSync(path,'utf8');
 
 function worker() {
@@ -95,4 +96,41 @@ test('集計は公開中のページだけを出し、少ない組と個人情�
   assert.equal(read(again),read(out),'同じ入力なら同じバイト列');
   writeFileSync(rowsPath,JSON.stringify([{results:pages,success:true,meta:{}}]));
   assert.throws(()=>execFileSync('python',['-B','.github/scripts/search-boost.py','--rows',rowsPath,'--output',out],{stdio:'pipe'}),'1文だけの結果は受け付けない');
+});
+
+test('ページの主リンクからsuggestは下書き、local/semanticは確定語を記録し、解析停止を守る',async()=>{
+  const browser=await chromium.launch({headless:true});
+  try {
+    const page=await browser.newPage(),clicks=[];
+    await page.route('https://search.fixture/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/search/api/click') {clicks.push(route.request().postDataJSON());await route.fulfill({status:204,body:''});return;}
+      if(path==='/search/api/rank') {
+        const body=route.request().postDataJSON();await route.fulfill({json:{status:'results',complete:true,cached:false,
+          searched:{scope:'tools',filters:{},generation:body.generation,total:25,candidates:20,judged:20},results:[{id:'tool:21',kind:'tool',title:'PDF 21',description:'',url:'/tools/21/'}]}});return;
+      }
+      await route.fulfill({contentType:'text/html',body:'<div id="search"></div>'});
+    });
+    await page.goto('https://search.fixture/');
+    for(const file of ['japanese-search.js','site-search.js','search-ui.js']) await page.addScriptTag({path:'assets/'+file});
+    await page.evaluate(async()=>{
+      const records=Array.from({length:25},(_,i)=>({id:'tool:'+(i+1),title:'PDF '+(i+1),href:'/tools/'+(i+1)+'/'}));
+      const source='1'.repeat(64);
+      window.ui=STSearchUI.mount(document.querySelector('#search'),{scope:'tools',fields:[{name:'title',mask:1}],href:r=>r.href,
+        loadBase:async()=>({records,sourceHash:source,generation:source}),loadReadings:async()=>{throw new Error('offline');},
+        renderItem(record,ctx) {const article=document.createElement('article'),a=document.createElement('a');a.dataset.stPrimary='';a.href=ctx.href;a.textContent=record.title;article.append(a);return article;}});
+      document.addEventListener('click',e=>{if(e.target.closest('a'))e.preventDefault();});await ui.ready;
+    });
+    const input=page.locator('input');await input.fill('PDF');await input.press('Enter');await page.waitForFunction(()=>window.ui.state.rank==='results');
+    await input.fill('pdf 1');
+    await page.locator('.st-search-suggestions a').first().dispatchEvent('click');
+    await page.locator('[data-st-search-list=local] [data-st-primary]').nth(1).dispatchEvent('click');
+    await page.locator('[data-st-search-list=semantic] [data-st-primary]').first().dispatchEvent('click');
+    await page.waitForFunction(()=>true);
+    await new Promise(r=>setTimeout(r,100));
+    assert.deepEqual(clicks.map(c=>[c.list,c.query,c.position]),[['suggest','pdf 1',1],['local','pdf',2],['semantic','pdf',1]]);
+    await page.evaluate(()=>localStorage.setItem('st-analytics','off'));
+    await page.locator('[data-st-search-list=local] [data-st-primary]').nth(2).dispatchEvent('click');
+    assert.equal(clicks.length,3);
+  }finally {await browser.close();}
 });

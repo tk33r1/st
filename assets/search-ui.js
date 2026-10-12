@@ -1,34 +1,32 @@
-/** Phase 4共通UI。ページ側はデータ・フィールド・filters・同点順・リンクだけを宣言する。 */
-(function (w) {
+/** 共通検索。操作と状態は共通、カードと装飾はページが受け持つ。 */
+(function(w) {
   'use strict';
-  const words = {
-    ja: {input:'検索語',submit:'検索',all:'全候補を見る',more:'さらに100件表示',cancel:'検索を中止',
-      local:'① 文字・読みの一致',semantic:'② 意味の近い候補',suggestions:'入力中の候補',
-      ready:'文字と読みで検索できます。',preparing:'文字で検索できます。読みを準備しています。',
-      readingFailed:'文字で検索できます。読みは利用できません。',loading:'検索対象を読み込んでいます。',
-      baseFailed:'検索対象を取得できませんでした。ページを再読み込みすると取得し直します。',
-      ranking:'意味の近い候補を調べています。',failed:'意味検索を利用できません。文字・読みの一致を確認してください。',
-      stale:'条件が変わりました。検索すると意味の近い候補も調べます。',limited:'意味検索の利用上限に達しました。',
-      updating:'検索データを更新しています。意味検索は次の検索操作で実行します。',
-      disabled:'意味検索は停止中です。',none:'選んだ候補に意味の近い結果はありませんでした。',sort:'並べ替え',
-      allOption:'すべて',count:n=>`${n}件一致`,shown:(n,total)=>`${n}件表示／${total}件`,coverage:(n,c,total,complete)=>`${total}件から${c}件を選択、${n}件を判定${complete?'':'（判定未完了）'}`,
-      privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示ではTypeSafe AIへ送りません。候補を開くと、検索語と開いたページを並び順の改善のために記録します。ファイルやツールの処理内容は送りません。',
-      privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは元に戻せないハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
-    en: {input:'Search query',submit:'Search',all:'View all matches',more:'Show 100 more',cancel:'Cancel search',
-      local:'① Text and reading matches',semantic:'② Related results',suggestions:'Suggestions',
-      ready:'Text and reading search is ready.',preparing:'Text search is ready. Preparing readings.',
-      readingFailed:'Text search is ready. Readings are unavailable.',loading:'Loading search data.',
-      baseFailed:'Search data could not be loaded. Reload the page to fetch it again.',
-      ranking:'Finding related results.',failed:'Related search is unavailable. Check text and reading matches.',
-      stale:'Conditions changed. Search again to find related results.',limited:'Related search has reached its usage limit.',
-      updating:'Search data is updating. Related search will run on your next Search action.',
-      disabled:'Related search is disabled.',none:'No related results among the selected candidates.',sort:'Sort',
-      allOption:'All',count:n=>`${n} matches`,shown:(n,total)=>`Showing ${n} of ${total}`,coverage:(n,c,total,complete)=>`Selected ${c} of ${total}, judged ${n}${complete?'':' (incomplete)'}`,
-      privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it to TypeSafe AI. When you open a result, your query and the page you opened are recorded to improve the ranking. Files and tool processing contents are not sent.',
-      privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a salted hash that cannot be reversed). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
+  const words={
+    ja:{input:'検索語',submit:'検索',clear:'検索をやめる',sort:'並べ替え',allOption:'すべて',placeholder:'サイト内を検索',
+      search:q=>`「${q}」で検索`,heading:(q,n)=>`「${q}」の検索結果${n===null?'':` ${n}件`}`,
+      notice:'Enter で検索。検索語を TypeSafe AI に送り、関連する候補も探します',noticeOff:'Enter で検索',
+      loading:'読み込み中…',baseFailed:'検索の準備に失敗しました。ページを再読み込みしてください。',
+      preparing:'（読み込み中）',readingFailed:'（文字の一致のみ）',updated:n=>`読みがなの一致を含めて${n}件になりました`,
+      ranking:'AIで関連する候補を探しています…',semantic:'AIが見つけた関連候補',showAll:'すべて表示',retry:'AIで関連する候補も探す',
+      related:q=>`「${q}」に一致するものはありませんが、近いものがあります`,none:q=>`「${q}」に一致するものは見つかりませんでした`,
+      textNone:q=>`「${q}」に文字で一致するものは見つかりませんでした`,more:n=>`もっと見る（残り ${n}件）`,
+      found:n=>`AIが関連する候補を${n}件見つけました`,failed:'AI検索を利用できません。',limited:'AI検索の利用上限に達しました。',
+      disabled:'AI検索は停止中です。',updating:'検索データを更新しています。',close:'閉じる',privacyTitle:'検索とプライバシー',
+      analytics:'検索語は Google アナリティクスに記録します。メールアドレスや電話番号は伏せてから送ります。アクセス解析を止めれば送信しません。',privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示ではTypeSafe AIへ送りません。候補を開くと、検索語と開いたページを並び順の改善のために記録します。ファイルやツールの処理内容は送りません。',
+      privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは元に戻せないハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
+    en:{input:'Search query',submit:'Search',clear:'Clear search',sort:'Sort',allOption:'All',placeholder:'Search this site',
+      search:q=>`Search for “${q}”`,heading:(q,n)=>n===null?`Results for “${q}”`:`${n} results for “${q}”`,
+      notice:'Press Enter to search. Your query is also sent to TypeSafe AI to find related results',noticeOff:'Press Enter to search',
+      loading:'Loading…',baseFailed:'Search could not be prepared. Please reload the page.',preparing:'(loading)',readingFailed:'(text matches only)',updated:n=>`Updated: ${n} results`,
+      ranking:'Looking for related results with AI…',semantic:'Related results found by AI',showAll:'Show all',retry:'Find related results with AI',
+      related:q=>`No exact matches for “${q}”, but these look related`,none:q=>`No results for “${q}”`,textNone:q=>`No text matches for “${q}”`,more:n=>`Show more (${n} left)`,
+      found:n=>`AI found ${n} related results`,failed:'AI search is unavailable.',limited:'AI search has reached its usage limit.',disabled:'AI search is disabled.',
+      updating:'Search data is updating.',close:'Close',privacyTitle:'Search and privacy',
+      analytics:'Search terms are recorded in Google Analytics. Email addresses and phone numbers are masked before sending. Turning analytics off stops this transmission.',privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it to TypeSafe AI. When you open a result, your query and the page you opened are recorded to improve the ranking. Files and tool processing contents are not sent.',
+      privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a salted hash that cannot be reversed). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
   };
-  let serial = 0;
-  const hash = /^[a-f0-9]{64}$/;
+  let serial=0;
+  const hash=/^[a-f0-9]{64}$/;
   function safeHref(value, scope) {
     if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000- \u007f]/.test(value)
       || /%(?![a-f0-9]{2})/i.test(value) || /%(?:2e|2f|5c|0[0-9a-f]|1[0-9a-f]|7f)/i.test(value)) throw new Error('search_href');
@@ -39,133 +37,213 @@
       || (scope === 'tools' && !value.startsWith('/tools/')) || (scope === 'game' && !value.startsWith('/game/'))) throw new Error('search_href');
     return value;
   }
-  function mount(container, adapter) {
-    if (!container || !adapter || typeof adapter.loadBase !== 'function' || typeof adapter.loadReadings !== 'function'
-      || typeof adapter.href !== 'function' || !['site','tools','game','nitori','retail'].includes(adapter.scope)) throw new Error('search_adapter');
-    if (container.dataset.stSearchMounted) throw new Error('search_mounted');
-    container.dataset.stSearchMounted = '1'; container.classList.add('st-search');
-    const id = `st-search-${++serial}`, client = w.STSiteSearch.createRankClient({scope:adapter.scope});
-    const controller = new AbortController(), signal = controller.signal;
-    let locale = adapter.locale === 'en' ? 'en' : 'ja', engine = null, base = null, links = new Map(), parts = null;
-    let dataRevision = 0, loadingRevision = 0, conditionRevision = 0, destroyed = false, composing = false, imeEnterHeld = false;
-    let readingState = 'unfetched', baseState = 'loading', rankState = 'idle', rankRows = [], rankInfo = null, rankComplete = false;
-    let recoveryAttempted = false, recoveryPromise = null, hasRun = false, submitted = false, openAll = false, limit = 100, activeSuggestion = -1;
-    let matched = {rows:[],total:0}, selectedSort = adapter.sorts?.[0]?.value || '';
-    const filters = {}, controls = new Map(), labelled = [];
-    const node = (tag, className, parent) => {const n = document.createElement(tag); if (className) n.className=className; if (parent) parent.append(n); return n;};
-    const labelValue = key => typeof key==='string'?words[locale][key]:(locale==='en' && key.label_en || key.label);
-    const labelText = (key, n) => {labelled.push([key,n]); n.textContent=labelValue(key);};
-    const button = (key, parent) => {const n=node('button','st-search-button',parent);n.type='button';labelText(key,n);return n;};
-    const form=node('form','st-search-form',container), label=node('label','st-search-label',form);
-    label.htmlFor=id+'-input';labelText('input',label);
-    const box=node('div','st-search-input-row',form), input=node('input','st-search-input',box);
-    input.type='search';input.id=id+'-input';input.maxLength=400;input.autocomplete='off';input.spellcheck=false;
-    input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
-    const submit=button('submit',box);submit.type='submit';
-    const filterArea=node('div','st-search-filters',form);
-    for (const spec of adapter.filters || []) {
-      const allowed={site:[],tools:['category'],game:['genre'],nitori:['category','region','month'],retail:['category','region','month']};
-      if (!spec || !allowed[adapter.scope].includes(spec.key) || !Array.isArray(spec.options) || controls.has(spec.key)) throw new Error('search_filters');
-      const l=node('label','',filterArea), text=node('span','',l), select=node('select','',l);
-      labelText(spec,text);select.dataset.filter=spec.key;
-      for (const choice of spec.options) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
-      filters[spec.key]=select.value;controls.set(spec.key,select);
-      select.addEventListener('change',()=>{filters[spec.key]=select.value;changeCondition();},{signal});
-    }
-    if (adapter.sorts?.length) {
-      const l=node('label','',filterArea), text=node('span','',l), select=node('select','',l);labelText('sort',text);
-      select.dataset.sort='1';for (const choice of adapter.sorts) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
-      select.addEventListener('change',()=>{selectedSort=select.value;changeCondition();},{signal});
-    }
-    const dataStatus=node('p','st-search-data-status',container);dataStatus.setAttribute('role','status');
-    const suggestArea=node('div','st-search-suggestions',container), suggestLabel=node('span','st-search-label',suggestArea);
-    labelText('suggestions',suggestLabel);suggestLabel.id=id+'-suggest-label';
-    const suggestions=node('ul','st-search-list',suggestArea);suggestions.id=id+'-suggestions';suggestions.setAttribute('role','listbox');
-    suggestions.setAttribute('aria-labelledby',suggestLabel.id);input.setAttribute('aria-controls',suggestions.id);input.setAttribute('aria-expanded','false');
-    const suggestionCount=node('p','st-search-count',suggestArea), all=button('all',suggestArea);
-    const local=node('section','st-search-local',container), localHeading=node('h3','st-search-heading',local);labelText('local',localHeading);
-    const localCount=node('p','st-search-count',local), localList=node('ul','st-search-list',local), more=button('more',local);
-    const semantic=node('section','st-search-semantic',container), semanticHeading=node('h3','st-search-heading',semantic);labelText('semantic',semanticHeading);
-    const rankStatus=node('p','st-search-rank-status',semantic);rankStatus.setAttribute('role','status');
-    const rankList=node('ul','st-search-list',semantic), coverage=node('p','st-search-coverage',semantic), cancel=button('cancel',semantic);
-    const privacy=node('p','st-search-privacy',container);labelText('privacy',privacy);
-    const disclosure=node('details','st-search-privacy-details',container);labelText('privacyTitle',node('summary','',disclosure));
-    labelText('privacyDetails',node('p','',disclosure));const policy=node('a','',disclosure);policy.href='https://typesafe.ai/legal/privacy-policy';labelText('privacyLink',policy);
-    const track=(event,values)=>{if(typeof adapter.track==='function'){try{adapter.track(event,values);}catch(_){}}};
+
+  function mount(container,adapter) {
+    if(!container || !adapter || typeof adapter.loadBase!=='function' || typeof adapter.loadReadings!=='function'
+      || typeof adapter.href!=='function' || !['site','tools','game','nitori','retail'].includes(adapter.scope)) throw new Error('search_adapter');
+    if(container.dataset.stSearchMounted) throw new Error('search_mounted');
+    container.dataset.stSearchMounted='1';container.classList.add('st-search');
+    const id=`st-search-${++serial}`,controller=new AbortController(),signal=controller.signal;
+    const client=w.STSiteSearch.createRankClient({scope:adapter.scope});
+    let locale=adapter.locale==='en'?'en':'ja',engine=null,base=null,links=new Map(),parts=null;
+    let dataRevision=0,loadingRevision=0,conditionRevision=0,destroyed=false,composing=false,imeEnterHeld=false;
+    let baseState='loading',readingState='unfetched',rankState='idle',rankRows=[],rankComplete=false;
+    let recoveryAttempted=false,recoveryPromise=null,committed='',limit=20,activeSuggestion=-1;
+    let dropdown=false,expandedAI=false,pending=null,matched={rows:[],total:0},dedupeIds=new Set(),confirmation=0;
+    const sorts=adapter.sorts || [],catalogueSort=sorts.find(s=>s.value==='newest')?.value || sorts.find(s=>s.value!=='relevance')?.value || '';
+    let selectedSort=catalogueSort,lookupSort=catalogueSort,previousSort=catalogueSort,announcedLocal='',announcedRank='';
+    const filters={},controls=new Map(),filterLabels=new Map(),chipAreas=new Map(),labelled=[];
+    const node=(tag,className,parent)=>{const n=document.createElement(tag);if(className) n.className=className;if(parent) parent.append(n);return n;};
+    const classes=(n,key)=>{if(adapter.classes?.[key]) n.classList.add(...adapter.classes[key].split(/\s+/).filter(Boolean));return n;};
+    const textFor=key=>typeof key==='string'?words[locale][key]:(locale==='en' && (key.label_en || key.en) || key.label || key.ja);
+    const labelText=(key,n)=>{labelled.push([key,n]);n.textContent=textFor(key);};
+    const button=(key,parent)=>{const n=node('button','st-search-button',parent);n.type='button';if(key) labelText(key,n);return n;};
     const call=(name,value)=>{try{adapter[name]?.(value);}catch(_){}};
-    const notify=()=>call('onConditions',{...rankCondition(),sort:selectedSort});
+    const track=(event,values)=>{try{adapter.track?.(event,values);}catch(_){}};
     const activeFilters=()=>Object.fromEntries(Object.entries(filters).filter(([,v])=>v));
-    function rankCondition() {
-      return {query:input.value.trim(),locale,filters:activeFilters(),generation:base?.generation};
+    const keyOf=value=>w.STJapaneseSearch.normalize(value).trim();
+    const rankCondition=()=>({query:committed,locale,filters:activeFilters(),generation:base?.generation});
+    const notify=()=>call('onConditions',{...rankCondition(),sort:selectedSort});
+    // 表示: 既存ヘッダーを借りる場合も操作の受け口はここに一本化する。
+    const external=!!adapter.input,form=adapter.input || node('form','st-search-form',container);
+    form.setAttribute('role','search');form.dataset.stSearchOwned='1';
+    // 借りた欄は DOM の中で動かさない。動かすとフォーカスと IME の変換が途切れるので、候補の枠だけを直後に置く。
+    const component=node('div',external?'st-search-control st-search-control-external':'st-search-control',null);
+    if(external) form.after(component);else {container.append(component);component.append(form);}
+    const focusRoot=external?form:component,inside=n=>!!n && (form.contains(n) || component.contains(n));
+    const box=external?form:node('div','st-search-input-row',form);
+    const input=external?form.querySelector('input[type="search"]'):node('input','st-search-input',box);
+    input.classList.add('st-search-input');classes(input,'input');if(input.type!=='search') input.type='search';input.id ||= id+'-input';input.maxLength=400;
+    input.autocomplete='off';input.spellcheck=false;input.setAttribute('enterkeyhint','search');input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
+    const label=external?form.querySelector('label') || node('label','',form):node('label','',form);
+    label.classList.add('st-search-label');label.htmlFor=input.id;labelText('input',label);
+    const submit=external?form.querySelector('button[type="submit"]'):button(null,box);
+    submit.classList.add('st-search-submit');classes(submit,'button');submit.type='submit';
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
+    const circle=document.createElementNS(svg.namespaceURI,'circle');circle.setAttribute('cx','10');circle.setAttribute('cy','10');circle.setAttribute('r','6');
+    const line=document.createElementNS(svg.namespaceURI,'path');line.setAttribute('d','m15 15 6 6');svg.append(circle,line);submit.replaceChildren(svg);
+    const clear=button(null,null);clear.classList.add('st-search-clear');clear.textContent='×';submit.before(clear);
+    const suggestArea=classes(node('div','st-search-suggestions',component),'panel');suggestArea.hidden=true;
+    const suggestions=node('ul','st-search-list',suggestArea);suggestions.id=id+'-suggestions';suggestions.setAttribute('role','listbox');suggestions.dataset.stSearchList='suggest';
+    input.setAttribute('aria-controls',suggestions.id);input.setAttribute('aria-expanded','false');
+    const suggestionMessage=node('p','st-search-suggestion-message',suggestArea);
+    const footer=node('div','st-search-notice',suggestArea),notice=node('span','',footer);
+    const info=button(null,footer);info.classList.add('st-search-info');info.textContent='ⓘ';info.setAttribute('aria-haspopup','dialog');
+    const results=adapter.results || node('div','st-search-results',container);results.classList.add('st-search-results');
+    const filterArea=node('div','st-search-filters',results);
+    for(const spec of adapter.filters || []) {
+      const allowed={site:[],tools:['category'],game:['genre'],nitori:['category','region','month'],retail:['category','region','month']};
+      if(!spec || !allowed[adapter.scope].includes(spec.key) || !Array.isArray(spec.options) || controls.has(spec.key)) throw new Error('search_filters');
+      const l=node(adapter.filterChips?'div':'label','',filterArea),text=node('span','',l),select=node('select','',l);labelText(spec,text);select.dataset.filter=spec.key;
+      for(const choice of spec.options) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
+      filters[spec.key]=select.value;controls.set(spec.key,select);filterLabels.set(spec.key,l);
+      select.addEventListener('change',()=>{filters[spec.key]=select.value;changeFilter();},{signal});
+      if(adapter.filterChips) {
+        text.id=id+'-filter-'+spec.key;l.setAttribute('role','group');l.setAttribute('aria-labelledby',text.id);select.setAttribute('aria-labelledby',text.id);
+        select.hidden=true;const chips=node('div','st-search-chips',l);chipAreas.set(spec.key,chips);
+      }
     }
-    function displayed(row) {
-      if(!row.record) return row;
-      const record=row.record;
-      const display=adapter.displayFields?.[locale] || {};
-      return {id:row.id || record.id,href:row.href || links.get(record.id),title:record[display.title] || record[adapter.titleField || 'title'],
-        description:record[display.description] || record[adapter.descriptionField || 'description'] || ''};
+    let sortSelect=null;
+    if(sorts.length>1) {
+      const l=node('label','',filterArea);labelText('sort',node('span','',l));sortSelect=node('select','',l);sortSelect.dataset.sort='1';
+      sortSelect.addEventListener('change',()=>{selectedSort=sortSelect.value;if(!committed) previousSort=selectedSort;limit=20;refreshLocal(false);refreshSuggestions();notify();},{signal});
     }
-    function addRow(list,row,suggestion,index) {
-      const r=displayed(row), li=node('li','st-search-result',list), a=node('a','st-search-link',li);
-      if (suggestion) {li.setAttribute('role','option');li.id=id+'-option-'+index;}
-      a.href=safeHref(r.href,adapter.scope);li.dataset.id=r.id;
-      node('span','st-search-title',a).textContent=r.title;
-      // 入力中は選択に使う題名を6件。説明は全候補と①②の結果で読む。
-      if(r.description && !suggestion) node('span','st-search-description',a).textContent=r.description;
-      return li;
+    const local=node('section','st-search-local',results),localHeading=node('h3','st-search-heading',local);
+    const semantic=node('section','st-search-semantic',local),semanticHeading=node('h4','st-search-heading',semantic);
+    const rankList=node('ul','st-search-list',semantic);rankList.dataset.stSearchList='semantic';
+    const showAll=button('showAll',semantic),retryArea=node('div','st-search-retry-area',semantic),retry=button('retry',retryArea);
+    const retryInfo=button(null,retryArea);retryInfo.classList.add('st-search-info');retryInfo.textContent='ⓘ';retryInfo.setAttribute('aria-haspopup','dialog');
+    const resultMessage=node('p','st-search-empty',local),localList=classes(node('ul','st-search-list',local),'list');localList.dataset.stSearchList='local';
+    const more=button(null,local);more.classList.add('st-search-more');
+    const dataStatus=node('p','st-search-data-status st-search-visually-hidden',results),rankStatus=node('p','st-search-rank-status st-search-visually-hidden',results);
+    dataStatus.setAttribute('role','status');rankStatus.setAttribute('role','status');
+    const dialog=node('dialog','st-search-privacy-details',container);dialog.setAttribute('aria-labelledby',id+'-privacy-title');
+    const dialogHead=node('div','st-search-dialog-head',dialog),dialogTitle=node('h2','',dialogHead);dialogTitle.id=id+'-privacy-title';labelText('privacyTitle',dialogTitle);
+    const close=button('close',dialogHead);labelText('privacy',node('p','',dialog));labelText('privacyDetails',node('p','',dialog));
+    if(adapter.analyticsNotice) labelText('analytics',node('p','st-search-analytics-notice',dialog));
+    const policy=node('a','',dialog);policy.href='https://typesafe.ai/legal/privacy-policy';labelText('privacyLink',policy);
+    let returnFocus=null;
+    function openPrivacy(origin=info) {returnFocus=origin===info?input:origin;closeDropdown();dialog.showModal();}
+    info.addEventListener('click',()=>openPrivacy(info),{signal});retryInfo.addEventListener('click',()=>openPrivacy(retryInfo),{signal});
+    close.addEventListener('click',()=>dialog.close(),{signal});dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();},{signal});
+    dialog.addEventListener('close',()=>returnFocus?.focus(),{signal});
+    function updateLabels() {
+      labelled.forEach(([key,n])=>{n.textContent=textFor(key);});input.placeholder=adapter.placeholder?textFor(adapter.placeholder):words[locale].placeholder;
+      submit.setAttribute('aria-label',words[locale].submit);clear.setAttribute('aria-label',words[locale].clear);
+      info.setAttribute('aria-label',words[locale].privacyTitle);retryInfo.setAttribute('aria-label',words[locale].privacyTitle);
+      notice.textContent=client.disabled?words[locale].noticeOff:words[locale].notice;
     }
-    // 追加表示では既存行を残す。重複除去後の集合から100件ずつ補う。
-    function fillList(list,rows,suggestion=false) {
-      const old=[...list.children];let shared=0;
-      while(shared<old.length && shared<rows.length && old[shared].dataset.id===rows[shared].id) shared++;
-      for (let i=old.length-1;i>=shared;i--) old[i].remove();
-      for (let i=shared;i<rows.length;i++) addRow(list,rows[i],suggestion,i);
+    function updateSort() {
+      if(!sortSelect) return;sortSelect.replaceChildren();
+      const order=['relevance','newest','oldest','title'];
+      const choices=sorts.filter(s=>committed || s.value!=='relevance').slice().sort((a,b)=>{
+        const x=order.indexOf(a.value),y=order.indexOf(b.value);return x<0 || y<0?0:x-y;
+      });
+      for(const choice of choices) {const option=node('option','',sortSelect);option.value=choice.value;option.textContent=textFor(choice);}sortSelect.value=selectedSort;
     }
     function showStates() {
-      const t=words[locale];
-      // role=statusの同じ文を入力のたびに差し替えて、読み上げを繰り返さない。
-      const dataText=baseState==='loading'?t.loading:baseState==='failed'?t.baseFailed:
-        readingState==='ready'?t.ready:readingState==='failed'?t.readingFailed:t.preparing;
-      const rankText=rankState==='loading'?t.ranking:rankState==='stale'?t.stale:rankState==='index_updating'?t.updating:
-        rankState==='failed'?t.failed:rankState==='rate_limited'?t.limited:rankState==='disabled'?t.disabled:rankState==='no_results'?t.none:'';
-      if(dataStatus.textContent!==dataText) dataStatus.textContent=dataText;
-      if(rankStatus.textContent!==rankText) rankStatus.textContent=rankText;
-      cancel.hidden=rankState!=='loading';submit.disabled=composing || rankState==='loading';
-      semantic.hidden=!input.value.trim() || ['idle','handoff'].includes(rankState);
-      all.disabled=composing;more.disabled=composing;
-      coverage.textContent=rankInfo?t.coverage(rankInfo.judged,rankInfo.candidates,rankInfo.total,rankComplete):'';
-      call('onState',{base:baseState,readings:readingState,rank:rankState,total:matched.total,query:input.value.trim(),composing,submitted,complete:rankComplete});
+      container.dataset.stSearchBase=baseState;container.dataset.stSearchReadings=readingState;
+      clear.hidden=!input.value;submit.disabled=composing;
+      for(const [key,l] of filterLabels) l.hidden=!committed && adapter.filtersBeforeSearch && !adapter.filtersBeforeSearch.includes(key);
+      for(const [key,area] of chipAreas) for(const b of area.children) b.setAttribute('aria-pressed',String(b.dataset.value===filters[key]));
+      local.hidden=!committed;
+      call('onState',{base:baseState,readings:readingState,rank:rankState,total:matched.total,query:committed,composing,submitted:!!committed,complete:rankComplete});
     }
-    // 照合・記録・実績の引き当てに共通の検索語（照合と同じ正規化）。
-    const searchKey=()=>w.STJapaneseSearch.normalize(input.value).trim();
-    // 同じ検索語で多くの人が押したページを、一致した候補の最上位に上げる（関連順のときだけ。一致しないページは足さない）。
-    function promote(result) {
-      const counts=selectedSort && selectedSort!=='relevance'?null:adapter.promoted?.(searchKey());
-      if(!counts?.size) return result;
-      const top=[],rest=[];
-      for(const row of result.rows) (counts.has(links.get(row.id))?top:rest).push(row);
-      top.sort((a,b)=>counts.get(links.get(b.id))-counts.get(links.get(a.id)));
-      return {rows:[...top,...rest],total:result.total};
+    function closeDropdown() {dropdown=false;suggestArea.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');activeSuggestion=-1;}
+    function titleOf(record) {return record[adapter.displayFields?.[locale]?.title] || record[adapter.titleField || 'title'];}
+    function highlight(parent,title,query) {
+      // ASCII英字だけを小文字化する。読み・全角一致は強調しない。
+      const fold=s=>s.replace(/[A-Z]/g,c=>c.toLowerCase()),hay=fold(title),needle=fold(query);let start=0,index=needle?hay.indexOf(needle):-1;
+      while(index>=0) {parent.append(document.createTextNode(title.slice(start,index)));node('strong','',parent).textContent=title.slice(index,index+needle.length);start=index+needle.length;index=hay.indexOf(needle,start);}
+      parent.append(document.createTextNode(title.slice(start)));
     }
-    function refreshLocal() {
-      if (destroyed) return;
-      // 長すぎる入力は送信・照合せず、入力欄自体の内容は書き換えない。
-      matched=engine && Array.from(searchKey()).length<=200?promote(engine.search(input.value,activeFilters())):{rows:[],total:0};
-      const occupied=new Set(rankRows.map(r=>r.href)), visible=rankRows.length?matched.rows.filter(r=>!occupied.has(links.get(r.id))):matched.rows;
-      suggestArea.hidden=!input.value.trim() || !engine || openAll;
-      input.setAttribute('aria-expanded',String(!suggestArea.hidden && visible.length>0));
-      activeSuggestion=-1;input.removeAttribute('aria-activedescendant');
-      fillList(suggestions,visible.slice(0,6),true);suggestionCount.textContent=words[locale].count(matched.total);
-      local.hidden=!openAll || !input.value.trim();fillList(localList,openAll?visible.slice(0,limit):[]);
-      localCount.textContent=words[locale].count(matched.total)+' · '+words[locale].shown(Math.min(limit,visible.length),visible.length);
-      more.hidden=visible.length<=limit;showStates();
+    function compactItem(record,href,suggestion=false) {
+      const a=node('a','',null);a.href=href;const title=node('span','st-search-title',a);
+      if(suggestion) highlight(title,titleOf(record),input.value.trim());else title.textContent=titleOf(record);
+      const kind=adapter.renderSuggestion?.(record,{href,locale,compact:true});
+      if(kind) {
+        if(typeof kind==='string') node('span','st-search-kind',a).textContent=kind;
+        else if(kind.classList?.contains('st-search-kind')) a.append(kind);
+        else node('span','st-search-kind',a).append(kind);
+      }
+      return a;
     }
-    function clearRank(next) {
-      client.invalidate();rankRows=[];rankInfo=null;rankList.replaceChildren();rankState=client.disabled && next!=='handoff'?'disabled':next;showStates();
+    function addRow(list,row,compact,index) {
+      const record=row.record || base.records.find(r=>r.id===row.id),href=safeHref(links.get(record.id),adapter.scope),suggestion=list===suggestions;
+      let item;try {item=suggestion?compactItem(record,href,true):adapter.renderItem?.(record,{href,locale,compact});}catch(_) {return;}
+      if(!item) {item=compactItem(record,href);const desc=record[adapter.displayFields?.[locale]?.description] || record[adapter.descriptionField || 'description'] || '';if(desc && !compact) node('span','st-search-description',item).textContent=desc;}
+      const primary=item.matches('a')?item:item.querySelector('[data-st-primary]');if(!primary || primary.getAttribute('href')!==href) return;
+      primary.classList.add('st-search-link');primary.dataset.stPrimary='';const li=item.tagName==='LI'?item:node('li','',null);if(li!==item) li.append(item);
+      li.classList.add('st-search-result');li.dataset.id=record.id;list.append(li);
+      if(suggestion) {li.setAttribute('role','option');li.id=id+'-option-'+index;primary.tabIndex=-1;}
     }
-    function changeCondition() {
-      conditionRevision++;submitted=false;limit=100;clearRank(hasRun && input.value.trim()?'stale':'idle');refreshLocal();
-      call('onQueryChange',input.value.trim());notify();
+    function fillList(list,rows,compact=false) {
+      const old=[...list.children];let shared=0;while(shared<old.length && shared<rows.length && old[shared].dataset.id===rows[shared].id) shared++;
+      for(let i=old.length-1;i>=shared;i--) old[i].remove();for(let i=shared;i<rows.length;i++) addRow(list,rows[i],compact,i);
+    }
+    function promote(result,query,sort=selectedSort) {
+      const counts=sort && sort!=='relevance'?null:adapter.promoted?.(keyOf(query));if(!counts?.size) return result;
+      const top=[],rest=[];for(const row of result.rows) (counts.has(links.get(row.id))?top:rest).push(row);top.sort((a,b)=>counts.get(links.get(b.id))-counts.get(links.get(a.id)));return {rows:[...top,...rest],total:result.total};
+    }
+    function refreshSuggestions() {
+      if(destroyed) return;
+      const query=input.value.trim();lookupSort='relevance';const suggested=engine && Array.from(keyOf(query)).length<=200?promote(engine.search(query,activeFilters()),query,'relevance'):{rows:[],total:0};
+      suggestions.replaceChildren();const first=node('li','st-search-result st-search-submit-option',suggestions);first.id=id+'-search-option';first.setAttribute('role','option');
+      node('span','st-search-search-for',first).textContent=words[locale].search(query);
+      suggested.rows.slice(0,6).forEach((row,i)=>addRow(suggestions,row,true,i));
+      suggestionMessage.textContent=baseState==='failed'?words[locale].baseFailed:baseState==='loading' || (!suggested.total && !['ready','failed'].includes(readingState))?words[locale].loading:'';
+      suggestionMessage.hidden=!suggestionMessage.textContent;activeSuggestion=-1;suggestArea.hidden=!dropdown || !query;input.setAttribute('aria-expanded',String(!suggestArea.hidden));input.removeAttribute('aria-activedescendant');showStates();
+    }
+    function emptyMessage(t,readingPending,mainAI) {
+      if(baseState==='loading') return t.loading;
+      if(baseState==='failed') return t.baseFailed;
+      if(matched.total || mainAI) return '';
+      if(readingPending) return t.loading;
+      if(rankState==='loading') return '';
+      return readingState==='failed'?t.textNone(committed):t.none(committed);
+    }
+    function announceResults(t,relatedCount) {
+      if(committed && baseState==='ready') {
+        const token=JSON.stringify([confirmation,conditionRevision,readingState,matched.total]);
+        if(token!==announcedLocal) {
+          const readingArrived=announcedLocal && JSON.parse(announcedLocal)[2]!==readingState && readingState==='ready';
+          announcedLocal=token;dataStatus.textContent=readingArrived?t.updated(matched.total):t.heading(committed,matched.total);
+        }
+      }
+      const token=JSON.stringify([conditionRevision,rankState,relatedCount]);
+      if(token===announcedRank) return;
+      announcedRank=token;
+      rankStatus.textContent=rankState==='results' && relatedCount?t.found(relatedCount):({
+        failed:t.failed,disabled:t.disabled,rate_limited:t.limited,index_updating:t.updating
+      })[rankState] || '';
+    }
+    function renderResults() {
+      const t=words[locale],readingPending=!['ready','failed'].includes(readingState),related=rankRows.filter(r=>!dedupeIds.has(r.id));
+      const mainAI=baseState==='ready' && !readingPending && matched.total===0 && related.length>0;
+      const heading=matched.total===0 && rankState==='loading' && !readingPending?t.heading(committed,null):t.heading(committed,matched.total);
+      localHeading.textContent=mainAI?t.related(committed):heading+(baseState==='ready'?(readingPending?' '+t.preparing:readingState==='failed'?' '+t.readingFailed:''):'');
+      const retryable=!!committed && baseState==='ready' && !client.disabled && rankState==='stale',compactVisible=!mainAI && related.length>0 && rankState==='results';
+      semantic.hidden=client.disabled || !(rankState==='loading' || compactVisible || retryable);semantic.classList.toggle('is-loading',rankState==='loading');semantic.classList.toggle('is-expanded',expandedAI);
+      semanticHeading.textContent=rankState==='loading'?t.ranking:t.semantic;semanticHeading.hidden=retryable;retryArea.hidden=!retryable;rankList.hidden=retryable;showAll.hidden=!compactVisible || related.length<=3 || expandedAI;
+      fillList(rankList,compactVisible?related.slice(0,expandedAI?related.length:3):[],true);
+      fillList(localList,mainAI?related:matched.rows.slice(0,limit));localList.dataset.stSearchList=mainAI?'semantic':'local';
+      resultMessage.textContent=emptyMessage(t,readingPending,mainAI);
+      resultMessage.hidden=!resultMessage.textContent;more.hidden=mainAI || matched.total<=limit;more.textContent=t.more(Math.max(0,matched.total-limit));
+      announceResults(t,related.length);
+      showStates();
+    }
+    function refreshLocal(resetDedupe=true) {if(destroyed) return;lookupSort=selectedSort;matched=committed && engine && Array.from(keyOf(committed)).length<=200?promote(engine.search(committed,activeFilters()),committed):{rows:[],total:0};if(resetDedupe) dedupeIds=new Set(matched.rows.slice(0,20).map(r=>r.id));renderResults();}
+    function clearRank(next) {client.invalidate();rankRows=[];rankComplete=false;expandedAI=false;rankState=client.disabled && next!=='handoff'?'disabled':next;}
+    function changeFilter() {conditionRevision++;limit=20;if(pending) pending.allowed=false;clearRank(committed?'stale':'idle');refreshLocal();refreshSuggestions();notify();}
+    function closeResults() {committed='';pending=null;conditionRevision++;clearRank('idle');selectedSort=previousSort;updateSort();closeDropdown();refreshLocal();notify();call('onResults',{query:'',open:false});}
+    function commit(value,allowed) {
+      const query=value.trim();if(!query) {closeResults();return;}if(Array.from(query).length>200) return;
+      const changed=committed!==query,wasEmpty=!committed;committed=query;
+      if(wasEmpty) {previousSort=selectedSort;selectedSort=sorts.find(s=>s.value==='relevance')?.value || selectedSort;updateSort();}
+      confirmation++;limit=20;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}
+      closeDropdown();refreshLocal();notify();call('onResults',{query:committed,open:true});
+      if(baseState==='loading') {if(changed || allowed || !pending) pending={allowed,revision:conditionRevision};}else if(allowed && baseState==='ready') runRank();
+      if(w.matchMedia('(pointer: coarse)').matches) input.blur();const rect=localHeading.getBoundingClientRect();if(rect.top<0 || rect.bottom>w.innerHeight) localHeading.scrollIntoView({block:'start',behavior:'smooth'});
     }
     async function finishTask(task,ticket) {
       let deadline=performance.now()+4;
@@ -198,9 +276,9 @@
       if (!Array.isArray(nextParts) || !nextParts.length || nextParts.some(p=>!hash.test(p.sourceHash || '') || !Array.isArray(p.recordIds))) throw new Error('search_base');
       const partIds=nextParts.flatMap(p=>p.recordIds);
       if(partIds.length!==next.records.length || partIds.some((id,i)=>id!==next.records[i].id)) throw new Error('search_base');
-      const compare=(a,b)=>adapter.sorts?.find(s=>s.value===selectedSort)?.compare?.(a,b) || adapter.compare?.(a,b) || 0;
+      const compare=(a,b)=>adapter.sorts?.find(s=>s.value===lookupSort)?.compare?.(a,b) || adapter.compare?.(a,b) || 0;
       const nextEngine=await finishTask(w.STJapaneseSearch.prepareTask(next.records,adapter.fields,{...adapter.legacy,compare,
-        orderKey:()=>selectedSort,sortByRelevance:()=>!selectedSort || selectedSort==='relevance'}),ticket);
+        orderKey:()=>lookupSort,sortByRelevance:()=>!lookupSort || lookupSort==='relevance'}),ticket);
       return {next,nextLinks,nextParts,nextEngine};
     }
     async function loadReadings(ticket,cache) {
@@ -212,24 +290,31 @@
           || JSON.stringify(s.recordIds)!==JSON.stringify(parts[i].recordIds))) throw new Error('reading_version');
         await finishTask(engine.attachReadingSetsTask(sets),ticket);
         if(destroyed || ticket!==loadingRevision) return;
-        readingState='ready';refreshLocal();
+        readingState='ready';refreshLocal();refreshSuggestions();
       } catch(error) {
         if(destroyed || ticket!==loadingRevision) return;
-        engine?.detachReadings();readingState='failed';refreshLocal();
+        engine?.detachReadings();readingState='failed';refreshLocal();refreshSuggestions();
         if(error.message==='reading_version' && !recoveryAttempted) recover();
       }
     }
     function adopt(prepared) {
       dataRevision++;base=prepared.next;links=prepared.nextLinks;parts=prepared.nextParts;engine=prepared.nextEngine;
-      baseState='ready';readingState='preparing';limit=100;
+      baseState='ready';readingState='preparing';limit=20;
       for(const [key,select] of controls) {
         const values=base.filterOptions?.[key];if(!values) continue;
         const previous=select.value;select.replaceChildren();
         for(const value of ['',...values]) {const option=node('option','',select);option.value=value;if(value) option.textContent=value;else labelText('allOption',option);}
         select.value=values.includes(previous)?previous:'';filters[key]=select.value;
+        const chips=chipAreas.get(key);
+        if(chips) {chips.replaceChildren();for(const value of ['',...values]) {
+          const b=button(null,chips);b.className=adapter.classes?.chip || 'st-search-chip';if(value) b.textContent=value;else labelText('allOption',b);b.dataset.value=value;b.dataset.category=value.toLowerCase();
+          b.addEventListener('click',()=>{select.value=value;filters[key]=value;changeFilter();},{signal});
+        }}
       }
-      clearRank(hasRun?'stale':'idle');localList.replaceChildren();suggestions.replaceChildren();refreshLocal();
-      call('onData',base.records);notify();
+      clearRank(committed?'stale':'idle');localList.replaceChildren();suggestions.replaceChildren();
+      call('onData',base.records);refreshLocal();refreshSuggestions();notify();
+      const held=pending;pending=null;
+      if(held?.allowed && held.revision===conditionRevision && committed) runRank();
     }
     async function loadBase(cache) {
       const ticket=++loadingRevision;
@@ -241,76 +326,64 @@
         adopt(prepared);await loadReadings(ticket,cache);
       } catch(error) {
         if(destroyed || ticket!==loadingRevision) return;
-        if(!engine) baseState='failed';readingState='failed';refreshLocal();
+        if(!engine) baseState='failed';readingState='failed';refreshLocal();refreshSuggestions();
         if(error.message==='reading_version' && !recoveryAttempted) recover();
       }
     }
     function recover() {
       if(recoveryPromise || recoveryAttempted || destroyed) return recoveryPromise;
       // awaitより先に回数とPromiseを確定し、同時検知や入力で枠を戻さない。
-      recoveryAttempted=true;engine?.detachReadings();readingState='preparing';clearRank('index_updating');refreshLocal();
+      recoveryAttempted=true;engine?.detachReadings();readingState='preparing';pending=null;clearRank('index_updating');refreshLocal();refreshSuggestions();
       recoveryPromise=Promise.resolve().then(()=>loadBase('no-cache')).finally(()=>{recoveryPromise=null;});
       return recoveryPromise;
     }
-    async function run() {
-      if(destroyed || composing || imeEnterHeld || !input.value.trim() || Array.from(input.value.trim()).length>200) return;
-      openAll=true;
-      if(base && client.disabled) {submitted=true;rankState='disabled';}
-      refreshLocal();
-      if(!base || client.disabled || ['loading','results','no_results'].includes(rankState)) return;
-      const condition=rankCondition(), key=JSON.stringify(condition), mine=conditionRevision, revision=dataRevision;
-      hasRun=true;submitted=true;rankState='loading';rankRows=[];rankInfo=null;rankList.replaceChildren();refreshLocal();
-      track('rank_run',{keyword_state:engine?'known':'failed',keyword_count:Math.min(matched.total,6)});
-      let result;
-      try {result=await client.run(condition);} catch(_) {rankState='failed';showStates();return;}
+
+    async function runRank() {
+      if(destroyed || !committed || !base || client.disabled || ['loading','results','no_results'].includes(rankState)) return;
+      const condition=rankCondition(),key=JSON.stringify(condition),mine=conditionRevision,revision=dataRevision;
+      rankState='loading';rankRows=[];expandedAI=false;renderResults();track('rank_run',{keyword_state:engine?'known':'failed',keyword_count:Math.min(matched.total,6)});
+      let result;try {result=await client.run(condition);}catch(_) {if(mine===conditionRevision && revision===dataRevision) {rankState='failed';renderResults();}return;}
       if(!result || destroyed || mine!==conditionRevision || revision!==dataRevision || key!==JSON.stringify(rankCondition())) return;
-      if(result.reason==='index_updating' || (result.searched && result.searched.generation!==base.generation)) {
-        clearRank('index_updating');recover();return;
-      }
-      const linkIds=new Map([...links].map(([id,href])=>[href,id]));
-      if(result.rows.some(row=>!linkIds.has(row.href) || (row.id!==row.href && links.get(row.id)!==row.href))) {
-        clearRank('failed');refreshLocal();return;
-      }
-      rankRows=result.rows.map(row=>({...row,id:linkIds.get(row.href)}));rankInfo=result.searched;rankComplete=result.complete;
-      rankState=result.reason==='disabled'?'disabled':result.reason==='rate_limited'?'rate_limited':result.status;
-      fillList(rankList,rankRows);refreshLocal();track('rank_result',{status:result.status,count:rankRows.length,complete:result.complete});
+      if(result.reason==='index_updating' || (result.searched && result.searched.generation!==base.generation)) {clearRank('index_updating');renderResults();recover();return;}
+      const linkIds=new Map([...links].map(([rid,href])=>[href,rid]));if(result.rows.some(row=>!linkIds.has(row.href) || (row.id!==row.href && links.get(row.id)!==row.href))) {clearRank('failed');renderResults();return;}
+      rankRows=result.rows.map(row=>({...row,id:linkIds.get(row.href)}));rankComplete=result.complete;rankState=result.reason==='disabled'?'disabled':result.reason==='rate_limited'?'rate_limited':result.status;
+      renderResults();updateLabels();track('rank_result',{status:result.status,count:rankRows.length,complete:result.complete});
     }
-    form.addEventListener('submit',event=>{event.preventDefault();run();},{signal});
-    input.addEventListener('input',()=>{openAll=false;changeCondition();},{signal});
-    input.addEventListener('compositionstart',()=>{composing=true;changeCondition();},{signal});
-    input.addEventListener('compositionend',()=>{composing=false;changeCondition();},{signal});
-    const enter=event=>event.key==='Enter' || event.code==='Enter' || event.code==='NumpadEnter';
-    form.addEventListener('keydown',event=>{
-      if(!enter(event)) return;
-      if(composing || event.isComposing || event.keyCode===229) {imeEnterHeld=true;return;}
-      if(imeEnterHeld || event.repeat) event.preventDefault();
-    },{capture:true,signal});
-    document.addEventListener('keyup',event=>{if(enter(event)) imeEnterHeld=false;},{signal});
-    w.addEventListener('blur',()=>{imeEnterHeld=false;},{signal});
-    input.addEventListener('keydown',event=>{
-      if(composing || event.isComposing || event.keyCode===229 || imeEnterHeld || event.repeat) return;
-      if(event.key==='Escape') {suggestArea.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');return;}
-      if(['ArrowDown','ArrowUp'].includes(event.key) && !suggestArea.hidden && suggestions.children.length) {
-        const count=suggestions.children.length, step=event.key==='ArrowDown'?1:-1;
-        event.preventDefault();activeSuggestion=activeSuggestion<0?(step>0?0:count-1):(activeSuggestion+step+count)%count;
-        [...suggestions.children].forEach((n,i)=>n.setAttribute('aria-selected',String(i===activeSuggestion)));
-        input.setAttribute('aria-activedescendant',suggestions.children[activeSuggestion].id);
+    function run() {if(destroyed || composing || imeEnterHeld || form._stComposing || form._stImeEnterHeld) return;if(adapter.onSubmit) {closeDropdown();call('onSubmit',{query:input.value.trim(),explicit:true});return;}commit(input.value,true);call('onNavigate');}
+    form.addEventListener('submit',e=>{e.preventDefault();run();},{signal});
+    input.addEventListener('input',()=>{dropdown=inside(document.activeElement);refreshSuggestions();},{signal});
+    input.addEventListener('focus',()=>{dropdown=true;refreshSuggestions();if(!external && w.matchMedia('(max-width: 720px)').matches) component.scrollIntoView({block:'start'});},{signal});
+    // 借りた欄では、欄（form）と直後の候補の枠を合わせて「欄の部品」とみなす。
+    for(const root of external?[form,component]:[component]) {
+      root.addEventListener('focusin',()=>focusRoot.classList.add('is-focused'),{signal});
+      root.addEventListener('focusout',e=>{if(!inside(e.relatedTarget)) {focusRoot.classList.remove('is-focused');closeDropdown();}},{signal});
+    }
+    document.addEventListener('pointerdown',e=>{if(!inside(e.target)) closeDropdown();},{signal});
+    suggestions.addEventListener('pointerdown',e=>{if(e.target.closest('[role="option"]')) e.preventDefault();},{signal});
+    suggestions.addEventListener('click',e=>{if(e.target.closest('.st-search-submit-option')) run();else if(e.target.closest('a')) closeDropdown();},{signal});
+    input.addEventListener('compositionstart',()=>{composing=true;showStates();},{signal});input.addEventListener('compositionend',()=>{composing=false;refreshSuggestions();},{signal});
+    const enter=e=>e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter';
+    form.addEventListener('keydown',e=>{if(!enter(e)) return;if(composing || e.isComposing || e.keyCode===229) {imeEnterHeld=true;return;}if(imeEnterHeld || e.repeat) e.preventDefault();},{capture:true,signal});
+    document.addEventListener('keyup',e=>{if(enter(e)) imeEnterHeld=false;},{signal});w.addEventListener('blur',()=>{imeEnterHeld=false;},{signal});
+    input.addEventListener('keydown',e=>{
+      if(composing || e.isComposing || e.keyCode===229 || imeEnterHeld || e.repeat) return;
+      if(e.key==='Escape') {e.preventDefault();if(!suggestArea.hidden) closeDropdown();else {input.value='';refreshSuggestions();}return;}
+      if(['ArrowDown','ArrowUp'].includes(e.key) && input.value.trim()) {
+        e.preventDefault();if(suggestArea.hidden) {dropdown=true;refreshSuggestions();}const count=suggestions.children.length,step=e.key==='ArrowDown'?1:-1;
+        activeSuggestion=activeSuggestion<0?(step>0?0:count-1):(activeSuggestion+step+count)%count;[...suggestions.children].forEach((n,i)=>n.setAttribute('aria-selected',String(i===activeSuggestion)));
+        input.setAttribute('aria-activedescendant',suggestions.children[activeSuggestion].id);call('onNavigate');
       }
-      if(event.key==='Enter' && activeSuggestion>=0 && !suggestArea.hidden) {
-        event.preventDefault();suggestions.children[activeSuggestion]?.querySelector('a')?.click();
-      }
+      if(e.key==='Enter' && activeSuggestion>=0 && !suggestArea.hidden) {e.preventDefault();const option=suggestions.children[activeSuggestion];(option.querySelector('a') || option).click();}
     },{signal});
-    all.addEventListener('click',()=>{if(!composing){openAll=true;refreshLocal();}},{signal});
-    more.addEventListener('click',()=>{if(!composing){limit+=100;refreshLocal();}},{signal});
-    // 候補を開いたら、検索語と開いたページを並び順の改善のために記録する（集計は1日1回、search-boost.json）。
-    // 同じ組は1日1回だけ送り、解析を止めた人（st-analytics=off）は送らない。ページの移動は待たせない。
+    clear.addEventListener('click',()=>{input.value='';closeResults();input.focus();refreshSuggestions();},{signal});
+    more.addEventListener('click',()=>{limit+=20;renderResults();},{signal});showAll.addEventListener('click',()=>{expandedAI=true;renderResults();},{signal});retry.addEventListener('click',()=>{if(!composing) runRank();},{signal});
     function recordClick(event) {
       const a=event.target.closest?.('a.st-search-link');
       if(!a || (event.type==='auxclick' && event.button!==1)) return;
-      const list=a.closest('ul'), kind=list===suggestions?'suggest':list===localList?'local':list===rankList?'semantic':'';
-      const query=searchKey();
+      const list=a.closest('[data-st-search-list]'), kind=list?.dataset.stSearchList || '';
+      const query=keyOf(kind==='suggest'?input.value:committed);
       if(!kind || !query || Array.from(query).length>200) return;
-      const body={scope:adapter.scope,query,href:a.getAttribute('href'),list:kind,position:[...list.children].indexOf(a.closest('li'))+1};
+      const body={scope:adapter.scope,query,href:a.getAttribute('href'),list:kind,position:[...list.children].indexOf(a.closest('.st-search-result'))+(kind==='suggest'?0:1)};
       try {
         if(localStorage.getItem('st-analytics')==='off') return;
         const day=new Date().toISOString().slice(0,10), key=JSON.stringify([body.scope,query,body.href]);
@@ -325,21 +398,26 @@
         if(!navigator.sendBeacon?.('/search/api/click',blob)) fetch('/search/api/click',{method:'POST',body:blob,keepalive:true,credentials:'omit'}).catch(()=>{});
       } catch(_) {}
     }
-    container.addEventListener('click',recordClick,{signal});
-    container.addEventListener('auxclick',recordClick,{signal});
-    const releaseRank=next=>{conditionRevision++;clearRank(next);refreshLocal();};
-    const cancelRank=()=>releaseRank('stale');
-    cancel.addEventListener('click',cancelRank,{signal});
-    showStates();refreshLocal();
-    const ready=loadBase('default');
-    return {ready,run,cancel:cancelRank,
-      // ③への引き継ぎでは確定条件を保ち、②の結果と通知だけを消す。
-      handoff:()=>releaseRank('handoff'),
-      setQuery(value){input.value=String(value).slice(0,400);openAll=true;changeCondition();},
-      setLocale(value){if(!['ja','en'].includes(value) || value===locale) return;locale=value;labelled.forEach(([key,n])=>{n.textContent=labelValue(key);});
-        localList.replaceChildren();suggestions.replaceChildren();changeCondition();},
-      get state(){return {base:baseState,readings:readingState,rank:rankState,total:matched.total,recoveryAttempted,dataRevision};},
-      destroy(){destroyed=true;loadingRevision++;controller.abort();client.cancel();delete container.dataset.stSearchMounted;container.replaceChildren();}};
+    results.addEventListener('click',recordClick,{signal});
+    results.addEventListener('auxclick',recordClick,{signal});
+    component.addEventListener('click',recordClick,{signal});
+    component.addEventListener('auxclick',recordClick,{signal});
+
+    updateLabels();updateSort();refreshLocal();
+    // 欄は動かしていないので、読み込み中に始めた入力（IME の変換中を含む）はそのまま続く。
+    dropdown=inside(document.activeElement);focusRoot.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
+    return {ready,run,cancel:()=>{conditionRevision++;clearRank('stale');renderResults();},handoff:()=>{conditionRevision++;pending=null;clearRank('handoff');renderResults();},
+      setQuery(value,options={}) {
+        input.value=String(value).slice(0,400);let explicit=false;
+        // 号からの確定だけ、同じタブの一度きりの目印で明示操作を引き継ぐ。
+        if(options.handoff) {try {const raw=sessionStorage.getItem('st-search-explicit');sessionStorage.removeItem('st-search-explicit');const marker=JSON.parse(raw),age=Date.now()-marker?.at;
+          explicit=marker?.scope===adapter.scope && marker.query===keyOf(input.value) && Number.isFinite(age) && age>=0 && age<=30000;
+        }catch(_) {}}commit(input.value,explicit);refreshSuggestions();
+      },
+      setLocale(value) {if(!['ja','en'].includes(value) || value===locale) return;locale=value;conditionRevision++;if(pending) pending.allowed=false;clearRank(committed?'stale':'idle');
+        updateLabels();updateSort();localList.replaceChildren();rankList.replaceChildren();refreshLocal();refreshSuggestions();notify();},
+      openPrivacy,focus:()=>input.focus(),get state(){return {base:baseState,readings:readingState,rank:rankState,total:matched.total,query:committed,recoveryAttempted,dataRevision};},
+      destroy(){destroyed=true;loadingRevision++;controller.abort();client.cancel();delete form.dataset.stSearchOwned;delete container.dataset.stSearchMounted;if(external) {component.remove();form.classList.remove('is-focused');}container.replaceChildren();}}
   }
   w.STSearchUI={mount};
 })(window);

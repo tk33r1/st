@@ -18,6 +18,14 @@ async function bytes(path) {
   if(!cache.has(path))cache.set(path,(async()=>{const r=await fetch(base+path,{cache:'no-cache'});assert.ok(r.ok,path);return Buffer.from(await r.arrayBuffer());})());
   return cache.get(path);
 }
+function checkScriptVersions(html,path) {
+  const expected=execFileSync('git',['show','HEAD:'+path],{encoding:'utf8'});
+  for(const name of ['japanese-search','search-data','search-ui']) {
+    const ref=expected.match(new RegExp(name+'\\.js\\?v=([0-9]+_[0-9]+)'));
+    assert.ok(ref,path+': '+name+' の版指定');
+    assert.ok(html.includes(ref[0]),path+': '+name+' の版がGit正本と一致');
+  }
+}
 try {
   for(const name of ['japanese-search.js','site-search.js','search-ui.js','search-data.js','search-ui.css','search-json-worker.js']) {
     const path='assets/'+name,actual=await bytes('/'+path),expected=execFileSync('git',['show','HEAD:'+path]);
@@ -37,10 +45,10 @@ try {
   }
   for(const path of ['/tools/','/game/','/job/nitoridaily/','/job/retailtechdaily/']) {
     const html=(await bytes(path)).toString('utf8');
-    for(const name of ['japanese-search','search-data','search-ui'])assert.ok(html.includes(name+'.js?v=20261012_8'),path+': '+name);
+    checkScriptVersions(html,path.slice(1)+'index.html');
   }
   const r=await fetch(base+'/phase4-validation/missing/deep/');assert.equal(r.status,404);
-  const html=await r.text();assert.ok(html.includes('data-sitemap-slot'));assert.ok(html.includes('search-ui.js?v=20261012_8'));report.deep404=true;
+  const html=await r.text();assert.ok(html.includes('data-sitemap-slot'));checkScriptVersions(html,'404.html');report.deep404=true;
   report.fetched=Object.fromEntries(await Promise.all([...cache].map(async([path,p])=>[path,{sha256:hash(await p),bytes:(await p).length}])));
   report.pass=true;console.log(JSON.stringify({pass:true,scopes:report.scopes,deep404:true}));
 }catch(error){report.error=error.message;process.exitCode=1;console.error(error.message);}

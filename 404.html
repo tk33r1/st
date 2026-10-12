@@ -147,8 +147,12 @@
     @media (max-width: 679px) { .sitemap-ready { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-group:only-child > ul { grid-template-columns: minmax(0, 1fr); } .panel-group:only-child > ul > li:nth-child(2) { border-top: 1px solid var(--border); } }
     @media (max-width: 559px) { body { padding: 32px 16px; } .result-link { column-gap: 8px; padding: 12px; } .tile { min-height: 120px; padding: 14px; } .panel { padding: 6px 16px 12px; } }
     @media (max-width: 359px) { .sitemap-ready { grid-template-columns: minmax(0, 1fr); } }
+    .st-search-input-row{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .st-search-input{border:0}.st-search-submit{border:0;border-left:1px solid var(--border)}
+    .st-search-suggestions,.st-search-privacy-details{background:var(--surface);border-radius:10px;box-shadow:0 12px 30px #0003}
+    .st-search-local>.result-list>.st-search-result{border:0}
   </style>
-  <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_13">
 </head>
 <body>
   <!-- JavaScript無効時の既存GTM導線。st-analyticsでは制御できない。 -->
@@ -323,7 +327,7 @@
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
   <script src="/assets/japanese-search.js?v=20261012_8"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_8"></script>
+  <script src="/assets/search-ui.js?v=20261012_13"></script>
   <script src="/assets/search-data.js?v=20261012_8"></script>
   <script>
     (function () {
@@ -486,7 +490,7 @@
       }
       var composing = false;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
-      function currentQuery() { return input ? input.value.trim() : ''; }
+      function currentQuery() { return searchState.query || ''; }
       function searched(query) { return searchState.submitted && searchState.query===query; }
       // 公開フラグ。URLなどから切り替えられない。停止はWorker側を先に行う。
       var AI_SEARCH_ENABLED = true;
@@ -634,7 +638,11 @@
       }
       byId('ai-search').addEventListener('click', recordAIClick); byId('ai-search').addEventListener('auxclick', recordAIClick);
       searchUI = STSearchUI.mount(byId('common-search'), STSearchData.createAdapter('site', {
-        locale:lang, compare:function(a,b) { return ((b.href.split('/')[1]===arrivedSection)?1:0)-((a.href.split('/')[1]===arrivedSection)?1:0); },
+        locale:lang, analyticsNotice:true, placeholder:{ja:'サイト内を検索',en:'Search this site'},
+        classes:{list:'result-list'},
+        renderSuggestion:function(record,ctx) {return text[record.kind] || '';},
+        renderItem:function(record,ctx) {if(ctx.compact) return null;var item=resultItem(ctx.href,ctx.locale==='en'?(record.title_en || record.title):record.title,ctx.locale==='en'?(record.description_en || record.description):record.description,text[record.kind]);item.querySelector('a').dataset.stPrimary='';return item;},
+        compare:function(a,b) { return ((b.href.split('/')[1]===arrivedSection)?1:0)-((a.href.split('/')[1]===arrivedSection)?1:0); },
         onConditions:function(condition) {
           resetAI();
           byId('path-suggestions').hidden=!!condition.query || !byId('path-suggestion-list').children.length;
@@ -644,6 +652,7 @@
             var link=byId(scope+'-search'), entry=dailyEntries.find(function(e) {return e.key==='entry:'+scope;});
             link.href=entry.href+'#q='+encodeURIComponent(condition.query);link.textContent=entry.title;
           });
+          syncAI(condition.query,searchState.total);
         },
         onState:function(value) { searchState=value;composing=value.composing;syncAI(value.query,value.total); },
         onData:function(rows) {
