@@ -21,6 +21,12 @@ const option = (name, fallback) => { const i = process.argv.indexOf(name); retur
 const remote = option('--base', null);
 const match = option('--match', '');
 const root = resolve(repo, option('--root', '_site'));
+// 公開後も同じURL回帰の入口を使う。Phase 3のfixtureでは従来の場面を保持する。
+const pageSource=remote?await (await fetch(remote.replace(/\/$/,'')+'/tools/')).text():
+  existsSync(join(root,'tools/index.html'))?readFileSync(join(root,'tools/index.html'),'utf8'):'';
+if(pageSource.includes('STSearchUI.mount')) {
+  await import('./test-phase4-publication.mjs');process.exit(process.exitCode || 0);
+}
 if (!remote && !existsSync(join(root, '404.html'))) {
   console.error(`${root} に 404.html が無い。先に bash build.sh を実行する（または --root . でリポジトリをそのまま出す）`);
   process.exit(1);

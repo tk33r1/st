@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch fixed fixture baselines
+        run: git fetch --no-tags --depth=1 origin 9b0dd28bc3eeebfbd41dc2ba27033d1760666c75 ec5a1ab481d02757abae2458233144ae8b870278
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
