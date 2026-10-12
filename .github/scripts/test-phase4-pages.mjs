@@ -204,4 +204,31 @@ try {
     assert.equal(failedPosts.length,0);assert.equal(await failed.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);await failed.close();
     console.log(media+': ポータル取得前の確定・タグ・ウォッチ・取得失敗を確認');
   }
+  // トップページの Search: 開いたときだけ共通検索を読み、コマンドを先頭にページと並べる。読めなければインラインのコマンド検索のまま。
+  {
+    const page=await browser.newPage({viewport:{width:1280,height:900}}),posts=[],requests=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await offline(page,posts,requests);await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
+    assert.ok(!requests.includes('/assets/search-ui.js'),'Search を開くまで共通検索を読まない');
+    await page.locator('#activitybar .act-btn[data-act="search"]').click();
+    await page.waitForFunction(()=>document.getElementById('search-form').dataset.stSearchOwned==='1');
+    assert.equal(await page.evaluate(()=>document.getElementById('search-form').parentElement.classList.contains('search-box')),true,'借りた欄を動かさない');
+    await page.keyboard.type('dj');await page.waitForSelector('.st-search-suggestions:not([hidden]) .st-search-command-option');
+    const kinds=await page.evaluate(()=>[...document.querySelectorAll('.st-search-suggestions [role="option"]')].map(o=>o.classList.contains('st-search-command-option')?'command':o.classList.contains('st-search-submit-option')?'go':'page'));
+    assert.equal(kinds[0],'go');assert.ok(kinds.indexOf('page')<0 || kinds.lastIndexOf('command')<kinds.indexOf('page'),'候補の枠でコマンドをページより前に出す');
+    assert.ok(kinds.filter(k=>k==='command').length<=3);assert.equal(await page.locator('#search-results').isHidden(),true,'インラインの結果は隠す');
+    await ready(page);await page.keyboard.press('Enter');for(let i=0;i<100 && !posts.length;i++) await page.waitForTimeout(50);
+    assert.equal(posts.length,1,'Enter でページの②を1回送る');assert.equal(posts[0].scope,'site');
+    const first=await page.locator('#search-shared .st-search-commands [data-command]').first().getAttribute('data-command');
+    assert.equal(await page.evaluate(()=>{const c=document.querySelector('#search-shared .st-search-commands'),h=document.querySelector('#search-shared .st-search-local>h3');return !!(c.compareDocumentPosition(h)&Node.DOCUMENT_POSITION_FOLLOWING);}),true,'結果でもコマンドを件数の見出しより前に出す');
+    await page.locator(`#search-shared .st-search-commands [data-command="${first}"]`).click();
+    await page.waitForFunction(c=>document.body.innerText.includes(c),first);assert.equal(posts.length,1,'コマンドの実行で②を送らない');
+    await page.evaluate(()=>window.setLanguage?.('ja'));await page.waitForFunction(()=>document.getElementById('search-input').placeholder==='コマンドとページを検索');
+    assert.deepEqual(errors,[]);await page.close();
+    const fallback=await browser.newPage({viewport:{width:1280,height:900}}),fallbackPosts=[];await offline(fallback,fallbackPosts);
+    await fallback.route('**/assets/search-ui.js*',route=>route.abort());await fallback.goto(origin+'/',{waitUntil:'domcontentloaded'});
+    await fallback.locator('#activitybar .act-btn[data-act="search"]').click();await fallback.locator('#search-input').fill('dj');
+    await fallback.waitForSelector('#search-results [data-cmd]');await fallback.locator('#search-input').press('Enter');await fallback.waitForTimeout(300);
+    assert.equal(new URL(fallback.url()).pathname,'/','インラインでは Enter でページを移らない');assert.equal(fallbackPosts.length,0);await fallback.close();
+    console.log('top: Search の遅延読み込み・コマンド先頭・確定・コマンド実行・読み込み失敗時のインライン検索を確認');
+  }
 } finally {if(browser) await browser.close();await new Promise(r=>server.close(r));}

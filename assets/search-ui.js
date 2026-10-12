@@ -10,7 +10,7 @@
       ranking:'AIで関連する候補を探しています…',semantic:'AIが見つけた関連候補',showAll:'すべて表示',retry:'AIで関連する候補も探す',
       related:q=>`「${q}」に一致するものはありませんが、近いものがあります`,none:q=>`「${q}」に一致するものは見つかりませんでした`,
       textNone:q=>`「${q}」に文字で一致するものは見つかりませんでした`,more:n=>`もっと見る（残り ${n}件）`,
-      found:n=>`AIが関連する候補を${n}件見つけました`,failed:'AI検索を利用できません。',limited:'AI検索の利用上限に達しました。',
+      found:n=>`AIが関連する候補を${n}件見つけました`,commands:'コマンド',commandKind:'コマンド',allCommands:n=>`すべて表示（${n}件）`,failed:'AI検索を利用できません。',limited:'AI検索の利用上限に達しました。',
       disabled:'AI検索は停止中です。',updating:'検索データを更新しています。',close:'閉じる',privacyTitle:'検索とプライバシー',
       analytics:'検索語は Google アナリティクスに記録します。メールアドレスや電話番号は伏せてから送ります。アクセス解析を止めれば送信しません。',privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示ではTypeSafe AIへ送りません。候補を開くと、検索語と開いたページを並び順の改善のために記録します。ファイルやツールの処理内容は送りません。',
       privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは元に戻せないハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
@@ -20,7 +20,7 @@
       loading:'Loading…',baseFailed:'Search could not be prepared. Please reload the page.',preparing:'(loading)',readingFailed:'(text matches only)',updated:n=>`Updated: ${n} results`,
       ranking:'Looking for related results with AI…',semantic:'Related results found by AI',showAll:'Show all',retry:'Find related results with AI',
       related:q=>`No exact matches for “${q}”, but these look related`,none:q=>`No results for “${q}”`,textNone:q=>`No text matches for “${q}”`,more:n=>`Show more (${n} left)`,
-      found:n=>`AI found ${n} related results`,failed:'AI search is unavailable.',limited:'AI search has reached its usage limit.',disabled:'AI search is disabled.',
+      found:n=>`AI found ${n} related results`,commands:'Commands',commandKind:'Command',allCommands:n=>`Show all (${n})`,failed:'AI search is unavailable.',limited:'AI search has reached its usage limit.',disabled:'AI search is disabled.',
       updating:'Search data is updating.',close:'Close',privacyTitle:'Search and privacy',
       analytics:'Search terms are recorded in Google Analytics. Email addresses and phone numbers are masked before sending. Turning analytics off stops this transmission.',privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it to TypeSafe AI. When you open a result, your query and the page you opened are recorded to improve the ranking. Files and tool processing contents are not sent.',
       privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a salted hash that cannot be reversed). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
@@ -49,7 +49,7 @@
     let dataRevision=0,loadingRevision=0,conditionRevision=0,destroyed=false,composing=false,imeEnterHeld=false;
     let baseState='loading',readingState='unfetched',rankState='idle',rankRows=[],rankComplete=false;
     let recoveryAttempted=false,recoveryPromise=null,committed='',limit=20,activeSuggestion=-1;
-    let dropdown=false,expandedAI=false,pending=null,matched={rows:[],total:0},dedupeIds=new Set(),confirmation=0;
+    let dropdown=false,expandedAI=false,expandedCommands=false,pending=null,matched={rows:[],total:0},dedupeIds=new Set(),confirmation=0;
     const sorts=adapter.sorts || [],catalogueSort=sorts.find(s=>s.value==='newest')?.value || sorts.find(s=>s.value!=='relevance')?.value || '';
     let selectedSort=catalogueSort,lookupSort=catalogueSort,previousSort=catalogueSort,announcedLocal='',announcedRank='';
     const filters={},controls=new Map(),filterLabels=new Map(),chipAreas=new Map(),labelled=[];
@@ -108,7 +108,11 @@
       const l=node('label','',filterArea);labelText('sort',node('span','',l));sortSelect=node('select','',l);sortSelect.dataset.sort='1';
       sortSelect.addEventListener('change',()=>{selectedSort=sortSelect.value;if(!committed) previousSort=selectedSort;limit=20;refreshLocal(false);refreshSuggestions();notify();},{signal});
     }
-    const local=node('section','st-search-local',results),localHeading=node('h3','st-search-heading',local);
+    const local=node('section','st-search-local',results);
+    // ページが渡すコマンド（トップページ）。結果の先頭（ページの件数の見出しより上）にまとめ、押すとページの run を呼ぶ。リンクではないので記録しない。
+    const commandArea=node('section','st-search-commands',local),commandHeading=node('h4','st-search-heading',commandArea);
+    const commandList=node('ul','st-search-list',commandArea),commandMore=button(null,commandArea);commandArea.hidden=true;
+    const localHeading=node('h3','st-search-heading',local);
     const semantic=node('section','st-search-semantic',local),semanticHeading=node('h4','st-search-heading',semantic);
     const rankList=node('ul','st-search-list',semantic);rankList.dataset.stSearchList='semantic';
     const showAll=button('showAll',semantic),retryArea=node('div','st-search-retry-area',semantic),retry=button('retry',retryArea);
@@ -186,21 +190,37 @@
       const counts=sort && sort!=='relevance'?null:adapter.promoted?.(keyOf(query));if(!counts?.size) return result;
       const top=[],rest=[];for(const row of result.rows) (counts.has(links.get(row.id))?top:rest).push(row);top.sort((a,b)=>counts.get(links.get(b.id))-counts.get(links.get(a.id)));return {rows:[...top,...rest],total:result.total};
     }
+    // コマンドの検索はページに任せる（{id,label,description} の配列）。壊れた値は捨て、例外でも検索を止めない。
+    function findCommands(query) {
+      if(!query || typeof adapter.commands?.find!=='function') return [];
+      try {const found=adapter.commands.find(query);return Array.isArray(found)?found.filter(c=>c && typeof c.id==='string' && c.id && typeof c.label==='string'):[];}catch(_) {return [];}
+    }
+    function runCommand(commandId) {closeDropdown();try {adapter.commands?.run?.(commandId);}catch(_) {}}
+    function commandItem(parent,command,option) {
+      const li=node('li','st-search-result st-search-command',parent),target=option?li:node('button','st-search-command-button',li);
+      if(option) {li.classList.add('st-search-command-option');li.setAttribute('role','option');} else target.type='button';
+      target.dataset.command=command.id;node('span','st-search-title',target).textContent=command.label;
+      node('span','st-search-kind',target).textContent=words[locale].commandKind;
+      if(command.description) target.title=command.description;
+      return li;
+    }
     function refreshSuggestions() {
       if(destroyed) return;
       const query=input.value.trim();lookupSort='relevance';const suggested=engine && Array.from(keyOf(query)).length<=200?promote(engine.search(query,activeFilters()),query,'relevance'):{rows:[],total:0};
       suggestions.replaceChildren();const first=node('li','st-search-result st-search-submit-option',suggestions);first.id=id+'-search-option';first.setAttribute('role','option');
       node('span','st-search-search-for',first).textContent=words[locale].search(query);
+      findCommands(query).slice(0,3).forEach((command,i)=>{commandItem(suggestions,command,true).id=id+'-command-'+i;});
       suggested.rows.slice(0,6).forEach((row,i)=>addRow(suggestions,row,true,i));
       suggestionMessage.textContent=baseState==='failed'?words[locale].baseFailed:baseState==='loading' || (!suggested.total && !['ready','failed'].includes(readingState))?words[locale].loading:'';
       suggestionMessage.hidden=!suggestionMessage.textContent;activeSuggestion=-1;suggestArea.hidden=!dropdown || !query;input.setAttribute('aria-expanded',String(!suggestArea.hidden));input.removeAttribute('aria-activedescendant');showStates();
     }
-    function emptyMessage(t,readingPending,mainAI) {
+    function emptyMessage(t,readingPending,mainAI,commandCount=0) {
       if(baseState==='loading') return t.loading;
       if(baseState==='failed') return t.baseFailed;
       if(matched.total || mainAI) return '';
       if(readingPending) return t.loading;
-      if(rankState==='loading') return '';
+      // コマンドが一致していれば、ページの「見つかりません」は出さない（読み込み中・失敗の文は残す）。
+      if(rankState==='loading' || commandCount) return '';
       return readingState==='failed'?t.textNone(committed):t.none(committed);
     }
     function announceResults(t,relatedCount) {
@@ -220,6 +240,9 @@
     }
     function renderResults() {
       const t=words[locale],readingPending=!['ready','failed'].includes(readingState),related=rankRows.filter(r=>!dedupeIds.has(r.id));
+      const commands=committed?findCommands(committed):[];commandArea.hidden=!commands.length;commandHeading.textContent=t.commands;commandList.replaceChildren();
+      commands.slice(0,expandedCommands?commands.length:3).forEach(command=>commandItem(commandList,command,false));
+      commandMore.hidden=commands.length<=3 || expandedCommands;commandMore.textContent=t.allCommands(commands.length);
       const mainAI=baseState==='ready' && !readingPending && matched.total===0 && related.length>0;
       const heading=matched.total===0 && rankState==='loading' && !readingPending?t.heading(committed,null):t.heading(committed,matched.total);
       localHeading.textContent=mainAI?t.related(committed):heading+(baseState==='ready'?(readingPending?' '+t.preparing:readingState==='failed'?' '+t.readingFailed:''):'');
@@ -228,7 +251,7 @@
       semanticHeading.textContent=rankState==='loading'?t.ranking:t.semantic;semanticHeading.hidden=retryable;retryArea.hidden=!retryable;rankList.hidden=retryable;showAll.hidden=!compactVisible || related.length<=3 || expandedAI;
       fillList(rankList,compactVisible?related.slice(0,expandedAI?related.length:3):[],true);
       fillList(localList,mainAI?related:matched.rows.slice(0,limit));localList.dataset.stSearchList=mainAI?'semantic':'local';
-      resultMessage.textContent=emptyMessage(t,readingPending,mainAI);
+      resultMessage.textContent=emptyMessage(t,readingPending,mainAI,commands.length);
       resultMessage.hidden=!resultMessage.textContent;more.hidden=mainAI || matched.total<=limit;more.textContent=t.more(Math.max(0,matched.total-limit));
       announceResults(t,related.length);
       showStates();
@@ -241,7 +264,7 @@
       const query=value.trim();if(!query) {closeResults();return;}if(Array.from(query).length>200) return;
       const changed=committed!==query,wasEmpty=!committed;committed=query;
       if(wasEmpty) {previousSort=selectedSort;selectedSort=sorts.find(s=>s.value==='relevance')?.value || selectedSort;updateSort();}
-      confirmation++;limit=20;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}
+      confirmation++;limit=20;expandedCommands=false;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}
       closeDropdown();refreshLocal();notify();call('onResults',{query:committed,open:true});
       if(baseState==='loading') {if(changed || allowed || !pending) pending={allowed,revision:conditionRevision};}else if(allowed && baseState==='ready') runRank();
       if(w.matchMedia('(pointer: coarse)').matches) input.blur();const rect=localHeading.getBoundingClientRect();if(rect.top<0 || rect.bottom>w.innerHeight) localHeading.scrollIntoView({block:'start',behavior:'smooth'});
@@ -361,7 +384,9 @@
     }
     document.addEventListener('pointerdown',e=>{if(!inside(e.target)) closeDropdown();},{signal});
     suggestions.addEventListener('pointerdown',e=>{if(e.target.closest('[role="option"]')) e.preventDefault();},{signal});
-    suggestions.addEventListener('click',e=>{if(e.target.closest('.st-search-submit-option')) run();else if(e.target.closest('a')) closeDropdown();},{signal});
+    suggestions.addEventListener('click',e=>{const command=e.target.closest('.st-search-command-option');if(command) runCommand(command.dataset.command);else if(e.target.closest('.st-search-submit-option')) run();else if(e.target.closest('a')) closeDropdown();},{signal});
+    commandList.addEventListener('click',e=>{const command=e.target.closest('[data-command]');if(command) runCommand(command.dataset.command);},{signal});
+    commandMore.addEventListener('click',()=>{expandedCommands=true;renderResults();},{signal});
     input.addEventListener('compositionstart',()=>{composing=true;showStates();},{signal});input.addEventListener('compositionend',()=>{composing=false;refreshSuggestions();},{signal});
     const enter=e=>e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter';
     form.addEventListener('keydown',e=>{if(!enter(e)) return;if(composing || e.isComposing || e.keyCode===229) {imeEnterHeld=true;return;}if(imeEnterHeld || e.repeat) e.preventDefault();},{capture:true,signal});

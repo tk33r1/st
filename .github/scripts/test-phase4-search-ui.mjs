@@ -127,7 +127,7 @@ try {
   {
     const page=await browser.newPage(),posts=[];await rankFixture(page,posts);await setup(page,{slowReading:true});await page.waitForFunction(()=>!!window.releaseReading);
     await page.locator('input').fill('kaden');await page.locator('input').press('Enter');
-    assert.match(await page.locator('.st-search-heading').first().textContent(),/読み込み中/);assert.doesNotMatch(await page.locator('.st-search-empty').textContent(),/見つかりません/);
+    assert.match(await page.locator('.st-search-local>h3').textContent(),/読み込み中/);assert.doesNotMatch(await page.locator('.st-search-empty').textContent(),/見つかりません/);
     await page.waitForFunction(()=>window.ui.state.rank==='results');assert.equal(await page.locator('.st-search-semantic li').count(),3);
     await page.evaluate(()=>window.releaseReading());await page.waitForFunction(()=>window.ui.state.readings==='ready');assert.equal(await page.evaluate(()=>window.ui.state.total),250);await page.close();
   }

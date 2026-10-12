@@ -20,9 +20,11 @@
 .st-search-suggestions{position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);color:inherit;border:1px solid var(--border,currentColor);max-height:60vh;overflow:auto}
 .st-search-list{list-style:none;margin:0;padding:0}
 .st-search-suggestions .st-search-result{border:0;margin:0;padding:0}
-.st-search-suggestions .st-search-link,.st-search-search-for,.st-search-semantic .st-search-link{display:flex;gap:.75rem;align-items:center;padding:.65rem .8rem;min-height:44px;color:inherit;text-decoration:none}
+.st-search-command-option{cursor:pointer}
+.st-search-command-button{width:100%;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.st-search-suggestions .st-search-link,.st-search-search-for,.st-search-semantic .st-search-link,.st-search-command-option,.st-search-command-button{display:flex;gap:.75rem;align-items:center;padding:.65rem .8rem;min-height:44px;color:inherit;text-decoration:none}
 .st-search-title{min-width:0;flex:1;overflow-wrap:anywhere}
-.st-search-suggestions .st-search-title,.st-search-semantic .st-search-title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.st-search-suggestions .st-search-title,.st-search-semantic .st-search-title,.st-search-commands .st-search-title{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .st-search-kind{font-size:.75em;flex-shrink:0}.st-search-submit-option{cursor:pointer}
 .st-search-result[aria-selected="true"],.st-search-suggestions .st-search-result:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
 .st-search-notice{display:flex;align-items:center;gap:.5rem;border-top:1px solid var(--border,currentColor);font-size:.75em;padding:.3rem .7rem;line-height:1.5}

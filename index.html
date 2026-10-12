@@ -1503,6 +1503,45 @@
     }
 
     #search-input:focus, #ext-search-input:focus { border-color: var(--primary-color) }
+    /* Search: the box is a form so the shared site search (tk.st only) can borrow it;
+       inline, it is still the plain command filter. */
+    .search-box { position: relative; }
+    #search-form { display: flex; margin: 0; }
+    #search-form #search-input { flex: 1; min-width: 0; border-radius: 4px 0 0 4px; }
+    #search-input::-webkit-search-cancel-button { display: none; }
+    #search-form .search-submit { flex: 0 0 2rem; padding: 0; background: var(--surface-alt); color: var(--text-color);
+      border: 1px solid var(--border-color); border-left: 0; border-radius: 0 4px 4px 0; cursor: pointer; }
+    #search-form:focus-within .search-submit { border-color: var(--primary-color); }
+    /* Shared search parts, in the side bar's own colours and density. */
+    #view-search { --surface: var(--surface-color); --border: var(--border-color); --accent: var(--primary-color); }
+    #search-form .st-search-clear { font-size: 1rem; background: transparent; color: var(--dim-color); }
+    #view-search .st-search-suggestions { left: .75rem; right: .75rem; top: calc(100% - .5rem); color: var(--text-color);
+      border-radius: 4px; box-shadow: 0 8px 20px rgb(0 0 0 / .25); font-size: .75rem; }
+    #view-search .st-search-notice { font-size: 10px; }
+    #search-shared .st-search-heading { font-size: 10px; letter-spacing: .05em; color: var(--dim-color); margin: .5rem 0 .25rem; }
+    #search-shared .st-search-command-button:hover, #search-shared .st-search-link:hover { background: var(--surface-hover); }
+    #search-shared .st-search-local > .st-search-list > .st-search-result > .st-search-link { padding: .45rem .25rem; }
+    #search-shared .st-search-title { color: var(--primary-color); }
+    #search-shared .st-search-description { color: var(--dim-color); font-size: 11px; }
+    #search-shared .st-search-kind { color: var(--dim-color); }
+    #search-shared .st-search-filters:empty { display: none; }
+    #search-shared .st-search-title { font-size: 12px; }
+    #search-shared .st-search-kind { font-size: 10px; }
+    #search-form #search-input.st-search-input { padding-right: 44px; }
+    #search-shared .st-search-button { font-size: 11px; border-radius: 4px; }
+    /* Desktop keeps the side bar's density; on touch-sized screens the 44px targets of the shared design stay. */
+    @media (min-width: 768px) {
+      #search-form #search-input.st-search-input { min-height: 0; padding-right: 2rem; }
+      #search-form .st-search-clear { right: 2rem; width: 2rem; }
+      #search-form .st-search-submit { min-width: 2rem; width: 2rem; flex: 0 0 2rem; min-height: 0; }
+      #view-search .st-search-suggestions :is(.st-search-link, .st-search-search-for, .st-search-command-option) { min-height: 32px; padding: .35rem .6rem; }
+      #view-search .st-search-info { min-width: 28px; width: 28px; }
+      #search-shared .st-search-semantic { min-height: calc(32px * 3 + 2.5rem); padding: .35rem .5rem; }
+      #search-shared .st-search-semantic .st-search-result { height: 32px; }
+      #search-shared .st-search-semantic.is-loading .st-search-list { height: 96px; background-size: 100% 32px; }
+      #search-shared :is(.st-search-command-button, .st-search-semantic .st-search-link) { min-height: 32px; padding: .3rem .25rem; }
+      #search-shared .st-search-button { min-height: 32px; }
+    }
     /* 2-column grid: icon + author stack on the left, name/desc + action button on
        the right. The button's left edge lines up with the title, and the publisher
        sits at the bottom-left under the icon. */
@@ -3458,11 +3497,15 @@
         </div>
         <div id="view-search" class="hidden">
           <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="検索">SEARCH</div>
-          <div class="px-3 pb-2"><input type="text" id="search-input" autocomplete="off" spellcheck="false"
-              placeholder="Search commands" data-ja-ph="コマンドを検索" data-ja-aria="コマンドを検索" aria-label="Search commands">
+          <!-- tk.st の上では、Search を開いたときに共通の検索部品（/assets/）がこの欄を借りて、コマンドとサイトのページを探す。
+               インスクリプション版など読めないところでは、下のインラインのコマンド検索のまま動く。 -->
+          <div class="px-3 pb-2 search-box"><form id="search-form" role="search" action="#"><input type="search" id="search-input" autocomplete="off" spellcheck="false"
+              placeholder="Search commands" data-ja-ph="コマンドを検索" data-ja-aria="コマンドを検索" aria-label="Search commands"><button type="submit"
+              class="search-submit" aria-label="Search" data-ja-aria="検索">⌕</button></form>
           </div>
           <div id="search-count" class="px-3 pb-1 text-[10px] text-dim"></div>
           <nav id="search-results" class="text-xs"></nav>
+          <div id="search-shared" class="px-3 text-xs"></div>
         </div>
         <div id="view-git" class="hidden">
           <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="ソース管理">SOURCE
@@ -6913,12 +6956,14 @@
     // Explorer and Search results behave identically once a [data-cmd] entry is picked:
     // close the mobile drawer (a no-op on desktop, where .open is never set), drop the
     // ?cmd= param so the URL stops replaying, run it, and hand focus back to the prompt.
-    const runFromSidebar = async (e) => {
-      const btn = e.target.closest('[data-cmd]'); if (!btn) return;
+    async function runSidebarCommand(cmd) {
       sidebarEl.classList.remove('open');
       clearCmdParam();
-      await handleCommand(btn.dataset.cmd);
+      await handleCommand(cmd);
       DOM.input.focus({ preventScroll: true });
+    }
+    const runFromSidebar = (e) => {
+      const btn = e.target.closest('[data-cmd]'); if (btn) runSidebarCommand(btn.dataset.cmd);
     };
     sidebarTree.addEventListener('click', runFromSidebar);
 
@@ -6932,6 +6977,9 @@
     const searchInput = document.getElementById('search-input');
     const searchResults = document.getElementById('search-results');
     const searchCount = document.getElementById('search-count');
+    const searchForm = document.getElementById('search-form');
+    // Once the shared site search has borrowed the box (tk.st only), it owns typing, Enter and Esc.
+    const sharedSearchOwned = () => !!searchForm.dataset.stSearchOwned;
     const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
     const SIDEBAR_VIEWS = ['explorer', 'search', 'git', 'extensions', 'arsenal'];
     // Arsenal sidebar view — weapon picker for RAMPAGE mode.
@@ -6985,6 +7033,7 @@
     }
     buildSearchIndex();
     function renderSearch(q) {
+      if (sharedSearchOwned()) return;
       q = (q || '').trim().toLowerCase();
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
       const cmds = availableCmdKeys().sort();
@@ -6995,8 +7044,53 @@
         : msgHTML('px-3 py-2 text-xs text-secondary', 'No results found.', '結果が見つかりませんでした。');
     }
     searchInput.addEventListener('input', () => renderSearch(searchInput.value));
-    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !isImeKey(e)) { searchInput.value = ''; renderSearch(''); } });
+    searchInput.addEventListener('keydown', (e) => { if (!sharedSearchOwned() && e.key === 'Escape' && !isImeKey(e)) { searchInput.value = ''; renderSearch(''); } });
+    searchForm.addEventListener('submit', (e) => { if (sharedSearchOwned()) return; e.preventDefault(); renderSearch(searchInput.value); });
     searchResults.addEventListener('click', runFromSidebar);
+
+    // --- Shared site search (tk.st only) ---
+    // On tk.st the Search view also finds the site's pages with the shared search (assets/site-search-ui-redesign.md):
+    // suggestions while typing, and on Enter the matching pages plus related ones judged by TypeSafe AI. Commands
+    // stay first. Loaded only when the view is first used, and never off tk.st (the inscribed copy keeps the
+    // inline command filter above), so this page still carries no external code of its own.
+    const SHARED_SEARCH_ASSETS = ['search-ui.css?v=20261012_15', 'japanese-search.js?v=20261012_8', 'site-search.js?v=20261011_1',
+      'search-ui.js?v=20261012_15', 'search-data.js?v=20261012_8'];
+    const sharedSearchAllowed = (location.protocol === 'https:' && location.hostname === 'tk.st')
+      || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const PAGE_KINDS = { tool: ['Tool', 'ツール'], game: ['Game', 'ゲーム'], article: ['Article', '記事'], page: ['Page', 'ページ'] };
+    function findSidebarCommands(query) {
+      const q = (query || '').trim().toLowerCase(); if (!q) return [];
+      const order = (c) => c.startsWith(q) ? 0 : c.includes(q) ? 1 : 2;
+      return availableCmdKeys().filter(c => (SEARCH_INDEX[c] || '').includes(q))
+        .sort((a, b) => order(a) - order(b) || a.localeCompare(b))
+        .map(c => ({ id: c, label: c, description: cdesc(c) }));
+    }
+    let sharedSearchStarted = false;
+    async function loadSharedSearch() {
+      if (sharedSearchStarted || !sharedSearchAllowed) return;
+      sharedSearchStarted = true;
+      try {
+        // Fetch in parallel; scripts still run in the order written (async = false).
+        await Promise.all(SHARED_SEARCH_ASSETS.map(file => new Promise((resolve, reject) => {
+          const css = file.includes('.css?'), el = document.createElement(css ? 'link' : 'script');
+          if (css) { el.rel = 'stylesheet'; el.href = '/assets/' + file; } else { el.async = false; el.src = '/assets/' + file; }
+          el.onload = resolve; el.onerror = reject; document.head.append(el);
+        })));
+        const box = document.getElementById('search-shared');
+        const search = STSearchUI.mount(box, STSearchData.createAdapter('site', {
+          input: searchForm, results: box, locale: currentLang === 'ja' ? 'ja' : 'en',
+          placeholder: { ja: 'コマンドとページを検索', en: 'Search commands and pages' },
+          renderSuggestion: (record) => PAGE_KINDS[record.kind] ? tr(...PAGE_KINDS[record.kind]) : '',
+          commands: { find: findSidebarCommands, run: runSidebarCommand }
+        }));
+        // applyChrome() swaps these on a language change; point them at the new wording so it does not undo it.
+        Object.assign(searchInput.dataset, { enPh: 'Search commands and pages', jaPh: 'コマンドとページを検索', enAria: 'Search commands and pages', jaAria: 'コマンドとページを検索' });
+        searchCount.textContent = ''; searchCount.hidden = true; searchResults.replaceChildren(); searchResults.hidden = true;
+        new MutationObserver(() => search.setLocale(currentLang === 'ja' ? 'ja' : 'en')).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+      } catch (err) { /* keep the inline command filter */ }
+    }
+    searchInput.addEventListener('focus', loadSharedSearch, { once: true });
+    searchInput.addEventListener('input', loadSharedSearch, { once: true });
 
     // Install and uninstall are the same marketplace ritual — spinner, disable the button,
     // a beat of pretend work, mutate the set, re-render, then log to Source Control /
@@ -7146,7 +7240,7 @@
         isMobile() ? sidebarEl.classList.toggle('open') : sidebarEl.classList.toggle('collapsed');
       } else {
         showSidebarView(act); ensureSidebarOpen();
-        if (act === 'search') { renderSearch(searchInput.value); searchInput.focus({ preventScroll: true }); searchInput.select(); }
+        if (act === 'search') { renderSearch(searchInput.value); searchInput.focus({ preventScroll: true }); searchInput.select(); loadSharedSearch(); }
         else if (act === 'git') { renderGit(); unreadHistoryCount = 0; updateGitBadge(); }
         else if (act === 'arsenal') { renderArsenal(); }
       }
