@@ -346,12 +346,12 @@ def smoke_openai_web_search(api_key, model):
 
 
 def smoke_deepseek(url, api_key, model):
-    # 日刊生成のフォールバック（一次は OpenAI）：JSON出力
+    # 日刊生成のフォールバック。既定の推論も上限を使うため32では本文の前に尽きる。
     expect_ok_json(post_json(url, api_key, {
         'model': model,
         'messages': JSON_MESSAGES,
         'temperature': 0.2,
-        'max_tokens': 32,
+        'max_tokens': 1024,
         'response_format': {'type': 'json_object'},
     }))
     smoke_magi_discussion(url, api_key, model, 'deepseek')
