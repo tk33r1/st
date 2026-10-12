@@ -140,7 +140,6 @@ python -B .github/scripts/preview-magi-mode.py
 # 保存済みの手元のキーで合成入力だけを評価。結果は非追跡の workers/.wrangler/
 node .github/scripts/eval-magi-mode.mjs --mode=motion
 node .github/scripts/eval-magi-mode.mjs --mode=entry
-node .github/scripts/eval-magi-mode.mjs --mode=reader
 node .github/scripts/eval-magi-mode.mjs --mode=paired --batch=1
 # 指定した合成入力だけ再評価する。結果ファイルは全件評価と分ける
 node .github/scripts/eval-magi-mode.mjs --mode=pilot --cases=1,16
@@ -276,3 +275,5 @@ BALTHASARと、ダークの統合・タイトル・予測・議題化・ペー�
 - 実APIの事前確認は `magi-anthropic-probe.yml`。合成入力だけを送り、本文・キーを成果物に残さない。X画像URLの確認が未実施なら、完了したとは扱わない。
 
 Anthropicのデータの扱いは [APIの保持期間](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) と [商用APIの学習への利用](https://privacy.claude.com/en/articles/7996885-how-do-you-use-personal-data-in-model-training) を確認した（2026-10-13）。入出力は既定で学習には利用されず、通常30日以内に削除される。安全管理・法令等の例外を説明文にも残す。
+
+- 票の補助AIは公開前の固定評価でBALTHASARの第1・2回の札30/30件が有効だったため撤去。札が読めない回は判定不能とし、前回の有効票があればコードで引き継ぐ。

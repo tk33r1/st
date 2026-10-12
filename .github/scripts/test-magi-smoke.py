@@ -172,7 +172,7 @@ class MagiSmokeTest(unittest.TestCase):
                         ai_models.validate_chat_stream(raw)
 
     def test_magi_schema_smoke_uses_production_request_body(self):
-        for provider, name in [('anthropic', 'motion'), ('openai', 'vote_reader')]:
+        for provider, name in [('anthropic', 'motion')]:
             config = copy.deepcopy(self.config['magi'])
             sent = []
             value = {'motion': 'Go for ramen tonight', 'votable': True} if name == 'motion' else {'votes': [{'codename': 'CASPER-3', 'vote': 'reject'}]}
@@ -205,6 +205,21 @@ class MagiSmokeTest(unittest.TestCase):
             else:
                 with self.assertRaises(RuntimeError):
                     ai_models.validate_anthropic_stream(raw)
+
+    def test_motion_schema_smoke_keeps_quality_decisions_separate(self):
+        for value, valid in [({'motion': 'Go for ramen', 'votable': True}, True),
+                             ({'motion': '', 'votable': False}, True),
+                             ({'motion': '', 'votable': True}, False),
+                             ({'motion': 'Invented decision', 'votable': False}, False),
+                             ({'motion': 'x', 'votable': 1}, False),
+                             ({'motion': 'x', 'votable': True, 'extra': 1}, False)]:
+            response = {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': 'end_turn'}
+            with self.subTest(value=value), patch.object(ai_models, 'post_json', return_value=response):
+                if valid:
+                    ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
+                else:
+                    with self.assertRaises(RuntimeError):
+                        ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
 
     def test_anthropic_models_detects_only_new_haiku_generations(self):
         pattern = ai_models.PROVIDERS['anthropic']['channels']['haiku']

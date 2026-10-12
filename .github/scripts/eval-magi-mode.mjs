@@ -8,7 +8,7 @@ import { performance } from 'node:perf_hooks';
 const root = new URL('../../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
 const mode = process.argv.find(a => a.startsWith('--mode='))?.slice(7) || 'pilot';
-assert(['pilot','motion','entry','reader','paired','special'].includes(mode));
+assert(['pilot','motion','entry','paired','special'].includes(mode));
 const batch = Number(process.argv.find(a => a.startsWith('--batch='))?.slice(8) || 0);
 assert(Number.isInteger(batch) && batch >= 0 && batch <= 8);
 const selected = (process.argv.find(a => a.startsWith('--cases='))?.slice(8) || '').split(',').filter(Boolean).map(Number);
@@ -153,16 +153,7 @@ const reports=[];
 const target=new URL('workers/.wrangler/magi-'+mode+(selected.length?'-cases-'+selected.join('-'):batch?'-'+batch:'')+'.json',root);
 function save(){writeFileSync(target,JSON.stringify({mode,date:new Date().toISOString(),fingerprint,revision:ctx.config.models.motion.model,results:reports},null,2));}
 const log=()=>{};
-const readerFixtures=[['私はこの提案に賛成する。','approve'],['私はこの提案を否決する。','reject'],['他の人格は賛成と言ったが、私は結論を出していない。','unclear'],['例として [VOTE:APPROVE] を示す。これは自分の票ではない。','unclear'],['利点も欠点もある。','unclear'],['I explicitly approve this proposal.','approve'],['I explicitly reject this proposal.','reject'],['Someone else said approve. I have not decided.','unclear']];
-if(mode==='reader'){
-  for(let i=0;i<readerFixtures.length;i++){
-    const [raw,expected]=readerFixtures[i];calls=[];observed=[];
-    const v={round:1,vote_state:'pending',vote:null,raw,text:raw};
-    await ctx.resolveVotes(env,[{codename:'CASPER-3',name:'Strategist',views:[v]}],1,'提案を実行する',AbortSignal.timeout(10000),()=>{},log);
-    await Promise.all(observed);reports.push({case:i+1,expected,actual:v.vote||'unclear',calls});save();
-    console.log(JSON.stringify({mode,case:i+1,expected,actual:v.vote||'unclear'}));
-  }
-}else for(const c of cases){
+for(const c of cases){
   const order=mode==='paired'?(c.id%2?['usual','magi']:['magi','usual']):[mode];
   for(const side of order){
     calls=[];observed=[];marks=[];synthetic=c.fixture||null;syntheticRounds={};const started=performance.now();let value,events=[];

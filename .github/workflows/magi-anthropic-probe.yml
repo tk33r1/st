@@ -4,6 +4,12 @@ name: MAGI Anthropic Probe
 on:
   workflow_dispatch:
     inputs:
+      evaluation:
+        description: '追加確認（allは固定入力47件とカード/X素材も生成。正本は変更しない）'
+        required: false
+        default: smoke
+        type: choice
+        options: [smoke, magi, all]
       image-urls:
         description: '任意: 公開X画像のHTTPS URLを3件（pbs.twimg.com、空白区切り）'
         required: false
@@ -35,15 +41,23 @@ jobs:
         ANTHROPIC_PROBE_IMAGE_URLS: ${{ inputs.image-urls }}
       run: node .github/scripts/probe-anthropic.mjs
     - name: Evaluate the candidate without publishing
-      if: hashFiles('.github/scripts/eval-magi-models.mjs') != ''
+      if: hashFiles('.github/scripts/eval-magi-models.mjs') != '' && inputs.evaluation == 'all'
       env:
         MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
       run: node .github/scripts/eval-magi-models.mjs
+    - name: Check final MAGI behavior without vote-reading AI
+      if: hashFiles('.github/scripts/eval-magi-models.mjs') != '' && inputs.evaluation == 'magi'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-models.mjs --cases=m1-dark,m2-dark,m3-dark --label=final-magi
     - name: Preview cards and X material without writing the canonical files
-      if: hashFiles('.github/scripts/preview-magi47-materials.py') != ''
+      if: hashFiles('.github/scripts/preview-magi47-materials.py') != '' && inputs.evaluation == 'all'
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

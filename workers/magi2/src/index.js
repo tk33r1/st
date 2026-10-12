@@ -1078,29 +1078,13 @@ async function createMotion(env, plainMessages, langNote, signal, log) {
   } catch (e) { log('motion', 'failed', e.name); return notVotable('failed'); }
 }
 
-async function resolveVotes(env, opinions, round, motion, signal, send, log) {
-  const pending = opinions.flatMap(p => {
+// 札が読めない発言は推測せず確定する。前回の有効票を使うかはmagiTallyが決める。
+function resolveVotes(opinions, round, send) {
+  for (const p of opinions) {
     const v = p.views.find(v => v.round === round && v.vote_state === 'pending');
-    return v ? [{ p, v }] : [];
-  });
-  if (!pending.length) return;
-  let votes = [];
-  try {
-    votes = await withTimeout(MAGI_MODE.vote_reader_ms, async signal => {
-      const res = await callModel({ env, cfg: DEFAULTS.models.vote_reader, stream: false, signal, response_format: MAGI_MODE.vote_reader_format,
-        messages: [{ role: 'system', content: MAGI_MODE.vote_reader_prompt }, { role: 'user', content: JSON.stringify({ motion,
-          responses: pending.map(({ p, v }) => ({ codename: p.codename, text: v.raw })) }) }] });
-      if (!res.ok) return [];
-      const c = (await res.json()).choices?.[0];
-      const v = c?.finish_reason === 'stop' ? JSON.parse(c.message.content).votes : [];
-      return Array.isArray(v) ? v : [];
-    }, signal);
-  } catch (e) { log('vote_reader', 'failed', e.name); }
-  for (const { p, v } of pending) {
-    const matches = votes.filter(x => x?.codename === p.codename);
-    v.vote = matches.length === 1 && ['approve', 'reject'].includes(matches[0].vote) ? matches[0].vote : null;
-    v.vote_state = 'final';
-    send('persona', { round, codename: p.codename, name: p.name, text: v.text, vote: v.vote, vote_state: 'final' });
+    if (!v) continue;
+    v.vote = null; v.vote_state = 'final';
+    send('persona', { round, codename: p.codename, name: p.name, text: v.text, vote: null, vote_state: 'final' });
   }
 }
 
@@ -1167,7 +1151,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
   if (!opinions.length) throw r1[0].reason;
   log('persona_call', 'round1 ok', `personas=${opinions.length}`);
-  if (motion) await resolveVotes(upstream, opinions, 1, motion, signal, send, log);
+  if (motion) resolveVotes(opinions, 1, send);
 
   // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
   // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
@@ -1185,7 +1169,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       } catch (e) { absent(p, 2, e); }
     })), signal);
   log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
-  if (motion) await resolveVotes(upstream, opinions, 2, motion, signal, send, log);
+  if (motion) resolveVotes(opinions, 2, send);
 
   // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
   // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
@@ -1221,7 +1205,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
         } catch (e) { absent(p, round, e); }
       })), signal);
     lastRound = round;
-    if (motion) await resolveVotes(upstream, opinions, round, motion, signal, send, log);
+    if (motion) resolveVotes(opinions, round, send);
   }
 
   const magiVerdict = motion ? magiTally(records, lastRound) : null;

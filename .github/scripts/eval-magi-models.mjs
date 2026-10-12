@@ -47,7 +47,7 @@ const context=vm.createContext({aiModels:registry,bundledContext:cards,Request,R
 vm.runInContext(source.map(strip).join('\n').replace('export default {','globalThis.worker = {'),context);
 const env={MAGI_MODE_ENABLED:'true',SITE_SEARCH_ENABLED:'true'};
 const counts=new Map();env.DB={prepare(){return{bind(key,day,limit){return{async first(){const n=(counts.get(key)||0)+1;counts.set(key,n);return n<=limit?{count:n}:null;}};}};}};
-if(process.argv.includes('--check')){const r=await context.worker.fetch(new Request('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'}}),env,{});assert.equal(r.status,200);console.log('Model evaluation VM: OK (no API calls)');process.exit(0);}
+if(process.argv.includes('--check')){const r=await context.worker.fetch(new Request('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'}}),env,{});assert.equal(r.status,200);if(opt('models-output'))writeFileSync(opt('models-output'),JSON.stringify(await r.json()));console.log('Model evaluation VM: OK (no API calls)');process.exit(0);}
 const saved=existsSync(new URL('workers/magi2/.dev.vars',root))?current('workers/magi2/.dev.vars'):'';
 for(const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY',registry.google?'MAGI_GEMINI_API_KEY':'MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']){
  env[name]=process.env[name]||saved.match(new RegExp('^\\s*'+name+'\\s*=\\s*(.*?)\\s*$','m'))?.[1].replace(/^(['"])(.*)\1$/,'$2');assert(env[name],name+' is required');}

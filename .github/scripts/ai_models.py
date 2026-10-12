@@ -220,7 +220,7 @@ def smoke_openai(url, api_key, model):
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_magi(url, api_key, model, config['magi'])
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・統合/本番設定/サイト候補/画像/stream、サイト選択/requested・auxiliary、討議判定・MAGI議題化・票読取/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
@@ -270,24 +270,18 @@ def smoke_openai_debate_judge(url, api_key, model, config):
 
 
 def smoke_openai_magi(url, api_key, model, config, provider='openai'):
-    """採決の議題化と票読取。本番のスキーマ・推論・上限を使う疎通確認。"""
-    for name in ('motion', 'vote_reader'):
-        cfg = config[name]
-        if cfg['model']['provider'] != provider:
-            continue
-        response = post_json(url, api_key, {**cfg['body'], 'model': model})
-        value = json.loads(completed_content(response))
-        if name == 'motion':
-            if value.get('votable') is not True or not isinstance(value.get('motion'), str) or not value['motion'].strip():
-                raise RuntimeError('MAGI議題化の疎通で期待した応答が得られませんでした')
-        else:
-            votes = value.get('votes')
-            allowed = cfg['format']['json_schema']['schema']['properties']['votes']['items']['properties']
-            if not isinstance(votes, list) or any(
-                not isinstance(v, dict) or v.get('codename') not in allowed['codename']['enum']
-                or v.get('vote') not in allowed['vote']['enum'] for v in votes
-            ) or [v.get('vote') for v in votes if v.get('codename') == 'CASPER-3'] != ['reject']:
-                raise RuntimeError('MAGI票読取の疎通で期待した応答が得られませんでした')
+    """議題化の形式疎通。本番のスキーマ・推論・上限を使い、採否の精度は実API評価で測る。"""
+    cfg = config['motion']
+    if cfg['model']['provider'] != provider:
+        return
+    response = post_json(url, api_key, {**cfg['body'], 'model': model})
+    value = json.loads(completed_content(response))
+    if not isinstance(value, dict) or set(value) != {'motion', 'votable'} or type(value['votable']) is not bool or not isinstance(value['motion'], str):
+        raise RuntimeError('MAGI議題化のスキーマ疎通に失敗しました')
+    motion = value['motion'].strip()
+    if len(motion) > 120 or (not motion if value['votable'] else bool(motion)):
+        raise RuntimeError('MAGI議題化の本文形式が不正です')
+    print('MAGI議題化schema smoke: ' + json.dumps({'votable': value['votable'], 'motion_chars': len(motion)}))
 
 
 def smoke_openai_site_search(url, api_key, model, config):

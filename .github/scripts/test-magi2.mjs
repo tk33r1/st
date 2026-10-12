@@ -2084,7 +2084,7 @@ test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけ
       if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(options.body)); return Response.json({ id: 'mail' }); }
       if (url.includes('deepseek')) return Response.json({ error: { message: 'Insufficient Balance' } }, { status: 402 });
       // ただの回数制限の 429 は知らせない
-      if (url.includes('googleapis')) return Response.json({ error: { message: 'Rate limit reached for requests' } }, { status: 429 });
+      if (url.includes('anthropic.com')) return Response.json({ error: { message: 'Rate limit reached for requests' } }, { status: 429 });
     });
     Object.assign(w.env, { DB: database(join(dir, 'db.sqlite')), RESEND_API_KEY: 'k', ALERT_TO: 'to@example.com, second@example.com', ALERT_FROM: 'from@example.com' });
     for (let i = 0; i < 2; i++) {
@@ -2745,7 +2745,6 @@ function magiWorker(settings = {}) {
     const format=b.response_format?.json_schema?.name;
     const json=v=>Response.json({choices:[{message:{content:JSON.stringify(v)},finish_reason:'stop'}]});
     if(format==='magi_motion') return settings.motionResponse || json(settings.motion ?? {motion:'条件が合えば実行する',votable:true});
-    if(format==='magi_votes') return settings.readerResponse || json({votes:settings.reader || []});
     if(format==='debate_judge') return json(settings.judge ? settings.judge(b) : {assessment:'理由は十分',action:'answer',questions:[]});
     const codename=['MELCHIOR-1','BALTHASAR-2','CASPER-3'].find(k => b.messages[0]?.content.includes('面の1つ「'+({ 'MELCHIOR-1':'Enthusiast', 'BALTHASAR-2':'Humanist', 'CASPER-3':'Strategist' }[k])+'」（'+k+'）'));
     if(codename){const round=rounds[codename]=(rounds[codename]||0)+1;
@@ -2791,14 +2790,23 @@ test('MAGI採決: 討議から多数決・説明完了へ進み、採決中は�
   assert.equal(second.length,3);for(const b of second)assert.doesNotMatch(JSON.stringify(b.messages.slice(1)),/\[VOTE:/);
 });
 
-test('MAGI採決: 読取のunclear・失敗でもpendingをfinalで再送し、矛盾タグは読まない', async () => {
-  for(const readerResponse of [undefined,new Response('failed',{status:503})]){
-    const w=magiWorker({readerResponse,raw:k=>k==='MELCHIOR-1'?'私は賛成する':k==='BALTHASAR-2'?'[VOTE:APPROVE][VOTE:REJECT]':'[VOTE:REJECT] 理由'});
+test('MAGI採決: 札なしはAIで推測せずfinalで再送し、矛盾タグも判定不能にする', async () => {
+  for(const raw of ['私は賛成する','本文\n[VOTE:APPROVE]']){
+    const w=magiWorker({raw:k=>k==='MELCHIOR-1'?raw:k==='BALTHASAR-2'?'[VOTE:APPROVE][VOTE:REJECT]':'[VOTE:REJECT] 理由'});
     const ev=await w.run(),p=ev.filter(e=>e.name==='persona'&&e.data.codename==='MELCHIOR-1');
     assert.deepEqual(p.map(e=>e.data.vote_state),['pending','final','pending','final']);
     assert.ok(p.every(e=>e.data.vote===null));assert.ok(ev.filter(e=>e.name==='persona'&&e.data.codename==='BALTHASAR-2').every(e=>e.data.vote_state==='final'));
     assert.equal(ev.find(e=>e.name==='verdict').data.result,'hold');
+    assert.ok(!w.api.some(b=>b.response_format?.json_schema?.name==='magi_votes'));
+    assert.equal(w.ctx.defaults.models.vote_reader,undefined);
   }
+});
+
+test('MAGI採決: 第2回の札が壊れても第1回の有効票を保持し、AIへ票を読ませない',async()=>{
+ const w=magiWorker({raw:(id,round)=>id==='MELCHIOR-1'&&round===2?'票を記入できない':'[VOTE:APPROVE] 理由'});
+ const events=await w.run(),verdict=events.find(e=>e.name==='verdict').data;
+ assert.equal(verdict.result,'approve');assert.equal(verdict.votes['MELCHIOR-1'].state,'carried');assert.equal(verdict.votes['MELCHIOR-1'].round,1);
+ assert.equal(verdict.votes['MELCHIOR-1'].vote,'approve');assert.ok(!w.api.some(b=>b.response_format?.json_schema?.name==='magi_votes'));
 });
 
 test('MAGI採決: タグのみでも応答に数え、単独応答は1回で保留、全欠席はエラー', async () => {
