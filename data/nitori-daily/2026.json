@@ -1,5 +1,287 @@
 [
   {
+    "date": "20261013",
+    "title": "2026年10月13日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。 置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。",
+      "置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。",
+      "SNSでは寝具の購入をめぐる本音や「ニトリ以上の品質」という比較が話題になり、価格と品質の評価軸が注目されています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリHD、APRCEでスマートホームと物流・店舗DXを展示",
+        "original_title": "",
+        "source": "みんなの広報宣伝部",
+        "source_id": "JP-06",
+        "summary": "ニトリホールディングスは、展示会「APRCE」で未来の暮らしを提案し、スマートホーム関連の取り組みに加えて、物流や店舗のDXを展示したと報じられました。家具やインテリアの提供にとどまらず、住空間のデジタル化と業務効率化を一体で示した点が特徴です。",
+        "why_it_matters": "企画から物流・店舗までを一気通貫で持つSPAの強みを、デジタル技術で可視化した点に注目すべきです。生活者にとっては、スマートホーム連携が住空間提案への入口になる可能性があります。今後は、オンラインと店舗をつなぐ在庫・配送の見える化や、AIを活用した暮らし提案の具体化が成否を分けるでしょう。",
+        "tags": [
+          "ニトリ",
+          "DX",
+          "物流",
+          "スマートホーム"
+        ],
+        "search_terms": [
+          "物流DX 店舗DX",
+          "スマートホーム 展示",
+          "logistics DX Nitori",
+          "smart home exhibition Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1pUzE5MU1hNDFiZVFZTVV6a2JjanJtcF8xd0UxR0NzMk9TQm5FU2ZDRS1HYWdDUHRUcFVXcXRLR0dzYnM5Ynhuek9HUFNNZ2dmaVFtNmhHVnoxcFpUc2VDdGgwVDZYa1p5Z213eVNFTTl6Zw?oc=5",
+        "source_pub_ts": 1791758796
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "Nプラス、横浜市鶴見区に「N+ 島忠ホームズ新川崎店」オープン",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-07",
+        "summary": "ニトリグループのNプラスは、横浜市鶴見区に「N+ 島忠ホームズ新川崎店」を10月9日にオープンしたと報じられました。グループの店舗網を広げる出店であり、首都圏の生活圏での接点拡充を進める動きとして位置づけられます。",
+        "why_it_matters": "既存の島忠ホームズの店舗を活用した新ブランド展開は、グループ内で業態を使い分ける戦略を示しています。ニトリ単独の店舗とは異なる品揃えや売場設計が、郊外立地での差別化要素になるでしょう。店舗ごとの商圏特性に合わせた提案力が、今後の出店効率を左右すると考えられます。",
+        "tags": [
+          "店舗展開",
+          "島忠ホームズ",
+          "N+",
+          "首都圏"
+        ],
+        "search_terms": [
+          "新規出店 神奈川",
+          "店舗オープン 横浜市鶴見区",
+          "store opening Yokohama",
+          "Nitori Plus new store"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBHZ1UzRjB0NGFvenNyTXBNblBPa1YtMGlyWkVTcVhubHcyZUltY25JRjgtRFVWOHYxRk5RMVZ0QVM3ZjRzUHZHbDhFd2V0Z2haVHAw?oc=5",
+        "source_pub_ts": 1791752672
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの3990円「置くだけ充電ランプ」、ベッドサイドの配線を解消",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-01",
+        "summary": "LIMOの記事では、ニトリの3990円の「置くだけ充電ランプ」が、ベッドサイドの配線の煩わしさを解消する商品として紹介されています。置くだけで充電できる仕組みにより、夜間のコード探しの手間を減らせる点が訴求されています。",
+        "why_it_matters": "照明と充電機能を一体化した提案は、寝室の配線を見えなくするという生活課題に応えるものです。機能を家具やインテリア雑貨に組み込む発想は、PB商品の価格帯を保ちながら付加価値を高める開発の方向性として参考になります。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "照明",
+          "充電"
+        ],
+        "search_terms": [
+          "充電ランプ 置くだけ",
+          "ベッドサイド照明 USB充電",
+          "bedside lamp wireless charging",
+          "Nitori charging lamp"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9yS2VSRUI0aFpGMGJ2WUllaGpfa1ltSzIyZGMwblJNZnZWd0w2TXpqTmZFT0ZoVVl4bzdzUzZfV2ZDUmpPajJwQlJaM3J0MjZDLU5tNUMta2xiMVVQdUI4OEhlWjBkcURJcmptUGF3bGwyako4c283UUJtaWw2a3M?oc=5",
+        "source_pub_ts": 1791812757
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのクッション「490万個」販売、クリーム色の支持も",
+        "original_title": "",
+        "source": "ヨムーノ",
+        "source_id": "JP-04",
+        "summary": "ヨムーノの記事では、ニトリのクッションが490万個売れたことや、クリーム色が好まれている点が紹介されています。家にあるクッションの買い替え候補として取り上げられ、在庫が残るうちに購入を促す内容になっています。",
+        "why_it_matters": "490万個という販売規模は、定番のクッションが大量生産と安定供給を前提にした販売力を持つことを示しています。カラー展開の評価が購買動機になっている点は、色味の提案がヒットの要因になることを示唆します。在庫への言及が加わると需要がさらに高まりやすく、補充体制の重要性も浮かび上がります。",
+        "tags": [
+          "ニトリ",
+          "クッション",
+          "ヒット商品",
+          "カラー展開"
+        ],
+        "search_terms": [
+          "クッション 販売数 累計",
+          "クリーム色 インテリア",
+          "cushion bestseller Japan",
+          "cream color cushion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiREFVX3lxTE5IaTJ0OGlOcE9scFRNeE1lZERJX0xTSFZzSUZfVlRjekNNQWtlWDZfX3pxNnNqWFZKOTlxNVNjSGNuN2w5?oc=5",
+        "source_pub_ts": 1791792285
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの1人用電気ざぶとん、USB給電と水洗い対応で部分防寒に",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-05",
+        "summary": "LIMOの記事では、ニトリの「ポカポカ折りたたみ電気ざぶとん」が、USB電源で使え持ち運びやすく、水洗いにも対応すると紹介されています。1人用の部分的な防寒需要に応える商品として、寒い季節の購買を後押しする内容です。",
+        "why_it_matters": "暖房を部屋全体で使うのではなく、個人の体感に合わせて使う需要が高まっています。低消費電力のUSB給電は手軽さを示す訴求点です。水洗い可能という衛生面も含め、冬物の機能性を分かりやすく伝える商品設計の好例といえるでしょう。",
+        "tags": [
+          "ニトリ",
+          "防寒",
+          "電気ざぶとん",
+          "USB"
+        ],
+        "search_terms": [
+          "電気ざぶとん 折りたたみ",
+          "USB暖房 防寒グッズ",
+          "heated floor cushion USB",
+          "portable heated cushion Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE8yeEhvZjdSLUJ3X2pFNjRIeHVfNnlxUkhrZldtS19PRmw5cjFQMzBieE9aSVc5UjNpR0Yza0xablFpTEtrem1jaDlMdmNqZzNSSFBPNktEZS1obUdTVlZKMC1pbVhNY2lrV3RseXdSZzlGZ0FtalBwdlVmNHAzVk0?oc=5",
+        "source_pub_ts": 1791765067
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ダブルベッド売り場の「シングル2つでよくない？」投稿が1878いいね",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Xでは、ニトリの売り場でダブルベッドの値札を見たカップルの会話を描いた投稿が1878いいねを集めています。価格や寝室の使い方をめぐる本音が店頭の体験と重なり、多くの共感を呼びました。",
+        "why_it_matters": "寝具は価格や生活スタイルなど、生活者の本音が表れやすい購買領域です。ダブルベッドの値札が購買判断の場面で話題になった点は、サイズや価格、使い方を複数の選択肢で示す売場設計の重要性を示しています。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "SNS",
+          "売場"
+        ],
+        "search_terms": [
+          "ダブルベッド 売場 本音",
+          "寝具 購入 共感",
+          "bed shopping couple post",
+          "mattress purchase social media Japan"
+        ],
+        "url": "https://x.com/komako_xxx/status/2109478914955395459",
+        "source_pub_ts": 1791802800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ニトリ以上の品質」を探す声、家具選びの比較基準として定着",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "Xでは、家具店が減っていることを嘆きつつ「ニトリ以上にきちんとしたものを探すのは大変」と投稿され、337いいねを集めています。手頃な価格で家具を選べる基準として、ニトリが認識されていることがうかがえます。",
+        "why_it_matters": "ニトリは価格と品質のバランスで、生活者の比較基準になりつつあります。一方で「ニトリ以上」の品質を求める声は、より高品質で長く使える商品への期待の表れでもあります。PBの素材や品質の説明を強化することが、次の信頼獲得につながるでしょう。",
+        "tags": [
+          "ニトリ",
+          "品質",
+          "家具",
+          "SNS"
+        ],
+        "search_terms": [
+          "家具 品質 比較",
+          "手頃な価格 家具 選び",
+          "furniture quality comparison Japan",
+          "affordable furniture brand perception"
+        ],
+        "url": "https://x.com/SY1698/status/2109505561050128799",
+        "source_pub_ts": 1791802800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリで隣の同棲前っぽいカップル。 男がダブルベッドの値札見て 「高っ。シングル2つでよくない？ﾔﾘたい時だけそっち行けばいいじゃんw」 彼...",
+        "platform": "x",
+        "author": "@komako_xxx",
+        "url": "https://x.com/komako_xxx/status/2109478914955395459",
+        "likes": 1878,
+        "retweets": 17,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:59",
+        "captured_at": "",
+        "text": "ニトリで隣の同棲前っぽいカップル。 男がダブルベッドの値札見て 「高っ。シングル2つでよくない？ﾔﾘたい時だけそっち行けばいいじゃんw」 彼女は「…そうだね」とだけ言って、 マットレスの端にちょこんと座ってた。 少しして店員さんが来たら、 彼女が先に言ったのが、",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "家具屋もだいぶ消えたが、大塚家具がヤマダに食われて、ニトリ以上できちんとしたものを、となるとなかなか探すの大変よ。",
+        "platform": "x",
+        "author": "@SY1698",
+        "url": "https://x.com/SY1698/status/2109505561050128799",
+        "likes": 337,
+        "retweets": 45,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:44",
+        "captured_at": "",
+        "text": "家具屋もだいぶ消えたが、大塚家具がヤマダに食われて、ニトリ以上できちんとしたものを、となるとなかなか探すの大変よ。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリ！ pic.x.com/sf9j8JAnpZ",
+        "platform": "x",
+        "author": "@miso_konbu",
+        "url": "https://x.com/miso_konbu/status/2109515932574036183",
+        "likes": 269,
+        "retweets": 34,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:26",
+        "captured_at": "",
+        "text": "ニトリ！ pic.x.com/sf9j8JAnpZ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "お昼ご飯はゆいちゃん担当 ハロウィンパーティー仕様だって♡ お友達とのパーティー楽しみだね😊 母は、ニトリさんの棚で本棚を作りました。 6つ...",
+        "platform": "x",
+        "author": "@yuichang47",
+        "url": "https://x.com/yuichang47/status/2109515727187452248",
+        "likes": 127,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:25",
+        "captured_at": "",
+        "text": "お昼ご飯はゆいちゃん担当 ハロウィンパーティー仕様だって♡ お友達とのパーティー楽しみだね😊 母は、ニトリさんの棚で本棚を作りました。 6つ目の棚完成👍 ゆいちゃんは絵本が大好き。 母は絵本集めが大好き。win-win✨ それにしても、家って強いなぁ 何kgあるかな pic.x.com/fJEuKOgL7X",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ラグをボロボロにされるので、ニトリの爪引っ掻きに強いラグを買ってみた。さていかに？ #黒猫 pic.x.com/dpub1DjjH0",
+        "platform": "x",
+        "author": "@umeko9625yamato",
+        "url": "https://x.com/umeko9625yamato/status/2109450487519228269",
+        "likes": 115,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:06",
+        "captured_at": "",
+        "text": "ラグをボロボロにされるので、ニトリの爪引っ掻きに強いラグを買ってみた。さていかに？ #黒猫 pic.x.com/dpub1DjjH0",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿は、ニトリの売り場やアイテムを日常の文脈で語る声が中心です。寝具の価格や関係性をめぐる会話、家具店の減少と並んでニトリを品質の比較基準とする投稿、ペットとの暮らしでの素材評価、本棚づくりなど生活の工夫への言及が見られます。",
+    "sns_why_it_matters": "共通するのは、購入そのものより暮らしの場面でどう使うかへの関心です。寝室の配置、ペットとの床材、収納棚を活用したDIYなど、商品を生活空間の中で捉える声が多く見られます。使用シーンを具体的に示す商品説明や提案が、共感と再購入を生むポイントになるでしょう。"
+  },
+  {
     "date": "20261012",
     "title": "2026年10月12日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が明らかになり、2028年度の稼働を予定。製品の回収から資源循環までを見据えたSPAとしての体制強化が注目される。 シンガポールの「NITORI JURONG POINT店」が10月15日（木）にオープンすることが発表され、海外店舗網の拡大が具体的に進んでいる。",

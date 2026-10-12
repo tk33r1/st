@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 12 Oct 2026 05:51:56 +0900</lastBuildDate>
+    <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 13 Oct 2026 08:33:38 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月13日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261013/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261013/</guid>
+      <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。 置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。</description>
+    </item>
     <item>
       <title>2026年10月12日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261012/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260929/</guid>
       <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
       <description>中国では小物中心の小型店を増やし、出店を再拡大する方針が示された。大型店とは異なる立地・需要への対応力を高める動きとして注目される。 店舗の狭い空間をロボット倉庫として活用する実証が始動。売場面積を圧迫せずに在庫機能を持たせられるか、店舗運営と物流の一体化に向けた検証が焦点となる。</description>
-    </item>
-    <item>
-      <title>2026年9月28日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260928/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260928/</guid>
-      <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
-      <description>幅60cm・450Lの大型冷蔵庫は、限られた設置幅と大容量を両立し、日常の使いやすさまで具体化する商品開発の動きを示す。 アプリの進化と高水準の入社時年収を扱う記事から、デジタル接点の強化と人材獲得が事業競争力を支えるテーマとして浮かぶ。</description>
     </item>
   </channel>
 </rss>
