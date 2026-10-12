@@ -135,6 +135,7 @@ try {
       let payload;const responsePromise=livePage.waitForResponse(r=>new URL(r.url()).pathname==='/search/api/rank' && r.request().method()==='POST');
       await livePage.locator('.st-search-input').fill(text);await livePage.locator('.st-search-input').press('Enter');payload=await (await responsePromise).json();
       assert.ok(['results','no_results'].includes(payload.status),scope+': '+payload.reason);assert.equal(payload.complete,true);assert.equal(payload.searched.scope,scope);
+      assert.ok(actual.posts[0].generation,scope+': 画面のgeneration');assert.deepEqual(payload.searched.generation,actual.posts[0].generation,scope+': 現行generationとの一致');
       assert.equal(actual.posts.length,1);for(const row of payload.results)assert.ok(row.url.startsWith(scope==='site'?'/':scope==='tools'?'/tools/':scope==='game'?'/game/':path));
       await livePage.locator('.st-search').screenshot({path:resolve(out,'..','live-'+scope+'.png')});
       report.cases.at(-1).live={status:payload.status,count:payload.results.length,complete:payload.complete,cached:payload.cached,generation:payload.searched.generation};

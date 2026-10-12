@@ -1,0 +1,41 @@
+name: MAGI Publication Check
+
+# 公開後の少数確認。合成入力だけを本番へ送る。上限・DB・設定は変更しない。
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: '公開0の確認対象'
+        type: choice
+        required: true
+        default: worker
+        options:
+          - worker
+          - pages
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        working-directory: .github/scripts
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Check search scopes
+        if: inputs.phase == 'worker'
+        run: node .github/scripts/test-site-search-ui.mjs --base https://tk.st --live --report "$RUNNER_TEMP/magi-publication/search.json"
+      - name: Check MAGI publication
+        env:
+          PHASE: ${{ inputs.phase }}
+        run: node .github/scripts/verify-magi-publication.mjs --phase "$PHASE" --report "$RUNNER_TEMP/magi-publication/magi.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: magi-publication-${{ inputs.phase }}
+          path: ${{ runner.temp }}/magi-publication/
