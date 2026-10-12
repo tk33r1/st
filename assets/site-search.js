@@ -231,5 +231,99 @@
     return self;
   }
 
-  w.STSiteSearch = { rank: rank, readResponse: readResponse };
+  // Phase 4の描画しない通信API。旧rank/readResponseの契約とは分ける。
+  var FILTER_KEYS = { site: [], tools: ['category'], game: ['genre'], nitori: ['category', 'region', 'month'], retail: ['category', 'region', 'month'] };
+  function sameFilters(a, b) {
+    return !!a && typeof a === 'object' && !Array.isArray(a)
+      && Object.keys(a).length === Object.keys(b).length
+      && Object.keys(b).every(function (key) { return a[key] === b[key]; });
+  }
+  function generationOK(value, scope) {
+    return typeof value === 'string' && (DAILY_DIRS[scope] ? /^[a-f0-9]{1,32}$/ : /^[a-f0-9]{64}$/).test(value);
+  }
+  function rankCondition(scope, condition) {
+    if (!KINDS[scope] || !condition || typeof condition.query !== 'string' || !condition.query.trim()
+      || Array.from(condition.query.trim()).length > 200 || /[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/.test(condition.query)
+      || !['ja', 'en'].includes(condition.locale) || !generationOK(condition.generation, scope)) throw new Error('rank_condition');
+    var filters = condition.filters || {};
+    if (!filters || typeof filters !== 'object' || Array.isArray(filters)
+      || Object.keys(filters).some(function (key) { return !FILTER_KEYS[scope].includes(key) || typeof filters[key] !== 'string'
+        || !filters[key] || Array.from(filters[key]).length > 100 || /[\u0000-\u001f\u007f]/.test(filters[key]); })) throw new Error('rank_filters');
+    if (filters.region && !['JP', 'GLOBAL'].includes(filters.region)) throw new Error('rank_filters');
+    if (filters.month && !/^[1-9]\d{3}(0[1-9]|1[0-2])$/.test(filters.month)) throw new Error('rank_filters');
+    return {scope: scope, query: condition.query.trim(), locale: condition.locale, filters: Object.assign({}, filters), generation: condition.generation};
+  }
+  function readRankResponse(status, data, condition) {
+    var scope = condition.scope, filters = condition.filters || {};
+    var bad = function () { return Object.assign(failed('unavailable'), {cached: false, searched: null}); };
+    if (!KINDS[scope] || !READ_STATUSES.includes(status) || !data || !STATUSES.includes(data.status)
+      || typeof data.complete !== 'boolean' || typeof data.cached !== 'boolean' || !Array.isArray(data.results)
+      || data.results.length > MAX_RESULTS) return bad();
+    var info = data.searched;
+    if (info !== null) {
+      if (!info || info.scope !== scope || !sameFilters(info.filters, filters) || !generationOK(info.generation, scope)
+        || !['total', 'candidates', 'judged'].every(function (key) { return Number.isSafeInteger(info[key]) && info[key] >= 0; })
+        || info.judged > info.candidates || info.candidates > info.total || (scope !== 'site' && info.candidates > 20)) return bad();
+    } else if (data.status !== 'failed') return bad();
+    if (data.status === 'failed') {
+      if (data.complete || data.results.length || data.cached || typeof data.reason !== 'string') return bad();
+      return {status: 'failed', reason: status === 429 ? 'rate_limited' : data.reason, complete: false, cached: false, searched: info, rows: []};
+    }
+    if (status !== 200 || !info || data.complete !== (info.judged === info.candidates) || data.results.length > info.judged
+      || (data.status === 'no_results' && (!data.complete || data.results.length))
+      || (data.status === 'results' && !data.results.length)) return bad();
+    var rows = [], hrefs = new Set(), ids = new Set();
+    for (var row of data.results) {
+      if (!row || !KINDS[scope].includes(row.kind) || typeof row.title !== 'string' || !row.title.trim()
+        || Array.from(row.title).length > 500 || typeof row.description !== 'string' || Array.from(row.description).length > 4000) return bad();
+      var href = resultHref(row.url, scope);
+      if (!href || href !== row.url || hrefs.has(href) || ((scope === 'tools' || row.kind === 'tool') && !href.startsWith('/tools/'))
+        || ((scope === 'game' || row.kind === 'game') && !href.startsWith('/game/')) || /%(?:2e|2f|5c)/i.test(row.url)) return bad();
+      var id = row.id == null ? href : row.id;
+      if (typeof id !== 'string' || !id || ids.has(id) || Array.from(id).length > 500) return bad();
+      hrefs.add(href); ids.add(id);
+      rows.push({id: id, kind: row.kind, title: row.title, description: row.description, href: href});
+    }
+    return {status: data.status, reason: null, complete: data.complete, cached: data.cached, searched: info, rows: rows};
+  }
+  function createRankClient(options) {
+    if (!options || !KINDS[options.scope]) throw new Error('rank_scope');
+    var revision = 0, active = null, pending = null, currentKey = null, lastResult = null, state = 'idle', disabled = false;
+    var client = {
+      get state() { return state; }, get disabled() { return disabled; },
+      invalidate() {
+        revision++; if (active) active.abort(); active = null; pending = null; currentKey = null; lastResult = null;
+        state = state === 'idle' || disabled ? 'idle' : 'stale';
+      },
+      cancel() { client.invalidate(); },
+      run(condition) {
+        if (disabled) return Promise.resolve(null);
+        var c = rankCondition(options.scope, condition), key = JSON.stringify(c);
+        if (pending && key === currentKey) return pending;
+        if (lastResult && key === currentKey && ['results', 'no_results'].includes(state)) return Promise.resolve(lastResult);
+        client.invalidate(); currentKey = key; state = 'loading';
+        var mine = revision, ac = new AbortController(); active = ac;
+        var timer = setTimeout(function () { ac.abort(); }, TIMEOUT_MS);
+        pending = (async function () {
+          var result;
+          try {
+            var response = await fetch('/search/api/rank', {method: 'POST', headers: {'Content-Type': 'application/json'},
+              credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store', signal: ac.signal,
+              body: JSON.stringify({search_contract: 1, mode: 'rank', scope: c.scope, query: c.query, locale: c.locale, filters: c.filters, generation: c.generation})});
+            var data = READ_STATUSES.includes(response.status) ? await response.json() : null;
+            result = readRankResponse(response.status, data, c);
+          } catch (_) { result = Object.assign(failed(ac.signal.aborted ? 'timeout' : 'unavailable'), {cached: false, searched: null}); }
+          finally { clearTimeout(timer); }
+          if (mine !== revision) return null;
+          active = null; pending = null; state = result.status;
+          if (result.reason === 'disabled') { disabled = true; state = 'idle'; }
+          lastResult = Object.assign({scope: c.scope, query: c.query, locale: c.locale, filters: c.filters, dataRevision: c.generation}, result);
+          return lastResult;
+        })();
+        return pending;
+      }
+    };
+    return client;
+  }
+  w.STSiteSearch = { rank: rank, readResponse: readResponse, createRankClient: createRankClient, readRankResponse: readRankResponse };
 })(window);

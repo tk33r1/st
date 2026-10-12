@@ -4,7 +4,46 @@ import { SITE_GUIDE, SITE_SEARCH } from './personas.js';
 export const searchFailure = (code = 'unavailable') => Object.assign(new Error('Site search unavailable'), { searchCode: code });
 export const searchSlice = (text, max) => Array.from(text).slice(0, max).join('');
 const clean = (s) => s.replace(/[\u0000-\u001f\u007f-\u009f]/g, '');
-const cache = { pages: null, fetchedAt: 0, retryAt: 0, refreshing: false };
+const cache = { pages: null, fetchedAt: 0, retryAt: 0, refreshing: null };
+
+// 固定索引の取得をソース単位で共有する。要求の切断は共有fetchを中断しない。
+// 開始時から更新間隔を設け、偽のgenerationでも毎回上流を取得しない。
+const searchSources = new Map();
+export async function fetchSearchSource(url, {signal, refresh = false, cooldown = true, maxBytes = 8 * 1024 * 1024} = {}) {
+  if(signal?.aborted) throw searchFailure('cancelled');
+  if (!/^https:\/\/tk\.st\/(data\/(site-search|tools|game)\.json|job\/(nitoridaily|retailtechdaily)\/search-index(?:-[1-9]\d{3})?\.json)$/.test(url)) throw searchFailure('invalid_request');
+  if (!searchSources.has(url)) searchSources.set(url, {text: null, at: 0, retryAt: 0, pending: null});
+  const state = searchSources.get(url), now = Date.now();
+  if (!state.pending && state.text !== null && !refresh && now - state.at <= SITE_SEARCH.list_ttl_ms) return state.text;
+  if (!state.pending && cooldown && now < state.retryAt) {
+    if (state.text !== null && now-state.at<=SITE_SEARCH.list_max_age_ms) return state.text;
+    throw searchFailure('index_updating');
+  }
+  if (!state.pending) {
+    state.retryAt = now + SITE_SEARCH.list_retry_ms;
+    state.pending = searchDeadline(SITE_SEARCH.list_timeout_ms, async s => {
+      const response = await fetch(url, {signal:s, headers:{'Cache-Control':'no-cache'}, cache:'no-cache'});
+      if (!response.ok || !response.body) throw searchFailure('index_unavailable');
+      const reader=response.body.getReader(), chunks=[];let bytes=0;
+      const stop=()=>{reader.cancel().catch(()=>{});};s.addEventListener('abort',stop,{once:true});
+      try {
+        for (;;) {
+          const {done,value}=await reader.read();
+          if (s.aborted) throw searchFailure('cancelled');
+          if (done) break;
+          bytes+=value.byteLength;if(bytes>maxBytes) throw searchFailure('index_unavailable');chunks.push(value);
+        }
+        const decoder=new TextDecoder('utf-8',{fatal:true});
+        const text=chunks.map(chunk=>decoder.decode(chunk,{stream:true})).join('')+decoder.decode();
+        if(s.aborted) throw searchFailure('cancelled');
+        state.text=text;state.at=Date.now();return text;
+      } finally {stop();s.removeEventListener('abort',stop);reader.releaseLock();}
+    }).finally(()=>{state.pending=null;});
+    state.pending.catch(()=>{}); // 全要求が中断しても共有取得の失敗を未処理にしない。
+  }
+  const pending=state.pending;
+  return searchDeadline(SITE_SEARCH.list_timeout_ms, ()=>pending, signal);
+}
 
 export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');
 
@@ -133,12 +172,10 @@ export function shortlistSitePages(pages, query) {
 // 取得した本文（②のキャッシュのキーになるハッシュの元）、②に使えるか（rankReady）。全部そろってから差し替えるので、
 // 更新の途中でも古い一覧と新しいハッシュが組み合わさらない。要求は受け取ったスナップショットを最後まで使う。
 // ハッシュは②が初めて使うときに snapshotHash で1回だけ作る（③とチャットは使わないので、その分の待ちを足さない）。
-async function fetchSiteLists(signal) {
-  const text = await searchDeadline(SITE_SEARCH.list_timeout_ms, async (s) => {
-    const res = await fetch('https://tk.st/data/site-search.json', { signal: s });
-    if (!res.ok) throw searchFailure('list_fetch');
-    return res.text();
-  }, signal);
+async function fetchSiteLists(signal, refresh = false) {
+  if (cache.refreshing) {const pending=cache.refreshing;return searchDeadline(SITE_SEARCH.list_timeout_ms, ()=>pending, signal);}
+  cache.refreshing=(async()=>{
+  const text = await fetchSearchSource('https://tk.st/data/site-search.json', {refresh:true, cooldown:refresh, maxBytes:2*1024*1024});
   let index;
   try { index = JSON.parse(text); } catch (_) { throw searchFailure('invalid_list'); }
   const pages = makeSitePages(index); // 一覧全体を検証してから差し替える。
@@ -146,6 +183,10 @@ async function fetchSiteLists(signal) {
     text, rankReady: rankReadyOf(index, pages) };
   cache.pages = snapshot; cache.fetchedAt = Date.now(); cache.retryAt = 0;
   return snapshot;
+  })().finally(()=>{cache.refreshing=null;});
+  cache.refreshing.catch(()=>{});
+  const pending=cache.refreshing;
+  return searchDeadline(SITE_SEARCH.list_timeout_ms, ()=>pending, signal);
 }
 const localePages = (pages, locale) => pages[locale === 'en' ? 'en' : 'ja'];
 
@@ -155,12 +196,12 @@ export function snapshotHash(snapshot) {
   return snapshotHashes.get(snapshot);
 }
 
-export async function getSiteSnapshot(ctx, signal) {
+export async function getSiteSnapshot(ctx, signal, {refresh = false} = {}) {
+  if (refresh) return fetchSiteLists(signal, true);
   const age = Date.now() - cache.fetchedAt;
   if (cache.pages && age <= SITE_SEARCH.list_max_age_ms) {
     if (age > SITE_SEARCH.list_ttl_ms && Date.now() >= cache.retryAt && !cache.refreshing) {
-      cache.refreshing = true;
-      ctx.waitUntil(fetchSiteLists().catch(() => { cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; }).finally(() => { cache.refreshing = false; }));
+      ctx.waitUntil(fetchSiteLists(undefined, true).catch(() => { cache.retryAt = Date.now() + SITE_SEARCH.list_retry_ms; }));
     }
     return cache.pages;
   }

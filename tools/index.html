@@ -162,7 +162,7 @@
             "name": "外部のライブラリやフォントを読み込みますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。"
+              "text": "ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。ブラウザの通信先はこのサイトとアクセス解析に制限し、Ko-fi は別の埋め込み枠で表示します。この一覧の検索ボタン／Enterは検索語と公開済み候補をtk.st経由でTypeSafe AIへ送り、意味の近い道具を探します。ファイルやツールの処理内容は送りません。"
             }
           },
           {
@@ -578,6 +578,7 @@
       #tool-grid { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
 </head>
 
 <body>
@@ -631,33 +632,9 @@
     </div>
   </div>
 
-  <!-- ===================== toolbar ===================== -->
-  <div class="toolbar">
-    <div class="tb-in">
-      <div class="search-wrap">
-        <i data-lucide="search"></i>
-        <input type="text" id="search-input" placeholder="道具を探す" autocomplete="off" aria-label="ツールを検索">
-      </div>
-
-      <div class="tb-sep"></div>
-
-      <div id="category-filter" role="group" aria-label="カテゴリで絞り込む"></div>
-
-      <div class="tb-sep"></div>
-
-      <div class="tb-group tb-sort">
-        <label class="st-lbl" for="sort-select">sort</label>
-        <select id="sort-select" class="tb-select" aria-label="並び替え">
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
   <!-- ===================== main ===================== -->
   <main>
+    <div id="list-search"></div>
     <div id="message-bar" class="hidden" role="status"></div>
 
     <div id="empty-state" class="hidden">
@@ -708,7 +685,7 @@
 
         <details class="faq-item">
           <summary class="faq-question">外部のライブラリやフォントを読み込みますか？</summary>
-          <p class="faq-answer">ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。</p>
+          <p class="faq-answer">ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。ブラウザの通信先はこのサイトとアクセス解析に制限し、Ko-fi は別の埋め込み枠で表示します。この一覧の検索ボタン／Enterは検索語と公開済み候補をtk.st経由でTypeSafe AIへ送り、意味の近い道具を探します。ファイルやツールの処理内容は送りません。</p>
         </details>
 
         <details class="faq-item">
@@ -739,6 +716,10 @@
   <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
     <i data-lucide="arrow-up"></i>
   </button>
+  <script src="/assets/japanese-search.js?v=20261012_4"></script>
+  <script src="/assets/site-search.js?v=20261011_1"></script>
+  <script src="/assets/search-ui.js?v=20261012_4"></script>
+  <script src="/assets/search-data.js?v=20261012_4"></script>
   <script src="../assets/buy-me-oil.js"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
@@ -780,9 +761,6 @@
     const emptyState = document.getElementById('empty-state');
     const countEl = document.getElementById('tool-count');
     const messageBar = document.getElementById('message-bar');
-    const searchInput = document.getElementById('search-input');
-    const sortSelect = document.getElementById('sort-select');
-    const categoryFilter = document.getElementById('category-filter');
 
 
     const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m =>
@@ -798,14 +776,6 @@
       } catch {
         return null;
       }
-    };
-
-    const debounce = (fn, ms) => {
-      let t;
-      return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(() => fn(...args), ms);
-      };
     };
 
     /* One caller: the fallback notice below. It never comes back down. */
@@ -838,7 +808,6 @@
           url: url.href,
           external: !SAME_ORIGIN_HOSTS.has(url.hostname),
           imageUrl: imageUrl ? imageUrl.href : '',
-          haystack: `${title} ${r.description || ''} ${r.category || ''} ${(r.tags || []).join(' ')}`.toLowerCase()
         });
         return keep;
       }, []);
@@ -860,33 +829,6 @@
         `;
         grid.appendChild(sk);
       }
-    }
-
-    function renderCategoryChips() {
-      const cats = [...new Set(records.map(r => r.category).filter(Boolean))].sort();
-      if (!cats.length) return;
-      categoryFilter.innerHTML = '';
-      ['all', ...cats].forEach(cat => {
-        const btn = document.createElement('button');
-        const isActive = cat === activeCategory;
-        btn.type = 'button';
-        btn.className = 'filter-chip' + (isActive ? ' active' : '');
-        /* The chip carries its category so the dot and the active fill can
-           take that category's own colour straight from the tokens. */
-        btn.dataset.cat = cat;
-        btn.textContent = cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1);
-        btn.setAttribute('aria-pressed', String(isActive));
-        btn.addEventListener('click', () => {
-          activeCategory = cat;
-          categoryFilter.querySelectorAll('.filter-chip').forEach(el => {
-            const on = el.dataset.cat === cat;
-            el.classList.toggle('active', on);
-            el.setAttribute('aria-pressed', String(on));
-          });
-          updateView();
-        });
-        categoryFilter.appendChild(btn);
-      });
     }
 
     const IMAGE_OFF_SVG = `
@@ -951,14 +893,10 @@
     }
 
     function updateView() {
-      const term = searchInput.value.toLowerCase();
-      const sortType = sortSelect.value;
-
-      let filtered = records.filter(r => {
-        const matchSearch = r.haystack.includes(term);
-        const matchCat = activeCategory === 'all' || r.category === activeCategory;
-        return matchSearch && matchCat;
-      });
+      grid.hidden = !!catalogueQuery;
+      if (catalogueQuery) { emptyState.classList.add('hidden'); return; }
+      const sortType = catalogueSort;
+      const filtered = records.filter(r => activeCategory === 'all' || r.category === activeCategory);
 
       filtered.sort((a, b) => {
         if (sortType === 'title') return a.title.localeCompare(b.title, 'ja');
@@ -1000,43 +938,25 @@
       }
     }
 
-    const FALLBACK_RECORDS = [
-      {
-        id: 1,
-        title: "CSV JSON Bridge - CSV ↔ JSON 相互変換ツール",
-        url: "https://tk.st/tools/csv-json-bridge/",
-        imageUrl: "https://tk.st/images/ogp/csv-json-bridge-ogp.png?v=979545b2929e",
-        category: "converter",
-        description: "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
-        tags: ["CSV", "JSON"]
+    let catalogueQuery = '', catalogueSort = 'newest';
+    showSkeletons(6);
+    const searchUI = STSearchUI.mount(document.getElementById('list-search'), STSearchData.createAdapter('tools', {
+      onData(rows) {
+        records = normalizeRecords(rows.map(r => ({ ...r, id: r.numericId, url: r.href, category: r.category.toLowerCase() })));
+        const sorted = [...records].sort((a,b) => b.id-a.id);
+        newIds = new Set(sorted.slice(0,2).map(r => r.id));
+        updateItemListSchema(records);
+        updateView();
+      },
+      onConditions(condition) {
+        catalogueQuery = condition.query;
+        catalogueSort = condition.sort === 'relevance' ? 'newest' : condition.sort;
+        activeCategory = (condition.filters.category || "all").toLowerCase();
+        updateView();
       }
-    ];
+    }));
 
-    async function loadTools() {
-      showSkeletons(6);
-      try {
-        /* Relative, like the stylesheet on this page. The host serves data/
-           with max-age=0, must-revalidate, so freshness is already settled at
-           the header level and needs no cache option here. */
-        const res = await fetch('../data/tools.json');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        records = normalizeRecords(await res.json());
-      } catch (e) {
-        console.warn('Failed to load tools.json, using fallback:', e);
-        records = normalizeRecords(FALLBACK_RECORDS);
-        showMessage('最新のツール一覧を取得できなかったため、サンプルを表示しています。');
-      }
-
-      const sorted = [...records].sort((a, b) => b.id - a.id);
-      newIds = new Set(sorted.slice(0, 2).map(r => r.id));
-      renderCategoryChips();
-      updateView();
-      updateItemListSchema(records);
-    }
-
-
-    searchInput.addEventListener('input', debounce(updateView, 150));
-    sortSelect.addEventListener('change', updateView);
+    searchUI.ready.then(() => { if (searchUI.state.base === 'failed') grid.replaceChildren(); });
 
     /* The icons ride a CDN, so they are treated as decoration that may not
        turn up: the shelf itself must never depend on them loading. The script
@@ -1045,13 +965,8 @@
       if (window.lucide) lucide.createIcons();
     });
 
-    if (window.STListHandoff) searchInput.value = window.STListHandoff;
-    window.addEventListener('st-list-handoff', () => {
-      searchInput.value = window.STListHandoff;
-      updateView();
-    });
-
-    loadTools();
+    if (window.STListHandoff) searchUI.setQuery(window.STListHandoff);
+    window.addEventListener('st-list-handoff', () => searchUI.setQuery(window.STListHandoff));
 
     document.getElementById('currentYear').textContent = new Date().getFullYear();
   </script>

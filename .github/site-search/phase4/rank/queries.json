@@ -1,0 +1,1098 @@
+{
+  "version": 1,
+  "frozen": "2026-10-12",
+  "annotator": "agent",
+  "source": "公開索引とdata/tools.json・data/game.jsonの機能説明。人による確認は未実施。",
+  "queries": [
+    {
+      "id": "tools-tune-01",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "Excelから貼り付けた表をJSONに変換したい",
+      "filters": {},
+      "answers": [
+        "tool:1"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-02",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "SVGの余計な情報を消して容量を減らしたい",
+      "filters": {},
+      "answers": [
+        "tool:2"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-03",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "動画から動くWebPを作りたい",
+      "filters": {},
+      "answers": [
+        "tool:3"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-04",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "iPhoneのHEIC画像をAVIFに変換したい",
+      "filters": {},
+      "answers": [
+        "tool:5"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-05",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "複数の静止画をパラパラ漫画にしたい",
+      "filters": {},
+      "answers": [
+        "tool:6"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-06",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "スキャンしたPDFのページを回転して結合したい",
+      "filters": {},
+      "answers": [
+        "tool:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-07",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "CSVの文字化けを直すためShift_JISからUTF-8にしたい",
+      "filters": {},
+      "answers": [
+        "tool:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-08",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "二つの文章を一文字単位で比較したい",
+      "filters": {},
+      "answers": [
+        "tool:9"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-09",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "ロゴ入りのQRコードを自分でデザインしたい",
+      "filters": {},
+      "answers": [
+        "tool:10"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-10",
+      "scope": "tools",
+      "set": "tune",
+      "class": "positive",
+      "locale": "en",
+      "query": "Convert PDF pages to PNG images",
+      "filters": {
+        "category": "Editor"
+      },
+      "answers": [
+        "tool:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-11",
+      "scope": "tools",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "写真に書かれた文字をOCRで抽出したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-12",
+      "scope": "tools",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "動画にBGMを入れてMP4で保存したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-13",
+      "scope": "tools",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "PDFへ電子署名を付けたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-14",
+      "scope": "tools",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "CSVをデータベースにアップロードしたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-15",
+      "scope": "tools",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "テトリスで遊びたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-16",
+      "scope": "tools",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "SVGのファイルサイズを減らす",
+      "filters": {
+        "category": "Optimizer"
+      },
+      "answers": [
+        "tool:2"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-17",
+      "scope": "tools",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "CSVファイルをJSONへ変換する",
+      "filters": {
+        "category": "Converter"
+      },
+      "answers": [
+        "tool:1"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-18",
+      "scope": "tools",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "短縮URLを発行するサービスを使いたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-19",
+      "scope": "tools",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "QRコードの画像をSVGで保存したい",
+      "filters": {},
+      "answers": [
+        "tool:10"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-tune-20",
+      "scope": "tools",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "文章の文字数を数えたい",
+      "filters": {},
+      "answers": [
+        "tool:9"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-01",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "中央に会社のロゴを入れたQR画像を作成したい",
+      "filters": {},
+      "answers": [
+        "tool:10"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-02",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "PDFの機密箇所を下のテキストごと消したい",
+      "filters": {},
+      "answers": [
+        "tool:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-03",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "一つのPDFを複数のファイルに分けたい",
+      "filters": {},
+      "answers": [
+        "tool:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-04",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "en",
+      "query": "Turn a video clip into an APNG animation",
+      "filters": {},
+      "answers": [
+        "tool:3"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-05",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "画像を何枚か並べて可逆WebPのアニメーションにしたい",
+      "filters": {},
+      "answers": [
+        "tool:6"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-06",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "en",
+      "query": "Remove unnecessary SVG metadata to shrink the file",
+      "filters": {},
+      "answers": [
+        "tool:2"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-07",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "HEIC写真を高圧縮の次世代画像形式にしたい",
+      "filters": {},
+      "answers": [
+        "tool:5"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-08",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "JSONの配列をCSVに戻したい",
+      "filters": {},
+      "answers": [
+        "tool:1"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-09",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "CSVをまとめてUTF-8にしてBOMを外したい",
+      "filters": {},
+      "answers": [
+        "tool:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-10",
+      "scope": "tools",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "文章比較で全角半角の違いを無視したい",
+      "filters": {},
+      "answers": [
+        "tool:9"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-11",
+      "scope": "tools",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "音声ファイルを書き起こして字幕を作りたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-12",
+      "scope": "tools",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "パスワードで暗号化されたZIPを開きたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-13",
+      "scope": "tools",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "PDFをクラウドへ保存して共有したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-14",
+      "scope": "tools",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "悪意のあるファイルかどうか検査したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-15",
+      "scope": "tools",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "将棋でAIと対戦したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-16",
+      "scope": "tools",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "動画をMP4のまま圧縮したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-17",
+      "scope": "tools",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "期限切れのQRコードの有効期限を延長したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-18",
+      "scope": "tools",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "QRコードをSVGとして書き出したい",
+      "filters": {
+        "category": "Generator"
+      },
+      "answers": [
+        "tool:10"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-19",
+      "scope": "tools",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "JSONファイルの文字コードをShift_JISにする",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "tools-final-20",
+      "scope": "tools",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "PDFを結合する",
+      "filters": {
+        "category": "Converter"
+      },
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-01",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "インド風のテトリスで遊びたい",
+      "filters": {},
+      "answers": [
+        "game:1",
+        "game:2",
+        "game:3",
+        "game:5",
+        "game:7"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-02",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "omemeのために作られたテトリスを探している",
+      "filters": {},
+      "answers": [
+        "game:2"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-03",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "音がついたMASALA TETRISの続編を遊びたい",
+      "filters": {},
+      "answers": [
+        "game:3"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-04",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "人間らしく失敗する逆のreCAPTCHAで遊びたい",
+      "filters": {},
+      "answers": [
+        "game:4"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-05",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "カレーのスパイスコンボを作ってAIと対戦したい",
+      "filters": {},
+      "answers": [
+        "game:5"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-06",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "ASCIIアートのダンジョンでBitcoin Yenを探すゲーム",
+      "filters": {},
+      "answers": [
+        "game:6"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-07",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "お弁当箱を一つずつ注文に沿って埋めたい",
+      "filters": {},
+      "answers": [
+        "game:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-08",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "ja",
+      "query": "歌舞伎町の夜のブロック都市で採掘して売りたい",
+      "filters": {},
+      "answers": [
+        "game:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-09",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "en",
+      "query": "I want a voxel open world where I can mine every block",
+      "filters": {},
+      "answers": [
+        "game:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-10",
+      "scope": "game",
+      "set": "tune",
+      "class": "positive",
+      "locale": "en",
+      "query": "Play an ASCII-art dungeon roguelike",
+      "filters": {
+        "genre": "roguelike"
+      },
+      "answers": [
+        "game:6"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-11",
+      "scope": "game",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "DJの曲をリクエストしたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-12",
+      "scope": "game",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "公式のMinecraftをダウンロードしたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-13",
+      "scope": "game",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "Geminiとチャットしたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-14",
+      "scope": "game",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "オンラインで本物のビットコインを売買したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-15",
+      "scope": "game",
+      "set": "tune",
+      "class": "negative",
+      "locale": "ja",
+      "query": "チェスの対戦ゲームを探している",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-16",
+      "scope": "game",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "MASALA TETRISの最初の2024年版で遊びたい",
+      "filters": {},
+      "answers": [
+        "game:1"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-17",
+      "scope": "game",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "AI courierに置き場所を教えてもらえるテトリス",
+      "filters": {},
+      "answers": [
+        "game:7"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-18",
+      "scope": "game",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "en",
+      "query": "Perfect play is a failure in this captcha game",
+      "filters": {},
+      "answers": [
+        "game:4"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-19",
+      "scope": "game",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "文字だけのローグライク",
+      "filters": {
+        "genre": "puzzle"
+      },
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-tune-20",
+      "scope": "game",
+      "set": "tune",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "子供向けの歌舞伎町ブロックゲームを探している",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-01",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "テトリスをインド風のアレンジで楽しみたい",
+      "filters": {},
+      "answers": [
+        "game:1",
+        "game:2",
+        "game:3",
+        "game:5",
+        "game:7"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-02",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "DJの友人omeme向けのテトリス版",
+      "filters": {},
+      "answers": [
+        "game:2"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-03",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "サウンドのある洗練されたMASALA TETRISの続編",
+      "filters": {},
+      "answers": [
+        "game:3"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-04",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "完璧な操作をすると失敗する人間判定ゲーム",
+      "filters": {},
+      "answers": [
+        "game:4"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-05",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "ローグライトでスパイスを組み合わせてカレーを完成させたい",
+      "filters": {},
+      "answers": [
+        "game:5"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-06",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "Bitcoin Yenを探して文字で描かれた迷宮に潜りたい",
+      "filters": {},
+      "answers": [
+        "game:6"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-07",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "AI配達員がガイドする穏やかなお弁当テトリス",
+      "filters": {},
+      "answers": [
+        "game:7"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-08",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "ja",
+      "query": "ネオンやビルや道路まで採掘できる歌舞伎町のゲーム",
+      "filters": {},
+      "answers": [
+        "game:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-09",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "en",
+      "query": "A sandbox with AI-generated NPC dialogue in a neon city",
+      "filters": {
+        "genre": "sandbox"
+      },
+      "answers": [
+        "game:8"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-10",
+      "scope": "game",
+      "set": "final",
+      "class": "positive",
+      "locale": "en",
+      "query": "The curry roguelite with AI versus battles",
+      "filters": {
+        "genre": "puzzle"
+      },
+      "answers": [
+        "game:5"
+      ],
+      "required": true,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-11",
+      "scope": "game",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "MP4をGIFに変換したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-12",
+      "scope": "game",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "本物のBitcoinを購入してウォレットに入れたい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-13",
+      "scope": "game",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "Googleの正規reCAPTCHAをサイトに設置したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-14",
+      "scope": "game",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "Claudeをコーディングに利用したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-15",
+      "scope": "game",
+      "set": "final",
+      "class": "negative",
+      "locale": "ja",
+      "query": "レースゲームで自動車を運転したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-16",
+      "scope": "game",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "穏やかに一つずつ注文をこなすテトリス",
+      "filters": {},
+      "answers": [
+        "game:7"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-17",
+      "scope": "game",
+      "set": "final",
+      "class": "boundary",
+      "locale": "en",
+      "query": "A classic 2024 indian Tetris game",
+      "filters": {},
+      "answers": [
+        "game:1"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-18",
+      "scope": "game",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "R18の歌舞伎町のボクセル世界",
+      "filters": {},
+      "answers": [
+        "game:8"
+      ],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-19",
+      "scope": "game",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "夜の歌舞伎町でブロックを採掘したい",
+      "filters": {
+        "genre": "roguelike"
+      },
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    },
+    {
+      "id": "game-final-20",
+      "scope": "game",
+      "set": "final",
+      "class": "boundary",
+      "locale": "ja",
+      "query": "Geminiという名前のモデルをローカルで実行したい",
+      "filters": {},
+      "answers": [],
+      "required": false,
+      "note": "正本の機能説明を根拠にエージェントがAPI実測前に注釈。filtersの外や別scopeは正解に含めない。"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ compatibility_flags = ["enable_request_signal"]
 # `magi*` ルートとの衝突を避けるため、より具体的な `magi2*` で先取りする。
 routes = [
   { pattern = "workers.tk.st/magi2*", zone_name = "tk.st" },
+  { pattern = "tk.st/search/api/*", zone_name = "tk.st" },
 ]
 
 [vars]

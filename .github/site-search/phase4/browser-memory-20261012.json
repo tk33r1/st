@@ -1,0 +1,3248 @@
+{
+  "started": "2026-10-12T00:03:49.147Z",
+  "adapterMode": true,
+  "maxRecords": 7500,
+  "profileMode": false,
+  "memoryMode": true,
+  "cpuThrottle": 4,
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "formalMeasurement": false,
+  "script_sha256": "91396495df32853c3844e3c4a0220a3bba89df97f266e22f182ed271297ad38a",
+  "includes": "共通UI input→6候補のDOM/layout。paint・実機IMEは含まない",
+  "files": {
+    "assets/japanese-search.js": "e7658994b1e64b17aac2ccfb4fbba32d7a718c7360d0685cbd32c340d20e6dc8",
+    "assets/site-search.js": "b9bb29c6c643ac60197606f9388db74568b20fde4e91691f06169aaadb60773a",
+    "assets/search-ui.js": "72fc9099b559771f609bff54d8f06da60bad7bfe997bfb1c4b70b404f05e688e",
+    "assets/search-data.js": "57aebade0359530263c6ac2a888d8ccd68d505177d53c595d334c38daa647921",
+    "assets/search-ui.css": "57e320cd6b1ae671943f30c1f8290e9010e4418bf956ae88937185e4f2fb38a8",
+    "assets/search-json-worker.js": "7aa183d5643d09368d408c161d01adf30564369544542106501ee1babf1af256"
+  },
+  "cases": [
+    {
+      "name": "10000-distinct",
+      "records": 7500,
+      "fixtureHash": "f13ef7529e721bfe07a80c45882e3027712051631321a84a127b85df908eeeae",
+      "baseHash": "567d80a0825371148783c4e560d01fec9a40b33b609b95143a5c36f5b7499488",
+      "readingHash": "66f2d9b359ad8946ae7f0007d95c25025ea14281e12e576184aeaf0a29eca294",
+      "baseBytes": 7869153,
+      "readingBytes": 5656763,
+      "prepareMs": 3253.7000000029802,
+      "conditionPreserved": true,
+      "state": {
+        "base": "ready",
+        "readings": "ready",
+        "rank": "idle",
+        "total": 3870,
+        "recoveryAttempted": false,
+        "dataRevision": 1
+      },
+      "scheduling": "background",
+      "heartbeat": {
+        "samples": 124,
+        "maxGapMs": 217.79999999701977
+      },
+      "prepareLongTasks": [
+        {
+          "start": 452.09999999403954,
+          "ms": 117
+        },
+        {
+          "start": 1838.5999999940395,
+          "ms": 62
+        },
+        {
+          "start": 1901.3999999985099,
+          "ms": 152
+        },
+        {
+          "start": 2079.2999999970198,
+          "ms": 53
+        }
+      ],
+      "runs": [
+        {
+          "first20p95": 77,
+          "first20Pass": false,
+          "p50": 9.5,
+          "p95": 39.19999999552965,
+          "max": 82.39999999850988,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 82.39999999850988,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 39.19999999552965,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 53.400000005960464,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 47,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 23.700000002980232,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 22.30000000447035,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.799999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 37.399999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 15.599999994039536,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.8000000044703484,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 77,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 33.600000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 58,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 18.19999999552965,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 24.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 27.399999998509884,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 36.600000001490116,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 37.600000001490116,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 19.5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 20.399999998509884,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 7.600000001490116,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 11.699999995529652,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 9.800000004470348,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.899999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 5.4000000059604645,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 9.899999998509884,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.299999997019768,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.099999994039536,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 10,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.8000000044703484,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.700000002980232,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.799999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.699999995529652,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.600000001490116,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.600000001490116,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.199999995529652,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.099999994039536,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 9.399999998509884,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.699999995529652,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 11.199999995529652,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3.399999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 6.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.400000005960464,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 17.200000002980232,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 8.600000001490116,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.200000002980232,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 11.699999995529652,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.400000005960464,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.199999995529652,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.199999995529652,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.299999997019768,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 12,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 8.699999995529652,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 3870
+            }
+          ]
+        },
+        {
+          "first20p95": 14.700000002980232,
+          "first20Pass": true,
+          "p50": 8.5,
+          "p95": 14.799999997019768,
+          "max": 16.599999994039536,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 7.899999998509884,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 9.200000002980232,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.7999999970197678,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.700000002980232,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 16.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 6.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.199999995529652,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.200000002980232,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.400000005960464,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.600000001490116,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 9.700000002980232,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3.399999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.799999997019768,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.199999995529652,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 10.800000004470348,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 9.300000004470348,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.899999998509884,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 9.199999995529652,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 10.199999995529652,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.6999999955296516,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 13.799999997019768,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.399999998509884,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 10.300000004470348,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.700000002980232,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.5,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 9.300000004470348,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 5.4000000059604645,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.300000004470348,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.200000002980232,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.799999997019768,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 6.300000004470348,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 16.599999994039536,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 15.800000004470348,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 6.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.099999994039536,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.799999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.600000001490116,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 11.900000005960464,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 9.300000004470348,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 9,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 9.900000005960464,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 4.0999999940395355,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 16.099999994039536,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 15.600000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.899999998509884,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.899999998509884,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 3870
+            }
+          ]
+        },
+        {
+          "first20p95": 14.300000004470348,
+          "first20Pass": true,
+          "p50": 8.399999998509884,
+          "p95": 14.600000001490116,
+          "max": 17.600000001490116,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.700000002980232,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.599999994039536,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 10.300000004470348,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.7999999970197678,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.300000004470348,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.400000005960464,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.299999997019768,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 7.399999998509884,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 9.799999997019768,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.799999997019768,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.700000002980232,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 10.699999995529652,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 11.700000002980232,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 6.699999995529652,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.400000005960464,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 15.399999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 9.900000005960464,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8.099999994039536,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.700000002980232,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 9.699999995529652,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 15,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 10.5,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 6.699999995529652,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.199999995529652,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 12.399999998509884,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8.099999994039536,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.299999997019768,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 8.600000001490116,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 9.299999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 2.5,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 14.799999997019768,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.199999995529652,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 3870
+            },
+            {
+              "query": "n",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7438
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "にｔ",
+              "ms": 8,
+              "candidates": 6,
+              "total": 4088
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "ニトリ",
+              "ms": 8,
+              "candidates": 6,
+              "total": 3609
+            },
+            {
+              "query": "家電",
+              "ms": 9,
+              "candidates": 6,
+              "total": 341
+            },
+            {
+              "query": "収納",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "shuunou",
+              "ms": 11.400000005960464,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "が",
+              "ms": 5.899999998509884,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "が",
+              "ms": 3.6999999955296516,
+              "candidates": 6,
+              "total": 7389
+            },
+            {
+              "query": "new",
+              "ms": 17.5,
+              "candidates": 6,
+              "total": 151
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 17.600000001490116,
+              "candidates": 6,
+              "total": 627
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 621
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7500
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 133
+            },
+            {
+              "query": "コーヒー",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 57
+            },
+            {
+              "query": "ni",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 5720
+            },
+            {
+              "query": "ka",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7413
+            },
+            {
+              "query": "にと",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 3870
+            }
+          ]
+        }
+      ],
+      "memory": [
+        {
+          "phase": "before_mount",
+          "at": "2026-10-12T00:03:50.103Z",
+          "heap": {
+            "usedSize": 2364164,
+            "totalSize": 3444736,
+            "embedderHeapUsedSize": 1248184,
+            "backingStorageSize": 462324
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17309696,
+              "workingSetBytes": 52191232
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 21315584,
+              "workingSetBytes": 59166720
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22728704,
+              "workingSetBytes": 45211648
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31326208
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:50.287Z",
+          "heap": {
+            "usedSize": 2541456,
+            "totalSize": 3969024,
+            "embedderHeapUsedSize": 1496784,
+            "backingStorageSize": 463788
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 25223168,
+              "workingSetBytes": 60284928
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 31387648,
+              "workingSetBytes": 84426752
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22781952,
+              "workingSetBytes": 48250880
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31686656
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:50.527Z",
+          "heap": {
+            "usedSize": 11522880,
+            "totalSize": 18124800,
+            "embedderHeapUsedSize": 1614760,
+            "backingStorageSize": 16204986
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17465344,
+              "workingSetBytes": 53055488
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 98570240,
+              "workingSetBytes": 145027072
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22786048,
+              "workingSetBytes": 48308224
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:50.773Z",
+          "heap": {
+            "usedSize": 13364812,
+            "totalSize": 27299840,
+            "embedderHeapUsedSize": 2907152,
+            "backingStorageSize": 16335163
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17313792,
+              "workingSetBytes": 52961280
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 103399424,
+              "workingSetBytes": 151322624
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22798336,
+              "workingSetBytes": 48320512
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:51.001Z",
+          "heap": {
+            "usedSize": 17550984,
+            "totalSize": 36212736,
+            "embedderHeapUsedSize": 3041424,
+            "backingStorageSize": 16345351
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17424384,
+              "workingSetBytes": 53059584
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 104693760,
+              "workingSetBytes": 153210880
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22798336,
+              "workingSetBytes": 48320512
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:51.238Z",
+          "heap": {
+            "usedSize": 22593648,
+            "totalSize": 48533504,
+            "embedderHeapUsedSize": 3172560,
+            "backingStorageSize": 16345351
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17444864,
+              "workingSetBytes": 53075968
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 114749440,
+              "workingSetBytes": 162373632
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22802432,
+              "workingSetBytes": 48324608
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:51.471Z",
+          "heap": {
+            "usedSize": 36358412,
+            "totalSize": 51417088,
+            "embedderHeapUsedSize": 3175560,
+            "backingStorageSize": 16345351
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17444864,
+              "workingSetBytes": 53075968
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 118833152,
+              "workingSetBytes": 167571456
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22802432,
+              "workingSetBytes": 48324608
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:51.785Z",
+          "heap": {
+            "usedSize": 48461440,
+            "totalSize": 63737856,
+            "embedderHeapUsedSize": 3574192,
+            "backingStorageSize": 16377360
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17453056,
+              "workingSetBytes": 53084160
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 131977216,
+              "workingSetBytes": 185221120
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22863872,
+              "workingSetBytes": 52121600
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10719232,
+              "workingSetBytes": 31698944
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:52.034Z",
+          "heap": {
+            "usedSize": 29971072,
+            "totalSize": 66097152,
+            "embedderHeapUsedSize": 3808416,
+            "backingStorageSize": 27692355
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 18010112,
+              "workingSetBytes": 53665792
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 197324800,
+              "workingSetBytes": 248467456
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22867968,
+              "workingSetBytes": 52228096
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:52.326Z",
+          "heap": {
+            "usedSize": 47591552,
+            "totalSize": 76484608,
+            "embedderHeapUsedSize": 1609768,
+            "backingStorageSize": 27469438
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17829888,
+              "workingSetBytes": 53428224
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 204840960,
+              "workingSetBytes": 259198976
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22872064,
+              "workingSetBytes": 52232192
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:52.564Z",
+          "heap": {
+            "usedSize": 64994864,
+            "totalSize": 95719424,
+            "embedderHeapUsedSize": 1793400,
+            "backingStorageSize": 19599420
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17448960,
+              "workingSetBytes": 53092352
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 202850304,
+              "workingSetBytes": 260603904
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22876160,
+              "workingSetBytes": 52236288
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:52.796Z",
+          "heap": {
+            "usedSize": 71274912,
+            "totalSize": 120332288,
+            "embedderHeapUsedSize": 1973968,
+            "backingStorageSize": 19644300
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17506304,
+              "workingSetBytes": 53141504
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 204341248,
+              "workingSetBytes": 261976064
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22876160,
+              "workingSetBytes": 52236288
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:53.040Z",
+          "heap": {
+            "usedSize": 70744168,
+            "totalSize": 124264448,
+            "embedderHeapUsedSize": 2313008,
+            "backingStorageSize": 20541200
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17510400,
+              "workingSetBytes": 53145600
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 210087936,
+              "workingSetBytes": 267640832
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22876160,
+              "workingSetBytes": 52236288
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:53.276Z",
+          "heap": {
+            "usedSize": 85408040,
+            "totalSize": 124264448,
+            "embedderHeapUsedSize": 2445328,
+            "backingStorageSize": 21404652
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17514496,
+              "workingSetBytes": 53149696
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 211496960,
+              "workingSetBytes": 269385728
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22876160,
+              "workingSetBytes": 52236288
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "ready",
+          "at": "2026-10-12T00:03:53.397Z",
+          "heap": {
+            "usedSize": 76439712,
+            "totalSize": 124264448,
+            "embedderHeapUsedSize": 2627296,
+            "backingStorageSize": 21808813
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17518592,
+              "workingSetBytes": 53153792
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 212164608,
+              "workingSetBytes": 270323712
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22880256,
+              "workingSetBytes": 52256768
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "ready_after_gc",
+          "at": "2026-10-12T00:03:53.496Z",
+          "heap": {
+            "usedSize": 25887496,
+            "totalSize": 29106176,
+            "embedderHeapUsedSize": 562936,
+            "backingStorageSize": 2439677
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53161984
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 90972160,
+              "workingSetBytes": 151097344
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22880256,
+              "workingSetBytes": 52256768
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:53.528Z",
+          "heap": {
+            "usedSize": 25887496,
+            "totalSize": 29106176,
+            "embedderHeapUsedSize": 562936,
+            "backingStorageSize": 2439677
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53161984
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 93970432,
+              "workingSetBytes": 153538560
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22880256,
+              "workingSetBytes": 52256768
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:53.787Z",
+          "heap": {
+            "usedSize": 26232512,
+            "totalSize": 32514048,
+            "embedderHeapUsedSize": 1404808,
+            "backingStorageSize": 2517786
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53161984
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 94822400,
+              "workingSetBytes": 154574848
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22884352,
+              "workingSetBytes": 52310016
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:54.063Z",
+          "heap": {
+            "usedSize": 26618008,
+            "totalSize": 33562624,
+            "embedderHeapUsedSize": 2021176,
+            "backingStorageSize": 2610428
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53161984
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 96178176,
+              "workingSetBytes": 156352512
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22888448,
+              "workingSetBytes": 52338688
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10723328,
+              "workingSetBytes": 31703040
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:54.305Z",
+          "heap": {
+            "usedSize": 26348456,
+            "totalSize": 33562624,
+            "embedderHeapUsedSize": 2586928,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53166080
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 96436224,
+              "workingSetBytes": 156524544
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22892544,
+              "workingSetBytes": 52518912
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:54.549Z",
+          "heap": {
+            "usedSize": 26795204,
+            "totalSize": 33562624,
+            "embedderHeapUsedSize": 3880912,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17522688,
+              "workingSetBytes": 53166080
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 96948224,
+              "workingSetBytes": 156934144
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22896640,
+              "workingSetBytes": 52531200
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:54.787Z",
+          "heap": {
+            "usedSize": 26529188,
+            "totalSize": 33562624,
+            "embedderHeapUsedSize": 5007816,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17526784,
+              "workingSetBytes": 53170176
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 98234368,
+              "workingSetBytes": 158056448
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22896640,
+              "workingSetBytes": 52531200
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:55.031Z",
+          "heap": {
+            "usedSize": 27663996,
+            "totalSize": 33562624,
+            "embedderHeapUsedSize": 6165896,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17526784,
+              "workingSetBytes": 53170176
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 99700736,
+              "workingSetBytes": 159428608
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22896640,
+              "workingSetBytes": 52531200
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:55.278Z",
+          "heap": {
+            "usedSize": 28036804,
+            "totalSize": 31989760,
+            "embedderHeapUsedSize": 1633632,
+            "backingStorageSize": 2717985
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17526784,
+              "workingSetBytes": 53170176
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 99561472,
+              "workingSetBytes": 160813056
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22896640,
+              "workingSetBytes": 52531200
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:55.518Z",
+          "heap": {
+            "usedSize": 29039528,
+            "totalSize": 34611200,
+            "embedderHeapUsedSize": 2366856,
+            "backingStorageSize": 2718595
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17530880,
+              "workingSetBytes": 53174272
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 100065280,
+              "workingSetBytes": 161595392
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22896640,
+              "workingSetBytes": 52531200
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:55.769Z",
+          "heap": {
+            "usedSize": 29045748,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 3349680,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17530880,
+              "workingSetBytes": 53174272
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 100855808,
+              "workingSetBytes": 162406400
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:56.015Z",
+          "heap": {
+            "usedSize": 28339480,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 4377760,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17530880,
+              "workingSetBytes": 53174272
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 100888576,
+              "workingSetBytes": 162435072
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:56.250Z",
+          "heap": {
+            "usedSize": 27484572,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 5637328,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17530880,
+              "workingSetBytes": 53174272
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 101015552,
+              "workingSetBytes": 162648064
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:56.480Z",
+          "heap": {
+            "usedSize": 27116084,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 6643048,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53178368
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 101724160,
+              "workingSetBytes": 163201024
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:56.718Z",
+          "heap": {
+            "usedSize": 29397432,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 7878080,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53178368
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 102875136,
+              "workingSetBytes": 164257792
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:56.965Z",
+          "heap": {
+            "usedSize": 29436956,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 8967024,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53178368
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 104017920,
+              "workingSetBytes": 165400576
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:57.203Z",
+          "heap": {
+            "usedSize": 27927972,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 10090168,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53178368
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 105328640,
+              "workingSetBytes": 166649856
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:57.456Z",
+          "heap": {
+            "usedSize": 28043056,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 11008016,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53178368
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 106516480,
+              "workingSetBytes": 168095744
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:57.700Z",
+          "heap": {
+            "usedSize": 27540340,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 12320304,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 108077056,
+              "workingSetBytes": 169435136
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:57.945Z",
+          "heap": {
+            "usedSize": 27266136,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 13332600,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 109371392,
+              "workingSetBytes": 170819584
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:58.184Z",
+          "heap": {
+            "usedSize": 29180464,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 14595512,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 111058944,
+              "workingSetBytes": 172167168
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:58.439Z",
+          "heap": {
+            "usedSize": 29069932,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 15578984,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 112250880,
+              "workingSetBytes": 173748224
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:58.679Z",
+          "heap": {
+            "usedSize": 28388556,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 16829344,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 113946624,
+              "workingSetBytes": 175149056
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "during",
+          "at": "2026-10-12T00:03:58.922Z",
+          "heap": {
+            "usedSize": 27535632,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 17818216,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 115101696,
+              "workingSetBytes": 176418816
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "before_destroy",
+          "at": "2026-10-12T00:03:58.950Z",
+          "heap": {
+            "usedSize": 27535632,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 17818216,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17534976,
+              "workingSetBytes": 53182464
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 115101696,
+              "workingSetBytes": 176418816
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22900736,
+              "workingSetBytes": 52535296
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "after_destroy",
+          "at": "2026-10-12T00:03:59.017Z",
+          "heap": {
+            "usedSize": 28659252,
+            "totalSize": 35397632,
+            "embedderHeapUsedSize": 17818216,
+            "backingStorageSize": 2718777
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17256448,
+              "workingSetBytes": 52920320
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 116625408,
+              "workingSetBytes": 177917952
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22908928,
+              "workingSetBytes": 52543488
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        },
+        {
+          "phase": "after_gc",
+          "at": "2026-10-12T00:03:59.101Z",
+          "heap": {
+            "usedSize": 1520228,
+            "totalSize": 4493312,
+            "embedderHeapUsedSize": 386224,
+            "backingStorageSize": 154651
+          },
+          "processes": {
+            "browser": {
+              "processes": 1,
+              "privateBytes": 17256448,
+              "workingSetBytes": 52920320
+            },
+            "renderer": {
+              "processes": 1,
+              "privateBytes": 77271040,
+              "workingSetBytes": 137658368
+            },
+            "GPU": {
+              "processes": 1,
+              "privateBytes": 22908928,
+              "workingSetBytes": 52543488
+            },
+            "network.mojom.NetworkService": {
+              "processes": 1,
+              "privateBytes": 10727424,
+              "workingSetBytes": 31731712
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "browser": "141.0.7390.37",
+  "pass": true,
+  "note": "監視と明示GCを付けた診断測定。正式な速度合否に使わない。Windows private bytesはChromium各プロセスの合計、heapは主フレームのみ。"
+}

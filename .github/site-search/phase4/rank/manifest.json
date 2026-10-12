@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "frozen": "2026-10-12",
+  "files": {
+    "tools.json": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9",
+    "game.json": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6",
+    "site-index.json": "4605765760ffff1da585bdb64da13cf3420eed62d08f9f3e905519707622aa06",
+    "queries.json": "1fedaaa2ea7f0273c931e637f5321010923f7566525e9f9cfbbdd1451e7c5693"
+  }
+}

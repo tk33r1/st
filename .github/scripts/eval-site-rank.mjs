@@ -59,7 +59,7 @@ export function loadWorker() {
   vm.runInContext(['languages.js', 'personas.js', 'site-search.js', 'search-scope.js', 'site-rank.js'].map(f => strip(read('workers/magi2/' + f))).join('\n')
     + '\nglobalThis.magi = { SITE_RANK, makeSitePages, fetchSiteLists, rankTargets, toRankCandidate, rankPayload, rankProbability,'
     + ' rankSearch, rankCandidateHash, snapshotHash, rankId, rankSiteUrl, rankQuery, makeDailySnapshot, filterDailyItems,'
-    + ' normalizeScopeFilters, searchScope, rankScopeConfig, shortlistRankDaily, dailyResultUrl, clearRankCache: () => rankCache.clear() };', ctx);
+    + ' normalizeScopeFilters, searchScope, rankScopeConfig, shortlistRankDaily, shortlistRankItems, filterRankItems, makeListSnapshot, dailyResultUrl, clearRankCache: () => rankCache.clear() };', ctx);
   return Object.assign(ctx.magi, { hooks });
 }
 

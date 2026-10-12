@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "source_commit": "ec5a1ab481d02757abae2458233144ae8b870278",
+  "files": [
+    {
+      "path": "404.html",
+      "sha256": "a58bd8bd2b444ff3b079e248c7b4c55db6552a3dc513a19393ee576599884e92"
+    },
+    {
+      "path": "job/assets/daily-ui.js",
+      "sha256": "a6f20211a1089cfd558d77fa95904f991b4e825405bd1b2cff99fae26f9e9585"
+    },
+    {
+      "path": "job/nitoridaily/index.html",
+      "sha256": "9ed610d926a06063ff69450230ca6c3fca635749e32d2a3925506af7eb055d45"
+    },
+    {
+      "path": "job/retailtechdaily/index.html",
+      "sha256": "ce9f79f87f3a98df224bc98fea60e6f8472d7f33cd7567f7c0dcdb75cb5e9f65"
+    },
+    {
+      "path": "job/nitoridaily/20261011/index.html",
+      "sha256": "434c7bcf36be822b8ff628c20073f4b76f60fb5f63d41ea61a3187d18d12f5dd"
+    },
+    {
+      "path": "job/retailtechdaily/20261011/index.html",
+      "sha256": "f8ca44b5cf7c3c6f4116addb8dd060403ba4dbf5584bd40ef37f23b66fd5e8a8"
+    },
+    {
+      "path": "assets/site-search.js",
+      "sha256": "9cf5a9dc19683bdfa407181268f3796666c17a2983232967877ffa97e0a9b6d0"
+    }
+  ]
+}

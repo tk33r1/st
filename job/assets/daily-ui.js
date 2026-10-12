@@ -327,35 +327,6 @@
     });
   }
 
-  function normalizeSearch(value) {
-    return String(value || '').toLocaleLowerCase('ja').replace(/\s+/g, '');
-  }
-
-  function createSearchResult(record, href) {
-    const article = document.createElement('article');
-    article.className = 'archive-result-card';
-    const meta = document.createElement('p');
-    meta.className = 'archive-result-meta';
-    const date = record.date ? record.date.slice(0, 4) + '.' + record.date.slice(4, 6) + '.' + record.date.slice(6, 8) : '';
-    meta.textContent = [date, record.region === 'GLOBAL' ? '海外' : '国内', record.category, record.source_kind, record.source].filter(Boolean).join(' / ');
-    const title = document.createElement('h3');
-    const link = document.createElement('a');
-    link.href = href;
-    link.textContent = record.title;
-    title.appendChild(link);
-    const summary = document.createElement('p');
-    summary.className = 'archive-result-summary';
-    summary.textContent = record.summary || record.takeaway || '';
-    const tags = document.createElement('p');
-    tags.className = 'archive-result-tags';
-    tags.textContent = (record.tags || []).map(function(tag) { return '#' + tag; }).join(' ');
-    article.append(meta, title, summary, tags);
-    return article;
-  }
-
-  // 横断検索とウォッチ新着の索引。号が増えても1ファイルが育たないよう年ごとに分けてある
-  // （daily_engine.py の build_search_index）。search-index.json に最新の年の記事と年の一覧
-  // （years、新しい順）、それより前の年は search-index-<年>.json。同じ版の年別ファイルを共有する。
   const indexFiles = new Map();
   const media = location.pathname.split('/')[2];
   let indexEpoch = 0;
@@ -413,293 +384,39 @@
   }
 
   function initArchiveSearch() {
-    const form = document.getElementById('archiveSearchForm');
-    if (!form) return null;
-    const query = document.getElementById('archiveSearchInput');
-    const category = document.getElementById('archiveCategoryFilter');
-    const region = document.getElementById('archiveRegionFilter');
-    const month = document.getElementById('archiveMonthFilter');
-    const filterControls = [category, region, month];
-    const status = document.getElementById('archiveSearchStatus');
-    const results = document.getElementById('archiveSearchResults');
-    const keywordHeading = document.getElementById('archiveKeywordTitle');
-    const suggestions = document.getElementById('archiveSuggestions');
-    const rankArea = document.getElementById('archiveRank');
-    const rankStatus = document.getElementById('archiveRankStatus');
-    const archiveRows = Array.from(document.querySelectorAll('[data-archive-month]'));
-    const archiveEmpty = document.getElementById('archiveEmpty');
+    const container = document.getElementById('archiveCommonSearch');
+    if (!container || !window.STSearchUI || !window.STSearchData) return null;
+    const locale = () => document.documentElement.lang === 'en' ? 'en' : 'ja';
     const scope = media === 'nitoridaily' ? 'nitori' : 'retail';
-    const recordText = new WeakMap();
-    let snapshot = null, pending = null, attempted = false, indexNeedsRefresh = false;
-    let serial = 0, shown = null, matched = [], active = -1;
-    let composing = false, imeEnterHeld = false, rank = null;
-    let lastTracked = null;
-    const locale = function() { return document.documentElement.lang === 'en' ? 'en' : 'ja'; };
-    const searchTexts = {
-      en: {
-        heading: 'Search results', keyword: 'Keyword matches', loading: 'Looking for related articles…',
-        stale: 'Press Enter to also find related articles.', failed: 'Search could not finish. Please try again.',
-        rateLimited: 'The search limit has been reached. Please try again later.',
-        indexUpdating: 'The latest issue is being added. Please try again in a little while.',
-        generationMismatch: 'The search index versions differ. The index will be refreshed on your next search.', partial: 'Some candidates could not be judged.',
-        count: function(n) { return n + ' related articles found.'; },
-        coverage: function(s) { return 'Of ' + s.total + ' articles in this scope, ' + s.candidates + ' candidates were selected by wording and recency; ' + s.judged + ' were judged.'; },
-        noResults: function(s) { return s.candidates === s.total ? 'No related articles were found in this scope.' : 'Of ' + s.total + ' articles in this scope, ' + s.candidates + ' candidates were checked by wording and recency, but no related articles were found.'; },
-        noKeyword: 'No keyword matches. Press Enter to find related articles.',
-        noKeywordPlain: 'No keyword matches.',
-        indexLoading: 'Loading the search index…', indexFailed: 'Search data could not be loaded. Search again to retry.',
-        keywordCount: function(n) { return n + ' articles found' + (n > 100 ? ' (first 100 shown)' : '') + '.'; }
+    const archiveRows = Array.from(document.querySelectorAll('[data-archive-month]'));
+    const search = STSearchUI.mount(container, STSearchData.createAdapter(scope, {
+      locale: locale(),
+      onConditions(condition) {
+        let visible = 0;
+        archiveRows.forEach(row => {
+          row.hidden = !!condition.filters.month && row.dataset.archiveMonth !== condition.filters.month;
+          if (!row.hidden) visible++;
+        });
+        const empty = document.getElementById('archiveEmpty');
+        if (empty) empty.hidden = visible > 0;
       },
-      ja: {
-        heading: '検索結果', keyword: 'キーワードに一致', loading: '意味の近い記事を探しています…',
-        stale: 'Enter で、意味の近い記事も探します。', failed: '検索を完了できませんでした。もう一度お試しください。',
-        rateLimited: '検索の利用上限に達しました。時間をおいてお試しください。',
-        indexUpdating: '最新の号を反映しています。少したってからもう一度お試しください。',
-        generationMismatch: '検索索引の版が異なります。次の検索で読み直します。', partial: '一部の候補の判定がそろいませんでした。',
-        count: function(n) { return n + '件見つかりました。'; },
-        coverage: function(s) { return '対象 ' + s.total + ' 件のうち、文字の近い記事と新しい記事 ' + s.candidates + ' 件を候補に選び、' + s.judged + ' 件を判定しました。'; },
-        noResults: function(s) { return s.candidates === s.total ? 'この条件の記事には、意味の近いものは見つかりませんでした。' : '対象 ' + s.total + ' 件のうち、文字の近い記事と新しい記事 ' + s.candidates + ' 件を調べましたが、意味の近い記事は見つかりませんでした。'; },
-        noKeyword: 'キーワードに一致する記事はありません。Enter で、意味の近い記事を探します。',
-        noKeywordPlain: 'キーワードに一致する記事はありません。',
-        indexLoading: '検索インデックスを読み込んでいます…', indexFailed: '検索データを読み込めませんでした。もう一度検索すると読み直します。',
-        keywordCount: function(n) { return n + '件見つかりました' + (n > 100 ? '（先頭100件を表示）' : '') + '。'; }
-      }
-    };
-    const texts = function() { return searchTexts[locale()]; };
-    const labels = { texts: texts(), kinds: { daily: '記事' } };
-    // 日刊本文は原文のまま。検索欄の案内は②に渡す言語に合わせる。
-    const translations = [
-      [document.getElementById('archiveSearchTitle'), 'Search articles'],
-      [form.querySelector('label[for="archiveSearchInput"]'), 'Keywords, companies or products'],
-      [category.previousElementSibling, 'Category'], [region.previousElementSibling, 'Region'], [month.previousElementSibling, 'Month'],
-      [document.getElementById('archiveSearchInfoTitle'), 'Search and privacy'],
-      [document.getElementById('archiveRankInfo').firstChild, 'When you search (Enter or the magnifier), your query and public article information are sent to the TypeSafe AI (Jev) API to find related articles. Nothing is sent while you type. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States. '],
-      [document.querySelector('#archiveRankInfo a'), 'TypeSafe AI privacy policy'],
-      [document.getElementById('archiveRankInfo').nextElementSibling, 'Search terms are recorded in Google Analytics, with email addresses and phone numbers masked. Nothing is sent if analytics is turned off.'],
-      [document.getElementById('archiveRankPrivacy'), 'Your IP address is recorded to limit usage. Queries and replies are not stored in the site database, operational logs or notifications.']
-    ].concat(filterControls.map(function(control) { return [control.options[0], 'All']; }),
-      [[region.options[1], 'Domestic'], [region.options[2], 'Overseas']]);
-    const originalTexts = translations.map(function(pair) { return pair[0].textContent; });
-    const originalPlaceholder = query.placeholder;
-    function updateLabels() {
-      const en = locale() === 'en';
-      labels.texts = texts(); labels.kinds.daily = en ? 'Article' : '記事';
-      translations.forEach(function(pair, i) { pair[0].textContent = en ? pair[1] : originalTexts[i]; });
-      query.placeholder = en ? 'e.g. self-checkout, Aeon, storage' : originalPlaceholder;
-      form.querySelector('button[type="submit"]').setAttribute('aria-label', en ? 'Search' : '検索');
-      suggestions.setAttribute('aria-label', en ? 'Keyword matches' : 'キーワードに一致する記事');
-      document.getElementById('archiveSearchInfoOpen').setAttribute('aria-label', en ? 'About search and privacy' : '検索とプライバシーについて');
-      document.getElementById('archiveSearchInfoClose').setAttribute('aria-label', en ? 'Close' : '閉じる');
-    }
-    function condition() {
-      const filters = {};
-      filterControls.forEach(function(control) { if (control.value) filters[control.dataset.filter] = control.value; });
-      return { query: cleanQuery(query.value), locale: locale(), filters: filters, generation: snapshot ? snapshot.generation : undefined };
-    }
-    function rankCondition() {
-      if (composing) return null;
-      const c = condition();
-      return c.query.replace(/[<>]/g, '').trim() ? c : null;
-    }
-    function viewKey() { const c = condition(); return JSON.stringify([c.query, c.locale, c.filters]); }
-    function href(record) { return '/job/' + media + '/' + record.url; }
-    function filtered(c = condition()) {
-      const q = normalizeSearch(c.query);
-      return snapshot ? snapshot.records.filter(function(record) {
-        return (!q || recordText.get(record).indexOf(q) !== -1) && (!c.filters.category || record.category === c.filters.category) &&
-          (!c.filters.region || record.region === c.filters.region) && (!c.filters.month || String(record.date).slice(0, 6) === c.filters.month);
-      }) : [];
-    }
-    function filterArchiveByMonth() {
-      let visible = 0;
-      archiveRows.forEach(function(row) { row.hidden = !!month.value && row.dataset.archiveMonth !== month.value; if (!row.hidden) visible++; });
-      if (archiveEmpty) archiveEmpty.hidden = visible > 0;
-    }
-    function closeSuggestions() {
-      suggestions.hidden = true; active = -1;
-      query.setAttribute('aria-expanded', 'false'); query.removeAttribute('aria-activedescendant');
-      form.classList.remove('no-keyword');
-    }
-    function setActive(index) {
-      const options = Array.from(suggestions.querySelectorAll('[role="option"]'));
-      active = index;
-      options.forEach(function(option, i) { option.setAttribute('aria-selected', String(i === index)); });
-      if (options[index]) { query.setAttribute('aria-activedescendant', options[index].id); options[index].scrollIntoView({ block: 'nearest' }); }
-      else query.removeAttribute('aria-activedescendant');
-    }
-    function renderSuggestions() {
-      const c = condition();
-      if (shown !== null || document.activeElement !== query || !c.query) { closeSuggestions(); return; }
-      suggestions.replaceChildren();
-      const rows = filtered(c).slice(0, 6);
-      rows.forEach(function(record, i) {
-        const li = document.createElement('li'), a = document.createElement('a');
-        li.id = 'archive-option-' + i; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
-        a.href = href(record); a.textContent = record.title; a.tabIndex = -1;
-        // フォーカスは入力欄に保ち、マウスでも候補を開ける。
-        a.addEventListener('mousedown', function(e) { e.preventDefault(); });
-        li.appendChild(a); suggestions.appendChild(li);
-      });
-      if (!rows.length) {
-        const li = document.createElement('li');
-        if (snapshot) li.textContent = rank && rank.disabled ? texts().noKeywordPlain : texts().noKeyword;
-        else li.textContent = attempted && !pending ? texts().indexFailed : texts().indexLoading;
-        li.setAttribute('role', 'presentation'); suggestions.appendChild(li);
-      }
-      suggestions.hidden = false; query.setAttribute('aria-expanded', 'true'); setActive(-1);
-      form.classList.toggle('no-keyword', !!snapshot && !rows.length);
-    }
-    async function ensureIndex(retry) {
-      if (retry && indexNeedsRefresh) {
-        snapshot = null; indexNeedsRefresh = false;
-        resetIndexFiles();
-      }
-      if (snapshot) return snapshot;
-      if (pending) return pending;
-      if (attempted && !retry) return null;
-      attempted = true;
-      pending = loadSearchIndex(true);
-      const data = await pending;
-      if (data) data.records.forEach(function(record) {
-        recordText.set(record, normalizeSearch([record.title, record.summary, record.takeaway, record.source, record.category].concat(record.tags || []).join(' ')));
-      });
-      snapshot = data; pending = null;
-      return data;
-    }
-    function drawKeyword() {
-      const visible = shown === viewKey();
-      keywordHeading.hidden = !visible; results.hidden = !visible; status.hidden = !visible;
-      if (!visible) return;
-      // ②が届いても同じ記事へフォーカスを戻す。別アンカーは重複としない。
-      const focused = results.contains(document.activeElement) ? document.activeElement.closest('a') : null;
-      const focusedHref = focused && focused.getAttribute('href');
-      const duplicates = new Set(rank ? rank.hrefs() : []);
-      results.replaceChildren();
-      matched.slice(0, 100).filter(function(record) { return !duplicates.has(href(record)); }).forEach(function(record) {
-        results.appendChild(createSearchResult(record, href(record)));
-      });
-      keywordHeading.textContent = texts().keyword;
-      status.textContent = snapshot ? texts().keywordCount(matched.length) : texts().indexFailed;
-      if (focusedHref) {
-        const same = Array.from(document.querySelectorAll('#archiveSearchResults a, #archiveRankList a')).find(function(a) { return a.getAttribute('href') === focusedHref; });
-        (same || query).focus({ preventScroll: true });
-      }
-    }
-    // 計測を止めていれば送らずに false を返す
-    function track(event, values) {
-      try { if (localStorage.getItem('st-analytics') === 'off') return false; } catch (_) {}
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push(Object.assign({ event: event }, values));
-      return true;
-    }
-    function trackSearch(value, count) {
-      const term = analyticsTerm(value);
-      if (term && term !== lastTracked && track('daily_search', { search_term: term, count: Math.min(count, 6) })) lastTracked = term;
-    }
-    function analyticsTerm(value) { return window.STSearchAnalytics ? window.STSearchAnalytics.term(value) : ''; }
-    if (window.STSiteSearch) rank = window.STSiteSearch.rank({
-      scope: scope, labels: labels,
-      condition: rankCondition,
-      keywordState: function() { return snapshot && shown === viewKey() ? 'known' : 'failed'; },
-      keywordCount: function() { return matched.length; },
-      elements: { section: document.getElementById('archiveRankResults'), heading: document.getElementById('archiveRankTitle'),
-        list: document.getElementById('archiveRankList'), note: document.getElementById('archiveRankNote'), status: rankStatus },
-      onRun: closeSuggestions,
-      onSettle: function(result) {
-        // 確定済みの①は保ち、次の検索で索引を取り直す。版の大小はハッシュから判断できない。
-        if (snapshot && result.searched && result.searched.generation !== snapshot.generation) indexNeedsRefresh = true;
-      },
-      onState: function() {
-        rankArea.hidden = shown !== viewKey() || rank.disabled;
-        document.getElementById('archiveRankInfo').hidden = rank.disabled;
-        document.getElementById('archiveRankPrivacy').hidden = rank.disabled;
-        drawKeyword();
-      },
-      track: function(event, values) {
+      track(event, values) {
+        try { if (localStorage.getItem('st-analytics') === 'off') return; } catch (_) {}
         if (event === 'rank_run') {
-          const term = analyticsTerm(condition().query);
+          const term = window.STSearchAnalytics ? STSearchAnalytics.term(container.querySelector('input[type="search"]').value) : '';
           if (term) values = Object.assign({}, values, { search_term: term });
         }
-        track('daily_' + event, values);
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(Object.assign({ event: 'daily_' + event }, values));
       }
-    });
-    async function runKeywordSearch(explicit) {
-      const mine = ++serial, key = viewKey();
-      shown = key; closeSuggestions(); filterArchiveByMonth();
-      if (!explicit && rank) rank.cancel();
-      results.replaceChildren(); results.hidden = true; keywordHeading.hidden = true;
-      status.hidden = false; status.textContent = texts().indexLoading;
-      rankArea.hidden = !rank || rank.disabled;
-      if (!explicit && rank && !rank.disabled) rankStatus.textContent = texts().stale;
-      const data = await ensureIndex(true);
-      if (mine !== serial || key !== viewKey()) return false;
-      matched = data ? filtered() : [];
-      drawKeyword();
-      if (data) trackSearch(condition().query, matched.length);
-      return true;
-    }
-    async function runExplicitSearch() {
-      if (imeEnterHeld || !rankCondition()) return;
-      if (await runKeywordSearch(true) && rank) rank.run();
-    }
-    function changed() {
-      if (shown === viewKey()) return;
-      resetSearch(false);
-    }
-    function resetSearch(force) {
-      serial++; shown = null;
-      if (rank) { if (force) rank.cancel(); else rank.invalidate(); }
-      rankArea.hidden = true; drawKeyword(); renderSuggestions();
-    }
-    function enterKey(e) { return e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter'; }
-    form.addEventListener('submit', function(e) { e.preventDefault(); runExplicitSearch(); });
-    query.addEventListener('input', changed);
-    query.addEventListener('focus', async function() { renderSuggestions(); await ensureIndex(false); renderSuggestions(); });
-    query.addEventListener('blur', function() { setTimeout(closeSuggestions, 120); });
-    query.addEventListener('compositionstart', function() { composing = true; });
-    query.addEventListener('compositionend', function() { composing = false; changed(); });
-    document.addEventListener('keydown', function(e) {
-      if (!enterKey(e)) return;
-      if (!form.contains(e.target)) return;
-      if (composing || e.isComposing || e.keyCode === 229) { imeEnterHeld = true; return; }
-      if (imeEnterHeld || e.repeat) { e.preventDefault(); e.stopPropagation(); }
-    }, true);
-    document.addEventListener('keyup', function(e) { if (enterKey(e)) imeEnterHeld = false; });
-    window.addEventListener('blur', function() { imeEnterHeld = false; });
-    query.addEventListener('keydown', function(e) {
-      if (composing || e.isComposing || e.keyCode === 229 || imeEnterHeld || e.repeat) return;
-      if (e.key === 'Escape') { e.preventDefault(); closeSuggestions(); return; }
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (shown === viewKey()) {
-          const first = document.querySelector('#archiveRankList a, #archiveSearchResults a');
-          if (first && e.key === 'ArrowDown') first.focus();
-          return;
-        }
-        if (suggestions.hidden) renderSuggestions();
-        const count = suggestions.querySelectorAll('[role="option"]').length;
-        if (count) setActive((active + (e.key === 'ArrowDown' ? 1 : active < 0 ? 0 : -1) + count) % count);
-      } else if (e.key === 'Enter' && !suggestions.hidden && active >= 0) {
-        e.preventDefault(); suggestions.querySelectorAll('[role="option"] a')[active].click();
-      }
-    });
-    document.addEventListener('mousedown', function(e) { if (!form.querySelector('.archive-searchbox').contains(e.target)) closeSuggestions(); });
-    filterControls.forEach(function(control) {
-      control.addEventListener('change', function() { if (rank) rank.invalidate(); runKeywordSearch(false); });
-    });
+    }));
     const dialog = document.getElementById('archiveSearchInfo');
-    const info = document.getElementById('archiveSearchInfoOpen');
-    info.addEventListener('click', function() { dialog.showModal(); });
-    document.getElementById('archiveSearchInfoClose').addEventListener('click', function() { dialog.close(); });
-    dialog.addEventListener('click', function(e) { if (e.target === dialog) dialog.close(); });
-    new MutationObserver(function() {
-      updateLabels();
-      resetSearch(true);
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-    updateLabels();
-    drawKeyword(); rankArea.hidden = true;
+    document.getElementById('archiveSearchInfoOpen').addEventListener('click', () => dialog.showModal());
+    document.getElementById('archiveSearchInfoClose').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+    new MutationObserver(() => search.setLocale(locale())).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
     return function searchFor(text) {
-      query.value = cleanQuery(text); if (rank) rank.cancel(); runKeywordSearch(false);
+      search.setQuery(cleanQuery(text));
       document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
     };
   }

@@ -43,7 +43,7 @@ ACTIVE_GLOBS = (
     'magi-app/www/**/*.html',
 )
 # Wrangler のバンドルには正本から取り込んだモデルIDが含まれるので、検査対象から外す。
-SKIP_DIRS = ('node_modules', 'vendor', 'android', 'ios', '.wrangler')
+SKIP_DIRS = ('node_modules', 'vendor', 'android', 'ios', '.wrangler', '.search-reading-env')
 
 JSON_MESSAGES = [
     {'role': 'system', 'content': 'Return only a JSON object.'},
@@ -357,10 +357,10 @@ def smoke_magi_classification(url, api_key, model, config=None):
     return observations
 
 
-def smoke_site_rank(url, api_key, model):
-    """404のサイト内検索の②。要求は eval-site-rank.mjs が本番の関数と手元の索引で組む（npm の依存を読まない。設計書 10.5）。"""
+def smoke_site_rank(url, api_key, model, script='eval-site-rank.mjs'):
+    """検索②。要求は評価scriptがWorkerと同じ関数で組む（npmの依存を読まない）。"""
     config = json.loads(subprocess.check_output(
-        ['node', str(REPO_ROOT / '.github/scripts/eval-site-rank.mjs'), '--smoke-payload'], encoding='utf-8'))
+        ['node', str(REPO_ROOT / '.github/scripts' / script), '--smoke-payload'], encoding='utf-8'))
     if config['endpoint'] != url:
         raise RuntimeError('サイト内検索の呼び出し先がsmokeと異なります')
     observations = []
@@ -377,10 +377,13 @@ def smoke_site_rank(url, api_key, model):
                 raise RuntimeError(f'サイト内検索の{name}の答えが不正です')
             probabilities[name] = value
         query = payload['state']['query']
-        if any(probabilities[name] < config['threshold'] for name in case['expect']):
+        threshold = case.get('threshold', config.get('threshold'))
+        if not isinstance(threshold, (int, float)) or isinstance(threshold, bool) or not (0 <= threshold <= 1):
+            raise RuntimeError('検索smokeの閾値が不正です')
+        if any(probabilities[name] < threshold for name in case['expect']):
             raise RuntimeError(f'サイト内検索「{query}」で期待するページが閾値未満です')
         observations.append({'query': query, 'expect': {name: probabilities[name] for name in case['expect']},
-                             'shown': sum(v >= config['threshold'] for v in probabilities.values())})
+                             'shown': sum(v >= threshold for v in probabilities.values())})
     return observations
 
 
@@ -390,6 +393,8 @@ def smoke_typesafe(url, api_key, model):
     print('MAGI分類smoke（合成入力・確信度に採用閾値なし）: ' + json.dumps(observations, ensure_ascii=False))
     observations = smoke_site_rank(url, api_key, model)
     print('サイト内検索smoke（閾値以上の件数は合否に使わない）: ' + json.dumps(observations, ensure_ascii=False))
+    observations = smoke_site_rank(url, api_key, model, 'eval-list-rank.mjs')
+    print('tools/game検索smoke: ' + json.dumps(observations, ensure_ascii=False))
     from nitori_social_filter import MIN_PROBABILITY, parse_probability, request_payload
     social_cases = [
         ('ニトリのテレビ台を買った。配線が隠せて便利！', True),

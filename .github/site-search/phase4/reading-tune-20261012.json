@@ -1,0 +1,850 @@
+{
+  "set": "tune",
+  "fixture_sha256": "5e6456a93bf8edf1b7cdf4bb37316ebd6c83d45e15ff7db56f68dd0426081ca0",
+  "analyzer": {
+    "package": "SudachiPy==0.6.11",
+    "dictionary": "SudachiDict-core==20260428",
+    "dictionary_sha256": "6c1d5adc8a2389875713056e7b39bbcd0073d6122ffd509866e1d3a196f8608e",
+    "aliases_sha256": "af5380463ff7273669352d9c6cdad10850bef2ad068f3b4fa5165b4053c86328"
+  },
+  "normalization_revision": 1,
+  "source_sha256": "1f8b6bea56f0ce9c1d09e4b32983546ac556d6a99ee1b4bfbfd074c9c4286337",
+  "unknown": [],
+  "total": 30,
+  "passed": 29,
+  "rows": [
+    {
+      "id": "tune:01",
+      "text": "家電",
+      "kind": "漢字",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "かでん",
+          "inputs": [
+            {
+              "query": "かでん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "かで",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:02",
+      "text": "収納",
+      "kind": "漢字",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "しゅうのう",
+          "inputs": [
+            {
+              "query": "しゅうのう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "しゅ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:03",
+      "text": "物流",
+      "kind": "漢字",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "ぶつりゅう",
+          "inputs": [
+            {
+              "query": "ぶつりゅう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "ぶつ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:04",
+      "text": "価格",
+      "kind": "漢字",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "かかく",
+          "inputs": [
+            {
+              "query": "かかく",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "かか",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:05",
+      "text": "店舗",
+      "kind": "漢字",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "てんぽ",
+          "inputs": [
+            {
+              "query": "てんぽ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "てん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:06",
+      "text": "会計",
+      "kind": "漢字",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "かいけい",
+          "inputs": [
+            {
+              "query": "かいけい",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "かい",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:07",
+      "text": "決済",
+      "kind": "漢字",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "けっさい",
+          "inputs": [
+            {
+              "query": "けっさい",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "けっ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:08",
+      "text": "日本の産業",
+      "kind": "多読",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "にほん",
+          "inputs": [
+            {
+              "query": "にほん",
+              "literal": false,
+              "matched": false,
+              "readingReached": false
+            },
+            {
+              "query": "にほ",
+              "literal": false,
+              "matched": false,
+              "readingReached": false
+            }
+          ]
+        },
+        {
+          "reading": "にっぽん",
+          "inputs": [
+            {
+              "query": "にっぽん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "にっ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:09",
+      "text": "東京",
+      "kind": "固有名詞",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "とうきょう",
+          "inputs": [
+            {
+              "query": "とうきょう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "とう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:10",
+      "text": "金融市場",
+      "kind": "多読",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "しじょう",
+          "inputs": [
+            {
+              "query": "しじょう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "しじ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:11",
+      "text": "乳酸菌",
+      "kind": "複合語",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "にゅうさんきん",
+          "inputs": [
+            {
+              "query": "にゅうさんきん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "にゅ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:12",
+      "text": "しずく",
+      "kind": "かな",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "しずく",
+          "inputs": [
+            {
+              "query": "しずく",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "しず",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:13",
+      "text": "さくら",
+      "kind": "かな",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "さくら",
+          "inputs": [
+            {
+              "query": "さくら",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "さく",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:14",
+      "text": "コーヒー",
+      "kind": "外来語",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "こーひー",
+          "inputs": [
+            {
+              "query": "こーひー",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "こー",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:15",
+      "text": "ショッピング",
+      "kind": "外来語",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "しょっぴんぐ",
+          "inputs": [
+            {
+              "query": "しょっぴんぐ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "しょ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:16",
+      "text": "ピッツァ",
+      "kind": "外来語",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "ぴっつぁ",
+          "inputs": [
+            {
+              "query": "ぴっつぁ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "ぴっ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:17",
+      "text": "ウェブ",
+      "kind": "外来語",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "うぇぶ",
+          "inputs": [
+            {
+              "query": "うぇぶ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "うぇ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:18",
+      "text": "ニュース",
+      "kind": "外来語",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "にゅーす",
+          "inputs": [
+            {
+              "query": "にゅーす",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "にゅ",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:19",
+      "text": "冷蔵庫",
+      "kind": "複合語",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "れいぞうこ",
+          "inputs": [
+            {
+              "query": "れいぞうこ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "れい",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:20",
+      "text": "小売業",
+      "kind": "複合語",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "こうりぎょう",
+          "inputs": [
+            {
+              "query": "こうりぎょう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "こう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:21",
+      "text": "情報処理",
+      "kind": "複合語",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "じょうほうしょり",
+          "inputs": [
+            {
+              "query": "じょうほうしょり",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "じょ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:22",
+      "text": "省エネルギー",
+      "kind": "複合語",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "しょうえねるぎー",
+          "inputs": [
+            {
+              "query": "しょうえねるぎー",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "しょ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:23",
+      "text": "電子機器",
+      "kind": "複合語",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "でんしきき",
+          "inputs": [
+            {
+              "query": "でんしきき",
+              "literal": false,
+              "matched": false,
+              "readingReached": false
+            },
+            {
+              "query": "でん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": false
+    },
+    {
+      "id": "tune:24",
+      "text": "ニトリ",
+      "kind": "固有名詞",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "にとり",
+          "inputs": [
+            {
+              "query": "にとり",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "にと",
+              "literal": true,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:25",
+      "text": "銀座",
+      "kind": "固有名詞",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "ぎんざ",
+          "inputs": [
+            {
+              "query": "ぎんざ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "ぎん",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:26",
+      "text": "武田",
+      "kind": "固有名詞",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "たけだ",
+          "inputs": [
+            {
+              "query": "たけだ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "たけ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:27",
+      "text": "パン生地",
+      "kind": "多読",
+      "field": "description",
+      "variants": [
+        {
+          "reading": "きじ",
+          "inputs": [
+            {
+              "query": "きじ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "きじ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:28",
+      "text": "今日の予定",
+      "kind": "多読",
+      "field": "detail",
+      "variants": [
+        {
+          "reading": "きょう",
+          "inputs": [
+            {
+              "query": "きょう",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "きょ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:29",
+      "text": "店に行った",
+      "kind": "活用",
+      "field": "title",
+      "variants": [
+        {
+          "reading": "いっ",
+          "inputs": [
+            {
+              "query": "いっ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "いっ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        },
+        {
+          "reading": "いく",
+          "inputs": [
+            {
+              "query": "いく",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "いく",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "tune:30",
+      "text": "価格が高かった",
+      "kind": "活用",
+      "field": "tags",
+      "variants": [
+        {
+          "reading": "たかかっ",
+          "inputs": [
+            {
+              "query": "たかかっ",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "たか",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        },
+        {
+          "reading": "たかい",
+          "inputs": [
+            {
+              "query": "たかい",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            },
+            {
+              "query": "たか",
+              "literal": false,
+              "matched": true,
+              "readingReached": true
+            }
+          ]
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "recall": 0.9666666666666667,
+  "pass": true
+}

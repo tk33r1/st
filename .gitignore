@@ -24,6 +24,7 @@ err.txt
 # Python cache
 __pycache__/
 *.pyc
+.search-reading-env/
 
 # Codex に添付した画像の一時置き場（リポジトリは GitHub で公開しているので、コミットしない）
 .codex-remote-attachments/

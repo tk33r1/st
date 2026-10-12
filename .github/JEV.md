@@ -16,6 +16,7 @@ Jev は TypeSafe AI の判定専用のモデル（System One モデル）。文�
 | DJ ブースの次の曲の相性 | `score`（5段階） | `workers/dj-request/src/transitions.js` | [jev-evaluation.md](../dj/booth/jev-evaluation.md) |
 | 日刊2誌の意味検索② | `noul`を候補最大20件分まとめて1回 | `workers/magi2/search-scope.js`・`site-rank.js`、`personas.js`の`SITE_RANK.scopes`（画面は`job/assets/daily-ui.js`） | [Phase 3公開評価](../assets/site-search-phase3-release-evaluation.md) |
 | 404 のサイト内検索の② | `noul` を候補の数だけ1回に | `workers/magi2/site-rank.js`、`personas.js` の `SITE_RANK`（画面は `assets/site-search.js`） | [site-search-evaluation.md](../assets/site-search-evaluation.md) |
+| tools/game一覧の意味検索②（Phase 4実装中・未公開） | `noul`を同じscopeの候補最大20件分まとめて1回 | `workers/magi2/search-scope.js`・`site-rank.js`、`personas.js`の`SITE_RANK.scopes`。画面は共通`assets/search-ui.js` | [固定80問・実Jev各2回とsmoke](site-search/phase4/rank/README.md)（2026-10-12）。tools 0.4／game 0.5。本番での確認は残り、公開設定は停止中 |
 
 ## キーと設定
 

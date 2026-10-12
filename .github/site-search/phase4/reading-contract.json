@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "normalization_revision": 1,
+  "frozen": "2026-10-11",
+  "author": "Codex（実装前の資料にある必須例と固定した合成文）",
+  "records": [
+    {"id": "fixture:1", "title": "ニトリの家電", "tags": ["収納"], "description": "暮らしの電気製品", "category": "商品", "date": "20261011"},
+    {"id": "fixture:2", "title": "机", "tags": [], "description": "new item for office", "category": "商品", "date": "20261010"},
+    {"id": "fixture:3", "title": "コーヒーとニュース", "tags": ["切手"], "description": "新聞を読む", "category": "話題", "date": "20261009"},
+    {"id": "fixture:4", "title": "alpha", "tags": [], "description": "beta", "category": "話題", "date": "20261008"}
+  ],
+  "readings": [
+    {"surface": "にとり", "reading": "にとり", "postings": [[0, 1]]},
+    {"surface": "家電", "reading": "かでん", "postings": [[0, 1]]},
+    {"surface": "収納", "reading": "しゅうのう", "postings": [[0, 2]]},
+    {"surface": "コーヒー", "reading": "こーひー", "postings": [[2, 1]]},
+    {"surface": "ニュース", "reading": "にゅーす", "postings": [[2, 1]]},
+    {"surface": "切手", "reading": "きって", "postings": [[2, 2]]}
+  ],
+  "required": [
+    {"query": "ｎ", "includes": "fixture:1"},
+    {"query": "に", "includes": "fixture:1"},
+    {"query": "にｔ", "includes": "fixture:1"},
+    {"query": "にと", "includes": "fixture:1"},
+    {"query": "にとり", "includes": "fixture:1"},
+    {"query": "ニトリ", "includes": "fixture:1"},
+    {"query": "nitori", "includes": "fixture:1"},
+    {"query": "ｋ", "includes": "fixture:1"},
+    {"query": "か", "includes": "fixture:1"},
+    {"query": "かｄ", "includes": "fixture:1"},
+    {"query": "かで", "includes": "fixture:1"},
+    {"query": "かでｎ", "includes": "fixture:1"},
+    {"query": "かでん", "includes": "fixture:1"},
+    {"query": "家電", "includes": "fixture:1"},
+    {"query": "kaden", "includes": "fixture:1"},
+    {"query": "syuunou", "includes": "fixture:1"},
+    {"query": "shuunou", "includes": "fixture:1"},
+    {"query": "koohii", "includes": "fixture:3"},
+    {"query": "kouhii", "includes": "fixture:3"},
+    {"query": "nyuusu", "includes": "fixture:3"},
+    {"query": "kitt", "includes": "fixture:3"},
+    {"query": "kitte", "includes": "fixture:3"}
+  ],
+  "new_api": {"endpoint": "/search/api/rank", "method": "POST", "search_contract": 1, "scopes": ["site", "nitori", "retail", "tools", "game"], "explicit_only": true},
+  "legacy_api": {"rank": ["run", "invalidate", "cancel", "settled", "hrefs"], "properties": ["state", "disabled"], "response": "readResponse", "requires_search_ui": false},
+  "worker_recovery": {"before": ["quota", "result_cache", "jev"], "refresh_cycles_per_request": 1, "share_inflight": true, "failure_reason": "index_updating", "failure_quota": 0, "failure_jev": 0},
+  "browser_recovery": {"cycles_until_reload": 1, "share_inflight": true, "automatic_rank_posts": 0}
+}

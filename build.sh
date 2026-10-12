@@ -10,6 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 OUT=_site
+SEARCH_BUILD_PYTHON="${SEARCH_BUILD_PYTHON:-python3}"
 
 # 公開しないもの。当たったファイルは _site/ に写さない。
 # 新しく足すものも、ここに当たらなければ公開される（ページを増やすたびに書き足さなくてよい）。
@@ -55,12 +56,25 @@ done < <(list)
 (cd game/reverse-recaptcha && npm ci --include=dev --no-audit --no-fund && npm run build -- --outDir "../../$OUT/game/reverse-recaptcha" --emptyOutDir)
 
 # 公開するHTMLそのものから作る。noindex・転送・重複ページをAIの検索対象から外す。
-python3 .github/scripts/site-search-index.py --root "$OUT"
+"$SEARCH_BUILD_PYTHON" .github/scripts/site-search-index.py --root "$OUT"
+
+# 読みは固定wheelと辞書から生成する。辞書・依存・設定は出荷しない。
+SEARCH_ENV=.github/scripts/.search-reading-env
+"$SEARCH_BUILD_PYTHON" -m venv "$SEARCH_ENV"
+SEARCH_PY="$SEARCH_ENV/bin/python"
+[ -f "$SEARCH_PY" ] || SEARCH_PY="$SEARCH_ENV/Scripts/python.exe"
+"$SEARCH_PY" -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: \
+  -r .github/scripts/search-reading-requirements.txt
+"$SEARCH_PY" -B .github/scripts/search-reading-index.py --root "$OUT" --output "$OUT"
+"$SEARCH_BUILD_PYTHON" -B .github/scripts/search-tree.py --root "$OUT"
 
 # 3. 出来上がりを確かめる（足りない・余計なものがあれば、デプロイさせずに止める）
 fail() { echo "build.sh: $*" >&2; exit 1; }
 for f in index.html 404.html _redirects robots.txt sitemap.xml favicon.ico \
-         game/reverse-recaptcha/index.html magi-app/www/index.html assets/vendor/SOURCES.json; do
+         game/reverse-recaptcha/index.html magi-app/www/index.html assets/vendor/SOURCES.json \
+         assets/japanese-search.js assets/search-ui.js assets/search-ui.css assets/search-data.js assets/search-json-worker.js \
+         data/site-keyword.json data/site-readings.json data/tools-readings.json data/game-readings.json \
+         job/nitoridaily/search-readings.json job/retailtechdaily/search-readings.json; do
   [ -f "$OUT/$f" ] || fail "$f が無い"
 done
 grep -q '/game/reverse-recaptcha/assets/' "$OUT/game/reverse-recaptcha/index.html" \

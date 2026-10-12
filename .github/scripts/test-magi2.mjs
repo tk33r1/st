@@ -133,7 +133,8 @@ test('日刊scope：固定の媒体、filtersの型とキー、暦、generation�
   const { ctx } = worker();
   assert.equal(ctx.searchScope('nitori').media, 'nitoridaily');
   assert.equal(ctx.searchScope('retail').media, 'retailtechdaily');
-  for (const scope of ['tools', 'game', '__proto__', 'constructor', '', null, 3]) assert.throws(() => ctx.searchScope(scope), { searchCode: 'invalid_request' });
+  assert.equal(ctx.searchScope('tools').kind,'tool');assert.equal(ctx.searchScope('game').kind,'game');
+  for (const scope of ['__proto__', 'constructor', '', null, 3]) assert.throws(() => ctx.searchScope(scope), { searchCode: 'invalid_request' });
   assert.equal(JSON.stringify(ctx.normalizeScopeFilters('nitori', { month: '202610', region: 'JP', category: '新商品' })), '{"category":"新商品","region":"JP","month":"202610"}');
   for (const value of [undefined, {}, { category: '', region: '', month: '' }]) assert.equal(JSON.stringify(ctx.normalizeScopeFilters('nitori', value)), '{}');
   assert.equal(ctx.normalizeScopeFilters('retail', { category: '😀'.repeat(40) }).category.length, 80);
@@ -1129,6 +1130,8 @@ test('古い完全な一覧を丸ごと使い、更新失敗では置き換え�
   assert.equal((await searchRequest(w)).status, 200);
   const old = w.ctx.searchCache.pages;
   w.ctx.searchCache.fetchedAt = Date.now() - 11 * 60000; broken = true;
+  // ソース共有側でも11分が経過した状態にする。実時刻を進めず上位キャッシュだけを古くしない。
+  vm.runInContext("searchSources.get('https://tk.st/data/site-search.json').retryAt=0;",w.ctx);
   assert.equal((await searchRequest(w)).status, 200); await Promise.all(w.waits);
   assert.equal(w.ctx.searchCache.pages, old); assert.ok(w.ctx.searchCache.retryAt > Date.now());
   w.ctx.searchCache.fetchedAt = Date.now() - 25 * 3600000;

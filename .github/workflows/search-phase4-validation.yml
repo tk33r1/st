@@ -1,0 +1,77 @@
+name: Search Phase 4 validation
+
+# Linuxの出荷検査。AI呼び出し・Worker/Pages公開・bot更新は行わない。
+on:
+  push:
+    branches: [codex/search-phase4]
+  pull_request:
+    paths:
+      - 'assets/*search*'
+      - '.github/scripts/*search*'
+      - '.github/scripts/test-phase4-*'
+      - '.github/scripts/validate-phase4-linux.py'
+      - '.github/workflows/search-phase4-validation.yml'
+      - 'config/search-readings.json'
+      - 'build.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: search-phase4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Cold and warm dependencies, build and Python verification
+        env:
+          LC_ALL: C.UTF-8
+        run: python -B .github/scripts/validate-phase4-linux.py
+      - name: Install fixed browser
+        working-directory: .github/scripts
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Worker and common regression
+        run: |
+          node --test --test-reporter=dot .github/scripts/test-magi2.mjs .github/scripts/test-daily-rank.mjs .github/scripts/test-phase4-rank-worker.mjs .github/scripts/test-japanese-search.mjs .github/scripts/test-search-json-worker.mjs .github/scripts/test-list-rank.mjs .github/scripts/test-search-rank-client.mjs
+          python -B .github/scripts/ai_models.py check
+      - name: Built data and browser integration
+        run: |
+          node .github/scripts/test-search-reading-integration.mjs _site
+          node .github/scripts/test-phase4-search-data.mjs _site
+          node .github/scripts/test-phase4-pages.mjs _site
+          node .github/scripts/test-phase4-search-ui.mjs
+          node .github/scripts/test-phase4-legacy-ui.mjs
+          node .github/scripts/test-phase4-layout.mjs
+      - name: Formal speed (serial, no profile or memory observer)
+        run: |
+          OUT=.github/scripts/.search-reading-env/work/linux-validation
+          node .github/scripts/measure-search-ui.mjs "$OUT/fixtures" "$OUT/ui-common"
+          node .github/scripts/measure-search-ui.mjs "$OUT/fixtures" "$OUT/ui-adapter" --adapter --records=7500
+      - name: Save verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-linux-${{ github.sha }}
+          path: |
+            .github/scripts/.search-reading-env/work/linux-validation/environment.json
+            .github/scripts/.search-reading-env/work/linux-validation/*.log
+            .github/scripts/.search-reading-env/work/linux-validation/*.time.txt
+            .github/scripts/.search-reading-env/work/linux-validation/memory-*.json
+            .github/scripts/.search-reading-env/work/linux-validation/fixtures/generation-measurements.json
+            .github/scripts/.search-reading-env/work/linux-validation/ui-*/ui-measurements.json
+            .github/scripts/.search-reading-env/work/layout/*
+            _site/page-*.png
+          retention-days: 14

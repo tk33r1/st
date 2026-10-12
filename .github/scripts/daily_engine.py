@@ -294,9 +294,10 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261010_1'
+DAILY_UI_VERSION = '20261011_1'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
-SITE_SEARCH_VERSION = '20261010_1'
+SITE_SEARCH_VERSION = '20261011_1'
+SEARCH_RUNTIME_VERSION = '20261012_4'
 DAILY_CSS_VERSION = '20261009_2'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
@@ -2093,28 +2094,7 @@ def render_top_index_html(config, articles_history):
 
     archive_tools_html = f'''<section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
       <div class="section-head"><h2 class="section-title" id="archiveSearchTitle">記事を横断検索</h2><button type="button" class="archive-info-button" id="archiveSearchInfoOpen" aria-label="検索とプライバシーについて" aria-haspopup="dialog">ⓘ</button><span class="section-rule" aria-hidden="true"></span></div>
-      <form class="archive-search-form" id="archiveSearchForm" role="search">
-        <div class="search-query archive-searchbox">
-          <label class="archive-visually-hidden" for="archiveSearchInput">キーワード・企業・商品名</label>
-          <input type="search" id="archiveSearchInput" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="archiveSuggestions" placeholder="例：セルフレジ、イオン、収納">
-          <button type="submit" class="archive-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
-          <ul id="archiveSuggestions" class="archive-suggestions" role="listbox" aria-label="キーワードに一致する記事" hidden></ul>
-        </div>
-        <label><span>カテゴリ</span><select id="archiveCategoryFilter" data-filter="category"><option value="">すべて</option>{category_options}</select></label>
-        <label><span>地域</span><select id="archiveRegionFilter" data-filter="region"><option value="">すべて</option><option value="JP">国内</option><option value="GLOBAL">海外</option></select></label>
-        <label><span>月</span><select id="archiveMonthFilter" data-filter="month"><option value="">すべて</option>{month_options}</select></label>
-      </form>
-      <div id="archiveRank" hidden>
-        <p class="archive-search-status" id="archiveRankStatus" role="status"></p>
-        <section id="archiveRankResults" aria-labelledby="archiveRankTitle" hidden>
-          <h3 id="archiveRankTitle" hidden>検索結果</h3>
-          <ul id="archiveRankList" class="archive-rank-list"></ul>
-          <p class="archive-search-status" id="archiveRankNote" hidden></p>
-        </section>
-      </div>
-      <h3 id="archiveKeywordTitle" hidden>キーワードに一致</h3>
-      <p class="archive-search-status" id="archiveSearchStatus" aria-live="polite" hidden></p>
-      <div class="archive-search-results" id="archiveSearchResults" hidden></div>
+      <div id="archiveCommonSearch"></div>
       <dialog class="archive-search-info" id="archiveSearchInfo" aria-labelledby="archiveSearchInfoTitle">
         <div class="archive-info-head"><h2 id="archiveSearchInfoTitle">検索とプライバシー</h2><button type="button" id="archiveSearchInfoClose" aria-label="閉じる" autofocus>×</button></div>
         <p id="archiveRankInfo">検索すると（Enter・虫眼鏡）、検索語と公開記事の情報を TypeSafe AI（Jev）のAPIへ送り、意味の近い記事を探します。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。<a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI のプライバシーポリシー</a></p>
@@ -2280,6 +2260,7 @@ def render_top_index_html(config, articles_history):
 <html lang="ja">
 <head>
 {portal_head_html}
+  <link rel="stylesheet" href="../../assets/search-ui.css?v={SITE_SEARCH_VERSION}">
 </head>
 <body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -2343,7 +2324,10 @@ def render_top_index_html(config, articles_history):
 
   <script src="../../assets/buy-me-oil.js"></script>
   <script src="../../assets/search-analytics.js?v={SEARCH_ANALYTICS_VERSION}"></script>
+  <script src="../../assets/japanese-search.js?v={SEARCH_RUNTIME_VERSION}"></script>
   <script src="../../assets/site-search.js?v={SITE_SEARCH_VERSION}"></script>
+  <script src="../../assets/search-ui.js?v={SEARCH_RUNTIME_VERSION}"></script>
+  <script src="../../assets/search-data.js?v={SEARCH_RUNTIME_VERSION}"></script>
   <script src="../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>

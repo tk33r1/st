@@ -228,6 +228,7 @@
     @media (max-width: 640px) { .controls { flex-direction: column; } .sort-control { width: 100%; } .genre-chip { font-size: .54rem; } .heart-wrap { flex-basis: 52px; width: 52px; height: 52px; } .heart-wrap > .nes-icon { scale: 1; } .footer-panel { gap: 16px; flex-wrap: wrap; justify-content: center; } .footer-side { flex: none; } .image-modal-panel { padding: 16px !important; } .image-modal-close { top: 8px; right: 8px; } .image-modal-caption { font-size: .52rem; } #scroll-top-btn { right: 16px; bottom: 60px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
 </head>
 
 <body>
@@ -245,16 +246,6 @@
             <span class="heart-wrap" aria-hidden="true"><i class="nes-icon is-large heart"></i></span>
           </div>
           <div class="controls">
-            <div class="search-control">
-              <input type="search" id="search-input" aria-label="Search games" placeholder="SEARCH..." class="nes-input pixel-input snd-hover" autocomplete="off">
-            </div>
-            <div class="sort-control nes-select">
-              <select id="sort-select" aria-label="Sort games" class="pixel-input snd-hover">
-                <option value="newest">NEWEST</option>
-                <option value="oldest">OLDEST</option>
-                <option value="title">TITLE</option>
-              </select>
-            </div>
             <div class="status-chip">
               <span class="status-icon" aria-hidden="true">▣</span>
               <span>SAVED: <span id="game-count">0</span></span>
@@ -267,7 +258,7 @@
     <main class="main-content">
       <section class="content-panel">
         <div id="message-bar" class="message-bar nes-container is-rounded hidden"></div>
-        <div id="genre-filter"></div>
+        <div id="list-search"></div>
         <div id="empty-state" class="empty-state nes-container is-rounded fade-up hidden">
           <span class="empty-icon" aria-hidden="true">?</span>
           <h2 class="pixel-title card-title">NO GAMES FOUND</h2>
@@ -302,6 +293,10 @@
 
   <button id="scroll-top-btn" class="nes-btn pixel-button" aria-label="Scroll to top">▲</button>
 
+  <script src="/assets/japanese-search.js?v=20261012_4"></script>
+  <script src="/assets/site-search.js?v=20261011_1"></script>
+  <script src="/assets/search-ui.js?v=20261012_4"></script>
+  <script src="/assets/search-data.js?v=20261012_4"></script>
   <script src="../assets/buy-me-oil.js"></script>
   <script>
     new DonationWidget({
@@ -382,9 +377,6 @@
     const emptyState = document.getElementById("empty-state");
     const countEl = document.getElementById("game-count");
     const messageBar = document.getElementById("message-bar");
-    const searchInput = document.getElementById("search-input");
-    const sortSelect = document.getElementById("sort-select");
-    const genreFilter = document.getElementById("genre-filter");
     const scrollTopBtn = document.getElementById("scroll-top-btn");
     const imageModal = document.getElementById("image-modal");
     const imageModalImage = document.getElementById("image-modal-image");
@@ -450,27 +442,6 @@
       return ({ all: 'is-primary', puzzle: 'is-warning', roguelike: 'is-success', sandbox: 'is-error' })[key] || 'is-primary';
     }
 
-    function renderGenreChips() {
-      const genres = [...new Set(records.map(r => r.genre).filter(Boolean))].sort();
-      if (genres.length === 0) return;
-      genreFilter.classList.add('visible');
-      genreFilter.innerHTML = '';
-      ['all', ...genres].forEach(genre => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = `genre-chip nes-btn ${genreTone(genre)}` + (genre === activeGenre ? ' active' : '');
-        chip.textContent = genre === 'all' ? 'ALL' : genre.toUpperCase();
-        chip.setAttribute('aria-pressed', String(genre === activeGenre));
-        chip.addEventListener('click', () => {
-          activeGenre = genre;
-          soundPop();
-          renderGenreChips();
-          updateView();
-        });
-        genreFilter.appendChild(chip);
-      });
-    }
-
     // XSS対策用のエスケープ関数
     const escapeHTML = (str) => String(str).replace(/[&<>"']/g, match => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
@@ -528,15 +499,11 @@
     }
 
     function updateView() {
-      const term = searchInput.value.toLowerCase();
-      const sortType = sortSelect.value;
-      
-      let filtered = records.filter(r => {
-        const matchSearch = `${r.title} ${r.description || ''} ${r.genre || ''} ${r.ai || ''}`.toLowerCase().includes(term);
-        const matchGenre = activeGenre === 'all' || r.genre === activeGenre;
-        return matchSearch && matchGenre;
-      });
-      
+      grid.hidden = !!catalogueQuery;
+      if (catalogueQuery) { emptyState.classList.add('hidden'); return; }
+      const sortType = catalogueSort;
+      const filtered = records.filter(r => activeGenre === 'all' || r.genre === activeGenre);
+
       filtered.sort((a, b) => {
         if (sortType === 'title') return a.title.localeCompare(b.title, 'ja');
         if (sortType === 'oldest') return a.id - b.id;
@@ -574,22 +541,25 @@
       } catch (e) {}
     }
 
-    async function loadGames() {
-      showSkeletons(6);
-      try {
-        const res = await fetch('../data/game.json');
-        if (!res.ok) throw new Error('Network error');
-        records = await res.json();
-      } catch (error) {
-        records = [];
-        showMessage('ゲーム一覧を読み込めませんでした。時間をおいて再度お試しください。', 'error');
-      } finally {
-        computeNewIds();
-        renderGenreChips();
-        updateView();
+    let catalogueQuery = '', catalogueSort = 'newest';
+    showSkeletons(6);
+    const searchUI = STSearchUI.mount(document.getElementById('list-search'), STSearchData.createAdapter('game', {
+      onData(rows) {
+        records = rows.map(r => ({ ...r, id: r.numericId, url: r.href }));
+        const sorted = [...records].sort((a,b) => b.id-a.id);
+        newIds = new Set(sorted.slice(0,2).map(r => r.id));
         updateItemListSchema(records);
+        updateView();
+      },
+      onConditions(condition) {
+        catalogueQuery = condition.query;
+        catalogueSort = condition.sort === 'relevance' ? 'newest' : condition.sort;
+        activeGenre = condition.filters.genre || "all";
+        updateView();
       }
-    }
+    }));
+
+    searchUI.ready.then(() => { if (searchUI.state.base === 'failed') grid.replaceChildren(); });
 
     // 静的要素（検索バー、セレクトなど）のサウンドイベント初期化
     function initStaticSoundEvents() {
@@ -607,17 +577,10 @@
       soundPop();
     });
     // 初期化処理
-    searchInput.addEventListener("input", updateView);
-    sortSelect.addEventListener("change", updateView);
     initStaticSoundEvents();
 
-    if (window.STListHandoff) searchInput.value = window.STListHandoff;
-    window.addEventListener('st-list-handoff', () => {
-      searchInput.value = window.STListHandoff;
-      updateView();
-    });
-
-    loadGames();
+    if (window.STListHandoff) searchUI.setQuery(window.STListHandoff);
+    window.addEventListener('st-list-handoff', () => searchUI.setQuery(window.STListHandoff));
 
     document.getElementById('currentYear').textContent = '2024-' + new Date().getFullYear();
 

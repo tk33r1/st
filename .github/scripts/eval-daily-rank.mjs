@@ -163,7 +163,7 @@ function savedResult(result, local) {
 }
 
 // 上流・キャッシュ・閾値の再生はWorkerを通す。候補のcNNは問いごとに異なるので、その問いのID順で記録する。
-export async function measureAccuracy(magi, local, queries, { runs = 2, thresholds, key, liveFetch = fetch, onRow = () => {} }) {
+export async function measureAccuracy(magi, local, queries, { runs = 2, thresholds, key, liveFetch = fetch, onRow = () => {}, candidateProvider = queryCandidates }) {
   assert.ok(queries.length && queries.every(q => q.scope === local.snapshot.scope));
   assert.ok(thresholds.length && thresholds.every(t => Number.isFinite(t) && t >= 0 && t <= 1));
   const measurements = [], signal = new AbortController().signal, config = magi.rankScopeConfig(queries[0].scope), original = config.threshold;
@@ -172,7 +172,7 @@ export async function measureAccuracy(magi, local, queries, { runs = 2, threshol
     for (let run = 1; run <= runs; run++) {
       const rows = []; measurements.push({ run, rows });
       for (const q of queries) {
-        const candidates = queryCandidates(magi, local, q), slot = {};
+        const candidates = candidateProvider(magi, local, q), slot = {};
         magi.hooks.fetch = async (url, opts) => {
           assert.equal(url, magi.SITE_RANK.endpoint); assert.deepEqual(JSON.parse(opts.body), plain(candidates.payload));
           const start = performance.now();

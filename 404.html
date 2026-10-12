@@ -143,6 +143,7 @@
     noscript p { margin-top: 28px; }
     @media (max-width: 559px) { body { padding: 32px 16px; } .cards { grid-template-columns: minmax(0, 1fr); } .result-link { column-gap: 8px; padding: 12px; } }
   </style>
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
 </head>
 <body>
   <!-- JavaScript無効時の既存GTM導線。st-analyticsでは制御できない。 -->
@@ -154,40 +155,9 @@
       <p class="intro" data-ja="URLが変わったか、入力に誤りがあるかもしれません。" data-en="The address may have changed, or there may be a typo.">URLが変わったか、入力に誤りがあるかもしれません。</p>
       <p class="requested-url" id="requested-url" hidden></p>
     </header>
-    <section class="search" id="search" aria-labelledby="search-label" hidden>
-      <form id="search-form" role="search">
-        <!-- 送り先・計測の説明はダイアログにまとめ、見出しの横のインフォメーションマークから開く（入力中の候補が欄の下を覆うため） -->
-        <div class="search-label-row">
-          <label id="search-label" for="query" data-ja="サイト内のページを探す" data-en="Find pages on this site">サイト内のページを探す</label>
-          <button type="button" class="ai-info" id="search-info-open" aria-label="検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
-          </button>
-        </div>
-        <div class="search-box" id="search-box">
-          <input id="query" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest-list" maxlength="200" autocomplete="off" spellcheck="false" placeholder="キーワードや、やりたいことを入力" data-placeholder-ja="キーワードや、やりたいことを入力" data-placeholder-en="Enter keywords or what you want to do" aria-describedby="search-status">
-          <button type="submit" class="search-submit" id="search-submit" aria-label="検索" title="検索">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
-          </button>
-          <!-- 入力中の候補（①。キーワードに一致するページ）。Enter か虫眼鏡で検索すると閉じて、結果をページに出す -->
-          <ul class="suggest-list" id="suggest-list" role="listbox" hidden></ul>
-        </div>
-      </form>
-      <!-- ②（TypeSafe AI で並べ替えた検索結果）。描画は assets/site-search.js。検索した後だけ出す（入力中は候補のドロップダウン） -->
-      <div id="rank-area" hidden>
-        <div class="results" id="rank-results" hidden>
-          <h2 id="rank-heading" hidden></h2>
-          <ul class="result-list" id="rank-list" aria-labelledby="rank-heading"></ul>
-          <p class="status rank-note" id="rank-note" hidden></p>
-        </div>
-      </div>
-      <!-- 読み上げの状態の行は隠す欄の外に置き、常に読み上げの対象にしておく（中に置くと、欄を出したのと同時に入れた「探しています」が読まれない） -->
-      <p class="status" id="rank-status" role="status" aria-atomic="true"></p>
-      <div class="results" id="results">
-        <h2 id="result-heading" hidden></h2>
-        <ul class="result-list" id="result-list" aria-labelledby="result-heading"></ul>
-      </div>
-      <!-- 読み上げの通知が落ちないよう、状態の行は隠す要素の外に置き、常に存在させる。 -->
-      <p class="status" id="search-status" role="status" aria-atomic="true"></p>
+    <section class="search" id="search" aria-label="サイト内検索" hidden>
+      <div id="common-search"></div>
+      <section id="path-suggestions" aria-labelledby="path-suggestion-title" hidden><h2 id="path-suggestion-title" data-ja="もしかして" data-en="Were you looking for…?">もしかして</h2><ul class="result-list" id="path-suggestion-list"></ul></section>
       <div class="ai-search" id="ai-search" hidden>
         <button type="button" id="ai-run" data-ja="Shinya Takeda AI に聞く" data-en="Ask Shinya Takeda AI">Shinya Takeda AI に聞く</button>
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
@@ -210,6 +180,10 @@
     <noscript><p>下の一覧からお選びください。</p></noscript>
     <section class="explore" aria-labelledby="explore-heading">
       <h2 id="explore-heading" data-ja="サイトの全体" data-en="Explore the site">サイトの全体</h2>
+      <!-- SEARCH_TREE_START -->
+      <nav class="site-tree" aria-label="サイトの全体"><ul><li><a href="/">トップページ</a></li><li><a href="/tools/">ツール一覧</a></li><li><a href="/game/">ゲーム一覧</a></li><li><a href="/job/">職務・日刊</a></li></ul></nav>
+      <!-- SEARCH_TREE_END -->
+      <div hidden id="search-entry-definitions">
       <div class="cards">
         <details id="card-tools">
           <summary><span><span class="card-title" data-ja="ツール" data-en="Tools">ツール</span><span class="count" id="count-tools" hidden></span><span class="card-description" data-ja="ブラウザで完結" data-en="Everything runs in your browser">ブラウザで完結</span></span><span class="chevron" aria-hidden="true">›</span></summary>
@@ -240,6 +214,7 @@
         <li><a data-entry="job" data-section="job" data-title-ja="職務" data-title-en="Career" data-description-ja="仕事とこれまでの経験" data-description-en="Work and experience" href="/job/" data-ja="職務" data-en="Career">職務</a></li>
         <li><a data-entry="contact" data-section="contact" data-title-ja="お問い合わせ" data-title-en="Contact" data-description-ja="Shinya Takedaへの連絡" data-description-en="Get in touch with Shinya Takeda" href="/contact/" data-ja="お問い合わせ" data-en="Contact">お問い合わせ</a></li>
       </ul></nav>
+      </div>
     </section>
     <a class="home" href="/" data-ja="トップページへ →" data-en="Go to the homepage →">トップページへ →</a>
   </main>
@@ -258,7 +233,10 @@
     </div>
   </dialog>
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
-  <script src="/assets/site-search.js?v=20261010_1"></script>
+  <script src="/assets/japanese-search.js?v=20261012_4"></script>
+  <script src="/assets/site-search.js?v=20261011_1"></script>
+  <script src="/assets/search-ui.js?v=20261012_4"></script>
+  <script src="/assets/search-data.js?v=20261012_4"></script>
   <script>
     (function () {
       'use strict';
@@ -276,7 +254,7 @@
       var infoOpen = byId('ai-info-open');
       infoOpen.setAttribute('aria-label', lang === 'ja' ? '検索とプライバシーについて' : 'About search and privacy');
       byId('ai-info-close').setAttribute('aria-label', lang === 'ja' ? '閉じる' : 'Close');
-      [infoOpen, byId('search-info-open')].forEach(function (button) {
+      [infoOpen].forEach(function (button) {
         button.setAttribute('aria-label', infoOpen.getAttribute('aria-label'));
         button.addEventListener('click', function () { infoDialog.showModal(); });
       });
@@ -287,15 +265,8 @@
       });
       document.title = (lang === 'ja' ? 'ページが見つかりませんでした' : 'Page not found') + ' | tk.st';
       byId('other-nav').setAttribute('aria-label', lang === 'ja' ? 'ほかのページ' : 'More pages');
-      var input = byId('query');
-      input.placeholder = lang === 'ja' ? input.dataset.placeholderJa : input.dataset.placeholderEn;
-      var list = byId('result-list');
-      var rankList = byId('rank-list');
-      var heading = byId('result-heading');
-      var status = byId('search-status');
-      // 共通部品が読めない場合は検索語を計測へ渡さず、検索は続ける。
+      var input, searchUI, searchState = {rank:'idle',base:'loading',total:0,submitted:false};
       var analyticsTerm = window.STSearchAnalytics ? window.STSearchAnalytics.term : function () { return ''; };
-
       function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
       function stripControls(value) { return value.replace(/[\u0000-\u001f\u007f-\u009f]/g, ''); }
       function normalize(value) {
@@ -382,63 +353,14 @@
       var correctedSection = corrections.length === 1 ? corrections[0] : null;
       var arrivedSection = (exactSection || correctedSection || {}).section || '';
       var initialCard = (exactSection || {}).card || (correctedSection || {}).card;
-      if (initialCard) byId('card-' + initialCard).open = true;
+      var arrival=exactSection || correctedSection;
+      if (arrival) {
+        var target=Array.from(document.querySelectorAll('.site-tree a')).find(function(a){return a.getAttribute('href')===arrival.href;});
+        var branch=target && target.closest('li').querySelector(':scope > details');
+        while(branch) {branch.open=true;branch=branch.parentElement.closest('details');}
+      }
 
-      function validatedHref(value, section) {
-        if (typeof value !== 'string' || !/^(?:\/(?!\/)|https?:\/\/)/i.test(value) || /[\u0000-\u0020\u007f\\]/.test(value)) return null;
-        try {
-          var url = new URL(value, 'https://tk.st');
-          if (!/^https?:$/.test(url.protocol) || !['tk.st', 'www.tk.st'].includes(url.hostname) || url.port || url.username || url.password || url.search || url.hash) return null;
-          var decoded = safeDecode(url.pathname);
-          if (!decoded.startsWith('/' + section + '/') || /[\u0000-\u001f\u007f\\?#]/.test(decoded) || decoded.split('/').some(function (part) { return part === '.' || part === '..'; })) return null;
-          var parts = pathParts(decoded);
-          if (parts.length < 2) return null;
-          return url.pathname;
-        } catch (_) { return null; }
-      }
-      function adapt(data, section, kind, offset) {
-        var source = section === 'glitch' ? data && data.articles : data;
-        if (!Array.isArray(source)) throw new Error('Invalid list');
-        var seen = new Set();
-        return source.reduce(function (items, row, index) {
-          if (!row || typeof row !== 'object' || typeof row.title !== 'string' || !row.title.trim() || !/^[a-z0-9-]+$/i.test(String(row.id == null ? '' : row.id))) return items;
-          var href = section === 'glitch' ? '/glitch/' + row.id + '/' : validatedHref(row.url, section);
-          if (!href) return items;
-          var key = pathKey(pathParts(safeDecode(href)));
-          if (seen.has(key)) return items;
-          seen.add(key);
-          var title = row.title.trim();
-          var displayTitle = kind === 'tool' ? title.split(' - ')[0] : title;
-          var description = typeof row.description === 'string' ? row.description : (typeof row.excerpt === 'string' ? row.excerpt : '');
-          var short = typeof row.shortDescription === 'string' ? row.shortDescription : '';
-          var tags = Array.isArray(row.tags) ? row.tags.filter(function (tag) { return typeof tag === 'string'; }) : [];
-          if (typeof row.genre === 'string') tags = tags.concat(row.genre);
-          var item = { key: kind + ':' + row.id, kind: kind, title: displayTitle, description: short || description, href: href, section: section, order: offset + index, parts: pathParts(safeDecode(href)) };
-          item.titles = [normalize(displayTitle), normalize(title)];
-          item.tags = tags.map(normalize);
-          item.fields = item.titles.concat(item.tags, [normalize(description), normalize(short)]);
-          // URLの語との照合用。名前の途中の文字（nextgenのen等）には当てず、語単位で比べる。
-          item.words = new Set(item.titles.concat(item.tags).flatMap(function (field) { return field.split(/[^\p{L}\p{N}]+/u).concat(compact(field)); }).filter(Boolean));
-          items.push(item);
-          return items;
-        }, []);
-      }
-      function includesTerm(fields, term) { return fields.some(function (field) { return field.includes(term) || compact(field).includes(compact(term)); }); }
-      function tie(a, b) { return (b.section === arrivedSection ? 1 : 0) - (a.section === arrivedSection ? 1 : 0) || a.order - b.order; }
-      function searchItems(items, query) {
-        var normalized = normalize(query);
-        var terms = normalized.split(' ').filter(Boolean);
-        if (!terms.length) return [];
-        return items.reduce(function (matches, item) {
-          if (!terms.every(function (term) { return includesTerm(item.fields, term); })) return matches;
-          var rank = item.titles.some(function (title) { return compact(title) === compact(normalized); }) ? 0
-            : item.titles.some(function (title) { return compact(title).startsWith(compact(normalized)); }) ? 1
-            : terms.every(function (term) { return includesTerm(item.titles, term); }) ? 2
-            : terms.every(function (term) { return includesTerm(item.titles.concat(item.tags), term); }) ? 3 : 4;
-          matches.push({ item: item, rank: rank });
-          return matches;
-        }, []).sort(function (a, b) { return a.rank - b.rank || tie(a.item, b.item); }).map(function (match) { return match.item; });
-      }
+      function tie(a,b) { return (b.section===arrivedSection?1:0)-(a.section===arrivedSection?1:0) || a.order-b.order; }
       function suggestions(items, issue) {
         var candidates = [];
         function add(item, rank, distance, words) { candidates.push({ item: item, rank: rank, distance: distance || 0, words: words || 0 }); }
@@ -481,41 +403,15 @@
         li.appendChild(a);
         return li;
       }
-      function makeLink(item) { var link = document.createElement('a'); link.href = item.href; link.textContent = item.title; return link; }
-      function fillCard(section, items) {
-        var target = byId('list-' + section);
-        items.forEach(function (item) { var li = document.createElement('li'); li.appendChild(makeLink(item)); target.appendChild(li); });
-        var count = byId('count-' + section);
-        count.textContent = lang === 'ja' ? items.length + '件' : items.length + (section === 'glitch' ? ' articles' : section === 'game' ? ' games' : ' tools');
-        count.hidden = false;
-      }
-      var state = { jsonReady: false, candidatesReady: false, failures: 0, items: [], candidates: [], mode: 'suggestion', searchUsed: false, total: 0, searchedQuery: null };
       var composing = false;
-      var imeEnterHeld = false;
-      var inputTimer = null;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
-      // ①の件数だけを送る（いまの0件率を取るため）。入力が1.5秒止まり、一覧を読み終えていて失敗が無いときだけ。
-      // 検索語は伏せ字にして search_term で送る（PRD 8.3）。同じ入力を二度送らない。1ページ10回まで。
-      var keywordCount = { timer: null, last: null, sent: 0 };
-      function cancelKeywordCount() { clearTimeout(keywordCount.timer); keywordCount.timer = null; }
-      function scheduleKeywordCount(query, total) {
-        cancelKeywordCount();
-        // 変換中（未確定の文字）は送らない。確定後の描き直しで改めて数える
-        if (composing || !query || !state.jsonReady || state.failures || keywordCount.sent >= 10 || query === keywordCount.last) return;
-        keywordCount.timer = setTimeout(function () {
-          keywordCount.timer = null; keywordCount.last = query; keywordCount.sent++;
-          send('not_found_keyword_count', { count: Math.min(total, 6), search_term: analyticsTerm(query) });
-        }, 1500);
-      }
+      function currentQuery() { return input ? input.value.trim() : ''; }
+      function searched(query) { return searchState.submitted && searchState.query===query; }
       // 公開フラグ。URLなどから切り替えられない。停止はWorker側を先に行う。
       var AI_SEARCH_ENABLED = true;
       // ③を止めているときは、ダイアログ（検索欄の見出しの横からも開く）に③の送り先と上限の説明を出さない
       if (!AI_SEARCH_ENABLED) ['ai-info-text', 'ai-limit-text'].forEach(function (id) { byId(id).hidden = true; });
-      // ②（TypeSafe AI で並べ替える検索）の公開フラグ。止めるときは Worker の SITE_RANK_ENABLED を先に false にする
-      // （画面は disabled を受けていまの動きに戻る）。false なら②の欄と説明を出さず、いまの動き（①が0件で③）のまま
-      var RANK_ENABLED = true;
-      var rank = null;
-      function rankAvailable() { return !!rank && !rank.disabled; }
+      function rankAvailable() { return searchState.rank!=='disabled'; }
       var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
       var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
         : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
@@ -564,8 +460,8 @@
       }
       // ③の出し方（設計書 6.3）。②が使えるときは②の状態で決め、②の読み込み中と②を送る前は出さない
       function aiAllowed(total) {
-        if (!rankAvailable()) return state.jsonReady && state.failures === 0 && total === 0;
-        return ['results', 'no_results', 'failed', 'stale'].includes(rank.state);
+        if (!rankAvailable()) return searchState.base==='ready' && total===0;
+        return ['results', 'no_results', 'failed', 'stale'].includes(searchState.rank);
       }
       function syncAI(query, total) {
         var eligible = AI_SEARCH_ENABLED && searched(query) && !composing && aiAllowed(total);
@@ -587,7 +483,7 @@
         if (!ai.eligible || ai.controller || composing || currentQuery() !== ai.query) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
-        if (rank) rank.cancel();
+        if (searchUI) searchUI.cancel();
         var startedAt = Date.now();
         var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
         byId('ai-thinking').replaceChildren(); byId('ai-thinking').hidden = false;
@@ -646,10 +542,8 @@
       });
       byId('ai-cancel').addEventListener('click', function () { var query = ai.query; resetAI(); syncAI(query, 0); setAIStatus(aiText.cancelled); });
       function rankAfter() {
-        var settled = rankAvailable() ? rank.settled() : null;
-        if (!settled) return 'no_rank';
-        if (settled.status === 'results') return settled.complete ? 'rank_results' : 'rank_partial';
-        return settled.status === 'no_results' ? 'rank_none' : 'rank_failed';
+        if(searchState.rank==='results') return searchState.complete?'rank_results':'rank_partial';
+        return searchState.rank==='no_results'?'rank_none':searchState.rank==='failed'?'rank_failed':'no_rank';
       }
       function recordAIClick(event) {
         var a = event.target.closest('a[data-ai-target]');
@@ -658,244 +552,37 @@
         send('not_found_ai_click', values);
       }
       byId('ai-search').addEventListener('click', recordAIClick); byId('ai-search').addEventListener('auxclick', recordAIClick);
-      // 画面は3つの形をとる（Google などの検索欄と同じ）。
-      //   空の入力：404 ならではの「もしかして」をページに出す
-      //   入力中：キーワードに一致するページ（①）を検索欄の下のドロップダウンに出す。ページには結果を出さない
-      //   検索した後（Enter・虫眼鏡）：②・①・③・日刊ブリーフの順にページに出す。入力を変えたら入力中の形に戻る
-      var suggestList = byId('suggest-list');
-      var suggest = { open: false, active: -1 };
-      function currentQuery() { return input.value.slice(0, 200).trim(); }
-      function searched(query) { return !!query && state.searchedQuery === query; }
-      function setActive(index) {
-        var options = Array.from(suggestList.querySelectorAll('[role="option"]'));
-        suggest.active = options.length ? Math.max(-1, Math.min(options.length - 1, index)) : -1;
-        options.forEach(function (option, i) { option.setAttribute('aria-selected', i === suggest.active ? 'true' : 'false'); });
-        if (suggest.active >= 0) { input.setAttribute('aria-activedescendant', options[suggest.active].id); options[suggest.active].scrollIntoView({ block: 'nearest' }); }
-        else input.removeAttribute('aria-activedescendant');
-      }
-      function closeSuggest() {
-        suggest.open = false; suggestList.hidden = true; input.setAttribute('aria-expanded', 'false'); setActive(-1);
-      }
-      function renderSuggest(query, items, note) {
-        suggestList.replaceChildren(); suggest.active = -1;
-        items.forEach(function (item, index) {
-          var li = document.createElement('li'), a = document.createElement('a'), title = document.createElement('span');
-          li.className = 'suggest-option'; li.id = 'suggest-' + index; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
-          a.href = item.href; a.tabIndex = -1; a.dataset.position = index + 1;
-          title.className = 'result-title'; title.textContent = item.title; a.appendChild(title);
-          if (item.kind !== 'entry') { var kind = document.createElement('span'); kind.className = 'kind'; kind.textContent = text[item.kind]; a.appendChild(kind); }
-          li.appendChild(a); suggestList.appendChild(li);
-        });
-        if (note) { var p = document.createElement('li'); p.className = 'suggest-note'; p.setAttribute('role', 'presentation'); p.textContent = note; suggestList.appendChild(p); }
-        var show = suggest.open && !!query && !searched(query) && suggestList.children.length > 0;
-        suggestList.hidden = !show;
-        if (input.getAttribute('aria-expanded') !== String(show)) input.setAttribute('aria-expanded', String(show));
-        if (input.hasAttribute('aria-activedescendant')) input.removeAttribute('aria-activedescendant');
-      }
-      // 変換中（未確定の文字）も描く（候補は Google などと同じく未確定の文字で出す）。②・③と計測は確定まで動かさない
-      function linkKey(href) { return pathKey(pathParts(safeDecode(href))); }
-      function render() {
-        // 描き直しで消えるリンクにフォーカスがあれば、描いた後で同じ行き先のリンク（②へ移っていれば②）へ戻す。無ければ入力欄へ
-        var focusedKey = list.contains(document.activeElement) ? linkKey(document.activeElement.getAttribute('href') || '') : null;
-        list.replaceChildren();
-        var displayed = [];
-        var query = currentQuery();
-        var notices = [];
-        var total = 0;
-        var ranking = rankAvailable();
-        var done = searched(query);
-        var dropdownItems = [], suggestNote = '';
-        state.mode = !query ? 'suggestion' : 'search';
-        heading.hidden = true;
-        if (query) {
-          var shownQuery = Array.from(query);
-          var quoted = shownQuery.slice(0, 40).join('') + (shownQuery.length > 40 ? '…' : '');
-          byId('daily-query').textContent = lang === 'ja' ? '日刊ブリーフで「' + quoted + '」を探す：' : 'Search daily briefs for “' + quoted + '”: ';
-          dailyEntries.forEach(function (entry, i) {
-            var link = byId(i === 0 ? 'nitori-search' : 'retail-search');
-            link.textContent = entry.title + ' →';
-            link.href = entry.href + '#q=' + encodeURIComponent(query);
+      searchUI = STSearchUI.mount(byId('common-search'), STSearchData.createAdapter('site', {
+        locale:lang, compare:function(a,b) { return ((b.href.split('/')[1]===arrivedSection)?1:0)-((a.href.split('/')[1]===arrivedSection)?1:0); },
+        onConditions:function(condition) {
+          resetAI();
+          byId('path-suggestions').hidden=!!condition.query || !byId('path-suggestion-list').children.length;
+          byId('daily-search').hidden=!condition.query;
+          byId('daily-query').textContent=condition.query;
+          ['nitori','retail'].forEach(function(scope) {
+            var link=byId(scope+'-search'), entry=dailyEntries.find(function(e) {return e.key==='entry:'+scope;});
+            link.href=entry.href+'#q='+encodeURIComponent(condition.query);link.textContent=entry.title;
           });
-          if (!state.jsonReady) { suggestNote = text.searchLoading; notices.push(text.searchLoading); }
-          else if (state.failures === 3) { suggestNote = text.failed; notices.push(text.failed); }
-          else {
-            var matches = searchItems(state.items, query);
-            total = matches.length;
-            dropdownItems = matches.slice(0, 6);
-            if (!total) suggestNote = ranking ? text.rankHint : text.noResults;
-            if (done) {
-              // ②に出たページは①から除く。件数の表示と計測は除く前の件数のまま（設計書 6.1）
-              var ranked = ranking ? new Set(rank.hrefs().map(linkKey)) : null;
-              displayed = (ranked ? matches.filter(function (item) { return !ranked.has(pathKey(item.parts)); }) : matches).slice(0, 5);
-              heading.textContent = ranking ? text.keywordResults : text.results;
-              heading.hidden = ranking && !displayed.length;
-              notices.push(total ? (lang === 'ja' ? total + '件見つかりました' : total + (total === 1 ? ' result found' : ' results found'))
-                : ranking ? text.keywordNone : text.noResults);
-              if (total > 5) notices.push(text.limit);
-            } else notices.push(text.suggestCount(total));
-            if (!state.searchUsed && !composing) { state.searchUsed = true; send('not_found_search_used', { used: true }); }
-          }
-        } else if (!state.candidatesReady) notices.push(text.candidatesLoading);
-        else {
-          displayed = state.candidates;
-          if (displayed.length) { heading.textContent = text.suggestions; heading.hidden = false; }
-        }
-        if (state.jsonReady && state.failures && (query || state.candidatesReady) && (state.failures < 3 || !query)) notices.push(state.failures === 3 ? text.listsFailed : text.partial);
-        displayed.forEach(function (item, index) {
-          var li = resultItem(item.href, item.title, item.description, item.kind !== 'entry' ? text[item.kind] : '');
-          li.firstChild.dataset.position = index + 1;
-          list.appendChild(li);
-        });
-        renderSuggest(query, done ? [] : dropdownItems, done ? '' : suggestNote);
-        // 入力中の件数は読み上げだけ（見た目はドロップダウン）
-        status.textContent = notices.join(' ');
-        status.classList.toggle('visually-hidden', !!query && !done);
-        byId('results').hidden = !displayed.length && heading.hidden;
-        byId('rank-area').hidden = !(ranking && done);
-        byId('daily-search').hidden = !done;
-        state.total = total;
-        byId('rank-info-text').hidden = !ranking;
-        byId('search-submit').classList.toggle('is-suggested', ranking && !!query && !done && state.jsonReady && state.failures === 0 && total === 0);
-        syncAI(query, total);
-        scheduleKeywordCount(query, total);
-        if (focusedKey !== null) {
-          var same = function (container) { return !container.closest('[hidden]') && Array.from(container.querySelectorAll('a')).find(function (a) { return linkKey(a.getAttribute('href')) === focusedKey; }); };
-          (same(list) || same(rankList) || input).focus({ preventScroll: true });
-        }
+        },
+        onState:function(value) { searchState=value;composing=value.composing;syncAI(value.query,value.total); },
+        onData:function(rows) {
+          var items=rows.map(function(row,order) {var parts=pathParts(safeDecode(row.href));return {key:row.id,kind:row.kind,title:lang==='en'?(row.title_en || row.title):row.title,description:row.description,href:row.href,parts:parts,section:parts[0] || '',order:order,words:new Set(normalize(row.title).split(/[^\p{L}\p{N}]+/u).filter(Boolean))};});
+          pathRows=items;renderPathSuggestions();
+        },
+        track:function(event,values) {if(event==='rank_run') values=Object.assign({},values,{search_term:analyticsTerm(currentQuery())});send('not_found_'+event,values);}
+      }));
+      input=byId('common-search').querySelector('input[type="search"]');
+      byId('search').hidden=false;
+      var pathRows=[], verifiedIssue=null;
+      function renderPathSuggestions() {
+        var list=byId('path-suggestion-list');list.replaceChildren();
+        suggestions(pathRows,verifiedIssue).forEach(function(item) {list.appendChild(resultItem(item.href,item.title,item.description,''));});
+        byId('path-suggestions').hidden=!!currentQuery() || !list.children.length;
       }
-      function flush() { clearTimeout(inputTimer); inputTimer = null; render(); }
-      function schedule() { clearTimeout(inputTimer); inputTimer = setTimeout(flush, 100); }
-      function renderWhenReady() { if (inputTimer === null) render(); }
-      // 検索（Enter・虫眼鏡）。①の待ちを済ませてから②を送る（keyword_count をいまの入力の件数にするため。設計書 6.2）
-      function runSearch() {
-        var query = currentQuery();
-        if (!query || composing || imeEnterHeld) return;
-        state.searchedQuery = query; closeSuggest(); flush();
-        if (rankAvailable()) rank.run();
-      }
-      byId('search-submit').setAttribute('aria-label', text.search); byId('search-submit').title = text.search;
-      byId('search-form').addEventListener('submit', function (event) { event.preventDefault(); runSearch(); });
-      // 入力が変わったら入力中の形に戻す。前後の空白だけの違いなら、検索した後の形のまま
-      function changed() { cancelKeywordCount(); suggest.open = true; if (state.searchedQuery !== currentQuery()) { resetAI(); state.searchedQuery = null; } }
-      input.addEventListener('compositionstart', function () { changed(); composing = true; if (rank) rank.invalidate(); });
-      input.addEventListener('compositionend', function () { composing = false; suggest.open = true; schedule(); if (rank) rank.invalidate(); });
-      input.addEventListener('input', function () { changed(); schedule(); if (rank) rank.invalidate(); });
-      input.addEventListener('focus', function () { if (currentQuery() && !searched(currentQuery())) { suggest.open = true; render(); } });
-      // ドロップダウンの外を押したら閉じる。候補を押したときは、入力欄のフォーカスを外さずにリンクへ移る
-      suggestList.addEventListener('mousedown', function (event) { event.preventDefault(); });
-      document.addEventListener('mousedown', function (event) { if (!byId('search-box').contains(event.target)) closeSuggest(); });
-      input.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== input) closeSuggest(); }, 0); });
-      function enterKey(event) { return event.key === 'Enter' || event.code === 'Enter' || event.code === 'NumpadEnter'; }
-      // 確定Enterはキーを離すまで抑止する。確定後の矢印・Escには適用しない。
-      // keyCode 229も見ることで、isComposingが先にfalseになる環境を扱う。
-      // 押し続けの Enter（自動の繰り返し）は、検索欄の中ではフォームの暗黙の送信とボタンの押下を止める（失敗の後の送り直しを重ねない）。
-      // 変換中のキーには触れない（IME の確定を妨げない）。
-      document.addEventListener('keydown', function (event) {
-        if (!enterKey(event)) return;
-        if (composing || event.isComposing || event.keyCode === 229) imeEnterHeld = true;
-        else if (event.repeat && byId('search-form').contains(event.target)) event.preventDefault();
-      }, true);
-      document.addEventListener('keyup', function (event) { if (enterKey(event)) imeEnterHeld = false; }, true);
-      window.addEventListener('blur', function () { imeEnterHeld = false; });
-      function imeEvent(event) {
-        return composing || event.isComposing || event.keyCode === 229 || (enterKey(event) && (imeEnterHeld || event.repeat));
-      }
-      input.addEventListener('keydown', function (event) {
-        if (imeEvent(event)) return;
-        var open = !suggestList.hidden;
-        if (event.key === 'Escape' && open) { event.preventDefault(); closeSuggest(); return; }
-        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter') return;
-        var query = currentQuery();
-        // 入力中：↑↓で候補を選び、Enter で選んだ候補へ移る。選んでいなければ検索する
-        if (event.key !== 'Enter' && query && !searched(query)) {
-          event.preventDefault();
-          if (!open) { suggest.open = true; flush(); setActive(event.key === 'ArrowDown' ? 0 : -1); return; }
-          setActive(suggest.active + (event.key === 'ArrowDown' ? 1 : -1));
-          return;
-        }
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          var chosen = open && suggest.active >= 0 && suggestList.querySelectorAll('[role="option"] a')[suggest.active];
-          if (chosen) { chosen.click(); return; }
-          if (query) { runSearch(); return; }
-          var firstCandidate = list.querySelector('a');
-          if (firstCandidate) firstCandidate.click();
-          return;
-        }
-        // 検索した後・空の入力：↓で結果（②、続けて①）へ移る
-        if (event.key === 'ArrowDown') {
-          event.preventDefault();
-          var first = (rankAvailable() && rankList.querySelector('a')) || list.querySelector('a');
-          if (first) first.focus();
-        }
-      });
-      // ①・②の一覧のキー操作（↑↓で移動、先頭で↑・Esc で入力欄へ）。②の末尾で↓なら①の先頭へ（設計書 6.2）
-      function bindListKeys(container, next) {
-        container.addEventListener('keydown', function (event) {
-          if (imeEvent(event)) { if (event.key === 'Enter') event.preventDefault(); return; }
-          var links = Array.from(container.querySelectorAll('a'));
-          var index = links.indexOf(event.target);
-          if (index < 0) return;
-          var after = next && event.key === 'ArrowDown' && index === links.length - 1 && next.querySelector('a');
-          if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) { event.preventDefault(); input.focus({ preventScroll: true }); }
-          else if (after) { event.preventDefault(); after.focus(); }
-          else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); links[Math.max(0, Math.min(links.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))].focus(); }
-        });
-      }
-      bindListKeys(rankList, list);
-      bindListKeys(list, null);
-      function recordClick(event) {
-        var link = event.target.closest('a[data-position]');
-        if (!link || (event.type === 'auxclick' && event.button !== 1)) return;
-        send('not_found_result_click', { mode: suggestList.contains(link) ? 'suggest' : state.mode, position: Number(link.dataset.position) });
-      }
-      [list, suggestList].forEach(function (el) { el.addEventListener('click', recordClick); el.addEventListener('auxclick', recordClick); });
-      if (RANK_ENABLED && window.STSiteSearch) {
-        rank = STSiteSearch.rank({
-          scope: 'site',
-          // Worker が落とす文字（制御文字と < >。site-rank.js の rankQuery）だけの入力は送らない（400 で失敗表示になるため）
-          condition: function () { var q = currentQuery(); return !composing && q.replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').trim() ? { query: q, locale: lang } : null; },
-          keywordState: function () { return !state.jsonReady ? 'loading' : state.failures > 0 ? 'failed' : 'known'; },
-          keywordCount: function () { return state.jsonReady && state.failures === 0 ? state.total : null; },
-          elements: { section: byId('rank-results'), heading: byId('rank-heading'), list: rankList, status: byId('rank-status'), note: byId('rank-note') },
-          labels: {
-            kinds: { page: text.page, tool: text.tool, game: text.game, article: text.article },
-            texts: lang === 'ja'
-              ? { heading: '検索結果', loading: '意味の近いページを探しています…', noResults: '意味の近いページは見つかりませんでした。', partial: '一部の候補を判定できませんでした。',
-                  failed: 'いまは検索結果を出せません。キーワードの一致と Shinya Takeda AI は使えます。', rateLimited: '今日の検索の上限に達しました。キーワードの一致は使えます。',
-                  stale: '', count: function (n) { return n + '件のページが見つかりました。'; } }
-              : { heading: 'Results', loading: 'Looking for related pages…', noResults: 'No related pages were found.', partial: 'Some pages could not be checked.',
-                  failed: 'Results are not available right now. Keyword matches and Shinya Takeda AI still work.', rateLimited: "You have reached today's search limit. Keyword matches still work.",
-                  stale: '', count: function (n) { return n + (n === 1 ? ' related page found.' : ' related pages found.'); } }
-          },
-          onRun: function () { resetAI(); },
-          // 状態が変わったら①（重複の除き）と③の出し方を描き直す
-          onState: function () { renderWhenReady(); },
-          // 部品は検索語を渡さないので、検索した操作のイベントにだけページが足す（設計書 6.5）
-          track: function (event, values) {
-            if (event === 'rank_run') values = Object.assign({}, values, { search_term: analyticsTerm(currentQuery()) });
-            send('not_found_' + event, values);
-          }
-        });
-      }
-      byId('search').hidden = false;
-      render();
-      // モバイルや履歴復帰ではフォーカスを奪わない。初回のPCだけ、スクロールなしで入力へ。
       try {
-        var navigation = performance.getEntriesByType('navigation')[0];
-        if ((!navigation || navigation.type !== 'back_forward') && matchMedia('(hover: hover) and (pointer: fine)').matches && document.activeElement === document.body) input.focus({ preventScroll: true });
-      } catch (_) { /* 自動フォーカスなしでも操作できる */ }
-
-      // 全取得は同じ5秒の期限。遅い応答が来ても、確定した候補に差し込まない。
-      var controller = new AbortController();
-      var deadline;
-      var expired = new Promise(function (resolve) { deadline = setTimeout(function () { controller.abort(); resolve(); }, 5000); });
-      function request(path, options, parse) {
-        return Promise.race([
-          (async function () { var response = await fetch(path, Object.assign({ signal: controller.signal }, options)); if (!response.ok) throw new Error('HTTP ' + response.status); return parse(response); })(),
-          expired.then(function () { throw new Error('Timeout'); })
-        ]);
-      }
+        var navigation=performance.getEntriesByType('navigation')[0];
+        if((!navigation || navigation.type!=='back_forward') && matchMedia('(hover: hover) and (pointer: fine)').matches && document.activeElement===document.body) input.focus({preventScroll:true});
+      } catch(_) {}
       function issueTarget() {
         if (!removedEnding || incoming.length !== 3 || !/^\d{8}$/.test(incoming[2])) return null;
         var entry = dailyEntries.find(function (candidate) { return candidate.parts[0] === incoming[0] && candidate.parts[1] === incoming[1]; });
@@ -907,25 +594,13 @@
         if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
         return { key: 'daily:' + entry.key + ':' + value, kind: 'daily', href: entry.href + value + '/', title: entry.title + ' ' + (lang === 'ja' ? year + '年' + month + '月' + day + '日号' : value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6, 8)), description: '', section: 'job', order: -1 };
       }
-      var issue = issueTarget();
-      var issueRequest = issue ? request(issue.href, { method: 'HEAD', redirect: 'error' }, function (response) { return response.status === 200 && (response.headers.get('Content-Type') || '').trim().toLowerCase().startsWith('text/html') ? issue : null; }).catch(function () { return null; }) : Promise.resolve(null);
-      var sources = [ ['tools', 'tool', '/data/tools.json'], ['game', 'game', '/data/game.json'], ['glitch', 'article', '/data/glitch.json'] ];
-      var jsonRequests = sources.map(function (source, index) {
-        return request(source[2], {}, async function (response) { return adapt(await response.json(), source[0], source[1], index * 1000000); }).then(function (items) {
-          fillCard(source[0], items); return items;
-        }).catch(function () { state.failures++; return []; });
-      });
-      var jsonRequest = Promise.all(jsonRequests).then(function (groups) {
-        state.items = groups.flat();
-        state.jsonReady = true;
-        renderWhenReady();
-      });
-      Promise.all([jsonRequest, issueRequest]).then(function (results) {
-        clearTimeout(deadline);
-        state.candidates = suggestions(state.items, results[1]);
-        state.candidatesReady = true;
-        if (!input.value.trim()) renderWhenReady();
-      });
+      var issue=issueTarget();
+      if(issue) {
+        var controller=new AbortController(), deadline=setTimeout(function(){controller.abort();},5000);
+        fetch(issue.href,{method:'HEAD',redirect:'error',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal}).then(function(response) {
+          if(response.status===200 && (response.headers.get('Content-Type') || '').toLowerCase().startsWith('text/html')) {verifiedIssue=issue;renderPathSuggestions();}
+        }).catch(function(){}).finally(function(){clearTimeout(deadline);});
+      }
     })();
   </script>
 </body>

@@ -1,11 +1,14 @@
 import { SITE_RANK, SITE_SEARCH } from './personas.js';
-import { searchDeadline, searchFailure, snapshotHash } from './site-search.js';
+import { fetchSearchSource, getSiteSnapshot, searchDeadline, searchFailure, sha256, snapshotHash } from './site-search.js';
+import { toRankCandidate } from './site-rank.js';
 
 // 入力から URL を作らない。scope と媒体のディレクトリの対応はここだけに持つ。
 const SEARCH_SCOPES = Object.freeze({
   site: Object.freeze({}),
   nitori: Object.freeze({ media: 'nitoridaily' }),
   retail: Object.freeze({ media: 'retailtechdaily' }),
+  tools: Object.freeze({ kind: 'tool', list: 'tools', filter: 'category' }),
+  game: Object.freeze({ kind: 'game', list: 'game', filter: 'genre' }),
 });
 const dailySnapshots = new Map();
 const scopeObject = value => {
@@ -48,17 +51,19 @@ export function rankScopeEnabled(env, scope) {
 }
 
 export function normalizeScopeFilters(scope, value) {
-  const { media } = searchScope(scope);
+  const { media, filter } = searchScope(scope);
   if (value === undefined) return {};
-  if (!media || !scopeObject(value) || Object.keys(value).some(k => !['category', 'region', 'month'].includes(k))) throw searchFailure('invalid_request');
+  if (!media && !filter) throw searchFailure('invalid_request');
+  const keys=media?['category','region','month']:filter?[filter]:[];
+  if (!scopeObject(value) || Object.keys(value).some(k => !keys.includes(k))) throw searchFailure('invalid_request');
   const filters = {};
   // 省略・空文字を除き、必ずこのキー順でキャッシュに渡す。
-  for (const key of ['category', 'region', 'month']) {
+  for (const key of keys) {
     if (!Object.hasOwn(value, key)) continue;
     const v = value[key];
     if (typeof v !== 'string') throw searchFailure('invalid_request');
     if (!v) continue;
-    if ((key === 'category' && !scopeCategory(v))
+    if ((['category','genre'].includes(key) && !scopeCategory(v))
       || (key === 'region' && !['JP', 'GLOBAL'].includes(v)) || (key === 'month' && !scopeMonth(v))) throw searchFailure('invalid_request');
     filters[key] = v;
   }
@@ -68,7 +73,7 @@ export function normalizeScopeFilters(scope, value) {
 export function scopeGeneration(scope, value) {
   const { media } = searchScope(scope);
   if (value === undefined) return undefined;
-  if (!media || !scopeHex(value)) throw searchFailure('invalid_request');
+  if (media ? !scopeHex(value) : typeof value!=='string' || !/^[a-f0-9]{64}$/.test(value)) throw searchFailure('invalid_request');
   return value;
 }
 
@@ -173,10 +178,19 @@ async function dailyText(url, signal, budget) {
   }
 }
 
-async function fetchDailySnapshot(scope, signal) {
-  return searchDeadline(SITE_SEARCH.list_timeout_ms, async s => {
+async function fetchDailySnapshot(scope, signal, shared = false, lease = null) {
+  const owner=new AbortController(),stop=()=>{if(!lease?.shared) owner.abort();};
+  if(signal?.aborted) stop();else signal?.addEventListener('abort',stop,{once:true});
+  try {return await searchDeadline(SITE_SEARCH.list_timeout_ms, async s => {
     const { media } = searchScope(scope), base = `https://tk.st/job/${media}/`, budget = { bytes: 0 };
-    const files = [['search-index.json', await dailyText(base + 'search-index.json', s, budget)]];
+    const text = async url => {
+      if (!shared) return dailyText(url,s,budget);
+      const value=await fetchSearchSource(url,{signal:s,refresh:true,maxBytes:SITE_RANK.daily_index_max_bytes});
+      budget.bytes+=new TextEncoder().encode(value).byteLength;
+      if(budget.bytes>SITE_RANK.daily_index_max_bytes) throw searchFailure('index_unavailable');
+      return value;
+    };
+    const files = [['search-index.json', await text(base + 'search-index.json')]];
     const head = dailyHead(scope, files[0][1]);
     let next = 1;
     await Promise.all(Array.from({ length: Math.min(SITE_RANK.daily_index_parallel, Math.max(0, head.years.length - 1)) }, async () => {
@@ -185,14 +199,14 @@ async function fetchDailySnapshot(scope, signal) {
         const i = next++;
         if (i >= head.years.length) return;
         const filename = `search-index-${head.years[i]}.json`;
-        files[i] = [filename, await dailyText(base + filename, s, budget)];
+        files[i] = [filename, await text(base + filename)];
       }
     }));
     const snapshot = makeDailySnapshot(scope, files);
     await snapshotHash(snapshot);
     if (s.aborted) throw searchFailure('cancelled');
     return snapshot;
-  }, signal);
+  }, owner.signal);} finally {signal?.removeEventListener('abort',stop);}
 }
 
 // 更新は要求の期限・切断に従う。全ファイルとハッシュがそろうまで共有状態を差し替えない。
@@ -218,7 +232,8 @@ export async function getDailySnapshot(scope, { filters = {}, generation, signal
   state.retryAt = now + SITE_SEARCH.list_retry_ms;
   let snapshot;
   try {
-    snapshot = await fetchDailySnapshot(scope, signal);
+    state.lease={shared:false};state.pending=fetchDailySnapshot(scope, signal, false, state.lease);
+    snapshot = await state.pending;
     if (signal?.aborted) throw searchFailure('cancelled');
     state.snapshot = snapshot; state.fetchedAt = Date.now();
   } catch (e) {
@@ -231,7 +246,86 @@ export async function getDailySnapshot(scope, { filters = {}, generation, signal
     if (forced) throw searchFailure('index_updating');
     if (state.snapshot && Date.now() - state.fetchedAt <= SITE_SEARCH.list_max_age_ms) return state.snapshot;
     throw searchFailure('index_unavailable');
-  } finally { state.refreshing = false; }
+  } finally { state.refreshing = false; state.pending = null; }
   if (dailyUnknownFilter(snapshot, filters)) throw searchFailure('invalid_request');
   return snapshot;
+}
+
+const listSnapshots=new Map(), rankSnapshotUpdates=new Map();
+const scopeCompact=(value,limit)=>typeof value==='string'?Array.from(value.replace(/[\u0000-\u001f\u007f-\u009f]/g,' ').replace(/\s+/g,' ').trim()).slice(0,limit).join(''):'';
+export function makeListSnapshot(scope,text,publication) {
+  const spec=searchScope(scope);
+  if(!spec.list || !publication?.rankReady) throw searchFailure('index_updating');
+  let list;try {list=JSON.parse(text);} catch(_) {throw searchFailure('index_unavailable');}
+  if(!Array.isArray(list) || list.length>10000 || new TextEncoder().encode(text).byteLength>2*1024*1024) throw searchFailure('index_unavailable');
+  const byUrl=new Map(publication.raw.map(p=>[p.url,p])), ids=new Set(), urls=new Set(), raw=[];
+  for(const row of list) {
+    if(!row || !((typeof row.id==='string' && !!row.id) || Number.isSafeInteger(row.id)) || typeof row.title!=='string' || !row.title.trim()
+      || typeof row.url!=='string' || !/^(?:https:\/\/tk\.st)?\/(?!\/)/.test(row.url) || /[\u0000- \u007f\\?#]/.test(row.url)) throw searchFailure('index_unavailable');
+    let link,decoded;try {link=new URL(row.url,'https://tk.st');decoded=decodeURIComponent(link.pathname);} catch(_) {throw searchFailure('index_unavailable');}
+    const url=row.url.replace(/^https:\/\/tk\.st/,'');
+    if(link.origin!=='https://tk.st' || link.pathname!==url || !url.startsWith(`/${spec.list}/`)
+      || /[\u0000- \u007f\\?#]/.test(decoded) || decoded.split('/').some(p=>p==='.' || p==='..')) throw searchFailure('index_unavailable');
+    const id=spec.kind+':'+row.id;
+    if(ids.has(id) || urls.has(url)) throw searchFailure('index_unavailable');ids.add(id);urls.add(url);
+    const page=byUrl.get(url);
+    if(!page) continue; // noindex・転送・別canonical・欠落は公開索引から除かれている。
+    if(page.id!==id || page.kind!==spec.kind) throw searchFailure('index_updating');
+    const own={kind:spec.kind,rank_title:scopeCompact(row.title,1000000),description:scopeCompact(row.shortDescription || row.description || '',320)};
+    if(spec.kind==='tool') {
+      if(!Array.isArray(row.tags) || row.tags.some(t=>typeof t!=='string')) throw searchFailure('index_unavailable');
+      own.tags=row.tags.map(t=>scopeCompact(t,1000000)).filter(Boolean);
+      const category=scopeCompact(row.category,1000000);own.category=category.slice(0,1).toUpperCase()+category.slice(1);
+    } else own.genre=scopeCompact(row.genre,1000000);
+    if(JSON.stringify(toRankCandidate(own))!==JSON.stringify(toRankCandidate(page))) throw searchFailure('index_updating');
+    raw.push(page);
+  }
+  return {scope,raw,ja:raw,en:raw,rankReady:true,text,publicationText:publication.text};
+}
+export function filterRankItems(snapshot,scope,filters={}) {
+  if(isDailyScope(scope)) return filterDailyItems(snapshot,filters);
+  const key=searchScope(scope).filter;
+  return key && filters[key]?snapshot.raw.filter(p=>p[key]===filters[key]):snapshot.raw;
+}
+
+// 新入口専用の世代guard。旧入口の世代不一致でも旧日刊を返す契約は変えない。
+// 更新Promiseはscope単位、取得PromiseはfetchSearchSourceでソース単位に共有する。
+export async function getRankSnapshot(scope,{ctx,filters={},generation,signal}={}) {
+  if(signal?.aborted) throw searchFailure('cancelled');
+  const spec=searchScope(scope);
+  const current=()=>scope==='site'?null:isDailyScope(scope)?dailySnapshots.get(scope)?.snapshot:listSnapshots.get(scope)?.snapshot;
+  let snapshot;
+  try {snapshot=scope==='site'?await getSiteSnapshot(ctx,signal):current();} catch(_) {snapshot=null;}
+  const version=async value=>value?(isDailyScope(scope)?value.generation:await snapshotHash(value)):null;
+  const matches=async value=>!!value && value.rankReady!==false && (!generation || generation===await version(value));
+  const fresh=scope==='site' || Date.now()-(isDailyScope(scope)?dailySnapshots.get(scope)?.fetchedAt:listSnapshots.get(scope)?.at || 0)<=SITE_SEARCH.list_ttl_ms;
+  if(fresh && !rankSnapshotUpdates.get(scope)?.blocked && await matches(snapshot)) return {snapshot,generation:await version(snapshot),updating:false};
+  if(!rankSnapshotUpdates.has(scope)) rankSnapshotUpdates.set(scope,{pending:null,retryAt:0,blocked:false});
+  const update=rankSnapshotUpdates.get(scope);
+  if(!update.pending && Date.now()>=update.retryAt) {
+    update.retryAt=Date.now()+SITE_SEARCH.list_retry_ms;
+    update.pending=(async()=>{
+      if(scope==='site') return getSiteSnapshot(ctx,undefined,{refresh:true});
+      if(spec.media) {
+        const state=dailySnapshots.get(scope);
+        let next;
+        if(state?.refreshing && state.pending) {if(state.lease) state.lease.shared=true;next=await state.pending;}
+        else next=await fetchDailySnapshot(scope,undefined,true);
+        if(!dailySnapshots.has(scope)) dailySnapshots.set(scope,{snapshot:null,fetchedAt:0,retryAt:0,refreshing:false});
+        const target=dailySnapshots.get(scope);target.snapshot=next;target.fetchedAt=Date.now();return next;
+      }
+      const [text,publication]=await Promise.all([
+        fetchSearchSource(`https://tk.st/data/${spec.list}.json`,{refresh:true,maxBytes:2*1024*1024}),
+        getSiteSnapshot(ctx,undefined,{refresh:true})]);
+      const next=makeListSnapshot(scope,text,publication);await snapshotHash(next);
+      listSnapshots.set(scope,{snapshot:next,at:Date.now()});return next;
+    })().then(next=>{update.blocked=false;return next;},error=>{update.blocked=true;throw error;}).finally(()=>{update.pending=null;});
+    update.pending.catch(()=>{});
+  }
+  if(update.pending) {
+    const pending=update.pending;
+    try {snapshot=await searchDeadline(SITE_SEARCH.list_timeout_ms,()=>pending,signal);} catch(_) {}
+  }
+  if(signal?.aborted) throw searchFailure('cancelled');
+  return {snapshot:snapshot || current() || null,generation:await version(snapshot || current()),updating:update.blocked || !(await matches(snapshot || current()))};
 }

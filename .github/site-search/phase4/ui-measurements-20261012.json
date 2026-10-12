@@ -1,0 +1,7470 @@
+{
+  "started": "2026-10-11T23:13:17.664Z",
+  "cpuThrottle": 4,
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "includes": "共通UI input→6候補のDOM/layout。paint・実機IMEは含まない",
+  "files": {
+    "assets/japanese-search.js": "d1369e4b16fb523337b9418c04a76dda262765f72c8765de54029005672119b3",
+    "assets/site-search.js": "b9bb29c6c643ac60197606f9388db74568b20fde4e91691f06169aaadb60773a",
+    "assets/search-ui.js": "1e4278952c75e1c2a5e3c52868882cf768f4128f977bcdbb11ccef6baf8c3d1b",
+    "assets/search-ui.css": "57e320cd6b1ae671943f30c1f8290e9010e4418bf956ae88937185e4f2fb38a8"
+  },
+  "cases": [
+    {
+      "name": "1000-shared",
+      "fixtureHash": "6b4f266627d0cb69d83910fa82178bbbb150cee51d3f0b88c0e58371bfc1710c",
+      "prepareMs": 1889.8000000044703,
+      "conditionPreserved": true,
+      "state": {
+        "base": "ready",
+        "readings": "ready",
+        "rank": "idle",
+        "total": 599,
+        "recoveryAttempted": false,
+        "dataRevision": 1
+      },
+      "heartbeat": {
+        "samples": 65,
+        "maxGapMs": 113.09999999403954
+      },
+      "prepareLongTasks": [
+        {
+          "start": 116.60000000149012,
+          "ms": 96
+        },
+        {
+          "start": 1003.3999999985099,
+          "ms": 55
+        }
+      ],
+      "runs": [
+        {
+          "first20p95": 42.5,
+          "first20Pass": true,
+          "p50": 4.5,
+          "p95": 21.5,
+          "max": 45.899999998509884,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 26.200000002980232,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 42.5,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 45.899999998509884,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 12.300000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 21.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 6.699999995529652,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 3.6999999955296516,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.699999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 24.799999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 8.700000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 29,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 7.799999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 19.5,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 21.30000000447035,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 10.100000001490116,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.8000000044703484,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.2000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.1999999955296516,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.2000000029802322,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 3.8000000044703484,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.7999999970197678,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.8000000044703484,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.2999999970197678,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.8000000044703484,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.2999999970197678,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.8000000044703484,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.5999999940395355,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        },
+        {
+          "first20p95": 5.399999998509884,
+          "first20Pass": true,
+          "p50": 4.399999998509884,
+          "p95": 5.399999998509884,
+          "max": 5.699999995529652,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.5,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.0999999940395355,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.699999995529652,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.7999999970197678,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.5999999940395355,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6999999955296516,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.2000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.8000000044703484,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.2000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.5999999940395355,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6999999955296516,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.4000000059604645,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        },
+        {
+          "first20p95": 6.399999998509884,
+          "first20Pass": true,
+          "p50": 4.399999998509884,
+          "p95": 6.300000004470348,
+          "max": 10,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2.100000001490116,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 6.600000001490116,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 3.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 3,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.5,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.5,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.9000000059604645,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.7000000029802322,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.5,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.6999999955296516,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 10,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 6.300000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 3,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.2999999970197678,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 6.800000004470348,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.399999998509884,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.2000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.0999999940395355,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.5,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 623
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 2.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 990
+            },
+            {
+              "query": "にと",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1000-distinct",
+      "fixtureHash": "9061dff18534bb80ee79f139991d08da8fd12ddd5f5681a4b688009b885c8273",
+      "prepareMs": 1841.6999999955297,
+      "conditionPreserved": true,
+      "state": {
+        "base": "ready",
+        "readings": "ready",
+        "rank": "idle",
+        "total": 599,
+        "recoveryAttempted": false,
+        "dataRevision": 1
+      },
+      "heartbeat": {
+        "samples": 66,
+        "maxGapMs": 108.19999999552965
+      },
+      "prepareLongTasks": [
+        {
+          "start": 112.69999999552965,
+          "ms": 92
+        },
+        {
+          "start": 954.8999999985099,
+          "ms": 58
+        }
+      ],
+      "runs": [
+        {
+          "first20p95": 47.20000000298023,
+          "first20Pass": true,
+          "p50": 4.699999995529652,
+          "p95": 23.5,
+          "max": 48.099999994039536,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 48.099999994039536,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 28,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 47.20000000298023,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 6.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 7,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 12.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2.2999999970197678,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 28.100000001490116,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 9.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 23.5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 7,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 8.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 24,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 22.899999998509884,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 9.399999998509884,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 12.699999995529652,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.8999999985098839,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.5999999940395355,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.7000000029802322,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.5999999940395355,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.7000000029802322,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2.1999999955296516,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.8000000044703484,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.0999999940395355,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.7999999970197678,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.0999999940395355,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        },
+        {
+          "first20p95": 5.699999995529652,
+          "first20Pass": true,
+          "p50": 4.700000002980232,
+          "p95": 5.799999997019768,
+          "max": 6.799999997019768,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 3.600000001490116,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.8000000044703484,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.699999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.4000000059604645,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5.899999998509884,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.6999999955296516,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.7999999970197678,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.8000000044703484,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.7999999970197678,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 6,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 3.7999999970197678,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.3999999985098839,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6999999955296516,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 3.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 6.799999997019768,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.799999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        },
+        {
+          "first20p95": 5.699999995529652,
+          "first20Pass": true,
+          "p50": 4.799999997019768,
+          "p95": 6.200000002980232,
+          "max": 6.799999997019768,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 3.9000000059604645,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.5999999940395355,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.200000002980232,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.7000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5.699999995529652,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 6.200000002980232,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 6.300000004470348,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 6.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 3.2000000029802322,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 5.699999995529652,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.4000000059604645,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5.199999995529652,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.199999995529652,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.5,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.899999998509884,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 1.6000000014901161,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.300000004470348,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.5999999940395355,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 599
+            },
+            {
+              "query": "n",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 992
+            },
+            {
+              "query": "ｋ",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "にｔ",
+              "ms": 6,
+              "candidates": 6,
+              "total": 624
+            },
+            {
+              "query": "かでｎ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "ニトリ",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 569
+            },
+            {
+              "query": "家電",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 51
+            },
+            {
+              "query": "収納",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "shuunou",
+              "ms": 5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "が",
+              "ms": 3.899999998509884,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "が",
+              "ms": 2,
+              "candidates": 6,
+              "total": 986
+            },
+            {
+              "query": "new",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 20
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 99
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 5,
+              "candidates": 6,
+              "total": 69
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 4,
+              "candidates": 6,
+              "total": 1000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 2.7999999970197678,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 21
+            },
+            {
+              "query": "コーヒー",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 7
+            },
+            {
+              "query": "ni",
+              "ms": 4.100000001490116,
+              "candidates": 6,
+              "total": 800
+            },
+            {
+              "query": "ka",
+              "ms": 4,
+              "candidates": 6,
+              "total": 991
+            },
+            {
+              "query": "にと",
+              "ms": 4.899999998509884,
+              "candidates": 6,
+              "total": 599
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10000-shared",
+      "fixtureHash": "f39677826ae13874632ac9f678a48c918c936285a59a05ec48a6050b50e894b3",
+      "prepareMs": 13204.10000000149,
+      "conditionPreserved": true,
+      "state": {
+        "base": "ready",
+        "readings": "ready",
+        "rank": "idle",
+        "total": 5095,
+        "recoveryAttempted": false,
+        "dataRevision": 1
+      },
+      "heartbeat": {
+        "samples": 509,
+        "maxGapMs": 464.90000000596046
+      },
+      "prepareLongTasks": [
+        {
+          "start": 107.39999999850988,
+          "ms": 95
+        },
+        {
+          "start": 8985.30000000447,
+          "ms": 111
+        }
+      ],
+      "runs": [
+        {
+          "first20p95": 59.19999999552965,
+          "first20Pass": false,
+          "p50": 12.899999998509884,
+          "p95": 42.19999999552965,
+          "max": 92.90000000596046,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 49.899999998509884,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 40.29999999701977,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 92.90000000596046,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 36.20000000298023,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 38.79999999701977,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 31.69999999552965,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 33.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 21.899999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 59.19999999552965,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 42.19999999552965,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 47.100000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 33.20000000298023,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 36.70000000298023,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 41.899999998509884,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 45.900000005960464,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 38.30000000447035,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 30.899999998509884,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 28.5,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.700000002980232,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 13.199999995529652,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 15.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.900000005960464,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 12.299999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 12.900000005960464,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16.399999998509884,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 12,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.699999995529652,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.899999998509884,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.199999995529652,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.5999999940395355,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.100000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.799999997019768,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 12.699999995529652,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.199999995529652,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.600000001490116,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.899999998509884,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.69999999552965,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.299999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.299999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.800000004470348,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.300000004470348,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 10.200000002980232,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 8,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.899999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.400000005960464,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.300000004470348,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.900000005960464,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.100000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 19,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.799999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.299999997019768,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5095
+            }
+          ]
+        },
+        {
+          "first20p95": 18.600000001490116,
+          "first20Pass": true,
+          "p50": 11.899999998509884,
+          "p95": 18.200000002980232,
+          "max": 20.200000002980232,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.200000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.799999997019768,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.099999994039536,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.9000000059604645,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.899999998509884,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 12.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.899999998509884,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.300000004470348,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.199999995529652,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.400000005960464,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.900000005960464,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.700000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.30000000447035,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.800000004470348,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.800000004470348,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.300000004470348,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.899999998509884,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 15,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 12.700000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.599999994039536,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.600000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.900000005960464,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.700000002980232,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 7,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 12,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.5999999940395355,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.599999994039536,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.200000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.19999999552965,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.800000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.399999998509884,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.199999995529652,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.699999995529652,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.599999994039536,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 15.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.200000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 20.200000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.899999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.799999997019768,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.599999994039536,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5095
+            }
+          ]
+        },
+        {
+          "first20p95": 18.200000002980232,
+          "first20Pass": true,
+          "p50": 11.700000002980232,
+          "p95": 18.600000001490116,
+          "max": 24.899999998509884,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 7,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.799999997019768,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.300000004470348,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 11.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.9000000059604645,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.200000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 15.100000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.799999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.699999995529652,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.700000002980232,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.800000004470348,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.799999997019768,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 13.899999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 13.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 12,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.299999997019768,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.699999995529652,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 7,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.200000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.700000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.800000004470348,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.699999995529652,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 19.30000000447035,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.799999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.199999995529652,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 10.5,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 15.399999998509884,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 19.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 16.899999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 15.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 24.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.700000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.800000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.600000001490116,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5095
+            },
+            {
+              "query": "n",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9900
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.699999995529652,
+              "candidates": 6,
+              "total": 5397
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.5,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 12.700000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 11.700000002980232,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.800000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.199999995529652,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.100000001490116,
+              "candidates": 6,
+              "total": 7544
+            },
+            {
+              "query": "ka",
+              "ms": 6.4000000059604645,
+              "candidates": 6,
+              "total": 9878
+            },
+            {
+              "query": "にと",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 5095
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10000-distinct",
+      "fixtureHash": "f13ef7529e721bfe07a80c45882e3027712051631321a84a127b85df908eeeae",
+      "prepareMs": 14513.39999999851,
+      "conditionPreserved": true,
+      "state": {
+        "base": "ready",
+        "readings": "ready",
+        "rank": "idle",
+        "total": 5098,
+        "recoveryAttempted": false,
+        "dataRevision": 1
+      },
+      "heartbeat": {
+        "samples": 566,
+        "maxGapMs": 509.59999999403954
+      },
+      "prepareLongTasks": [
+        {
+          "start": 112.60000000149012,
+          "ms": 106
+        },
+        {
+          "start": 9205,
+          "ms": 129
+        },
+        {
+          "start": 9334.5,
+          "ms": 71
+        }
+      ],
+      "runs": [
+        {
+          "first20p95": 63.100000001490116,
+          "first20Pass": false,
+          "p50": 12.899999998509884,
+          "p95": 47.79999999701977,
+          "max": 78.10000000149012,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 52.70000000298023,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 46.100000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 78.10000000149012,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 37.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 29.19999999552965,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 31.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 30.799999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 21.900000005960464,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.300000004470348,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 63.100000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 42.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 44.900000005960464,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 24.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 32.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 47.79999999701977,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 51.79999999701977,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 47.900000005960464,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 31.599999994039536,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 26.700000002980232,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.5,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 11.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 10.299999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.200000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 12.399999998509884,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 12.899999998509884,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15.299999997019768,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.799999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.799999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.19999999552965,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.30000000447035,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 15,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.599999994039536,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.600000001490116,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 10.800000004470348,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.099999994039536,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.600000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.799999997019768,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.699999995529652,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 11,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 11.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.699999995529652,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 16.900000005960464,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 15.100000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 13.300000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 11,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.600000001490116,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.199999995529652,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 10.200000002980232,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16.5,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 12.600000001490116,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 14.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 13.199999995529652,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 15.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.299999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 20.600000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.400000005960464,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.800000004470348,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 6.799999997019768,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.800000004470348,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 14.199999995529652,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15.399999998509884,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.399999998509884,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 5098
+            }
+          ]
+        },
+        {
+          "first20p95": 17.69999999552965,
+          "first20Pass": true,
+          "p50": 11.700000002980232,
+          "p95": 18.399999998509884,
+          "max": 26,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.299999997019768,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.0999999940395355,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 18.399999998509884,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 17.69999999552965,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.700000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.199999995529652,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16.299999997019768,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 7.700000002980232,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 8.100000001490116,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 8.300000004470348,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 8.600000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 20,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 18.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.900000005960464,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.300000004470348,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 11.800000004470348,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.799999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.299999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 16.80000000447035,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 13.799999997019768,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 6,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 15,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.5,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.100000001490116,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 12.799999997019768,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 16.69999999552965,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 18.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 13.899999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.199999995529652,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16.100000001490116,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 8.599999994039536,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.299999997019768,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 12.200000002980232,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 6.100000001490116,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.100000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 14.700000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.799999997019768,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 11.199999995529652,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.199999995529652,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.800000004470348,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 17.600000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 17.700000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 14.099999994039536,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.200000002980232,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 5.800000004470348,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 10.700000002980232,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 6.5999999940395355,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 6.4000000059604645,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16.200000002980232,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 14.400000005960464,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 17.899999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 14.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 15,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.100000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 21.799999997019768,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 26,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 22.399999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 9.199999995529652,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 11.100000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.900000005960464,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 17.69999999552965,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 11.899999998509884,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 7.800000004470348,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.700000002980232,
+              "candidates": 6,
+              "total": 5098
+            }
+          ]
+        },
+        {
+          "first20p95": 20.5,
+          "first20Pass": true,
+          "p50": 13,
+          "p95": 20.200000002980232,
+          "max": 27.5,
+          "pass": true,
+          "samples": [
+            {
+              "query": "n",
+              "ms": 7.800000004470348,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.199999995529652,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 15.899999998509884,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 15.800000004470348,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.299999997019768,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 14.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 15.200000002980232,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 20.5,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 22.399999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 18.100000001490116,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 8.899999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 16.5,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 16.5,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 17.100000001490116,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 8.099999994039536,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 7.200000002980232,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 8.399999998509884,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 11.700000002980232,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15.300000004470348,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 13.100000001490116,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 16,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.200000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.600000001490116,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 19.600000001490116,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 19,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 16.899999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 5.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 15.599999994039536,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 16.19999999552965,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 17.400000005960464,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.700000002980232,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.5,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 7.899999998509884,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 13.100000001490116,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16.799999997019768,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 11.900000005960464,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 15.299999997019768,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 17.899999998509884,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 20,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 10.200000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 8.299999997019768,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 27.5,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 23.100000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 19.299999997019768,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 9.200000002980232,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 12.799999997019768,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 16.799999997019768,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 19.5,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 11,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 13,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 7.799999997019768,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 8,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 13,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 16.399999998509884,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 13.399999998509884,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 13.300000004470348,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 14.199999995529652,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 14.5,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 7.200000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 5.399999998509884,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 20.200000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 27,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 16.399999998509884,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 6.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 10.600000001490116,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 13.700000002980232,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 17.599999994039536,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 12.100000001490116,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.399999998509884,
+              "candidates": 6,
+              "total": 5098
+            },
+            {
+              "query": "n",
+              "ms": 8.300000004470348,
+              "candidates": 6,
+              "total": 9915
+            },
+            {
+              "query": "ｋ",
+              "ms": 7.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "にｔ",
+              "ms": 12.600000001490116,
+              "candidates": 6,
+              "total": 5398
+            },
+            {
+              "query": "かでｎ",
+              "ms": 15.100000001490116,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "ニトリ",
+              "ms": 12.299999997019768,
+              "candidates": 6,
+              "total": 4749
+            },
+            {
+              "query": "家電",
+              "ms": 12.900000005960464,
+              "candidates": 6,
+              "total": 450
+            },
+            {
+              "query": "収納",
+              "ms": 12,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "shuunou",
+              "ms": 13.600000001490116,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "が",
+              "ms": 6.699999995529652,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "が",
+              "ms": 4.700000002980232,
+              "candidates": 6,
+              "total": 9852
+            },
+            {
+              "query": "new",
+              "ms": 17.700000002980232,
+              "candidates": 6,
+              "total": 199
+            },
+            {
+              "query": "nitori 収納",
+              "ms": 19.30000000447035,
+              "candidates": 6,
+              "total": 825
+            },
+            {
+              "query": "セルフレジ",
+              "ms": 15.199999995529652,
+              "candidates": 6,
+              "total": 842
+            },
+            {
+              "query": "ぴぴ",
+              "ms": 8.5,
+              "candidates": 6,
+              "total": 10000
+            },
+            {
+              "query": "架空xyz無該当",
+              "ms": 9.399999998509884,
+              "candidates": 0,
+              "total": 0
+            },
+            {
+              "query": "家電 価格",
+              "ms": 12,
+              "candidates": 6,
+              "total": 175
+            },
+            {
+              "query": "コーヒー",
+              "ms": 16.299999997019768,
+              "candidates": 6,
+              "total": 75
+            },
+            {
+              "query": "ni",
+              "ms": 9.300000004470348,
+              "candidates": 6,
+              "total": 7583
+            },
+            {
+              "query": "ka",
+              "ms": 6.899999998509884,
+              "candidates": 6,
+              "total": 9883
+            },
+            {
+              "query": "にと",
+              "ms": 11.299999997019768,
+              "candidates": 6,
+              "total": 5098
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "browser": "141.0.7390.37",
+  "pass": true,
+  "measurementNotes": [
+    "共通UIの入力イベントから最大6題名のDOM/layoutまで。paint・実機IME・実ページadapterの取得時間は含めない。",
+    "固定fixtureをブラウザのJSON取得でロードし、各入力の間にrequestAnimationFrameを挟む。全体p95は20入力×5・各3回。",
+    "最初の20入力は別記。1万件で59.2/63.1msだった診断値を含め、基準の100入力p95と混ぜない。",
+    "準備はネットワークの実測ではなくローカル固定応答。JSON parse・辞書統合・初期描画を含む。最大主スレッド応答間隔も記録する。",
+    "初期の巨大JSONをpage.evaluate引数で渡した測定は転送の影響があり、探索記録として保持。破棄や最速値だけの採用はしていない。"
+  ]
+}

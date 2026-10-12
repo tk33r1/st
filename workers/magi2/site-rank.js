@@ -1,10 +1,10 @@
 // 404 のサイト内検索の②：索引の各ページに Jev（TypeSafe AI）で「この検索の目的を果たせる確率」を付け、閾値以上を並べる。
 // 設計は assets/site-search-design.md 3章。設定の正本は personas.js の SITE_RANK。
-// site と日刊2誌（Phase 3）。tools・game の scope は受け付けない。
+// site・日刊2誌・tools/game。同じ判定器を使い、新scopeは評価が済むまで公開設定で停止する。
 // test-magi2.mjs は magi2 のファイルを1つにつないで動かすので、トップレベルの名前には rank を付けて重ならないようにする。
 import { SITE_RANK } from './personas.js';
 import { RANK_FIELDS, dailyIssue, isBillingFailure, scoreItems, searchDeadline, searchFailure, searchSlice, sha256, snapshotHash } from './site-search.js';
-import { dailyResultUrl, filterDailyItems, normalizeScopeFilters, rankScopeConfig } from './search-scope.js';
+import { dailyResultUrl, filterRankItems, isDailyScope, normalizeScopeFilters, rankScopeConfig } from './search-scope.js';
 
 const rankLength = s => Array.from(s).length;
 const rankValues = c => Object.values(c).flatMap(v => Array.isArray(v) ? v : [v]);
@@ -75,10 +75,13 @@ const rankScoreFields = p => p.kind === 'daily' ? { title: p.title, detail: [p.s
 const rankDailyOrder = (a, b) => b.p.date.localeCompare(a.p.date) || a.p.article - b.p.article;
 // 字の一致で候補を選び、足りなければ新しい記事で補う。takeaway・source・dateは点数を付ける材料にしない。
 export function shortlistRankDaily(items, query, scope) {
+  return shortlistRankItems(items,query,scope,rankDailyOrder);
+}
+export function shortlistRankItems(items,query,scope,order=(a,b)=>a.p.id.localeCompare(b.p.id)) {
   const scored = scoreItems(items, query, rankScoreFields), limit = rankScopeConfig(scope).candidates;
-  const matches = scored.filter(r => r.score > 0).sort((a, b) => b.score - a.score || rankDailyOrder(a, b)).slice(0, limit);
+  const matches = scored.filter(r => r.score > 0).sort((a, b) => b.score - a.score || order(a, b)).slice(0, limit);
   const ids = new Set(matches.map(r => r.p.id));
-  return [...matches, ...scored.filter(r => !ids.has(r.p.id)).sort(rankDailyOrder).slice(0, limit - matches.length)];
+  return [...matches, ...scored.filter(r => !ids.has(r.p.id)).sort(order).slice(0, limit - matches.length)];
 }
 
 const rankId = i => 'c' + String(i + 1).padStart(2, '0');
@@ -155,7 +158,9 @@ export function rankSiteUrl(url) {
 // キーは検索語を含む条件の SHA-256 で、検索語そのものは持たない。値は応答の本体（検索語を含まない）
 const rankCache = new Map();
 async function rankCacheKey(scope, locale, query, filters, snapshot) {
-  return sha256(JSON.stringify([rankScopeConfig(scope).revision, scope, locale, query, filters || null, await snapshotHash(snapshot)]));
+  const key=[rankScopeConfig(scope).revision,scope,locale,query,filters || null,await snapshotHash(snapshot)];
+  if(snapshot.publicationText) key.push(await sha256(snapshot.publicationText));
+  return sha256(JSON.stringify(key));
 }
 function rankCacheGet(key) {
   const now = Date.now();
@@ -175,9 +180,9 @@ function rankCacheSet(key, value) {
 // 返すのは { status, complete, reason, searched, results } と、ログ用の値（above・jevMs・cached）。
 // progress（省略できる）には Jev に送る直前に候補の数を書く（要求全体の期限で途中で終わっても searched.candidates を返せるように）
 export async function rankSearch({ env, snapshot, query, locale, signal, onBilling, progress = {}, scope = 'site', filters = null }) {
-  const daily = scope !== 'site', config = rankScopeConfig(scope);
-  if (daily) filters = normalizeScopeFilters(scope, filters === null ? undefined : filters);
-  const targets = daily ? filterDailyItems(snapshot, filters) : rankTargets(snapshot);
+  const daily = isDailyScope(scope), scoped=scope!=='site', config = rankScopeConfig(scope);
+  if (scoped) filters = normalizeScopeFilters(scope, filters === null ? undefined : filters);
+  const targets = scoped ? filterRankItems(snapshot,scope,filters) : rankTargets(snapshot);
   const total = targets.length;
   const searched = (candidates, judged) => ({ total, candidates, judged, ...(daily ? { generation: snapshot.generation } : {}) });
   const noResults = (candidates = 0, judged = 0) => ({ status: 'no_results', complete: true, reason: null,
@@ -193,7 +198,7 @@ export async function rankSearch({ env, snapshot, query, locale, signal, onBilli
   const hit = rankCacheGet(key);
   if (hit) return { ...hit, jevMs: null, cached: true };
   if (!total) return store(noResults());
-  const scores = daily ? shortlistRankDaily(targets, query, scope) : scoreItems(targets, query, rankScoreFields);
+  const scores = daily ? shortlistRankDaily(targets, query, scope) : scoped ? shortlistRankItems(targets,query,scope) : scoreItems(targets, query, rankScoreFields);
   const selected = scores.map(r => r.p);
   let candidates;
   try { candidates = selected.map(toRankCandidate); } catch (_) { return fresh(failed('index_unavailable')); }
