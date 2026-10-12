@@ -22,7 +22,7 @@ const report={date:new Date().toISOString(),cases:[]};let browser;
 try {
   browser=await chromium.launch({headless:true});
   for(const [scope,path,query] of cases) {
-    const page=await browser.newPage();let posts=0;
+    const page=await browser.newPage({locale:'ja-JP'});let posts=0;
     await page.route('**/*',async route=>{
       const url=new URL(route.request().url());
       if(url.origin!==origin){await route.abort();return;}

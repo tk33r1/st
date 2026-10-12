@@ -28,13 +28,13 @@ const analyticsScript=url=>/^https:\/\/www\.googletagmanager\.com\/(?:gtm\.js|gt
   || url==='https://analytics.ahrefs.com/analytics.js';
 const google=host=>/(^|\.)google-analytics\.com$|^analytics\.google\.com$|^stats\.g\.doubleclick\.net$|^www\.google\.[a-z.]+$/.test(host);
 const report={started:new Date().toISOString(),base,live,liveRequests:0,analyticsLoaded:[],cases:[],limitations:'Chromiumのみ。OSのIMEと実機読み上げは含まない。解析送信は記録して停止。'};
-const loaded=new Set();let browser;
+const loaded=new Set(),routingErrors=[];let browser;
 const scripts=new Map();
 const close=async ctx=>{await ctx.unrouteAll({behavior:'wait'});await ctx.close();};
 async function context(off=false,allowLive=false) {
   const ctx=await browser.newContext({locale:'ja-JP'}),log=[],posts=[];
   if(off)await ctx.addInitScript(()=>localStorage.setItem('st-analytics','off'));
-  await ctx.route('**/*',async route=>{
+  await ctx.route('**/*',route=>(async()=>{
     const req=route.request(),url=new URL(req.url()),headers=await req.allHeaders();
     if(url.origin===origin && url.pathname==='/search/api/rank') {
       assert.equal(req.method(),'POST');assert.equal(url.search,'');assert.ok(!decode(headers.referer).includes(marker));
@@ -54,7 +54,7 @@ async function context(off=false,allowLive=false) {
       return route.fulfill(await scripts.get(req.url()));
     }
     return route.abort();
-  });
+  })().catch(async error=>{routingErrors.push(error.message);await route.abort().catch(()=>{});}));
   return {ctx,log,posts};
 }
 const ready=page=>page.locator('.st-search-data-status').filter({hasText:/文字と読みで検索できます|Text and reading search is ready/}).waitFor();
@@ -126,6 +126,21 @@ try {
     console.log(scope+': URL・計測・明示操作・解析停止'+(live?'・本番②':''));
   }
   report.analyticsLoaded=[...loaded];
+  // JS無効でも静的ツリーを操作でき、日刊ヘッダーの入力をURLへ載せない。
+  const noJS=await browser.newContext({javaScriptEnabled:false});
+  await noJS.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
+  const staticPage=await noJS.newPage();const notFound=await staticPage.goto(base+screens[0][1]);assert.equal(notFound.status(),404);
+  assert.ok(await staticPage.locator('.site-tree a[href="/tools/"]').count());
+  const branch=staticPage.locator('.site-tree details').first();await branch.locator('summary').first().click();
+  assert.ok(await branch.getAttribute('open')!==null);
+  for(const media of ['nitoridaily','retailtechdaily']) {
+    await staticPage.goto(base+'/job/'+media+'/');const href=await staticPage.locator('[data-archive-month] a').first().getAttribute('href');
+    await staticPage.goto(new URL(href,staticPage.url()).href);await staticPage.locator('.header-search input').fill(query);
+    await staticPage.locator('.header-search button').click();await staticPage.waitForURL(url=>url.pathname==='/job/'+media+'/');
+    await locationSafe(staticPage);
+  }
+  await noJS.close();report.javascriptDisabled=true;
+  assert.deepEqual(routingErrors,[],'通信の検査・計測スクリプトの取得に失敗がない');
   if(remote) {
     assert.ok([...loaded].some(s=>s.startsWith('www.googletagmanager.com/')),'本物のGTMが読み込めたこと');
     assert.ok(loaded.has('analytics.ahrefs.com/analytics.js'),'本物のAhrefsが読み込めたこと');
