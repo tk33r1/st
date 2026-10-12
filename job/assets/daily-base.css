@@ -3084,9 +3084,10 @@ a {
   }
 }
 /* 日刊検索はヘッダーの一本。候補はoverflowのあるフォームの外に重ねる。 */
-.header-actions .st-search-control{--border:var(--rule);--accent:var(--primary);color:var(--ink);width:230px}
+/* 欄は動かさず、直後の候補の枠（display:contents）を .header-actions を基準に重ねる。 */
+.header-actions{position:relative;--border:var(--rule);--accent:var(--primary)}
+.header-actions .st-search-control-external{color:var(--ink)}
 .header-search{position:relative;height:44px}
-.st-search-control .header-search{width:100%}
 .header-search .st-search-input{border:0;min-height:44px;padding:0 44px 0 12px}
 .header-search .st-search-submit{min-width:44px;height:44px;width:44px;border:0}
 .header-search .st-search-clear{right:44px;height:44px;width:44px;background:var(--surface)}
@@ -3101,12 +3102,11 @@ a {
 .st-search-local .archive-date{font:12px var(--font-mono);color:var(--ink-3)}
 .st-search-filters select{border-color:var(--rule-strong);background:var(--surface)}
 @media(max-width:720px){
- .header-actions .st-search-control{width:clamp(92px,25vw,150px)}
- .header-actions:has(.st-search-control.is-focused){width:100%}
- .header-inner:has(.st-search-control.is-focused)>.brand,.header-actions:has(.st-search-control.is-focused)>:not(.st-search-control){display:none}
- .header-actions .st-search-control.is-focused{width:100%}
+ .header-actions:has(.header-search.is-focused){width:100%}
+ .header-inner:has(.header-search.is-focused)>.brand,.header-actions:has(.header-search.is-focused)>:not(.header-search):not(.st-search-control){display:none}
+ .header-actions .header-search.is-focused{width:100%}
  .header-actions .st-search-suggestions{left:calc(-1 * var(--gutter));right:calc(-1 * var(--gutter));min-width:0;width:auto}
- .header-actions .st-search-control:not(.is-focused) .st-search-clear{display:none}
+ .header-search:not(.is-focused) .st-search-clear{display:none}
  .header-search input{font-size:16px}
  .st-search-local .archive-row{grid-template-columns:90px 1fr;gap:12px}
 }

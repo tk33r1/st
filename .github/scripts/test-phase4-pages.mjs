@@ -133,6 +133,21 @@ try {
       await typing.keyboard.type('tori');assert.equal(await input.inputValue(),'ntori','続けて打った文字も欄へ入る');
       await ready(typing);assert.equal(typingPosts.length,0);await typing.close();
     }
+    // IME の変換中に取り付けが終わっても、欄を動かさないので変換は途切れない（CDP で IME の入力を再現する）。
+    for(const issue of [true,false]) {
+      const composing=await browser.newPage({viewport:{width:320,height:900}}),composingPosts=[];
+      const release=await offline(composing,composingPosts,[],'/assets/search-ui.js');
+      await composing.goto(origin+'/job/'+media+'/'+(issue?'20261011/':''),{waitUntil:'commit'});
+      const input=composing.locator('#headerSearchInput');await input.focus();
+      const cdp=await composing.context().newCDPSession(composing);
+      await cdp.send('Input.imeSetComposition',{text:'にと',selectionStart:2,selectionEnd:2});await release();
+      await composing.waitForFunction(()=>document.querySelector('.header-search').dataset.stSearchOwned==='1');
+      assert.equal(await input.evaluate(el=>el.form.parentElement.classList.contains('header-actions')),true,'借りた欄をDOMの中で動かさない');
+      assert.equal(await input.evaluate(el=>document.activeElement===el),true,'変換中の取り付けでもフォーカスを保つ');
+      await cdp.send('Input.imeSetComposition',{text:'にとり',selectionStart:3,selectionEnd:3});await cdp.send('Input.insertText',{text:'ニトリ'});
+      assert.equal(await input.inputValue(),'ニトリ','取り付けで変換を途中確定しない');
+      await ready(composing);assert.equal(composingPosts.length,0);await composing.close();
+    }
     const page=await browser.newPage({viewport:{width:320,height:900}}),posts=[],requests=[];await offline(page,posts,requests);
     await page.goto(origin+'/job/'+media+'/20261011/',{waitUntil:'domcontentloaded'});
     assert.ok(!requests.includes('/assets/search-ui.js'));assert.ok(!requests.includes('/job/'+media+'/search-index.json'));

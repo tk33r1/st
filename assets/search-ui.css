@@ -3,6 +3,7 @@
 .st-search *, .st-search-control *{box-sizing:border-box}
 .st-search [hidden],.st-search-control [hidden]{display:none!important}
 .st-search-control{position:relative;min-width:0;scroll-margin-top:5rem}
+.st-search-control-external{display:contents}
 .st-search-form{margin:0}.st-search-input-row{display:flex;position:relative;align-items:stretch}
 .st-search-input{min-width:0;flex:1;padding:.7rem 3rem .7rem .9rem;background:var(--surface,transparent);color:inherit;border:1px solid var(--border,currentColor);font:inherit;min-height:44px}
 .st-search-input::-webkit-search-cancel-button,.st-search-input::-webkit-search-decoration{display:none}

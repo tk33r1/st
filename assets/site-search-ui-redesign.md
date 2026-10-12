@@ -295,7 +295,7 @@ tools と game のページは日本語だけなので、英語の placeholder �
 
 | 項目 | 内容 |
 | --- | --- |
-| `input` | 既存の `<form role="search">`。渡されたらその中の input とボタンを使い、欄を作らない（日刊のヘッダー） |
+| `input` | 既存の `<form role="search">`。渡されたらその中の input とボタンを使い、欄を作らない（日刊のヘッダー）。借りた `<form>` は DOM の中で動かさず、候補の枠を直後に置く（動かすとフォーカスと IME の変換が途切れ、読み込み中に打ち始めた入力が途中で確定される）。「欄の部品の中」は `<form>` と枠の両方で判定する |
 | `results` | 帯と結果を出す要素。無ければ `container` の中に作る（日刊は「記事を横断検索」の節） |
 | `placeholder` | 対象名入りの文言（日英） |
 | `classes` | 部品ごとに足すページの class（例: game の `{input:'nes-input', button:'nes-btn', panel:'nes-container is-rounded'}`、tools/game の結果の一覧にカタログのグリッドの class） |

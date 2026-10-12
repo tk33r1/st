@@ -66,14 +66,14 @@
     const notify=()=>call('onConditions',{...rankCondition(),sort:selectedSort});
     // 表示: 既存ヘッダーを借りる場合も操作の受け口はここに一本化する。
     const external=!!adapter.input,form=adapter.input || node('form','st-search-form',container);
-    const borrowed=external?form.querySelector('input[type="search"]'):null;
-    const focusSnapshot=borrowed===document.activeElement?{start:borrowed.selectionStart,end:borrowed.selectionEnd,direction:borrowed.selectionDirection}:null;
     form.setAttribute('role','search');form.dataset.stSearchOwned='1';
-    const component=external?node('div','st-search-control'):node('div','st-search-control',container);
-    if(external) {form.before(component);component.append(form);} else component.append(form);
+    // 借りた欄は DOM の中で動かさない。動かすとフォーカスと IME の変換が途切れるので、候補の枠だけを直後に置く。
+    const component=node('div',external?'st-search-control st-search-control-external':'st-search-control',null);
+    if(external) form.after(component);else {container.append(component);component.append(form);}
+    const focusRoot=external?form:component,inside=n=>!!n && (form.contains(n) || component.contains(n));
     const box=external?form:node('div','st-search-input-row',form);
-    const input=external?borrowed:node('input','st-search-input',box);
-    input.classList.add('st-search-input');classes(input,'input');input.type='search';input.id ||= id+'-input';input.maxLength=400;
+    const input=external?form.querySelector('input[type="search"]'):node('input','st-search-input',box);
+    input.classList.add('st-search-input');classes(input,'input');if(input.type!=='search') input.type='search';input.id ||= id+'-input';input.maxLength=400;
     input.autocomplete='off';input.spellcheck=false;input.setAttribute('enterkeyhint','search');input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
     const label=external?form.querySelector('label') || node('label','',form):node('label','',form);
     label.classList.add('st-search-label');label.htmlFor=input.id;labelText('input',label);
@@ -351,11 +351,14 @@
     }
     function run() {if(destroyed || composing || imeEnterHeld || form._stComposing || form._stImeEnterHeld) return;if(adapter.onSubmit) {closeDropdown();call('onSubmit',{query:input.value.trim(),explicit:true});return;}commit(input.value,true);call('onNavigate');}
     form.addEventListener('submit',e=>{e.preventDefault();run();},{signal});
-    input.addEventListener('input',()=>{dropdown=component.contains(document.activeElement);refreshSuggestions();},{signal});
+    input.addEventListener('input',()=>{dropdown=inside(document.activeElement);refreshSuggestions();},{signal});
     input.addEventListener('focus',()=>{dropdown=true;refreshSuggestions();if(!external && w.matchMedia('(max-width: 720px)').matches) component.scrollIntoView({block:'start'});},{signal});
-    component.addEventListener('focusin',()=>component.classList.add('is-focused'),{signal});
-    component.addEventListener('focusout',e=>{if(!component.contains(e.relatedTarget)) {component.classList.remove('is-focused');closeDropdown();}},{signal});
-    document.addEventListener('pointerdown',e=>{if(!component.contains(e.target)) closeDropdown();},{signal});
+    // 借りた欄では、欄（form）と直後の候補の枠を合わせて「欄の部品」とみなす。
+    for(const root of external?[form,component]:[component]) {
+      root.addEventListener('focusin',()=>focusRoot.classList.add('is-focused'),{signal});
+      root.addEventListener('focusout',e=>{if(!inside(e.relatedTarget)) {focusRoot.classList.remove('is-focused');closeDropdown();}},{signal});
+    }
+    document.addEventListener('pointerdown',e=>{if(!inside(e.target)) closeDropdown();},{signal});
     suggestions.addEventListener('pointerdown',e=>{if(e.target.closest('[role="option"]')) e.preventDefault();},{signal});
     suggestions.addEventListener('click',e=>{if(e.target.closest('.st-search-submit-option')) run();else if(e.target.closest('a')) closeDropdown();},{signal});
     input.addEventListener('compositionstart',()=>{composing=true;showStates();},{signal});input.addEventListener('compositionend',()=>{composing=false;refreshSuggestions();},{signal});
@@ -401,12 +404,8 @@
     component.addEventListener('auxclick',recordClick,{signal});
 
     updateLabels();updateSort();refreshLocal();
-    // ヘッダーを包み直しても、読み込み中に始めた入力を続けられるようにする。
-    if(focusSnapshot) {
-      input.focus({preventScroll:true});
-      if(focusSnapshot.start!==null && focusSnapshot.end!==null) input.setSelectionRange(focusSnapshot.start,focusSnapshot.end,focusSnapshot.direction);
-    }
-    dropdown=component.contains(document.activeElement);component.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
+    // 欄は動かしていないので、読み込み中に始めた入力（IME の変換中を含む）はそのまま続く。
+    dropdown=inside(document.activeElement);focusRoot.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
     return {ready,run,cancel:()=>{conditionRevision++;clearRank('stale');renderResults();},handoff:()=>{conditionRevision++;pending=null;clearRank('handoff');renderResults();},
       setQuery(value,options={}) {
         input.value=String(value).slice(0,400);let explicit=false;
@@ -418,7 +417,7 @@
       setLocale(value) {if(!['ja','en'].includes(value) || value===locale) return;locale=value;conditionRevision++;if(pending) pending.allowed=false;clearRank(committed?'stale':'idle');
         updateLabels();updateSort();localList.replaceChildren();rankList.replaceChildren();refreshLocal();refreshSuggestions();notify();},
       openPrivacy,focus:()=>input.focus(),get state(){return {base:baseState,readings:readingState,rank:rankState,total:matched.total,query:committed,recoveryAttempted,dataRevision};},
-      destroy(){destroyed=true;loadingRevision++;controller.abort();client.cancel();delete form.dataset.stSearchOwned;delete container.dataset.stSearchMounted;if(external) {component.before(form);component.remove();}container.replaceChildren();}}
+      destroy(){destroyed=true;loadingRevision++;controller.abort();client.cancel();delete form.dataset.stSearchOwned;delete container.dataset.stSearchMounted;if(external) {component.remove();form.classList.remove('is-focused');}container.replaceChildren();}}
   }
   w.STSearchUI={mount};
 })(window);
