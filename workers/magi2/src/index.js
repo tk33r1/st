@@ -537,6 +537,8 @@ function clickHref(scope, value) {
 async function handleSearchClick(request, env, { requestId, cors, log }) {
   const fail = (status, code) => httpError(status, { stage: status === 429 ? 'rate_limit' : 'bad_request', code, message: '記録できませんでした', retryable: false }, requestId, cors);
   if (env.SEARCH_CLICK_ENABLED !== 'true' || !env.DB) return new Response(null, { status: 204, headers: cors });
+  // 塩が無いと IP のハッシュを総当たりで戻せるので、記録しない。
+  if (!env.SEARCH_CLICK_SALT) { log('search_click', 'salt_missing'); return new Response(null, { status: 204, headers: cors }); }
   let body;
   try { body = await readJsonLimited(request, SEARCH_CLICK.request_bytes); } catch (err) { return fail(err.envelope?.http_status || 400, 'invalid_json'); }
   const { scope, query, list, position } = body || {};
@@ -550,8 +552,8 @@ async function handleSearchClick(request, env, { requestId, cors, log }) {
   try {
     if (await countUp(env.DB, `click:${ip}`, day, SEARCH_CLICK.ip_daily_limit) == null
       || await countUp(env.DB, 'click:global', day, SEARCH_CLICK.global_daily_limit) == null) return fail(429, 'click_limit_exceeded');
-    // 同じ人の重複は集計で除く。IPは日付と合わせたハッシュの先頭だけを残す。
-    const visitor = (await sha256(`${day}:${ip}`)).slice(0, 16);
+    // 同じ人の重複は集計で除く。IP は secret を混ぜたハッシュの先頭だけを残す（日をまたいでも1人と数え、IP へは戻せない）。
+    const visitor = (await sha256(`${env.SEARCH_CLICK_SALT}:${ip}`)).slice(0, 16);
     await env.DB.prepare(`INSERT INTO search_clicks (day, at, scope, query, href, list, position, visitor) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`)
       .bind(day, Date.now(), scope, query, href, list, position, visitor).run();
   } catch (_) { log('search_click', 'record_failed'); return fail(503, 'unavailable'); }

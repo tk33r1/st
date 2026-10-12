@@ -216,9 +216,9 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 共通検索（`assets/search-ui.js`）の候補を開くと、画面が `{ scope, query, href, list, position }` を sendBeacon で送る。
 Worker は形と画面の種類を確かめ、`countUp` で IP ごと（`click:<IP>`）と全体（`click:global`）の1日の上限を数えてから、D1 の `search_clicks` に1行書く。
 1件で書くのは最大3行で、上限に達した後は書かない（無料枠の書き込み10万行／日を守る。値は `personas.js` の `SEARCH_CLICK`）。応答は 204 で、画面は読まない。
-IP は日付と合わせたハッシュの先頭16桁（`visitor`）だけを残す。押したページが公開中かは、集計の `.github/scripts/search-boost.py` がリポジトリのファイルで確かめる。
+IP は secret の `SEARCH_CLICK_SALT` を混ぜたハッシュの先頭16桁（`visitor`）だけを残す。日をまたいでも同じ人を1人と数え（公開する「3人以上」の基準）、塩が無いと逆算できるので、secret が無ければ記録しない。押したページが公開中かは、集計の `.github/scripts/search-boost.py` がリポジトリのファイルで確かめる。
 
-- 初期化（1回だけ）: `cd workers && npx wrangler d1 execute tk-st-magi2-db --remote --file=magi2/migrations/0002_search_clicks.sql`
+- 初期化（1回だけ）: `cd workers && npx wrangler d1 execute tk-st-magi2-db --remote --file=magi2/migrations/0002_search_clicks.sql`、`node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))" | npx wrangler secret put SEARCH_CLICK_SALT --config magi2/wrangler.toml`（値を変えると、それより前の記録と同じ人を別人と数える）
 - 出す順番: 上の初期化 → Worker のデプロイ → サイトの push。逆でも壊れない（テーブルが無ければ 503、Worker が古ければ 404 で、どちらも画面は無視する）。
 - 集計は `.github/workflows/search-boost.yml`（毎日）。画面は `data/search-boost.json` を読むだけで、検索のたびに D1 を読まない。
 - 止め方: `wrangler.toml` の `SEARCH_CLICK_ENABLED` を `"false"` にして出す（204 を返して何も書かない）。検索と並び順は、最後に集計した JSON のまま動く。

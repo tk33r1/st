@@ -13,7 +13,7 @@
       disabled:'意味検索は停止中です。',none:'選んだ候補に意味の近い結果はありませんでした。',sort:'並べ替え',
       allOption:'すべて',count:n=>`${n}件一致`,shown:(n,total)=>`${n}件表示／${total}件`,coverage:(n,c,total,complete)=>`${total}件から${c}件を選択、${n}件を判定${complete?'':'（判定未完了）'}`,
       privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示ではTypeSafe AIへ送りません。候補を開くと、検索語と開いたページを並び順の改善のために記録します。ファイルやツールの処理内容は送りません。',
-      privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは日ごとに変わるハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
+      privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは元に戻せないハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
     en: {input:'Search query',submit:'Search',all:'View all matches',more:'Show 100 more',cancel:'Cancel search',
       local:'① Text and reading matches',semantic:'② Related results',suggestions:'Suggestions',
       ready:'Text and reading search is ready.',preparing:'Text search is ready. Preparing readings.',
@@ -25,7 +25,7 @@
       disabled:'Related search is disabled.',none:'No related results among the selected candidates.',sort:'Sort',
       allOption:'All',count:n=>`${n} matches`,shown:(n,total)=>`Showing ${n} of ${total}`,coverage:(n,c,total,complete)=>`Selected ${c} of ${total}, judged ${n}${complete?'':' (incomplete)'}`,
       privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it to TypeSafe AI. When you open a result, your query and the page you opened are recorded to improve the ranking. Files and tool processing contents are not sent.',
-      privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a hash that changes daily). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
+      privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a salted hash that cannot be reversed). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
   };
   let serial = 0;
   const hash = /^[a-f0-9]{64}$/;

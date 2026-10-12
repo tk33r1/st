@@ -10,5 +10,5 @@ CREATE TABLE search_clicks (
   href     TEXT    NOT NULL,      -- 押したページ
   list     TEXT    NOT NULL,      -- suggest（入力中の候補）/ local（①）/ semantic（②）
   position INTEGER NOT NULL,      -- 一覧の中の順位（1から）
-  visitor  TEXT    NOT NULL       -- 日付とIPのハッシュの先頭16桁（同じ人の重複を集計で除く）
+  visitor  TEXT    NOT NULL       -- secret の SEARCH_CLICK_SALT を混ぜた IP のハッシュの先頭16桁（同じ人の重複を集計で除く）
 );

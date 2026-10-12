@@ -49,8 +49,11 @@ jobs:
         fi
         cutoff=$(date -u -d '90 days ago' +%F)
         echo "CUTOFF=$cutoff" >> "$GITHUB_ENV"
-        npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --json \
-          --command "SELECT scope, query, href, visitor FROM search_clicks WHERE day >= '$cutoff'" > "$RUNNER_TEMP/clicks.json"
+        # 集計は SQL で行い、取り出すのは集計後の行だけにする（生の行を全部取り出すと記録が増えたときに出力が大きくなる）。
+        # 2文目の 3 は search-boost.py の QUERY_MIN_VISITORS と揃える。
+        sql_pages="SELECT scope, href, COUNT(DISTINCT visitor) AS visitors FROM search_clicks WHERE day >= '$cutoff' GROUP BY scope, href"
+        sql_queries="SELECT scope, query, href, COUNT(DISTINCT visitor) AS visitors FROM search_clicks WHERE day >= '$cutoff' GROUP BY scope, query, href HAVING COUNT(DISTINCT visitor) >= 3"
+        npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --json --command "$sql_pages; $sql_queries" > "$RUNNER_TEMP/clicks.json"
 
     - name: Aggregate
       run: python .github/scripts/search-boost.py --rows "$RUNNER_TEMP/clicks.json"
