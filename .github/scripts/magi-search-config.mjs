@@ -9,8 +9,7 @@ vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('w
   + '\n' + strip(read('workers/magi2/site-search.js'))
   + '\nglobalThis.config = { model: SITE_SEARCH.model, temperature: SITE_SEARCH.temperature, top_p: DEFAULTS.top_p, chat_max_tokens: SITE_SEARCH.chat_max_tokens, formats: SITE_SEARCH.formats,'
   + ' judge: { model: DEFAULTS.models.judge, format: DEBATE.format },'
-  + ' magi: { motion: { model: DEFAULTS.models.motion, format: MAGI_MODE.motion_format, prompt: MAGI_MODE.motion_prompt },'
-  + ' },'
+  + ' magi: { motion: { model: DEFAULTS.models.motion, format: MAGI_MODE.motion_format, prompt: MAGI_MODE.motion_prompt } },'
   + ' classify: INTENT_CLASSIFY, classify_smoke: ['
   + ' { input: { texts: ["Should I go for ramen tonight?"], seed: "日本語で話したいです。" }, expected: { language: "ja", votable: "yes", intent: "consult" } },'
   + ' { input: { texts: ["Which songs would you recommend for a DJ set?"], hasLanguage: true }, expected: { intent: "music" } },'
@@ -28,13 +27,11 @@ const start = worker.indexOf('function requestBody('), end = worker.indexOf('\na
 if (start < 0 || end < 0) throw new Error('requestBody block not found');
 vm.runInContext(worker.slice(start, end), ctx);
 vm.runInContext(worker.match(/^const withLangNote = .*$/m)[0], ctx);
-vm.runInContext(`for (const [name, data] of [
-  ['motion', {latest: 'Should I go for ramen tonight?', has_image: false, reference: []}]
-]) {
-  const cfg = config.magi[name];
+vm.runInContext(`{
+  const cfg = config.magi.motion;
   cfg.body = requestBody(cfg.model, {stream: false, response_format: cfg.format, messages: [
-    {role: 'system', content: name === 'motion' ? withLangNote(cfg.prompt, languageNote({code: 'en'})) : cfg.prompt},
-    {role: 'user', content: JSON.stringify(data)}
+    {role: 'system', content: withLangNote(cfg.prompt, languageNote({code: 'en'}))},
+    {role: 'user', content: JSON.stringify({latest: 'Should I go for ramen tonight?', has_image: false, reference: []})}
   ]});
 }`, ctx);
 ctx.smokeIndex = JSON.parse(read('data/site-search.json'));

@@ -18,7 +18,7 @@ export function parseVote(raw) {
   const atStart = voteAtStart.test(first);
   const vote = !invalid && tags.length && atStart ? values[0].toLowerCase() : null;
   const text = raw.replace(voteDisplay, '').trim();
-  return { text, vote, vote_state: vote || invalid ? 'final' : 'pending', raw };
+  return { text, vote, vote_state: vote || invalid ? 'final' : 'pending' };
 }
 
 const tallyResult = t => t.approve >= MAGI_MODE.quorum ? 'approve' : t.reject >= MAGI_MODE.quorum ? 'reject' : 'hold';

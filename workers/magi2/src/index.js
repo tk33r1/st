@@ -391,7 +391,6 @@ async function sendAlert(env, log, key, subject, lines, redact = false, signal =
 // 本文を読まずに状態だけで通知する（②は Jev の期限の中で本文を読み、確かめてから呼ぶ）。
 function searchUpstream(env, ctx, log, purpose, signal = null) {
   return Object.assign(Object.create(env), {
-    modelUsagePurpose: purpose === '404検索' ? '404' : 'chat',
     onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
       if (!billingFailure) {
         let body = '';
@@ -457,7 +456,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (signal.aborted) throw searchFailure('cancelled');
       const upstream = searchUpstream(env, ctx, log, '404検索');
       const result = await selectSitePages({ query, locale: body.locale, pages, cards, chat: true, purpose: 'requested', signal, log,
-        call: opts => callAuxModel({ ...opts, env: upstream }, log, 'site_pages') });
+        call: opts => callModel({ ...opts, env: upstream }) });
       const answer = await runDiscussion({ upstream, cards, plainMessages: [{ role: 'user', content: query }],
         langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: () => {}, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
@@ -868,7 +867,7 @@ async function readSynthesis(body, send, provider = 'openai', signal) {
 }
 
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
-async function synthesize({ env, messages, theme, signal, send, log, purpose = 'synthesizer' }) {
+async function synthesize({ env, messages, theme, signal, send, log }) {
   const primary = theme === 'dark' ? DEFAULTS.models.synthesizer_dark : DEFAULTS.models.synthesizer;
   const alternate = primary.provider === 'anthropic' ? DEFAULTS.models.synthesizer : DEFAULTS.models.synthesizer_dark;
   let emitted = false;
@@ -903,7 +902,7 @@ async function synthesize({ env, messages, theme, signal, send, log, purpose = '
       }, signal);
     } catch (error) {
       if (attempt || emitted || signal?.aborted) throw error;
-      log('fallback', purpose, cfg.provider, error.envelope?.code || error.name || 'failed');
+      log('fallback', 'synthesizer', cfg.provider, error.envelope?.code || error.name || 'failed');
     }
   }
 }
@@ -1403,7 +1402,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
             const pages = await getSitePages(ctx, locale, pageStop.signal);
             return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true, current: guide && guide.current,
               purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
-              signal: pageStop.signal, log, call: opts => callAuxModel({ ...opts, env: searchEnv }, log, 'site_pages') });
+              signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
           })().catch(() => { log('site_search', 'omitted'); return null; });
         }
 
