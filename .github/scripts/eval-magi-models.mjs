@@ -8,6 +8,8 @@ import vm from 'node:vm';
 const root=new URL('../../',import.meta.url);
 const opt=(key,fallback='')=>process.argv.find(x=>x.startsWith('--'+key+'='))?.slice(key.length+3)||fallback;
 const ref=opt('ref'), label=opt('label',ref?'baseline':'candidate');
+const siteSearch=process.argv.includes('--site-search'),faultProvider=opt('fault-provider');
+assert(!faultProvider||['anthropic','openai'].includes(faultProvider));
 assert.match(label,/^[a-z0-9-]+$/);
 const current=p=>readFileSync(new URL(p,root),'utf8');
 const read=p=>ref?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):current(p);
@@ -17,7 +19,7 @@ const registry=JSON.parse(read('config/ai-models.json'));
 const source=files.map(p=>read('workers/magi2/'+p));
 const directory=new URL('workers/.wrangler/magi47-quality/',root);mkdirSync(directory,{recursive:true});
 const target=new URL(label+'.json',directory);
-const report={label,ref:ref||'working-tree',date:new Date().toISOString(),fingerprint:createHash('sha256').update(source.join('\n')).digest('hex'),cards_hash:createHash('sha256').update(JSON.stringify(cards)).digest('hex'),registry,results:[]};
+const report={label,ref:ref||'working-tree',date:new Date().toISOString(),fingerprint:createHash('sha256').update(source.join('\n')).digest('hex'),cards_hash:createHash('sha256').update(JSON.stringify(cards)).digest('hex'),site_index_hash:createHash('sha256').update(current('data/site-search.json')).digest('hex'),fault_provider:faultProvider||null,registry,results:[]};
 const save=()=>writeFileSync(target,JSON.stringify(report,null,2)+'\n');
 let calls=[],observed=[],marks=[];
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
@@ -51,6 +53,8 @@ if(process.argv.includes('--check')){const r=await context.worker.fetch(new Requ
 const saved=existsSync(new URL('workers/magi2/.dev.vars',root))?current('workers/magi2/.dev.vars'):'';
 for(const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY',registry.google?'MAGI_GEMINI_API_KEY':'MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']){
  env[name]=process.env[name]||saved.match(new RegExp('^\\s*'+name+'\\s*=\\s*(.*?)\\s*$','m'))?.[1].replace(/^(['"])(.*)\1$/,'$2');assert(env[name],name+' is required');}
+// 評価VMだけの失効キー。実APIのHTTP失敗から、反対側へ本文を返せることを確認する。
+if(faultProvider)env[faultProvider==='anthropic'?'MAGI_ANTHROPIC_API_KEY':'MAGI_OPENAI_API_KEY']='invalid-magi47-evaluation-key';
 const consult=[
  ['仕事の締切が重なり、休むと遅れるのが怖い。優先順位と休み方を一緒に整理して。','ja'],
  ['友人からの誘いを断るのが苦手で、疲れてしまう。関係を大切にしながら伝える方法を相談したい。','ja'],
@@ -74,26 +78,33 @@ for(const [i,text]of [...motions,...(ref?[]:extra)].entries())cases.push({id:'m'
 const dj=['夕方の落ち着いた雰囲気に合うソウルを3曲提案して。','ファンク中心のセットの序盤に合う曲を3曲、理由も短く教えて。','世代の違う人がいるカフェでかける、親しみやすい曲を3曲相談したい。','ハウスの前に自然につなげられるディスコを3曲提案して。','Suggest three mellow songs for the opening of a small evening DJ set.'];
 dj.forEach((text,i)=>cases.push({id:'d'+(i+1),kind:'dj',text,language:i===4?'en':'ja'}));
 const selected=opt('cases').split(',').filter(Boolean);
-const work=[...cases.map(c=>({...c,theme:'dark'})),...cases.filter(c=>c.kind==='consult').map(c=>({...c,theme:'light'}))].filter(c=>!selected.length||selected.includes(c.id+'-'+c.theme));
+// 既存404評価器と同じ固定20問を読む。索引も旧・新で同じ現在の正本を使う。
+const siteFixtures=siteSearch?JSON.parse(current('.github/scripts/fixtures/magi47-site-search.json')):[];
+const work=(siteSearch?siteFixtures.map(([text,language,expected],i)=>({id:'s'+(i+1),kind:'site',text,language,expected,theme:'default'})):[...cases.map(c=>({...c,theme:'dark'})),...cases.filter(c=>c.kind==='consult').map(c=>({...c,theme:'light'}))]).filter(c=>!selected.length||selected.includes(c.id+'-'+c.theme));
 if(process.argv.includes('--resume')&&existsSync(target)){const previous=JSON.parse(readFileSync(target,'utf8'));assert.equal(previous.fingerprint,report.fingerprint);assert.equal(previous.cards_hash,report.cards_hash);report.results=previous.results;}
 for(const c of work){if(report.results.some(r=>r.id===c.id&&r.theme===c.theme))continue;
  calls=[];observed=[];marks=[];counts.clear();const waits=[],started=performance.now(),events=[];
  const content=c.image?[{type:'image_url',image_url:{url:'data:'+c.image.media_type+';base64,'+c.image.data}},{type:'text',text:c.text}]:c.text;
  const body={messages:[...(c.previous||[]),{role:'user',content}],classification_state:true,magi_panel:c.kind==='magi',reply_language:{version:1,code:c.language,source:'ui'},ui_language:c.language,theme:c.theme,adaptive_debate:true,suggest:true,site_pages:c.kind!=='dj',...(c.kind==='dj'?{entry:'dj-request',context:'小さなカフェのDJイベント。受付中で、特別なリクエストはまだありません。音楽の相談だけをします。'}:{page:'/'})};
- const response=await context.worker.fetch(new Request('https://workers.tk.st/magi2/chat',{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.47'},body:JSON.stringify(body),signal:AbortSignal.timeout(310000)}),env,{waitUntil:p=>waits.push(p)});
+ const response=await context.worker.fetch(new Request('https://workers.tk.st/magi2/'+(siteSearch?'site-search?site_debate=1':'chat'),{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.47'},body:JSON.stringify(siteSearch?{query:c.text,locale:c.language}:body),signal:AbortSignal.timeout(310000)}),env,{waitUntil:p=>waits.push(p)});
  assert.equal(response.status,200,'Chat HTTP status');
+ let siteResult;
+ if(siteSearch){siteResult=await response.json();events.push({event:'done',data:{},ms:performance.now()-started});assert(['results','no_results'].includes(siteResult.status));}
+ else {
  const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
  while(true){const {value,done}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let end;
-  while((end=buffer.indexOf('\n\n'))>=0){const chunk=buffer.slice(0,end);buffer=buffer.slice(end+2);const event=chunk.match(/^event: (.+)$/m)?.[1],data=chunk.match(/^data: (.+)$/m)?.[1];if(event&&data)events.push({event,data:JSON.parse(data),ms:performance.now()-started});}}
+  while((end=buffer.indexOf('\n\n'))>=0){const chunk=buffer.slice(0,end);buffer=buffer.slice(end+2);const event=chunk.match(/^event: (.+)$/m)?.[1],data=chunk.match(/^data: (.+)$/m)?.[1];if(event&&data)events.push({event,data:JSON.parse(data),ms:performance.now()-started});}}}
  await Promise.allSettled([...waits,...observed]);
  const result={id:c.id,kind:c.kind,theme:c.theme,language:c.language,input:c.text,events,calls:calls.map(call=>({...call,started_ms:call.started_ms-started})),marks:marks.map(m=>({...m,ms:m.ms-started})),elapsed_ms:performance.now()-started,
  answer:events.filter(e=>e.event==='integrated').map(e=>e.data.delta||'').join(''),completed:events.some(e=>e.event==='done')&&!events.some(e=>e.event==='error')};
- report.results.push(result);save();console.log(JSON.stringify({label,id:c.id,theme:c.theme,completed:result.completed,elapsed_ms:Math.round(result.elapsed_ms),calls:calls.length,failures:calls.filter(x=>x.error||x.status!==200).map(x=>({provider:x.provider,status:x.status,error:x.error}))}));
- if(calls.some(x=>[401,402,403,429].includes(x.status))){report.stopped='upstream_auth_billing_or_rate_limit';save();throw new Error('Evaluation stopped at upstream authentication, billing, or rate limit');}
+ if(siteSearch){result.response=siteResult;result.expected=c.expected;result.answer=siteResult.comment;result.expected_link=c.expected?siteResult.results.some(r=>new URL(r.url,'https://tk.st').pathname===c.expected):null;}
+ if(faultProvider){const streams=calls.filter(x=>x.stream);assert.equal(streams.length,2,'One integration fallback');assert.equal(streams[0].provider,faultProvider);assert.equal(streams[0].status,401);assert.equal(streams[1].provider,faultProvider==='anthropic'?'openai':'anthropic');assert.equal(streams[1].status,200);assert(result.answer.trim(),'Fallback must return text');result.fallback_verified=true;}
+ report.results.push(result);save();console.log(JSON.stringify({label,id:c.id,theme:c.theme,completed:result.completed,elapsed_ms:Math.round(result.elapsed_ms),calls:calls.length,...(siteSearch?{expected_link:result.expected_link,result_count:siteResult.results.length}:{}),failures:calls.filter(x=>x.error||x.status!==200).map(x=>({provider:x.provider,status:x.status,error:x.error}))}));
+ if(calls.some(x=>[401,402,403,429].includes(x.status)&&!(x.provider===faultProvider&&x.status===401))){report.stopped='upstream_auth_billing_or_rate_limit';save();throw new Error('Evaluation stopped at upstream authentication, billing, or rate limit');}
  if(!result.completed)throw new Error('Evaluation stopped at incomplete answer');
- if(ref)await new Promise(r=>setTimeout(r,Math.max(0,30000-(performance.now()-started))));
+ if(ref||siteSearch)await new Promise(r=>setTimeout(r,Math.max(0,30000-(performance.now()-started))));
 }
-if(!ref&&!selected.length){
+if(!ref&&!selected.length&&!siteSearch&&!faultProvider){
  report.effort=[];
  for(const result of report.results.filter(r=>r.kind==='consult'&&r.theme==='dark').slice(0,10)){
   const low=result.calls.find(c=>c.persona==='BALTHASAR-2'),payload=structuredClone(low?.request);assert(payload,'Effort comparison input');
