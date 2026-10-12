@@ -40,7 +40,7 @@ try {
     for(const name of ['japanese-search','search-data','search-ui'])assert.ok(html.includes(name+'.js?v=20261012_8'),path+': '+name);
   }
   const r=await fetch(base+'/phase4-validation/missing/deep/');assert.equal(r.status,404);
-  const html=await r.text();assert.ok(html.includes('site-tree'));assert.ok(html.includes('search-ui.js?v=20261012_8'));report.deep404=true;
+  const html=await r.text();assert.ok(html.includes('data-sitemap-slot'));assert.ok(html.includes('search-ui.js?v=20261012_8'));report.deep404=true;
   report.fetched=Object.fromEntries(await Promise.all([...cache].map(async([path,p])=>[path,{sha256:hash(await p),bytes:(await p).length}])));
   report.pass=true;console.log(JSON.stringify({pass:true,scopes:report.scopes,deep404:true}));
 }catch(error){report.error=error.message;process.exitCode=1;console.error(error.message);}

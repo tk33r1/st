@@ -65,9 +65,14 @@ try {
       assert.equal(await page.locator('meta[http-equiv="Content-Security-Policy"]').count(),scope==='tools'?1:0);
     }
     if(scope==='site') {
-      const expected=JSON.parse(readFileSync(resolve(generated,'data/site-keyword.json'))).pages.length;
-      assert.equal(await page.locator('.site-tree a').count(),expected);
-      assert.equal(await page.locator('.site-tree a[href="/job/nitoridaily/2026/"]').count(),0,'年枝の架空リンクを作らない');
+      // 日刊の号は媒体ごとに新しい3件だけ。それ以外の公開ページはすべてサイトの全体のどこかに出る（トップは「トップページへ」）。
+      const urls=JSON.parse(readFileSync(resolve(generated,'data/site-keyword.json'))).pages.map(p=>p.url);
+      const shown=new Set(await page.locator('#sitemap a, .sitemap-extra a, a.home').evaluateAll(links=>links.map(a=>a.getAttribute('href'))));
+      assert.deepEqual(urls.filter(url=>!/^\/job\/[a-z]+daily\/\d{8}\/$/.test(url) && !shown.has(url)),[],'載っていない公開ページ');
+      for(const media of ['nitoridaily','retailtechdaily']) assert.ok(await page.locator(`#sitemap a[href^="/job/${media}/2"]`).count()<=3);
+      assert.equal(await page.locator('.tile[aria-expanded="true"]').count(),0,'到着区画が無ければ閉じておく');
+      await page.locator('#tile-dj').click();assert.ok(await page.locator('#panel-dj a[href="/dj/#offer"]').isVisible());
+      await page.locator('#tile-job').click();assert.ok(await page.locator('#panel-dj').isHidden(),'開くのは1つだけ');
       await input.fill(query);await input.press('Enter');await page.locator('.st-search-semantic li').waitFor();
       await page.locator('#ai-search').waitFor({state:'visible'});assert.ok(await page.locator('#ai-run').isEnabled());
       await page.locator('#ai-run').click();await page.locator('#ai-list a').waitFor();

@@ -55,7 +55,7 @@
     h2 { font-size: 20px; line-height: 1.4; }
     .error-code, .requested-url { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .error-code { color: var(--accent); font-size: clamp(40px, 8vw, 56px); line-height: 1.15; font-weight: 600; letter-spacing: -.04em; }
-    .intro, .requested-url, .status, .description, .card-description, .count, .kind { color: var(--muted); }
+    .intro, .requested-url, .status, .description, .kind { color: var(--muted); }
     .requested-url { font-size: 13px; margin-top: 12px; overflow-wrap: anywhere; }
     a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
     a:hover { text-decoration: underline; }
@@ -106,26 +106,47 @@
     #ai-list { margin-top: 12px; }
     .ai-followups a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
     .explore { margin-top: 36px; }
-    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; margin-top: 16px; }
-    details { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-    summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 18px; border-radius: 12px; min-height: 88px; }
-    summary::-webkit-details-marker { display: none; }
-    summary:hover { background: var(--hover); }
-    .card-title { font-weight: 600; }
-    .card-description { display: block; font-size: 13px; font-weight: 400; margin-top: 2px; }
-    .count { font-size: 12px; font-weight: 400; margin-left: 8px; white-space: nowrap; }
-    .chevron { align-self: center; color: var(--accent); font-size: 20px; line-height: 1; }
-    details[open] .chevron { transform: rotate(90deg); }
-    .card-body { padding: 0 18px 12px; }
-    .card-list a, .all-link { display: flex; align-items: center; min-height: 44px; padding: 8px 0; font-size: 14px; text-decoration: none; }
-    .card-list li + li { border-top: 1px solid var(--border); }
-    .card-list:not(:empty) { margin-bottom: 6px; }
-    .all-link { border-top: 1px solid var(--border); }
-    .other-links { display: flex; flex-wrap: wrap; gap: 0 20px; margin-top: 16px; }
-    .other-links a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+    /* タイルとパネル。パネルはタイルの直後に置いて横幅いっぱいに広げ、dense で同じ段の残りのタイルを前に詰める */
+    /* 開閉の配線が済むまで（JS無効・失敗を含む）は、タイルとそのパネルを1列に順に並べ、パネルをすべて開いておく */
+    .sitemap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 16px; }
+    .sitemap-ready { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; }
+    .tile-heading { display: flex; margin: 0; font-size: inherit; line-height: inherit; }
+    .tile { flex: 1; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto; align-items: center; column-gap: 10px; min-height: 132px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; text-align: left; }
+    .sitemap-ready .tile { cursor: pointer; }
+    .sitemap-ready .tile:hover { background: var(--hover); }
+    .sitemap-ready .tile[aria-expanded="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .tile-icon { width: 22px; height: 22px; color: var(--accent); }
+    .tile-name { font-weight: 600; overflow-wrap: anywhere; }
+    .tile-description { grid-column: 1 / -1; align-self: start; margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .tile-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+    .tile-path { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+    .tile-chevron { display: none; color: var(--accent); font-size: 20px; line-height: 1; transition: transform .15s; }
+    .sitemap-ready .tile-chevron { display: inline; }
+    .tile[aria-expanded="true"] .tile-chevron { transform: rotate(90deg); }
+    .panel { grid-column: 1 / -1; min-width: 0; padding: 8px 20px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .sitemap-ready .panel { border-color: var(--accent); }
+    .sitemap-ready .panel:not(.is-open) { display: none; }
+    .panel-open { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
+    .panel-note { color: var(--muted); font-size: 14px; }
+    .panel-note a { display: inline-flex; align-items: center; min-height: 44px; }
+    .panel-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 28px; }
+    .panel-body:empty { display: none; }
+    .panel-group h4 { margin: 10px 0 2px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; }
+    .panel-group a { display: flex; align-items: center; min-height: 44px; padding: 6px 0; font-size: 14px; line-height: 1.45; text-decoration: none; }
+    .panel-group > ul > li + li { border-top: 1px solid var(--border); }
+    /* 群が1つだけなら2列に並べる（左から右へ読む順） */
+    .panel-group:only-child > ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+    .panel-group:only-child > ul > li { border-top: 1px solid var(--border); }
+    .panel-group:only-child > ul > li:nth-child(-n+2) { border-top: 0; }
+    .panel-latest { display: inline; margin-right: 8px; color: var(--muted); font-size: 12px; }
+    .panel-latest-list { display: inline-flex; flex-wrap: wrap; gap: 0 14px; }
+    .panel-latest-list a { min-height: 36px; padding: 0 0 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .sitemap-extra .panel-body { margin-top: 12px; }
     .home { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; font-weight: 600; }
     noscript p { margin-top: 28px; }
-    @media (max-width: 559px) { body { padding: 32px 16px; } .cards { grid-template-columns: minmax(0, 1fr); } .result-link { column-gap: 8px; padding: 12px; } }
+    @media (max-width: 679px) { .sitemap-ready { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-group:only-child > ul { grid-template-columns: minmax(0, 1fr); } .panel-group:only-child > ul > li:nth-child(2) { border-top: 1px solid var(--border); } }
+    @media (max-width: 559px) { body { padding: 32px 16px; } .result-link { column-gap: 8px; padding: 12px; } .tile { min-height: 120px; padding: 14px; } .panel { padding: 6px 16px 12px; } }
+    @media (max-width: 359px) { .sitemap-ready { grid-template-columns: minmax(0, 1fr); } }
   </style>
   <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
 </head>
@@ -164,42 +185,125 @@
     <noscript><p>下の一覧からお選びください。</p></noscript>
     <section class="explore" aria-labelledby="explore-heading">
       <h2 id="explore-heading" data-ja="サイトの全体" data-en="Explore the site">サイトの全体</h2>
-      <!-- SEARCH_TREE_START -->
-      <nav class="site-tree" aria-label="サイトの全体"><ul><li><a href="/">トップページ</a></li><li><a href="/tools/">ツール一覧</a></li><li><a href="/game/">ゲーム一覧</a></li><li><a href="/job/">職務・日刊</a></li></ul></nav>
-      <!-- SEARCH_TREE_END -->
-      <div hidden id="search-entry-definitions">
-      <div class="cards">
-        <details id="card-tools">
-          <summary><span><span class="card-title" data-ja="ツール" data-en="Tools">ツール</span><span class="count" id="count-tools" hidden></span><span class="card-description" data-ja="ブラウザで完結" data-en="Everything runs in your browser">ブラウザで完結</span></span><span class="chevron" aria-hidden="true">›</span></summary>
-          <div class="card-body"><ul class="card-list" id="list-tools"></ul><a class="all-link" data-entry="tools" data-section="tools" data-card="tools" data-title-ja="ツール一覧" data-title-en="All tools" data-description-ja="ブラウザで完結" data-description-en="Everything runs in your browser" href="/tools/" data-ja="ツールをすべて見る →" data-en="View all tools →">ツールをすべて見る →</a></div>
-        </details>
-        <details id="card-game">
-          <summary><span><span class="card-title" data-ja="ゲーム" data-en="Games">ゲーム</span><span class="count" id="count-game" hidden></span><span class="card-description" data-ja="ブラウザで遊べる" data-en="Play in your browser">ブラウザで遊べる</span></span><span class="chevron" aria-hidden="true">›</span></summary>
-          <div class="card-body"><ul class="card-list" id="list-game"></ul><a class="all-link" data-entry="game" data-section="game" data-card="game" data-title-ja="ゲーム一覧" data-title-en="All games" data-description-ja="ブラウザで遊べる" data-description-en="Play in your browser" href="/game/" data-ja="ゲームをすべて見る →" data-en="View all games →">ゲームをすべて見る →</a></div>
-        </details>
-        <details id="card-glitch">
-          <summary><span><span class="card-title">Glitch</span><span class="count" id="count-glitch" hidden></span><span class="card-description" data-ja="工夫と実験の記事" data-en="Ideas, hacks, and experiments">工夫と実験の記事</span></span><span class="chevron" aria-hidden="true">›</span></summary>
-          <div class="card-body"><ul class="card-list" id="list-glitch"></ul><a class="all-link" data-entry="glitch" data-section="glitch" data-card="glitch" data-title-ja="Glitch 記事一覧" data-title-en="All Glitch articles" data-description-ja="工夫と実験の記事" data-description-en="Ideas, hacks, and experiments" href="/glitch/" data-ja="記事をすべて見る →" data-en="View all articles →">記事をすべて見る →</a></div>
-        </details>
-        <details id="card-daily">
-          <summary><span><span class="card-title" data-ja="日刊ブリーフ" data-en="Daily briefs">日刊ブリーフ</span><span class="count" data-ja="2媒体" data-en="2 publications">2媒体</span><span class="card-description" data-ja="小売のニュースを毎日" data-en="Retail news, every day">小売のニュースを毎日</span></span><span class="chevron" aria-hidden="true">›</span></summary>
-          <div class="card-body"><ul class="card-list">
-            <li><a data-entry="nitori" data-section="job" data-card="daily" data-title-ja="日刊ニトリ" data-title-en="Daily Nitori" data-description-ja="ニトリとホームファニシングのニュース" data-description-en="Nitori and home furnishing news" href="/job/nitoridaily/" data-ja="日刊ニトリ →" data-en="Daily Nitori →">日刊ニトリ →</a></li>
-            <li><a data-entry="retail" data-section="job" data-card="daily" data-title-ja="日刊リテールテック" data-title-en="Daily Retail Tech" data-description-ja="小売とテクノロジーのニュース" data-description-en="Retail and technology news" href="/job/retailtechdaily/" data-ja="日刊リテールテック →" data-en="Daily Retail Tech →">日刊リテールテック →</a></li>
-          </ul></div>
-        </details>
+      <!-- タイルを押すと、その段の下にパネルが開く（JS無効ではすべて開いたまま）。並びはトップページの pages と同じ。
+           data-entry は主な入口の正本（site-search-index.py）。パネルの中身は出荷時に search-tree.py が data-sitemap-slot へ入れる。 -->
+      <div class="sitemap" id="sitemap">
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-dj" aria-expanded="true" aria-controls="panel-dj">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>
+          <span class="tile-name" data-ja="DJ" data-en="DJ">DJ</span>
+          <span class="tile-description" data-ja="DJの活動とプロフィール" data-en="DJ activity and profile">DJの活動とプロフィール</span>
+          <span class="tile-foot"><span class="tile-path">~/dj/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-dj" role="region" aria-labelledby="tile-dj">
+          <a class="panel-open" data-entry="dj" data-section="dj" data-title-ja="DJ" data-title-en="DJ" data-description-ja="DJの活動とプロフィール" data-description-en="DJ activity and profile" href="/dj/" data-ja="DJ のページへ →" data-en="DJ page →">DJ のページへ →</a>
+          <div class="panel-body" data-sitemap-slot="/dj/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-job" aria-expanded="true" aria-controls="panel-job">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg>
+          <span class="tile-name" data-ja="職務" data-en="Career">職務</span>
+          <span class="tile-description" data-ja="仕事の経験と日刊ブリーフ" data-en="Work experience and daily briefs">仕事の経験と日刊ブリーフ</span>
+          <span class="tile-foot"><span class="tile-path">~/job/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-job" role="region" aria-labelledby="tile-job">
+          <a class="panel-open" data-entry="job" data-section="job" data-title-ja="職務" data-title-en="Career" data-description-ja="仕事とこれまでの経験" data-description-en="Work and experience" href="/job/" data-ja="職務のページへ →" data-en="Career page →">職務のページへ →</a>
+          <div class="panel-body" data-sitemap-slot="/job/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-game" aria-expanded="true" aria-controls="panel-game">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13.8" r="1" fill="currentColor" stroke="none"/></svg>
+          <span class="tile-name" data-ja="ゲーム" data-en="Games">ゲーム</span>
+          <span class="tile-description" data-ja="ブラウザで遊べる" data-en="Play in your browser">ブラウザで遊べる</span>
+          <span class="tile-foot"><span class="tile-path">~/game/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-game" role="region" aria-labelledby="tile-game">
+          <a class="panel-open" data-entry="game" data-section="game" data-title-ja="ゲーム一覧" data-title-en="All games" data-description-ja="ブラウザで遊べる" data-description-en="Play in your browser" href="/game/" data-ja="ゲーム一覧へ →" data-en="All games →">ゲーム一覧へ →</a>
+          <div class="panel-body" data-sitemap-slot="/game/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-tools" aria-expanded="true" aria-controls="panel-tools">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></svg>
+          <span class="tile-name" data-ja="ツール" data-en="Tools">ツール</span>
+          <span class="tile-description" data-ja="ブラウザで完結" data-en="Everything runs in your browser">ブラウザで完結</span>
+          <span class="tile-foot"><span class="tile-path">~/tools/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-tools" role="region" aria-labelledby="tile-tools">
+          <a class="panel-open" data-entry="tools" data-section="tools" data-title-ja="ツール一覧" data-title-en="All tools" data-description-ja="ブラウザで完結" data-description-en="Everything runs in your browser" href="/tools/" data-ja="ツール一覧へ →" data-en="All tools →">ツール一覧へ →</a>
+          <div class="panel-body" data-sitemap-slot="/tools/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-glitch" aria-expanded="true" aria-controls="panel-glitch">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/></svg>
+          <span class="tile-name" data-ja="Glitch" data-en="Glitch">Glitch</span>
+          <span class="tile-description" data-ja="工夫と実験の記事" data-en="Ideas, hacks, and experiments">工夫と実験の記事</span>
+          <span class="tile-foot"><span class="tile-path">~/glitch/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-glitch" role="region" aria-labelledby="tile-glitch">
+          <a class="panel-open" data-entry="glitch" data-section="glitch" data-title-ja="Glitch 記事一覧" data-title-en="All Glitch articles" data-description-ja="工夫と実験の記事" data-description-en="Ideas, hacks, and experiments" href="/glitch/" data-ja="記事一覧へ →" data-en="All articles →">記事一覧へ →</a>
+          <div class="panel-body" data-sitemap-slot="/glitch/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-thought" aria-expanded="true" aria-controls="panel-thought">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 5H8a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2.5zM21.5 5H16a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h6.5z"/></svg>
+          <span class="tile-name" data-ja="Thought" data-en="Thought">Thought</span>
+          <span class="tile-description" data-ja="考えていること" data-en="Thoughts and reflections">考えていること</span>
+          <span class="tile-foot"><span class="tile-path">~/thought/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-thought" role="region" aria-labelledby="tile-thought">
+          <a class="panel-open" data-entry="thought" data-section="thought" data-title-ja="Thought" data-title-en="Thought" data-description-ja="考えていること" data-description-en="Thoughts and reflections" href="/thought/" data-ja="Thought のページへ →" data-en="Thought page →">Thought のページへ →</a>
+          <div class="panel-body" data-sitemap-slot="/thought/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-motovlog" aria-expanded="true" aria-controls="panel-motovlog">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="5.5" cy="16" r="3.5"/><circle cx="18.5" cy="16" r="3.5"/><path d="M5.5 16 9 9.5h5l4.5 6.5M7 9.5h3.5M14 9.5l1.8-3H18"/></svg>
+          <span class="tile-name" data-ja="Motovlog" data-en="Motovlog">Motovlog</span>
+          <span class="tile-description" data-ja="LIBERTY MOTOVLOG" data-en="LIBERTY MOTOVLOG">LIBERTY MOTOVLOG</span>
+          <span class="tile-foot"><span class="tile-path">~/motovlog/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-motovlog" role="region" aria-labelledby="tile-motovlog">
+          <a class="panel-open" data-entry="motovlog" data-section="motovlog" data-title-ja="Motovlog" data-title-en="Motovlog" data-description-ja="LIBERTY MOTOVLOG" data-description-en="LIBERTY MOTOVLOG" href="/motovlog/" data-ja="Motovlog のページへ →" data-en="Motovlog page →">Motovlog のページへ →</a>
+          <div class="panel-body" data-sitemap-slot="/motovlog/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-magi" aria-expanded="true" aria-controls="panel-magi">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/></svg>
+          <span class="tile-name" data-ja="MAGI" data-en="MAGI">MAGI</span>
+          <span class="tile-description" data-ja="3つの人格と話すAIチャット" data-en="Chat with three AI personas">3つの人格と話すAIチャット</span>
+          <span class="tile-foot"><span class="tile-path">~/magi/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-magi" role="region" aria-labelledby="tile-magi">
+          <a class="panel-open" data-entry="magi" data-section="magi" data-title-ja="MAGI" data-title-en="MAGI" data-description-ja="3つの人格と話すAIチャット" data-description-en="Chat with three AI personas" href="/magi/" data-ja="MAGI（旧版）へ →" data-en="Legacy MAGI →">MAGI（旧版）へ →</a>
+          <p class="panel-note"><span data-ja="いまの MAGI はトップページの ✦ から開けます。このページは旧版です。" data-en="The current MAGI opens from ✦ on the homepage. This page is the legacy version.">いまの MAGI はトップページの ✦ から開けます。このページは旧版です。</span> <a href="/" data-ja="トップページへ →" data-en="Go to the homepage →">トップページへ →</a></p>
+          <div class="panel-body" data-sitemap-slot="/magi/"></div><!-- /slot -->
+        </div>
+        <h3 class="tile-heading"><button type="button" class="tile" id="tile-contact" aria-expanded="true" aria-controls="panel-contact">
+          <svg class="tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+          <span class="tile-name" data-ja="お問い合わせ" data-en="Contact">お問い合わせ</span>
+          <span class="tile-description" data-ja="Shinya Takedaへの連絡" data-en="Get in touch with Shinya Takeda">Shinya Takedaへの連絡</span>
+          <span class="tile-foot"><span class="tile-path">~/contact/</span><span class="tile-chevron" aria-hidden="true">›</span></span>
+        </button></h3>
+        <div class="panel" id="panel-contact" role="region" aria-labelledby="tile-contact">
+          <a class="panel-open" data-entry="contact" data-section="contact" data-title-ja="お問い合わせ" data-title-en="Contact" data-description-ja="Shinya Takedaへの連絡" data-description-en="Get in touch with Shinya Takeda" href="/contact/" data-ja="お問い合わせのページへ →" data-en="Contact page →">お問い合わせのページへ →</a>
+          <div class="panel-body" data-sitemap-slot="/contact/"></div><!-- /slot -->
+        </div>
       </div>
-      <!-- 固定の入口の定義はこの11リンク。候補もここから作り、個別のDJページは載せない。 -->
-      <nav aria-label="ほかのページ" id="other-nav"><ul class="other-links">
-        <li><a data-entry="magi" data-section="magi" data-title-ja="MAGI" data-title-en="MAGI" data-description-ja="3つの人格と話すAIチャット" data-description-en="Chat with three AI personas" href="/magi/">MAGI</a></li>
-        <li><a data-entry="dj" data-section="dj" data-title-ja="DJ" data-title-en="DJ" data-description-ja="DJの活動とプロフィール" data-description-en="DJ activity and profile" href="/dj/">DJ</a></li>
-        <li><a data-entry="motovlog" data-section="motovlog" data-title-ja="Motovlog" data-title-en="Motovlog" data-description-ja="LIBERTY MOTOVLOG" data-description-en="LIBERTY MOTOVLOG" href="/motovlog/">Motovlog</a></li>
-        <li><a data-entry="thought" data-section="thought" data-title-ja="Thought" data-title-en="Thought" data-description-ja="考えていること" data-description-en="Thoughts and reflections" href="/thought/">Thought</a></li>
-        <li><a data-entry="job" data-section="job" data-title-ja="職務" data-title-en="Career" data-description-ja="仕事とこれまでの経験" data-description-en="Work and experience" href="/job/" data-ja="職務" data-en="Career">職務</a></li>
-        <li><a data-entry="contact" data-section="contact" data-title-ja="お問い合わせ" data-title-en="Contact" data-description-ja="Shinya Takedaへの連絡" data-description-en="Get in touch with Shinya Takeda" href="/contact/" data-ja="お問い合わせ" data-en="Contact">お問い合わせ</a></li>
-      </ul></nav>
+      <div class="sitemap-extra"><div class="panel-body" data-sitemap-slot="*"></div><!-- /slot --></div>
+      <!-- 日刊2誌の入口。パネルでは職務の下に出る。 -->
+      <div hidden>
+        <a data-entry="nitori" data-section="job" data-card="daily" data-title-ja="日刊ニトリ" data-title-en="Daily Nitori" data-description-ja="ニトリとホームファニシングのニュース" data-description-en="Nitori and home furnishing news" href="/job/nitoridaily/">日刊ニトリ</a>
+        <a data-entry="retail" data-section="job" data-card="daily" data-title-ja="日刊リテールテック" data-title-en="Daily Retail Tech" data-description-ja="小売とテクノロジーのニュース" data-description-en="Retail and technology news" href="/job/retailtechdaily/">日刊リテールテック</a>
       </div>
     </section>
+    <script>
+      // サイトの全体: 開くパネルは1つだけ。配線できたときだけ畳む（本体のスクリプトが失敗しても、ここが動けば操作できる）。
+      // 外部スクリプトの読み込みより前で畳み、パネルがすべて開いた状態が見えるのを防ぐ。
+      (function () {
+        var sitemap = document.getElementById('sitemap'), tiles = Array.from(sitemap.querySelectorAll('.tile'));
+        function setPanel(tile) {
+          tiles.forEach(function (t) {
+            var on = t === tile;
+            t.setAttribute('aria-expanded', String(on));
+            document.getElementById(t.getAttribute('aria-controls')).classList.toggle('is-open', on);
+          });
+        }
+        tiles.forEach(function (t) { t.addEventListener('click', function () { setPanel(t.getAttribute('aria-expanded') === 'true' ? null : t); }); });
+        setPanel(null);
+        sitemap.classList.add('sitemap-ready');
+      })();
+    </script>
     <a class="home" href="/" data-ja="トップページへ →" data-en="Go to the homepage →">トップページへ →</a>
   </main>
   <dialog class="ai-info-dialog" id="ai-info-dialog" aria-labelledby="ai-info-title">
@@ -245,7 +349,6 @@
         if (event.target === infoDialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) infoDialog.close();
       });
       document.title = (lang === 'ja' ? 'ページが見つかりませんでした' : 'Page not found') + ' | tk.st';
-      byId('other-nav').setAttribute('aria-label', lang === 'ja' ? 'ほかのページ' : 'More pages');
       var input, searchUI, searchState = {rank:'idle',base:'loading',total:0,submitted:false};
       var analyticsTerm = window.STSearchAnalytics ? window.STSearchAnalytics.term : function () { return ''; };
       function safeDecode(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
@@ -333,11 +436,10 @@
       var correctedSection = corrections.length === 1 ? corrections[0] : null;
       var arrivedSection = (exactSection || correctedSection || {}).section || '';
       var arrival=exactSection || correctedSection;
-      if (arrival) {
-        var target=Array.from(document.querySelectorAll('.site-tree a')).find(function(a){return a.getAttribute('href')===arrival.href;});
-        var branch=target && target.closest('li').querySelector(':scope > details');
-        while(branch) {branch.open=true;branch=branch.parentElement.closest('details');}
-      }
+      // サイトの全体: 到着した区画のパネルを最初から開く（開閉はタイルの直後のスクリプト）。
+      var arrivalLink=arrival && Array.from(document.querySelectorAll('#sitemap .panel a')).find(function(a){return a.getAttribute('href')===arrival.href;});
+      var arrivalTile=arrivalLink && byId(arrivalLink.closest('.panel').getAttribute('aria-labelledby'));
+      if (arrivalTile && byId('sitemap').classList.contains('sitemap-ready')) arrivalTile.click();
 
       function tie(a,b) { return (b.section===arrivedSection?1:0)-(a.section===arrivedSection?1:0) || a.order-b.order; }
       function suggestions(items, issue) {

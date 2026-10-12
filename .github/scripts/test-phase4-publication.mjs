@@ -142,13 +142,14 @@ try {
     console.log(scope+': URL・計測・明示操作・検索イベント停止'+(live?'・本番②':''));
   }
   report.analyticsLoaded=[...loaded];
-  // JS無効でも静的ツリーを操作でき、日刊ヘッダーの入力をURLへ載せない。
+  // JS無効でもサイトの全体のパネルが開いたまま見え、日刊ヘッダーの入力をURLへ載せない。
   const noJS=await browser.newContext({javaScriptEnabled:false});
   await noJS.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   const staticPage=await noJS.newPage();const notFound=await staticPage.goto(base+screens[0][1]);assert.equal(notFound.status(),404);
-  assert.ok(await staticPage.locator('.site-tree a[href="/tools/"]').count());
-  const branch=staticPage.locator('.site-tree details').first();await branch.locator('summary').first().click();
-  assert.ok(await branch.getAttribute('open')!==null);
+  assert.ok(await staticPage.locator('#panel-tools a[href="/tools/"]').isVisible(),'JS無効ではパネルをすべて開いたまま');
+  assert.ok(await staticPage.locator('#panel-dj a[href="/dj/#offer"]').isVisible());
+  const [djTile,djPanel,jobTile]=await Promise.all(['#tile-dj','#panel-dj','#tile-job'].map(s=>staticPage.locator(s).boundingBox()));
+  assert.ok(djTile.y<djPanel.y && djPanel.y<jobTile.y,'JS無効でもパネルは自分のタイルの直後に並ぶ');
   for(const media of ['nitoridaily','retailtechdaily']) {
     await staticPage.goto(base+'/job/'+media+'/');const href=await staticPage.locator('[data-archive-month] a').first().getAttribute('href');
     await staticPage.goto(new URL(href,staticPage.url()).href);await staticPage.locator('.header-search input').fill(query);

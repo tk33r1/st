@@ -260,6 +260,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `build.sh` は出荷するHTMLから毎回生成する。手元では `python -B .github/scripts/site-search-index.py` で更新する。
     noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。
     主な入口は `404.html` の常設入口（`data-entry`）が正本で、noindexでも索引に入れ、日英の名前を持たせる（入口を足すなら `data-entry` を書く）。
+    404 の「サイトの全体」は同じ形の9枚のタイル（並びはトップページの `pages` コマンドの一覧（`index.html` の `projects`）の順に、MAGI・お問い合わせを足したもの）で、押すとその段の下にパネルが1つだけ開く（JS無効・開閉の配線の失敗ではすべて開いたまま）。パネルの中身は `search-tree.py` が出荷時に、索引のページ（日刊の号は媒体ごとに新しい3件）と、各区画のページで `data-sitemap="日本語" data-sitemap-en="English"` を付けた節（リンク先は `data-sitemap-anchor`、無ければ id）から作る。
+    節を足したら目印を付ける。区画を足すときは 404.html にタイルとパネルを書く（どのタイルにも入らないページは「ほかのページ」に出て、ビルドに警告が出る）。
     404 の検索ボタン（②）は同じ入口に `mode: 'rank'` を送り、索引の各ページを TypeSafe AI（Jev）で判定して並べる（`SITE_RANK`／`site-rank.js`、画面の部品は `assets/site-search.js`）。
     日刊2誌の②も同じ入口で、`scope: nitori|retail` と `filters`・`generation` を送る。明示検索でだけ送信し、日刊の③は設けない。
     正本は `search-scope.js`・`site-rank.js`・`SITE_RANK.scopes`。対象は全年度、候補は最大20件。媒体ごとの有効化・停止は `SITE_RANK_SCOPES` で行い、回数は404の②と共有する。停止は索引・回数・Jevより前で行い、①は利用可能。
