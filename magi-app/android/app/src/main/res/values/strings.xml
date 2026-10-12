@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MAGI</string>
+    <string name="title_activity_main">MAGI</string>
+    <string name="package_name">st.tk.magi</string>
+    <string name="custom_url_scheme">st.tk.magi</string>
+</resources>
