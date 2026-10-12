@@ -655,10 +655,13 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
 async function fetchTitle(env, lastContent, langNote, signal, log) {
   try {
+    // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる。
+    // 発言は見出しを付けて引用する（そのまま渡すと、モデルが題ではなく答えを書く）
+    const quoted = `${TITLER.input_header}
+${contentText(lastContent).trim() || '（文字なし。画像だけ）'}`;
     const res = await callAuxModel({
       env, cfg: DEFAULTS.models.titler, stream: false, signal,
-      // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる
-      messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: lastContent }],
+      messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: withImages(quoted, contentImages(lastContent)) }],
     }, log, 'title');
     if (!res.ok) { log('title_call', `HTTP ${res.status}`); return null; }
     const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();

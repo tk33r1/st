@@ -3550,6 +3550,17 @@ test('Anthropic：system・同役の結合・先頭assistantの除去・画像�
   for(const name of ['temperature','top_p','top_k','opinions']) assert.ok(!JSON.stringify(body).includes(name));
 });
 
+test('タイトル：発言は見出しを付けて引用し、画像は前に残す（そのまま渡すと題でなく答えを書く）',async()=>{
+  const seen=[]; const w=nativeWorker(undefined,(_,opts)=>{seen.push(JSON.parse(opts.body));return nativeAnswer('休憩の工夫')});
+  const header=vm.runInContext('TITLER.input_header',w.ctx);
+  assert.equal(await w.ctx.fetchTitle(w.env,'休憩のコツを教えて',null,new AbortController().signal,()=>{}),'休憩の工夫');
+  assert.deepEqual(JSON.parse(JSON.stringify(seen[0].messages)),[{role:'user',content:[{type:'text',text:header+'\n休憩のコツを教えて'}]}]);
+  const image={type:'image_url',image_url:{url:'data:image/png;base64,YQ=='}};
+  await w.ctx.fetchTitle(w.env,[image],null,new AbortController().signal,()=>{});
+  assert.deepEqual(JSON.parse(JSON.stringify(seen[1].messages[0].content.map(p=>p.type))),['image','text']);
+  assert.equal(seen[1].messages[0].content[1].text,header+'\n（文字なし。画像だけ）');
+});
+
 test('Anthropic：専用見出し・観測の元応答・非streamの正規化・拒否は本文を落とす',async()=>{
   let seen, stop='end_turn'; const observed=[];
   const w=nativeWorker(undefined,(_,opts)=>{seen=opts;return nativeAnswer('answer',stop)});
