@@ -1,0 +1,41 @@
+name: MAGI Anthropic Probe
+
+# 少数の合成入力で公開1の前提を確認する。本番Worker・DB・人格カードは変更しない。
+on:
+  workflow_dispatch:
+    inputs:
+      image-urls:
+        description: '任意: 公開X画像のHTTPS URLを3件（pbs.twimg.com、空白区切り）'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magi-anthropic-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Probe the API
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_PROBE_IMAGE_URLS: ${{ inputs.image-urls }}
+      run: node .github/scripts/probe-anthropic.mjs
+    - name: Keep metadata only
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: anthropic-probe
+        path: workers/.wrangler/anthropic-probe.json
+        include-hidden-files: true
+        if-no-files-found: ignore
