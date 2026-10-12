@@ -1104,8 +1104,8 @@ test('検索は認可・入力・フラグ・DB・完全な一覧を確認して
   const res = await searchRequest(w), body = await res.json();
   assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store'); assert.ok(body.request_id);
   assert.equal(body.results[0].title, 'PDF Studio'); assert.equal(body.results[0].url, '/tools/pdf-studio/');
-  const call = w.calls.find(c => c.response_format); assert.equal(call.max_completion_tokens, 120); assert.equal(call.temperature, undefined);
-  assert.equal(call.thinking.type, 'disabled'); assert.equal(call.output_config.effort, 'low');
+  const call = w.calls.find(c => c.response_format); assert.equal(call.max_completion_tokens, 120); assert.equal(call.temperature, .4);
+  assert.equal(call.reasoning_effort, 'none'); assert.equal(call.response_format.json_schema.strict, true);
 });
 
 test('検索のIP上限を超えた要求は全体を進めず、通常チャットとは別に数える', async () => {
@@ -1188,14 +1188,14 @@ test('検索エラーに入力が含まれても公開エラー・ログ・通�
   const secret = 'PRIVATE_SEARCH_TEXT', logs = [], mails = [];
   const w = enableSearch(worker(undefined, (url, o) => {
     if (url.includes('resend.com')) { mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
-    if (o?.body && JSON.parse(o.body).response_format) return new Response('credit balance exhausted ' + secret, { status: 429 });
+    if (o?.body && JSON.parse(o.body).response_format) return new Response('insufficient_quota ' + secret, { status: 429 });
   }));
   w.ctx.console.log = (...values) => logs.push(values);
   Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
   for (let i = 0; i < 2; i++) {
     const res = await searchRequest(w, { query: secret, locale: 'en' }); assert.equal(res.status, 503); assert.ok(!(await res.text()).includes(secret));
   }
-  await Promise.all(w.waits); assert.equal(mails.length, 2);
+  await Promise.all(w.waits); assert.equal(mails.length, 1);
   assert.ok(!JSON.stringify([logs, mails]).includes(secret)); assert.ok(mails[0].text.includes('404検索'));
 });
 
@@ -1205,18 +1205,18 @@ test('検索とチャットのページ選びは、遅れて届く429本文を�
   const server = createServer((req, res) => {
     req.resume();
     res.writeHead(429, { 'Content-Type': 'application/json' }); res.flushHeaders();
-    const timer = setTimeout(() => res.end(JSON.stringify({ error: { code: 'credit balance exhausted', message: secret } })), 80);
+    const timer = setTimeout(() => res.end(JSON.stringify({ error: { code: 'insufficient_quota', message: secret } })), 80);
     res.on('close', () => clearTimeout(timer));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  let releaseMails = [];
+  let releaseMail;
   try {
     for (const chat of [false, true]) {
       const logs = [], mails = [];
       const w = enableSearch(worker(undefined, (url, o) => {
         if (url.includes('resend.com')) {
           mails.push(JSON.parse(o.body));
-          return new Promise(resolve => { releaseMails.push(() => resolve(Response.json({ id: 'mail' }))); });
+          return new Promise(resolve => { releaseMail = () => resolve(Response.json({ id: 'mail' })); });
         }
         if (o?.body && JSON.parse(o.body).response_format) return fetch('http://127.0.0.1:' + server.address().port, o);
       }));
@@ -1228,12 +1228,12 @@ test('検索とチャットのページ選びは、遅れて届く429本文を�
       const text = await res.text();
       if (chat) { assert.match(text, /event: done/); assert.doesNotMatch(text, /event: pages|event: error/); }
       else { assert.equal(res.status, 503); assert.ok(!text.includes(secret)); }
-      assert.equal(mails.length, 2); assert.ok(mails[0].text.includes(chat ? 'チャットのページ選び' : '404検索'));
+      assert.equal(mails.length, 1); assert.ok(mails[0].text.includes(chat ? 'チャットのページ選び' : '404検索'));
       assert.ok(!JSON.stringify([logs, mails]).includes(secret));
-      releaseMails.forEach(release => release()); releaseMails = []; await Promise.all(w.waits);
+      releaseMail(); releaseMail = null; await Promise.all(w.waits);
     }
   } finally {
-    releaseMails.forEach(release => release());
+    if (releaseMail) releaseMail();
     server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
   }
 });
@@ -1258,7 +1258,7 @@ test('検索エラーの本文が届かなければ期限で通信を止め、HT
       w.ctx.setTimeout = (fn, ms) => setTimeout(fn, ms === 2000 ? 40 : ms);
       Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
       assert.equal((await searchRequest(w)).status, 503); assert.equal(signal.aborted, true);
-      await Promise.all(w.waits); assert.equal(mails.length, status === 401 ? 2 : 0);
+      await Promise.all(w.waits); assert.equal(mails.length, status === 401 ? 1 : 0);
     }
   } finally {
     server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
