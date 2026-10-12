@@ -206,7 +206,9 @@
           // 「き」があれば「きゃ」等の範囲をもう一度走査しない。件数は省略しない。
           for (const prefix of unique.filter(p => !unique.some(other => other !== p && p.startsWith(other)))) {
             for (let i = lowerBound(vocabulary, prefix); i < vocabulary.length && vocabulary[i].reading.startsWith(prefix); i++) {
-              for (const packed of vocabulary[i].postings) {
+              const postings=vocabulary[i].postings;
+              for(let p=0;p<postings.length;p++) {
+                const packed=postings[p];
                 const index = packed >>> 4, score = (packed & 3) ? 300 : 100;
                 if (score > found[index]) found[index] = score;
               }
@@ -237,16 +239,18 @@
           orderingKey=options.orderKey();ordered=rows.slice().sort((a,b)=>(options.compare?.(a.record,b.record) || 0) || a.order-b.order);
         }
         const result = [], buckets = !options.compare || (options.orderKey && relevance)?new Map():null;
-        (options.orderKey?ordered:rows).forEach(row => {
+        const candidates=options.orderKey?ordered:rows;
+        for(let position=0;position<candidates.length;position++) {
+          const row=candidates[position];
           const index=row.order;
-          if (filterEntries.length && !filterEntries.every(([key, val]) => (key === 'month' ? String(row.record.date || '').slice(0, 6) : row.record[key]) === val)) return;
+          if (filterEntries.length && !filterEntries.every(([key, val]) => (key === 'month' ? String(row.record.date || '').slice(0, 6) : row.record[key]) === val)) continue;
           let common = true, score = matches.length ? 700 : 0;
           for (const m of matches) {
             if (!m[index]) { common = false; break; }
             score = Math.min(score, m[index]);
           }
           const legacy = !common && !!query && row.legacy.includes(legacyQuery);
-          if (!common && !legacy) return;
+          if (!common && !legacy) continue;
           if (!common) score = 100;
           if (terms.length > 1) for (const f of row.texts) if ((f.mask & 1) && f.text.includes(query)) {
             score = Math.max(score, f.text === query ? 700 : f.text.startsWith(query) ? 600 : 500);
@@ -256,7 +260,7 @@
             if (!buckets.has(score)) buckets.set(score, []);
             buckets.get(score).push(item);
           } else result.push(item);
-        });
+        }
         if (buckets) {
           // 点数は少数の離散値。元の順のまま束ねれば全件を比較ソートしなくてよい。
           for (const score of [...buckets.keys()].sort((a, b) => b - a)) result.push(...buckets.get(score));

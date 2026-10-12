@@ -297,7 +297,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 DAILY_UI_VERSION = '20261011_1'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
-SEARCH_RUNTIME_VERSION = '20261012_4'
+SEARCH_RUNTIME_VERSION = '20261012_5'
 DAILY_CSS_VERSION = '20261009_2'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。

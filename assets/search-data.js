@@ -20,7 +20,7 @@
       if(!parserSource) parserSource=(async()=>{
         const ac=new AbortController(),timer=setTimeout(()=>ac.abort(),8000);
         try {
-          const r=await fetch('/assets/search-json-worker.js?v=20261012_4',{signal:ac.signal,credentials:'omit',referrerPolicy:'no-referrer'});
+          const r=await fetch('/assets/search-json-worker.js?v=20261012_5',{signal:ac.signal,credentials:'omit',referrerPolicy:'no-referrer'});
           if(!r.ok) fail('search_parser');return await r.text();
         } finally {clearTimeout(timer);}
       })();
