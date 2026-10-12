@@ -1,0 +1,59 @@
+{
+  "started": "2026-10-12T01:01:06.966Z",
+  "endpoint": "https://workers.tk.st/magi2/site-search",
+  "liveRequests": 3,
+  "cases": [
+    {
+      "scope": "tools",
+      "http": 400,
+      "reason": "invalid_request"
+    },
+    {
+      "scope": "game",
+      "http": 400,
+      "reason": "invalid_request"
+    },
+    {
+      "scope": "site",
+      "http": 200,
+      "status": "results",
+      "complete": true,
+      "cached": false,
+      "count": 1,
+      "searched": {
+        "total": 35,
+        "candidates": 35,
+        "judged": 35
+      }
+    },
+    {
+      "scope": "nitori",
+      "http": 200,
+      "status": "results",
+      "complete": true,
+      "cached": true,
+      "count": 5,
+      "searched": {
+        "total": 197,
+        "candidates": 20,
+        "judged": 20,
+        "generation": "7284fd8864175dd2"
+      }
+    },
+    {
+      "scope": "retail",
+      "http": 200,
+      "status": "results",
+      "complete": true,
+      "cached": false,
+      "count": 5,
+      "searched": {
+        "total": 214,
+        "candidates": 20,
+        "judged": 20,
+        "generation": "907bcfa8652db67f"
+      }
+    }
+  ],
+  "pass": true
+}

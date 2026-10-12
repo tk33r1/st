@@ -44,7 +44,7 @@ async function context(off=false,allowLive=false,dailySearchEventsOnly=false) {
     }
     if(url.origin===origin && !url.pathname.startsWith('/cdn-cgi/'))return route.continue();
     const body=req.postData() || '',referer=headers.referer || '';
-    log.push({host:url.host,url:req.url(),body,referer});
+    log.push({host:url.host,url:req.url(),method:req.method(),body,referer});
     if(analyticsScript(req.url())) {
       // 日刊の既存設定は検索イベントの停止。SAFE TOOLSのタグ読込停止とは区別する。
       if(off && !dailySearchEventsOnly)throw new Error('解析停止中に計測スクリプトを取得');
@@ -63,8 +63,19 @@ const locationSafe=async page=>assert.ok(!decode(await page.evaluate(()=>locatio
 function checkLog(log) {
   for(const entry of log) {
     const remove=text=>google(entry.host)?text.replace(/(^|[?&\n])ep\.search_term=[^&\n]*/g,'$1'):text;
-    for(const text of [remove(entry.url),remove(entry.body),entry.referer])
+    // 旧?q=で開く要求は既に同じサイトへ届く。Cloudflareの先読みルール取得の
+    // Refererだけは初期URLを持つ場合があり、外部計測と区別する。URL/本文は検査する。
+    const infrastructure=new URL(entry.url).origin===origin && new URL(entry.url).pathname==='/cdn-cgi/speculation' && entry.method==='GET';
+    if(infrastructure && decode(entry.referer).includes(marker) && !entry.countedException) {
+      report.infrastructureReferrerExceptions=(report.infrastructureReferrerExceptions || 0)+1;entry.countedException=true;
+    }
+    for(const [field,text] of [['url',remove(entry.url)],['body',remove(entry.body)],...(!infrastructure?[['referer',entry.referer]]:[])]) {
+      if(decode(text).includes(marker)) {
+        const value=decode(text),at=value.indexOf(marker);
+        report.violation={host:entry.host,path:new URL(entry.url).pathname,field,context:value.slice(Math.max(0,at-50),at+marker.length)};
+      }
       assert.ok(!decode(text).includes(marker),'計測のsearch_term以外に検索語を載せない');
+    }
     const text=decode(entry.url+'\n'+entry.body+'\n'+entry.referer);
     assert.ok(!text.includes('a.b@example.com') && !text.includes('090-1234-5678'),'計測の個人情報を伏せる');
     assert.ok(!/(?:^|[?&\n])en=view_search_results(?:&|$)/.test(entry.url+'\n'+entry.body),'自動検索イベントを送らない');

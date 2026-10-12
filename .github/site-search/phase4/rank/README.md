@@ -1,6 +1,6 @@
 # tools/game検索②の固定評価
 
-2026-10-12。公開前のローカル評価。Worker／Pagesは公開していない。
+2026-10-12。直接Jevの公開前評価の記録。本番Worker／Pagesも同日公開し、[別の公開評価](../../../../assets/site-search-phase4-release-evaluation.md)に本番final40問と5画面・制約を記録した。
 
 ## 固定したもの
 
@@ -39,4 +39,4 @@ node .github/scripts/eval-list-rank.mjs --smoke-payload
 node --test .github/scripts/test-list-rank.mjs
 ```
 
-精度評価のための追加実APIは再課金になる。既存記録の集計は`--report`を使う。新scopeは`wrangler.toml`の公開許可に足していない。本番の評価認可・画面経由の測定・Linux／Pagesの依存導入・実機IME／読み上げは残る。
+精度評価のための追加実APIは再課金になる。既存記録の集計は`--report`を使う。新scopeを公開許可へ追加し、本番の評価認可・画面経由・Linux／Pagesを確認して一時キーを片付けた。実機IME／読み上げは未検証。直接APIの結果と本番結果は混同しない。

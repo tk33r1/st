@@ -1,0 +1,82 @@
+{
+  "started": "2026-10-12T01:00:08.074Z",
+  "base": "https://tk.st",
+  "live": true,
+  "liveRequests": 5,
+  "analyticsLoaded": [
+    "www.googletagmanager.com/gtm.js",
+    "www.googletagmanager.com/gtag/js",
+    "analytics.ahrefs.com/analytics.js"
+  ],
+  "cases": [
+    {
+      "scope": "site",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 18,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 1,
+        "complete": true,
+        "cached": false,
+        "generation": "623e1d88553c4790f86c295493088143858e2048deebe3b43c6e2702c525e7b4"
+      }
+    },
+    {
+      "scope": "tools",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 49,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 1,
+        "complete": true,
+        "cached": false,
+        "generation": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9"
+      }
+    },
+    {
+      "scope": "game",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 64,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 1,
+        "complete": true,
+        "cached": false,
+        "generation": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6"
+      }
+    },
+    {
+      "scope": "nitori",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 90,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 5,
+        "complete": true,
+        "cached": false,
+        "generation": "7284fd8864175dd2"
+      }
+    },
+    {
+      "scope": "retail",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 88,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 5,
+        "complete": true,
+        "cached": false,
+        "generation": "907bcfa8652db67f"
+      }
+    }
+  ],
+  "limitations": "Chromiumのみ。OSのIMEと実機読み上げは含まない。解析送信は記録して停止。",
+  "infrastructureReferrerExceptions": 12,
+  "javascriptDisabled": true,
+  "pass": true
+}

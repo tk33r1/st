@@ -1,0 +1,23 @@
+{
+  "started": "2026-10-12T00:57:03.220Z",
+  "base": "https://tk.st",
+  "cases": [
+    {
+      "scope": "tools",
+      "reason": "disabled",
+      "searched": null,
+      "localResults": 1,
+      "posts": 1,
+      "automaticResend": false
+    },
+    {
+      "scope": "game",
+      "reason": "disabled",
+      "searched": null,
+      "localResults": 5,
+      "posts": 1,
+      "automaticResend": false
+    }
+  ],
+  "pass": true
+}

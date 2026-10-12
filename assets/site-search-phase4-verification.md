@@ -1,8 +1,8 @@
 # サイト内検索 Phase 4 検証計画書
 
-実装中（2026-10-12更新）。生成・照合・新共通UI・旧HTML互換をローカルで部分検証済み。詳細と未実施範囲は[実装記録](../.github/site-search/phase4/implementation-progress.md)。対象は[PRD](site-search-phase4-prd.md)、契約は[設計書](site-search-phase4-design.md)、順序は[実装計画書](site-search-phase4-plan.md)。Phase 3の合格記録をPhase 4の合格として数えない。
+実装済み（2026-10-12）。正本はコード。404・日刊2誌・tools/gameを共通ロジック・UIへ接続して本番公開した。Linux・Pages・本番Jev・URL／計測・停止／復帰の結果と制約は[公開評価](site-search-phase4-release-evaluation.md)。OSのIMEと実機読み上げは未検証。本書は公開時点で凍結し、以後の運用はコードと公開評価を参照する。
 
-2026-10-12の追加検証は一般60語、tools/gameの固定80問の実Jev、10k共通UIの入力p95、7,500件の実日刊adapter、Blob Workerの生バイトhash・内容保持・移譲後の縮退・取消、5画面の小画面・CSS拡大・焦点・重複通知・並べ替え時の②破棄、674ファイルの出荷ビルド、Windowsの10k生成ピークRAM234.7/285.5MiBとブラウザメモリ。準備は約2.7〜3.2秒へ短縮。初回20入力・最大約0.225秒の準備中停止は制約として記録する。ChromiumのIME入力経路は確認したが、OSの実機IMEではない。Linux／Pages、実機IME／読み上げ、実計測を含む本番URL回帰と公開確認は未実施。
+生成・照合・共通UI・旧契約の回帰211件、Python6件、固定80問の実Jev各2回と本番final40問、正式入力p95、5画面の本番実検索、解析送信を止めた実GTM／AhrefsのURL検査が通過。実機確認と初回入力／準備中停止などの限界は公開評価に残す。
 
 ## 1. 段階と環境
 

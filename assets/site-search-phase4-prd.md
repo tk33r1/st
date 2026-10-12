@@ -1,6 +1,6 @@
 # サイト内検索 Phase 4 PRD
 
-実装中（2026-10-12更新）。未公開。読み生成・共通照合・共通UIと通信APIの基盤を着手済み。実ページ・Worker・出荷ビルドへローカル接続し部分検証済み。60語・新scopeの実Jev／smoke・共通UIの入力速度・実adapterの7,500件準備とブラウザメモリを評価済み。準備は約2.7〜3.2秒へ短縮し、ChromiumのIME経路も確認した。初回入力と短い停止・Linux／実機と本番確認は残る。進捗は[実装記録](../.github/site-search/phase4/implementation-progress.md)。Phase 3 の公開済み資料は書き換えず、本書で Phase 4 の追加要件を定義する。
+実装済み（2026-10-12）。正本はコード。404・日刊2誌・tools/gameを共通ロジック・UIへ接続して本番公開した。Linux・Pages・本番Jev・URL／計測・停止／復帰の結果と制約は[公開評価](site-search-phase4-release-evaluation.md)。OSのIMEと実機読み上げは未検証。本書は公開時点で凍結し、以後の運用はコードと公開評価を参照する。
 
 仕組みは[設計書](site-search-phase4-design.md)、作業順は[実装計画書](site-search-phase4-plan.md)、合否は[検証計画書](site-search-phase4-verification.md)。①はブラウザ内の文字・読み検索、②は Jev の意味検索、③は Shinya Takeda AI に聞く機能を指す。
 

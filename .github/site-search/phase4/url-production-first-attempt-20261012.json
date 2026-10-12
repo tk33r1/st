@@ -1,0 +1,25 @@
+{
+  "started": "2026-10-12T00:57:24.461Z",
+  "base": "https://tk.st",
+  "live": true,
+  "liveRequests": 1,
+  "analyticsLoaded": [],
+  "cases": [
+    {
+      "scope": "site",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 11,
+      "explicitPosts": 1,
+      "live": {
+        "status": "results",
+        "count": 2,
+        "complete": true,
+        "cached": false,
+        "generation": "623e1d88553c4790f86c295493088143858e2048deebe3b43c6e2702c525e7b4"
+      }
+    }
+  ],
+  "limitations": "Chromiumのみ。OSのIMEと実機読み上げは含まない。解析送信は記録して停止。",
+  "pass": false,
+  "error": "計測のsearch_term以外に検索語を載せない"
+}

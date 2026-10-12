@@ -1,0 +1,142 @@
+{
+  "started": "2026-10-12T01:01:08.801Z",
+  "base": "https://tk.st",
+  "commit": "c1142b344864246bd7982b602c0dfd12003a80b4",
+  "runtime": {
+    "assets/japanese-search.js": "9646e57696d204d077b7411de203f4fb6cf122f1433c734f9fa241b119b4b49f",
+    "assets/site-search.js": "b9bb29c6c643ac60197606f9388db74568b20fde4e91691f06169aaadb60773a",
+    "assets/search-ui.js": "cc1a6d7bddc39544a35fba088d776ab618148c9a920f98b343225a5efa11b401",
+    "assets/search-data.js": "e5408d7f155e270f36d5b07d467467e3717210a2a71b0be63deb2eaa3e6e5807",
+    "assets/search-ui.css": "57e320cd6b1ae671943f30c1f8290e9010e4418bf956ae88937185e4f2fb38a8",
+    "assets/search-json-worker.js": "5a3db97af0bc7f2b78c94e584e6acc3452d51bd763f962889e79d7e6975715dc"
+  },
+  "scopes": {
+    "site": {
+      "records": 96,
+      "generation": "623e1d88553c4790f86c295493088143858e2048deebe3b43c6e2702c525e7b4",
+      "sourceHash": "6f76f2a33a056140e60dd4004f883f2bd07558f4a9e1297cda5e8fb7d9e28a66",
+      "allTitles": true,
+      "readingsAttached": true
+    },
+    "nitori": {
+      "records": 197,
+      "generation": "7284fd8864175dd2",
+      "sourceHash": "63b74d84931205edbf9dfb94d2aa1ae8fba36b247b9074e84deefbb5cbb17215",
+      "allTitles": true,
+      "readingsAttached": true
+    },
+    "retail": {
+      "records": 214,
+      "generation": "907bcfa8652db67f",
+      "sourceHash": "8f2b323d24bc4699e2a071d5d043d94026d21bc16f112cef3e5722e732a1c566",
+      "allTitles": true,
+      "readingsAttached": true
+    },
+    "tools": {
+      "records": 9,
+      "generation": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9",
+      "sourceHash": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9",
+      "allTitles": true,
+      "readingsAttached": true
+    },
+    "game": {
+      "records": 8,
+      "generation": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6",
+      "sourceHash": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6",
+      "allTitles": true,
+      "readingsAttached": true
+    }
+  },
+  "pass": true,
+  "deep404": true,
+  "fetched": {
+    "/assets/japanese-search.js": {
+      "sha256": "9646e57696d204d077b7411de203f4fb6cf122f1433c734f9fa241b119b4b49f",
+      "bytes": 17463
+    },
+    "/assets/site-search.js": {
+      "sha256": "b9bb29c6c643ac60197606f9388db74568b20fde4e91691f06169aaadb60773a",
+      "bytes": 21542
+    },
+    "/assets/search-ui.js": {
+      "sha256": "cc1a6d7bddc39544a35fba088d776ab618148c9a920f98b343225a5efa11b401",
+      "bytes": 24994
+    },
+    "/assets/search-data.js": {
+      "sha256": "e5408d7f155e270f36d5b07d467467e3717210a2a71b0be63deb2eaa3e6e5807",
+      "bytes": 15930
+    },
+    "/assets/search-ui.css": {
+      "sha256": "57e320cd6b1ae671943f30c1f8290e9010e4418bf956ae88937185e4f2fb38a8",
+      "bytes": 2949
+    },
+    "/assets/search-json-worker.js": {
+      "sha256": "5a3db97af0bc7f2b78c94e584e6acc3452d51bd763f962889e79d7e6975715dc",
+      "bytes": 2079
+    },
+    "/data/site-keyword.json": {
+      "sha256": "6f76f2a33a056140e60dd4004f883f2bd07558f4a9e1297cda5e8fb7d9e28a66",
+      "bytes": 198595
+    },
+    "/data/site-readings.json": {
+      "sha256": "a48535c8a68810907890d6ab75a401339a715e3d60e45a1dd8598e7ea7aba9d9",
+      "bytes": 151958
+    },
+    "/job/nitoridaily/search-index.json": {
+      "sha256": "63b74d84931205edbf9dfb94d2aa1ae8fba36b247b9074e84deefbb5cbb17215",
+      "bytes": 196635
+    },
+    "/job/nitoridaily/search-readings.json": {
+      "sha256": "0f3ca78a523ba1335d1afebcf018f6271c53df159a4bc27bbfe7b1ebfc813add",
+      "bytes": 458
+    },
+    "/job/nitoridaily/search-readings-2026.json": {
+      "sha256": "edac98f4fd8c0da5088c954d6cb3553b5f6f47b0fb45a3b6cab74722b040d099",
+      "bytes": 314948
+    },
+    "/job/retailtechdaily/search-index.json": {
+      "sha256": "8f2b323d24bc4699e2a071d5d043d94026d21bc16f112cef3e5722e732a1c566",
+      "bytes": 217641
+    },
+    "/job/retailtechdaily/search-readings.json": {
+      "sha256": "9846ff0fcab017659093d7c83ed0727ea6995606f616ad2bab47a9bab2cacfee",
+      "bytes": 462
+    },
+    "/job/retailtechdaily/search-readings-2026.json": {
+      "sha256": "ef3bfa0de8b369fc439ccef72800c23ecad6663961fe8ca9101c64e526c60c6e",
+      "bytes": 326286
+    },
+    "/data/tools.json": {
+      "sha256": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9",
+      "bytes": 5841
+    },
+    "/data/tools-readings.json": {
+      "sha256": "65aad672336b63f7a1a1f0a471b1a0f76a35486e596bd807bebb073dcffdbd8d",
+      "bytes": 13494
+    },
+    "/data/game.json": {
+      "sha256": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6",
+      "bytes": 2896
+    },
+    "/data/game-readings.json": {
+      "sha256": "366f9930e3710b70e9cfa2c6001a3863ca0b1edd51ed09186412d6afb1a32009",
+      "bytes": 5476
+    },
+    "/tools/": {
+      "sha256": "8ba28abd01bb398d205f912f9dec37694de9ec4c1cf59b3982f5759059a74827",
+      "bytes": 49722
+    },
+    "/game/": {
+      "sha256": "967a4a863fe6780bb643dd6af7040abe77b280212afbf5c4109a0690de8e7987",
+      "bytes": 31571
+    },
+    "/job/nitoridaily/": {
+      "sha256": "46b9a06e12339884385293ee70878670b38e15f0c667f0fae75196393577bb26",
+      "bytes": 87071
+    },
+    "/job/retailtechdaily/": {
+      "sha256": "fb6bee7973dc91a185d6f49e0873f0f6dd8ec6376826d30bdb2f4fe9e86af944",
+      "bytes": 86475
+    }
+  }
+}

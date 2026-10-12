@@ -208,3 +208,12 @@ Linuxの[Actions 38188586608](https://github.com/tk33r1/st/actions/runs/38188586
 固定finalを各scope20問・1回ずつ本番入口で評価して合格。toolsは上位5件11/11、必須候補10/10、正解なし誤表示0/9。gameは13/13、必須9/9、0/7。scope/filter外の表示、判定欠け、失敗は0件。game-final-17に続編が混ざる既知の限界は残す。Worker往復p95は307.5／293.2msでJev単体と混同しない。[本番評価](rank-publication-20261012.json)。40件が共有回数枠を利用し、別の6件は判定前の停止検査。既存の固定80問・2回の評価は正解も閾値も変更していない。
 
 合格後に5scopeを一般利用向けに有効化。Workerは5cf9e947-e7a7-4fd2-a0c4-5e6e5c01d7bcへ正本を配置し、一時変数と診断コードを除去、SITE_RANK_EVAL_KEYを削除した。静的画面の本番公開と公開ブラウザ確認はこの続きで実施する。
+
+
+## 2026-10-12：本番公開と完了記録
+
+mainへc1142b34を反映し、Pages1760c14bが公開完了。最終Linux38189518864も全項目合格。5画面の実Jev、旧入口の3scope、公開6ファイル／読みmanifestの実バイト、URL／実GTM／Ahrefs・JS無効・scope停止と①保持・Pages旧版→新版の実rollbackを確認。一時評価secret・変数・診断コードを除去した。
+
+最初のURL検査が同一サイトのCloudflare先読み設定GET /cdn-cgi/speculationの初期Refererを外部計測と扱って停止したため、既存Phase 3の区別を固定GETパスだけへ限定して検査を修正した。外部通信・URL・本文は引き続き検査し、全5scopeの本番検査が合格。先の実検索1件も記録へ残し、共有枠への実要求は本番final40＋公開確認6＋旧入口3＝49件。
+
+最後に公開後botの10087b7e（sitemap／dateModified）を取り込んだ。実装済みとして4資料を凍結し、正本はコードとした。版・証跡・再現手順・初回入力／準備停止・実機IME／読み上げ未検証などの限界は[Phase 4公開評価](../../../assets/site-search-phase4-release-evaluation.md)へ固定した。

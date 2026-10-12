@@ -189,13 +189,13 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 
 ### サイト内検索の②（Jev）
 
-Phase 4のローカル実装は `POST https://tk.st/search/api/rank` に `{search_contract:1,mode:'rank',scope,query,locale,filters,generation}` を送る。scopeはsite・nitori・retail・tools・gameに固定。toolsのfilterはcategory、gameはgenre。旧 `/magi2/site-search` の②は従来の3scopeだけを受け付ける。③は従来の入口を維持する。
+2026-10-12公開のPhase 4は `POST https://tk.st/search/api/rank` に `{search_contract:1,mode:'rank',scope,query,locale,filters,generation}` を送る。scopeはsite・nitori・retail・tools・gameに固定。toolsのfilterはcategory、gameはgenre。旧 `/magi2/site-search` の②は従来の3scopeだけを受け付ける。③は従来の入口を維持する。
 
-新入口は索引の世代を回数・結果キャッシュ・Jevより前に照合する。取得は固定URLごとに共有し、更新間隔は最低60秒。要求した版を確定できない／一覧と公開索引が混在する場合は `index_updating` を返し、回数・Jevは使わない。ブラウザは1画面1回だけデータを読み直し、②を自動再送しない。詳しい進捗と未実施の評価は[Phase 4実装記録](../../.github/site-search/phase4/implementation-progress.md)。
+新入口は索引の世代を回数・結果キャッシュ・Jevより前に照合する。取得は固定URLごとに共有し、更新間隔は最低60秒。要求した版を確定できない／一覧と公開索引が混在する場合は `index_updating` を返し、回数・Jevは使わない。ブラウザは1画面1回だけデータを読み直し、②を自動再送しない。結果・公開版と未確認の実機範囲は[Phase 4公開評価](../../assets/site-search-phase4-release-evaluation.md)。
 
-**tools/gameは公開前の検証が残るため公開設定で停止中。未公開のローカル差分を含む。** 2026-10-12に固定tune/final各20問を2回ずつ実Jevで評価し、toolsは閾値0.4／revision 1、gameは0.5／revision 2へ固定。finalでは両scopeの正解が上位5件へ100%届き、正解なしの誤表示は0件。gameの原作を探す1問に続編が混ざる限界も[評価記録](../../.github/site-search/phase4/rank/README.md)へ残した。評価用に有効化する場合も `SITE_RANK_EVAL_SCOPES`・`SITE_RANK_EVAL_KEY` の制限を併用する。実API単体の評価を本番ブラウザの合格へ転用しない。新入口を持つWorkerを先に出し、公開前検証後に新scopeを有効化して静的UIを出す。
+**5scopeを有効にして本番公開済み。** 2026-10-12に固定tune/final各20問を2回ずつ実Jevで評価し、toolsは閾値0.4／revision 1、gameは0.5／revision 2へ固定。finalでは両scopeの正解が上位5件へ100%届き、正解なしの誤表示は0件。gameの原作を探す1問に続編が混ざる限界も[評価記録](../../.github/site-search/phase4/rank/README.md)へ残した。評価用に有効化する場合も `SITE_RANK_EVAL_SCOPES`・`SITE_RANK_EVAL_KEY` の制限を併用する。実API単体の評価を本番ブラウザの合格へ転用しない。今回も新入口を先行配置して評価後に一般公開し、本番5画面・旧入口3scope・停止／復帰を確認した。一時評価変数／secretは削除済み。固定索引の `cache:no-cache` を使うため、互換日付2025-01-01では `cache_no_cache_enabled` が必要（wrangler.tomlの本番／eval両方に設定）。
 
-日刊2誌の②は`scope=nitori|retail`、`filters`（category・month・region）、画面の索引の`generation`を送る。`SITE_RANK_SCOPES="site,nitori,retail"`で両誌と404を有効にする。未設定もsiteだけ。媒体だけを止めるときは値からその媒体を外してWorkerを先に再デプロイする。全体の`SITE_RANK_ENABLED=false`が優先。停止応答はdisabledで、索引・回数・Jevを使わず、開いたままの画面も①を続ける。復帰は媒体を戻してデプロイし、画面を再読み込みする。
+日刊2誌の②は`scope=nitori|retail`、`filters`（category・month・region）、画面の索引の`generation`を送る。`SITE_RANK_SCOPES="site,nitori,retail,tools,game"`で5scopeを有効にする。未設定もsiteだけ。媒体だけを止めるときは値からその媒体を外してWorkerを先に再デプロイする。全体の`SITE_RANK_ENABLED=false`が優先。停止応答はdisabledで、索引・回数・Jevを使わず、開いたままの画面も①を続ける。復帰は媒体を戻してデプロイし、画面を再読み込みする。
 
 日刊は全年度の索引を完全に検査し、絞り込み後の全件数Nから候補最大20件Mを選び、Jevで判定した件数Jとともに画面へ返す。対象0件・索引の取得失敗を分け、別の媒体のリンクを許さない。検索語・公開記事の情報をTypeSafeへ送るのはEnter・虫眼鏡の明示操作だけ。入力中・受け渡し・絞り込みでは送らない。検索語はURL・参照元・運用ログ・DB・通知へ残さない。GA4のsearch_termはメール・電話番号を伏せ字にし、計測停止時は送らない。
 

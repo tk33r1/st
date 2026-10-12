@@ -1,0 +1,21 @@
+{
+  "started": "2026-10-12T00:55:56.430Z",
+  "old": "1b6f8ba5-3d63-40c4-9de4-9b8e94dabd2e",
+  "current": "1760c14b-80b8-44a0-8b6f-43ea7e998a36",
+  "oldObserved": true,
+  "newObserved": true,
+  "rollback": {
+    "before": "1760c14b-80b8-44a0-8b6f-43ea7e998a36",
+    "target": "1b6f8ba5-3d63-40c4-9de4-9b8e94dabd2e",
+    "result": "1b6f8ba5-3d63-40c4-9de4-9b8e94dabd2e",
+    "stage": "success"
+  },
+  "restore": {
+    "before": "1b6f8ba5-3d63-40c4-9de4-9b8e94dabd2e",
+    "target": "1760c14b-80b8-44a0-8b6f-43ea7e998a36",
+    "result": "1760c14b-80b8-44a0-8b6f-43ea7e998a36",
+    "stage": "success"
+  },
+  "finished": "2026-10-12T00:56:03.822Z",
+  "pass": true
+}

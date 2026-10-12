@@ -1,6 +1,6 @@
 # サイト内検索 Phase 4 設計書
 
-実装中（2026-10-12更新）。未公開。基盤の実装とローカル検証は[実装記録](../.github/site-search/phase4/implementation-progress.md)。要件は[PRD](site-search-phase4-prd.md)、順序は[実装計画書](site-search-phase4-plan.md)、合否は[検証計画書](site-search-phase4-verification.md)。Phase 0〜3の公開記録は保持する。
+実装済み（2026-10-12）。正本はコード。404・日刊2誌・tools/gameを共通ロジック・UIへ接続して本番公開した。Linux・Pages・本番Jev・URL／計測・停止／復帰の結果と制約は[公開評価](site-search-phase4-release-evaluation.md)。OSのIMEと実機読み上げは未検証。本書は公開時点で凍結し、以後の運用はコードと公開評価を参照する。
 
 ## 1. 構成と正本
 
