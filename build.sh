@@ -70,7 +70,7 @@ SEARCH_PY="$SEARCH_ENV/bin/python"
 
 # 3. 出来上がりを確かめる（足りない・余計なものがあれば、デプロイさせずに止める）
 fail() { echo "build.sh: $*" >&2; exit 1; }
-for f in index.html 404.html _redirects robots.txt sitemap.xml favicon.ico \
+for f in index.html 404.html 404-game.js _redirects robots.txt sitemap.xml favicon.ico \
          game/reverse-recaptcha/index.html magi-app/www/index.html assets/vendor/SOURCES.json \
          assets/japanese-search.js assets/search-ui.js assets/search-ui.css assets/search-data.js assets/search-json-worker.js \
          data/site-keyword.json data/site-readings.json data/tools-readings.json data/game-readings.json \
