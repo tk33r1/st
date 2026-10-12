@@ -31,7 +31,7 @@ const report={started:new Date().toISOString(),base,live,liveRequests:0,analytic
 const loaded=new Set(),routingErrors=[];let browser;
 const scripts=new Map();
 const close=async ctx=>{await ctx.unrouteAll({behavior:'wait'});await ctx.close();};
-async function context(off=false,allowLive=false) {
+async function context(off=false,allowLive=false,dailySearchEventsOnly=false) {
   const ctx=await browser.newContext({locale:'ja-JP'}),log=[],posts=[];
   if(off)await ctx.addInitScript(()=>localStorage.setItem('st-analytics','off'));
   await ctx.route('**/*',route=>(async()=>{
@@ -46,7 +46,8 @@ async function context(off=false,allowLive=false) {
     const body=req.postData() || '',referer=headers.referer || '';
     log.push({host:url.host,url:req.url(),body,referer});
     if(analyticsScript(req.url())) {
-      if(off)throw new Error('解析停止中に計測スクリプトを取得');
+      // 日刊の既存設定は検索イベントの停止。SAFE TOOLSのタグ読込停止とは区別する。
+      if(off && !dailySearchEventsOnly)throw new Error('解析停止中に計測スクリプトを取得');
       if(!scripts.has(req.url()))scripts.set(req.url(),(async()=>{
         const response=await route.fetch({timeout:8000});assert.ok(response.ok(),'実計測スクリプトの取得');
         loaded.add(url.host+url.pathname);return {status:response.status(),headers:response.headers(),body:await response.body()};
@@ -78,7 +79,8 @@ try {
     const response=await page.goto(base+path,{waitUntil:'domcontentloaded'});if(scope==='site')assert.equal(response.status(),404);
     await ready(page);const field=page.locator('.st-search-input');
     await field.fill(query+' '+pii);assert.equal(posts.length,0);
-    const sort=page.locator('[data-sort]');if(await sort.count())await sort.selectOption({index:1});
+    const sort=page.locator('[data-sort]');if(await sort.locator('option').count()>1)await sort.selectOption({index:1});
+    const filter=page.locator('[data-filter]').first();if(await filter.locator('option').count()>1)await filter.selectOption({index:1});
     assert.equal(posts.length,0);await field.press('Enter');
     await page.locator('.st-search-rank-status').filter({hasText:/停止中|disabled/}).waitFor();assert.equal(posts.length,1);
     await locationSafe(page);await page.waitForTimeout(1000);checkLog(log);
@@ -95,7 +97,9 @@ try {
       // 不正な受け渡しも取得・計測より先にURLから除く。
       for(const suffix of ['?q='+marker+'&q=x','#q='+marker+'%E0%A4','#q='+marker+'a'.repeat(201), '?q='+marker+'#q=x']) {
         await page.goto(base+path+suffix,{waitUntil:'domcontentloaded'});await ready(page);
-        await locationSafe(page);assert.equal(await field.inputValue(),'');assert.equal(posts.length,1);
+        await locationSafe(page);
+        const expected=(scope==='nitori' || scope==='retail') && suffix.endsWith('#q=x')?'x':'';
+        assert.equal(await field.inputValue(),expected);assert.equal(posts.length,1);
       }
       if(scope==='nitori' || scope==='retail') {
         const link=page.locator('[data-archive-month] a').first();const issue=await link.getAttribute('href');
@@ -109,12 +113,13 @@ try {
       }
     }
     checkLog(log);report.cases.push({scope,urlAndPrivacy:true,analyticsRequestsStopped:log.length,explicitPosts:posts.length});await close(ctx);
-    const off=await context(true),offPage=await off.ctx.newPage();await offPage.goto(base+path,{waitUntil:'domcontentloaded'});await ready(offPage);
+    const daily=scope==='nitori' || scope==='retail';
+    const off=await context(true,false,daily),offPage=await off.ctx.newPage();await offPage.goto(base+path,{waitUntil:'domcontentloaded'});await ready(offPage);
     await offPage.locator('.st-search-input').fill(query);await offPage.locator('.st-search-input').press('Enter');await offPage.waitForTimeout(250);
     assert.equal(off.posts.length,1);assert.equal(await offPage.evaluate(()=>(window.dataLayer || []).filter(e=>/rank_run|search_used/.test(e.event || '')).length),0);
     checkLog(off.log);await close(off.ctx);
     if(live) {
-      const actual=await context(true,true),livePage=await actual.ctx.newPage();await livePage.goto(base+path,{waitUntil:'domcontentloaded'});await ready(livePage);
+      const actual=await context(true,true,daily),livePage=await actual.ctx.newPage();await livePage.goto(base+path,{waitUntil:'domcontentloaded'});await ready(livePage);
       let payload;const responsePromise=livePage.waitForResponse(r=>new URL(r.url()).pathname==='/search/api/rank' && r.request().method()==='POST');
       await livePage.locator('.st-search-input').fill(text);await livePage.locator('.st-search-input').press('Enter');payload=await (await responsePromise).json();
       assert.ok(['results','no_results'].includes(payload.status),scope+': '+payload.reason);assert.equal(payload.complete,true);assert.equal(payload.searched.scope,scope);
@@ -123,7 +128,7 @@ try {
       report.cases.at(-1).live={status:payload.status,count:payload.results.length,complete:payload.complete,cached:payload.cached,generation:payload.searched.generation};
       await close(actual.ctx);
     }
-    console.log(scope+': URL・計測・明示操作・解析停止'+(live?'・本番②':''));
+    console.log(scope+': URL・計測・明示操作・検索イベント停止'+(live?'・本番②':''));
   }
   report.analyticsLoaded=[...loaded];
   // JS無効でも静的ツリーを操作でき、日刊ヘッダーの入力をURLへ載せない。
