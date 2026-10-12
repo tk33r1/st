@@ -227,8 +227,8 @@
       var lang = 'ja';
       try { if (navigator.language) lang = /^ja/i.test(navigator.language) ? 'ja' : 'en'; } catch (_) { /* 静的HTMLと同じ日本語 */ }
       var messages = {
-        ja: { tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ' },
-        en: { tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page' }
+        ja: { tool: 'ツール', game: 'ゲーム', article: '記事', page: 'ページ' },
+        en: { tool: 'Tool', game: 'Game', article: 'Article', page: 'Page' }
       };
       var text = messages[lang];
       var byId = function (id) { return document.getElementById(id); };
@@ -238,10 +238,7 @@
       var infoOpen = byId('ai-info-open');
       infoOpen.setAttribute('aria-label', lang === 'ja' ? '検索とプライバシーについて' : 'About search and privacy');
       byId('ai-info-close').setAttribute('aria-label', lang === 'ja' ? '閉じる' : 'Close');
-      [infoOpen].forEach(function (button) {
-        button.setAttribute('aria-label', infoOpen.getAttribute('aria-label'));
-        button.addEventListener('click', function () { infoDialog.showModal(); });
-      });
+      infoOpen.addEventListener('click', function () { infoDialog.showModal(); });
       byId('ai-info-close').addEventListener('click', function () { infoDialog.close(); });
       infoDialog.addEventListener('click', function (event) {
         var rect = infoDialog.getBoundingClientRect();

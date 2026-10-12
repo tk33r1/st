@@ -93,8 +93,9 @@
     const track=(event,values)=>{if(typeof adapter.track==='function'){try{adapter.track(event,values);}catch(_){}}};
     const call=(name,value)=>{try{adapter[name]?.(value);}catch(_){}};
     const notify=()=>call('onConditions',{...rankCondition(),sort:selectedSort});
+    const activeFilters=()=>Object.fromEntries(Object.entries(filters).filter(([,v])=>v));
     function rankCondition() {
-      return {query:input.value.trim(),locale,filters:Object.fromEntries(Object.entries(filters).filter(([,v])=>v)),generation:base?.generation};
+      return {query:input.value.trim(),locale,filters:activeFilters(),generation:base?.generation};
     }
     function displayed(row) {
       if(!row.record) return row;
@@ -137,7 +138,7 @@
     function refreshLocal() {
       if (destroyed) return;
       // 長すぎる入力は送信・照合せず、入力欄自体の内容は書き換えない。
-      matched=engine && Array.from(input.value.trim()).length<=200?engine.search(input.value,Object.fromEntries(Object.entries(filters).filter(([,v])=>v))):{rows:[],total:0};
+      matched=engine && Array.from(input.value.trim()).length<=200?engine.search(input.value,activeFilters()):{rows:[],total:0};
       const occupied=new Set(rankRows.map(r=>r.href)), visible=rankRows.length?matched.rows.filter(r=>!occupied.has(links.get(r.id))):matched.rows;
       suggestArea.hidden=!input.value.trim() || !engine || openAll;
       input.setAttribute('aria-expanded',String(!suggestArea.hidden && visible.length>0));

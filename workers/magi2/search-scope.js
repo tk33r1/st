@@ -290,7 +290,7 @@ export function filterRankItems(snapshot,scope,filters={}) {
 
 // 新入口専用の世代guard。旧入口の世代不一致でも旧日刊を返す契約は変えない。
 // 更新Promiseはscope単位、取得PromiseはfetchSearchSourceでソース単位に共有する。
-export async function getRankSnapshot(scope,{ctx,filters={},generation,signal}={}) {
+export async function getRankSnapshot(scope,{ctx,generation,signal}={}) {
   if(signal?.aborted) throw searchFailure('cancelled');
   const spec=searchScope(scope);
   const current=()=>scope==='site'?null:isDailyScope(scope)?dailySnapshots.get(scope)?.snapshot:listSnapshots.get(scope)?.snapshot;

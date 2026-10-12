@@ -484,7 +484,7 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       let snapshot;
       try {
         if(contract) {
-          const checked=await getRankSnapshot(scope,{ctx,filters,generation,signal:s});snapshot=checked.snapshot;
+          const checked=await getRankSnapshot(scope,{ctx,generation,signal:s});snapshot=checked.snapshot;
           if(snapshot) {info.total=(scope==='site'?rankTargets(snapshot):filterRankItems(snapshot,scope,filters)).length;info.generation=checked.generation;}
           if(checked.updating || !snapshot) return fail('index_updating');
           if(daily && ((filters.category && !snapshot.categories.has(filters.category)) || (filters.month && !snapshot.months.has(filters.month)))) return fail('invalid_request',400);
