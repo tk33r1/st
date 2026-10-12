@@ -175,6 +175,23 @@ try {
     const field=pending.locator('#headerSearchInput');await field.fill('収納');await field.press('Enter');await release();await ready(pending);
     assert.equal(pendingPosts.length,0);assert.equal(await field.inputValue(),'収納');
     assert.equal(await pending.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),true);await pending.close();
+    // 号からの目印（st-search-explicit）の判定。有効なときだけポータルで②を送り、どの場合も目印は一度で消す。
+    if(media==='nitoridaily') for(const marker of ['valid','expired','different','scope','future','none','blocked']) {
+      const p=await browser.newPage(),ps=[];await offline(p,ps);
+      await p.addInitScript(marker=>{
+        // 同じオリジンの iframe でも走るので、トップのフレームだけで目印を置く（置き直すと消えたかを確かめられない）。
+        if(window!==window.top) return;
+        if(marker==='blocked') {Object.defineProperty(window,'sessionStorage',{get(){throw new Error('blocked');}});return;}
+        if(marker!=='none') sessionStorage.setItem('st-search-explicit',JSON.stringify({scope:marker==='scope'?'retail':'nitori',query:marker==='different'?'別':'収納',
+          at:Date.now()+(marker==='future'?10000:marker==='expired'?-31000:0)}));
+      },marker);
+      await p.goto(origin+'/job/nitoridaily/#q='+encodeURIComponent('収納'),{waitUntil:'domcontentloaded'});await ready(p);
+      if(marker==='valid') {for(let i=0;i<100 && !ps.length;i++) await p.waitForTimeout(50);}
+      else await p.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).waitFor();
+      assert.equal(ps.length,marker==='valid'?1:0,'目印 '+marker);
+      if(marker!=='blocked') assert.equal(await p.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null,'目印は一度で消す');
+      await p.close();
+    }
     for(const entry of ['tag','watch']) {
       const p=await browser.newPage(),ps=[];await p.addInitScript(media=>localStorage.setItem('daily_watch_topics:'+media,JSON.stringify(['収納'])),media);
       const release=await offline(p,ps,[],'/job/'+media+'/search-index.json');await p.goto(origin+'/job/'+media+'/',{waitUntil:'domcontentloaded'});

@@ -45,7 +45,7 @@
     container.dataset.stSearchMounted='1';container.classList.add('st-search');
     const id=`st-search-${++serial}`,controller=new AbortController(),signal=controller.signal;
     const client=w.STSiteSearch.createRankClient({scope:adapter.scope});
-    let locale=adapter.locale==='en'?'en':'ja',engine=null,base=null,links=new Map(),parts=null;
+    let locale=adapter.locale==='en'?'en':'ja',engine=null,base=null,links=new Map(),records=new Map(),parts=null;
     let dataRevision=0,loadingRevision=0,conditionRevision=0,destroyed=false,composing=false,imeEnterHeld=false;
     let baseState='loading',readingState='unfetched',rankState='idle',rankRows=[],rankComplete=false;
     let recoveryAttempted=false,recoveryPromise=null,committed='',limit=20,activeSuggestion=-1;
@@ -160,7 +160,7 @@
     function compactItem(record,href,suggestion=false) {
       const a=node('a','',null);a.href=href;const title=node('span','st-search-title',a);
       if(suggestion) highlight(title,titleOf(record),input.value.trim());else title.textContent=titleOf(record);
-      const kind=adapter.renderSuggestion?.(record,{href,locale,compact:true});
+      const kind=adapter.renderSuggestion?.(record,{href,locale});
       if(kind) {
         if(typeof kind==='string') node('span','st-search-kind',a).textContent=kind;
         else if(kind.classList?.contains('st-search-kind')) a.append(kind);
@@ -169,9 +169,10 @@
       return a;
     }
     function addRow(list,row,compact,index) {
-      const record=row.record || base.records.find(r=>r.id===row.id),href=safeHref(links.get(record.id),adapter.scope),suggestion=list===suggestions;
-      let item;try {item=suggestion?compactItem(record,href,true):adapter.renderItem?.(record,{href,locale,compact});}catch(_) {return;}
-      if(!item) {item=compactItem(record,href);const desc=record[adapter.displayFields?.[locale]?.description] || record[adapter.descriptionField || 'description'] || '';if(desc && !compact) node('span','st-search-description',item).textContent=desc;}
+      // href は prepareBase で検査済み。候補の枠と②の短い表示は共通の行、それ以外はページの描画に任せる。
+      const record=row.record || records.get(row.id),href=links.get(record.id),suggestion=list===suggestions;
+      let item;try {item=suggestion || compact?compactItem(record,href,suggestion):adapter.renderItem?.(record,{href,locale});}catch(_) {return;}
+      if(!item) {item=compactItem(record,href);const desc=record[adapter.displayFields?.[locale]?.description] || record[adapter.descriptionField || 'description'] || '';if(desc) node('span','st-search-description',item).textContent=desc;}
       const primary=item.matches('a')?item:item.querySelector('[data-st-primary]');if(!primary || primary.getAttribute('href')!==href) return;
       primary.classList.add('st-search-link');primary.dataset.stPrimary='';const li=item.tagName==='LI'?item:node('li','',null);if(li!==item) li.append(item);
       li.classList.add('st-search-result');li.dataset.id=record.id;list.append(li);
@@ -261,12 +262,12 @@
       if(next.filterOptions && (typeof next.filterOptions!=='object' || Array.isArray(next.filterOptions)
         || Object.entries(next.filterOptions).some(([key,values])=>!controls.has(key) || !Array.isArray(values) || new Set(values).size!==values.length
           || values.some(value=>typeof value!=='string' || !value || Array.from(value).length>100)))) throw new Error('search_filters');
-      const nextLinks=new Map(), hrefs=new Set();
+      const nextLinks=new Map(), nextRecords=new Map(), hrefs=new Set();
       let checked=0;
       for (const r of next.records) {
         const href=safeHref(adapter.href(r),adapter.scope);
         if (hrefs.has(href) || typeof r[adapter.titleField || 'title']!=='string' || !r[adapter.titleField || 'title'].trim()) throw new Error('search_base');
-        nextLinks.set(r.id,href);hrefs.add(href);
+        nextLinks.set(r.id,href);nextRecords.set(r.id,r);hrefs.add(href);
         if((++checked & 31)===0) {
           await w.STJapaneseSearch.yieldControl();
           if(destroyed || ticket!==loadingRevision) throw new Error('search_cancelled');
@@ -279,7 +280,7 @@
       const compare=(a,b)=>adapter.sorts?.find(s=>s.value===lookupSort)?.compare?.(a,b) || adapter.compare?.(a,b) || 0;
       const nextEngine=await finishTask(w.STJapaneseSearch.prepareTask(next.records,adapter.fields,{...adapter.legacy,compare,
         orderKey:()=>lookupSort,sortByRelevance:()=>!lookupSort || lookupSort==='relevance'}),ticket);
-      return {next,nextLinks,nextParts,nextEngine};
+      return {next,nextLinks,nextRecords,nextParts,nextEngine};
     }
     async function loadReadings(ticket,cache) {
       try {
@@ -298,7 +299,7 @@
       }
     }
     function adopt(prepared) {
-      dataRevision++;base=prepared.next;links=prepared.nextLinks;parts=prepared.nextParts;engine=prepared.nextEngine;
+      dataRevision++;base=prepared.next;links=prepared.nextLinks;records=prepared.nextRecords;parts=prepared.nextParts;engine=prepared.nextEngine;
       baseState='ready';readingState='preparing';limit=20;
       for(const [key,select] of controls) {
         const values=base.filterOptions?.[key];if(!values) continue;
@@ -407,13 +408,8 @@
     // 欄は動かしていないので、読み込み中に始めた入力（IME の変換中を含む）はそのまま続く。
     dropdown=inside(document.activeElement);focusRoot.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
     return {ready,run,cancel:()=>{conditionRevision++;clearRank('stale');renderResults();},handoff:()=>{conditionRevision++;pending=null;clearRank('handoff');renderResults();},
-      setQuery(value,options={}) {
-        input.value=String(value).slice(0,400);let explicit=false;
-        // 号からの確定だけ、同じタブの一度きりの目印で明示操作を引き継ぐ。
-        if(options.handoff) {try {const raw=sessionStorage.getItem('st-search-explicit');sessionStorage.removeItem('st-search-explicit');const marker=JSON.parse(raw),age=Date.now()-marker?.at;
-          explicit=marker?.scope===adapter.scope && marker.query===keyOf(input.value) && Number.isFinite(age) && age>=0 && age<=30000;
-        }catch(_) {}}commit(input.value,explicit);refreshSuggestions();
-      },
+      // 受け渡しは①だけで確定する。explicit は呼び出し側が明示操作と確かめた場合だけ（日刊の号からの確定）。
+      setQuery(value,options={}) {input.value=String(value).slice(0,400);commit(input.value,options.explicit===true);refreshSuggestions();},
       setLocale(value) {if(!['ja','en'].includes(value) || value===locale) return;locale=value;conditionRevision++;if(pending) pending.allowed=false;clearRank(committed?'stale':'idle');
         updateLabels();updateSort();localList.replaceChildren();rankList.replaceChildren();refreshLocal();refreshSuggestions();notify();},
       openPrivacy,focus:()=>input.focus(),get state(){return {base:baseState,readings:readingState,rank:rankState,total:matched.total,query:committed,recoveryAttempted,dataRevision};},

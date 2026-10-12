@@ -152,7 +152,7 @@
     .st-search-suggestions,.st-search-privacy-details{background:var(--surface);border-radius:10px;box-shadow:0 12px 30px #0003}
     .st-search-local>.result-list>.st-search-result{border:0}
   </style>
-  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_13">
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_14">
 </head>
 <body>
   <!-- JavaScript無効時の既存GTM導線。st-analyticsでは制御できない。 -->
@@ -327,7 +327,7 @@
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
   <script src="/assets/japanese-search.js?v=20261012_8"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_13"></script>
+  <script src="/assets/search-ui.js?v=20261012_14"></script>
   <script src="/assets/search-data.js?v=20261012_8"></script>
   <script>
     (function () {
@@ -641,7 +641,7 @@
         locale:lang, analyticsNotice:true, placeholder:{ja:'サイト内を検索',en:'Search this site'},
         classes:{list:'result-list'},
         renderSuggestion:function(record,ctx) {return text[record.kind] || '';},
-        renderItem:function(record,ctx) {if(ctx.compact) return null;var item=resultItem(ctx.href,ctx.locale==='en'?(record.title_en || record.title):record.title,ctx.locale==='en'?(record.description_en || record.description):record.description,text[record.kind]);item.querySelector('a').dataset.stPrimary='';return item;},
+        renderItem:function(record,ctx) {var item=resultItem(ctx.href,ctx.locale==='en'?(record.title_en || record.title):record.title,ctx.locale==='en'?(record.description_en || record.description):record.description,text[record.kind]);item.querySelector('a').dataset.stPrimary='';return item;},
         compare:function(a,b) { return ((b.href.split('/')[1]===arrivedSection)?1:0)-((a.href.split('/')[1]===arrivedSection)?1:0); },
         onConditions:function(condition) {
           resetAI();

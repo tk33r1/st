@@ -107,15 +107,13 @@ try {
     if(explicit) await page.waitForFunction(()=>window.ui.state.rank==='results');
     assert.equal(posts.length,explicit?1:0);assert.equal(await page.evaluate(()=>window.ui.state.total),250);await page.close();
   }
-  for(const marker of ['valid','expired','different','scope','future','none']) {
+  // 共通部品は explicit===true のときだけ受け渡しを明示操作として扱う（目印の判定は日刊の daily-ui.js。test-phase4-pages.mjs）。
+  for(const explicit of [true,false,'1',null]) {
     const page=await browser.newPage(),posts=[];await rankFixture(page,posts);await setup(page);
-    await page.evaluate(marker=>{
-      if(marker!=='none') sessionStorage.setItem('st-search-explicit',JSON.stringify({scope:marker==='scope'?'game':'tools',query:marker==='different'?'別':'家電',at:Date.now()+(marker==='future'?10000:marker==='expired'?-31000:0)}));
-      window.ui.setQuery('家電',{handoff:true});
-    },marker);
-    if(marker==='valid') await page.waitForFunction(()=>window.ui.state.rank==='results');
-    assert.equal(posts.length,marker==='valid'?1:0);assert.equal(await page.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);
-    await page.evaluate(()=>window.ui.setQuery('家電',{handoff:true}));assert.equal(posts.length,marker==='valid'?1:0);await page.close();
+    await page.evaluate(explicit=>window.ui.setQuery('家電',explicit===null?undefined:{explicit}),explicit);
+    if(explicit===true) await page.waitForFunction(()=>window.ui.state.rank==='results');
+    assert.equal(posts.length,explicit===true?1:0);
+    await page.evaluate(()=>window.ui.setQuery('家電'));assert.equal(posts.length,explicit===true?1:0);await page.close();
   }
   {
     const page=await browser.newPage(),posts=[];const release=await rankFixture(page,posts,{delay:true});await setup(page);await page.waitForFunction(()=>window.ui.state.readings==='ready');
@@ -173,8 +171,7 @@ try {
     const field=page.locator('input');await field.focus();const ime=await page.context().newCDPSession(page);
     await ime.send('Input.imeSetComposition',{text:'家電',selectionStart:2,selectionEnd:2});await page.keyboard.down('Enter');
     await ime.send('Input.insertText',{text:'家電'});assert.equal(posts.length,0);await page.keyboard.up('Enter');assert.equal(posts.length,0);await ime.detach();
-    await page.evaluate(()=>Object.defineProperty(window,'sessionStorage',{get(){throw new Error('blocked');}}));
-    await page.evaluate(()=>window.ui.setQuery('家電',{handoff:true}));assert.equal(posts.length,0);await page.close();
+    await page.evaluate(()=>window.ui.setQuery('家電'));assert.equal(posts.length,0);await page.close();
   }
   {
     const page=await browser.newPage();await setup(page,{filterChips:true});
