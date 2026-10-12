@@ -17,8 +17,19 @@ try {
   for(const lang of ['ja','en'])assert.equal(models.privacy[lang].length,14);
   for(const file of git('ls-files','magi-app/www/').toString().trim().split('\n')) {
     const remote=await fetch(origin+'/'+file,{cache:'no-store'});assert.equal(remote.status,200);
-    const bytes=Buffer.from(await remote.arrayBuffer());assert.deepEqual(bytes,git('show','HEAD:'+file),'配布www: '+file);
-    report.www.push({file,sha256:createHash('sha256').update(bytes).digest('hex')});
+    const bytes=Buffer.from(await remote.arrayBuffer()),expected=git('show','HEAD:'+file);let edgeInjected=false;
+    if(file.endsWith('.html')&&!bytes.equals(expected)){
+      // Cloudflareはbody末尾へPages AnalyticsとJSDを挿入する。元の全HTMLはそのまま照合する。
+      const source=expected.toString(),actual=bytes.toString(),end=source.lastIndexOf('</body>');
+      assert.ok(end>=0&&actual.startsWith(source.slice(0,end))&&actual.endsWith(source.slice(end)),'配信HTMLの原文');
+      let inserted=actual.slice(end,actual.length-source.slice(end).length);
+      const analytics=/^<!-- Cloudflare Pages Analytics --><script defer src='https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js' data-cf-beacon='\{"token": "[a-f0-9]{32}"\}'><\/script><!-- Cloudflare Pages Analytics -->/;
+      assert.ok(analytics.test(inserted),'Pages Analyticsの挿入');inserted=inserted.replace(analytics,'');
+      assert.match(inserted,/^<script>\(function\(\)\{function c\(\)\{[\s\S]*\}\)\(\);<\/script>$/);
+      assert.ok(inserted.includes('window.__CF$cv$params=')&&inserted.includes('/cdn-cgi/challenge-platform/scripts/jsd/main.js'));
+      assert.equal((inserted.match(/<script>/g)||[]).length,1);edgeInjected=true;
+    }else assert.ok(bytes.equals(expected),'配布www: '+file);
+    report.www.push({file,sha256:createHash('sha256').update(bytes).digest('hex'),sourceSha256:createHash('sha256').update(expected).digest('hex'),edgeInjected});
   }
   browser=await chromium.launch({headless:true});
   for(const [name,path,lang,scheme,failed] of [
