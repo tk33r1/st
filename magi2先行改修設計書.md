@@ -1,7 +1,7 @@
 # magi2 先行改修設計書 — 回答の受信・モデル変更・アプリの更新通知とアイコン
 
 設計中（2026-10-09）。実装と公開が済んだら、冒頭を「実装済み（日付）。正本はコード」に書き換え、以後は直さない。
-現状との照合・改訂: 2026-10-11。site-search の公開済み部分は 1.6 の基準に従う。
+現状との照合・改訂: 2026-10-12。検索 Phase 4・UI 改修・トップページの Search を含む現行コード（`b361c210`）に合わせ、検索の維持条件と接続・検証だけを更新した。予定している先行・対話改修の内容は維持する。site-search は 1.6 の基準に従う。
 検証の筋書き・評価用入力・合格条件は [magi2先行改修検証計画](magi2先行改修検証計画.md) を正本とする（本書には書かない）。
 後に続く改修: [A 対話改修](magi2対話改修設計書.md)、[B ネイティブ機能](magi-app/ネイティブ機能設計書.md)、最後に Fish Audio の読み上げ（別に設計する）。
 本書の 2章（版の上げ方）と 4.4（答え直しの規則）は、A・B でもそのまま使う正本。
@@ -60,12 +60,17 @@
 
 ### 1.6 公開済みの site-search を維持する基準
 
-2026-10-10 の [Phase3 完了記録](assets/site-search-phase3-completion.md) を基準にする。404 の検索①（手元の検索）・②（Jev による候補の選別）・③（MAGI のページ選びと回答）と、日刊ニトリ・日刊リテールテックの①・②が公開済み。tools・game の②は未公開で、本書では広げない。
+2026-10-12 の [Phase 4 公開評価](assets/site-search-phase4-release-evaluation.md) と現行コードを基準にする。404 の①・②・③、日刊2誌・tools・game の①・②を維持する。UI の操作・描画は [UI 改修設計](assets/site-search-ui-redesign.md) と `assets/search-ui.js`・各ページの adapter が正本。トップページの Search も `site` の①・②とコマンド検索を使う（別の scope は作らない）。
 
-- 本番の `wrangler.toml` の `SITE_RANK_ENABLED="true"`、`SITE_RANK_SCOPES="site,nitori,retail"`、`compatibility_flags=["enable_request_signal"]` を保つ。評価用の一時設定 `SITE_RANK_EVAL_SCOPES` と `SITE_RANK_EVAL_KEY` は撤去済みで、復活させない。`env.eval` は専用の設定のまま扱い、本番の②を自動で有効にしない。
-- ②のモデル・問い・閾値・期限・上限・日刊の世代とキャッシュ・切断時の中止は現行の `SITE_RANK`／`site-search.js` を維持する。4.14 の Haiku への変更は③とチャットのページ選びであり、②の Jev を替えるものではない。
-- `/magi2/site-search` は `mode` を持つ要求を②へ先に分岐する。②は URL クエリを受け付けず、本文は許可した項目だけ・最大 4KiB。③の `site_debate=1`、JSON の応答、Worker 150秒・画面165秒の期限とは別の契約として扱う。
-- デプロイと戻し方にもこの基準を適用する。確認項目は [先行改修検証計画](magi2先行改修検証計画.md) 計画§1.4・§4.4。完成済みの評価記録は当時の記録として残す。
+- 本番の `wrangler.toml` の `SITE_RANK_ENABLED="true"`、`SITE_RANK_SCOPES="site,nitori,retail,tools,game"`、`compatibility_flags=["enable_request_signal", "cache_no_cache_enabled"]`、`tk.st/search/api/*` の route を保つ。`SEARCH_CLICK_ENABLED="true"` と `/search/api/click` の契約、既存の `search_clicks`・集計・`SEARCH_CLICK_SALT` の扱いも維持する。評価用の一時設定 `SITE_RANK_EVAL_SCOPES` と `SITE_RANK_EVAL_KEY` は撤去済みで、復活させない。`env.eval` は専用の設定のまま扱い、本番の②を自動で有効にしない。
+- ②のモデル・scope ごとの問い・revision・閾値・期限・共有上限・世代とキャッシュ・切断時の中止は現行の `SITE_RANK`／`site-rank.js`／`search-scope.js` を維持する。4.14 の Haiku への変更は③とチャットのページ選びであり、②の Jev を替えるものではない。
+- 新入口 `POST /search/api/rank` は5 scope の `{search_contract: 1, mode: 'rank', scope, query, locale, filters?, generation?}` を受ける。旧入口 `/magi2/site-search` の②は従来の3 scope（`site,nitori,retail`）だけを受け、tools/game は400のまま。新旧の許可項目・応答形式を混ぜない。
+- 旧入口の `mode` を持つ要求と、新入口の要求は、③の言語・悪意判定や履歴処理より先に②へ分岐する。新入口は `mode` の欠落・不正でも③へ流さない。②は URL クエリを受け付けず、本文は許可した項目だけ・最大4KiB。新入口の generation の先行照合・共有更新・未解消時の `index_updating`（回数・Jev・古い結果を使わない）も維持する。③の `site_debate=1`、JSON の応答、Worker150秒・画面165秒とは別の契約。
+- UI は下書きと確定語を分け、①の20件ずつの追加表示、②の3行枠と①の先頭20件だけとの重複除去、ページごとの描画・プライバシーダイアログを維持する。日刊の号からの明示操作は、一度きりの有効な目印だけ②を送れる。通常の受け渡し・入力・絞り込み・並べ替え・追加表示・自動復帰では②を送らず、自動復帰は1画面1回、②の自動再送はしない。
+- トップページは Search を開くときだけ共通資産を読む。本番では `https://tk.st`、開発では loopback だけを許し、それ以外のホストや読み込み失敗時はインラインのコマンド検索へ縮退する。`SHARED_SEARCH_ASSETS` の版を全参照と揃える。
+- デプロイと戻し方にもこの基準を適用する。確認項目は [先行改修検証計画](magi2先行改修検証計画.md) 計画§1.4・§4.4。完成済みの設計・評価記録は当時の記録として残す。
+
+- 検索UI改修は現行コードへ取り込み済み（UIのマージ `c489c98d`、トップSearchのマージ `fe2227b9`、後続の全号再生成を含む）。UI設計の冒頭・実装記録には「公開は未実施」「再生成は確認用のみ」という作業時点の記述が残る。現行の実装状態はコードで判断し、本番の公開版・実通信の合否は今回の文書照合だけでは更新しない。
 
 ## 2. 公開の単位と版
 
@@ -256,7 +261,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | --- | --- | --- |
 | Worker の送り先の説明（`personas.js` の `PRIVACY`。トップページとアプリの「System & Privacy」はここから出る。5.6） | 送り先を「OpenAI・DeepSeek・Anthropic」に。Gemini の無料枠の注意書きを消す。Anthropic のデータの扱いは公式の規約で確かめてから書く | 1 |
 | 画面に固定で残る説明（`dj/request/` の説明、トップページと `dj/request/` の FAQ の見える文と構造化データ）。取得に失敗したときの文（5.6）は会社名に触れないので直さない | 同上 | 1 |
-| [404.html](404.html) の AI 検索の説明（`ai-info-text`）とプライバシーポリシーへのリンク | 404 も3人格の討議を使うので、Google Gemini を Anthropic に替える | 1 |
+| [404.html](404.html) の③の説明（`ai-info-text`）とプライバシーポリシーへのリンク | 404 も3人格の討議を使うので、Google Gemini を Anthropic に替える。①②の共通ダイアログ・TypeSafe AI・クリック記録・アクセス解析の説明は維持する | 1 |
 | トップページ・`app.js` の画像の送り先のコメント | 同上 | 1 |
 | アプリの「System & Privacy」 | 1日1回 GitHub に新しい版を問い合わせること（届くのは IP アドレスなどの通常の通信情報で、会話は送らない） | 2 |
 | [AGENTS.md](AGENTS.md) | magi2 の secret（`MAGI_GEMINI_API_KEY` → `MAGI_ANTHROPIC_API_KEY`）、人格の会社の割り当て、Gemini の注記、「入力は3社すべてに送られる」、`ai-models.yml`／`ai-model-watch.yml` の会社、`magi-app/` の `android/` の扱い | 1・2 |
@@ -411,7 +416,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 
 - 各段で `node --test .github/scripts/test-magi2.mjs`、`node --check`（Worker と画面）、`python .github/scripts/test-magi-smoke.py`、`python .github/scripts/ai_models.py check` を通す。
 - Worker を出す前に `git pull` して最新の人格カードを取り込む（AGENTS.md の約束）。
-- 各段で 1.6 の本番設定を照合し、計画§1.4 の②の回帰を通す。Worker の各デプロイ直後は計画§4.4 の3 scope の確認を行う。
+- 各段で 1.6 の本番設定を照合し、計画§1.4 の②の回帰を通す。Worker の各デプロイ直後は計画§4.4 の5 scope とトップSearchの確認を行う。
 - デプロイは Worker が先（0 の合図は配布済みの画面も読み飛ばし、2 の `privacy`・`provider_label` は古い画面が読まないだけ）。APK は 0 の画面が公開済みの `main` から作る。
 
 ### 6.2 戻し方
@@ -422,4 +427,4 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | 1 | 該当の commit を revert して Worker を再デプロイ（Gemini の secret を2週間残すのはこのため） |
 | 2 | 前の版の APK は GitHub Releases に残る。更新通知の誤作動は、Releases の Latest を前の版に戻せば止まる |
 
-戻すのは本書の該当差分だけ。site-search 改修前の Worker・設定へ丸ごと戻さず、1.6 の3 scope・切断対応・撤去済みの評価設定を保ち、戻した後も計画§4.4 を確かめる。
+戻すのは本書の該当差分だけ。site-search 改修前の Worker・設定へ丸ごと戻さず、1.6 の5 scope・新旧入口・クリック記録・2つの互換フラグ・切断対応・評価設定の撤去を保ち、戻した後も計画§4.4 を確かめる。共通検索UIを戻す場合は、対応する日刊の生成器・共通資産・全号HTMLも揃える（UI改修設計7章）。
