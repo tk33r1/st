@@ -30,14 +30,17 @@ async function probe() {
   const start=performance.now(),res=await fetch(api+'/magi2/chat',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
     body:JSON.stringify({messages:[{role:'user',content:'小さな書店です。月の販促予算2万円、平日は1人、週末だけ手伝いが来ます。新規客向けSNSと常連向け読書会のどちらに注力するか、弱点と3か月で判断する基準も検討してください。'}],
       classification_state:true,entry:'chat',ui_language:'ja',reply_language:{version:1,code:'ja',source:'ui'},magi_panel:true,theme:'light',adaptive_debate:true,suggest:true}),signal:AbortSignal.timeout(300000)});
-  assert.equal(res.status,200);assert.equal(res.headers.get('cache-control'),'no-cache, no-transform');assert.equal(res.headers.get('x-accel-buffering'),'no');
+  assert.equal(res.status,200);assert.equal(res.headers.get('cache-control'),'no-cache, no-transform');
+  // Cloudflareは訪問者向け応答からX-Accel-Bufferingを除去する。Worker内の指定は単体検査で確認する。
+  // https://developers.cloudflare.com/fundamentals/reference/http-headers/#removed-response-headers
+  const edgeBufferHeader=res.headers.get('x-accel-buffering');assert.ok(edgeBufferHeader===null||edgeBufferHeader==='no');
   const reader=res.body.getReader(),decoder=new TextDecoder(),pings=[],events=[],chunks=[];let buffer='',firstComment=false;
   try {while(true){const {done,value}=await reader.read();if(done)break;const ms=Math.round(performance.now()-start);chunks.push({ms,bytes:value.length});buffer+=decoder.decode(value,{stream:true});let i;
     while((i=buffer.indexOf('\n\n'))>=0){const block=buffer.slice(0,i);buffer=buffer.slice(i+2);if(!firstComment){assert.equal(block.length+2,2048);assert.ok(block.startsWith(':'));firstComment=true;}
       if(block===': ping')pings.push(ms);const ev=block.match(/^event: (.+)$/m)?.[1];if(ev)events.push({ev,ms});}
   }} finally {await reader.cancel().catch(()=>{});reader.releaseLock();}
   assert.ok(firstComment);assert.ok(events.some(e=>e.ev==='done'));assert.ok(!events.some(e=>e.ev==='error'));assert.ok(pings.length,'10秒のpingが実際に届くこと');
-  const value={name:'production-SSE',firstChunkMs:chunks[0].ms,chunks:chunks.length,pings,eventCounts:Object.fromEntries([...new Set(events.map(e=>e.ev))].map(ev=>[ev,events.filter(e=>e.ev===ev).length])),elapsedMs:Math.round(performance.now()-start)};
+  const value={name:'production-SSE',edgeBufferHeader,cacheControl:res.headers.get('cache-control'),firstChunkMs:chunks[0].ms,chunks:chunks.length,pings,eventCounts:Object.fromEntries([...new Set(events.map(e=>e.ev))].map(ev=>[ev,events.filter(e=>e.ev===ev).length])),elapsedMs:Math.round(performance.now()-start)};
   report.cases.push(value);console.log(JSON.stringify(value));
 }
 async function search() {
