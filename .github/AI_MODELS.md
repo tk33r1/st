@@ -71,7 +71,8 @@ PR本文にも同じ手順を出す。
 | Anthropic | 本番のMessages API・推論なし・effort low・samplingなし、画像なし／base64画像あり | magi2 の Humanist |
 | Anthropic | adaptive・effort medium・出力上限8192・正常なtextと終端を持つstream | magi2 のダークの統合 |
 | Anthropic | 非推論・effort low・出力上限4000・textのみ・正常終了 | MAGIの人格カードとX素材（共通API） |
-| Anthropic | 本番の非推論・JSONスキーマ。選択なし／1件の固定JSONと実在候補の検査 | 議題化、404とチャットのページ選び |
+| Anthropic | 本番の非推論・JSONスキーマ。true/falseと空の議題の整合を検査 | 議題化 |
+| OpenAI | 本番の非推論・strictなJSONスキーマ。選択なし／1件の固定JSONと実在候補の検査 | 404とチャットのページ選び。Haikuは上限3件を超えたため採用を見送った |
 | TypeSafe | System One API の choice 質問。本番の `INTENT_CLASSIFY` と共通の組立てで初回4問・継続3問・DJ初回1問・旧画面1問を確認。答えの形と明確な例のchoiceを検査し、確信度の閾値は品質評価で確認する | magi2 の発言分類・初回言語判定と旧画面の互換経路 |
 | TypeSafe | System One APIのnoul質問を候補の数だけ1回に。`eval-site-rank.mjs --smoke-payload` が本番の `rankPayload` と手元の索引で組んだ決まった3問（日英。評価セットと重ねない）で、全候補の答えが有効で、期待するページが閾値以上か（npm の依存を読まない） | 404のサイト内検索の② |
 | TypeSafe | System One APIのnoul質問。本番の `nitori_social_filter.py` の採否基準で、テレビ台・通常の贈り物を採用し、PR・株を除外できるか | 日刊ニトリのX・TikTok内容判定 |

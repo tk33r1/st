@@ -65,10 +65,10 @@ class MagiSmokeTest(unittest.TestCase):
             self.assertEqual(body, {**case['body'], 'model': 'candidate-for-test'})
             if 'purpose' in case:
                 self.assertNotIn('Return exactly', json.dumps(body))
-                self.assertIn('公開ページ一覧', body['system'])
+                self.assertIn('公開ページ一覧', body['messages'][0]['content'])
             else:
                 self.assertIn('Return exactly', body['messages'][0]['content'])
-                self.assertEqual(body['output_config']['format'], cases[0]['body']['output_config']['format'])
+                self.assertEqual(body['response_format'], cases[0]['body']['response_format'])
         self.assertNotEqual(cases[0]['body']['messages'][0]['content'], cases[2]['body']['messages'][0]['content'])
 
     def test_site_validator_accepts_query_variation_and_rejects_unknown_ids(self):

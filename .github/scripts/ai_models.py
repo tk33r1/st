@@ -188,13 +188,11 @@ def smoke_anthropic(url, api_key, model):
         raise RuntimeError('Anthropicの日刊JSON疎通に失敗しました')
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'anthropic', config)
-    observations = smoke_openai_site_search(url, api_key, model, config)
     smoke_openai_magi(url, api_key, model, config['magi'], provider='anthropic')
     # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
     card = message_payload(model, 'Return only READY.', 'A public synthetic source.', max_tokens=4000, thinking='disabled', effort='low')
     message_text(post_json(url, api_key, card))
-    print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
-    return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、議題化・ページ選択/スキーマ、人格カード・X要約/非推論'
+    return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、議題化/スキーマ、人格カード・X要約/非推論'
 
 
 def smoke_openai(url, api_key, model):
@@ -219,8 +217,10 @@ def smoke_openai(url, api_key, model):
     smoke_magi_discussion(url, api_key, model, 'openai', config)
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_magi(url, api_key, model, config['magi'])
+    observations = smoke_openai_site_search(url, api_key, model, config)
+    print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、ページ選択・討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():

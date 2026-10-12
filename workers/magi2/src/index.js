@@ -323,9 +323,9 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
 const PROVIDER_ROLES = {
-  openai: 'OpenAI（CASPER-3・ライトの統合・討議の判定。統合と補助の役割の答え直しにも使用）',
+  openai: 'OpenAI（CASPER-3・ライトの統合・討議の判定・ページ選び。統合と補助の役割の答え直しにも使用）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
-  anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・タイトル・次の質問の予測・議題化・ページ選び。統合は本文の表示前に限りOpenAIで一度答え直す）',
+  anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
   typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
 };
 async function alertUpstream(env, log, provider, res) {

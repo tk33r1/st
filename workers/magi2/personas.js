@@ -31,7 +31,7 @@ export const PRIVACY = {
     { text: 'Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal."', requires: ['magi_panel'] },
     { text: 'Strict limits: max 1,000 characters per input, limited output tokens, and 60 daily requests. Each reply is written with the last 12 messages (about 6 exchanges) as context; anything older drops out.' },
     { text: 'Images can be attached (up to 4 per message, resized on your device before sending) and are sent to the API just like text.' },
-    { text: 'When site guidance is enabled, Anthropic (or OpenAI if the call fails) also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
+    { text: 'When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
     { text: 'By default, inputs are not saved in the database, unless you react to a reply (👍/emoji) to help improve MAGI.' },
     { text: 'Your IP address is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.' },
     { text: "Chat history is stored in your device's local storage (not permanent; please export important chats)." },
@@ -47,7 +47,7 @@ export const PRIVACY = {
     { text: '「今夜ラーメンを食べに行くべきか」のような賛否を問うと、適した質問ではMAGIが自動で審議・採決します。採決せずに説明してほしいときは「採決なしで、前の議案の判断材料を説明して」と頼んでください。', requires: ['magi_panel'] },
     { text: '利用制限：1回あたりの入力は最大1,000文字まで、出力トークン数制限あり、1日あたり60回のリクエストまで。回答は直近12メッセージ（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。' },
     { text: '画像も添付できます（1メッセージ最大4枚。送信前に端末側で縮小されます）。テキスト同様にAPIへ送信されます。' },
-    { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をAnthropic（呼び出しが失敗した場合はOpenAI）に送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
+    { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
     { text: 'デフォルトでは、MAGI向上のために回答へリアクション（👍や絵文字）をしない限り、入力内容はデータベースに保存されません。' },
     { text: '利用上限のため、IPアドレスを日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒にIPアドレスも保存されます。' },
     { text: 'チャット履歴はお使いの端末のローカルストレージに保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。' },
@@ -67,7 +67,8 @@ const searchSchema = (comment) => ({
   }, required: comment ? ['selections', 'comment'] : ['selections'],
 });
 export const SITE_SEARCH = {
-  model: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 300 },
+  // Haikuの実API評価で選択の上限3件を超えたため、検証計画§0-9に従いLunaを維持する。
+  model: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 300 },
   chat_max_tokens: 120, temperature: 0.4,
   daily_limit: 10, global_daily_limit: 100,
   request_bytes: 4096, query_max_chars: 200, chat_query_max_chars: 500,
