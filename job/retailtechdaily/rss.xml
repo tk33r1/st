@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 12 Oct 2026 05:44:51 +0900</lastBuildDate>
+    <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 13 Oct 2026 08:25:45 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月13日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261013/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261013/</guid>
+      <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
+      <description>コープデリ連合会がUnityStep AIとAI・データ活用プロジェクトを始め、宅配サービスの利用促進に取り組む方針が示された。 セルフレジを見守る店員の業務量が想像以上に多いことが、生活者の間で反響を呼んでいる。</description>
+    </item>
     <item>
       <title>2026年10月12日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261012/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260929/</guid>
       <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
       <description>国内では、買い物支援や駐車場管理の実証、リテールメディア市場予測など、店舗・地域の運営課題をデータや仕組みで解く動きが確認された。 海外では、Instacartの店舗情報可視化やHy-Veeのオンライン購買迅速化が注目される。オンラインと実店舗をつなぐ運営改善が競争力の焦点になっている。</description>
-    </item>
-    <item>
-      <title>2026年9月28日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260928/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260928/</guid>
-      <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
-      <description>候補の中では、店舗技術の大型発表よりも、食品ロス削減、会員基盤の連携、採用・人材確保に関する運営改善が中心となった。 ベイシアの食品ロス削減アプリ導入は3店舗での展開。対象や運用実績が限られる段階のため、今後の拡大と効果検証が焦点となる。</description>
     </item>
   </channel>
 </rss>
