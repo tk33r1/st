@@ -21,6 +21,9 @@
 - **トップページ（ルートの `index.html`）**: Bitcoin の Witness 領域（Ordinals インスクリプション）にも刻んであるため、
   外部フォント / CDN / 外部アセットを足さない（CSS・JS・アイコン・QR はすべてインライン）。
   **例外は head の Ahrefs と GTM の2本だけ**で、これは公開サイト側の計測用。インスクリプション版はこの2行を落としたもの。
+  もう1つ、サイドバーの Search を開いたときに、**tk.st の上でだけ**共通検索（`/assets/` の search-ui などと `/data/` の索引）を遅れて読み、
+  コマンドとサイトのページを一緒に探す（読む資産と版は `index.html` の `SHARED_SEARCH_ASSETS`。共通検索の版を上げたらここも上げる）。
+  tk.st 以外（インスクリプション版など）や読めなかったときは、インラインのコマンド検索のまま動くので、インスクリプション版から落とす行は無い。
 - **SAFE TOOLS（`tools/` 配下）**: 外部とやりとりするのはアクセス解析だけ（後述「SAFE TOOLS の通信制限」）。
 - **それ以外のページ**: Google Fonts などの Web フォントや CDN の CSS/JS を読み込んでよい。
 - どのページでも、フレームワーク・ビルドツールを勝手に持ち込まない。
@@ -266,7 +269,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     日刊2誌の②も同じ入口で、`scope: nitori|retail` と `filters`・`generation` を送る。明示検索でだけ送信し、日刊の③は設けない。
     正本は `search-scope.js`・`site-rank.js`・`SITE_RANK.scopes`。対象は全年度、候補は最大20件。媒体ごとの有効化・停止は `SITE_RANK_SCOPES` で行い、回数は404の②と共有する。停止は索引・回数・Jevより前で行い、①は利用可能。
     Phase 4（2026-10-12公開）は`POST /search/api/rank`を5scopeの共通入口にし、tools/gameも対象にする。`search_contract: 1`と基礎データの生バイト列hashに対応するgenerationを送り、Workerは回数・Jev・結果キャッシュより前に版を照合する。旧入口は従来の3scopeの契約を保持する。ブラウザの版ずれ復帰は自動で1画面1回、②は明示検索だけ。公開設定は5scopeが有効。新scopeのtune/final・smokeの記録は`.github/site-search/phase4/rank/README.md`、本番確認と限界は`assets/site-search-phase4-release-evaluation.md`。
-    UI改修は`assets/site-search-ui-redesign.md`。操作と構造は共通、見た目はページ。下書きと確定語を分け、①は20件ずつ、②は先頭20件との重複を除いて3行の枠へ描く。日刊の号の確定だけは、同じタブの30秒以内・一度きりの目印でポータルへ明示操作を引き継ぐ。
+    UI改修は`assets/site-search-ui-redesign.md`。トップページのサイドバーの Search も同じ部品で、adapter の `commands` でコマンドを先頭に足す（tk.st の上でだけ遅れて読む。上の「外部参照の制約」）。操作と構造は共通、見た目はページ。下書きと確定語を分け、①は20件ずつ、②は先頭20件との重複を除いて3行の枠へ描く。日刊の号の確定だけは、同じタブの30秒以内・一度きりの目印でポータルへ明示操作を引き継ぐ。
     読みは`search-reading-index.py`が固定したSudachiで出荷時に生成し、正本の全文・ID順・生バイト列hashを保つ。補正の正本は`config/search-readings.json`。ブラウザへ辞書を配らない。`data/site-keyword.json`・各scopeの読み、日刊の年別読み／manifestは`_site`だけの生成物で、手で書かない。共通UIとadapterへ変更を集め、ページ側に独立した検索制御を追加しない。
     止めるときは Worker の `SITE_RANK_ENABLED` を先に false にし、その後で 404 の `RANK_ENABLED` を false にする（magi2 の README.md）。
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。

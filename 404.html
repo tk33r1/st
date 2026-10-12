@@ -151,15 +151,21 @@
     .st-search-input{border:0}.st-search-submit{border:0;border-left:1px solid var(--border)}
     .st-search-suggestions,.st-search-privacy-details{background:var(--surface);border-radius:10px;box-shadow:0 12px 30px #0003}
     .st-search-local>.result-list>.st-search-result{border:0}
+    /* 「404」がミニゲームの入口。点滅するカーソルで、押せることをそっと知らせる */
+    .game-trigger { padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; }
+    .game-trigger::after { content: "▌"; margin-left: .08em; animation: game-caret 1.1s steps(1) infinite; }
+    .game-trigger:hover::after { animation: none; }
+    @keyframes game-caret { 50% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .game-trigger::after { animation: none; opacity: .6; } }
   </style>
-  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_14">
+  <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_15">
 </head>
 <body>
   <!-- JavaScript無効時の既存GTM導線。st-analyticsでは制御できない。 -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
   <main>
     <header>
-      <p class="error-code"><span aria-hidden="true">~$ </span>404</p>
+      <p class="error-code"><span aria-hidden="true">~$ </span><button type="button" class="game-trigger" id="game-trigger">404</button></p>
       <h1 data-ja="ページが見つかりませんでした" data-en="Page not found">ページが見つかりませんでした</h1>
       <p class="intro" data-ja="URLが変わったか、入力に誤りがあるかもしれません。" data-en="The address may have changed, or there may be a typo.">URLが変わったか、入力に誤りがあるかもしれません。</p>
       <p class="requested-url" id="requested-url" hidden></p>
@@ -327,7 +333,7 @@
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
   <script src="/assets/japanese-search.js?v=20261012_8"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_14"></script>
+  <script src="/assets/search-ui.js?v=20261012_15"></script>
   <script src="/assets/search-data.js?v=20261012_8"></script>
   <script>
     (function () {
@@ -691,6 +697,35 @@
           if(response.status===200 && (response.headers.get('Content-Type') || '').toLowerCase().startsWith('text/html')) {verifiedIssue=issue;renderPathSuggestions();}
         }).catch(function(){}).finally(function(){clearTimeout(deadline);});
       }
+    })();
+  </script>
+  <script>
+    // ミニゲーム（ページそのものを壊すブロック崩し）の入口。「404」を押したときだけ /404-game.js を読み込む。
+    // 言語は上のスクリプトが html の lang に決めた後で読む
+    (function () {
+      var t = document.getElementById('game-trigger'), loading = false;
+      if (!t) return;
+      t.setAttribute('aria-label', document.documentElement.lang === 'en' ? '404 (press for a mini game)' : '404（押すとミニゲーム）');
+      t.addEventListener('click', function () {
+        // 音はこのクリックの中で有効にする（読み込みを待ってからだと、ブラウザによっては操作の外とみなされて鳴らない）
+        var A = window.AudioContext || window.webkitAudioContext;
+        if (A) {
+          try {
+            window.ST404Audio = window.ST404Audio || new A();
+            var p = window.ST404Audio.resume();
+            if (p && p.catch) p.catch(function () {});
+          } catch (e) {}
+        }
+        if (window.ST404Game) return window.ST404Game.start();
+        if (loading) return;
+        loading = true;
+        var s = document.createElement('script');
+        s.src = '/404-game.js?v=20261012_1';
+        // 読み込めても本体が動かなかった（古いブラウザなど）ときは、もう一度押せるように戻す
+        s.onload = function () { loading = false; if (window.ST404Game) window.ST404Game.start(); };
+        s.onerror = function () { loading = false; };
+        document.head.appendChild(s);
+      });
     })();
   </script>
 </body>
