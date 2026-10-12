@@ -2044,18 +2044,6 @@ def render_top_index_html(config, articles_history):
           </a>
         </li>""")
 
-    all_categories = sorted({
-        str(art.get('category')) for issue in articles_history for art in issue.get('articles', [])
-        if art.get('category')
-    })
-    # ②が受け付けるのは記事のある月。0本の号はバックナンバーには残す。
-    all_months = sorted({str(issue.get('date', ''))[:6] for issue in articles_history
-                         if issue.get('date') and issue.get('articles')}, reverse=True)
-    category_options = ''.join(f'<option value="{esc(cat)}">{esc(cat)}</option>' for cat in all_categories)
-    month_options = ''.join(
-        f'<option value="{month}">{month[:4]}年{int(month[4:6])}月</option>' for month in all_months
-    )
-
     recent_issues = articles_history[:7]
     trend_counts = Counter()
     # 全記事に付きがちで「注目テーマ」として情報量が無いタグ。

@@ -22,11 +22,17 @@ try {
   browser=await chromium.launch({headless:true});
   const screens=[['site','/404.html','Thought'],['tools','/tools/','PDF'],['game','/game/','MASALA'],['nitori','/job/nitoridaily/','収納'],['retail','/job/retailtechdaily/','AI']];
   for(const [scope,path,query] of screens) {
-    const page=await browser.newPage({locale:'ja-JP',viewport:{width:1280,height:900}}),errors=[],requests=[],posts=[];
+    const page=await browser.newPage({locale:'ja-JP',viewport:{width:1280,height:900}}),errors=[],requests=[],posts=[],aiPosts=[];
     page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
     await page.route('**/*',async route=>{
       const request=route.request(),url=new URL(request.url());requests.push(url.pathname);
+      if(url.origin!==origin && url.pathname==='/magi2/site-search') {
+        const headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST'};
+        if(request.method()==='OPTIONS') {await route.fulfill({status:204,headers});return;}
+        aiPosts.push(request.postDataJSON());
+        await route.fulfill({headers,json:{status:'results',comment:null,results:[{kind:'page',title:'Thought',description:'AIの固定応答',url:'/thought/'}]}});return;
+      }
       if(url.origin!==origin) {await route.fulfill({status:200,body:'',contentType:url.pathname.endsWith('.css')?'text/css':'application/javascript'});return;}
       if(url.pathname==='/search/api/rank') {
         const body=request.postDataJSON();posts.push(body);
@@ -64,7 +70,30 @@ try {
       assert.equal(await page.locator('.site-tree a[href="/job/nitoridaily/2026/"]').count(),0,'年枝の架空リンクを作らない');
       await input.fill(query);await input.press('Enter');await page.locator('.st-search-semantic li').waitFor();
       await page.locator('#ai-search').waitFor({state:'visible'});assert.ok(await page.locator('#ai-run').isEnabled());
+      await page.locator('#ai-run').click();await page.locator('#ai-list a').waitFor();
+      assert.equal(aiPosts.length,1);assert.equal(aiPosts[0].query,query);
+      assert.equal(await page.locator('.st-search-rank-status').textContent(),'','③への切り替えは条件変更と通知しない');
+      assert.ok(await page.locator('.st-search-semantic').isHidden());assert.ok(await page.locator('#ai-result').isVisible(),'③の結果を保持');
+      assert.equal(posts.length,2,'③への切り替えで②を再送しない');
       await input.fill('別の入力');assert.ok(await page.locator('#ai-search').isHidden(),'入力変更で③を消す');
+      assert.ok(await page.locator('#ai-result').isHidden());
+    }
+    if(scope==='nitori' || scope==='retail') {
+      const labels=()=>page.locator('.st-search-filters label > span').allTextContents();
+      const allOptions=()=>page.locator('[data-filter] option[value=""]').allTextContents();
+      const choices=await page.locator('[data-filter="category"] option').allTextContents();
+      await page.locator('[data-filter="category"]').selectOption({index:1});
+      const selected=await page.locator('[data-filter="category"]').inputValue(),beforePosts=posts.length;
+      await page.evaluate(()=>{document.documentElement.lang='en';});
+      await page.locator('.st-search-form').getByRole('button',{name:'Search',exact:true}).waitFor();
+      assert.deepEqual(await labels(),['Category','Region','Month','Sort']);assert.deepEqual(await allOptions(),['All','All','All']);
+      assert.equal(await page.locator('[data-sort] option').textContent(),'Relevance');
+      assert.equal(await page.locator('[data-filter="category"]').inputValue(),selected);
+      assert.deepEqual((await page.locator('[data-filter="category"] option').allTextContents()).slice(1),choices.slice(1),'データ由来のカテゴリーを保持');
+      await page.evaluate(()=>{document.documentElement.lang='ja';});
+      await page.locator('.st-search-form').getByRole('button',{name:'検索',exact:true}).waitFor();
+      assert.deepEqual(await labels(),['カテゴリー','地域','月','並べ替え']);assert.deepEqual(await allOptions(),['すべて','すべて','すべて']);
+      assert.equal(posts.length,beforePosts,'言語変更は②を自動送信しない');
     }
     assert.deepEqual(errors,[],scope+' の実行エラー');
     await page.screenshot({path:resolve(generated,'page-'+scope+'.png'),fullPage:false,animations:'disabled'});

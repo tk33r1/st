@@ -147,7 +147,7 @@
     let vocabulary = [], bySurface = new Map();
     const termScores=new Map();
     let ordered = null, orderingKey;
-    const maskScore = (mask, reading, asciiSingle) => (mask & 1) ? (reading ? 300 : 400) : (mask & 2) ? (reading ? 300 : 400) : asciiSingle && !reading ? 50 : 100;
+    const maskScore = (mask, asciiSingle) => (mask & 3) ? 400 : asciiSingle ? 50 : 100;
     const api = {
       recordIds: rows.map(r => r.record.id),
       attachReadings(payload, sourceHash) {
@@ -219,7 +219,7 @@
             let best=found[index];
             for (const f of rows[index].texts) {
               // 既に得た読み・題名の点数を超えないフィールドは、全文を再走査しない。
-              const ceiling=(f.mask & 1)?700:maskScore(f.mask,false,asciiSingle);
+              const ceiling=(f.mask & 1)?700:maskScore(f.mask,asciiSingle);
               if(best>=ceiling || !f.text.includes(term)) continue;
               const score=(f.mask & 1)?(f.text===term?700:f.text.startsWith(term)?600:500):ceiling;
               if(score>best) best=score;

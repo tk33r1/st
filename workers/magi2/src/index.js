@@ -488,8 +488,7 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
           if(snapshot) {info.total=(scope==='site'?rankTargets(snapshot):filterRankItems(snapshot,scope,filters)).length;info.generation=checked.generation;}
           if(checked.updating || !snapshot) return fail('index_updating');
           if(daily && ((filters.category && !snapshot.categories.has(filters.category)) || (filters.month && !snapshot.months.has(filters.month)))) return fail('invalid_request',400);
-          const key=scope==='tools'?'category':scope==='game'?'genre':null;
-          if(key && filters[key] && !snapshot.raw.some(p=>p[key]===filters[key])) return fail('invalid_request',400);
+          if(!daily && scope!=='site' && Object.keys(filters).length && info.total===0) return fail('invalid_request',400);
         } else snapshot = daily ? await getDailySnapshot(scope, { filters, generation, signal: s }) : await getSiteSnapshot(ctx, s);
       }
       catch (e) {

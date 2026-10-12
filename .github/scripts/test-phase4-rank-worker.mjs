@@ -59,6 +59,9 @@ test('filtersを候補より前に適用し、一覧が自分のscopeだけをJe
     const r=await (await w.request(w.body(scope,{filters:{[key]:value}}))).json();assert.equal(r.status,'results');
     const candidates=Object.values(w.jev.at(-1).state.candidates);assert.ok(candidates.length);
     assert.ok(candidates.every(c=>c.kind===(scope==='tools'?'tool':'game') && c[key]===value));
+    const count=w.jev.length,quota=[...w.counts.values()];
+    const unknown=await w.request(w.body(scope,{filters:{[key]:'unknown'}}));assert.equal(unknown.status,400);
+    assert.equal((await unknown.json()).reason,'invalid_request');assert.equal(w.jev.length,count);assert.deepEqual([...w.counts.values()],quota);
   }
 });
 test('偽のgeneration・searched=null・取得失敗は回数とJevゼロ。連打は同じ再取得間隔を共有する',async()=>{

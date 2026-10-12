@@ -440,7 +440,7 @@
       // ③の出し方（設計書 6.3）。②が使えるときは②の状態で決め、②の読み込み中と②を送る前は出さない
       function aiAllowed(total) {
         if (!rankAvailable()) return searchState.base==='ready' && total===0;
-        return ['results', 'no_results', 'failed', 'stale'].includes(searchState.rank);
+        return ['results', 'no_results', 'failed', 'stale', 'handoff'].includes(searchState.rank);
       }
       function syncAI(query, total) {
         var eligible = AI_SEARCH_ENABLED && searched(query) && !composing && aiAllowed(total);
@@ -462,7 +462,7 @@
         if (!ai.eligible || ai.controller || composing || currentQuery() !== ai.query) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
-        if (searchUI) searchUI.cancel();
+        if (searchUI) searchUI.handoff();
         var startedAt = Date.now();
         var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
         byId('ai-thinking').replaceChildren(); byId('ai-thinking').hidden = false;

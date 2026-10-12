@@ -2,11 +2,11 @@
 (function(w){
   'use strict';
   const newest=(a,b)=>b.numericId-a.numericId;
-  const listSorts=[{value:'relevance',label:'関連順'},{value:'title',label:'タイトル順',compare:(a,b)=>a.title.localeCompare(b.title,'ja')},
-    {value:'newest',label:'新しい順',compare:newest},{value:'oldest',label:'古い順',compare:(a,b)=>a.numericId-b.numericId}];
+  const listSorts=[{value:'relevance',label:'関連順',label_en:'Relevance'},{value:'title',label:'タイトル順',label_en:'Title',compare:(a,b)=>a.title.localeCompare(b.title,'ja')},
+    {value:'newest',label:'新しい順',label_en:'Newest',compare:newest},{value:'oldest',label:'古い順',label_en:'Oldest',compare:(a,b)=>a.numericId-b.numericId}];
   const daily={fields:[{name:'title',mask:1},{name:'tags',mask:2},{name:'summary',mask:4},{name:'takeaway',mask:4},{name:'source',mask:8},{name:'category',mask:2}],
     legacy:{legacyFields:['title','summary','takeaway','source','category','tags'],legacyRemoveWhitespace:true},
-    sorts:[{value:'relevance',label:'関連順',compare:(a,b)=>(a.date===b.date?0:a.date<b.date?1:-1)||a.article-b.article}]};
+    sorts:[{value:'relevance',label:'関連順',label_en:'Relevance',compare:(a,b)=>(a.date===b.date?0:a.date<b.date?1:-1)||a.article-b.article}]};
   const specs={site:{base:'/data/site-keyword.json',readings:'/data/site-readings.json',
       fields:['title','tags','description','detail'].map((key,i)=>({name:'search_'+key,mask:1<<i})),legacy:{},sorts:[],
       displayFields:{en:{title:'title_en',description:'description_en'}}},
@@ -157,11 +157,12 @@
   }
   function createAdapter(scope,options={}) {
     if(!Object.hasOwn(specs,scope)) fail('search_scope');const spec=specs[scope];let pending=null;
-    const names={category:'カテゴリー',genre:'ジャンル',region:'地域',month:'月'};
+    const names={category:{label:'カテゴリー',label_en:'Category'},genre:{label:'ジャンル',label_en:'Genre'},
+      region:{label:'地域',label_en:'Region'},month:{label:'月',label_en:'Month'}};
     const keys=spec.media?['category','region','month']:spec.filter?[spec.filter]:[];
     const adapter={...options,scope,fields:spec.fields,href:r=>r.href,compare:options.compare || spec.compare,
       displayFields:spec.displayFields,legacy:spec.legacy,
-      filters:keys.map(key=>({key,label:names[key],options:[{value:'',label:'すべて'}]})),
+      filters:keys.map(key=>({key,...names[key],options:[{value:'',label:'すべて',label_en:'All'}]})),
       sorts:options.sorts || spec.sorts,
       async loadBase(request) {
         if(request.cache==='no-cache') pending=null;

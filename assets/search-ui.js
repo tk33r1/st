@@ -11,7 +11,7 @@
       stale:'条件が変わりました。検索すると意味の近い候補も調べます。',limited:'意味検索の利用上限に達しました。',
       updating:'検索データを更新しています。意味検索は次の検索操作で実行します。',
       disabled:'意味検索は停止中です。',none:'選んだ候補に意味の近い結果はありませんでした。',sort:'並べ替え',
-      count:n=>`${n}件一致`,shown:(n,total)=>`${n}件表示／${total}件`,coverage:(n,c,total,complete)=>`${total}件から${c}件を選択、${n}件を判定${complete?'':'（判定未完了）'}`,
+      allOption:'すべて',count:n=>`${n}件一致`,shown:(n,total)=>`${n}件表示／${total}件`,coverage:(n,c,total,complete)=>`${total}件から${c}件を選択、${n}件を判定${complete?'':'（判定未完了）'}`,
       privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示では送信しません。ファイルやツールの処理内容は送りません。',
       privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・運用ログ・運用通知には残しません。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
     en: {input:'Search query',submit:'Search',all:'View all matches',more:'Show 100 more',cancel:'Cancel search',
@@ -23,7 +23,7 @@
       stale:'Conditions changed. Search again to find related results.',limited:'Related search has reached its usage limit.',
       updating:'Search data is updating. Related search will run on your next Search action.',
       disabled:'Related search is disabled.',none:'No related results among the selected candidates.',sort:'Sort',
-      count:n=>`${n} matches`,shown:(n,total)=>`Showing ${n} of ${total}`,coverage:(n,c,total,complete)=>`Selected ${c} of ${total}, judged ${n}${complete?'':' (incomplete)'}`,
+      allOption:'All',count:n=>`${n} matches`,shown:(n,total)=>`Showing ${n} of ${total}`,coverage:(n,c,total,complete)=>`Selected ${c} of ${total}, judged ${n}${complete?'':' (incomplete)'}`,
       privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it. Files and tool processing contents are not sent.',
       privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. Queries and replies are not stored in the site database, operational logs or notifications.',privacyLink:'TypeSafe AI privacy policy'}
   };
@@ -53,7 +53,8 @@
     let matched = {rows:[],total:0}, selectedSort = adapter.sorts?.[0]?.value || '';
     const filters = {}, controls = new Map(), labelled = [];
     const node = (tag, className, parent) => {const n = document.createElement(tag); if (className) n.className=className; if (parent) parent.append(n); return n;};
-    const labelText = (key, n) => {labelled.push([key,n]); n.textContent=words[locale][key];};
+    const labelValue = key => typeof key==='string'?words[locale][key]:(locale==='en' && key.label_en || key.label);
+    const labelText = (key, n) => {labelled.push([key,n]); n.textContent=labelValue(key);};
     const button = (key, parent) => {const n=node('button','st-search-button',parent);n.type='button';labelText(key,n);return n;};
     const form=node('form','st-search-form',container), label=node('label','st-search-label',form);
     label.htmlFor=id+'-input';labelText('input',label);
@@ -66,14 +67,14 @@
       const allowed={site:[],tools:['category'],game:['genre'],nitori:['category','region','month'],retail:['category','region','month']};
       if (!spec || !allowed[adapter.scope].includes(spec.key) || !Array.isArray(spec.options) || controls.has(spec.key)) throw new Error('search_filters');
       const l=node('label','',filterArea), text=node('span','',l), select=node('select','',l);
-      text.textContent=spec.label;select.dataset.filter=spec.key;
-      for (const choice of spec.options) {const option=node('option','',select);option.value=choice.value;option.textContent=choice.label;}
+      labelText(spec,text);select.dataset.filter=spec.key;
+      for (const choice of spec.options) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
       filters[spec.key]=select.value;controls.set(spec.key,select);
       select.addEventListener('change',()=>{filters[spec.key]=select.value;changeCondition();},{signal});
     }
     if (adapter.sorts?.length) {
       const l=node('label','',filterArea), text=node('span','',l), select=node('select','',l);labelText('sort',text);
-      select.dataset.sort='1';for (const choice of adapter.sorts) {const option=node('option','',select);option.value=choice.value;option.textContent=choice.label;}
+      select.dataset.sort='1';for (const choice of adapter.sorts) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
       select.addEventListener('change',()=>{selectedSort=select.value;changeCondition();},{signal});
     }
     const dataStatus=node('p','st-search-data-status',container);dataStatus.setAttribute('role','status');
@@ -130,7 +131,7 @@
       if(dataStatus.textContent!==dataText) dataStatus.textContent=dataText;
       if(rankStatus.textContent!==rankText) rankStatus.textContent=rankText;
       cancel.hidden=rankState!=='loading';submit.disabled=composing || rankState==='loading';
-      semantic.hidden=!input.value.trim() || rankState==='idle';
+      semantic.hidden=!input.value.trim() || ['idle','handoff'].includes(rankState);
       all.disabled=composing;more.disabled=composing;
       coverage.textContent=rankInfo?t.coverage(rankInfo.judged,rankInfo.candidates,rankInfo.total,rankComplete):'';
       call('onState',{base:baseState,readings:readingState,rank:rankState,total:matched.total,query:input.value.trim(),composing,submitted,complete:rankComplete});
@@ -138,7 +139,7 @@
     function refreshLocal() {
       if (destroyed) return;
       // 長すぎる入力は送信・照合せず、入力欄自体の内容は書き換えない。
-      matched=engine && Array.from(input.value.trim()).length<=200?engine.search(input.value,activeFilters()):{rows:[],total:0};
+      matched=engine && Array.from(w.STJapaneseSearch.normalize(input.value).trim()).length<=200?engine.search(input.value,activeFilters()):{rows:[],total:0};
       const occupied=new Set(rankRows.map(r=>r.href)), visible=rankRows.length?matched.rows.filter(r=>!occupied.has(links.get(r.id))):matched.rows;
       suggestArea.hidden=!input.value.trim() || !engine || openAll;
       input.setAttribute('aria-expanded',String(!suggestArea.hidden && visible.length>0));
@@ -149,7 +150,7 @@
       more.hidden=visible.length<=limit;showStates();
     }
     function clearRank(next) {
-      client.invalidate();rankRows=[];rankInfo=null;rankList.replaceChildren();rankState=next;showStates();
+      client.invalidate();rankRows=[];rankInfo=null;rankList.replaceChildren();rankState=client.disabled && next!=='handoff'?'disabled':next;showStates();
     }
     function changeCondition() {
       conditionRevision++;submitted=false;limit=100;clearRank(hasRun && input.value.trim()?'stale':'idle');refreshLocal();
@@ -213,7 +214,7 @@
       for(const [key,select] of controls) {
         const values=base.filterOptions?.[key];if(!values) continue;
         const previous=select.value;select.replaceChildren();
-        for(const value of ['',...values]) {const option=node('option','',select);option.value=value;option.textContent=value || (locale==='en'?'All':'すべて');}
+        for(const value of ['',...values]) {const option=node('option','',select);option.value=value;if(value) option.textContent=value;else labelText('allOption',option);}
         select.value=values.includes(previous)?previous:'';filters[key]=select.value;
       }
       clearRank(hasRun?'stale':'idle');localList.replaceChildren();suggestions.replaceChildren();refreshLocal();
@@ -242,7 +243,9 @@
     }
     async function run() {
       if(destroyed || composing || imeEnterHeld || !input.value.trim() || Array.from(input.value.trim()).length>200) return;
-      openAll=true;refreshLocal();
+      openAll=true;
+      if(base && client.disabled) {submitted=true;rankState='disabled';}
+      refreshLocal();
       if(!base || client.disabled || ['loading','results','no_results'].includes(rankState)) return;
       const condition=rankCondition(), key=JSON.stringify(condition), mine=conditionRevision, revision=dataRevision;
       hasRun=true;submitted=true;rankState='loading';rankRows=[];rankInfo=null;rankList.replaceChildren();refreshLocal();
@@ -277,7 +280,8 @@
       if(composing || event.isComposing || event.keyCode===229 || imeEnterHeld || event.repeat) return;
       if(event.key==='Escape') {suggestArea.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');return;}
       if(['ArrowDown','ArrowUp'].includes(event.key) && !suggestArea.hidden && suggestions.children.length) {
-        event.preventDefault();activeSuggestion=(activeSuggestion+(event.key==='ArrowDown'?1:-1)+suggestions.children.length)%suggestions.children.length;
+        const count=suggestions.children.length, step=event.key==='ArrowDown'?1:-1;
+        event.preventDefault();activeSuggestion=activeSuggestion<0?(step>0?0:count-1):(activeSuggestion+step+count)%count;
         [...suggestions.children].forEach((n,i)=>n.setAttribute('aria-selected',String(i===activeSuggestion)));
         input.setAttribute('aria-activedescendant',suggestions.children[activeSuggestion].id);
       }
@@ -287,13 +291,16 @@
     },{signal});
     all.addEventListener('click',()=>{if(!composing){openAll=true;refreshLocal();}},{signal});
     more.addEventListener('click',()=>{if(!composing){limit+=100;refreshLocal();}},{signal});
-    const cancelRank=()=>{conditionRevision++;clearRank('stale');refreshLocal();};
+    const releaseRank=next=>{conditionRevision++;clearRank(next);refreshLocal();};
+    const cancelRank=()=>releaseRank('stale');
     cancel.addEventListener('click',cancelRank,{signal});
     showStates();refreshLocal();
     const ready=loadBase('default');
     return {ready,run,cancel:cancelRank,
+      // ③への引き継ぎでは確定条件を保ち、②の結果と通知だけを消す。
+      handoff:()=>releaseRank('handoff'),
       setQuery(value){input.value=String(value).slice(0,400);openAll=true;changeCondition();},
-      setLocale(value){if(!['ja','en'].includes(value) || value===locale) return;locale=value;labelled.forEach(([key,n])=>{n.textContent=words[locale][key];});
+      setLocale(value){if(!['ja','en'].includes(value) || value===locale) return;locale=value;labelled.forEach(([key,n])=>{n.textContent=labelValue(key);});
         localList.replaceChildren();suggestions.replaceChildren();changeCondition();},
       get state(){return {base:baseState,readings:readingState,rank:rankState,total:matched.total,recoveryAttempted,dataRevision};},
       destroy(){destroyed=true;loadingRevision++;controller.abort();client.cancel();delete container.dataset.stSearchMounted;container.replaceChildren();}};

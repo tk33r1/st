@@ -319,6 +319,7 @@ export async function getRankSnapshot(scope,{ctx,generation,signal}={}) {
         getSiteSnapshot(ctx,undefined,{refresh:true})]);
       const next=makeListSnapshot(scope,text,publication);await snapshotHash(next);
       listSnapshots.set(scope,{snapshot:next,at:Date.now()});return next;
+    // 更新失敗後は公開索引との照合ができないため、手元の版が一致していても再取得の間隔まで②を止める。
     })().then(next=>{update.blocked=false;return next;},error=>{update.blocked=true;throw error;}).finally(()=>{update.pending=null;});
     update.pending.catch(()=>{});
   }
