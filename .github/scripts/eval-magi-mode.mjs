@@ -5,8 +5,14 @@ import { webcrypto, createHash } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import vm from 'node:vm';
 import { performance } from 'node:perf_hooks';
+import { execFileSync } from 'node:child_process';
 const root = new URL('../../', import.meta.url);
-const read = p => readFileSync(new URL(p, root), 'utf8');
+const ref = process.argv.find(a=>a.startsWith('--ref='))?.slice(6);
+const label = process.argv.find(a=>a.startsWith('--label='))?.slice(8);
+assert(!label||/^[a-z0-9-]+$/.test(label));
+// 旧・新で素材を固定し、Workerとモデル設定だけを切り替える。
+const read = p => ref&&/^(workers\/magi2\/|config\/)/.test(p)?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):readFileSync(new URL(p, root), 'utf8');
+const registry = JSON.parse(read('config/ai-models.json'));
 const mode = process.argv.find(a => a.startsWith('--mode='))?.slice(7) || 'pilot';
 assert(['pilot','motion','entry','paired','special'].includes(mode));
 const batch = Number(process.argv.find(a => a.startsWith('--batch='))?.slice(8) || 0);
@@ -16,7 +22,7 @@ assert(selected.every(n => Number.isInteger(n) && n >= 1 && (n <= 52 || n >= 61 
 const fingerprint = createHash('sha256').update(['personas.js','classification.js','magi-mode.js','src/index.js'].map(p=>read('workers/magi2/'+p)).join('\n')).digest('hex');
 const saved = existsSync(new URL('workers/magi2/.dev.vars',root)) ? read('workers/magi2/.dev.vars') : '';
 const env = { MAGI_MODE_ENABLED:'true', SITE_SEARCH_ENABLED:'true' };
-for (const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY','MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']) {
+for (const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY',registry.google?'MAGI_GEMINI_API_KEY':'MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']) {
   env[name] = process.env[name] || saved.match(new RegExp('^\\s*'+name+'\\s*=\\s*(.*?)\\s*$', 'm'))?.[1].replace(/^(['"])(.*)\1$/, '$2');
   assert(env[name], name+' is required');
 }
@@ -39,7 +45,7 @@ async function checkUi(events) {
 }
 let calls = [], marks = [], observed = [], synthetic = null, syntheticRounds = {};
 const strip = s => s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
-const ctx = vm.createContext({ aiModels:JSON.parse(read('config/ai-models.json')), bundledContext:cards,
+const ctx = vm.createContext({ aiModels:registry, bundledContext:cards,
   Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL, crypto:webcrypto, setTimeout, clearTimeout, setInterval, clearInterval,
   console:{ log(...args) { marks.push({ms:Math.round(performance.now()),stage:args[1],state:args[2]}); } },
   fetch:async (url,options) => {
@@ -150,8 +156,8 @@ const special=['no-reasons','hold','carried'].map((fixture,i)=>({...positives[0]
 const fixtureSet=mode==='special'?special:mode==='motion'?[...positives,...negatives]:mode==='entry'?[...positives,...negatives,...invitations,...bypass,...ordinary]:positives;
 const cases=selected.length?fixtureSet.filter(c=>selected.includes(c.id)):mode==='pilot'?positives.slice(0,2):batch?fixtureSet.slice((batch-1)*10,batch*10):fixtureSet;
 const reports=[];
-const target=new URL('workers/.wrangler/magi-'+mode+(selected.length?'-cases-'+selected.join('-'):batch?'-'+batch:'')+'.json',root);
-function save(){writeFileSync(target,JSON.stringify({mode,date:new Date().toISOString(),fingerprint,revision:ctx.config.models.motion.model,results:reports},null,2));}
+const target=new URL('workers/.wrangler/'+(label?'magi47-quality/'+label:'magi-'+mode+(selected.length?'-cases-'+selected.join('-'):batch?'-'+batch:''))+'.json',root);
+function save(){writeFileSync(target,JSON.stringify({mode,ref:ref||'working-tree',date:new Date().toISOString(),fingerprint,revision:ctx.config.models.motion.model,results:reports},null,2));}
 const log=()=>{};
 for(const c of cases){
   const order=mode==='paired'?(c.id%2?['usual','magi']:['magi','usual']):[mode];

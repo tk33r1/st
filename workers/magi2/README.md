@@ -272,6 +272,7 @@ BALTHASARと、ダークの統合・タイトル・予測・議題化・ペー�
 - 補助の役割はHTTP失敗の場合だけ、元の期限の残りでLunaを一度呼ぶ。人格は他社へ切り替えず、欠席として残りで進める。
 - 残高切れ・キーの失効は、答え直しが成功しても会社とHTTP状態ごとにUTCの1日につき1通の通知を送る。Anthropicのspend limit/cap、credit/balance等の語がある400、`retry-after`がない課金上限の429も対象とする。通常のRPM/TPMの429は対象外。
 - Geminiの呼び出し・匿名試行の記録・週次監視は撤去する。既存DBの過去の計測行は変更しない。Workerの `MAGI_GEMINI_API_KEY` はロールバック用に公開から2週間保持し、削除する前に本人へ知らせる。
+- `deploy-worker.yml` のmagi2公開は、先にリポジトリの `ANTHROPIC_API_KEY` をWorkerの `MAGI_ANTHROPIC_API_KEY` へ同期する。未設定・同期失敗ならデプロイを止める。dry-runでは同期せず、バンドルだけ確認する。手動wrangler公開ではこの同期を先に行う。
 - 実APIの事前確認は `magi-anthropic-probe.yml`。合成入力だけを送り、本文・キーを成果物に残さない。X画像URLの確認が未実施なら、完了したとは扱わない。
 
 Anthropicのデータの扱いは [APIの保持期間](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) と [商用APIの学習への利用](https://privacy.claude.com/en/articles/7996885-how-do-you-use-personal-data-in-model-training) を確認した（2026-10-13）。入出力は既定で学習には利用されず、通常30日以内に削除される。安全管理・法令等の例外を説明文にも残す。

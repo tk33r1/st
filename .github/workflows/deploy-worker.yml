@@ -8,7 +8,7 @@ name: Deploy Worker
 #                           Worker があるので、ゾーン tk.st の Workers Routes の編集権限も要る）
 #   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
 # dj-request の DB 更新には Account > D1 > Edit も追加する（上記テンプレートには含まれない）。
-# Worker の既存 secret は維持する。dj-request の TYPESAFE_API_KEY はリポジトリ Secret があれば同期する。
+# Worker の既存 secret は維持する。magi2 の Anthropicキーと、dj-request の任意の TYPESAFE_API_KEY を同期する。
 # dry-run は Secrets なしで動く（バンドルできるかだけ確かめる）。
 
 on:
@@ -79,6 +79,21 @@ jobs:
         if [ -n "$TYPESAFE_API_KEY" ]; then
           printf '%s' "$TYPESAFE_API_KEY" | npx wrangler secret put TYPESAFE_API_KEY --config dj-request/wrangler.toml
         fi
+
+    # モデルの切り替え前にキーを同期する。Geminiを含む既存のsecretは消さない。
+    - name: Prepare MAGI Anthropic
+      if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        if [ -z "$ANTHROPIC_API_KEY" ]; then
+          echo "::error::リポジトリ Secret ANTHROPIC_API_KEY が未設定です。MAGIのモデル切り替えを止めます"
+          exit 1
+        fi
+        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put MAGI_ANTHROPIC_API_KEY --config magi2/wrangler.toml
 
     - name: Deploy
       working-directory: workers
