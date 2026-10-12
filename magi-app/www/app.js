@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '4.6';
+var APP_VERSION = '4.7';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -88,7 +88,7 @@ var AGENT_SYNTH = { codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true }
 // Fetched once, the first time a persona is opened on the splash (retried on the next open if it fails).
 // undefined = loading, null = unavailable.
 var MODELS_API = API_BASE + '/magi2/models';
-var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
+var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', anthropic: 'Anthropic' };
 var agentModels;
 var agentModelsPromise = null;
 var agentModelsExpires = 0;
@@ -632,7 +632,7 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
 // ---- 画像添付（マルチモーダル入力）------------------------------------------
-// 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Gemini）へ送る。送信用（長辺1024）と保存用
+// 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Anthropic）へ送る。送信用（長辺1024）と保存用
 // サムネ（長辺320）を分けて作り、localStorage には軽いサムネだけを残す。
 var ATTACH_MAX = 4;
 var ATTACH_SEND_DIM = 1024;

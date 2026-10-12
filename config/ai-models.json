@@ -17,12 +17,6 @@
       "display_name": "V4.1 Flash"
     }
   },
-  "google": {
-    "flash_lite": {
-      "id": "gemini-3.5-flash-lite",
-      "display_name": "Gemini 3.5 Flash-Lite"
-    }
-  },
   "typesafe": {
     "jev": {
       "id": "jev-latest",

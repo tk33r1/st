@@ -4,7 +4,9 @@ import {createServer} from 'node:http';
 import {readFileSync, existsSync, mkdirSync, writeFileSync} from 'node:fs';
 import {resolve, extname, sep} from 'node:path';
 import {chromium} from 'playwright';
-const root=resolve(process.argv[2]||'.'),out=resolve('workers/.wrangler/magi2-app46-eval');mkdirSync(out,{recursive:true});
+const root=resolve(process.argv[2]||'.'),out=resolve('workers/.wrangler/magi2-app47-eval');mkdirSync(out,{recursive:true});
+const appVersion=JSON.parse(readFileSync(resolve(root,'magi-app/package.json'),'utf8')).version.split('.').slice(0,2).join('.');
+const nextVersion=appVersion.split('.')[0]+'.'+(Number(appVersion.split('.')[1])+1),laterVersion=appVersion.split('.')[0]+'.'+(Number(appVersion.split('.')[1])+2);
 const server=createServer((req,res)=>{
   let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';
   const file=resolve(root,'.'+path);if(!file.startsWith(root+sep)||!existsSync(file)){res.writeHead(404);res.end();return;}
@@ -17,7 +19,7 @@ const paragraphs=[{text:'Shared text <strong>literal</strong>'},{text:'Site guid
 const models={personas:{'MELCHIOR-1':model},synthesizer:model,themes:{light:model,dark:{...model,provider_label:'Dark Co'}},privacy:{en:paragraphs,ja:paragraphs}};
 async function scenario(name,path,{native=false,scheme='light',api='ok',stored={},language='en',blocked=false}={}){
   const ctx=await browser.newContext({viewport:{width:path==='/'?1280:390,height:900},locale:language,colorScheme:scheme,serviceWorkers:'block'});
-  const page=await ctx.newPage(),errors=[],releases=[],modelCalls=[];let modelMode=api,release='v4.7';
+  const page=await ctx.newPage(),errors=[],releases=[],modelCalls=[];let modelMode=api,release='v'+nextVersion;
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(({native,stored,blocked})=>{
     if(native)window.Capacitor={isNativePlatform:()=>true};
@@ -34,7 +36,7 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
   });
   try{
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.locator('.magi-ver').waitFor();
-    assert.match(await page.locator('.magi-ver').textContent(),/ver 4\.6/);
+    assert.ok((await page.locator('.magi-ver').textContent()).includes('ver '+appVersion));
     if(path!=='/'){
       assert.equal(await page.locator('html').getAttribute('data-theme'),scheme);
       if(!blocked)assert.equal(await page.evaluate(()=>localStorage.getItem('magi_theme')),null);
@@ -55,9 +57,9 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
     await page.locator('.agent-panel-close').click();
     await page.locator('.magi-node[data-codename="Shinya Takeda"]').click();const desc=page.locator('.magi-desc');await desc.waitFor();await page.waitForTimeout(100);
     if(api!=='legacy'){assert.match(await desc.textContent(),/Future Co <literal>/);assert.match(await desc.textContent(),/Dark Co/);assert.equal(await desc.locator('literal').count(),0);}
-    if(native){await page.locator('#app-update').waitFor({state:'visible'});assert.equal(releases.length,1);assert.match(await page.locator('#app-update').innerText(),/4\.7/);assert.equal(await page.locator('#app-update a').getAttribute('href'),'https://tk.st/magi-app/android/');assert.equal(await page.locator('#app-update a').getAttribute('target'),'_blank');
+    if(native){await page.locator('#app-update').waitFor({state:'visible'});assert.equal(releases.length,1);assert.ok((await page.locator('#app-update').innerText()).includes(nextVersion));assert.equal(await page.locator('#app-update a').getAttribute('href'),'https://tk.st/magi-app/android/');assert.equal(await page.locator('#app-update a').getAttribute('target'),'_blank');
       await page.screenshot({path:resolve(out,name+'.png')});await page.locator('#app-update button').click();await page.reload();await page.locator('.magi-ver').waitFor();await page.waitForTimeout(100);assert.equal(releases.length,blocked?2:1);
-      if(!blocked){assert.equal(await page.locator('#app-update').isVisible(),false);await page.evaluate(()=>localStorage.setItem('magi_update_checked','1'));release='v4.8';await page.reload();await page.locator('#app-update').waitFor({state:'visible'});assert.match(await page.locator('#app-update').innerText(),/4\.8/);}
+      if(!blocked){assert.equal(await page.locator('#app-update').isVisible(),false);await page.evaluate(()=>localStorage.setItem('magi_update_checked','1'));release='v'+laterVersion;await page.reload();await page.locator('#app-update').waitFor({state:'visible'});assert.ok((await page.locator('#app-update').innerText()).includes(laterVersion));}
     }else assert.equal(releases.length,0);
     assert.deepEqual(errors,[]);results.push({name,pass:true,modelCalls:modelCalls.length,releaseCalls:releases.length});console.log(name+' OK');
   }finally{await ctx.close();}

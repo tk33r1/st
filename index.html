@@ -3236,7 +3236,7 @@
               "name": "What is MAGI, and where do my messages go?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Messages and images are sent to OpenAI, DeepSeek, and Anthropic, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
               }
             },
             {
@@ -4188,8 +4188,8 @@
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
         question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
-        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Messages and images are sent to OpenAI, DeepSeek, and Google Gemini, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
-        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。「今夜ラーメンを食べに行くべき？」のように賛否を尋ねると、審議できる問いはMAGIが自動で採決します。採決ではなく説明がほしいときは「採決せず、直前の議題の判断材料を整理して」と入力できます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ、発言の分類と会話の初回の言語判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Messages and images are sent to OpenAI, DeepSeek, and Anthropic, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。「今夜ラーメンを食べに行くべき？」のように賛否を尋ねると、審議できる問いはMAGIが自動で採決します。採決ではなく説明がほしいときは「採決せず、直前の議題の判断材料を整理して」と入力できます。メッセージと画像は OpenAI・DeepSeek・Anthropic の3社へ、発言の分類と会話の初回の言語判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
         sec: 'magi',
@@ -7320,7 +7320,7 @@
     // 人格の説明と LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
     // （失敗したら次に開いたときに取り直す）。undefined = 取得中、null = 取れなかった
     const MODELS_API = MAGI_ORIGIN + '/magi2/models';
-    const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
+    const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', anthropic: 'Anthropic' };
     let agentModels;
     let agentModelsPromise = null;
     let agentModelsExpires = 0;
@@ -7374,7 +7374,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 4.6 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 4.7 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7764,7 +7764,7 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
     // --- マルチモーダル入力（画像添付）---
-    // 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Gemini）へ渡す。アップロード先を持たない
+    // 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Anthropic）へ渡す。アップロード先を持たない
     // インスクリプションなので、外部ストレージには一切依存させない。
     const ATTACH_MAX = 4;         // 1メッセージあたりの枚数（Worker 側の上限と一致）
     const ATTACH_SEND_DIM = 1024; // 送信用の長辺 px（認識精度とトークン量の折り合い）

@@ -37,7 +37,7 @@ const ready=page=>page.waitForFunction(()=>document.querySelector('[data-st-sear
 try {
   browser=await chromium.launch({headless:true});
   for(const [scope,path,query] of [['site','/404.html','Thought'],['tools','/tools/','PDF'],['game','/game/','tetris'],['nitori','/job/nitoridaily/','収納'],['retail','/job/retailtechdaily/','AI']]) {
-    const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[],posts=[];page.on('pageerror',e=>errors.push(e.message));await offline(page,posts);
+    const page=await browser.newPage({viewport:{width:1280,height:900},locale:'ja-JP'}),errors=[],posts=[];page.on('pageerror',e=>errors.push(e.message));await offline(page,posts);
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});
     if(scope==='site') await page.waitForFunction(()=>document.querySelector('#path-suggestion-list').children.length>0);else await ready(page);
     const input=page.locator('.st-search-input');
@@ -95,6 +95,9 @@ try {
       assert.deepEqual(await page.locator('[data-filter] option[value=""]').allTextContents(),['すべて','すべて','すべて']);
     }
     await input.press('Escape');
+    assert.equal(await page.locator('.st-search-local').isVisible(),true,'Escは確定済みの結果を閉じない');
+    // Escで空になった下書きでは×も隠れる。文字を入れてから×で結果を閉じる。
+    await input.fill(query);
     await page.getByRole('button',{name:'検索をやめる',exact:true}).click();
     if(catalogue) {assert.equal(await page.locator(catalogue).isVisible(),true);assert.equal(await page.locator('[data-sort]').inputValue(),'title');}
     if(scope==='site') assert.equal(await page.locator('#path-suggestions').isVisible(),true);

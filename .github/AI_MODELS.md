@@ -3,7 +3,7 @@
 AI APIで使うモデルID・画面の表示名の正本は `config/ai-models.json`（プロバイダー → 用途チャネル → モデル設定）。
 各設定はAPIに送るモデルID `id` と、画面用の名称 `display_name` を必ず持つ。
 MAGIの3社の画面は `display_name` を使い、APIには `id` を送る。日刊の生成元バッジは実際に使ったプロバイダーとIDを記録する。
-実運用で直接モデルを選ぶプロバイダーは Anthropic・OpenAI・DeepSeek・Google（Gemini）の4社と、magi2 の言語の判定に使う
+実運用で直接モデルを選ぶプロバイダーは Anthropic・OpenAI・DeepSeek の3社と、magi2 の言語の判定に使う
 TypeSafe AI（Jev。magi2の発言分類・初回言語判定、日刊ニトリのSNS採否、日刊ニトリ・リテールテックのニュース採否に使う、文章を生成しない判定専用のモデル）で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 Jev はモデル一覧の API が無く、`jev-latest` は版を追う固定のエイリアスなので、更新の監視はせずスモークテストだけを行う（`PROVIDERS` の `watch: False`）。
@@ -32,9 +32,9 @@ Jev の API の形・料金・規約・使い方の知見は [JEV.md](JEV.md) �
 1. **現在のモデルのスモークテスト**。DeepSeekの `flash` チャネルはIDが固定のエイリアスで、
    中身はDeepSeek側で黙って差し替わるため、候補の有無にかかわらず毎週試す。
 2. **更新候補の検知**。各社の `/models` APIを見て、OpenAIは同じLuna系列のより新しい世代番号
-   （`6` と `6.0` は同じ版として扱う）を、AnthropicはHaiku系列、GoogleはFlash-Lite系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
+   （`6` と `6.0` は同じ版として扱う）を、AnthropicはHaiku系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
    候補はその場でスモークテストにかけ、**合格したものだけ**を正本に書く。
-   Anthropic・OpenAI・Googleは限定した系列の公式表記（`Claude Haiku <版>`・`GPT-<版> Luna`・`Gemini <版> Flash-Lite`）に合わせて
+   Anthropic・OpenAIは限定した系列の公式表記（`Claude Haiku <版>`・`GPT-<版> Luna`）に合わせて
    `display_name` も同時に更新する。
    DeepSeekは公式の「Models & Pricing」のモデルID列と「MODEL VERSION」行を対応させ、
    使用中のエイリアスの実モデル名を取得する。表示名が変わった場合もスモークテストに通ったものだけを
@@ -61,22 +61,25 @@ PR本文にも同じ手順を出す。
 | --- | --- | --- |
 | Anthropic | 本番と共通のMessages API・適応的推論 medium（sampling指定なし）・JSON本文・正常終了 | 日刊生成（一次プロバイダー） |
 | OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（Anthropic が失敗したときのフォールバック） |
-| OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
+| OpenAI | 非推論・temperature 0.2・JSON出力 | ゲームAPI |
 | OpenAI | 本番設定の人格、サイト候補を含む入力、画像なし／data URL画像あり | magi2 の Strategist。推論・トークン上限・揺らぎ・top_pを `DEFAULTS` と `PERSONA_TEMPERATURE` から読む |
-| OpenAI | 本番設定の推論・上限・ストリーミング、サイト候補を含む入力 | magi2 の統合。推論時にsamplingを送らない本番の組立てを使う |
-| OpenAI | 本番の選択指示4ケースと、dailyがnull／オブジェクトの固定JSON2ケース・strictなJSONスキーマ | 404とチャットの共通ページ選択。本番の指示では形式と実在IDだけを検査し、日刊検索の有無は記録する。nullableの両側は固定JSONで確認する |
+| OpenAI | 本番設定の推論・上限・ストリーミング、サイト候補を含む入力 | magi2 のライトの統合。推論時にsamplingを送らない本番の組立てを使う |
 | OpenAI | 推論 low（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定。本番の `DEBATE` を読む |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成（Anthropic・OpenAI が失敗したときのフォールバック） |
 | DeepSeek | 本番設定の推論・上限・揺らぎ・top_p、サイト候補を含む画像なし／画像あり入力 | magi2 の Enthusiast |
-| Google | 本番設定の推論・上限・揺らぎ・top_p、サイト候補を含む画像なし／画像あり入力 | magi2 の Humanist |
+| Anthropic | 本番のMessages API・推論なし・effort low・samplingなし、画像なし／base64画像あり | magi2 の Humanist |
+| Anthropic | adaptive・effort medium・出力上限8192・正常なtextと終端を持つstream | magi2 のダークの統合 |
+| Anthropic | 非推論・effort low・出力上限4000・textのみ・正常終了 | MAGIの人格カードとX素材（共通API） |
+| Anthropic | 本番の非推論・JSONスキーマ。true/falseと空の議題の整合を検査 | 議題化 |
+| OpenAI | 本番の非推論・strictなJSONスキーマ。選択なし／1件の固定JSONと実在候補の検査 | 404とチャットのページ選び。Haikuは上限3件を超えたため採用を見送った |
 | TypeSafe | System One API の choice 質問。本番の `INTENT_CLASSIFY` と共通の組立てで初回4問・継続3問・DJ初回1問・旧画面1問を確認。答えの形と明確な例のchoiceを検査し、確信度の閾値は品質評価で確認する | magi2 の発言分類・初回言語判定と旧画面の互換経路 |
 | TypeSafe | System One APIのnoul質問を候補の数だけ1回に。`eval-site-rank.mjs --smoke-payload` が本番の `rankPayload` と手元の索引で組んだ決まった3問（日英。評価セットと重ねない）で、全候補の答えが有効で、期待するページが閾値以上か（npm の依存を読まない） | 404のサイト内検索の② |
 | TypeSafe | System One APIのnoul質問。本番の `nitori_social_filter.py` の採否基準で、テレビ台・通常の贈り物を採用し、PR・株を除外できるか | 日刊ニトリのX・TikTok内容判定 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` の採否基準で、食品売り場の技術導入と英語の店舗技術記事を採用し、食品紹介のみ・一般AI記事を除外できるか | 日刊リテールテックの国内・海外ニュース候補 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` のニトリ用採否基準で、英語の出店・N＋を採用し、投資推奨・同名別物を除外できるか（ブランド名救済前の判定） | 日刊ニトリの国内・海外ニュース候補 |
 
-Anthropicのモデル一覧は `ANTHROPIC_API_KEY`、OpenAIは `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
+Anthropicのモデル一覧は `ANTHROPIC_API_KEY`、OpenAIは `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、TypeSafe は `TYPESAFE_API_KEY` を使う。
 `TYPESAFE_API_KEY` は Worker の `MAGI_TYPESAFE_API_KEY` と同じキーでよい。
 Actionsの日刊生成・TikTok取得・週次スモークテストでも、TypeSafeが401・402・403、または残高・枠不足の429を
 返したら `typesafe_alert.py` がResendでメール通知する（通常の回数制限の429・通信障害・5xxは対象外）。
@@ -84,8 +87,7 @@ Repository Secretsに `RESEND_API_KEY`・`ALERT_FROM`・`ALERT_TO` が必要で�
 `ALERT_TO` はカンマ区切りで複数可。宛先を公開リポジトリに書かず、WorkerのsecretもActionsには自動で引き継がれない。
 同じPython実行中の同じHTTPステータスは1通にまとめ、送信失敗時は次のAPI失敗で再試行する。
 キー・記事・投稿・上流の応答本文は通知に含めない。通知未設定・送信失敗でも従来の判定失敗時の処理を続ける。
-OpenAIとDeepSeekは既存のRepository Secretをそのまま使う。`GEMINI_API_KEY` はmagi2の Humanist 用に足した
-Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じキーでよい（未設定だと監視がIssueで知らせる）。
+OpenAI・DeepSeek・Anthropicは既存のRepository Secretを使う。Workerのsecretは別管理。Geminiの監視は撤去し、Workerの旧キーだけは公開後2週間のロールバック用に保持する。
 レビュー用PRを自動作成するには、GitHubのリポジトリ設定で Actions にPull Requestの作成を
 許可しておく。許可されていない場合も、workflowは失敗内容をIssueで通知する。
 ボットが作ったPRでは `ai-models.yml` が走らない（GITHUB_TOKEN の push は workflow を起動しない）が、
@@ -115,4 +117,4 @@ MAGIのJev smokeは `magi-search-config.mjs` が本番と同じ `INTENT_CLASSIFY
 
 ページ選択は、本番の指示を使う4ケースで `daily` が全件nullでも失敗にしない。有効な日刊検索の有無はログに記録する。nullableの両側は、同じ本番スキーマ・推論・上限で指定JSONを返す2ケースとして独立に確認する。固定JSONの期待値を本番指示のケースへ適用しない。
 
-MAGI採決の議題化と票の読み取りも、同じ抽出で本番のスキーマ・推論強度・上限を使い、Lunaのsmokeで最小の構造化応答を確認する。判定品質とタグ率は `eval-magi-mode.mjs` の評価で別に測る。
+MAGI採決の議題化は同じ抽出で本番のスキーマ・推論強度・上限を使い、Anthropicのsmokeで構造化応答と本文の形式を確認する。採否の一致はsmokeの合否に使わず、品質とタグ率を実API評価で別に測る。票の補助AIは30/30件の有効な札を確認したため撤去し、コードの票解析・前回票の引き継ぎを回帰検査する。

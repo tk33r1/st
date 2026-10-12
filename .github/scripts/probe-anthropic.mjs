@@ -119,9 +119,9 @@ if (!key) {
     for (let i = 1; i <= 5; i++) await check(`0-5-6-stream-${i}`, stream);
     for (const name of ['motion', 'pages']) for (let i = 1; i <= 5; i++) await check(`0-9-${name}-${i}`, async () => {
       const source = name === 'motion' ? config.magi.motion.body : config.site_schema_smoke[i % 2].body;
-      const schema = source.response_format.json_schema.schema;
+      const schema = source.response_format?.json_schema.schema || source.output_config.format.schema;
       const {meta, text} = await request({...basic, max_tokens: name === 'motion' ? 400 : 300,
-        system: source.messages.filter(message => message.role === 'system').map(message => message.content).join('\n\n'),
+        system: source.system || source.messages.filter(message => message.role === 'system').map(message => message.content).join('\n\n'),
         messages: source.messages.filter(message => message.role !== 'system'),
         output_config: {effort: 'low', format: {type: 'json_schema', schema: schemaForApi(schema)}}});
       let valid = false;
@@ -133,7 +133,9 @@ if (!key) {
       } catch {}
       return {...meta, pass: meta.status === 200 && meta.stop_reason === 'end_turn' && valid, schema_valid: valid};
     });
-    const urls = (process.env.ANTHROPIC_PROBE_IMAGE_URLS || '').split(/\s+/).filter(Boolean);
+    const materialFile=process.argv.find(a=>a.startsWith('--image-urls-file='))?.slice(18);
+    const urls = materialFile ? JSON.parse(readFileSync(materialFile,'utf8')).image_urls.slice(0,3)
+      : (process.env.ANTHROPIC_PROBE_IMAGE_URLS || '').split(/\s+/).filter(Boolean);
     if (urls.length !== 3 || urls.some(url => {try {const parsed = new URL(url); return parsed.protocol !== 'https:' || parsed.hostname !== 'pbs.twimg.com';} catch {return true;}})) {
       record('0-10-x-images', {skipped: true, reason: 'three_public_pbs_image_urls_required'});
     } else for (let i = 0; i < urls.length; i++) await check(`0-10-x-image-${i + 1}`, async () => {

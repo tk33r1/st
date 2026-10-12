@@ -59,8 +59,8 @@ if (process.argv.includes('--delay')) {
       elapsed_ms: Math.round(performance.now() - started), calls: metadata ? JSON.parse(atob(metadata)) : [] };
     reports.push({ ...report, response: body }); console.log(JSON.stringify(report));
     writeFileSync(new URL('../../workers/.wrangler/site-search-' + (batch ? 'batch-' + batch : 'pilot') + '.json', import.meta.url), JSON.stringify(reports, null, 2));
-    if (report.calls.some(c => c.provider === 'google' && c.status === 429)) throw new Error('Googleの上限エラーで評価を中断しました');
-    // 評価でも通常利用と無料枠を共有する。1検索の開始を30秒以上空ける。
+    if (report.calls.some(c => [401,402,403,429].includes(c.status))) throw new Error('上流の認証・課金・回数の上限エラーで評価を中断しました');
+    // 評価でも通常利用と上流の利用枠を共有する。1検索の開始を30秒以上空ける。
     if (i + 1 < cases.length) await new Promise(r => setTimeout(r, Math.max(0, 30000 - (performance.now() - started))));
   }
 }

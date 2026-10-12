@@ -18,7 +18,11 @@ export default {
             if (!stream) record.usage = (await response.json()).usage || null;
             else for (const line of (await response.text()).split('\n')) {
               if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
-              const data = JSON.parse(line.slice(6)); if (data.usage) record.usage = data.usage;
+              const data = JSON.parse(line.slice(6));
+              if (provider === 'anthropic') {
+                const usage = data.type === 'message_start' ? data.message?.usage : data.type === 'message_delta' ? data.usage : null;
+                if (usage) record.usage = { ...record.usage, ...usage };
+              } else if (data.usage) record.usage = data.usage;
             }
           } catch {}
         })());

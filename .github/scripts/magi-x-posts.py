@@ -203,14 +203,14 @@ def describe_images(mc, api_key, rec, media):
         if m.get('alt_text'):
             parts.append({'type': 'text', 'text': f"（この画像に投稿者が付けた説明: {m['alt_text'][:200]}）"})
     # 指示しても付けてくることがある行頭の記号・番号（「- 」「1. 」「2）」）だけを落とす
-    lines = [re.sub(r'^\s*(?:[-・*]|\d+[.．)）])\s*', '', l).strip() for l in mc.call_openai(api_key, IMAGE_PROMPT, parts).splitlines()]
+    lines = [re.sub(r'^\s*(?:[-・*]|\d+[.．)）])\s*', '', l).strip() for l in mc.call_anthropic(api_key, IMAGE_PROMPT, parts).splitlines()]
     return [l[:60] for l in lines if l][:len(media)]
 
 
 def summarize_context(mc, api_key, rec, parent):
     parent_text = (parent.get('note_tweet') or {}).get('text') or parent.get('text', '')
     kind = '返信' if rec['kind'] == 'reply' else '引用'
-    line = mc.call_openai(api_key, CONTEXT_PROMPT, f"【元の投稿】{parent_text[:1000]}【本人の{kind}】{rec['text'][:300]}")
+    line = mc.call_anthropic(api_key, CONTEXT_PROMPT, f"【元の投稿】{parent_text[:1000]}【本人の{kind}】{rec['text'][:300]}")
     return line.strip().splitlines()[0][:60] if line.strip() else None
 
 
@@ -218,7 +218,7 @@ def enrich(records):
     """説明の済んでいない投稿に、画像の説明（media）と返信・引用の相手の要約（context）を付ける。
     要るのは、この実行で受け取った includes。失敗した投稿は付けないまま残し、次の読み直しでまた試す。"""
     todo = [r for r in records if not r.get('enriched')]
-    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
     done = images = contexts = failed = streak = 0
     if todo and api_key:
         mc = load_magi_context()
@@ -246,7 +246,7 @@ def enrich(records):
                 continue
             streak = 0
     elif todo:
-        print('::warning::OPENAI_API_KEY が無いので、画像の説明と返信・引用の要約を付けなかった')
+        print('::warning::ANTHROPIC_API_KEY が無いので、画像の説明と返信・引用の要約を付けなかった')
     for r in records:
         r.pop('_media', None)
         r.pop('_ref', None)
@@ -384,9 +384,9 @@ def load_magi_context():
 
 def interests():
     creds = own_credentials()
-    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
     if not api_key:
-        sys.exit('OPENAI_API_KEY が未設定（関心の要約に使う）')
+        sys.exit('ANTHROPIC_API_KEY が未設定（関心の要約に使う）')
     mc = load_magi_context()
     status, me = api_get('/users/me', {}, creds)
     if status != 200:
@@ -408,7 +408,7 @@ def interests():
         system = ('あなたは、ある人物（Shinya Takeda）が X で「いいね」した他人の投稿から、本人が何に関心を持ち、'
                   '何に共感し、何を面白がるかを読み取る分析者。次の分野ごとに、読み取れた傾向を箇条書きで書く。'
                   f'\n{areas_text}\n各分野は最大6行。読み取れない分野は「なし」。{NAME_RULE}')
-        notes.append(mc.call_openai(api_key, system, f'【いいねした投稿（{i + 1}〜{i + len(chunk)} 件目、新しい順）】\n{lines}'))
+        notes.append(mc.call_anthropic(api_key, system, f'【いいねした投稿（{i + 1}〜{i + len(chunk)} 件目、新しい順）】\n{lines}'))
         print(f'いいねの要約 {i // LIKES_PER_CHUNK + 1}: {len(notes[-1])} 字')
     # 2) フォローしているアカウント（名前と自己紹介）から、関心の地図を作る
     if following:
@@ -416,14 +416,14 @@ def interests():
         lines = '\n'.join('- ' + u.get('name', '') + ': ' + one_line(u.get('description')) for u in following)
         system = ('あなたは、ある人物（Shinya Takeda）が X でフォローしているアカウントの一覧から、本人の関心の地図を読み取る分析者。'
                   f'次の分野ごとに、どんな種類のアカウントを追っているかを箇条書きで書く。\n{areas_text}\n各分野は最大6行。{NAME_RULE}')
-        notes.append(mc.call_openai(api_key, system, f'【フォローしているアカウント（{len(following)} 件）】\n{lines}'))
+        notes.append(mc.call_anthropic(api_key, system, f'【フォローしているアカウント（{len(following)} 件）】\n{lines}'))
         print(f'フォローの要約: {len(notes[-1])} 字')
     # 3) まとめる。分野ごとに、人格カードの素材として渡せる形にする
     heads = '\n'.join(f'## {key}\n（{d}）' for _, key, d in AREAS)
     system = ('あなたは、ある人物（Shinya Takeda）の X のいいねとフォローから読み取った関心のメモを、分野ごとに1つにまとめる編集者。'
               f'次の見出しをこの順にそのまま使い、各見出しの下に「- 」で始まる箇条書きを5〜8行書く（重複はまとめ、よく出る傾向を先に）。\n{heads}\n'
               f'見出しと箇条書き以外は書かない。{NAME_RULE}')
-    merged = mc.call_openai(api_key, system, '\n\n'.join(f'【メモ {n + 1}】\n{t}' for n, t in enumerate(notes)))
+    merged = mc.call_anthropic(api_key, system, '\n\n'.join(f'【メモ {n + 1}】\n{t}' for n, t in enumerate(notes)))
     areas = {}
     for _, key, _ in AREAS:
         m = re.search(rf'^##\s*{key}\s*$(.*?)(?=^##\s|\Z)', merged, re.M | re.S)

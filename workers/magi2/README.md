@@ -34,7 +34,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 ## 説明の配信（公開2・公開準備中）
 
-`GET /magi2/models`はモデル名・人格の説明に加えて`provider_label`と`privacy`を返す。段落の正本は`personas.js`の`PRIVACY`。日英の`[{text, requires?}]`を文字だけで持ち、画面が対応する機能の印をすべて満たす段落だけ表示する。公開2ではGeminiを含む現在の送り先を維持する。トップとアプリは10分で説明を取り直し、取得失敗・旧Workerでは会社名を挙げない案内を出す。`themes`の2行表示は画面側で先に対応し、Workerのモデル切り替えは公開1で行う。
+`GET /magi2/models`はモデル名・人格の説明に加えて`provider_label`と`privacy`を返す。段落の正本は`personas.js`の`PRIVACY`。日英の`[{text, requires?}]`を文字だけで持ち、画面が対応する機能の印をすべて満たす段落だけ表示する。送り先はOpenAI・DeepSeek・Anthropic。トップとアプリは10分で説明を取り直し、取得失敗・旧Workerでは会社名を挙げない案内を出す。`themes.light`はLuna、`themes.dark`はHaikuを返す。旧画面のため`synthesizer`はライトのモデルのまま維持する。
 
 ## 討議の回数（最大5回）
 
@@ -140,7 +140,6 @@ python -B .github/scripts/preview-magi-mode.py
 # 保存済みの手元のキーで合成入力だけを評価。結果は非追跡の workers/.wrangler/
 node .github/scripts/eval-magi-mode.mjs --mode=motion
 node .github/scripts/eval-magi-mode.mjs --mode=entry
-node .github/scripts/eval-magi-mode.mjs --mode=reader
 node .github/scripts/eval-magi-mode.mjs --mode=paired --batch=1
 # 指定した合成入力だけ再評価する。結果ファイルは全件評価と分ける
 node .github/scripts/eval-magi-mode.mjs --mode=pilot --cases=1,16
@@ -148,7 +147,7 @@ node .github/scripts/eval-magi-mode.mjs --mode=pilot --cases=1,16
 node .github/scripts/eval-magi-mode.mjs --mode=special
 ```
 
-pairedは10組ずつ（batch 1〜3）通常回答と採決を交互に比較し、Google上限エラーで中断する。API観測はVM内の本番処理を通し、カード・索引・D1は手元の固定値で置き換える。Cloudflareの通信評価・実機・録画解析・本人による演出確認の代わりにはしない。公開手順と未確認事項は実装進捗・第2公開評価を参照。
+pairedは10組ずつ（batch 1〜3）通常回答と採決を交互に比較し、上流の認証・課金上限エラーで中断する。API観測はVM内の本番処理を通し、カード・索引・D1は手元の固定値で置き換える。Cloudflareの通信評価・実機・録画解析・本人による演出確認の代わりにはしない。公開手順と未確認事項は実装進捗・第2公開評価を参照。
 
 ## 404のAI検索とチャットのサイト案内
 
@@ -163,7 +162,7 @@ URLやタイトルをAIに生成させない。失敗は503で、該当なしの
 `.github/scripts/site-search-index.py` がタイトル・説明を抽出し、ツール・ゲーム・Glitchは既存JSONのタグや説明も使う。
 `build.sh` は公開ファイルを揃えた後に再生成するため、新しいページをWorkerへ手動登録する必要はない。
 手元の生成物は `python -B .github/scripts/site-search-index.py` で更新する（手で編集しない）。
-新しい404契約の公開はWorker→対応済み404の順。旧404には409・site_search_update_requiredを返し、AIも回数も使わない。新版404はこの応答で再読み込みを案内する。事前に本番相当経路の時間・費用・Google枠の評価を通す。未達ならWorkerと404をともに現行のまま維持する。
+新しい404契約の公開はWorker→対応済み404の順。旧404には409・site_search_update_requiredを返し、AIも回数も使わない。新版404はこの応答で再読み込みを案内する。事前に本番相当経路の時間・費用・上流APIの上限の評価を通す。未達ならWorkerと404をともに現行のまま維持する。
 AIへは名前・説明・URLとの一致で順位をつけた最大40件・16,000文字分を渡す。主な入口11件は必ず入れ、日刊の号は5件まで。英語の機能語は数えない。
 AIの選択IDは、実際に渡した候補内で検証する。ページ本文の検索・自動翻訳は行わない。
 
@@ -264,14 +263,19 @@ DJのapiとreq_apiはlocalhostページだけでループバックのオリジ�
 Accessサービス認証とAPIキーを環境変数に設定してeval-site-search.mjsを使う。--delayは149秒成功と150秒打切りの通信確認で、AIの品質・速度とは分ける。
 評価終了後はWorker名を固定して `npx wrangler delete tk-st-magi2-eval --config magi2/wrangler.toml --env eval`、次に評価DBだけを削除し、評価DNS・Access・専用トークンを片付ける。継続利用する場合は用途と次回の利用日・片付け予定日を記録する。
 
-## Gemini無料枠の運用
+## Anthropicの運用（公開1）
 
-無料枠（確認時15 RPM・250,000 TPM・500 RPD）で、通常チャットと404検索を共有する。通常チャットの300質問/日は維持するが、複数回の討議と再試行があるため300質問が全て成功する枠の保証はない。
-`rate_limit` に `usage:google:chat:attempt`・`usage:google:404:attempt` と、それぞれの `limited`（HTTP 429）をUTC日付で記録する。本文・利用者IPは含めず、記録失敗で回答を止めない。回数はこのWorkerのAPI試行数で、Googleの実際の消費量や同じプロジェクトの他の利用はAI Studioで確認する。Googleのリセット時刻とは異なる。
+BALTHASARと、ダークの統合・タイトル・予測・議題化にMessages APIを使う。モデルの正本は `config/ai-models.json`。人格カードとX素材は `.github/scripts/anthropic_api.py` を日刊と共用する。ページ選びはHaikuの実API評価で上限3件を超えたため、検証計画§0-9に従いLunaを維持する。採用しなかった応答と判断は[公開1準備](先行改修公開1準備.md)に記録する。
+本人確認（2026-10-12）: 月額spend limitで管理せず、前払いの$5を使い切るとエラーになる運用。4.4利用者全員への案内・更新は公開条件から外し、本人の4.6への更新を確認済みとする。本人以外への連絡は行っていない。
+本人の意向（2026-10-13）: 今回の全件品質比較は省略し、公開前の必須条件から外す。本人らしさ・事実関係の合格へ置き換えず、BALTHASARのeffortはlowを維持する。比較の選択・回答は本番のプロンプト・人格カード・学習用の正解に取り込まない。本人の考えと関心は更新されたサイト/X素材から作るカードに任せる。自動検証と公開後の動作確認は維持する。
 
-```sh
-# workers/ で実行。集計行だけを読み、利用者の記録は出さない。
-npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --command "SELECT ip AS metric, day, count FROM rate_limit WHERE ip LIKE 'usage:google:%' ORDER BY day DESC, ip LIMIT 28"
-```
+- 統合は本文を表示する前だけ、HTTP失敗・拒否・空・30秒間本文なし等で、もう一方の会社に一度答え直してもらう。各試行の期限は60秒。表示を始めた後や利用者の停止では答え直さない。
+- 補助の役割はHTTP失敗の場合だけ、元の期限の残りでLunaを一度呼ぶ。人格は他社へ切り替えず、欠席として残りで進める。
+- 残高切れ・キーの失効は、答え直しが成功しても会社とHTTP状態ごとにUTCの1日につき1通の通知を送る。Anthropicのspend limit/cap、credit/balance等の語がある400、`retry-after`がない課金上限の429も対象とする。通常のRPM/TPMの429は対象外。
+- Geminiの呼び出し・匿名試行の記録・週次監視は撤去する。既存DBの過去の計測行は変更しない。Workerの `MAGI_GEMINI_API_KEY` はロールバック用に公開から2週間保持し、削除する前に本人へ知らせる。
+- `deploy-worker.yml` のmagi2公開は、先にリポジトリの `ANTHROPIC_API_KEY` をWorkerの `MAGI_ANTHROPIC_API_KEY` へ同期する。未設定・同期失敗ならデプロイを止める。dry-runでは同期せず、バンドルだけ確認する。手動wrangler公開ではこの同期を先に行う。
+- 実APIの事前確認は `magi-anthropic-probe.yml`。合成入力だけを送り、本文・キーを成果物に残さない。X画像URLの確認が未実施なら、完了したとは扱わない。
 
-429や枠の競合が続く場合は、`personas.js` の `SITE_SEARCH.global_daily_limit` を100から下げる。0で404のAI検索だけ停止する。変更をコミットし、magi2を再デプロイする。ブラウザ内の通常検索とチャットは続く。残高・割当量を示す上流429の通知は既存の1日1通の通知に従う。
+Anthropicのデータの扱いは [APIの保持期間](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) と [商用APIの学習への利用](https://privacy.claude.com/en/articles/7996885-how-do-you-use-personal-data-in-model-training) を確認した（2026-10-13）。入出力は既定で学習には利用されず、通常30日以内に削除される。安全管理・法令等の例外を説明文にも残す。
+
+- 票の補助AIは公開前の固定評価でBALTHASARの第1・2回の札30/30件が有効だったため撤去。札が読めない回は判定不能とし、前回の有効票があればコードで引き継ぐ。

@@ -4,14 +4,26 @@ name: MAGI Anthropic Probe
 on:
   workflow_dispatch:
     inputs:
+      evaluation:
+        description: '追加確認（allは固定入力47件とカード/X素材も生成。正本は変更しない）'
+        required: false
+        default: smoke
+        type: choice
+        options: [smoke, magi, faults, site, motion, deepseek, all]
       image-urls:
         description: '任意: 公開X画像のHTTPS URLを3件（pbs.twimg.com、空白区切り）'
+        required: false
+        default: ''
+        type: string
+      resume-run:
+        description: '任意: site評価の完了済み入力を引き継ぐ同リポジトリのrun ID'
         required: false
         default: ''
         type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: magi-anthropic-probe
@@ -20,22 +32,135 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Probe the API
+      if: inputs.evaluation != 'faults' && inputs.evaluation != 'site' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek'
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         ANTHROPIC_PROBE_IMAGE_URLS: ${{ inputs.image-urls }}
       run: node .github/scripts/probe-anthropic.mjs
+    - name: Evaluate the candidate without publishing
+      if: hashFiles('.github/scripts/eval-magi-models.mjs') != '' && inputs.evaluation == 'all'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-models.mjs
+    - name: Check final MAGI behavior without vote-reading AI
+      if: hashFiles('.github/scripts/eval-magi-models.mjs') != '' && inputs.evaluation == 'magi'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-models.mjs --cases=m1-dark,m2-dark,m3-dark --label=final-magi
+    - name: Check both integration fallback directions twice with real failed authentication
+      if: inputs.evaluation == 'faults'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: |
+        node .github/scripts/eval-magi-models.mjs --cases=c1-dark,c2-dark --label=fault-anthropic --fault-provider=anthropic
+        node .github/scripts/eval-magi-models.mjs --cases=c1-light,c2-light --label=fault-openai --fault-provider=openai
+    - name: Restore completed synthetic cases for the site comparison
+      if: inputs.evaluation == 'site' && inputs.resume-run != ''
+      uses: actions/download-artifact@v4
+      with:
+        name: magi47-quality
+        path: workers/.wrangler/magi47-quality/
+        run-id: ${{ inputs.resume-run }}
+        github-token: ${{ github.token }}
+    - name: Compare 404 page selection using the fixed twenty cases
+      if: inputs.evaluation == 'site'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-models.mjs --site-search --label=site-candidate --resume
+    - name: Compare motion creation using thirty positive and ten negative fixed cases
+      if: inputs.evaluation == 'motion'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-mode.mjs --mode=motion --label=motion-candidate
+    - name: Check latest Anthropic channel without writing the registry
+      if: inputs.evaluation == 'faults'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        PYTHONPATH=.github/scripts python - <<'PY'
+        import ai_models
+        pconf = ai_models.PROVIDERS['anthropic']
+        models = ai_models.fetch_models('anthropic', pconf, ai_models.api_key_for('anthropic', pconf))
+        current = ai_models.model_id('anthropic', 'haiku', ai_models.load_registry())
+        pattern = pconf['channels']['haiku']
+        latest = max((model for model in models if pattern.fullmatch(model)), key=lambda model: ai_models.version_key(pattern, model))
+        assert current in models
+        assert latest == current, 'A newer Haiku requires a separate model review'
+        print('Anthropic Haiku channel: current model is latest; registry unchanged')
+        PY
+    - name: Preview cards and X material without writing the canonical files
+      if: hashFiles('.github/scripts/preview-magi47-materials.py') != '' && inputs.evaluation == 'all'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
+        X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
+        X_TAHKEH_ACCESS_TOKEN: ${{ secrets.X_TAHKEH_ACCESS_TOKEN }}
+        X_TAHKEH_ACCESS_TOKEN_SECRET: ${{ secrets.X_TAHKEH_ACCESS_TOKEN_SECRET }}
+      run: python .github/scripts/preview-magi47-materials.py
+    - name: Probe three saved public X image URLs
+      if: hashFiles('workers/.wrangler/magi47-quality/materials.json') != ''
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: node .github/scripts/probe-anthropic.mjs --image-urls-file=workers/.wrangler/magi47-quality/materials.json
+    - name: Smoke current models without update or publication
+      if: hashFiles('.github/scripts/anthropic_api.py') != '' && inputs.evaluation != 'faults' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek'
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: python .github/scripts/ai_models.py smoke
+    - name: Check DeepSeek smoke with room for default reasoning
+      if: inputs.evaluation == 'deepseek'
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        PYTHONPATH=.github/scripts python - <<'PY'
+        import ai_models
+        pconf = ai_models.PROVIDERS['deepseek']
+        model = ai_models.model_id('deepseek', 'flash', ai_models.load_registry())
+        detail = pconf['smoke'](pconf['chat_url'], ai_models.api_key_for('deepseek', pconf), model)
+        print('[OK] deepseek.flash: ' + detail)
+        PY
     - name: Keep metadata only
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: anthropic-probe
         path: workers/.wrangler/anthropic-probe.json
+        include-hidden-files: true
+        if-no-files-found: ignore
+    - name: Keep synthetic evaluation answers for review
+      if: always() && hashFiles('.github/scripts/eval-magi-models.mjs') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: magi47-quality
+        path: workers/.wrangler/magi47-quality/
         include-hidden-files: true
         if-no-files-found: ignore
