@@ -42,7 +42,7 @@ const context=vm.createContext({aiModels:registry,bundledContext:cards,Request,R
     const events=[...raw.matchAll(/^data: (.+)$/gm)].flatMap(m=>{try{return [JSON.parse(m[1])];}catch{return [];}});
     call.usage=Object.assign({},...events.map(e=>e.message?.usage||e.usage||{}));
    }else{const value=await response.clone().json();call.usage=value.usage;call.finish=value.stop_reason||value.choices?.[0]?.finish_reason;
-    if(call.persona){call.raw=provider==='anthropic'?(value.content||[]).filter(p=>p.type==='text').map(p=>p.text).join(''):value.choices?.[0]?.message?.content;call.vote=typeof call.raw==='string'?context.parseVote(call.raw).vote:null;}}
+    if(call.persona||body.output_config?.format||body.response_format?.json_schema){call.raw=provider==='anthropic'?(value.content||[]).filter(p=>p.type==='text').map(p=>p.text).join(''):value.choices?.[0]?.message?.content;if(call.persona)call.vote=typeof call.raw==='string'?context.parseVote(call.raw).vote:null;}}
   }catch{call.observation_error=true;}finally{call.elapsed_ms=performance.now()-started;}})());
   return response;
  }});
@@ -81,13 +81,13 @@ const selected=opt('cases').split(',').filter(Boolean);
 // 既存404評価器と同じ固定20問を読む。索引も旧・新で同じ現在の正本を使う。
 const siteFixtures=siteSearch?JSON.parse(current('.github/scripts/fixtures/magi47-site-search.json')):[];
 const work=(siteSearch?siteFixtures.map(([text,language,expected],i)=>({id:'s'+(i+1),kind:'site',text,language,expected,theme:'default'})):[...cases.map(c=>({...c,theme:'dark'})),...cases.filter(c=>c.kind==='consult').map(c=>({...c,theme:'light'}))]).filter(c=>!selected.length||selected.includes(c.id+'-'+c.theme));
-if(process.argv.includes('--resume')&&existsSync(target)){const previous=JSON.parse(readFileSync(target,'utf8'));assert.equal(previous.fingerprint,report.fingerprint);assert.equal(previous.cards_hash,report.cards_hash);report.results=previous.results;}
+if(process.argv.includes('--resume')&&existsSync(target)){const previous=JSON.parse(readFileSync(target,'utf8'));assert.equal(previous.fingerprint,report.fingerprint);assert.equal(previous.cards_hash,report.cards_hash);assert.equal(previous.site_index_hash,report.site_index_hash);report.results=previous.results;report.failed_attempts=previous.failed_attempts||[];}
 for(const c of work){if(report.results.some(r=>r.id===c.id&&r.theme===c.theme))continue;
  calls=[];observed=[];marks=[];counts.clear();const waits=[],started=performance.now(),events=[];
  const content=c.image?[{type:'image_url',image_url:{url:'data:'+c.image.media_type+';base64,'+c.image.data}},{type:'text',text:c.text}]:c.text;
  const body={messages:[...(c.previous||[]),{role:'user',content}],classification_state:true,magi_panel:c.kind==='magi',reply_language:{version:1,code:c.language,source:'ui'},ui_language:c.language,theme:c.theme,adaptive_debate:true,suggest:true,site_pages:c.kind!=='dj',...(c.kind==='dj'?{entry:'dj-request',context:'小さなカフェのDJイベント。受付中で、特別なリクエストはまだありません。音楽の相談だけをします。'}:{page:'/'})};
  const response=await context.worker.fetch(new Request('https://workers.tk.st/magi2/'+(siteSearch?'site-search?site_debate=1':'chat'),{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.47'},body:JSON.stringify(siteSearch?{query:c.text,locale:c.language}:body),signal:AbortSignal.timeout(310000)}),env,{waitUntil:p=>waits.push(p)});
- assert.equal(response.status,200,'Chat HTTP status');
+ if(response.status!==200){const envelope=await response.json();await Promise.allSettled([...waits,...observed]);(report.failed_attempts??=[]).push({id:c.id,theme:c.theme,status:response.status,envelope,calls,marks});save();console.log(JSON.stringify({label,id:c.id,status:response.status,calls:calls.map(x=>({provider:x.provider,status:x.status,finish:x.finish,error:x.error})),marks:marks.map(x=>({stage:x.stage,state:x.state}))}));throw new Error('Evaluation stopped at HTTP '+response.status);}
  let siteResult;
  if(siteSearch){siteResult=await response.json();events.push({event:'done',data:{},ms:performance.now()-started});assert(['results','no_results'].includes(siteResult.status));}
  else {
