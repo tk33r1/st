@@ -65,13 +65,27 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
 - **iOS** requires macOS with Xcode.
 - **Android** requires Android Studio (any OS).
 - After changing `www/`, re-run `npm run sync`.
-- `npm run icons` only writes into `ios/` and `android/` (it needs at least one of
-  them). The PWA icons in `www/` are kept by hand: without `--ios --android` the
-  generator would write unused `icons/*.webp` (PNG data despite the name) and a
-  stray `www/manifest.json` that the app never loads. `icon-maskable-512.png` is
-  `icon-512.png` flattened onto `#0c0c0c` (the artwork already sits inside the
-  maskable safe zone): `magick icon-512.png -background '#0c0c0c' -alpha remove -alpha off icon-maskable-512.png`
-  (ImageMagick 7; with ImageMagick 6 use `convert` — but not on Windows, where `convert` is a system tool).
+- `npm run icons` uses the existing `@capacitor/assets` generator for Android,
+  keeps splash backgrounds at `#0c0c0c`, restores both adaptive icons' `monochrome`
+  layer, and rasterizes all three PWA PNGs. Sources are `resources/icon.svg` and
+  `resources/icon-monochrome.svg`; the digits are paths so font substitution cannot
+  change the output. `scripts/generate-icons.cjs` owns these steps.
+- Android sources are tracked. Build outputs, copied `assets/public/`, local SDK
+  paths, signing files and release work files stay ignored. On a clean clone:
+  `npm ci` → `npx cap sync android` → `android/gradlew assembleDebug` (Windows:
+  `android\gradlew.bat`). Set `JAVA_HOME` and the Android SDK locally.
+- Android `AppTheme` uses DayNight. The page chooses its initial theme before
+  rendering, follows system changes until the theme button is used, and never
+  saves that button's choice. If the system preference is unavailable it uses
+  light from 06:00–17:59 and dark at other times.
+- Native builds check the public GitHub latest-release API at most once per 24
+  hours, stop after 5 seconds and quietly ignore failures. Web/PWA never contact
+  GitHub for updates. Dismissing a version hides that version; the next one can
+  still be shown.
+- System & Privacy comes from `/magi2/models` (10-minute cache). Paragraphs use
+  `textContent`; all `requires` flags must be supported by this screen. A failed
+  fetch or legacy Worker gives a recipient-neutral fallback instead of stale
+  company names. Model labels use `provider_label`, and `themes` can show two LLMs.
 
 ## Backend CORS
 
@@ -106,11 +120,24 @@ use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
 **Version display must always match the release.** Before every APK build, set the
 same `X.Y` in all four places: `magi-app/package.json` (`X.Y.0`), the `ver X.Y`
-string in `www/app.js` and in the top page `../index.html`, and `versionName` in
+`APP_VERSION` constant in `www/app.js` and in the top page `../index.html`, and `versionName` in
 `android/app/build.gradle` (raise `versionCode` too, e.g. 4.5 → 45). Push the web
 side (with the `app.js?v=` / `sw.js` cache bump) in the same release so the PWA,
 the top page and the APK show the same version. `node --test .github/scripts/test-magi2.mjs`
-fails if the first three disagree.
+fails if any disagree (including Android versionCode).
+
+Before uploading any APK, verify the actual packaged files against the Git
+commit, Android version and the previous distribution's certificate:
+
+```bash
+# JAVA_HOME must be set; use the installed SDK build-tools directory.
+python magi-app/scripts/verify-apk.py --apk magi-app/android/app/build/outputs/apk/release/app-release.apk --reference magi-app/magi-android.apk --commit HEAD --build-tools "$ANDROID_HOME/build-tools/34.0.0" --report workers/.wrangler/magi2-app46-eval/apk.json
+```
+
+This reads every tracked `www/` file from Git and compares its exact bytes in
+`assets/public/`. A stale `cap sync`, missing file, extra non-runtime file, wrong
+version, certificate change or missing v1/v2 signature fails the check. Run
+`npx cap sync android` after the final edit. APKs and raw reports stay ignored.
 
 The release build is signed with a keystore loaded from
 `android/keystore.properties` (both the keystore `*.jks` and that properties file

@@ -7323,10 +7323,14 @@
     const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
     let agentModels;
     let agentModelsPromise = null;
-    const loadAgentModels = () => agentModelsPromise || (agentModelsPromise = fetch(MODELS_API)
+    let agentModelsExpires = 0;
+    const loadAgentModels = () => {
+      if (Date.now() >= agentModelsExpires && agentModels) { agentModelsPromise = null; agentModels = undefined; }
+      return agentModelsPromise || (agentModelsPromise = fetch(MODELS_API)
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(j => (agentModels = j))
+      .then(j => { agentModelsExpires = Date.now() + 600000; return (agentModels = j); })
       .catch(() => { agentModelsPromise = null; return (agentModels = null); }));
+    };
     const personaDescHTML = (p) => {
       const m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
       const head = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>`;
@@ -7334,7 +7338,9 @@
       const text = (o) => esc(o ? tr(o.en, o.ja) : '');
       return head + text(m.desc)
         + '<dl class="magi-desc-meta">'
-        + `<dt>LLM</dt><dd>${esc(`${PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}`)}</dd>`
+        + `<dt>LLM</dt><dd>${p.synth && agentModels.themes && agentModels.themes.light && agentModels.themes.dark
+          ? ['light', 'dark'].map(theme => { const model = agentModels.themes[theme]; return esc(`${model.provider_label || PROVIDER_LABEL[model.provider] || model.provider} · ${model.model} (${theme === 'light' ? tr('Light', 'ライト') : tr('Dark', 'ダーク')})`); }).join('<br>')
+          : esc(`${m.provider_label || PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}`)}</dd>`
         + `<dt>${tr('Context', '素材')}</dt><dd>${text(m.context)}</dd>`
         + `<dt>${tr('Theme', 'テーマ')}</dt><dd>${text(m.theme)}</dd>`
         + '</dl>';
@@ -7368,7 +7374,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 4.5 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 4.6 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -8294,7 +8300,7 @@ async function parseSSE(body, handlers, onChunk) {
         desc.innerHTML = personaDescHTML(p);
         desc.classList.remove('hidden');
         // LLM が未取得なら取りに行き、同じ人格を開いたままなら描き直す
-        if (!agentModels) loadAgentModels().then(() => { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
+        if (!agentModels || Date.now() >= agentModelsExpires) loadAgentModels().then(() => { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
         return;
       }
       // 絵文字グリッドから選択
@@ -8506,28 +8512,33 @@ async function parseSSE(body, handlers, onChunk) {
       renderSavedSessionsList();
     }
 
+// AGENT_PRIVACY_BEGIN
+// 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages'];
+function renderAgentPrivacy(list, lang, data) {
+  if (!list || !list.isConnected) return;
+  var fallback = lang === 'ja'
+    ? '入力は回答のため、外部のAIのAPIに送られます。送り先の最新の説明を取得できませんでした。接続を確かめて開き直してください。最新の説明は https://tk.st/ のMAGIのFAQにもあります。'
+    : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
+  var rows = data && data.privacy && data.privacy[lang];
+  rows = Array.isArray(rows) ? rows.filter(function (row) {
+    return row && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+      || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
+  }) : [];
+  list.replaceChildren();
+  (rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
+    var li = document.createElement('li'); li.textContent = row.text; list.appendChild(li);
+  });
+}
+// AGENT_PRIVACY_END
+
     function showInfoPanel() {
-      makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'), `
-        <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-normal leading-relaxed">
-          <ul class="space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed">
-            <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
-            <li>${tr('Each persona, and the final answer, also draws on summaries of this site (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.', '各人格と最終回答は、このサイトの要約（各ページ、年表、プロフィールの性格検査）も拠り所にします。サイトが更新されると自動で作り直されるので、MAGI は本人の今に追従します。')}</li>
-            <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
-            <li>${tr('When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。')}</li>
-            <!-- "12 messages", not "12 round-trips": AGENT_MAX_HISTORY and the Worker's
-                 history_max_messages are both 12 *messages* (≈6 exchanges), which is the
-                 context window carried forward — not a cap on how long a session may run. -->
-            <li>${tr(`Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, and <strong class="text-normal">60 daily requests</strong>. Each reply is written with the last <strong class="text-normal">${AGENT_MAX_HISTORY} messages</strong> as context; anything older drops out.`, `利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">60回のリクエスト</strong>まで。回答は直近<strong class="text-normal">${AGENT_MAX_HISTORY}メッセージ</strong>（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。`)}</li>
-            <li>${tr('Images can be attached (up to <strong class="text-normal">4 per message</strong>, resized in your browser before sending) and are sent to the API just like text.', '画像も添付できます（1メッセージ<strong class="text-normal">最大4枚</strong>。送信前にブラウザ側で縮小されます）。テキスト同様に API へ送信されます。')}</li>
-            <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
-            <li>${tr('Your <strong class="text-normal">IP address</strong> is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.', '利用上限のため、<strong class="text-normal">IP アドレス</strong>を日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒に IP アドレスも保存されます。')}</li>
-            <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
-            <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong>, <strong class="text-normal">DeepSeek API</strong> and <strong class="text-normal">Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong class="text-normal">sent to all three</strong>.', '<strong class="text-normal">OpenAI API</strong>・<strong class="text-normal">DeepSeek API</strong>・<strong class="text-normal">Gemini API</strong>を使用しています。人格ごとに別の API で動くため、入力内容（画像を含む）は<strong class="text-normal">3社すべてへ送信</strong>されます。')}</li>
-            <li>${tr('OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong class="text-normal">used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong class="text-normal">stored on servers in China and may be used to train its models</strong>.', 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：<strong class="text-normal">Google の製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります</strong>。DeepSeek：<strong class="text-normal">中国のサーバーに保存され、同社のモデルの学習に利用されることがあります</strong>。')}</li>
-            <li>${tr('To classify each request, the latest user message and up to two earlier user messages are also sent to <strong class="text-normal">TypeSafe AI</strong> (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.', '毎回の発言を分類するため、今回の本文と直近2件までのユーザー本文を <strong class="text-normal">TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信し、初回の言語判定には最初の発言だけを使います。画像・AIの回答・DJの状況説明は送りません。言語はブラウザ内の会話ごとに保存し、分類結果はサイトのDBには保存しません。同社は API の入力をモデルの学習に利用しないとしています。')}</li>
-            <li class="text-red-500 font-semibold">${tr('DO NOT input any confidential or personal information.', '機密情報や個人情報は絶対に入力しないでください。')}</li>
-          </ul>
-        </div>`);
+      const panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'),
+        '<div class="flex-1 overflow-y-auto pr-1 pb-4 text-normal leading-relaxed"><ul class="agent-privacy-list space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed"></ul></div>');
+      if (!panel) return;
+      const list = panel.querySelector('.agent-privacy-list'), lang = currentLang === 'ja' ? 'ja' : 'en';
+      renderAgentPrivacy(list, lang, null);
+      loadAgentModels().then(data => renderAgentPrivacy(list, lang, data));
     }
 
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);

@@ -32,6 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
+var APP_VERSION = '4.6';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -90,11 +91,13 @@ var MODELS_API = API_BASE + '/magi2/models';
 var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google' };
 var agentModels;
 var agentModelsPromise = null;
+var agentModelsExpires = 0;
 function loadAgentModels() {
+  if (Date.now() >= agentModelsExpires && agentModels) { agentModelsPromise = null; agentModels = undefined; }
   if (!agentModelsPromise) {
     agentModelsPromise = fetch(MODELS_API)
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (j) { agentModels = j; return j; })
+      .then(function (j) { agentModelsExpires = Date.now() + 600000; agentModels = j; return j; })
       .catch(function () { agentModelsPromise = null; agentModels = null; return null; });
   }
   return agentModelsPromise;
@@ -106,7 +109,9 @@ function personaDescHTML(p) {
   function text(o) { return esc(o && o.en ? o.en : ''); }
   return head + text(m.desc)
     + '<dl class="magi-desc-meta">'
-    + '<dt>LLM</dt><dd>' + esc((PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model) + '</dd>'
+    + '<dt>LLM</dt><dd>' + (p.synth && agentModels.themes && agentModels.themes.light && agentModels.themes.dark
+      ? ['light', 'dark'].map(function (theme) { var model = agentModels.themes[theme]; return esc((model.provider_label || PROVIDER_LABEL[model.provider] || model.provider) + ' · ' + model.model + (theme === 'light' ? ' (Light)' : ' (Dark)')); }).join('<br>')
+      : esc((m.provider_label || PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model)) + '</dd>'
     + '<dt>Context</dt><dd>' + text(m.context) + '</dd>'
     + '<dt>Theme</dt><dd>' + text(m.theme) + '</dd>'
     + '</dl>';
@@ -221,7 +226,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 4.5 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver ' + APP_VERSION + ' <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -1097,7 +1102,7 @@ agentLog.addEventListener('click', function (e) {
     desc.innerHTML = personaDescHTML(p);
     desc.classList.remove('hidden');
     // fetch the LLM names if not loaded yet, then redraw if the same persona is still open
-    if (!agentModels) loadAgentModels().then(function () { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
+    if (!agentModels || Date.now() >= agentModelsExpires) loadAgentModels().then(function () { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
     return;
   }
   // emoji selection
@@ -1230,24 +1235,32 @@ function deleteSavedSession(id) {
   safeStore('magi_saved_sessions', sessions);
   renderSavedSessionsList();
 }
+// AGENT_PRIVACY_BEGIN
+// 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages'];
+function renderAgentPrivacy(list, lang, data) {
+  if (!list || !list.isConnected) return;
+  var fallback = lang === 'ja'
+    ? '入力は回答のため、外部のAIのAPIに送られます。送り先の最新の説明を取得できませんでした。接続を確かめて開き直してください。最新の説明は https://tk.st/ のMAGIのFAQにもあります。'
+    : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
+  var rows = data && data.privacy && data.privacy[lang];
+  rows = Array.isArray(rows) ? rows.filter(function (row) {
+    return row && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+      || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
+  }) : [];
+  list.replaceChildren();
+  (rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
+    var li = document.createElement('li'); li.textContent = row.text; list.appendChild(li);
+  });
+}
+// AGENT_PRIVACY_END
+
 function showInfoPanel() {
-  makeAgentPanel('agent-info-panel', 'System & Privacy',
-    '<ul>'
-    + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
-    + '<li>Each persona, and the final answer, also draws on summaries of tk.st (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.</li>'
-    + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
-    + '<li>Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal."</li>'
-    + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and context from the latest <strong>12 messages</strong>.</li>'
-    + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
-    + '<li>When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.</li>'
-    + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
-    + '<li>Your <strong>IP address</strong> is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.</li>'
-    + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
-    + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
-    + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong>used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
-    + '<li>To classify each request, the latest user message and up to two earlier user messages are also sent to <strong>TypeSafe AI</strong> (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.</li>'
-    + '<li class="warn">DO NOT input any confidential or personal information.</li>'
-    + '</ul>');
+  var panel = makeAgentPanel('agent-info-panel', 'System & Privacy', '<ul class="agent-privacy-list"></ul>');
+  if (!panel) return;
+  var list = panel.querySelector('.agent-privacy-list');
+  renderAgentPrivacy(list, 'en', null);
+  loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
 }
 
 // ---- Export / share ---------------------------------------------------------
@@ -1345,20 +1358,57 @@ installBtn.addEventListener('click', showInstallPanel);
 
 document.getElementById('btn-theme').addEventListener('click', function () {
   var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  safeStore('magi_theme', next);
+  window.MagiTheme.choose(next);
 });
-
-// theme restore
-(function () {
-  var t = safeGet('magi_theme');
-  if (t) document.documentElement.setAttribute('data-theme', t);
-})();
 
 // service worker (PWA)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
 }
 
+// APP_UPDATE_BEGIN
+// ネイティブだけが公開Releaseを1日1回確認する。遅延・失敗は会話に影響させない。
+function releaseVersion(tag) {
+  var match = typeof tag === 'string' && /^v(\d+)\.(\d+)$/.exec(tag);
+  if (!match) return null;
+  var parts = [Number(match[1]), Number(match[2])];
+  return parts.every(Number.isSafeInteger) ? parts : null;
+}
+function newerRelease(parts, current) {
+  var installed = releaseVersion('v' + current);
+  return !!installed && (parts[0] > installed[0] || parts[0] === installed[0] && parts[1] > installed[1]);
+}
+function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+async function checkAppUpdate() {
+  try {
+    if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
+    var now = Date.now(), last = Number(safeGet('magi_update_checked'));
+    if (last > 0 && now >= last && now - last < 86400000) return;
+    updateStore('magi_update_checked', String(now));
+    var controller = new AbortController(), timer;
+    try {
+      var data = await Promise.race([
+        fetch('https://api.github.com/repos/tk33r1/st/releases/latest', { signal: controller.signal, headers: { Accept: 'application/vnd.github+json' } })
+          .then(function (res) { if (!res.ok) throw new Error('release unavailable'); return res.json(); }),
+        new Promise(function (_, reject) { timer = setTimeout(function () { controller.abort(); reject(new Error('release timeout')); }, 5000); })
+      ]);
+      var parts = releaseVersion(data && data.tag_name);
+      if (!parts || data.draft || data.prerelease || !newerRelease(parts, APP_VERSION)) return;
+      var version = parts.join('.');
+      if (safeGet('magi_update_dismissed') === version) return;
+      var banner = document.getElementById('app-update');
+      if (!banner) return;
+      var ja = /^ja(?:-|$)/i.test(navigator.language || '');
+      banner.querySelector('.app-update-text').textContent = ja ? '新しいバージョン（' + version + '）があります' : 'Version ' + version + ' is available';
+      banner.querySelector('a').textContent = ja ? 'ダウンロード' : 'Download';
+      var close = banner.querySelector('button'); close.setAttribute('aria-label', ja ? 'この版の通知を閉じる' : 'Dismiss this version');
+      close.onclick = function () { banner.hidden = true; updateStore('magi_update_dismissed', version); };
+      banner.hidden = false;
+    } finally { clearTimeout(timer); }
+  } catch (_) { /* 機内モード・保存不可・壊れた応答でも起動を続ける */ }
+}
+// APP_UPDATE_END
+
 initAgent();
+checkAppUpdate();
 if (WEB_INSTALL && location.hash === '#install') showInstallPanel();

@@ -2451,6 +2451,9 @@ test('PWAの初回キャッシュとHTMLは同じ版のアプリJSを読む', ()
   const html = read('magi-app/www/index.html'), sw = read('magi-app/www/sw.js');
   const version = html.match(/src="app\.js\?v=([^"]+)"/)[1];
   assert.ok(sw.includes('./app.js?v=' + version));
+  const themeVersion = html.match(/src="app-theme\.js\?v=([^"]+)"/)[1];
+  assert.ok(sw.includes('./app-theme.js?v=' + themeVersion));
+  assert.ok(html.indexOf('app-theme.js?') < html.indexOf('<style>'));
 });
 
 test('site/musicは2回討議、consultは従来の判定、旧DJは現行契約を維持する', async () => {
@@ -2533,7 +2536,7 @@ test('404の対応通知の欠落・重複・不正値はAIも回数も使わず
 });
 
 test('画面の共通分類処理は3画面で一致し、順序違反を拒否し、旧Workerと未知イベントを受け止める', async () => {
-  const block = src => between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END');
+  const block = src => between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END').replace(/\r\n/g, '\n');
   assert.equal(block(home), block(mobile)); assert.equal(block(home), block(dj));
   const ctx = vm.createContext({ TextDecoder, setTimeout, clearTimeout });
   vm.runInContext(block(home) + '\n' + between(home, 'async function parseSSE(', '// --- マルチモーダル入力'), ctx);
@@ -3368,10 +3371,117 @@ test('404 の③のリンクの検査はサイト内のパスだけを通す（�
 });
 
 
-test('MAGI の版の表示はトップページ・アプリ・magi-app/package.json で同じ（Android の versionName もこれにそろえる）', () => {
+test('MAGI の版はトップ・アプリの定数・package・Androidで一致し、同梱画面も同じ定数を使う', () => {
   const shown = src => [...src.matchAll(/class="magi-ver">ver (\d+\.\d+) /g)].map(m => m[1]);
-  const home = shown(read('index.html')), app = shown(read('magi-app/www/app.js'));
+  const home = shown(read('index.html')), app = mobile.match(/var APP_VERSION = '(\d+\.\d+)'/);
   const pkg = JSON.parse(read('magi-app/package.json')).version.split('.').slice(0, 2).join('.');
-  assert.equal(home.length, 1); assert.equal(app.length, 1);
-  assert.equal(home[0], pkg); assert.equal(app[0], pkg);
+  assert.equal(home.length, 1); assert.ok(app);
+  assert.equal(home[0], pkg); assert.equal(app[1], pkg);
+  assert.ok(mobile.includes('class="magi-ver">ver \' + APP_VERSION + \' '));
+  const gradle = read('magi-app/android/app/build.gradle');
+  assert.equal(gradle.match(/versionName "([^"]+)"/)[1], pkg);
+  assert.equal(Number(gradle.match(/versionCode (\d+)/)[1]), Number(pkg.split('.').join('')));
+});
+
+test('modelsは送り先を変えず会社の表示名と日英の文字段落・機能の印を配る', async () => {
+  const w = worker();
+  const res = await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models'), w.env, {waitUntil() {}});
+  const data = await res.json();
+  for (const model of [...Object.values(data.personas), data.synthesizer]) assert.ok(model.provider_label);
+  assert.equal(data.personas['BALTHASAR-2'].provider, 'google');
+  assert.equal(data.personas['BALTHASAR-2'].provider_label, 'Google');
+  for (const lang of ['ja','en']) {
+    assert.ok(data.privacy[lang].length >= 10);
+    assert.ok(data.privacy[lang].some(row => row.text.includes('Gemini')));
+    assert.ok(data.privacy[lang].some(row => row.requires?.includes('site_pages')));
+    for (const row of data.privacy[lang]) {
+      assert.equal(typeof row.text, 'string'); assert.ok(!/[<>]/.test(row.text));
+      if (row.requires) assert.ok(row.requires.every(name => typeof name === 'string'));
+    }
+  }
+  assert.equal(w.calls.length, 0);
+});
+
+test('説明の文字描画は日英・両画面で一致し、機能の印はすべて満たす場合だけ出す', () => {
+  const blocks=[home,mobile].map(src=>between(src,'// AGENT_PRIVACY_BEGIN','// AGENT_PRIVACY_END').replace(/\r\n/g,'\n'));
+  assert.equal(blocks[0],blocks[1]);
+  for(const lang of ['en','ja']) {
+    const children=[],list={isConnected:true,replaceChildren(){children.length=0;},appendChild(el){children.push(el);}};
+    const ctx=vm.createContext({document:{createElement(){return {};}}});vm.runInContext(blocks[0],ctx);
+    ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'<strong>文字</strong>'},{text:'all',requires:['classification_state','site_pages']},{text:'no',requires:['fact_mode']},{text:'no',requires:['site_pages','unknown']},{text:'no',requires:'site_pages'}]}});
+    assert.deepEqual(children.map(c=>c.textContent),['<strong>文字</strong>','all']);
+    for(const data of [null,{}, {privacy:{[lang]:[]}}]) {ctx.renderAgentPrivacy(list,lang,data);assert.equal(children.length,1);assert.ok(!/OpenAI|Google|DeepSeek|Gemini|TypeSafe/.test(children[0].textContent));}
+    list.isConnected=false;ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'late'}]}});assert.notEqual(children[0].textContent,'late');
+  }
+});
+
+test('両画面の説明キャッシュは並行取得を共有し、10分後と失敗後に取り直す', async () => {
+  for(const source of [home,mobile]) {
+    const clock=streamClock();let calls=0,fail=false;
+    const ctx=vm.createContext({...clock,MODELS_API:'https://example.test/models',fetch:async()=>{calls++;if(fail)throw new Error('offline');return {ok:true,json:async()=>({revision:calls})};}});
+    const code=source===home?between(source,'    let agentModels;','    const personaDescHTML'):between(source,'var agentModels;','function personaDescHTML');
+    vm.runInContext(code+'\nglobalThis.load = loadAgentModels;',ctx);
+    await Promise.all([ctx.load(),ctx.load()]);assert.equal(calls,1);
+    await clock.advance(599999);assert.equal((await ctx.load()).revision,1);assert.equal(calls,1);
+    await clock.advance(1);assert.equal((await ctx.load()).revision,2);
+    await clock.advance(600000);fail=true;assert.equal(await ctx.load(),null);fail=false;assert.equal((await ctx.load()).revision,4);
+  }
+});
+
+function appUpdateFixture({native = true, stored = {}, reply = {tag_name:'v4.7'}, failure, blocked = false, language = 'ja-JP'} = {}) {
+  const clock = streamClock(), calls = [];
+  const banner = {hidden:true, text:{}, link:{}, button:{setAttribute() {}}, querySelector(s) { return s === 'a' ? this.link : s === 'button' ? this.button : this.text; }};
+  const ctx = vm.createContext({...clock, APP_VERSION:'4.6', AbortController,
+    Number, navigator:{language}, window:native ? {Capacitor:{isNativePlatform:()=>true}} : {},
+    safeGet(key) { return blocked ? null : stored[key] ?? null; },
+    localStorage:{setItem(k,v) { if(blocked) throw new Error('blocked'); stored[k]=v; }},
+    document:{getElementById:()=>banner},
+    fetch(url,options) { calls.push({url,options}); return failure === 'pending' ? new Promise(()=>{}) : failure === 'throw' ? Promise.reject(new Error('offline')) : Promise.resolve({ok:failure !== 'http', json:()=>failure === 'json' ? Promise.reject(new Error('json')) : Promise.resolve(reply)}); }
+  });
+  vm.runInContext(between(mobile, '// APP_UPDATE_BEGIN', '// APP_UPDATE_END'), ctx);
+  return {ctx, clock, banner, calls, stored};
+}
+test('更新通知はネイティブ限定、数字比較、正しいReleaseタグだけで新しい版を表示する', async () => {
+  for(const [tag,expected] of [['v4.7',true],['v4.6',false],['v4.5',false],['v4.10',true],['v4.8-beta',false],['magi-4.8',false],['v999999999999999999999.0',false]]) {
+    const f=appUpdateFixture({reply:{tag_name:tag}});await f.ctx.checkAppUpdate();assert.equal(!f.banner.hidden,expected,tag);assert.equal(f.clock.timers.size,0);
+    if(expected){assert.ok(f.banner.text.textContent.includes(tag.slice(1)));assert.equal(f.banner.link.textContent,'ダウンロード');}
+  }
+  const web=appUpdateFixture({native:false});await web.ctx.checkAppUpdate();assert.equal(web.calls.length,0);
+  const f=appUpdateFixture();assert.equal(f.ctx.newerRelease(f.ctx.releaseVersion('v4.10'),'4.9'),true);
+});
+test('更新通知は24時間で再確認し、閉じた版を抑止して次の版は知らせる', async () => {
+  const f=appUpdateFixture();await f.clock.advance(86400000);await f.ctx.checkAppUpdate();f.banner.button.onclick();assert.equal(f.banner.hidden,true);
+  await f.ctx.checkAppUpdate();assert.equal(f.calls.length,1);
+  await f.clock.advance(86400000-1);await f.ctx.checkAppUpdate();assert.equal(f.calls.length,1);
+  await f.clock.advance(1);await f.ctx.checkAppUpdate();assert.equal(f.calls.length,2);assert.equal(f.banner.hidden,true);
+  const next=appUpdateFixture({stored:f.stored,reply:{tag_name:'v4.8'}});await next.clock.advance(259200000);await next.ctx.checkAppUpdate();assert.equal(next.banner.hidden,false);
+});
+test('更新通知は5秒で諦め、壊れたJSON・HTTP・保存不可でも例外を出さない', async () => {
+  for(const failure of ['throw','http','json','pending']) {
+    const f=appUpdateFixture({failure});const p=f.ctx.checkAppUpdate();await tick();await f.clock.advance(5000);await p;
+    assert.equal(f.banner.hidden,true);assert.equal(f.clock.timers.size,0);
+    if(failure==='pending')assert.equal(f.calls[0].options.signal.aborted,true);
+  }
+  const f=appUpdateFixture({blocked:true,language:'en'});await f.ctx.checkAppUpdate();f.banner.button.onclick();assert.equal(f.banner.hidden,true);
+});
+test('起動テーマは前回の保存値を消し、端末設定・読めない時刻の境界・手動後の不追従を守る', () => {
+  for(const [mode,hour,expected]of[['dark',12,'dark'],['light',0,'light'],['none',5,'dark'],['none',6,'light'],['none',17,'light'],['none',18,'dark'],['throw',12,'light']]) {
+    let removed=false;const attr={},media={};
+    const ctx=vm.createContext({Date:class extends Date {getHours(){return hour;}},localStorage:{removeItem(){removed=true;throw new Error('blocked');}},
+      document:{documentElement:{style:{},setAttribute(k,v){attr[k]=v;}}},window:{matchMedia(q){if(mode==='throw')throw new Error('unsupported');return media[q]={matches:q.includes(mode),addEventListener(_,fn){this.changed=fn;}};}}});
+    vm.runInContext(read('magi-app/www/app-theme.js'),ctx);assert.equal(attr['data-theme'],expected);assert.equal(removed,true);
+    if(mode==='light') {media['(prefers-color-scheme: light)'].matches=false;media['(prefers-color-scheme: dark)'].matches=true;media['(prefers-color-scheme: dark)'].changed();assert.equal(attr['data-theme'],'dark');}
+    ctx.window.MagiTheme.choose('light');for(const m of Object.values(media)){m.matches=true;m.changed();}assert.equal(attr['data-theme'],'light');
+  }
+});
+test('Android管理・両方の単色アイコン・DayNight・固定サーバーを維持する', () => {
+  for(const name of ['ic_launcher','ic_launcher_round'])assert.match(read('magi-app/android/app/src/main/res/mipmap-anydpi-v26/'+name+'.xml'), /<monochrome android:drawable="@drawable\/ic_launcher_monochrome"/);
+  assert.match(read('magi-app/android/app/src/main/res/drawable/ic_launcher_monochrome.xml'), /android:viewportWidth="108"/);
+  assert.match(read('magi-app/android/app/src/main/res/values/styles.xml'), /name="AppTheme" parent="Theme.AppCompat.DayNight/);
+  assert.ok(!JSON.parse(read('magi-app/capacitor.config.json')).server.url);
+  const files=spawnSync('git',['ls-files','magi-app/android'],{cwd:root,encoding:'utf8'});assert.equal(files.status,0);
+  for(const file of files.stdout.trim().split('\n')) {
+    assert.ok(!/(?:\/build\/|\.gradle\/|local\.properties|keystore\.properties|\.jks$|assets\/public\/|release-input\/)/.test(file),file);
+    if(/\.(?:gradle|properties|xml|java|json|bat)$/.test(file))assert.ok(!/C:[\\/]Users[\\/]|(?:sk-|ghp_|AIza)[A-Za-z0-9_-]{20,}/.test(read(file)),file);
+  }
 });
