@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -1393,10 +1393,11 @@ export default {
     if (request.method === 'GET' && url.pathname === '/magi2/models') {
       // 配布済みの画面も model を表示するので、ここで表示名を返す。API 呼び出しは cfg.model のまま。
       // 実際に指定しているモデルIDも model_id として返し、エイリアスとの対応を確認できるようにする。
-      const describe = (codename, cfg) => ({ provider: cfg.provider, model: cfg.display_name, model_id: cfg.model, ...PERSONA_GUIDE[codename] });
+      const describe = (codename, cfg) => ({ provider: cfg.provider, provider_label: PROVIDERS[cfg.provider].label, model: cfg.display_name, model_id: cfg.model, ...PERSONA_GUIDE[codename] });
       const body = {
         personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, describe(codename, cfg)])),
         synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
+        privacy: PRIVACY,
       };
       return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
     }

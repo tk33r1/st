@@ -16,9 +16,46 @@ const modelConfig = (provider, channel) => ({
 // 呼び出し先。3社とも OpenAI 互換の Chat Completions を持つ。key は Wrangler secret の名前。
 // 各社で違う呼び出し方（推論の切り方・トークン上限の名前）は src/index.js の requestBody に置く。
 export const PROVIDERS = {
-  openai: { endpoint: 'https://api.openai.com/v1/chat/completions', key: 'MAGI_OPENAI_API_KEY' },
-  deepseek: { endpoint: 'https://api.deepseek.com/chat/completions', key: 'MAGI_DEEPSEEK_API_KEY' },
-  google: { endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: 'MAGI_GEMINI_API_KEY' },
+  openai: { label: 'OpenAI', endpoint: 'https://api.openai.com/v1/chat/completions', key: 'MAGI_OPENAI_API_KEY' },
+  deepseek: { label: 'DeepSeek', endpoint: 'https://api.deepseek.com/chat/completions', key: 'MAGI_DEEPSEEK_API_KEY' },
+  google: { label: 'Google', endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: 'MAGI_GEMINI_API_KEY' },
+};
+
+// System & Privacyの正本。段落は文字だけ。requiresは対応する画面にだけ説明を出す印。
+// 公開2では送り先を変えず、配布済みAPKにも後の変更が届く受け口を先に入れる。
+export const PRIVACY = {
+  en: [
+    { text: "A multi-agent system with 3 debating personas modeled on Shinya Takeda's personality." },
+    { text: 'Each persona, and the final answer, also draws on summaries of tk.st (pages, timeline and the personality tests in the profile). They are rebuilt automatically when the site changes, so MAGI keeps up with me.' },
+    { text: 'This is a parody & experimental system inspired by the MAGI system from Neon Genesis Evangelion. It is not intended for practical tasks like coding.' },
+    { text: 'Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal."', requires: ['magi_panel'] },
+    { text: 'Strict limits: max 1,000 characters per input, limited output tokens, and 60 daily requests. Each reply is written with the last 12 messages (about 6 exchanges) as context; anything older drops out.' },
+    { text: 'Images can be attached (up to 4 per message, resized on your device before sending) and are sent to the API just like text.' },
+    { text: 'When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
+    { text: 'By default, inputs are not saved in the database, unless you react to a reply (👍/emoji) to help improve MAGI.' },
+    { text: 'Your IP address is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.' },
+    { text: "Chat history is stored in your device's local storage (not permanent; please export important chats)." },
+    { text: 'Powered by OpenAI API, DeepSeek API and Gemini API. Each persona runs on a different one, so every input (including images) is sent to all three.' },
+    { text: "OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): used to improve Google's products and train its models, and may be read by human reviewers. DeepSeek: stored on servers in China and may be used to train its models." },
+    { text: 'To classify each request, the latest user message and up to two earlier user messages are also sent to TypeSafe AI (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.', requires: ['classification_state'] },
+    { text: 'DO NOT input any confidential or personal information.' },
+  ],
+  ja: [
+    { text: '武田 伸也の人格をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。' },
+    { text: '各人格と最終回答は、このサイトの要約（各ページ、年表、プロフィールの性格検査）も拠り所にします。サイトが更新されると自動で作り直されるので、MAGIは本人の今に追従します。' },
+    { text: 'これは「新世紀エヴァンゲリオン」のMAGIシステムにインスパイアされた、パロディ＆実験用システムです。プログラミングなどの実用的なタスクへの利用は想定されていません。' },
+    { text: '「今夜ラーメンを食べに行くべきか」のような賛否を問うと、適した質問ではMAGIが自動で審議・採決します。採決せずに説明してほしいときは「採決なしで、前の議案の判断材料を説明して」と頼んでください。', requires: ['magi_panel'] },
+    { text: '利用制限：1回あたりの入力は最大1,000文字まで、出力トークン数制限あり、1日あたり60回のリクエストまで。回答は直近12メッセージ（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。' },
+    { text: '画像も添付できます（1メッセージ最大4枚。送信前に端末側で縮小されます）。テキスト同様にAPIへ送信されます。' },
+    { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
+    { text: 'デフォルトでは、MAGI向上のために回答へリアクション（👍や絵文字）をしない限り、入力内容はデータベースに保存されません。' },
+    { text: '利用上限のため、IPアドレスを日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒にIPアドレスも保存されます。' },
+    { text: 'チャット履歴はお使いの端末のローカルストレージに保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。' },
+    { text: 'OpenAI API・DeepSeek API・Gemini APIを使用しています。人格ごとに別のAPIで動くため、入力内容（画像を含む）は3社すべてへ送信されます。' },
+    { text: 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：Googleの製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります。DeepSeek：中国のサーバーに保存され、同社のモデルの学習に利用されることがあります。' },
+    { text: '毎回の発言を分類するため、今回の本文と直近2件までのユーザー本文をTypeSafe AI（Jev。判定専用のモデル）にも送信し、初回の言語判定には最初の発言だけを使います。画像・AIの回答・DJの状況説明は送りません。言語は端末内の会話ごとに保存し、分類結果はサイトのDBには保存しません。同社はAPIの入力をモデルの学習に利用しないとしています。', requires: ['classification_state'] },
+    { text: '機密情報や個人情報を入力しないでください。' },
+  ],
 };
 
 // 404とチャットで使うサイト案内。本文の索引や別の人格は作らない。
