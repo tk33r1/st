@@ -87,7 +87,7 @@ export async function classifyQuery(env, input, signal, log) {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        if (env.onUpstreamError) await env.onUpstreamError('typesafe', res.clone());
+        if (env.onUpstreamError) await env.onUpstreamError('typesafe', res.clone(), { signal });
         await res.body?.cancel();
         log('classify', profile, 'HTTP', res.status);
       } else answers = (await res.json()).answers || {};

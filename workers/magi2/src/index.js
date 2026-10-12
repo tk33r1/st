@@ -302,9 +302,9 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   });
   if (typeof env.evalObserve === 'function') env.evalObserve(cfg.provider, cfg.model, res.clone(), !!stream);
   // 失敗は残高切れ・キーの失効でないかを見る（本文は呼び出し側も読むので複製を渡す）
-  // 検索では本文の分類を待つ。先に戻ると検索の後処理がabortし、複製した本文も読めなくなる。
+  // 本文の分類を待つ。先に戻ると呼び出し側がabortし、複製した本文も読めなくなる。
   // メールの送信はフック内のwaitUntilで行うので、ここでは待たない。
-  if (!res.ok && env.onUpstreamError) await env.onUpstreamError(cfg.provider, res.clone());
+  if (!res.ok && env.onUpstreamError) await env.onUpstreamError(cfg.provider, res.clone(), { signal });
   // 非ストリームは既存の読み取りへ正規化し、thinkingは一度も履歴へ入れない。
   // 観測には正規化前の応答を渡すので、評価用の使用量は元の形で残る。
   if (res.ok && cfg.provider === 'anthropic' && !stream) {
@@ -328,11 +328,31 @@ const PROVIDER_ROLES = {
   anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
   typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
 };
-async function alertUpstream(env, log, provider, res) {
-  const body = (await res.text().catch(() => '')).slice(0, 500);
+async function alertUpstream(env, log, provider, res, ctx, signal) {
+  // 判定に使う先頭500文字だけを最大2秒で読む。切断時もreaderを止め、待ち続けない。
+  // 複製のcancelは元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
+  let body = '';
+  if (res.body) {
+    const reader = res.body.getReader(), decoder = new TextDecoder();
+    const cancel = () => { reader.cancel().catch(() => {}); };
+    try {
+      await searchDeadline(2000, async limit => {
+        limit.addEventListener('abort', cancel, { once: true });
+        try {
+          while (body.length < 500) {
+            const { done, value } = await reader.read();
+            if (done) { body += decoder.decode(); break; }
+            body += decoder.decode(value, { stream: true });
+          }
+        } finally { limit.removeEventListener('abort', cancel); }
+      }, signal);
+    } catch (_) { /* 届いた部分とHTTPコードだけで判定する */ }
+    finally { cancel(); reader.releaseLock(); }
+  }
+  body = body.slice(0, 500);
   if (!isBillingFailure(res.status, body, provider, res.headers)) return;
   log('upstream_alert', provider, res.status, body.slice(0, 200));
-  await sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
+  const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
     `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
     '',
     `HTTP ${res.status}`,
@@ -344,6 +364,8 @@ async function alertUpstream(env, log, provider, res) {
       : 'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
     '同じ会社・同じ状態のメールは UTC の1日に1通です。',
   ]);
+  // 本文の判定は呼び出し側が待ち、メールの送信だけを裏で続ける。
+  ctx.waitUntil(task.catch(e => log('upstream_alert', 'failed', e && e.message)));
 }
 
 // 通知メールを送る。key ごとに UTC の1日に1通（rate_limit に key の行を「送った」印として作る）。
@@ -1259,7 +1281,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {
-    onUpstreamError: (provider, res) => ctx.waitUntil(alertUpstream(env, log, provider, res).catch(e => log('upstream_alert', 'failed', e && e.message))),
+    onUpstreamError: (provider, res, { signal } = {}) => alertUpstream(env, log, provider, res, ctx, signal).catch(e => log('upstream_alert', 'failed', e && e.message)),
   });
   const stop = new AbortController();
   const stopRequest = () => stop.abort();

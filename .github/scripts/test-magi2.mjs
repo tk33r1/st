@@ -3645,3 +3645,113 @@ test('Anthropicの通知：課金400/429を拾い、retry-after付きの回数�
  assert.equal(check(400,'invalid schema','anthropic'),false);
  assert.equal(check(429,'quota exceeded','openai',new Headers({'retry-after':'1'})),true);
 });
+
+test('統合と補助は遅い課金エラー本文を判定してから接続を切り、通知メールを待たずに回答する', { timeout: 6000 }, async () => {
+  let status, retryAfter;
+  const server = createServer((req, res) => {
+    req.resume();
+    res.writeHead(status, { 'Content-Type': 'application/json', ...(retryAfter ? { 'Retry-After': '1' } : {}) });
+    res.flushHeaders();
+    const timer = setTimeout(() => res.end(JSON.stringify({ error: { message: 'Your credit balance is too low to access the Anthropic API.' } })), 80);
+    res.on('close', () => clearTimeout(timer));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  let releaseMail;
+  try {
+    for (const role of ['synthesizer', 'titler']) {
+      for (const failure of ['credit400', 'credit429', 'rate429']) {
+        status = failure === 'credit400' ? 400 : 429; retryAfter = failure === 'rate429';
+        const mails = []; let failedSignal;
+        const w = nativeWorker(undefined, (url, options) => {
+          if (url.includes('resend.com')) {
+            mails.push(JSON.parse(options.body));
+            return new Promise(resolve => { releaseMail = () => resolve(Response.json({ id: 'mail' })); });
+          }
+          const body = options?.body && JSON.parse(options.body);
+          if (url.includes('api.anthropic.com') && (role === 'synthesizer' ? body.stream : body.max_tokens === 48)) {
+            failedSignal = options.signal;
+            return fetch('http://127.0.0.1:' + server.address().port, options);
+          }
+        });
+        Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+        const text = await (await w.request('/magi2/chat', { theme: role === 'synthesizer' ? 'dark' : 'light', messages: [{ role: 'user', content: '休憩のコツを教えて' }] })).text();
+        assert.match(text, /event: done/); assert.doesNotMatch(text, /event: error/);
+        assert.equal(failedSignal.aborted, true);
+        assert.equal(mails.length, retryAfter ? 0 : 1, role + ': ' + failure);
+        if (releaseMail) { releaseMail(); releaseMail = null; }
+        await Promise.all(w.waits);
+      }
+    }
+  } finally {
+    if (releaseMail) releaseMail();
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('統合と補助のエラー本文が止まっても期限か先頭500文字で戻り、判定できた課金障害は通知する', { timeout: 4000 }, async () => {
+  let status, prefix;
+  const server = createServer((req, res) => { req.resume(); res.writeHead(status); res.flushHeaders(); if (prefix) res.write(prefix); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    for (const role of ['synthesizer', 'titler']) {
+      for (const failure of [
+        { status: 400, prefix: '', mails: 0, deadline: 1 },
+        { status: 401, prefix: '', mails: 1, deadline: 1 },
+        { status: 400, prefix: 'credit balance too low', mails: 1, deadline: 1 },
+        { status: 400, prefix: 'credit balance too low' + 'x'.repeat(500), mails: 1, deadline: 0 },
+      ]) {
+        ({ status, prefix } = failure);
+        const mails = []; let failedSignal;
+        const w = nativeWorker(undefined, (url, options) => {
+          if (url.includes('resend.com')) { mails.push(JSON.parse(options.body)); return Response.json({ id: 'mail' }); }
+          const body = options?.body && JSON.parse(options.body);
+          if (url.includes('api.anthropic.com') && (role === 'synthesizer' ? body.stream : body.max_tokens === 48)) {
+            failedSignal = options.signal;
+            return fetch('http://127.0.0.1:' + server.address().port, options);
+          }
+        });
+        let bodyDeadline = 0;
+        w.ctx.setTimeout = (fn, ms) => setTimeout(ms === 2000 ? () => { bodyDeadline++; fn(); } : fn, ms === 2000 ? 40 : ms);
+        Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+        const text = await (await w.request('/magi2/chat', { theme: role === 'synthesizer' ? 'dark' : 'light', messages: [{ role: 'user', content: '休憩のコツを教えて' }] })).text();
+        assert.match(text, /event: done/); assert.doesNotMatch(text, /event: error/);
+        assert.equal(failedSignal.aborted, true);
+        assert.equal(bodyDeadline, failure.deadline, '先頭500文字か本文判定の期限で戻る');
+        await Promise.all(w.waits); assert.equal(mails.length, failure.mails);
+      }
+    }
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});
+
+test('課金エラーの読み取り中に停止すると期限を待たずに読み取りとタイマーを片付ける', { timeout: 3000 }, async () => {
+  let started;
+  const headers = new Promise(resolve => { started = resolve; });
+  const server = createServer((req, res) => { req.resume(); res.writeHead(400); res.flushHeaders(); started(); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const mails = [], timers = new Set(); let failedSignal;
+    const w = nativeWorker(undefined, (url, options) => {
+      if (url.includes('resend.com')) { mails.push(JSON.parse(options.body)); return Response.json({ id: 'mail' }); }
+      if (url.includes('api.anthropic.com') && JSON.parse(options.body).stream) {
+        failedSignal = options.signal;
+        return fetch('http://127.0.0.1:' + server.address().port, options);
+      }
+    });
+    Object.assign(w.ctx, {
+      setTimeout(fn, ms) { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; },
+      clearTimeout(id) { timers.delete(id); clearTimeout(id); },
+    });
+    Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+    const ac = new AbortController();
+    const res = await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/chat', {
+      method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json' }, signal: ac.signal,
+      body: JSON.stringify({ theme: 'dark', messages: [{ role: 'user', content: '休憩のコツを教えて' }] }),
+    }), w.env, { waitUntil(p) { w.waits.push(p); } });
+    const reading = res.text();
+    await headers; await delay(20); ac.abort();
+    const elapsed = Date.now();
+    await reading; await Promise.all(w.waits);
+    assert.ok(Date.now() - elapsed < 1000, '2秒の本文判定の期限まで待たない');
+    assert.equal(failedSignal.aborted, true); assert.equal(timers.size, 0); assert.equal(mails.length, 0);
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});
