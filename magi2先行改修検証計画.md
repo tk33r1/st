@@ -1,7 +1,7 @@
 # magi2 先行改修 検証計画
 
 設計中（2026-10-09）。対象は [magi2先行改修設計書](magi2先行改修設計書.md)。仕様は設計書、検証の筋書き・評価用入力・合格条件は本計画を正本とする。
-現状との照合・改訂: 2026-10-11。site-search の公開済み部分の回帰と評価の区別を計画§1.4・§4.4に追加した。
+現状との照合・改訂: 2026-10-12。検索 Phase 4・UI改修・トップSearchを含む現行コード（`b361c210`）に合わせ、検索の回帰と評価の区別を計画§1.4・§4.4に反映した。予定している改修の内容は維持する。
 他節への参照は「設計§4.4」「計画§3」のように文書名を付ける。見出しの番号は本計画内の番号。
 記載しただけで検証済みとはしない。結果は対象コミット・設定・実施日と一緒に `workers/magi2/先行改修評価.md`（公開時に作る）へ記録する。
 
@@ -123,7 +123,7 @@
   BALTHASAR の `provider` は `anthropic`。`PERSONA_GUIDE` の BALTHASAR と統合の `theme` が日英とも新しい文で、モデル名を直書きしていない。
 - 画面: `themes` があれば統合の LLM 欄に2行（ライト・ダーク）、無ければ今の1行（旧 Worker との組み合わせ）。会社名は `provider_label` から出て、無ければ手元の `PROVIDER_LABEL`。
 - `PRIVACY`: `/magi2/models` の `privacy` が日英とも新しい送り先（Anthropic、Gemini なし）になる。
-- 3画面の「System & Privacy」、トップページと `dj/request/` の FAQ（見える文と構造化データ）、404 ページの AI 検索の説明とプライバシーポリシーのリンクに Gemini・Google が無く、Anthropic がある。
+- 3画面の「System & Privacy」、トップページと `dj/request/` の FAQ（見える文と構造化データ）、404 ページの AI 検索の説明とプライバシーポリシーのリンクに Gemini・Google が無く、Anthropic がある。検索のGoogleアナリティクスの説明・リンクはAIの送り先の変更対象に含めず維持する。
   FAQ の見える文と構造化データの文が一致する。
 
 **週次の監視（設計§4.8・4.9）**
@@ -159,11 +159,15 @@
 
 ### 1.4 公開済み site-search の回帰（設計§1.6）
 
-- 既存の `node --test .github/scripts/test-magi2.mjs` を全件通す（②のWorker回帰も含む）。`node .github/scripts/test-site-search-ui.mjs --root .` で404・日刊ニトリ・日刊リテールテックの画面を確かめ、①の結果が残り、②が起動・失敗・停止でき、古い返しが今の結果を上書きしないことを確認する。
-- 本番設定が `SITE_RANK_ENABLED="true"`・`SITE_RANK_SCOPES="site,nitori,retail"`・`enable_request_signal` のままで、撤去済みの評価scopeとキーを持たない。②は許可項目だけ・URLクエリなし・本文4KiB。③のページ選びのモデル変更で②のJevや経路・回数が変わらないことを確かめる。
-- ②の共有処理・画面・問い・閾値を触ったときは、scopeごとの停止、利用回数、日刊のgeneration・キャッシュ、切断と中止、URL・参照元・計測への漏れ防止を再検証する。日刊の処理を触れば `node --test .github/scripts/test-daily-rank.mjs` と `python .github/scripts/test-daily-news.py`、索引を触れば `python .github/scripts/test-site-search-index.py` も通す。Jevの問い・閾値・候補の作り方を変えた場合は `eval-site-rank.mjs`／`eval-daily-rank.mjs` の該当する実API評価を行い、revisionも更新する。
-- **評価の区別**: ②の基準は [site-search評価](assets/site-search-evaluation.md)、[Phase3公開前評価](assets/site-search-phase3-release-evaluation.md)、[完了記録](assets/site-search-phase3-completion.md)。③は `eval-site-search.mjs` と [第1公開評価の404検索](workers/magi2/第1公開評価.md) を使う。②の精度・待ち時間を、Haikuへのページ選びの変更の合格記録として使わない。②を変えないモデル改修で、②の全件実API評価を再実施した扱いにもしない。
-- 完了記録に残る Safari・iOS・Android の実機確認と実データの複数年評価は未実施のまま区別し、本改修の模擬検証で完了にしない。
+- `node --test .github/scripts/test-magi2.mjs .github/scripts/test-phase4-rank-worker.mjs .github/scripts/test-list-rank.mjs .github/scripts/test-search-rank-client.mjs .github/scripts/test-search-click.mjs` を全件通す。旧入口3 scope と新入口5 scope の契約・generationの先行照合・共有更新・未解消時の回数/Jevゼロ・共有上限・切断・クリック記録を維持する。
+- ブラウザの共通操作は `node .github/scripts/test-phase4-search-ui.mjs`、新旧画面の互換は `node .github/scripts/test-phase4-legacy-ui.mjs`。実ページは `bash build.sh` の出荷物で `node .github/scripts/test-phase4-pages.mjs _site`・`node .github/scripts/test-phase4-layout.mjs`、URL/計測は `node .github/scripts/test-site-search-ui.mjs --root _site` を通す。この最後の入口は現行では `test-phase4-publication.mjs` へ分岐するため、これだけで共通UI・実ページ・③の回帰を実施した扱いにしない。ルートのソースだけでは出荷生成の読み索引・ツリーを検査できない。
+- 本番設定は設計§1.6の5 scope・2つの互換フラグ・新route・`SEARCH_CLICK_ENABLED`と一致し、撤去済みの評価scopeとキーを持たない。②は許可項目だけ・URLクエリなし・本文4KiB。新入口は `mode` の欠落でも③へ流れず、旧入口のtools/gameは400。③のページ選びのモデル変更で②のJevや経路・回数が変わらないことを確かめる。
+- UI改修後の操作で確認する: 下書きの変更で確定済みの①②を消さず、Enter・虫眼鏡・候補枠の先頭行で確定する。同じ確定条件では②を重複送信しない。×・空の確定で閉じ、Escだけでは結果を閉じない。①の20件ずつの追加、②の3件と「すべて表示」、①の先頭20件との重複除去、失敗/停止でも①が使えること、古い返しが今の結果を上書きしないことを確かめる。「検索を中止」ボタンは現行UIに無いので、内部の中止・切断と画面の操作を分ける。
+- 日刊の号で共通UIが取り付く前/後の確定、IME、30秒以内・同scope/語・一度きりの目印、通常の `#q=`・タグ・ウォッチ・404からの受け渡し（②なし）を確認する。準備前の確定の保留・準備失敗・復帰1回・②の自動再送なしも維持する。
+- トップSearchは開くまで共通資産を読まず、コマンドとページが出る。コマンドの実行で②・クリック記録を送らず、検索語をGAへ送らない。tk.st以外（開発loopbackを除く）と読み込み失敗時のインライン検索、言語/ライト/ダーク、SearchとMAGIの切り替え後の送信・受信・保存を確認する。共通資産の版と `SHARED_SEARCH_ASSETS` が一致する。
+- ②の共有処理・画面・問い・閾値を触ったときは、5 scopeの停止、利用回数、generation・キャッシュ、切断と中止、URL・参照元・計測への漏れ防止を追加回帰する。日刊の処理を触れば `node --test .github/scripts/test-daily-rank.mjs` と `python .github/scripts/test-daily-news.py`、索引を触れば `python .github/scripts/test-site-search-index.py`・`python .github/scripts/test-search-readings.py`・`node --test .github/scripts/test-phase4-search-data.mjs` も通す。Jevの問い・閾値・候補の作り方を変えた場合は `eval-site-rank.mjs`／`eval-daily-rank.mjs`／`eval-list-rank.mjs` の該当scopeの実API評価を行い、revisionも更新する。
+- **評価の区別**: ②の基準は [Phase 4 公開評価](assets/site-search-phase4-release-evaluation.md)・[tools/gameの評価](.github/site-search/phase4/rank/README.md)。既存3 scopeの精度基準は [site-search評価](assets/site-search-evaluation.md)・[Phase3公開前評価](assets/site-search-phase3-release-evaluation.md)も保持する。③は `eval-site-search.mjs` と [第1公開評価の404検索](workers/magi2/第1公開評価.md) を使う。②の精度・待ち時間を、Haikuへのページ選びの変更の合格記録として使わない。②を変えないモデル改修で、②の全件実API評価を再実施した扱いにもしない。
+- OSの日本語IME・読み上げ・Safari/iOS/Android、複数年の実データなどの未実施項目は、最新の公開評価と個別の検証記録で確認し、本改修の模擬検証で完了にしない。UI改修・トップSearchの本番公開版と実通信の確認も、コードの取り込みやPhase 4公開時の合格と区別して記録する。
 
 ## 2. 公開 0 の再現環境（溜めるネットワーク）
 
@@ -301,5 +305,6 @@
 
 ### 4.4 各Workerデプロイ・戻した後の②の確認
 
-公開0・2・1の各Workerデプロイと戻した後に行う。本番設定を設計§1.6と照合し、404（`scope: site`）・日刊ニトリ（`nitori`）・日刊リテールテック（`retail`）で既知の合成検索を各1件流す。①が使え、②の応答と候補が表示されること、日刊は現行generationの候補が出ること、404の③も従来どおり起動することを記録する。
+公開0・2・1の各Workerデプロイと戻した後に行う。本番設定を設計§1.6と照合し、404（`site`）・日刊ニトリ（`nitori`）・日刊リテールテック（`retail`）・tools・gameで既知の合成検索を各1件流す。①が使え、新入口の②の応答と候補が表示され、現行generationと一致することを記録する。トップSearchでもサイトの検索を1件、コマンドの実行を1件確認し、コマンドでは②を送らない。旧入口3 scopeの互換と、404の③の起動・説明も確認する。計測停止時はGA/クリック記録を送らず検索は使える。
+本番のURL/計測検査は `node .github/scripts/test-site-search-ui.mjs --base https://tk.st`、実②5回を含めるときは `--live`。scope停止を実施するときは `test-phase4-scope-stop.mjs --expect-disabled` を使い、検査後は正本の5 scopeへ戻す。トップSearchと③は別に確認する。共通UIの資産や日刊HTMLも変更した公開では、最新の出荷物・参照の版であることを確かめる。
 これは公開後の少数確認であり、②・③の全件品質評価の代わりにはしない。②の共有処理を触った場合は計画§1.4の追加回帰も行う。

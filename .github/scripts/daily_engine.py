@@ -297,7 +297,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 DAILY_UI_VERSION = '20261012_14'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
-SEARCH_RUNTIME_VERSION = '20261012_15'
+SEARCH_RUNTIME_VERSION = '20261012_16'
 DAILY_CSS_VERSION = '20261012_14'
 # 共通検索の資産（読む順）。ポータルのタグと、号のページの遅延読み込み（ヘッダーの data-search-assets）の両方をここから作る。
 SEARCH_ASSETS = [
