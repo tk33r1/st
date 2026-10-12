@@ -1,5 +1,278 @@
 [
   {
+    "date": "20261012",
+    "title": "2026年10月12日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が明らかになり、2028年度の稼働を予定。製品の回収から資源循環までを見据えたSPAとしての体制強化が注目される。 シンガポールの「NITORI JURONG POINT店」が10月15日（木）にオープンすることが発表され、海外店舗網の拡大が具体的に進んでいる。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が明らかになり、2028年度の稼働を予定。製品の回収から資源循環までを見据えたSPAとしての体制強化が注目される。",
+      "シンガポールの「NITORI JURONG POINT店」が10月15日（木）にオープンすることが発表され、海外店舗網の拡大が具体的に進んでいる。",
+      "2000円台の室内物干し、トランポリンクッション、999円のペンケースなど、低価格で機能や遊び心を備えた商品の口コミ反響が広がっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ、埼玉県に「リサイクルセンター（仮称）」を開設へ 2028年度稼働を予定",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が報じられた。稼働は2028年度を予定している。施設の詳細や具体的な処理対象については、今後の発表が待たれる。資源循環の取り組みを強化する動きとして注目される。",
+        "why_it_matters": "企画・製造・販売を一貫して手がけるSPAにとって、製品の廃棄や再資源化まで見据えた拠点整備は、ライフサイクル全体でのコスト管理と環境対応の両立につながる。回収品の再資源化ルートを自社で持てれば、家具の買い替え需要を取り込みつつ、顧客に「使い終わった後も安心」という価値を訴求できる。大型家具の物流網と組み合わせた展開が次の焦点になる。",
+        "tags": [
+          "ニトリ",
+          "物流",
+          "リサイクル",
+          "環境"
+        ],
+        "search_terms": [
+          "ニトリ リサイクルセンター 埼玉",
+          "Nitori recycling center Saitama",
+          "家具 再資源化 物流拠点"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5lRkdGVDJUdjV1V0I0OVU5WFZ6UHpUazFOYUMtY3o3bzMwcloyMzdvUjZKVTlEaUdGNk8yU2Y4dXE0c1RsYVNENUk4VjZaY1RBZi1n?oc=5",
+        "source_pub_ts": 1791749487
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、シンガポール「NITORI JURONG POINT店」が10月15日にオープン",
+        "original_title": "",
+        "source": "シンガポール新聞社",
+        "source_id": "JP-03",
+        "summary": "ニトリHDは、シンガポールの新店舗「NITORI JURONG POINT店」を10月15日（木）にオープンすると発表した。同社にとってシンガポールでは7店舗目の出店となる。以前に示された出店計画が具体化し、開店日が確定した形で、現地での店舗網拡大を進める。海外事業の成長を支える新たな拠点として注目される。",
+        "why_it_matters": "海外出店は、現地の住環境に合わせた商品構成や価格設定をどこまで標準化できるかが成否を分ける。JURONG POINTは大型商業施設内の出店であり、来店動線の中で家具やインテリア雑貨を実際に試せる体験価値が重要になる。国内で磨いた物流と商品開発の仕組みをアジアの店舗に展開できるかが、今後の海外成長の鍵となる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "海外",
+          "シンガポール"
+        ],
+        "search_terms": [
+          "NITORI JURONG POINT店 オープン",
+          "Nitori Singapore store opening",
+          "ニトリ 海外出店 シンガポール"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBXa3NLVE1tX181eWcyNlRLcTgxbG5pTFlRenlBQ3hhb2xIRzN1QWhBd0pFb2ZKUEFLN2E0cm9NUkozc0xFeXFSZE5WTUlLSzlmNlh5eWN3?oc=5",
+        "source_pub_ts": 1791712706
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「トランポリンクッション」が好評 運動と座り心地の両立で支持",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ニトリのトランポリンクッションが「思いのほかきつくて気軽にしっかり運動できる」と好評を集めている。「音が響かなくて良い」「イスにも踏み台にもなる」といった声が寄せられ、室内で手軽に体を動かす用途と、椅子や踏み台としての多用途性が評価されている。運動用品としてだけでなく、日常の座具として使える点も生活者に響いているようだ。",
+        "why_it_matters": "運動器具と家具の境界を越える商品は、自宅で使う機会を生活シーンに組み込めるため反復購入につながりやすい。「音が響かない」という住環境への配慮が支持されている点は、生活者の悩みを捉えた企画力の表れだ。ニトリの強みである低価格と多機能性を、フィットネス需要と生活雑貨の接点で打ち出す提案余地がある。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ヒット商品",
+          "口コミ"
+        ],
+        "search_terms": [
+          "トランポリンクッション 運動",
+          "Nitori trampoline cushion",
+          "室内運動 多機能 クッション"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5STkpVeHBUSHoyWTllWWowcWY3S2x5MmkwY0ZhdElxZWpRMWo1OWRhMGo5MnFVcHJDWkx4MFVqNWZrUW5YaW9WUDZkQlM3Q0FjSjUwWThoYXlZNEdPTDBIdy1tMNIBaEFVX3lxTE5oeE55ZkpGMWp1b3l2ZlZNQ080MHFENExvaWpIZnR3dlRQVG5IZlNmVml0eVFzeDlON2JxVFJEMU8tSWF4RkM4SGpiTVlEWWJlbzNrckJwNHd1VUY3Ulk2c2tkaUJYcVJK?oc=5",
+        "source_pub_ts": 1791706800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの999円「ぬいぐるみ風ペンケース」、アライグマ型が癒しアイテムに",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-12",
+        "summary": "ニトリの999円のぬいぐるみのようなペンケースが「まさかのアライグマ！」と話題になっている。「バッグにつけられる」という使い方も紹介され、文具としてだけでなくバッグチャームのように持ち歩ける点が注目された。かわいらしいデザインで癒されるとの声もあり、低価格でも気分を上げるアイテムとして支持を広げている。",
+        "why_it_matters": "文具は買い替え頻度が高く、単価の低いカテゴリだ。デザイン性と「バッグにつけられる」という二次用途を持たせることで、ペンケースという枠を超えて購入理由が広がる。999円という価格帯は衝動買いを誘いやすく、キャラクター性のある商品は写真映えやSNS拡散の起点にもなる。遊び心のある小物開発は、若年層との接点を広げる施策として有効だ。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "文具",
+          "口コミ"
+        ],
+        "search_terms": [
+          "ぬいぐるみ風 ペンケース",
+          "Nitori plush pencil case",
+          "アライグマ 文具 バッグチャーム"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBLOFNtS1NQUGotVm90cEZYai1FcG5ZWmRVY1o3cVJMa0t5ajZTRXJLODJYNHh3ZlJhMHhvY1ZBRlRhRURzSzA2NktNMHFjcHFoY0N6RVExWXI2V1FNTVZhYWNYSTg5REVNLUlSN1hrRDZ6aEdTNVFXbUZhajJzLTA?oc=5",
+        "source_pub_ts": 1791552670
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの2000円台「室内物干し」、2台目購入の声も",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-06",
+        "summary": "ニトリの2000円台の室内物干しが「2台目の購入です」と再購入の声を集め、高評価を得ている。「この値段でこのクオリティはすごい」「夜しか洗濯できない私にピッタリ」といった反応があり、夜間に洗濯する生活者の悩みに応えた点が支持されている。室内干しの需要が高まる中、低価格で複数台揃えやすい点も評価につながっている。",
+        "why_it_matters": "室内干しは天候や花粉の時期、夜間洗濯など生活者の時間帯や環境に左右される需要だ。「2台目」という声は、一台を使って必要性を実感し、複数台での配置を検討している証拠で、関連アイテムの同時購入やシリーズ展開につながる。2000円台で品質を担保する価格設計は、SPAの商品開発力と調達力を示す好例であり、生活動線に沿った売り場提案が有効だ。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "生活雑貨",
+          "口コミ"
+        ],
+        "search_terms": [
+          "室内物干し 2台目",
+          "Nitori indoor drying rack",
+          "室内干し 夜間洗濯 ラック"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBLZFZPc2o0U2lNSDZvNF90SXMzOFdiUDRUeExoMlJzWHQyT1JSaDM2NnlveldpNi15ZnNOOUZXQ1RpODYtQUg5MlhEOUxiZXZVclhFS2ZzZl8xRlR4dVlpNGNSOWJUczFu?oc=5",
+        "source_pub_ts": 1791683400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "冷蔵庫収納をニトリのクリアケースに見直す投稿、1.9万回再生で反響",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "冷蔵庫の収納を見直そうとニトリを訪れた投稿者が、これまで使っていたダイソーの白いケースから、中が見えるクリアケースに替えたところ取りやすくなったと紹介した。動画は1.9万回再生を記録し、「冷蔵庫収納」「整理整頓」などのハッシュタグとともに拡散された。使用後の変化が具体的に伝わる内容が、多くの視聴につながった。",
+        "why_it_matters": "短尺動画で伸びたのは、買い物のきっかけと「中が見える」という具体的な使用後の変化が一度に伝わる投稿だったからだ。白いケースから透明への切り替えという比較が、収納の悩みを抱える生活者の共感を集めた。商品の見た目よりも「取り出しやすさ」という機能が語られている点は、売り場で透明素材の比較展示や冷蔵庫内の使用例を示すことが購買を後押しする示唆となる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "収納",
+          "冷蔵庫"
+        ],
+        "search_terms": [
+          "冷蔵庫収納 クリアケース",
+          "Nitori fridge storage case",
+          "TikTok 整理整頓 収納"
+        ],
+        "url": "https://www.tiktok.com/@rinanan_world/video/7694634020990094613",
+        "source_pub_ts": 1791546597.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリとオレ様 #黒猫 pic.x.com/Yib16fA9I4",
+        "platform": "x",
+        "author": "@umeko9625yamato",
+        "url": "https://x.com/umeko9625yamato/status/2109099949770338552",
+        "likes": 15565,
+        "retweets": 2124,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:53",
+        "captured_at": "",
+        "text": "ニトリとオレ様 #黒猫 pic.x.com/Yib16fA9I4",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "静岡市ニトリしかないがζζ x.com/neko_yameta/st…",
+        "platform": "x",
+        "author": "@sakuyaoi",
+        "url": "https://x.com/sakuyaoi/status/2109125973258215822",
+        "likes": 441,
+        "retweets": 32,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:36",
+        "captured_at": "",
+        "text": "静岡市ニトリしかないがζζ x.com/neko_yameta/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリの折り畳めるスチールワゴンの在庫入ってた こんな感じなんだ😇 トロリにはできない芸当だな（笑） pic.x.com/CY6BOIsAtm",
+        "platform": "x",
+        "author": "@taishonpresso",
+        "url": "https://x.com/taishonpresso/status/2109153515134439916",
+        "likes": 142,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:25",
+        "captured_at": "",
+        "text": "ニトリの折り畳めるスチールワゴンの在庫入ってた こんな感じなんだ😇 トロリにはできない芸当だな（笑） pic.x.com/CY6BOIsAtm",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリ オレ様 あたち #黒猫 pic.x.com/KxcppMS7y9",
+        "platform": "x",
+        "author": "@umeko9625yamato",
+        "url": "https://x.com/umeko9625yamato/status/2109259363655528491",
+        "likes": 119,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:26",
+        "captured_at": "",
+        "text": "ニトリ オレ様 あたち #黒猫 pic.x.com/KxcppMS7y9",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリのNポルダコーナーL型が70％オフとかいうパワーワード出してきて財布の紐が緩みそう😇 安すぎ… pic.x.com/XdzHhe7BjD",
+        "platform": "x",
+        "author": "@taishonpresso",
+        "url": "https://x.com/taishonpresso/status/2109152063812997495",
+        "likes": 102,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:20",
+        "captured_at": "",
+        "text": "ニトリのNポルダコーナーL型が70％オフとかいうパワーワード出してきて財布の紐が緩みそう😇 安すぎ… pic.x.com/XdzHhe7BjD",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "冷蔵庫収納見直したくてニトリへ🎀今までダイソーの白のケース使ってたけど、クリアで中が見えるから取りやすくなった！ #冷蔵庫収納 #ニトリ #...",
+        "platform": "tiktok",
+        "author": "@𝑅𝑖𝑛𝑎🤍",
+        "url": "https://www.tiktok.com/@rinanan_world/video/7694634020990094613",
+        "likes": 417,
+        "retweets": 3,
+        "views": 18500,
+        "comments": 1,
+        "posted_on": "2026-10-09 20:49",
+        "captured_at": "2026-10-11T20:12:20.353584+09:00",
+        "text": "冷蔵庫収納見直したくてニトリへ🎀今までダイソーの白のケース使ってたけど、クリアで中が見えるから取りやすくなった！ #冷蔵庫収納 #ニトリ #主婦の日常 #整理整頓 #収納",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿は、Xでは猫やキャラクターに関する話題や在庫・セールへの反応が中心となり、TikTokでは収納や使い勝手を紹介する実用系の投稿が再生を集めた。Xは「いいね」で共感が広がる一方、動画は視聴数で反響が測られ、生活シーンを映す内容が伸びている。",
+    "sns_why_it_matters": "投稿の多くは「見つけた」「安い」といった発見や割安感への反応で、購入前の比較・検討を促す力を持つ。一方でTikTokの収納投稿は、取り出しやすさという使用後の変化を映像で示すことで共感を得ている。売り場やアプリでは、在庫情報やセール告知と併せて、実際の収納シーンを動画で伝える導線を設計すると、生活者の購買意欲を高められるだろう。",
+    "x_post_id": "2109386768982184111",
+    "x_posted_at": "2026-10-12T05:52:51+09:00"
+  },
+  {
     "date": "20261011",
     "title": "2026年10月11日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリの食品（300円レトルトカレー全6種）や食器（99円丸ボウル、599円ダブルウォールマグ、699円超軽量深皿）が、実際に使った生活者から「価格以上」「リピート購入」と評価され、低価格帯PBの品質評価が広がっている。 たい焼きデザインのビッグクッションなど、和菓子モチーフの遊び心ある商品がTikTokでも再生数を伸ばし、インテリア雑貨の話題化と購買動機づくりにつながっている。",
