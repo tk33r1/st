@@ -59,7 +59,7 @@ try {
         if (mode !== 'pass') {
           await page.clock.runFor(15001); assert.equal(await page.locator('.magi-stream-note').count(),1);
           if (mode === 'full' && process.argv.includes('--screenshots')) {
-            const captures = resolve('.github/scripts/.magi-stream-captures'); mkdirSync(captures,{recursive:true});
+            const captures = resolve('workers/.wrangler/magi2-stream-eval/captures'); mkdirSync(captures,{recursive:true});
             await page.screenshot({path:resolve(captures,name+'.png'),animations:'disabled'});
           }
           release();

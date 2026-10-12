@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       phase:
-        description: '公開0の確認対象'
+        description: 'Worker／画面の公開確認対象'
         type: choice
         required: true
         default: worker

@@ -1,14 +1,15 @@
-// 先行0の公開確認。本番の固定URLだけを使い、合成入力でSSE・検索・画面を点検する。
+// MAGIの公開確認。本番の固定URLだけを使い、合成入力でSSE・検索・画面を点検する。
 // 結果にキーや会話本文を入れず、公開後の少数確認として品質評価と区別する。
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {chromium} from 'playwright';
 const option=(key,fallback)=>{const i=process.argv.indexOf(key);return i<0?fallback:process.argv[i+1];};
 const phase=option('--phase','worker');assert.ok(['worker','pages'].includes(phase));
+const version=option('--version',JSON.parse(readFileSync('magi-app/package.json','utf8')).version.split('.').slice(0,2).join('.'));
 const out=resolve(option('--report','workers/.wrangler/magi2-stream-eval/magi-'+phase+'.json'));
-const report={phase,started:new Date().toISOString(),pass:false,cases:[],limitations:'Chromiumのみ。Android実機・会社PC・OSのIMEは含まない。'};
+const report={phase,version,started:new Date().toISOString(),pass:false,cases:[],limitations:'Chromiumのみ。Android実機・会社PC・OSのIMEは含まない。'};
 const origin='https://tk.st',api='https://workers.tk.st';let browser;
 async function context() {
   const ctx=await browser.newContext({locale:'ja-JP',serviceWorkers:'block'}),posts=[],errors=[],blocked=[];
@@ -80,7 +81,7 @@ async function pages() {
       const event=name==='DJ'?c.page.waitForResponse(r=>new URL(r.url()).pathname==='/dj/api/req/event'):null;
       await c.page.goto(origin+path,{waitUntil:'domcontentloaded'});
       if(event){const res=await event;assert.equal(res.status(),200);await res.finished();await c.page.waitForTimeout(200);}
-      if(name==='DJ')await c.page.locator('[data-tab="consult"]').click();else await c.page.waitForFunction(()=>document.body.innerText.includes('ver 4.5'));
+      if(name==='DJ')await c.page.locator('[data-tab="consult"]').click();else await c.page.waitForFunction(v=>document.body.innerText.includes('ver '+v),version);
       const input=name==='DJ'?'#chatInput':'#agent-input',send=name==='DJ'?'#chatSend':'#agent-send';
       if(name==='DJ'&&await c.page.locator(input).isDisabled()) {
         // 受付を勝手に開かず、画面のロックと同じDJ契約の通信を分けて記録する。

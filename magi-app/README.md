@@ -119,8 +119,8 @@ use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 ## Release (signed) APK
 
 **Version display must always match the release.** Before every APK build, set the
-same `X.Y` in all four places: `magi-app/package.json` (`X.Y.0`), the `ver X.Y`
-`APP_VERSION` constant in `www/app.js` and in the top page `../index.html`, and `versionName` in
+same `X.Y` in all four places: `magi-app/package.json` (`X.Y.0`), the
+`APP_VERSION` constant in `www/app.js`, the `ver X.Y` display in the top page `../index.html`, and `versionName` in
 `android/app/build.gradle` (raise `versionCode` too, e.g. 4.5 → 45). Push the web
 side (with the `app.js?v=` / `sw.js` cache bump) in the same release so the PWA,
 the top page and the APK show the same version. `node --test .github/scripts/test-magi2.mjs`
