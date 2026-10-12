@@ -32,21 +32,17 @@
 
 import argparse
 import hashlib
-import http.client
 import json
 import os
 import re
 import subprocess
 import sys
-import time
-import urllib.error
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from functools import cache
 from html.parser import HTMLParser
 
 from ai_model_registry import model_id_with_override
-from anthropic_api import ENDPOINT, call_messages, message_payload
+from anthropic_api import CARD_OPTIONS, ENDPOINT, call_messages, message_payload
 
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(SCRIPTS, '..', '..'))
@@ -472,7 +468,7 @@ RETRY_WAITS = (5, 20)  # 再試行までの待ち秒。回数はこの長さ＋1
 
 def call_anthropic(api_key, system, user):
     """人格カード1枚。X素材も同じ形式・推論なし・再試行の条件を使う。"""
-    payload = message_payload(MODEL, system, user, max_tokens=4000, thinking='disabled', effort='low')
+    payload = message_payload(MODEL, system, user, **CARD_OPTIONS)
     return call_messages(ENDPOINT, api_key, payload, 'tk.st-magi-context/1.0', retry_waits=RETRY_WAITS)
 
 

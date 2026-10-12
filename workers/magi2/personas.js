@@ -15,10 +15,14 @@ const modelConfig = (provider, channel) => ({
 
 // 呼び出し先。AnthropicはMessages API、ほか2社はChat Completions。keyはWrangler secretの名前。
 // 各社で違う呼び出し方（推論の切り方・トークン上限の名前）は src/index.js の requestBody に置く。
+// billing は残高切れ・枠の不足とみなす失敗（401・402・403 は会社を問わない。→ site-search.js の isBillingFailure）。
+//   statuses の状態で、本文が body に当たるもの。retry_after_is_rate_limit なら、retry-after 付きの 429 はただの回数制限とみなす。
+//   書いていない会社（TypeSafe AI も）は、本文が残高・枠の不足を示す 429 だけ。
 export const PROVIDERS = {
   openai: { label: 'OpenAI', endpoint: 'https://api.openai.com/v1/chat/completions', key: 'MAGI_OPENAI_API_KEY' },
   deepseek: { label: 'DeepSeek', endpoint: 'https://api.deepseek.com/chat/completions', key: 'MAGI_DEEPSEEK_API_KEY' },
-  anthropic: { label: 'Anthropic', endpoint: 'https://api.anthropic.com/v1/messages', key: 'MAGI_ANTHROPIC_API_KEY' },
+  anthropic: { label: 'Anthropic', endpoint: 'https://api.anthropic.com/v1/messages', key: 'MAGI_ANTHROPIC_API_KEY',
+    billing: { statuses: [400, 429], body: /spend[ _-]*(?:limit|cap)|usage[ _-]*limit|billing|credit|balance|exhausted/i, retry_after_is_rate_limit: true } },
 };
 
 // System & Privacyの正本。段落は文字だけ。requiresは対応する画面にだけ説明を出す印。
@@ -157,7 +161,7 @@ export const DEFAULTS = {
   //   OpenAI  : none|low|medium|high|xhigh|max。省略すると Luna は medium で推論するので必ず明示する。
   //             temperature / top_p は 'none' のときだけ受け付けられる（推論ありで送ると 400）。
   //   DeepSeek: 'none' で推論を切る（既定は推論あり＝ high）。temperature は推論なしのときだけ効く。
-  //   Anthropic: thinking disabled/adaptive と effort で決める。samplingは送らない。
+  //   Anthropic: 'none' で推論を切る（effort は low）。それ以外は適応的推論で、値を effort として送る。samplingは送らない。
   // max_tokens は出力の上限（推論トークンを含む）。OpenAI には max_completion_tokens として送る。
   models: {
     // 3人格：推論なし・並列・短文。Anthropic以外はtemperatureの揺らぎもここで効く。
@@ -166,24 +170,27 @@ export const DEFAULTS = {
       // 前向きに寄る癖と描写の濃い文体が「熱狂者」に合う
       'MELCHIOR-1': { ...modelConfig('deepseek', 'flash'), reasoning_effort: 'none', max_tokens: 512 },
       // 寄り添いの強さが「人間主義者」に合う。テーマにかかわらず同じ調子で答える。
-      'BALTHASAR-2': { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 1024 },
+      'BALTHASAR-2': { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 1024 },
       // 手順立てて言い切る実務寄りの型が「戦略家」に合う
       'CASPER-3': { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 512 },
     },
     // 統合：推論あり・ストリーミング。max_tokens は推論トークンを含むので広く取る（答えの長さは200字の指定で決まる）。
     // 足りないと finish_reason=length になり、答えが途中まで流れた後に失敗扱いになる。課金は使った分だけ
     synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'medium', max_tokens: 4096 },
-    synthesizer_dark: { ...modelConfig('anthropic', 'haiku'), thinking: 'adaptive', effort: 'medium', max_tokens: 8192 },
+    synthesizer_dark: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'medium', max_tokens: 8192 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
-    titler: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 48 },
+    titler: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 48 },
     // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
     // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
-    suggester: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 80 },
+    suggester: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 80 },
     // 討議の判定（DEBATE）：答えを変えうる論点が残っているかを見分けるので、推論は low。
     // max_tokens は推論トークンを含む。足りないと JSON が途中で切れて「答える」扱いになる
     judge: { ...modelConfig('openai', 'luna'), reasoning_effort: 'low', max_tokens: 2048 },
-    motion: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 400 },
+    motion: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 400 },
+    // 補助の役割（タイトル・予測・議題化）の答え直し先。元の役割が別の会社のとき、HTTP失敗に限って一度だけ呼ぶ
+    // （→ src/index.js の callAuxModel）。移す前と同じLuna・推論なしで、max_tokens は元の役割の値を使う。
+    aux_fallback: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none' },
   },
 };
 

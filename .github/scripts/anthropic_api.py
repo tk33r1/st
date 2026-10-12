@@ -7,6 +7,8 @@ import urllib.error
 import urllib.request
 
 ENDPOINT = 'https://api.anthropic.com/v1/messages'
+# 人格カード・X素材の呼び出し方（推論なし）。週次のスモークも同じ値で試す。
+CARD_OPTIONS = {'max_tokens': 4000, 'thinking': 'disabled', 'effort': 'low'}
 
 
 def message_payload(model, system, content, *, max_tokens, thinking, effort):

@@ -20,7 +20,7 @@ from pathlib import Path
 
 from ai_model_registry import REGISTRY_PATH, REPO_ROOT, load_registry, model_id
 from typesafe_alert import notify_http_error
-from anthropic_api import ENDPOINT as ANTHROPIC_ENDPOINT, message_payload, message_text, post_messages
+from anthropic_api import CARD_OPTIONS, ENDPOINT as ANTHROPIC_ENDPOINT, message_payload, message_text, post_messages
 
 
 # クォートの有無を問わず拾う（YAML の値はクォートなしで書けるため）。
@@ -188,9 +188,9 @@ def smoke_anthropic(url, api_key, model):
         raise RuntimeError('Anthropicの日刊JSON疎通に失敗しました')
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'anthropic', config)
-    smoke_openai_magi(url, api_key, model, config['magi'], provider='anthropic')
+    smoke_magi_motion(url, api_key, model, config['magi'], provider='anthropic')
     # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
-    card = message_payload(model, 'Return only READY.', 'A public synthetic source.', max_tokens=4000, thinking='disabled', effort='low')
+    card = message_payload(model, 'Return only READY.', 'A public synthetic source.', **CARD_OPTIONS)
     message_text(post_json(url, api_key, card))
     return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、議題化/スキーマ、人格カード・X要約/非推論'
 
@@ -216,7 +216,7 @@ def smoke_openai(url, api_key, model):
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'openai', config)
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
-    smoke_openai_magi(url, api_key, model, config['magi'])
+    smoke_magi_motion(url, api_key, model, config['magi'])
     observations = smoke_openai_site_search(url, api_key, model, config)
     print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_web_search(api_key, model)
@@ -269,7 +269,7 @@ def smoke_openai_debate_judge(url, api_key, model, config):
         raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
 
 
-def smoke_openai_magi(url, api_key, model, config, provider='openai'):
+def smoke_magi_motion(url, api_key, model, config, provider='openai'):
     """議題化の形式疎通。本番のスキーマ・推論・上限を使い、採否の精度は実API評価で測る。"""
     cfg = config['motion']
     if cfg['model']['provider'] != provider:

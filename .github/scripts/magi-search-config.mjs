@@ -49,14 +49,11 @@ await vm.runInContext(`(async function () {
       body: requestBody(DEFAULTS.models.persona[p.codename], { stream: false, temperature,
         messages: [{role: 'system', content: p.system_prompt + '\\n' + (p.role?.chat || '') + '\\n' + guide.persona},
           ...messages, {role: 'user', content: '検証済みの候補: ' + JSON.stringify(page)}] }) })),
-    synthesizer: { provider: DEFAULTS.models.synthesizer.provider,
-      body: requestBody(DEFAULTS.models.synthesizer, { stream: true,
+    // ライトとダークの統合は同じプロンプトで、呼び出し先だけが違う
+    ...Object.fromEntries(['synthesizer', 'synthesizer_dark'].map(name => [name, { provider: DEFAULTS.models[name].provider,
+      body: requestBody(DEFAULTS.models[name], { stream: true,
         messages: [{role: 'system', content: SYNTHESIZER.system_prompt + '\\n' + (SYNTHESIZER.role?.chat || '') + '\\n' + guide.synth},
-          ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) },
-    synthesizer_dark: { provider: DEFAULTS.models.synthesizer_dark.provider,
-      body: requestBody(DEFAULTS.models.synthesizer_dark, { stream: true,
-        messages: [{role: 'system', content: SYNTHESIZER.system_prompt + '\\n' + (SYNTHESIZER.role?.chat || '') + '\\n' + guide.synth},
-          ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) },
+          ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) }])),
   };
   config.site_smoke = [];
   for (const purpose of ['requested', 'auxiliary']) {

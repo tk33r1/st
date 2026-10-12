@@ -183,7 +183,7 @@ class MagiSmokeTest(unittest.TestCase):
                     return {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': 'end_turn'}
                 return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
             with patch.object(ai_models, 'post_json', side_effect=post):
-                ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', config, provider=provider)
+                ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', config, provider=provider)
             self.assertEqual(sent, [{**config[name]['body'], 'model': 'candidate-for-test'}])
             if provider == 'anthropic':
                 self.assertEqual(sent[0]['output_config']['format']['schema'], config[name]['format']['json_schema']['schema'])
@@ -216,10 +216,10 @@ class MagiSmokeTest(unittest.TestCase):
             response = {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': 'end_turn'}
             with self.subTest(value=value), patch.object(ai_models, 'post_json', return_value=response):
                 if valid:
-                    ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
+                    ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
                 else:
                     with self.assertRaises(RuntimeError):
-                        ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
+                        ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', self.config['magi'], provider='anthropic')
 
     def test_anthropic_models_detects_only_new_haiku_generations(self):
         pattern = ai_models.PROVIDERS['anthropic']['channels']['haiku']

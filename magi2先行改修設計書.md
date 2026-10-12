@@ -179,12 +179,13 @@
   - 応答: `type: 'text'` のブロックだけをつなぐ。`thinking` のブロックは読み捨て、次の呼び出しに送り返さない（上流へ送るのは role と本文だけ、という今の約束）。
   - 終わり方: `end_turn` → 成功、`max_tokens` → 今の `length`、`refusal` → 今の `content_filter`（再試行しない）。
 - **Haiku 5.5 の制約**: `temperature`・`top_p`・`top_k` は既定値以外が 400 になるので送らない。推論は `thinking: { type: 'disabled' }`（effort は high 以下）か adaptive＋effort で決める。
+  設定はほかの会社と同じ `reasoning_effort` で書き、`requestBody` が変換する（4.15）。
 - **評価用の付け足し**: 評価用の Worker（`src/eval.js` の `evalObserve`）でストリームに足している `stream_options` は Anthropic が受け付けないので、OpenAI 互換の会社にだけ足す。使用量の読み取りも Anthropic の形（`message_start`・`message_delta` の `usage`）に対応させる。
 - `magi-search-config.mjs`（週次の動作確認）は `function requestBody(` から `async function callModel(` までを切り出して評価するので、Anthropic への変換はこの範囲の中に書く。
 
 ### 4.3 BALTHASAR-2
 
-- 設定: `{ ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 1024 }`（名前は実装で揃える）。effort は low で始め、検証の結果で medium と選ぶ。
+- 設定: `{ ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 1024 }`（送るのは `thinking: disabled`・effort low。4.15）。effort は low で始め、検証の結果で medium と選ぶ。
 - 失敗は今どおり [NO RESPONSE] にして、残りの人格で続ける。
 - 揺らぎ: `PERSONA_TEMPERATURE` は Anthropic には渡さない（4.2 の制約）。テーマによらず同じ調子の人格とし、説明もそう書く（4.5）。
 - `stripCharCount`（文字数の後書きの除去）は残す（害は無く、ほかのモデルが書くこともある）。
@@ -234,6 +235,7 @@
 | 利用段階の月の上限（spend cap） | 429 `rate_limit_error`（`retry-after` なし） | 本文の語による |
 
 - 400 と 429 は、本文の `error.message` に残高・上限の語（credit・balance・billing・spend・usage limit など。公式の文書の語で作り、テストの入力に残す）があるときだけ拾う。
+  会社ごとの規則は `PROVIDERS` の `billing` に持たせる（4.15）。
   拾い損ねても、週次の動作確認（4.8）が失敗して Issue になる。
 - `PROVIDER_ROLES` に `anthropic`（BALTHASAR-2・ダークの統合）を足し、`openai` の説明にライトの統合を書く。メールの本文には、統合は答え直しで続くが残高切れは早めに直すことを書く。
 
@@ -332,7 +334,24 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
   Haiku 5.5 が構造化出力に対応しているかを計画§0 で確かめる（対応していなければ、その役割は Luna のままにして本人に知らせる）。
 - **失敗したとき**: どれも今は「失敗したらその機能を省いて続ける」作り（議題化の失敗は通常の回答、ページ選びの失敗はリンクなし）。
   Anthropic が止まると、これらが BALTHASAR と同時に落ちるので、HTTP のエラーですぐに失敗したときに限り、期限の残りで Luna を1回呼び直す（期限は延ばさない）。
+  答え直し先は `DEFAULTS.models.aux_fallback` に宣言する（4.15）。
 - 週次の動作確認に、これらの呼び出しの形を足す（AGENTS.md の約束）。
+
+### 4.15 実装後に設計から変えたこと（2026-10-13）
+
+公開 1 の実装を見直し（重複・会社ごとの分岐の散らばり・無駄な処理）、本人の判断で次のように変えた。送る中身と判定の結果は、キャッシュの目印を除いて変えていない。
+
+| 項目 | 設計（4.2〜4.14） | 変更後 | 理由 |
+| --- | --- | --- | --- |
+| Anthropic の推論の書き方 | 設定に `thinking`（disabled／adaptive）と `effort` を書く | ほかの会社と同じ `reasoning_effort` で書く。`requestBody` が `'none'` を `thinking: disabled`・effort low に、それ以外を adaptive＋その値の effort に変える | 会社ごとの違いは `requestBody` に閉じる約束（AGENTS.md）。設定の語彙が2系統あると、スモークや答え直しが会社で分岐する |
+| プロンプトキャッシュ | 設計に無い | Anthropic へ送る `system` を1つのテキストブロックにし、`cache_control: { type: 'ephemeral' }`（5分）を付ける | BALTHASAR は1回の質問で R1・R2・聞き返しと最大5回、同じ system（人格プロンプト＋カード）で呼ばれる。2回目以降の入力は0.1倍、書き込みは1.25倍。512トークン未満（タイトル・予測・議題化）は自動で対象外になり費用もかからない。効いているかは応答の `usage.cache_read_input_tokens` で確かめる |
+| 補助の役割の答え直し先 | 「Luna を1回呼び直す」（設定の置き場所は決めていなかった） | `DEFAULTS.models.aux_fallback`（Luna・推論なし。上限は元の役割の値）に宣言する。答え直すのは、元の役割が答え直し先と別の会社のときだけ | 実装はライトの統合の設定を借りて書き換えていたため、ライトの統合を変えると答え直し先も黙って変わり、答え直しの有無も「Anthropic かどうか」のコードの条件で決まっていた |
+| 残高切れの判定（4.7） | `isBillingFailure` に Anthropic の分岐を書く | `PROVIDERS.anthropic.billing`（対象の状態・本文の語・retry-after 付きの 429 は回数制限）に持たせ、`isBillingFailure` は表を引くだけにする。書いていない会社（OpenAI・DeepSeek・TypeSafe AI）は今までどおり本文が残高・枠の不足を示す 429 だけ | 会社を足すたびに共通の判定を直さずに済む |
+| エラー本文の読み取り | 通知・検索の通知・②でそれぞれ読む | `site-search.js` の `readLimited`（上限のバイト数・期限・中止で止まり、届いた分を返す）にまとめる。判定が本文しだいで真になりえない状態（5xx・529 など）は本文を読まずに外す。通知に使う本文は先頭500バイト（エラー本文は ASCII の JSON なので500文字と同じ） | 同じ処理が3通りあった。5xx でも最大2秒読んでから答え直していた |
+| ストリームの読み取り（4.4） | `readSynthesis` に Anthropic の分岐を足す | 会社ごとの1行の解釈を `streamEvent` に置き、停止理由は非ストリームと同じ表で `stop` などに揃える。成功の条件は変えない（Anthropic は `message_stop` と `end_turn`） | 分岐が4か所に散っていた |
+| 認証の見出し（4.2） | `callModel` で会社を分ける | `requestBody` の隣の `requestHeaders` に置く | 会社ごとの違いを1か所に集める |
+| 画像の変換（4.2） | data URL を正規表現で分解 | 先頭の形式だけを確かめ、残りを切り出す（本体は入口の `DATA_IMAGE_RE` で検査済み） | Anthropic を呼ぶたびに最大約10MBの base64 を走査し直していた |
+| 人格カードの呼び出し（4.13） | スモークが値を書き写す | `anthropic_api.py` の `CARD_OPTIONS` を人格カードとスモークで共用する | カード側を変えるとスモークが古い形を試し続ける |
 
 ## 5. 公開 2: アプリの先行版
 

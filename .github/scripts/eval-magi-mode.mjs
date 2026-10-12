@@ -44,6 +44,8 @@ async function checkUi(events) {
   return {sequence:true,display_history_verdict:true};
 }
 let calls = [], marks = [], observed = [], synthetic = null, syntheticRounds = {};
+// Anthropic の system は、キャッシュの目印を付けたブロックの配列（旧版は文字列）
+const systemText = s => Array.isArray(s) ? s.map(b => b.text).join('') : s;
 const strip = s => s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const ctx = vm.createContext({ aiModels:registry, bundledContext:cards,
   Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL, crypto:webcrypto, setTimeout, clearTimeout, setInterval, clearInterval,
@@ -53,7 +55,7 @@ const ctx = vm.createContext({ aiModels:registry, bundledContext:cards,
     const started=performance.now(),body=JSON.parse(options.body);
     // 説明だけの実API評価。票・欠席・判定を固定し、3社の人格APIは呼ばない。
     if(synthetic){
-      const id=(body.system || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1];
+      const id=(systemText(body.system) || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1];
       if(id){const round=syntheticRounds[id]=(syntheticRounds[id]||0)+1;
         const raw=synthetic==='hold'&&id==='CASPER-3'?'':synthetic==='carried'&&id==='MELCHIOR-1'&&round>1?'[VOTE:]':
           '[VOTE:'+(synthetic!=='no-reasons'&&id==='BALTHASAR-2'?'REJECT':'APPROVE')+']'+(synthetic==='no-reasons'?'':'\n'+(id==='BALTHASAR-2'?'費用への懸念が残る。':'温かい一杯の喜びを重視した。'));
@@ -64,7 +66,7 @@ const ctx = vm.createContext({ aiModels:registry, bundledContext:cards,
     const res=await fetch(url,options);
     const report={provider:String(url).includes('typesafe')?'typesafe':String(url).includes('deepseek')?'deepseek':String(url).includes('anthropic.com')?'anthropic':'openai',
       model:body.model,format:body.response_format?.json_schema?.name,status:res.status,started_ms:Math.round(started),
-      persona:(body.system || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1]};
+      persona:(systemText(body.system) || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1]};
     calls.push(report);
     observed.push((async()=>{
       if (!body.stream) { const data=await res.clone().json().catch(()=>null); report.usage=data?.usage;

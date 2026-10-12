@@ -25,6 +25,8 @@ const completion = (text = 'answer', reason = 'stop', done = true) =>
   + `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] })}\n\n`
   + (done ? 'data: [DONE]\n\n' : '');
 
+const anthropicReason = reason => ({stop:'end_turn',length:'max_tokens',content_filter:'refusal'})[reason] || reason;
+
 // 会社に依存しない既存のSSE fixtureをMessages APIの形へ移す（境界の専用テストは変換を使わない）。
 function nativeFixtureStream(body) {
   let buffer = '';
@@ -38,7 +40,7 @@ function nativeFixtureStream(body) {
     if (!json.choices) return line+'\n';
     const c=json.choices[0]; let result='';
     if (typeof c.delta?.content === 'string') result+='data: '+JSON.stringify({type:'content_block_delta',delta:{type:'text_delta',text:c.delta.content}})+'\n';
-    if (c.finish_reason) result+='data: '+JSON.stringify({type:'message_delta',delta:{stop_reason:{stop:'end_turn',length:'max_tokens',content_filter:'refusal'}[c.finish_reason]||c.finish_reason}})+'\n';
+    if (c.finish_reason) result+='data: '+JSON.stringify({type:'message_delta',delta:{stop_reason:anthropicReason(c.finish_reason)}})+'\n';
     return result;
   };
   return body.pipeThrough(new TransformStream({
@@ -61,7 +63,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
       const native = String(url).includes('api.anthropic.com');
       const actual = options?.body && JSON.parse(options.body);
       const fixture = native && !rawUpstream ? { ...actual,
-        messages: [...(actual.system ? [{role:'system',content:actual.system}] : []), ...actual.messages.map(m=>({...m,content:m.content.length===1&&m.content[0].type==='text'?m.content[0].text:m.content}))],
+        messages: [...(actual.system ? [{role:'system',content:actual.system.map(b=>b.text).join('')}] : []), ...actual.messages.map(m=>({...m,content:m.content.length===1&&m.content[0].type==='text'?m.content[0].text:m.content}))],
         ...(actual.output_config?.format ? {response_format:{type:'json_schema',json_schema:{name:actual.output_config.format.schema.properties.motion?'magi_motion':'site_chat',schema:actual.output_config.format.schema}}} : {}),
       } : actual;
       const replaced = upstream && await upstream(url, native && !rawUpstream ? {...options,body:JSON.stringify(fixture)} : options);
@@ -71,7 +73,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
           const data=await replaced.json();
           if (data.choices) {
             const c=data.choices[0];
-            return Response.json({content:[{type:'text',text:c.message?.content||''}],stop_reason:{stop:'end_turn',length:'max_tokens',content_filter:'refusal'}[c.finish_reason]||c.finish_reason,usage:data.usage});
+            return Response.json({content:[{type:'text',text:c.message?.content||''}],stop_reason:anthropicReason(c.finish_reason),usage:data.usage});
           }
           return Response.json(data);
         }
@@ -96,7 +98,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
-  const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
+  const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
   const request = async (path, body, ip = '192.0.2.1', headers = {}) => {
     const res = await ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
       method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, ...headers },
@@ -3538,10 +3540,12 @@ test('Anthropic：system・同役の結合・先頭assistantの除去・画像�
     {role:'assistant',content:'c'}, {role:'user',content:'d'},
   ]});
   const plain=JSON.parse(JSON.stringify(body));
-  assert.equal(plain.system,'one\n\ntwo');
+  assert.deepEqual(plain.system,[{type:'text',text:'one\n\ntwo',cache_control:{type:'ephemeral'}}]);
   assert.deepEqual(plain.messages.map(m=>m.role),['user','assistant','user']);
   assert.deepEqual(plain.messages[0].content,[{type:'text',text:'a'},{type:'text',text:'b'},{type:'image',source:{type:'base64',media_type:'image/webp',data:'YQ=='}}]);
   assert.deepEqual(plain.thinking,{type:'adaptive'}); assert.equal(plain.output_config.effort,'medium');
+  const off=JSON.parse(JSON.stringify(w.ctx.requestBody(w.ctx.defaults.models.persona['BALTHASAR-2'],{messages:[{role:'user',content:'x'}]})));
+  assert.deepEqual(off.thinking,{type:'disabled'}); assert.equal(off.output_config.effort,'low');
   assert.equal(plain.output_config.format.schema.properties.items.maxItems,undefined);
   for(const name of ['temperature','top_p','top_k','opinions']) assert.ok(!JSON.stringify(body).includes(name));
 });
@@ -3550,7 +3554,7 @@ test('Anthropic：専用見出し・観測の元応答・非streamの正規化�
   let seen, stop='end_turn'; const observed=[];
   const w=nativeWorker(undefined,(_,opts)=>{seen=opts;return nativeAnswer('answer',stop)});
   w.env.evalObserve=(provider,model,res,stream)=>observed.push(res.json());
-  const cfg={...w.ctx.defaults.models.synthesizer_dark,thinking:'disabled',effort:'low',max_tokens:1024};
+  const cfg={...w.ctx.defaults.models.synthesizer_dark,reasoning_effort:'none',max_tokens:1024};
   const call=()=>w.ctx.callModel({env:w.env,cfg,messages:[{role:'user',content:'hello'}],stream:false});
   let value=await (await call()).json();
   assert.equal(seen.headers['x-api-key'],'test'); assert.equal(seen.headers['anthropic-version'],'2023-06-01'); assert.equal(seen.headers.Authorization,undefined);
@@ -3625,7 +3629,7 @@ test('統合の答え直し：本文なし30秒で止め、次の60秒の期限�
 test('補助の答え直し：HTTPのみ・同じ期限・一回・解析失敗と停止では呼び直さない',async()=>{
  const calls=[]; let status=503;
  const w=nativeWorker(undefined,(_,opts)=>{calls.push(opts);return calls.length%2 ? new Response('failure',{status}) : searchReply({motion:'test',votable:true})});
- const cfg={...w.ctx.defaults.models.synthesizer_dark,thinking:'disabled',effort:'low',max_tokens:400};
+ const cfg={...w.ctx.defaults.models.synthesizer_dark,reasoning_effort:'none',max_tokens:400};
  const signal=new AbortController().signal;
  const opts={env:w.env,cfg,signal,stream:false,messages:[{role:'user',content:'input'}]};
  await w.ctx.callAuxModel(opts,()=>{},'motion'); assert.equal(calls.length,2); assert.equal(calls[0].signal.aborted,true); assert.equal(calls[1].signal,signal);

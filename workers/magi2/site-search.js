@@ -1,4 +1,4 @@
-import { SITE_GUIDE, SITE_SEARCH } from './personas.js';
+import { PROVIDERS, SITE_GUIDE, SITE_SEARCH } from './personas.js';
 
 // 例外に入力や上流の本文を含めない。公開エラーとログは呼び出し側で固定文にする。
 export const searchFailure = (code = 'unavailable') => Object.assign(new Error('Site search unavailable'), { searchCode: code });
@@ -50,11 +50,43 @@ export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.sub
 // 上流の失敗が残高切れ・キーの失効か（401・402・403 と、残高や枠の不足を示す 429。ただの回数制限の 429 は拾わない）。
 // ②（site-rank.js）と通知（src/index.js）で同じ判定を使う。
 export const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
-export const isBillingFailure = (status, body, provider, headers) => [401, 402, 403].includes(status)
-  || (provider === 'anthropic'
-    ? [400, 429].includes(status) && (status !== 429 || !headers?.has('retry-after'))
-      && /spend[ _-]*(?:limit|cap)|usage[ _-]*limit|billing|credit|balance|exhausted/i.test(body)
-    : status === 429 && QUOTA_RE.test(body));
+// 会社ごとの規則は PROVIDERS の billing。
+const billingRule = (provider) => PROVIDERS[provider]?.billing || { statuses: [429], body: QUOTA_RE };
+export const isBillingFailure = (status, body, provider, headers) => {
+  if ([401, 402, 403].includes(status)) return true;
+  const rule = billingRule(provider);
+  return rule.statuses.includes(status) && !(status === 429 && rule.retry_after_is_rate_limit && headers?.has('retry-after'))
+    && rule.body.test(body);
+};
+// 上の判定が本文しだいで真になりうる状態。ほか（5xx・529など）は本文を読まずに外せる。
+export const mayBeBillingFailure = (status, provider) => [401, 402, 403, ...billingRule(provider).statuses].includes(status);
+
+// 上流のエラー本文の先頭を、上限のバイト数まで読む（判定と通知に使う）。signal か ms（省略できる）で止まったときや
+// 読み取りが失敗したときは、それまでに届いた分を返す。上限で切れた文字の途中は捨てる。reader の止まらない応答でも待ち続けない。
+// cancel は複製の本文だと元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
+export async function readLimited(res, maxBytes, signal, ms) {
+  if (!res.body) return '';
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let text = '', size = 0, stop;
+  const stopped = new Promise(resolve => { stop = () => resolve(null); });
+  const timer = ms ? setTimeout(stop, ms) : null;
+  if (signal?.aborted) stop(); else signal?.addEventListener('abort', stop, { once: true });
+  try {
+    while (size < maxBytes) {
+      const read = await Promise.race([reader.read(), stopped]);
+      if (!read || read.done) break;
+      const chunk = read.value.byteLength > maxBytes - size ? read.value.subarray(0, maxBytes - size) : read.value;
+      size += chunk.byteLength;
+      text += dec.decode(chunk, { stream: true });
+    }
+    return text;
+  } catch (_) {
+    return text;
+  } finally {
+    clearTimeout(timer); signal?.removeEventListener('abort', stop);
+    reader.cancel().catch(() => {}); try { reader.releaseLock(); } catch (_) {}
+  }
+}
 
 // signalを無視する応答でも待ち続けない。本文読み取りを含む処理全体を囲む。
 export async function searchDeadline(ms, run, stop) {

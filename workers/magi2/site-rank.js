@@ -3,7 +3,7 @@
 // site・日刊2誌・tools/game。同じ判定器を使い、新scopeは評価が済むまで公開設定で停止する。
 // test-magi2.mjs は magi2 のファイルを1つにつないで動かすので、トップレベルの名前には rank を付けて重ならないようにする。
 import { SITE_RANK } from './personas.js';
-import { RANK_FIELDS, dailyIssue, isBillingFailure, scoreItems, searchDeadline, searchFailure, searchSlice, sha256, snapshotHash } from './site-search.js';
+import { RANK_FIELDS, dailyIssue, isBillingFailure, readLimited, scoreItems, searchDeadline, searchFailure, searchSlice, sha256, snapshotHash } from './site-search.js';
 import { dailyResultUrl, filterRankItems, isDailyScope, normalizeScopeFilters, rankScopeConfig } from './search-scope.js';
 
 const rankLength = s => Array.from(s).length;
@@ -101,27 +101,6 @@ export function rankProbability(answer) {
     && Number.isFinite(answer.noul) && answer.noul >= 0 && answer.noul <= 1 ? answer.noul : null;
 }
 
-// 本文を上限のバイト数まで読む。中止されたら読み取り中の reader を止める（res.text() を期限で囲むだけでは止まらない）。
-// 上限を超えるチャンクは残りのバイト数で切ってからデコードする（上限で切れた文字の途中は捨てる）
-async function rankReadLimited(res, maxBytes, signal) {
-  if (!res.body) return '';
-  const reader = res.body.getReader(), dec = new TextDecoder();
-  const onAbort = () => { reader.cancel().catch(() => {}); };
-  if (signal.aborted) onAbort(); else signal.addEventListener('abort', onAbort, { once: true });
-  let text = '', size = 0;
-  try {
-    while (size < maxBytes) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = value.byteLength > maxBytes - size ? value.subarray(0, maxBytes - size) : value;
-      size += chunk.byteLength;
-      text += dec.decode(chunk, { stream: true });
-    }
-    await reader.cancel().catch(() => {});
-    return text;
-  } finally { signal.removeEventListener('abort', onAbort); reader.releaseLock(); }
-}
-
 // Jev を呼ぶ。呼び出しから本文の読み取りまでを SITE_RANK.jev_timeout_ms で打ち切る。
 // 401・402・403 と、本文が残高・枠の不足を示す 429 は onBilling(status) で知らせる（本文はログ・通知に渡さない）
 export async function callRank(env, payload, signal, onBilling) {
@@ -133,7 +112,7 @@ export async function callRank(env, payload, signal, onBilling) {
     });
     if (!res.ok) {
       let billing = [401, 402, 403].includes(res.status);
-      if (res.status === 429) billing = isBillingFailure(429, await rankReadLimited(res, SITE_RANK.error_body_max_bytes, s).catch(() => ''));
+      if (res.status === 429) billing = isBillingFailure(429, await readLimited(res, SITE_RANK.error_body_max_bytes, s).catch(() => ''));
       else await res.body?.cancel().catch(() => {});
       if (billing) onBilling(res.status);
       throw searchFailure('unavailable');

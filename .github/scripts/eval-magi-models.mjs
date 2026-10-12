@@ -27,7 +27,7 @@ const context=vm.createContext({aiModels:registry,bundledContext:cards,Request,R
  console:{log(...args){marks.push({ms:performance.now(),stage:args[1],state:args[2]});}},
  fetch:async(url,options)=>{
   if(/^https:\/\/tk\.st\/data\//.test(String(url)))return Response.json(JSON.parse(current('data/'+String(url).split('/').at(-1))));
-  const started=performance.now(),body=JSON.parse(options.body),system=body.system||body.messages?.[0]?.content;
+  const started=performance.now(),body=JSON.parse(options.body),system=(Array.isArray(body.system)?body.system.map(b=>b.text).join(''):body.system)||body.messages?.[0]?.content;
   const provider=String(url).includes('anthropic.com')?'anthropic':String(url).includes('typesafe')?'typesafe':String(url).includes('deepseek')?'deepseek':String(url).includes('googleapis')?'google':'openai';
   const call={provider,model:body.model,stream:body.stream===true,started_ms:started,persona:typeof system==='string'?system.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1]:null};
   if(call.persona==='BALTHASAR-2'&&!calls.some(c=>c.persona==='BALTHASAR-2'))call.request=body;

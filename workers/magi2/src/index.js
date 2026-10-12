@@ -1,6 +1,6 @@
 import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
-import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
+import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
@@ -230,7 +230,7 @@ function personaThread(codename, history, lastContent) {
   return out;
 }
 
-// 「120文字以内」の指定を数えて、末尾に「（109文字）」「(98 characters)」と書き足すモデルがある（Gemini）。
+// 「120文字以内」の指定を数えて、末尾に「（109文字）」「(98 characters)」と書き足すモデルがある（以前のGeminiで確認）。
 // プロンプトでも止めているが、書かれたときはここで落とす
 const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|characters?|chars?)\s*[）)]\s*$/i, '').trim();
 
@@ -261,22 +261,51 @@ function requestBody(cfg, { messages, stream, temperature, response_format }) {
         if (!turns.length && role === 'assistant') continue;
         const parts = typeof content === 'string' ? [{ type: 'text', text: content }] : content.map(part => {
           if (part.type === 'text') return { type: 'text', text: part.text };
-          const image = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(part.image_url?.url || '');
+          // 本体は入口（DATA_IMAGE_RE）で検査済みなので、数MBの base64 は走査し直さず形式だけ見る
+          const url = part.image_url?.url || '', image = /^data:(image\/(?:png|jpeg|webp));base64,(?=.)/.exec(url);
           if (!image) throw stageError('internal', 'invalid_image', '上流の画像が不正です', { retryable: false });
-          return { type: 'image', source: { type: 'base64', media_type: image[1], data: image[2] } };
+          return { type: 'image', source: { type: 'base64', media_type: image[1], data: url.slice(image[0].length) } };
         });
         if (turns.at(-1)?.role === role) turns.at(-1).content.push(...parts);
         else turns.push({ role, content: parts });
       }
+      // reasoning_effort の 'none' は推論なし（effort は最低の low）、それ以外は適応的推論をその強さで。
+      // system は自動ではキャッシュされないので末尾に目印を付ける（同じ人格の R1・R2・聞き返しで読み出せる。
+      // 512トークン未満は黙って対象外になり、費用もかからない）
+      const thinking = cfg.reasoning_effort === 'none' ? 'disabled' : 'adaptive';
       return { model: cfg.model, stream: !!stream, max_tokens: cfg.max_tokens,
-        ...(system.length ? { system: system.join('\n\n') } : {}), messages: turns,
-        thinking: { type: cfg.thinking }, output_config: { effort: cfg.effort,
+        ...(system.length ? { system: [{ type: 'text', text: system.join('\n\n'), cache_control: { type: 'ephemeral' } }] } : {}), messages: turns,
+        thinking: { type: thinking }, output_config: { effort: thinking === 'disabled' ? 'low' : cfg.reasoning_effort,
           ...(response_format ? { format: { type: 'json_schema', schema: anthropicSchema(response_format.json_schema.schema) } } : {}) },
       };
     }
     default:
       throw stageError('internal', 'unknown_provider', `未知の呼び出し先です: ${cfg.provider}`, { retryable: false });
   }
+}
+
+// 認証の付け方も会社ごとに違う。
+const requestHeaders = (provider, key) => ({ 'Content-Type': 'application/json', ...(provider === 'anthropic'
+  ? { 'x-api-key': key, 'anthropic-version': '2023-06-01' } : { 'Authorization': `Bearer ${key}` }) });
+
+// Anthropic の停止理由を OpenAI の finish_reason に揃える（非ストリームとストリームで共通）。
+const ANTHROPIC_STOP = { end_turn: 'stop', max_tokens: 'length', refusal: 'content_filter' };
+const anthropicStop = (reason) => ANTHROPIC_STOP[reason] || reason || null;
+
+// ストリームの data 行1つを { done, finish, delta } に読む。finish は OpenAI の finish_reason に揃える。
+function streamEvent(provider, payload) {
+  if (payload === '[DONE]' && provider !== 'anthropic') return { done: true };
+  let data;
+  try { data = JSON.parse(payload); }
+  catch (_) { throw stageError('synthesizer_call', 'invalid_stream', '統合応答の形式が不正です', { retryable: true }); }
+  if (data.error) throw stageError('synthesizer_call', 'stream_error', '統合応答の途中でエラーが発生しました', { retryable: true });
+  if (provider === 'anthropic') return {
+    done: data.type === 'message_stop',
+    finish: data.type === 'message_delta' ? anthropicStop(data.delta?.stop_reason) : null,
+    delta: data.type === 'content_block_delta' && data.delta?.type === 'text_delta' ? data.delta.text : null,
+  };
+  const choice = data.choices?.[0];
+  return { finish: choice?.finish_reason, delta: choice?.delta?.content };
 }
 
 // 呼び出し本文の切り出しを使う監視も同じ変換を通す。元の制約は受信側で検査する。
@@ -295,8 +324,7 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
   const res = await fetch(provider.endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(cfg.provider === 'anthropic'
-      ? { 'x-api-key': key, 'anthropic-version': '2023-06-01' } : { 'Authorization': `Bearer ${key}` }) },
+    headers: requestHeaders(cfg.provider, key),
     body: JSON.stringify(body),
     signal,
   });
@@ -309,7 +337,7 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   // 観測には正規化前の応答を渡すので、評価用の使用量は元の形で残る。
   if (res.ok && cfg.provider === 'anthropic' && !stream) {
     const data = await res.json();
-    const reason = { end_turn: 'stop', max_tokens: 'length', refusal: 'content_filter' }[data.stop_reason] || data.stop_reason || null;
+    const reason = anthropicStop(data.stop_reason);
     const text = (data.content || []).filter(block => block.type === 'text').map(block => block.text).join('');
     return Response.json({ choices: [{ finish_reason: reason, message: { content: reason === 'content_filter' ? '' : text } }],
       usage: { ...data.usage, total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) } });
@@ -329,27 +357,10 @@ const PROVIDER_ROLES = {
   typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
 };
 async function alertUpstream(env, log, provider, res, ctx, signal) {
-  // 判定に使う先頭500文字だけを最大2秒で読む。切断時もreaderを止め、待ち続けない。
+  // 判定に使う先頭500バイト（エラー本文はASCIIのJSONなので500文字）だけを最大2秒で読む（届いた部分とHTTPコードだけで判定する）。
   // 複製のcancelは元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
-  let body = '';
-  if (res.body) {
-    const reader = res.body.getReader(), decoder = new TextDecoder();
-    const cancel = () => { reader.cancel().catch(() => {}); };
-    try {
-      await searchDeadline(2000, async limit => {
-        limit.addEventListener('abort', cancel, { once: true });
-        try {
-          while (body.length < 500) {
-            const { done, value } = await reader.read();
-            if (done) { body += decoder.decode(); break; }
-            body += decoder.decode(value, { stream: true });
-          }
-        } finally { limit.removeEventListener('abort', cancel); }
-      }, signal);
-    } catch (_) { /* 届いた部分とHTTPコードだけで判定する */ }
-    finally { cancel(); reader.releaseLock(); }
-  }
-  body = body.slice(0, 500);
+  if (!mayBeBillingFailure(res.status, provider)) { res.body?.cancel().catch(() => {}); return; }
+  const body = await readLimited(res, 500, signal, 2000);
   if (!isBillingFailure(res.status, body, provider, res.headers)) return;
   log('upstream_alert', provider, res.status, body.slice(0, 200));
   const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
@@ -415,9 +426,8 @@ function searchUpstream(env, ctx, log, purpose, signal = null) {
   return Object.assign(Object.create(env), {
     onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
       if (!billingFailure) {
-        let body = '';
-        try { body = await searchDeadline(2000, () => res.text()); } catch (_) {}
-        finally { if (!res.bodyUsed) await res.body?.cancel().catch(() => {}); }
+        if (!mayBeBillingFailure(res.status, provider)) { res.body?.cancel().catch(() => {}); return; }
+        const body = await readLimited(res, SITE_RANK.error_body_max_bytes, null, 2000);
         if (!isBillingFailure(res.status, body, provider, res.headers)) return;
       }
       log('site_search', 'upstream_alert', provider, res.status);
@@ -844,28 +854,15 @@ const withCard = (p, cards, header = PERSONA_CONTEXT.header) => (cards && cards[
   : p;
 
 // 統合の本文と正常な終端の両方を確認する。EOF だけでは成功にしない。
-async function readSynthesis(body, send, provider = 'openai', signal) {
+async function readSynthesis(body, send, provider, signal) {
   const reader = body.getReader();
   const dec = new TextDecoder();
   let buf = '', answer = '', finished = false, finishReason = null;
   const line = (raw) => {
     if (!raw.startsWith('data:')) return;
-    const payload = raw.slice(5).trim();
-    if (payload === '[DONE]' && provider !== 'anthropic') { finished = true; return; }
-    let data;
-    try { data = JSON.parse(payload); }
-    catch (_) { throw stageError('synthesizer_call', 'invalid_stream', '統合応答の形式が不正です', { retryable: true }); }
-    if (data.error) throw stageError('synthesizer_call', 'stream_error', '統合応答の途中でエラーが発生しました', { retryable: true });
-    if (provider === 'anthropic') {
-      if (data.type === 'message_delta' && data.delta?.stop_reason) finishReason = data.delta.stop_reason;
-      if (data.type === 'message_stop') finished = true;
-    } else {
-      const choice = data.choices?.[0];
-      if (choice?.finish_reason) finishReason = choice.finish_reason;
-    }
-    const delta = provider === 'anthropic'
-      ? (data.type === 'content_block_delta' && data.delta?.type === 'text_delta' ? data.delta.text : null)
-      : data.choices?.[0]?.delta?.content;
+    const { done, finish, delta } = streamEvent(provider, raw.slice(5).trim());
+    if (finish) finishReason = finish;
+    if (done) finished = true;
     if (typeof delta === 'string' && delta) { answer += delta; send('integrated', { delta }); }
   };
   const stop = () => { reader.cancel().catch(() => {}); };
@@ -882,7 +879,7 @@ async function readSynthesis(body, send, provider = 'openai', signal) {
       }
     }
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: true });
-    if (!finished || finishReason !== (provider === 'anthropic' ? 'end_turn' : 'stop')) throw stageError('synthesizer_call', 'incomplete_output', '統合応答が最後まで生成されませんでした', { retryable: true });
+    if (!finished || finishReason !== 'stop') throw stageError('synthesizer_call', 'incomplete_output', '統合応答が最後まで生成されませんでした', { retryable: true });
     if (!answer.trim()) throw stageError('synthesizer_call', 'empty_output', '統合人格が空の応答を返しました', { retryable: true });
     return answer;
   } finally { signal?.removeEventListener('abort', stop); await reader.cancel().catch(() => {}); reader.releaseLock(); }
@@ -890,8 +887,8 @@ async function readSynthesis(body, send, provider = 'openai', signal) {
 
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
 async function synthesize({ env, messages, theme, signal, send, log }) {
-  const primary = theme === 'dark' ? DEFAULTS.models.synthesizer_dark : DEFAULTS.models.synthesizer;
-  const alternate = primary.provider === 'anthropic' ? DEFAULTS.models.synthesizer : DEFAULTS.models.synthesizer_dark;
+  const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
+  const [primary, alternate] = theme === 'dark' ? [dark, light] : [light, dark];
   let emitted = false;
   for (const [attempt, cfg] of [primary, alternate].entries()) {
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: false });
@@ -929,9 +926,11 @@ async function synthesize({ env, messages, theme, signal, send, log }) {
   }
 }
 
-// 非必須の役割はHTTP失敗のときだけLunaで一度呼び直す。元のsignalの期限は延ばさない。
+// 非必須の役割はHTTP失敗のときだけ、別の会社の答え直し先（DEFAULTS.models.aux_fallback）で一度呼び直す。
+// 元のsignalの期限は延ばさない。
 async function callAuxModel(options, log, purpose) {
-  if (options.cfg.provider !== 'anthropic') return callModel(options);
+  const fallback = DEFAULTS.models.aux_fallback;
+  if (options.cfg.provider === fallback.provider) return callModel(options);
   // 複製したエラー本文が止まっても、元のHTTP接続を切ってから答え直す。
   // 非streamの成功はcallModel内で読み終わっているので、ここで接続を片付けられる。
   const ac = new AbortController(), cancel = () => ac.abort();
@@ -943,8 +942,7 @@ async function callAuxModel(options, log, purpose) {
   if (res.ok || options.signal?.aborted) return res;
   res.body?.cancel().catch(() => {});
   log('fallback', purpose, options.cfg.provider, `http_${res.status}`);
-  const cfg = { ...DEFAULTS.models.synthesizer, reasoning_effort: 'none', max_tokens: options.cfg.max_tokens };
-  return callModel({ ...options, cfg });
+  return callModel({ ...options, cfg: { ...fallback, max_tokens: options.cfg.max_tokens } });
 }
 
 // 処理全体にタイムアウトを掛け、成功・失敗のどちらでもタイマーを解除する。
