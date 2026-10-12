@@ -1,0 +1,759 @@
+{
+  "started": "2026-10-12T00:47:29.394Z",
+  "endpoint": "https://tk.st/search/api/rank",
+  "evaluationGate": true,
+  "queriesHash": "1fedaaa2ea7f0273c931e637f5321010923f7566525e9f9cfbbdd1451e7c5693",
+  "annotator": "agent",
+  "requests": 46,
+  "searchRequests": 40,
+  "probes": [
+    {
+      "scope": "tools",
+      "case": "ordinary request disabled before release",
+      "http": 200,
+      "reason": "disabled"
+    },
+    {
+      "scope": "tools",
+      "case": "invalid filter",
+      "http": 400,
+      "reason": "invalid_request"
+    },
+    {
+      "scope": "tools",
+      "case": "generation mismatch",
+      "http": 200,
+      "reason": "index_updating"
+    },
+    {
+      "scope": "game",
+      "case": "ordinary request disabled before release",
+      "http": 200,
+      "reason": "disabled"
+    },
+    {
+      "scope": "game",
+      "case": "invalid filter",
+      "http": 400,
+      "reason": "invalid_request"
+    },
+    {
+      "scope": "game",
+      "case": "generation mismatch",
+      "http": 200,
+      "reason": "index_updating"
+    }
+  ],
+  "scopes": {
+    "tools": {
+      "generation": "448294f99895d3f9d9bf52f8f2ac847a313b81ecd42a6d5acc9dd33938bdccd9",
+      "candidateHash": "4b3a08695fa0720bd7f9f31aabdbd6225559a86dbb2f2da8995aa84a2cc1e5b3",
+      "threshold": 0.4,
+      "revision": 1,
+      "rows": [
+        {
+          "id": "tools-final-01",
+          "http": 200,
+          "ms": 700.4675,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:10"
+          ],
+          "answers": [
+            "tool:10"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-02",
+          "http": 200,
+          "ms": 307.4639000000001,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:7"
+          ],
+          "answers": [
+            "tool:7"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-03",
+          "http": 200,
+          "ms": 219.44410000000016,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:7"
+          ],
+          "answers": [
+            "tool:7"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-04",
+          "http": 200,
+          "ms": 288.4716000000001,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:3"
+          ],
+          "answers": [
+            "tool:3"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-05",
+          "http": 200,
+          "ms": 241.24619999999982,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:6"
+          ],
+          "answers": [
+            "tool:6"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-06",
+          "http": 200,
+          "ms": 220.39840000000004,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:2"
+          ],
+          "answers": [
+            "tool:2"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-07",
+          "http": 200,
+          "ms": 207.5693000000001,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:5"
+          ],
+          "answers": [
+            "tool:5"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-08",
+          "http": 200,
+          "ms": 246.5317,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:1"
+          ],
+          "answers": [
+            "tool:1"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-09",
+          "http": 200,
+          "ms": 255.2201,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:8"
+          ],
+          "answers": [
+            "tool:8"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-10",
+          "http": 200,
+          "ms": 194.50030000000015,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [
+            "tool:9"
+          ],
+          "answers": [
+            "tool:9"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-11",
+          "http": 200,
+          "ms": 220.63869999999997,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-12",
+          "http": 200,
+          "ms": 210.4126000000001,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-13",
+          "http": 200,
+          "ms": 202.1008999999999,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-14",
+          "http": 200,
+          "ms": 194.92830000000004,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-15",
+          "http": 200,
+          "ms": 195.01850000000013,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-16",
+          "http": 200,
+          "ms": 194.71039999999994,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-17",
+          "http": 200,
+          "ms": 200.32430000000022,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-18",
+          "http": 200,
+          "ms": 222.7529000000004,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 1,
+          "judged": 1,
+          "ids": [
+            "tool:10"
+          ],
+          "answers": [
+            "tool:10"
+          ],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-19",
+          "http": 200,
+          "ms": 193.64759999999933,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 9,
+          "judged": 9,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "tools-final-20",
+          "http": 200,
+          "ms": 195.3141999999998,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 5,
+          "judged": 5,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        }
+      ],
+      "summary": {
+        "positive": 11,
+        "hit": 11,
+        "reached": 11,
+        "required": 10,
+        "requiredReached": 10,
+        "none": 9,
+        "shown": 0,
+        "positiveExtras": [],
+        "p95": 307.4639000000001,
+        "pass": true
+      }
+    },
+    "game": {
+      "generation": "44a67d354ba3bf627ef8b69dd3fb07fb8966d129855e1ec45583f929546e86b6",
+      "candidateHash": "62c21ba63ae68f23ed3ac85df2a9a935dcb71aed08615506ab52b8f7288a1fb5",
+      "threshold": 0.5,
+      "revision": 2,
+      "rows": [
+        {
+          "id": "game-final-01",
+          "http": 200,
+          "ms": 367.7404000000006,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:1",
+            "game:3",
+            "game:5",
+            "game:7",
+            "game:2"
+          ],
+          "answers": [
+            "game:1",
+            "game:2",
+            "game:3",
+            "game:5",
+            "game:7"
+          ],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-02",
+          "http": 200,
+          "ms": 231.3739999999998,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:2"
+          ],
+          "answers": [
+            "game:2"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-03",
+          "http": 200,
+          "ms": 186.2434000000003,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:3"
+          ],
+          "answers": [
+            "game:3"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-04",
+          "http": 200,
+          "ms": 189.00900000000001,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:4"
+          ],
+          "answers": [
+            "game:4"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-05",
+          "http": 200,
+          "ms": 202.57070000000022,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:5"
+          ],
+          "answers": [
+            "game:5"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-06",
+          "http": 200,
+          "ms": 254.57369999999992,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:6"
+          ],
+          "answers": [
+            "game:6"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-07",
+          "http": 200,
+          "ms": 199.85660000000007,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:7"
+          ],
+          "answers": [
+            "game:7"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-08",
+          "http": 200,
+          "ms": 236.82929999999942,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:8"
+          ],
+          "answers": [
+            "game:8"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-09",
+          "http": 200,
+          "ms": 261.33429999999953,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 1,
+          "judged": 1,
+          "ids": [
+            "game:8"
+          ],
+          "answers": [
+            "game:8"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-10",
+          "http": 200,
+          "ms": 198.32789999999932,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 6,
+          "judged": 6,
+          "ids": [
+            "game:5"
+          ],
+          "answers": [
+            "game:5"
+          ],
+          "required": true,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-11",
+          "http": 200,
+          "ms": 194.8816999999999,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-12",
+          "http": 200,
+          "ms": 202.5052999999998,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-13",
+          "http": 200,
+          "ms": 214.4943000000003,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-14",
+          "http": 200,
+          "ms": 265.3637999999992,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-15",
+          "http": 200,
+          "ms": 224.3026000000009,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-16",
+          "http": 200,
+          "ms": 206.13370000000032,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:7"
+          ],
+          "answers": [
+            "game:7"
+          ],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-17",
+          "http": 200,
+          "ms": 195.54470000000038,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:1",
+            "game:3",
+            "game:2"
+          ],
+          "answers": [
+            "game:1"
+          ],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-18",
+          "http": 200,
+          "ms": 293.2376000000004,
+          "status": "results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [
+            "game:8"
+          ],
+          "answers": [
+            "game:8"
+          ],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-19",
+          "http": 200,
+          "ms": 194.82790000000023,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 1,
+          "judged": 1,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        },
+        {
+          "id": "game-final-20",
+          "http": 200,
+          "ms": 190.32359999999971,
+          "status": "no_results",
+          "complete": true,
+          "cached": false,
+          "candidates": 8,
+          "judged": 8,
+          "ids": [],
+          "answers": [],
+          "required": false,
+          "candidateReached": true
+        }
+      ],
+      "summary": {
+        "positive": 13,
+        "hit": 13,
+        "reached": 13,
+        "required": 9,
+        "requiredReached": 9,
+        "none": 7,
+        "shown": 0,
+        "positiveExtras": [
+          "game-final-17"
+        ],
+        "p95": 293.2376000000004,
+        "pass": true
+      }
+    }
+  },
+  "pass": true,
+  "finished": "2026-10-12T00:47:39.112Z"
+}

@@ -184,3 +184,27 @@ Worker dry-runはログ先を隔離して警告なしで通過（239.41KiB／gzi
 速度・メモリ測定の参照は`20261012_3`。その後、sortの変更でもPRD3.4どおり②を破棄して次の明示実行を待つよう修正し、5scopeの検査へ追加した。準備・照合・input処理は測定時と同じ。最終の5画面と日刊生成器の共通3ライブラリ、解析Workerの取得URLを`20261012_4`へ更新。公開scope許可・有料Jev評価・補正正本はこの続きで変更していない。
 
 最終ビルドは674ファイルで検査通過。5実画面・最新2号の受け渡し、toolsのCSP内での索引取得、404の入口、実adapterと読みmanifestの照合、320/768/1440px・CSS200%の画面検査を確認した。共通UIの5scopeと追加3ケースではsort変更・CDPのIMEイベント・scheduler非対応時の縮退も通過。追加回帰22件を最終ソースで再確認した。Worker実装はこの続きでは変えておらず、前段で通過した189件の結果を引き継ぐ。構文検査は45スクリプト・64HTMLのscript／JSON-LD・84JSON、AIモデル設定と`git diff --check`も通過。出荷した共通JS/CSSのバイト列は作業ソースと一致する。画面試験のAPI・解析通信は固定応答であり、本番接続の検証ではない。Linux／Pages、OSの日本語IME、実機読み上げ、本番のURL・計測の確認は引き続き未実施。
+
+
+## 2026-10-12：Linux・Pages・本番Workerの公開前検証
+
+最新main（2172cf0）の20261012号とMAGI生成物を取り込み、出荷は678ファイル、サイト96ページ、日刊197＋214＝411記事となった。61号の共通UI参照だけを更新し、本文・dateModifiedを保持。共通3ライブラリと解析Workerは `20261012_5`。大きなpostingsの移譲も最大512組へ分割した。game一覧のGTM/Ahrefsが解析停止設定を無視していた点を修正した。
+
+WindowsとLinuxの正式測定は同じ411記事から作ったfixture、CPU4倍抑制、20入力×5・3回、監視なしで実施。共通UI4ケースと実日刊adapter4ケースの全測定で100入力p95が50ms以下。fixture hashと共通6ファイルのhashは両OSで一致する。実adapterの大きいケースは8MiB上限を保った7,500件で、10kの合格と混同しない。
+
+| 環境 | 共通10kの入力p95最大ms | 実adapter 7,500件の入力p95最大ms | 実adapterの準備ms |
+| --- | ---: | ---: | --- |
+| Windows | 40.2 | 38.8 | 2,659.0 / 2,903.0 |
+| Linux | 29.3 | 26.9 | 3,058.2 / 3,335.5 |
+
+[Windows共通](ui-final-windows-20261012.json)・[実adapter](ui-adapter-final-windows-20261012.json)、[Linux共通](ui-final-linux-20261012.json)・[実adapter](ui-adapter-final-linux-20261012.json)。Windowsの最初の20入力p95は10kで54.1／55.7ms、7,500件で61.6／59.1ms。準備中の最大heartbeat間隔は実adapterで204.9／221.6ms。正式合格でも、この制約と実機IME／読み上げ未検証は残る。
+
+Linuxの[Actions 38188586608](https://github.com/tk33r1/st/actions/runs/38188586608)（86c2e20）で固定依存の冷／温取得、出荷ビルド、Python6件、Node211件、読み照合、5画面、旧HTML、共通UI、画面寸法／焦点／通知、正式測定が通過。初回のfixture履歴取得不足と次回の試験locale不足は修正して再実行した。合格結果だけに置き換えず経緯を残す。Python3.13.16／Linux x86_64／Node24.21.0。冷取得5.885秒・温取得0.848秒、出荷14.320秒／ピークRSS408.5MiB。10k生成は共有1.702秒／316.9MiB、別語彙5.046秒／372.4MiB。[環境記録](linux-environment-20261012.json)、[共有語彙](reading-memory-shared-linux-20261012.json)・[別語彙](reading-memory-distinct-linux-20261012.json)。RSSは各処理と子孫の最大で同時プロセス合計ではない。PagesそのもののRAMと呼ばない。
+
+実Cloudflare Pagesの[preview](https://b9bfde6a.st-dmt.pages.dev)（b9bfde6a-f1b8-4311-8d56-18ffc4dfe3f0、86c2e20）もビルド成功。ローカル出荷とpreviewで本物のGTM／gtag／Ahrefsを読み、送信を記録して停止した。5scopeのURL・Referer・伏せ字・明示POST・受け渡し・再読み込み・JS無効時の404ツリーと日刊フォームが通過。[preview](url-preview-20261012.json)・[ローカル](url-local-20261012.json)。日刊の既存解析停止設定は検索イベントの停止であり、tools/gameのタグ読込停止と同一だとは記載しない。
+
+本番Workerに新入口を先行配置し、tools/gameは一時評価キー付きだけで有効化。普通の要求はdisabled、不正filterは400、世代不一致はindex_updatingで有料判定へ進まないことを確認。本番接続で `cache:'no-cache'` に必要な互換フラグが不足していたため、2025-01-01を維持して `cache_no_cache_enabled` を追加した（[Cloudflare仕様](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#enable-cache-no-cache-http-standard-api)）。配置直後の停止記録もGit管理外へ保存し、有料測定とは数えない。
+
+固定finalを各scope20問・1回ずつ本番入口で評価して合格。toolsは上位5件11/11、必須候補10/10、正解なし誤表示0/9。gameは13/13、必須9/9、0/7。scope/filter外の表示、判定欠け、失敗は0件。game-final-17に続編が混ざる既知の限界は残す。Worker往復p95は307.5／293.2msでJev単体と混同しない。[本番評価](rank-publication-20261012.json)。40件が共有回数枠を利用し、別の6件は判定前の停止検査。既存の固定80問・2回の評価は正解も閾値も変更していない。
+
+合格後に5scopeを一般利用向けに有効化。Workerは5cf9e947-e7a7-4fd2-a0c4-5e6e5c01d7bcへ正本を配置し、一時変数と診断コードを除去、SITE_RANK_EVAL_KEYを削除した。静的画面の本番公開と公開ブラウザ確認はこの続きで実施する。

@@ -1,0 +1,46 @@
+{
+  "started": "2026-10-12T00:38:34.555Z",
+  "base": "https://b9bfde6a.st-dmt.pages.dev",
+  "live": false,
+  "liveRequests": 0,
+  "analyticsLoaded": [
+    "analytics.ahrefs.com/analytics.js",
+    "www.googletagmanager.com/gtm.js",
+    "www.googletagmanager.com/gtag/js"
+  ],
+  "cases": [
+    {
+      "scope": "site",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 10,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "tools",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 34,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "game",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 87,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "nitori",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 70,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "retail",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 64,
+      "explicitPosts": 1
+    }
+  ],
+  "limitations": "Chromiumのみ。OSのIMEと実機読み上げは含まない。解析送信は記録して停止。",
+  "javascriptDisabled": true,
+  "pass": true
+}

@@ -1,0 +1,46 @@
+{
+  "started": "2026-10-12T00:38:18.107Z",
+  "base": "http://127.0.0.1:54061",
+  "live": false,
+  "liveRequests": 0,
+  "analyticsLoaded": [
+    "analytics.ahrefs.com/analytics.js",
+    "www.googletagmanager.com/gtm.js",
+    "www.googletagmanager.com/gtag/js"
+  ],
+  "cases": [
+    {
+      "scope": "site",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 8,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "tools",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 29,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "game",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 79,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "nitori",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 52,
+      "explicitPosts": 1
+    },
+    {
+      "scope": "retail",
+      "urlAndPrivacy": true,
+      "analyticsRequestsStopped": 52,
+      "explicitPosts": 1
+    }
+  ],
+  "limitations": "Chromiumのみ。OSのIMEと実機読み上げは含まない。解析送信は記録して停止。",
+  "javascriptDisabled": true,
+  "pass": true
+}

@@ -1,0 +1,50 @@
+{
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.13.16",
+  "source_commit": "86c2e20ce743b31c04605db13d90fbf328cb7e5b",
+  "note": "GitHub Linux runner\u3002Pages\u305d\u306e\u3082\u306e\u306e\u6e2c\u5b9a\u3067\u306f\u306a\u3044\u3002time\u306eRSS\u306f\u5404\u51e6\u7406\u3068\u5b50\u5b6b\u306e\u6700\u5927\u3067\u3001\u540c\u6642\u30d7\u30ed\u30bb\u30b9\u306e\u5408\u8a08\u3067\u306f\u306a\u3044\u3002",
+  "runs": [
+    {
+      "name": "dependency-cold",
+      "seconds": 5.8851398309999965,
+      "exit_code": 0,
+      "peak_rss_bytes": 53501952
+    },
+    {
+      "name": "dependency-warm",
+      "seconds": 0.8483327540000047,
+      "exit_code": 0,
+      "peak_rss_bytes": 44871680
+    },
+    {
+      "name": "build",
+      "seconds": 14.319806309,
+      "exit_code": 0,
+      "peak_rss_bytes": 428367872
+    },
+    {
+      "name": "memory-shared",
+      "seconds": 2.0547359469999975,
+      "exit_code": 0,
+      "peak_rss_bytes": 332320768
+    },
+    {
+      "name": "memory-distinct",
+      "seconds": 5.451861362999992,
+      "exit_code": 0,
+      "peak_rss_bytes": 390512640
+    },
+    {
+      "name": "generation",
+      "seconds": 11.266024981000001,
+      "exit_code": 0,
+      "peak_rss_bytes": 461103104
+    },
+    {
+      "name": "python-regression",
+      "seconds": 0.38843027000000063,
+      "exit_code": 0,
+      "peak_rss_bytes": 243113984
+    }
+  ]
+}
