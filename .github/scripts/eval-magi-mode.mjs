@@ -1,6 +1,6 @@
 // 合成入力で第2公開を評価。APIキーはローカルのみ、結果は非追跡の .wrangler に保存する。
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { webcrypto, createHash } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import vm from 'node:vm';
@@ -11,7 +11,7 @@ const ref = process.argv.find(a=>a.startsWith('--ref='))?.slice(6);
 const label = process.argv.find(a=>a.startsWith('--label='))?.slice(8);
 assert(!label||/^[a-z0-9-]+$/.test(label));
 // 旧・新で素材を固定し、Workerとモデル設定だけを切り替える。
-const read = p => ref&&/^(workers\/magi2\/|config\/)/.test(p)?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):readFileSync(new URL(p, root), 'utf8');
+const read = p => ref&&/^(workers\/magi2\/.*\.js$|config\/)/.test(p)?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):readFileSync(new URL(p, root), 'utf8');
 const registry = JSON.parse(read('config/ai-models.json'));
 const mode = process.argv.find(a => a.startsWith('--mode='))?.slice(7) || 'pilot';
 assert(['pilot','motion','entry','paired','special'].includes(mode));
@@ -156,6 +156,7 @@ const special=['no-reasons','hold','carried'].map((fixture,i)=>({...positives[0]
 const fixtureSet=mode==='special'?special:mode==='motion'?[...positives,...negatives]:mode==='entry'?[...positives,...negatives,...invitations,...bypass,...ordinary]:positives;
 const cases=selected.length?fixtureSet.filter(c=>selected.includes(c.id)):mode==='pilot'?positives.slice(0,2):batch?fixtureSet.slice((batch-1)*10,batch*10):fixtureSet;
 const reports=[];
+if(label)mkdirSync(new URL('workers/.wrangler/magi47-quality/',root),{recursive:true});
 const target=new URL('workers/.wrangler/'+(label?'magi47-quality/'+label:'magi-'+mode+(selected.length?'-cases-'+selected.join('-'):batch?'-'+batch:''))+'.json',root);
 function save(){writeFileSync(target,JSON.stringify({mode,ref:ref||'working-tree',date:new Date().toISOString(),fingerprint,revision:ctx.config.models.motion.model,results:reports},null,2));}
 const log=()=>{};
