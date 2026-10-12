@@ -215,10 +215,11 @@ a {
 }
 
 .header-search {
+  position: relative;
   display: flex;
   align-items: center;
   width: 230px;
-  height: 36px;
+  height: 44px;
   overflow: hidden;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-sm);
@@ -3087,9 +3088,8 @@ a {
 /* 欄は動かさず、直後の候補の枠（display:contents）を .header-actions を基準に重ねる。 */
 .header-actions{position:relative;--border:var(--rule);--accent:var(--primary)}
 .header-actions .st-search-control-external{color:var(--ink)}
-.header-search{position:relative;height:44px}
-.header-search .st-search-input{border:0;min-height:44px;padding:0 44px 0 12px}
-.header-search .st-search-submit{min-width:44px;height:44px;width:44px;border:0}
+.header-search .st-search-input{padding:0 44px 0 12px}
+.header-search .st-search-submit{min-width:44px;height:44px;width:44px}
 .header-search .st-search-clear{right:44px;height:44px;width:44px;background:var(--surface)}
 .header-actions .st-search-suggestions{color:var(--ink);background:var(--surface);border-color:var(--rule-strong);box-shadow:var(--shadow-md);min-width:360px;left:auto;right:0}
 .header-actions .st-search-notice{font-size:11px}.header-actions .st-search-list{font-family:var(--font-sans);font-size:14px}
@@ -3107,6 +3107,5 @@ a {
  .header-actions .header-search.is-focused{width:100%}
  .header-actions .st-search-suggestions{left:calc(-1 * var(--gutter));right:calc(-1 * var(--gutter));min-width:0;width:auto}
  .header-search:not(.is-focused) .st-search-clear{display:none}
- .header-search input{font-size:16px}
  .st-search-local .archive-row{grid-template-columns:90px 1fr;gap:12px}
 }

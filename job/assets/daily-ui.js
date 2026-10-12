@@ -414,14 +414,22 @@
     document.getElementById('archiveSearchHint')?.addEventListener('click',()=>search.focus());
     document.querySelector('.header-search')._stSearch=search;
     new MutationObserver(() => search.setLocale(locale())).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    // 号のページからの確定だけ、同じタブの一度きりの目印で明示操作として受け取る（書くのは initIssueSearch の onSubmit）。
+    function explicitMarker(query) {
+      try {
+        const raw=sessionStorage.getItem('st-search-explicit');sessionStorage.removeItem('st-search-explicit');
+        const marker=JSON.parse(raw),age=Date.now()-marker?.at;
+        return marker?.scope===scope && marker.query===STJapaneseSearch.normalize(query).trim() && Number.isFinite(age) && age>=0 && age<=30000;
+      } catch(_) {return false;}
+    }
     return function searchFor(text,options) {
-      search.setQuery(cleanQuery(text),options);
+      const query=cleanQuery(text);
+      search.setQuery(query,{explicit:!!options?.handoff && explicitMarker(query)});
       document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
     };
   }
 
   function renderSearchArticle(record,ctx) {
-    if(ctx.compact) return null;
     const link=document.createElement('a');link.href=ctx.href;link.dataset.stPrimary='';link.className='archive-row';
     const date=document.createElement('time');date.className='archive-date';date.textContent=searchArticleDate(record);link.append(date);
     const body=document.createElement('span');body.className='archive-body';
@@ -431,13 +439,19 @@
   // 号のページは、欄に触れたときだけ共通検索と索引を読む。失敗時も従来の確定は使える。
   function initIssueSearch(header) {
     if(!header || document.getElementById('archiveCommonSearch')) return;
+    // 読む資産と版は生成器（daily_engine.py の SEARCH_ASSETS）がヘッダーに書く。無い古いHTMLでは従来の確定だけを使う。
+    const assets=(header.dataset.searchAssets || '').split(' ').filter(a=>/^[a-z-]+[.](?:js|css)[?]v=[0-9_]+$/.test(a));
+    if(!assets.some(a=>a.startsWith('search-ui.js?'))) return;
     let started=false;
     async function load() {
       if(started) return;started=true;
       try {
-        const version='20261012_13',files=['search-analytics.js?v=20261009_1','japanese-search.js?v=20261012_8','site-search.js?v=20261011_1','search-ui.js?v='+version,'search-data.js?v=20261012_8'];
-        await new Promise((resolve,reject)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='/assets/search-ui.css?v='+version;style.onload=resolve;style.onerror=reject;document.head.append(style);});
-        for(const file of files) await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/assets/'+file;script.onload=resolve;script.onerror=reject;document.head.append(script);});
+        // 並べて取得し、JS は書いた順に実行する（async=false）。CSS も揃ってから取り付ける。
+        await Promise.all(assets.map(file=>new Promise((resolve,reject)=>{
+          const css=file.includes('.css?'),el=document.createElement(css?'link':'script');
+          if(css) {el.rel='stylesheet';el.href='/assets/'+file;} else {el.async=false;el.src='/assets/'+file;}
+          el.onload=resolve;el.onerror=reject;document.head.append(el);
+        })));
         const scope=media==='nitoridaily'?'nitori':'retail',container=document.createElement('div');container.className='daily-header-search-runtime';header.after(container);
         const search=STSearchUI.mount(container,STSearchData.createAdapter(scope,{
           input:header,locale:document.documentElement.lang==='en'?'en':'ja',placeholder:{ja:'記事を検索',en:'Search articles'},analyticsNotice:true,

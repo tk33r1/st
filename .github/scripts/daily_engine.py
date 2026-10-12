@@ -229,7 +229,7 @@ def render_site_header(config, brand_href, search_action, menu_links, sibling_pr
         </span>
       </a>
       <div class="header-actions">
-        <form class="header-search" action="{esc(search_action)}" method="get" role="search">
+        <form class="header-search" action="{esc(search_action)}" method="get" role="search" data-search-assets="{esc(' '.join(SEARCH_ASSETS))}">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
           <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
@@ -294,11 +294,22 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261012_13'
+DAILY_UI_VERSION = '20261012_14'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
-SEARCH_RUNTIME_VERSION = '20261012_13'
-DAILY_CSS_VERSION = '20261012_13'
+SEARCH_RUNTIME_VERSION = '20261012_14'
+DAILY_CSS_VERSION = '20261012_14'
+# 共通検索の資産（読む順）。ポータルのタグと、号のページの遅延読み込み（ヘッダーの data-search-assets）の両方をここから作る。
+SEARCH_ASSETS = [
+    f'search-ui.css?v={SEARCH_RUNTIME_VERSION}',
+    f'search-analytics.js?v={SEARCH_ANALYTICS_VERSION}',
+    f'japanese-search.js?v={SEARCH_RUNTIME_VERSION}',
+    f'site-search.js?v={SITE_SEARCH_VERSION}',
+    f'search-ui.js?v={SEARCH_RUNTIME_VERSION}',
+    f'search-data.js?v={SEARCH_RUNTIME_VERSION}',
+]
+SEARCH_CSS_TAG = ''.join(f'  <link rel="stylesheet" href="../../assets/{a}">' for a in SEARCH_ASSETS if '.css?' in a)
+SEARCH_SCRIPT_TAGS = chr(10).join(f'  <script src="../../assets/{a}"></script>' for a in SEARCH_ASSETS if '.js?' in a)
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
 # URL に q（クエリのすべての q、または #q=）があれば、受け取るかどうかに関係なく先に消して #archiveSearch にし、
@@ -2274,7 +2285,7 @@ def render_top_index_html(config, articles_history):
 <html lang="ja">
 <head>
 {portal_head_html}
-  <link rel="stylesheet" href="../../assets/search-ui.css?v={SEARCH_RUNTIME_VERSION}">
+{SEARCH_CSS_TAG}
 </head>
 <body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -2337,11 +2348,7 @@ def render_top_index_html(config, articles_history):
   {site_footer_html}
 
   <script src="../../assets/buy-me-oil.js"></script>
-  <script src="../../assets/search-analytics.js?v={SEARCH_ANALYTICS_VERSION}"></script>
-  <script src="../../assets/japanese-search.js?v={SEARCH_RUNTIME_VERSION}"></script>
-  <script src="../../assets/site-search.js?v={SITE_SEARCH_VERSION}"></script>
-  <script src="../../assets/search-ui.js?v={SEARCH_RUNTIME_VERSION}"></script>
-  <script src="../../assets/search-data.js?v={SEARCH_RUNTIME_VERSION}"></script>
+{SEARCH_SCRIPT_TAGS}
   <script src="../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>

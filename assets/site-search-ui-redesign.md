@@ -264,7 +264,7 @@ tools と game のページは日本語だけなので、英語の placeholder �
   - 結果の行は、アーカイブの行（日付の列と記事名）と同じ見た目にする。
 - ⓘ: 節の見出しの隣のⓘ（`archiveSearchInfoOpen`）は残し、枠の末尾のⓘからも同じダイアログを開く。
 - **号のページ**でも候補を出す。
-  - 検索の JS と索引は、ページを開いたときではなく、欄に初めてフォーカスするか入力したときに読む。読み込みは `daily-ui.js` が受け持ち、共通の6ファイル（`search-analytics.js`・`japanese-search.js`・`site-search.js`・`search-ui.js`・`search-data.js`・`search-ui.css`。2026-10-12 時点で gzip 合計約30KiB）を順に読んでから `mount` する（5.1）。
+  - 検索の JS と索引は、ページを開いたときではなく、欄に初めてフォーカスするか入力したときに読む。読み込みは `daily-ui.js` が受け持ち、共通の6ファイル（`search-analytics.js`・`japanese-search.js`・`site-search.js`・`search-ui.js`・`search-data.js`・`search-ui.css`。2026-10-12 時点で gzip 合計約30KiB）を読んでから `mount` する（5.1）。読む資産と版は `daily_engine.py` の `SEARCH_ASSETS` が正本で、ポータルのタグと、号のヘッダーの `data-search-assets`（遅延読み込みの一覧）の両方をそこから作る。並べて取得し、JS は書いた順に実行する（`async=false`）。`data-search-assets` の無い古い号では遅延読み込みをせず、従来の確定だけを使う。
   - 候補を選べば、その記事へ直接移る。
   - `mount` が終わった後に確定したら、3.8 の目印を書いてポータルの `#q=` へ移る。ポータルでは②も送られる。`mount` の後は候補の枠（末尾の告知を含む）が出ているので、告知を見る前に送ることにはならない。基礎データの取得中なら、枠には「読み込み中…」と告知が出ている。
   - **`mount` が終わる前**（6ファイルの取得中、または取得に失敗した後）は、`daily-ui.js` の既存のヘッダーの処理が確定を受ける。
@@ -288,7 +288,7 @@ tools と game のページは日本語だけなので、英語の placeholder �
 
 `search-ui.js` の `mount` の中を、**制御**と**表示**に分ける。ファイルは1つのまま。
 
-- 制御（いまの `mount` の大半をそのまま移す）: 状態、IME、①の照合、②の送受信と世代、版ずれからの復帰、クリックの記録、計測（`track`）。新しく持つのは、確定した検索語と語の使い分け（3.4）、基礎データの準備前の確定の保留（語・条件・②を送ってよいか）と、読みの準備後の数え直し（3.4）、20件ずつの表示上限、3.8 の目印の確認。
+- 制御（いまの `mount` の大半をそのまま移す）: 状態、IME、①の照合、②の送受信と世代、版ずれからの復帰、クリックの記録、計測（`track`）。新しく持つのは、確定した検索語と語の使い分け（3.4）、基礎データの準備前の確定の保留（語・条件・②を送ってよいか）と、読みの準備後の数え直し（3.4）、20件ずつの表示上限。3.8 の目印の読み書きは日刊の `daily-ui.js` が持ち、共通部品は `setQuery(value, {explicit: true})` で明示操作かどうかだけを受け取る。
 - 表示: 欄・消去・虫眼鏡・候補の枠・帯・結果の見出し・②の枠・「もっと見る」・status・ⓘのダイアログを、共通の DOM で作る。
 
 `mount(container, adapter)` の adapter に足す項目。**すべて省略でき、省略したときは共通の既定で動く**（欄も共通部品が作る）。Pages は `?v=` に関係なく最新のファイルを返すので、ブラウザに残った古い HTML が新しい `search-ui.js` を読んでも検索が使えるようにするため（見た目は崩れてよい）。
@@ -301,7 +301,7 @@ tools と game のページは日本語だけなので、英語の placeholder �
 | `classes` | 部品ごとに足すページの class（例: game の `{input:'nes-input', button:'nes-btn', panel:'nes-container is-rounded'}`、tools/game の結果の一覧にカタログのグリッドの class） |
 | `filterChips` | true なら、絞り込みを `aria-pressed` のチップで描く。省略時はセレクト。チップの class は `classes.chip` |
 | `filtersBeforeSearch` | 検索の前から帯に出す絞り込みの key（3.6）。省略時はすべて |
-| `renderItem(record, ctx)` | 結果の1件を描いて要素を返す。`ctx` は `{href, locale, compact}`（`href` は検査済みの行き先、`compact` は②の短い表示）。省略時は共通の既定（題名と説明） |
+| `renderItem(record, ctx)` | 結果の1件を描いて要素を返す。`ctx` は `{href, locale}`（`href` は検査済みの行き先）。①と、①0件のときの②の本体の一覧で呼ぶ。候補の枠と②の短い表示は呼ばずに共通の行で描く。省略時は共通の既定（題名と説明） |
 | `renderSuggestion(record, ctx)` | 候補の行の右の種類の表示を返す。省略時は種類を出さない |
 | `onResults({query, open})` | 結果の開閉をページへ知らせる（tools/game のカタログ、404 の「もしかして」・③、日刊の案内） |
 | `analyticsNotice` | true なら、ⓘの説明にアクセス解析の段落を足す（3.7）。404・日刊で付ける |
@@ -319,7 +319,7 @@ tools と game のページは日本語だけなので、英語の placeholder �
 ページ側の受け手で変わるもの:
 
 - `onConditions`・`onState` の `query` は確定した語になる（3.4）。tools/game の `catalogueQuery`、404 の `searched()`・`syncAI()`・日刊へのリンク、日刊の `onConditions` はこれに合わせる。
-- `setQuery`・`handoff`・`setLocale`・`ready`・`state`・`run`・`cancel` は名前と役目を保つ。`setQuery` は 3.8 の受け渡し（①だけで確定）になる。
+- `setQuery`・`handoff`・`setLocale`・`ready`・`state`・`run`・`cancel` は名前と役目を保つ。`setQuery` は 3.8 の受け渡し（①だけで確定）になる。`{explicit: true}` を渡したときだけ明示操作として②を送る（日刊が目印を確かめた場合）。
 
 ### 5.2 CSS の役割
 
@@ -331,13 +331,13 @@ tools と game のページは日本語だけなので、英語の placeholder �
 
 | ファイル | 変更 |
 | --- | --- |
-| `assets/search-ui.js` | 5.1。文言の辞書（3.9）。3.8 の目印の確認 |
+| `assets/search-ui.js` | 5.1。文言の辞書（3.9） |
 | `assets/search-ui.css` | 5.2 |
 | `assets/search-data.js` | 変えない（placeholder などは各ページの adapter のオプションで渡す） |
 | `404.html` | 4.1。欄・結果・③・日刊への移動の配置、行の描画関数、③の語の照合 |
 | `tools/index.html` | 4.2。チップ、並べ替え、`renderItem` への `createCard` の接続、カタログの出し分け |
 | `game/index.html` | 4.3。NES の class、音、`renderItem` への `createCard` の接続 |
-| `job/assets/daily-ui.js` | 4.4。ヘッダーへの取り付け、号のページの遅延読み込み、`mount` の前の確定と IME の守り、3.8 の目印の書き込み |
+| `job/assets/daily-ui.js` | 4.4。ヘッダーへの取り付け、号のページの遅延読み込み、`mount` の前の確定と IME の守り、3.8 の目印の読み書き |
 | `job/assets/daily-base.css`・媒体の CSS | 4.4。小さい画面でヘッダーの欄を広げる、候補の枠と結果の見た目 |
 | `.github/scripts/daily_engine.py` | ポータルの節から入力欄を外して帯と案内にする。号のページにも遅延読み込みの入口を足す。日刊の HTML が読む共通 JS の版の定数（`DAILY_UI_VERSION`・`SEARCH_RUNTIME_VERSION` など）を上げる。全号の作り直しは 7章の手順で `main` で行う |
 | 共通 JS/CSS を読む全ページ | `?v=` を上げる（日刊の全号を含め、同じ公開単位で） |
