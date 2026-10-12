@@ -33,6 +33,32 @@
     w.addEventListener('hashchange', function () { if (take()) w.dispatchEvent(new Event('st-daily-handoff')); });
   })(window, location, history);
   </script>
+  <script>
+
+(function(w,d) {
+  var portal=true,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="../../assets/analytics.js" async></script>
   <title>日刊リテールテック／流通DXの速報ニュース | Retail Tech Daily</title>
@@ -513,8 +539,8 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../job/assets/retail-tech-daily.css?v=20261009_2">
-  <link rel="stylesheet" href="../../assets/search-ui.css?v=20261011_1">
+  <link rel="stylesheet" href="../../job/assets/retail-tech-daily.css?v=20261012_13">
+  <link rel="stylesheet" href="../../assets/search-ui.css?v=20261012_13">
 </head>
 <body id="top" data-daily-media="retailtechdaily">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -551,7 +577,7 @@
       <div class="header-actions">
         <form class="header-search" action="./#archiveSearch" method="get" role="search">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" autocomplete="off" placeholder="記事を検索">
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
         </form>
         <div class="header-menu">
@@ -626,12 +652,7 @@
     <section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
       <div class="section-head"><h2 class="section-title" id="archiveSearchTitle">記事を横断検索</h2><button type="button" class="archive-info-button" id="archiveSearchInfoOpen" aria-label="検索とプライバシーについて" aria-haspopup="dialog">ⓘ</button><span class="section-rule" aria-hidden="true"></span></div>
       <div id="archiveCommonSearch"></div>
-      <dialog class="archive-search-info" id="archiveSearchInfo" aria-labelledby="archiveSearchInfoTitle">
-        <div class="archive-info-head"><h2 id="archiveSearchInfoTitle">検索とプライバシー</h2><button type="button" id="archiveSearchInfoClose" aria-label="閉じる" autofocus>×</button></div>
-        <p id="archiveRankInfo">検索すると（Enter・虫眼鏡）、検索語と公開記事の情報を TypeSafe AI（Jev）のAPIへ送り、意味の近い記事を探します。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。<a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI のプライバシーポリシー</a></p>
-        <p>検索語はアクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。アクセス解析を停止した場合は送りません。</p>
-        <p id="archiveRankPrivacy">利用回数の制限のためIPアドレスを記録します。候補を開くと、検索語と開いたページを並び順の改善のために90日間記録します。</p>
-      </dialog>
+      <button type="button" class="archive-search-hint" id="archiveSearchHint" data-ja="ページ上部の検索欄で記事を探せます" data-en="Use the search box at the top to find articles">ページ上部の検索欄で記事を探せます</button>
     </section>
     <section class="archive-section" aria-labelledby="archiveTitle">
       <div class="section-head">
@@ -1167,10 +1188,10 @@
 
   <script src="../../assets/buy-me-oil.js"></script>
   <script src="../../assets/search-analytics.js?v=20261009_1"></script>
-  <script src="../../assets/japanese-search.js?v=20261012_8"></script>
+  <script src="../../assets/japanese-search.js?v=20261012_13"></script>
   <script src="../../assets/site-search.js?v=20261011_1"></script>
-  <script src="../../assets/search-ui.js?v=20261012_8"></script>
-  <script src="../../assets/search-data.js?v=20261012_8"></script>
-  <script src="../../job/assets/daily-ui.js?v=20261012_1"></script>
+  <script src="../../assets/search-ui.js?v=20261012_13"></script>
+  <script src="../../assets/search-data.js?v=20261012_13"></script>
+  <script src="../../job/assets/daily-ui.js?v=20261012_13"></script>
 </body>
 </html>

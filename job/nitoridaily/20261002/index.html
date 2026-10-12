@@ -2,6 +2,32 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="../../../assets/analytics.js" async></script>
   <title>2026年10月2日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily | tk.st</title>
@@ -437,7 +463,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261009_2">
+  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_13">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -467,7 +493,7 @@
       <div class="header-actions">
         <form class="header-search" action="../#archiveSearch" method="get" role="search">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" autocomplete="off" placeholder="記事を検索">
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
         </form>
         <div class="header-menu">
@@ -938,7 +964,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../assets/search-analytics.js?v=20261009_1"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_1"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_13"></script>
 </body>
 </html>
