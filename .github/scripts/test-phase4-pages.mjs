@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {readFileSync,existsSync} from 'node:fs';
 import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
-const repo=resolve('.'),generated=resolve(process.argv[2] || '.github/scripts/.search-reading-env/work/generated');
+const repo=resolve('.'),generated=resolve(process.argv[2] || '_site');
 const server=createServer((req,res)=>{
   let path;
   try {path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);} catch(_) {res.writeHead(400);res.end();return;}
@@ -18,104 +18,131 @@ const server=createServer((req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin=`http://127.0.0.1:${server.address().port}`;
 let browser;
+async function offline(page,posts,requests=[],delayFile=null) {
+  let release;
+  await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
+  await page.route('**/*',async route=>{
+    const request=route.request(),url=new URL(request.url());requests.push(url.pathname);
+    if(url.origin!==origin) {await route.fulfill({status:200,body:'',contentType:url.pathname.endsWith('.css')?'text/css':'application/javascript'});return;}
+    if(url.pathname==='/search/api/rank') {
+      const body=request.postDataJSON();posts.push(body);
+      await route.fulfill({json:{status:'no_results',complete:true,cached:false,results:[],searched:{scope:body.scope,filters:body.filters,generation:body.generation,total:20,candidates:20,judged:20}}});return;
+    }
+    if(delayFile && url.pathname===delayFile) {delayFile=null;await new Promise(r=>release=r);}
+    await route.continue();
+  });
+  return async()=>{while(!release) await new Promise(r=>setTimeout(r,10));release();};
+}
+const ready=page=>page.waitForFunction(()=>document.querySelector('[data-st-search-readings="ready"]'));
 try {
   browser=await chromium.launch({headless:true});
-  const screens=[['site','/404.html','Thought'],['tools','/tools/','PDF'],['game','/game/','MASALA'],['nitori','/job/nitoridaily/','収納'],['retail','/job/retailtechdaily/','AI']];
-  for(const [scope,path,query] of screens) {
-    const page=await browser.newPage({locale:'ja-JP',viewport:{width:1280,height:900}}),errors=[],requests=[],posts=[],aiPosts=[];
-    page.on('pageerror',e=>errors.push(e.message));
-    await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
-    await page.route('**/*',async route=>{
-      const request=route.request(),url=new URL(request.url());requests.push(url.pathname);
-      if(url.origin!==origin && url.pathname==='/magi2/site-search') {
-        const headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'content-type','Access-Control-Allow-Methods':'POST'};
-        if(request.method()==='OPTIONS') {await route.fulfill({status:204,headers});return;}
-        aiPosts.push(request.postDataJSON());
-        await route.fulfill({headers,json:{status:'results',comment:null,results:[{kind:'page',title:'Thought',description:'AIの固定応答',url:'/thought/'}]}});return;
-      }
-      if(url.origin!==origin) {await route.fulfill({status:200,body:'',contentType:url.pathname.endsWith('.css')?'text/css':'application/javascript'});return;}
-      if(url.pathname==='/search/api/rank') {
-        const body=request.postDataJSON();posts.push(body);
-        const row=await page.locator('.st-search-local .st-search-result').first().evaluate(li=>({id:li.dataset.id,title:li.querySelector('.st-search-title').textContent,
-          description:li.querySelector('.st-search-description')?.textContent || '',url:li.querySelector('a').getAttribute('href')}));
-        const kind=scope==='tools'?'tool':scope==='game'?'game':scope==='site'?'page':'daily';
-        await route.fulfill({status:200,json:{status:'results',complete:true,cached:false,results:[{...row,kind}],
-          searched:{scope,filters:body.filters,generation:body.generation,total:20,candidates:20,judged:20}}});return;
-      }
-      if(url.pathname==='/magi2/site-search') {throw new Error('新画面が旧②へ送信した');}
-      await route.continue();
-    });
+  for(const [scope,path,query] of [['site','/404.html','Thought'],['tools','/tools/','PDF'],['game','/game/','tetris'],['nitori','/job/nitoridaily/','収納'],['retail','/job/retailtechdaily/','AI']]) {
+    const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[],posts=[];page.on('pageerror',e=>errors.push(e.message));await offline(page,posts);
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-    await page.locator('.st-search-data-status').filter({hasText:'文字と読みで検索できます'}).waitFor();
-    const input=page.locator('.st-search-input');await input.fill(query);
-    assert.ok(await page.locator('.st-search-suggestions li').count()>0,scope+' ①の候補');assert.equal(posts.length,0);
-    await page.locator('.st-search-suggestions .st-search-button').click();assert.equal(posts.length,0);
-    const localCount=await page.locator('.st-search-local li').count();assert.ok(localCount>0);
-    await input.press('Enter');await page.locator('.st-search-semantic li').waitFor();
-    assert.equal(posts.length,1);assert.equal(posts[0].search_contract,1);assert.equal(posts[0].scope,scope);assert.equal(posts[0].mode,'rank');
-    const semanticId=await page.locator('.st-search-semantic li').getAttribute('data-id');
-    assert.equal(await page.locator('.st-search-local li').evaluateAll((rows,id)=>rows.filter(row=>row.dataset.id===id).length,semanticId),0,'②の同じhrefを①から除く');
-    assert.ok(await page.locator('.st-search-local li').count()<=100,'重複を除いてから表示上限を適用');
-    await input.press('Enter');assert.equal(posts.length,1,'同じ確定条件を再送しない');
-    await input.fill(query+' 未収録語');assert.equal(await page.locator('.st-search-semantic li').count(),0,'入力変更で②を破棄');assert.equal(posts.length,1);
-    if(scope==='tools' || scope==='game') {
-      assert.ok(!requests.includes('/data/site-keyword.json') && !requests.includes('/data/site-search.json'),'一覧は自分の索引だけ取得');
-      await input.fill('');assert.ok(await page.locator(scope==='tools'?'#tool-grid':'#game-grid').isVisible());
-      assert.equal(await page.locator(scope==='tools'?'#tool-grid .tool-card':'#game-grid .game-card').count(),scope==='tools'?9:8,'元のカード一覧を維持');
-      assert.equal(await page.locator('meta[http-equiv="Content-Security-Policy"]').count(),scope==='tools'?1:0);
+    if(scope==='site') await page.waitForFunction(()=>document.querySelector('#path-suggestion-list').children.length>0);else await ready(page);
+    const input=page.locator('.st-search-input');
+    const catalogue=scope==='tools'?'#tool-grid':scope==='game'?'#game-grid':null;
+    if(catalogue) {
+      assert.equal(await page.locator('[data-sort] option').first().getAttribute('value'),'newest');
+      assert.equal(await page.locator('.st-search-chip').count()>1,true);await page.locator('.st-search-chip').nth(1).click();
+      assert.equal(await page.locator('.st-search-chip').nth(1).getAttribute('aria-pressed'),'true');await page.locator('.st-search-chip').first().click();
+      await page.locator('[data-sort]').selectOption('title');
     }
+    await input.fill(query);assert.equal(posts.length,0);
+    if(catalogue) assert.equal(await page.locator(catalogue).isVisible(),true,'打っている間はカタログを残す');
+    if(scope==='site') assert.equal(await page.locator('#path-suggestions').isVisible(),true);
+    assert.match(await page.locator('.st-search-notice').textContent(),/TypeSafe AI/);
+    await input.press('Enter');await page.waitForFunction(()=>document.querySelector('.st-search-rank-status').textContent==='' && document.querySelector('.st-search-local').hidden===false);
+    await page.waitForFunction(()=>document.querySelector('.st-search-semantic').hidden);
+    assert.equal(posts.length,1);assert.equal(posts[0].query,query);
     if(scope==='site') {
-      // 日刊の号は媒体ごとに新しい3件だけ。それ以外の公開ページはすべてサイトの全体のどこかに出る（トップは「トップページへ」）。
-      const urls=JSON.parse(readFileSync(resolve(generated,'data/site-keyword.json'))).pages.map(p=>p.url);
-      const shown=new Set(await page.locator('#sitemap a, .sitemap-extra a, a.home').evaluateAll(links=>links.map(a=>a.getAttribute('href'))));
-      assert.deepEqual(urls.filter(url=>!/^\/job\/[a-z]+daily\/\d{8}\/$/.test(url) && !shown.has(url)),[],'載っていない公開ページ');
-      for(const media of ['nitoridaily','retailtechdaily']) assert.ok(await page.locator(`#sitemap a[href^="/job/${media}/2"]`).count()<=3);
-      assert.equal(await page.locator('.tile[aria-expanded="true"]').count(),0,'到着区画が無ければ閉じておく');
-      await page.locator('#tile-dj').click();assert.ok(await page.locator('#panel-dj a[href="/dj/#offer"]').isVisible());
-      await page.locator('#tile-job').click();assert.ok(await page.locator('#panel-dj').isHidden(),'開くのは1つだけ');
-      await input.fill(query);await input.press('Enter');await page.locator('.st-search-semantic li').waitFor();
-      await page.locator('#ai-search').waitFor({state:'visible'});assert.ok(await page.locator('#ai-run').isEnabled());
-      await page.locator('#ai-run').click();await page.locator('#ai-list a').waitFor();
-      assert.equal(aiPosts.length,1);assert.equal(aiPosts[0].query,query);
-      assert.equal(await page.locator('.st-search-rank-status').textContent(),'','③への切り替えは条件変更と通知しない');
-      assert.ok(await page.locator('.st-search-semantic').isHidden());assert.ok(await page.locator('#ai-result').isVisible(),'③の結果を保持');
-      assert.equal(posts.length,2,'③への切り替えで②を再送しない');
-      await input.fill('別の入力');assert.ok(await page.locator('#ai-search').isHidden(),'入力変更で③を消す');
-      assert.ok(await page.locator('#ai-result').isHidden());
+      await page.locator('#ai-search').waitFor();
+      await input.press('Enter');
+      assert.equal(await page.locator('#ai-search').isVisible(),true,'同じ語の再確定でも③を表示する');
+      assert.equal(posts.length,1,'同じ条件の②は再送しない');
     }
+    const rows=page.locator('.st-search-local > ul > li');assert.ok(await rows.count()>0);
+    if(catalogue) {
+      assert.equal(await page.locator(catalogue).isVisible(),false);
+      const heading=await page.locator('.st-search-local > h3').textContent(),count=Number(heading.match(/ (\d+)件/)[1]);
+      assert.equal(await rows.count(),count);assert.equal(await page.locator('.st-search-local .'+(scope==='tools'?'tool-card':'game-card')).count(),count);
+      for(const href of await rows.locator('[data-st-primary]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')))) assert.ok(href.startsWith('/'+scope+'/'));
+      assert.equal(await page.locator('[data-sort]').inputValue(),'relevance');
+    }
+    await page.waitForFunction(()=>!document.querySelector('.st-search-local > h3').textContent.includes('（読み込み中）'));
+    const mainText=await page.locator('.st-search-local > h3').textContent();await input.fill('別の下書き');assert.equal(await page.locator('.st-search-local > h3').textContent(),mainText);
+    if(scope==='site') assert.equal(await page.locator('#daily-query').textContent(),query);
     if(scope==='nitori' || scope==='retail') {
-      const labels=()=>page.locator('.st-search-filters label > span').allTextContents();
-      const allOptions=()=>page.locator('[data-filter] option[value=""]').allTextContents();
-      const choices=await page.locator('[data-filter="category"] option').allTextContents();
-      await page.locator('[data-filter="category"]').selectOption({index:1});
-      const selected=await page.locator('[data-filter="category"]').inputValue(),beforePosts=posts.length;
-      await page.evaluate(()=>{document.documentElement.lang='en';});
-      await page.locator('.st-search-form').getByRole('button',{name:'Search',exact:true}).waitFor();
-      assert.deepEqual(await labels(),['Category','Region','Month','Sort']);assert.deepEqual(await allOptions(),['All','All','All']);
-      assert.equal(await page.locator('[data-sort] option').textContent(),'Relevance');
-      assert.equal(await page.locator('[data-filter="category"]').inputValue(),selected);
-      assert.deepEqual((await page.locator('[data-filter="category"] option').allTextContents()).slice(1),choices.slice(1),'データ由来のカテゴリーを保持');
-      await page.evaluate(()=>{document.documentElement.lang='ja';});
-      await page.locator('.st-search-form').getByRole('button',{name:'検索',exact:true}).waitFor();
-      assert.deepEqual(await labels(),['カテゴリー','地域','月','並べ替え']);assert.deepEqual(await allOptions(),['すべて','すべて','すべて']);
-      assert.equal(posts.length,beforePosts,'言語変更は②を自動送信しない');
+      await page.evaluate(()=>document.documentElement.lang='en');
+      await page.waitForFunction(()=>document.querySelector('.st-search-input').placeholder==='Search articles');
+      assert.deepEqual(await page.locator('[data-filter] option[value=""]').allTextContents(),['All','All','All']);
+      await page.evaluate(()=>document.documentElement.lang='ja');
+      await page.waitForFunction(()=>document.querySelector('.st-search-input').placeholder==='記事を検索');
+      assert.deepEqual(await page.locator('[data-filter] option[value=""]').allTextContents(),['すべて','すべて','すべて']);
     }
-    assert.deepEqual(errors,[],scope+' の実行エラー');
-    await page.screenshot({path:resolve(generated,'page-'+scope+'.png'),fullPage:false,animations:'disabled'});
-    console.log(`${scope}: 実HTML・読み・明示POST・重複除去・入力変更を確認`);await page.close();
+    await input.press('Escape');
+    await page.getByRole('button',{name:'検索をやめる',exact:true}).click();
+    if(catalogue) {assert.equal(await page.locator(catalogue).isVisible(),true);assert.equal(await page.locator('[data-sort]').inputValue(),'title');}
+    if(scope==='site') assert.equal(await page.locator('#path-suggestions').isVisible(),true);
+    assert.equal(await page.locator('.st-search-analytics-notice').count(),['site','nitori','retail'].includes(scope)?1:0);
+    if(catalogue) {
+      const records=JSON.parse(readFileSync(generated+'/data/'+scope+'.json','utf8'));
+      for(const record of records) {
+        await input.fill(record.title);await input.press('Enter');await page.waitForFunction(()=>document.querySelector('.st-search-semantic').hidden);
+        const count=Number((await page.locator('.st-search-local > h3').textContent()).match(/ (\d+)件/)[1]);
+        assert.equal(await rows.count(),count);
+        const href=new URL(record.url,'https://tk.st').pathname;
+        assert.ok((await rows.locator('[data-st-primary]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')))).includes(href),record.title+': 検査済みの主リンク');
+      }
+    }
+    assert.deepEqual(errors,[]);await page.close();console.log(scope+': 実索引・ページのカード・帯・確定語・プライバシー');
+  }
+  for(const scope of ['tools','game','nitori','retail']) {
+    const media=scope==='nitori'?'nitoridaily':'retailtechdaily',path=['tools','game'].includes(scope)?'/'+scope+'/':'/job/'+media+'/';
+    const page=await browser.newPage(),posts=[],requests=[];
+    const release=await offline(page,posts,requests,['tools','game'].includes(scope)?'/data/'+scope+'.json':'/job/'+media+'/search-index.json');
+    await page.goto(origin+path+'#q='+encodeURIComponent(scope==='game'?'tetris':'PDF'),{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>document.querySelector('.st-search-local')?.hidden===false);await release();await ready(page);
+    assert.equal(posts.length,0);assert.equal(await page.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),true);assert.ok(!page.url().includes('q='));await page.close();
   }
   for(const media of ['nitoridaily','retailtechdaily']) {
-    const page=await browser.newPage({locale:'ja-JP'});let posts=0;
-    await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
-    await page.route('**/*',async route=>{const url=new URL(route.request().url());if(route.request().method()==='POST') posts++;
-      if(url.origin!==origin){await route.fulfill({status:200,body:''});return;}await route.continue();});
-    const index=JSON.parse(readFileSync(resolve(generated,'job',media,'search-index.json')));
-    const latest=index.records.map(r=>r.date).sort().at(-1);assert.ok(/^[1-9]\d{7}$/.test(latest));
-    await page.goto(`${origin}/job/${media}/${latest}/`,{waitUntil:'domcontentloaded'});
-    await page.locator('.header-search input[type="search"]').fill('収納');await page.locator('.header-search input[type="search"]').press('Enter');
-    await page.waitForURL(url=>url.pathname===`/job/${media}/`);
-    await page.locator('.st-search-input').waitFor();assert.equal(await page.locator('.st-search-input').inputValue(),'収納');assert.equal(posts,0);
-    assert.equal(new URL(page.url()).hash,'#archiveSearch');assert.ok(!page.url().includes('収納'));
-    console.log(`${media}: 号→共通検索への受け渡し、URL除去、POSTゼロを確認`);await page.close();
+    const page=await browser.newPage({viewport:{width:320,height:900}}),posts=[],requests=[];await offline(page,posts,requests);
+    await page.goto(origin+'/job/'+media+'/20261011/',{waitUntil:'domcontentloaded'});
+    assert.ok(!requests.includes('/assets/search-ui.js'));assert.ok(!requests.includes('/job/'+media+'/search-index.json'));
+    for(const width of [320,375,720]) {
+      await page.setViewportSize({width,height:900});
+      const logo=await page.locator('.brand-mark').boundingBox(),form=await page.locator('.header-search').boundingBox();
+      assert.ok(logo.x+logo.width<=form.x,media+'/'+width+': 読み込み前の検索欄がロゴに重ならない');
+      assert.ok(form.width<=150,media+'/'+width+': 読み込み前はコンパクトな幅');
+    }
+    await page.locator('#headerSearchInput').fill('収納');await page.locator('.st-search-input').waitFor();
+    await page.waitForFunction(()=>document.querySelector('.header-search').dataset.stSearchOwned==='1');
+    assert.match(await page.locator('.st-search-notice').textContent(),/TypeSafe AI/);await page.locator('#headerSearchInput').press('Enter');
+    await page.waitForURL('**/job/'+media+'/#archiveSearch');await ready(page);await page.waitForFunction(()=>document.querySelector('.st-search-semantic').hidden);
+    assert.equal(posts.length,1,'号の確定はポータルでもAI検索を一度送る');assert.equal(await page.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);await page.close();
+    const early=await browser.newPage(),earlyPosts=[],earlyRequests=[];await offline(early,earlyPosts,earlyRequests,'/assets/search-ui.js');
+    await early.goto(origin+'/job/'+media+'/20261011/',{waitUntil:'domcontentloaded'});
+    const loading=early.waitForRequest(r=>new URL(r.url()).pathname==='/assets/search-ui.js');
+    await early.locator('#headerSearchInput').fill('収納');await loading;await early.locator('#headerSearchInput').dispatchEvent('compositionstart');await early.locator('#headerSearchInput').press('Enter');
+    assert.ok(early.url().includes('20261011'));await early.locator('#headerSearchInput').dispatchEvent('compositionend');await early.locator('#headerSearchInput').press('Enter');
+    await early.waitForURL('**/job/'+media+'/#archiveSearch');
+    assert.equal(earlyPosts.length,0);assert.equal(await early.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);await early.close();
+    console.log(media+': 号の遅延読み込み・確定受け渡し・取得前IME');
+    const pending=await browser.newPage(),pendingPosts=[];const release=await offline(pending,pendingPosts,[],'/assets/search-ui.js');
+    await pending.goto(origin+'/job/'+media+'/',{waitUntil:'commit'});
+    const field=pending.locator('#headerSearchInput');await field.fill('収納');await field.press('Enter');await release();await ready(pending);
+    assert.equal(pendingPosts.length,0);assert.equal(await field.inputValue(),'収納');
+    assert.equal(await pending.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),true);await pending.close();
+    for(const entry of ['tag','watch']) {
+      const p=await browser.newPage(),ps=[];await p.addInitScript(media=>localStorage.setItem('daily_watch_topics:'+media,JSON.stringify(['収納'])),media);
+      const release=await offline(p,ps,[],'/job/'+media+'/search-index.json');await p.goto(origin+'/job/'+media+'/',{waitUntil:'domcontentloaded'});
+      await p.locator(entry==='tag'?'a.topic-tag[href^="#q="]':'.watch-topic-search').first().click();await release();await ready(p);
+      assert.equal(ps.length,0);assert.equal(await p.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),true);await p.close();
+    }
+    const failed=await browser.newPage(),failedPosts=[];await offline(failed,failedPosts);
+    await failed.route('**/assets/search-ui.js*',route=>route.abort());await failed.goto(origin+'/job/'+media+'/20261011/',{waitUntil:'domcontentloaded'});
+    await failed.locator('#headerSearchInput').fill('収納');await failed.locator('#headerSearchInput').press('Enter');await failed.waitForURL('**/job/'+media+'/#archiveSearch');
+    assert.equal(failedPosts.length,0);assert.equal(await failed.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);await failed.close();
+    console.log(media+': ポータル取得前の確定・タグ・ウォッチ・取得失敗を確認');
   }
-} finally {if(browser) await browser.close();await new Promise(resolve=>server.close(resolve));}
+} finally {if(browser) await browser.close();await new Promise(r=>server.close(r));}

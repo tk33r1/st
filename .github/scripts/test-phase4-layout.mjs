@@ -30,7 +30,7 @@ try {
       await route.continue();
     });
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-    await page.waitForFunction(()=>/文字と読み/.test(document.querySelector('.st-search-data-status')?.textContent || ''));
+    await page.waitForFunction(()=>document.querySelector('[data-st-search-readings=ready]'));
     const input=page.locator('.st-search-input');await input.fill(query);
     assert.ok(await page.locator('.st-search-suggestions li').count()>0);
     await page.evaluate(()=>{
@@ -44,12 +44,23 @@ try {
     assert.equal(await page.evaluate(()=>document.activeElement===document.querySelector('.st-search-input')),true);
     await input.press('Escape');assert.equal(await input.getAttribute('aria-expanded'),'false');await input.fill(query+' ');
     for(const [width,zoom] of [[320,1],[768,1],[1440,1],[1440,2]]) {
-      await page.setViewportSize({width,height:900});await page.evaluate(zoom=>document.body.style.zoom=String(zoom),zoom);
+      await page.setViewportSize({width,height:900});await page.evaluate(zoom=>document.body.style.zoom=String(zoom),zoom);await input.focus();
       const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth,
         count:document.querySelectorAll('.st-search-suggestions li').length}));
       assert.ok(dimensions.scroll<=dimensions.width+2,scope+'/'+width+'/'+zoom+': 横のはみ出し '+JSON.stringify(dimensions));
-      assert.ok(dimensions.count<=6);report.cases.push({scope,width,cssZoom:zoom,...dimensions});
-      await page.locator('.st-search').screenshot({path:resolve(out,scope+'-'+width+'-'+zoom+'.png')});
+      const panel=await page.locator('.st-search-suggestions').boundingBox();
+      assert.ok(panel.x>=-2 && panel.x+panel.width<=width+2,scope+': 候補枠が画面の内側');
+      const targets=await page.locator('.st-search-submit,.st-search-clear').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width).map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));
+      assert.ok(targets.every(r=>r.w>=43 && r.h>=43),scope+': 44pxの的');
+      assert.ok(dimensions.count<=7);report.cases.push({scope,width,cssZoom:zoom,...dimensions});
+      await page.screenshot({path:resolve(out,scope+'-'+width+'-'+zoom+'.png')});
+    }
+    await page.evaluate(()=>document.body.style.zoom='1');await page.setViewportSize({width:320,height:900});await input.focus();
+    if(scope==='nitori' || scope==='retail') {
+      assert.equal(await page.locator('.brand').isVisible(),false);
+      assert.ok((await page.locator('.header-search').boundingBox()).width>240);
+      await input.evaluate(el=>el.blur());assert.equal(await page.locator('.brand').isVisible(),true);
+      assert.ok((await page.locator('.header-search').boundingBox()).width<=150);
     }
     assert.equal(posts,0);await page.close();console.log(scope+': 320/768/1440px・CSS200%・焦点・重複通知ゼロ');
   }

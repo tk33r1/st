@@ -231,7 +231,7 @@ def render_site_header(config, brand_href, search_action, menu_links, sibling_pr
       <div class="header-actions">
         <form class="header-search" action="{esc(search_action)}" method="get" role="search">
           <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" autocomplete="off" placeholder="記事を検索">
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
           <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
         </form>
         <div class="header-menu">
@@ -294,11 +294,11 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261012_1'
+DAILY_UI_VERSION = '20261012_11'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
-SEARCH_RUNTIME_VERSION = '20261012_8'
-DAILY_CSS_VERSION = '20261009_2'
+SEARCH_RUNTIME_VERSION = '20261012_11'
+DAILY_CSS_VERSION = '20261012_11'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
 # URL に q（クエリのすべての q、または #q=）があれば、受け取るかどうかに関係なく先に消して #archiveSearch にし、
@@ -337,6 +337,35 @@ DAILY_HANDOFF_SCRIPT = r"""<script>
 </script>"""
 
 
+
+# 検索の本体が取得中でも確定を取りこぼさず、URLのクエリにも残さない。
+# 告知をまだ表示していないので、ここで受ける確定は②の許可を持たない。
+DAILY_EARLY_SEARCH_SCRIPT = r"""
+(function(w,d) {
+  var portal=__PORTAL__,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+"""
+
+
 def render_head(config, rel, title, social_title, description, canonical,
                 og_type, og_image, jsonld_str, extra_links=(), handoff=False):
     """号ページとポータルで共通の <head>。
@@ -351,7 +380,10 @@ def render_head(config, rel, title, social_title, description, canonical,
     extra_html = ''.join('  ' + tag + '\n' for tag in extra_links)
     handoff_html = '  ' + DAILY_HANDOFF_SCRIPT.replace('\n', '\n  ') + '\n' if handoff else ''
     return f"""  <meta charset="UTF-8">
-{handoff_html}  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{handoff_html}  <script>
+{DAILY_EARLY_SEARCH_SCRIPT.replace('__PORTAL__', 'true' if handoff else 'false')}
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="{rel}assets/analytics.js" async></script>
   <title>{title}</title>
   <meta name="description" content="{description}">
@@ -1963,7 +1995,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   {site_footer_html}
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../assets/search-analytics.js?v={SEARCH_ANALYTICS_VERSION}"></script>
   <script src="../../../job/assets/daily-ui.js?v={DAILY_UI_VERSION}"></script>
 </body>
 </html>
@@ -2083,12 +2114,7 @@ def render_top_index_html(config, articles_history):
     archive_tools_html = f'''<section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
       <div class="section-head"><h2 class="section-title" id="archiveSearchTitle">記事を横断検索</h2><button type="button" class="archive-info-button" id="archiveSearchInfoOpen" aria-label="検索とプライバシーについて" aria-haspopup="dialog">ⓘ</button><span class="section-rule" aria-hidden="true"></span></div>
       <div id="archiveCommonSearch"></div>
-      <dialog class="archive-search-info" id="archiveSearchInfo" aria-labelledby="archiveSearchInfoTitle">
-        <div class="archive-info-head"><h2 id="archiveSearchInfoTitle">検索とプライバシー</h2><button type="button" id="archiveSearchInfoClose" aria-label="閉じる" autofocus>×</button></div>
-        <p id="archiveRankInfo">検索すると（Enter・虫眼鏡）、検索語と公開記事の情報を TypeSafe AI（Jev）のAPIへ送り、意味の近い記事を探します。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。<a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI のプライバシーポリシー</a></p>
-        <p>検索語はアクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。アクセス解析を停止した場合は送りません。</p>
-        <p id="archiveRankPrivacy">利用回数の制限のためIPアドレスを記録します。候補を開くと、検索語と開いたページを並び順の改善のために90日間記録します。</p>
-      </dialog>
+      <button type="button" class="archive-search-hint" id="archiveSearchHint" data-ja="ページ上部の検索欄で記事を探せます" data-en="Use the search box at the top to find articles">ページ上部の検索欄で記事を探せます</button>
     </section>'''
 
     portal_x_url = x_profile_url(config)
@@ -2248,7 +2274,7 @@ def render_top_index_html(config, articles_history):
 <html lang="ja">
 <head>
 {portal_head_html}
-  <link rel="stylesheet" href="../../assets/search-ui.css?v={SITE_SEARCH_VERSION}">
+  <link rel="stylesheet" href="../../assets/search-ui.css?v={SEARCH_RUNTIME_VERSION}">
 </head>
 <body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
