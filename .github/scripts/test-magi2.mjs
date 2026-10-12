@@ -32,7 +32,7 @@ function worker(stream = completion(), upstream = null) {
   const ctx = vm.createContext({
     aiModels: JSON.parse(read('config/ai-models.json')), bundledContext: cards,
     Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL,
-    crypto: webcrypto, setTimeout, clearTimeout, console: { log() {} },
+    crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} },
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
       const replaced = upstream && await upstream(url, options);
@@ -1559,7 +1559,7 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
 
 test('3画面のSSEは分割CRLF・終端・途中EOFを同じように読む', async () => {
   for (const [src, end] of [[mobile, '// ---- 画像添付'], [home, '// --- マルチモーダル入力'], [dj, '// 相談の下には FAQ']]) {
-    const ctx = vm.createContext({ TextDecoder }); vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END') + '\n' + between(src, 'async function parseSSE(', end), ctx);
+    const ctx = vm.createContext({ TextDecoder, setTimeout, clearTimeout }); vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END') + '\n' + between(src, 'async function parseSSE(', end), ctx);
     let text = '', completed = false, chunks = 0, cancelled = false;
     const data = (event('integrated', { delta: '答え' }) + event('done', {})).replaceAll('\n', '\r\n');
     const body = new ReadableStream({ start(c) { for (const byte of encode(data)) c.enqueue(Uint8Array.of(byte)); }, cancel() { cancelled = true; } });
@@ -1568,6 +1568,183 @@ test('3画面のSSEは分割CRLF・終端・途中EOFを同じように読む', 
     completed = false;
     await ctx.parseSSE(new Response(event('integrated', { delta: 'partial' })).body, { done() { completed = true; } });
     assert.equal(completed, false);
+  }
+});
+
+// 受信と再生を別々に進め、300秒の境界も実時間を待たず確認する。
+function streamClock() {
+  let now = 0, sequence = 0;
+  const timers = new Map();
+  const clock = {
+    Date: class extends Date { static now() { return now; } },
+    setTimeout(fn, ms) { const id = ++sequence; timers.set(id, { fn, at: now + ms }); return id; },
+    clearTimeout(id) { timers.delete(id); },
+    timers,
+    async advance(ms) {
+      const end = now + ms;
+      for (;;) {
+        const next = [...timers].sort((a, b) => a[1].at - b[1].at)[0];
+        if (!next || next[1].at > end) break;
+        now = next[1].at; timers.delete(next[0]); next[1].fn(); await tick();
+      }
+      now = end; await tick();
+    },
+  };
+  return clock;
+}
+function streamClient(src, clock = streamClock()) {
+  const ctx = vm.createContext({ ...clock, TextDecoder });
+  if (src !== dj) vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+  vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END') + '\n'
+    + between(src, 'async function parseSSE(', src === home ? '// --- マルチモーダル入力' : src === mobile ? '// ---- 画像添付' : '// 相談の下には FAQ'), ctx);
+  const ctrl = new AbortController(), notices = [], seen = [];
+  let timedOut = false, replaying = false, alive = true, controller;
+  const watch = ctx.createMagiStreamWatch(ctrl, 0, { alive: () => alive,
+    notice(value) { notices.push({ value, time: clock.Date.now() }); }, timeout() { timedOut = true; }, replaying() { replaying = true; } });
+  const body = new ReadableStream({ start(c) { controller = c; } });
+  const handlers = { signal: ctrl.signal, streamWatch: watch, alive: () => alive };
+  for (const ev of ['classification','title','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done','error']) {
+    handlers[ev] = data => seen.push({ ev, data, time: clock.Date.now() });
+  }
+  return { ctx, clock, ctrl, notices, seen, watch, handlers,
+    get timedOut() { return timedOut; }, get replaying() { return replaying; },
+    drop() { alive = false; ctrl.abort(); },
+    push(text) { controller.enqueue(encode(text)); }, close() { controller.close(); },
+    parse() { return ctx.parseSSE(body, handlers).finally(() => watch.finish()); },
+  };
+}
+
+test('先行0: Workerは分類前に2KiBを送り、10秒のpingを完了・失敗・切断で解除する', async () => {
+  for (const result of ['done', 'error', 'cancel']) {
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    const w = worker(completion(), async (url, options) => {
+      if (!options?.body || JSON.parse(options.body).stream) return;
+      await gate;
+      if (result === 'error') return Response.json({ error: {} }, { status: 401 });
+    });
+    const intervals = new Map();
+    w.ctx.setInterval = (fn, ms) => { const id = {}; intervals.set(id, { fn, ms }); return id; };
+    w.ctx.clearInterval = id => intervals.delete(id);
+    const res = await w.chat([{ role: 'user', content: '相談' }]), reader = res.body.getReader();
+    assert.equal(res.headers.get('Cache-Control'), 'no-cache, no-transform');
+    assert.equal(res.headers.get('X-Accel-Buffering'), 'no');
+    const first = (await reader.read()).value;
+    assert.equal(first.length, 2048); assert.equal(new TextDecoder().decode(first)[0], ':');
+    assert.equal(intervals.size, 1);
+    const ping = [...intervals.values()][0]; assert.equal(ping.ms, 10000);
+    for (let i = 0; i < 3; i++) { ping.fn(); assert.equal(new TextDecoder().decode((await reader.read()).value), ': ping\n\n'); }
+    if (result === 'cancel') { await reader.cancel(); assert.equal(intervals.size, 0); }
+    release();
+    if (result !== 'cancel') {
+      let text = ''; for (;;) { const part = await reader.read(); if (part.done) break; text += new TextDecoder().decode(part.value); }
+      assert.match(text, new RegExp('event: ' + result));
+    }
+    await Promise.all(w.waits); assert.equal(intervals.size, 0);
+  }
+});
+
+test('先行0: 3画面は合図だけの待ちを打ち切らず、通常の受信は即時表示する', async () => {
+  for (const src of [home, mobile, dj]) {
+    const c = streamClient(src), pending = c.parse();
+    c.push(': padding\n\n'); await tick();
+    for (let i = 0; i < 12; i++) { await c.clock.advance(10000); c.push(': ping\n\n'); await tick(); }
+    assert.equal(c.seen.length, 0); assert.equal(c.timedOut, false); assert.equal(c.notices.some(x => x.value), false);
+    c.push(event('persona', { text: '意見' }) + event('integrated', { delta: '答え' }) + event('done', {})); await pending;
+    assert.deepEqual(c.seen.map(x => x.ev), ['persona', 'integrated', 'done']);
+    assert.ok(c.seen.every(x => x.time === 120000)); assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: 全部・途中から溜めた200秒後の受信も順序・12文字・30ms・700msで再生する', async () => {
+  for (const src of [home, mobile, dj]) for (const late of [false, true]) {
+    const c = streamClient(src), pending = c.parse();
+    if (late) { c.push(': padding\n\n'); await tick(); }
+    await c.clock.advance(15000); assert.equal(c.notices.at(-1).value, true);
+    await c.clock.advance(185000); assert.equal(c.timedOut, false);
+    const answer = 'abcdefghijkl😀mnopqrstuvwxyz';
+    c.push(event('title', { text: '題' }) + event('persona', { text: '意見1' }) + event('judge', {})
+      + event('integrated', { delta: answer }) + event('pages', {}) + event('suggest', { text: '次' }) + event('done', {}));
+    await tick(); assert.equal(c.notices.at(-1).value, false); assert.equal(c.replaying, true);
+    assert.deepEqual(c.seen.map(x => x.ev), ['title']);
+    await c.clock.advance(699); assert.equal(c.seen.length, 1);
+    await c.clock.advance(1); assert.equal(c.seen.at(-1).ev, 'persona');
+    await c.clock.advance(700); assert.equal(c.seen.at(-1).ev, 'judge');
+    await c.clock.advance(30); assert.equal(c.seen.at(-1).data.delta, 'abcdefghijkl');
+    await c.clock.advance(20000); await pending;
+    assert.equal(c.seen.filter(x => x.ev === 'integrated').map(x => x.data.delta).join(''), answer);
+    assert.deepEqual(c.seen.slice(-3).map(x => x.ev), ['pages', 'suggest', 'done']);
+    assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: 295秒で受信を終えた長い回答は300秒後も再生し、20秒以内に完了する', async () => {
+  for (const src of [home, mobile, dj]) for (const terminal of ['done', 'error']) {
+    const c = streamClient(src), pending = c.parse();
+    await c.clock.advance(295000);
+    const answer = 'あ😀'.repeat(6000);
+    c.push(event('persona', { text: '意見' }) + event('integrated', { delta: answer }) + event(terminal, {})); await tick();
+    await c.clock.advance(5001); assert.equal(c.timedOut, false); assert.equal(c.ctrl.signal.aborted, false);
+    assert.notEqual(c.seen.at(-1)?.ev, terminal);
+    await c.clock.advance(15000); await pending;
+    assert.equal(c.seen.at(-1).ev, terminal); assert.ok(c.seen.at(-1).time <= 315000.001);
+    assert.equal(c.seen.filter(x => x.ev === 'integrated').map(x => x.data.delta).join(''), answer);
+    assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: 3画面の再生中の停止は受信済みを即時反映し、done受信後は成功のまま終える', async () => {
+  for (const src of [home, mobile, dj]) for (const terminal of [false, true]) {
+    const c = streamClient(src);
+    const pending = c.parse(); const result = pending.then(() => 'done', error => error.name);
+    await c.clock.advance(20000);
+    c.push(event('persona', { text: '受信済み' }) + event('integrated', { delta: '受信済みの回答' }) + (terminal ? event('done', {}) : '')); await tick();
+    assert.equal(c.seen.length, 0); c.ctrl.abort();
+    assert.equal(await result, terminal ? 'done' : 'AbortError');
+    assert.deepEqual(c.seen.map(x => x.ev), terminal ? ['persona','integrated','done'] : ['persona','integrated']);
+    assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: 無通信70秒でも続け、全体300秒で受信済みを反映して打ち切る', async () => {
+  for (const src of [home, mobile, dj]) for (const partial of [false, true]) {
+    const c = streamClient(src), result = c.parse().then(() => 'done', err => err.name);
+    await c.clock.advance(20000);
+    if (partial) { c.push(event('persona', { text: '受信済み' })); await tick(); }
+    await c.clock.advance(70000); assert.equal(c.ctrl.signal.aborted, false);
+    await c.clock.advance(209900); assert.equal(c.timedOut, false);
+    // 期限の直前に届いた列も捨てない。
+    if (partial) { c.push(event('integrated', { delta: '途中' })); await tick(); }
+    await c.clock.advance(100); assert.equal(await result, 'AbortError'); assert.equal(c.timedOut, true);
+    if (partial) assert.equal(c.seen.at(-1).data.delta, '途中');
+    assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: 会話の切り替えでは古い再生列を反映せず、切断・EOFでは受信済みを残す', async () => {
+  for (const src of [home, mobile, dj]) for (const ending of ['drop', 'disconnect', 'eof']) {
+    const c = streamClient(src), result = c.parse().then(() => 'done', err => err.message);
+    await c.clock.advance(20000); c.push(event('persona', { text: '受信済み' })); await tick();
+    if (ending === 'drop') c.drop(); else if (ending === 'eof') c.close(); else c.ctrl.abort();
+    await result;
+    assert.equal(c.seen.length, ending === 'drop' ? 0 : 1); assert.equal(c.clock.timers.size, 0);
+  }
+});
+
+test('先行0: MAGIの決議が再生待ちでも停止・期限・切断で保持し、正常受信と同じイベントを反映する', async () => {
+  for (const src of [home, mobile]) for (const ending of ['stop','timeout','disconnect']) {
+    const c = streamClient(src); c.handlers.magiPanel = true;
+    const result = c.parse().then(() => 'done', err => err.name);
+    await c.clock.advance(ending === 'timeout' ? 299900 : 20000);
+    const notice = { version:1,intent:'consult',site_pages:'no',votable:'yes',magi_candidate:true,reply_language:{version:1,code:'ja',source:'jev'} };
+    c.push(event('classification', notice) + event('motion', {text:finalMagi().motion,votable:true})
+      + [1,2].flatMap(round => ['MELCHIOR-1','BALTHASAR-2','CASPER-3'].map(codename => event('persona', {codename,round,text:'理由',vote:codename==='BALTHASAR-2'?'reject':'approve',vote_state:'final'}))).join('')
+      + event('verdict', finalMagi())); await tick();
+    assert.equal(c.seen.some(x => x.ev === 'verdict'), false);
+    if (ending === 'timeout') await c.clock.advance(100); else if (ending === 'disconnect') c.close(); else c.ctrl.abort();
+    await result;
+    assert.equal(c.seen.at(-1).ev, 'verdict'); assert.equal(c.seen.at(-1).data.result, 'approve');
+    assert.equal(c.clock.timers.size, 0);
   }
 });
 
@@ -1640,6 +1817,7 @@ function client(src, isHome = false) {
   ctx.currentSessionId = 'test-session'; ctx.agentReplyLanguage = null; ctx.currentLang = 'en'; ctx.ensureAgentConversation = () => ctx.currentSessionId; ctx.saveAgentLanguage = value => { ctx.agentReplyLanguage = value; };
   if (!isHome) vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
   vm.runInContext(thinkingSource(src), ctx);
+  vm.runInContext(between(src, 'async function parseSSE(', isHome ? '// --- マルチモーダル入力' : '// ---- 画像添付'), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
   return { ctx, timers, errors, clock };
 }
@@ -1669,11 +1847,11 @@ test('両画面は最初の回答本文までの秒数を保存し、次の質�
   }
 });
 
-test('両画面はdone欠落を保存せず、開始後の無通信で入力を戻す', async () => {
+test('両画面はdone欠落を保存せず、送信から300秒の期限で入力を戻す', async () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
     const c = client(src, isHome);
     c.ctx.fetch = async () => ({ ok: true, body: {} });
-    c.ctx.parseSSE = async (_, handlers) => { assert.equal([...c.timers.values()][0].ms, 70000); handlers.integrated({ delta: 'partial' }); };
+    c.ctx.parseSSE = async (_, handlers) => { assert.equal([...c.timers.values()][0].ms, 300000); handlers.integrated({ delta: 'partial' }); };
     await c.ctx.agentSend();
     assert.equal(c.ctx.agentHistory.length, 0); assert.equal(c.errors.at(-1).code, 'incomplete_reply'); assert.equal(c.timers.size, 0); assert.equal(c.clock.intervals.size, 0);
     c.ctx.agentInput.value = 'retry';
@@ -1683,7 +1861,7 @@ test('両画面はdone欠落を保存せず、開始後の無通信で入力を�
     c.ctx.fetch = async (_, { signal }) => ({ ok: true, body: { signal } });
     c.ctx.parseSSE = async body => new Promise((_, reject) => body.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
     const pending = c.ctx.agentSend(); await tick();
-    assert.equal([...c.timers.values()][0].ms, 70000); [...c.timers.values()][0].fn(); await pending;
+    assert.equal([...c.timers.values()][0].ms, 300000); [...c.timers.values()][0].fn(); await pending;
     assert.equal(c.ctx.agentBusy, false); assert.equal(c.ctx.agentInput.disabled, false); assert.equal(c.errors.at(-1).code, 'timeout'); assert.equal(c.timers.size, 0); assert.equal(c.clock.intervals.size, 0);
   }
 });
@@ -2249,7 +2427,7 @@ test('言語sampleはWorkerと3画面で全12双方向制御を拒否し、通�
   const controls = [0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069];
   const sample = text => ({ version: 1, code: 'other', source: 'sample', sample: text });
   for (const src of [home, mobile, dj]) {
-    const ctx = vm.createContext({ TextDecoder });
+    const ctx = vm.createContext({ TextDecoder, setTimeout, clearTimeout });
     vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
     for (const code of controls) {
       const value = sample('α' + String.fromCodePoint(code) + 'β');
@@ -2357,7 +2535,7 @@ test('404の対応通知の欠落・重複・不正値はAIも回数も使わず
 test('画面の共通分類処理は3画面で一致し、順序違反を拒否し、旧Workerと未知イベントを受け止める', async () => {
   const block = src => between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END');
   assert.equal(block(home), block(mobile)); assert.equal(block(home), block(dj));
-  const ctx = vm.createContext({ TextDecoder });
+  const ctx = vm.createContext({ TextDecoder, setTimeout, clearTimeout });
   vm.runInContext(block(home) + '\n' + between(home, 'async function parseSSE(', '// --- マルチモーダル入力'), ctx);
   const notice = { version: 1, intent: 'consult', site_pages: 'no', votable: 'no', magi_candidate: false,
     reply_language: { version: 1, code: 'en', source: 'ui' } };
@@ -2629,7 +2807,7 @@ test('MAGI採決: 議題化は直前1往復だけ参照し、上限超の往復�
   }
 });
 
-function coreClient(src=home){const block=between(src,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END');assert.ok(block.length>100);const c=vm.createContext({});vm.runInContext(block,c);return c;}
+function coreClient(src=home){const block=between(src,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END');assert.ok(block.length>100);const c=vm.createContext({setTimeout,clearTimeout});vm.runInContext(block,c);return c;}
 function recordClient(src) {
   const c = coreClient(src);
   Object.assign(c, {

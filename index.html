@@ -7368,7 +7368,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 4.4 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 4.5 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7620,10 +7620,47 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
-      let buf = '', skipLF = false;
+      let buf = '', skipLF = false, receivedEnd = false, playback = null, playbackError = null;
+      let timer = null, wake = null;
+      const queue = [], settings = magiStreamSettings();
+      const alive = () => !handlers.alive || handlers.alive();
       const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null, panel: handlers.magiPanel === true };
-      const block = (text) => {
-        handlers.signal?.throwIfAborted();
+      const dispatch = item => { if (alive() && handlers[item.ev]) handlers[item.ev](item.data); };
+      // 停止・期限・切断は受信済みの列を先に反映する。会話切り替えだけは古い列を捨てる。
+      const flush = () => {
+        clearTimeout(timer); timer = null;
+        try { while (queue.length) dispatch(queue.shift()); }
+        finally {
+          queue.length = 0;
+          if (wake) { const resolve = wake; wake = null; resolve(); }
+        }
+      };
+      const abort = () => {
+        try { flush(); } catch (err) { playbackError = err; }
+        reader.cancel().catch(() => {});
+      };
+      const check = () => {
+        if (playbackError) throw playbackError;
+        if (!alive()) throw new Error('stale_stream');
+        if (!receivedEnd) handlers.signal?.throwIfAborted();
+      };
+      const pump = () => {
+        if (playback || !queue.length) return;
+        playback = (async () => {
+          while (queue.length) {
+            check();
+            const item = queue[0];
+            if (item.wait) await new Promise(resolve => { wake = resolve; timer = setTimeout(resolve, item.wait); });
+            timer = null; wake = null;
+            check();
+            // 待つ間の停止で flush されたものを二重に渡さない。
+            if (queue[0] === item) { queue.shift(); dispatch(item); }
+          }
+        })().catch(err => { playbackError = err; reader.cancel().catch(() => {}); })
+          .finally(() => { playback = null; if (queue.length && !playbackError) pump(); });
+      };
+      const block = text => {
+        check();
         let ev = 'message', data = '';
         text.split('\n').forEach(line => {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
@@ -7631,16 +7668,29 @@ async function parseSSE(body, handlers, onChunk) {
         });
         if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
+        // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
-        if (handlers[ev]) handlers[ev](parsed);
-        return ev === 'done' || ev === 'error';
+        const terminal = ev === 'done' || ev === 'error';
+        if (terminal) { receivedEnd = true; if (handlers.streamWatch) handlers.streamWatch.end(); }
+        if (!handlers.streamWatch?.isBuffered() || ev === 'classification' || ev === 'title') dispatch({ ev, data: parsed });
+        else if (ev === 'integrated' && typeof parsed.delta === 'string') {
+          const chars = Array.from(parsed.delta);
+          for (let i = 0; i < chars.length; i += settings.text_chars) {
+            queue.push({ ev, data: { ...parsed, delta: chars.slice(i, i + settings.text_chars).join('') }, wait: settings.text_ms });
+          }
+        } else queue.push({ ev, data: parsed, wait: ['motion','persona','ask','judge','verdict'].includes(ev) ? settings.event_ms : 0 });
+        return terminal;
       };
+      handlers.signal?.addEventListener('abort', abort, { once: true });
       try {
+        check();
         while (true) {
           const { done, value } = await reader.read();
-          handlers.signal?.throwIfAborted();
-          if (done) return;
+          check();
+          if (done) break;
           if (onChunk) onChunk();
+          if (handlers.streamWatch) handlers.streamWatch.chunk();
+          check();
           let chunk = dec.decode(value, { stream: true });
           if (!chunk) continue;
           if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
@@ -7649,10 +7699,62 @@ async function parseSSE(body, handlers, onChunk) {
           let i;
           while ((i = buf.indexOf('\n\n')) >= 0) {
             const text = buf.slice(0, i); buf = buf.slice(i + 2);
-            if (block(text)) return;
+            if (block(text)) break;
           }
+          // 塊の再生を20秒以内に収める。読み取りは再生と並行して進める。
+          const duration = queue.reduce((sum, item) => sum + item.wait, 0);
+          if (duration > settings.batch_ms) queue.forEach(item => { item.wait *= settings.batch_ms / duration; });
+          pump();
+          if (receivedEnd) break;
         }
-      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+        if (!receivedEnd) flush(); // EOF でも受信済みの決議は残す（done の欠落は呼び出し側が扱う）。
+        while (playback) await playback;
+        check();
+      } catch (err) {
+        flush();
+        throw err;
+      } finally {
+        handlers.signal?.removeEventListener('abort', abort);
+        clearTimeout(timer);
+        await reader.cancel().catch(() => {}); reader.releaseLock();
+      }
+    }
+
+    // 3画面で同じ値を使う。トップページのインスクリプション版のため外部資産へ分離しない。
+    function magiStreamSettings() {
+      return { deadline_ms: 300000, gap_ms: 15000, event_ms: 700, text_chars: 12, text_ms: 30, batch_ms: 20000 };
+    }
+    function createMagiStreamWatch(ctrl, startedAt, options) {
+      const settings = magiStreamSettings();
+      let buffered = false, ended = false, lastChunk = startedAt, gapTimer = null;
+      const deadlineTimer = setTimeout(() => { options.timeout(); ctrl.abort(); }, Math.max(0, settings.deadline_ms - (Date.now() - startedAt)));
+      const show = value => { if (options.alive()) options.notice(value); };
+      const gap = () => {
+        clearTimeout(gapTimer);
+        gapTimer = setTimeout(() => { buffered = true; show(true); }, settings.gap_ms);
+      };
+      const finish = () => { clearTimeout(deadlineTimer); clearTimeout(gapTimer); show(false); };
+      gap();
+      return {
+        chunk() {
+          if (Date.now() - lastChunk >= settings.gap_ms) buffered = true;
+          lastChunk = Date.now(); show(false); if (!ended) gap();
+        },
+        end() { ended = true; finish(); if (buffered && options.alive()) options.replaying(); },
+        finish,
+        isBuffered() { return buffered; },
+      };
+    }
+    function magiStreamNotice(target, visible, ja) {
+      let note = target.querySelector('.magi-stream-note');
+      if (!visible) { if (note) note.remove(); return; }
+      if (!note) {
+        note = document.createElement('div'); note.className = 'magi-stream-note';
+        note.style.cssText = 'font-size:12px;line-height:1.6;opacity:.75;margin-top:8px';
+        note.setAttribute('role', 'status'); target.appendChild(note);
+      }
+      note.textContent = ja ? 'この環境では途中経過がまとめて届くようです。最後まで待って表示します（最大5分）'
+        : 'Progress seems to arrive all at once on this network. Waiting for the full reply (up to 5 minutes).';
     }
 
     // --- マルチモーダル入力（画像添付）---
@@ -7899,17 +8001,17 @@ async function parseSSE(body, handlers, onChunk) {
       const sendId = ++agentSendSequence;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…', followups: [] }]));
 
-      // 接続は30秒。開始後も70秒の無通信で切り、段階ごとの待ちは受信のたびに延長する。
+      // 受信の終端まで300秒待つ。15秒の空白は注記・再生へ切り替えるだけで打ち切らない。
       const ctrl = new AbortController();
       const conversationId = ensureAgentConversation();
       const gen = agentGen; agentCtrl = ctrl;
 
       const dropped = () => gen !== agentGen || conversationId !== currentSessionId || sendId !== agentSendSequence;
-      let idleTimer = null;
-      const watch = (ms = 70000) => {
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, ms);
-      };
+      const streamWatch = createMagiStreamWatch(ctrl, startedAt, {
+        alive: () => !dropped(), timeout: () => { timedOut = true; },
+        notice: visible => magiStreamNotice(replyEl, visible, document.documentElement.lang === 'ja'),
+        replaying: () => { agentSendBtn.title = agentSendBtn.ariaLabel = document.documentElement.lang === 'ja' ? 'すぐに全部表示' : 'Show all now'; },
+      });
       // MAGI_SEND_BEGIN
       function isMagiJa() { return document.documentElement.lang === 'ja'; }
       function presentMagiReply() { if (!dropped() && magiView && magiView.ready()) { replyBody.textContent = reply; if (reply.trim()) thinking.finish(); } }
@@ -7920,10 +8022,15 @@ async function parseSSE(body, handlers, onChunk) {
         if (!integratedEnd) { reply = magiSummary(magiMeta, isMagiJa()); magiMissing(turn, isMagiJa()); } else replyBody.textContent = reply;
         return true;
       }
-      ctrl.signal.addEventListener('abort', function () { if (magiView) { if (dropped()) magiView.dispose(); else magiView.finish(); } thinking.cancel(); }, { once: true });
+      // parser の同期 flush が済んでから、表示の演出も最終状態へ進める。
+      ctrl.signal.addEventListener('abort', function () {
+        Promise.resolve().then(function () {
+          if (magiView) { if (dropped()) magiView.dispose(); else magiView.finish(); }
+          if (!completed) thinking.cancel();
+        });
+      }, { once: true });
       // MAGI_SEND_END
 
-      watch(30000);
       try {
         const theme = isDarkNow() ? 'dark' : 'light';
         // Send only the most recent slice to the API (bounded context/cost); full
@@ -7931,7 +8038,6 @@ async function parseSSE(body, handlers, onChunk) {
         const outbound = prepareAgentMessages(agentHistory, sendContent);
         const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, currentLang, 'chat', true))), signal: ctrl.signal });
         if (dropped()) return;
-        watch();
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
           if (dropped()) return;
@@ -7941,7 +8047,7 @@ async function parseSSE(body, handlers, onChunk) {
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
-            replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal,
+            replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
             // MAGI_EVENTS_BEGIN
             motion: function (d) {
               if (dropped()) return;
@@ -8002,8 +8108,8 @@ async function parseSSE(body, handlers, onChunk) {
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
             pages: (d) => { if (!dropped()) sitePages = d; },
-            done: () => { completed = true; clearTimeout(idleTimer); },
-          }, watch);
+            done: () => { completed = true; streamWatch.finish(); },
+          });
           if (magiView && completed && !errored && !dropped()) await magiView.wait();
           if (!dropped() && !errored && (!completed || !reply.trim())) {
             errored = true; if (!keepMagi()) turn.remove();
@@ -8020,7 +8126,7 @@ async function parseSSE(body, handlers, onChunk) {
           else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: tr('Could not receive the reply. Check your connection and try again.', '返事を受け取れませんでした。接続を確認して、もう一度お試しください。'), code: 'network_error' }); }
         }
       } finally {
-        clearTimeout(idleTimer);
+        streamWatch.finish();
         if (magiView) magiView.dispose();
         if (!completed || errored || dropped()) thinking.cancel();
         if (agentCtrl === ctrl) agentCtrl = null;

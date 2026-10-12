@@ -23,7 +23,7 @@ for (const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY','MAGI_GEMINI_A
 const cards = JSON.parse(read('data/magi-context.json'));
 const home = read('index.html');
 const between = (start,end) => home.slice(home.indexOf(start)+start.length,home.indexOf(end,home.indexOf(start)+start.length));
-const ui = vm.createContext({TextDecoder});
+const ui = vm.createContext({TextDecoder, setTimeout, clearTimeout});
 vm.runInContext(between('// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END')+'\n'+between('// AGENT_CLASSIFY_BEGIN','// AGENT_CLASSIFY_END')+'\nasync function parseSSE('+between('async function parseSSE(','// --- マルチモーダル入力'),ui);
 async function checkUi(events) {
   await ui.parseSSE(new Response(events.map(e=>'event: '+e.event+'\ndata: '+JSON.stringify(e.data)+'\n\n').join('')).body,{magiPanel:true});
@@ -40,7 +40,7 @@ async function checkUi(events) {
 let calls = [], marks = [], observed = [], synthetic = null, syntheticRounds = {};
 const strip = s => s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const ctx = vm.createContext({ aiModels:JSON.parse(read('config/ai-models.json')), bundledContext:cards,
-  Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL, crypto:webcrypto, setTimeout, clearTimeout,
+  Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL, crypto:webcrypto, setTimeout, clearTimeout, setInterval, clearInterval,
   console:{ log(...args) { marks.push({ms:Math.round(performance.now()),stage:args[1],state:args[2]}); } },
   fetch:async (url,options) => {
     if (/^https:\/\/tk\.st\/data\//.test(url)) return Response.json(JSON.parse(read('data/'+url.split('/').at(-1))));
@@ -71,12 +71,20 @@ const ctx = vm.createContext({ aiModels:JSON.parse(read('config/ai-models.json')
     return res;
   },
 });
-vm.runInContext(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','src/index.js'].map(p=>strip(read('workers/magi2/'+p))).join('\n')
+vm.runInContext(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'].map(p=>strip(read('workers/magi2/'+p))).join('\n')
   .replace('export default {','globalThis.worker = {')+'\nglobalThis.config=DEFAULTS;globalThis.magi= MAGI_MODE;',ctx);
 const rated = new Map();
 env.DB={prepare(){return {bind(key,day,limit){return {async first(){const n=(rated.get(key)||0)+1;rated.set(key,n);return n<=limit?{count:n}:null;}};}};}};
 // usage付きストリーミングを本番の呼び出し関数に要求する評価専用フック。
 env.evalObserve=(_provider,_model,response)=>{observed.push(response.text());};
+// 有料評価の前に、束ねたWorkerと画面の受信器を外部APIなしで点検する。
+if(process.argv.includes('--check')) {
+  const response=await ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'}}),env,{});
+  assert.equal(response.status,200);
+  await checkUi([{event:'integrated',data:{delta:'受信器の確認'}},{event:'done',data:{}}]);
+  console.log('MAGI評価環境: Worker・画面の読み込み OK（外部APIなし）');
+  process.exit(0);
+}
 const positives = [
   ['今夜ラーメンを食べに行くべき？','ja'], ['予算が3000円以下なら今夜ラーメンを食べに行くべき？','ja'],
   ['雨が降るなら今日はバイクに乗るのをやめるべき？','ja'], ['締切が明日なら今日中に資料を完成させるべき？','ja'],

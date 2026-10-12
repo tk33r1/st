@@ -2962,10 +2962,6 @@
        プロンプトは Worker 側にあるので、DJ の文脈（イベント名・かかった曲・
        得意ジャンル）は送る窓の最初のユーザー発言の前置きとして渡す。 */
     const MAGI_API = localApiOrigin('api', 'https://workers.tk.st') + '/magi2/chat';
-    /* Worker は段階（初回・討議・判定・統合）が終わるまで何も送らないので、いちばん長い
-       統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る。
-       討議の回数は統合人格の判定で最大5回まで増える（同 DEBATE）が、回ごとに何か届くので延びない */
-    const MAGI_IDLE_MS = 70000;
     const CONTEXT_TIMEOUT_MS = 5000;   // 送信前に読む /board（状況説明の材料）の待ち上限
     const MAGI_PERSONAS = [
       { cn: 'MELCHIOR-1', ja: '熱狂者' },
@@ -2979,7 +2975,7 @@
     let chatCtrl = null, chatStopped = false, chatThinking = null;
     function stopConsult() {
       chatStopped = true;
-      if (chatThinking) chatThinking.cancel();
+      if (!chatCtrl && chatThinking) chatThinking.cancel();
       if (chatCtrl) chatCtrl.abort();
     }
     // MAGI が予測した次の相談。空の入力欄に薄く出し、› で入れる（送信・会話の切り替え・使用で消す）
@@ -2989,7 +2985,7 @@
        送るたびに作り直す（相談の途中や、履歴から開き直したあとにかかった曲も「かけた曲」に入れるため） */
     async function djContext() {
       let title = '', played = [], waiting = [];
-      /* MAGI_IDLE_MS の見張りはこの後の MAGI への通信にしか掛からない。回線が止まると
+      /* MAGI の300秒の期限はこの後の MAGI への通信にしか掛からない。回線が止まると
          ここがブラウザの既定（数分）まで返らず、入力欄が塞がったままになるので短く切る */
       try {
         const d = await apiJson('/board', { timeout: CONTEXT_TIMEOUT_MS });
@@ -3091,9 +3087,47 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
-      let buf = '', skipLF = false;
+      let buf = '', skipLF = false, receivedEnd = false, playback = null, playbackError = null;
+      let timer = null, wake = null;
+      const queue = [], settings = magiStreamSettings();
+      const alive = () => !handlers.alive || handlers.alive();
       const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null, panel: handlers.magiPanel === true };
-      const block = (text) => {
+      const dispatch = item => { if (alive() && handlers[item.ev]) handlers[item.ev](item.data); };
+      // 停止・期限・切断は受信済みの列を先に反映する。会話切り替えだけは古い列を捨てる。
+      const flush = () => {
+        clearTimeout(timer); timer = null;
+        try { while (queue.length) dispatch(queue.shift()); }
+        finally {
+          queue.length = 0;
+          if (wake) { const resolve = wake; wake = null; resolve(); }
+        }
+      };
+      const abort = () => {
+        try { flush(); } catch (err) { playbackError = err; }
+        reader.cancel().catch(() => {});
+      };
+      const check = () => {
+        if (playbackError) throw playbackError;
+        if (!alive()) throw new Error('stale_stream');
+        if (!receivedEnd) handlers.signal?.throwIfAborted();
+      };
+      const pump = () => {
+        if (playback || !queue.length) return;
+        playback = (async () => {
+          while (queue.length) {
+            check();
+            const item = queue[0];
+            if (item.wait) await new Promise(resolve => { wake = resolve; timer = setTimeout(resolve, item.wait); });
+            timer = null; wake = null;
+            check();
+            // 待つ間の停止で flush されたものを二重に渡さない。
+            if (queue[0] === item) { queue.shift(); dispatch(item); }
+          }
+        })().catch(err => { playbackError = err; reader.cancel().catch(() => {}); })
+          .finally(() => { playback = null; if (queue.length && !playbackError) pump(); });
+      };
+      const block = text => {
+        check();
         let ev = 'message', data = '';
         text.split('\n').forEach(line => {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
@@ -3101,15 +3135,29 @@ async function parseSSE(body, handlers, onChunk) {
         });
         if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
+        // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
-        if (handlers[ev]) handlers[ev](parsed);
-        return ev === 'done' || ev === 'error';
+        const terminal = ev === 'done' || ev === 'error';
+        if (terminal) { receivedEnd = true; if (handlers.streamWatch) handlers.streamWatch.end(); }
+        if (!handlers.streamWatch?.isBuffered() || ev === 'classification' || ev === 'title') dispatch({ ev, data: parsed });
+        else if (ev === 'integrated' && typeof parsed.delta === 'string') {
+          const chars = Array.from(parsed.delta);
+          for (let i = 0; i < chars.length; i += settings.text_chars) {
+            queue.push({ ev, data: { ...parsed, delta: chars.slice(i, i + settings.text_chars).join('') }, wait: settings.text_ms });
+          }
+        } else queue.push({ ev, data: parsed, wait: ['motion','persona','ask','judge','verdict'].includes(ev) ? settings.event_ms : 0 });
+        return terminal;
       };
+      handlers.signal?.addEventListener('abort', abort, { once: true });
       try {
+        check();
         while (true) {
           const { done, value } = await reader.read();
-          if (done) return;
+          check();
+          if (done) break;
           if (onChunk) onChunk();
+          if (handlers.streamWatch) handlers.streamWatch.chunk();
+          check();
           let chunk = dec.decode(value, { stream: true });
           if (!chunk) continue;
           if (skipLF && chunk[0] === '\n') chunk = chunk.slice(1);
@@ -3118,10 +3166,62 @@ async function parseSSE(body, handlers, onChunk) {
           let i;
           while ((i = buf.indexOf('\n\n')) >= 0) {
             const text = buf.slice(0, i); buf = buf.slice(i + 2);
-            if (block(text)) return;
+            if (block(text)) break;
           }
+          // 塊の再生を20秒以内に収める。読み取りは再生と並行して進める。
+          const duration = queue.reduce((sum, item) => sum + item.wait, 0);
+          if (duration > settings.batch_ms) queue.forEach(item => { item.wait *= settings.batch_ms / duration; });
+          pump();
+          if (receivedEnd) break;
         }
-      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+        if (!receivedEnd) flush(); // EOF でも受信済みの決議は残す（done の欠落は呼び出し側が扱う）。
+        while (playback) await playback;
+        check();
+      } catch (err) {
+        flush();
+        throw err;
+      } finally {
+        handlers.signal?.removeEventListener('abort', abort);
+        clearTimeout(timer);
+        await reader.cancel().catch(() => {}); reader.releaseLock();
+      }
+    }
+
+    // 3画面で同じ値を使う。トップページのインスクリプション版のため外部資産へ分離しない。
+    function magiStreamSettings() {
+      return { deadline_ms: 300000, gap_ms: 15000, event_ms: 700, text_chars: 12, text_ms: 30, batch_ms: 20000 };
+    }
+    function createMagiStreamWatch(ctrl, startedAt, options) {
+      const settings = magiStreamSettings();
+      let buffered = false, ended = false, lastChunk = startedAt, gapTimer = null;
+      const deadlineTimer = setTimeout(() => { options.timeout(); ctrl.abort(); }, Math.max(0, settings.deadline_ms - (Date.now() - startedAt)));
+      const show = value => { if (options.alive()) options.notice(value); };
+      const gap = () => {
+        clearTimeout(gapTimer);
+        gapTimer = setTimeout(() => { buffered = true; show(true); }, settings.gap_ms);
+      };
+      const finish = () => { clearTimeout(deadlineTimer); clearTimeout(gapTimer); show(false); };
+      gap();
+      return {
+        chunk() {
+          if (Date.now() - lastChunk >= settings.gap_ms) buffered = true;
+          lastChunk = Date.now(); show(false); if (!ended) gap();
+        },
+        end() { ended = true; finish(); if (buffered && options.alive()) options.replaying(); },
+        finish,
+        isBuffered() { return buffered; },
+      };
+    }
+    function magiStreamNotice(target, visible, ja) {
+      let note = target.querySelector('.magi-stream-note');
+      if (!visible) { if (note) note.remove(); return; }
+      if (!note) {
+        note = document.createElement('div'); note.className = 'magi-stream-note';
+        note.style.cssText = 'font-size:12px;line-height:1.6;opacity:.75;margin-top:8px';
+        note.setAttribute('role', 'status'); target.appendChild(note);
+      }
+      note.textContent = ja ? 'この環境では途中経過がまとめて届くようです。最後まで待って表示します（最大5分）'
+        : 'Progress seems to arrive all at once on this network. Waiting for the full reply (up to 5 minutes).';
     }
 
     // 相談の下には FAQ とフッターがあるため、ページ末尾ではなく会話の末尾を追う
@@ -3260,18 +3360,16 @@ async function parseSSE(body, handlers, onChunk) {
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
        失敗したら turn を画面から外してエラーを出し、null を返す（履歴への保存は成功したときに sendConsult が行う） */
     async function askMagi(turn, content, context, thinking) {
-      /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
-         ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
       const sendConversation = conv || (conv = newConsult(content));
       chatCtrl = ctrl;
-      ctrl.signal.addEventListener('abort', () => thinking.cancel(), { once: true });
-      let timedOut = false, to = null;
-      const watch = () => {
-        clearTimeout(to);
-        to = setTimeout(() => { timedOut = true; ctrl.abort(); }, MAGI_IDLE_MS);
-      };
-      watch();
+      let timedOut = false;
+      const streamWatch = createMagiStreamWatch(ctrl, Date.now(), {
+        alive: () => conv === sendConversation && chatCtrl === ctrl,
+        timeout: () => { timedOut = true; },
+        notice: visible => magiStreamNotice(turn, visible, true),
+        replaying: () => { $('#chatSend').title = 'すぐに全部表示'; $('#chatSend').setAttribute('aria-label', 'すぐに全部表示'); },
+      });
       const bodyEl = turn.querySelector('.ab');
       let reply = '', failure = null, suggestion = '', completed = false, classified = false;
 
@@ -3282,14 +3380,14 @@ async function parseSSE(body, handlers, onChunk) {
           body: JSON.stringify(Object.assign({ messages: messagesForMagi(content), context, theme: 'dark', suggest: true, adaptive_debate: true }, classificationFields([{ role: 'user', content: sendConversation.first || content }], sendConversation.reply_language, 'ja', 'dj-request'))),
           signal: ctrl.signal,
         });
-        watch();
         if (!res.ok || !res.body) {
           let env = null;
           try { env = (await res.json()).error; } catch { /* 本文が JSON でない */ }
           failure = (env && env.message) || '相談できませんでした（HTTP ' + res.status + '）。';
         } else {
           await parseSSE(res.body, {
-            replyLanguage: cleanReplyLanguage(sendConversation.reply_language),
+            replyLanguage: cleanReplyLanguage(sendConversation.reply_language), signal: ctrl.signal, streamWatch,
+            alive: () => conv === sendConversation && chatCtrl === ctrl,
             classification: d => { if (conv === sendConversation && chatCtrl === ctrl) { classified = true; sendConversation.reply_language = cleanReplyLanguage(d.reply_language); storeConsult(sendConversation); } },
             persona: (d) => {
               const card = turn.querySelector('.pcard[data-cn="' + String(d.codename || '').replace(/"/g, '') + '"]');
@@ -3326,19 +3424,19 @@ async function parseSSE(body, handlers, onChunk) {
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
             done: () => { completed = true; },
             error: (d) => { thinking.cancel(); failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
-          }, watch);
+          });
         }
       } catch (e) {
         failure = chatStopped ? null : (timedOut || e.name === 'AbortError')
           ? '時間内に返事が来ませんでした。もう一度お試しください。'
           : '通信に失敗しました。電波の良い場所でもう一度お試しください。';
       } finally {
-        clearTimeout(to);
+        streamWatch.finish();
         if (chatCtrl === ctrl) chatCtrl = null;
         finishTurn(turn);
       }
       // 止めた相談はエラーを出さずに外す（質問は sendConsult が入力欄に戻す）
-      if (chatStopped) { turn.remove(); return null; }
+      if (chatStopped && !completed) { turn.remove(); return null; }
 
       if (completed && reply && !failure) {
         chatSuggestion = suggestion;
@@ -3580,6 +3678,7 @@ async function parseSSE(body, handlers, onChunk) {
       // 回答を待つ間は停止ボタンになる（押せるまま）
       $('#chatSend').disabled = consultLocked || (!chatBusy && input.value.trim().length < 2);
       $('#chatSend').textContent = chatBusy ? '■' : '送信';
+      $('#chatSend').title = chatBusy ? '停止' : '送信';
       $('#chatSend').setAttribute('aria-label', chatBusy ? '停止' : '送信');
 
       $('#chatLock').hidden = !consultLocked;
