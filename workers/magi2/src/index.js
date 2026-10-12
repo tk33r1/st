@@ -1,7 +1,7 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SITE_GUIDE, SITE_RANK, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
-import { rankCandidateHash, rankQuery, rankSearch, rankTargets } from '../site-rank.js';
+import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
@@ -521,6 +521,41 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       return reply(200, r);
     }, signal);
   } catch (e) { return fail(e.searchCode === 'timeout' ? 'timeout' : 'unavailable'); }
+}
+
+// 共通検索の候補クリックを記録する（設定は personas.js の SEARCH_CLICK）。画面は sendBeacon で送り、応答を読まない。
+// 押したページが今も公開されているかは集計（search-boost.py）で確かめる。ここでは形と画面の種類に合うかだけを見る。
+const CLICK_LISTS = ['suggest', 'local', 'semantic'];
+const CLICK_DAILY = { nitori: 'nitoridaily', retail: 'retailtechdaily' };
+function clickHref(scope, value) {
+  if (typeof value !== 'string' || Array.from(value).length > SEARCH_CLICK.href_max_chars) return null;
+  if (CLICK_DAILY[scope]) return new RegExp(`^/job/${CLICK_DAILY[scope]}/[1-9][0-9]{7}/#art-[1-9][0-9]*$`).test(value) ? value : null;
+  const path = rankSiteUrl(value);
+  if (path !== value || /%(?:2e|2f|5c)/i.test(value)) return null;
+  return scope === 'site' || path.startsWith(`/${scope}/`) ? path : null;
+}
+async function handleSearchClick(request, env, { requestId, cors, log }) {
+  const fail = (status, code) => httpError(status, { stage: status === 429 ? 'rate_limit' : 'bad_request', code, message: '記録できませんでした', retryable: false }, requestId, cors);
+  if (env.SEARCH_CLICK_ENABLED !== 'true' || !env.DB) return new Response(null, { status: 204, headers: cors });
+  let body;
+  try { body = await readJsonLimited(request, SEARCH_CLICK.request_bytes); } catch (err) { return fail(err.envelope?.http_status || 400, 'invalid_json'); }
+  const { scope, query, list, position } = body || {};
+  const href = clickHref(scope, body?.href);
+  if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).sort().join() !== 'href,list,position,query,scope'
+    || !['site', 'tools', 'game', 'nitori', 'retail'].includes(scope) || !href || !CLICK_LISTS.includes(list)
+    || !Number.isSafeInteger(position) || position < 1 || position > SEARCH_CLICK.position_max
+    || typeof query !== 'string' || query !== query.trim() || !query || Array.from(query).length > SEARCH_CLICK.query_max_chars
+    || /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(query)) return fail(400, 'invalid_click');
+  const day = utcDay(), ip = requestIP(request);
+  try {
+    if (await countUp(env.DB, `click:${ip}`, day, SEARCH_CLICK.ip_daily_limit) == null
+      || await countUp(env.DB, 'click:global', day, SEARCH_CLICK.global_daily_limit) == null) return fail(429, 'click_limit_exceeded');
+    // 同じ人の重複は集計で除く。IPは日付と合わせたハッシュの先頭だけを残す。
+    const visitor = (await sha256(`${day}:${ip}`)).slice(0, 16);
+    await env.DB.prepare(`INSERT INTO search_clicks (day, at, scope, query, href, list, position, visitor) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`)
+      .bind(day, Date.now(), scope, query, href, list, position, visitor).run();
+  } catch (_) { log('search_click', 'record_failed'); return fail(503, 'unavailable'); }
+  return new Response(null, { status: 204, headers: cors });
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。
@@ -1356,12 +1391,13 @@ export default {
     const isReaction = request.method === 'POST' && url.pathname === '/magi2/react';
     const isSiteSearch = request.method === 'POST' && url.pathname === '/magi2/site-search';
     const isRankSearch=request.method==='POST' && url.pathname==='/search/api/rank';
-    if (isSiteSearch || isRankSearch) cors['Cache-Control'] = 'no-store';
-    if (!isChat && !isReaction && !isSiteSearch && !isRankSearch) {
+    const isSearchClick = request.method === 'POST' && url.pathname === '/search/api/click';
+    if (isSiteSearch || isRankSearch || isSearchClick) cors['Cache-Control'] = 'no-store';
+    if (!isChat && !isReaction && !isSiteSearch && !isRankSearch && !isSearchClick) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
     if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
-      if (isSiteSearch || isRankSearch) log('auth', 'rejected (site-search)');
+      if (isSiteSearch || isRankSearch || isSearchClick) log('auth', 'rejected (site-search)');
       else log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
       return httpError(401, {
         stage: 'auth', code: 'unauthorized',
@@ -1371,6 +1407,7 @@ export default {
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
+    if (isSearchClick) return handleSearchClick(request, env, context);
     // 入力・IPを含まないGeminiの試行数と429だけをUTC日単位で記録。記録失敗で回答を止めない。
     const usageEnv = Object.assign(Object.create(env), { recordGoogleUsage(purpose, state) {
       if (!env.DB) return;

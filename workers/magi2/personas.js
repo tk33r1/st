@@ -574,6 +574,13 @@ export const SITE_RANK = {
   },
 };
 
+// 共通検索の候補クリックの記録（POST /search/api/click）。並び順の改善に使い、集計は .github/scripts/search-boost.py が1日1回行う。
+// 1件の記録で D1 に最大3行書く（IPごとの回数・全体の回数・記録）。上限に達した後は書かない（無料枠の書き込み10万行／日を守る）。
+export const SEARCH_CLICK = {
+  request_bytes: 2048, query_max_chars: 200, href_max_chars: 500, position_max: 1000,
+  ip_daily_limit: 100, global_daily_limit: 10000,
+};
+
 // 会話の初回ユーザー発言を、チャットのタイトル用に極短く要約する。
 export const TITLER = {
   system_prompt: [

@@ -47,7 +47,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Worker and common regression
         run: |
-          node --test --test-reporter=dot .github/scripts/test-magi2.mjs .github/scripts/test-daily-rank.mjs .github/scripts/test-phase4-rank-worker.mjs .github/scripts/test-japanese-search.mjs .github/scripts/test-search-json-worker.mjs .github/scripts/test-list-rank.mjs .github/scripts/test-search-rank-client.mjs
+          node --test --test-reporter=dot .github/scripts/test-magi2.mjs .github/scripts/test-daily-rank.mjs .github/scripts/test-phase4-rank-worker.mjs .github/scripts/test-japanese-search.mjs .github/scripts/test-search-json-worker.mjs .github/scripts/test-list-rank.mjs .github/scripts/test-search-rank-client.mjs .github/scripts/test-search-click.mjs
           python -B .github/scripts/ai_models.py check
       - name: Built data and browser integration
         run: |

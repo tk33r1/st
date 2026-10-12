@@ -30,7 +30,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン）。巨大かつ高頻度で編集される |
-| `data/` | データ（JSON）だけを置く。ここに置いたものはすべて公開される。手で直す正本は `tools.json`・`game.json`（一覧）と `glitch.json`（記事メタ）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily/`・`retail-tech-daily/`（日刊の号データ。年ごとの `<YYYY>.json`。読み書きは `daily_engine.py` の `load_history`/`save_history` を通す）、`nitori-tiktok-buzz.json`（日刊ニトリ用の TikTok の取得結果） |
+| `data/` | データ（JSON）だけを置く。ここに置いたものはすべて公開される。手で直す正本は `tools.json`・`game.json`（一覧）と `glitch.json`（記事メタ）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily/`・`retail-tech-daily/`（日刊の号データ。年ごとの `<YYYY>.json`。読み書きは `daily_engine.py` の `load_history`/`save_history` を通す）、`nitori-tiktok-buzz.json`（日刊ニトリ用の TikTok の取得結果）、`search-boost.json`（共通検索の候補クリックの集計。`search-boost.yml` が作る） |
 | `assets/` | 区画をまたいで使う自前のコードと、取り込んだ外部物。`analytics.js`（GTM と Ahrefs の読み込み。ID はここにだけ書く）、`site-search.js`（検索②の通信・応答検査、`window.STSiteSearch`。旧画面APIも保持）。検索Phase 4の共通①は`japanese-search.js`、UIは`search-ui.js`+`.css`、対象別の宣言は`search-data.js`、大きな公開JSONの生バイトhashと解析を行うBlob Workerは`search-json-worker.js`（辞書・通信は持たない）、`buy-me-oil.js`（寄付ウィジェット。`oil-price.json` は自分の場所から `../data/` を引く）、`bijutsu-shisui.js`+`.css`（DJ の各ページと `anniversary/mitsuki32/` の背景演出）、`vendor/`・`fonts/`（取り込んだライブラリとフォント。後述「SAFE TOOLS の通信制限」） |
 | `files/` | ダウンロード用の資料（PDF）。トップページからリンクしている。旧 `data/` の URL は `_redirects` で 301（インスクリプション版のトップページが旧 URL を持っているので外さない） |
 | `tools/` | ブラウザ内完結のツール群（SAFE TOOLS）。共通部品は `tools/assets/`: `tools-ui.js`+`tools-ui.css`（共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みのほか、テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印も受け持つので、ページ側に書かない）、`tools-base.css`（土台のリセットとアイコン寸法などの部品クラス。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない |
@@ -168,6 +168,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - `site-search-url.yml`（手動のみ）: 検索語が URL・参照元・計測に残らないことを、本番の tk.st で本物の GTM・Ahrefs を読み込んで確かめる
     （`test-site-search-ui.mjs --base https://tk.st`。計測の送信は記録してから止める）。
   - `magi-classification-eval.yml`（手動のみ）: magi2 の発言分類（Jev）を固定の合成文で確かめる（`eval-magi-classification.mjs`。リポジトリ Secret の `TYPESAFE_API_KEY`）。問い・基準を変えたら、変える前と後で回して比べる。
+  - `search-boost.yml`（毎日 03:40 JST＋手動）: 共通検索の候補クリック（magi2 の D1 の `search_clicks`）を `search-boost.py` で集計して
+    `data/search-boost.json` を作り直し、90日より古い記録を消す。画面はこの JSON を読むだけで、検索のたびに D1 を読まない（無料枠の読み込みを守る）。
+    `CLOUDFLARE_API_TOKEN` に `Account > D1 > Edit` が要る。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が MAGI の人格カードを作り直して
@@ -265,7 +268,11 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     止めるときは Worker の `SITE_RANK_ENABLED` を先に false にし、その後で 404 の `RANK_ENABLED` を false にする（magi2 の README.md）。
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
     AIの検索や MAGI の話題から外したいページは、ページを noindex にする。
-    回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。検索内容はログ・通知・DBに残さない。
+    回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。
+    検索語・行動ログは取ってよい（2026-10-12 に「検索語をDB・ログに残さない」約束は破棄した。tools の約束は「アップロードされた中身を保存しない」だけ）。
+    共通検索の候補を開くと、画面が `POST /search/api/click` へ検索語（照合と同じ正規化）・開いたページ・一覧と順位を sendBeacon で送り、D1 の `search_clicks` に1行書く
+    （同じ組は1日1回、`st-analytics=off` なら送らない。上限は `personas.js` の `SEARCH_CLICK`、停止は `SEARCH_CLICK_ENABLED`）。
+    集計した `data/search-boost.json` を `search-data.js` が読み、同じ点数の候補を押した人数の順に並べ、同じ検索語で3人以上が押したページを最上位に上げる（`search-ui.js` の `promote`）。
     MAGI はサイトの案内役も兼ねる（`SITE_GUIDE`／`siteGuide`）。分類対応の画面では、今回のintent・site_pagesと画面の許可を確認してから索引・一覧・ページ選択を使う（musicとdj/requestは省く）。画面が `page`（トップページは `'/'`、アプリは `'app'`）を送ったときだけ、
     3人格に場面といまのページを、統合人格に `data/site-search.json` から作るページ一覧（日刊の号を除く）を足す。
     `dj/request/` は送らない（選曲の相談にサイトの話を混ぜない）。新しい画面で MAGI を使うときは、送るかどうかを決めること。

@@ -21,3 +21,16 @@ CREATE TABLE IF NOT EXISTS reactions (
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_created ON reactions (created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_reactions_fingerprint ON reactions (ip, fingerprint);
+
+-- 共通検索の候補クリック（migrations/0002_search_clicks.sql と同じ）
+CREATE TABLE IF NOT EXISTS search_clicks (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  day      TEXT    NOT NULL,
+  at       INTEGER NOT NULL,
+  scope    TEXT    NOT NULL,
+  query    TEXT    NOT NULL,
+  href     TEXT    NOT NULL,
+  list     TEXT    NOT NULL,
+  position INTEGER NOT NULL,
+  visitor  TEXT    NOT NULL
+);

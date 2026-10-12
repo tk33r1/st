@@ -173,7 +173,7 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
   `page` は索引を引く鍵としてだけ使い、文字列としてプロンプトに入れない。ページ選びには今のページの題名を `current_page` で渡し、今のページ自体のリンクは出さない。
   `dj/request/` は `page` を送らないので、案内は足さない。
 - 一覧の有効期間は10分、古い一覧は24時間まで使用して裏で更新する。索引全体を検証して差し替え（検査済みの一覧を日英別に保持）、失敗後は1分あける。noindexへの変更・削除もこの更新周期で反映する。
-- 検索語・ひとこと・上流本文はDB／ログ／Resendに残さない。検索用の運用通知は会社・HTTPコード・用途のみ。通知抑制は既存の `alert:<会社>:<HTTP>`、検索の全体上限は `alert:site-search-global` を使う。
+- 検索語・ひとこと・上流本文はいまDB／ログ／Resendに書いていない（約束ではない。2026-10-12 に破棄した）。検索用の運用通知は会社・HTTPコード・用途のみ。通知抑制は既存の `alert:<会社>:<HTTP>`、検索の全体上限は `alert:site-search-global` を使う。
 
 公開フラグの既定はオン。Workerの `wrangler.toml` の `SITE_SEARCH_ENABLED = "true"`、次に404の `AI_SEARCH_ENABLED = true` で有効化する。
 停止はWorkerを先に `false` にする。通常チャットは続く。公開前に本番スモークテスト、設計書の20件の品質評価・費用見積もり、GTM設定を確認する。
@@ -206,10 +206,22 @@ AIの選択IDは、実際に渡した候補内で検証する。ページ本文�
 回数は③と別に `rank:<IP>`・`rank:global` で数え（1日に IP ごと60回・全体3,000回。値は `SITE_RANK`）、全体の上限の通知は `alert:site-rank-global`。
 
 - 要求は `POST /magi2/site-search`（クエリなし）に `{ query, locale, mode: 'rank', scope: 'site' }`。応答は `{ request_id, status, complete, reason, searched, results }` で、
-  上限は 429、要求の誤りは 400、それ以外の失敗（`disabled`・`unavailable`・`index_unavailable`・`timeout`）は 200 の `status: 'failed'`。検索語はログ・DB・通知に残さない。
+  上限は 429、要求の誤りは 400、それ以外の失敗（`disabled`・`unavailable`・`index_unavailable`・`timeout`）は 200 の `status: 'failed'`。検索語はいまログ・DB・通知に書いていない（約束ではない）。
 - 画面は `assets/site-search.js`（送信・状態・応答の検査・描画・計測）と、404 の `RANK_ENABLED`。Worker が `disabled` を返すと、画面は検索ボタンと②の欄を隠していまの動き（①が0件で③）に戻る。
 - **止め方**：先に Worker の `SITE_RANK_ENABLED` を `"false"` にして出し、その後で 404 の `RANK_ENABLED` を false にする（逆にすると、出したままの画面が②を送り続ける間がある）。
 - 応答時間は `.github/workflows/site-rank-browser.yml`（Actions のランナーのブラウザから本番へ）、精度は `node .github/scripts/eval-site-rank.mjs --accuracy` で測る。
+
+### 共通検索の候補クリック（`/search/api/click`）
+
+共通検索（`assets/search-ui.js`）の候補を開くと、画面が `{ scope, query, href, list, position }` を sendBeacon で送る。
+Worker は形と画面の種類を確かめ、`countUp` で IP ごと（`click:<IP>`）と全体（`click:global`）の1日の上限を数えてから、D1 の `search_clicks` に1行書く。
+1件で書くのは最大3行で、上限に達した後は書かない（無料枠の書き込み10万行／日を守る。値は `personas.js` の `SEARCH_CLICK`）。応答は 204 で、画面は読まない。
+IP は日付と合わせたハッシュの先頭16桁（`visitor`）だけを残す。押したページが公開中かは、集計の `.github/scripts/search-boost.py` がリポジトリのファイルで確かめる。
+
+- 初期化（1回だけ）: `cd workers && npx wrangler d1 execute tk-st-magi2-db --remote --file=magi2/migrations/0002_search_clicks.sql`
+- 出す順番: 上の初期化 → Worker のデプロイ → サイトの push。逆でも壊れない（テーブルが無ければ 503、Worker が古ければ 404 で、どちらも画面は無視する）。
+- 集計は `.github/workflows/search-boost.yml`（毎日）。画面は `data/search-boost.json` を読むだけで、検索のたびに D1 を読まない。
+- 止め方: `wrangler.toml` の `SEARCH_CLICK_ENABLED` を `"false"` にして出す（204 を返して何も書かない）。検索と並び順は、最後に集計した JSON のまま動く。
 
 ## ローカル検証のコマンド
 

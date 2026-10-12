@@ -1,0 +1,80 @@
+name: Search Boost
+
+# 共通検索の候補クリック（magi2 の D1 の search_clicks）を集計して data/search-boost.json を作り直し、
+# 90日より古い記録を消す。画面はこの静的な JSON を読むだけで、検索のたびに D1 を読まない（無料枠の読み込み500万行／日を守る）。
+# 集計の中身は .github/scripts/search-boost.py の冒頭。
+#
+# 必要なリポジトリ Secrets（deploy-worker.yml と共通）:
+#   CLOUDFLARE_API_TOKEN  … Account > D1 > Edit を含める（読み取りと古い行の削除に使う）
+#   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
+
+on:
+  schedule:
+    # 03:40 JST（18:40 UTC）。日刊の発行（01:55・02:05 JST）と重ならない時刻。
+    - cron: '40 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: search-boost
+  cancel-in-progress: false
+
+jobs:
+  search-boost:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    # wrangler は全 Worker 共通で workers/package.json に入れてある
+    - name: Install wrangler
+      working-directory: workers
+      run: npm ci --no-audit --no-fund
+
+    - name: Read clicks from D1
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+          echo "::error::リポジトリ Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID を登録してください"
+          exit 1
+        fi
+        cutoff=$(date -u -d '90 days ago' +%F)
+        echo "CUTOFF=$cutoff" >> "$GITHUB_ENV"
+        npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml --json \
+          --command "SELECT scope, query, href, visitor FROM search_clicks WHERE day >= '$cutoff'" > "$RUNNER_TEMP/clicks.json"
+
+    - name: Aggregate
+      run: python .github/scripts/search-boost.py --rows "$RUNNER_TEMP/clicks.json"
+
+    # 集計を書き出してから消す（集計に失敗した日は消さない）。回数の行はその日だけ使うので、前日より前を消す。
+    - name: Delete old rows
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        yesterday=$(date -u -d '1 day ago' +%F)
+        npx wrangler d1 execute tk-st-magi2-db --remote --config magi2/wrangler.toml \
+          --command "DELETE FROM search_clicks WHERE day < '$CUTOFF'; DELETE FROM rate_limit WHERE ip LIKE 'click:%' AND day < '$yesterday'"
+
+    # サイトにすぐ出したい生成物なので [skip ci] を付けない（Pages のビルドも止まるため）
+    - name: Commit and Push
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add data/search-boost.json
+        if git diff --cached --quiet; then
+          echo "search-boost.json is unchanged"
+          exit 0
+        fi
+        git commit -m "Update search boost"
+        bash .github/scripts/push-with-retry.sh

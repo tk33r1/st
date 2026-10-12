@@ -160,7 +160,21 @@
     const names={category:{label:'カテゴリー',label_en:'Category'},genre:{label:'ジャンル',label_en:'Genre'},
       region:{label:'地域',label_en:'Region'},month:{label:'月',label_en:'Month'}};
     const keys=spec.media?['category','region','month']:spec.filter?[spec.filter]:[];
-    const adapter={...options,scope,fields:spec.fields,href:r=>r.href,compare:options.compare || spec.compare,
+    // 候補を押した人数（search-boost.json。集計は1日1回）。読めなくても検索は続ける。
+    let pages=new Map(),queries=new Map();
+    const counts=value=>new Map(object(value)?Object.entries(value).filter(([,n])=>Number.isSafeInteger(n) && n>0):[]);
+    async function loadBoost(request) {
+      try {
+        const data=(await json('/data/search-boost.json',request,1024*1024)).data,own=data?.version===1 && object(data.scopes)?data.scopes[scope]:null;
+        pages=counts(own?.pages);
+        queries=new Map((object(own?.queries)?Object.entries(own.queries):[]).map(([query,value])=>[query,counts(value)]).filter(([,value])=>value.size));
+      } catch(_) {pages=new Map();queries=new Map();}
+    }
+    // 同じ点数の中は、画面の文脈の順（404の到着区画）→ 押した人数 → 既定の順（新しい順）。
+    const popular=(a,b)=>(pages.get(b.href) || 0)-(pages.get(a.href) || 0);
+    const adapter={...options,scope,fields:spec.fields,href:r=>r.href,compare:(a,b)=>(options.compare?.(a,b) || 0) || popular(a,b) || (spec.compare?.(a,b) || 0),
+      // 同じ検索語で多くの人が押したページ（href→人数）。共通UIが一致した候補の最上位に上げる。
+      promoted:query=>queries.get(query) || null,
       displayFields:spec.displayFields,legacy:spec.legacy,
       filters:keys.map(key=>({key,...names[key],options:[{value:'',label:'すべて',label_en:'All'}]})),
       sorts:options.sorts || spec.sorts,
@@ -168,8 +182,10 @@
         if(request.cache==='no-cache') pending=null;
         if(pending) return pending;
         pending=(async()=>{
+          const boost=loadBoost(request);
           if(!spec.media) {
             const result=await json(spec.base,request,2*1024*1024),records=await (scope==='site'?siteRecords(result.data,request.signal):listRecords(scope,result.data,request.signal));
+            await boost;
             return {records,sourceHash:result.sourceHash,generation:scope==='site'?result.data.rank_generation:result.sourceHash,
               filterOptions:spec.filter?{[spec.filter]:[...new Set(records.map(r=>r[spec.filter]))].filter(Boolean).sort()}: {}};
           }
@@ -185,6 +201,7 @@
           });
           const records=unique(loaded.flatMap(p=>p.records));
           const filterOptions=Object.fromEntries(keys.map(key=>[key,[...new Set(records.map(r=>key==='month'?r.date.slice(0,6):r[key]))].filter(Boolean).sort().reverse()]));
+          await boost;
           return {records,sourceHash:head.sourceHash,generation:head.data.generation,parts:loaded.length?loaded:[{sourceHash:head.sourceHash,recordIds:[]}],years,filterOptions};
         })();
         pending.catch(()=>{pending=null;});return pending;

@@ -12,8 +12,8 @@
       updating:'検索データを更新しています。意味検索は次の検索操作で実行します。',
       disabled:'意味検索は停止中です。',none:'選んだ候補に意味の近い結果はありませんでした。',sort:'並べ替え',
       allOption:'すべて',count:n=>`${n}件一致`,shown:(n,total)=>`${n}件表示／${total}件`,coverage:(n,c,total,complete)=>`${total}件から${c}件を選択、${n}件を判定${complete?'':'（判定未完了）'}`,
-      privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示では送信しません。ファイルやツールの処理内容は送りません。',
-      privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・運用ログ・運用通知には残しません。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
+      privacy:'検索ボタン／Enterで、検索語と公開済みの候補情報をTypeSafe AIへ送ります。入力中・絞り込み・追加表示ではTypeSafe AIへ送りません。候補を開くと、検索語と開いたページを並び順の改善のために記録します。ファイルやツールの処理内容は送りません。',
+      privacyTitle:'検索とプライバシー',privacyDetails:'TypeSafe AI（Jev）の入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。利用回数の制限のためIPアドレスを記録します。候補を開いたときの検索語・開いたページ・一覧の順位はサイトのDBに90日間記録し、並び順の改善に使います（IPアドレスは日ごとに変わるハッシュにして残します）。同じ検索語で3人以上が開いたページは、検索語と人数を集計して公開データに含めます。',privacyLink:'TypeSafe AIのプライバシーポリシー'},
     en: {input:'Search query',submit:'Search',all:'View all matches',more:'Show 100 more',cancel:'Cancel search',
       local:'① Text and reading matches',semantic:'② Related results',suggestions:'Suggestions',
       ready:'Text and reading search is ready.',preparing:'Text search is ready. Preparing readings.',
@@ -24,8 +24,8 @@
       updating:'Search data is updating. Related search will run on your next Search action.',
       disabled:'Related search is disabled.',none:'No related results among the selected candidates.',sort:'Sort',
       allOption:'All',count:n=>`${n} matches`,shown:(n,total)=>`Showing ${n} of ${total}`,coverage:(n,c,total,complete)=>`Selected ${c} of ${total}, judged ${n}${complete?'':' (incomplete)'}`,
-      privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it. Files and tool processing contents are not sent.',
-      privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. Queries and replies are not stored in the site database, operational logs or notifications.',privacyLink:'TypeSafe AI privacy policy'}
+      privacy:'Search / Enter sends your query and public candidate information to TypeSafe AI. Typing, filters and additional pages do not send it to TypeSafe AI. When you open a result, your query and the page you opened are recorded to improve the ranking. Files and tool processing contents are not sent.',
+      privacyTitle:'Search and privacy',privacyDetails:'TypeSafe AI (Jev) inputs are not used for model training. The retention period is not specified. Processing takes place on servers in the United States. Your IP is recorded to limit usage. When you open a result, the query, the page and its position are stored in the site database for 90 days to improve the ranking (your IP is kept only as a hash that changes daily). When three or more people open the same page for the same query, the query and the count are published in aggregated form.',privacyLink:'TypeSafe AI privacy policy'}
   };
   let serial = 0;
   const hash = /^[a-f0-9]{64}$/;
@@ -136,10 +136,21 @@
       coverage.textContent=rankInfo?t.coverage(rankInfo.judged,rankInfo.candidates,rankInfo.total,rankComplete):'';
       call('onState',{base:baseState,readings:readingState,rank:rankState,total:matched.total,query:input.value.trim(),composing,submitted,complete:rankComplete});
     }
+    // 照合・記録・実績の引き当てに共通の検索語（照合と同じ正規化）。
+    const searchKey=()=>w.STJapaneseSearch.normalize(input.value).trim();
+    // 同じ検索語で多くの人が押したページを、一致した候補の最上位に上げる（関連順のときだけ。一致しないページは足さない）。
+    function promote(result) {
+      const counts=selectedSort && selectedSort!=='relevance'?null:adapter.promoted?.(searchKey());
+      if(!counts?.size) return result;
+      const top=[],rest=[];
+      for(const row of result.rows) (counts.has(links.get(row.id))?top:rest).push(row);
+      top.sort((a,b)=>counts.get(links.get(b.id))-counts.get(links.get(a.id)));
+      return {rows:[...top,...rest],total:result.total};
+    }
     function refreshLocal() {
       if (destroyed) return;
       // 長すぎる入力は送信・照合せず、入力欄自体の内容は書き換えない。
-      matched=engine && Array.from(w.STJapaneseSearch.normalize(input.value).trim()).length<=200?engine.search(input.value,activeFilters()):{rows:[],total:0};
+      matched=engine && Array.from(searchKey()).length<=200?promote(engine.search(input.value,activeFilters())):{rows:[],total:0};
       const occupied=new Set(rankRows.map(r=>r.href)), visible=rankRows.length?matched.rows.filter(r=>!occupied.has(links.get(r.id))):matched.rows;
       suggestArea.hidden=!input.value.trim() || !engine || openAll;
       input.setAttribute('aria-expanded',String(!suggestArea.hidden && visible.length>0));
@@ -291,6 +302,31 @@
     },{signal});
     all.addEventListener('click',()=>{if(!composing){openAll=true;refreshLocal();}},{signal});
     more.addEventListener('click',()=>{if(!composing){limit+=100;refreshLocal();}},{signal});
+    // 候補を開いたら、検索語と開いたページを並び順の改善のために記録する（集計は1日1回、search-boost.json）。
+    // 同じ組は1日1回だけ送り、解析を止めた人（st-analytics=off）は送らない。ページの移動は待たせない。
+    function recordClick(event) {
+      const a=event.target.closest?.('a.st-search-link');
+      if(!a || (event.type==='auxclick' && event.button!==1)) return;
+      const list=a.closest('ul'), kind=list===suggestions?'suggest':list===localList?'local':list===rankList?'semantic':'';
+      const query=searchKey();
+      if(!kind || !query || Array.from(query).length>200) return;
+      const body={scope:adapter.scope,query,href:a.getAttribute('href'),list:kind,position:[...list.children].indexOf(a.closest('li'))+1};
+      try {
+        if(localStorage.getItem('st-analytics')==='off') return;
+        const day=new Date().toISOString().slice(0,10), key=JSON.stringify([body.scope,query,body.href]);
+        let seen=null;
+        try {seen=JSON.parse(localStorage.getItem('st-search-clicks') || 'null');} catch(_) {}
+        if(!seen || seen.day!==day || !Array.isArray(seen.keys)) seen={day,keys:[]};
+        if(seen.keys.includes(key)) return;
+        localStorage.setItem('st-search-clicks',JSON.stringify({day,keys:[...seen.keys,key].slice(-300)}));
+      } catch(_) {}
+      try {
+        const blob=new Blob([JSON.stringify(body)],{type:'application/json'});
+        if(!navigator.sendBeacon?.('/search/api/click',blob)) fetch('/search/api/click',{method:'POST',body:blob,keepalive:true,credentials:'omit'}).catch(()=>{});
+      } catch(_) {}
+    }
+    container.addEventListener('click',recordClick,{signal});
+    container.addEventListener('auxclick',recordClick,{signal});
     const releaseRank=next=>{conditionRevision++;clearRank(next);refreshLocal();};
     const cancelRank=()=>releaseRank('stale');
     cancel.addEventListener('click',cancelRank,{signal});

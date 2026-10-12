@@ -297,7 +297,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 DAILY_UI_VERSION = '20261012_1'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
-SEARCH_RUNTIME_VERSION = '20261012_6'
+SEARCH_RUNTIME_VERSION = '20261012_7'
 DAILY_CSS_VERSION = '20261009_2'
 
 # ポータルが検索語を受け取る head の同期処理（assets/site-search-design.md 8.1・8.2）。analytics.js より前に置く。
@@ -2087,7 +2087,7 @@ def render_top_index_html(config, articles_history):
         <div class="archive-info-head"><h2 id="archiveSearchInfoTitle">検索とプライバシー</h2><button type="button" id="archiveSearchInfoClose" aria-label="閉じる" autofocus>×</button></div>
         <p id="archiveRankInfo">検索すると（Enter・虫眼鏡）、検索語と公開記事の情報を TypeSafe AI（Jev）のAPIへ送り、意味の近い記事を探します。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。<a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI のプライバシーポリシー</a></p>
         <p>検索語はアクセス解析（Google アナリティクス）に記録します（メールアドレスや電話番号は伏せます）。アクセス解析を停止した場合は送りません。</p>
-        <p id="archiveRankPrivacy">利用回数の制限のためIPアドレスを記録します。検索語・応答はサイトのDB・運用ログ・運用通知には残しません。</p>
+        <p id="archiveRankPrivacy">利用回数の制限のためIPアドレスを記録します。候補を開くと、検索語と開いたページを並び順の改善のために90日間記録します。</p>
       </dialog>
     </section>'''
 
