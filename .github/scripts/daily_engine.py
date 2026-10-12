@@ -915,36 +915,12 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
 
 
 def call_anthropic_api(endpoint, api_key, model_name, prompt_content, user_agent):
-    """Messages API の推論ブロックを除き、完了した JSON 本文だけを読む。"""
-    payload = {
-        "model": model_name,
-        "max_tokens": 16384,
-        "system": "You are a professional editorial curator and analyst. Return only valid JSON adhering strictly to the requested schema.",
-        "messages": [{"role": "user", "content": prompt_content}],
-        # Haiku の推論は medium。非既定の temperature / top_p / top_k は送れない。
-        "thinking": {"type": "adaptive"},
-        "output_config": {"effort": "medium"},
-    }
-    req = urllib.request.Request(
-        endpoint,
-        data=json.dumps(payload).encode('utf-8'),
-        headers={
-            'Content-Type': 'application/json',
-            'x-api-key': api_key,
-            'anthropic-version': '2023-06-01',
-            'User-Agent': user_agent,
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            body = json.loads(resp.read().decode('utf-8'))
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode('utf-8', errors='replace')
-        raise RuntimeError(f"HTTP {e.code}: {detail}") from e
-    if body.get('stop_reason') != 'end_turn':
-        raise RuntimeError(f"Anthropic 応答が完了していません: {body.get('stop_reason')}")
-    raw_text = ''.join(block.get('text', '') for block in body.get('content', [])
-                       if block.get('type') == 'text').strip()
+    """共通のMessages APIで、完了したJSON本文だけを読む。日刊の設定は維持する。"""
+    from anthropic_api import call_messages, message_payload
+    payload = message_payload(model_name,
+        'You are a professional editorial curator and analyst. Return only valid JSON adhering strictly to the requested schema.',
+        prompt_content, max_tokens=16384, thinking='adaptive', effort='medium')
+    raw_text = call_messages(endpoint, api_key, payload, user_agent, timeout=60)
     if raw_text.startswith('```'):
         raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
         raw_text = re.sub(r'\s*```$', '', raw_text)

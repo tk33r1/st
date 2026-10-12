@@ -46,14 +46,14 @@ from functools import cache
 from html.parser import HTMLParser
 
 from ai_model_registry import model_id_with_override
+from anthropic_api import ENDPOINT, call_messages, message_payload
 
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(SCRIPTS, '..', '..'))
 OUT_PATH = os.path.join(ROOT, 'data', 'magi-context.json')
 JST = timezone(timedelta(hours=9))
 
-ENDPOINT = 'https://api.openai.com/v1/chat/completions'
-MODEL = model_id_with_override('openai', 'luna', 'OPENAI_MODEL')
+MODEL = model_id_with_override('anthropic', 'haiku', 'ANTHROPIC_MODEL')
 
 # 人格カードの長さ。プロンプトでは CARD_TARGET を指示し、検査は緩めに取る（素材の多い人格は指示より長く書きがちで、
 # 1,400 字では弾かれた。Worker 側は PERSONA_CONTEXT.max_chars = 2000 で切るので、それより内側に置く）。
@@ -470,48 +470,10 @@ def build_source(key, conf, top, routed):
 RETRY_WAITS = (5, 20)  # 再試行までの待ち秒。回数はこの長さ＋1回
 
 
-def call_openai(api_key, system, user):
-    """人格カード1枚を生成する。失敗はすべて RuntimeError にそろえる（呼び出し側で整形して止めるため）。"""
-    payload = {
-        'model': MODEL,
-        # 省略すると推論が走り max_completion_tokens を食い潰すので明示する（magi2 と同じ理由）
-        'reasoning_effort': 'none',
-        'temperature': 0.2,
-        # 日本語は1字あたり1トークン前後。CARD_MAX を超える長さまで出させ、切れたかどうかは
-        # finish_reason で判定する（上限で切られた文は検査の文字数範囲に収まってしまうため）
-        'max_completion_tokens': 4000,
-        'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-    }
-    req = urllib.request.Request(
-        ENDPOINT, data=json.dumps(payload).encode('utf-8'),
-        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'},
-    )
-    for attempt in range(len(RETRY_WAITS) + 1):
-        try:
-            with urllib.request.urlopen(req, timeout=90) as resp:
-                body = json.loads(resp.read().decode('utf-8'))
-            break
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode('utf-8', errors='ignore')[:300]
-            error = f'HTTP {e.code}: {detail}'
-            retryable = e.code == 429 or e.code >= 500  # 一時的なもの（レート制限・サーバ側）だけ再試行
-        # URLError・タイムアウト・接続切れ（RemoteDisconnected 等）はすべて OSError。urllib が
-        # URLError に包むのは送信時だけで、応答待ちや読み込み中の切断は素の例外で上がってくる
-        except (OSError, http.client.HTTPException, json.JSONDecodeError) as e:
-            error, retryable = f'{type(e).__name__}: {e}', True
-        if not retryable or attempt == len(RETRY_WAITS):
-            raise RuntimeError(f'OpenAI の呼び出しに失敗: {error}')
-        print(f'[WARN] {error} — {RETRY_WAITS[attempt]} 秒後に再試行します', file=sys.stderr)
-        time.sleep(RETRY_WAITS[attempt])
-
-    try:
-        choice = body['choices'][0]
-        content = (choice['message'].get('content') or '').strip()
-    except (KeyError, IndexError, TypeError) as e:
-        raise RuntimeError(f'OpenAI の応答の形が想定外: {str(body)[:300]}') from e
-    if choice.get('finish_reason') != 'stop':
-        raise RuntimeError(f"人格カードが途中で終わった（finish_reason={choice.get('finish_reason')}）")
-    return content
+def call_anthropic(api_key, system, user):
+    """人格カード1枚。X素材も同じ形式・推論なし・再試行の条件を使う。"""
+    payload = message_payload(MODEL, system, user, max_tokens=4000, thinking='disabled', effort='low')
+    return call_messages(ENDPOINT, api_key, payload, 'tk.st-magi-context/1.0', retry_waits=RETRY_WAITS)
 
 
 def validate_card(card):
@@ -571,16 +533,16 @@ def main():
             raise RuntimeError(f'{len(errors)} 人格の素材を作れなかった（その人格は前回のカードのまま）')
         return
 
-    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
     if not api_key:
-        sys.exit('OPENAI_API_KEY が未設定')
+        sys.exit('ANTHROPIC_API_KEY が未設定')
 
     now = datetime.now(JST).isoformat(timespec='seconds')
     updated = {}
     for conf, system, source, digest in todo:
         # 前回のカードは渡さず、毎回素材からゼロで作る（前回の誤りや消した内容を引き継がないため）
         try:
-            card = validate_card(call_openai(api_key, system, f'【素材】\n{source}'))
+            card = validate_card(call_anthropic(api_key, system, f'【素材】\n{source}'))
         except RuntimeError as e:
             # 1人格の失敗で、料金を払って作れたほかの人格まで捨てないよう、続けて最後にまとめて失敗させる
             errors.append(f"{conf['codename']}: {e}")

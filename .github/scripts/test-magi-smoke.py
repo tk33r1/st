@@ -16,9 +16,10 @@ class MagiSmokeTest(unittest.TestCase):
         for entry in config['discussion']['personas']:
             name = 'max_completion_tokens' if entry['provider'] == 'openai' else 'max_tokens'
             entry['body'][name] = 777
-            entry['body']['top_p'] = .87
+            if entry['provider'] != 'anthropic':
+                entry['body']['top_p'] = .87
         config['discussion']['synthesizer']['body']['max_completion_tokens'] = 1777
-        for provider in ['openai', 'deepseek', 'google']:
+        for provider in ['openai', 'deepseek', 'anthropic']:
             with self.subTest(provider=provider):
                 sent = []
                 def post(url, key, body, stream=False):
@@ -30,11 +31,19 @@ class MagiSmokeTest(unittest.TestCase):
                 expected = {**persona, 'model': 'candidate-for-test'}
                 self.assertEqual(sent[0], (expected, False))
                 self.assertEqual(sent[1][0]['messages'][:-1], expected['messages'])
-                self.assertIn('image_url', sent[1][0]['messages'][-1]['content'][1])
+                image = sent[1][0]['messages'][-1]['content'][1]
+                if provider == 'anthropic':
+                    self.assertEqual(image['source']['type'], 'base64')
+                    for body, _ in sent:
+                        self.assertNotIn('temperature', body)
+                        self.assertNotIn('top_p', body)
+                else:
+                    self.assertIn('image_url', image)
                 for body, _ in sent:
                     self.assertEqual(body['model'], 'candidate-for-test')
-                if provider == config['discussion']['synthesizer']['provider']:
-                    self.assertEqual(sent[2], ({**config['discussion']['synthesizer']['body'], 'model': 'candidate-for-test'}, True))
+                name = 'synthesizer_dark' if provider == 'anthropic' else 'synthesizer'
+                if provider == config['discussion'][name]['provider']:
+                    self.assertEqual(sent[2], ({**config['discussion'][name]['body'], 'model': 'candidate-for-test'}, True))
                     self.assertNotIn('temperature', sent[2][0])
                     self.assertNotIn('top_p', sent[2][0])
                 else:
@@ -56,10 +65,10 @@ class MagiSmokeTest(unittest.TestCase):
             self.assertEqual(body, {**case['body'], 'model': 'candidate-for-test'})
             if 'purpose' in case:
                 self.assertNotIn('Return exactly', json.dumps(body))
-                self.assertIn('公開ページ一覧', body['messages'][0]['content'])
+                self.assertIn('公開ページ一覧', body['system'])
             else:
                 self.assertIn('Return exactly', body['messages'][0]['content'])
-                self.assertEqual(body['response_format'], cases[0]['body']['response_format'])
+                self.assertEqual(body['output_config']['format'], cases[0]['body']['output_config']['format'])
         self.assertNotEqual(cases[0]['body']['messages'][0]['content'], cases[2]['body']['messages'][0]['content'])
 
     def test_site_validator_accepts_query_variation_and_rejects_unknown_ids(self):
@@ -122,7 +131,7 @@ class MagiSmokeTest(unittest.TestCase):
         self.assertEqual(len(observations), len(sent))
 
     def test_persona_accepts_nonempty_partial_but_rejects_missing_text(self):
-        for provider in ['openai', 'deepseek', 'google']:
+        for provider in ['openai', 'deepseek', 'anthropic']:
             for content in ['partial', '', '   ', None]:
                 with self.subTest(provider=provider, content=content):
                     response = {'choices': [{'finish_reason': 'length', 'message': {'content': content}}]}
@@ -163,24 +172,48 @@ class MagiSmokeTest(unittest.TestCase):
                         ai_models.validate_chat_stream(raw)
 
     def test_magi_schema_smoke_uses_production_request_body(self):
-        config = copy.deepcopy(self.config['magi'])
-        sent = []
-        expected = [{'motion': 'Go for ramen tonight', 'votable': True},
-                    {'votes': [{'codename': 'CASPER-3', 'vote': 'reject'}]}]
-        for cfg in config.values():
-            cfg['body']['max_completion_tokens'] = 777
-            cfg['body']['temperature'] = .87
-        def post(url, key, body):
-            value = expected[len(sent)]
-            sent.append(body)
-            return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
-        with patch.object(ai_models, 'post_json', side_effect=post):
-            ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', config)
-        for body, name in zip(sent, ['motion', 'vote_reader']):
-            self.assertEqual(body, {**config[name]['body'], 'model': 'candidate-for-test'})
-            self.assertEqual(body['response_format'], config[name]['format'])
-        self.assertIn(self.config['magi']['vote_reader']['prompt'], sent[1]['messages'][0]['content'])
-        self.assertNotIn('Write in English.', sent[1]['messages'][0]['content'])
+        for provider, name in [('anthropic', 'motion'), ('openai', 'vote_reader')]:
+            config = copy.deepcopy(self.config['magi'])
+            sent = []
+            value = {'motion': 'Go for ramen tonight', 'votable': True} if name == 'motion' else {'votes': [{'codename': 'CASPER-3', 'vote': 'reject'}]}
+            config[name]['body']['max_tokens' if provider == 'anthropic' else 'max_completion_tokens'] = 777
+            def post(url, key, body):
+                sent.append(body)
+                if provider == 'anthropic':
+                    return {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': 'end_turn'}
+                return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
+            with patch.object(ai_models, 'post_json', side_effect=post):
+                ai_models.smoke_openai_magi('mock', 'private', 'candidate-for-test', config, provider=provider)
+            self.assertEqual(sent, [{**config[name]['body'], 'model': 'candidate-for-test'}])
+            if provider == 'anthropic':
+                self.assertEqual(sent[0]['output_config']['format']['schema'], config[name]['format']['json_schema']['schema'])
+                self.assertNotIn('temperature', sent[0])
+            else:
+                self.assertEqual(sent[0]['response_format'], config[name]['format'])
+                self.assertIn(config[name]['prompt'], sent[0]['messages'][0]['content'])
+
+    def test_anthropic_stream_requires_text_and_normal_end(self):
+        for text, reason, done in [('answer', 'end_turn', True), ('', 'end_turn', True), ('answer', 'max_tokens', True), ('answer', 'end_turn', False), ('', 'refusal', True)]:
+            events = [{'type': 'content_block_delta', 'delta': {'type': 'thinking_delta', 'thinking': 'private'}},
+                      {'type': 'content_block_delta', 'delta': {'type': 'text_delta', 'text': text}},
+                      {'type': 'message_delta', 'delta': {'stop_reason': reason}}]
+            if done:
+                events.append({'type': 'message_stop'})
+            raw = ''.join('data: ' + json.dumps(event) + '\n\n' for event in events)
+            if text and reason == 'end_turn' and done:
+                ai_models.validate_anthropic_stream(raw)
+            else:
+                with self.assertRaises(RuntimeError):
+                    ai_models.validate_anthropic_stream(raw)
+
+    def test_anthropic_models_detects_only_new_haiku_generations(self):
+        pattern = ai_models.PROVIDERS['anthropic']['channels']['haiku']
+        # モデルIDの固定値は正本に閉じ、系列の検査は現在の版を組み替えて行う。
+        current = ai_models.load_registry()['anthropic']['haiku']['id']
+        self.assertIsNotNone(pattern.fullmatch(current))
+        self.assertIsNone(pattern.fullmatch(current + '-20261013'))
+        self.assertIsNone(pattern.fullmatch(current.replace('haiku', 'sonnet')))
+        self.assertIsNone(pattern.fullmatch('prefix-' + current))
 
 
 if __name__ == '__main__':

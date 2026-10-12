@@ -50,7 +50,11 @@ export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.sub
 // 上流の失敗が残高切れ・キーの失効か（401・402・403 と、残高や枠の不足を示す 429。ただの回数制限の 429 は拾わない）。
 // ②（site-rank.js）と通知（src/index.js）で同じ判定を使う。
 export const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
-export const isBillingFailure = (status, body) => [401, 402, 403].includes(status) || (status === 429 && QUOTA_RE.test(body));
+export const isBillingFailure = (status, body, provider, headers) => [401, 402, 403].includes(status)
+  || (provider === 'anthropic'
+    ? [400, 429].includes(status) && (status !== 429 || !headers?.has('retry-after'))
+      && /spend[ _-]*(?:limit|cap)|usage[ _-]*limit|billing|credit|balance|exhausted/i.test(body)
+    : status === 429 && QUOTA_RE.test(body));
 
 // signalを無視する応答でも待ち続けない。本文読み取りを含む処理全体を囲む。
 export async function searchDeadline(ms, run, stop) {

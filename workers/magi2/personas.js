@@ -13,16 +13,16 @@ const modelConfig = (provider, channel) => ({
   display_name: aiModels[provider][channel].display_name,
 });
 
-// 呼び出し先。3社とも OpenAI 互換の Chat Completions を持つ。key は Wrangler secret の名前。
+// 呼び出し先。AnthropicはMessages API、ほか2社はChat Completions。keyはWrangler secretの名前。
 // 各社で違う呼び出し方（推論の切り方・トークン上限の名前）は src/index.js の requestBody に置く。
 export const PROVIDERS = {
   openai: { label: 'OpenAI', endpoint: 'https://api.openai.com/v1/chat/completions', key: 'MAGI_OPENAI_API_KEY' },
   deepseek: { label: 'DeepSeek', endpoint: 'https://api.deepseek.com/chat/completions', key: 'MAGI_DEEPSEEK_API_KEY' },
-  google: { label: 'Google', endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: 'MAGI_GEMINI_API_KEY' },
+  anthropic: { label: 'Anthropic', endpoint: 'https://api.anthropic.com/v1/messages', key: 'MAGI_ANTHROPIC_API_KEY' },
 };
 
 // System & Privacyの正本。段落は文字だけ。requiresは対応する画面にだけ説明を出す印。
-// 公開2では送り先を変えず、配布済みAPKにも後の変更が届く受け口を先に入れる。
+// 配布済みAPKにも、現在の送り先とデータの扱いの説明を返す。
 export const PRIVACY = {
   en: [
     { text: "A multi-agent system with 3 debating personas modeled on Shinya Takeda's personality." },
@@ -31,12 +31,12 @@ export const PRIVACY = {
     { text: 'Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal."', requires: ['magi_panel'] },
     { text: 'Strict limits: max 1,000 characters per input, limited output tokens, and 60 daily requests. Each reply is written with the last 12 messages (about 6 exchanges) as context; anything older drops out.' },
     { text: 'Images can be attached (up to 4 per message, resized on your device before sending) and are sent to the API just like text.' },
-    { text: 'When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
+    { text: 'When site guidance is enabled, Anthropic (or OpenAI if the call fails) also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
     { text: 'By default, inputs are not saved in the database, unless you react to a reply (👍/emoji) to help improve MAGI.' },
     { text: 'Your IP address is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.' },
     { text: "Chat history is stored in your device's local storage (not permanent; please export important chats)." },
-    { text: 'Powered by OpenAI API, DeepSeek API and Gemini API. Each persona runs on a different one, so every input (including images) is sent to all three.' },
-    { text: "OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): used to improve Google's products and train its models, and may be read by human reviewers. DeepSeek: stored on servers in China and may be used to train its models." },
+    { text: 'Powered by OpenAI API, DeepSeek API and Anthropic API. Each persona runs on a different one, so every input (including images) is sent to all three.' },
+    { text: "OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Anthropic: API inputs and outputs are not used for AI training by default and are normally deleted within 30 days, with exceptions for safety and legal requirements. DeepSeek: stored on servers in China and may be used to train its models." },
     { text: 'To classify each request, the latest user message and up to two earlier user messages are also sent to TypeSafe AI (Jev, a classification model); the first user message is used only to fix the conversation language. Images, AI replies and DJ context are excluded. The language is stored with the conversation in this browser; classification results are not stored in the site database. TypeSafe states that it does not train models on API inputs.', requires: ['classification_state'] },
     { text: 'DO NOT input any confidential or personal information.' },
   ],
@@ -47,12 +47,12 @@ export const PRIVACY = {
     { text: '「今夜ラーメンを食べに行くべきか」のような賛否を問うと、適した質問ではMAGIが自動で審議・採決します。採決せずに説明してほしいときは「採決なしで、前の議案の判断材料を説明して」と頼んでください。', requires: ['magi_panel'] },
     { text: '利用制限：1回あたりの入力は最大1,000文字まで、出力トークン数制限あり、1日あたり60回のリクエストまで。回答は直近12メッセージ（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。' },
     { text: '画像も添付できます（1メッセージ最大4枚。送信前に端末側で縮小されます）。テキスト同様にAPIへ送信されます。' },
-    { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
+    { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をAnthropic（呼び出しが失敗した場合はOpenAI）に送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
     { text: 'デフォルトでは、MAGI向上のために回答へリアクション（👍や絵文字）をしない限り、入力内容はデータベースに保存されません。' },
     { text: '利用上限のため、IPアドレスを日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒にIPアドレスも保存されます。' },
     { text: 'チャット履歴はお使いの端末のローカルストレージに保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。' },
-    { text: 'OpenAI API・DeepSeek API・Gemini APIを使用しています。人格ごとに別のAPIで動くため、入力内容（画像を含む）は3社すべてへ送信されます。' },
-    { text: 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini API・無料枠）：Googleの製品改善とモデルの学習に利用され、人間のレビュアーが内容を読むことがあります。DeepSeek：中国のサーバーに保存され、同社のモデルの学習に利用されることがあります。' },
+    { text: 'OpenAI API・DeepSeek API・Anthropic APIを使用しています。人格ごとに別のAPIで動くため、入力内容（画像を含む）は3社すべてへ送信されます。' },
+    { text: 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Anthropic：APIの入出力は既定ではAIの学習に利用されず、通常30日以内に削除されます（安全管理や法令に基づく例外があります）。DeepSeek：中国のサーバーに保存され、同社のモデルの学習に利用されることがあります。' },
     { text: '毎回の発言を分類するため、今回の本文と直近2件までのユーザー本文をTypeSafe AI（Jev。判定専用のモデル）にも送信し、初回の言語判定には最初の発言だけを使います。画像・AIの回答・DJの状況説明は送りません。言語は端末内の会話ごとに保存し、分類結果はサイトのDBには保存しません。同社はAPIの入力をモデルの学習に利用しないとしています。', requires: ['classification_state'] },
     { text: '機密情報や個人情報を入力しないでください。' },
   ],
@@ -67,7 +67,7 @@ const searchSchema = (comment) => ({
   }, required: comment ? ['selections', 'comment'] : ['selections'],
 });
 export const SITE_SEARCH = {
-  model: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 300 },
+  model: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 300 },
   chat_max_tokens: 120, temperature: 0.4,
   daily_limit: 10, global_daily_limit: 100,
   request_bytes: 4096, query_max_chars: 200, chat_query_max_chars: 500,
@@ -143,7 +143,7 @@ export const DEFAULTS = {
   // 最長の目安は約250秒：討議予算90秒＋開始済みの判定20秒・画像人格45秒・票読取4秒、
   // 初回の分類/議題化/案内/ページ選び等約20秒＋統合60秒＋予測4秒。
   // 予算は次の回の開始を止める値なので、開始済みの1回を上乗せする。画面は受信終了まで300秒待つ。
-  timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000, suggest_ms: 4000 },
+  timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000, synthesis_first_text_ms: 30000, suggest_ms: 4000 },
   // マルチモーダル入力（画像）の受け入れ条件。data: URL のみ許可する
   // （外部 URL を許すと Worker 経由の任意フェッチになるため受け付けない）。
   vision: {
@@ -156,32 +156,33 @@ export const DEFAULTS = {
   //   OpenAI  : none|low|medium|high|xhigh|max。省略すると Luna は medium で推論するので必ず明示する。
   //             temperature / top_p は 'none' のときだけ受け付けられる（推論ありで送ると 400）。
   //   DeepSeek: 'none' で推論を切る（既定は推論あり＝ high）。temperature は推論なしのときだけ効く。
-  //   Google  : Gemini 3 系は推論を切れず、最低が 'minimal'。推論トークンも max_tokens に数えるので余裕を持たせる。
+  //   Anthropic: thinking disabled/adaptive と effort で決める。samplingは送らない。
   // max_tokens は出力の上限（推論トークンを含む）。OpenAI には max_completion_tokens として送る。
   models: {
-    // 3人格：推論なし（Gemini は最小）・並列・短文。temperature の揺らぎもここで効く。
+    // 3人格：推論なし・並列・短文。Anthropic以外はtemperatureの揺らぎもここで効く。
     // 人格ごとに会社を分け、答えの癖と間違え方をばらけさせる（codename で引く）。
     persona: {
       // 前向きに寄る癖と描写の濃い文体が「熱狂者」に合う
       'MELCHIOR-1': { ...modelConfig('deepseek', 'flash'), reasoning_effort: 'none', max_tokens: 512 },
-      // 寄り添いの強さが「人間主義者」に合う。推論ぶんを見込んで上限を広げる
-      'BALTHASAR-2': { ...modelConfig('google', 'flash_lite'), reasoning_effort: 'minimal', max_tokens: 1024 },
+      // 寄り添いの強さが「人間主義者」に合う。テーマにかかわらず同じ調子で答える。
+      'BALTHASAR-2': { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 1024 },
       // 手順立てて言い切る実務寄りの型が「戦略家」に合う
       'CASPER-3': { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 512 },
     },
     // 統合：推論あり・ストリーミング。max_tokens は推論トークンを含むので広く取る（答えの長さは200字の指定で決まる）。
     // 足りないと finish_reason=length になり、答えが途中まで流れた後に失敗扱いになる。課金は使った分だけ
     synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'medium', max_tokens: 4096 },
+    synthesizer_dark: { ...modelConfig('anthropic', 'haiku'), thinking: 'adaptive', effort: 'medium', max_tokens: 8192 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
-    titler: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 48 },
+    titler: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 48 },
     // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
     // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
-    suggester: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 80 },
+    suggester: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 80 },
     // 討議の判定（DEBATE）：答えを変えうる論点が残っているかを見分けるので、推論は low。
     // max_tokens は推論トークンを含む。足りないと JSON が途中で切れて「答える」扱いになる
     judge: { ...modelConfig('openai', 'luna'), reasoning_effort: 'low', max_tokens: 2048 },
-    motion: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 400 },
+    motion: { ...modelConfig('anthropic', 'haiku'), thinking: 'disabled', effort: 'low', max_tokens: 400 },
     vote_reader: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 300 },
   },
 };
@@ -386,8 +387,8 @@ export const PERSONA_GUIDE = {
       ja: 'Thought ページ本文（愛・幸せ・失敗・人生についての結論と、その拠り所の書物、考えの変遷）、tk.st の年表のうち人生の項目、X のいいね・フォローの要約も拠り所にする。更新されると自動で作り直される。',
     },
     theme: {
-      en: 'Light: default. Dark: speaks a little more freely.',
-      ja: 'ライト：標準。ダーク：発言の揺らぎが大きくなる。',
+      en: 'Speaks in the same tone in Light and Dark. Of the three personas, this one is unaffected by the theme.',
+      ja: 'ライト・ダークとも同じ調子で答える。3人の中で、テーマに揺らがない人格。',
     },
   },
   'CASPER-3': {
@@ -414,8 +415,8 @@ export const PERSONA_GUIDE = {
       ja: 'tk.st のプロフィール（自己紹介、ライト／ダークの2つの肩書き、事故の前後の性格検査）と、直近1年の X の投稿（話し方の見本）、X のいいね・フォローの要約を拠り所にする。更新されると自動で作り直される。',
     },
     theme: {
-      en: 'Usual answers: Light leans toward the Strategist; Dark toward the Enthusiast. MAGI uses the majority vote without theme bias.',
-      ja: '通常回答ではライトは戦略家、ダークは熱狂者の視点をやや重く見る。MAGIではテーマの重み付けを使わず多数決に従う。',
+      en: `Usual answers: Light leans toward the Strategist; Dark toward the Enthusiast. MAGI uses the majority vote without theme bias. ${aiModels.openai.luna.display_name} answers in Light; ${aiModels.anthropic.haiku.display_name} in Dark. If one cannot answer before any text is shown, the other tries once.`,
+      ja: `通常回答ではライトは戦略家、ダークは熱狂者の視点をやや重く見る。MAGIではテーマの重み付けを使わず多数決に従う。ライトは${aiModels.openai.luna.display_name}、ダークは${aiModels.anthropic.haiku.display_name}が答える。本文の表示前に片方が答えられないときは、もう片方が1回答え直す。`,
     },
   },
 };

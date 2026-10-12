@@ -20,22 +20,64 @@ concurrency:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Probe the API
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         ANTHROPIC_PROBE_IMAGE_URLS: ${{ inputs.image-urls }}
       run: node .github/scripts/probe-anthropic.mjs
+    - name: Evaluate the candidate without publishing
+      if: hashFiles('.github/scripts/eval-magi-models.mjs') != ''
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        MAGI_TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: node .github/scripts/eval-magi-models.mjs
+    - name: Preview cards and X material without writing the canonical files
+      if: hashFiles('.github/scripts/preview-magi47-materials.py') != ''
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
+        X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
+        X_TAHKEH_ACCESS_TOKEN: ${{ secrets.X_TAHKEH_ACCESS_TOKEN }}
+        X_TAHKEH_ACCESS_TOKEN_SECRET: ${{ secrets.X_TAHKEH_ACCESS_TOKEN_SECRET }}
+      run: python .github/scripts/preview-magi47-materials.py
+    - name: Probe three saved public X image URLs
+      if: hashFiles('workers/.wrangler/magi47-quality/materials.json') != ''
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: node .github/scripts/probe-anthropic.mjs --image-urls-file=workers/.wrangler/magi47-quality/materials.json
+    - name: Smoke current models without update or publication
+      if: hashFiles('.github/scripts/anthropic_api.py') != ''
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      run: python .github/scripts/ai_models.py smoke
     - name: Keep metadata only
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: anthropic-probe
         path: workers/.wrangler/anthropic-probe.json
+        include-hidden-files: true
+        if-no-files-found: ignore
+    - name: Keep synthetic evaluation answers for review
+      if: always() && hashFiles('.github/scripts/eval-magi-models.mjs') != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: magi47-quality
+        path: workers/.wrangler/magi47-quality/
         include-hidden-files: true
         if-no-files-found: ignore

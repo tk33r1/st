@@ -20,6 +20,7 @@ from pathlib import Path
 
 from ai_model_registry import REGISTRY_PATH, REPO_ROOT, load_registry, model_id
 from typesafe_alert import notify_http_error
+from anthropic_api import ENDPOINT as ANTHROPIC_ENDPOINT, message_payload, message_text, post_messages
 
 
 # クォートの有無を問わず拾う（YAML の値はクォートなしで書けるため）。
@@ -68,6 +69,11 @@ def solid_png_data_url(size=32):
 
 
 def post_json(url, api_key, payload, stream=False):
+    if url == ANTHROPIC_ENDPOINT:
+        result = post_messages(url, api_key, payload, 'tk.st-ai-model-smoke/1.0', stream=stream)
+        if stream:
+            validate_anthropic_stream(result)
+        return result
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode('utf-8'),
@@ -123,6 +129,8 @@ def validate_chat_stream(raw):
 
 
 def message_content(body):
+    if 'content' in body:
+        return message_text(body, allow_partial=True)
     try:
         content = body['choices'][0]['message']['content'].strip()
     except (KeyError, IndexError, TypeError, AttributeError) as e:
@@ -143,17 +151,50 @@ def expect_ok_json(body):
 
 
 # スモークテストは実運用の呼び出し方を最小の形でなぞる。呼び出し方を変えたらここも直すこと。
+def validate_anthropic_stream(raw):
+    done, reason, text = False, None, ''
+    for line in raw.splitlines():
+        if not line.startswith('data:'):
+            continue
+        try:
+            value = json.loads(line[5:].strip())
+        except json.JSONDecodeError as error:
+            raise RuntimeError('AnthropicストリームのJSONが不正です') from error
+        if value.get('type') == 'error':
+            raise RuntimeError('Anthropicストリームの途中でエラーが発生しました')
+        if value.get('type') == 'content_block_delta' and value.get('delta', {}).get('type') == 'text_delta':
+            text += value['delta'].get('text', '')
+        if value.get('type') == 'message_delta':
+            reason = value.get('delta', {}).get('stop_reason') or reason
+        if value.get('type') == 'message_stop':
+            done = True
+    if not done or reason != 'end_turn' or not text.strip():
+        raise RuntimeError('Anthropicストリームが正常な本文を返しませんでした')
+
+
+def completed_content(body):
+    if 'content' in body:
+        return message_text(body)
+    choice = body.get('choices', [{}])[0]
+    if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
+        raise RuntimeError('応答が正常完了しませんでした')
+    return message_content(body)
+
+
 def smoke_anthropic(url, api_key, model):
-    # 日刊と同じ Messages API の組立て・推論・応答検査を使う。
     from daily_engine import call_anthropic_api
-    try:
-        parsed = call_anthropic_api(url, api_key, model, 'Return exactly {"ok":true}.',
-                                    'tk.st-ai-model-smoke/1.0')
-    except (OSError, ValueError, KeyError, TypeError) as e:
-        raise RuntimeError(f'Anthropic の JSON 応答を取得できません: {e}') from e
+    parsed = call_anthropic_api(url, api_key, model, 'Return exactly {"ok":true}.', 'tk.st-ai-model-smoke/1.0')
     if not isinstance(parsed, dict) or parsed.get('ok') is not True:
-        raise RuntimeError(f'期待した JSON 応答ではありません: {str(parsed)[:500]}')
-    return 'Messages API/適応的推論 medium/JSON/正常終了'
+        raise RuntimeError('Anthropicの日刊JSON疎通に失敗しました')
+    config = magi_config()
+    smoke_magi_discussion(url, api_key, model, 'anthropic', config)
+    observations = smoke_openai_site_search(url, api_key, model, config)
+    smoke_openai_magi(url, api_key, model, config['magi'], provider='anthropic')
+    # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
+    card = message_payload(model, 'Return only READY.', 'A public synthetic source.', max_tokens=4000, thinking='disabled', effort='low')
+    message_text(post_json(url, api_key, card))
+    print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
+    return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、議題化・ページ選択/スキーマ、人格カード・X要約/非推論'
 
 
 def smoke_openai(url, api_key, model):
@@ -165,7 +206,7 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 1024,
         'response_format': {'type': 'json_object'},
     }))
-    # 人格カード・ゲームAPI：非推論、低温、JSON出力
+    # ゲームAPI：非推論、低温、JSON出力
     expect_ok_json(post_json(url, api_key, {
         'model': model,
         'messages': JSON_MESSAGES,
@@ -176,8 +217,6 @@ def smoke_openai(url, api_key, model):
     }))
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'openai', config)
-    observations = smoke_openai_site_search(url, api_key, model, config)
-    print('サイト選択smoke（日刊検索の有無は合否に使わない）: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_openai_magi(url, api_key, model, config['magi'])
     smoke_openai_web_search(api_key, model)
@@ -202,12 +241,14 @@ def smoke_magi_discussion(url, api_key, model, provider, config=None):
         message_content(post_json(url, api_key, body))
         image_body = {**body, 'messages': [*body['messages'], {'role': 'user', 'content': [
             {'type': 'text', 'text': 'Name the color of this image in one word.'},
-            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
+            ({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': solid_png_data_url().split(',', 1)[1]}}
+             if provider == 'anthropic' else {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}}),
         ]}]}
         message_content(post_json(url, api_key, image_body))
-    synth = config['discussion']['synthesizer']
-    if synth['provider'] == provider:
-        post_json(url, api_key, {**synth['body'], 'model': model}, stream=True)
+    for name in ['synthesizer', 'synthesizer_dark']:
+        synth = config['discussion'][name]
+        if synth['provider'] == provider:
+            post_json(url, api_key, {**synth['body'], 'model': model}, stream=True)
 
 
 def smoke_openai_debate_judge(url, api_key, model, config):
@@ -228,15 +269,14 @@ def smoke_openai_debate_judge(url, api_key, model, config):
         raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
 
 
-def smoke_openai_magi(url, api_key, model, config):
+def smoke_openai_magi(url, api_key, model, config, provider='openai'):
     """採決の議題化と票読取。本番のスキーマ・推論・上限を使う疎通確認。"""
     for name in ('motion', 'vote_reader'):
         cfg = config[name]
+        if cfg['model']['provider'] != provider:
+            continue
         response = post_json(url, api_key, {**cfg['body'], 'model': model})
-        choice = response.get('choices', [{}])[0]
-        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-            raise RuntimeError('MAGI ' + name + ' の応答が正常完了しませんでした')
-        value = json.loads(message_content(response))
+        value = json.loads(completed_content(response))
         if name == 'motion':
             if value.get('votable') is not True or not isinstance(value.get('motion'), str) or not value['motion'].strip():
                 raise RuntimeError('MAGI議題化の疎通で期待した応答が得られませんでした')
@@ -256,10 +296,7 @@ def smoke_openai_site_search(url, api_key, model, config):
     values = []
     for case in config['site_smoke']:
         response = post_json(url, api_key, {**case['body'], 'model': model})
-        choice = response.get('choices', [{}])[0]
-        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-            raise RuntimeError('サイト案内の応答が正常完了しませんでした')
-        values.append(json.loads(message_content(response)))
+        values.append(json.loads(completed_content(response)))
     # 本番の検査を使い、未知ID・余計な項目を拒否する。
     # 検索語や選択順の完全一致、リンクの関連性は週次の合否に使わない。
     subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'), '--validate-site-smoke'],
@@ -267,10 +304,7 @@ def smoke_openai_site_search(url, api_key, model, config):
     # 選択が空と1件の両側の受理は、判断を求めず固定JSONを返す別の2ケースで守る。
     for case in config['site_schema_smoke']:
         response = post_json(url, api_key, {**case['body'], 'model': model})
-        choice = response.get('choices', [{}])[0]
-        if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-            raise RuntimeError('サイト選択のスキーマ疎通が正常完了しませんでした')
-        if json.loads(message_content(response)) != case['expected']:
+        if json.loads(completed_content(response)) != case['expected']:
             raise RuntimeError('サイト選択のスキーマ疎通で指定したJSONが得られませんでした')
     return [{'purpose': case['purpose'], 'selections': len(value['selections'])}
             for case, value in zip(config['site_smoke'], values)]
@@ -329,10 +363,6 @@ def smoke_deepseek(url, api_key, model):
     smoke_magi_discussion(url, api_key, model, 'deepseek')
     return 'JSON、MAGI人格/本番設定/サイト候補/画像あり・なし'
 
-
-def smoke_google(url, api_key, model):
-    smoke_magi_discussion(url, api_key, model, 'google')
-    return 'MAGI人格/本番設定/サイト候補/画像あり・なし'
 
 
 def smoke_magi_classification(url, api_key, model, config=None):
@@ -487,15 +517,6 @@ PROVIDERS = {
         'channels': {'flash': None},
         'smoke': smoke_deepseek,
     },
-    # Gemini の OpenAI 互換の口。一覧のIDは 'models/' 付きで返ることがあるので fetch_models で外す
-    'google': {
-        'key_env': 'GEMINI_API_KEY',
-        'models_url': 'https://generativelanguage.googleapis.com/v1beta/openai/models',
-        'chat_url': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-        'channels': {'flash_lite': re.compile(r'gemini-(\d+(?:\.\d+)*)-flash-lite')},
-        'display_name_template': 'Gemini {version} Flash-Lite',
-        'smoke': smoke_google,
-    },
     # 判定専用のモデル（文章を生成しない）。モデル一覧の API が無く、jev-latest は版を追う固定のエイリアスなので、
     # 更新の監視はせず、スモークテストだけを毎週行う。chat_url は判定の口（スモークテストの呼び出し先）
     'typesafe': {
@@ -591,7 +612,7 @@ def fetch_models(provider, pconf, api_key):
         models = body.get('data') if isinstance(body, dict) else None
         if not isinstance(models, list):
             raise RuntimeError(f'{provider}: モデル一覧の data が配列ではありません')
-        by_id.update({m['id'].removeprefix('models/'): m for m in models
+        by_id.update({m['id']: m for m in models
                       if isinstance(m, dict) and m.get('id')})
         if provider == 'anthropic' and body.get('has_more'):
             cursor = body.get('last_id')
@@ -789,7 +810,7 @@ def update_registry():
             entry['display_name'] = display_name
             if provider == 'openai':
                 workers_to_deploy.update(('magi2', 'games', 'dj-request'))
-            elif provider == 'google':
+            elif provider == 'anthropic':
                 workers_to_deploy.add('magi2')
             changes.append(f'{label}: `{current}` → `{candidate}`（スモークテスト合格: {detail}）')
             report.append(f'- {label}: 更新候補 `{current}` → `{candidate}`')

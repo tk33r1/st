@@ -25,8 +25,30 @@ const completion = (text = 'answer', reason = 'stop', done = true) =>
   + `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] })}\n\n`
   + (done ? 'data: [DONE]\n\n' : '');
 
+// 会社に依存しない既存のSSE fixtureをMessages APIの形へ移す（境界の専用テストは変換を使わない）。
+function nativeFixtureStream(body) {
+  let buffer = '';
+  const decoder = new TextDecoder();
+  const convert = line => {
+    if (!line.startsWith('data:')) return line + '\n';
+    const data = line.slice(5).trim();
+    if (data === '[DONE]') return 'data: {"type":"message_stop"}\n';
+    let json;
+    try { json=JSON.parse(data); } catch { return line+'\n'; }
+    if (!json.choices) return line+'\n';
+    const c=json.choices[0]; let result='';
+    if (typeof c.delta?.content === 'string') result+='data: '+JSON.stringify({type:'content_block_delta',delta:{type:'text_delta',text:c.delta.content}})+'\n';
+    if (c.finish_reason) result+='data: '+JSON.stringify({type:'message_delta',delta:{stop_reason:{stop:'end_turn',length:'max_tokens',content_filter:'refusal'}[c.finish_reason]||c.finish_reason}})+'\n';
+    return result;
+  };
+  return body.pipeThrough(new TransformStream({
+    transform(chunk,c){buffer+=decoder.decode(chunk,{stream:true});let end;while((end=buffer.indexOf('\n'))>=0){c.enqueue(encode(convert(buffer.slice(0,end))));buffer=buffer.slice(end+1);}},
+    flush(c){buffer+=decoder.decode();if(buffer)c.enqueue(encode(convert(buffer)));},
+  }));
+}
+
 // upstream を渡すと、上流（各社の API・Resend）への fetch をそれで置き換えられる（undefined を返せば既定の応答）
-function worker(stream = completion(), upstream = null) {
+function worker(stream = completion(), upstream = null, rawUpstream = false) {
   const calls = [], waits = [];
   const cards = JSON.parse(read('data/magi-context.json'));
   const ctx = vm.createContext({
@@ -35,10 +57,32 @@ function worker(stream = completion(), upstream = null) {
     crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} },
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
-      const replaced = upstream && await upstream(url, options);
-      if (replaced) return replaced;
+      // 既存の意味の回帰は会社に依存しないfixtureで行い、専用テストはwire形式をそのまま使う。
+      const native = String(url).includes('api.anthropic.com');
+      const actual = options?.body && JSON.parse(options.body);
+      const fixture = native && !rawUpstream ? { ...actual,
+        messages: [...(actual.system ? [{role:'system',content:actual.system}] : []), ...actual.messages.map(m=>({...m,content:m.content.length===1&&m.content[0].type==='text'?m.content[0].text:m.content}))],
+        ...(actual.output_config?.format ? {response_format:{type:'json_schema',json_schema:{name:actual.output_config.format.schema.properties.motion?'magi_motion':'site_chat',schema:actual.output_config.format.schema}}} : {}),
+      } : actual;
+      const replaced = upstream && await upstream(url, native && !rawUpstream ? {...options,body:JSON.stringify(fixture)} : options);
+      if (replaced) {
+        if (native && !rawUpstream && replaced.ok && actual.stream) return new Response(nativeFixtureStream(replaced.body));
+        if (native && !rawUpstream && replaced.ok && !actual.stream) {
+          const data=await replaced.json();
+          if (data.choices) {
+            const c=data.choices[0];
+            return Response.json({content:[{type:'text',text:c.message?.content||''}],stop_reason:{stop:'end_turn',length:'max_tokens',content_filter:'refusal'}[c.finish_reason]||c.finish_reason,usage:data.usage});
+          }
+          return Response.json(data);
+        }
+        return replaced;
+      }
       if (/^https:\/\/tk\.st\/data\/(tools|game|glitch|site-search)\.json$/.test(url)) return Response.json(JSON.parse(read('data/' + url.split('/').at(-1))));
-      const body = JSON.parse(options.body); calls.push(body);
+      const body = JSON.parse(options.body); calls.push(native && !rawUpstream ? {...fixture,max_completion_tokens:actual.max_tokens} : body);
+      if (native) {
+        if (body.output_config?.format) return nativeAnswer(JSON.stringify({selections:['tool:7']}));
+        return body.stream ? new Response(nativeFixtureStream(new Response(stream).body)) : nativeAnswer();
+      }
       if (body.response_format?.type === 'json_schema') return Response.json({ choices: [{ message: { content: JSON.stringify({ selections: ['tool:7'], ...(body.response_format.json_schema.name === 'site_search' ? { comment: 'PDF Studioでまとめられます。' } : {}) }) }, finish_reason: 'stop' }] });
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
     },
@@ -52,7 +96,7 @@ function worker(stream = completion(), upstream = null) {
     + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
-  const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test' };
+  const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_GEMINI_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
   const request = async (path, body, ip = '192.0.2.1', headers = {}) => {
     const res = await ctx.worker.fetch(new Request('https://workers.tk.st' + path, {
       method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, ...headers },
@@ -1060,8 +1104,8 @@ test('検索は認可・入力・フラグ・DB・完全な一覧を確認して
   const res = await searchRequest(w), body = await res.json();
   assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store'); assert.ok(body.request_id);
   assert.equal(body.results[0].title, 'PDF Studio'); assert.equal(body.results[0].url, '/tools/pdf-studio/');
-  const call = w.calls.find(c => c.response_format); assert.equal(call.max_completion_tokens, 120); assert.equal(call.temperature, .4);
-  assert.equal(call.reasoning_effort, 'none'); assert.equal(call.response_format.json_schema.strict, true);
+  const call = w.calls.find(c => c.response_format); assert.equal(call.max_completion_tokens, 120); assert.equal(call.temperature, undefined);
+  assert.equal(call.thinking.type, 'disabled'); assert.equal(call.output_config.effort, 'low');
 });
 
 test('検索のIP上限を超えた要求は全体を進めず、通常チャットとは別に数える', async () => {
@@ -1144,14 +1188,14 @@ test('検索エラーに入力が含まれても公開エラー・ログ・通�
   const secret = 'PRIVATE_SEARCH_TEXT', logs = [], mails = [];
   const w = enableSearch(worker(undefined, (url, o) => {
     if (url.includes('resend.com')) { mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
-    if (o?.body && JSON.parse(o.body).response_format) return new Response('insufficient_quota ' + secret, { status: 429 });
+    if (o?.body && JSON.parse(o.body).response_format) return new Response('credit balance exhausted ' + secret, { status: 429 });
   }));
   w.ctx.console.log = (...values) => logs.push(values);
   Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
   for (let i = 0; i < 2; i++) {
     const res = await searchRequest(w, { query: secret, locale: 'en' }); assert.equal(res.status, 503); assert.ok(!(await res.text()).includes(secret));
   }
-  await Promise.all(w.waits); assert.equal(mails.length, 1);
+  await Promise.all(w.waits); assert.equal(mails.length, 2);
   assert.ok(!JSON.stringify([logs, mails]).includes(secret)); assert.ok(mails[0].text.includes('404検索'));
 });
 
@@ -1161,18 +1205,18 @@ test('検索とチャットのページ選びは、遅れて届く429本文を�
   const server = createServer((req, res) => {
     req.resume();
     res.writeHead(429, { 'Content-Type': 'application/json' }); res.flushHeaders();
-    const timer = setTimeout(() => res.end(JSON.stringify({ error: { code: 'insufficient_quota', message: secret } })), 80);
+    const timer = setTimeout(() => res.end(JSON.stringify({ error: { code: 'credit balance exhausted', message: secret } })), 80);
     res.on('close', () => clearTimeout(timer));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  let releaseMail;
+  let releaseMails = [];
   try {
     for (const chat of [false, true]) {
       const logs = [], mails = [];
       const w = enableSearch(worker(undefined, (url, o) => {
         if (url.includes('resend.com')) {
           mails.push(JSON.parse(o.body));
-          return new Promise(resolve => { releaseMail = () => resolve(Response.json({ id: 'mail' })); });
+          return new Promise(resolve => { releaseMails.push(() => resolve(Response.json({ id: 'mail' }))); });
         }
         if (o?.body && JSON.parse(o.body).response_format) return fetch('http://127.0.0.1:' + server.address().port, o);
       }));
@@ -1184,12 +1228,12 @@ test('検索とチャットのページ選びは、遅れて届く429本文を�
       const text = await res.text();
       if (chat) { assert.match(text, /event: done/); assert.doesNotMatch(text, /event: pages|event: error/); }
       else { assert.equal(res.status, 503); assert.ok(!text.includes(secret)); }
-      assert.equal(mails.length, 1); assert.ok(mails[0].text.includes(chat ? 'チャットのページ選び' : '404検索'));
+      assert.equal(mails.length, 2); assert.ok(mails[0].text.includes(chat ? 'チャットのページ選び' : '404検索'));
       assert.ok(!JSON.stringify([logs, mails]).includes(secret));
-      releaseMail(); releaseMail = null; await Promise.all(w.waits);
+      releaseMails.forEach(release => release()); releaseMails = []; await Promise.all(w.waits);
     }
   } finally {
-    if (releaseMail) releaseMail();
+    releaseMails.forEach(release => release());
     server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
   }
 });
@@ -1214,7 +1258,7 @@ test('検索エラーの本文が届かなければ期限で通信を止め、HT
       w.ctx.setTimeout = (fn, ms) => setTimeout(fn, ms === 2000 ? 40 : ms);
       Object.assign(w.env, { RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
       assert.equal((await searchRequest(w)).status, 503); assert.equal(signal.aborted, true);
-      await Promise.all(w.waits); assert.equal(mails.length, status === 401 ? 1 : 0);
+      await Promise.all(w.waits); assert.equal(mails.length, status === 401 ? 2 : 0);
     }
   } finally {
     server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
@@ -2513,7 +2557,7 @@ test('site_pagesの拒否とmusicでは索引や一覧を送らず、siteは検�
 });
 
 test('新契約は呼んでいない第2回のabsentを補わず、単独応答も判定せず統合する', async () => {
-  const w = worker(undefined, url => /deepseek|googleapis/.test(url) ? new Response('unavailable', { status: 400 }) : undefined);
+  const w = worker(undefined, url => /deepseek|anthropic/.test(url) ? new Response('unavailable', { status: 400 }) : undefined);
   const events = classifiedEvents(await (await w.request('/magi2/chat', { classification_state: true, adaptive_debate: true,
     messages: [{ role: 'user', content: 'Help me think.' }] })).text());
   assert.equal(events.filter(e => e.name === 'persona').length, 3);
@@ -2635,7 +2679,7 @@ test('DJの接続先上書きはlocalhostページで独立に検査し、資格
 test('要求されたページ選びに失敗したら候補なしと説明せず、未完了のDJ相談の言語も復元対象にする', async () => {
   const w = worker(undefined, (url, options) => {
     if (String(url).includes('api.typesafe.ai')) return classifiedReply({ intent: { choice: 'site', confidence: .99 }, site_pages: { choice: 'yes', confidence: .99 } });
-    if (!String(url).includes('api.openai.com')) return;
+    if (!/api\.(openai|anthropic)\.com/.test(String(url))) return;
     const body = JSON.parse(options.body);
     if (body.response_format?.json_schema?.name === 'site_chat') return new Response('failed', { status: 500 });
   });
@@ -2671,31 +2715,11 @@ test('アプリの保存言語の復元時には、言語コード一覧が初�
   vm.runInContext(prefix,c);assert.equal(c.agentReplyLanguage.code,'en');
 });
 
-test('Geminiの試行と429は用途別に匿名で数え、記録失敗で回答を止めない', async () => {
-  let googleCalls = 0;
-  const w = worker(undefined, (url) => {
-    if (!String(url).includes('generativelanguage.googleapis.com')) return;
-    googleCalls++;
-    if (googleCalls === 1) return new Response('rate limit', { status: 429 });
-  });
-  const rows = new Map();
-  w.env.DB = { prepare(sql) { return { bind(key, day, limit) { return { async first() {
-    if (key.startsWith('usage:google:')) {
-      assert.match(key, /^usage:google:(chat|404):(attempt|limited)$/);
-      assert.match(day, /^\d{4}-\d{2}-\d{2}$/); assert.equal(limit, Number.MAX_SAFE_INTEGER);
-      rows.set(key, (rows.get(key) || 0) + 1);
-    }
-    return { count: 1 };
-  } }; } }; } };
-  const first = await w.chat([{ role: 'user', content: 'Hello' }]);
-  assert.match(await first.text(), /event: done/); await Promise.all(w.waits);
-  assert.equal(rows.get('usage:google:chat:attempt'), googleCalls);
-  assert.equal(rows.get('usage:google:chat:limited'), 1);
-  // 入口が設定する実際の記録フックも実行する。失敗はwaitUntil内で吸収する。
-  w.env.DB = { prepare() { return { bind(key) { return { first() { return key.startsWith('usage:google:')
-    ? Promise.reject(new Error('database unavailable')) : Promise.resolve({ count: 1 }); } }; } }; } };
-  const response = await w.chat([{ role: 'user', content: 'Hello' }]);
-  assert.match(await response.text(), /event: done/); await Promise.all(w.waits);
+test('Geminiの呼び出しと匿名試行の計測を撤去し、キーの値は扱わない', () => {
+  const w=worker();
+  assert.equal(vm.runInContext("PROVIDERS.google",w.ctx),undefined);
+  assert.ok(!read('workers/magi2/src/index.js').includes('recordGoogleUsage'));
+  assert.ok(!read('workers/magi2/src/index.js').includes('usage:google:'));
 });
 
 test('文字数指定を外した人格の長い応答で次の討議入力を膨らませない', async () => {
@@ -3383,16 +3407,17 @@ test('MAGI の版はトップ・アプリの定数・package・Androidで一致�
   assert.equal(Number(gradle.match(/versionCode (\d+)/)[1]), Number(pkg.split('.').join('')));
 });
 
-test('modelsは送り先を変えず会社の表示名と日英の文字段落・機能の印を配る', async () => {
+test('modelsはAnthropicとテーマ別の統合、日英の文字段落・機能の印を配る', async () => {
   const w = worker();
   const res = await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models'), w.env, {waitUntil() {}});
   const data = await res.json();
   for (const model of [...Object.values(data.personas), data.synthesizer]) assert.ok(model.provider_label);
-  assert.equal(data.personas['BALTHASAR-2'].provider, 'google');
-  assert.equal(data.personas['BALTHASAR-2'].provider_label, 'Google');
+  assert.equal(data.personas['BALTHASAR-2'].provider, 'anthropic');
+  assert.equal(data.themes.light.provider,'openai'); assert.equal(data.themes.dark.provider,'anthropic');
+  assert.equal(data.personas['BALTHASAR-2'].provider_label, 'Anthropic');
   for (const lang of ['ja','en']) {
     assert.ok(data.privacy[lang].length >= 10);
-    assert.ok(data.privacy[lang].some(row => row.text.includes('Gemini')));
+    assert.ok(data.privacy[lang].some(row => row.text.includes('Anthropic'))); assert.ok(data.privacy[lang].every(row=>!row.text.includes('Gemini')));
     assert.ok(data.privacy[lang].some(row => row.requires?.includes('site_pages')));
     for (const row of data.privacy[lang]) {
       assert.equal(typeof row.text, 'string'); assert.ok(!/[<>]/.test(row.text));
@@ -3484,4 +3509,131 @@ test('Android管理・両方の単色アイコン・DayNight・固定サーバ�
     assert.ok(!/(?:\/build\/|\.gradle\/|local\.properties|keystore\.properties|\.jks$|assets\/public\/|release-input\/)/.test(file),file);
     if(/\.(?:gradle|properties|xml|java|json|bat)$/.test(file))assert.ok(!/C:[\\/]Users[\\/]|(?:sk-|ghp_|AIza)[A-Za-z0-9_-]{20,}/.test(read(file)),file);
   }
+});
+// Anthropic固有の本文・終端と、会社をまたぐ答え直しの境界を検査する。
+const nativeWorker = (stream, upstream) => worker(stream, upstream, true);
+const anthropicCompletion = (text = 'answer', reason = 'end_turn', done = true) => [
+  {type:'message_start',message:{usage:{input_tokens:10}}},
+  {type:'content_block_delta',delta:{type:'thinking_delta',thinking:'SECRET_THINKING'}},
+  {type:'content_block_delta',delta:{type:'text_delta',text}},
+  {type:'message_delta',delta:{stop_reason:reason},usage:{output_tokens:20}},
+  ...(done ? [{type:'message_stop'}] : []),
+].map(value => 'data: ' + JSON.stringify(value) + '\n\n').join('');
+const nativeAnswer = (text='opinion', reason='end_turn') => Response.json({content:[{type:'thinking',thinking:'SECRET_THINKING'},{type:'text',text}],stop_reason:reason,usage:{input_tokens:10,output_tokens:20}});
+
+test('Anthropic：system・同役の結合・先頭assistantの除去・画像変換・samplingの除外', () => {
+  const w=worker();
+  const cfg=w.ctx.defaults.models.synthesizer_dark;
+  const body=w.ctx.requestBody(cfg,{stream:true,temperature:1.3,response_format:{json_schema:{schema:{type:'object',properties:{items:{type:'array',maxItems:3,items:{type:'string'}}}}}},messages:[
+    {role:'system',content:'one'},{role:'system',content:'two'}, {role:'assistant',content:'drop'},
+    {role:'user',content:'a',opinions:'private'}, {role:'user',content:[{type:'text',text:'b'},{type:'image_url',image_url:{url:'data:image/webp;base64,YQ=='}}]},
+    {role:'assistant',content:'c'}, {role:'user',content:'d'},
+  ]});
+  const plain=JSON.parse(JSON.stringify(body));
+  assert.equal(plain.system,'one\n\ntwo');
+  assert.deepEqual(plain.messages.map(m=>m.role),['user','assistant','user']);
+  assert.deepEqual(plain.messages[0].content,[{type:'text',text:'a'},{type:'text',text:'b'},{type:'image',source:{type:'base64',media_type:'image/webp',data:'YQ=='}}]);
+  assert.deepEqual(plain.thinking,{type:'adaptive'}); assert.equal(plain.output_config.effort,'medium');
+  assert.equal(plain.output_config.format.schema.properties.items.maxItems,undefined);
+  for(const name of ['temperature','top_p','top_k','opinions']) assert.ok(!JSON.stringify(body).includes(name));
+});
+
+test('Anthropic：専用見出し・観測の元応答・非streamの正規化・拒否は本文を落とす',async()=>{
+  let seen, stop='end_turn'; const observed=[];
+  const w=nativeWorker(undefined,(_,opts)=>{seen=opts;return nativeAnswer('answer',stop)});
+  w.env.evalObserve=(provider,model,res,stream)=>observed.push(res.json());
+  const cfg={...w.ctx.defaults.models.synthesizer_dark,thinking:'disabled',effort:'low',max_tokens:1024};
+  const call=()=>w.ctx.callModel({env:w.env,cfg,messages:[{role:'user',content:'hello'}],stream:false});
+  let value=await (await call()).json();
+  assert.equal(seen.headers['x-api-key'],'test'); assert.equal(seen.headers['anthropic-version'],'2023-06-01'); assert.equal(seen.headers.Authorization,undefined);
+  assert.equal(value.choices[0].message.content,'answer'); assert.equal(value.usage.total_tokens,30);
+  assert.equal((await observed[0]).content[0].type,'thinking');
+  stop='max_tokens'; value=await (await call()).json(); assert.equal(value.choices[0].finish_reason,'length');
+  stop='refusal'; value=await (await call()).json(); assert.equal(value.choices[0].finish_reason,'content_filter'); assert.equal(value.choices[0].message.content,'');
+  await w.ctx.callModel({env:w.env,cfg,messages:[{role:'user',content:'hello'}],stream:true});
+  assert.equal(JSON.parse(seen.body).stream_options,undefined);
+  delete w.env.MAGI_ANTHROPIC_API_KEY; await assert.rejects(call(),e=>e.envelope.code==='missing_api_key');
+});
+
+test('Anthropic：textだけをストリームへ渡し、拒否・上限・EOF・空は成功にしない',async()=>{
+  const w=worker(), received=[];
+  const bytes=encode(anthropicCompletion('日本語'));
+  const body=new ReadableStream({start(c){for(let i=0;i<bytes.length;i+=3)c.enqueue(bytes.slice(i,i+3));c.close()}});
+  assert.equal(await w.ctx.readSynthesis(body,(_,v)=>received.push(v.delta),'anthropic'),'日本語');
+  assert.deepEqual(received,['日本語']);
+  for(const [text,reason,done] of [['','end_turn',true],['','refusal',true],['partial','max_tokens',true],['partial','end_turn',false]]) {
+    await assert.rejects(w.ctx.readSynthesis(new Response(anthropicCompletion(text,reason,done)).body,()=>{},'anthropic'));
+  }
+});
+
+test('統合の答え直し：HTTP・拒否・空・streamエラーを両方向で一度だけ行う',async()=>{
+ for(const theme of ['light','dark']) for(const failure of ['http','refusal','empty','error']) {
+  const calls=[], emitted=[], logs=[]; const native=theme==='dark';
+  const w=nativeWorker(undefined,(_,options)=>{
+    const body=JSON.parse(options.body); calls.push(body);
+    if(calls.length>1) return new Response(native ? completion('fallback') : anthropicCompletion('fallback'));
+    if(failure==='http') return new Response('billing error',{status:402});
+    if(failure==='error') return new Response('data: '+JSON.stringify({error:{type:'overloaded_error'}})+'\n\n');
+    return new Response(native ? anthropicCompletion('',failure==='refusal'?'refusal':'end_turn') : completion('',failure==='refusal'?'content_filter':'stop'));
+  });
+  const answer=await w.ctx.synthesize({env:w.env,messages:[{role:'system',content:'prompt'},{role:'user',content:'input'}],theme,send:(_,v)=>emitted.push(v.delta),log:(...v)=>logs.push(v)});
+  assert.equal(answer,'fallback'); assert.equal(calls.length,2); assert.deepEqual(emitted,['fallback']);
+  assert.ok(logs.some(v=>v[0]==='fallback'&&v[2]===(native?'anthropic':'openai')));
+  assert.ok(native ? calls[1].reasoning_effort : calls[1].thinking);
+ }
+});
+
+test('統合の答え直し：本文後の失敗・両社失敗・利用者の停止では3回目も取り消しもない',async()=>{
+ for(const theme of ['light','dark']) {
+  for(const partial of [true,false]) {
+    let calls=0; const emitted=[];
+    const w=nativeWorker(undefined,()=>{calls++;return new Response(partial ? (theme==='dark'?anthropicCompletion('partial','max_tokens'):completion('partial','length')) : 'data: {"error":{}}\n\n')});
+    await assert.rejects(w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,send:(_,v)=>emitted.push(v.delta),log(){}}));
+    assert.equal(calls,partial?1:2); assert.deepEqual(emitted,partial?['partial']:[]);
+  }
+  let calls=0; const ac=new AbortController();
+  const w=nativeWorker(undefined,(_,opts)=>{calls++;return new Response(new ReadableStream({start(){ac.abort()},cancel(){}}))});
+  await assert.rejects(w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,signal:ac.signal,send(){},log(){}}));
+  assert.equal(calls,1);
+ }
+});
+
+test('統合の答え直し：本文なし30秒で止め、次の60秒の期限を新しく作り、タイマーを片付ける',async()=>{
+ for(const theme of ['light','dark']) {
+  const clock=streamClock(), calls=[], logs=[]; let cancelled=false;
+  const w=nativeWorker(undefined,(_,opts)=>{
+    calls.push(JSON.parse(opts.body));
+    if(calls.length===1)return new Response(new ReadableStream({start(c){c.enqueue(encode('data: '+JSON.stringify({type:'ping'})+'\n\n'))},cancel(){cancelled=true}}));
+    return new Response(theme==='dark'?completion('fallback'):anthropicCompletion('fallback'));
+  });
+  Object.assign(w.ctx,{setTimeout:clock.setTimeout,clearTimeout:clock.clearTimeout});
+  const pending=w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,send(){},log:(...v)=>logs.push(v)});
+  await tick(); await clock.advance(29999); assert.equal(calls.length,1);
+  await clock.advance(1); assert.equal(await pending,'fallback'); assert.equal(calls.length,2); assert.equal(cancelled,true);
+  assert.ok(logs.some(v=>v[0]==='fallback'&&v[3]==='first_text_timeout')); assert.equal(clock.timers.size,0);
+ }
+});
+
+test('補助の答え直し：HTTPのみ・同じ期限・一回・解析失敗と停止では呼び直さない',async()=>{
+ const calls=[]; let status=503;
+ const w=nativeWorker(undefined,(_,opts)=>{calls.push(opts);return calls.length%2 ? new Response('failure',{status}) : searchReply({motion:'test',votable:true})});
+ const cfg={...w.ctx.defaults.models.synthesizer_dark,thinking:'disabled',effort:'low',max_tokens:400};
+ const signal=new AbortController().signal;
+ const opts={env:w.env,cfg,signal,stream:false,messages:[{role:'user',content:'input'}]};
+ await w.ctx.callAuxModel(opts,()=>{},'motion'); assert.equal(calls.length,2); assert.equal(calls[0].signal.aborted,true); assert.equal(calls[1].signal,signal);
+ const b=JSON.parse(calls[1].body); assert.equal(b.reasoning_effort,'none');assert.equal(b.max_completion_tokens,400);
+ status=200; await assert.rejects(w.ctx.callAuxModel(opts,()=>{},'motion'),SyntaxError); assert.equal(calls.length,3);
+ const ac=new AbortController(); ac.abort(); status=503; await w.ctx.callAuxModel({...opts,signal:ac.signal},()=>{},'motion'); assert.equal(calls.length,4);
+});
+
+test('Anthropicの通知：課金400/429を拾い、retry-after付きの回数制限は除く',()=>{
+ const w=nativeWorker(),check=vm.runInContext('isBillingFailure',w.ctx);
+ for(const status of [401,402,403])assert.equal(check(status,'','anthropic'),true);
+ for(const body of ['spend limit reached','spend cap reached','credit balance exhausted','usage limit reached']) {
+  for(const status of [400,429])assert.equal(check(status,body,'anthropic',new Headers()),true);
+  assert.equal(check(429,body,'anthropic',new Headers({'retry-after':'1'})),false);
+ }
+ for(const body of ['rate limit reached','requests per minute exceeded','quota exceeded'])assert.equal(check(429,body,'anthropic',new Headers()),false);
+ assert.equal(check(400,'invalid schema','anthropic'),false);
+ assert.equal(check(429,'quota exceeded','openai',new Headers({'retry-after':'1'})),true);
 });

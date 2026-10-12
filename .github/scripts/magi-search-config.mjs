@@ -57,6 +57,10 @@ await vm.runInContext(`(async function () {
       body: requestBody(DEFAULTS.models.synthesizer, { stream: true,
         messages: [{role: 'system', content: SYNTHESIZER.system_prompt + '\\n' + (SYNTHESIZER.role?.chat || '') + '\\n' + guide.synth},
           ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) },
+    synthesizer_dark: { provider: DEFAULTS.models.synthesizer_dark.provider,
+      body: requestBody(DEFAULTS.models.synthesizer_dark, { stream: true,
+        messages: [{role: 'system', content: SYNTHESIZER.system_prompt + '\\n' + (SYNTHESIZER.role?.chat || '') + '\\n' + guide.synth},
+          ...messages, {role: 'user', content: '討議: PDF Studioで結合できる。検証済みの候補: ' + JSON.stringify(page)}] }) },
   };
   config.site_smoke = [];
   for (const purpose of ['requested', 'auxiliary']) {

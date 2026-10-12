@@ -1,6 +1,6 @@
 // 合成入力で第2公開を評価。APIキーはローカルのみ、結果は非追跡の .wrangler に保存する。
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { webcrypto, createHash } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import vm from 'node:vm';
@@ -14,9 +14,9 @@ assert(Number.isInteger(batch) && batch >= 0 && batch <= 8);
 const selected = (process.argv.find(a => a.startsWith('--cases='))?.slice(8) || '').split(',').filter(Boolean).map(Number);
 assert(selected.every(n => Number.isInteger(n) && n >= 1 && (n <= 52 || n >= 61 && n <= 80)));
 const fingerprint = createHash('sha256').update(['personas.js','classification.js','magi-mode.js','src/index.js'].map(p=>read('workers/magi2/'+p)).join('\n')).digest('hex');
-const saved = read('workers/magi2/.dev.vars');
+const saved = existsSync(new URL('workers/magi2/.dev.vars',root)) ? read('workers/magi2/.dev.vars') : '';
 const env = { MAGI_MODE_ENABLED:'true', SITE_SEARCH_ENABLED:'true' };
-for (const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY','MAGI_GEMINI_API_KEY','MAGI_TYPESAFE_API_KEY']) {
+for (const name of ['MAGI_OPENAI_API_KEY','MAGI_DEEPSEEK_API_KEY','MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']) {
   env[name] = process.env[name] || saved.match(new RegExp('^\\s*'+name+'\\s*=\\s*(.*?)\\s*$', 'm'))?.[1].replace(/^(['"])(.*)\1$/, '$2');
   assert(env[name], name+' is required');
 }
@@ -47,25 +47,25 @@ const ctx = vm.createContext({ aiModels:JSON.parse(read('config/ai-models.json')
     const started=performance.now(),body=JSON.parse(options.body);
     // 説明だけの実API評価。票・欠席・判定を固定し、3社の人格APIは呼ばない。
     if(synthetic){
-      const id=body.messages?.[0]?.content.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1];
+      const id=(body.system || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1];
       if(id){const round=syntheticRounds[id]=(syntheticRounds[id]||0)+1;
         const raw=synthetic==='hold'&&id==='CASPER-3'?'':synthetic==='carried'&&id==='MELCHIOR-1'&&round>1?'[VOTE:]':
           '[VOTE:'+(synthetic!=='no-reasons'&&id==='BALTHASAR-2'?'REJECT':'APPROVE')+']'+(synthetic==='no-reasons'?'':'\n'+(id==='BALTHASAR-2'?'費用への懸念が残る。':'温かい一杯の喜びを重視した。'));
-        return Response.json({choices:[{finish_reason:'stop',message:{content:raw}}]});
+        return String(url).includes('anthropic.com') ? Response.json({content:[{type:'text',text:raw}],stop_reason:'end_turn'}) : Response.json({choices:[{finish_reason:'stop',message:{content:raw}}]});
       }
       if(body.response_format?.json_schema?.name==='debate_judge')return Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify({action:'answer',assessment:'採用票の範囲で説明する。',questions:[]})}}]});
     }
     const res=await fetch(url,options);
-    const report={provider:String(url).includes('typesafe')?'typesafe':String(url).includes('deepseek')?'deepseek':String(url).includes('googleapis')?'google':'openai',
+    const report={provider:String(url).includes('typesafe')?'typesafe':String(url).includes('deepseek')?'deepseek':String(url).includes('anthropic.com')?'anthropic':'openai',
       model:body.model,format:body.response_format?.json_schema?.name,status:res.status,started_ms:Math.round(started),
-      persona:body.messages?.[0]?.content.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1]};
+      persona:(body.system || body.messages?.[0]?.content)?.match(/面の1つ「[^」]+」（([^）]+)）/)?.[1]};
     calls.push(report);
     observed.push((async()=>{
       if (!body.stream) { const data=await res.clone().json().catch(()=>null); report.usage=data?.usage;
         if(report.provider==='typesafe')report.answers=data?.answers;
-        if(report.persona){const choice=data?.choices?.[0]; report.finish=choice?.finish_reason;report.raw=choice?.message?.content;
+        if(report.persona){const choice=data?.choices?.[0]; report.finish=data?.stop_reason || choice?.finish_reason;report.raw=report.provider==='anthropic'?(data?.content||[]).filter(p=>p.type==='text').map(p=>p.text).join(''):choice?.message?.content;
           report.tag=typeof report.raw==='string'?ctx.parseVote(report.raw).vote:null;}
-      } else { const text=await res.clone().text();const last=[...text.matchAll(/^data: (.+)$/gm)].map(m=>{try{return JSON.parse(m[1]);}catch{return null;}}).filter(Boolean);report.usage=last.findLast(v=>v.usage)?.usage; }
+      } else { const text=await res.clone().text();const last=[...text.matchAll(/^data: (.+)$/gm)].map(m=>{try{return JSON.parse(m[1]);}catch{return null;}}).filter(Boolean);report.usage=Object.assign({},...last.map(v=>v.message?.usage||v.usage||{})); }
       report.elapsed_ms=Math.round(performance.now()-started);
     })());
     return res;
@@ -187,9 +187,7 @@ if(mode==='reader'){
     const report={case:c.id,side,fixture:c.fixture,expected:c.expected,language:c.language,input:c.text,value,events,calls,marks:marks.map(m=>({...m,ms:Math.round(m.ms-started)})),elapsed_ms:Math.round(performance.now()-started)};
     if(events.length)report.ui=await checkUi(events);
     reports.push(report);save();console.log(JSON.stringify({mode,case:c.id,side,elapsed_ms:report.elapsed_ms,result:value?.verdict?.result,votable:value?.votable||value?.classification?.votable,calls:calls.length,errors:calls.filter(x=>x.status!==200).map(x=>({provider:x.provider,status:x.status}))}));
-    if(calls.some(x=>x.provider==='google'&&x.status===429))throw new Error('Google上限エラー。これ以上の評価を中断します');
-    // Google無料枠を本番と共有するため、フル討議の開始を30秒以上空ける。
-    if(mode==='paired'||mode==='pilot')await new Promise(r=>setTimeout(r,Math.max(0,30000-(performance.now()-started))));
+    if(calls.some(x=>[401,402,403,429].includes(x.status)))throw new Error('上流の認証・課金・回数の上限エラー。これ以上の評価を中断します');
   }
 }
 console.log(JSON.stringify({mode,completed:reports.length,output:target.pathname.split('/').at(-1)}));

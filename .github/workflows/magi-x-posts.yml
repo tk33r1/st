@@ -57,7 +57,7 @@ jobs:
         X_TAHKEH_ACCESS_TOKEN_SECRET: ${{ secrets.X_TAHKEH_ACCESS_TOKEN_SECRET }}
         X_TAHKEH_CONSUMER_KEY: ${{ secrets.X_TAHKEH_CONSUMER_KEY }}
         X_TAHKEH_CONSUMER_SECRET: ${{ secrets.X_TAHKEH_CONSUMER_SECRET }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         DAYS: ${{ inputs.days }}
       # 日数は recheck で指定があるときだけ渡す（既定は magi-x-posts.py の RECHECK_DAYS の1か所）
       run: |
