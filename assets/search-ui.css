@@ -22,7 +22,7 @@
 .st-search-result[aria-selected="true"],.st-search-suggestions .st-search-result:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
 .st-search-notice{display:flex;align-items:center;gap:.5rem;border-top:1px solid var(--border,currentColor);font-size:.75em;padding:.3rem .7rem;line-height:1.5}
 .st-search-info{flex-shrink:0;min-width:44px;width:44px;border:0;padding:0;font-size:1.1rem}
-.st-search-filters{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:1rem 0}.st-search-filters label{display:flex;align-items:center;gap:.5rem;font-size:.85em}
+.st-search-filters{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:1rem 0}.st-search-filters :is(label,[role="group"]){display:flex;align-items:center;gap:.5rem;font-size:.85em}
 .st-search-heading{font:inherit;font-weight:700;margin:1rem 0 .5rem;scroll-margin-top:6rem}
 .st-search-local>.st-search-list>.st-search-result{margin:0;border-bottom:1px solid var(--border,currentColor)}
 .st-search-local>.st-search-list>.st-search-result>.st-search-link{display:grid;gap:.25rem;padding:.8rem .5rem;color:inherit;text-decoration:none}
@@ -37,5 +37,5 @@
 .st-search-privacy-details{color:inherit;background:var(--surface);border:1px solid var(--border,currentColor);padding:1.5rem;width:min(38rem,calc(100vw - 2rem));max-height:85vh;overflow:auto;margin:auto;font:inherit}
 .st-search-privacy-details::backdrop{background:#0008}.st-search-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .st-search-dialog-head h2{font:inherit;font-weight:700}.st-search-privacy-details p{margin:1rem 0;font-size:.85em;line-height:1.8}.st-search-privacy-details a{text-decoration:underline}
-@media(max-width:720px){.st-search-notice{font-size:.7em}.st-search-filters{gap:.5rem}.st-search-filters label{max-width:100%}.st-search-filters select{max-width:100%;min-width:0}}
+@media(max-width:720px){.st-search-notice{font-size:.7em}.st-search-filters{gap:.5rem}.st-search-filters :is(label,[role="group"]){max-width:100%}.st-search-filters select{max-width:100%;min-width:0}}
 .site-tree ul{list-style:none;padding-left:1.2rem}.site-tree>ul{padding-left:0}.site-tree li{border-left:1px solid var(--border,#555);margin:.6rem 0;padding-left:.75rem}.site-tree-label{overflow-wrap:anywhere}.site-tree details{margin-top:.3rem}.site-tree summary{cursor:pointer;font-size:.8em}.site-tree a{color:var(--accent,#55d4b0);text-decoration:none}.site-tree a:hover{text-decoration:underline}

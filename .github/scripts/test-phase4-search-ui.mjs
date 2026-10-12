@@ -74,6 +74,9 @@ try {
     await input.fill('収納');release();await page.waitForFunction(()=>window.ui.state.rank!=='loading');assert.equal(await page.evaluate(()=>window.ui.state.rank),'results',JSON.stringify({errors,posts}));
     assert.equal(await page.evaluate(()=>window.ui.state.query),'家電');assert.equal(posts[0].query,'家電');
     assert.equal(await page.locator('.st-search-semantic li').count(),3);
+    await page.evaluate(()=>window.ui.setQuery('家電'));
+    assert.equal(await page.evaluate(()=>window.ui.state.rank),'results','同じ語の受け渡しで②を捨てない');
+    assert.equal(await page.locator('.st-search-semantic li').count(),3);assert.equal(posts.length,1);
     assert.equal(await page.locator('.st-search-semantic li').first().getAttribute('data-id'),scope==='game'?'game:21':['nitori','retail'].includes(scope)?'daily:21':'tool:21');
     assert.equal(await page.locator('.st-search-local > ul').evaluate(el=>el.getBoundingClientRect().top),y,'AIの応答で①を押し下げない');
     await input.press('Escape');
@@ -98,6 +101,7 @@ try {
     const page=await browser.newPage(),posts=[];await rankFixture(page,posts);await setup(page,{slowBase:true});
     await page.waitForFunction(()=>!!window.releaseBase);const input=page.locator('.st-search-input');
     if(explicit) {await input.fill('家電');await input.press('Enter');}else await page.evaluate(()=>window.ui.setQuery('家電'));
+    await page.evaluate(()=>window.ui.setQuery('家電'));
     assert.equal(posts.length,0);assert.match(await page.locator('.st-search-empty').textContent(),/読み込み中/);
     await page.evaluate(()=>window.releaseBase());await page.waitForFunction(()=>window.ui.state.readings==='ready');
     if(explicit) await page.waitForFunction(()=>window.ui.state.rank==='results');
@@ -112,6 +116,15 @@ try {
     if(marker==='valid') await page.waitForFunction(()=>window.ui.state.rank==='results');
     assert.equal(posts.length,marker==='valid'?1:0);assert.equal(await page.evaluate(()=>sessionStorage.getItem('st-search-explicit')),null);
     await page.evaluate(()=>window.ui.setQuery('家電',{handoff:true}));assert.equal(posts.length,marker==='valid'?1:0);await page.close();
+  }
+  {
+    const page=await browser.newPage(),posts=[];const release=await rankFixture(page,posts,{delay:true});await setup(page);await page.waitForFunction(()=>window.ui.state.readings==='ready');
+    await page.locator('input').fill('家電');await page.locator('input').press('Enter');await page.waitForFunction(()=>window.ui.state.rank==='loading');
+    await page.evaluate(()=>window.ui.setQuery('家電'));assert.equal(await page.evaluate(()=>window.ui.state.rank),'loading');
+    release();await page.waitForFunction(()=>window.ui.state.rank==='results');assert.equal(posts.length,1);
+    await page.evaluate(()=>window.ui.handoff());assert.equal(await page.evaluate(()=>window.ui.state.rank),'handoff');
+    assert.equal(await page.locator('.st-search-semantic').isVisible(),false,'③へ渡した後は②の再実行を出さない');
+    assert.equal(await page.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),false);await page.close();
   }
   {
     const page=await browser.newPage(),posts=[];await rankFixture(page,posts);await setup(page,{slowReading:true});await page.waitForFunction(()=>!!window.releaseReading);
@@ -165,6 +178,8 @@ try {
   }
   {
     const page=await browser.newPage();await setup(page,{filterChips:true});
+    const group=page.getByRole('group',{name:'分野',exact:true});assert.equal(await group.count(),1);
+    assert.equal(await page.locator('.st-search-filters label button').count(),0,'label内にチップを置かない');
     await page.evaluate(()=>window.ui.setLocale('en'));
     assert.equal(await page.locator('[data-filter] option[value=""]').textContent(),'All');
     assert.equal(await page.locator('.st-search-chips button').first().textContent(),'All');

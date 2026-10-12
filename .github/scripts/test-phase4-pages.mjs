@@ -43,12 +43,18 @@ try {
     const input=page.locator('.st-search-input');
     const catalogue=scope==='tools'?'#tool-grid':scope==='game'?'#game-grid':null;
     if(catalogue) {
+      assert.equal(await page.getByRole('group',{name:scope==='tools'?'カテゴリー':'ジャンル',exact:true}).count(),1);
+      assert.equal(await page.locator('.st-search-filters label button').count(),0);
       assert.equal(await page.locator('[data-sort] option').first().getAttribute('value'),'newest');
       assert.equal(await page.locator('.st-search-chip').count()>1,true);await page.locator('.st-search-chip').nth(1).click();
       assert.equal(await page.locator('.st-search-chip').nth(1).getAttribute('aria-pressed'),'true');await page.locator('.st-search-chip').first().click();
       await page.locator('[data-sort]').selectOption('title');
     }
     await input.fill(query);assert.equal(posts.length,0);
+    if(scope==='tools') {
+      assert.ok(await page.locator('.st-search-suggestions .st-search-kind').count()>0);
+      assert.equal(await page.locator('.st-search-kind .st-search-kind').count(),0,'種類の字を二重に縮小しない');
+    }
     if(catalogue) assert.equal(await page.locator(catalogue).isVisible(),true,'打っている間はカタログを残す');
     if(scope==='site') assert.equal(await page.locator('#path-suggestions').isVisible(),true);
     assert.match(await page.locator('.st-search-notice').textContent(),/TypeSafe AI/);
@@ -60,6 +66,14 @@ try {
       await input.press('Enter');
       assert.equal(await page.locator('#ai-search').isVisible(),true,'同じ語の再確定でも③を表示する');
       assert.equal(posts.length,1,'同じ条件の②は再送しない');
+      let finishAI;
+      await page.route(/\/magi2\/site-search(?:\?|$)/,async route=>{await new Promise(r=>finishAI=r);await route.fulfill({json:{status:'no_results',results:[],comment:''}});});
+      await page.locator('#ai-run').click();
+      await page.waitForFunction(()=>!document.querySelector('#ai-thinking').hidden);
+      assert.equal(await page.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),false,'③の実行中に②の再実行を出さない');
+      assert.equal(posts.length,1);
+      while(!finishAI) await new Promise(r=>setTimeout(r,10));finishAI();
+      await page.waitForFunction(()=>document.querySelector('#ai-cancel').hidden);
     }
     const rows=page.locator('.st-search-local > ul > li');assert.ok(await rows.count()>0);
     if(catalogue) {
@@ -106,6 +120,19 @@ try {
     assert.equal(posts.length,0);assert.equal(await page.getByRole('button',{name:'AIで関連する候補も探す',exact:true}).isVisible(),true);assert.ok(!page.url().includes('q='));await page.close();
   }
   for(const media of ['nitoridaily','retailtechdaily']) {
+    for(const issue of [true,false]) {
+      const typing=await browser.newPage({viewport:{width:320,height:900}}),typingPosts=[];
+      const release=await offline(typing,typingPosts,[],'/assets/search-ui.js');
+      await typing.goto(origin+'/job/'+media+'/'+(issue?'20261011/':''),{waitUntil:'commit'});
+      const input=typing.locator('#headerSearchInput');await input.focus();await typing.keyboard.type('ni');
+      await input.evaluate(el=>el.setSelectionRange(1,2,'backward'));await release();
+      await typing.waitForFunction(()=>document.querySelector('.header-search').dataset.stSearchOwned==='1');
+      assert.equal(await input.evaluate(el=>document.activeElement===el),true,'取り付け後も入力欄のフォーカスを保つ');
+      assert.deepEqual(await input.evaluate(el=>[el.selectionStart,el.selectionEnd,el.selectionDirection]),[1,2,'backward']);
+      assert.equal(await input.getAttribute('aria-expanded'),'true');
+      await typing.keyboard.type('tori');assert.equal(await input.inputValue(),'ntori','続けて打った文字も欄へ入る');
+      await ready(typing);assert.equal(typingPosts.length,0);await typing.close();
+    }
     const page=await browser.newPage({viewport:{width:320,height:900}}),posts=[],requests=[];await offline(page,posts,requests);
     await page.goto(origin+'/job/'+media+'/20261011/',{waitUntil:'domcontentloaded'});
     assert.ok(!requests.includes('/assets/search-ui.js'));assert.ok(!requests.includes('/job/'+media+'/search-index.json'));

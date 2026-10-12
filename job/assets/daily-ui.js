@@ -435,7 +435,7 @@
     async function load() {
       if(started) return;started=true;
       try {
-        const version='20261012_11',files=['search-analytics.js?v=20261009_1','japanese-search.js?v=20261012_8','site-search.js?v=20261011_1','search-ui.js?v='+version,'search-data.js?v=20261012_8'];
+        const version='20261012_12',files=['search-analytics.js?v=20261009_1','japanese-search.js?v=20261012_8','site-search.js?v=20261011_1','search-ui.js?v='+version,'search-data.js?v=20261012_8'];
         await new Promise((resolve,reject)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='/assets/search-ui.css?v='+version;style.onload=resolve;style.onerror=reject;document.head.append(style);});
         for(const file of files) await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/assets/'+file;script.onload=resolve;script.onerror=reject;document.head.append(script);});
         const scope=media==='nitoridaily'?'nitori':'retail',container=document.createElement('div');container.className='daily-header-search-runtime';header.after(container);

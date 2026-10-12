@@ -66,11 +66,13 @@
     const notify=()=>call('onConditions',{...rankCondition(),sort:selectedSort});
     // 表示: 既存ヘッダーを借りる場合も操作の受け口はここに一本化する。
     const external=!!adapter.input,form=adapter.input || node('form','st-search-form',container);
+    const borrowed=external?form.querySelector('input[type="search"]'):null;
+    const focusSnapshot=borrowed===document.activeElement?{start:borrowed.selectionStart,end:borrowed.selectionEnd,direction:borrowed.selectionDirection}:null;
     form.setAttribute('role','search');form.dataset.stSearchOwned='1';
     const component=external?node('div','st-search-control'):node('div','st-search-control',container);
     if(external) {form.before(component);component.append(form);} else component.append(form);
     const box=external?form:node('div','st-search-input-row',form);
-    const input=external?form.querySelector('input[type="search"]'):node('input','st-search-input',box);
+    const input=external?borrowed:node('input','st-search-input',box);
     input.classList.add('st-search-input');classes(input,'input');input.type='search';input.id ||= id+'-input';input.maxLength=400;
     input.autocomplete='off';input.spellcheck=false;input.setAttribute('enterkeyhint','search');input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
     const label=external?form.querySelector('label') || node('label','',form):node('label','',form);
@@ -92,11 +94,14 @@
     for(const spec of adapter.filters || []) {
       const allowed={site:[],tools:['category'],game:['genre'],nitori:['category','region','month'],retail:['category','region','month']};
       if(!spec || !allowed[adapter.scope].includes(spec.key) || !Array.isArray(spec.options) || controls.has(spec.key)) throw new Error('search_filters');
-      const l=node('label','',filterArea),text=node('span','',l),select=node('select','',l);labelText(spec,text);select.dataset.filter=spec.key;
+      const l=node(adapter.filterChips?'div':'label','',filterArea),text=node('span','',l),select=node('select','',l);labelText(spec,text);select.dataset.filter=spec.key;
       for(const choice of spec.options) {const option=node('option','',select);option.value=choice.value;labelText(choice,option);}
       filters[spec.key]=select.value;controls.set(spec.key,select);filterLabels.set(spec.key,l);
       select.addEventListener('change',()=>{filters[spec.key]=select.value;changeFilter();},{signal});
-      if(adapter.filterChips) {select.hidden=true;const chips=node('div','st-search-chips',l);chipAreas.set(spec.key,chips);}
+      if(adapter.filterChips) {
+        text.id=id+'-filter-'+spec.key;l.setAttribute('role','group');l.setAttribute('aria-labelledby',text.id);select.setAttribute('aria-labelledby',text.id);
+        select.hidden=true;const chips=node('div','st-search-chips',l);chipAreas.set(spec.key,chips);
+      }
     }
     let sortSelect=null;
     if(sorts.length>1) {
@@ -155,7 +160,13 @@
     function compactItem(record,href,suggestion=false) {
       const a=node('a','',null);a.href=href;const title=node('span','st-search-title',a);
       if(suggestion) highlight(title,titleOf(record),input.value.trim());else title.textContent=titleOf(record);
-      const kind=adapter.renderSuggestion?.(record,{href,locale,compact:true});if(kind) {const span=node('span','st-search-kind',a);if(typeof kind==='string') span.textContent=kind;else span.append(kind);}return a;
+      const kind=adapter.renderSuggestion?.(record,{href,locale,compact:true});
+      if(kind) {
+        if(typeof kind==='string') node('span','st-search-kind',a).textContent=kind;
+        else if(kind.classList?.contains('st-search-kind')) a.append(kind);
+        else node('span','st-search-kind',a).append(kind);
+      }
+      return a;
     }
     function addRow(list,row,compact,index) {
       const record=row.record || base.records.find(r=>r.id===row.id),href=safeHref(links.get(record.id),adapter.scope),suggestion=list===suggestions;
@@ -211,7 +222,7 @@
       const mainAI=baseState==='ready' && !readingPending && matched.total===0 && related.length>0;
       const heading=matched.total===0 && rankState==='loading' && !readingPending?t.heading(committed,null):t.heading(committed,matched.total);
       localHeading.textContent=mainAI?t.related(committed):heading+(baseState==='ready'?(readingPending?' '+t.preparing:readingState==='failed'?' '+t.readingFailed:''):'');
-      const retryable=!!committed && baseState==='ready' && !client.disabled && ['stale','handoff'].includes(rankState),compactVisible=!mainAI && related.length>0 && rankState==='results';
+      const retryable=!!committed && baseState==='ready' && !client.disabled && rankState==='stale',compactVisible=!mainAI && related.length>0 && rankState==='results';
       semantic.hidden=client.disabled || !(rankState==='loading' || compactVisible || retryable);semantic.classList.toggle('is-loading',rankState==='loading');semantic.classList.toggle('is-expanded',expandedAI);
       semanticHeading.textContent=rankState==='loading'?t.ranking:t.semantic;semanticHeading.hidden=retryable;retryArea.hidden=!retryable;rankList.hidden=retryable;showAll.hidden=!compactVisible || related.length<=3 || expandedAI;
       fillList(rankList,compactVisible?related.slice(0,expandedAI?related.length:3):[],true);
@@ -229,9 +240,9 @@
       const query=value.trim();if(!query) {closeResults();return;}if(Array.from(query).length>200) return;
       const changed=committed!==query,wasEmpty=!committed;committed=query;
       if(wasEmpty) {previousSort=selectedSort;selectedSort=sorts.find(s=>s.value==='relevance')?.value || selectedSort;updateSort();}
-      confirmation++;limit=20;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}if(!allowed) clearRank('stale');
+      confirmation++;limit=20;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}
       closeDropdown();refreshLocal();notify();call('onResults',{query:committed,open:true});
-      if(baseState==='loading') pending={allowed,revision:conditionRevision};else if(allowed && baseState==='ready') runRank();
+      if(baseState==='loading') {if(changed || allowed || !pending) pending={allowed,revision:conditionRevision};}else if(allowed && baseState==='ready') runRank();
       if(w.matchMedia('(pointer: coarse)').matches) input.blur();const rect=localHeading.getBoundingClientRect();if(rect.top<0 || rect.bottom>w.innerHeight) localHeading.scrollIntoView({block:'start',behavior:'smooth'});
     }
     async function finishTask(task,ticket) {
@@ -389,7 +400,13 @@
     component.addEventListener('click',recordClick,{signal});
     component.addEventListener('auxclick',recordClick,{signal});
 
-    updateLabels();updateSort();refreshLocal();dropdown=component.contains(document.activeElement);component.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
+    updateLabels();updateSort();refreshLocal();
+    // ヘッダーを包み直しても、読み込み中に始めた入力を続けられるようにする。
+    if(focusSnapshot) {
+      input.focus({preventScroll:true});
+      if(focusSnapshot.start!==null && focusSnapshot.end!==null) input.setSelectionRange(focusSnapshot.start,focusSnapshot.end,focusSnapshot.direction);
+    }
+    dropdown=component.contains(document.activeElement);component.classList.toggle('is-focused',dropdown);refreshSuggestions();const ready=loadBase('default');
     return {ready,run,cancel:()=>{conditionRevision++;clearRank('stale');renderResults();},handoff:()=>{conditionRevision++;pending=null;clearRank('handoff');renderResults();},
       setQuery(value,options={}) {
         input.value=String(value).slice(0,400);let explicit=false;
