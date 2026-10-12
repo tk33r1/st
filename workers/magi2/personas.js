@@ -82,6 +82,9 @@ export const SITE_GUIDE = {
   list_label: 'サイトのページ一覧（題名 — 説明）:',
 };
 
+// SSE のコメントは旧画面も読み飛ばす。中継の無通信切断と少量のバッファリングを避ける。
+export const STREAM = { padding_bytes: 2048, ping_ms: 10000 };
+
 export const DEFAULTS = {
   temperature: 1.0,
   top_p: 1.0,
@@ -100,6 +103,9 @@ export const DEFAULTS = {
   reactions: { minute_limit: 30, daily_limit: 480, max_request_bytes: 128 * 1024 },
   // 画像付きは前処理（デコード・タイル化）のぶん遅くなるので人格側の猶予を広げる
   // suggest_ms は次の質問の予測の上限。統合の答えが出た後に待つぶん入力欄の再開が遅れるので短く切る
+  // 最長の目安は約250秒：討議予算90秒＋開始済みの判定20秒・画像人格45秒・票読取4秒、
+  // 初回の分類/議題化/案内/ページ選び等約20秒＋統合60秒＋予測4秒。
+  // 予算は次の回の開始を止める値なので、開始済みの1回を上乗せする。画面は受信終了まで300秒待つ。
   timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000, suggest_ms: 4000 },
   // マルチモーダル入力（画像）の受け入れ条件。data: URL のみ許可する
   // （外部 URL を許すと Worker 経由の任意フェッチになるため受け付けない）。

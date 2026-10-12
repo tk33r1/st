@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -1249,7 +1249,20 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
       const enc = new TextEncoder();
       let closed = false;
       const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
-      const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
+      let pingTimer = null;
+      const stopPing = () => { clearInterval(pingTimer); pingTimer = null; };
+      const close = () => {
+        stopPing(); stop.signal.removeEventListener('abort', close);
+        if (!closed) { closed = true; try { controller.close(); } catch (_) {} }
+      };
+      stop.signal.addEventListener('abort', close, { once: true });
+      if (stop.signal.aborted) close();
+      else {
+        controller.enqueue(enc.encode(':' + ' '.repeat(STREAM.padding_bytes - 3) + '\n\n'));
+        pingTimer = setInterval(() => {
+          if (!closed) { try { controller.enqueue(enc.encode(': ping\n\n')); } catch (_) { close(); } }
+        }, STREAM.ping_ms);
+      }
 
       ctx.waitUntil((async () => { try {
         // 出力の言語（3人格・統合・討議の判定・タイトル・予測の全部に同じものを付ける）
@@ -1357,7 +1370,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   });
 
   return new Response(stream, {
-    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
+    headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
   });
 }
 
