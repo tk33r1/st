@@ -76,9 +76,10 @@ async function pages() {
   for(const [name,path] of [['top','/'],['PWA','/magi-app/www/'],['DJ','/dj/request/']]) {
     const c=await context();try {
       if(name!=='top')await c.page.setViewportSize({width:390,height:900});
-      const board=name==='DJ'?c.page.waitForResponse(r=>new URL(r.url()).pathname==='/dj/api/req/board'):null;
+      // 起動時の受付判定は/event。受付中は/boardを送信時まで読まない。
+      const event=name==='DJ'?c.page.waitForResponse(r=>new URL(r.url()).pathname==='/dj/api/req/event'):null;
       await c.page.goto(origin+path,{waitUntil:'domcontentloaded'});
-      if(board){const res=await board;assert.equal(res.status(),200);await res.finished();await c.page.waitForTimeout(200);}
+      if(event){const res=await event;assert.equal(res.status(),200);await res.finished();await c.page.waitForTimeout(200);}
       if(name==='DJ')await c.page.locator('[data-tab="consult"]').click();else await c.page.waitForFunction(()=>document.body.innerText.includes('ver 4.5'));
       const input=name==='DJ'?'#chatInput':'#agent-input',send=name==='DJ'?'#chatSend':'#agent-send';
       if(name==='DJ'&&await c.page.locator(input).isDisabled()) {
