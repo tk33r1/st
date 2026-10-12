@@ -748,8 +748,8 @@
             <div id="vLine" class="anim-ready play-fade-in delay-2"></div>
 
             <div class="prose-panel">
-              <!-- イントロ本文。data-updated はイントロの最終更新日、data-question は書き留め欄に出す問い（各テーマの分は #thoughtSource の article 側） -->
-              <div id="body" class="anim-ready play-fade-up delay-1" data-updated="2025.10.12" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
+              <!-- イントロ本文。最終更新日は各テーマの最新日付から決める。data-question は書き留め欄に出す問い（各テーマの分は #thoughtSource の article 側） -->
+              <div id="body" class="anim-ready play-fade-up delay-1" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
@@ -1011,7 +1011,7 @@
     const intro = {
       title: els.title.textContent.trim(),
       body: els.body.textContent.trim(),
-      lastUpdated: els.body.dataset.updated || '',
+      lastUpdated: '',
       question: els.body.dataset.question || '',
       reference: null,
       revisions: []
@@ -1031,6 +1031,10 @@
         }))
       };
     });
+
+    // 日付は YYYY.MM.DD なので文字列で比較できる。目次の更新日は各コラムの最新日付に合わせる
+    intro.lastUpdated = Object.values(themes).reduce((latest, theme) =>
+      theme.lastUpdated > latest ? theme.lastUpdated : latest, '');
 
     const SITE_URL = "https://tk.st/thought/";
     const UTM_PARAMS = "?utm_source=tk.st&utm_medium=referral&utm_campaign=thought_space";
