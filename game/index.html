@@ -145,11 +145,6 @@
     .heart-wrap { position: relative; display: block; flex: 0 0 64px; width: 64px; height: 64px; animation: heartBeat 1.25s steps(2, end) infinite; transform-origin: center; }
     .heart-wrap > .nes-icon { position: absolute; top: 50%; left: 50%; margin: 0; translate: -50% -50%; scale: 1.15; transform-origin: center; }
     .controls { gap: 12px; }
-    .search-control { width: 14rem; }
-    .sort-control { width: 8.5rem; }
-    .pixel-input { width: 100%; font-size: .65rem !important; }
-    .sort-control select { color: var(--ink) !important; background-color: #fff !important; }
-    .sort-control option { color: var(--ink); background: #fff; }
     .status-chip { justify-content: center; gap: 8px; padding: 10px 16px; color: #fff; font-size: .62rem; white-space: nowrap; background: var(--ink); border: 4px solid #fff; box-shadow: 4px 4px 0 #000; }
     .status-icon { color: #aaa; }
     @keyframes heartBeat {
@@ -187,10 +182,6 @@
     .game-genre > span { padding: 4px 7px; }
     .game-genre > .is-warning, .game-genre > .is-success { color: var(--ink); }
 
-    #genre-filter { display: none; max-width: 100%; flex-wrap: wrap; gap: 12px; align-items: center; margin: 4px 0 24px; }
-    #genre-filter.visible { display: flex; }
-    .genre-chip { font-size: .62rem; white-space: nowrap; }
-    .genre-chip.active { outline: 4px solid #fff; outline-offset: 3px; filter: brightness(.9); }
     .skeleton { background: linear-gradient(90deg, #d3d3d3 25%, #fff 50%, #d3d3d3 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
     .skeleton-image { aspect-ratio: 1200 / 630; }
     .skeleton-image .skeleton { width: 100%; height: 100%; }
@@ -223,9 +214,9 @@
     #scroll-top-btn { position: fixed; bottom: 28px; right: 28px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 150ms steps(2, end), transform 150ms steps(2, end); transform: translateY(12px); }
     #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
     @media (max-width: 1199px) { .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 900px) { .header-content { align-items: stretch; flex-direction: column; } .controls { align-items: stretch; } .search-control { flex: 1; width: auto; } }
+    @media (max-width: 900px) { .header-content { align-items: stretch; flex-direction: column; } .controls { align-items: stretch; } }
     @media (max-width: 767px) { .site-header, .main-content, .site-footer { padding-left: 16px; padding-right: 16px; } .game-grid { grid-template-columns: 1fr; } .game-card { width: calc(100% - 8px); margin: 4px; } }
-    @media (max-width: 640px) { .controls { flex-direction: column; } .sort-control { width: 100%; } .genre-chip { font-size: .54rem; } .heart-wrap { flex-basis: 52px; width: 52px; height: 52px; } .heart-wrap > .nes-icon { scale: 1; } .footer-panel { gap: 16px; flex-wrap: wrap; justify-content: center; } .footer-side { flex: none; } .image-modal-panel { padding: 16px !important; } .image-modal-close { top: 8px; right: 8px; } .image-modal-caption { font-size: .52rem; } #scroll-top-btn { right: 16px; bottom: 60px; } }
+    @media (max-width: 640px) { .controls { flex-direction: column; } .heart-wrap { flex-basis: 52px; width: 52px; height: 52px; } .heart-wrap > .nes-icon { scale: 1; } .footer-panel { gap: 16px; flex-wrap: wrap; justify-content: center; } .footer-side { flex: none; } .image-modal-panel { padding: 16px !important; } .image-modal-close { top: 8px; right: 8px; } .image-modal-caption { font-size: .52rem; } #scroll-top-btn { right: 16px; bottom: 60px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
   <link rel="stylesheet" href="/assets/search-ui.css?v=20261011_1">
@@ -293,10 +284,10 @@
 
   <button id="scroll-top-btn" class="nes-btn pixel-button" aria-label="Scroll to top">▲</button>
 
-  <script src="/assets/japanese-search.js?v=20261012_5"></script>
+  <script src="/assets/japanese-search.js?v=20261012_6"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_5"></script>
-  <script src="/assets/search-data.js?v=20261012_5"></script>
+  <script src="/assets/search-ui.js?v=20261012_6"></script>
+  <script src="/assets/search-data.js?v=20261012_6"></script>
   <script src="../assets/buy-me-oil.js"></script>
   <script>
     new DonationWidget({
@@ -520,11 +511,6 @@
       countEl.textContent = filtered.length;
       emptyState.classList.toggle("hidden", filtered.length > 0);
       
-    }
-
-    function computeNewIds() {
-      const sorted = [...records].sort((a, b) => b.id - a.id);
-      newIds = new Set(sorted.slice(0, 2).map(r => r.id));
     }
 
     function updateItemListSchema(games) {

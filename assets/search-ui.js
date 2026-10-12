@@ -286,10 +286,11 @@
     },{signal});
     all.addEventListener('click',()=>{if(!composing){openAll=true;refreshLocal();}},{signal});
     more.addEventListener('click',()=>{if(!composing){limit+=100;refreshLocal();}},{signal});
-    cancel.addEventListener('click',()=>{conditionRevision++;clearRank('stale');refreshLocal();},{signal});
+    const cancelRank=()=>{conditionRevision++;clearRank('stale');refreshLocal();};
+    cancel.addEventListener('click',cancelRank,{signal});
     showStates();refreshLocal();
     const ready=loadBase('default');
-    return {ready,run,cancel:()=>{conditionRevision++;clearRank('stale');refreshLocal();},
+    return {ready,run,cancel:cancelRank,
       setQuery(value){input.value=String(value).slice(0,400);openAll=true;changeCondition();},
       setLocale(value){if(!['ja','en'].includes(value) || value===locale) return;locale=value;labelled.forEach(([key,n])=>{n.textContent=words[locale][key];});
         localList.replaceChildren();suggestions.replaceChildren();changeCondition();},

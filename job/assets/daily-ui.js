@@ -327,43 +327,33 @@
     });
   }
 
-  const indexFiles = new Map();
   const media = location.pathname.split('/')[2];
-  let indexEpoch = 0;
-  function resetIndexFiles() { indexEpoch++; indexFiles.clear(); }
   async function fetchIndexFile(name) {
     const response = await fetch(name, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Index HTTP ' + response.status);
     const payload = await response.json();
-    if (!payload || !Array.isArray(payload.records) || typeof payload.generation !== 'string' ||
+    if (!payload || payload.media !== media || !Array.isArray(payload.records) || typeof payload.generation !== 'string' ||
         !/^[a-f0-9]{1,32}$/i.test(payload.generation)) throw new Error('Invalid index');
     return payload;
   }
 
-  // all が true なら全部の年（横断検索）。false なら最新の年だけで、1月は前の年も足す
-  // （ウォッチ新着。年が明けた直後に一覧が空にならないように）。読めなければ null。
-  async function loadSearchIndex(all) {
-    const epoch = indexEpoch;
+  // ウォッチ新着用。最新の年だけを読み、1月は前の年も足す（年が明けた直後に一覧が空にならないように）。
+  // 読めなければ null。
+  async function loadWatchRecords() {
     try {
-      // head は読み込みごとに一度だけ取り、年の Promise は媒体・版・ファイル名で分ける。
       const head = await fetchIndexFile('search-index.json');
       const years = head.years;
-      if (head.media !== media || !Array.isArray(years) || years.length > 100 ||
+      if (!Array.isArray(years) || years.length > 100 ||
           years.some(function(year, i) { return typeof year !== 'string' || !/^[0-9]{4}$/.test(year) || Number(year) < 1 || (i && years[i - 1] <= year); }) ||
           (!years.length && head.records.length)) throw new Error('Invalid years');
       const latest = head.records.reduce(function(max, record) { return String(record.date || '') > max ? String(record.date) : max; }, '');
-      const older = all ? years.slice(1) : (latest.slice(4, 6) === '01' ? years.slice(1, 2) : []);
-      const parts = await Promise.all(older.map(function(year) {
-        const name = 'search-index-' + year + '.json';
-        const key = JSON.stringify([media, head.generation, name]);
-        if (!indexFiles.has(key)) indexFiles.set(key, fetchIndexFile(name));
-        return indexFiles.get(key);
-      }));
-      if (epoch !== indexEpoch || parts.some(function(part) { return part.media !== media || part.generation !== head.generation; })) throw new Error('Mixed index');
+      const parts = [head];
+      if (latest.slice(4, 6) === '01' && years[1]) parts.push(await fetchIndexFile('search-index-' + years[1] + '.json'));
+      if (parts.some(function(part) { return part.generation !== head.generation; })) throw new Error('Mixed index');
       const hrefs = new Set();
-      const records = [head].concat(parts).flatMap(function(part, i) {
+      return parts.flatMap(function(part, i) {
         return part.records.map(function(record) {
-          // ①・候補も、その年の実在する日付・媒体・記事アンカーだけを使う。
+          // その年の実在する日付・媒体・記事アンカーだけを使う。
           const match = record && typeof record.url === 'string' && /^([0-9]{8})\/#art-([1-9][0-9]*)$/.exec(record.url);
           if (!match || typeof record.title !== 'string' || match[1] !== record.date ||
               record.date.slice(0, 4) !== years[i] || !Number.isSafeInteger(Number(match[2])) || hrefs.has(record.url) ||
@@ -375,10 +365,7 @@
           return record;
         });
       });
-      return { records: records, generation: head.generation, complete: all };
     } catch (_) {
-      // 混在・欠落の年も Promise ごと捨て、次の明示操作まで取り直さない。
-      if (epoch === indexEpoch) resetIndexFiles();
       return null;
     }
   }
@@ -579,8 +566,8 @@
       });
     }
     watch.onChange(render);
-    loadSearchIndex(false).then(function(loaded) {
-      // 読めなかったときは「新着なし」と見せない（横断検索と同じ。次にページを開いたときに読み直す）
+    loadWatchRecords().then(function(loaded) {
+      // 読めなかったときは「新着なし」と見せない（次にページを開いたときに読み直す）
       if (!loaded) {
         if (watch.size()) {
           container.hidden = false;
@@ -590,7 +577,7 @@
         }
         return;
       }
-      records = loaded.records;
+      records = loaded;
       latestDate = records.reduce(function(max, record) {
         const date = String(record.date || '');
         return date > max ? date : max;

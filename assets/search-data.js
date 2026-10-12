@@ -1,10 +1,22 @@
 /** Phase 4の固定ソースadapter。生バイト列・ID順・年別manifestを共通UIへ渡す。 */
 (function(w){
   'use strict';
-  const specs={site:{base:'/data/site-keyword.json',readings:'/data/site-readings.json'},
-    tools:{base:'/data/tools.json',readings:'/data/tools-readings.json',kind:'tool',filter:'category'},
-    game:{base:'/data/game.json',readings:'/data/game-readings.json',kind:'game',filter:'genre'},
-    nitori:{media:'nitoridaily'},retail:{media:'retailtechdaily'}};
+  const newest=(a,b)=>b.numericId-a.numericId;
+  const listSorts=[{value:'relevance',label:'関連順'},{value:'title',label:'タイトル順',compare:(a,b)=>a.title.localeCompare(b.title,'ja')},
+    {value:'newest',label:'新しい順',compare:newest},{value:'oldest',label:'古い順',compare:(a,b)=>a.numericId-b.numericId}];
+  const daily={fields:[{name:'title',mask:1},{name:'tags',mask:2},{name:'summary',mask:4},{name:'takeaway',mask:4},{name:'source',mask:8},{name:'category',mask:2}],
+    legacy:{legacyFields:['title','summary','takeaway','source','category','tags'],legacyRemoveWhitespace:true},
+    sorts:[{value:'relevance',label:'関連順',compare:(a,b)=>(a.date===b.date?0:a.date<b.date?1:-1)||a.article-b.article}]};
+  const specs={site:{base:'/data/site-keyword.json',readings:'/data/site-readings.json',
+      fields:['title','tags','description','detail'].map((key,i)=>({name:'search_'+key,mask:1<<i})),legacy:{},sorts:[],
+      displayFields:{en:{title:'title_en',description:'description_en'}}},
+    tools:{base:'/data/tools.json',readings:'/data/tools-readings.json',kind:'tool',filter:'category',compare:newest,sorts:listSorts,
+      fields:[{name:'title',mask:1},{name:'tags',mask:2},{name:'description',mask:4},{name:'shortDescription',mask:4},{name:'category',mask:8}],
+      legacy:{legacyFields:['title','description','category','tags']}},
+    game:{base:'/data/game.json',readings:'/data/game-readings.json',kind:'game',filter:'genre',compare:newest,sorts:listSorts,
+      fields:[{name:'title',mask:1},{name:'description',mask:4},{name:'genre',mask:2},{name:'ai',mask:8}],
+      legacy:{legacyFields:['title','description','genre','ai']}},
+    nitori:{media:'nitoridaily',...daily},retail:{media:'retailtechdaily',...daily}};
   const hex=/^[a-f0-9]{64}$/,dailyHex=/^[a-f0-9]{1,32}$/;
   const fail=code=>{throw new Error(code);};
   const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
@@ -145,20 +157,12 @@
   }
   function createAdapter(scope,options={}) {
     if(!Object.hasOwn(specs,scope)) fail('search_scope');const spec=specs[scope];let pending=null;
-    const fields=scope==='site'?['title','tags','description','detail'].map((key,i)=>({name:'search_'+key,mask:1<<i})):
-      scope==='tools'?[{name:'title',mask:1},{name:'tags',mask:2},{name:'description',mask:4},{name:'shortDescription',mask:4},{name:'category',mask:8}]:
-      scope==='game'?[{name:'title',mask:1},{name:'description',mask:4},{name:'genre',mask:2},{name:'ai',mask:8}]:
-      [{name:'title',mask:1},{name:'tags',mask:2},{name:'summary',mask:4},{name:'takeaway',mask:4},{name:'source',mask:8},{name:'category',mask:2}];
     const names={category:'カテゴリー',genre:'ジャンル',region:'地域',month:'月'};
     const keys=spec.media?['category','region','month']:spec.filter?[spec.filter]:[];
-    const adapter={...options,scope,fields,href:r=>r.href,compare:options.compare || (spec.list || spec.kind?(a,b)=>b.numericId-a.numericId:undefined),
-      displayFields:scope==='site'?{en:{title:'title_en',description:'description_en'}}:undefined,
-      legacy:scope==='site'?{}:spec.media?{legacyFields:['title','summary','takeaway','source','category','tags'],legacyRemoveWhitespace:true}:
-        {legacyFields:scope==='tools'?['title','description','category','tags']:['title','description','genre','ai']},
+    const adapter={...options,scope,fields:spec.fields,href:r=>r.href,compare:options.compare || spec.compare,
+      displayFields:spec.displayFields,legacy:spec.legacy,
       filters:keys.map(key=>({key,label:names[key],options:[{value:'',label:'すべて'}]})),
-      sorts:options.sorts || (spec.media?[{value:'relevance',label:'関連順',compare:(a,b)=>(a.date===b.date?0:a.date<b.date?1:-1)||a.article-b.article}]:
-        scope==='site'?[]:[{value:'relevance',label:'関連順'},{value:'title',label:'タイトル順',compare:(a,b)=>a.title.localeCompare(b.title,'ja')},
-          {value:'newest',label:'新しい順',compare:(a,b)=>b.numericId-a.numericId},{value:'oldest',label:'古い順',compare:(a,b)=>a.numericId-b.numericId}]),
+      sorts:options.sorts || spec.sorts,
       async loadBase(request) {
         if(request.cache==='no-cache') pending=null;
         if(pending) return pending;

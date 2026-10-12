@@ -276,14 +276,10 @@
       border-color: rgb(255 255 255 / .48);
       color: #FFFFFF;
     }
-    :root.st-theme:not([data-theme="dark"]) .toolbar {
-      box-shadow: 0 4px 16px rgb(11 42 69 / .04);
-    }
 
     /* Lucide stamps 24x24 onto every icon it injects, and this page carries
        no utility classes to override that, so the sizes live here. */
-    .icon-btn svg,
-    .search-wrap svg { width: 15px; height: 15px; }
+    .icon-btn svg { width: 15px; height: 15px; }
     .fact svg { width: 13px; height: 13px; }
     #empty-state .box svg { width: 20px; height: 20px; }
     /* The mark is drawn, not loaded, so it needs its own box. */
@@ -322,99 +318,6 @@
     }
     .fact svg { color: var(--accent); flex: none; }
     .fact.is-trust svg { color: var(--trust); }
-
-    /* ===== toolbar =====
-       Search, categories and sort ride the tools' own sticky toolbar, so the
-       controls stay put while the shelf scrolls past them. */
-    .search-wrap { position: relative; flex: 1 1 190px; min-width: 0; display: flex; }
-    .search-wrap svg {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--ink-3);
-      pointer-events: none;
-    }
-    #search-input {
-      width: 100%;
-      border: 1px solid var(--rule);
-      border-radius: var(--r-1);
-      background: var(--panel);
-      color: var(--ink);
-      padding: 6px 11px 6px 32px;
-      font-family: var(--font-ui);
-      font-size: 13.5px;
-      transition: border-color 120ms ease;
-    }
-    #search-input::placeholder { color: var(--ink-3); }
-    #search-input:focus { outline: none; border-color: var(--accent); }
-
-    #category-filter { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-    /* On a narrow screen the sort pairs up with the search on the first row
-       and the chips take the second, which is one row fewer than letting them
-       wrap in DOM order. */
-    @media (max-width: 780px) {
-      .tb-sort { order: 2; }
-      #category-filter { order: 3; flex-basis: 100%; }
-    }
-    .filter-chip {
-      --chip: var(--ink-3);
-      --chip-soft: var(--panel-2);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 4px 11px;
-      border: 1px solid var(--rule);
-      border-radius: 999px;
-      background: var(--panel);
-      color: var(--ink-2);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
-    }
-    /* A dot in the category's own colour, so the chips read as the same
-       four-hue ramp the cards and the tools themselves use. */
-    .filter-chip::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--chip);
-      flex: none;
-    }
-    .filter-chip[data-cat="optimizer"] { --chip: var(--cat-optimizer); --chip-soft: var(--cat-optimizer-soft); }
-    .filter-chip[data-cat="converter"] { --chip: var(--cat-converter); --chip-soft: var(--cat-converter-soft); }
-    .filter-chip[data-cat="editor"]    { --chip: var(--cat-editor);    --chip-soft: var(--cat-editor-soft); }
-    .filter-chip[data-cat="generator"] { --chip: var(--cat-generator); --chip-soft: var(--cat-generator-soft); }
-    .filter-chip:hover:not(.active) { border-color: var(--rule-strong); color: var(--ink); }
-    .filter-chip.active {
-      background: var(--chip-soft);
-      border-color: var(--chip);
-      color: var(--chip);
-      font-weight: 700;
-    }
-    .filter-chip[data-cat="all"].active { color: var(--ink); border-color: var(--rule-strong); }
-    .filter-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    /* ===== notice ===== */
-    #message-bar {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      border: 1px solid var(--rule);
-      border-left: 3px solid var(--accent);
-      border-radius: var(--r-1);
-      background: var(--panel);
-      padding: 9px 13px;
-      margin-bottom: 16px;
-      font-size: 12.5px;
-      color: var(--ink-2);
-    }
 
     /* ===== shelf ===== */
     #tool-grid {
@@ -635,7 +538,6 @@
   <!-- ===================== main ===================== -->
   <main>
     <div id="list-search"></div>
-    <div id="message-bar" class="hidden" role="status"></div>
 
     <div id="empty-state" class="hidden">
       <div class="box"><i data-lucide="search-x"></i></div>
@@ -716,10 +618,10 @@
   <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
     <i data-lucide="arrow-up"></i>
   </button>
-  <script src="/assets/japanese-search.js?v=20261012_5"></script>
+  <script src="/assets/japanese-search.js?v=20261012_6"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_5"></script>
-  <script src="/assets/search-data.js?v=20261012_5"></script>
+  <script src="/assets/search-ui.js?v=20261012_6"></script>
+  <script src="/assets/search-data.js?v=20261012_6"></script>
   <script src="../assets/buy-me-oil.js"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
@@ -760,7 +662,6 @@
     const grid = document.getElementById('tool-grid');
     const emptyState = document.getElementById('empty-state');
     const countEl = document.getElementById('tool-count');
-    const messageBar = document.getElementById('message-bar');
 
 
     const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m =>
@@ -777,12 +678,6 @@
         return null;
       }
     };
-
-    /* One caller: the fallback notice below. It never comes back down. */
-    function showMessage(text) {
-      messageBar.textContent = text;
-      messageBar.classList.remove('hidden');
-    }
 
     /* tools.json is edited by hand, so a record only earns a card once it has
        the three things a card cannot be drawn without: an id to sort by, a

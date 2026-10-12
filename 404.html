@@ -79,21 +79,6 @@
     .daily-search { margin-top: 16px; font-size: 14px; }
     .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
     .daily-query { overflow-wrap: anywhere; }
-    .search-box { position: relative; }
-    .search-box input { padding-right: 56px; }
-    .search-box input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
-    .search-submit { position: absolute; top: 4px; right: 4px; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--accent); cursor: pointer; }
-    .search-submit svg { width: 22px; height: 22px; }
-    .search-submit:hover { background: var(--hover); }
-    .search-submit.is-suggested { background: var(--accent); color: var(--surface); }
-    .suggest-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10; max-height: 60vh; overflow-y: auto; padding: 4px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px #0003; }
-    .suggest-option a { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 16px; color: var(--text); text-decoration: none; }
-    .suggest-option a:hover, .suggest-option[aria-selected="true"] a { background: var(--hover); text-decoration: none; }
-    .suggest-option .result-title { overflow-wrap: anywhere; }
-    .suggest-note { padding: 10px 16px; font-size: 14px; color: var(--muted); }
-    .search-label-row { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; }
-    .search-label-row label { margin: 0; }
-    .rank-note:not(:empty) { margin-top: 8px; }
     .ai-search { margin-top: 20px; padding: 16px; border: 1px solid var(--accent); border-radius: 10px; }
     .ai-search.is-quiet { border-color: var(--border); }
     .ai-search button { min-height: 44px; padding: 8px 12px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
@@ -101,9 +86,8 @@
     .ai-disclosure, .ai-mark, .ai-ask { font-size: 13px; color: var(--muted); }
     .ai-disclosure-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
     .ai-disclosure { margin: 0; flex: 1; }
-    .ai-search .ai-info, .search-label-row .ai-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--accent); }
-    .ai-search .ai-info:hover, .search-label-row .ai-info:hover { background: var(--hover); }
-    .search-label-row .ai-info { margin-block: -10px; }
+    .ai-search .ai-info { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--accent); }
+    .ai-search .ai-info:hover { background: var(--hover); }
     .ai-info svg { width: 22px; height: 22px; }
     .ai-info-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 20px 60px #0005; }
     .ai-info-dialog::backdrop { background: #0008; }
@@ -233,18 +217,18 @@
     </div>
   </dialog>
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
-  <script src="/assets/japanese-search.js?v=20261012_5"></script>
+  <script src="/assets/japanese-search.js?v=20261012_6"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_5"></script>
-  <script src="/assets/search-data.js?v=20261012_5"></script>
+  <script src="/assets/search-ui.js?v=20261012_6"></script>
+  <script src="/assets/search-data.js?v=20261012_6"></script>
   <script>
     (function () {
       'use strict';
       var lang = 'ja';
       try { if (navigator.language) lang = /^ja/i.test(navigator.language) ? 'ja' : 'en'; } catch (_) { /* 静的HTMLと同じ日本語 */ }
       var messages = {
-        ja: { suggestions: 'もしかして', results: '検索結果', candidatesLoading: '候補を読み込んでいます…', searchLoading: '検索データを読み込んでいます…', noResults: '見つかりませんでした', partial: '一部の一覧を読み込めませんでした。', listsFailed: '一覧を読み込めませんでした。', failed: '検索を読み込めませんでした。下の一覧からお選びください。', limit: '上位5件を表示', tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ', keywordResults: 'キーワードに一致', keywordNone: 'キーワードに一致するページはありません', rankHint: 'キーワードに一致するページはありません。Enter で、意味の近いページを探します', suggestCount: function (n) { return n + '件の候補'; }, search: '検索' },
-        en: { suggestions: 'Were you looking for…?', results: 'Search results', candidatesLoading: 'Loading suggestions…', searchLoading: 'Loading search data…', noResults: 'No results found', partial: 'Some lists could not be loaded.', listsFailed: 'The lists could not be loaded.', failed: 'Search could not be loaded. Please choose from the links below.', limit: 'Showing the top 5 results', tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page', keywordResults: 'Keyword matches', keywordNone: 'No keyword matches', rankHint: 'No keyword matches. Press Enter to look for related pages', suggestCount: function (n) { return n + (n === 1 ? ' suggestion' : ' suggestions'); }, search: 'Search' }
+        ja: { tool: 'ツール', game: 'ゲーム', article: '記事', daily: '日刊', page: 'ページ' },
+        en: { tool: 'Tool', game: 'Game', article: 'Article', daily: 'Daily brief', page: 'Page' }
       };
       var text = messages[lang];
       var byId = function (id) { return document.getElementById(id); };
@@ -272,7 +256,6 @@
       function normalize(value) {
         return value.normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); }).replace(/[\s_-]+/gu, ' ').trim();
       }
-      function compact(value) { return value.replace(/\s/g, ''); }
       function pathParts(value) {
         var parts = value.split('/').filter(Boolean);
         if (parts.length && /^index\.html?$/i.test(parts[parts.length - 1])) parts.pop();
@@ -352,7 +335,6 @@
       var corrections = entries.filter(function (entry) { return entryCorrection(entry) !== null; });
       var correctedSection = corrections.length === 1 ? corrections[0] : null;
       var arrivedSection = (exactSection || correctedSection || {}).section || '';
-      var initialCard = (exactSection || {}).card || (correctedSection || {}).card;
       var arrival=exactSection || correctedSection;
       if (arrival) {
         var target=Array.from(document.querySelectorAll('.site-tree a')).find(function(a){return a.getAttribute('href')===arrival.href;});
