@@ -2915,7 +2915,7 @@ test('MAGI採決: 過去採決の見出しは日本語の結果を人格履歴�
   const res = await w.request('/magi2/chat', { messages: [{ role: 'user', content: '実行すべき？' }, prior, { role: 'user', content: '採決せず判断材料を整理して' }] });
   await res.text();
   const history = w.calls.flatMap(c => c.messages || []).filter(m => typeof m.content === 'string' && m.content.includes('MAGI モードの採決'));
-  assert.ok(history.some(m => m.role === 'user' && m.content.includes('前回、あなたたち3人')));
+  assert.ok(history.some(m => m.role === 'user' && m.content.includes('前回、3つの面の議論')));
   assert.ok(history.some(m => m.role === 'assistant'));
   for (const message of history) assert.match(message.content, /決議: 保留（賛成1・反対1・票なし1）/);
 });
@@ -3533,14 +3533,16 @@ const anthropicCompletion = (text = 'answer', reason = 'end_turn', done = true) 
 ].map(value => 'data: ' + JSON.stringify(value) + '\n\n').join('');
 const nativeAnswer = (text='opinion', reason='end_turn') => Response.json({content:[{type:'thinking',thinking:'SECRET_THINKING'},{type:'text',text}],stop_reason:reason,usage:{input_tokens:10,output_tokens:20}});
 
-test('人格は自分の発言だけ：役割に指示があり、頭の自分の名前の見出しは画面と討議に渡す前に落とす', async () => {
+test('人格は自分の意見だけ：枠に頼むことと行き先があり、頭の自分の名前の見出しは画面と討議に渡す前に落とす', async () => {
   const w = nativeWorker(undefined, (url, options) => {
     const body = JSON.parse(options.body);
     if (url.includes('api.anthropic.com') && (body.system || []).some(b => b.text.includes('（BALTHASAR-2）')) && !body.stream)
       return Response.json({ content: [{ type: 'text', text: '【BALTHASAR-2（Humanist）】\n僕は異世代を選ぶ。' }], stop_reason: 'end_turn', usage: {} });
   });
   for (const p of vm.runInContext('PERSONAS', w.ctx)) {
-    assert.match(p.role.chat, /自分ひとりの発言だけ/); assert.match(p.role.magi, /自分ひとりの発言だけ/);
+    // 枠はこの呼び出しで頼むことと行き先を書き、書き方は回の種類（チャット／採決）で分ける
+    assert.match(p.system_prompt, new RegExp(`この呼び出しで頼むのは、${p.name} としてのあなたの意見だけ`));
+    assert.match(p.role.chat, /名前は画面が出す/); assert.match(p.role.magi, /\[VOTE:APPROVE\]/);
   }
   const text = await (await w.chat([{ role: 'user', content: 'どっちを選ぶ？' }])).text();
   const views = text.split('\n\n').filter(b => b.startsWith('event: persona')).map(b => JSON.parse(b.split('\ndata: ')[1])).filter(v => v.codename === 'BALTHASAR-2');

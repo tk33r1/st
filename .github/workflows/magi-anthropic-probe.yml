@@ -112,10 +112,12 @@ jobs:
       run: |
         if [ -n "$BASELINE" ]; then node .github/scripts/eval-magi-title.mjs --ref="$BASELINE"; fi
         node .github/scripts/eval-magi-title.mjs
-    - name: Check that BALTHASAR writes only its own view
+    - name: Check that each persona writes only its own view
       if: inputs.evaluation == 'persona'
       env:
         MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAGI_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAGI_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         BASELINE: ${{ inputs.title-baseline }}
       run: |
         if [ -n "$BASELINE" ]; then node .github/scripts/eval-magi-persona.mjs --ref="$BASELINE"; fi

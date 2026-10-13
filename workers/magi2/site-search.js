@@ -308,7 +308,7 @@ export function siteGuide(page, pages) {
   const where = SITE_GUIDE.current_label + (current ? line(current) : SITE_GUIDE.unknown_page);
   return {
     current: current ? clean(current.title).trim() : null,
-    persona: [SITE_GUIDE.persona_header, SITE_GUIDE.chat, where].join('\n'),
+    persona: [SITE_GUIDE.persona_header, where].join('\n'),
     synth: [SITE_GUIDE.synth_header, SITE_GUIDE.chat, where,
       ...(listed.length ? [SITE_GUIDE.list_label, ...listed] : [])].join('\n'),
   };

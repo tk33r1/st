@@ -215,7 +215,8 @@ function personaThread(codename, history, lastContent) {
     if (last && last.role === role) last.content = joinContent(last.content, content);
     else out.push({ role, content });
   };
-  const withRecap = (c) => recap ? prependText(`${recap}〔ユーザーの今回の発言〕\n`, c) : c;
+  // 利用者の発言には毎回見出しを付ける（見出しが無いと、利用者に直接答える本人として書きやすい）
+  const withRecap = (c) => prependText(`${recap || ''}〔ユーザーの今回の発言〕\n`, c);
   for (const m of history) {
     if (m.role === 'user') { push('user', withRecap(m.content)); recap = null; continue; }
     const own = m.opinions && m.opinions[codename];
@@ -224,7 +225,7 @@ function personaThread(codename, history, lastContent) {
     recap = (others.length
       ? `〔前回、${others.map(personaLabel).join('と')}が言ったこと〕\n${others.map(p => `- ${personaLabel(p)}: ${m.opinions[p.codename]}`).join('\n')}\n\n`
       : '')
-      + `〔前回、あなたたち3人の議論をまとめて Shinya Takeda が答えたこと〕\n${magiHistoryNote(m.magi)}${contentText(m.content)}\n\n`;
+      + `〔前回、3つの面の議論をまとめて Shinya Takeda が答えたこと〕\n${magiHistoryNote(m.magi)}${contentText(m.content)}\n\n`;
   }
   push('user', withRecap(lastContent));
   return out;
@@ -1151,7 +1152,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
   const personaPageNote = pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : '';
   const personas = PERSONAS.map(p => {
-    const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
+    const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
     return { ...base, system_prompt: withLangNote(base.system_prompt
       + (guide ? '\n\n' + guide.persona : '')
       + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
