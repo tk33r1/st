@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 13 Oct 2026 08:25:45 +0900</lastBuildDate>
+    <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 14 Oct 2026 06:42:59 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月14日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261014/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261014/</guid>
+      <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
+      <description>AI需要予測が在庫管理や人員配置といった店舗運営の実務に広がり、「ゴンチャ」全店への導入やカラーズの新サービスのように実装段階の動きが具体化している ゼンショーの独自QRコード・バーコード決済スキームや、リテールメディアにおけるAIクリエイティブの活用が示すように、店舗決済とデータ活用の両面で取り組みが進んでいる</description>
+    </item>
     <item>
       <title>2026年10月13日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261013/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260930/</guid>
       <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
       <description>国内では、ファミリーマートがコーヒーマシンを活用したリテールメディアを開始。オフィス内メディアの提供開始もあり、売場外の接点を広告・購買につなげる動きが広がっています。 カラオケ店舗約720店への自動発注導入や、店舗DXサービスの導入5,000店突破など、現場業務の省力化と運用基盤の拡張が進展。導入規模を伴う実装が注目されます。</description>
-    </item>
-    <item>
-      <title>2026年9月29日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260929/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260929/</guid>
-      <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
-      <description>国内では、買い物支援や駐車場管理の実証、リテールメディア市場予測など、店舗・地域の運営課題をデータや仕組みで解く動きが確認された。 海外では、Instacartの店舗情報可視化やHy-Veeのオンライン購買迅速化が注目される。オンラインと実店舗をつなぐ運営改善が競争力の焦点になっている。</description>
     </item>
   </channel>
 </rss>
