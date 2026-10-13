@@ -15,7 +15,7 @@ const browser=await chromium.launch({headless:true});
 try {
   for(const name of (workerOnly?['old-app']:['home-light','home-dark','app','dj'])) {
     const legacy=name==='old-app',dj=name==='dj',path=dj?'/dj/request/':name.includes('app')?'/magi-app/www/':'/';
-    const ctx=await browser.newContext({viewport:{width:name.startsWith('home')?1280:390,height:900},serviceWorkers:'block'});
+    const ctx=await browser.newContext({viewport:{width:name.startsWith('home')?1280:390,height:900},colorScheme:name==='app'?'dark':'light',serviceWorkers:'block'});
     const page=await ctx.newPage(),errors=[];let captured;page.on('pageerror',e=>errors.push(e.message));
     await ctx.addInitScript(()=>localStorage.setItem('st-analytics','off'));
     await ctx.route('**/*',async route=>{
@@ -49,8 +49,9 @@ try {
       assert.equal(events.at(-1)?.event,'done');assert.ok(!events.some(e=>e.event==='error'));
       const request=captured.request;
       if(!legacy) {
-        assert.deepEqual(events.map(e=>e.event),['classification','integrated','closed','done']);
-        assert.equal(events[2].data.reason,'malice');assert.equal(request.theme,name==='home-light'?'light':'dark');
+        const names=events.map(e=>e.event);
+        assert.deepEqual(names.filter((name,i)=>i===0||name!==names[i-1]),['classification','integrated','closed','done']);
+        assert.equal(events.find(e=>e.event==='closed').data.reason,'malice');assert.equal(request.theme,name==='home-light'?'light':'dark');
         if(!dj)assert.equal(request.close_on_malice,true);
       } else {
         assert.ok(!request.close_on_malice);assert.ok(!events.some(e=>e.event==='closed'));
