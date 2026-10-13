@@ -62,9 +62,12 @@ const inputs=[[reported,repeatReported],...[
  '友人からの誘いを断るのが苦手で、疲れてしまう。関係を大切にしながら伝える方法を相談したい。',
  '寝る前にスマートフォンを別の部屋に置くべき？',
 ].map(q=>[q,repeat])];
-// 他の面や本人の発言を書いた印：行頭の話者の札（【MELCHIOR-1】・CASPER-3: など）
-const speaker=/(^|\n)\s*[【\[［]?\s*(MELCHIOR-1|BALTHASAR-2|CASPER-3|Shinya Takeda|Enthusiast|Humanist|Strategist)\s*[】\]］：:]/;
-const others=/(^|\n)\s*[【\[［]?\s*(MELCHIOR-1|CASPER-3|Shinya Takeda|Enthusiast|Strategist)\s*[】\]］：:]/;
+// 話者の見出し：行頭の【…】・**…**・[…]・「名前：」。大文字や（コード名）付きも数える（2026-10-13 の初回の検出は太字・大文字を取りこぼした）
+const heading=names=>new RegExp(`(^|\\n)\\s*(?:\\*\\*|【|\\[|［)?\\s*(?:${names})[^\\n]{0,24}?(?:\\*\\*|】|\\]|］|[:：])`,'i');
+const speaker=heading('MELCHIOR-1|BALTHASAR-2|CASPER-3|Shinya Takeda|Takeda|Enthusiast|Humanist|Strategist|本人の答え');
+const others=heading('MELCHIOR-1|CASPER-3|Shinya Takeda|Takeda|Enthusiast|Strategist|本人の答え');
+// 画面に出る本文（版にあれば自分の名前の見出しを落とす処理を通す）
+let shown=t=>t;try{const f=vm.runInContext('stripOwnHeader',context);shown=t=>f(t,{name:'Humanist',codename:'BALTHASAR-2'});}catch(_){}
 const results=[];
 for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
  calls=[];
@@ -73,7 +76,7 @@ for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
   body:JSON.stringify({messages:[{role:'user',content:q}],theme:'light',suggest:true,site_pages:true,page:'/',adaptive_debate:true})}),env,{waitUntil(){}});
  const stream=await res.text();
  if(calls.some(c=>[401,402,403,429].includes(c.status)))throw new Error('Evaluation stopped at upstream authentication, billing, or rate limit');
- const rounds=calls.map((c,i)=>({round:i+1,status:c.status,stop:c.stop,chars:[...c.text].length,speaker:speaker.test(c.text),others:others.test(c.text),text:c.text}));
+ const rounds=calls.map((c,i)=>({round:i+1,status:c.status,stop:c.stop,chars:[...c.text].length,speaker:speaker.test(c.text),others:others.test(c.text),shown_tag:speaker.test(shown(c.text)),text:c.text}));
  results.push({id:id+1,run,input:q,done:/event: done/.test(stream),rounds});
  console.log(JSON.stringify({label,id:id+1,run,done:results.at(-1).done,rounds:rounds.map(r=>({round:r.round,status:r.status,chars:r.chars,speaker:r.speaker,others:r.others}))}));
  // 引っかかった回答は本文もログに出す（入力は合成。成果物を取れない環境でも確かめられるように）
@@ -82,8 +85,8 @@ for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
 const r1=results.map(r=>r.rounds[0]).filter(Boolean),r2=results.map(r=>r.rounds[1]).filter(Boolean);
 const count=(list,f)=>list.filter(f).length;
 const summary={label,ref:ref||'working-tree',date:new Date().toISOString(),runs:results.length,
- r1:{total:r1.length,others:count(r1,r=>r.others),speaker_tag:count(r1,r=>r.speaker),over_200_chars:count(r1,r=>r.chars>200)},
- r2:{total:r2.length,others:count(r2,r=>r.others),speaker_tag:count(r2,r=>r.speaker),over_200_chars:count(r2,r=>r.chars>200)},
+ r1:{total:r1.length,others:count(r1,r=>r.others),speaker_tag:count(r1,r=>r.speaker),shown_tag:count(r1,r=>r.shown_tag),over_200_chars:count(r1,r=>r.chars>200)},
+ r2:{total:r2.length,others:count(r2,r=>r.others),speaker_tag:count(r2,r=>r.speaker),shown_tag:count(r2,r=>r.shown_tag),over_200_chars:count(r2,r=>r.chars>200)},
  reported:{total:repeatReported,r1_others:count(results.filter(r=>r.id===1),r=>r.rounds[0]?.others)}};
 const directory=new URL('workers/.wrangler/magi-persona/',root);mkdirSync(directory,{recursive:true});
 writeFileSync(new URL(label+'.json',directory),JSON.stringify({...summary,results},null,2)+'\n');

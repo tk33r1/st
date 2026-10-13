@@ -6814,6 +6814,9 @@
     });
 
     DOM.app.addEventListener('click', (e) => {
+      // 押した要素が先に書き換えられた（送信⇄停止のアイコンなど）なら、外側を押した扱いにしない。
+      // 外れた要素は closest() で親をたどれず、スマホでドックが閉じていた
+      if (!e.target.isConnected) return;
       if (sidebarEl.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sidebarEl.classList.remove('open'); return; }
       if (isMobile() && agentDockEl.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"], [data-act="settings"]')) { closeAgentDock(); return; }
       if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });

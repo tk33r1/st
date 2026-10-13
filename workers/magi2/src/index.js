@@ -234,6 +234,15 @@ function personaThread(codename, history, lastContent) {
 // プロンプトでも止めているが、書かれたときはここで落とす
 const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|characters?|chars?)\s*[）)]\s*$/i, '').trim();
 
+// 画面がカードに名前を出すのに、頭へ自分の名前の見出し（【BALTHASAR-2】・**Humanist（BALTHASAR-2）**:・Humanist：など）を
+// 付けるモデルがある（Haikuで確認。プロンプトで止めても残る）。自分の名前の見出しだけを落とし、本文の「Humanistとして」は残す
+const ownHeaderPattern = (p) => {
+  const id = `(?:${[p.codename, p.name].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`;
+  const named = `${id}(?:\\s*[（(]\\s*${id}\\s*[)）])?`;
+  return new RegExp(`^\\s*(?:【\\s*${named}\\s*】(?:\\s*[（(]\\s*${id}\\s*[)）])?|\\*\\*\\s*${named}\\s*\\*\\*|[[［]\\s*${named}\\s*[\\]］]|${named}\\s*(?=[:：]))\\s*[:：]?\\s*`, 'i');
+};
+const stripOwnHeader = (text, p) => text.replace(ownHeaderPattern(p), '').trim() || text;
+
 // 会社ごとの呼び出し方の違いはここに閉じる（値は personas.js の DEFAULTS.models）。
 function requestBody(cfg, { messages, stream, temperature, response_format }) {
   const sampling = { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p };
@@ -643,7 +652,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
       throw stageError('persona_call', `${cfg.provider}_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
-    const text = classifySlice(stripCharCount((choice.message?.content || '').trim()), DEFAULTS.persona_response_max_chars);
+    const text = classifySlice(stripOwnHeader(stripCharCount((choice.message?.content || '').trim()), p), DEFAULTS.persona_response_max_chars);
     log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
     if (text) return p.magi && choice.finish_reason === 'length' ? text + '…' : text;
     // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない

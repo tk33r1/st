@@ -3533,6 +3533,23 @@ const anthropicCompletion = (text = 'answer', reason = 'end_turn', done = true) 
 ].map(value => 'data: ' + JSON.stringify(value) + '\n\n').join('');
 const nativeAnswer = (text='opinion', reason='end_turn') => Response.json({content:[{type:'thinking',thinking:'SECRET_THINKING'},{type:'text',text}],stop_reason:reason,usage:{input_tokens:10,output_tokens:20}});
 
+test('人格は自分の発言だけ：役割に指示があり、頭の自分の名前の見出しは画面と討議に渡す前に落とす', async () => {
+  const w = nativeWorker(undefined, (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.includes('api.anthropic.com') && (body.system || []).some(b => b.text.includes('（BALTHASAR-2）')) && !body.stream)
+      return Response.json({ content: [{ type: 'text', text: '【BALTHASAR-2（Humanist）】\n僕は異世代を選ぶ。' }], stop_reason: 'end_turn', usage: {} });
+  });
+  for (const p of vm.runInContext('PERSONAS', w.ctx)) {
+    assert.match(p.role.chat, /自分ひとりの発言だけ/); assert.match(p.role.magi, /自分ひとりの発言だけ/);
+  }
+  const text = await (await w.chat([{ role: 'user', content: 'どっちを選ぶ？' }])).text();
+  const views = text.split('\n\n').filter(b => b.startsWith('event: persona')).map(b => JSON.parse(b.split('\ndata: ')[1])).filter(v => v.codename === 'BALTHASAR-2');
+  assert.ok(views.length >= 1); for (const v of views) assert.equal(v.text, '僕は異世代を選ぶ。');
+  const strip = vm.runInContext('stripOwnHeader', w.ctx), p = { name: 'Humanist', codename: 'BALTHASAR-2' };
+  for (const [input, out] of [['**Humanist（BALTHASAR-2）**：僕は', '僕は'], ['【Humanist】（BALTHASAR-2）\n眠り', '眠り'], ['Humanist: I would', 'I would'],
+    ['BALTHASAR-2として、僕は', 'BALTHASAR-2として、僕は'], ['[VOTE:APPROVE]\n理由', '[VOTE:APPROVE]\n理由'], ['【MELCHIOR-1】俺は', '【MELCHIOR-1】俺は'], ['【Humanist】', '【Humanist】']]) assert.equal(strip(input, p), out);
+});
+
 test('Anthropic：system・同役の結合・先頭assistantの除去・画像変換・samplingの除外', () => {
   const w=worker();
   const cfg=w.ctx.defaults.models.synthesizer_dark;
