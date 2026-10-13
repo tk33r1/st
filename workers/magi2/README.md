@@ -75,7 +75,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 ## 発言分類と会話の言語
 
 `personas.js` の `INTENT_CLASSIFY` と `classification.js` を本番・実装前確認・週次smokeで共有する。
-`classification_state: true` のトップページ・アプリでは、対話改修A1の実装で初回にlanguage/malice/votable/intent/site_pagesの5問、継続では言語を省いた4問をJevへ1回で送る（A1は公開前。実測は[対話改修評価](対話改修評価.md)）。
+`classification_state: true` のトップページ・アプリでは、対話改修A1で初回にlanguage/malice/votable/intent/site_pagesの5問、継続では言語を省いた4問をJevへ1回で送る（2026-10-14にWorker公開。実測と公開確認は[対話改修評価](対話改修評価.md)）。
 分類は最新本文全体（1,000文字まで）と直近2件までのユーザー本文、言語は最初のユーザー本文（500文字まで）を使う。画像・AI回答・状況説明は分類に送らない。
 DJは `entry: dj-request` によりmusic/no/no固定で、初回は言語とmaliceの2問、以後はmaliceだけ。毎回の本文と直近2件のユーザー本文を使い、状況説明とAIの返答は渡さない。古い契約（classification_stateなし）は従来のリクエストごとの言語1問を使う。
 
@@ -92,9 +92,9 @@ node .github/scripts/probe-jev-classify.mjs
 
 本番と同じ問いで初回4問・継続3問を各20回、DJ・旧画面の言語1問も確認する。キーは環境変数か非追跡の `.dev.vars` から読み、本文やキーを出力しない。
 
-## 対話改修A1（4.8・公開前）
+## 対話改修A1（4.8）
 
-maliceの調整確定値は0.55（2026-10-13、実Jev。2026-10-14に修正後56返答の本人確認を記録し、検証計画§3.1は合格。本番公開・公開後確認は未実施）。identity/extraction/extremeだけが短い返しに入り、none/uncertain・低確信・欠落・障害では通常経路を使う。討議・議題化・ページ選び・タイトル・予測より先に分岐する。短い返しはテーマの統合モデルを推論なしで呼び、本文前の失敗だけもう一方の会社で1回答え直す。両社失敗は固定の日英の文、本文を送った後の失敗と停止は答え直さない。言語がotherで本文由来のsampleしか無いときは、この返しだけUI言語を使って攻撃本文を渡さない。
+maliceの調整確定値は0.55（2026-10-13、実Jev。2026-10-14に修正後56返答の本人確認を記録し、検証計画§3.1は合格。同日にWorker公開）。identity/extraction/extremeだけが短い返しに入り、none/uncertain・低確信・欠落・障害では通常経路を使う。討議・議題化・ページ選び・タイトル・予測より先に分岐する。短い返しはテーマの統合モデルを推論なしで呼び、本文前の失敗だけもう一方の会社で1回答え直す。両社失敗は固定の日英の文、本文を送った後の失敗と停止は答え直さない。言語がotherで本文由来のsampleしか無いときは、この返しだけUI言語を使って攻撃本文を渡さない。
 
 classification → integrated → closed（reason: malice）→ done。closedは印なしの新分類契約にも送り、配布済み画面では未知イベントとして読み飛ばされる。対応画面はclose_on_maliceを送り、正常完了後にclosed: trueを履歴に残し、新しい会話まで入力を閉じる。DJは返しだけ。履歴のclosedをWorkerの受付拒否に使わず、毎回判定する。404・検索②はA1の対象外。
 

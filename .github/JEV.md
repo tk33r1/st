@@ -10,7 +10,7 @@ Jev は TypeSafe AI の判定専用のモデル（System One モデル）。文�
 
 | 用途 | 問いの形 | コード | 評価の記録 |
 | --- | --- | --- | --- |
-| magi2 の発言分類・初回の言語判定 | A1の手元実装は `choice` を1回に最大5問（maliceを追加）。本番は最大4問 | `workers/magi2/classification.js`、`personas.js` の `INTENT_CLASSIFY` | [対話改修の公開前評価](../workers/magi2/対話改修評価.md)、既存の公開評価 |
+| magi2 の発言分類・初回の言語判定 | `choice` を1回に最大5問（A1のmaliceを含む）。継続4問、DJ初回2問・継続1問 | `workers/magi2/classification.js`、`personas.js` の `INTENT_CLASSIFY` | [対話改修評価](../workers/magi2/対話改修評価.md)、既存の公開評価 |
 | 日刊ニトリの SNS 投稿の採否 | `noul` 1問 | `.github/scripts/nitori_social_filter.py` | [sns-jev-evaluation.md](../job/nitoridaily/sns-jev-evaluation.md) |
 | 日刊2誌のニュース候補の採否 | `noul` 1問（基準付き） | `.github/scripts/daily_news_filter.py` | [news-jev-evaluation.md](../job/nitoridaily/news-jev-evaluation.md) |
 | DJ ブースの次の曲の相性 | `score`（5段階） | `workers/dj-request/src/transitions.js` | [jev-evaluation.md](../dj/booth/jev-evaluation.md) |

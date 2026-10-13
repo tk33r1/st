@@ -1,0 +1,76 @@
+name: MAGI A1 Publication Check
+
+# 合成入力でA1を確認し、maliceログだけを成果物へ残す。受付・DB・設定は変更しない。
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install tools
+        run: |
+          cd .github/scripts
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          cd ../../workers
+          npm ci --no-audit --no-fund
+      - name: Start production log capture
+        working-directory: workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          mkdir -p .wrangler/magi2-dialogue-a1
+          npx wrangler tail --config magi2/wrangler.toml --format json > "$RUNNER_TEMP/magi-a1-tail.jsonl" 2> "$RUNNER_TEMP/magi-a1-tail-error.log" &
+          echo "MAGI_A1_TAIL_PID=$!" >> "$GITHUB_ENV"
+          sleep 8
+      - name: Check published A1 pages
+        run: node .github/scripts/verify-magi-a1-publication.mjs
+      - name: Check malice log and retain only metadata
+        if: always()
+        run: |
+          kill "$MAGI_A1_TAIL_PID" 2>/dev/null || true
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const raw=fs.readFileSync(process.env.RUNNER_TEMP+'/magi-a1-tail.jsonl','utf8');
+          const rows=[];
+          for(const block of raw.split(/\n}\r?\n/)) {
+            const start=block.indexOf('{');if(start<0)continue;
+            let event;try{event=JSON.parse(block.slice(start)+'\n}');}catch{continue;}
+            for(const log of event.logs||[]) {
+              const m=log.message;if(!Array.isArray(m)||m[1]!=='malice')continue;
+              rows.push({requestId:m[0],malice:m[2],confidence:m[3],outcome:event.outcome});
+            }
+          }
+          fs.writeFileSync('workers/.wrangler/magi2-dialogue-a1/production-malice-log.json',JSON.stringify({rows},null,2));
+          assert.ok(rows.length>=4,'本番の4画面でmaliceログを確認');
+          console.log('malice logs:',rows.length);
+          NODE
+      - name: Retain public verification metadata
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const dir='workers/.wrangler/magi2-dialogue-a1';
+          const path=dir+'/production-a1-pages.json';
+          if(fs.existsSync(path)) {
+            const data=JSON.parse(fs.readFileSync(path,'utf8'));
+            for(const row of data.cases){row.eventNames=row.events.map(e=>e.event);delete row.events;delete row.request;}
+            fs.writeFileSync(path,JSON.stringify(data,null,2));
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: magi-a1-publication
+          path: |
+            workers/.wrangler/magi2-dialogue-a1/production-a1-pages.json
+            workers/.wrangler/magi2-dialogue-a1/production-malice-log.json
