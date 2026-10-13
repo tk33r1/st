@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 13 Oct 2026 08:33:38 +0900</lastBuildDate>
+    <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 14 Oct 2026 06:47:35 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月14日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261014/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261014/</guid>
+      <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
+      <description>「寝られる座椅子」がソファ代わりとして支持を集め、寝る・座るを一台でこなす複合機能の需要が見えてきました。 インドで2店舗目となる「NITORI Sky City Mall Mumbai店」が出店し、海外の店舗網拡大が続いています。</description>
+    </item>
     <item>
       <title>2026年10月13日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261013/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260930/</guid>
       <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
       <description>ニトリは約350アイテムを10％引きで販売する期間限定施策を開始。冬支度需要を取り込み、季節商品の購買を促す価格戦略が焦点となる。 宅配ボックスやアニマルクッションなど、日常の不便解消と選ぶ楽しさを備えた商品が登場。生活者の具体的な使用場面に根差す商品提案が続く。</description>
-    </item>
-    <item>
-      <title>2026年9月29日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260929/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260929/</guid>
-      <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
-      <description>中国では小物中心の小型店を増やし、出店を再拡大する方針が示された。大型店とは異なる立地・需要への対応力を高める動きとして注目される。 店舗の狭い空間をロボット倉庫として活用する実証が始動。売場面積を圧迫せずに在庫機能を持たせられるか、店舗運営と物流の一体化に向けた検証が焦点となる。</description>
     </item>
   </channel>
 </rss>

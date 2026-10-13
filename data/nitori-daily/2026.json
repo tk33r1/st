@@ -1,5 +1,369 @@
 [
   {
+    "date": "20261014",
+    "title": "2026年10月14日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "「寝られる座椅子」がソファ代わりとして支持を集め、寝る・座るを一台でこなす複合機能の需要が見えてきました。 インドで2店舗目となる「NITORI Sky City Mall Mumbai店」が出店し、海外の店舗網拡大が続いています。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "「寝られる座椅子」がソファ代わりとして支持を集め、寝る・座るを一台でこなす複合機能の需要が見えてきました。",
+      "インドで2店舗目となる「NITORI Sky City Mall Mumbai店」が出店し、海外の店舗網拡大が続いています。",
+      "基幹システムを仮想環境から移行して処理時間を6時間から1時間半に短縮し、データ活用の基盤強化が進んでいます。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「寝られる座椅子」がソファ代わりに人気、昼寝や腰まわりの快適さで支持",
+        "original_title": "",
+        "source": "ねとらぼ（Yahoo!ニュース）",
+        "source_id": "JP-01",
+        "summary": "ねとらぼの報道によると、ニトリの「寝られる座椅子」がSNS等で人気を集めています。ユーザーからは「ソファを捨ててこっちを購入」「昼寝がはかどる」「コスパ的に言う事なし」といった声が上がり、腰やお尻が痛くならない点が評価されています。ソファの代替として選ばれるケースが見られ、座る・寝るを一台でこなす多機能性が注目されています。",
+        "why_it_matters": "ソファ・ベッド・座椅子の境界を越える「寝る＋座る」の複合機能は、限られた床面積の住まいにおける買い替え需要を取り込む可能性があります。低価格帯で生活空間の用途を広げる提案は、企画から店頭までを自社で完結させるSPAの強みを活かせる領域です。昼寝やリビングでの休息といった具体的シーンを売り場やECで可視化し、ソファとの比較軸を明確に打ち出すことで、単品の座椅子を超えた顧客単価の向上が期待できます。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ヒット商品",
+          "座椅子"
+        ],
+        "search_terms": [
+          "寝られる座椅子",
+          "reclining floor chair Nitori",
+          "Nitori sofa alternative",
+          "ニトリ 座椅子 ヒット"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5GdTJfLTBXNlJxS3U4UHBVdlBPY0ZtZzQ1c2Ewa2Rzb2xtYkE5QnlJOHdJcGVNLW0zQkF6bkpxdWVVb082cG4wVldURkJ0SHI3T1JSUEpkek5aNWdpcDhTenJIUlh2V1oxQmFQdE9fUkZlTlRPY3BxaGNfcm1qdk0?oc=5",
+        "source_pub_ts": 1791891900
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、インド2店舗目「NITORI Sky City Mall Mumbai店」を出店",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-02",
+        "summary": "流通スーパーニュースによると、ニトリはインドで2店舗目となる「NITORI Sky City Mall Mumbai店」を出店しました。インドでは既存店に続く2拠点目となり、ムンバイの商業施設「Sky City Mall」内での展開です。アジア圏での店舗網拡大を進める中、現地での認知拡大と顧客接点の強化に位置づけられる出店といえます。",
+        "why_it_matters": "インドは人口規模と住宅需要の拡大が見込まれる市場で、2店舗目の出店は単発の進出ではなく現地展開の本格化を示します。SPAとして商品企画と調達を自社で握れる体制は、現地の住空間や価格感に合わせた品揃えの調整に有利に働きます。今後は1店舗目との売上や顧客属性の比較から、都市別の出店基準や現地向けPB開発の方向性を読み取ることが重要になります。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "インド",
+          "店舗展開"
+        ],
+        "search_terms": [
+          "インド 2店舗目 出店",
+          "Nitori India second store",
+          "Sky City Mall Mumbai",
+          "ニトリ 海外店舗 拡大"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBMd3BQajNtSmZkVEpYQlRNUEhYSElKQUVUR0JLVlpwMktkejlSeVBzSXJlcFlLOW1mTGRobHJ5RWlRakpGMkZfTFRKaHZtcU5RMXhB?oc=5",
+        "source_pub_ts": 1791867166
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのトイレ用品が人気ランキング上位に、取っ手付きの移動しやすさと中身が見える収納性が支持",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-03",
+        "summary": "ねとらぼリサーチの人気ランキングで、ニトリの「トイレ用品」が上位に入りました。ユーザーからは「キッチンの小物を並べるのに便利」「取っ手付きで移動も楽」「中身が見えないのですっきり」といった声が寄せられています。用途を限定しない転用のしやすさが評価され、日用品の収納需要に応えています。",
+        "why_it_matters": "トイレ用品がキッチンなど他の用途に転用されている点は、用途を限定しない汎用的な設計が支持されていることを示します。取っ手や中身の見えやすさといった使い勝手の細部が口コミで広がる構造は、商品企画の段階でUXを具体化することの重要性を示しています。売り場では用途別ではなく生活動線別の提案に組み替えることで、関連購入の促進が見込めます。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "収納",
+          "ランキング"
+        ],
+        "search_terms": [
+          "トイレ用品 人気ランキング",
+          "Nitori bathroom storage",
+          "収納 転用 キッチン",
+          "storage product ranking Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5zWkdneGJOV0ZUemZ3OGg2NXQ1QWtqX0NtV3VYWjdfdXZJZnZ4bDIyb3NFaU5VQXFDTGxNZzdJSnQ2ZWVvZGpHSjNKYUl6dXVvelg1eDc0dnpaQnBwTENPX2FwYk4xcFh6cjRz?oc=5",
+        "source_pub_ts": 1791865800
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリHD、35期連続の増収増益の背景を特集",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-05",
+        "summary": "ウォーカープラスの記事は、ニトリホールディングスが35期連続で増収増益を達成していることを取り上げています。同社が躍進を続ける理由に焦点を当て、成長の背景を読者向けに紹介しています。長期にわたる安定成長は、消費者からの継続的な支持を示す材料として注目されています。",
+        "why_it_matters": "35期にわたる連続増収増益は、景気変動の中でも収益モデルが機能し続けていることを示す指標です。成長要因を企画・調達・販売を一体で行う体制に求める見方は、SPAとしての構造的な強みを改めて確認する機会になります。今後は、価格戦略と為替対応を含めた利益率の維持策が、成長持続性を読むうえでの焦点となります。",
+        "tags": [
+          "ニトリ",
+          "経営",
+          "業績",
+          "増収増益"
+        ],
+        "search_terms": [
+          "35期連続増収増益",
+          "Nitori Holdings consecutive growth",
+          "ニトリ 業績 成長要因",
+          "retail profit growth Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5VZkVDWTA0eVAxb0FYb0FCelg2ZF9ySXdrUTZRU0lfOWMyalVZYjNTM0xaTGR5WDh3MUVwUFBMWXBhTWtia21GM3ZrQl9ZZTFyQmNWcjJET1NKb2x3WU0wRkRTd2xPQ20yT1dYNkRB?oc=5",
+        "source_pub_ts": 1791858478
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、オンプレミス仮想環境から基幹システムを移行し処理時間を6時間から1時間半に短縮",
+        "original_title": "",
+        "source": "ITmedia",
+        "source_id": "JP-09",
+        "summary": "ITmediaの報道によると、ニトリはオンプレミスの仮想環境を見直し、基幹システムの処理時間を6時間から1時間半へ短縮しました。記事では基幹システムをどのように移行したのかに焦点を当てています。社内の業務処理の高速化を進める取り組みとして、小売のデジタル基盤の刷新事例となっています。",
+        "why_it_matters": "基幹システムの処理時間短縮は、在庫や受注、店舗データの反映スピードを高め、欠品防止や需要予測の精度向上につながります。製造から店舗までの情報を一元管理するSPAの構造では、基盤刷新が商品回転率や物流の意思決定速度を左右します。今後は、クラウド移行の効果をデータ連携や自動化の拡張にどう活かすかが焦点となります。",
+        "tags": [
+          "ニトリ",
+          "DX",
+          "基幹システム",
+          "クラウド"
+        ],
+        "search_terms": [
+          "基幹システム 移行",
+          "Nitori core system migration",
+          "オンプレミス 仮想環境 クラウド",
+          "retail ERP modernization"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE5MaTFxNlRxdG1qSGhYV2ZhekVBZ0w1Wjc5RXdWQmJtdmdaQWd4VjEtdXFEemVXdVVnRkotV1Rpdy1TcnNmUm5QaW5MY3MyYUF0YTljQWVzUmFFa2dROTNlTG1LMzBGOHpNR3lOWVJVVzkxdw?oc=5",
+        "source_pub_ts": 1791846000
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "進化する「ニトリアプリ」と入社時年収1300万円の賃金体系、ウォーカープラスが取材",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-11",
+        "summary": "ウォーカープラスの記事は、進化を続けている「ニトリアプリ」と、入社時の年収1300万円とされる賃金体系について取材した内容を伝えています。アプリの機能向上と人材面の報酬設計の両面から、ニトリの取り組みに注目が集まっていることが分かります。",
+        "why_it_matters": "アプリの進化は店舗・EC・会員データを束ねる顧客接点の強化を示し、小売DXの中核を担います。一方、高水準の賃金体系はデジタル人材や専門性の確保に寄与する可能性があり、人材獲得競争の中での戦略的な意味を持ちます。今後はアプリ活用による販売効率と人件費のバランスを、継続的に見ていく視点が重要です。",
+        "tags": [
+          "ニトリ",
+          "アプリ",
+          "DX",
+          "人材"
+        ],
+        "search_terms": [
+          "ニトリアプリ 進化",
+          "Nitori app evolution",
+          "retail app digital customer",
+          "小売 人材 報酬 デジタル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1FU3ZDMWtZWFloN1pFTV9MRFlsSkJFZ0FHWXhab0xPWGdlcjRwWlVPVWllOE16TGZPNFMxSDc0Q3VOVGNjR0lpWU1Ncm9xbExRcjhGOS0wU3gwVHdGZVc5TlNSWWoycU5uVG9nN3ZB?oc=5",
+        "source_pub_ts": 1791824287
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「家賃35万でもニトリの食器」投稿が1,459いいね、価格より選び方に共感集まる",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "Xでは「家賃35万の家に住んでニトリで揃えたような食器を使うのは不思議」「お金をかけるポイントがそこなんだ」という投稿が1,459いいねを集めました。高価な住まいと手頃な食器の組み合わせに対する驚きと共感が広がり、暮らしの中で何にお金をかけるかという価値観が話題になっています。",
+        "why_it_matters": "この投稿は、ニトリの食器が「安いから使う」だけでなく、住空間全体の中で選択的に満足を得る器として受け止められていることを示します。生活者は住まいの格とは別に、日常の器に機能性や見た目の納得感を求めており、ブランドを選ぶ理由が価格から自分らしい取捨選択へと変化しつつあります。器の質感やデザインの統一感を訴求し、コーディネートの一員として提案することが有効です。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "食器",
+          "生活者の声"
+        ],
+        "search_terms": [
+          "ニトリ 食器 共感",
+          "Nitori tableware social buzz",
+          "食器 選び方 価値観",
+          "home value spending Japan"
+        ],
+        "url_note": "https://x.com/roppongi_1300",
+        "url": "https://x.com/underlifewear/status/2109848676604735798",
+        "source_pub_ts": 1791889200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "デコホームの「パリジェンヌ風」購入品紹介が1.1万再生、くすみ配色とリボンで世界観を演出",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-08",
+        "summary": "TikTokでは、ニトリデコホームの商品で「パリジェンヌのときめき」をテーマにした購入品紹介動画が1.1万回再生を集めました。白・リボン・くすみカラーで統一した雑貨を取り上げ、399円のカップ＆ソーサーやコード収納ホルダー、ルームシューズ、吸水マットなど手に取りやすい価格帯のアイテムを組み合わせて紹介しています。",
+        "why_it_matters": "短尺動画では、テーマ性のある統一感が真似したい暮らしとして伝わり、個別商品より世界観が共感を生みます。手頃な価格の雑貨をひとつの物語でまとめる紹介は、デコホームのコンセプトと生活者の自己表現欲求を結びつけています。今後は機能の訴求に加え、シリーズ化したコーディネート提案や組み合わせ例の発信が購買転換に効果的と考えられます。",
+        "tags": [
+          "ニトリデコホーム",
+          "SNS",
+          "TikTok",
+          "購入品紹介"
+        ],
+        "search_terms": [
+          "デコホーム 購入品 パリジェンヌ",
+          "Nitori Decohome TikTok",
+          "くすみカラー 雑貨 コーディネート",
+          "cute home goods haul Japan"
+        ],
+        "url": "https://www.tiktok.com/@mimi.blanche.maison/video/7695572010004401416",
+        "source_pub_ts": 1791764992.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "家賃35万の家に住んでニトリで揃えたみたいな食器使うの不思議。お金かけるポイントそこなんだ。 x.com/roppongi_1300/…",
+        "platform": "x",
+        "author": "@underlifewear",
+        "url": "https://x.com/underlifewear/status/2109848676604735798",
+        "likes": 1459,
+        "retweets": 22,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:28",
+        "captured_at": "",
+        "text": "家賃35万の家に住んでニトリで揃えたみたいな食器使うの不思議。お金かけるポイントそこなんだ。 x.com/roppongi_1300/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリで隣の同棲前っぽいカップル。 男がダブルベッドの値札見て 「高っ。シングル2つでよくない？ﾔﾘたい時だけそっち行けばいいじゃんw」 彼...",
+        "platform": "x",
+        "author": "@Sakuraharutoyut",
+        "url": "https://x.com/Sakuraharutoyut/status/2109772894943465659",
+        "likes": 1048,
+        "retweets": 27,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 7:27",
+        "captured_at": "",
+        "text": "ニトリで隣の同棲前っぽいカップル。 男がダブルベッドの値札見て 「高っ。シングル2つでよくない？ﾔﾘたい時だけそっち行けばいいじゃんw」 彼女は「…そうだね」とだけ言って、 マットレスの端にちょこんと座ってた。 少しして店員さんが来たら、 彼女が先に言ったのが、",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリのXmasツリー、オーナメントもライトも付いてこの値段なの良すぎでは、、、？！！ pic.x.com/PfeoJGDUbz",
+        "platform": "x",
+        "author": "@___h___r___k__",
+        "url": "https://x.com/___h___r___k__/status/2109933688146604340",
+        "likes": 846,
+        "retweets": 37,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:06",
+        "captured_at": "",
+        "text": "ニトリのXmasツリー、オーナメントもライトも付いてこの値段なの良すぎでは、、、？！！ pic.x.com/PfeoJGDUbz",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "NISAがどうのって言われてもニトリのソファをサクッと買える現金無い事に萎えるてWWW x.com/koi_haruru/sta…",
+        "platform": "x",
+        "author": "@hyeonbin125666",
+        "url": "https://x.com/hyeonbin125666/status/2109801841781608551",
+        "likes": 767,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:22",
+        "captured_at": "",
+        "text": "NISAがどうのって言われてもニトリのソファをサクッと買える現金無い事に萎えるてWWW x.com/koi_haruru/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "今日も今日とて、牛赤身挽肉を使用した超低脂質の激辛麻婆豆腐を作成 油は使わずに紹興酒と鶏がらスープの素と調味料と香辛料で煮詰める ニンニクと...",
+        "platform": "x",
+        "author": "@Tanuk_Ichi",
+        "url": "https://x.com/Tanuk_Ichi/status/2109995007616917956",
+        "likes": 86,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:09",
+        "captured_at": "",
+        "text": "今日も今日とて、牛赤身挽肉を使用した超低脂質の激辛麻婆豆腐を作成 油は使わずに紹興酒と鶏がらスープの素と調味料と香辛料で煮詰める ニンニクと生姜はマシマシで これを大量に作って冷凍庫にストック 保存容器はニトリで購入 あとは1日のうち1-2食をこれに置き換えていけば、簡単に痩せる pic.x.com/LZtTpHjV7a x.com/tanuk_ichi/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "After many trips to Nitori #japan #university #tokyo",
+        "platform": "tiktok",
+        "author": "@Tom Powell",
+        "url": "https://www.tiktok.com/@tompowelll/video/7695782086606720278",
+        "likes": 1903,
+        "retweets": 8,
+        "views": 13800,
+        "comments": 9,
+        "posted_on": "2026-10-12 23:05",
+        "captured_at": "2026-10-13T21:27:45.663521+09:00",
+        "text": "After many trips to Nitori #japan #university #tokyo",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "🫧収納見直し🫧 ニトリのシリーズスキ🎀 #収納 #生活音 #購入品紹介 #年子ママ #日常Vlog",
+        "platform": "tiktok",
+        "author": "@ⓔ ⓡ ⓘ🧸🎀",
+        "url": "https://www.tiktok.com/@e_a_r_27ao/video/7695609765908499733",
+        "likes": 377,
+        "retweets": 1,
+        "views": 12500,
+        "comments": 5,
+        "posted_on": "2026-10-12 11:56",
+        "captured_at": "2026-10-13T21:27:45.663521+09:00",
+        "text": "🫧収納見直し🫧 ニトリのシリーズスキ🎀 #収納 #生活音 #購入品紹介 #年子ママ #日常Vlog",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-08",
+        "title": "\\パリジェンヌのようなときめきを/ デコホーム購入品紹介🤍 ୨୧┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ ୨୧ ニトリデコホーム で見つけた購入品紹介...",
+        "platform": "tiktok",
+        "author": "@Mimi▫️儚可愛い暮らし",
+        "url": "https://www.tiktok.com/@mimi.blanche.maison/video/7695572010004401416",
+        "likes": 423,
+        "retweets": 6,
+        "views": 11300,
+        "comments": 8,
+        "posted_on": "2026-10-12 09:29",
+        "captured_at": "2026-10-13T21:27:45.663521+09:00",
+        "text": "\\パリジェンヌのようなときめきを/ デコホーム購入品紹介🤍 ୨୧┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ ୨୧ ニトリデコホーム で見つけた購入品紹介です🎀 今回は、「パリジェンヌのときめき」をテーマに 白・リボン・くすみカラーという 大好きな要素が詰まった可愛いアイテムをご紹介します🦢 🇫🇷カップ＆ソーサー（ブランシェ） 見つけた瞬間、商品名の「ブランシェ」が、 私の名前（blanche）と同じフランス語の「白い（ブランシュ）」という意味だと知って運命を感じちゃいました🤍 アンティーク風のレリーフにも一目惚れして すぐにお迎えしたカップ&ソーサーセット☕ 399円と、プチプラなお値段も嬉しすぎます✨ 🇫🇷コード収納ホルダー（2個入り AG009） 大人可愛いくすみピンクのリボン型ホルダー🎀 粘着面をデスクや壁にペタッと貼るだけで、 くぼみにコードをくるくる巻き付けて生活感を隠せます✨ 可愛さと便利さのいいとこ取りで本当にオススメです 🤍 🇫🇷ルームシューズ（リボンrRSx3a モカ M） 大きなリボンがふんわりあしらわれたルームシューズ🩰 絶妙な「くすみモカ」のお色味としっとりした素材感で、 足元から一気にお姫様気分になれます👑色違いのローズも可愛かったです🤍 ୨୧┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ ୨୧ あと、動画では映っていないのですが、 「やわらかラバー吸水マット(リボン柄 36×22cm NR009） ￥399」もあとで購入しました🎀 くすみピンクにリボンのイラストが大人可愛い吸水マットで、こちらもオススメです🤍 お皿洗いも楽しくなりますよ🥰 ୨୧┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ ୨୧ @ニトリデコホーム【公式】 #デコホーム購入品 #ニトリデコホーム #フレンチガーリー #かわいい暮らし #儚可愛い",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿では、Xで食器や住まいの価値観に関する投稿が高い共感を集め、TikTokではテーマ性のある購入品紹介や収納見直しの動画が1万回超の再生を記録しました。Xは「いいね」で共感が広がり、TikTokは実際の使用シーンや統一感のある紹介が再生を伸ばす傾向が見られます。海外ユーザーによる投稿も確認されました。",
+    "sns_why_it_matters": "Xでは住まい全体の価値観と食器選びの関係が共感を集め、ニトリを安さだけでなく選び方の上手さを示すブランドとして語る傾向が見られます。TikTokでは世界観を持つ購入品紹介が再生を伸ばしており、個別の商品訴求より暮らしの物語が購買の起点になっています。店頭とSNSの双方で、テーマ別のコーディネート提案を強化することが重要です。"
+  },
+  {
     "date": "20261013",
     "title": "2026年10月13日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。 置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。",
