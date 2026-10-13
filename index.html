@@ -2076,6 +2076,8 @@
     .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
     .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
     .agent-page span { font-size: 11px; opacity: .8; }
+    .agent-closed { margin-top: 12px; padding: 12px; border: 1px solid var(--primary-color); font-size: 12px; }
+    .agent-closed button { margin-top: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--primary-color); background: transparent; color: var(--primary-color); cursor: pointer; }
 
     .reaction-bar {
       display: flex;
@@ -3236,7 +3238,7 @@
               "name": "What is MAGI, and where do my messages go?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Messages and images are sent to OpenAI, DeepSeek, and Anthropic, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Ordinary messages and images are sent to OpenAI, DeepSeek, and Anthropic. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
               }
             },
             {
@@ -4188,8 +4190,8 @@
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
         question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
-        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Messages and images are sent to OpenAI, DeepSeek, and Anthropic, and the latest and up to two preceding user messages to TypeSafe AI to classify the request, with the first message used to fix the conversation language. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
-        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。「今夜ラーメンを食べに行くべき？」のように賛否を尋ねると、審議できる問いはMAGIが自動で採決します。採決ではなく説明がほしいときは「採決せず、直前の議題の判断材料を整理して」と入力できます。メッセージと画像は OpenAI・DeepSeek・Anthropic の3社へ、発言の分類と会話の初回の言語判定のためメッセージの文字だけを TypeSafe AI へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Ordinary messages and images are sent to OpenAI, DeepSeek, and Anthropic. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。「今夜ラーメンを食べに行くべき？」のように賛否を尋ねると、審議できる問いはMAGIが自動で採決します。採決ではなく説明がほしいときは「採決せず、直前の議題の判断材料を整理して」と入力できます。本人設定の変更・内部指示の開示・極端な差別や暴力の肯定を求める入力には、討議せず短く返して会話を終えます。続けるときは新しい会話を始めてください。通常のメッセージと画像は OpenAI・DeepSeek・Anthropic の3社へ送信されます。毎回の分類には、今回の本文と直前2件までのユーザー本文を TypeSafe AI に送り、初回の言語判定には最初の本文を使います。画像・AIの回答・状況説明は分類に送りません。短い返答のモデルには固定の方向・本人の要約・返答の言語だけを送り、その入力と会話の履歴は渡しません。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
         sec: 'magi',
@@ -7377,7 +7379,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 4.7 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 4.8 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7407,6 +7409,7 @@
     const agentActBtn = document.querySelector('#activitybar [data-act="agent"]');
     const agentTitleEl = document.getElementById('agentdock-title');
     let agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
+    var agentClosed = false;
     const saveCurrentHistory = () => safeStore('magi_current_history', agentHistory);
     // Nothing asked yet: the splash is the only thing in the dock.
     const splashOnly = () => agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash');
@@ -7515,7 +7518,7 @@
     function resetAgent(keepOpen = false) {
       dropAgentRequest();
       archiveCurrentHistory();
-      agentHistory = []; agentBusy = false; agentDead = false;
+      agentHistory = []; agentBusy = false; agentDead = false; agentClosed = false;
       safeRemove('magi_current_history');
       safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
@@ -7608,7 +7611,7 @@ function classificationFields(history, language, ui, entry, panel) {
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: panel === true },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
     state ? { reply_language: state } : { language_seed: seed });
 }
 function receiveClassification(state, ev, d) {
@@ -7621,12 +7624,39 @@ function receiveClassification(state, ev, d) {
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
     state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (ev === 'closed') {
+      if (!state.classified || state.candidate || state.closed || !state.reply || !d || d.reason !== 'malice') throw new Error('invalid_closed');
+      state.closed = true;
+    } else if (state.closed && ev !== 'done') throw new Error('event_after_closed');
+    if (ev === 'integrated' && d && typeof d.delta === 'string' && d.delta.trim()) state.reply = true;
     if (state.panel && typeof magiReceive === 'function') magiReceive(state, ev, d);
     else if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
     state.started = true;
   }
 }
 // AGENT_CLASSIFY_END
+
+// AGENT_CLOSED_BEGIN
+// 終了状態は会話ごとの履歴から復元する。古い送信はaliveの検査でここへ来ない。
+function closeAgentConversation(turn) {
+  agentClosed = true;
+  agentInput.disabled = true; agentSendBtn.disabled = true;
+  attachBtn.disabled = true;
+  setAgentSuggestion('');
+  if (!turn || turn.querySelector('.agent-closed')) return;
+  var ja = document.documentElement.lang === 'ja';
+  var box = document.createElement('div'); box.className = 'agent-closed';
+  var text = document.createElement('p');
+  text.dataset.en = 'This conversation has ended. Please start a new conversation.';
+  text.dataset.ja = 'この会話はここまでです。新しい会話を始めてください。';
+  text.textContent = ja ? text.dataset.ja : text.dataset.en;
+  var button = document.createElement('button'); button.type = 'button';
+  button.dataset.en = 'New conversation'; button.dataset.ja = '新しい会話';
+  button.textContent = ja ? button.dataset.ja : button.dataset.en;
+  button.addEventListener('click', function () { resetAgent(true); });
+  box.appendChild(text); box.appendChild(button); turn.appendChild(box);
+}
+// AGENT_CLOSED_END
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false, receivedEnd = false, playback = null, playbackError = null;
@@ -7675,7 +7705,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
@@ -7822,7 +7852,7 @@ async function parseSSE(body, handlers, onChunk) {
       setTimeout(() => { attachNotice = ''; renderAttachTray(); }, 2500);
     }
     async function addAttachments(files) {
-      if (agentDead) return;
+      if (agentDead || agentClosed) return;
       const list = Array.from(files || []).filter(isImageFile);
       if (!list.length) return;
       for (const f of list) {
@@ -7858,10 +7888,10 @@ async function parseSSE(body, handlers, onChunk) {
     });
     // ドックへのドラッグ＆ドロップ
     const dragHasFiles = (e) => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
-    agentDockEl.addEventListener('dragover', (e) => { if (!dragHasFiles(e) || agentDead) return; e.preventDefault(); agentDockEl.classList.add('dragging'); });
+    agentDockEl.addEventListener('dragover', (e) => { if (!dragHasFiles(e) || agentDead || agentClosed) return; e.preventDefault(); agentDockEl.classList.add('dragging'); });
     agentDockEl.addEventListener('dragleave', (e) => { if (e.relatedTarget && agentDockEl.contains(e.relatedTarget)) return; agentDockEl.classList.remove('dragging'); });
     agentDockEl.addEventListener('drop', (e) => {
-      if (!dragHasFiles(e) || agentDead) return;
+      if (!dragHasFiles(e) || agentDead || agentClosed) return;
       e.preventDefault(); agentDockEl.classList.remove('dragging'); addAttachments(e.dataTransfer.files);
     });
     // 送信済みサムネはクリックで拡大／縮小
@@ -7975,7 +8005,7 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
     async function agentSend() {
-      if (agentBusy || agentDead) return;
+      if (agentBusy || agentDead || agentClosed) return;
       const text = agentInput.value.trim().slice(0, 1000);
       const atts = attachments.slice();
       if (!text && !atts.length) return;
@@ -8007,6 +8037,7 @@ async function parseSSE(body, handlers, onChunk) {
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       let magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
+      var closedReply = false;
       const sendId = ++agentSendSequence;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…', followups: [] }]));
 
@@ -8067,6 +8098,7 @@ async function parseSSE(body, handlers, onChunk) {
             },
             verdict: function (d) { if (dropped()) return; magiMeta = Object.assign({}, d, { motion: magiMeta.motion, reason_missing: false }); magiView.push('verdict', d); },
             integrated_end: function () { if (!dropped()) integratedEnd = true; },
+            closed: function () { if (!dropped()) { closedReply = true; turn.querySelector('.agent-personas')?.remove(); } },
             // MAGI_EVENTS_END
             classification: d => { if (!dropped()) { classified = true; saveAgentLanguage(d.reply_language); } },
             title: (d) => { if (d && d.text && !dropped()) setAgentTitle(d.text); },
@@ -8149,6 +8181,7 @@ async function parseSSE(body, handlers, onChunk) {
           agentBusy = false;
           if (!agentDead) { setAgentInputEnabled(true); if (!document.hidden) agentInput.focus({ preventScroll: true }); }
           else agentSendBtn.disabled = true;
+          if (agentClosed) setAgentInputEnabled(false);
         }
       }
       if (dropped()) { delete pendingReactions[mid]; return; }
@@ -8158,12 +8191,13 @@ async function parseSSE(body, handlers, onChunk) {
         if (!magiView) announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
         Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
-        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), mid, reactions: pendingReactions[mid] || {} });
+        if (closedReply) closeAgentConversation(turn);
+        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
         saveCurrentHistory();
         updateAgentActionButtons();
         syncCurrentToSaved();
-        setAgentSuggestion(completed && !magiMeta?.reason_missing ? suggestion : '');
+        setAgentSuggestion(completed && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
       } else {
         // 失敗した往復を次の質問の履歴に持ち越さない。
         turn.remove();
@@ -8357,6 +8391,8 @@ async function parseSSE(body, handlers, onChunk) {
 
     // --- トーク履歴管理ロジック ---
     function renderHistoryToLog(history) {
+      agentClosed = false;
+      if (!agentDead) setAgentInputEnabled(true);
       agentLog.innerHTML = '';
       cleanHistory(history).forEach(item => {
         if (item.role === 'user') { agentLog.appendChild(userBubbleEl(item.content)); return; }
@@ -8365,6 +8401,7 @@ async function parseSSE(body, handlers, onChunk) {
         if (item.magi) magiReplay(turn, item, { ja: document.documentElement.lang === 'ja', id: item.mid, log: agentLog });
         applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
         agentLog.appendChild(turn);
+        if (item.closed === true) closeAgentConversation(turn);
       });
       agentScroll();
     }
@@ -8518,7 +8555,7 @@ async function parseSSE(body, handlers, onChunk) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice'];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'

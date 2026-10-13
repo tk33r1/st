@@ -20,7 +20,7 @@ vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('w
   + ' { input: { profile: "dj-request", texts: ["OK"], seed: "日本語で曲の相談をしたいです。" }, expected: { language: "ja" } },'
   + ' { input: { profile: "legacy", texts: ["DJを始めたい", "OK"] }, expected: { language: "ja" } },'
   + ' { input: { profile: "legacy", texts: ["I want to start DJing."] }, expected: { language: "en" } }'
-  + ' ].map(test => ({ payload: classificationPayload(test.input), expected: test.expected })) };', ctx);
+  + ' ].map(test => { const payload = classificationPayload(test.input); return { payload, expected: { ...(payload.questions.malice ? { malice: "none" } : {}), ...test.expected } }; }) };', ctx);
 // 会社ごとのパラメーター名・推論時のsampling除外も本番の組立てを使う。
 const worker = read('workers/magi2/src/index.js');
 const start = worker.indexOf('function requestBody('), end = worker.indexOf('\nasync function callModel(', start);

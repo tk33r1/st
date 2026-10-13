@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -905,11 +905,12 @@ const discardEvents = () => {};
 
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
 // 送り口が discardEvents なら何も見せていないので、本文の途中で失敗しても答え直す。
-async function synthesize({ env, messages, theme, signal, send, log }) {
+async function synthesize({ env, messages, theme, signal, send, log, reasoningEffort }) {
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const [primary, alternate] = theme === 'dark' ? [dark, light] : [light, dark];
   let emitted = false;
-  for (const [attempt, cfg] of [primary, alternate].entries()) {
+  for (const [attempt, model] of [primary, alternate].entries()) {
+    const cfg = reasoningEffort ? { ...model, reasoning_effort: reasoningEffort } : model;
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: false });
     try {
       return await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async parent => {
@@ -1287,6 +1288,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     ...(guide ? [{ role: 'system', content: guide.synth }] : []),
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
     ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
+    { role: 'system', content: SYNTHESIZER.voice_rules },
     ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
     { role: 'user', content: withImages(noteLang(augmented), lastImages) },
   ];
@@ -1397,9 +1399,31 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (stop.signal.aborted) throw searchFailure('cancelled');
         langNote = classified.langNote;
         const classification = classified.classification;
-        if (classification) classification.magi_candidate = env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
+        if (classification) classification.magi_candidate = !classified.malice && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
           && entry === 'chat' && classification.votable === 'yes' && !!contentText(plainMessages.at(-1).content).trim();
         if (newContract) send('classification', classification);
+        if (classified.malice) {
+          log('malice', classified.malice, classified.maliceConfidence);
+          const cards = await cardsPromise;
+          const p = withCard({ ...SYNTHESIZER, system_prompt: MALICE_REPLY.system_prompt }, cards, PERSONA_CONTEXT.synth_header);
+          const replyCode = classification.reply_language.code === 'other' ? uiLanguage : classification.reply_language.code;
+          let emitted = false;
+          const push = (event, data) => { if (event === 'integrated' && data.delta) emitted = true; send(event, data); };
+          try {
+            await synthesize({ env: upstream, theme, signal: stop.signal, send: push, log, reasoningEffort: 'none',
+              // otherの言語sampleも入力由来なので、この返しには渡さずUI言語へ縮退する。
+              messages: [{ role: 'system', content: withLangNote(p.system_prompt + '\n\n' + MALICE_REPLY.output_rules, classification.reply_language.code === 'other' ? languageNote({ code: replyCode }) : langNote) },
+                { role: 'user', content: MALICE_REPLY.directions[classified.malice] }] });
+          } catch (err) {
+            if (emitted || stop.signal.aborted) throw err;
+            send('integrated', { delta: MALICE_REPLY.fallback[replyCode === 'ja' ? 'ja' : 'en'] });
+          }
+          if (stop.signal.aborted) throw searchFailure('cancelled');
+          send('closed', { reason: 'malice' });
+          send('done', { request_id: requestId });
+          close();
+          return;
+        }
         const motionPromise = classification?.magi_candidate ? withTimeout(MAGI_MODE.motion_ms,
           signal => createMotion(upstream, plainMessages, langNote, signal, log), stop.signal)
           .catch(() => notVotable('failed')) : null;

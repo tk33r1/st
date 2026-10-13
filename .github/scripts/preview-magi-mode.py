@@ -20,6 +20,13 @@ def vote(k, r, v, text='既知の条件から判断した。', absent=False, sta
 def fixtures(query, language):
     """(待ち秒, イベント名, 中身)。合否の正本は設計書、ここは再現用のデータ。"""
     legacy = query == 'mock-legacy'
+    if query == 'mock-malice':
+        yield 0, 'classification', {'version': 1, 'intent': 'consult', 'site_pages': 'no',
+                                    'votable': 'no', 'magi_candidate': False, 'reply_language': language}
+        yield .3, 'integrated', {'delta': 'その話はここまでにしておきます。' if language.get('code') == 'ja' else "I'll leave that there."}
+        yield 0, 'closed', {'reason': 'malice'}
+        yield 0, 'done', {}
+        return
     if not legacy:
         yield 0, 'classification', {'version': 1, 'intent': 'consult', 'site_pages': 'no', 'votable': 'yes', 'magi_candidate': True, 'reply_language': language}
     if query == 'mock-early-error':

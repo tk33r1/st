@@ -113,11 +113,12 @@ class MagiSmokeTest(unittest.TestCase):
         self.assertIn('yes', expected)
         self.assertIn('no', expected)
         questions = [set(c['payload']['questions']) for c in self.config['classify_smoke']]
-        self.assertEqual(questions[0], {'language', 'votable', 'intent', 'site_pages'})
+        self.assertEqual(questions[0], {'language', 'malice', 'votable', 'intent', 'site_pages'})
         self.assertEqual(questions[2], questions[0])
-        self.assertEqual(questions[1], {'votable', 'intent', 'site_pages'})
+        self.assertEqual(questions[1], {'malice', 'votable', 'intent', 'site_pages'})
         self.assertEqual(questions[3:5], [questions[1], questions[1]])
-        self.assertTrue(all(q == {'language'} for q in questions[5:]))
+        self.assertTrue(all(q == {'language', 'malice'} for q in questions[5:7]))
+        self.assertTrue(all(q == {'language'} for q in questions[7:]))
         # Jevの形式検査は閾値を使わず、0.68でも明確なchoiceなら受け付ける。
         sent = []
         def post(url, key, body):

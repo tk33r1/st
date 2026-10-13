@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '4.7';
+var APP_VERSION = '4.8';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -54,7 +54,7 @@ function classificationFields(history, language, ui, entry, panel) {
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: panel === true },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
     state ? { reply_language: state } : { language_seed: seed });
 }
 function receiveClassification(state, ev, d) {
@@ -67,12 +67,39 @@ function receiveClassification(state, ev, d) {
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
     state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (ev === 'closed') {
+      if (!state.classified || state.candidate || state.closed || !state.reply || !d || d.reason !== 'malice') throw new Error('invalid_closed');
+      state.closed = true;
+    } else if (state.closed && ev !== 'done') throw new Error('event_after_closed');
+    if (ev === 'integrated' && d && typeof d.delta === 'string' && d.delta.trim()) state.reply = true;
     if (state.panel && typeof magiReceive === 'function') magiReceive(state, ev, d);
     else if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
     state.started = true;
   }
 }
 // AGENT_CLASSIFY_END
+
+// AGENT_CLOSED_BEGIN
+// 終了状態は会話ごとの履歴から復元する。古い送信はaliveの検査でここへ来ない。
+function closeAgentConversation(turn) {
+  agentClosed = true;
+  agentInput.disabled = true; agentSendBtn.disabled = true;
+  attachBtn.disabled = true;
+  setAgentSuggestion('');
+  if (!turn || turn.querySelector('.agent-closed')) return;
+  var ja = document.documentElement.lang === 'ja';
+  var box = document.createElement('div'); box.className = 'agent-closed';
+  var text = document.createElement('p');
+  text.dataset.en = 'This conversation has ended. Please start a new conversation.';
+  text.dataset.ja = 'この会話はここまでです。新しい会話を始めてください。';
+  text.textContent = ja ? text.dataset.ja : text.dataset.en;
+  var button = document.createElement('button'); button.type = 'button';
+  button.dataset.en = 'New conversation'; button.dataset.ja = '新しい会話';
+  button.textContent = ja ? button.dataset.ja : button.dataset.en;
+  button.addEventListener('click', function () { resetAgent(true); });
+  box.appendChild(text); box.appendChild(button); turn.appendChild(box);
+}
+// AGENT_CLOSED_END
 
 // Persona names (shown on the debate cards and the splash buttons). The descriptions (temperament, context,
 // theme) and the LLM behind each persona are not written here: they come from the Worker's /magi2/models
@@ -125,6 +152,7 @@ var agentSendBtn = document.getElementById('agent-send');
 var agentDegraded = document.getElementById('agent-degraded');
 var barTitle = document.getElementById('bar-title');
 var agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
+var agentClosed = false;
 var pendingReactions = {};
 
 // 次の質問の予測（Worker の suggest イベント）。入力欄が空で送れる状態のときだけ薄く重ね、
@@ -370,10 +398,12 @@ function startMagiThinking(target, startedAt) {
 
 // ---- Render persisted history ----------------------------------------------
 function turnHTML(item) {
-  return personaCardsHTML(item.debate || {})
+  return (item.closed === true ? '' : personaCardsHTML(item.debate || {}))
     + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda' + magiThinkingHTML(item.thinkingSeconds) + '</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + reactionBarHTML('integrated') + '</div>';
 }
 function renderHistoryToLog(history) {
+  agentClosed = false;
+  if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; }
   agentLog.innerHTML = '';
   cleanHistory(history).forEach(function (item) {
     if (item.role === 'user') {
@@ -388,6 +418,7 @@ function renderHistoryToLog(history) {
       agentLog.appendChild(turn);
       if (item.magi) magiReplay(turn, item, { ja: document.documentElement.lang === 'ja', id: item.mid, log: agentLog });
       applyReactionsToTurn(turn, item.reactions);
+      if (item.closed === true) closeAgentConversation(turn);
     }
   });
   agentScroll();
@@ -422,7 +453,7 @@ function dropAgentRequest() {
 function resetAgent() {
   dropAgentRequest();
   archiveCurrentHistory();
-  agentHistory = []; agentBusy = false; agentDead = false;
+  agentHistory = []; agentBusy = false; agentDead = false; agentClosed = false;
   safeRemove('magi_current_history');
   safeRemove('magi_current_title');
   agentLog.innerHTML = '';
@@ -540,7 +571,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
@@ -692,7 +723,7 @@ function noticeAttach(msg) {
   setTimeout(function () { attachNotice = ''; renderAttachTray(); }, 2500);
 }
 async function addAttachments(files) {
-  if (agentDead) return;
+  if (agentDead || agentClosed) return;
   var list = Array.prototype.slice.call(files || []).filter(isImageFile);
   if (!list.length) return;
   for (var i = 0; i < list.length; i++) {
@@ -787,7 +818,7 @@ function agentStop() {
 }
 
 async function agentSend() {
-  if (agentBusy || agentDead) return;
+  if (agentBusy || agentDead || agentClosed) return;
   var text = agentInput.value.trim().slice(0, 1000);
   var atts = attachments.slice();
   if (!text && !atts.length) return;
@@ -825,6 +856,7 @@ async function agentSend() {
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
+      var closedReply = false;
       var sendId = ++agentSendSequence;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
@@ -887,6 +919,7 @@ async function agentSend() {
             },
             verdict: function (d) { if (dropped()) return; magiMeta = Object.assign({}, d, { motion: magiMeta.motion, reason_missing: false }); magiView.push('verdict', d); },
             integrated_end: function () { if (!dropped()) integratedEnd = true; },
+            closed: function () { if (!dropped()) { closedReply = true; turn.querySelector('.agent-personas')?.remove(); } },
             // MAGI_EVENTS_END
         classification: function (d) { if (!dropped()) { classified = true; saveAgentLanguage(d.reply_language); } },
         title: function (d) { if (d && d.text && !dropped()) setAgentTitle(d.text); },
@@ -977,12 +1010,13 @@ async function agentSend() {
     if (!magiView) announceAgent('MAGI replied. ' + reply);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
-    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), debate: debateData, ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
+    if (closedReply) closeAgentConversation(turn);
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
-    setAgentSuggestion(completed && !magiMeta?.reason_missing ? suggestion : '');
+    setAgentSuggestion(completed && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
     var last = agentHistory[agentHistory.length - 1];
@@ -1238,7 +1272,7 @@ function deleteSavedSession(id) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice'];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'

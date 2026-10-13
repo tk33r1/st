@@ -75,9 +75,9 @@ npx wrangler deploy --config magi2/wrangler.toml
 ## 発言分類と会話の言語
 
 `personas.js` の `INTENT_CLASSIFY` と `classification.js` を本番・実装前確認・週次smokeで共有する。
-`classification_state: true` のトップページ・アプリでは初回にlanguage/votable/intent/site_pagesの4問、継続では言語を省いた3問をJevへ1回で送る。
+`classification_state: true` のトップページ・アプリでは、対話改修A1の実装で初回にlanguage/malice/votable/intent/site_pagesの5問、継続では言語を省いた4問をJevへ1回で送る（A1は公開前。実測は[対話改修評価](対話改修評価.md)）。
 分類は最新本文全体（1,000文字まで）と直近2件までのユーザー本文、言語は最初のユーザー本文（500文字まで）を使う。画像・AI回答・状況説明は分類に送らない。
-DJは `entry: dj-request` によりmusic/no/no固定で、言語の初回1問だけ。旧画面は従来のリクエストごとの言語1問を使う。
+DJは `entry: dj-request` によりmusic/no/no固定で、初回は言語とmaliceの2問、以後はmaliceだけ。毎回の本文と直近2件のユーザー本文を使い、状況説明とAIの返答は渡さない。古い契約（classification_stateなし）は従来のリクエストごとの言語1問を使う。
 
 - 問いごとに選択肢と有限の0〜1のconfidenceを検査し、language/intent/site_pagesは0.5、votableは0.7以上を採用する。
 - 言語を引き継ぐ `reply_language` はversion・code・sourceを検査する。初回に失敗しても日本語の規則、固定した短いsample、UI言語で確定し、次のターンには再判定しない。
@@ -91,6 +91,28 @@ node .github/scripts/probe-jev-classify.mjs
 ```
 
 本番と同じ問いで初回4問・継続3問を各20回、DJ・旧画面の言語1問も確認する。キーは環境変数か非追跡の `.dev.vars` から読み、本文やキーを出力しない。
+
+## 対話改修A1（4.8・公開前）
+
+maliceの調整確定値は0.55（2026-10-13、実Jev。2026-10-14に修正後56返答の本人確認を記録し、検証計画§3.1は合格。本番公開・公開後確認は未実施）。identity/extraction/extremeだけが短い返しに入り、none/uncertain・低確信・欠落・障害では通常経路を使う。討議・議題化・ページ選び・タイトル・予測より先に分岐する。短い返しはテーマの統合モデルを推論なしで呼び、本文前の失敗だけもう一方の会社で1回答え直す。両社失敗は固定の日英の文、本文を送った後の失敗と停止は答え直さない。言語がotherで本文由来のsampleしか無いときは、この返しだけUI言語を使って攻撃本文を渡さない。
+
+classification → integrated → closed（reason: malice）→ done。closedは印なしの新分類契約にも送り、配布済み画面では未知イベントとして読み飛ばされる。対応画面はclose_on_maliceを送り、正常完了後にclosed: trueを履歴に残し、新しい会話まで入力を閉じる。DJは返しだけ。履歴のclosedをWorkerの受付拒否に使わず、毎回判定する。404・検索②はA1の対象外。
+
+統合人格は一人称「私」、語尾「ぜ」を使わない。短い返しは本人のカードの後に出力ルールを付け、会話を続ける誘いや後で話す約束を付け足さずに終える。
+
+実測前に、検証計画§0.1に従って本人が入力の文面・期待値を確定する。確認済み調整用は `.github/scripts/fixtures/magi-dialogue-a1-tune.json`、別途確認済みの判定用は `magi-dialogue-a1-final.json`（同じディレクトリ）、測定は `.github/scripts/eval-magi-malice.mjs`。調整用で値を確定した後、判定用の分類単体は各回誤検知0件・検出27件。口調修正後、両テーマの実Worker各80件は無害50件の誤検知0件・対象30件の検出28件で、全件正常完了した。返答完了の中央値はライト1075ms、ダーク1194ms。返答の修正前後で分類の契約hashが不変で、問い・閾値を変えていない。2026-10-14、本人が「修正後の両テーマ56件を採用する」と承認し、確認用本文と測定元JSONのhash・テーマ別28件のIDを記録した。実測は[対話改修Jev評価](対話改修-jev-evaluation.md)、出荷前に残る項目は[対話改修評価](対話改修評価.md)。
+
+```sh
+node .github/scripts/eval-magi-malice.mjs --inspect
+# 本人確認後、JSONのreviewed_by/reviewed_atに事実を記録してから調整用を測る
+node .github/scripts/eval-magi-malice.mjs --run --input=.github/scripts/fixtures/magi-dialogue-a1-tune.json
+# 別の判定用を用意し、確定した閾値・コードの調整記録と照合してから測る
+node .github/scripts/eval-magi-malice.mjs --run --input=<判定用JSON> --freeze=<確定後の調整記録JSON>
+# 外部AIなし。トップ・PWA・DJの会話終了・再生・保存・再開を確認
+node .github/scripts/test-magi-stream-browser.mjs . --malice-only
+# 手動プレビューの入力はmock-malice
+python -B .github/scripts/preview-magi-mode.py
+```
 
 ## 上流の残高切れの通知
 

@@ -116,7 +116,7 @@
               "name": "AIへ相談した内容は、どこに送られますか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Anthropicの3社すべてに送信されます。会話の最初に返答の言語を決めるため、最初の相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
+                "text": "相談文とその回のリクエスト状況は、通常の回答のためOpenAI、DeepSeek、Anthropicの3社すべてに送信されます。毎回の相談文と直近2件までのユーザー本文をTypeSafe AIへ送信して悪意のある指示を判定し、最初の相談文で返答の言語を決めます。画像・AIの回答・リクエスト状況はTypeSafe AIへ送りません。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
               }
             },
             {
@@ -1678,8 +1678,8 @@
     </div>
     <div class="dj-modal__body ai-info-card">
       <ul>
-        <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Anthropic の3社すべて</strong>へ送信されます。</li>
-        <li>返答の言語を決めるため、会話の最初の相談文だけを <strong>TypeSafe AI</strong>（Jev。判定専用のモデル）にも送信します（リクエスト状況は送りません）。同社は API の入力をモデルの学習に利用しないとしています。</li>
+        <li>相談文とこの回のリクエスト状況は、通常の回答のため <strong>OpenAI・DeepSeek・Anthropic の3社すべて</strong>へ送信されます。</li>
+        <li>毎回の相談文と直近2件までのユーザー本文を <strong>TypeSafe AI</strong>（Jev。判定専用のモデル）へ送信し、悪意のある指示を判定します。最初の相談文で返答の言語を決めます（画像・AIの回答・リクエスト状況は送りません）。同社は API の入力をモデルの学習に利用しないとしています。</li>
         <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
         <li>1日の利用上限のため、<strong>IP アドレス</strong>を日ごとの回数としてデータベースに記録します（相談の中身は記録しません）。</li>
         <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Anthropic API の入出力は既定では学習に利用されず、通常30日以内に削除されます（安全管理や法令に基づく例外があります）。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
@@ -1730,7 +1730,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">AIへ相談した内容は、どこに送られますか？</summary>
           <div class="request-faq-answer">
-            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Anthropicの3社すべてに送信されます。会話の最初に返答の言語を決めるため、最初の相談文だけをTypeSafe AIにも送信します。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
+            <p>相談文とその回のリクエスト状況は、通常の回答のためOpenAI、DeepSeek、Anthropicの3社すべてに送信されます。毎回の相談文と直近2件までのユーザー本文をTypeSafe AIへ送信して悪意のある指示を判定し、最初の相談文で返答の言語を決めます。画像・AIの回答・リクエスト状況はTypeSafe AIへ送りません。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
           </div>
         </details>
         <details class="request-faq-item">
@@ -3066,7 +3066,7 @@ function classificationFields(history, language, ui, entry, panel) {
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: panel === true },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
     state ? { reply_language: state } : { language_seed: seed });
 }
 function receiveClassification(state, ev, d) {
@@ -3079,6 +3079,11 @@ function receiveClassification(state, ev, d) {
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
     state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (ev === 'closed') {
+      if (!state.classified || state.candidate || state.closed || !state.reply || !d || d.reason !== 'malice') throw new Error('invalid_closed');
+      state.closed = true;
+    } else if (state.closed && ev !== 'done') throw new Error('event_after_closed');
+    if (ev === 'integrated' && d && typeof d.delta === 'string' && d.delta.trim()) state.reply = true;
     if (state.panel && typeof magiReceive === 'function') magiReceive(state, ev, d);
     else if (['motion','verdict','integrated_end'].indexOf(ev) >= 0) throw new Error('unexpected_magi_event');
     state.started = true;
@@ -3133,7 +3138,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);

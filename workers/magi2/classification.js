@@ -18,18 +18,13 @@ export function classificationPayload({ profile = 'chat', texts = [], seed, hasL
     names = p.questions;
   } else {
     const languageSeed = classifySlice(seed ?? texts.find(t => t.trim()) ?? '', cfg.language_seed_max_chars);
-    if (profile === 'dj-request') {
-      state = { language_seed: languageSeed };
-      names = !hasLanguage && languageSeed.trim() ? cfg.profiles[profile].questions : [];
-    } else {
-      state = {
-        latest_message: classifySlice(latest, cfg.latest_max_chars),
-        earlier_messages: texts.slice(0, -1).filter(t => t.trim()).slice(-cfg.earlier_messages).map(t => classifySlice(t, cfg.earlier_max_chars)),
-        ...(!hasLanguage && languageSeed.trim() ? { language_seed: languageSeed } : {}),
-      };
-      names = cfg.profiles.chat.questions.filter(name => name === 'language'
-        ? !hasLanguage && !!languageSeed.trim() : !!latest.trim());
-    }
+    state = {
+      latest_message: classifySlice(latest, cfg.latest_max_chars),
+      earlier_messages: texts.slice(0, -1).filter(t => t.trim()).slice(-cfg.earlier_messages).map(t => classifySlice(t, cfg.earlier_max_chars)),
+      ...(!hasLanguage && languageSeed.trim() ? { language_seed: languageSeed } : {}),
+    };
+    names = cfg.profiles[profile].questions.filter(name => name === 'language'
+      ? !hasLanguage && !!languageSeed.trim() : !!latest.trim());
   }
   if (!names.length) return null;
   return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name, cfg.questions[name]])) };
@@ -70,7 +65,8 @@ export function languageNote(value) {
 }
 
 export function acceptedChoice(name, answer) {
-  return answer && typeof answer.choice === 'string' && Object.hasOwn(INTENT_CLASSIFY.questions[name].criteria, answer.choice)
+  return answer && (answer.type === undefined || answer.type === INTENT_CLASSIFY.questions[name].type)
+    && typeof answer.choice === 'string' && Object.hasOwn(INTENT_CLASSIFY.questions[name].criteria, answer.choice)
     && typeof answer.confidence === 'number' && Number.isFinite(answer.confidence)
     && answer.confidence >= INTENT_CLASSIFY.min_confidence[name] && answer.confidence <= 1 ? answer.choice : null;
 }
@@ -109,6 +105,8 @@ export async function classifyQuery(env, input, signal, log) {
   const noText = !(texts.at(-1) || '').trim();
   return {
     langNote: languageNote(language),
+    malice: ['identity', 'extraction', 'extreme'].includes(choices.malice) ? choices.malice : null,
+    maliceConfidence: choices.malice ? answers.malice.confidence : null,
     classification: { version: 1, intent: dj ? 'music' : noText ? 'consult' : choices.intent || 'consult',
       site_pages: dj ? 'no' : choices.site_pages || 'uncertain', votable: dj || noText ? 'no' : choices.votable || 'uncertain',
       magi_candidate: false, reply_language: language },

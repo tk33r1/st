@@ -312,9 +312,10 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     上流の API へは role と content しか送らない（`requestBody`）。
   - 入力は3社すべてに送られる。会社を変えたり足したりしたら、トップページと `magi-app/www/app.js` の
     「System & Privacy」と `dj/request/` の送信先の説明も直すこと。Anthropic APIは通常30日保持（安全対策・法令等の例外あり）し、通常はモデルの学習に使わない。条件を変更したときは説明も直すこと。
-  - **分類と言語**: `classification_state: true` の一般会話は、TypeSafe AI（Jev）へ初回4問・継続3問を1回で送り、最新本文を分類し、初回だけ最初のユーザー本文から言語を決める。DJはmusic固定で、初回の言語1問だけ。旧画面はリクエストごとの言語1問を維持する。
+  - **分類と言語**: `classification_state: true` の一般会話は、TypeSafe AI（Jev）へ初回5問・継続4問（language・malice・votable・intent・site_pages、継続は言語を省く）を1回で送り、最新本文と直前2件のユーザー本文から分類し、初回だけ最初のユーザー本文から言語を決める。DJはmusic固定で、初回は言語・maliceの2問、継続はmaliceの1問。旧画面はリクエストごとの言語1問を維持する。
     3人格・統合・討議の判定・タイトル・予測に同じ言語指定を付ける（`INTENT_CLASSIFY`／`classification.js`。画像・状況説明・AIの回答は分類に送らない）。会話ごとの言語を画面に保存・復元し、分類結果・本文・ハッシュをD1に保存しない。
     決まらなければ手元の規則（`REPLY_LANGUAGE`）とUI言語で初回に固定する。Jev は4社目の送り先なので、上の説明にも載せてある。
+  - **悪意への短い返答（対話改修A1）**: identity・extraction・extremeが確信度0.55以上なら、討議・採決・サイト案内・タイトル・予測より先に、テーマの統合モデルが推論なしで短く返す。返答モデルへ送るのは固定の方向・本人のカード・言語だけで、相手の本文と履歴は渡さない。`classification` → `integrated` → `closed` → `done`。トップ/PWAは `close_on_malice` を送り、終了状態を保存して入力を閉じ、［新しい会話］で再開する。DJは短い返答だけで入力を閉じない。統合人格の一人称は「私」、語尾「ぜ」は使わない。返答の本文前だけ相手の会社へ1回答え直し、両社失敗なら固定の日英の文。
   - 次の質問の予測: リクエストに `suggest: true` を付けると、統合の答えの後に軽量モデル（`anthropic.haiku`・推論なし、HTTP失敗時だけOpenAI）で
     利用者が次に送りそうな質問を1つ作り、`suggest` イベントで送ってから `done` にする（失敗・4秒超えなら送らずに終える）。
     いま付けているのはトップページの MAGI、`magi-app/www/app.js`、`dj/request/` の「AIに相談」。どれも空の入力欄に薄く重ね、
