@@ -63,6 +63,7 @@ const inputs=[[reported,repeatReported],...[
  '住むなら都会と田舎、どっち？',
  '一つの仕事を続けるのと、何度も転職するのと、どっちがいい？',
  'Would you rather have a few close friends or many casual friends?',
+ 'Should I take a quiet weekend alone or go to a festival with friends?',
  '友人からの誘いを断るのが苦手で、疲れてしまう。関係を大切にしながら伝える方法を相談したい。',
  '寝る前にスマートフォンを別の部屋に置くべき？',
 ].map(q=>[q,repeat])];
@@ -73,8 +74,11 @@ const othersOf=codename=>heading(PERSONAS.filter(p=>p.codename!==codename).flatM
 const speaker=heading(all);
 // 画面に出る本文（版にあれば自分の名前の見出しを落とす処理を通す）
 let shown=t=>t;try{const f=vm.runInContext('stripOwnHeader',context);shown=(t,who)=>f(t,PERSONAS.find(p=>p.codename===who));}catch(_){}
-// 長すぎる：英語は60語超、それ以外は200字超（指示は2〜3文・120字ほど）
+// 長すぎる：英語は60語超、それ以外は200字超（指示は2〜3文・日本語120字・英語40語ほど）
 const tooLong=t=>/[ぁ-んァ-ン一-龥]/.test(t)?[...t].length>200:t.split(/\s+/).filter(Boolean).length>60;
+// 英語の質問に、かなを含む答えを返した（出力の言語の食い違い）
+const english=q=>!/[^\x00-\x7f]/.test(q);
+const kana=t=>/[ぁ-んァ-ン]/.test(t);
 
 const results=[];
 for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
@@ -88,18 +92,18 @@ for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
  for(const c of calls){
   const list=(rounds[c.who]||=[]);
   const view=shown(c.text,c.who);
-  list.push({round:list.length+1,status:c.status,chars:[...c.text].length,others:othersOf(c.who).test(c.text),shown_tag:speaker.test(view),long:tooLong(view),text:c.text});
+  list.push({round:list.length+1,status:c.status,chars:[...c.text].length,others:othersOf(c.who).test(c.text),shown_tag:speaker.test(view),long:tooLong(view),lang:english(q)&&kana(view),text:c.text});
  }
  results.push({id:id+1,run,input:q,done:/event: done/.test(stream),rounds});
- console.log(JSON.stringify({label,id:id+1,run,done:results.at(-1).done,rounds:Object.fromEntries(Object.entries(rounds).map(([k,v])=>[k,v.map(r=>[r.chars,r.others?'O':'',r.shown_tag?'T':'',r.long?'L':''].join(''))]))}));
+ console.log(JSON.stringify({label,id:id+1,run,done:results.at(-1).done,rounds:Object.fromEntries(Object.entries(rounds).map(([k,v])=>[k,v.map(r=>[r.chars,r.others?'O':'',r.shown_tag?'T':'',r.long?'L':'',r.lang?'J':''].join(''))]))}));
  // 引っかかった回答と、各入力の1回目は本文もログに出す（入力は合成。成果物を取れない環境でも目で確かめられるように）
- for(const [who,list] of Object.entries(rounds))for(const r of list)if(r.others||r.shown_tag||r.long||run===1)
+ for(const [who,list] of Object.entries(rounds))for(const r of list)if(r.others||r.shown_tag||r.long||r.lang||run===1)
   console.log('TEXT '+JSON.stringify({label,id:id+1,run,who,round:r.round,chars:r.chars,text:r.text}));
 }
 const count=(who,round,f)=>results.map(r=>r.rounds[who]?.[round-1]).filter(Boolean).filter(f).length;
 const total=(who,round)=>results.map(r=>r.rounds[who]?.[round-1]).filter(Boolean).length;
 const summary={label,ref:ref||'working-tree',date:new Date().toISOString(),runs:results.length,
- personas:Object.fromEntries(PERSONAS.map(({codename:w})=>[w,Object.fromEntries([1,2].map(n=>['r'+n,{total:total(w,n),others:count(w,n,r=>r.others),shown_tag:count(w,n,r=>r.shown_tag),long:count(w,n,r=>r.long)}]))]))};
+ personas:Object.fromEntries(PERSONAS.map(({codename:w})=>[w,Object.fromEntries([1,2].map(n=>['r'+n,{total:total(w,n),others:count(w,n,r=>r.others),shown_tag:count(w,n,r=>r.shown_tag),long:count(w,n,r=>r.long),lang_mismatch:count(w,n,r=>r.lang)}]))]))};
 const directory=new URL('workers/.wrangler/magi-persona/',root);mkdirSync(directory,{recursive:true});
 writeFileSync(new URL(label+'.json',directory),JSON.stringify({...summary,results},null,2)+'\n');
 console.log('SUMMARY '+JSON.stringify(summary));

@@ -280,7 +280,7 @@ const magiPersonaRole = '同じ議題の文のとおりにすること・主張�
 const chatPersonaRole = [
   '【書き方】',
   '判定や採決はしない。自分の面から意見・感想や問いを返す。',
-  'カードに収まるよう、2〜3文（日本語なら120字ほど）で書く。名前は画面が出すので、本文から書き始める。',
+  'カードに収まるよう、2〜3文（日本語なら120字、英語なら40語ほど）で書く。名前は画面が出すので、本文から書き始める。',
 ].join('\n');
 PERSONAS.forEach(p => {
   p.role = { chat: chatPersonaRole, magi: '【書き方】\n' + magiPersonaRole };
