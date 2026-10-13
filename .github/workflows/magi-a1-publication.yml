@@ -36,24 +36,32 @@ jobs:
       - name: Check malice log and retain only metadata
         if: always()
         run: |
-          kill "$MAGI_A1_TAIL_PID" 2>/dev/null || true
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
-          const raw=fs.readFileSync(process.env.RUNNER_TEMP+'/magi-a1-tail.jsonl','utf8');
-          const rows=[];
-          for(const block of raw.split(/\n}\r?\n/)) {
-            const start=block.indexOf('{');if(start<0)continue;
-            let event;try{event=JSON.parse(block.slice(start)+'\n}');}catch{continue;}
-            for(const log of event.logs||[]) {
-              const m=log.message;if(!Array.isArray(m)||m[1]!=='malice')continue;
-              rows.push({requestId:m[0],malice:m[2],confidence:m[3],outcome:event.outcome});
+          const report=JSON.parse(fs.readFileSync('workers/.wrangler/magi2-dialogue-a1/production-a1-pages.json','utf8'));
+          const ids=new Set(report.cases.map(c=>c.requestId));
+          assert.equal(ids.size,4,'合成確認の4要求ID');assert.ok(!ids.has(null));
+          let rows=[];
+          // tailはHTTPの完了より遅れて届く。確認した要求だけを最大30秒待つ。
+          for(let attempt=0;attempt<=30;attempt++) {
+            const raw=fs.readFileSync(process.env.RUNNER_TEMP+'/magi-a1-tail.jsonl','utf8');rows=[];
+            for(const block of raw.split(/\n}\r?\n/)) {
+              const start=block.indexOf('{');if(start<0)continue;
+              let event;try{event=JSON.parse(block.slice(start)+'\n}');}catch{continue;}
+              for(const log of event.logs||[]) {
+                const m=log.message;if(!Array.isArray(m)||m[1]!=='malice'||!ids.has(m[0]))continue;
+                rows.push({requestId:m[0],malice:m[2],confidence:m[3],outcome:event.outcome});
+              }
             }
+            if(new Set(rows.map(r=>r.requestId)).size===4)break;
+            await new Promise(r=>setTimeout(r,1000));
           }
           fs.writeFileSync('workers/.wrangler/magi2-dialogue-a1/production-malice-log.json',JSON.stringify({rows},null,2));
-          assert.ok(rows.length>=4,'本番の4画面でmaliceログを確認');
+          assert.equal(new Set(rows.map(r=>r.requestId)).size,4,'本番の4画面でmaliceログを確認');
           console.log('malice logs:',rows.length);
           NODE
+          kill "$MAGI_A1_TAIL_PID" 2>/dev/null || true
       - name: Retain public verification metadata
         if: always()
         run: |

@@ -24,7 +24,7 @@ try {
       if(url.origin==='https://workers.tk.st'&&url.pathname==='/magi2/chat') {
         const request=route.request().postDataJSON();
         const response=await fetch(url,{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(300000)});
-        const body=await response.text();captured={request,body,status:response.status};
+        const body=await response.text();captured={request,body,status:response.status,requestId:response.headers.get('X-Request-Id')};
         return route.fulfill({status:response.status,contentType:'text/event-stream',headers:{'Access-Control-Allow-Origin':'https://tk.st'},body});
       }
       if(legacy&&url.pathname==='/magi-app/www/app.js')return route.fulfill({contentType:'application/javascript',body:old.stdout});
@@ -71,7 +71,7 @@ try {
       const stored=await page.evaluate(dj=>localStorage.getItem(dj?'tkdj.consults':'magi_current_history'),dj);
       const contains=value=>value===expected||value&&typeof value==='object'&&Object.values(value).some(contains);assert.ok(contains(JSON.parse(stored)));
       if(!legacy&&!dj){await page.reload({waitUntil:'domcontentloaded'});assert.equal(await page.locator(input).isDisabled(),true);await page.locator('.agent-closed button').click();assert.equal(await page.locator(input).isDisabled(),false);}
-      assert.deepEqual(errors,[]);report.cases.push({name,pass:true,request,events,closed:!legacy&&!dj,privacyCompatible:legacy,djSyntheticReception:dj});console.log(name+': 本番A1・表示・保存・互換 OK');
+      assert.deepEqual(errors,[]);report.cases.push({name,pass:true,requestId:captured.requestId,request,events,closed:!legacy&&!dj,privacyCompatible:legacy,djSyntheticReception:dj});console.log(name+': 本番A1・表示・保存・互換 OK');
     } finally {await ctx.close();}
   }
   report.pass=true;
