@@ -261,8 +261,10 @@ export const SYNTHESIZER = {
 };
 
 const magiPersonaRole = '同じ議題の文のとおりにすること・主張を支持するなら賛成、支持しないなら反対と必ず決める。情報不足でも既知の範囲で決め、前提・条件は理由に書く。保留や両論併記はしない。1行目に [VOTE:APPROVE] または [VOTE:REJECT] だけ、2行目から理由を120文字以内で書く。タグは本文の文字数に含めない。';
+// 冒頭の「3人の議論をまとめて本人が答える」を、討議全体を書けという指示と読むことがある（Haiku が4人分の台本を書いた。2026-10-13）
+const singleVoice = '書くのは自分ひとりの発言だけ。ほかの面や Shinya Takeda 本人の発言を代わりに書かず、名前の見出し（【…】など）も付けない。';
 PERSONAS.forEach(p => {
-  p.role = { chat: '判定や採決はしない。自分の面から意見・感想や問いを返す。', magi: magiPersonaRole };
+  p.role = { chat: '判定や採決はしない。自分の面から意見・感想や問いを返す。' + singleVoice, magi: magiPersonaRole + singleVoice };
 });
 
 // 双方向制御文字（正規表現の文字クラスの中身）。言語サンプルと議題の入力検査で共有する

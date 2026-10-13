@@ -76,6 +76,8 @@ for(const [id,[q,n]] of inputs.entries())for(let run=1;run<=n;run++){
  const rounds=calls.map((c,i)=>({round:i+1,status:c.status,stop:c.stop,chars:[...c.text].length,speaker:speaker.test(c.text),others:others.test(c.text),text:c.text}));
  results.push({id:id+1,run,input:q,done:/event: done/.test(stream),rounds});
  console.log(JSON.stringify({label,id:id+1,run,done:results.at(-1).done,rounds:rounds.map(r=>({round:r.round,status:r.status,chars:r.chars,speaker:r.speaker,others:r.others}))}));
+ // 引っかかった回答は本文もログに出す（入力は合成。成果物を取れない環境でも確かめられるように）
+ for(const r of rounds)if(r.speaker||r.chars>200)console.log('TEXT '+JSON.stringify({label,id:id+1,run,round:r.round,chars:r.chars,text:r.text}));
 }
 const r1=results.map(r=>r.rounds[0]).filter(Boolean),r2=results.map(r=>r.rounds[1]).filter(Boolean);
 const count=(list,f)=>list.filter(f).length;
