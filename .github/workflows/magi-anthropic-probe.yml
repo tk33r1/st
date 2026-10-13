@@ -9,7 +9,7 @@ on:
         required: false
         default: smoke
         type: choice
-        options: [smoke, magi, faults, site, motion, deepseek, title, all]
+        options: [smoke, magi, faults, site, motion, deepseek, title, persona, all]
       image-urls:
         description: '任意: 公開X画像のHTTPS URLを3件（pbs.twimg.com、空白区切り）'
         required: false
@@ -21,7 +21,7 @@ on:
         default: ''
         type: string
       title-baseline:
-        description: '任意: title評価で比べる旧版のコミット'
+        description: '任意: title・persona評価で比べる旧版のコミット'
         required: false
         default: ''
         type: string
@@ -49,7 +49,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Probe the API
-      if: inputs.evaluation != 'faults' && inputs.evaluation != 'site' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek' && inputs.evaluation != 'title'
+      if: inputs.evaluation != 'faults' && inputs.evaluation != 'site' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek' && inputs.evaluation != 'title' && inputs.evaluation != 'persona'
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         ANTHROPIC_PROBE_IMAGE_URLS: ${{ inputs.image-urls }}
@@ -112,6 +112,14 @@ jobs:
       run: |
         if [ -n "$BASELINE" ]; then node .github/scripts/eval-magi-title.mjs --ref="$BASELINE"; fi
         node .github/scripts/eval-magi-title.mjs
+    - name: Check that BALTHASAR writes only its own view
+      if: inputs.evaluation == 'persona'
+      env:
+        MAGI_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        BASELINE: ${{ inputs.title-baseline }}
+      run: |
+        if [ -n "$BASELINE" ]; then node .github/scripts/eval-magi-persona.mjs --ref="$BASELINE"; fi
+        node .github/scripts/eval-magi-persona.mjs
     - name: Check latest Anthropic channel without writing the registry
       if: inputs.evaluation == 'faults'
       env:
@@ -144,7 +152,7 @@ jobs:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       run: node .github/scripts/probe-anthropic.mjs --image-urls-file=workers/.wrangler/magi47-quality/materials.json
     - name: Smoke current models without update or publication
-      if: hashFiles('.github/scripts/anthropic_api.py') != '' && inputs.evaluation != 'faults' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek' && inputs.evaluation != 'title'
+      if: hashFiles('.github/scripts/anthropic_api.py') != '' && inputs.evaluation != 'faults' && inputs.evaluation != 'motion' && inputs.evaluation != 'deepseek' && inputs.evaluation != 'title' && inputs.evaluation != 'persona'
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -185,5 +193,13 @@ jobs:
       with:
         name: magi-title
         path: workers/.wrangler/magi-title/
+        include-hidden-files: true
+        if-no-files-found: ignore
+    - name: Keep persona evaluation outputs for review
+      if: always() && inputs.evaluation == 'persona'
+      uses: actions/upload-artifact@v4
+      with:
+        name: magi-persona
+        path: workers/.wrangler/magi-persona/
         include-hidden-files: true
         if-no-files-found: ignore
