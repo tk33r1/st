@@ -16,8 +16,7 @@ const inputText=read('.github/scripts/fixtures/magi-dialogue-a1-final.json'), fi
 assert(fixture.reviewed_by && fixture.reviewed_at && fixture.split==='final','reviewed final is required');
 const freezePath=arg('freeze','workers/.wrangler/magi2-dialogue-a1/freeze-classification-contract.json');
 const frozen=JSON.parse(read(freezePath));
-const sourceHash=hash(['config/ai-models.json','workers/magi2/languages.js','workers/magi2/personas.js','workers/magi2/classification.js'].map(read).join('\n'));
-const contractHash=classificationFingerprint().contract_hash;
+const {source_hash:sourceHash,contract_hash:contractHash}=classificationFingerprint();
 assert(frozen.complete && frozen.selected_threshold!==null
   && (frozen.source_hash===sourceHash || frozen.classification_contract_hash===contractHash),'freeze mismatch');
 assert(fixture.cases.every(c=>!frozen.case_hashes.includes(hash(c.text))),'final cannot reuse tuning text');

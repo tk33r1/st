@@ -80,11 +80,14 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 
 // AGENT_CLOSED_BEGIN
+// 予測の描画・フォーカスは呼び出し元が行う。ここでは3つの操作の状態だけを揃える。
+function setAgentControlsEnabled(on) {
+  agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on;
+}
 // 終了状態は会話ごとの履歴から復元する。古い送信はaliveの検査でここへ来ない。
 function closeAgentConversation(turn) {
   agentClosed = true;
-  agentInput.disabled = true; agentSendBtn.disabled = true;
-  attachBtn.disabled = true;
+  setAgentControlsEnabled(false);
   setAgentSuggestion('');
   if (!turn || turn.querySelector('.agent-closed')) return;
   var ja = document.documentElement.lang === 'ja';
@@ -403,7 +406,7 @@ function turnHTML(item) {
 }
 function renderHistoryToLog(history) {
   agentClosed = false;
-  if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; }
+  if (!agentDead) setAgentControlsEnabled(true);
   agentLog.innerHTML = '';
   cleanHistory(history).forEach(function (item) {
     if (item.role === 'user') {
@@ -459,8 +462,8 @@ function resetAgent() {
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   announceAgent('');
-  agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = ''; fitAgentInput();
-  attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
+  setAgentControlsEnabled(true); agentInput.value = ''; fitAgentInput();
+  attachments = []; attachNotice = ''; renderAttachTray();
   setAgentSuggestion('');
   closeAgentPanels();
   setAgentTitle('');
@@ -472,7 +475,7 @@ function agentDegrade(msg) {
   agentDegraded.textContent = msg || 'MAGI is currently unreachable. Check your connection and try again.';
   agentDegraded.classList.remove('hidden');
   announceAgent(agentDegraded.textContent);
-  agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+  setAgentControlsEnabled(false);
   renderAgentSuggest();
 }
 function renderAgentError(env) {
@@ -852,7 +855,7 @@ async function agentSend() {
   agentHistory.push({ role: 'user', content: storeContent });
   safeStore('magi_current_history', agentHistory);
 
-  agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+  agentBusy = true; setAgentControlsEnabled(false);
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
@@ -1000,7 +1003,7 @@ async function agentSend() {
     if (!dropped()) {
       replyEl.classList.remove('streaming');
       agentBusy = false;
-      if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; if (!document.hidden) agentInput.focus({ preventScroll: true }); }
+      if (!agentDead) { setAgentControlsEnabled(true); if (!document.hidden) agentInput.focus({ preventScroll: true }); }
       else agentSendBtn.disabled = true;
     }
   }
@@ -1257,7 +1260,7 @@ function loadSavedSession(id) {
   safeStore('magi_current_session_id', currentSessionId);
   saveAgentLanguage(session.reply_language);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
-  agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false;
+  setAgentControlsEnabled(true);
   setAgentSuggestion('');
   renderHistoryToLog(agentHistory);
   updateAgentActionButtons();

@@ -110,6 +110,12 @@ node .github/scripts/eval-magi-malice.mjs --run --input=.github/scripts/fixtures
 node .github/scripts/eval-magi-malice.mjs --run --input=<判定用JSON> --freeze=<確定後の調整記録JSON>
 # 外部AIなし。トップ・PWA・DJの会話終了・再生・保存・再開を確認
 node .github/scripts/test-magi-stream-browser.mjs . --malice-only
+# 旧画面の比較元を固定して確認（--inspectではブラウザ・実APIを起動しない）
+node .github/scripts/eval-magi-a1-browser.mjs --legacy-ref=3b68b9e1 --inspect
+# 新しいローカルWorkerとA1前の画面を比較する。実APIを使う
+node .github/scripts/eval-magi-a1-browser.mjs --base=http://localhost:8793 --legacy-ref=3b68b9e1
+# 新画面＋旧Workerの比較では旧画面を読み込まない
+node .github/scripts/eval-magi-a1-browser.mjs --base=http://localhost:8794 --legacy-worker
 # 手動プレビューの入力はmock-malice
 python -B .github/scripts/preview-magi-mode.py
 ```

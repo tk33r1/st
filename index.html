@@ -7457,7 +7457,7 @@
     }).observe(agentInput);
     // The text box, send and attach buttons are always switched on and off together.
     const setAgentInputEnabled = (on) => {
-      agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on;
+      setAgentControlsEnabled(on);
       renderAgentSuggest();
     };
 
@@ -7637,11 +7637,14 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 
 // AGENT_CLOSED_BEGIN
+// 予測の描画・フォーカスは呼び出し元が行う。ここでは3つの操作の状態だけを揃える。
+function setAgentControlsEnabled(on) {
+  agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on;
+}
 // 終了状態は会話ごとの履歴から復元する。古い送信はaliveの検査でここへ来ない。
 function closeAgentConversation(turn) {
   agentClosed = true;
-  agentInput.disabled = true; agentSendBtn.disabled = true;
-  attachBtn.disabled = true;
+  setAgentControlsEnabled(false);
   setAgentSuggestion('');
   if (!turn || turn.querySelector('.agent-closed')) return;
   var ja = document.documentElement.lang === 'ja';

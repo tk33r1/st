@@ -1,5 +1,7 @@
 // 承認済みの入力で、ローカル実Workerと新画面・改修前の画面を接続する。
 // 本文はGit管理外へ保存し、無関係な外部通信と解析は止める。
+// 新Workerと旧画面を比較するときは --legacy-ref=<A1前のcommit/tag> を必ず指定する。
+// --inspect は比較元の確認だけを行い、ブラウザや上流APIを起動しない。
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFileSync,existsSync,writeFileSync} from 'node:fs';
@@ -12,8 +14,20 @@ const fixture=JSON.parse(readFileSync(resolve(root,'.github/scripts/fixtures/mag
 assert(fixture.reviewed_by&&fixture.reviewed_at);
 const legacyWorker=process.argv.includes('--legacy-worker');
 const input=fixture.cases.find(c=>c.id===(legacyWorker?'final-benign-01':'final-identity-02')).text;
-const oldFile=p=>{const r=spawnSync('git',['show','HEAD:'+p],{encoding:'utf8',maxBuffer:20*1024*1024});assert.equal(r.status,0);return r.stdout;};
-const oldHome=oldFile('index.html'),oldApp=oldFile('magi-app/www/app.js');
+const legacyRef=process.argv.find(a=>a.startsWith('--legacy-ref='))?.slice(13);
+assert(legacyWorker || legacyRef,'旧画面との比較には --legacy-ref=<A1前のcommit/tag> が必要');
+let legacyCommit=null,oldHome=null,oldApp=null;
+if(!legacyWorker) {
+  const revision=spawnSync('git',['rev-parse','--verify','--end-of-options',legacyRef+'^{commit}'],{encoding:'utf8'});
+  assert.equal(revision.status,0,'legacy-refがcommitを指していない');legacyCommit=revision.stdout.trim();
+  const oldFile=p=>{const r=spawnSync('git',['show',legacyCommit+':'+p],{encoding:'utf8',maxBuffer:20*1024*1024});assert.equal(r.status,0);return r.stdout;};
+  oldHome=oldFile('index.html');oldApp=oldFile('magi-app/www/app.js');
+  assert(!oldHome.includes('close_on_malice: true')&&!oldApp.includes('close_on_malice: true'),'legacy-refにはA1前の画面を指定する');
+}
+if(process.argv.includes('--inspect')) {
+  console.log(JSON.stringify({base:base.href,legacy_worker:legacyWorker,legacy_ref:legacyRef??null,legacy_commit:legacyCommit,
+    old_home_loaded:oldHome!==null,old_app_loaded:oldApp!==null}));process.exit(0);
+}
 const server=createServer((req,res)=>{
   let path=new URL(req.url,'http://localhost').pathname;
   if(path.endsWith('/'))path+='index.html';
@@ -26,7 +40,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://localhost:'+server.address().port;
 const browser=await chromium.launch({headless:true});
 const rows=[],output=resolve(root,'workers/.wrangler/magi2-dialogue-a1/browser-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');
-const save=()=>writeFileSync(output,JSON.stringify({date:new Date().toISOString(),base:base.href,complete:false,results:rows},null,2));
+const save=()=>writeFileSync(output,JSON.stringify({date:new Date().toISOString(),base:base.href,legacy_ref:legacyRef??null,legacy_commit:legacyCommit,complete:false,results:rows},null,2));
 try{
   const surfaces=[['home-light','/',1280,false],['home-dark','/',1280,false],['app','/magi-app/www/',390,false],['dj','/dj/request/',390,false],['old-home','/',1280,true],['old-app','/magi-app/www/',390,true]];
   for(const [name,path,width,old] of (legacyWorker?surfaces.slice(0,4):surfaces)){
@@ -71,11 +85,14 @@ try{
       const shouldClose=!legacyWorker&&!old&&name!=='dj';
       assert.equal(await page.locator(inputSelector).isDisabled(),shouldClose);
       assert.equal(await page.locator('.agent-closed').count(),shouldClose?1:0);
-      const saved=await page.evaluate(dj=>localStorage.getItem(dj?'tkdj.consults':'magi_current_history'),name==='dj');assert.ok(saved?.includes(expected));
+      const saved=await page.evaluate(dj=>localStorage.getItem(dj?'tkdj.consults':'magi_current_history'),name==='dj');
+      const stored=JSON.parse(saved);
+      const savedReply=name==='dj'?stored?.[0]?.turns?.at(-1)?.reply:stored?.filter(m=>m.role==='assistant').at(-1)?.content;
+      assert.equal(savedReply,expected,'復元した保存データの最新回答が一致する');
       if(shouldClose){await page.reload({waitUntil:'domcontentloaded'});assert.equal(await page.locator(inputSelector).isDisabled(),true);await page.locator('.agent-closed button').click();assert.equal(await page.locator(inputSelector).isDisabled(),false);}
       assert.equal(errors.length,0,errors.join('\n'));rows.push({...captured,complete:true});save();console.log(name+': 実Worker・回答・保存・互換 OK');
     }catch(error){rows.push({...captured,name,complete:false,error:error.message,errors});save();throw error;}
     finally{clearTimeout(responseTimer);await page.close();}
   }
-  writeFileSync(output,JSON.stringify({date:new Date().toISOString(),base:base.href,complete:true,results:rows},null,2));console.log(JSON.stringify({complete:true,count:rows.length,output}));
+  writeFileSync(output,JSON.stringify({date:new Date().toISOString(),base:base.href,legacy_ref:legacyRef??null,legacy_commit:legacyCommit,complete:true,results:rows},null,2));console.log(JSON.stringify({complete:true,count:rows.length,output}));
 }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}

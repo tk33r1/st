@@ -947,6 +947,25 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
   }
 }
 
+// 悪意への返しには、ユーザーの本文・会話履歴・入力由来の言語sampleを渡さない。
+// 両社失敗の固定文も、本文が始まる前だけ使う。closed/doneは正常完了後に呼び出し元が送る。
+async function replyToMalice({ env, cards, classified, uiLanguage, theme, signal, send, log }) {
+  const p = withCard({ ...SYNTHESIZER, system_prompt: MALICE_REPLY.system_prompt }, cards, PERSONA_CONTEXT.synth_header);
+  const language = classified.classification.reply_language;
+  const replyCode = language.code === 'other' ? uiLanguage : language.code;
+  const langNote = language.code === 'other' ? languageNote({ code: replyCode }) : classified.langNote;
+  let emitted = false;
+  const push = (event, data) => { if (event === 'integrated' && data.delta) emitted = true; send(event, data); };
+  try {
+    await synthesize({ env, theme, signal, send: push, log, reasoningEffort: 'none',
+      messages: [{ role: 'system', content: withLangNote(p.system_prompt + '\n\n' + MALICE_REPLY.output_rules, langNote) },
+        { role: 'user', content: MALICE_REPLY.directions[classified.malice] }] });
+  } catch (err) {
+    if (emitted || signal.aborted) throw err;
+    send('integrated', { delta: MALICE_REPLY.fallback[replyCode === 'ja' ? 'ja' : 'en'] });
+  }
+}
+
 // 非必須の役割は、HTTPの失敗と、応答の前の失敗（鍵の未設定・通信の失敗など）のとき、別の会社の答え直し先
 // （DEFAULTS.models.aux_fallback）で一度呼び直す。利用者の停止・期限では呼び直さず、元のsignalの期限も延ばさない。
 // 200で届いた応答（拒否・途中切れ・本文の解析の失敗）は呼び出し側の判定に任せる。
@@ -1405,19 +1424,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (classified.malice) {
           log('malice', classified.malice, classified.maliceConfidence);
           const cards = await cardsPromise;
-          const p = withCard({ ...SYNTHESIZER, system_prompt: MALICE_REPLY.system_prompt }, cards, PERSONA_CONTEXT.synth_header);
-          const replyCode = classification.reply_language.code === 'other' ? uiLanguage : classification.reply_language.code;
-          let emitted = false;
-          const push = (event, data) => { if (event === 'integrated' && data.delta) emitted = true; send(event, data); };
-          try {
-            await synthesize({ env: upstream, theme, signal: stop.signal, send: push, log, reasoningEffort: 'none',
-              // otherの言語sampleも入力由来なので、この返しには渡さずUI言語へ縮退する。
-              messages: [{ role: 'system', content: withLangNote(p.system_prompt + '\n\n' + MALICE_REPLY.output_rules, classification.reply_language.code === 'other' ? languageNote({ code: replyCode }) : langNote) },
-                { role: 'user', content: MALICE_REPLY.directions[classified.malice] }] });
-          } catch (err) {
-            if (emitted || stop.signal.aborted) throw err;
-            send('integrated', { delta: MALICE_REPLY.fallback[replyCode === 'ja' ? 'ja' : 'en'] });
-          }
+          await replyToMalice({ env: upstream, cards, classified, uiLanguage, theme, signal: stop.signal, send, log });
           if (stop.signal.aborted) throw searchFailure('cancelled');
           send('closed', { reason: 'malice' });
           send('done', { request_id: requestId });
