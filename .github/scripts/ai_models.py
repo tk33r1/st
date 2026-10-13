@@ -217,10 +217,12 @@ def smoke_openai(url, api_key, model):
     smoke_magi_discussion(url, api_key, model, 'openai', config)
     smoke_openai_debate_judge(url, api_key, model, config['judge'])
     smoke_magi_motion(url, api_key, model, config['magi'])
+    # 議題化が別の会社のとき、その答え直し（Luna・推論なし・strictスキーマ）
+    smoke_magi_motion(url, api_key, model, config['magi'], name='motion_fallback')
     observations = smoke_openai_site_search(url, api_key, model, config)
     print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、ページ選択・討議判定/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、ページ選択・討議判定・議題化の答え直し/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
@@ -269,9 +271,9 @@ def smoke_openai_debate_judge(url, api_key, model, config):
         raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
 
 
-def smoke_magi_motion(url, api_key, model, config, provider='openai'):
-    """議題化の形式疎通。本番のスキーマ・推論・上限を使い、採否の精度は実API評価で測る。"""
-    cfg = config['motion']
+def smoke_magi_motion(url, api_key, model, config, provider='openai', name='motion'):
+    """議題化（name='motion_fallback' はその答え直し）の形式疎通。本番のスキーマ・推論・上限を使い、採否の精度は実API評価で測る。"""
+    cfg = config[name]
     if cfg['model']['provider'] != provider:
         return
     response = post_json(url, api_key, {**cfg['body'], 'model': model})
@@ -281,7 +283,7 @@ def smoke_magi_motion(url, api_key, model, config, provider='openai'):
     motion = value['motion'].strip()
     if len(motion) > 120 or (not motion if value['votable'] else bool(motion)):
         raise RuntimeError('MAGI議題化の本文形式が不正です')
-    print('MAGI議題化schema smoke: ' + json.dumps({'votable': value['votable'], 'motion_chars': len(motion)}))
+    print(f'MAGI議題化schema smoke ({name}): ' + json.dumps({'votable': value['votable'], 'motion_chars': len(motion)}))
 
 
 def smoke_openai_site_search(url, api_key, model, config):

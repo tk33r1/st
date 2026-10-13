@@ -172,10 +172,10 @@ class MagiSmokeTest(unittest.TestCase):
                         ai_models.validate_chat_stream(raw)
 
     def test_magi_schema_smoke_uses_production_request_body(self):
-        for provider, name in [('anthropic', 'motion')]:
+        for provider, name in [('anthropic', 'motion'), ('openai', 'motion_fallback')]:
             config = copy.deepcopy(self.config['magi'])
             sent = []
-            value = {'motion': 'Go for ramen tonight', 'votable': True} if name == 'motion' else {'votes': [{'codename': 'CASPER-3', 'vote': 'reject'}]}
+            value = {'motion': 'Go for ramen tonight', 'votable': True}
             config[name]['body']['max_tokens' if provider == 'anthropic' else 'max_completion_tokens'] = 777
             def post(url, key, body):
                 sent.append(body)
@@ -183,14 +183,21 @@ class MagiSmokeTest(unittest.TestCase):
                     return {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': 'end_turn'}
                 return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(value)}}]}
             with patch.object(ai_models, 'post_json', side_effect=post):
-                ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', config, provider=provider)
+                ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', config, provider=provider, name=name)
             self.assertEqual(sent, [{**config[name]['body'], 'model': 'candidate-for-test'}])
             if provider == 'anthropic':
-                self.assertEqual(sent[0]['output_config']['format']['schema'], config[name]['format']['json_schema']['schema'])
+                self.assertEqual(sent[0]['output_config']['format']['schema'], config['motion']['format']['json_schema']['schema'])
                 self.assertNotIn('temperature', sent[0])
             else:
-                self.assertEqual(sent[0]['response_format'], config[name]['format'])
-                self.assertIn(config[name]['prompt'], sent[0]['messages'][0]['content'])
+                # 答え直しは議題化と同じスキーマ・指示を、元の役割の上限・推論なしで送る
+                self.assertEqual(sent[0]['response_format'], config['motion']['format'])
+                self.assertIn(config['motion']['prompt'], sent[0]['messages'][0]['content'])
+                self.assertEqual(sent[0]['reasoning_effort'], 'none')
+            # 呼び先の会社が違う設定では何も送らない
+            sent.clear()
+            with patch.object(ai_models, 'post_json', side_effect=post):
+                ai_models.smoke_magi_motion('mock', 'private', 'candidate-for-test', config, provider='deepseek', name=name)
+            self.assertEqual(sent, [])
 
     def test_anthropic_stream_requires_text_and_normal_end(self):
         for text, reason, done in [('answer', 'end_turn', True), ('', 'end_turn', True), ('answer', 'max_tokens', True), ('answer', 'end_turn', False), ('', 'refusal', True)]:

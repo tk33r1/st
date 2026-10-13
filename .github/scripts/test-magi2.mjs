@@ -3446,6 +3446,8 @@ test('説明の文字描画は日英・両画面で一致し、機能の印は�
     ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'<strong>文字</strong>'},{text:'all',requires:['classification_state','site_pages']},{text:'no',requires:['fact_mode']},{text:'no',requires:['site_pages','unknown']},{text:'no',requires:'site_pages'}]}});
     assert.deepEqual(children.map(c=>c.textContent),['<strong>文字</strong>','all']);
     for(const data of [null,{}, {privacy:{[lang]:[]}}]) {ctx.renderAgentPrivacy(list,lang,data);assert.equal(children.length,1);assert.ok(!/OpenAI|Google|DeepSeek|Gemini|TypeSafe/.test(children[0].textContent));}
+    // 取得中は失敗の案内を出さない
+    ctx.renderAgentPrivacy(list,lang,undefined);assert.deepEqual(children.map(c=>c.textContent),[lang==='ja'?'読み込み中…':'Loading…']);
     list.isConnected=false;ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'late'}]}});assert.notEqual(children[0].textContent,'late');
   }
 });
@@ -3546,6 +3548,9 @@ test('Anthropic：system・同役の結合・先頭assistantの除去・画像�
   assert.deepEqual(plain.thinking,{type:'adaptive'}); assert.equal(plain.output_config.effort,'medium');
   const off=JSON.parse(JSON.stringify(w.ctx.requestBody(w.ctx.defaults.models.persona['BALTHASAR-2'],{messages:[{role:'user',content:'x'}]})));
   assert.deepEqual(off.thinking,{type:'disabled'}); assert.equal(off.output_config.effort,'low');
+  // 入口が通すgifは送り、空白だけのtextは落とす
+  const gif=JSON.parse(JSON.stringify(w.ctx.requestBody(cfg,{messages:[{role:'user',content:[{type:'image_url',image_url:{url:'data:image/gif;base64,YQ=='}},{type:'text',text:' '}]}]})));
+  assert.deepEqual(gif.messages,[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/gif',data:'YQ=='}}]}]);
   assert.equal(plain.output_config.format.schema.properties.items.maxItems,undefined);
   for(const name of ['temperature','top_p','top_k','opinions']) assert.ok(!JSON.stringify(body).includes(name));
 });
@@ -3614,6 +3619,13 @@ test('統合の答え直し：本文後の失敗・両社失敗・利用者の�
     await assert.rejects(w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,send:(_,v)=>emitted.push(v.delta),log(){}}));
     assert.equal(calls,partial?1:2); assert.deepEqual(emitted,partial?['partial']:[]);
   }
+  // 本文を流さない404の③は、途中まで出た本文を見せていないので答え直す
+  {
+    let calls=0;
+    const w=nativeWorker(undefined,()=>{calls++;const dark=(theme==='dark')===(calls===1);return new Response(calls===1 ? (dark?anthropicCompletion('partial','max_tokens'):completion('partial','length')) : (dark?anthropicCompletion('fallback'):completion('fallback')))});
+    const answer=await w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,send:vm.runInContext('discardEvents',w.ctx),log(){}});
+    assert.equal(answer,'fallback'); assert.equal(calls,2);
+  }
   let calls=0; const ac=new AbortController();
   const w=nativeWorker(undefined,(_,opts)=>{calls++;return new Response(new ReadableStream({start(){ac.abort()},cancel(){}}))});
   await assert.rejects(w.ctx.synthesize({env:w.env,messages:[{role:'user',content:'input'}],theme,signal:ac.signal,send(){},log(){}}));
@@ -3637,7 +3649,7 @@ test('統合の答え直し：本文なし30秒で止め、次の60秒の期限�
  }
 });
 
-test('補助の答え直し：HTTPのみ・同じ期限・一回・解析失敗と停止では呼び直さない',async()=>{
+test('補助の答え直し：HTTPと応答前の失敗・同じ期限・一回・解析失敗と停止では呼び直さない',async()=>{
  const calls=[]; let status=503;
  const w=nativeWorker(undefined,(_,opts)=>{calls.push(opts);return calls.length%2 ? new Response('failure',{status}) : searchReply({motion:'test',votable:true})});
  const cfg={...w.ctx.defaults.models.synthesizer_dark,reasoning_effort:'none',max_tokens:400};
@@ -3647,6 +3659,14 @@ test('補助の答え直し：HTTPのみ・同じ期限・一回・解析失敗�
  const b=JSON.parse(calls[1].body); assert.equal(b.reasoning_effort,'none');assert.equal(b.max_completion_tokens,400);
  status=200; await assert.rejects(w.ctx.callAuxModel(opts,()=>{},'motion'),SyntaxError); assert.equal(calls.length,3);
  const ac=new AbortController(); ac.abort(); status=503; await w.ctx.callAuxModel({...opts,signal:ac.signal},()=>{},'motion'); assert.equal(calls.length,4);
+ // 鍵の未設定・通信の失敗は応答の前の失敗なので、Lunaで一度呼び直す
+ const logs=[], sent=[];
+ const n=nativeWorker(undefined,(url,o)=>{sent.push({url,o});if(url.includes('api.anthropic.com'))throw new TypeError('fetch failed');return searchReply({motion:'test',votable:true});});
+ const res=await n.ctx.callAuxModel({...opts,env:{...n.env,MAGI_ANTHROPIC_API_KEY:''}},(...a)=>logs.push(a),'motion');
+ assert.equal(res.ok,true); assert.equal(sent.length,1); assert.match(sent[0].url,/openai/); assert.equal(JSON.parse(sent[0].o.body).max_completion_tokens,400);
+ assert.deepEqual(logs.at(-1),['fallback','motion','anthropic','missing_api_key']);
+ sent.length=0; assert.equal((await n.ctx.callAuxModel({...opts,env:n.env},()=>{},'motion')).ok,true);
+ assert.equal(sent.length,2); assert.match(sent[1].url,/openai/); assert.equal(sent[1].o.signal,signal);
 });
 
 test('Anthropicの通知：課金400/429を拾い、retry-after付きの回数制限は除く',()=>{

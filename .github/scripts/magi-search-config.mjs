@@ -27,12 +27,16 @@ const start = worker.indexOf('function requestBody('), end = worker.indexOf('\na
 if (start < 0 || end < 0) throw new Error('requestBody block not found');
 vm.runInContext(worker.slice(start, end), ctx);
 vm.runInContext(worker.match(/^const withLangNote = .*$/m)[0], ctx);
+// 議題化の答え直し（callAuxModel）は同じ中身を aux_fallback へ、上限は元の役割の値で送る。
 vm.runInContext(`{
   const cfg = config.magi.motion;
-  cfg.body = requestBody(cfg.model, {stream: false, response_format: cfg.format, messages: [
+  const messages = [
     {role: 'system', content: withLangNote(cfg.prompt, languageNote({code: 'en'}))},
     {role: 'user', content: JSON.stringify({latest: 'Should I go for ramen tonight?', has_image: false, reference: []})}
-  ]});
+  ];
+  cfg.body = requestBody(cfg.model, {stream: false, response_format: cfg.format, messages});
+  const fallback = {...DEFAULTS.models.aux_fallback, max_tokens: cfg.model.max_tokens};
+  config.magi.motion_fallback = {model: fallback, body: requestBody(fallback, {stream: false, response_format: cfg.format, messages})};
 }`, ctx);
 ctx.smokeIndex = JSON.parse(read('data/site-search.json'));
 await vm.runInContext(`(async function () {

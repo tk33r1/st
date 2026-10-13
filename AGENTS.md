@@ -164,7 +164,9 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     リポジトリ Secrets に `CLOUDFLARE_API_TOKEN`（テンプレート「Edit Cloudflare Workers」で作り、ゾーン tk.st の
     Workers Routes の編集権限を含める）と `CLOUDFLARE_ACCOUNT_ID` を置く。`dj-request` の DB 更新には対象アカウントの
     `Account > D1 > Edit` も追加する（上記テンプレートには含まれない）。DB 更新後、リポジトリ Secret `TYPESAFE_API_KEY` が
-    あれば Worker へ同期し、それ以外の既存 secret は Cloudflare 側のまま使う。
+    あれば Worker へ同期する。`magi2` は出すたびに、リポジトリ Secret `ANTHROPIC_API_KEY` を Worker の `MAGI_ANTHROPIC_API_KEY` へ
+    同期する（未設定ならデプロイを止める）。Anthropic のキーを入れ替えるときは、Cloudflare 側だけでなくリポジトリ Secret も替える
+    （Cloudflare 側だけ替えると、次のデプロイで古いキーに戻る）。それ以外の既存 secret は Cloudflare 側のまま使う。
     Worker を足したら `options` にも足す。
   - `site-rank-browser.yml`（手動のみ）: 404 のサイト内検索の②の応答時間を、ランナーのブラウザから本番の Worker へ送って測る
     （`eval-site-rank.mjs --probe` → `--browser`。生の記録は成果物。`assets/site-search-design.md` 10.4）。

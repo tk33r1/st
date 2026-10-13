@@ -188,7 +188,7 @@ export const DEFAULTS = {
     // max_tokens は推論トークンを含む。足りないと JSON が途中で切れて「答える」扱いになる
     judge: { ...modelConfig('openai', 'luna'), reasoning_effort: 'low', max_tokens: 2048 },
     motion: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 400 },
-    // 補助の役割（タイトル・予測・議題化）の答え直し先。元の役割が別の会社のとき、HTTP失敗に限って一度だけ呼ぶ
+    // 補助の役割（タイトル・予測・議題化）の答え直し先。元の役割が別の会社のとき、HTTPの失敗と応答の前の失敗（鍵の未設定・通信の失敗）に限って一度だけ呼ぶ
     // （→ src/index.js の callAuxModel）。移す前と同じLuna・推論なしで、max_tokens は元の役割の値を使う。
     aux_fallback: { ...modelConfig('openai', 'luna'), reasoning_effort: 'none' },
   },

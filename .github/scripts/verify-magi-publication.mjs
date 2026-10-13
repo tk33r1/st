@@ -69,7 +69,7 @@ async function search() {
     const response=c.page.waitForResponse(r=>r.url().includes('/magi2/site-search?site_debate=1'));
     await c.page.locator('#ai-run').click();const res=await response;assert.equal(res.status(),200);const data=await res.json();assert.ok(['results','no_results'].includes(data.status));
     await c.page.locator('#ai-result').waitFor({state:'visible',timeout:165000});await c.page.locator('#ai-info-open').click();
-    const explanation=await c.page.locator('#ai-info-dialog').innerText();assert.match(explanation,/OpenAI/);assert.match(explanation,/DeepSeek/);assert.match(explanation,/Google/);assert.deepEqual(c.errors,[]);
+    const explanation=await c.page.locator('#ai-info-dialog').innerText();assert.match(explanation,/OpenAI/);assert.match(explanation,/DeepSeek/);assert.match(explanation,/Anthropic/);assert.doesNotMatch(explanation,/Gemini/);assert.deepEqual(c.errors,[]);
     report.cases.push({name:'404-third-search',status:data.status,count:data.results.length,explanation:true});console.log('404③・説明 OK');
   } finally {await c.ctx.close();}
 }

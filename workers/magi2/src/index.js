@@ -259,13 +259,15 @@ function requestBody(cfg, { messages, stream, temperature, response_format }) {
         if (role === 'system') { system.push(content); continue; }
         if (!['user', 'assistant'].includes(role)) throw stageError('internal', 'invalid_role', '上流の役割が不正です', { retryable: false });
         if (!turns.length && role === 'assistant') continue;
-        const parts = typeof content === 'string' ? [{ type: 'text', text: content }] : content.map(part => {
-          if (part.type === 'text') return { type: 'text', text: part.text };
+        // Anthropic は空白だけの text を受け付けないので落とす（入口は画像に空の text が付くのを許している）
+        const parts = (typeof content === 'string' ? [{ type: 'text', text: content }] : content).flatMap(part => {
+          if (part.type === 'text') return part.text.trim() ? [{ type: 'text', text: part.text }] : [];
           // 本体は入口（DATA_IMAGE_RE）で検査済みなので、数MBの base64 は走査し直さず形式だけ見る
-          const url = part.image_url?.url || '', image = /^data:(image\/(?:png|jpeg|webp));base64,(?=.)/.exec(url);
+          const url = part.image_url?.url || '', image = /^data:(image\/(?:png|jpeg|webp|gif));base64,(?=.)/.exec(url);
           if (!image) throw stageError('internal', 'invalid_image', '上流の画像が不正です', { retryable: false });
-          return { type: 'image', source: { type: 'base64', media_type: image[1], data: url.slice(image[0].length) } };
+          return [{ type: 'image', source: { type: 'base64', media_type: image[1], data: url.slice(image[0].length) } }];
         });
+        if (!parts.length) continue;
         if (turns.at(-1)?.role === role) turns.at(-1).content.push(...parts);
         else turns.push({ role, content: parts });
       }
@@ -490,7 +492,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       const result = await selectSitePages({ query, locale: body.locale, pages, cards, chat: true, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
       const answer = await runDiscussion({ upstream, cards, plainMessages: [{ role: 'user', content: query }],
-        langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: () => {}, log: stage => log('site_search', stage) });
+        langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: discardEvents, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) {
@@ -888,7 +890,11 @@ async function readSynthesis(body, send, provider, signal) {
   } finally { signal?.removeEventListener('abort', stop); await reader.cancel().catch(() => {}); reader.releaseLock(); }
 }
 
+// 本文を利用者へ流さない呼び出し（404の③は最後に JSON でまとめて返す）の送り口。
+const discardEvents = () => {};
+
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
+// 送り口が discardEvents なら何も見せていないので、本文の途中で失敗しても答え直す。
 async function synthesize({ env, messages, theme, signal, send, log }) {
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const [primary, alternate] = theme === 'dark' ? [dark, light] : [light, dark];
@@ -905,7 +911,7 @@ async function synthesize({ env, messages, theme, signal, send, log }) {
         let first = setTimeout(() => { noText = true; ac.abort(); }, DEFAULTS.timeouts.synthesis_first_text_ms);
         const push = (event, value) => {
           if (ac.signal.aborted) return;
-          if (event === 'integrated' && value.delta) { emitted = true; clearTimeout(first); first = null; }
+          if (event === 'integrated' && value.delta) { emitted = send !== discardEvents; clearTimeout(first); first = null; }
           send(event, value);
         };
         try {
@@ -913,7 +919,8 @@ async function synthesize({ env, messages, theme, signal, send, log }) {
           const res = await callModel({ env, cfg, stream: true, signal: ac.signal, messages });
           if (ac.signal.aborted) { await res.body?.cancel().catch(() => {}); throw new Error('cancelled'); }
           if (!res.ok) {
-            ac.abort(); res.body?.cancel().catch(() => {});
+            // 読まない本文は中止より先に閉じる（中止の後だと閉じる処理の失敗が誰にも拾われない）
+            res.body?.cancel().catch(() => {}); ac.abort();
             throw stageError('synthesizer_call', `upstream_http_${res.status}`, `統合人格の呼び出しが失敗しました (HTTP ${res.status})`, { retryable: res.status >= 500 });
           }
           return await readSynthesis(res.body, push, cfg.provider, ac.signal);
@@ -929,8 +936,9 @@ async function synthesize({ env, messages, theme, signal, send, log }) {
   }
 }
 
-// 非必須の役割はHTTP失敗のときだけ、別の会社の答え直し先（DEFAULTS.models.aux_fallback）で一度呼び直す。
-// 元のsignalの期限は延ばさない。
+// 非必須の役割は、HTTPの失敗と、応答の前の失敗（鍵の未設定・通信の失敗など）のとき、別の会社の答え直し先
+// （DEFAULTS.models.aux_fallback）で一度呼び直す。利用者の停止・期限では呼び直さず、元のsignalの期限も延ばさない。
+// 200で届いた応答（拒否・途中切れ・本文の解析の失敗）は呼び出し側の判定に任せる。
 async function callAuxModel(options, log, purpose) {
   const fallback = DEFAULTS.models.aux_fallback;
   if (options.cfg.provider === fallback.provider) return callModel(options);
@@ -939,12 +947,19 @@ async function callAuxModel(options, log, purpose) {
   const ac = new AbortController(), cancel = () => ac.abort();
   if (options.signal?.aborted) ac.abort();
   else options.signal?.addEventListener('abort', cancel, { once: true });
-  let res;
-  try { res = await callModel({ ...options, signal: ac.signal }); }
-  finally { options.signal?.removeEventListener('abort', cancel); ac.abort(); }
-  if (res.ok || options.signal?.aborted) return res;
-  res.body?.cancel().catch(() => {});
-  log('fallback', purpose, options.cfg.provider, `http_${res.status}`);
+  let failure;
+  try {
+    const res = await callModel({ ...options, signal: ac.signal });
+    if (res.ok || options.signal?.aborted) return res;
+    // 読まない本文は中止より先に閉じる
+    res.body?.cancel().catch(() => {});
+    failure = `http_${res.status}`;
+  } catch (error) {
+    // 解析の失敗は200の本文が壊れていたもの（callModel が Anthropic の応答を読み替えるとき）
+    if (options.signal?.aborted || error.name === 'SyntaxError') throw error;
+    failure = error.envelope?.code || error.name || 'failed';
+  } finally { options.signal?.removeEventListener('abort', cancel); ac.abort(); }
+  log('fallback', purpose, options.cfg.provider, failure);
   return callModel({ ...options, cfg: { ...fallback, max_tokens: options.cfg.max_tokens } });
 }
 

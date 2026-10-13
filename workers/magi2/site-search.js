@@ -274,7 +274,8 @@ export async function selectSitePages({ query, locale, pages, purpose = 'request
     const res = await call({ cfg: { ...SITE_SEARCH.model, max_tokens: SITE_SEARCH.chat_max_tokens },
       messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify({ query, locale, ...(current ? { current_page: current } : {}) }) }], stream: false,
       temperature: SITE_SEARCH.temperature, response_format: SITE_SEARCH.formats.chat, signal: s });
-    if (!res.ok) throw searchFailure('upstream');
+    // 読まない本文は期限の中止より先に閉じる（中止の後だと閉じる処理の失敗が誰にも拾われない）
+    if (!res.ok) { res.body?.cancel().catch(() => {}); throw searchFailure('upstream'); }
     const body = await res.json();
     const choice = body.choices?.[0];
     if (choice?.finish_reason !== 'stop' || choice.message?.refusal || typeof choice?.message?.content !== 'string' || !choice.message.content.trim()) throw searchFailure('invalid_output');

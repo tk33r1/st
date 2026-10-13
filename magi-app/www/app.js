@@ -1237,6 +1237,7 @@ function deleteSavedSession(id) {
 }
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
+// data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
 var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages'];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
@@ -1249,7 +1250,7 @@ function renderAgentPrivacy(list, lang, data) {
       || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
   }) : [];
   list.replaceChildren();
-  (rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
+  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
     var li = document.createElement('li'); li.textContent = row.text; list.appendChild(li);
   });
 }
@@ -1259,7 +1260,7 @@ function showInfoPanel() {
   var panel = makeAgentPanel('agent-info-panel', 'System & Privacy', '<ul class="agent-privacy-list"></ul>');
   if (!panel) return;
   var list = panel.querySelector('.agent-privacy-list');
-  renderAgentPrivacy(list, 'en', null);
+  renderAgentPrivacy(list, 'en', undefined);
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
 }
 
