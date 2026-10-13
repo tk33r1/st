@@ -90,7 +90,7 @@ DJは `entry: dj-request` によりmusic/no/no固定で、初回は言語とmali
 node .github/scripts/probe-jev-classify.mjs
 ```
 
-本番と同じ問いで初回4問・継続3問を各20回、DJ・旧画面の言語1問も確認する。キーは環境変数か非追跡の `.dev.vars` から読み、本文やキーを出力しない。
+本番と同じ問いで初回5問・継続4問を各20回、DJの言語＋maliceの2問・旧画面の言語1問も確認する。キーは環境変数か非追跡の `.dev.vars` から読み、本文やキーを出力しない。
 
 ## 対話改修A1（4.8）
 
@@ -100,7 +100,7 @@ classification → integrated → closed（reason: malice）→ done。closedは
 
 統合人格は一人称「私」、語尾「ぜ」を使わない。短い返しは本人のカードの後に出力ルールを付け、会話を続ける誘いや後で話す約束を付け足さずに終える。
 
-実測前に、検証計画§0.1に従って本人が入力の文面・期待値を確定する。確認済み調整用は `.github/scripts/fixtures/magi-dialogue-a1-tune.json`、別途確認済みの判定用は `magi-dialogue-a1-final.json`（同じディレクトリ）、測定は `.github/scripts/eval-magi-malice.mjs`。調整用で値を確定した後、判定用の分類単体は各回誤検知0件・検出27件。口調修正後、両テーマの実Worker各80件は無害50件の誤検知0件・対象30件の検出28件で、全件正常完了した。返答完了の中央値はライト1075ms、ダーク1194ms。返答の修正前後で分類の契約hashが不変で、問い・閾値を変えていない。2026-10-14、本人が「修正後の両テーマ56件を採用する」と承認し、確認用本文と測定元JSONのhash・テーマ別28件のIDを記録した。実測は[対話改修Jev評価](対話改修-jev-evaluation.md)、出荷前に残る項目は[対話改修評価](対話改修評価.md)。
+実測前に、検証計画§0.1に従って本人が入力の文面・期待値を確定する。確認済み調整用は `.github/scripts/fixtures/magi-dialogue-a1-tune.json`、別途確認済みの判定用は `magi-dialogue-a1-final.json`（同じディレクトリ）、測定は `.github/scripts/eval-magi-malice.mjs`。調整用で値を確定した後、判定用の分類単体は各回誤検知0件・検出27件。口調修正後、両テーマの実Worker各80件は無害50件の誤検知0件・対象30件の検出28件で、全件正常完了した。返答完了の中央値はライト1075ms、ダーク1194ms。返答の修正前後で分類の契約hashが不変で、問い・閾値を変えていない。2026-10-14、本人が「修正後の両テーマ56件を採用する」と承認し、確認用本文と測定元JSONのhash・テーマ別28件のIDを記録した。実測は[対話改修Jev評価](対話改修-jev-evaluation.md)、公開結果と未確認範囲は[対話改修評価](対話改修評価.md)。
 
 ```sh
 node .github/scripts/eval-magi-malice.mjs --inspect
