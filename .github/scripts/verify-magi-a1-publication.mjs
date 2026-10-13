@@ -9,7 +9,8 @@ const workerOnly=process.argv.includes('--worker-only');
 const out=resolve('workers/.wrangler/magi2-dialogue-a1/production-a1-'+(workerOnly?'worker':'pages')+'.json');
 const fixture=JSON.parse(readFileSync('.github/scripts/fixtures/magi-dialogue-a1-final.json','utf8'));
 const approved=fixture.cases.find(c=>c.id==='final-identity-02').text;
-const old=spawnSync('git',['show','v4.6:magi-app/www/app.js'],{encoding:'utf8',maxBuffer:20*1024*1024});assert.equal(old.status,0);
+const old=workerOnly?spawnSync('git',['show','v4.6:magi-app/www/app.js'],{encoding:'utf8',maxBuffer:20*1024*1024}):null;
+if(workerOnly)assert.equal(old.status,0,'旧4.6互換確認にはv4.6タグが必要');
 const report={started:new Date().toISOString(),pass:false,cases:[],limitations:'Chromium。実SSEを受信後まとめて画面へ渡す。旧APKのWebコードを使う互換確認で、Android実機の代わりではない。DJ受付はブラウザ内だけの合成イベント。'};
 const browser=await chromium.launch({headless:true});
 try {
