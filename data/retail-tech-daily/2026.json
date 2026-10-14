@@ -1,5 +1,161 @@
 [
   {
+    "date": "20261015",
+    "title": "2026年10月15日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "無人店舗の決済は、クレジットカードのタッチだけで入店・購入できる方式へと広がり始めており、専用アプリや会員登録を前提としない利用体験が現実味を帯びてきた。 リテールメディアは、店内サイネージの料金改定や新媒体の追加、広告会社の媒体選定への組み込みなど、広告主の出稿判断に入る段階へ進んでいる。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "無人店舗の決済は、クレジットカードのタッチだけで入店・購入できる方式へと広がり始めており、専用アプリや会員登録を前提としない利用体験が現実味を帯びてきた。",
+      "リテールメディアは、店内サイネージの料金改定や新媒体の追加、広告会社の媒体選定への組み込みなど、広告主の出稿判断に入る段階へ進んでいる。",
+      "海外では小売大手が店舗従業員向けアプリの刷新を進めており、大規模投資を伴わない店舗オペレーション改善が、店舗DXの現実的な焦点になっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "クレカをタッチして入店、商品を取るだけで自動決済　無人店舗に11月から導入",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-02",
+        "summary": "無人店舗に11月から導入される新たな決済の仕組みを伝える記事。利用者はクレジットカードをタッチして入店し、売り場で商品を手に取るだけで購入が自動決済される。レジ待ちや会計作業をなくし、無人店舗の利用体験を大きく変える動きとして注目される。店舗の運営主体や導入店舗数などの詳細は、候補の情報からは確認できない。",
+        "why_it_matters": "入店と決済をクレジットカードのタッチに統一すると、専用アプリや会員登録の障壁が下がり、初回利用のハードルを抑えられる。小売企業にとっては、少人数運営での省人化と売上機会の拡大を両立しやすくなる。一方で、商品の取り忘れや不正利用への対策など、無人運営ならではの管理設計が導入の成否を左右する。",
+        "tags": [
+          "無人決済",
+          "非接触決済",
+          "省人化"
+        ],
+        "search_terms": [
+          "無人店舗 自動決済",
+          "unmanned store automatic checkout",
+          "contactless card entry retail",
+          "cashless unmanned shop Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5OTHNzWDZ5Nm5KTkF3Zm96RUNfZUJNVGlYSTV5NW80bnlOR3BlVnZyS1NHQjd5ZVA3dVA2UW1la2ZpMDN3RjJXSC1fSTlyMG0wc1c5eTVfZllCYlJvRDc0?oc=5",
+        "source_pub_ts": 1791957777
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "JR品川駅構内に生花や鉄道グッズ販売の無人決済店舗が期間限定オープン",
+        "original_title": "",
+        "source": "ペイメントナビ",
+        "source_id": "JP-04",
+        "summary": "JR品川駅構内に、生花や鉄道グッズを扱う無人決済店舗が期間限定でオープンしたと報じられた。TTG、日比谷花壇、JR東日本商事が連携した取り組みである。駅構内という人通りの多い場所で、無人決済を活用した小型店舗を試す形となり、来街者の購買行動を確かめる機会になる。",
+        "why_it_matters": "駅の通過客を対象にした無人店舗は、省人化と長時間営業に近い販売機会を両立できる業態として期待される。期間限定という形は、需要の反応や商品構成を低リスクで検証する手法として有効だ。鉄道会社と花店、グッズ販売の組み合わせは、駅ナカ空間の収益化を広げる参考事例になる。",
+        "tags": [
+          "無人決済",
+          "駅ナカ",
+          "期間限定店舗"
+        ],
+        "search_terms": [
+          "駅構内 無人店舗",
+          "unmanned pop-up store station",
+          "JR品川 無人決済",
+          "station retail unmanned payment"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1KS2xOV28tRTMzVFN3LUVobWFVZXQ2bXBTbDJHRzlneGZLNVZxUV9OVEJhX0FLeHJ2Q0VGa21OZTlUQnV5YzY1cTZER2dBNDlZMjdiQm0yR2pyVGc?oc=5",
+        "source_pub_ts": 1791937200
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "博報堂ら、メディアプラニングソリューションの対象媒体にリテールメディアを追加　主要7社と連携",
+        "original_title": "",
+        "source": "MarkeZine（マーケジン）",
+        "source_id": "JP-05",
+        "summary": "博報堂などが、メディアプラニングソリューションの対象媒体にリテールメディアを追加したと発表した。主要7社と連携し、広告主が小売店舗やECの媒体を計画段階から組み込めるようにする狙いである。広告会社の提案業務の中に、リテールメディアが標準的な選択肢として入ってくる流れを示す。",
+        "why_it_matters": "メディアプランニングの段階でリテールメディアを比較対象に加えられると、広告主はテレビやデジタルと同じ土俵で予算配分を検討できる。購買データに基づく効果測定が組み合わさることで、広告の説明責任も高まる。小売側は、媒体としての可視化と販売の標準化を進める好機になる。",
+        "tags": [
+          "リテールメディア",
+          "メディアプランニング",
+          "広告会社連携"
+        ],
+        "search_terms": [
+          "リテールメディア 媒体追加",
+          "retail media media planning",
+          "博報堂 メディアプラン",
+          "retail media ad buying Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE41RDA0NThjbXFkXzV6bkR4dnFKdkNKMzJrcERKbklFTFd6UUNZZkxMWTZRUTFnRlhFQlNhRjRzalFjUFM5QmlvX1VzcjN0VXM?oc=5",
+        "source_pub_ts": 1791930166
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "スイッチメディア、広告分析基盤でファミマTVに対応　リテールメディアへ拡張",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-06",
+        "summary": "スイッチメディアが、広告分析の基盤でファミリーマートの店内映像メディア「ファミマTV」に対応したと報じられた。小売店舗のサイネージを、広告の効果を分析できる仕組みに組み込み、リテールメディアとして拡張する取り組みである。分析基盤で扱えるようになることで、広告主が出稿を判断するための材料が増える可能性がある。",
+        "why_it_matters": "店内サイネージの広告を分析基盤で扱えるようにすると、露出や反応を数値で示す根拠が生まれ、広告主の継続出稿につながりやすい。小売側にとっても、媒体価値を外部に説明する力が高まる。分析機能の標準化は、複数の小売チェーンへの横展開を検討する上で重要な一歩になる。",
+        "tags": [
+          "リテールメディア",
+          "店内サイネージ",
+          "広告分析"
+        ],
+        "search_terms": [
+          "ファミマTV 広告分析",
+          "in-store signage ad analytics",
+          "スイッチメディア リテールメディア",
+          "retail media measurement Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBTUjlkYVE5WWZXWkVHZVhUc1dvZXVUcmZORU9WdnA1eU50aDBfTjBzelRlR1d2b0FtWENjUG9YMEJzMndXeWc?oc=5",
+        "source_pub_ts": 1791929250
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ファミリーマート店内インストアリテールメディア、ファミマTVの料金改定と新媒体「FAMIMA CAFÉ液晶広告」を提供開始",
+        "original_title": "",
+        "source": "gate-one.co.jp",
+        "source_id": "JP-03",
+        "summary": "ファミリーマートの店内インストアリテールメディアについて、媒体資料が更新された。日本最大級のリテールサイネージネットワーク「ファミマTV」の料金改定と、新媒体「FAMIMA CAFÉ液晶広告」の提供開始が盛り込まれた。店内の広告枠の選択肢が広がり、出稿の検討条件が変わる。",
+        "why_it_matters": "料金改定と新媒体の追加は、店内広告の価格と枠の両面で広告主の選択肢を再設計する動きである。カフェ併設の売り場に液晶広告を置くことで、飲食をともなう滞在時間に合わせた訴求が可能になる。小売の店内メディアを収益源として育てる戦略が、より明確になったといえる。",
+        "tags": [
+          "リテールメディア",
+          "店内サイネージ",
+          "料金改定"
+        ],
+        "search_terms": [
+          "ファミマTV 料金改定",
+          "in-store retail media rate change",
+          "FAMIMA CAFÉ 液晶広告",
+          "convenience store digital signage ads"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9TelAtQ2o4amZNeFNTZUxSRTVfZ09ROWZDdjNqN2VSdkQ2dDYtUEs2UmVBSUlqV1RpTDJxNm9PcHBVQjBONWUxWGZQVkJqMzZKUnlR?oc=5",
+        "source_pub_ts": 1791954170
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Target、店舗の効率化へ従業員アプリを刷新　現場業務の支援に期待",
+        "original_title": "Target wants more efficient stores. An upgraded employee app could help.",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "米小売大手Targetが、店舗運営の効率を高めるため、従業員向けアプリの刷新に取り組む方向を示したと報じられた。店舗スタッフが業務を進める際の情報共有や作業支援を強化し、店舗オペレーションの改善につなげる狙いとみられる。アップグレードが効率化に役立つ可能性があると伝えられている。候補情報の範囲では、具体的な機能や導入時期は確認できない。",
+        "why_it_matters": "従業員アプリの改善は、店舗の省人化や作業効率化を、大規模な設備投資を伴わずに進める現実的な手段である。店舗スタッフの業務を一つの画面にまとめることで、教育コストや作業のばらつきも抑えられる。国内小売にとっても、店舗DXの優先順位を検討する際の参考になる。",
+        "tags": [
+          "従業員アプリ",
+          "店舗効率化",
+          "海外小売"
+        ],
+        "search_terms": [
+          "従業員向けアプリ 店舗効率化",
+          "store employee app upgrade",
+          "Target store operations technology",
+          "retail frontline workforce app"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQaml5Vld0aElFOG1sM3ZRSGVLc0o5bUxBY2hKUTFLaVRBblBldmtMaHJTc2M4cndKd2ZhQmlmT2VoUTJxQ200REdfOW1EajViYVZZQjZNOF9xbWF2NFZ2T3poRFQxZDYtRktRZGdPR2N0eEF5d2RDVDFJdFM1YXlwMEktcWtKS3RXeW9OSzg2TQ?oc=5",
+        "source_pub_ts": 1791995750
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261014",
     "title": "2026年10月14日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "AI需要予測が在庫管理や人員配置といった店舗運営の実務に広がり、「ゴンチャ」全店への導入やカラーズの新サービスのように実装段階の動きが具体化している ゼンショーの独自QRコード・バーコード決済スキームや、リテールメディアにおけるAIクリエイティブの活用が示すように、店舗決済とデータ活用の両面で取り組みが進んでいる",
