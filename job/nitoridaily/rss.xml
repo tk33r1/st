@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 14 Oct 2026 06:47:35 +0900</lastBuildDate>
+    <pubDate>Thu, 15 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 15 Oct 2026 05:32:11 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月15日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261015/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261015/</guid>
+      <pubDate>Thu, 15 Oct 2026 08:00:00 +0900</pubDate>
+      <description>島忠の「爆安挑戦セール」第10弾が10月14日に開始。新米や日用品、秋冬商品など22アイテムを特別価格で提供し、物価高への対応を前面に出している。 「ニトリ 戸田駅前T-FRONTE店」が10月16日にオープン予定。駅前立地での出店により、都市近接型の店舗網づくりが続いていることが分かる。</description>
+    </item>
     <item>
       <title>2026年10月14日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261014/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261001/</guid>
       <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリはマレーシア15店舗目の出店を発表。東南アジアで店舗網を広げ、現地の商業施設への出店を通じた顧客接点拡大を進める。 島忠の値下げ企画や家電の1対1回収が話題に。価格対応と購入後の処分支援を組み合わせ、顧客の買い替え負担を抑える動きが見られる。</description>
-    </item>
-    <item>
-      <title>2026年9月30日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260930/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260930/</guid>
-      <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
-      <description>ニトリは約350アイテムを10％引きで販売する期間限定施策を開始。冬支度需要を取り込み、季節商品の購買を促す価格戦略が焦点となる。 宅配ボックスやアニマルクッションなど、日常の不便解消と選ぶ楽しさを備えた商品が登場。生活者の具体的な使用場面に根差す商品提案が続く。</description>
     </item>
   </channel>
 </rss>
