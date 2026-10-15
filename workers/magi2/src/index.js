@@ -142,6 +142,8 @@ function normaliseMessage(m, counters) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
   }
   if (typeof m.content === 'string') {
+    // fact回答は画面で全文を保存する。送り直すときの切り詰めを画面に頼らず、ここでも上限に収める。
+    if (m.role === 'assistant' && m.mode === 'fact') m = { ...m, content: classifySlice(m.content, DEFAULTS.input.assistant_max_chars) };
     checkText(m.content, m.role === 'user' ? DEFAULTS.input.user_max_chars : DEFAULTS.input.assistant_max_chars, counters);
     if (!m.content.trim()) throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
     const opinions = m.role === 'assistant' && m.mode !== 'fact' ? normaliseDebate(m.debate) : null;
@@ -331,7 +333,8 @@ function anthropicSchema(value) {
     .map(([key, child]) => [key, anthropicSchema(child)]));
 }
 
-async function callModel({ env, messages, cfg, stream, signal, temperature, response_format }) {
+// replyLimitは非streamのAnthropicを読み替える前の本文にも上限を掛ける（{ bytes, ms }）。
+async function callModel({ env, messages, cfg, stream, signal, temperature, response_format, replyLimit = null }) {
   const provider = PROVIDERS[cfg.provider];
   const body = requestBody(cfg, { messages, stream, temperature, response_format });
   if (typeof env.evalObserve === 'function' && stream && cfg.provider !== 'anthropic') body.stream_options = { include_usage: true };
@@ -351,7 +354,10 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   // 非ストリームは既存の読み取りへ正規化し、thinkingは一度も履歴へ入れない。
   // 観測には正規化前の応答を渡すので、評価用の使用量は元の形で残る。
   if (res.ok && cfg.provider === 'anthropic' && !stream) {
-    const data = await res.json();
+    const raw = replyLimit ? await readLimited(res, replyLimit.bytes, signal, replyLimit.ms) : null;
+    // 上限付きの読み取りは中断でも途中の本文を返すので、解析の失敗より先に中断として返す。
+    if (replyLimit && signal?.aborted) throw searchFailure('cancelled');
+    const data = replyLimit ? JSON.parse(raw) : await res.json();
     const reason = anthropicStop(data.stop_reason);
     const text = (data.content || []).filter(block => block.type === 'text').map(block => block.text).join('');
     return Response.json({ choices: [{ finish_reason: reason, message: { content: reason === 'content_filter' ? '' : text } }],
@@ -1034,29 +1040,40 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
   pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
-  if (pagesPromise) pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
+  const otherPages = choice => {
+    if (!choice || !page) return choice;
+    const results = choice.results.filter(p => p.url !== page);
+    return { ...choice, results, status: choice.status === 'results' && !results.length ? 'no_results' : choice.status };
+  };
+  // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
+  const pagesWait = pagesPromise ? searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice) : null;
+  if (pagesWait && !research) pageChoice = await pagesWait;
   if (signal?.aborted) throw searchFailure('cancelled');
-  if (pageChoice && page) {
-    const results = pageChoice.results.filter(p => p.url !== page);
-    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
-  }
-  const input = factAnswerMessages({ cards, messages, langNote, theme, guide, pageChoice, siteOnly, research });
-  let answer;
-  if (research) answer = await researchAnswer({ upstream, messages: input, theme, replyLanguage, ip, signal, send, log });
-  else answer = await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+  const options = { cards, messages, langNote, theme, guide, pageChoice: otherPages(pageChoice), siteOnly };
+  const input = factAnswerMessages({ ...options, research });
+  const answer = research
+    ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, signal, send, log })
+    : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+  if (pagesWait && research) pageChoice = await pagesWait;
+  pageChoice = otherPages(pageChoice);
   if (pageChoice?.results.length && !signal?.aborted) send('pages', chatPageEvent(pageChoice));
   return answer;
 }
 
 // 日付・項目・出典の指示は実経路と週次smokeで同じ形から作る。
 function researchMessages(messages, verifiedNow) {
-  const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
-    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' }).formatToParts(verifiedNow);
-  const localPart = type => localParts.find(p => p.type === type).value;
-  const localDate = `${localPart('year')}-${localPart('month')}-${localPart('day')} (${localPart('weekday')})`;
+  const localDate = researchLocalDate(verifiedNow);
   const firstUser = messages.findIndex(m => m.role !== 'system');
   return [...messages.slice(0, firstUser),
     { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
+}
+
+// 検索と照合で、同じ「日本の現在日付」を使う。
+function researchLocalDate(verifiedNow) {
+  const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' }).formatToParts(verifiedNow);
+  const localPart = type => localParts.find(p => p.type === type).value;
+  return `${localPart('year')}-${localPart('month')}-${localPart('day')} (${localPart('weekday')})`;
 }
 
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
@@ -1127,8 +1144,11 @@ function researchSourceUrl(value) {
 
 function researchSourceBlocks(raw, html) {
   if (html) {
-    raw = raw.replace(/<(script|style|nav|header|footer|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
-    raw = raw.match(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/i)?.[2] || raw;
+    raw = raw.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
+    // 本文の区画はすべて読み、記事の見出し（公開日・更新日を置くことが多い）を残す。区画が無いページだけ周りの部品を外す。
+    const sections = [...raw.matchAll(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].map(m => m[2]).filter(t => t.trim());
+    raw = sections.length ? sections.join(' ').replace(/<nav\b[^>]*>[\s\S]*?<\/nav\s*>/gi, ' ')
+      : raw.replace(/<(nav|header|footer)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
     raw = raw.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
       .replace(/&#(x[\da-f]+|\d+);/gi, (_, n) => {
         const cp = n[0].toLowerCase() === 'x' ? parseInt(n.slice(1), 16) : +n;
@@ -1137,7 +1157,7 @@ function researchSourceBlocks(raw, html) {
   }
   const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
   const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
-  const kept = text.slice(0, boundary(Math.min(text.length, RESEARCH.verify.source_chars))), blocks = [];
+  const kept = classifySlice(text, RESEARCH.verify.source_chars), blocks = [];
   for (let at = 0; at < kept.length;) {
     const end = boundary(Math.min(kept.length, at + RESEARCH.verify.block_chars));
     blocks.push({id: blocks.length, text: kept.slice(at, end)}); at = end;
@@ -1194,9 +1214,10 @@ async function readResearchSource(item, signal) {
         }
         const type = res.headers.get('content-type') || '';
         const charset = type.match(/charset\s*=\s*["']?([^\s;"']+)/i)?.[1];
+        // 403・404なども、PDFや時間切れと同じく取得を試みた未読の出典として残し、照合で未確認にする。
         if (!res.ok || !/(?:text\/html|text\/plain|application\/json)/i.test(type)) {
           res.body?.cancel().catch(() => {});
-          return unread(res.ok);
+          return unread(true);
         }
         const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
         if (stop.aborted) throw searchFailure('cancelled');
@@ -1228,7 +1249,7 @@ function verifiedResearchResult(value, evidence, replyLanguage) {
     if (!keys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
       || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
       || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
-      || !Array.isArray(p.citations) || !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
+      || !Array.isArray(p.citations) || p.status === 'verified' && !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
     const body = p.status === 'unverified'
       ? RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en : p.text.trim();
     text += (text ? '\n\n' : '') + '- ' + p.label.trim() + ': ' + body;
@@ -1247,41 +1268,44 @@ function verifiedResearchResult(value, evidence, replyLanguage) {
   return {text, sources:{items,marks}};
 }
 
-function researchVerificationBody(cfg,messages,result,evidence,replyLanguage) {
-  const latest = messages.findLast(m => m.role === 'user')?.content;
-  const question = typeof latest === 'string' ? latest : (latest || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
-  const input = [...messages, {role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')},
-    {role:'user', content:JSON.stringify({question,draft:result.text,evidence})}];
-  return requestBody({...cfg,max_tokens:RESEARCH.verify.max_tokens}, {messages:input,stream:false,response_format:researchVerificationFormat(evidence)});
+// callModelへ渡す設定・会話・出力形式。本番と保存済み出典の評価で同じものを使う。
+// 照合にはカード・検索の指示・画像を送り直さない。前の会話は、質問が何を指すかを読むための文字だけを渡す。
+function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage) {
+  const text = content => typeof content === 'string' ? content : (content || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
+  const turns = messages.filter(m => m.role !== 'system'), latest = turns.findLastIndex(m => m.role === 'user');
+  const conversation = turns.slice(0, latest).map(m => ({role:m.role, text:text(m.content)})).filter(m => m.text.trim());
+  const input = [{role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')
+      + `\nChecked at: ${verifiedNow.toISOString()} (UTC). Current date in Japan: ${researchLocalDate(verifiedNow)} (${RESEARCH.location.timezone}).`},
+    {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence})}];
+  return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
-async function verifyResearchAnswer({upstream, messages, result, cfg, replyLanguage, signal}) {
+async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal}) {
   const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
   if (signal.aborted) throw searchFailure('cancelled');
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
-  const body = researchVerificationBody(cfg,messages,result,evidence,replyLanguage);
-  const res = await fetch(PROVIDERS[cfg.provider].endpoint, {method:'POST',headers:requestHeaders(cfg.provider,upstream[PROVIDERS[cfg.provider].key]),body:JSON.stringify(body),signal});
-  if (typeof upstream.evalObserve === 'function') upstream.evalObserve(cfg.provider,cfg.model,res.clone(),false);
+  const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
+  const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage),
+    stream:false, signal, replyLimit:limit});
   if (!res.ok) {
-    if (upstream.onUpstreamError) await upstream.onUpstreamError(cfg.provider,res.clone(),{signal});
     res.body?.cancel().catch(() => {});
     throw stageError('upstream','research_verification_http_'+res.status,'Web回答の根拠を確認できませんでした',{retryable:true});
   }
-  const raw = await readLimited(res,RESEARCH.verify.reply_bytes,signal,RESEARCH.timeout_ms);
+  const raw = await readLimited(res,limit.bytes,signal,limit.ms);
   if (signal.aborted) throw searchFailure('cancelled');
-  const data = JSON.parse(raw), reason = cfg.provider === 'anthropic' ? anthropicStop(data.stop_reason) : data.choices?.[0]?.finish_reason;
-  const content = cfg.provider === 'anthropic' ? (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('') : data.choices?.[0]?.message?.content;
-  if (reason !== 'stop' || typeof content !== 'string') throw stageError('upstream','research_verification_incomplete','Web回答の根拠を確認できませんでした',{retryable:true});
+  const choice = JSON.parse(raw).choices?.[0], content = choice?.message?.content;
+  if (choice?.finish_reason !== 'stop' || typeof content !== 'string') throw stageError('upstream','research_verification_incomplete','Web回答の根拠を確認できませんでした',{retryable:true});
   return verifiedResearchResult(JSON.parse(content),evidence,replyLanguage);
 }
 
-async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, signal, send, log }) {
+// fallbackMessagesはWebの指示を含まない事実回答の入力。Webを使えないときはこちらで答える。
+async function researchAnswer({ upstream, messages, fallbackMessages = messages, theme, replyLanguage, ip, signal, send, log }) {
   const note = RESEARCH.limited_note[replyLanguage?.code] || RESEARCH.limited_note.en;
   const withoutWeb = async reason => {
     if (signal.aborted) throw searchFailure('cancelled');
     log('research', reason);
     send('integrated', { delta: note });
-    return note + await synthesize({ env: upstream, messages, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+    return note + await synthesize({ env: upstream, messages: fallbackMessages, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
   };
   if (upstream.DB) {
     const day = utcDay();
@@ -1292,7 +1316,7 @@ async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, si
   }
   const verifiedNow = new Date(), verifiedAt = verifiedNow.toISOString();
   // 確認時刻はモデルに作らせず、本文と同じ履歴へ保存する。出典の時刻とは別。
-  const checked = (replyLanguage?.code === 'ja' ? 'Web確認日時: ' : 'Web checked at: ') + verifiedAt + ' (UTC)\n\n';
+  const checked = (RESEARCH.checked_label[replyLanguage?.code] || RESEARCH.checked_label.en) + verifiedAt + ' (UTC)\n\n';
   const input = researchMessages(messages, verifiedNow);
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const primary = RESEARCH.primary_provider[theme === 'dark' ? 'dark' : 'light'];
@@ -1319,7 +1343,7 @@ async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, si
             throw stageError('upstream', 'research_http_' + res.status, 'Web検索に失敗しました', { retryable: true });
           }
           const content = await readResearchResponse(res.body, reader, cfg.provider, stop);
-          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,result:reader.finish(),cfg,replyLanguage,signal:stop});
+          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,verifiedNow,result:reader.finish(),cfg,replyLanguage,signal:stop});
           if (paused >= RESEARCH.max_pause_turns) throw stageError('upstream', 'research_pause_limit', 'Web検索が完了しませんでした', { retryable: true });
           body = { ...body, messages: [...body.messages, { role: 'assistant', content }] };
           reader.beginTurn();
@@ -1331,7 +1355,7 @@ async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, si
       if (signal.aborted) throw searchFailure('cancelled');
       send('integrated',{delta:result.text});
       if (signal.aborted) throw searchFailure('cancelled');
-      send('sources', { ...result.sources, marks: result.sources.marks.map(m => ({ ...m, at: m.at + checked.length })) });
+      if (result.sources.items.length) send('sources', { ...result.sources, marks: result.sources.marks.map(m => ({ ...m, at: m.at + checked.length })) });
       log('research', 'ok', cfg.provider, attempt, result.sources.items.length);
       return checked + result.text;
     } catch (error) {

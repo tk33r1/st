@@ -4404,7 +4404,7 @@ test('A2: 架空の出典・本文番号・未読本文の確認済み・余分�
   assert.throws(()=>w.ctx.verifiedResearchResult(value,evidence));
 });
 
-test('A2: 出典の安全なリダイレクトを読むが、内部への転送とHTTP失敗は採用せず認証を送らない',async()=>{
+test('A2: 出典の安全なリダイレクトを読むが、内部への転送は採用せず、HTTP失敗は未読で残し、認証を送らない',async()=>{
   for(const blocked of [false,true]) {
     const seen=[];const w=worker(undefined,(url,o)=>{
       seen.push([url,o]);return seen.length===1?new Response(null,{status:302,headers:{Location:blocked?'http://127.0.0.1/':'https://other.example/'}})
@@ -4415,7 +4415,8 @@ test('A2: 出典の安全なリダイレクトを読むが、内部への転送�
     for(const [,o] of seen){assert.equal(o.redirect,'manual');assert.equal(o.headers.Authorization,undefined);assert.equal(o.headers.Cookie,undefined);}
   }
   const w=worker(undefined,()=>new Response('denied',{status:403}));
-  assert.equal((await w.ctx.readResearchSource({n:1,url:'https://official.example/'},new AbortController().signal)).allowed,false);
+  const denied=await w.ctx.readResearchSource({n:1,url:'https://official.example/'},new AbortController().signal);
+  assert.equal(denied.allowed,true);assert.equal(denied.readable,false);assert.deepEqual([...denied.blocks],[]);
 });
 
 test('A2: 出典の本文が止まっても8秒で取り消し、利用者の停止では照合を続けない',async()=>{
@@ -4449,6 +4450,79 @@ test('A2: 公開本文のHTTPヘッダーとHTML先頭の文字コードを使�
     const w=worker(undefined,()=>new Response(bytes,{headers:{'Content-Type':header?'text/html; charset=shift_jis':'text/html'}}));
     const value=await w.ctx.readResearchSource({n:1,url:'https://official.example/'},new AbortController().signal);
     assert.equal(value.readable,true);assert.equal(value.blocks[0].text,'あ');
+  }
+});
+
+test('A2: Anthropicの照合応答も読み替える前の本文に32KBの上限を掛ける',async()=>{
+  const reply=JSON.stringify({parts:[{label:'確認',text:'最新の答え',status:'verified',citations:[{n:1,blocks:[0]}]}]});
+  for(const padding of [0,40000]) {
+    const w=a2Worker('research','yes',(url,o,b)=>{if(url.includes('anthropic'))return Response.json({content:[{type:'thinking',thinking:'x'.repeat(padding)},{type:'text',text:reply}],stop_reason:'end_turn',usage:{input_tokens:1,output_tokens:1}});});
+    const cfg=vm.runInContext('DEFAULTS.models.synthesizer_dark',w.ctx);assert.equal(cfg.provider,'anthropic');
+    const verify=w.ctx.verifyResearchAnswer({upstream:w.env,messages:[{role:'user',content:'現在の状態は？'}],verifiedNow:new Date(),cfg,replyLanguage:{code:'ja'},
+      result:{text:'原案',sources:{items:[{n:1,title:'出典',url:'https://example.com/'}],marks:[]}},signal:new AbortController().signal});
+    if(padding)await assert.rejects(verify,{name:'SyntaxError'});else assert.match((await verify).text,/最新の答え/);
+  }
+});
+
+test('A2: 照合にはカード・検索の指示・画像を送らず、前の会話の文字と日本の日付だけを添える',async()=>{
+  let sent;const w=a2Worker('research','yes',(url,o,b)=>{if(b.response_format?.json_schema?.name==='research_verified_reply'){sent=b;return searchReply({parts:[{label:'確認',text:'最新の答え',status:'verified',citations:[{n:1,blocks:[0]}]}]});}});
+  const cfg=vm.runInContext('DEFAULTS.models.synthesizer',w.ctx);
+  const messages=[{role:'system',content:'CARD_SECRET'},{role:'user',content:'東京タワー'},{role:'assistant',content:'前の答え'},
+    {role:'user',content:[{type:'text',text:'今日の営業時間は？'},{type:'image_url',image_url:{url:'data:image/png;base64,AAAA'}}]}];
+  await w.ctx.verifyResearchAnswer({upstream:w.env,messages,verifiedNow:new Date('2026-10-14T15:00:00Z'),cfg,replyLanguage:{code:'ja'},
+    result:{text:'原案',sources:{items:[{n:1,title:'出典',url:'https://example.com/'}],marks:[]}},signal:new AbortController().signal});
+  assert.equal(sent.messages.length,2);assert.doesNotMatch(JSON.stringify(sent),/CARD_SECRET|image_url|base64/);
+  assert.match(sent.messages[0].content,/Current date in Japan: 2026-10-15 \(Thursday\)/);
+  const payload=JSON.parse(sent.messages[1].content);
+  assert.equal(payload.question,'今日の営業時間は？');assert.deepEqual(payload.conversation,[{role:'user',text:'東京タワー'},{role:'assistant',text:'前の答え'}]);
+});
+
+test('A2: Webを使えないときはWebの指示を含まない入力で答え、注記と確認日時の見出しは会話の言語で出す',async()=>{
+  const inputs=[];const w=a2Worker('research','yes',(url,o,b)=>{if(!b?.tools&&!b?.response_format)inputs.push(b);});w.env.DB=counts();
+  w.env.DB.rows.set('research:global|'+new Date().toISOString().slice(0,10),300);
+  const events=sseEvents(await(await w.request('/magi2/chat',a2Body('最新情報を確認して'))).text());
+  assert.equal(events.at(-1)[0],'done');
+  const system=JSON.stringify(inputs.at(-1).messages||inputs.at(-1).system);
+  assert.doesNotMatch(system,new RegExp(vm.runInContext('RESEARCH.system_prompt',w.ctx).slice(0,30)));
+  for(const key of ['limited_note','checked_label'])
+    assert.deepEqual(Object.keys(vm.runInContext('RESEARCH.'+key,w.ctx)).sort(),Object.keys(vm.runInContext('RESEARCH.unverified_note',w.ctx)).sort());
+});
+
+test('A2: 未確認の項目は引用が無くても受け付け、引用が1件も無ければsourcesを送らない',async()=>{
+  const w=worker(),value={parts:[{label:'項目',text:'未確認です。',status:'unverified',citations:[]}]};
+  const result=w.ctx.verifiedResearchResult(value,proofEvidence(),{code:'ja'});
+  assert.equal(result.sources.items.length,0);assert.match(result.text,/項目/);
+  const verified={parts:[{label:'項目',text:'値',status:'verified',citations:[]}]};
+  assert.throws(()=>w.ctx.verifiedResearchResult(verified,proofEvidence()));
+  const seen=[];const a=a2Worker('research','yes',(url,o,b)=>{if(b.response_format?.json_schema?.name==='research_verified_reply')return searchReply(value);});
+  await a.ctx.researchAnswer({upstream:a.env,messages:[{role:'user',content:'現在の状態は？'}],theme:'light',replyLanguage:{code:'ja'},ip:'test',signal:new AbortController().signal,send:(e,d)=>seen.push([e,d]),log(){}});
+  assert.equal(seen.some(([e])=>e==='sources'),false);
+});
+
+test('A2: HTMLの本文はmain/articleの区画をすべて読み、区画内の見出しの日付を残す',()=>{
+  const w=worker(),value=w.ctx.researchSourceBlocks('<header>サイト名</header><article><header>2026年10月1日更新</header><p>一つ目</p></article><nav>メニュー</nav><article><p>二つ目</p><nav>前へ</nav></article><footer>著作権</footer>',true);
+  const text=value.blocks.map(b=>b.text).join('');
+  assert.match(text,/2026年10月1日更新/);assert.match(text,/一つ目/);assert.match(text,/二つ目/);assert.doesNotMatch(text,/サイト名|メニュー|前へ|著作権/);
+});
+
+test('A2: 4,000文字を超えるfact回答の履歴はWorkerでも切り詰め、通常の履歴は従来どおり拒否する',()=>{
+  const w=worker(),long='あ'.repeat(3999)+'😀'+'い'.repeat(10);
+  const fact=w.ctx.normaliseMessage({role:'assistant',mode:'fact',content:long},{text:0});
+  assert.equal(fact.content.length,3999);
+  assert.throws(()=>w.ctx.normaliseMessage({role:'assistant',content:long},{text:0}));
+});
+
+test('A2: Webの回答はページ選びを待たずに始め、2秒以内に選んだページは回答の後に出す',async()=>{
+  for(const [delay,shown] of [[50,true],[2200,false]]) {
+    const order=[],seen=[];let resolved=false;
+    const w=a2Worker('research','yes',(url,o,b)=>{if(b?.tools)order.push(resolved?'after':'before');});
+    const pagesPromise=new Promise(r=>setTimeout(()=>{resolved=true;r({status:'results',results:[{url:'/now/',title:'今'},{url:'/here/',title:'ここ'}]});},delay));
+    await w.ctx.runFactAnswer({upstream:w.env,cards:{},messages:[{role:'user',content:'現在の状態は？'}],langNote:null,theme:'light',pagesPromise,page:'/here/',
+      research:true,replyLanguage:{code:'ja'},ip:'test',signal:new AbortController().signal,send:(e,d)=>seen.push([e,d]),log(){}});
+    assert.equal(order[0],'before');
+    const pages=seen.filter(([e])=>e==='pages');
+    if(shown){assert.equal(pages.length,1);assert.deepEqual(pages[0][1].pages.map(p=>p.url),['https://tk.st/now/']);assert.equal(seen.at(-1)[0],'pages');}
+    else assert.equal(pages.length,0);
   }
 });
 
