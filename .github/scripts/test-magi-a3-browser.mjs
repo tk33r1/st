@@ -1,11 +1,13 @@
-// A3の確認質問を実ブラウザで検査する。AI・計測・本番APIへの通信は行わない。
+// A3の確認質問を実ブラウザで検査する。--base=https://tk.stでもAI・計測は模擬にする。
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, existsSync, mkdirSync} from 'node:fs';
 import {createServer} from 'node:http';
 import {resolve, extname, sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
-const root = resolve('.'), out = resolve('workers/.wrangler/magi2-dialogue-a3/browser');
+const remote = process.argv.find(v => v.startsWith('--base='))?.slice(7);
+if (remote && remote !== 'https://tk.st') throw new Error('publication_base_not_allowed');
+const root = resolve('.'), out = resolve('workers/.wrangler/magi2-dialogue-a3/' + (remote ? 'public-browser' : 'browser'));
 mkdirSync(out, {recursive:true});
 const modelsFile = resolve(out, 'models.json');
 execFileSync(process.execPath, ['.github/scripts/eval-magi-models.mjs', '--check', '--models-output='+modelsFile]);
@@ -19,7 +21,7 @@ const server = createServer((req, res) => {
   res.end(readFileSync(file));
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const origin = 'http://localhost:'+server.address().port;
+const origin = remote || 'http://localhost:'+server.address().port;
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 const one = [{question:'用途を選んでください <b>確認</b>', options:['練習','本番','比較']}];
 const multi = [{question:'人数は？',options:['1人','2人','3人']},{question:'時間は？',options:['10分','20分','30分']}];
