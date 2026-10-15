@@ -329,7 +329,8 @@ function anthropicSchema(value) {
     .map(([key, child]) => [key, anthropicSchema(child)]));
 }
 
-async function callModel({ env, messages, cfg, stream, signal, temperature, response_format }) {
+// replyLimitは非streamのAnthropicを読み替える前の本文にも上限を掛ける（{ bytes, ms }）。
+async function callModel({ env, messages, cfg, stream, signal, temperature, response_format, replyLimit = null }) {
   const provider = PROVIDERS[cfg.provider];
   const body = requestBody(cfg, { messages, stream, temperature, response_format });
   if (typeof env.evalObserve === 'function' && stream && cfg.provider !== 'anthropic') body.stream_options = { include_usage: true };
@@ -349,7 +350,10 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   // 非ストリームは既存の読み取りへ正規化し、thinkingは一度も履歴へ入れない。
   // 観測には正規化前の応答を渡すので、評価用の使用量は元の形で残る。
   if (res.ok && cfg.provider === 'anthropic' && !stream) {
-    const data = await res.json();
+    const raw = replyLimit ? await readLimited(res, replyLimit.bytes, signal, replyLimit.ms) : null;
+    // 上限付きの読み取りは中断でも途中の本文を返すので、解析の失敗より先に中断として返す。
+    if (replyLimit && signal?.aborted) throw searchFailure('cancelled');
+    const data = replyLimit ? JSON.parse(raw) : await res.json();
     const reason = anthropicStop(data.stop_reason);
     const text = (data.content || []).filter(block => block.type === 'text').map(block => block.text).join('');
     return Response.json({ choices: [{ finish_reason: reason, message: { content: reason === 'content_filter' ? '' : text } }],
@@ -974,9 +978,8 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
     pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
   }
   const input = factAnswerMessages({ cards, messages, langNote, theme, guide, pageChoice, siteOnly, research });
-  let answer;
-  if (research) answer = await researchAnswer({ upstream, messages: input, theme, replyLanguage, ip, signal, send, log });
-  else answer = await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+  const answer = research ? await researchAnswer({ upstream, messages: input, theme, replyLanguage, ip, signal, send, log })
+    : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
   if (pageChoice?.results.length && !signal?.aborted) send('pages', chatPageEvent(pageChoice));
   return answer;
 }
@@ -1070,7 +1073,7 @@ function researchSourceBlocks(raw, html) {
   }
   const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
   const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
-  const kept = text.slice(0, boundary(Math.min(text.length, RESEARCH.verify.source_chars))), blocks = [];
+  const kept = classifySlice(text, RESEARCH.verify.source_chars), blocks = [];
   for (let at = 0; at < kept.length;) {
     const end = boundary(Math.min(kept.length, at + RESEARCH.verify.block_chars));
     blocks.push({id: blocks.length, text: kept.slice(at, end)}); at = end;
@@ -1180,31 +1183,30 @@ function verifiedResearchResult(value, evidence, replyLanguage) {
   return {text, sources:{items,marks}};
 }
 
-function researchVerificationBody(cfg,messages,result,evidence,replyLanguage) {
+// callModelへ渡す設定・会話・出力形式。本番と保存済み出典の評価で同じものを使う。
+function researchVerificationRequest(cfg,messages,result,evidence,replyLanguage) {
   const latest = messages.findLast(m => m.role === 'user')?.content;
   const question = typeof latest === 'string' ? latest : (latest || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
   const input = [...messages, {role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')},
     {role:'user', content:JSON.stringify({question,draft:result.text,evidence})}];
-  return requestBody({...cfg,max_tokens:RESEARCH.verify.max_tokens}, {messages:input,stream:false,response_format:researchVerificationFormat(evidence)});
+  return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
 async function verifyResearchAnswer({upstream, messages, result, cfg, replyLanguage, signal}) {
   const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
   if (signal.aborted) throw searchFailure('cancelled');
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
-  const body = researchVerificationBody(cfg,messages,result,evidence,replyLanguage);
-  const res = await fetch(PROVIDERS[cfg.provider].endpoint, {method:'POST',headers:requestHeaders(cfg.provider,upstream[PROVIDERS[cfg.provider].key]),body:JSON.stringify(body),signal});
-  if (typeof upstream.evalObserve === 'function') upstream.evalObserve(cfg.provider,cfg.model,res.clone(),false);
+  const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
+  const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,result,evidence,replyLanguage),
+    stream:false, signal, replyLimit:limit});
   if (!res.ok) {
-    if (upstream.onUpstreamError) await upstream.onUpstreamError(cfg.provider,res.clone(),{signal});
     res.body?.cancel().catch(() => {});
     throw stageError('upstream','research_verification_http_'+res.status,'Web回答の根拠を確認できませんでした',{retryable:true});
   }
-  const raw = await readLimited(res,RESEARCH.verify.reply_bytes,signal,RESEARCH.timeout_ms);
+  const raw = await readLimited(res,limit.bytes,signal,limit.ms);
   if (signal.aborted) throw searchFailure('cancelled');
-  const data = JSON.parse(raw), reason = cfg.provider === 'anthropic' ? anthropicStop(data.stop_reason) : data.choices?.[0]?.finish_reason;
-  const content = cfg.provider === 'anthropic' ? (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('') : data.choices?.[0]?.message?.content;
-  if (reason !== 'stop' || typeof content !== 'string') throw stageError('upstream','research_verification_incomplete','Web回答の根拠を確認できませんでした',{retryable:true});
+  const choice = JSON.parse(raw).choices?.[0], content = choice?.message?.content;
+  if (choice?.finish_reason !== 'stop' || typeof content !== 'string') throw stageError('upstream','research_verification_incomplete','Web回答の根拠を確認できませんでした',{retryable:true});
   return verifiedResearchResult(JSON.parse(content),evidence,replyLanguage);
 }
 

@@ -6,6 +6,9 @@ export function classifySlice(text, limit) {
   return /[\uD800-\uDBFF]$/.test(out) ? out.slice(0, -1) : out;
 }
 
+// 事実モードの一般会話だけ、同じ名前の問いをfact_questionsで差し替える。
+const classifyQuestion = (name, fact) => fact && INTENT_CLASSIFY.fact_questions[name] || INTENT_CLASSIFY.questions[name];
+
 export function classificationPayload({ profile = 'chat', texts = [], seed, hasLanguage = false, factMode = false }) {
   const cfg = INTENT_CLASSIFY;
   const latest = texts.at(-1) || '';
@@ -29,8 +32,7 @@ export function classificationPayload({ profile = 'chat', texts = [], seed, hasL
   if (!names.length) return null;
   const fact = factMode && profile === 'chat';
   if (fact && latest.trim()) names = [...names, 'fresh'];
-  return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name,
-    fact && cfg.fact_questions[name] || cfg.questions[name]])) };
+  return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name, classifyQuestion(name, fact)])) };
 }
 
 const languageControl = new RegExp(`[\\u0000-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
@@ -68,7 +70,7 @@ export function languageNote(value) {
 }
 
 export function acceptedChoice(name, answer, factMode = false) {
-  const question = factMode && INTENT_CLASSIFY.fact_questions[name] || INTENT_CLASSIFY.questions[name];
+  const question = classifyQuestion(name, factMode);
   return question && answer && (answer.type === undefined || answer.type === question.type)
     && typeof answer.choice === 'string' && Object.hasOwn(question.criteria, answer.choice)
     && typeof answer.confidence === 'number' && Number.isFinite(answer.confidence)

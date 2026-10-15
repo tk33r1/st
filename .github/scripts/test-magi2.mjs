@@ -4307,6 +4307,17 @@ test('A2: 公開本文のHTTPヘッダーとHTML先頭の文字コードを使�
   }
 });
 
+test('A2: Anthropicの照合応答も読み替える前の本文に32KBの上限を掛ける',async()=>{
+  const reply=JSON.stringify({parts:[{label:'確認',text:'最新の答え',status:'verified',citations:[{n:1,blocks:[0]}]}]});
+  for(const padding of [0,40000]) {
+    const w=a2Worker('research','yes',(url,o,b)=>{if(url.includes('anthropic'))return Response.json({content:[{type:'thinking',thinking:'x'.repeat(padding)},{type:'text',text:reply}],stop_reason:'end_turn',usage:{input_tokens:1,output_tokens:1}});});
+    const cfg=vm.runInContext('DEFAULTS.models.synthesizer_dark',w.ctx);assert.equal(cfg.provider,'anthropic');
+    const verify=w.ctx.verifyResearchAnswer({upstream:w.env,messages:[{role:'user',content:'現在の状態は？'}],cfg,replyLanguage:{code:'ja'},
+      result:{text:'原案',sources:{items:[{n:1,title:'出典',url:'https://example.com/'}],marks:[]}},signal:new AbortController().signal});
+    if(padding)await assert.rejects(verify,{name:'SyntaxError'});else assert.match((await verify).text,/最新の答え/);
+  }
+});
+
 test('A2: 原案を出さず実本文の照合を待ち、確認できない項目も根拠リンク付きで返す',async()=>{
   let release,reached;const ready=new Promise(r=>reached=r),seen=[];
   const w=a2Worker('research','yes',(url,o,b)=>{
