@@ -50,11 +50,13 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 公開の結果と未確認範囲は[A3公開評価](A3公開評価.md)。APKはA4で更新する。
 
-## A5の404会話（5.2・未公開）
+## A5の404会話（5.2・2026-10-16公開）
 
 `/magi2/site-search?site_debate=1&site_chat=1`は`query`・`locale`・任意の`history`/`reply_language`を受け、既存のページ候補・commentへ`reply_language`と`closed`を追加する。履歴は最大6メッセージ（user/assistant交互の3往復）。user 200字、assistant 2,000字、assistantのpagesは最大3件の`{title,url}`（160/500字）。継続はreply_languageが必要。文字数はコードポイントで数える。本文は64KiB、既存の②と旧③は4KiB。
 
 site_chatのない旧③は従来どおり。②は最初に分岐し、会話の項目・URLクエリを拒否する。初回は検索の回数、historyがある続きは通常チャットの回数を使う。Jevは言語・悪意のみで、AI回答やページ名は送らない。ページ選びと直接回答には直近の会話を渡し、過去のページは現行索引で照合する。会話の保存は行わず、別の検索・空への確定・再読み込みで消す。同じ条件や下書き・IMEでは会話を壊さない。
+
+公開の結果と未確認範囲は[A5公開評価](A5公開評価.md)、代表2相談の実モデル確認と修正は[A5品質確認](A5品質確認.md)。A5は404の変更なのでAPKは作らず、Androidの配布版は5.1を維持する。
 
 ## A4の更新履歴（5.1・2026-10-15公開）
 
