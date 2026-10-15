@@ -5,7 +5,9 @@ import {readFileSync,existsSync,mkdirSync,writeFileSync} from 'node:fs';
 import {resolve,sep,extname} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
-const root=resolve('.'),out=resolve('workers/.wrangler/magi2-dialogue-a4/browser');mkdirSync(out,{recursive:true});
+const remote=process.argv.find(v=>v.startsWith('--base='))?.slice(7);
+if(remote && remote!=='https://tk.st')throw new Error('publication_base_not_allowed');
+const root=resolve('.'),out=resolve('workers/.wrangler/magi2-dialogue-a4/'+(remote?'public-browser':'browser'));mkdirSync(out,{recursive:true});
 const data=JSON.parse(readFileSync('data/magi-versions.json','utf8'));
 const modelsFile=resolve(out,'models.json');
 execFileSync(process.execPath,['.github/scripts/eval-magi-models.mjs','--check','--models-output='+modelsFile]);
@@ -13,7 +15,7 @@ const models=JSON.parse(readFileSync(modelsFile,'utf8'));
 const server=createServer((req,res)=>{let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';
  const f=resolve(root,'.'+path);if(!f.startsWith(root+sep)||!existsSync(f)){res.writeHead(404);res.end();return;}
  res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'application/javascript','.json':'application/json'})[extname(f)]||'application/octet-stream'});res.end(readFileSync(f));});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://localhost:'+server.address().port;
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=remote || 'http://localhost:'+server.address().port;
 const browser=await chromium.launch(),results=[];
 try {
  for(const [label,path,width,lang,theme] of [['home-ja-light','/',1280,'ja','light'],['home-en-dark','/',390,'en','dark'],['app-ja-dark','/magi-app/www/',390,'ja','dark'],['app-en-light','/magi-app/www/',1280,'en','light']]){
