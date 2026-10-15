@@ -4,13 +4,15 @@ import {createServer} from 'node:http';
 import {readFileSync,existsSync,statSync,mkdirSync,writeFileSync} from 'node:fs';
 import {resolve,sep,extname} from 'node:path';
 import {chromium} from 'playwright';
-const root=resolve('.'),out=resolve('workers/.wrangler/magi2-dialogue-a5/browser');mkdirSync(out,{recursive:true});
+const remote=process.argv.find(v=>v.startsWith('--base='))?.slice(7);
+if(remote && remote!=='https://tk.st')throw new Error('publication_base_not_allowed');
+const root=resolve('.'),out=resolve('workers/.wrangler/magi2-dialogue-a5/'+(remote?'public-browser':'browser'));mkdirSync(out,{recursive:true});
 const server=createServer((req,res)=>{let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';
  let file=resolve(root,'_site','.'+path);if(!file.startsWith(resolve(root,'_site')+sep)){res.writeHead(400);res.end();return;}
  if(path==='/assets/search-ui.js')file=resolve(root,'assets/search-ui.js');
  const found=existsSync(file)&&statSync(file).isFile();if(!found||path==='/404.html')file=resolve(root,'404.html');
  res.writeHead(found?200:404,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'application/javascript','.json':'application/json','.css':'text/css'})[extname(file)]||'application/octet-stream'});res.end(readFileSync(file));});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://localhost:'+server.address().port;
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=remote || 'http://localhost:'+server.address().port;
 const browser=await chromium.launch(),results=[];
 try{
  for(const [lang,width,off] of [['ja',390,true],['en',1280,false]]){
