@@ -613,6 +613,7 @@ function cleanReplyLanguage(v) {
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       async function askAI(query, followup) {
         if (!ai.eligible || ai.controller || composing || followupComposing || ai.closed || currentQuery() !== ai.query) return;
+        var followupDraft = byId('ai-followup-input').value;
         query = query.trim(); if (!query || Array.from(query).length > 200) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
@@ -655,7 +656,7 @@ function cleanReplyLanguage(v) {
           ai.turns.push({query:query, comment:data.comment, rows:rows});
           ai.history = ai.history.concat([{role:'user',content:query},{role:'assistant',content:Array.from(data.comment).slice(0,2000).join(''),pages:rows.map(function (p) {return {title:Array.from(p.title).slice(0,160).join(''),url:p.url};})}]).slice(-6);
           renderAIPast(); byId('ai-followup').hidden = ai.closed; byId('ai-closed').hidden = !ai.closed;
-          if (followup) byId('ai-followup-input').value = '';
+          if (followup && !followupComposing && byId('ai-followup-input').value === followupDraft) byId('ai-followup-input').value = '';
           byId('ai-run').hidden = true;
           byId('ai-list').replaceChildren();
           rows.forEach(function (p, i) {
@@ -665,8 +666,8 @@ function cleanReplyLanguage(v) {
           });
           var chars = Array.from(query);
           byId('ai-ask').textContent = '~$ ask "' + chars.slice(0, 40).join('') + (chars.length > 40 ? '…' : '') + '"';
-          byId('ai-comment').textContent = typeof data.comment === 'string' ? data.comment : data.status === 'no_results' ? aiText.none : '';
-          byId('ai-comment').hidden = !byId('ai-comment').textContent;
+          byId('ai-comment').textContent = data.comment;
+          byId('ai-comment').hidden = false;
           byId('ai-request').hidden = ai.closed || data.status !== 'no_results'; byId('ai-result').hidden = false;
           setAIStatus(data.status === 'no_results' ? aiText.none : aiText.ready + ' ' + (lang === 'ja' ? rows.length + '件のページ候補。' : rows.length + ' page suggestions.'), true);
           thinking.finish(); answered = true;

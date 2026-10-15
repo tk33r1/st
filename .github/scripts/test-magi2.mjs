@@ -3685,6 +3685,7 @@ test('A4: 取得失敗・壊れたJSON・不正な形・容量超過では同梱
   const bundled = JSON.parse(read('data/magi-versions.json'));
   for (const make of [() => new Response('', {status:404}), () => new Response('{'),
     () => Response.json({versions:[]}), () => Response.json({versions:bundled.versions.slice(1)}),
+    () => Response.json({versions:[bundled.versions.at(-1)]}),
     () => new Response(' '.repeat(65537)), () => {throw new Error('offline');}]) {
     let calls = 0;
     const w = worker(completion(), async url => {if (url.endsWith('/magi-versions.json')) { calls++; return make(); }});

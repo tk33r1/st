@@ -10,18 +10,18 @@ export function cleanVersionHistory(value) {
     && !/[\u0000-\u001f\u007f-\u009f]/.test(v);
   if (!object(value) || Object.keys(value).some(k => k !== 'versions') || !Array.isArray(value.versions)
     || !value.versions.length || value.versions.length > VERSION_HISTORY.max_versions) return null;
-  const seen = new Set(); let previous = Infinity, previousDate = '9999-12-31';
+  let previous = Infinity, previousDate = '9999-12-31';
   for (const [i, row] of value.versions.entries()) {
     if (!object(row) || Object.keys(row).some(k => !['version', 'date', 'changes'].includes(k))) return null;
     const earlier = row.version === 'earlier';
     if (earlier ? i !== value.versions.length - 1 || row.date !== null
       : typeof row.version !== 'string' || !/^\d{1,2}\.\d$/.test(row.version) || !date(row.date)) return null;
     const order = earlier ? -1 : Number(row.version.split('.')[0]) * 10 + Number(row.version.split('.')[1]);
-    if (seen.has(row.version) || order >= previous || !earlier && row.date > previousDate) return null;
+    if (order >= previous || !earlier && row.date > previousDate) return null;
     if (!object(row.changes) || Object.keys(row.changes).length !== 2 || !['ja', 'en'].every(lang =>
       Array.isArray(row.changes[lang]) && row.changes[lang].length >= 2 && row.changes[lang].length <= 4
       && row.changes[lang].every(text))) return null;
-    seen.add(row.version); previous = order; if (!earlier) previousDate = row.date;
+    previous = order; if (!earlier) previousDate = row.date;
   }
   return value;
 }
@@ -56,7 +56,8 @@ export async function getVersionHistory() {
         const data = cleanVersionHistory(JSON.parse(body));
         if (!data) throw new Error('versions_invalid');
         // Workerを画面より先に出す間も、そのWorkerに同梱した最新の版を欠かさない。
-        if (Number(data.versions[0].version) < Number(bundledVersions.versions[0].version)) throw new Error('versions_older');
+        if (data.versions[0].version === 'earlier'
+          || Number(data.versions[0].version) < Number(bundledVersions.versions[0].version)) throw new Error('versions_older');
         return data;
       };
       versionHistoryCache = await Promise.race([load(), deadline]);

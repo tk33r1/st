@@ -117,17 +117,26 @@ function agentClarifyText(v) {
 function agentClarifyPlaceholder(on) {
   agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : '武田伸也AIに質問…') : (on ? 'Add details if needed' : 'Ask Shinya Takeda AI...');
 }
+function lastAgentTurn() {
+  return Array.from(agentLog.querySelectorAll('.agent-turn')).at(-1) || null;
+}
 function freezeAgentClarify() {
-  var turn = agentLog.lastElementChild;
-  if (turn && turn._clarify) {
+  var turn = lastAgentTurn(), draft = turn && turn._clarify;
+  if (draft) {
     turn.querySelectorAll('.agent-clarify button,.agent-clarify input').forEach(function (el) { el.disabled = true; });
     turn._clarify = null;
   }
   agentClarifyPlaceholder(false);
+  return draft;
 }
-function restoreAgentClarify() {
-  var item = agentHistory.at(-1), turn = agentLog.lastElementChild;
-  if (item && item.clarify && turn) renderAgentClarify(turn, item.clarify, true);
+function restoreAgentClarify(draft) {
+  var item = agentHistory.at(-1), turn = lastAgentTurn();
+  if (!item || !item.clarify || !turn) return;
+  if (draft && turn.querySelector('.agent-clarify')) {
+    turn._clarify = draft;
+    turn.querySelectorAll('.agent-clarify button,.agent-clarify input').forEach(function (el) { el.disabled = false; });
+    agentClarifyPlaceholder(true);
+  } else renderAgentClarify(turn, item.clarify, true);
 }
 function agentClarifyAnswer(turn, extra) {
   var state = turn && turn._clarify;
@@ -152,7 +161,7 @@ function renderAgentClarify(turn, raw, interactive) {
   var panel = document.createElement('div'); panel.className = 'agent-clarify';
   var state = {value:value, picks:[], other:[]}; turn._clarify = interactive ? state : null;
   var ja = document.documentElement.lang === 'ja';
-  var active = function () { return interactive && !agentBusy && !agentDead && !agentClosed && agentLog.lastElementChild === turn; };
+  var active = function () { return interactive && !agentBusy && !agentDead && !agentClosed && lastAgentTurn() === turn; };
   value.questions.forEach(function (q, i) {
     var group = document.createElement('fieldset'), legend = document.createElement('legend');
     legend.textContent = (i + 1) + '. ' + q.question; group.appendChild(legend);
@@ -617,12 +626,7 @@ function cleanHistory(history) {
       && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
         return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
       })));
-  }).map(magiCleanItem).map(function (item) {
-    var copy = Object.assign({}, item); delete copy.clarify;
-    var clarify = item.role === 'assistant' && !item.closed && !item.mode ? cleanAgentClarify(item.clarify) : null;
-    if (clarify) copy.clarify = clarify;
-    return copy;
-  }) : [];
+  }).map(magiCleanItem).map(cleanAgentClarifyItem) : [];
 }
 function initAgent() {
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
@@ -1008,11 +1012,12 @@ function agentStop() {
 
 async function agentSend() {
   if (agentBusy || agentDead || agentClosed) return;
-  var text = agentClarifyAnswer(agentLog.lastElementChild, agentInput.value.trim());
+  var draftText = agentInput.value;
+  var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
   var atts = attachments.slice();
   if (!text && !atts.length) return;
-  freezeAgentClarify();
+  var clarifyDraft = freezeAgentClarify();
   var startedAt = Date.now();
   setAgentSuggestion('');
   agentInput.value = ''; fitAgentInput();
@@ -1221,8 +1226,8 @@ async function agentSend() {
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
     // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
-    if (!agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
-    restoreAgentClarify();
+    if (!agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+    restoreAgentClarify(clarifyDraft);
   }
 }
 

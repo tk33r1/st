@@ -40,15 +40,17 @@ try {
       if (url.pathname === '/magi2/models') { await route.fulfill({json:models}); return; }
       if (url.pathname === '/magi2/chat') {
         const body = JSON.parse(request.postData()); sent.push(body);
+        if (answer === 'http-failure') return route.fulfill({status:503,json:{error:{message:'Temporary error',code:'unavailable'}}});
+        if (answer === 'network-failure') return route.abort();
         const notice = {version:1,intent:'consult',mode:'consult',fresh:'no',site_pages:'no',votable:'no',magi_candidate:false,
           reply_language:body.reply_language || {version:1,code:lang,source:'jev'}};
         let text = event('classification', notice);
-        if (answer === 'normal') text += event('integrated', {delta:'回答しました。'});
+        if (answer === 'normal' || answer === 'incomplete') text += event('integrated', {delta:'回答しました。'});
         else {
           for (const codename of ['MELCHIOR-1','BALTHASAR-2','CASPER-3']) for (const round of [1,2]) text += event('persona',{codename,round,text:'討議の意見'});
           text += event('clarify', {questions:answer === 'one' ? one : multi,intent:'consult',fresh:'no'});
         }
-        await route.fulfill({contentType:'text/event-stream', body:text+event('done',{}),headers:{'Access-Control-Allow-Origin':origin}}); return;
+        await route.fulfill({contentType:'text/event-stream', body:text+(answer === 'incomplete' ? '' : event('done',{})),headers:{'Access-Control-Allow-Origin':origin}}); return;
       }
       if (url.origin !== origin) { await route.fulfill({status:200,body:''}); return; }
       await route.continue();
@@ -96,6 +98,35 @@ try {
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('magi_current_history') || '[]').at(-1)?.content === '回答しました。');
       assert.match(sent.at(-1).messages.at(-1).content,/1人/); assert.match(sent.at(-1).messages.at(-1).content,/45分/);
       assert.match(sent.at(-1).messages.at(-1).content,/途中で休憩します/);
+      // エラー行が末尾にあっても質問を復元し、再選択に失敗した回答を混ぜない。
+      for (const failure of ['http-failure','network-failure','incomplete']) {
+        answer = 'one'; await send('再送する相談です');
+        const retryPanel = page.locator('.agent-turn').last().locator('.agent-clarify'); await retryPanel.waitFor();
+        answer = failure; await retryPanel.locator('fieldset button').nth(1).click();
+        await page.waitForFunction(() => !document.getElementById('agent-input').disabled
+          && document.querySelectorAll('.agent-clarify button:enabled').length === 5);
+        assert.equal(await page.locator('#agent-input').inputValue(),'');
+        assert.equal(await retryPanel.locator('fieldset button').nth(1).getAttribute('aria-pressed'),'true');
+        assert.ok(await page.locator('.agent-err').count());
+        answer = 'normal'; await retryPanel.locator('fieldset button').nth(0).click();
+        await page.waitForFunction(() => JSON.parse(localStorage.getItem('magi_current_history') || '[]').at(-1)?.content === '回答しました。');
+        assert.equal(sent.at(-1).messages.at(-1).content,'練習');
+        assert.equal(await page.locator('.agent-clarify button:enabled').count(),0);
+      }
+      answer = 'multi'; await send('複数の条件も再送します');
+      const retryMulti = page.locator('.agent-turn').last().locator('.agent-clarify'); await retryMulti.waitFor();
+      await retryMulti.locator('fieldset').nth(0).locator('button').nth(0).click();
+      await retryMulti.locator('fieldset').nth(1).locator('button').nth(3).click();
+      await retryMulti.locator('input').nth(1).fill('45分'); await page.locator('#agent-input').fill('補足');
+      answer = 'http-failure'; await retryMulti.locator(':scope > button').click();
+      await page.waitForFunction(() => !document.getElementById('agent-input').disabled
+        && document.querySelectorAll('.agent-clarify button:enabled').length === 9);
+      const failedText = sent.at(-1).messages.at(-1).content;
+      assert.equal(await retryMulti.locator('input').nth(1).inputValue(),'45分');
+      assert.equal(await page.locator('#agent-input').inputValue(),'補足');
+      answer = 'normal'; await retryMulti.locator(':scope > button').click();
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('magi_current_history') || '[]').at(-1)?.content === '回答しました。');
+      assert.equal(sent.at(-1).messages.at(-1).content,failedText);
       assert.deepEqual(errors,[]); results.push({label,pass:true,requests:sent.length}); console.log(label+' OK');
     } finally { await page.close(); }
   }

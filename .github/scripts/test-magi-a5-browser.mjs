@@ -39,7 +39,16 @@ try{
   mode='normal';await page.locator('#ai-followup-send').click();await page.waitForFunction(()=>document.getElementById('ai-comment').textContent.includes('回答 4'));assert.equal(await page.locator('.ai-past-turn').count(),2);
   await page.locator('#ai-result').screenshot({path:resolve(out,lang+'-conversation.png')});
   const entries=await page.evaluate(()=>JSON.stringify(Object.keys(localStorage).map(k=>[k,localStorage.getItem(k)]))+JSON.stringify(Object.keys(sessionStorage).map(k=>[k,sessionStorage.getItem(k)])));assert.ok(!entries.includes('それの使い方')&&!entries.includes('onerror'));
-  mode='slow';await follow.fill('遅い質問');await page.locator('#ai-followup-send').click();await page.waitForFunction(()=>!document.getElementById('ai-cancel').hidden);
+  mode='slow';release=null;await follow.fill('回答を待つ質問');await page.locator('#ai-followup-send').click();
+  while(!release)await page.waitForTimeout(10);await follow.fill('回答待ちに書いた次の質問');release();
+  await page.waitForFunction(()=>document.getElementById('ai-comment').textContent.includes('回答 5'));
+  assert.equal(await follow.inputValue(),'回答待ちに書いた次の質問');
+  // IMEの変換中なら、文字列がまだ変わっていなくても消さない。
+  mode='slow';release=null;await follow.fill('変換中の質問');await page.locator('#ai-followup-send').click();
+  while(!release)await page.waitForTimeout(10);await follow.dispatchEvent('compositionstart');release();
+  await page.waitForFunction(()=>document.getElementById('ai-comment').textContent.includes('回答 6'));
+  assert.equal(await follow.inputValue(),'変換中の質問');await follow.dispatchEvent('compositionend');
+  mode='slow';release=null;await follow.fill('遅い質問');await page.locator('#ai-followup-send').click();await page.waitForFunction(()=>!document.getElementById('ai-cancel').hidden);
   while(!release)await page.waitForTimeout(10);await query.fill('QR');await query.press('Enter');await page.waitForTimeout(150);assert.equal(await page.locator('#ai-result').isHidden(),true);release();await page.waitForTimeout(100);assert.equal(await page.locator('#ai-result').isHidden(),true);
   mode='normal';await page.locator('#ai-run').click();await page.locator('#ai-followup').waitFor();assert.deepEqual(posts.at(-1).history,[]);
   mode='closed';await follow.fill('会話終了の確認');await page.locator('#ai-followup-send').click();await page.locator('#ai-closed').waitFor();assert.equal(await page.locator('#ai-followup').isHidden(),true);

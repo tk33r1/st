@@ -1,6 +1,6 @@
 import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
-import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
+import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
@@ -556,11 +556,9 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
           return jsonResponse({request_id:requestId,status:'no_results',results:[],comment,reply_language:language,closed:true},cors,200,{'Cache-Control':'no-store'});
         }
       }
-      const result = await selectSitePages({ query, locale: body.locale, pages, history, cards, chat: true, purpose: 'requested', signal, log,
+      const result = await selectSitePages({ query, locale: body.locale, pages, history, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      const previousPages = history.flatMap(row => (row.pages || []).flatMap(old => {
-        const p = pages.find(p => p.url === old.url);return p ? [{title:p.title,url:p.url}] : [];
-      }));
+      const previousPages = resolveSiteHistory(history, pages).flatMap(row => row.pages || []);
       const messages = [...(previousPages.length ? [{role:'system',content:SITE_SEARCH.history_answer_prompt + '\n' + JSON.stringify(previousPages)}] : []),
         ...history.map(row => ({role:row.role,content:row.content})), {role:'user',content:query}];
       const answer = await runFactAnswer({ upstream, cards, messages,
@@ -1975,7 +1973,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
             // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
             if (!await indexPromise) throw searchFailure('list_fetch');
             const pages = await getSitePages(ctx, locale, pageStop.signal);
-            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, chat: true, current: guide && guide.current,
+            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, current: guide && guide.current,
               purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
               signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
           })().catch(() => { log('site_search', 'omitted'); return null; });

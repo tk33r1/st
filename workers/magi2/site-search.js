@@ -275,14 +275,18 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
     results: selected.map(id => { const { kind, title, description, url } = byId.get(id); return { id, kind, title, description, url }; }) };
 }
 
-// current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
-export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, history = [], call, signal, log }) {
-  // 履歴のページ名・URLをそのまま根拠へ昇格しない。いま公開されている索引で引き直す。
-  const conversation = history.map(row => ({role:row.role, content:row.content,
+// ページ選びと回答で同じ照合を使う。履歴のページ名は信頼せず、現行索引の名前・URLだけを残す。
+export function resolveSiteHistory(history, pages) {
+  return history.map(row => ({role:row.role, content:row.content,
     ...(row.role === 'assistant' ? {pages:(row.pages || []).flatMap(old => {
       const page = pages.find(p => p.url === old.url);
       return page ? [{title:page.title, url:page.url}] : [];
     })} : {})}));
+}
+
+// current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
+export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, history = [], call, signal, log }) {
+  const conversation = resolveSiteHistory(history, pages);
   const preferred = conversation.flatMap(row => (row.pages || []).map(old => pages.find(p => p.url === old.url)));
   const context = conversation.map(row => row.content + ' ' + (row.pages || []).map(p => p.title).join(' ')).join('\n');
   pages = shortlistSitePages(pages, context ? query + '\n' + context : query, preferred);
