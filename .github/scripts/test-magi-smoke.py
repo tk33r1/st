@@ -42,6 +42,30 @@ class MagiSmokeTest(unittest.TestCase):
     def setUpClass(cls):
         cls.config = ai_models.magi_config()
 
+    def test_judge_and_fallback_use_production_medium_schema_and_candidate(self):
+        for name, provider in [('judge', 'anthropic'), ('judge_fallback', 'openai')]:
+            cfg = self.config[name]
+            self.assertEqual(cfg['model']['provider'], provider)
+            def post(url, key, body):
+                self.assertEqual(body['model'], 'candidate-for-test')
+                self.assertFalse(body['stream'])
+                self.assertNotIn('temperature', body)
+                if provider == 'anthropic':
+                    self.assertEqual(body['thinking'], {'type': 'adaptive'})
+                    self.assertEqual(body['output_config']['effort'], 'medium')
+                    schema = body['output_config']['format']['schema']
+                else:
+                    self.assertEqual(body['reasoning_effort'], 'medium')
+                    self.assertFalse(body['store'])
+                    schema = body['response_format']['json_schema']['schema']
+                self.assertEqual(set(schema['required']), {'next_step', 'assessment', 'persona_questions', 'questions'})
+                return verifier_reply(provider, cfg['expected'])
+            with patch.object(ai_models, 'post_json', side_effect=post):
+                ai_models.smoke_magi_debate_judge('mock', 'private', 'candidate-for-test', cfg)
+            with patch.object(ai_models, 'post_json', return_value=verifier_reply(provider, cfg['expected'], 'max_tokens' if provider == 'anthropic' else 'length')):
+                with self.assertRaises(RuntimeError):
+                    ai_models.smoke_magi_debate_judge('mock', 'private', 'candidate-for-test', cfg)
+
     def test_discussion_settings_and_candidate_override(self):
         config = copy.deepcopy(self.config)
         for entry in config['discussion']['personas']:

@@ -190,6 +190,7 @@ def smoke_anthropic(url, api_key, model):
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'anthropic', config)
     smoke_magi_motion(url, api_key, model, config['magi'], provider='anthropic')
+    smoke_magi_debate_judge(url, api_key, model, config['judge'])
     # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
     card = message_payload(model, 'Return only READY.', 'A public synthetic source.', **CARD_OPTIONS)
     message_text(post_json(url, api_key, card))
@@ -216,7 +217,7 @@ def smoke_openai(url, api_key, model):
     }))
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'openai', config)
-    smoke_openai_debate_judge(url, api_key, model, config['judge'])
+    smoke_magi_debate_judge(url, api_key, model, config['judge_fallback'])
     smoke_magi_motion(url, api_key, model, config['magi'])
     # 議題化が別の会社のとき、その答え直し（Luna・推論なし・strictスキーマ）
     smoke_magi_motion(url, api_key, model, config['magi'], name='motion_fallback')
@@ -271,21 +272,10 @@ def smoke_magi_discussion(url, api_key, model, provider, config=None):
                             '--validate-verifier-smoke', provider], input=json.dumps(data), encoding='utf-8', check=True, capture_output=True)
 
 
-def smoke_openai_debate_judge(url, api_key, model, config):
-    """magi2 の討議の判定（DEBATE）：推論 low（temperature は送れない）、enum と配列を含む strict な JSON スキーマ。"""
-    expected = {'assessment': '前提が割れている', 'action': 'ask',
-                'questions': [{'target': 'CASPER-3', 'question': '予算の上限は？'}]}
-    response = post_json(url, api_key, {
-        'model': model, 'stream': False, 'store': False,
-        'messages': [{'role': 'user', 'content': 'Return exactly this JSON: ' + json.dumps(expected, ensure_ascii=False)}],
-        'reasoning_effort': config['model']['reasoning_effort'],
-        'max_completion_tokens': config['model']['max_tokens'],
-        'response_format': config['format'],
-    })
-    choice = response.get('choices', [{}])[0]
-    if choice.get('finish_reason') != 'stop' or choice.get('message', {}).get('refusal'):
-        raise RuntimeError('討議の判定の応答が正常完了しませんでした')
-    if json.loads(message_content(response)) != expected:
+def smoke_magi_debate_judge(url, api_key, model, config):
+    """Haikuの判定とLunaの切替先を、本番のmedium・スキーマ・上限で確認する。"""
+    response = post_json(url, api_key, {**config['body'], 'model': model})
+    if json.loads(completed_content(response)) != config['expected']:
         raise RuntimeError('討議の判定のスキーマ疎通で期待した応答が得られませんでした')
 
 

@@ -7,6 +7,7 @@ import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, i
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchReader } from '../research.js';
+import { BIDI_CONTROL_CHARS } from '../personas.js';
 import bundledContext from '../../../data/magi-context.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -134,8 +135,8 @@ function normaliseImagePart(part, counters) {
 
 // 1メッセージを検証し {role, content} に正規化する。
 // クライアントは表示用の付加キー（mid / debate / reactions）を持つ履歴をそのまま送ってくる。
-// そのうち assistant の debate（その回の各人格の意見）だけは opinions として残し、人格ごとの履歴に使う
-// （personaThread）。上流の API へは role と content しか送らない（requestBody）。
+// assistantのdebateはopinionsとして人格ごとの履歴に使い、clarifyは直後の回答の分類にだけ使う。
+// 上流の生成APIへはroleとcontentしか送らない（requestBody）。
 function normaliseMessage(m, counters) {
   if (!m || (m.role !== 'user' && m.role !== 'assistant')) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
@@ -146,7 +147,8 @@ function normaliseMessage(m, counters) {
     const opinions = m.role === 'assistant' && m.mode !== 'fact' ? normaliseDebate(m.debate) : null;
     if (opinions) for (const text of Object.values(opinions)) checkText(text, DEFAULTS.persona_history_max_chars, counters);
     const magi = m.role === 'assistant' && m.mode === 'magi' ? cleanMagiHistory(m.magi) : null;
-    return { role: m.role, content: m.content, ...(opinions ? { opinions } : {}), ...(magi ? { magi } : {}) };
+    const clarify = m.role === 'assistant' && m.mode !== 'magi' && m.mode !== 'fact' ? cleanClarification(m.clarify) : null;
+    return { role: m.role, content: m.content, ...(opinions ? { opinions } : {}), ...(magi ? { magi } : {}), ...(clarify ? { clarify } : {}) };
   }
   // 画像を含められるのは user メッセージのみ
   if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0 || m.content.length > 8) {
@@ -778,32 +780,97 @@ function judgeInput(plainMessages, context, opinions, langNote) {
   ].join('\n');
 }
 
-// 統合人格（本人）として、いま答えを書けるか、聞き返すなら誰に何を聞くかを決める。
-// 返すのは { assessment, questions }（questions が空なら答える）。questions の相手は、いま討議に残っている人格（active）に限る。
-// 非クリティカル：失敗・時間切れ・形の崩れた JSON は null（その時点の討議で統合する）
-async function fetchJudgement(env, { system, input, active }, signal, log) {
-  try {
-    const res = await callModel({
-      env, cfg: DEFAULTS.models.judge, stream: false, signal, response_format: DEBATE.format,
-      messages: [{ role: 'system', content: system }, { role: 'user', content: input }],
-    });
-    if (!res.ok) { log('debate', 'judge', `HTTP ${res.status}`); return null; }
-    const choice = (await res.json()).choices?.[0] || {};
-    if (choice.finish_reason !== 'stop') { log('debate', 'judge', `finish_reason=${choice.finish_reason}`); return null; }
-    const v = JSON.parse(choice.message?.content || '');
-    const seen = new Set();
-    const questions = v.action === 'ask' && Array.isArray(v.questions) ? v.questions.flatMap(q => {
-      const text = q && typeof q.question === 'string' ? q.question.trim().slice(0, DEBATE.ask_max_chars) : '';
-      if (!text || !active.includes(q.target) || seen.has(q.target)) return [];
-      seen.add(q.target);
-      return [{ target: q.target, question: text }];
-    }) : [];
-    const assessment = typeof v.assessment === 'string' ? v.assessment.trim().slice(0, DEBATE.assessment_max_chars) : '';
-    return { assessment, questions };
-  } catch (e) {
-    log('debate', 'judge', 'failed', e && (e.name || e.message));
-    return null;
+const exactKeys = (value, keys) => value && !Array.isArray(value) && typeof value === 'object'
+  && Object.keys(value).length === keys.length && keys.every(k => Object.hasOwn(value, k));
+const questionText = (text, max) => typeof text === 'string' && !!text.trim() && text.length <= max
+  && !new RegExp(`[\\u0000-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`).test(text);
+
+function cleanUserQuestions(value) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 3) return null;
+  const seen = new Set();
+  const result = [];
+  for (const q of value) {
+    if (!exactKeys(q, ['question', 'options']) || !questionText(q.question, DEBATE.user_question_max_chars)
+      || seen.has(q.question.trim()) || !Array.isArray(q.options) || q.options.length !== 3
+      || q.options.some(o => !questionText(o, DEBATE.user_option_max_chars))
+      || new Set(q.options.map(o => o.trim())).size !== 3) return null;
+    seen.add(q.question.trim());
+    result.push({ question: q.question.trim(), options: q.options.map(o => o.trim()) });
   }
+  return result;
+}
+
+function cleanClarification(value) {
+  if (!exactKeys(value, ['questions', 'intent', 'fresh']) || !['consult', 'music', 'site', 'research'].includes(value.intent)
+    || !['yes', 'no'].includes(value.fresh)) return null;
+  const questions = cleanUserQuestions(value.questions);
+  return questions ? { questions, intent: value.intent, fresh: value.fresh } : null;
+}
+
+// JSON.parseが上書きしてしまう重複キー（エスケープ表記も含む）を、解析成功後に検出する。
+function uniqueJSONKeys(text) {
+  const tokens = text.match(/"(?:\\.|[^"\\])*"|[{}\[\]:,]/g) || [], stack = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t === '{' || t === '[') stack.push(t === '{' ? new Set() : null);
+    else if (t === '}' || t === ']') stack.pop();
+    else if (t[0] === '"' && tokens[i + 1] === ':') {
+      const key = JSON.parse(t), seen = stack.at(-1);
+      if (seen?.has(key)) return false;
+      seen?.add(key);
+    }
+  }
+  return true;
+}
+
+function parseJudgement(text, active, allowUser) {
+  const v = JSON.parse(text);
+  if (!uniqueJSONKeys(text) || !exactKeys(v, ['next_step', 'assessment', 'persona_questions', 'questions'])
+    || !['answer', 'ask_personas', 'ask_user'].includes(v.next_step)
+    || typeof v.assessment !== 'string' || v.assessment.length > DEBATE.assessment_max_chars
+    || !Array.isArray(v.persona_questions) || !Array.isArray(v.questions)) throw new Error('invalid_judgement');
+  if (v.next_step === 'answer' && (v.questions.length || v.persona_questions.length)) throw new Error('answer_with_questions');
+  if (v.next_step === 'ask_user') {
+    const questions = cleanUserQuestions(v.questions);
+    if (!questions || v.persona_questions.length) throw new Error('invalid_user_questions');
+    return allowUser ? { ...v, questions } : { ...v, next_step: 'answer', questions: [] };
+  }
+  if (v.next_step === 'ask_personas') {
+    const seen = new Set(), texts = new Set(), known = PERSONAS.map(p => p.codename);
+    if (v.questions.length || !v.persona_questions.length || v.persona_questions.length > 3) throw new Error('invalid_persona_questions');
+    for (const q of v.persona_questions) {
+      if (!exactKeys(q, ['target', 'question']) || !known.includes(q.target) || seen.has(q.target)
+        || !questionText(q.question, DEBATE.ask_max_chars) || texts.has(q.question.trim())) throw new Error('invalid_persona_question');
+      seen.add(q.target); texts.add(q.question.trim());
+    }
+    v.persona_questions = v.persona_questions.filter(q => active.includes(q.target)).map(q => ({ ...q, question: q.question.trim() }));
+    if (!v.persona_questions.length) v.next_step = 'answer';
+  }
+  return v;
+}
+
+// 判定と質問を1コールで生成する。形式不正・HTTP失敗時だけ別会社へ1回切り替える。
+// 呼び出し元の同じ20秒のsignalを使い、切替時に締切を延ばさない。
+async function fetchJudgement(env, { system, input, active, allowUser = false }, signal, log) {
+  const format = allowUser ? DEBATE.format : { ...DEBATE.format, json_schema: { ...DEBATE.format.json_schema,
+    schema: { ...DEBATE.format.json_schema.schema, properties: { ...DEBATE.format.json_schema.schema.properties,
+      next_step: { type: 'string', enum: ['answer', 'ask_personas'] } } } } };
+  for (const cfg of [DEFAULTS.models.judge, DEFAULTS.models.judge_fallback]) {
+    if (signal.aborted) return null;
+    try {
+      const res = await callModel({
+        env, cfg, stream: false, signal, response_format: format,
+        messages: [{ role: 'system', content: system }, { role: 'user', content: input }],
+      });
+      if (!res.ok) { await res.body?.cancel(); throw new Error(`HTTP ${res.status}`); }
+      const choice = (await res.json()).choices?.[0] || {};
+      if (choice.finish_reason !== 'stop') throw new Error(`finish_reason=${choice.finish_reason}`);
+      return parseJudgement(choice.message?.content || '', active, allowUser);
+    } catch (e) {
+      log('debate', 'judge', cfg.provider, 'failed', e && (e.name || e.message));
+    }
+  }
+  return null;
 }
 
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
@@ -1451,7 +1518,7 @@ async function readChatInput(request) {
     : null;
   if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
   return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
-    newContract, factMode, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
+    newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
 function siteSelectionNote(choice) {
@@ -1495,7 +1562,7 @@ function resolveVotes(opinions, round, send) {
 
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
-  pagesPromise = null, page = null, music = false, motion = null, signal, send, log }) {
+  pagesPromise = null, page = null, music = false, motion = null, clarification = null, signal, send, log }) {
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
@@ -1584,16 +1651,21 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
   for (let round = 3; round <= maxRounds && !signal.aborted; round++) {
     if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
-    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
+    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds, !!clarification) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
     const judgement = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
-      system: judgeSystem, input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename),
-    }, signal, log), signal);
+      system: judgeSystem, input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename), allowUser: !!clarification,
+    }, signal, log), signal).catch(e => { if (signal.aborted) throw e; log('debate', 'judge', 'timeout'); return null; });
+    if (signal.aborted) throw searchFailure('cancelled');
     if (judgement && judgement.assessment) assessment = judgement.assessment;
-    log('debate', `after r${round - 1}`, !judgement ? 'judge failed' : judgement.questions.length ? `ask ${judgement.questions.map(q => q.target).join(',')}` : 'answer');
+    log('debate', `after r${round - 1}`, judgement?.next_step || 'judge failed');
+    if (judgement?.next_step === 'ask_user' && clarification) {
+      send('clarify', { questions: judgement.questions, ...clarification });
+      return null; // このターンは質問だけ。統合・予測は行わない。
+    }
     // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
-    if (!judgement || !judgement.questions.length) { send('judge', { round: round - 1, action: 'answer' }); break; }
+    if (!judgement || judgement.next_step !== 'ask_personas') { send('judge', { round: round - 1, action: 'answer' }); break; }
     // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
-    const asked = judgement.questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
+    const asked = judgement.persona_questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
     send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });
     await withTimeout(personaTimeoutMs, signal =>
       Promise.all(asked.map(async ({ p, ask }) => {
@@ -1661,7 +1733,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
@@ -1674,9 +1746,13 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   else request.signal.addEventListener('abort', stopRequest, { once: true });
   // カードと分類は利用回数の確認と並行する。拒否・切断時は分類も止める。
   const cardsPromise = getPersonaCards(ctx, log);
+  const previousClarify = plainMessages.at(-2)?.role === 'assistant' ? plainMessages.at(-2).clarify : null;
+  const originalQuestion = previousClarify && [...plainMessages.slice(0, -2)].reverse().find(m => m.role === 'user');
   const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
     profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
     seed, replyLanguage, uiLanguage, fallback: langNote, factMode,
+    clarification: originalQuestion ? { original_question: classifySlice(contentText(originalQuestion.content), INTENT_CLASSIFY.latest_max_chars),
+      questions: previousClarify.questions, prior: { intent: previousClarify.intent, fresh: previousClarify.fresh } } : null,
   }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
   const refuse = res => {
     stop.abort();
@@ -1731,8 +1807,12 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
     cancel() { log('client', 'cancelled'); stop.abort(); },
     start(controller) {
       const enc = new TextEncoder();
-      let closed = false;
-      const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
+      let closed = false, clarified = false;
+      const send = (event, data) => {
+        if (closed || clarified && event === 'title') return;
+        if (event === 'clarify') clarified = true;
+        try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {}
+      };
       let pingTimer = null;
       const stopPing = () => { clearInterval(pingTimer); pingTimer = null; };
       const close = () => {
@@ -1834,9 +1914,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
               replyLanguage: classification.reply_language, ip: requestIP(request), signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
+              clarification: clarify && entry === 'chat' && !motion && !previousClarify
+                ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
               signal: stop.signal, send, log });
         // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
-        if (wantSuggest) {
+        if (wantSuggest && answer !== null) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
             signal => fetchSuggestion(upstream, [...plainMessages, { role: 'assistant', content: answer }], context, langNote, signal, log), stop.signal);
           if (text) send('suggest', { text });

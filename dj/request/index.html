@@ -3068,8 +3068,21 @@ function classificationFields(history, language, ui, entry, panel) {
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, fact_mode: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true, clarify: true },
     state ? { reply_language: state } : { language_seed: seed });
+}
+function cleanAgentClarify(v) {
+  if (!v || Object.keys(v).length !== 3 || ['questions','intent','fresh'].some(function (k) { return !Object.prototype.hasOwnProperty.call(v,k); }) || ['consult','music','site','research'].indexOf(v.intent) < 0 || ['yes','no'].indexOf(v.fresh) < 0
+    || !Array.isArray(v.questions) || !v.questions.length || v.questions.length > 3) return null;
+  var seen = new Set(), questions = [];
+  function text(s, max) { return typeof s === 'string' && s.trim() && s.length <= max
+    && !/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(s); }
+  for (var q of v.questions) {
+    if (!q || Object.keys(q).length !== 2 || !Object.prototype.hasOwnProperty.call(q,'question') || !Object.prototype.hasOwnProperty.call(q,'options') || !text(q.question, 60) || seen.has(q.question.trim()) || !Array.isArray(q.options) || q.options.length !== 3
+      || q.options.some(function (s) { return !text(s, 30); }) || new Set(q.options.map(function (s) { return s.trim(); })).size !== 3) return null;
+    seen.add(q.question.trim()); questions.push({question:q.question.trim(), options:q.options.map(function (s) { return s.trim(); })});
+  }
+  return {questions:questions, intent:v.intent, fresh:v.fresh};
 }
 function receiveClassification(state, ev, d) {
   if (ev === 'title' || ev === 'error') return;
@@ -3081,8 +3094,13 @@ function receiveClassification(state, ev, d) {
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
     if (d.mode !== undefined && (['fact','consult'].indexOf(d.mode) < 0 || d.mode === 'fact' && d.magi_candidate)
       || d.fresh !== undefined && ['yes','no'].indexOf(d.fresh) < 0) throw new Error('invalid_fact_classification');
-    state.mode = d.mode; state.classified = true; state.language = language; state.candidate = d.magi_candidate;
+    state.intent = d.intent; state.fresh = d.fresh || 'no'; state.mode = d.mode; state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (state.clarified && ev !== 'done') throw new Error('event_after_clarify');
+    if (ev === 'clarify') {
+      if (!state.classified || state.mode === 'fact' || state.candidate || state.reply || state.closed || !cleanAgentClarify(d) || d.intent !== state.intent || d.fresh !== state.fresh) throw new Error('invalid_clarify');
+      state.clarified = true;
+    }
     if (ev === 'sources') {
       if (state.mode !== 'fact' || state.candidate || !state.reply || state.sources) throw new Error('invalid_sources');
       state.sources = true;

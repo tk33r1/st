@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '4.9';
+var APP_VERSION = '5.0';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -54,8 +54,21 @@ function classificationFields(history, language, ui, entry, panel) {
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
   return Object.assign({ entry: entry || 'chat', classification_state: true, fact_mode: true, ui_language: ui },
-    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
+    entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true, clarify: true },
     state ? { reply_language: state } : { language_seed: seed });
+}
+function cleanAgentClarify(v) {
+  if (!v || Object.keys(v).length !== 3 || ['questions','intent','fresh'].some(function (k) { return !Object.prototype.hasOwnProperty.call(v,k); }) || ['consult','music','site','research'].indexOf(v.intent) < 0 || ['yes','no'].indexOf(v.fresh) < 0
+    || !Array.isArray(v.questions) || !v.questions.length || v.questions.length > 3) return null;
+  var seen = new Set(), questions = [];
+  function text(s, max) { return typeof s === 'string' && s.trim() && s.length <= max
+    && !/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(s); }
+  for (var q of v.questions) {
+    if (!q || Object.keys(q).length !== 2 || !Object.prototype.hasOwnProperty.call(q,'question') || !Object.prototype.hasOwnProperty.call(q,'options') || !text(q.question, 60) || seen.has(q.question.trim()) || !Array.isArray(q.options) || q.options.length !== 3
+      || q.options.some(function (s) { return !text(s, 30); }) || new Set(q.options.map(function (s) { return s.trim(); })).size !== 3) return null;
+    seen.add(q.question.trim()); questions.push({question:q.question.trim(), options:q.options.map(function (s) { return s.trim(); })});
+  }
+  return {questions:questions, intent:v.intent, fresh:v.fresh};
 }
 function receiveClassification(state, ev, d) {
   if (ev === 'title' || ev === 'error') return;
@@ -67,8 +80,13 @@ function receiveClassification(state, ev, d) {
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
     if (d.mode !== undefined && (['fact','consult'].indexOf(d.mode) < 0 || d.mode === 'fact' && d.magi_candidate)
       || d.fresh !== undefined && ['yes','no'].indexOf(d.fresh) < 0) throw new Error('invalid_fact_classification');
-    state.mode = d.mode; state.classified = true; state.language = language; state.candidate = d.magi_candidate;
+    state.intent = d.intent; state.fresh = d.fresh || 'no'; state.mode = d.mode; state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (state.clarified && ev !== 'done') throw new Error('event_after_clarify');
+    if (ev === 'clarify') {
+      if (!state.classified || state.mode === 'fact' || state.candidate || state.reply || state.closed || !cleanAgentClarify(d) || d.intent !== state.intent || d.fresh !== state.fresh) throw new Error('invalid_clarify');
+      state.clarified = true;
+    }
     if (ev === 'sources') {
       if (state.mode !== 'fact' || state.candidate || !state.reply || state.sources) throw new Error('invalid_sources');
       state.sources = true;
@@ -84,6 +102,90 @@ function receiveClassification(state, ev, d) {
   }
 }
 // AGENT_CLASSIFY_END
+
+// AGENT_CLARIFY_BEGIN
+// 確認質問も履歴に残す。HTMLとして解釈せず、古い質問は読み取り専用で再現する。
+function cleanAgentClarifyItem(item) {
+  var copy = Object.assign({}, item); delete copy.clarify;
+  var clarify = item.role === 'assistant' && !item.closed && !item.mode ? cleanAgentClarify(item.clarify) : null;
+  if (clarify) copy.clarify = clarify;
+  return copy;
+}
+function agentClarifyText(v) {
+  return v.questions.map(function (q, i) { return (i + 1) + '. ' + q.question; }).join('\n');
+}
+function agentClarifyPlaceholder(on) {
+  agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : '武田伸也AIに質問…') : (on ? 'Add details if needed' : 'Ask Shinya Takeda AI...');
+}
+function freezeAgentClarify() {
+  var turn = agentLog.lastElementChild;
+  if (turn && turn._clarify) {
+    turn.querySelectorAll('.agent-clarify button,.agent-clarify input').forEach(function (el) { el.disabled = true; });
+    turn._clarify = null;
+  }
+  agentClarifyPlaceholder(false);
+}
+function restoreAgentClarify() {
+  var item = agentHistory.at(-1), turn = agentLog.lastElementChild;
+  if (item && item.clarify && turn) renderAgentClarify(turn, item.clarify, true);
+}
+function agentClarifyAnswer(turn, extra) {
+  var state = turn && turn._clarify;
+  if (!state) return extra;
+  var lines = [], missing = false;
+  state.value.questions.forEach(function (q, i) {
+    var pick = state.picks[i];
+    if (pick === undefined) return;
+    var answer = pick === 3 ? state.other[i].value.trim() : q.options[pick];
+    if (pick === 3 && answer.length > 100) missing = true;
+    else if (answer) lines.push(state.value.questions.length === 1 && pick < 3 ? answer : q.question + ': ' + answer);
+  });
+  if (missing) return null;
+  if (extra) lines.push(extra);
+  var text = lines.join('\n\n');
+  return text.length <= 1000 ? text : null;
+}
+function renderAgentClarify(turn, raw, interactive) {
+  var value = cleanAgentClarify(raw);
+  if (!value) return;
+  var old = turn.querySelector('.agent-clarify'); if (old) old.remove();
+  var panel = document.createElement('div'); panel.className = 'agent-clarify';
+  var state = {value:value, picks:[], other:[]}; turn._clarify = interactive ? state : null;
+  var ja = document.documentElement.lang === 'ja';
+  var active = function () { return interactive && !agentBusy && !agentDead && !agentClosed && agentLog.lastElementChild === turn; };
+  value.questions.forEach(function (q, i) {
+    var group = document.createElement('fieldset'), legend = document.createElement('legend');
+    legend.textContent = (i + 1) + '. ' + q.question; group.appendChild(legend);
+    var input = document.createElement('input'); input.type = 'text'; input.maxLength = 100;
+    input.dataset.jaPh = '100文字以内で入力'; input.dataset.enPh = 'Up to 100 characters';
+    input.placeholder = ja ? input.dataset.jaPh : input.dataset.enPh; input.hidden = true; input.disabled = !interactive;
+    input.setAttribute('aria-label', q.question + ' — ' + (ja ? 'その他' : 'Other')); state.other[i] = input;
+    var buttons = [];
+    q.options.concat([ja ? 'その他（入力する）' : 'Other (type your own)']).forEach(function (option, n) {
+      var button = document.createElement('button'); button.type = 'button'; button.textContent = (n + 1) + '. ' + option;
+      if (n === 3) { button.dataset.ja = '4. その他（入力する）'; button.dataset.en = '4. Other (type your own)'; }
+      button.disabled = !interactive; button.setAttribute('aria-pressed', 'false'); buttons.push(button); group.appendChild(button);
+      button.addEventListener('click', function () {
+        if (!active()) return;
+        state.picks[i] = n; buttons.forEach(function (b, k) { b.setAttribute('aria-pressed', k === n ? 'true' : 'false'); });
+        input.hidden = n !== 3;
+        if (n === 3) input.focus();
+        else if (value.questions.length === 1) agentSend();
+      });
+    });
+    group.appendChild(input); panel.appendChild(group);
+  });
+  var send = document.createElement('button'); send.type = 'button'; send.textContent = ja ? '回答する' : 'Send answers'; send.disabled = !interactive;
+  send.dataset.ja = '回答する'; send.dataset.en = 'Send answers';
+  send.addEventListener('click', function () { if (active()) agentSend(); }); panel.appendChild(send);
+  turn.querySelector('.agent-reply-body').textContent = '';
+  turn.querySelector('.agent-reply').appendChild(panel);
+  if (interactive) {
+    agentClarifyPlaceholder(true);
+    agentInput.classList.remove('has-suggest');
+  }
+}
+// AGENT_CLARIFY_END
 
 // AGENT_FACT_BEGIN
 // 保存・表示・引用位置は全文のまま、上流へ送り直す事実回答の履歴だけ上限に収める。
@@ -482,7 +584,9 @@ function renderHistoryToLog(history) {
   agentClosed = false;
   if (!agentDead) setAgentControlsEnabled(true);
   agentLog.innerHTML = '';
-  cleanHistory(history).forEach(function (item) {
+  agentClarifyPlaceholder(false);
+  var cleanHistoryItems = cleanHistory(history), cleanHistoryLast = cleanHistoryItems.at(-1);
+  cleanHistoryItems.forEach(function (item) {
     if (item.role === 'user') {
       var u = document.createElement('div'); u.className = 'agent-user';
       u.innerHTML = '<span>' + userContentHTML(item.content) + '</span>';
@@ -494,6 +598,7 @@ function renderHistoryToLog(history) {
       turn.innerHTML = turnHTML(item);
       agentLog.appendChild(turn);
       renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, document.documentElement.lang === "ja");
+      if (item.clarify) { renderAgentClarify(turn, item.clarify, item === cleanHistoryLast); turn.querySelector('.agent-reply .reaction-bar')?.remove(); }
       if (item.magi) magiReplay(turn, item, { ja: document.documentElement.lang === 'ja', id: item.mid, log: agentLog });
       applyReactionsToTurn(turn, item.reactions);
       if (item.closed === true) closeAgentConversation(turn);
@@ -512,7 +617,12 @@ function cleanHistory(history) {
       && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
         return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
       })));
-  }).map(magiCleanItem) : [];
+  }).map(magiCleanItem).map(function (item) {
+    var copy = Object.assign({}, item); delete copy.clarify;
+    var clarify = item.role === 'assistant' && !item.closed && !item.mode ? cleanAgentClarify(item.clarify) : null;
+    if (clarify) copy.clarify = clarify;
+    return copy;
+  }) : [];
 }
 function initAgent() {
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
@@ -535,6 +645,7 @@ function resetAgent() {
   safeRemove('magi_current_history');
   safeRemove('magi_current_title');
   agentLog.innerHTML = '';
+  agentClarifyPlaceholder(false);
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   announceAgent('');
   setAgentControlsEnabled(true); agentInput.value = ''; fitAgentInput();
@@ -649,7 +760,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','sources','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','clarify','sources','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
@@ -897,9 +1008,11 @@ function agentStop() {
 
 async function agentSend() {
   if (agentBusy || agentDead || agentClosed) return;
-  var text = agentInput.value.trim().slice(0, 1000);
+  var text = agentClarifyAnswer(agentLog.lastElementChild, agentInput.value.trim());
+  if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
   var atts = attachments.slice();
   if (!text && !atts.length) return;
+  freezeAgentClarify();
   var startedAt = Date.now();
   setAgentSuggestion('');
   agentInput.value = ''; fitAgentInput();
@@ -913,6 +1026,7 @@ async function agentSend() {
   var sendContent = atts.length ? partsOf('url') : text;
   var storeContent = atts.length ? partsOf('thumb') : text;
   if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
+  agentClarifyPlaceholder(false);
 
   var u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = '<span>' + userContentHTML(storeContent) + '</span>';
   agentLog.appendChild(u);
@@ -934,7 +1048,7 @@ async function agentSend() {
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
-      var closedReply = false, factReply = false, replySources = null;
+      var closedReply = false, factReply = false, replySources = null, clarifyReply = null;
       var sendId = ++agentSendSequence;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
@@ -1034,6 +1148,7 @@ async function agentSend() {
           });
           if (magiView) magiView.push('ask', d); else agentScroll();
         },
+        clarify: function (d) { if (!dropped()) { clarifyReply = cleanAgentClarify(d); reply = agentClarifyText(clarifyReply); thinking.finish(); } },
         integrated: function (d) {
               if (dropped()) return;
               turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); });
@@ -1093,12 +1208,13 @@ async function agentSend() {
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     if (closedReply) closeAgentConversation(turn);
-    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
+    if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
-    setAgentSuggestion(completed && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
+    setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
     var last = agentHistory[agentHistory.length - 1];
@@ -1106,6 +1222,7 @@ async function agentSend() {
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
     // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
     if (!agentInput.value) { agentInput.value = text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+    restoreAgentClarify();
   }
 }
 
@@ -1353,7 +1470,7 @@ function deleteSavedSession(id) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify'];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'

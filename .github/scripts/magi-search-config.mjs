@@ -9,7 +9,7 @@ vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('w
   + '\n' + strip(read('workers/magi2/classification.js'))
   + '\n' + strip(read('workers/magi2/site-search.js'))
   + '\nglobalThis.config = { model: SITE_SEARCH.model, temperature: SITE_SEARCH.temperature, top_p: DEFAULTS.top_p, chat_max_tokens: SITE_SEARCH.chat_max_tokens, formats: SITE_SEARCH.formats,'
-  + ' judge: { model: DEFAULTS.models.judge, format: DEBATE.format },'
+  + ' judge: { model: DEFAULTS.models.judge, format: DEBATE.format }, judge_fallback: { model: DEFAULTS.models.judge_fallback, format: DEBATE.format },'
   + ' magi: { motion: { model: DEFAULTS.models.motion, format: MAGI_MODE.motion_format, prompt: MAGI_MODE.motion_prompt } },'
   + ' classify: INTENT_CLASSIFY, classify_smoke: ['
   + ' { input: { texts: ["Should I go for ramen tonight?"], seed: "日本語で話したいです。" }, expected: { language: "ja", votable: "yes", intent: "consult" } },'
@@ -30,6 +30,12 @@ const worker = read('workers/magi2/src/index.js');
 const start = worker.indexOf('function requestBody('), end = worker.indexOf('\nasync function callModel(', start);
 if (start < 0 || end < 0) throw new Error('requestBody block not found');
 vm.runInContext(worker.slice(start, end), ctx);
+vm.runInContext(`for (const name of ['judge', 'judge_fallback']) {
+  const cfg = config[name];
+  cfg.expected = {next_step:'ask_personas', assessment:'既知の条件を検算する', persona_questions:[{target:'CASPER-3', question:'与えられた時間で処理できる人数は？'}], questions:[]};
+  cfg.body = requestBody(cfg.model, {stream:false, response_format:cfg.format,
+    messages:[{role:'user', content:'Return exactly this JSON: ' + JSON.stringify(cfg.expected)}]});
+}`, ctx);
 vm.runInContext(worker.slice(worker.indexOf('function researchMessages('),worker.indexOf('// pause_turnで送り返す')),ctx);
 vm.runInContext(worker.slice(worker.indexOf('function researchSourceUrl('),worker.indexOf('async function verifyResearchAnswer(')),ctx);
 vm.runInContext('function stageError(_kind, code) {return new Error(code);}',ctx);

@@ -266,6 +266,17 @@
 .magi-record{margin-top:8px;min-width:0}.magi-record summary{cursor:pointer;font-size:11px;margin-bottom:6px}.magi-record .agent-personas{margin-top:6px}.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
 /* MAGI_PANEL_CSS_END */
 
+
+    .agent-clarify { display:grid; gap:12px; margin-top:8px }
+    .agent-clarify fieldset { border:0; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px; min-width:0 }
+    .agent-clarify legend { width:100%; margin-bottom:8px; white-space:pre-wrap }
+    .agent-clarify button,.agent-clarify input { font:inherit; color:inherit; background:transparent; border:1px solid currentColor; border-radius:6px; padding:8px; max-width:100%; overflow-wrap:anywhere }
+    .agent-clarify button { cursor:pointer; text-align:left }
+    .agent-clarify button[aria-pressed="true"] { background:var(--primary-color); color:var(--surface-color) }
+    .agent-clarify button:disabled { cursor:default; opacity:.6 }
+    .agent-clarify input { width:100%; box-sizing:border-box }
+    .agent-clarify input[hidden] { display:none }
+
   </style>
 </head>
 <body>
@@ -337,6 +348,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261015_2"></script>
+  <script src="app.js?v=20261015_3"></script>
 </body>
 </html>

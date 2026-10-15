@@ -6,7 +6,7 @@ export function classifySlice(text, limit) {
   return /[\uD800-\uDBFF]$/.test(out) ? out.slice(0, -1) : out;
 }
 
-export function classificationPayload({ profile = 'chat', texts = [], seed, hasLanguage = false, factMode = false }) {
+export function classificationPayload({ profile = 'chat', texts = [], seed, hasLanguage = false, factMode = false, clarification = null }) {
   const cfg = INTENT_CLASSIFY;
   const latest = texts.at(-1) || '';
   let state, names;
@@ -27,6 +27,8 @@ export function classificationPayload({ profile = 'chat', texts = [], seed, hasL
       ? !hasLanguage && !!languageSeed.trim() : !!latest.trim());
   }
   if (!names.length) return null;
+  // 直前の追加質問に対する回答だけ、通常のAI返信とは分けて分類の材料にする。
+  if (profile === 'chat' && clarification) state.clarification = clarification;
   const fact = factMode && profile === 'chat';
   if (fact && latest.trim()) names = [...names, 'fresh'];
   return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name,
@@ -76,8 +78,8 @@ export function acceptedChoice(name, answer, factMode = false) {
 }
 
 export async function classifyQuery(env, input, signal, log) {
-  const { profile, texts, seed, replyLanguage, uiLanguage, fallback, factMode = false } = input;
-  const payload = classificationPayload({ profile, texts, seed, hasLanguage: !!replyLanguage, factMode });
+  const { profile, texts, seed, replyLanguage, uiLanguage, fallback, factMode = false, clarification = null } = input;
+  const payload = classificationPayload({ profile, texts, seed, hasLanguage: !!replyLanguage, factMode, clarification });
   let answers = {};
   const started = Date.now();
   if (payload && env[INTENT_CLASSIFY.key] && !signal.aborted) {
