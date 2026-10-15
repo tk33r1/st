@@ -1,9 +1,8 @@
-import { BIDI_CONTROL_CHARS, MAGI_MODE, PERSONAS } from './personas.js';
+import { LINE_CONTROL_RE, MAGI_MODE, PERSONAS } from './personas.js';
 
 // 改行・タブは許し（後で空白にする）、それ以外の制御文字と双方向制御文字を拒む
-const bidiOrControl = new RegExp(`[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
 export function cleanMotion(text) {
-  if (typeof text !== 'string' || bidiOrControl.test(text)) return null;
+  if (typeof text !== 'string' || LINE_CONTROL_RE.test(text)) return null;
   const clean = text.trim().replace(/[\r\n\t]+/g, ' ');
   return clean && clean.length <= MAGI_MODE.motion_max_chars ? clean : null;
 }

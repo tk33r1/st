@@ -319,6 +319,9 @@ PERSONAS.forEach(p => {
 
 // 双方向制御文字（正規表現の文字クラスの中身）。言語サンプルと議題の入力検査で共有する
 export const BIDI_CONTROL_CHARS = '\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069';
+// 制御文字と双方向制御文字。TEXT_CONTROL_RE は改行・タブも拒み、LINE_CONTROL_RE は改行・タブ・復帰を許す
+export const TEXT_CONTROL_RE = new RegExp(`[\\u0000-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
+export const LINE_CONTROL_RE = new RegExp(`[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
 
 export const MAGI_MODE = {
   motion_ms: 4000, motion_max_chars: 120, motion_reference_max_chars: 500, quorum: 2,

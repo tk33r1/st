@@ -4614,9 +4614,9 @@ test('A2: 原案を出さず実本文の照合を待ち、確認できない項�
   const answer=await pending;assert.doesNotMatch(answer,/根拠のない原案/);assert.match(answer,/未確認/);assert.equal(seen.at(-1)[0],'sources');
 });
 // A5: 実上流なしで会話・分類・課金前の受付境界を検査する。
-function siteChatWorker(malice = 'none') {
+function siteChatWorker(malice = 'none', stream = undefined) {
   const inputs=[];
-  const w=enableSearch(worker(undefined,(url,o)=>{
+  const w=enableSearch(worker(stream,(url,o)=>{
     const body=o?.body && JSON.parse(o.body);inputs.push({url,body});
     if(url===JEV)return Response.json({answers:Object.fromEntries(Object.keys(body.questions).map(k=>[k,{choice:k==='language'?'ja':malice,confidence:0.99}]))});
   }));
@@ -4662,6 +4662,51 @@ test('A5: 旧404の応答契約と分類なしを維持し、履歴と未知・�
   const w=siteChatWorker();assert.equal((await siteChatRequest(w,undefined,suffix)).status,400);assert.equal(w.inputs.length,0);assert.equal(w.env.DB.rows.size,0);
  }
  const w=siteChatWorker();assert.equal((await searchRequest(w,{query:'確認',locale:'ja',history:[]})).status,400);assert.equal(w.inputs.length,0);
+});
+
+test('A5: 検索語と回答から双方向制御文字を除き、返した文字列を履歴にした続きを受け付ける',async()=>{
+ const lrm=String.fromCharCode(0x200e), rlm=String.fromCharCode(0x200f), query='PDF'+lrm+'をまとめたい';
+ const w=siteChatWorker('none',completion('PDF'+rlm+'Studioを案内します。\n使い方も聞けます。'));
+ const first=await (await siteChatRequest(w,{query,locale:'ja',history:[]})).json();
+ assert.ok(!first.comment.includes(rlm));assert.ok(first.comment.includes('\n'));
+ assert.ok(!JSON.stringify(w.inputs).includes(lrm));
+ // 画面は送る前の検索語から同じ文字を除き、受け取った回答をそのまま履歴に入れる
+ const answered={role:'assistant',content:first.comment,pages:first.results.map(p=>({title:p.title,url:p.url}))};
+ const next=await siteChatRequest(w,{query:'使い方は？',locale:'ja',history:[{role:'user',content:query.replace(lrm,'')},answered],reply_language:first.reply_language});
+ assert.equal(next.status,200);
+ // 除かずに送り返した履歴は、これまでどおり課金前に拒否する
+ const raw=siteChatWorker();
+ assert.equal((await siteChatRequest(raw,{query:'使い方は？',locale:'ja',history:[{role:'user',content:query},answered],reply_language:first.reply_language})).status,400);
+ assert.equal(raw.inputs.length,0);
+});
+
+test('A5: 続きの候補は今回の語の点数を先に比べ、会話の文脈は同点の並びにだけ使う',()=>{
+ const w=worker();
+ const page=(id,title)=>({id:'tool:'+id,kind:'tool',title,description:'',detail:title,url:'/tools/'+id+'/',hub:false,title_en:'',description_en:''});
+ const pages=[page('qr','QR Palette'),page('game','ゲーム一覧'),page('pdf','PDF Studio')];
+ const context='PDFをまとめたい PDF Studioを案内しました。';
+ // 話題を変えた続きでは、前の話題（PDF）より今回の語（ゲーム）に合うページを先に置く
+ assert.equal(w.ctx.shortlistSitePages(pages,'ゲームはある？',[],context)[0].id,'tool:game');
+ // 今回の語で差が付かない続きでは、会話の文脈に合うページを先に置く
+ assert.equal(w.ctx.shortlistSitePages(pages,'それは？',[],context)[0].id,'tool:pdf');
+ assert.equal(w.ctx.shortlistSitePages(pages,'それは？')[0].id,'tool:qr');
+});
+
+test('A5: 4画面の言語コード表は Worker の INTENT_CLASSIFY.languages と同じ',()=>{
+ const w=worker();
+ const expected=vm.runInContext("Object.keys(INTENT_CLASSIFY.languages).filter(c => c !== 'other').sort().join(' ')",w.ctx);
+ for(const file of ['404.html','index.html','magi-app/www/app.js','dj/request/index.html']){
+  const table=read(file).match(/MAGI_LANGUAGE_CODES = '([^']*)'/);
+  assert.ok(table,file);assert.equal(table[1].trim().split(' ').sort().join(' '),expected,file);
+ }
+});
+
+test('A4: 更新履歴を読めないときは CORS 付きの 503 で返す',async()=>{
+ const w=worker();
+ vm.runInContext("getVersionHistory = async () => { throw new Error('bundled_versions_invalid'); };",w.ctx);
+ const res=await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions',{headers:{Origin:'https://tk.st'}}),w.env,{waitUntil(){}});
+ assert.equal(res.status,503);assert.equal(res.headers.get('Access-Control-Allow-Origin'),'https://tk.st');
+ assert.equal((await res.json()).error.code,'versions_unavailable');
 });
 
 test('A5: 履歴は3往復まで・交互の役割・文字数・ページ形・言語を厳密に検査する',async()=>{

@@ -23,6 +23,7 @@ try{
    if(url.pathname==='/magi2/site-search'){const body=req.postDataJSON();posts.push(body);assert.equal(url.search,'?site_debate=1&site_chat=1');
     if(mode==='slow')await new Promise(r=>release=r);
     if(mode==='failure')return route.fulfill({status:503,json:{error:{code:'search_unavailable'}}});
+    if(mode==='global')return route.fulfill({status:429,headers:{'Access-Control-Allow-Origin':origin},json:{error:{code:'global_daily_limit_exceeded'}}});
     return route.fulfill({headers:{'Access-Control-Allow-Origin':origin},json:{status:'results',results:[{id:'tool:7',title:'PDF Studio',description:'<b>文字だけ</b>',kind:'tool',url:'/tools/pdf-studio/'}],comment:'回答 '+posts.length+' <img src=x onerror=alert(1)>',reply_language:{version:1,code:lang,source:'jev'},closed:mode==='closed'}});}
    if(url.origin!==origin||url.pathname==='/assets/analytics.js')return route.fulfill({body:''});return route.continue();});
   await page.goto(origin+'/a5-validation/missing/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('[data-st-search-readings=ready]'));
@@ -53,6 +54,22 @@ try{
   mode='normal';await page.locator('#ai-run').click();await page.locator('#ai-followup').waitFor();assert.deepEqual(posts.at(-1).history,[]);
   mode='closed';await follow.fill('会話終了の確認');await page.locator('#ai-followup-send').click();await page.locator('#ai-closed').waitFor();assert.equal(await page.locator('#ai-followup').isHidden(),true);
   await query.fill('PDF');await query.press('Enter');await page.locator('#ai-run').waitFor();assert.equal(await page.locator('#ai-closed').isHidden(),true);
+  // 双方向制御文字は送る前に除き、続きの履歴にも残さない（Workerが履歴で拒むため）
+  const lrm=String.fromCharCode(0x200e);
+  mode='normal';await page.locator('#ai-run').click();await page.locator('#ai-followup').waitFor();
+  const turns=posts.length;await follow.fill('PDF'+lrm+'の使い方');await page.locator('#ai-followup-send').click();await page.waitForFunction(n=>document.getElementById('ai-comment').textContent.includes('回答 '+n),turns+1);
+  assert.equal(posts.at(-1).query,'PDFの使い方');
+  // 続きの質問で全体上限に当たったら、共有上限ではなく今日の上限として案内し、送信ボタンを戻さない
+  mode='global';await follow.fill('上限の確認');await page.locator('#ai-followup-send').click();await page.locator('#ai-status').filter({hasText:/今日はここまで|That is all for today/}).waitFor();
+  assert.equal(posts.at(-1).history[2].content,'PDFの使い方');assert.ok(!JSON.stringify(posts.at(-1)).includes(lrm));
+  assert.equal(await page.locator('#ai-followup-send').isDisabled(),true);
+  mode='normal';await page.locator('#ai-followup').dispatchEvent('submit');await page.waitForTimeout(100);assert.equal(posts.at(-1).query,'上限の確認');
+  // 会話が始まる前に③を取り消したら、②の引き渡しを外し、同じ語の確定で②をやり直せる
+  await query.fill('QR');await query.press('Enter');await page.locator('#ai-run').waitFor();
+  mode='slow';release=null;await page.locator('#ai-run').click();await page.waitForFunction(()=>!document.getElementById('ai-cancel').hidden);
+  while(!release)await page.waitForTimeout(10);await page.locator('#ai-cancel').click();mode='normal';release();
+  const rankBefore=rank.length;await query.press('Enter');for(let i=0;i<100&&rank.length===rankBefore;i++)await page.waitForTimeout(20);
+  assert.equal(rank.length,rankBefore+1);assert.equal(rank.at(-1).query,'QR');
   const events=await page.evaluate(()=>(window.dataLayer||[]).filter(e=>/^not_found_ai/.test(e.event||'')));
   if(off)assert.equal(events.length,0);else{const followEvents=events.filter(e=>e.event==='not_found_ai_followup');assert.ok(followEvents.length>=2);assert.equal(followEvents[0].turn,2);assert.ok(!followEvents[0].search_term.includes('a.b@example.com')&&!followEvents[0].search_term.includes('090-1234-5678'));assert.ok(followEvents.every(e=>Object.keys(e).every(k=>['event','search_term','turn'].includes(k))));}
   await page.reload();assert.equal(await page.locator('#ai-result').isHidden(),true);assert.deepEqual(errors,[]);assert.ok(!page.url().includes('PDF'));

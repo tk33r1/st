@@ -1205,7 +1205,7 @@ async function agentSend() {
       else if (!(closedReply && completed && !errored)) { setAgentControlsEnabled(true); if (!document.hidden) agentInput.focus({ preventScroll: true }); }
     }
   }
-  if (dropped()) { delete pendingReactions[mid]; return; }
+  if (dropped()) return; // 予約したリアクションは finally で消してある
   if (completed && reply.trim() && !errored || magiRetained) {
     renderAgentPages(replyEl, sitePages);
         renderAgentSources(replyBody, replyEl, reply, replySources, document.documentElement.lang === "ja");

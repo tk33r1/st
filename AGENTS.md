@@ -276,7 +276,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     止めるときは Worker の `SITE_RANK_ENABLED` を先に false にし、その後で 404 の `RANK_ENABLED` を false にする（magi2 の README.md）。
     AIの検索範囲は常設入口に限らない。AIへは関連度で最大40件・16,000文字分だけ渡す（値の正本は `SITE_SEARCH`）。
     AIの検索や MAGI の話題から外したいページは、ページを noindex にする。
-    回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける。
+    回数は既存の `countUp`／`rate_limit` に `search:<IP>` と `search:global` で記録し、通常チャットと分ける（例外はA5の404会話の続きの質問で、通常チャットの回数で数える）。
     検索語・行動ログは取ってよい（2026-10-12 に「検索語をDB・ログに残さない」約束は破棄した。tools の約束は「アップロードされた中身を保存しない」だけ）。
     共通検索の候補を開くと、画面が `POST /search/api/click` へ検索語（照合と同じ正規化）・開いたページ・一覧と順位を sendBeacon で送り、D1 の `search_clicks` に1行書く
     （同じ組は1日1回、`st-analytics=off` なら送らない。上限は `personas.js` の `SEARCH_CLICK`、停止は `SEARCH_CLICK_ENABLED`）。

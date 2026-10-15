@@ -1,13 +1,12 @@
-import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
-import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
+import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
-// デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
-// 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchReader } from '../research.js';
-import { BIDI_CONTROL_CHARS } from '../personas.js';
+// デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
+// 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
 
@@ -382,9 +381,8 @@ const PROVIDER_ROLES = {
 async function alertUpstream(env, log, provider, res, ctx, signal) {
   // 判定に使う先頭500バイト（エラー本文はASCIIのJSONなので500文字）だけを最大2秒で読む（届いた部分とHTTPコードだけで判定する）。
   // 複製のcancelは元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
-  if (!mayBeBillingFailure(res.status, provider)) { res.body?.cancel().catch(() => {}); return; }
-  const body = await readLimited(res, 500, signal, 2000);
-  if (!isBillingFailure(res.status, body, provider, res.headers)) return;
+  const body = await billingFailureBody(res, provider, 500, signal);
+  if (body === null) return;
   log('upstream_alert', provider, res.status, body.slice(0, 200));
   const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
     `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
@@ -448,11 +446,7 @@ async function sendAlert(env, log, key, subject, lines, redact = false, signal =
 function searchUpstream(env, ctx, log, purpose, signal = null) {
   return Object.assign(Object.create(env), {
     onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
-      if (!billingFailure) {
-        if (!mayBeBillingFailure(res.status, provider)) { res.body?.cancel().catch(() => {}); return; }
-        const body = await readLimited(res, SITE_RANK.error_body_max_bytes, null, 2000);
-        if (!isBillingFailure(res.status, body, provider, res.headers)) return;
-      }
+      if (!billingFailure && await billingFailureBody(res, provider, SITE_RANK.error_body_max_bytes, null) === null) return;
       log('site_search', 'upstream_alert', provider, res.status);
       const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
         `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
@@ -471,13 +465,17 @@ function alertWithDeadline(ctx, log, ms, task) {
   ctx.waitUntil(Promise.resolve().then(() => task(ac.signal)).catch(() => log('site_rank', 'alert_failed')).finally(() => clearTimeout(timer)));
 }
 
+// 404の会話の検索語と回答から、続きの履歴の検査（cleanSiteHistory）で拒む文字を除く。
+// 画面は送った検索語と受け取った回答をそのまま履歴にして送り返すので、ここで除かないと続きが毎回400になる。
+// 検索語は1行なので改行・タブも除き、回答は改行・タブを残す。
+const queryControls = new RegExp(TEXT_CONTROL_RE.source, 'g'), replyControls = new RegExp(LINE_CONTROL_RE.source, 'g');
+
 // A5の履歴は3往復だけ。ページ名は入力の検査に使い、事実の根拠にはしない。
 function cleanSiteHistory(value) {
   if (value === undefined) return [];
   const cfg = SITE_SEARCH.conversation;
   if (!Array.isArray(value) || value.length > cfg.history_limit || value.length % 2) return null;
-  const control = new RegExp(`[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
-  const text = (s, max) => typeof s === 'string' && !!s.trim() && Array.from(s).length <= max && !control.test(s);
+  const text = (s, max) => typeof s === 'string' && !!s.trim() && Array.from(s).length <= max && !LINE_CONTROL_RE.test(s);
   const rows = [];
   for (const [i, row] of value.entries()) {
     const assistant = i % 2 === 1;
@@ -519,7 +517,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       }
       const allowed = siteChat ? ['query','locale','history','reply_language'] : ['query','locale'];
       if (Object.keys(body).some(k => !allowed.includes(k)) || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
-      const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+      const query = body.query.replace(queryControls, '').trim();
       if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
       if ([...params.keys()].some(k => !['site_debate','site_chat'].includes(k) || params.getAll(k).length !== 1 || params.get(k) !== '1')) return fail(400, 'invalid_site_debate');
       if (!params.has('site_debate')) return httpError(409, { stage: 'bad_request', code: 'site_search_update_required',
@@ -532,11 +530,16 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (signal.aborted) throw searchFailure('cancelled');
       const day = utcDay();
       const ip = requestIP(request);
-      const followup = history.length > 0, ipKey = followup ? ip : 'search:' + ip, globalKey = followup ? 'global' : 'search:global';
-      if (await countUp(env.DB, ipKey, day, followup ? DEFAULTS.daily_limit : SITE_SEARCH.daily_limit) == null) return fail(429, 'daily_limit_exceeded');
-      if (await countUp(env.DB, globalKey, day, followup ? DEFAULTS.global_daily_limit : SITE_SEARCH.global_daily_limit) == null) {
-        ctx.waitUntil(sendAlert(env, log, followup ? 'alert:global' : 'alert:site-search-global', followup ? '[MAGI] 本日のサイト全体の上限に達しました' : '[MAGI] AI検索の本日の全体上限に達しました', [
-          `UTC日付: ${day}`, `全体上限: ${followup ? DEFAULTS.global_daily_limit : SITE_SEARCH.global_daily_limit}`,
+      // 続きの質問は通常チャットの回数、初回は AI 検索の回数で数える
+      const quota = history.length > 0
+        ? { ipKey: ip, globalKey: 'global', ipLimit: DEFAULTS.daily_limit, globalLimit: DEFAULTS.global_daily_limit,
+          alert: 'alert:global', subject: '[MAGI] 本日のサイト全体の上限に達しました' }
+        : { ipKey: 'search:' + ip, globalKey: 'search:global', ipLimit: SITE_SEARCH.daily_limit, globalLimit: SITE_SEARCH.global_daily_limit,
+          alert: 'alert:site-search-global', subject: '[MAGI] AI検索の本日の全体上限に達しました' };
+      if (await countUp(env.DB, quota.ipKey, day, quota.ipLimit) == null) return fail(429, 'daily_limit_exceeded');
+      if (await countUp(env.DB, quota.globalKey, day, quota.globalLimit) == null) {
+        ctx.waitUntil(sendAlert(env, log, quota.alert, quota.subject, [
+          `UTC日付: ${day}`, `全体上限: ${quota.globalLimit}`,
         ], true).catch(() => log('site_search', 'alert_failed')));
         return fail(429, 'global_daily_limit_exceeded');
       }
@@ -553,17 +556,19 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
           let comment = '';
           await replyToMalice({env:upstream,cards,classified,uiLanguage:body.locale,signal,
             send:(event, data) => {if(event === 'integrated') comment += data.delta;}, log});
-          return jsonResponse({request_id:requestId,status:'no_results',results:[],comment,reply_language:language,closed:true},cors,200,{'Cache-Control':'no-store'});
+          return jsonResponse({request_id:requestId,status:'no_results',results:[],comment:comment.replace(replyControls, ''),reply_language:language,closed:true},cors,200,{'Cache-Control':'no-store'});
         }
       }
-      const result = await selectSitePages({ query, locale: body.locale, pages, history, purpose: 'requested', signal, log,
+      // 履歴のページ名は信頼せず、現行の索引で1回だけ照合して、ページ選びと回答の両方に使う
+      const conversation = resolveSiteHistory(history, pages);
+      const result = await selectSitePages({ query, locale: body.locale, pages, conversation, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      const previousPages = resolveSiteHistory(history, pages).flatMap(row => row.pages || []);
+      const previousPages = conversation.flatMap(row => row.pages || []);
       const messages = [...(previousPages.length ? [{role:'system',content:SITE_SEARCH.history_answer_prompt + '\n' + JSON.stringify(previousPages)}] : []),
         ...history.map(row => ({role:row.role,content:row.content})), {role:'user',content:query}];
       const answer = await runFactAnswer({ upstream, cards, messages,
         langNote, pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
-      return jsonResponse({ request_id: requestId, ...result, comment: answer, ...(siteChat ? {reply_language:language,closed:false} : {}) }, cors, 200, { 'Cache-Control': 'no-store' });
+      return jsonResponse({ request_id: requestId, ...result, comment: answer.replace(replyControls, ''), ...(siteChat ? {reply_language:language,closed:false} : {}) }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) {
     // ②がここに来るのは切断だけ（②の期限は内側で応答する）。②の記録は handleSiteRank の1行に任せる
@@ -839,8 +844,7 @@ function judgeInput(plainMessages, context, opinions, langNote) {
 
 const exactKeys = (value, keys) => value && !Array.isArray(value) && typeof value === 'object'
   && Object.keys(value).length === keys.length && keys.every(k => Object.hasOwn(value, k));
-const questionText = (text, max) => typeof text === 'string' && !!text.trim() && text.length <= max
-  && !new RegExp(`[\\u0000-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`).test(text);
+const questionText = (text, max) => typeof text === 'string' && !!text.trim() && text.length <= max && !TEXT_CONTROL_RE.test(text);
 
 function cleanUserQuestions(value) {
   if (!Array.isArray(value) || value.length < 1 || value.length > 3) return null;
@@ -1072,6 +1076,18 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
   }
 }
 
+// ページ選びは呼び出しの開始から chat_wait_ms だけ待ち、間に合わなければ手元の結果（fallback）のまま進む。
+const awaitPageChoice = (pagesPromise, fallback, signal) =>
+  searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => fallback);
+
+// いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）。
+// 除いて空になったら「見当たらない」として扱う（結果がある扱いのまま空の一覧を渡さない）
+function withoutCurrentPage(choice, page) {
+  if (!choice || !page) return choice;
+  const results = choice.results.filter(p => p.url !== page);
+  return { ...choice, results, status: choice.status === 'results' && !results.length ? 'no_results' : choice.status };
+}
+
 // 事実回答の入力は、本番と保存済み出典の評価で同じ順序から作る。
 function factAnswerMessages({ cards, messages, langNote, theme = null, guide = null,
   pageChoice = null, siteOnly = false, research = false }) {
@@ -1091,22 +1107,17 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
   pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
-  const otherPages = choice => {
-    if (!choice || !page) return choice;
-    const results = choice.results.filter(p => p.url !== page);
-    return { ...choice, results, status: choice.status === 'results' && !results.length ? 'no_results' : choice.status };
-  };
   // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
-  const pagesWait = pagesPromise ? searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice) : null;
+  const pagesWait = pagesPromise ? awaitPageChoice(pagesPromise, pageChoice, signal) : null;
   if (pagesWait && !research) pageChoice = await pagesWait;
   if (signal?.aborted) throw searchFailure('cancelled');
-  const options = { cards, messages, langNote, theme, guide, pageChoice: otherPages(pageChoice), siteOnly };
+  const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly };
   const input = factAnswerMessages({ ...options, research });
   const answer = research
     ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, signal, send, log })
     : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
   if (pagesWait && research) pageChoice = await pagesWait;
-  pageChoice = otherPages(pageChoice);
+  pageChoice = withoutCurrentPage(pageChoice, page);
   if (pageChoice?.results.length && !signal?.aborted) send('pages', chatPageEvent(pageChoice));
   return answer;
 }
@@ -1775,15 +1786,10 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (bias) log('synthesizer_call', 'bias', theme);
 
   if (pagesPromise) {
-    pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
+    pageChoice = await awaitPageChoice(pagesPromise, pageChoice, signal);
     if (signal.aborted) throw searchFailure('cancelled');
   }
-  // いま開いているページへのリンクは出さない（ページ選びにも選ばないよう伝えてあるが、念のため）
-  if (pageChoice && page) {
-    const results = pageChoice.results.filter(p => p.url !== page);
-    // 除いて空になったら「見当たらない」として統合人格に伝える（結果がある扱いのまま空の一覧を渡さない）
-    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
-  }
+  pageChoice = withoutCurrentPage(pageChoice, page);
   const hasPages = pageChoice && pageChoice.results.length;
   const synthMessages = [
     // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
@@ -2041,14 +2047,21 @@ export default {
 
     const url = new URL(request.url);
 
+    // --- 更新履歴（data/magi-versions.json）。tk.st からも同梱分からも読めなければ、CORS 付きの 503 で返す
+    // （例外のまま返すと CORS ヘッダーの無い 500 になり、画面では原因の見えない失敗になる）---
+    if (request.method === 'GET' && url.pathname === '/magi2/versions') {
+      try {
+        return jsonResponse(await getVersionHistory(), cors, 200, { 'Cache-Control': 'public, max-age=600', Vary: 'Origin' });
+      } catch (err) {
+        log('versions', 'unavailable', err && err.message);
+        return httpError(503, { stage: 'internal', code: 'versions_unavailable', message: '更新履歴を読み込めませんでした', retryable: true }, requestId, cors);
+      }
+    }
     // --- スプラッシュの人格の説明：各人格がいま使っている LLM と、説明文（personas.js の PERSONA_GUIDE）---
     // モデルID・表示名の正本は config/ai-models.json で、週次の監視で更新されうるのでページには直書きしない。
     // 説明文も画面に持たせない（トップページとアプリで食い違わず、アプリのリリースなしで直せる）。
     // パスの名前はモデル名だけを返していた頃のまま（配布済みのアプリが provider / model を読みに来る）。
     // 公開して困る情報ではないので認可は付けない（読めるのは CORS で許した Origin のページだけ）
-    if (request.method === 'GET' && url.pathname === '/magi2/versions') {
-      return jsonResponse(await getVersionHistory(), cors, 200, { 'Cache-Control': 'public, max-age=600', Vary: 'Origin' });
-    }
     if (request.method === 'GET' && url.pathname === '/magi2/models') {
       // 配布済みの画面も model を表示するので、ここで表示名を返す。API 呼び出しは cfg.model のまま。
       // 実際に指定しているモデルIDも model_id として返し、エイリアスとの対応を確認できるようにする。

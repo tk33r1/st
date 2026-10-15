@@ -529,7 +529,8 @@ function cleanReplyLanguage(v) {
       // ③を止めているときは、ダイアログ（検索欄の見出しの横からも開く）に③の送り先と上限の説明を出さない
       if (!AI_SEARCH_ENABLED) ['ai-info-text', 'ai-limit-text'].forEach(function (id) { byId(id).hidden = true; });
       function rankAvailable() { return searchState.rank!=='disabled'; }
-      var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null, history: [], turns: [], language: null, closed: false, conditionKey: '' };
+      // limited は今日の上限（IP・全体）に達した印。同じ語の会話では送信ボタンを戻さない
+      var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null, turns: [], language: null, closed: false, limited: false, conditionKey: '' };
       var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
         : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
       // 考え中と回答の到着は計時ラベルと結果の枠が見せるので、読み上げだけにする。失敗・上限・キャンセルは画面にも出す。
@@ -565,16 +566,21 @@ function cleanReplyLanguage(v) {
         };
       }
 
-      function resetAI() {
+      // 進行中の問い合わせを止める（会話は残す）。届きかけの応答は generation で捨てる
+      function stopAI() {
         ai.generation++;
         if (ai.thinking) { ai.thinking.cancel(); ai.thinking = null; }
         if (ai.controller) ai.controller.abort();
-        ai.controller = null; ai.query = ''; ai.eligible = false;
+        ai.controller = null; byId('ai-cancel').hidden = true;
+      }
+      function resetAI() {
+        stopAI();
+        ai.query = ''; ai.eligible = false;
         byId('ai-search').hidden = true; byId('ai-result').hidden = true;
-        byId('ai-run').disabled = false; byId('ai-cancel').hidden = true;
+        byId('ai-run').disabled = false;
         byId('ai-thinking').hidden = true; byId('ai-thinking').replaceChildren();
         setAIStatus(''); byId('ai-list').replaceChildren();
-        ai.history = []; ai.turns = []; ai.language = null; ai.closed = false;
+        ai.turns = []; ai.language = null; ai.closed = false; ai.limited = false;
         byId('ai-conversation').replaceChildren(); byId('ai-followup').hidden = true; byId('ai-closed').hidden = true;
         byId('ai-followup-input').value = ''; byId('ai-run').hidden = false;
       }
@@ -602,6 +608,12 @@ function cleanReplyLanguage(v) {
           section.appendChild(pages); list.appendChild(section);
         });
       }
+      // 送る履歴は直近3往復。本文と題名は Worker の上限（SITE_SEARCH.conversation）に収める
+      function aiHistory() {
+        return ai.turns.slice(-3).flatMap(function (turn) {
+          return [{role:'user',content:turn.query},{role:'assistant',content:Array.from(turn.comment).slice(0,2000).join(''),pages:turn.rows.map(function (p) {return {title:Array.from(p.title).slice(0,160).join(''),url:p.url};})}];
+        });
+      }
       function aiHref(value) {
         if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return null;
         try {
@@ -612,9 +624,9 @@ function cleanReplyLanguage(v) {
       }
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       async function askAI(query, followup) {
-        if (!ai.eligible || ai.controller || composing || followupComposing || ai.closed || currentQuery() !== ai.query) return;
+        if (!ai.eligible || ai.controller || composing || followupComposing || ai.closed || ai.limited || currentQuery() !== ai.query) return;
         var followupDraft = byId('ai-followup-input').value;
-        query = query.trim(); if (!query || Array.from(query).length > 200) return;
+        query = query.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '').trim(); if (!query || Array.from(query).length > 200) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
         if (searchUI) searchUI.handoff();
@@ -632,17 +644,18 @@ function cleanReplyLanguage(v) {
         try {
           var origin = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://workers.tk.st';
           var res = await Promise.race([fetch(origin + '/magi2/site-search?site_debate=1&site_chat=1', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify(Object.assign({query:query,locale:lang,history:followup ? ai.history : []}, ai.language ? {reply_language:ai.language} : {})) }), expired]);
+            credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify(Object.assign({query:query,locale:lang,history:followup ? aiHistory() : []}, ai.language ? {reply_language:ai.language} : {})) }), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!res.ok) {
             var errorBody = await Promise.race([res.json().catch(function () { return {}; }), expired]);
             if (generation !== ai.generation || ac.signal.aborted) return;
             var code = errorBody.error && errorBody.error.code;
+            // 続きの質問はAI検索ではなく通常のチャットの回数で数えるので、全体上限でも共有上限の案内は出さない
             setAIStatus(code === 'site_search_update_required' ? (lang === 'ja' ? 'ページを再読み込みしてください。' : 'Please reload this page.')
-              : code === 'global_daily_limit_exceeded' ? (lang === 'ja' ? 'AI検索の共有上限に達しました。通常検索は引き続き使えます。' : 'The shared daily AI search limit has been reached. Regular search remains available.')
+              : code === 'global_daily_limit_exceeded' && !followup ? (lang === 'ja' ? 'AI検索の共有上限に達しました。通常検索は引き続き使えます。' : 'The shared daily AI search limit has been reached. Regular search remains available.')
               : res.status === 429 ? aiText.limited : aiText.unavailable);
             send('not_found_ai_result', { status: res.status === 429 ? 'limited' : 'error', count: 0 });
-            if (res.status === 429) byId('ai-run').disabled = true;
+            if (res.status === 429) ai.limited = true;
             return;
           }
           var data = await Promise.race([res.json(), expired]);
@@ -654,7 +667,6 @@ function cleanReplyLanguage(v) {
           if (rows.length !== data.results.length) throw new Error('Invalid links');
           ai.language = replyLanguage; ai.closed = data.closed;
           ai.turns.push({query:query, comment:data.comment, rows:rows});
-          ai.history = ai.history.concat([{role:'user',content:query},{role:'assistant',content:Array.from(data.comment).slice(0,2000).join(''),pages:rows.map(function (p) {return {title:Array.from(p.title).slice(0,160).join(''),url:p.url};})}]).slice(-6);
           renderAIPast(); byId('ai-followup').hidden = ai.closed; byId('ai-closed').hidden = !ai.closed;
           if (followup && !followupComposing && byId('ai-followup-input').value === followupDraft) byId('ai-followup-input').value = '';
           byId('ai-run').hidden = true;
@@ -679,7 +691,7 @@ function cleanReplyLanguage(v) {
           clearTimeout(timer);
           if (!answered) thinking.cancel();
           if (ai.thinking === thinking) ai.thinking = null;
-          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; byId('ai-followup-send').disabled = ai.closed || byId('ai-status').textContent === aiText.limited; if (byId('ai-status').textContent !== aiText.limited) byId('ai-run').disabled = false; }
+          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; byId('ai-followup-send').disabled = ai.closed || ai.limited; byId('ai-run').disabled = ai.limited; }
         }
       }
       byId('ai-run').addEventListener('click', function () { askAI(ai.query, false); });
@@ -687,8 +699,9 @@ function cleanReplyLanguage(v) {
       byId('ai-followup-input').addEventListener('compositionend', function () {followupComposing = false;});
       byId('ai-followup').addEventListener('submit', function (event) {event.preventDefault(); if (!followupComposing) askAI(byId('ai-followup-input').value,true);});
       byId('ai-cancel').addEventListener('click', function () {
-        if (!ai.turns.length) {var query=ai.query;resetAI();syncAI(query,0);}
-        else {ai.generation++;if(ai.controller) ai.controller.abort();ai.controller=null;if(ai.thinking)ai.thinking.cancel();ai.thinking=null;byId('ai-cancel').hidden=true;byId('ai-followup-send').disabled=false;}
+        // 会話が始まる前に③をやめたら、②を引き渡し（handoff）から外し、同じ語のまま②をやり直せるようにする
+        if (!ai.turns.length) {var query=ai.query;resetAI();syncAI(query,0);if (searchUI) searchUI.cancel();}
+        else {stopAI();byId('ai-followup-send').disabled=false;}
         setAIStatus(aiText.cancelled);
       });
       function rankAfter() {

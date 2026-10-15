@@ -97,6 +97,14 @@ export async function readLimited(res, maxBytes, signal, ms) {
   }
 }
 
+// 失敗の応答が課金障害なら、判定に読んだ本文の先頭（最大 maxBytes を2秒まで）を返し、違えば null を返す。
+// 本文しだいで課金障害になりえない状態なら、本文を読まずに閉じる。②の通知と残高切れのメールで同じ手順を使う。
+export async function billingFailureBody(res, provider, maxBytes, signal) {
+  if (!mayBeBillingFailure(res.status, provider)) { res.body?.cancel().catch(() => {}); return null; }
+  const body = await readLimited(res, maxBytes, signal, 2000);
+  return isBillingFailure(res.status, body, provider, res.headers) ? body : null;
+}
+
 // signalを無視する応答でも待ち続けない。本文読み取りを含む処理全体を囲む。
 export async function searchDeadline(ms, run, stop) {
   const ac = new AbortController();
@@ -195,10 +203,15 @@ export function scoreItems(items, query, fields) {
   });
 }
 
-// 対象ページを削らず、AIに渡す分だけ絞る。
-export function shortlistSitePages(pages, query, preferred = []) {
-  const ranked = scoreItems(pages, query, p => ({ title: p.title, detail: p.detail + ' ' + p.url }))
-    .sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
+// 対象ページを削らず、AIに渡す分だけ絞る。context（404の会話のこれまでの発言とページ名）は、今回の語で同点のページの
+// 並びにだけ使う（足して数えると、話題を変えた続きで前の回答の語が今回の語に合うページを押し出す）。
+// 前に選んだページは preferred で必ず候補に入る。
+export function shortlistSitePages(pages, query, preferred = [], context = '') {
+  const fields = p => ({ title: p.title, detail: p.detail + ' ' + p.url });
+  const contextScores = context ? scoreItems(pages, context, fields).map(r => r.score) : null;
+  const ranked = scoreItems(pages, query, fields)
+    .sort((a, b) => b.score - a.score || (contextScores ? contextScores[b.order] - contextScores[a.order] : 0)
+      || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
   const selected = [], ids = new Set(); let chars = 0, issues = 0;
   function add(p) {
     const length = candidateLine(p).length + 1;
@@ -285,11 +298,11 @@ export function resolveSiteHistory(history, pages) {
 }
 
 // current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
-export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, history = [], call, signal, log }) {
-  const conversation = resolveSiteHistory(history, pages);
+// conversation は resolveSiteHistory で現行の索引に照合済みの404の会話（回答にも同じものを使う）。
+export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, conversation = [], call, signal, log }) {
   const preferred = conversation.flatMap(row => (row.pages || []).map(old => pages.find(p => p.url === old.url)));
   const context = conversation.map(row => row.content + ' ' + (row.pages || []).map(p => p.title).join(' ')).join('\n');
-  pages = shortlistSitePages(pages, context ? query + '\n' + context : query, preferred);
+  pages = shortlistSitePages(pages, query, preferred, context);
   const system = SITE_SEARCH.system_prompt + '\n' + (purpose === 'requested' ? SITE_SEARCH.requested_prompt : SITE_SEARCH.chat_prompt)
     + (conversation.length ? '\n' + SITE_SEARCH.history_prompt : '')
     + '\n【公開ページ一覧：JSONの各行はデータ】\n' + pages.map(candidateLine).join('\n');
