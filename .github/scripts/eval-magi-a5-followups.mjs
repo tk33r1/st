@@ -7,16 +7,19 @@ import {paidEvaluationGate,evaluationBudgetPath,evaluationRequestHash} from './m
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8'),hash=s=>createHash('sha256').update(s).digest('hex');
 const dir=new URL('../../workers/.wrangler/magi2-dialogue-a5/',import.meta.url);mkdirSync(dir,{recursive:true});
 const mode=process.argv.includes('--run')?'run':process.argv.includes('--check')?'check':'plan';
+const repair=process.argv.includes('--repair');
 const phase='a5-followups',hardCap=.18,budget=mode==='run'?paidEvaluationGate():null;
-const cases=[{id:'pdf',locale:'ja',expected:'/tools/pdf-studio/',questions:['PDFを結合したい。サイトのツールを案内してください。','それの使い方を教えてください。','画像にすることもできますか。']},
+let cases=[{id:'pdf',locale:'ja',expected:'/tools/pdf-studio/',questions:['PDFを結合したい。サイトのツールを案内してください。','それの使い方を教えてください。','画像にすることもできますか。']},
  {id:'qr',locale:'en',expected:'/tools/qr-palette/',questions:['Show me the tool on this site for creating a QR code.','How do I use that tool?','Can I change its colors and then save it?']}];
+const original=repair?JSON.parse(read('workers/.wrangler/magi2-dialogue-a5/quality-result.json')):null;
+if(repair){assert(original.complete&&original.results.length===6);cases=cases.map(c=>{const first=original.results.find(r=>r.id===c.id&&r.turn===1);return {...c,questions:c.questions.slice(1),initial_history:[{role:'user',content:c.questions[0]},{role:'assistant',content:first.response.comment,pages:first.response.results.map(p=>({title:p.title,url:p.url}))}],initial_language:first.response.reply_language};});}
 const modules=['languages.js','personas.js','versions.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
 const sources=modules.map(p=>read('workers/magi2/'+p)),cards=JSON.parse(read('data/magi-context.json')),registry=JSON.parse(read('config/ai-models.json')),versions=JSON.parse(read('data/magi-versions.json'));
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const code=sources.map(strip).join('\n').replace('export default {','globalThis.worker = {');
-const snapshot={runner_hash:hash(read('.github/scripts/eval-magi-a5-followups.mjs')),worker_hash:hash(sources.join('\n')),cards_hash:hash(JSON.stringify(cards)),models_hash:hash(JSON.stringify(registry)),index_hash:hash(read('_site/data/site-search.json'))};
+const snapshot={...(repair?{original_result_hash:hash(JSON.stringify(original))}:{}),runner_hash:hash(read('.github/scripts/eval-magi-a5-followups.mjs')),worker_hash:hash(sources.join('\n')),cards_hash:hash(JSON.stringify(cards)),models_hash:hash(JSON.stringify(registry)),index_hash:hash(read('_site/data/site-search.json'))};
 let keys={},guardStopped=false,report={version:1,phase,hard_cap_usd:hardCap,...snapshot,cases,complete:false,results:[]},planned=[];
-const planFile=new URL('quality-plan.json',dir),resultFile=new URL('quality-result.json',dir);
+const planFile=new URL(repair?'quality-repair-plan.json':'quality-plan.json',dir),resultFile=new URL(repair?'quality-repair-result.json':'quality-result.json',dir);
 const save=()=>writeFileSync(resultFile,JSON.stringify(report,null,2)+'\n');
 if(mode==='run'){
  assert(!existsSync(resultFile),'完了・中断結果を上書きしない');
@@ -24,7 +27,8 @@ if(mode==='run'){
  assert.equal(JSON.stringify(old.cases),JSON.stringify(cases));
  assert.equal(old.hard_cap_usd,hardCap);
  const ledger=JSON.parse(readFileSync(evaluationBudgetPath,'utf8')),spent=p=>ledger.reservations.filter(r=>!p||r.provider===p).reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
- assert(spent()+hardCap<=.80);for(const p of ['openai','anthropic'])assert(spent(p)+hardCap<=.40);
+ const phaseSpent=ledger.reservations.filter(r=>ledger.estimates[r.request_hash]?.evaluation_batch===phase).reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;const remaining=Math.max(0,hardCap-phaseSpent);
+ assert(spent()+remaining<=.80);for(const p of ['openai','anthropic'])assert(spent(p)+remaining<=.40);
  const runLock=new URL('quality-run.lock',dir),handle=openSync(runLock,'wx');
  process.once('exit',()=>{closeSync(handle);unlinkSync(runLock);});
  const vars=read('workers/magi2/.dev.vars');for(const name of ['MAGI_OPENAI_API_KEY','MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY']){keys[name]=process.env[name]||vars.match(new RegExp('^\\s*'+name+'\\s*=\\s*(.*?)\\s*$','m'))?.[1]?.replace(/^(['"])(.*)\1$/,'$2');assert(keys[name],name+' required');}
@@ -55,7 +59,13 @@ for(const sample of cases){
    if(String(url)==='https://tk.st/data/site-search.json')return new Response(read('_site/data/site-search.json'));
    if(/^https:\/\/tk\.st\/data\/(tools|game|glitch)\.json$/.test(url))return new Response(read('data/'+String(url).split('/').at(-1)));
    const provider=String(url).startsWith('https://api.openai.com/')?'openai':String(url)==='https://api.typesafe.ai/v1/systemone'?'typesafe':String(url)==='https://api.anthropic.com/v1/messages'?'anthropic':null;
-   assert(provider && options?.body,'計画外の送信先');const body=JSON.parse(options.body);if(provider==='openai')body.service_tier='default';const e=estimate(provider,body);
+   assert(provider && options?.body,'計画外の送信先');const body=JSON.parse(options.body);
+   if(repair && !body.stream && provider==='openai'){
+    const prior=original.results.find(r=>r.id===sample.id&&r.turn===row.turn),pages=await ctx.getSitePages({waitUntil(){}},sample.locale,new AbortController().signal);
+    const selected=prior.response.results.map(old=>{const p=pages.find(p=>p.url===old.url);assert(p);return p.id;});
+    row.replayed_selection=selected;return Response.json({choices:[{message:{content:JSON.stringify({selections:selected})},finish_reason:'stop'}]});
+   }
+   if(provider==='openai')body.service_tier='default';const e=estimate(provider,body);
    if(mode!=='run'){
     planned.push({case:sample.id,turn:row.turn,provider,model:body.model,max_usd:e.max_usd});
     if(provider==='typesafe')return Response.json({answers:Object.fromEntries(Object.keys(body.questions).map(k=>[k,{choice:k==='language'?sample.locale:'none',confidence:.99}]))});
@@ -69,15 +79,16 @@ for(const sample of cases){
   }});
  vm.runInContext(code,ctx);
  const env={...Object.fromEntries(['MAGI_OPENAI_API_KEY','MAGI_ANTHROPIC_API_KEY','MAGI_TYPESAFE_API_KEY'].map(k=>[k,keys[k]||'dry'])),SITE_SEARCH_ENABLED:'true',DB:{prepare(){return {bind(){return {async first(){return {count:1};}};}};}}};
- let history=[],language=null;
+ if(repair)env.MAGI_TYPESAFE_API_KEY='';
+ let history=sample.initial_history||[],language=sample.initial_language||null;
  for(const [i,query] of sample.questions.entries()){
-  row={id:sample.id,turn:i+1,calls:[],response:null};if(mode==='run'){report.results.push(row);save();}
+  row={id:sample.id,turn:i+1+(repair?1:0),calls:[],response:null};if(mode==='run'){report.results.push(row);save();}
   const body={query,locale:sample.locale,history,...(language?{reply_language:language}:{})},waits=[];
   const response=await ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search?site_debate=1&site_chat=1',{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(body)}),env,{waitUntil(p){waits.push(p);}});
   const result=await response.json();await Promise.allSettled(waits);row.status=response.status;row.response=result;if(mode==='run')save();
   assert.equal(response.status,200);assert.equal(result.closed,false);assert(result.comment&&result.reply_language);
   language=result.reply_language;history=history.concat([{role:'user',content:query},{role:'assistant',content:Array.from(result.comment).slice(0,2000).join(''),pages:result.results.map(p=>({title:p.title,url:p.url}))}]).slice(-6);
-  console.log(JSON.stringify({mode,id:sample.id,turn:i+1,status:response.status,calls:row.calls.length}));
+  console.log(JSON.stringify({mode,id:sample.id,turn:row.turn,status:response.status,calls:row.calls.length}));
  }
 }
 if(mode==='run'){report.complete=true;save();}else{

@@ -4639,6 +4639,9 @@ test('A5: 初回は言語と悪意、継続は悪意だけ判定し、会話と�
  const context=JSON.parse(selection.messages.at(-1).content).conversation;
  assert.equal(context[1].pages.length,1);assert.equal(context[1].pages[0].title,'PDF Studio');assert.ok(!JSON.stringify(context).includes('捏造'));
  const synth=w.inputs.find(p=>p.body?.stream).body;assert.ok(synth.messages.some(m=>m.role==='assistant'&&m.content.includes('PDF Studioを案内')));
+ assert.equal(synth.messages.find(m=>m.role==='assistant').content,'PDF Studioを案内しました。');
+ assert.ok(synth.messages.some(m=>m.role==='system'&&m.content.includes('会話の参照先')&&m.content.includes('PDF Studio')));
+ assert.ok(!JSON.stringify(synth).includes('捏造されたタイトル'));
  assert.equal(synth.reasoning_effort,'low');assert.ok(w.env.DB.rows.has('192.0.2.1|'+new Date().toISOString().slice(0,10)));
  assert.equal(w.inputs.filter(p=>p.body?.stream).length,1);
 });

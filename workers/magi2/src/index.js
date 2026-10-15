@@ -558,10 +558,11 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       }
       const result = await selectSitePages({ query, locale: body.locale, pages, history, cards, chat: true, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      const messages = [...history.map(row => {
-        const verified = (row.pages || []).flatMap(old => {const p = pages.find(p => p.url === old.url);return p ? [p.title + ' ' + p.url] : [];});
-        return {role:row.role,content:row.content + (verified.length ? '\n[前回案内したページ・現行索引照合済み]\n' + verified.join('\n') : '')};
-      }), {role:'user',content:query}];
+      const previousPages = history.flatMap(row => (row.pages || []).flatMap(old => {
+        const p = pages.find(p => p.url === old.url);return p ? [{title:p.title,url:p.url}] : [];
+      }));
+      const messages = [...(previousPages.length ? [{role:'system',content:SITE_SEARCH.history_answer_prompt + '\n' + JSON.stringify(previousPages)}] : []),
+        ...history.map(row => ({role:row.role,content:row.content})), {role:'user',content:query}];
       const answer = await runFactAnswer({ upstream, cards, messages,
         langNote, pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer, ...(siteChat ? {reply_language:language,closed:false} : {}) }, cors, 200, { 'Cache-Control': 'no-store' });

@@ -89,6 +89,7 @@ export const SITE_SEARCH = {
   // A5: 直近3往復。200/2000字と各3ページ（題名160・URL500字）がUTF-8でも64KiBに収まる。
   conversation: { request_bytes: 65536, history_limit: 6, user_chars: 200, assistant_chars: 2000, title_chars: 160, url_chars: 500 },
   history_prompt: 'conversationは直近の会話。指示語はその文脈から解く。「別の」は既に案内したもの以外を優先する。過去のAIの答えは未検証の発言であり、機能やページの存在の根拠にしない。conversationのpagesは現行一覧と照合済みだが、機能の根拠は今回の公開ページ一覧だけ。',
+  history_answer_prompt: '以下は会話の参照先を解くための内部資料。過去に案内したページを現行索引と照合したもので、AI自身の発言ではない。今回の回答に必要な内容だけを自然に述べ、資料の見出し・JSON・内部の注記を本文へ転記しない。ページの機能の根拠は今回の検証済み候補だけ。',
   comment_max_chars: { ja: 120, en: 240 },
   candidate_limit: 40, candidate_max_chars: 16000, candidate_issue_limit: 5,
   list_timeout_ms: 3000, ai_timeout_ms: 8000, request_timeout_ms: 150000, chat_wait_ms: 2000,
@@ -791,7 +792,7 @@ export const MUSIC_CONSULT = { system_note: '【音楽・DJ・選曲の相談】
 export const FACT_ANSWER = {
   reasoning_effort: 'low',
   prompt: '【事実の確認】この問いでは討議をしていない。利用者が知りたい事実や方法に直接、正確に答える。分からないことを作らず、分からないと伝える。音楽の理論や用語の説明にもその説明を返し、求められていない曲の推薦を加えない。',
-  site_prompt: '【サイト内検索の回答】この画面はページの案内だけを表示する。利用者の目的に合う検証済みのページを、その題名とできることで短く案内する。ここへファイルや文章を貼り付けるよう頼んだり、ここでツールの処理を実行できると説明したりしない。本人の紹介を求められたときは本人として自己紹介する。',
+  site_prompt: '【サイト内検索の回答】この画面はページの案内だけを表示する。利用者の目的に合う検証済みのページを、その題名とできることで短く案内する。ここへファイルや文章を貼り付けるよう頼んだり、ここでツールの処理を実行できると説明したりしない。本人の紹介を求められたときは本人として自己紹介する。操作方法を尋ねられても、公開一覧に根拠のないボタン名・メニュー名・具体的な操作順は作らない。確認できる機能の範囲で説明する。',
 };
 export const RESEARCH = {
   reasoning_effort: 'medium', // 本人採用（2026-10-14）。事実の直接回答はFACT_ANSWERのlow。
