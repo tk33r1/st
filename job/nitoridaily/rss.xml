@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 15 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 15 Oct 2026 05:32:11 +0900</lastBuildDate>
+    <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 16 Oct 2026 05:13:32 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月16日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261016/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261016/</guid>
+      <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ニトリグループが2026年度グッドデザイン賞で7項目を受賞し、14年連続の評価を獲得。SPAによる商品開発力の継続性が改めて示された。 島忠の秋冬ペットベッド新発売やデコホームでの化粧品取り扱いなど、生活空間と暮らしの領域を広げる商品・売場の拡張が進んでいる。</description>
+    </item>
     <item>
       <title>2026年10月15日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261015/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261002/</guid>
       <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
       <description>似鳥会長が直接指揮する月約1,000点の新商品開発が報じられ、商品投入の速度と開発体制が競争力の焦点に。 Nウォームの新柄・機能提案や、低価格ヘッドホンの評価記事から、価格だけでなく選ぶ楽しさや使用価値を磨く動きが見える。</description>
-    </item>
-    <item>
-      <title>2026年10月1日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261001/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261001/</guid>
-      <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリはマレーシア15店舗目の出店を発表。東南アジアで店舗網を広げ、現地の商業施設への出店を通じた顧客接点拡大を進める。 島忠の値下げ企画や家電の1対1回収が話題に。価格対応と購入後の処分支援を組み合わせ、顧客の買い替え負担を抑える動きが見られる。</description>
     </item>
   </channel>
 </rss>
