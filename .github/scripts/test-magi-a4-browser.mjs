@@ -36,8 +36,8 @@ try {
   await page.locator('#btn-info-agent').click();await page.locator('#agent-info-panel').waitFor();
   await page.locator('#agent-info-panel .agent-panel-close').click();
   await page.locator('#btn-versions-agent').click();await page.locator('.agent-versions-list section').first().waitFor();
-  assert.equal(await page.locator('.agent-versions-list section').count(),26);
-  assert.equal(await page.locator('.agent-versions-list h3').first().textContent(),'ver 5.1');
+  assert.equal(await page.locator('.agent-versions-list section').count(),data.versions.length);
+  assert.equal(await page.locator('.agent-versions-list h3').first().textContent(),'ver '+data.versions[0].version);
   assert.equal(await page.locator('.agent-versions-title').textContent(),lang==='ja'?'更新履歴':'Release History');
   const list=page.locator('.agent-versions-list');assert.equal(await list.getAttribute('lang'),lang);
   assert.equal(await list.evaluate(e=>e.scrollHeight>e.clientHeight),true);

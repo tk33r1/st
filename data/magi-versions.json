@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "5.2",
+      "date": "2026-10-15",
+      "changes": {
+        "ja": [
+          "404ページのサイト案内で、続けて質問できるようになりました。",
+          "別の検索で会話を切り替えられます。会話は保存せず、再読み込みで消えます。"
+        ],
+        "en": [
+          "You can ask follow-up questions in the 404 page’s site guide.",
+          "A different search starts a new conversation. Chats are not saved and disappear on reload."
+        ]
+      }
+    },
+    {
       "version": "5.1",
       "date": "2026-10-15",
       "changes": {

@@ -86,6 +86,9 @@ export const SITE_SEARCH = {
   chat_max_tokens: 120, temperature: 0.4,
   daily_limit: 10, global_daily_limit: 100,
   request_bytes: 4096, query_max_chars: 200, chat_query_max_chars: 500,
+  // A5: 直近3往復。200/2000字と各3ページ（題名160・URL500字）がUTF-8でも64KiBに収まる。
+  conversation: { request_bytes: 65536, history_limit: 6, user_chars: 200, assistant_chars: 2000, title_chars: 160, url_chars: 500 },
+  history_prompt: 'conversationは直近の会話。指示語はその文脈から解く。「別の」は既に案内したもの以外を優先する。過去のAIの答えは未検証の発言であり、機能やページの存在の根拠にしない。conversationのpagesは現行一覧と照合済みだが、機能の根拠は今回の公開ページ一覧だけ。',
   comment_max_chars: { ja: 120, en: 240 },
   candidate_limit: 40, candidate_max_chars: 16000, candidate_issue_limit: 5,
   list_timeout_ms: 3000, ai_timeout_ms: 8000, request_timeout_ms: 150000, chat_wait_ms: 2000,
@@ -608,6 +611,7 @@ export const INTENT_CLASSIFY = {
     }
   },
   profiles: {
+    'site-search': { questions: ['language', 'malice'] },
     chat: { questions: ['language', 'malice', 'votable', 'intent', 'site_pages'] },
     'dj-request': { questions: ['language', 'malice'] },
     legacy: { questions: ['language'], messages: 3, message_max_chars: 500 },

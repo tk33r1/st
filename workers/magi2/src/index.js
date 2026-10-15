@@ -60,7 +60,7 @@ function inputError(err, requestId, cors) {
 
 // Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
 // signal（省略できる）で止めたら、読み取り中の reader を止める（待つ Promise を打ち切るだけでは読み取りが残る）
-async function readJsonLimited(request, maxBytes, signal = null) {
+async function readJsonLimited(request, maxBytes, signal = null, metrics = null) {
   const tooLarge = () => stageError('bad_request', 'request_too_large', 'リクエストサイズが上限を超えています', { http_status: 413, retryable: false });
   if (Number(request.headers.get('Content-Length')) > maxBytes) throw tooLarge();
   if (!request.body) throw stageError('bad_request', 'invalid_json', 'リクエストボディがありません', { retryable: false });
@@ -77,6 +77,7 @@ async function readJsonLimited(request, maxBytes, signal = null) {
       if (size > maxBytes) { await reader.cancel(); throw tooLarge(); }
       text += dec.decode(value, { stream: true });
     }
+    if (metrics) metrics.bytes = size;
     const body = JSON.parse(text + dec.decode());
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid body');
     return body;
@@ -470,6 +471,28 @@ function alertWithDeadline(ctx, log, ms, task) {
   ctx.waitUntil(Promise.resolve().then(() => task(ac.signal)).catch(() => log('site_rank', 'alert_failed')).finally(() => clearTimeout(timer)));
 }
 
+// A5の履歴は3往復だけ。ページ名は入力の検査に使い、事実の根拠にはしない。
+function cleanSiteHistory(value) {
+  if (value === undefined) return [];
+  const cfg = SITE_SEARCH.conversation;
+  if (!Array.isArray(value) || value.length > cfg.history_limit || value.length % 2) return null;
+  const control = new RegExp(`[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
+  const text = (s, max) => typeof s === 'string' && !!s.trim() && Array.from(s).length <= max && !control.test(s);
+  const rows = [];
+  for (const [i, row] of value.entries()) {
+    const assistant = i % 2 === 1;
+    if (!row || typeof row !== 'object' || Array.isArray(row) || Object.keys(row).some(k => !['role','content','pages'].includes(k))
+      || row.role !== (assistant ? 'assistant' : 'user') || !text(row.content, assistant ? cfg.assistant_chars : cfg.user_chars)
+      || !assistant && row.pages !== undefined) return null;
+    const pages = assistant && row.pages !== undefined ? row.pages : [];
+    if (!Array.isArray(pages) || pages.length > 3 || pages.some(p => !p || Object.keys(p).length !== 2
+      || !text(p.title, cfg.title_chars) || !text(p.url, cfg.url_chars) || !/^\/(?!\/)/.test(p.url)
+      || /[\\\s?#]/.test(p.url) || new URL(p.url, 'https://tk.st').origin !== 'https://tk.st')) return null;
+    rows.push({role:row.role, content:row.content, ...(assistant ? {pages:pages.map(p => ({title:p.title,url:p.url}))} : {})});
+  }
+  return rows;
+}
+
 async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
   const fail = (status, code) => httpError(status, {
     stage: status === 429 ? 'rate_limit' : status < 500 ? 'bad_request' : 'upstream', code,
@@ -483,37 +506,65 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_json');
       // 本文の受け付けは②・③とも6秒まで（遅い本文で待ち続けない）。②の残りの時間は、受付からの経過を引いて数える
       let body;
-      try { body = await searchDeadline(SITE_RANK.request_timeout_ms, s => readJsonLimited(request, SITE_SEARCH.request_bytes, s), signal); }
+      const url = new URL(request.url), params = url.searchParams, rankPath = url.pathname === '/search/api/rank';
+      const siteChat = !rankPath && params.get('site_chat') === '1', metrics = {};
+      try { body = await searchDeadline(SITE_RANK.request_timeout_ms, s => readJsonLimited(request,
+        siteChat ? SITE_SEARCH.conversation.request_bytes : SITE_SEARCH.request_bytes, s, metrics), signal); }
       catch (err) { return fail(err.envelope?.http_status || 400, err.envelope?.code || (err.searchCode === 'timeout' ? 'request_timeout' : 'invalid_json')); }
       // mode のある要求は②。'rank' 以外の mode を③として動かさない
-      if (Object.hasOwn(body, 'mode') || new URL(request.url).pathname==='/search/api/rank') { rank = true; return await handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started); }
-      if (Object.keys(body).length !== 2 || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
+      if (Object.hasOwn(body, 'mode') || rankPath) {
+        rank = true;
+        if (metrics.bytes > SITE_SEARCH.request_bytes) return fail(413, 'request_too_large');
+        return await handleSiteRank(request, env, ctx, { requestId, cors, log }, body, signal, started);
+      }
+      const allowed = siteChat ? ['query','locale','history','reply_language'] : ['query','locale'];
+      if (Object.keys(body).some(k => !allowed.includes(k)) || typeof body.query !== 'string' || !['ja', 'en'].includes(body.locale)) return fail(400, 'invalid_query');
       const query = body.query.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
       if (!query || Array.from(body.query).length > SITE_SEARCH.query_max_chars) return fail(400, 'invalid_query');
-      const params = new URL(request.url).searchParams;
-      if ([...params.keys()].some(k => k !== 'site_debate') || params.getAll('site_debate').length > 1
-        || (params.has('site_debate') && params.get('site_debate') !== '1')) return fail(400, 'invalid_site_debate');
+      if ([...params.keys()].some(k => !['site_debate','site_chat'].includes(k) || params.getAll(k).length !== 1 || params.get(k) !== '1')) return fail(400, 'invalid_site_debate');
       if (!params.has('site_debate')) return httpError(409, { stage: 'bad_request', code: 'site_search_update_required',
         message: 'ページを再読み込みしてください', retryable: false }, requestId, cors);
+      const history = siteChat ? cleanSiteHistory(body.history) : [];
+      const replyLanguage = siteChat && body.reply_language !== undefined ? cleanReplyLanguage(body.reply_language) : null;
+      if (!history || siteChat && (body.reply_language !== undefined && !replyLanguage || history.length && !replyLanguage)) return fail(400, 'invalid_history');
       if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
       const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
       if (signal.aborted) throw searchFailure('cancelled');
       const day = utcDay();
       const ip = requestIP(request);
-      if (await countUp(env.DB, 'search:' + ip, day, SITE_SEARCH.daily_limit) == null) return fail(429, 'daily_limit_exceeded');
-      if (await countUp(env.DB, 'search:global', day, SITE_SEARCH.global_daily_limit) == null) {
-        ctx.waitUntil(sendAlert(env, log, 'alert:site-search-global', '[MAGI] AI検索の本日の全体上限に達しました', [
-          `UTC日付: ${day}`, `全体上限: ${SITE_SEARCH.global_daily_limit}`,
+      const followup = history.length > 0, ipKey = followup ? ip : 'search:' + ip, globalKey = followup ? 'global' : 'search:global';
+      if (await countUp(env.DB, ipKey, day, followup ? DEFAULTS.daily_limit : SITE_SEARCH.daily_limit) == null) return fail(429, 'daily_limit_exceeded');
+      if (await countUp(env.DB, globalKey, day, followup ? DEFAULTS.global_daily_limit : SITE_SEARCH.global_daily_limit) == null) {
+        ctx.waitUntil(sendAlert(env, log, followup ? 'alert:global' : 'alert:site-search-global', followup ? '[MAGI] 本日のサイト全体の上限に達しました' : '[MAGI] AI検索の本日の全体上限に達しました', [
+          `UTC日付: ${day}`, `全体上限: ${followup ? DEFAULTS.global_daily_limit : SITE_SEARCH.global_daily_limit}`,
         ], true).catch(() => log('site_search', 'alert_failed')));
         return fail(429, 'global_daily_limit_exceeded');
       }
       if (signal.aborted) throw searchFailure('cancelled');
       const upstream = searchUpstream(env, ctx, log, '404検索');
-      const result = await selectSitePages({ query, locale: body.locale, pages, cards, chat: true, purpose: 'requested', signal, log,
+      let langNote = languageNote({ code: body.locale }), language = replyLanguage;
+      if (siteChat) {
+        const input = {profile:'site-search', texts:[...history.filter(m => m.role === 'user').map(m => m.content), query],
+          seed:history[0]?.content || query, replyLanguage, uiLanguage:body.locale};
+        const classified = await withTimeout(INTENT_CLASSIFY.timeout_ms, s => classifyQuery(upstream, input, s, log), signal)
+          .catch(err => { if (signal.aborted) throw err; return classifyQuery({}, input, signal, log); });
+        langNote = classified.langNote; language = classified.classification.reply_language;
+        if (classified.malice) {
+          let comment = '';
+          await replyToMalice({env:upstream,cards,classified,uiLanguage:body.locale,signal,
+            send:(event, data) => {if(event === 'integrated') comment += data.delta;}, log});
+          return jsonResponse({request_id:requestId,status:'no_results',results:[],comment,reply_language:language,closed:true},cors,200,{'Cache-Control':'no-store'});
+        }
+      }
+      const result = await selectSitePages({ query, locale: body.locale, pages, history, cards, chat: true, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      const answer = await runFactAnswer({ upstream, cards, messages: [{ role: 'user', content: query }],
-        langNote: languageNote({ code: body.locale }), pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
-      return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
+      const messages = [...history.map(row => {
+        const verified = (row.pages || []).flatMap(old => {const p = pages.find(p => p.url === old.url);return p ? [p.title + ' ' + p.url] : [];});
+        return {role:row.role,content:row.content + (verified.length ? '\n[前回案内したページ・現行索引照合済み]\n' + verified.join('\n') : '')};
+      }), {role:'user',content:query}];
+      const answer = await runFactAnswer({ upstream, cards, messages,
+        langNote, pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
+      return jsonResponse({ request_id: requestId, ...result, comment: answer, ...(siteChat ? {reply_language:language,closed:false} : {}) }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) {
     // ②がここに来るのは切断だけ（②の期限は内側で応答する）。②の記録は handleSiteRank の1行に任せる

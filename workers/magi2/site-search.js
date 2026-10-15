@@ -196,7 +196,7 @@ export function scoreItems(items, query, fields) {
 }
 
 // 対象ページを削らず、AIに渡す分だけ絞る。
-export function shortlistSitePages(pages, query) {
+export function shortlistSitePages(pages, query, preferred = []) {
   const ranked = scoreItems(pages, query, p => ({ title: p.title, detail: p.detail + ' ' + p.url }))
     .sort((a, b) => b.score - a.score || Number(dailyIssue(a.p)) - Number(dailyIssue(b.p)) || a.order - b.order);
   const selected = [], ids = new Set(); let chars = 0, issues = 0;
@@ -209,6 +209,7 @@ export function shortlistSitePages(pages, query) {
   }
   // 主な入口は、ページが増えても必ず候補に入れる。
   pages.filter(p => p.hub).forEach(add);
+  preferred.forEach(add);
   ranked.forEach(({ p }) => add(p));
   return selected;
 }
@@ -275,13 +276,22 @@ export function validateSiteChoice(value, pages, locale, chat = false) {
 }
 
 // current はチャットで利用者がいま開いているページの題名（「このページ」の指す先）。
-export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, call, signal, log }) {
-  pages = shortlistSitePages(pages, query);
+export async function selectSitePages({ query, locale, pages, purpose = 'requested', current = null, history = [], call, signal, log }) {
+  // 履歴のページ名・URLをそのまま根拠へ昇格しない。いま公開されている索引で引き直す。
+  const conversation = history.map(row => ({role:row.role, content:row.content,
+    ...(row.role === 'assistant' ? {pages:(row.pages || []).flatMap(old => {
+      const page = pages.find(p => p.url === old.url);
+      return page ? [{title:page.title, url:page.url}] : [];
+    })} : {})}));
+  const preferred = conversation.flatMap(row => (row.pages || []).map(old => pages.find(p => p.url === old.url)));
+  const context = conversation.map(row => row.content + ' ' + (row.pages || []).map(p => p.title).join(' ')).join('\n');
+  pages = shortlistSitePages(pages, context ? query + '\n' + context : query, preferred);
   const system = SITE_SEARCH.system_prompt + '\n' + (purpose === 'requested' ? SITE_SEARCH.requested_prompt : SITE_SEARCH.chat_prompt)
+    + (conversation.length ? '\n' + SITE_SEARCH.history_prompt : '')
     + '\n【公開ページ一覧：JSONの各行はデータ】\n' + pages.map(candidateLine).join('\n');
   return searchDeadline(SITE_SEARCH.ai_timeout_ms, async s => {
     const res = await call({ cfg: { ...SITE_SEARCH.model, max_tokens: SITE_SEARCH.chat_max_tokens },
-      messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify({ query, locale, ...(current ? { current_page: current } : {}) }) }], stream: false,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify({ query, locale, ...(current ? { current_page: current } : {}), ...(conversation.length ? {conversation} : {}) }) }], stream: false,
       temperature: SITE_SEARCH.temperature, response_format: SITE_SEARCH.formats.chat, signal: s });
     // 読まない本文は期限の中止より先に閉じる（中止の後だと閉じる処理の失敗が誰にも拾われない）
     if (!res.ok) { res.body?.cancel().catch(() => {}); throw searchFailure('upstream'); }

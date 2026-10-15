@@ -298,6 +298,7 @@ DAILY_UI_VERSION = '20261012_14'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
 SEARCH_RUNTIME_VERSION = '20261012_16'
+SEARCH_UI_SCRIPT_VERSION = '20261015_1'
 DAILY_CSS_VERSION = '20261012_14'
 # 共通検索の資産（読む順）。ポータルのタグと、号のページの遅延読み込み（ヘッダーの data-search-assets）の両方をここから作る。
 SEARCH_ASSETS = [
@@ -305,7 +306,7 @@ SEARCH_ASSETS = [
     f'search-analytics.js?v={SEARCH_ANALYTICS_VERSION}',
     f'japanese-search.js?v={SEARCH_RUNTIME_VERSION}',
     f'site-search.js?v={SITE_SEARCH_VERSION}',
-    f'search-ui.js?v={SEARCH_RUNTIME_VERSION}',
+    f'search-ui.js?v={SEARCH_UI_SCRIPT_VERSION}',
     f'search-data.js?v={SEARCH_RUNTIME_VERSION}',
 ]
 SEARCH_CSS_TAG = ''.join(f'  <link rel="stylesheet" href="../../assets/{a}">' for a in SEARCH_ASSETS if '.css?' in a)

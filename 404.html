@@ -105,6 +105,11 @@
     .ai-ask { font-family: ui-monospace, monospace; margin: 8px 0; }
     #ai-list { margin-top: 12px; }
     .ai-followups a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 12px; }
+    #ai-followup { margin-top:16px; }
+    .ai-followup-row { display:flex;gap:8px;margin-top:6px; }
+    #ai-followup-input { flex:1;min-width:0;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font:inherit; }
+    #ai-followup-send { padding:8px 12px;cursor:pointer;font:inherit; }
+    #ai-conversation .ai-past-turn { margin:16px 0;padding-bottom:12px;border-bottom:1px solid var(--border);overflow-wrap:anywhere; }
     .explore { margin-top: 36px; }
     /* タイルとパネル。パネルはタイルの直後に置いて横幅いっぱいに広げ、dense で同じ段の残りのタイルを前に詰める */
     /* 開閉の配線が済むまで（JS無効・失敗を含む）は、タイルとそのパネルを1列に順に並べ、パネルをすべて開いておく */
@@ -178,15 +183,21 @@
         <button type="button" id="ai-cancel" hidden data-ja="キャンセル" data-en="Cancel">キャンセル</button>
         <span id="ai-thinking" hidden></span>
         <div class="ai-disclosure-row">
-          <p class="ai-disclosure" data-ja="このボタンを押すと、検索語と必要な公開ページ情報・人格カードをOpenAIへ送り、サイトの案内役が直接答えます。本文が始まる前の失敗ではAnthropicへ送り直すことがあります。" data-en="When you press the button, your search, relevant public page information and persona cards are sent to OpenAI for a direct answer from the site guide. Before answer text starts, a failed request may be retried with Anthropic."></p>
+          <p class="ai-disclosure" data-ja="検索語は言語・悪意の判定のためTypeSafe AIへ送り、必要な公開ページ情報・人格カードと共にOpenAIへ送ります。回答前の失敗ではAnthropicへ送ることがあります。このページ内で続けて質問でき、続きでは直近の会話も送ります。会話は保存せず、再読み込みや別の検索で消えます。" data-en="Your query is sent to TypeSafe AI to detect language and hostile requests, and to OpenAI with relevant public page information and persona cards. Before reply text starts, failures may be retried with Anthropic. Ask follow-up questions here; recent conversation is included. Chats are not saved and are cleared on reload or a different search."></p>
           <button type="button" class="ai-info" id="ai-info-open" aria-label="検索とプライバシーについて" aria-haspopup="dialog" aria-controls="ai-info-dialog">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><circle cx="12" cy="7" r=".8" fill="currentColor" stroke="none"/></svg>
           </button>
         </div>
         <div id="ai-result" hidden>
+          <div id="ai-conversation"></div>
           <div class="ai-answer"><strong>Shinya Takeda AI</strong> <span class="ai-mark" data-ja="AIによる応答" data-en="AI-generated">AIによる応答</span><p class="ai-ask" id="ai-ask" aria-hidden="true"></p><p id="ai-comment"></p></div>
           <ul class="result-list" id="ai-list"></ul>
-          <p class="ai-followups"><a id="ai-request" hidden data-ai-target="request" data-ja="要望を送る →" data-en="Send a request →">要望を送る →</a><a href="/" data-ai-target="magi" data-ja="続きを MAGI で話す →" data-en="Keep talking on MAGI →">続きを MAGI で話す →</a></p>
+          <p class="ai-followups"><a id="ai-request" hidden data-ai-target="request" data-ja="要望を送る →" data-en="Send a request →">要望を送る →</a><a href="/" data-ai-target="magi" data-ja="サイトの案内以外の相談は MAGI へ →" data-en="Other questions? Ask MAGI →">サイトの案内以外の相談は MAGI へ →</a></p>
+          <form id="ai-followup" hidden>
+            <label for="ai-followup-input" data-ja="続けて質問する" data-en="Ask a follow-up">続けて質問する</label>
+            <div class="ai-followup-row"><input id="ai-followup-input" type="text" maxlength="200" autocomplete="off" required><button type="submit" id="ai-followup-send" data-ja="送信" data-en="Send">送信</button></div>
+          </form>
+          <p id="ai-closed" hidden data-ja="この会話は終了しました。別の検索で新しい会話を始められます。" data-en="This conversation has ended. Start a new search to begin another."></p>
         </div>
       </div>
       <p class="status" id="ai-status" role="status" aria-atomic="true"></p>
@@ -323,8 +334,8 @@
         <button type="button" class="ai-info-close" id="ai-info-close" aria-label="閉じる" autofocus><span aria-hidden="true">×</span></button>
       </div>
       <p id="rank-info-text" data-ja="検索すると（Enter・虫眼鏡）、検索語と公開ページの情報を TypeSafe AI（Jev）のAPIへ送り、ページを並べ替えます。入力中は送りません。入力はモデルの学習に使われません。保持期間は明示されていません。米国のサーバーで処理されます。" data-en="When you search (Enter or the magnifier), your query and public page information are sent to the TypeSafe AI (Jev) API to rank pages. Nothing is sent while you type. Inputs are not used to train models. The retention period is not specified. Processing takes place on servers in the United States."></p>
-      <p id="analytics-info-text" data-ja="検索語はアクセス解析（Google アナリティクス）に記録し、よく探される言葉やページの不足を調べるのに使います。メールアドレスと電話番号のような長い数字は伏せてから送ります。" data-en="Search terms are recorded in our analytics (Google Analytics) to learn what people look for and which pages are missing. Email addresses and long numbers such as phone numbers are masked before sending."></p>
-      <p id="ai-info-text" data-ja="「Shinya Takeda AI に聞く」を押すと、検索語と必要な公開ページ情報・人格カードをOpenAIのAPIへ送り、本文が始まる前の失敗ではAnthropicへ送り直すことがあります。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。Anthropic APIの入出力は既定では学習に利用されず、通常30日以内に削除されます（安全管理や法令に基づく例外があります）。利用回数の制限のためIPアドレスを記録します。" data-en="When you press “Ask Shinya Takeda AI”, your search, relevant public page information, and public persona cards are sent to OpenAI; before answer text starts, a failed request may be retried with Anthropic. OpenAI API data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Anthropic API inputs and outputs are not used for training by default and are normally deleted within 30 days, with safety and legal exceptions. Your IP is recorded to limit usage."></p>
+      <p id="analytics-info-text" data-ja="1問目の検索語と続けて送る質問はアクセス解析（Google アナリティクス）に記録します。会話の履歴とAIの回答は送信しません。記録はよく探される言葉やページの不足を調べるのに使います。メールアドレスと電話番号のような長い数字は伏せてから送ります。" data-en="Your initial search and each follow-up question are recorded in Google Analytics; conversation history and AI replies are not sent. We use this to learn what people look for and which pages are missing. Email addresses and long numbers such as phone numbers are masked before sending."></p>
+      <p id="ai-info-text" data-ja="検索語は言語・悪意の判定のためTypeSafe AIへ送り、必要な公開ページ情報・人格カードと共にOpenAIへ送ります。回答前の失敗ではAnthropicへ送ることがあります。このページ内で続けて質問でき、続きでは直近の会話も送ります。会話は保存せず、再読み込みや別の検索で消えます。OpenAI APIのデータは通常、学習に使われず、不正利用監視のため最大30日保持されます（法的な義務による例外があります）。Anthropic APIの入出力は既定では学習に利用されず、通常30日以内に削除されます（安全管理や法令に基づく例外があります）。TypeSafe AIの入力は学習に使われず、保持期間は明示されていません。米国のサーバーで処理されます。利用回数制限のためIPを記録します。" data-en="Your query is sent to TypeSafe AI to detect language and hostile requests, and to OpenAI with relevant public page information and persona cards. Before reply text starts, failures may be retried with Anthropic. Ask follow-up questions here; recent conversation is included. Chats are not saved and are cleared on reload or a different search. OpenAI data is not used for training by default and may be retained for abuse monitoring for up to 30 days, with legal exceptions. Anthropic inputs and outputs are not used for training by default and are normally deleted within 30 days, with safety and legal exceptions. TypeSafe AI does not train on inputs; retention is not specified, and processing takes place in the US. Your IP is recorded for rate limits."></p>
       <p class="ai-disclosure" id="ai-limit-text" data-ja="AI検索は全利用者で共有する1日の上限があります。ご自身の上限に達していなくても利用できない場合があります。通常検索は引き続き使えます。" data-en="AI search has a shared daily limit. It may be unavailable even if you have not reached your own limit. Regular search remains available."></p>
       <p><a href="https://typesafe.ai/legal/privacy-policy">TypeSafe AI privacy</a> · <a href="https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data">Anthropic API privacy</a></p>
       <p><a href="https://developers.openai.com/api/docs/guides/your-data" data-ja="OpenAIのデータの扱い" data-en="OpenAI data controls">OpenAIのデータの扱い</a></p>
@@ -333,7 +344,7 @@
   <script src="/assets/search-analytics.js?v=20261009_1"></script>
   <script src="/assets/japanese-search.js?v=20261012_8"></script>
   <script src="/assets/site-search.js?v=20261011_1"></script>
-  <script src="/assets/search-ui.js?v=20261012_16"></script>
+  <script src="/assets/search-ui.js?v=20261015_1"></script>
   <script src="/assets/search-data.js?v=20261012_8"></script>
   <script>
     (function () {
@@ -494,6 +505,21 @@
         li.appendChild(a);
         return li;
       }
+
+var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
+function cleanReplyLanguage(v) {
+  if (!v || v.version !== 1 || typeof v.code !== 'string') return null;
+  if (v.code === 'other') {
+    if (v.source !== 'sample' || typeof v.sample !== 'string' || !v.sample.trim() || v.sample.length > 120
+      || /[<>\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(v.sample)) return null;
+    return { version: 1, code: 'other', source: 'sample', sample: v.sample };
+  }
+  if (v.code.length !== 2 || MAGI_LANGUAGE_CODES.indexOf(' ' + v.code + ' ') < 0 || ['jev','rule','ui'].indexOf(v.source) < 0
+    || v.sample !== undefined || (v.source === 'ui' && ['ja','en'].indexOf(v.code) < 0)) return null;
+  return { version: 1, code: v.code, source: v.source };
+}
+
+      var followupComposing = false;
       var composing = false;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
       function currentQuery() { return searchState.query || ''; }
@@ -503,7 +529,7 @@
       // ③を止めているときは、ダイアログ（検索欄の見出しの横からも開く）に③の送り先と上限の説明を出さない
       if (!AI_SEARCH_ENABLED) ['ai-info-text', 'ai-limit-text'].forEach(function (id) { byId(id).hidden = true; });
       function rankAvailable() { return searchState.rank!=='disabled'; }
-      var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null };
+      var ai = { generation: 0, controller: null, query: '', eligible: false, thinking: null, history: [], turns: [], language: null, closed: false, conditionKey: '' };
       var aiText = lang === 'ja' ? { thinking: '考えています…', unavailable: 'いまは AI に聞けません。もう一度お試しください。', limited: '今日はここまでにさせてください。明日また聞いてください。', none: '見つかりませんでした。必要なら教えてください。', cancelled: 'キャンセルしました。', ready: 'AIの回答が届きました。' }
         : { thinking: 'Thinking…', unavailable: 'The AI is not available right now. Please try again.', limited: 'That is all for today. Please ask again tomorrow.', none: 'No matching page was found. Please tell me what you need.', cancelled: 'Cancelled.', ready: 'The AI reply is ready.' };
       // 考え中と回答の到着は計時ラベルと結果の枠が見せるので、読み上げだけにする。失敗・上限・キャンセルは画面にも出す。
@@ -548,6 +574,9 @@
         byId('ai-run').disabled = false; byId('ai-cancel').hidden = true;
         byId('ai-thinking').hidden = true; byId('ai-thinking').replaceChildren();
         setAIStatus(''); byId('ai-list').replaceChildren();
+        ai.history = []; ai.turns = []; ai.language = null; ai.closed = false;
+        byId('ai-conversation').replaceChildren(); byId('ai-followup').hidden = true; byId('ai-closed').hidden = true;
+        byId('ai-followup-input').value = ''; byId('ai-run').hidden = false;
       }
       // ③の出し方（設計書 6.3）。②が使えるときは②の状態で決め、②の読み込み中と②を送る前は出さない
       function aiAllowed(total) {
@@ -555,11 +584,23 @@
         return ['results', 'no_results', 'failed', 'stale', 'handoff'].includes(searchState.rank);
       }
       function syncAI(query, total) {
+        if (ai.query && ai.query !== query) resetAI();
         var eligible = AI_SEARCH_ENABLED && searched(query) && !composing && aiAllowed(total);
-        if (!eligible) { if (ai.eligible) resetAI(); return; }
-        if (ai.query !== query) resetAI();
-        ai.query = query; ai.eligible = true; byId('ai-search').hidden = false;
+        // IMEや同条件の再描画では、進行中・完了済みの会話を壊さない。
+        if (!eligible && (ai.controller || ai.turns.length)) return;
+        ai.query = query; ai.eligible = eligible; byId('ai-search').hidden = !eligible;
         byId('ai-search').classList.toggle('is-quiet', rankAfter() === 'rank_results');
+      }
+      function renderAIPast() {
+        var list = byId('ai-conversation'); list.replaceChildren();
+        ai.turns.slice(0, -1).forEach(function (turn) {
+          var section = document.createElement('section'); section.className = 'ai-past-turn';
+          var question = document.createElement('p'); question.textContent = '~$ ask "' + turn.query + '"'; section.appendChild(question);
+          var answer = document.createElement('p'); answer.textContent = turn.comment; section.appendChild(answer);
+          var pages = document.createElement('ul'); pages.className = 'result-list';
+          turn.rows.forEach(function (p) { pages.appendChild(resultItem(p.url,p.title,p.description,text[p.kind])); });
+          section.appendChild(pages); list.appendChild(section);
+        });
       }
       function aiHref(value) {
         if (typeof value !== 'string' || !/^\/(?!\/)/.test(value) || /[\\\u0000-\u0020\u007f]/.test(value)) return null;
@@ -570,26 +611,27 @@
         } catch (_) { return null; }
       }
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
-      byId('ai-run').addEventListener('click', async function () {
-        if (!ai.eligible || ai.controller || composing || currentQuery() !== ai.query) return;
+      async function askAI(query, followup) {
+        if (!ai.eligible || ai.controller || composing || followupComposing || ai.closed || currentQuery() !== ai.query) return;
+        query = query.trim(); if (!query || Array.from(query).length > 200) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
         var after = rankAfter();
         if (searchUI) searchUI.handoff();
         var startedAt = Date.now();
-        var generation = ++ai.generation, query = ai.query, ac = new AbortController(); ai.controller = ac;
+        var generation = ++ai.generation, ac = new AbortController(); ai.controller = ac;
         byId('ai-thinking').replaceChildren(); byId('ai-thinking').hidden = false;
         var thinking = startMagiThinking(byId('ai-thinking'), startedAt); ai.thinking = thinking;
         ac.signal.addEventListener('abort', function () { thinking.cancel(); }, { once: true });
         var answered = false;
         var timer;
         var expired = new Promise(function (_, reject) { timer = setTimeout(function () { ac.abort(); reject(new Error('Timeout')); }, 165000); });
-        byId('ai-run').disabled = true; byId('ai-cancel').hidden = false; byId('ai-result').hidden = true;
+        byId('ai-run').disabled = true; byId('ai-followup-send').disabled = true; byId('ai-cancel').hidden = false; if (!followup) byId('ai-result').hidden = true;
         setAIStatus(aiText.thinking, true);
-        send('not_found_ai_used', { after: after, search_term: analyticsTerm(query) });
+        send(followup ? 'not_found_ai_followup' : 'not_found_ai_used', Object.assign({search_term:analyticsTerm(query)}, followup ? {turn:ai.turns.length + 1} : {after:after}));
         try {
           var origin = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://workers.tk.st';
-          var res = await Promise.race([fetch(origin + '/magi2/site-search?site_debate=1', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify({ query: query, locale: lang }) }), expired]);
+          var res = await Promise.race([fetch(origin + '/magi2/site-search?site_debate=1&site_chat=1', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'omit', referrerPolicy: 'no-referrer', signal: ac.signal, body: JSON.stringify(Object.assign({query:query,locale:lang,history:followup ? ai.history : []}, ai.language ? {reply_language:ai.language} : {})) }), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!res.ok) {
             var errorBody = await Promise.race([res.json().catch(function () { return {}; }), expired]);
@@ -605,8 +647,16 @@
           var data = await Promise.race([res.json(), expired]);
           if (generation !== ai.generation || ac.signal.aborted) return;
           if (!data || !['results', 'no_results'].includes(data.status) || !Array.isArray(data.results) || data.results.length > 3) throw new Error('Invalid response');
+          var replyLanguage = cleanReplyLanguage(data.reply_language);
+          if (!replyLanguage || typeof data.closed !== 'boolean' || typeof data.comment !== 'string' || !data.comment.trim() || (ai.language && JSON.stringify(ai.language) !== JSON.stringify(replyLanguage))) throw new Error('Invalid conversation');
           var rows = data.results.filter(function (p) { return p && typeof p.title === 'string' && typeof p.description === 'string' && ['tool', 'game', 'article', 'page'].includes(p.kind) && aiHref(p.url); });
           if (rows.length !== data.results.length) throw new Error('Invalid links');
+          ai.language = replyLanguage; ai.closed = data.closed;
+          ai.turns.push({query:query, comment:data.comment, rows:rows});
+          ai.history = ai.history.concat([{role:'user',content:query},{role:'assistant',content:Array.from(data.comment).slice(0,2000).join(''),pages:rows.map(function (p) {return {title:Array.from(p.title).slice(0,160).join(''),url:p.url};})}]).slice(-6);
+          renderAIPast(); byId('ai-followup').hidden = ai.closed; byId('ai-closed').hidden = !ai.closed;
+          if (followup) byId('ai-followup-input').value = '';
+          byId('ai-run').hidden = true;
           byId('ai-list').replaceChildren();
           rows.forEach(function (p, i) {
             var li = resultItem(aiHref(p.url), p.title, p.description, text[p.kind]);
@@ -617,7 +667,7 @@
           byId('ai-ask').textContent = '~$ ask "' + chars.slice(0, 40).join('') + (chars.length > 40 ? '…' : '') + '"';
           byId('ai-comment').textContent = typeof data.comment === 'string' ? data.comment : data.status === 'no_results' ? aiText.none : '';
           byId('ai-comment').hidden = !byId('ai-comment').textContent;
-          byId('ai-request').hidden = data.status !== 'no_results'; byId('ai-result').hidden = false;
+          byId('ai-request').hidden = ai.closed || data.status !== 'no_results'; byId('ai-result').hidden = false;
           setAIStatus(data.status === 'no_results' ? aiText.none : aiText.ready + ' ' + (lang === 'ja' ? rows.length + '件のページ候補。' : rows.length + ' page suggestions.'), true);
           thinking.finish(); answered = true;
           send('not_found_ai_result', { status: data.status, count: rows.length });
@@ -628,10 +678,18 @@
           clearTimeout(timer);
           if (!answered) thinking.cancel();
           if (ai.thinking === thinking) ai.thinking = null;
-          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; if (byId('ai-status').textContent !== aiText.limited) byId('ai-run').disabled = false; }
+          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; byId('ai-followup-send').disabled = ai.closed || byId('ai-status').textContent === aiText.limited; if (byId('ai-status').textContent !== aiText.limited) byId('ai-run').disabled = false; }
         }
+      }
+      byId('ai-run').addEventListener('click', function () { askAI(ai.query, false); });
+      byId('ai-followup-input').addEventListener('compositionstart', function () {followupComposing = true;});
+      byId('ai-followup-input').addEventListener('compositionend', function () {followupComposing = false;});
+      byId('ai-followup').addEventListener('submit', function (event) {event.preventDefault(); if (!followupComposing) askAI(byId('ai-followup-input').value,true);});
+      byId('ai-cancel').addEventListener('click', function () {
+        if (!ai.turns.length) {var query=ai.query;resetAI();syncAI(query,0);}
+        else {ai.generation++;if(ai.controller) ai.controller.abort();ai.controller=null;if(ai.thinking)ai.thinking.cancel();ai.thinking=null;byId('ai-cancel').hidden=true;byId('ai-followup-send').disabled=false;}
+        setAIStatus(aiText.cancelled);
       });
-      byId('ai-cancel').addEventListener('click', function () { var query = ai.query; resetAI(); syncAI(query, 0); setAIStatus(aiText.cancelled); });
       function rankAfter() {
         if(searchState.rank==='results') return searchState.complete?'rank_results':'rank_partial';
         return searchState.rank==='no_results'?'rank_none':searchState.rank==='failed'?'rank_failed':'no_rank';
@@ -650,7 +708,8 @@
         renderItem:function(record,ctx) {var item=resultItem(ctx.href,ctx.locale==='en'?(record.title_en || record.title):record.title,ctx.locale==='en'?(record.description_en || record.description):record.description,text[record.kind]);item.querySelector('a').dataset.stPrimary='';return item;},
         compare:function(a,b) { return ((b.href.split('/')[1]===arrivedSection)?1:0)-((a.href.split('/')[1]===arrivedSection)?1:0); },
         onConditions:function(condition) {
-          resetAI();
+          var key = JSON.stringify([condition.query,condition.locale]);
+          if (key !== ai.conditionKey) {resetAI();ai.conditionKey = key;}
           byId('path-suggestions').hidden=!!condition.query || !byId('path-suggestion-list').children.length;
           byId('daily-search').hidden=!condition.query;
           byId('daily-query').textContent=condition.query;

@@ -264,6 +264,9 @@
     function commit(value,allowed) {
       const query=value.trim();if(!query) {closeResults();return;}if(Array.from(query).length>200) return;
       const changed=committed!==query,wasEmpty=!committed;committed=query;
+      // ③へ引き渡した同じ条件を確定し直しても、②を再送して会話へ割り込まない。
+      // 語・言語・絞り込みが変わればhandoffから離れるので、通常どおり検索できる。
+      if (!changed && rankState==='handoff') {closeDropdown();return;}
       if(wasEmpty) {previousSort=selectedSort;selectedSort=sorts.find(s=>s.value==='relevance')?.value || selectedSort;updateSort();}
       confirmation++;limit=20;expandedCommands=false;if(changed) {conditionRevision++;clearRank(allowed?'idle':'stale');localList.replaceChildren();}
       closeDropdown();refreshLocal();notify();call('onResults',{query:committed,open:true});

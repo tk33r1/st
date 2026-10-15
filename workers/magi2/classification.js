@@ -109,16 +109,16 @@ export async function classifyQuery(env, input, signal, log) {
     return { langNote: code && code !== 'other' ? languageNote({ code }) : fallback };
   }
   const language = replyLanguage || (code && code !== 'other' ? { version: 1, code, source: 'jev' } : fixedLanguage(seed, uiLanguage));
-  const dj = profile === 'dj-request';
+  const dj = profile === 'dj-request', site = profile === 'site-search';
   const noText = !(texts.at(-1) || '').trim();
-  const intent = dj ? 'music' : noText ? 'consult' : choices.intent || 'consult';
+  const intent = site ? 'site' : dj ? 'music' : noText ? 'consult' : choices.intent || 'consult';
   return {
     langNote: languageNote(language),
     malice: ['identity', 'extraction', 'extreme'].includes(choices.malice) ? choices.malice : null,
     maliceConfidence: choices.malice ? answers.malice.confidence : null,
     classification: { version: 1, intent,
-      ...(factMode ? { mode: ['research', 'site'].includes(intent) ? 'fact' : 'consult', fresh: choices.fresh === 'yes' ? 'yes' : 'no' } : {}),
-      site_pages: dj ? 'no' : choices.site_pages || 'uncertain', votable: dj || noText ? 'no' : choices.votable || 'uncertain',
+      ...(factMode || site ? { mode: ['research', 'site'].includes(intent) ? 'fact' : 'consult', fresh: choices.fresh === 'yes' ? 'yes' : 'no' } : {}),
+      site_pages: site ? 'yes' : dj ? 'no' : choices.site_pages || 'uncertain', votable: dj || site || noText ? 'no' : choices.votable || 'uncertain',
       magi_candidate: false, reply_language: language },
   };
 }
