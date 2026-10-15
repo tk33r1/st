@@ -40,15 +40,15 @@ npx wrangler deploy --config magi2/wrangler.toml
 ## 討議の回数（最大5回）
 
 `classification_state:true`と`fact_mode:true`の画面では、research・siteは討議なしのlow回答、musicは曲の案内としてadaptive_debateに従い最大5回。印のない新契約のsite・musicは第2回で統合する。consultと旧契約は、その後も統合人格（本人）が判定して回数を決める。新契約で第1回に1人だけ答えた場合は第2回を省き、呼んでいない回の欠席通知は送らない。
-値と判定のプロンプトは `personas.js` の `DEBATE`。A3の作業版は両テーマとも`DEFAULTS.models.judge`（Haiku・medium）で判定と質問を1回のJSONで生成する。HTTP失敗・不正JSON・未完了時だけ`judge_fallback`（Luna・medium）へ1回切り替え、同じ20秒の期限を共有する。両社失敗なら現在の討議で統合する。
+値と判定のプロンプトは `personas.js` の `DEBATE`。両テーマとも`DEFAULTS.models.judge`（Haiku・medium）で判定と質問を1回のJSONで生成する。HTTP失敗・不正JSON・未完了時だけ`judge_fallback`（Luna・medium）へ1回切り替え、同じ20秒の期限を共有する。両社失敗なら現在の討議で統合する。
 
-## A3の確認質問（5.0・未公開）
+## A3の確認質問（5.0・2026-10-15公開）
 
 `clarify:true`の通常チャットで、第2〜4回の後の判定が`ask_user`なら、1〜3問と各3選択肢の`clarify`を送り、統合・予測を作らず`done`で終える。`ask_personas`では選ばれた1〜3人格へだけ追加質問する。最大5回・討議90秒は維持。MAGI・DJ・404・印のない画面では利用者への確認を出さない。MAGIの採決はコードで集計する。
 
 トップ/PWAは各問に固定の「その他（入力する）」を足し、1問のAI選択肢は即送信、複数問は選択と補足をまとめて送る。「その他」は100文字、合成後の送信は1,000文字まで。質問・選択肢・`intent`・`fresh`を端末の履歴へ保存し、最後の未回答の質問だけ操作を復元する。Workerは直前のassistantが`clarify`なら再確認を禁止し、回答を通常の悪意・intent・fresh分類から通す。この分類だけ、元の相談・確認の質問と選択肢・直前のintent/freshをJevへ足す。人格の討議・カード・DJの状況説明はJevへ送らない。
 
-状況と未確認範囲は[A3実装評価](A3実装評価.md)。本番公開・APK作成は別。
+公開の結果と未確認範囲は[A3公開評価](A3公開評価.md)。APKはA4で更新する。
 
 ## A2の事実確認（4.9・2026-10-15公開）
 
