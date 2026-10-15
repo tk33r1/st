@@ -40,6 +40,17 @@ test('HTTP200のエラー・空結果・URLなしの天気は本文前の失敗'
   r.push({type: 'response.completed', response: {status: 'completed', output: []}});
   assert.equal(emitted, ''); assert.throws(() => r.finish(), e => e.beforeText && e.code === 'no_url_search_result');
 });
+
+test('課金障害はエラーの種類だけ保持し、メッセージや応答本文を保持しない',()=>{
+  for(const event of [
+    {type:'response.failed',response:{error:{code:'credit_balance_exhausted',type:'insufficient_quota',message:'private text'}}},
+    {type:'error',code:'credit_balance_exhausted',message:'private text'},
+  ]){
+    const reader=researchReader('openai');
+    assert.throws(()=>reader.push(event),e=>e.code==='stream_error'&&e.beforeText
+      &&e.upstreamError.code==='credit_balance_exhausted'&&!Object.hasOwn(e.upstreamError,'message'));
+  }
+});
 test('検索の失敗の後の成功と、成功の後の検索エラーを許す', () => {
   const r = researchReader('anthropic');
   r.push(result({type: 'web_search_tool_result_error', error_code: 'unavailable'}));

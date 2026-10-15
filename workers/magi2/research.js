@@ -5,7 +5,10 @@ const researchUrl = value => {
 };
 
 export const ResearchStreamError = class extends Error {
-  constructor(code, beforeText) {super(code); this.name = 'ResearchStreamError'; this.code = code; this.beforeText = beforeText;}
+  constructor(code, beforeText, upstreamError = null) {
+    super(code); this.name = 'ResearchStreamError'; this.code = code; this.beforeText = beforeText;
+    this.upstreamError = upstreamError;
+  }
 }
 
 export function researchReader(provider, onText, maxSources) {
@@ -13,7 +16,7 @@ export function researchReader(provider, onText, maxSources) {
   if (!['openai', 'anthropic'].includes(provider)) throw new TypeError('unknown provider');
   let text = '', success = false, ended = false, stop = null;
   const parts = new Map(), blocks = new Map(), documents = [], items = [], marks = [], sourceNumbers = new Map();
-  const fail = code => {throw new ResearchStreamError(code, !text.length);};
+  const fail = (code, upstreamError) => {throw new ResearchStreamError(code, !text.length, upstreamError);};
   const source = citation => {
     const href = researchUrl(citation?.url);
     if (!href) return null;
@@ -58,7 +61,12 @@ export function researchReader(provider, onText, maxSources) {
     beginTurn() { blocks.clear(); ended = false; stop = null; },
     push(e) {
       if (!e || typeof e !== 'object') fail('invalid_stream');
-      if (e.type === 'error' || e.error || ['response.failed', 'response.incomplete'].includes(e.type)) fail('stream_error');
+      if (e.type === 'error' || e.error || ['response.failed', 'response.incomplete'].includes(e.type)) {
+        // 本文・推論・ユーザーの入力を通知へ持ち出さず、課金障害の判定に必要な種類だけ保持する。
+        const error = e.error || e.response?.error || e;
+        const detail = Object.fromEntries(['code','type'].filter(k => typeof error[k] === 'string').map(k => [k,error[k].slice(0,100)]));
+        fail('stream_error', detail);
+      }
       if (provider === 'openai') {
         if (e.type === 'response.output_item.done' && e.item?.type === 'web_search_call'
           && e.item.status === 'completed' && e.item.action?.sources?.some(s => researchUrl(s.url))) success = true;
@@ -83,7 +91,7 @@ export function researchReader(provider, onText, maxSources) {
         if (e.type === 'content_block_start') {
           const b = e.content_block;
           if (!b || blocks.has(e.index)) fail('invalid_block');
-          blocks.set(e.index, {type: b.type, citations: b.citations || [], sentStart: text.length, sent: false});
+          blocks.set(e.index, {type: b.type, citations: b.citations || [], sent: false});
           if (b.type === 'web_search_tool_result' && Array.isArray(b.content)
             && b.content.some(c => c.type === 'web_search_result' && researchUrl(c.url))) success = true;
           if (b.type === 'web_fetch_tool_result' && b.content?.type === 'web_fetch_result'
@@ -103,7 +111,7 @@ export function researchReader(provider, onText, maxSources) {
           const b = blocks.get(e.index);
           if (!b) fail('invalid_block');
           if (e.delta?.type === 'text_delta' && typeof e.delta.text === 'string') {
-            if (success && e.delta.text) {if (!b.sent) b.sentStart = text.length; b.sent = true;}
+            if (success && e.delta.text) b.sent = true;
             append(e.delta.text);
           }
           if (e.delta?.type === 'citations_delta' && e.delta.citation) b.citations.push(e.delta.citation);

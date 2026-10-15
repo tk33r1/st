@@ -54,12 +54,21 @@ export const QUOTA_RE = /insufficient|quota|balance|billing|credit|exhausted/i;
 const billingRule = (provider) => PROVIDERS[provider]?.billing || { statuses: [429], body: QUOTA_RE };
 export const isBillingFailure = (status, body, provider, headers) => {
   if ([401, 402, 403].includes(status)) return true;
+  // ResponsesはHTTP200のSSE内で失敗することもある。回数制限や本文中の単語では通知しない。
+  if (status === 200 && provider === 'openai') {
+    try {
+      const error = JSON.parse(body)?.error;
+      return ['insufficient_quota','credit_balance_exhausted','billing_hard_limit_reached'].includes(error?.code)
+        || error?.type === 'insufficient_quota';
+    } catch { return false; }
+  }
   const rule = billingRule(provider);
   return rule.statuses.includes(status) && !(status === 429 && rule.retry_after_is_rate_limit && headers?.has('retry-after'))
     && rule.body.test(body);
 };
 // 上の判定が本文しだいで真になりうる状態。ほか（5xx・529など）は本文を読まずに外せる。
-export const mayBeBillingFailure = (status, provider) => [401, 402, 403, ...billingRule(provider).statuses].includes(status);
+export const mayBeBillingFailure = (status, provider) => status === 200 && provider === 'openai'
+  || [401, 402, 403, ...billingRule(provider).statuses].includes(status);
 
 // 上流のエラー本文の先頭を、上限のバイト数まで読む（判定と通知に使う）。signal か ms（省略できる）で止まったときや
 // 読み取りが失敗したときは、それまでに届いた分を返す。上限で切れた文字の途中は捨てる。reader の止まらない応答でも待ち続けない。

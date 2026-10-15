@@ -3167,7 +3167,7 @@
           "@type": "ProfilePage",
           "@id": "https://tk.st/#profile-page",
           "dateCreated": "2026-03-26T12:00:00+09:00",
-          "dateModified": "2026-10-15T10:15:47+09:00",
+          "dateModified": "2026-10-15T10:53:09+09:00",
           "mainEntity": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake",
@@ -7643,6 +7643,13 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 
 // AGENT_FACT_BEGIN
+// 保存・表示・引用位置は全文のまま、上流へ送り直す事実回答の履歴だけ上限に収める。
+function agentFactHistoryMessage(item) {
+  if (item.role !== 'assistant' || item.mode !== 'fact' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
+  var text = item.content.slice(0, 4000);
+  if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
+  return Object.assign({}, item, {content:text});
+}
 function cleanAgentSources(value, text) {
   if (!value || !Array.isArray(value.items) || !Array.isArray(value.marks) || typeof text !== 'string') return null;
   var items = [], numbers = new Set(), urls = new Set();
@@ -8042,7 +8049,7 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
     function prepareAgentMessages(history, lastContent) {
-      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, ...m }) => ({ ...m }));
+      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, ...m }) => agentFactHistoryMessage(m));
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
       messages[messages.length - 1].content = lastContent;
       let remaining = 8;

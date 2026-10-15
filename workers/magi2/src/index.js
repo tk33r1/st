@@ -948,16 +948,10 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
   }
 }
 
-// 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
-async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
-  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
-  if (pagesPromise) pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
-  if (signal?.aborted) throw searchFailure('cancelled');
-  if (pageChoice && page) {
-    const results = pageChoice.results.filter(p => p.url !== page);
-    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
-  }
-  const input = [
+// 事実回答の入力は、本番と保存済み出典の評価で同じ順序から作る。
+function factAnswerMessages({ cards, messages, langNote, theme = null, guide = null,
+  pageChoice = null, siteOnly = false, research = false }) {
+  return [
     { role: 'system', content: withLangNote(withCard(research ? { ...SYNTHESIZER, system_prompt: RESEARCH.system_prompt } : SYNTHESIZER,
       cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote) },
     ...(theme && SYNTH_BIAS[theme] ? [{ role: 'system', content: SYNTH_BIAS[theme] }] : []),
@@ -968,6 +962,18 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
     { role: 'system', content: SYNTHESIZER.voice_rules },
     ...messages,
   ];
+}
+
+// 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
+async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
+  if (pagesPromise) pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
+  if (signal?.aborted) throw searchFailure('cancelled');
+  if (pageChoice && page) {
+    const results = pageChoice.results.filter(p => p.url !== page);
+    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
+  }
+  const input = factAnswerMessages({ cards, messages, langNote, theme, guide, pageChoice, siteOnly, research });
   let answer;
   if (research) answer = await researchAnswer({ upstream, messages: input, theme, replyLanguage, ip, signal, send, log });
   else answer = await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
@@ -1104,7 +1110,8 @@ async function readResearchSourceBody(res, signal, html, charset) {
 }
 
 async function readResearchSource(item, signal) {
-  if (!researchSourceUrl(item.url)) return {...item, allowed: false, readable: false, blocks: []};
+  const unread = allowed => ({...item, allowed, readable:false, blocks:[]});
+  if (!researchSourceUrl(item.url)) return unread(false);
   try {
     return await searchDeadline(RESEARCH.verify.source_ms, async stop => {
       let url = item.url;
@@ -1115,14 +1122,14 @@ async function readResearchSource(item, signal) {
           res.body?.cancel().catch(() => {});
           const next = res.headers.get('location');
           const target = next && researchSourceUrl(URL.canParse(next,url) ? new URL(next,url).href : '');
-          if (redirects >= 3 || !target) return {...item, allowed:false, readable:false, blocks:[]};
+          if (redirects >= 3 || !target) return unread(false);
           url = target; continue;
         }
         const type = res.headers.get('content-type') || '';
         const charset = type.match(/charset\s*=\s*["']?([^\s;"']+)/i)?.[1];
         if (!res.ok || !/(?:text\/html|text\/plain|application\/json)/i.test(type)) {
           res.body?.cancel().catch(() => {});
-          return {...item, allowed:res.ok, readable:false, blocks:[]};
+          return unread(res.ok);
         }
         const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
         if (stop.aborted) throw searchFailure('cancelled');
@@ -1133,7 +1140,7 @@ async function readResearchSource(item, signal) {
     }, signal);
   } catch (e) {
     if (signal.aborted) throw searchFailure('cancelled');
-    return {...item, allowed:true, readable:false, blocks:[]};
+    return unread(true);
   }
 }
 
@@ -1261,6 +1268,12 @@ async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, si
       log('research', 'ok', cfg.provider, attempt, result.sources.items.length);
       return checked + result.text;
     } catch (error) {
+      if (!signal.aborted && error.upstreamError && upstream.onUpstreamError) {
+        const body = JSON.stringify({error:error.upstreamError});
+        if (isBillingFailure(200, body, cfg.provider)) {
+          await upstream.onUpstreamError(cfg.provider, new Response(body, {headers:{'Content-Type':'application/json'}}), {signal});
+        }
+      }
       if (signal.aborted || emitted) {
         if (error.name === 'ResearchStreamError') throw stageError('upstream', 'research_' + error.code, 'Web検索の回答を完了できませんでした', { retryable: true });
         throw error;

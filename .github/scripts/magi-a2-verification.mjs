@@ -14,12 +14,12 @@ vm.runInContext(worker.slice(begin,finish),ctx);
 vm.runInContext(worker.slice(worker.indexOf('function researchMessages('),worker.indexOf('// pause_turnで送り返す')),ctx);
 vm.runInContext(worker.slice(worker.indexOf('const withLangNote ='),worker.indexOf('\n',worker.indexOf('const withLangNote ='))),ctx);
 vm.runInContext(worker.slice(worker.indexOf('const withCard ='),worker.indexOf('// 統合の本文と正常',worker.indexOf('const withCard ='))),ctx);
+vm.runInContext(worker.slice(worker.indexOf('function factAnswerMessages('),worker.indexOf('async function runFactAnswer(')),ctx);
 ctx.cards=Object.fromEntries(Object.entries(JSON.parse(read('data/magi-context.json')).personas).map(([n,v])=>[n,v.card]));
 vm.runInContext(`globalThis.build=(question,draft,evidence,language,theme,date)=>{
   const cards=Object.fromEntries(Object.entries(globalThis.cards).map(([n,v])=>[n,v.slice(0,PERSONA_CONTEXT.max_chars)]));
-  const messages=[{role:'system',content:withLangNote(withCard({...SYNTHESIZER,system_prompt:RESEARCH.system_prompt},cards,PERSONA_CONTEXT.synth_header).system_prompt,languageNote(language))},
-    ...(SYNTH_BIAS[theme]?[{role:'system',content:SYNTH_BIAS[theme]}]:[]),
-    {role:'system',content:FACT_ANSWER.prompt},{role:'system',content:SYNTHESIZER.voice_rules},{role:'user',content:question}];
+  const messages=factAnswerMessages({cards,messages:[{role:'user',content:question}],
+    langNote:languageNote(language),theme,research:true});
   return researchVerificationBody({...DEFAULTS.models.synthesizer,reasoning_effort:RESEARCH.reasoning_effort},
     researchMessages(messages,new Date(date)),{text:draft},evidence,language);
 };`,ctx);
