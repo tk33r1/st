@@ -11,6 +11,13 @@ const dir = new URL('workers/.wrangler/magi2-dialogue-a3/',root);
 const hash = s => createHash('sha256').update(s).digest('hex');
 const save = (file,v) => writeFileSync(file,JSON.stringify(v,null,2)+'\n');
 const mode = process.argv.includes('--run') ? 'run' : process.argv.includes('--plan') ? 'plan' : 'check';
+const release = process.argv.includes('--release');
+const revision=process.argv.includes('--revision=constraints-v2')?'constraints-v2':null;
+const releaseSpent=ledger=>{
+  const hashes=new Set();
+  for(const name of ['release-judge-result.json','release-constraints-result.json']){const path=new URL(name,dir);if(existsSync(path))for(const row of JSON.parse(readFileSync(path,'utf8')).results)for(const c of row.calls)hashes.add(c.request_hash);}
+  return ledger.reservations.filter(r=>hashes.has(r.request_hash)||ledger.estimates[r.request_hash]?.evaluation_batch==='a3-release-v2').reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
+};
 let budget;
 if (mode === 'run') budget = paidEvaluationGate(); // 鍵と本文を読む前に既定拒否を確認する。
 const files = ['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
@@ -18,15 +25,15 @@ const sources = files.map(p=>read('workers/magi2/'+p));
 const registry = JSON.parse(read('config/ai-models.json')), cards = JSON.parse(read('data/magi-context.json'));
 const raw = read('workers/.wrangler/magi2-dialogue-a3/collection-result.json');
 const tune = read('workers/.wrangler/magi2-dialogue-a3/tune-review.json');
-const cases = JSON.parse(raw).results.map(row=>({id:row.id,input:row.input,debate:extractDebate(row)}));
+const cases = JSON.parse(raw).results.filter(r=>!revision||r.id==='collect-01').map(row=>({id:row.id,input:row.input,debate:extractDebate(row)}));
 const userCase = JSON.parse(tune).cases.find(c=>c.id==='tune-21');
 assert(userCase); cases.push({id:userCase.id,input:userCase.input,debate:userCase.debate});
-assert.equal(cases.length,4);
+assert.equal(cases.length,revision?2:4);
 const strip = s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 let row = null, keys = mode === 'run' ? {} : {MAGI_OPENAI_API_KEY:'mock',MAGI_ANTHROPIC_API_KEY:'mock'}, report = null;
-const hardCapUSD = .069135; // 送信許可で提示した追加上限。切替の残枠がなければ送信しない。
+const hardCapUSD = revision ? .095 : release ? .070 : .069135; // 送信許可で提示した追加上限。切替の残枠がなければ送信しない。
 let reservedUSD = 0;
-const planFile = new URL('judge-plan.json',dir), resultFile = new URL('judge-result.json',dir);
+const planFile = new URL(revision ? 'release-v2-judge-plan.json' : release ? 'release-judge-plan.json' : 'judge-plan.json',dir), resultFile = new URL(revision ? 'release-v2-judge-result.json' : release ? 'release-judge-result.json' : 'judge-result.json',dir);
 const realFetch = globalThis.fetch;
 const rates = {anthropic:{input:.20,output:.50,source:'https://platform.claude.com/docs/en/models/haiku-5-5/overview'},
   openai:{input:.25,output:.75,source:'https://developers.openai.com/api/docs/pricing'}};
@@ -55,7 +62,7 @@ const ctx = vm.createContext({aiModels:registry,bundledContext:cards,Request,Res
         : {choices:[{message:{content:text},finish_reason:'stop'}]});
     }
     assert(row.calls.length<2,'1判定は2社まで'); assert(!row.calls.some(c=>c.provider===provider),'同じ会社を再試行しない');
-    assert(Math.round((reservedUSD+request.estimate.max_usd)*1e6)<=Math.round(hardCapUSD*1e6),'追加上限に達したので切替を送信しない');
+    assert(Math.round(((revision?releaseSpent(JSON.parse(readFileSync(evaluationBudgetPath,'utf8'))):reservedUSD)+request.estimate.max_usd)*1e6)<=Math.round(hardCapUSD*1e6),'追加上限に達したので切替を送信しない');
     const reservation=budget.reserve(provider,body),call={provider,request_hash,reservation,status:null,finish:null,usage:null};
     reservedUSD+=reservation.max_usd;
     row.calls.push(call);save(resultFile,report);
@@ -66,7 +73,7 @@ const ctx = vm.createContext({aiModels:registry,bundledContext:cards,Request,Res
 vm.runInContext(sources.map(strip).join('\n').replace('export default {','globalThis.worker = {'),ctx);
 const requests = cases.map(c=>{
   ctx.sample=c;
-  const input=vm.runInContext(`({system:withLangNote(withCard({...SYNTHESIZER,system_prompt:DEBATE.system_prompt(2,5,true)},cardsFrom(bundledContext),PERSONA_CONTEXT.synth_header).system_prompt,languageNote({code:'ja'})),
+  const input=vm.runInContext(`({system:withLangNote(withCard({...SYNTHESIZER,system_prompt:DEBATE.system_prompt(2,5,true)},cardsFrom(bundledContext),PERSONA_CONTEXT.synth_header).system_prompt+'\\n\\n'+DEBATE.constraint_rules,languageNote({code:'ja'})),
     input:judgeInput([{role:'user',content:sample.input}],null,sample.debate,languageNote({code:'ja'})),active:sample.debate.map(d=>d.codename),allowUser:true})`,ctx);
   ctx.judgeSample=input;
   const bodies=vm.runInContext(`[DEFAULTS.models.judge,DEFAULTS.models.judge_fallback].map(cfg=>({provider:cfg.provider,body:requestBody(cfg,{stream:false,response_format:DEBATE.format,messages:[{role:'system',content:judgeSample.system},{role:'user',content:judgeSample.input}]})}))`,ctx);
@@ -90,7 +97,7 @@ if(mode==='run'){
     lock=openSync(evaluationBudgetPath+'.lock','wx');const ledger=JSON.parse(readFileSync(evaluationBudgetPath,'utf8'));
     const spent=p=>ledger.reservations.filter(r=>!p||r.provider===p).reduce((n,r)=>n+r.max_usd,0);
     assert(spent()+maximum_usd.total<=.80);for(const p of ['openai','anthropic'])assert(spent(p)+maximum_usd[p]<=.40);
-    for(const c of requests)for(const r of c.requests){assert(!ledger.reservations.some(x=>x.request_hash===r.request_hash),'同じ要求は再送しない');ledger.estimates[r.request_hash]=r.estimate;}
+    for(const c of requests)for(const r of c.requests){assert(!ledger.reservations.some(x=>x.request_hash===r.request_hash),'同じ要求は再送しない');ledger.estimates[r.request_hash]={...r.estimate,...(revision?{evaluation_batch:'a3-release-v2'}:{})};}
     save(evaluationBudgetPath,ledger);
   }finally{if(lock!==undefined){closeSync(lock);unlinkSync(evaluationBudgetPath+'.lock');}}
   const vars=read('workers/magi2/.dev.vars');

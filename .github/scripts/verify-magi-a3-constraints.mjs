@@ -12,11 +12,18 @@ const dir=new URL('workers/.wrangler/magi2-dialogue-a3/',root);
 const hash=s=>createHash('sha256').update(s).digest('hex');
 const save=(p,v)=>writeFileSync(p,JSON.stringify(v,null,2)+'\n');
 const mode=process.argv.includes('--run')?'run':process.argv.includes('--plan')?'plan':'check';
+const release=process.argv.includes('--release');
+const revision=process.argv.includes('--revision=constraints-v2')?'constraints-v2':null;
+const releaseSpent=ledger=>{
+  const hashes=new Set();
+  for(const name of ['release-judge-result.json','release-constraints-result.json']){const path=new URL(name,dir);if(existsSync(path))for(const row of JSON.parse(readFileSync(path,'utf8')).results)for(const c of row.calls)hashes.add(c.request_hash);}
+  return ledger.reservations.filter(r=>hashes.has(r.request_hash)||ledger.estimates[r.request_hash]?.evaluation_batch==='a3-release-v2').reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
+};
 const budget=mode==='run'?paidEvaluationGate():null; // 鍵より先に既定拒否。
 const previousText=read('workers/.wrangler/magi2-dialogue-a3/judge-result.json');
 const previous=JSON.parse(previousText), rawText=read('workers/.wrangler/magi2-dialogue-a3/collection-result.json');
 const raw=JSON.parse(rawText);
-const cases=['collect-01','collect-03'].map(id=>{
+const cases=(release?['collect-01']:['collect-01','collect-03']).map(id=>{
   const row=raw.results.find(r=>r.id===id), judgement=previous.results.find(r=>r.id===id)?.decision;
   assert(row?.completed&&judgement?.next_step==='answer');
   return {id,input:row.input,debate:extractDebate(row),judgement};
@@ -39,7 +46,7 @@ const oracle={reception:{capacity_per_10_min:600/20,total_service_seconds:60*20,
   conclusion:'最大30人待ちは到着分布を仮定しないと成立しない。受付1人の能力は列を分けても増えない。'},
   reading:{original_minutes:45+5+45,limit_minutes:90,overflow_minutes:45+5+45-90,
     feasible_example:[{from:0,to:40,participants:6,host:1},{from:40,to:45,participants:0,host:1},{from:45,to:85,participants:6,host:1},{from:85,to:90,participants:0,host:1}],
-    sharing:'全12人の事前感想を全員へ配布する場合のみ、分かれた組の感想も共有できる。二部制だけでは届かない。'}};
+    sharing:'全員に全員の感想を共有するなら、事前カードなど組をまたぐ方法を補う。全員が全員の話を直接聞くという追加条件を合否にしない。'}};
 assert(oracle.reading.feasible_example.every(s=>s.participants+s.host<=8));
 assert.equal(oracle.reading.feasible_example.at(-1).to,90);
 const files=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
@@ -56,16 +63,18 @@ const estimate=(provider,body)=>{
     pricing_checked_at:'2026-10-15',input_ceiling:input,output_ceiling:output,
     basis:`${rates[provider].source}; Standard・cache write側の高い単価; UTF8 ${bytes} bytes*2+2048 input ceiling; output<=${output}; 10%余裕。`};
 };
-const hardCap=.069135;
+const hardCap=revision?.095:release?.025:.069135;
 const previousHashes=new Set(previous.results.flatMap(r=>r.calls.map(c=>c.request_hash)));
 function phaseSpend(ledger) {
+  if(revision)return releaseSpent(ledger);
+  if(release)return ledger.reservations.filter(r=>ledger.estimates[r.request_hash]?.evaluation_batch==='a3-release-constraints').reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
   const first=ledger.reservations.filter(r=>previousHashes.has(r.request_hash));assert.equal(first.length,4);
   const at=Math.min(...first.map(r=>Date.parse(r.at)));assert(Number.isFinite(at));
   assert(ledger.reservations.every(r=>Number.isFinite(Date.parse(r.at))));
   // 他の評価が後から走っていても上限の残額を大きく見積もらない。
   return ledger.reservations.filter(r=>Date.parse(r.at)>=at).reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
 }
-const planFile=new URL('constraints-plan.json',dir),resultFile=new URL('constraints-result.json',dir);
+const planFile=new URL(revision?'release-v2-constraints-plan.json':release?'release-constraints-plan.json':'constraints-plan.json',dir),resultFile=new URL(revision?'release-v2-constraints-result.json':release?'release-constraints-result.json':'constraints-result.json',dir);
 const event=(v)=>'data: '+JSON.stringify(v)+'\n\n';
 const mock=(provider)=>new Response(provider==='anthropic'
   ? event({type:'content_block_delta',delta:{type:'text_delta',text:'模擬の回答'}})+event({type:'message_delta',delta:{stop_reason:'end_turn'}})+event({type:'message_stop'})
@@ -142,7 +151,7 @@ if(mode==='run'){
     const total=ledger.reservations.reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6;
     assert(total+maximum_usd.total<=.80);
     for(const provider of ['openai','anthropic'])assert(ledger.reservations.filter(r=>r.provider===provider).reduce((n,r)=>n+Math.ceil(r.max_usd*1e6),0)/1e6+maximum_usd[provider]<=.40);
-    for(const row of plannedRows)for(const r of row.requests){assert(!ledger.reservations.some(x=>x.request_hash===r.request_hash),'同じ要求は再送しない');ledger.estimates[r.request_hash]=r.estimate;}
+    for(const row of plannedRows)for(const r of row.requests){assert(!ledger.reservations.some(x=>x.request_hash===r.request_hash),'同じ要求は再送しない');ledger.estimates[r.request_hash]={...r.estimate,...(release?{evaluation_batch:revision?'a3-release-v2':'a3-release-constraints'}:{})};}
     save(evaluationBudgetPath,ledger);
   }finally{if(lock!==undefined){closeSync(lock);unlinkSync(evaluationBudgetPath+'.lock');}}
   const vars=read('workers/magi2/.dev.vars');keys={};

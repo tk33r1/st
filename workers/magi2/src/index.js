@@ -372,9 +372,9 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
 const PROVIDER_ROLES = {
-  openai: 'OpenAI（CASPER-3・ライトの統合・討議の判定・ページ選び。統合と補助の役割の答え直しにも使用）',
+  openai: 'OpenAI（CASPER-3・ライトの統合・討議判定の答え直し・ページ選び。統合と補助の役割の答え直しにも使用）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
-  anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
+  anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・両テーマの討議判定・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
   typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
 };
 async function alertUpstream(env, log, provider, res, ctx, signal) {
@@ -1675,7 +1675,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
   for (let round = 3; round <= maxRounds && !signal.aborted; round++) {
     if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
-    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds, !!clarification) }, cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote);
+    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds, !!clarification) }, cards, PERSONA_CONTEXT.synth_header).system_prompt + '\n\n' + DEBATE.constraint_rules, langNote);
     const judgement = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
       system: judgeSystem, input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename), allowUser: !!clarification,
     }, signal, log), signal).catch(e => { if (signal.aborted) throw e; log('debate', 'judge', 'timeout'); return null; });
@@ -1742,6 +1742,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
     ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
+    { role: 'system', content: SYNTHESIZER.constraint_rules },
     ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
     { role: 'user', content: withImages(noteLang(augmented), lastImages) },
   ];

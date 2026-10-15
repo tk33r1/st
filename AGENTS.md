@@ -296,10 +296,11 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     会社ごとの推論の切り方やトークン上限の名前の違いは `src/index.js` の `requestBody` に閉じている。
     1人格が失敗しても（障害・安全フィルター・キー未設定・時間切れ）その人格を `[NO RESPONSE]` にして
     残りで討議と統合を続け、全員が失敗したときだけエラーにする。
-  - **討議の回数**: `fact_mode:true`の新画面はresearch・siteを討議なしで答え、musicは曲案内として最大5回。印のない新契約のsite・musicは第2回で統合する。consultと旧契約は、第2回の後から統合人格が判定し（`DEBATE`、Luna・推論 low）、答えを変えうる論点が残っていれば
+  - **討議の回数**: `fact_mode:true`の新画面はresearch・siteを討議なしで答え、musicは曲案内として最大5回。印のない新契約のsite・musicは第2回で統合する。consultと旧契約は、第2回の後から統合人格が判定し（`DEBATE`、両テーマHaiku・medium。失敗時だけLuna・mediumへ1回、同じ20秒以内）、答えを変えうる論点が残っていれば
     答えられる人格にだけ聞き返して最大5回まで回す。基準は「一致したか」ではない（価値観の違いは統合で本人が決める）。
     第3回以降は、リクエストに `adaptive_debate: true` を付けた画面だけ（配布済みの古いアプリは2回のまま）。
     MAGI を使う画面を足すときは、`ask` イベントと履歴の `followups` に対応してから付ける（詳細は magi2 の README.md）。
+  - **A3の確認質問**: `clarify:true`の通常チャットは判定と質問を同じJSONで生成し、必要時に1〜3問を`clarify`→`done`で送る。MAGI・DJ・404・印のない画面は利用者へ確認しない。直前のassistantが`clarify`なら再確認せず、回答の分類時だけ元の相談・質問と選択肢・直前のintent/freshをJevへ渡す。通常のAI回答・討議・カード・状況説明はJevへ送らない。
   - **人格ごとの会話の履歴**: 画面は履歴の回答に、その回の各人格の意見を `debate`（`{ 人格名: { round1, round2, followups } }`。
     `followups` は聞き返された第3回以降の `[{ round, ask, text }]`）として
     付けて送る（トップページとアプリは履歴の項目をそのまま、`dj/request/` は保存した `personas` を変換して）。Worker は
