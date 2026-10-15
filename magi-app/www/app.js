@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '5.0';
+var APP_VERSION = '5.1';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -432,8 +432,8 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
   + '</svg>'
   + '<div class="magi-title">MAGI</div>'
-  + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver ' + APP_VERSION + ' <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-sub">Multi-Agent Generative Intelligence<button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="Release History">ver ' + APP_VERSION + '</button>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -1321,7 +1321,8 @@ function closeEmojiPops() { document.querySelectorAll('.emoji-pop').forEach(func
 agentLog.addEventListener('click', function (e) {
   if (e.target.closest('[data-install-agent]')) { showInstallPanel(); return; }
   // splash: System & Privacy info button (next to the version string)
-  if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
+  if (e.target.closest('#btn-versions-agent')) { e.preventDefault(); showVersionsPanel(); return; }
+      if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
   // splash persona node
   var node = e.target.closest('.magi-node');
   if (node) {
@@ -1391,7 +1392,7 @@ agentLog.addEventListener('click', function (e) {
 document.addEventListener('click', function (e) { if (!e.target.closest('.reaction-bar')) closeEmojiPops(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel', 'agent-install-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel'];
 function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); }); }
 function makeAgentPanel(id, title, bodyHTML) {
   if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
@@ -1487,6 +1488,65 @@ function renderAgentPrivacy(list, lang, data) {
   });
 }
 // AGENT_PRIVACY_END
+
+// AGENT_VERSIONS_BEGIN
+// トップとアプリで同じ、文字だけの更新履歴。チャットの状態には触れない。
+var agentVersionsCache = null, agentVersionsAt = 0, agentVersionsPending = null;
+function validAgentVersions(data) {
+  return data && Array.isArray(data.versions) && data.versions.length > 0 && data.versions.length <= 60
+    && data.versions.every(function (row) { return row && typeof row.version === 'string'
+      && (/^\d{1,2}\.\d$/.test(row.version) || row.version === 'earlier')
+      && (row.version === 'earlier' ? row.date === null : typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.date))
+      && row.changes && ['ja','en'].every(function (lang) { return Array.isArray(row.changes[lang])
+        && row.changes[lang].length >= 2 && row.changes[lang].length <= 4
+        && row.changes[lang].every(function (text) { return typeof text === 'string' && text.length > 0 && Array.from(text).length <= 200; }); }); });
+}
+function loadAgentVersions() {
+  if (agentVersionsCache && Date.now() - agentVersionsAt < 600000) return Promise.resolve(agentVersionsCache);
+  if (agentVersionsPending) return agentVersionsPending;
+  var controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 6000);
+  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions'), {signal:controller.signal})
+    .then(function (response) { if (!response.ok) throw new Error('versions_unavailable'); return response.json(); })
+    .then(function (data) { if (!validAgentVersions(data)) throw new Error('versions_invalid');
+      agentVersionsCache = data; agentVersionsAt = Date.now(); return data; })
+    .catch(function () { return null; }).finally(function () { clearTimeout(timer); agentVersionsPending = null; });
+  return agentVersionsPending;
+}
+function renderAgentVersions(list, lang, data) {
+  list.replaceChildren(); list.lang = lang;
+  if (!data) {
+    var status = document.createElement('p'); status.setAttribute('role', 'status');
+    status.textContent = data === undefined ? (lang === 'ja' ? '読み込み中…' : 'Loading…')
+      : (lang === 'ja' ? '更新履歴を取得できませんでした。閉じてから、もう一度お試しください。' : 'Could not load the release history. Close this panel and try again.');
+    list.appendChild(status); return;
+  }
+  data.versions.forEach(function (row) {
+    var section = document.createElement('section'), title = document.createElement('h3');
+    title.textContent = row.version === 'earlier' ? (lang === 'ja' ? 'それ以前' : 'Earlier releases') : 'ver ' + row.version;
+    section.appendChild(title);
+    if (row.date) { var date = document.createElement('time'); date.dateTime = row.date; date.textContent = row.date; section.appendChild(date); }
+    var changes = document.createElement('ul');
+    row.changes[lang].forEach(function (text) { var li = document.createElement('li'); li.textContent = text; changes.appendChild(li); });
+    section.appendChild(changes); list.appendChild(section);
+  });
+}
+function fillAgentVersionsPanel(panel, lang) {
+  panel.dataset.lang = lang;
+  panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
+  panel.querySelector('.agent-panel-close').textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
+  var list = panel.querySelector('.agent-versions-list');
+  renderAgentVersions(list, lang, agentVersionsCache || undefined);
+  loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
+}
+function showVersionsPanel() {
+  var panel = makeAgentPanel('agent-versions-panel', '', '<div class="agent-versions-list"></div>');
+  if (!panel) return;
+  var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
+  title.classList.add('agent-versions-title');
+  fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
+}
+// AGENT_VERSIONS_END
+
 
 function showInfoPanel() {
   var panel = makeAgentPanel('agent-info-panel', 'System & Privacy', '<ul class="agent-privacy-list"></ul>');

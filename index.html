@@ -2380,6 +2380,18 @@
       justify-content: center;
     }
 
+
+    .magi-ver { background:transparent;border:1px solid var(--border-color);border-radius:2px;padding:0.2rem 0.45rem;font-family:inherit;cursor:pointer;gap:0.35rem; }
+    .magi-ver::after { content:'▾'; }
+    .magi-ver:hover,.magi-ver:focus-visible { color:var(--primary-color);border-color:var(--primary-color); }
+    .magi-sub { display:flex;align-items:center;justify-content:center; }
+    .agent-versions-list { flex:1;min-height:0;overflow-y:auto;text-align:left;overflow-wrap:anywhere; }
+    .agent-versions-list section { padding:0.65rem 0;border-bottom:1px solid var(--border-color); }
+    .agent-versions-list h3 { margin:0 0 0.15rem;font-size:12px;color:var(--primary-color); }
+    .agent-versions-list time { font-size:10px;color:var(--secondary-color); }
+    .agent-versions-list ul { margin:0.45rem 0 0;padding-left:1.2rem; }
+    .agent-versions-list li,.agent-versions-list p { font-size:11px;line-height:1.7;color:var(--text-color); }
+
     #btn-info-agent {
       display: inline-flex;
       align-items: center;
@@ -4519,6 +4531,8 @@
       // button labels (APK/App Download, etc.) are baked in via tr() at render
       // time, so a one-shot innerHTML never updates on a later language switch.
       if (splashOnly()) agentLog.innerHTML = agentHintHTML();
+      const versionsPanel = document.getElementById('agent-versions-panel');
+      if (versionsPanel) fillAgentVersionsPanel(versionsPanel, currentLang);
       // Rebuild the content search index against the active language.
       buildSearchIndex();
       if (searchInput.value) renderSearch(searchInput.value);
@@ -7390,8 +7404,8 @@
       + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
-      + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 5.0 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-sub">Multi-Agent Generative Intelligence<button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 5.1</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -8526,6 +8540,7 @@ async function parseSSE(body, handlers, onChunk) {
         return;
       }
       // スプラッシュ：System & Privacy ボタン
+      if (e.target.closest('#btn-versions-agent')) { e.preventDefault(); showVersionsPanel(); return; }
       if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
       // スプラッシュの人格ノード：特徴をトグル表示
       const node = e.target.closest('.magi-node');
@@ -8672,7 +8687,7 @@ async function parseSSE(body, handlers, onChunk) {
 
     // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
     // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
-    const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel'];
+    const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel'];
     const closeAgentPanels = () => AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p) p.remove(); });
     function makeAgentPanel(id, title, bodyHTML) {
       if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
@@ -8778,6 +8793,65 @@ function renderAgentPrivacy(list, lang, data) {
   });
 }
 // AGENT_PRIVACY_END
+
+// AGENT_VERSIONS_BEGIN
+// トップとアプリで同じ、文字だけの更新履歴。チャットの状態には触れない。
+var agentVersionsCache = null, agentVersionsAt = 0, agentVersionsPending = null;
+function validAgentVersions(data) {
+  return data && Array.isArray(data.versions) && data.versions.length > 0 && data.versions.length <= 60
+    && data.versions.every(function (row) { return row && typeof row.version === 'string'
+      && (/^\d{1,2}\.\d$/.test(row.version) || row.version === 'earlier')
+      && (row.version === 'earlier' ? row.date === null : typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.date))
+      && row.changes && ['ja','en'].every(function (lang) { return Array.isArray(row.changes[lang])
+        && row.changes[lang].length >= 2 && row.changes[lang].length <= 4
+        && row.changes[lang].every(function (text) { return typeof text === 'string' && text.length > 0 && Array.from(text).length <= 200; }); }); });
+}
+function loadAgentVersions() {
+  if (agentVersionsCache && Date.now() - agentVersionsAt < 600000) return Promise.resolve(agentVersionsCache);
+  if (agentVersionsPending) return agentVersionsPending;
+  var controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 6000);
+  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions'), {signal:controller.signal})
+    .then(function (response) { if (!response.ok) throw new Error('versions_unavailable'); return response.json(); })
+    .then(function (data) { if (!validAgentVersions(data)) throw new Error('versions_invalid');
+      agentVersionsCache = data; agentVersionsAt = Date.now(); return data; })
+    .catch(function () { return null; }).finally(function () { clearTimeout(timer); agentVersionsPending = null; });
+  return agentVersionsPending;
+}
+function renderAgentVersions(list, lang, data) {
+  list.replaceChildren(); list.lang = lang;
+  if (!data) {
+    var status = document.createElement('p'); status.setAttribute('role', 'status');
+    status.textContent = data === undefined ? (lang === 'ja' ? '読み込み中…' : 'Loading…')
+      : (lang === 'ja' ? '更新履歴を取得できませんでした。閉じてから、もう一度お試しください。' : 'Could not load the release history. Close this panel and try again.');
+    list.appendChild(status); return;
+  }
+  data.versions.forEach(function (row) {
+    var section = document.createElement('section'), title = document.createElement('h3');
+    title.textContent = row.version === 'earlier' ? (lang === 'ja' ? 'それ以前' : 'Earlier releases') : 'ver ' + row.version;
+    section.appendChild(title);
+    if (row.date) { var date = document.createElement('time'); date.dateTime = row.date; date.textContent = row.date; section.appendChild(date); }
+    var changes = document.createElement('ul');
+    row.changes[lang].forEach(function (text) { var li = document.createElement('li'); li.textContent = text; changes.appendChild(li); });
+    section.appendChild(changes); list.appendChild(section);
+  });
+}
+function fillAgentVersionsPanel(panel, lang) {
+  panel.dataset.lang = lang;
+  panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
+  panel.querySelector('.agent-panel-close').textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
+  var list = panel.querySelector('.agent-versions-list');
+  renderAgentVersions(list, lang, agentVersionsCache || undefined);
+  loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
+}
+function showVersionsPanel() {
+  var panel = makeAgentPanel('agent-versions-panel', '', '<div class="agent-versions-list"></div>');
+  if (!panel) return;
+  var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
+  title.classList.add('agent-versions-title');
+  fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
+}
+// AGENT_VERSIONS_END
+
 
     function showInfoPanel() {
       const panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'),

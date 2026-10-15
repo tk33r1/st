@@ -9,6 +9,7 @@ import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLangu
 import { researchReader } from '../research.js';
 import { BIDI_CONTROL_CHARS } from '../personas.js';
 import bundledContext from '../../../data/magi-context.json';
+import { getVersionHistory } from '../versions.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -1995,6 +1996,9 @@ export default {
     // 説明文も画面に持たせない（トップページとアプリで食い違わず、アプリのリリースなしで直せる）。
     // パスの名前はモデル名だけを返していた頃のまま（配布済みのアプリが provider / model を読みに来る）。
     // 公開して困る情報ではないので認可は付けない（読めるのは CORS で許した Origin のページだけ）
+    if (request.method === 'GET' && url.pathname === '/magi2/versions') {
+      return jsonResponse(await getVersionHistory(), cors, 200, { 'Cache-Control': 'public, max-age=600', Vary: 'Origin' });
+    }
     if (request.method === 'GET' && url.pathname === '/magi2/models') {
       // 配布済みの画面も model を表示するので、ここで表示名を返す。API 呼び出しは cfg.model のまま。
       // 実際に指定しているモデルIDも model_id として返し、エイリアスとの対応を確認できるようにする。

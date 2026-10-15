@@ -865,3 +865,8 @@ export const RESEARCH = {
     it: 'Non è stato possibile verificare questo dato nella fonte citata.',
   },
 };
+// 更新履歴の公開JSON。タイムアウトと上限もここを正本にする。
+export const VERSION_HISTORY = {
+  url: 'https://tk.st/data/magi-versions.json', cache_ms: 600000,
+  fetch_timeout_ms: 3000, max_bytes: 65536, max_versions: 60, max_change_chars: 200,
+};

@@ -55,6 +55,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
   const cards = JSON.parse(read('data/magi-context.json'));
   const ctx = vm.createContext({
     aiModels: JSON.parse(read('config/ai-models.json')), bundledContext: cards,
+    bundledVersions: JSON.parse(read('data/magi-versions.json')),
     Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL,
     crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} },
     fetch: async (url, options) => {
@@ -91,6 +92,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
   });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
   vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
+    + strip(read('workers/magi2/versions.js')) + '\n'
     + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/research.js')) + '\n'
     + strip(read('workers/magi2/magi-mode.js')) + '\n'
@@ -3614,12 +3616,13 @@ test('404 の③のリンクの検査はサイト内のパスだけを通す（�
 
 
 test('MAGI の版はトップ・アプリの定数・package・Androidで一致し、同梱画面も同じ定数を使う', () => {
-  const shown = src => [...src.matchAll(/class="magi-ver">ver (\d+\.\d+) /g)].map(m => m[1]);
+  const shown = src => [...src.matchAll(/class="magi-ver"[^>]*>ver (\d+\.\d+)</g)].map(m => m[1]);
   const home = shown(read('index.html')), app = mobile.match(/var APP_VERSION = '(\d+\.\d+)'/);
   const pkg = JSON.parse(read('magi-app/package.json')).version.split('.').slice(0, 2).join('.');
   assert.equal(home.length, 1); assert.ok(app);
   assert.equal(home[0], pkg); assert.equal(app[1], pkg);
-  assert.ok(mobile.includes('class="magi-ver">ver \' + APP_VERSION + \' '));
+  assert.ok(mobile.includes('>ver \' + APP_VERSION + \'</button>'));
+  assert.equal(JSON.parse(read('data/magi-versions.json')).versions[0].version, pkg);
   const gradle = read('magi-app/android/app/build.gradle');
   assert.equal(gradle.match(/versionName "([^"]+)"/)[1], pkg);
   assert.equal(Number(gradle.match(/versionCode (\d+)/)[1]), Number(pkg.split('.').join('')));
@@ -3643,6 +3646,75 @@ test('modelsはAnthropicとテーマ別の統合、日英の文字段落・機�
     }
   }
   assert.equal(w.calls.length, 0);
+});
+
+test('A4: 更新履歴の正本は日英2〜4行・日付・降順を満たし、壊れた全体を採用しない', () => {
+  const w = worker(), original = JSON.parse(read('data/magi-versions.json'));
+  assert.ok(w.ctx.cleanVersionHistory(original));
+  for (const corrupt of [
+    d => d.versions.reverse(), d => d.versions[0].date = '2026-02-30',
+    d => d.versions[0].changes.ja = [], d => d.versions[0].changes.en = ['one'],
+    d => d.versions[0].changes.ja[0] = 'x'.repeat(201), d => d.versions[0].changes.ja[0] = 'a\nb',
+    d => d.versions[1].version = d.versions[0].version, d => d.versions[0].other = true,
+    d => d.versions[0].changes.fr = ['x','y'], d => d.versions.at(-1).date = '2020-01-01',
+  ]) {
+    const data = structuredClone(original); corrupt(data); assert.equal(w.ctx.cleanVersionHistory(data), null);
+  }
+});
+
+const versionRequest = (w, origin = 'https://localhost') => w.ctx.worker.fetch(
+  new Request('https://workers.tk.st/magi2/versions', {headers:{Origin:origin}}), w.env, {waitUntil(){}});
+
+test('A4: 公開JSONを取得し、同時要求と10分キャッシュを共有し、CORSはmodelsと同じ', async () => {
+  const remote = JSON.parse(read('data/magi-versions.json')); remote.versions[0].changes.ja[0] = '公開後の説明 <確認>';
+  let calls = 0;
+  const w = worker(completion(), async url => { if (url.endsWith('/magi-versions.json')) { calls++; return Response.json(remote); } });
+  const results = await Promise.all([versionRequest(w), versionRequest(w, 'https://tk.st')]);
+  assert.equal(calls, 1); assert.deepEqual(await results[0].json(), remote);
+  assert.equal(results[0].headers.get('Access-Control-Allow-Origin'), 'https://localhost');
+  assert.equal(results[1].headers.get('Access-Control-Allow-Origin'), 'https://tk.st');
+  assert.equal(results[0].headers.get('Cache-Control'), 'public, max-age=600');
+  assert.equal(results[0].headers.get('Vary'), 'Origin');
+  await versionRequest(w); assert.equal(calls, 1);
+  vm.runInContext('versionHistoryExpires = 0', w.ctx);
+  await versionRequest(w); assert.equal(calls, 2); assert.equal(w.calls.length, 0);
+  assert.equal((await versionRequest(w, 'https://elsewhere.invalid')).headers.get('Access-Control-Allow-Origin'), 'https://tk.st');
+});
+
+test('A4: 取得失敗・壊れたJSON・不正な形・容量超過では同梱分を返す', async () => {
+  const bundled = JSON.parse(read('data/magi-versions.json'));
+  for (const make of [() => new Response('', {status:404}), () => new Response('{'),
+    () => Response.json({versions:[]}), () => Response.json({versions:bundled.versions.slice(1)}),
+    () => new Response(' '.repeat(65537)), () => {throw new Error('offline');}]) {
+    let calls = 0;
+    const w = worker(completion(), async url => {if (url.endsWith('/magi-versions.json')) { calls++; return make(); }});
+    assert.deepEqual(await (await versionRequest(w)).json(), bundled);
+    assert.equal(calls, 1); await versionRequest(w); assert.equal(calls, 1); assert.equal(w.calls.length, 0);
+  }
+});
+
+test('A4: ヘッダーと本文が止まっても期限で同梱分を返し、取得を中止する', async () => {
+  for (const stuckBody of [false,true]) {
+    let aborted = false, cancelled = false;
+    const w = worker(completion(), async (url, options) => {
+      if (!url.endsWith('/magi-versions.json')) return;
+      options.signal.addEventListener('abort', () => {aborted = true;});
+      return stuckBody ? new Response(new ReadableStream({pull(){},cancel(){cancelled = true;}})) : new Promise(()=>{});
+    });
+    vm.runInContext('VERSION_HISTORY.fetch_timeout_ms = 15', w.ctx);
+    const response = await versionRequest(w);
+    assert.deepEqual(await response.json(), JSON.parse(read('data/magi-versions.json')));
+    assert.equal(aborted, true); if (stuckBody) assert.equal(cancelled, true);
+  }
+});
+
+test('A4: トップとPWAの履歴の検査・取得・描画を同じ実装にそろえる', () => {
+  const block = src => between(src, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END');
+  assert.equal(block(home), block(mobile));
+  for (const src of [home,mobile]) {
+    assert.ok(src.includes("'agent-versions-panel'"));
+    assert.ok(src.includes("closest('#btn-versions-agent')"));
+  }
 });
 
 test('説明の文字描画は日英・両画面で一致し、機能の印はすべて満たす場合だけ出す', () => {

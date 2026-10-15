@@ -1,0 +1,370 @@
+{
+  "versions": [
+    {
+      "version": "5.1",
+      "date": "2026-10-15",
+      "changes": {
+        "ja": [
+          "版の表記から、これまでの更新履歴を読めるようになりました。",
+          "システムとプライバシーの案内を、サブタイトルの右から開けるようになりました。"
+        ],
+        "en": [
+          "Tap the version to read the release history.",
+          "Open System & Privacy from the information button beside the subtitle."
+        ]
+      }
+    },
+    {
+      "version": "5.0",
+      "date": "2026-10-15",
+      "changes": {
+        "ja": [
+          "答えを決めるために必要なときは、選択肢付きの確認質問を出すようになりました。",
+          "相談に残った論点に応じて、必要な人格だけに追加で意見を聞くようになりました。"
+        ],
+        "en": [
+          "When an important detail is missing, MAGI can ask a question with choices.",
+          "Further discussion asks only the personas needed to address the remaining issues."
+        ]
+      }
+    },
+    {
+      "version": "4.9",
+      "date": "2026-10-15",
+      "changes": {
+        "ja": [
+          "事実の確認には、人格の討議を挟まずに答えるようになりました。",
+          "最新情報を調べた回答に、確認した出典を添えるようになりました。"
+        ],
+        "en": [
+          "Factual questions receive a direct answer without a persona discussion.",
+          "Answers that check current information include the sources consulted."
+        ]
+      }
+    },
+    {
+      "version": "4.8",
+      "date": "2026-10-14",
+      "changes": {
+        "ja": [
+          "悪意のある問いには、短く返して会話を終えるようになりました。",
+          "会話を終えた後も、新しい会話を開いて再開できます。"
+        ],
+        "en": [
+          "Hostile requests can receive a short reply that ends the conversation.",
+          "Start a new chat to resume after a conversation has been closed."
+        ]
+      }
+    },
+    {
+      "version": "4.7",
+      "date": "2026-10-13",
+      "changes": {
+        "ja": [
+          "人格の話し方と、ライト・ダークそれぞれの回答の雰囲気を見直しました。",
+          "システムとプライバシーの案内を、現在の動作に合わせて更新しました。"
+        ],
+        "en": [
+          "Persona voices and the tone of light and dark replies were revised.",
+          "System & Privacy was updated to describe the current experience."
+        ]
+      }
+    },
+    {
+      "version": "4.6",
+      "date": "2026-10-12",
+      "changes": {
+        "ja": [
+          "新しい版が出ると、アプリ内で更新を知らせるようになりました。",
+          "端末のテーマに合わせて起動し、後からライト・ダークを切り替えられます。",
+          "アプリのアイコンをトップページと同じ紋章にそろえました。"
+        ],
+        "en": [
+          "The app now lets you know when a new version is available.",
+          "It starts with your device theme and lets you switch between light and dark.",
+          "The app icon now uses the same emblem as the home page."
+        ]
+      }
+    },
+    {
+      "version": "4.5",
+      "date": "2026-10-12",
+      "changes": {
+        "ja": [
+          "回答がまとめて届く環境でも、受け取った内容を順に表示するようになりました。",
+          "待ち時間の案内と停止操作を見直しました。"
+        ],
+        "en": [
+          "Replies received in a batch are displayed in sequence.",
+          "Waiting notices and the stop action were improved."
+        ]
+      }
+    },
+    {
+      "version": "4.4",
+      "date": "2026-10-08",
+      "changes": {
+        "ja": [
+          "回答から日刊ブリーフを開くリンクを、新しい検索画面に合わせました。",
+          "以前の検索リンクからも、引き続き日刊記事を探せます。"
+        ],
+        "en": [
+          "Links from replies now open the updated daily brief search.",
+          "Older search links still let you find daily articles."
+        ]
+      }
+    },
+    {
+      "version": "4.3",
+      "date": "2026-10-06",
+      "changes": {
+        "ja": [
+          "通常のチャット画面を、サイトと共通のライト・ダーク配色にそろえました。",
+          "人格カードの形とマークの配置をそろえました。"
+        ],
+        "en": [
+          "Normal chat now shares the site’s light and dark colors.",
+          "Persona cards use a consistent shape and arrangement of symbols."
+        ]
+      }
+    },
+    {
+      "version": "4.2",
+      "date": "2026-10-06",
+      "changes": {
+        "ja": [
+          "採決中の票と、決議後の表示を安定させました。",
+          "英語の審議記録と読み上げを整えました。"
+        ],
+        "en": [
+          "Votes during deliberation and the final decision display are more stable.",
+          "English deliberation records and screen reader announcements were refined."
+        ]
+      }
+    },
+    {
+      "version": "4.1",
+      "date": "2026-10-05",
+      "changes": {
+        "ja": [
+          "賛否を問う相談で、3人格が採決するMAGIモードを追加しました。",
+          "審議記録と決議の説明を読み、保存した会話でも見返せます。"
+        ],
+        "en": [
+          "MAGI mode adds a three-persona vote for explicit yes-or-no decisions.",
+          "Read the deliberation record and decision explanation, including in saved chats."
+        ]
+      }
+    },
+    {
+      "version": "4.0",
+      "date": "2026-10-04",
+      "changes": {
+        "ja": [
+          "回答に、考えていた時間と関連するサイト内ページを表示するようになりました。",
+          "会話の完了とエラーを、スクリーンリーダーへ知らせるようになりました。"
+        ],
+        "en": [
+          "Replies now show thinking time and links to related pages on the site.",
+          "Screen readers announce completed replies and errors."
+        ]
+      }
+    },
+    {
+      "version": "3.8",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "回答の生成中に、停止ボタンで止められるようになりました。",
+          "停止したときに、送った質問を入力欄へ戻せるようになりました。"
+        ],
+        "en": [
+          "A stop button lets you interrupt a reply.",
+          "After stopping, your question can be restored to the input field."
+        ]
+      }
+    },
+    {
+      "version": "3.7",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "長い会話や画像を含む相談の扱いを整えました。",
+          "完了した回答を保存し、保存した会話を安定して開けるようにしました。"
+        ],
+        "en": [
+          "Handling of long conversations and image questions was improved.",
+          "Completed replies are saved, and saved conversations open more reliably."
+        ]
+      }
+    },
+    {
+      "version": "3.6",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "人格の説明に、現在の案内を表示するようになりました。",
+          "アプリを更新しなくても、人格の説明の変更を読めるようになりました。"
+        ],
+        "en": [
+          "Persona descriptions now show the current guidance.",
+          "Updated descriptions can be read without installing a new app version."
+        ]
+      }
+    },
+    {
+      "version": "3.5",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "統合人格のボタンから、回答をまとめる役割の説明を読めるようになりました。",
+          "人格ごとの説明と、統合人格の説明を分けて確認できます。"
+        ],
+        "en": [
+          "Tap the synthesizing persona to read about its role.",
+          "Read separate descriptions for the individual personas and the synthesizing persona."
+        ]
+      }
+    },
+    {
+      "version": "3.4",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "サイトに書かれた現在の活動や関心を、人格の回答に反映するようになりました。",
+          "人格の案内から、それぞれの拠り所を確認できます。"
+        ],
+        "en": [
+          "Persona replies now reflect current activities and interests described on the site.",
+          "Persona descriptions explain the material each persona draws on."
+        ]
+      }
+    },
+    {
+      "version": "3.3",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "長い質問を書くと、入力欄が最大6行まで広がるようになりました。",
+          "改行と、日本語変換中の送信操作を整えました。"
+        ],
+        "en": [
+          "The input field grows to six lines for longer questions.",
+          "Line breaks and sending during Japanese text conversion were improved."
+        ]
+      }
+    },
+    {
+      "version": "3.2",
+      "date": "2026-10-03",
+      "changes": {
+        "ja": [
+          "次に聞ける質問の候補を、入力欄に表示するようになりました。",
+          "候補の右のボタンを押すと、送信前に内容を編集できます。"
+        ],
+        "en": [
+          "A suggested follow-up question appears in the input field.",
+          "Tap the button beside it to edit the suggestion before sending."
+        ]
+      }
+    },
+    {
+      "version": "3.1",
+      "date": "2026-09-26",
+      "changes": {
+        "ja": [
+          "3人格それぞれの答えの違いを出しやすくしました。",
+          "1つの人格が応答できなくても、残りの人格で回答を続けるようになりました。"
+        ],
+        "en": [
+          "The three personas now offer more distinct perspectives.",
+          "If one persona cannot respond, the others can continue the answer."
+        ]
+      }
+    },
+    {
+      "version": "3.0",
+      "date": "2026-08-22",
+      "changes": {
+        "ja": [
+          "画像を添えた質問を、1回につき最大4枚まで送れるようになりました。",
+          "画像を端末で縮小してから送るようになりました。"
+        ],
+        "en": [
+          "Questions can include up to four images at a time.",
+          "Images are resized on your device before sending."
+        ]
+      }
+    },
+    {
+      "version": "2.4",
+      "date": "2026-08-18",
+      "changes": {
+        "ja": [
+          "画像を添付して相談できるようになりました。",
+          "文章と画像を同じ質問で送れます。"
+        ],
+        "en": [
+          "You can attach an image to a question.",
+          "Send text and images together in one question."
+        ]
+      }
+    },
+    {
+      "version": "2.3",
+      "date": "2026-05-24",
+      "changes": {
+        "ja": [
+          "画面の見た目と、表示する素材を更新しました。",
+          "Androidアプリの画面を更新しました。"
+        ],
+        "en": [
+          "The interface and visual assets were updated.",
+          "The Android app received the updated interface."
+        ]
+      }
+    },
+    {
+      "version": "2.2",
+      "date": "2026-05-24",
+      "changes": {
+        "ja": [
+          "会話の保存・読み込み・削除と、共有・書き出しに対応しました。",
+          "人格の説明の開閉と、リアクションの操作を整えました。"
+        ],
+        "en": [
+          "Save, reopen, delete, share, and export conversations.",
+          "Persona descriptions and reaction controls were refined."
+        ]
+      }
+    },
+    {
+      "version": "2.1",
+      "date": "2026-05-24",
+      "changes": {
+        "ja": [
+          "AndroidでMAGIを使う専用アプリを公開しました。",
+          "サイトとは別のアプリ画面から相談できます。"
+        ],
+        "en": [
+          "A dedicated MAGI app was released for Android.",
+          "Chat with MAGI from its own app screen."
+        ]
+      }
+    },
+    {
+      "version": "earlier",
+      "date": null,
+      "changes": {
+        "ja": [
+          "Webサイト上でMAGIに相談できるようになりました。",
+          "3つの人格の意見と、それをまとめた回答を読めます。"
+        ],
+        "en": [
+          "MAGI became available on the website.",
+          "Read three persona perspectives and a combined reply."
+        ]
+      }
+    }
+  ]
+}

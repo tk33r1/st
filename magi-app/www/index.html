@@ -240,6 +240,18 @@
     .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem auto 0.2rem; width: fit-content; border-block: 3px double var(--secondary-color); padding: 0.1rem 0.35rem; }
     .magi-sub { font-size: 11px; letter-spacing: 0.12em; color: var(--text-color); }
     .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; display: inline-flex; align-items: center; justify-content: center; }
+
+    .magi-ver { background:transparent;border:1px solid var(--border-color);border-radius:2px;padding:0.2rem 0.45rem;font-family:inherit;cursor:pointer;gap:0.35rem; }
+    .magi-ver::after { content:'▾'; }
+    .magi-ver:hover,.magi-ver:focus-visible { color:var(--primary-color);border-color:var(--primary-color); }
+    .magi-sub { display:flex;align-items:center;justify-content:center; }
+    .agent-versions-list { flex:1;min-height:0;overflow-y:auto;text-align:left;overflow-wrap:anywhere; }
+    .agent-versions-list section { padding:0.65rem 0;border-bottom:1px solid var(--border-color); }
+    .agent-versions-list h3 { margin:0 0 0.15rem;font-size:12px;color:var(--primary-color); }
+    .agent-versions-list time { font-size:10px;color:var(--secondary-color); }
+    .agent-versions-list ul { margin:0.45rem 0 0;padding-left:1.2rem; }
+    .agent-versions-list li,.agent-versions-list p { font-size:11px;line-height:1.7;color:var(--text-color); }
+
     .magi-info-btn { display: inline-flex; align-items: center; justify-content: center; margin-left: 0.35rem; padding: 0; background: transparent; border: none; color: var(--secondary-color); cursor: pointer; transition: color var(--duration-fast); }
     .magi-info-btn:hover, .magi-info-btn:active { color: var(--primary-color); }
     .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 1rem; flex-wrap: wrap; }
@@ -348,6 +360,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261015_3"></script>
+  <script src="app.js?v=20261015_4"></script>
 </body>
 </html>
