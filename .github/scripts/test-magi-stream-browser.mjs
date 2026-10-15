@@ -7,7 +7,7 @@ import { resolve, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
 const root = resolve(process.argv[2] || '.'), event = (ev, data) => `event: ${ev}\ndata: ${JSON.stringify(data)}\n\n`;
 const ids = ['MELCHIOR-1','BALTHASAR-2','CASPER-3'];
-const answer = '固定回答として受信と再生を確認します。'.repeat(15);
+const answer = '固定回答として受信と再生を確認します。'.repeat(process.argv.includes('--fact-long') ? 250 : 15);
 const activeEvent = { open: true, code: 'ABC123', title: 'ローカル確認', genres: [] };
 const server = createServer((req, res) => {
   let path = new URL(req.url, 'http://localhost').pathname; if (path.endsWith('/')) path += 'index.html';
@@ -33,13 +33,13 @@ try {
       const malice = mode.startsWith('malice'), fact = mode.startsWith('fact'), buffered = !mode.endsWith('pass');
       const page = await browser.newPage({ viewport: { width, height: 900 }, serviceWorkers: 'block' }), errors = [];
       page.on('pageerror', e => errors.push(e.message));
-      let release, posted = false;
+      let release, posted = false; const requests = [];
       const gate = new Promise(r => { release = r; });
       await page.addInitScript(() => localStorage.setItem('st-analytics','off'));
       await page.route('**/*', async route => {
         const request = route.request(), url = new URL(request.url());
         if (url.pathname === '/magi2/chat') {
-          const sent=JSON.parse(request.postData());if(fact)assert.equal(sent.fact_mode,true);
+          const sent=JSON.parse(request.postData());requests.push(sent);if(fact)assert.equal(sent.fact_mode,true);
           posted = true; if (buffered) await gate;
           const dj = name === 'dj', magi = mode.startsWith('magi');
           const classification = { version:1, intent:dj?'music':'consult', votable:magi?'yes':'no', site_pages:'no', magi_candidate:magi, reply_language:{version:1,code:'ja',source:'ui'} };
@@ -92,6 +92,16 @@ try {
           await page.reload({waitUntil:'domcontentloaded'});
           assert.equal(await page.locator('.agent-reply-body').last().textContent(),answer.slice(0,18)+'[1]'+answer.slice(18));
           assert.equal(await page.locator('.agent-sources a').getAttribute('href'),'https://example.com/source');assert.equal(await page.locator('.agent-personas').count(),0);
+          if(process.argv.includes('--fact-long')) {
+            assert.ok(answer.length>4000);
+            await page.locator(input).fill('続けて説明して');await page.locator(send).click();
+            await until(()=>requests.length===2);await until(async()=>!await page.locator(input).isDisabled());
+            const previous=requests[1].messages.filter(m=>m.role==='assistant').at(-1);
+            assert.equal(previous.mode,'fact');assert.equal(previous.content,answer.slice(0,4000));
+            const savedAgain=JSON.parse(await page.evaluate(()=>localStorage.getItem('magi_current_history')));
+            assert.equal(savedAgain.filter(m=>m.role==='assistant')[0].content,answer);
+            assert.equal(await page.locator('.agent-reply-body').first().textContent(),answer.slice(0,18)+'[1]'+answer.slice(18));
+          }
           assert.equal(errors.length,0,errors.join('\n'));
         }
         if (closed) {

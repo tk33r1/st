@@ -1625,6 +1625,7 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
   for (const src of [mobile, home]) {
     const ctx = vm.createContext({ AGENT_MAX_HISTORY: 12 });
     vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+    vm.runInContext(between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
     ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
     vm.runInContext(between(src, 'function prepareAgentMessages(', 'async function agentSend('), ctx);
     const messages = ctx.prepareAgentMessages(history, history.at(-1).content);
@@ -1632,6 +1633,30 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
     assert.equal(images.length, 8); assert.deepEqual(Array.from(images, p => p.label), [4, 5, 6, 7, 8, 9, 10, 11]);
     assert.equal(JSON.stringify(history), original);
     assert.match(await (await worker().chat(messages)).text(), /event: done/);
+  }
+});
+
+test('A2: 長い保存済みWeb回答の表示と引用を保ち、次の質問の送信履歴だけ4,000文字へ収める', async () => {
+  const w=a2Worker('research','no');
+  const value={parts:Array.from({length:5},(_,i)=>({label:'項目'+i,text:'x'.repeat(900),status:'verified',citations:[{n:1,blocks:[0]}]}))};
+  const reply=w.ctx.verifiedResearchResult(value,proofEvidence(),{code:'ja'});
+  assert.ok(reply.text.length>4000);
+  for(const src of [home,mobile]) {
+    const ctx=vm.createContext({URL,AGENT_MAX_HISTORY:12});
+    vm.runInContext(between(src,'// MAGI_PRESENTATION_CORE_BEGIN','// MAGI_PRESENTATION_CORE_END')+'\n'
+      +between(src,'// AGENT_FACT_BEGIN','// AGENT_FACT_END'),ctx);
+    ctx.cleanHistory=h=>h.map(ctx.magiCleanItem);
+    vm.runInContext(between(src,'function prepareAgentMessages(','async function agentSend('),ctx);
+    const history=[{role:'user',content:'項目を詳しく'},
+      {role:'assistant',mode:'fact',content:reply.text,sources:reply.sources},{role:'user',content:'続けて説明して'}];
+    const saved=JSON.stringify(history),messages=ctx.prepareAgentMessages(history,history.at(-1).content);
+    assert.equal(messages[1].content.length,4000);assert.equal(JSON.stringify(history),saved);
+    assert.deepEqual(JSON.parse(JSON.stringify(messages[1].sources)),JSON.parse(JSON.stringify(reply.sources)));
+    assert.ok(ctx.agentFactMarkdown(history[1].content,history[1].sources).includes(reply.text.slice(4000)));
+    assert.match(await(await w.request('/magi2/chat',{...a2Body('続けて説明して'),messages})).text(),/event: done/);
+    const pair={role:'assistant',mode:'fact',content:'x'.repeat(3999)+'😀tail'};
+    assert.equal(ctx.agentFactHistoryMessage(pair).content,'x'.repeat(3999));assert.equal(pair.content.length,4005);
+    const ordinary={...pair,mode:undefined};assert.equal(ctx.agentFactHistoryMessage(ordinary),ordinary);
   }
 });
 
@@ -4096,6 +4121,26 @@ test('A2: WebのHTTP失敗は両テーマでAnthropicへ一度だけ答え直し
     assert.equal(fetched.max_content_tokens,12000);assert.equal(fetched.citations.enabled,true);assert.deepEqual(fetched.allowed_callers,['direct']);
     assert.equal(events.at(-1)[0],'done');
     if(both){assert.equal(events.filter(([name])=>name==='sources').length,0);assert.ok(events.find(([name])=>name==='integrated')[1].delta.includes('手元の知識'));assert.equal(w.calls.length,1);}
+  }
+});
+
+test('A2: HTTP200内のOpenAI残高切れを日次1通で通知し、通常のSSE障害は通知せず答え直す',async()=>{
+  for(const code of ['credit_balance_exhausted','insufficient_quota','rate_limit_exceeded','server_error']) {
+    const mails=[],sent=[];
+    const w=a2Worker('research','yes',(url,o,b)=>{
+      if(url.includes('resend.com')){mails.push(JSON.parse(o.body));return Response.json({id:'mail'});}
+      if(b?.tools){sent.push(url);return url.includes('openai')
+        ? new Response('data: '+JSON.stringify({type:'response.failed',response:{status:'failed',error:{code,type:code,message:'sensitive source text'}}})+'\n\n')
+        : a2Web('anthropic');}
+    });
+    Object.assign(w.env,{DB:counts(),RESEND_API_KEY:'test',ALERT_TO:'a@example.test',ALERT_FROM:'b@example.test'});
+    for(let i=0;i<2;i++){
+      const events=sseEvents(await(await w.request('/magi2/chat',a2Body('現在の情報は？'))).text());
+      assert.equal(events.at(-1)[0],'done');assert.equal(events.filter(([name])=>name==='sources').length,1);
+      await Promise.all(w.waits);
+    }
+    assert.equal(sent.length,4);assert.equal(mails.length,['credit_balance_exhausted','insufficient_quota'].includes(code)?1:0);
+    if(mails.length){assert.match(mails[0].text,new RegExp(code));assert.match(mails[0].text,/HTTP 200/);assert.doesNotMatch(mails[0].text,/sensitive source text/);}
   }
 });
 
