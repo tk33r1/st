@@ -1,0 +1,901 @@
+{
+  "split": "tune",
+  "authored_by": "agent (2026-10-14)",
+  "reviewed_by": "Shinya Takeda (曲の案内がmusicという方針の指摘と他項目の了承。音楽の文面・境界の期待はagentが方針に従い更新)",
+  "reviewed_at": "2026-10-14T10:34:10+09:00",
+  "notes": "計画§0.2の70件。本人が文面・期待値・stableの答えの基準を実測前に承認。reviewed_atは承認受領後の記録時刻。site/musicは既存eval-magi-classificationから採用。聞き返しはA3の先行確認で、A2画面へ聞き返しを追加しない。判定用は別の機会に作成し、本人が期待を確認する。 2026-10-14: 本人の指摘に従いmusicを曲案内に限定。音楽説明を曲案内5件の枠から境界5件へ移し、判定用は結果を見る前に更新。旧freezeは今回の契約に使わず、調整用を再測定する。",
+  "cases": [
+    {
+      "id": "stable-01",
+      "group": "stable",
+      "text": "日本の首都はどこですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "東京。"
+    },
+    {
+      "id": "stable-02",
+      "group": "stable",
+      "text": "真空中の光の速さをm/sで教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "299,792,458 m/s。"
+    },
+    {
+      "id": "stable-03",
+      "group": "stable",
+      "text": "水の化学式は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "H₂O。"
+    },
+    {
+      "id": "stable-04",
+      "group": "stable",
+      "text": "1キロメートルは何メートルですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "1,000メートル。"
+    },
+    {
+      "id": "stable-05",
+      "group": "stable",
+      "text": "三角形の内角の和は？ユークリッド平面で答えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "180度。"
+    },
+    {
+      "id": "stable-06",
+      "group": "stable",
+      "text": "二進数の1010を十進数にすると？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "10。"
+    },
+    {
+      "id": "stable-07",
+      "group": "stable",
+      "text": "UTF-8とUTF-16の違いを簡単に説明して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "どちらもUnicodeの符号化方式。UTF-8は1〜4バイト、UTF-16は1〜2個の16ビット符号単位。"
+    },
+    {
+      "id": "stable-08",
+      "group": "stable",
+      "text": "HTTPの404は何を表す？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "要求したリソースが見つからないこと。"
+    },
+    {
+      "id": "stable-09",
+      "group": "stable",
+      "text": "PNGは可逆圧縮ですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "可逆圧縮。"
+    },
+    {
+      "id": "stable-10",
+      "group": "stable",
+      "text": "1時間は何秒？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "3,600秒。"
+    },
+    {
+      "id": "stable-11",
+      "group": "stable",
+      "text": "カメラの絞り値を大きくすると、同じ条件で入る光は増える？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "絞り値が大きいほど入る光は減る。"
+    },
+    {
+      "id": "stable-12",
+      "group": "stable",
+      "text": "摂氏0度を華氏に換算して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "32°F。"
+    },
+    {
+      "id": "stable-13",
+      "group": "stable",
+      "text": "What is the chemical symbol for gold?",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "Au。"
+    },
+    {
+      "id": "stable-14",
+      "group": "stable",
+      "text": "How many bits are in a byte?",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "8ビット。"
+    },
+    {
+      "id": "stable-15",
+      "group": "stable",
+      "text": "What does DNS stand for?",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "Domain Name System。"
+    },
+    {
+      "id": "fresh-01",
+      "group": "fresh",
+      "text": "今日の東京の天気は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-02",
+      "group": "fresh",
+      "text": "今のドル円相場を、確認した日時と一緒に教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-03",
+      "group": "fresh",
+      "text": "日本銀行の現在の政策金利を知りたい。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-04",
+      "group": "fresh",
+      "text": "Go言語の最新安定版と公開日を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-05",
+      "group": "fresh",
+      "text": "Pythonの最新安定版はいつ公開された？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-06",
+      "group": "fresh",
+      "text": "Node.jsの現在のLTS版は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-07",
+      "group": "fresh",
+      "text": "今日の東京のハイオクの平均価格を調べて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-08",
+      "group": "fresh",
+      "text": "ニトリの直近の決算発表日はいつ？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-09",
+      "group": "fresh",
+      "text": "今の東京都知事は誰？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-10",
+      "group": "fresh",
+      "text": "日本の直近の消費者物価指数の発表値を知りたい。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-11",
+      "group": "fresh",
+      "text": "今日の日経平均の終値は？まだ取引中ならそのことも教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-12",
+      "group": "fresh",
+      "text": "Cloudflare Workersの最新の料金体系を確認して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-13",
+      "group": "fresh",
+      "text": "What is the current stable release of Firefox?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-14",
+      "group": "fresh",
+      "text": "What is the latest iOS version available today?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "fresh-15",
+      "group": "fresh",
+      "text": "Who is the current prime minister of Japan?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "site-01",
+      "group": "site",
+      "text": "PDFを結合するツールを探している",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-02",
+      "group": "site",
+      "text": "このサイトのゲームを見たい",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-03",
+      "group": "site",
+      "text": "Shinya Takedaのプロフィールを教えて",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-04",
+      "group": "site",
+      "text": "Shinyaの仕事について教えて",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-05",
+      "group": "site",
+      "text": "ShinyaのDJ活動を紹介して",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-06",
+      "group": "site",
+      "text": "このサイトの技術ブログはどこ？",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-07",
+      "group": "site",
+      "text": "QRコードを作るページを探して",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-08",
+      "group": "site",
+      "text": "このサイトのお問い合わせ先を教えて",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-09",
+      "group": "site",
+      "text": "ニトリの日刊ニュースを読みたい",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "site-10",
+      "group": "site",
+      "text": "Shinyaのバイク動画はどこ？",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-01",
+      "group": "consult",
+      "text": "転職すべきか調べたいけど、何から考えればいい？",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-02",
+      "group": "consult",
+      "text": "どのPCを買えばいい？私に合う選び方を一緒に考えて。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-03",
+      "group": "consult",
+      "text": "東京に引っ越すべきか悩んでいます。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-04",
+      "group": "consult",
+      "text": "最近疲れていて、休み方を相談したい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-05",
+      "group": "consult",
+      "text": "調査結果はもうあるけど、次にどの企画を選ぶか迷う。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-06",
+      "group": "consult",
+      "text": "副業を始めていいと思う？",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-07",
+      "group": "consult",
+      "text": "人生の目標が分からなくなった。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-08",
+      "group": "consult",
+      "text": "親と意見が合わないとき、どう付き合えばいい？",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-09",
+      "group": "consult",
+      "text": "新しい趣味に挑戦する勇気がほしい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-10",
+      "group": "consult",
+      "text": "こんにちは、今日は少し話したいです。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-11",
+      "group": "consult",
+      "text": "ありがとう、助かりました。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-12",
+      "group": "consult",
+      "text": "天気が悪い日は気分が落ち込むんだよね。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-13",
+      "group": "consult",
+      "text": "Help me decide whether to accept a new job offer.",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-14",
+      "group": "consult",
+      "text": "I can't choose between two laptops. Help me think about my needs.",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "consult-15",
+      "group": "consult",
+      "text": "I'm nervous about tomorrow's presentation. Can we talk?",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "music-01",
+      "group": "music",
+      "text": "今夜聴く曲を3曲おすすめして",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "music-02",
+      "group": "music",
+      "text": "DJセットの選曲を相談したい",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "music-03",
+      "group": "music",
+      "text": "朝の通勤で聴くハウスの曲を3曲案内して。",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "music-04",
+      "group": "music",
+      "text": "Which drum and bass tracks should I listen to?",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "music-05",
+      "group": "music",
+      "text": "この曲の後に何をかけると良い？",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "clarification-01",
+      "group": "clarification",
+      "text": "東京",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "今日の天気を知りたい。",
+        "questions": [
+          {
+            "question": "どの地域ですか。",
+            "options": [
+              "東京",
+              "大阪",
+              "福岡"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-02",
+      "group": "clarification",
+      "text": "2番目",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "最新のブラウザのバージョンを確認して。",
+        "questions": [
+          {
+            "question": "どのブラウザですか。",
+            "options": [
+              "Chrome",
+              "Firefox",
+              "Safari"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-03",
+      "group": "clarification",
+      "text": "それでお願いします",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "現時点のドル円相場を調べて。",
+        "questions": [
+          {
+            "question": "円からドルへの相場を確認しますか。",
+            "options": [
+              "それでお願いします",
+              "ドルから円を知りたい"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-04",
+      "group": "clarification",
+      "text": "1つ目は東京、2つ目は今日",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "天気予報を調べて。",
+        "questions": [
+          {
+            "question": "地域はどこですか。",
+            "options": [
+              "東京",
+              "名古屋",
+              "大阪"
+            ]
+          },
+          {
+            "question": "いつの予報ですか。",
+            "options": [
+              "今日",
+              "明日",
+              "週末"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-05",
+      "group": "clarification",
+      "text": "Python、安定版",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "言語処理系の最新版を確認したい。",
+        "questions": [
+          {
+            "question": "どの言語ですか。",
+            "options": [
+              "Python",
+              "Go",
+              "Ruby"
+            ]
+          },
+          {
+            "question": "どの公開系列ですか。",
+            "options": [
+              "安定版",
+              "開発版"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-06",
+      "group": "clarification",
+      "text": "東京、日本円、現在の1ドルあたり",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "旅行前に最新の為替情報を確認したい。",
+        "questions": [
+          {
+            "question": "どこへ行きますか。",
+            "options": [
+              "東京",
+              "ニューヨーク",
+              "パリ"
+            ]
+          },
+          {
+            "question": "どの通貨を基準にしますか。",
+            "options": [
+              "日本円",
+              "米ドル",
+              "ユーロ"
+            ]
+          },
+          {
+            "question": "何を知りたいですか。",
+            "options": [
+              "現在の1ドルあたり",
+              "過去1年の変化"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "clarification-07",
+      "group": "clarification",
+      "text": "16進数",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "255を別の進数に変換して。",
+        "questions": [
+          {
+            "question": "どの進数にしますか。",
+            "options": [
+              "2進数",
+              "8進数",
+              "16進数"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "clarification-08",
+      "group": "clarification",
+      "text": "仕事と生活のバランス",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "転職について一緒に考えて。",
+        "questions": [
+          {
+            "question": "何を重視しますか。",
+            "options": [
+              "収入",
+              "仕事と生活のバランス",
+              "成長機会"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "consult",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "clarification-09",
+      "group": "clarification",
+      "text": "ジャズ",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "今夜聴く音楽を選びたい。",
+        "questions": [
+          {
+            "question": "どんなジャンルにしますか。",
+            "options": [
+              "ロック",
+              "ジャズ",
+              "ハウス"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "music",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "clarification-10",
+      "group": "clarification",
+      "text": "PDFの結合",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "このサイトで作業できるツールを探している。",
+        "questions": [
+          {
+            "question": "何をしたいですか。",
+            "options": [
+              "PDFの結合",
+              "画像の変換",
+              "QRコード作成"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "site",
+          "fresh": "no"
+        }
+      }
+    }
+  ],
+  "boundary_cases": [
+    {
+      "id": "tune-music-boundary-01",
+      "group": "music-boundary",
+      "text": "ハウスミュージックの特徴は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "tune-music-boundary-02",
+      "group": "music-boundary",
+      "text": "8分の6拍子の数字が表す意味を説明して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "tune-music-boundary-03",
+      "group": "music-boundary",
+      "text": "DJのビートマッチの仕組みを説明して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "tune-music-boundary-04",
+      "group": "music-boundary",
+      "text": "DJの練習計画を一緒に考えて。毎日15分しか時間が取れません。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "tune-music-boundary-05",
+      "group": "music-boundary",
+      "text": "Daft Punkが解散したのは何年？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    }
+  ],
+  "review_basis": "2026-10-14の本人の「音楽は、曲を案内する想定です」「それ以外は特に違和感はない」。変更した文面を本人が個別に読み直したとは記録しない。"
+}

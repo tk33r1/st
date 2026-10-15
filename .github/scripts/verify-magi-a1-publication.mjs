@@ -72,6 +72,10 @@ try {
       const contains=value=>value===expected||value&&typeof value==='object'&&Object.values(value).some(contains);assert.ok(contains(JSON.parse(stored)));
       if(!legacy&&!dj){await page.reload({waitUntil:'domcontentloaded'});assert.equal(await page.locator(input).isDisabled(),true);await page.locator('.agent-closed button').click();assert.equal(await page.locator(input).isDisabled(),false);}
       assert.deepEqual(errors,[]);report.cases.push({name,pass:true,requestId:captured.requestId,request,events,closed:!legacy&&!dj,privacyCompatible:legacy,djSyntheticReception:dj});console.log(name+': 本番A1・表示・保存・互換 OK');
+    } catch(error) {
+      // assertのactual・pageerrorは本番の返答の本文を含みうる。成果物とActionsのログには画面・種類・行だけを残す
+      const line=(error.stack||'').match(/verify-magi-a1-publication\.mjs:(\d+)/)?.[1];
+      throw new Error(name+': '+(error.code==='ERR_ASSERTION'?'assert.'+error.operator:error.name)+(line?' (line '+line+')':''));
     } finally {await ctx.close();}
   }
   report.pass=true;

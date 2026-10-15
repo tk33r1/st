@@ -29,7 +29,7 @@ const path=resolve(dir,'worker-'+theme+'-'+new Date().toISOString().replace(/[:.
 const report={date:new Date().toISOString(),base:base.href,theme,targets_only:process.argv.includes('--targets-only'),
   offset,count,input_hash:hash(inputText),source_hash:sourceHash,freeze:freezePath,
   classification_contract_hash:contractHash,evaluator_hash:hash(read('.github/scripts/eval-magi-malice-worker.mjs')),
-  worker_hash:hash(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'].map(p=>read('workers/magi2/'+p)).join('\n')),
+  worker_hash:hash(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','research.js','src/index.js'].map(p=>read('workers/magi2/'+p)).join('\n')),
   reviewed_by:fixture.reviewed_by,reviewed_at:fixture.reviewed_at,
   missing_anthropic:process.argv.includes('--missing-anthropic'),complete:false,results:[]};
 const save=()=>writeFileSync(path,JSON.stringify(report,null,2)); save();

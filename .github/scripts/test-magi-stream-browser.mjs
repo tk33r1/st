@@ -1,4 +1,5 @@
 // 先行0と対話改修A1の実画面。固定SSEで注記・再生・停止・保存・会話終了を確認する。
+// --base=https://tk.st --quick で公開された画面も確認する。AI・DJ受付・計測は模擬に差し替える。
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -16,16 +17,20 @@ const server = createServer((req, res) => {
   res.end(readFileSync(file));
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const origin = 'http://127.0.0.1:' + server.address().port;
+const remote = process.argv.find(value => value.startsWith('--base='))?.slice(7);
+if (remote && remote !== 'https://tk.st') throw new Error('publication_base_not_allowed');
+const origin = remote || 'http://127.0.0.1:' + server.address().port;
 const browser = await chromium.launch({ headless: true });
 async function until(check) { for (let i = 0; i < 200; i++) { if (await check()) return; await new Promise(r => setTimeout(r, 10)); } throw new Error('browser_condition_timeout'); }
 try {
   for (const [name, path, width] of [['home-light','/',1280],['home-dark','/',1280],['app','/magi-app/www/',390],['dj','/dj/request/',390]]) {
     if (process.argv.includes('--dj-only') && name !== 'dj') continue;
-    const modes = process.argv.includes('--malice-only') ? ['malice-pass','malice-full','malice-stop']
+    if (process.argv.includes('--fact-only') && name === 'dj') continue;
+    const modes = process.argv.includes('--fact-only') ? ['fact-pass','fact-full','fact-stop'] : process.argv.includes('--malice-only') ? ['malice-pass','malice-full','malice-stop']
       : name === 'dj' ? ['pass','full','stop'] : ['pass','full','stop','magi-full','magi-stop'];
     for (const mode of modes) {
-      const malice = mode.startsWith('malice'), buffered = !mode.endsWith('pass');
+      if (process.argv.includes('--quick') && !mode.endsWith('pass')) continue;
+      const malice = mode.startsWith('malice'), fact = mode.startsWith('fact'), buffered = !mode.endsWith('pass');
       const page = await browser.newPage({ viewport: { width, height: 900 }, serviceWorkers: 'block' }), errors = [];
       page.on('pageerror', e => errors.push(e.message));
       let release, posted = false;
@@ -34,14 +39,17 @@ try {
       await page.route('**/*', async route => {
         const request = route.request(), url = new URL(request.url());
         if (url.pathname === '/magi2/chat') {
+          const sent=JSON.parse(request.postData());if(fact)assert.equal(sent.fact_mode,true);
           posted = true; if (buffered) await gate;
           const dj = name === 'dj', magi = mode.startsWith('magi');
           const classification = { version:1, intent:dj?'music':'consult', votable:magi?'yes':'no', site_pages:'no', magi_candidate:magi, reply_language:{version:1,code:'ja',source:'ui'} };
+          if(fact)Object.assign(classification,{intent:'research',mode:'fact',fresh:'yes'});
           await route.fulfill({ contentType:'text/event-stream', headers:{'Access-Control-Allow-Origin':origin}, body:': padding\n\n' + event('classification',classification)
             + (magi ? event('motion',{text:'改修を進める',votable:true}) : '')
-            + (malice ? '' : [1,2].flatMap(round => ids.map(codename => event('persona',{codename,round,text:'固定意見'+round,...(magi?{vote:codename==='BALTHASAR-2'?'reject':'approve',vote_state:'final'}:{})}))).join(''))
+            + (malice || fact ? '' : [1,2].flatMap(round => ids.map(codename => event('persona',{codename,round,text:'固定意見'+round,...(magi?{vote:codename==='BALTHASAR-2'?'reject':'approve',vote_state:'final'}:{})}))).join(''))
             + (magi ? event('verdict',{motion:'改修を進める',result:'approve',tally:{approve:2,reject:1,none:0},rounds:2,reason_missing:false,votes:Object.fromEntries(ids.map(codename=>[codename,{vote:codename==='BALTHASAR-2'?'reject':'approve',round:2,state:'voted'}]))}) : '')
-            + event('integrated',{delta:answer}) + (magi ? event('integrated_end',{}) : '') + (malice ? event('closed',{reason:'malice'}) : event('suggest',{text:'次の相談'})) + event('done',{}) }); return;
+            + event('integrated',{delta:answer}) + (fact ? event('sources',{items:[{n:1,title:'<script>alert(1)</script>',url:'https://example.com/source'},{n:2,title:'unsafe',url:'javascript:alert(2)'}],marks:[{at:18,n:1},{at:10,n:2}]}) : '')
+            + (magi ? event('integrated_end',{}) : '') + (malice ? event('closed',{reason:'malice'}) : event('suggest',{text:'次の相談'})) + event('done',{}) }); return;
         }
         if (url.pathname === '/magi2/models') { await route.fulfill({json:{personas:{},synthesizer:{}}}); return; }
         if (url.pathname === '/dj/api/req/event') { await route.fulfill({json:activeEvent}); return; }
@@ -73,9 +81,19 @@ try {
         const closed = malice && name !== 'dj';
         await until(async () => closed ? await page.locator('.agent-closed').count() === 1 : !await page.locator(input).isDisabled());
         const body = page.locator(name === 'dj' ? '.ab' : '.agent-reply-body').last();
-        assert.equal(await body.textContent(), answer); assert.equal(await page.locator(input).inputValue(), '');
+        assert.equal(await body.textContent(), fact ? answer.slice(0,18)+'[1]'+answer.slice(18) : answer); assert.equal(await page.locator(input).inputValue(), '');
         const saved = await page.evaluate(dj => localStorage.getItem(dj ? 'tkdj.consults' : 'magi_current_history'), name === 'dj');
         assert.ok(saved?.includes(answer), name + ': 保存された回答'); assert.equal(errors.length,0,errors.join('\n'));
+        if(fact) {
+          assert.equal(await page.locator('.agent-personas').count(),0);
+          assert.equal(await body.locator('a').count(),1);assert.equal(await body.locator('a').getAttribute('href'),'https://example.com/source');
+          assert.equal(await page.locator('.agent-sources script').count(),0);assert.equal(await page.locator('.agent-sources a').textContent(),'[1] <script>alert(1)</script>');
+          const item=JSON.parse(saved).at(-1);assert.equal(item.mode,'fact');assert.equal(item.debate,undefined);assert.equal(item.sources.items.length,1);
+          await page.reload({waitUntil:'domcontentloaded'});
+          assert.equal(await page.locator('.agent-reply-body').last().textContent(),answer.slice(0,18)+'[1]'+answer.slice(18));
+          assert.equal(await page.locator('.agent-sources a').getAttribute('href'),'https://example.com/source');assert.equal(await page.locator('.agent-personas').count(),0);
+          assert.equal(errors.length,0,errors.join('\n'));
+        }
         if (closed) {
           assert.equal(await page.locator(input).isDisabled(),true);
           assert.ok(JSON.parse(saved).at(-1).closed === true);

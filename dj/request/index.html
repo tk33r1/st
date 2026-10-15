@@ -3028,7 +3028,9 @@
         round1: (rounds || [])[0] || null, round2: (rounds || [])[1] || null,
         followups: (rounds || []).slice(2).filter((f) => f && typeof f === 'object'),
       }]));
-    const messagesFromTurns = (turns) => (turns || []).flatMap((entry) => [
+    // 悪意への短い返し（closed）の往復は送らない。DJ は会話を閉じないので、攻撃の文が次の相談の
+    // 分類（直近2件）や3人格の文脈に残り、普通の相談まで短い返しになるのを防ぐ
+    const messagesFromTurns = (turns) => (turns || []).filter((entry) => entry.closed !== true).flatMap((entry) => [
       { role: 'user', content: String(entry.q || '') },
       { role: 'assistant', content: String(entry.reply || ''), debate: debateOf(entry.personas) },
     ]).filter((m) => m.content);
@@ -3065,7 +3067,7 @@ function classificationFields(history, language, ui, entry, panel) {
   var seed = text.slice(0, 500);
   if (/[\uD800-\uDBFF]$/.test(seed)) seed = seed.slice(0, -1);
   var state = cleanReplyLanguage(language);
-  return Object.assign({ entry: entry || 'chat', classification_state: true, ui_language: ui },
+  return Object.assign({ entry: entry || 'chat', classification_state: true, fact_mode: true, ui_language: ui },
     entry === 'dj-request' ? {} : { magi_panel: panel === true, close_on_malice: true },
     state ? { reply_language: state } : { language_seed: seed });
 }
@@ -3073,12 +3075,18 @@ function receiveClassification(state, ev, d) {
   if (ev === 'title' || ev === 'error') return;
   if (ev === 'classification') {
     var language = cleanReplyLanguage(d && d.reply_language);
-    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music'].indexOf(d.intent) < 0
+    if (state.started || state.classified || !d || d.version !== 1 || ['consult','site','music','research'].indexOf(d.intent) < 0
       || ['yes','no','uncertain'].indexOf(d.site_pages) < 0 || ['yes','no','uncertain'].indexOf(d.votable) < 0
       || typeof d.magi_candidate !== 'boolean' || d.magi_candidate && (!state.panel || d.votable !== 'yes') || !language
       || (state.language && JSON.stringify(language) !== JSON.stringify(state.language))) throw new Error('invalid_classification');
-    state.classified = true; state.language = language; state.candidate = d.magi_candidate;
+    if (d.mode !== undefined && (['fact','consult'].indexOf(d.mode) < 0 || d.mode === 'fact' && d.magi_candidate)
+      || d.fresh !== undefined && ['yes','no'].indexOf(d.fresh) < 0) throw new Error('invalid_fact_classification');
+    state.mode = d.mode; state.classified = true; state.language = language; state.candidate = d.magi_candidate;
   } else {
+    if (ev === 'sources') {
+      if (state.mode !== 'fact' || state.candidate || !state.reply || state.sources) throw new Error('invalid_sources');
+      state.sources = true;
+    }
     if (ev === 'closed') {
       if (!state.classified || state.candidate || state.closed || !state.reply || !d || d.reason !== 'malice') throw new Error('invalid_closed');
       state.closed = true;
@@ -3090,6 +3098,67 @@ function receiveClassification(state, ev, d) {
   }
 }
 // AGENT_CLASSIFY_END
+
+// AGENT_FACT_BEGIN
+function cleanAgentSources(value, text) {
+  if (!value || !Array.isArray(value.items) || !Array.isArray(value.marks) || typeof text !== 'string') return null;
+  var items = [], numbers = new Set(), urls = new Set();
+  value.items.slice(0, 5).forEach(function (item) {
+    if (!item || !Number.isInteger(item.n) || item.n < 1 || item.n > 5 || numbers.has(item.n)
+      || typeof item.url !== 'string' || item.url.length > 4096) return;
+    try {
+      var u = new URL(item.url);
+      if (!['http:','https:'].includes(u.protocol) || urls.has(u.href)) return;
+      numbers.add(item.n); urls.add(u.href);
+      items.push({ n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href });
+    } catch (_) {}
+  });
+  var marks = [], seen = new Set();
+  value.marks.slice(0, 200).forEach(function (m) {
+    if (!m || !Number.isInteger(m.at) || m.at < 0 || m.at > text.length || !numbers.has(m.n)) return;
+    if (m.at > 0 && /[\uD800-\uDBFF]/.test(text[m.at - 1]) && /[\uDC00-\uDFFF]/.test(text[m.at])) return;
+    var key = m.at + ':' + m.n;
+    if (!seen.has(key)) { seen.add(key); marks.push({ at: m.at, n: m.n }); }
+  });
+  marks.sort(function (a, b) { return a.at - b.at || a.n - b.n; });
+  return items.length && marks.length ? { items: items, marks: marks } : null;
+}
+function renderAgentSources(body, replyEl, text, raw, ja) {
+  var data = cleanAgentSources(raw, text);
+  if (!data || !body || !replyEl) return;
+  body.replaceChildren();
+  var last = 0;
+  data.marks.forEach(function (mark) {
+    body.appendChild(document.createTextNode(text.slice(last, mark.at))); last = mark.at;
+    var item = data.items.find(function (row) { return row.n === mark.n; });
+    var a = document.createElement('a'); a.textContent = '[' + mark.n + ']'; a.href = item.url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer'; a.style.cssText = 'margin-inline:2px;text-decoration:underline';
+    a.setAttribute('aria-label', (ja ? '出典 ' : 'Source ') + mark.n + ': ' + item.title); body.appendChild(a);
+  });
+  body.appendChild(document.createTextNode(text.slice(last)));
+  var previous = replyEl.querySelector('.agent-sources'); if (previous) previous.remove();
+  var panel = document.createElement('div'); panel.className = 'agent-sources';
+  panel.style.cssText = 'display:grid;gap:6px;margin-top:12px;font-size:12px;line-height:1.6;overflow-wrap:anywhere';
+  var label = document.createElement('strong'); label.textContent = ja ? '出典' : 'Sources'; panel.appendChild(label);
+  data.items.forEach(function (item) {
+    var a = document.createElement('a'); a.textContent = '[' + item.n + '] ' + item.title; a.href = item.url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer'; panel.appendChild(a);
+  });
+  replyEl.appendChild(panel);
+}
+function agentFactMarkdown(text, raw) {
+  var data = cleanAgentSources(raw, text); if (!data) return text;
+  var out = '', last = 0;
+  data.marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
+  out += text.slice(last) + '\n\n### Sources\n';
+  data.items.forEach(function (item) {
+    var title = item.title.replace(/([\\\[\]<>*`_])/g, '\\$1');
+    out += '[' + item.n + '] ' + title + ' (<'+ item.url +'>)\n';
+  });
+  return out;
+}
+// AGENT_FACT_END
+
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false, receivedEnd = false, playback = null, playbackError = null;
@@ -3138,7 +3207,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','sources','pages','suggest','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
@@ -3310,6 +3379,7 @@ async function parseSSE(body, handlers, onChunk) {
       turn.querySelector('.answer').classList.remove('streaming');
       turn.querySelectorAll('.pcard.thinking').forEach((c) => c.classList.remove('thinking'));
       const det = turn.querySelector('details.debate');
+      if (!det) return;   // 悪意への短い返しは討議が無いので、枠ごと外してある
       det.open = false;
       det.querySelector('summary').textContent = '3つの人格の議論';
     }
@@ -3362,7 +3432,7 @@ async function parseSSE(body, handlers, onChunk) {
       if (turn.isConnected) chatScroll();
     }
 
-    /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
+    /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら { reply: 回答の本文, closed: 悪意への短い返しか } を返す。
        失敗したら turn を画面から外してエラーを出し、null を返す（履歴への保存は成功したときに sendConsult が行う） */
     async function askMagi(turn, content, context, thinking) {
       const ctrl = new AbortController();
@@ -3376,7 +3446,7 @@ async function parseSSE(body, handlers, onChunk) {
         replaying: () => { $('#chatSend').title = 'すぐに全部表示'; $('#chatSend').setAttribute('aria-label', 'すぐに全部表示'); },
       });
       const bodyEl = turn.querySelector('.ab');
-      let reply = '', failure = null, suggestion = '', completed = false, classified = false;
+      let reply = '', failure = null, suggestion = '', completed = false, classified = false, closed = false;
 
       try {
         const res = await fetch(MAGI_API, {
@@ -3427,6 +3497,8 @@ async function parseSSE(body, handlers, onChunk) {
             integrated: (d) => { turn.querySelectorAll('.pcard.thinking').forEach(c => c.classList.remove('thinking')); reply += d.delta || ''; if (reply.trim()) thinking.finish(); bodyEl.textContent = reply; chatScroll(); },
             // 次の相談の予測。回答が最後まで届いたときだけ使う（下の成功の分岐）
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
+            // 悪意への短い返し。討議しないので人格の枠を外す（DJ では入力は閉じない）
+            closed: () => { closed = true; turn.querySelector('details.debate')?.remove(); },
             done: () => { completed = true; },
             error: (d) => { thinking.cancel(); failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
           });
@@ -3444,8 +3516,8 @@ async function parseSSE(body, handlers, onChunk) {
       if (chatStopped && !completed) { turn.remove(); return null; }
 
       if (completed && reply && !failure) {
-        chatSuggestion = suggestion;
-        return reply;
+        chatSuggestion = closed ? '' : suggestion;
+        return { reply, closed };
       }
       turn.remove();
       $('#chatErr').textContent = failure || (reply && !completed
@@ -3479,12 +3551,13 @@ async function parseSSE(body, handlers, onChunk) {
       try {
         const context = await djContext();
         if (context === null || chatStopped) { turn.remove(); return; }
-        const reply = await askMagi(turn, text, context, thinking);
-        if (reply) {
+        const answer = await askMagi(turn, text, context, thinking);
+        if (answer) {
           answered = true;
+          const { reply, closed } = answer;
           const c = conv || (conv = newConsult(text));
           // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
-          const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, thinkingSeconds: thinking.finish(), picks: pickSongs(reply).length ? null : [] };
+          const entry = { id: uid(), q: text, ...(closed ? { closed: true } : { personas: readPersonas(turn) }), reply, thinkingSeconds: thinking.finish(), picks: pickSongs(reply).length ? null : [] };
           c.turns = c.turns.concat(entry).slice(-TURN_MAX);
           c.count = (c.count || 0) + 1;
           c.title = eventTitle;
@@ -3505,7 +3578,8 @@ async function parseSSE(body, handlers, onChunk) {
 
     /* ── 相談の履歴 ──────────────────────────
        この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
-       { id, first, count, title, at, turns: [{ id, q, personas, reply, picks }] }。
+       { id, first, count, title, at, turns: [{ id, q, personas, reply, picks }] }。悪意への短い返しの往復は
+       personas の代わりに closed: true を持ち、画面には出すが Worker へは送らない。
        turns は画面の復元と Worker へ送る直近の会話の両方の正本。DJ の文脈は送るたびに作り直すので
        含まない。古い往復は捨てるので、一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
        通信の都合で確かめられなかった曲を含むこともある。どちらも開き直したときに引き直す） */
@@ -3621,6 +3695,7 @@ async function parseSSE(body, handlers, onChunk) {
     // 保存した往復を画面に組み直す（照合の枠は呼び出し側で足す）
     function restoreTurn(entry) {
       const turn = chatTurn(entry.q);
+      if (entry.closed === true) turn.querySelector('details.debate').remove();
       turn.querySelectorAll('.pcard').forEach((card) => {
         const got = (entry.personas && entry.personas[card.dataset.cn]) || [];
         [1, 2].forEach((r, k) => {

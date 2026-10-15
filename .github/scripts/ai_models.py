@@ -95,7 +95,8 @@ def post_json(url, api_key, payload, stream=False):
     except OSError as e:
         raise RuntimeError(f'接続エラー: {e}') from e
     if stream:
-        validate_chat_stream(raw)
+        if url != OPENAI_RESPONSES_URL:
+            validate_chat_stream(raw)
         return raw
     try:
         return json.loads(raw)
@@ -192,7 +193,7 @@ def smoke_anthropic(url, api_key, model):
     # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
     card = message_payload(model, 'Return only READY.', 'A public synthetic source.', **CARD_OPTIONS)
     message_text(post_json(url, api_key, card))
-    return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、議題化/スキーマ、人格カード・X要約/非推論'
+    return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、悪意への返し/非推論stream、議題化/スキーマ、人格カード・X要約/非推論'
 
 
 def smoke_openai(url, api_key, model):
@@ -222,7 +223,7 @@ def smoke_openai(url, api_key, model):
     observations = smoke_openai_site_search(url, api_key, model, config)
     print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
     smoke_openai_web_search(api_key, model)
-    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、ページ選択・討議判定・議題化の答え直し/strictスキーマ、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、悪意への返し/非推論stream、ページ選択・討議判定・議題化の答え直し/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
 def magi_config():
@@ -251,6 +252,23 @@ def smoke_magi_discussion(url, api_key, model, provider, config=None):
         synth = config['discussion'][name]
         if synth['provider'] == provider:
             post_json(url, api_key, {**synth['body'], 'model': model}, stream=True)
+    # 悪意への短い返し：同じ統合のモデルを推論なし（OpenAIはtemperature・top_p付き）でストリーミング
+    for reply in config['discussion']['malice_reply']:
+        if reply['provider'] == provider:
+            post_json(url, api_key, {**reply['body'], 'model': model}, stream=True)
+    for fact in config['fact_smoke']:
+        if fact['provider'] == provider:
+            post_json(url, api_key, {**fact['body'], 'model': model}, stream=True)
+    for research in config['research_smoke']:
+        if research['provider'] == provider:
+            raw = post_json(research['endpoint'], api_key, {**research['body'], 'model': model}, stream=True)
+            subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'),
+                            '--validate-research-smoke', provider], input=raw, encoding='utf-8', check=True, capture_output=True)
+    for verifier in config['verify_smoke']:
+        if verifier['provider'] == provider:
+            data = post_json(url, api_key, {**verifier['body'], 'model': model})
+            subprocess.run(['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs'),
+                            '--validate-verifier-smoke', provider], input=json.dumps(data), encoding='utf-8', check=True, capture_output=True)
 
 
 def smoke_openai_debate_judge(url, api_key, model, config):

@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, INTENT_CLASSIFY, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, mayBeBillingFailure, readLimited, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -6,6 +6,7 @@ import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, i
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
+import { researchReader } from '../research.js';
 import bundledContext from '../../../data/magi-context.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -142,7 +143,7 @@ function normaliseMessage(m, counters) {
   if (typeof m.content === 'string') {
     checkText(m.content, m.role === 'user' ? DEFAULTS.input.user_max_chars : DEFAULTS.input.assistant_max_chars, counters);
     if (!m.content.trim()) throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
-    const opinions = m.role === 'assistant' ? normaliseDebate(m.debate) : null;
+    const opinions = m.role === 'assistant' && m.mode !== 'fact' ? normaliseDebate(m.debate) : null;
     if (opinions) for (const text of Object.values(opinions)) checkText(text, DEFAULTS.persona_history_max_chars, counters);
     const magi = m.role === 'assistant' && m.mode === 'magi' ? cleanMagiHistory(m.magi) : null;
     return { role: m.role, content: m.content, ...(opinions ? { opinions } : {}), ...(magi ? { magi } : {}) };
@@ -501,8 +502,8 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       const upstream = searchUpstream(env, ctx, log, '404検索');
       const result = await selectSitePages({ query, locale: body.locale, pages, cards, chat: true, purpose: 'requested', signal, log,
         call: opts => callModel({ ...opts, env: upstream }) });
-      const answer = await runDiscussion({ upstream, cards, plainMessages: [{ role: 'user', content: query }],
-        langNote: languageNote({ code: body.locale }), pageChoice: result, signal, send: discardEvents, log: stage => log('site_search', stage) });
+      const answer = await runFactAnswer({ upstream, cards, messages: [{ role: 'user', content: query }],
+        langNote: languageNote({ code: body.locale }), pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
       return jsonResponse({ request_id: requestId, ...result, comment: answer }, cors, 200, { 'Cache-Control': 'no-store' });
     }, request.signal);
   } catch (_) {
@@ -947,6 +948,329 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
   }
 }
 
+// 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
+async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
+  if (pagesPromise) pageChoice = await searchDeadline(SITE_SEARCH.chat_wait_ms, () => pagesPromise, signal).catch(() => pageChoice);
+  if (signal?.aborted) throw searchFailure('cancelled');
+  if (pageChoice && page) {
+    const results = pageChoice.results.filter(p => p.url !== page);
+    pageChoice = { ...pageChoice, results, status: pageChoice.status === 'results' && !results.length ? 'no_results' : pageChoice.status };
+  }
+  const input = [
+    { role: 'system', content: withLangNote(withCard(research ? { ...SYNTHESIZER, system_prompt: RESEARCH.system_prompt } : SYNTHESIZER,
+      cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote) },
+    ...(theme && SYNTH_BIAS[theme] ? [{ role: 'system', content: SYNTH_BIAS[theme] }] : []),
+    ...(guide ? [{ role: 'system', content: guide.synth }] : []),
+    ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
+    { role: 'system', content: FACT_ANSWER.prompt },
+    ...(siteOnly ? [{ role: 'system', content: FACT_ANSWER.site_prompt }] : []),
+    { role: 'system', content: SYNTHESIZER.voice_rules },
+    ...messages,
+  ];
+  let answer;
+  if (research) answer = await researchAnswer({ upstream, messages: input, theme, replyLanguage, ip, signal, send, log });
+  else answer = await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+  if (pageChoice?.results.length && !signal?.aborted) send('pages', chatPageEvent(pageChoice));
+  return answer;
+}
+
+// 日付・項目・出典の指示は実経路と週次smokeで同じ形から作る。
+function researchMessages(messages, verifiedNow) {
+  const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' }).formatToParts(verifiedNow);
+  const localPart = type => localParts.find(p => p.type === type).value;
+  const localDate = `${localPart('year')}-${localPart('month')}-${localPart('day')} (${localPart('weekday')})`;
+  const firstUser = messages.findIndex(m => m.role !== 'system');
+  return [...messages.slice(0, firstUser),
+    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
+}
+
+// Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
+function researchRequestBody(cfg, messages) {
+  if (cfg.provider === 'anthropic') return { ...requestBody(cfg, { messages, stream: true }),
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, user_location: RESEARCH.location },
+      { ...RESEARCH.fetch, name: 'web_fetch', allowed_callers: ['direct'], use_cache: false, citations: { enabled: true } }] };
+  const instructions = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+  const input = messages.filter(m => m.role !== 'system').map(({ role, content }) => ({ role,
+    content: (typeof content === 'string' ? [{ type: 'text', text: content }] : content).map(part => part.type === 'text'
+      ? { type: role === 'assistant' ? 'output_text' : 'input_text', text: part.text }
+      : { type: 'input_image', image_url: part.image_url.url }) }));
+  return { model: cfg.model, stream: true, store: false, instructions, input,
+    reasoning: { effort: cfg.reasoning_effort }, max_output_tokens: cfg.max_tokens, max_tool_calls: RESEARCH.max_uses,
+    tools: [{ type: 'web_search', user_location: RESEARCH.location }], tool_choice: 'required', include: ['web_search_call.action.sources'] };
+}
+
+// pause_turnで送り返すassistantのcontentを、届いたブロックと差分からそのまま復元する。
+async function readResearchResponse(body, reader, provider, signal) {
+  const input = body.getReader(), decoder = new TextDecoder(), blocks = new Map(), partial = new Map();
+  const cancel = () => { input.cancel().catch(() => {}); };
+  signal.addEventListener('abort', cancel, { once: true });
+  let buffer = '';
+  const frame = text => {
+    const data = text.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5).trimStart()).join('\n');
+    if (!data || data === '[DONE]') return;
+    const e = JSON.parse(data);
+    if (provider === 'anthropic') {
+      if (e.type === 'content_block_start') blocks.set(e.index, JSON.parse(JSON.stringify(e.content_block)));
+      if (e.type === 'content_block_delta') {
+        const b = blocks.get(e.index), d = e.delta;
+        if (!b) throw new Error('invalid_research_block');
+        if (d.type === 'text_delta') b.text = (b.text || '') + d.text;
+        if (d.type === 'thinking_delta') b.thinking = (b.thinking || '') + d.thinking;
+        if (d.type === 'signature_delta') b.signature = (b.signature || '') + d.signature;
+        if (d.type === 'citations_delta') { b.citations ||= []; b.citations.push(d.citation); }
+        if (d.type === 'input_json_delta') partial.set(e.index, (partial.get(e.index) || '') + d.partial_json);
+      }
+      if (e.type === 'content_block_stop' && partial.has(e.index)) blocks.get(e.index).input = JSON.parse(partial.get(e.index));
+    }
+    reader.push(e);
+  };
+  const drain = () => { let end; while ((end = buffer.indexOf('\n\n')) >= 0) { frame(buffer.slice(0, end)); buffer = buffer.slice(end + 2); } };
+  try {
+    while (true) {
+      if (signal.aborted) throw searchFailure('cancelled');
+      const next = await input.read();
+      if (signal.aborted) throw searchFailure('cancelled');
+      if (next.done) break;
+      buffer += decoder.decode(next.value, { stream: true }).replace(/\r/g, ''); drain();
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) { buffer += '\n\n'; drain(); }
+    return [...blocks.entries()].sort((a, b) => a[0] - b[0]).map(([, block]) => block);
+  } finally { signal.removeEventListener('abort', cancel); input.cancel().catch(() => {}); input.releaseLock(); }
+}
+
+// 出典は公開ホストのみ。リダイレクトも各段で検査し、認証・Cookie・APIキーを付けずに読む。
+function researchSourceUrl(value) {
+  try {
+    const u = new URL(value), host = u.hostname.toLowerCase().replace(/\.+$/, '');
+    return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password
+      && (!u.port || ['80', '443'].includes(u.port)) && host.includes('.')
+      && !host.includes(':') && !/^\d+(?:\.\d+){3}$/.test(host)
+      && !/(?:^|\.)(?:localhost|local|internal|invalid|test|onion)$/.test(host) ? u.href : null;
+  } catch { return null; }
+}
+
+function researchSourceBlocks(raw, html) {
+  if (html) {
+    raw = raw.replace(/<(script|style|nav|header|footer|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
+    raw = raw.match(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/i)?.[2] || raw;
+    raw = raw.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
+      .replace(/&#(x[\da-f]+|\d+);/gi, (_, n) => {
+        const cp = n[0].toLowerCase() === 'x' ? parseInt(n.slice(1), 16) : +n;
+        return cp > 0 && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff) ? String.fromCodePoint(cp) : '';
+      }).replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, n => ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'",'&nbsp;':' '}[n]));
+  }
+  const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
+  const kept = text.slice(0, boundary(Math.min(text.length, RESEARCH.verify.source_chars))), blocks = [];
+  for (let at = 0; at < kept.length;) {
+    const end = boundary(Math.min(kept.length, at + RESEARCH.verify.block_chars));
+    blocks.push({id: blocks.length, text: kept.slice(at, end)}); at = end;
+  }
+  return {blocks, truncated: kept.length < text.length};
+}
+
+// エラー用readLimitedは途中の本文を返すため、根拠の取得では完了と打切りを別に扱う。
+async function readResearchSourceBody(res, signal, html, charset) {
+  if (!res.body) return {raw:'',truncated:false};
+  const reader = res.body.getReader(), chunks = [];
+  let size = 0, onStop;
+  const decode = truncated => {
+    const bytes = new Uint8Array(size); let at = 0;
+    for (const chunk of chunks) {bytes.set(chunk,at);at += chunk.length;}
+    const head = html ? new TextDecoder().decode(bytes.subarray(0,2048)) : '';
+    const declared = charset || head.match(/<meta\b[^>]*\bcharset\s*=\s*["']?([^\s;"'/>]+)/i)?.[1] || 'utf-8';
+    if (!/^(?:utf-8|utf8|us-ascii|shift_jis|shift-jis|sjis|windows-31j|euc-jp|iso-2022-jp)$/i.test(declared)) throw new Error('unsupported_source_encoding');
+    return {raw:new TextDecoder(declared,{fatal:true}).decode(bytes,{stream:truncated}),truncated};
+  };
+  const stopped = new Promise((_,reject) => {
+    onStop = () => reject(searchFailure('cancelled'));
+    if (signal.aborted) onStop(); else signal.addEventListener('abort',onStop,{once:true});
+  });
+  try {
+    while (size < RESEARCH.verify.source_bytes) {
+      const {done,value} = await Promise.race([reader.read(),stopped]);
+      if (done) return decode(false);
+      const kept = value.subarray(0,RESEARCH.verify.source_bytes - size); size += kept.byteLength;
+      chunks.push(kept);
+    }
+    return decode(true);
+  } finally {
+    signal.removeEventListener('abort',onStop); reader.cancel().catch(() => {});
+    try {reader.releaseLock();} catch {}
+  }
+}
+
+async function readResearchSource(item, signal) {
+  if (!researchSourceUrl(item.url)) return {...item, allowed: false, readable: false, blocks: []};
+  try {
+    return await searchDeadline(RESEARCH.verify.source_ms, async stop => {
+      let url = item.url;
+      for (let redirects = 0; ; redirects++) {
+        if (stop.aborted) throw searchFailure('cancelled');
+        const res = await fetch(url, {redirect:'manual', signal:stop, headers:{Accept:'text/html, text/plain, application/json'}});
+        if ([301,302,303,307,308].includes(res.status)) {
+          res.body?.cancel().catch(() => {});
+          const next = res.headers.get('location');
+          const target = next && researchSourceUrl(URL.canParse(next,url) ? new URL(next,url).href : '');
+          if (redirects >= 3 || !target) return {...item, allowed:false, readable:false, blocks:[]};
+          url = target; continue;
+        }
+        const type = res.headers.get('content-type') || '';
+        const charset = type.match(/charset\s*=\s*["']?([^\s;"']+)/i)?.[1];
+        if (!res.ok || !/(?:text\/html|text\/plain|application\/json)/i.test(type)) {
+          res.body?.cancel().catch(() => {});
+          return {...item, allowed:res.ok, readable:false, blocks:[]};
+        }
+        const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
+        if (stop.aborted) throw searchFailure('cancelled');
+        const content = researchSourceBlocks(raw, /text\/html/i.test(type));
+        return {...item, allowed:true, readable:content.blocks.length > 0, ...content,
+          truncated:content.truncated || truncated};
+      }
+    }, signal);
+  } catch (e) {
+    if (signal.aborted) throw searchFailure('cancelled');
+    return {...item, allowed:true, readable:false, blocks:[]};
+  }
+}
+
+function researchVerificationFormat(evidence) {
+  return {type:'json_schema', json_schema:{name:'research_verified_reply', strict:true, schema:{type:'object', additionalProperties:false,
+    properties:{parts:{type:'array', items:{type:'object', additionalProperties:false, properties:{label:{type:'string'}, text:{type:'string'},
+      status:{type:'string', enum:['verified','unverified']}, citations:{type:'array', items:{type:'object', additionalProperties:false,
+        properties:{n:{type:'integer', enum:evidence.map(e => e.n)}, blocks:{type:'array', items:{type:'integer'}}}, required:['n','blocks']}}},
+      required:['label','text','status','citations']}}}, required:['parts']}}};
+}
+
+function verifiedResearchResult(value, evidence, replyLanguage) {
+  const fail = () => {throw stageError('upstream', 'research_verification_invalid', 'Web回答の根拠を確認できませんでした', {retryable:true});};
+  const keys = (x, names) => x && typeof x === 'object' && !Array.isArray(x) && Object.keys(x).length === names.length && names.every(k => Object.hasOwn(x,k));
+  if (!keys(value,['parts']) || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
+  let text = ''; const items = [], marks = [], numbers = new Map();
+  for (const p of value.parts) {
+    if (!keys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
+      || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
+      || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
+      || !Array.isArray(p.citations) || !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
+    const body = p.status === 'unverified'
+      ? RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en : p.text.trim();
+    text += (text ? '\n\n' : '') + '- ' + p.label.trim() + ': ' + body;
+    const used = new Set();
+    for (const c of p.citations) {
+      const source = evidence.find(e => e.n === c?.n);
+      if (!keys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
+        || !Array.isArray(c.blocks) || c.blocks.length > 20
+        || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
+        || p.status === 'verified' && (!source.readable || !c.blocks.length)) fail();
+      if (used.has(c.n)) continue; used.add(c.n);
+      if (!numbers.has(c.n)) {numbers.set(c.n,items.length + 1);items.push({n:items.length + 1,title:source.title,url:source.url});}
+      marks.push({at:text.length, n:numbers.get(c.n)});
+    }
+  }
+  return {text, sources:{items,marks}};
+}
+
+function researchVerificationBody(cfg,messages,result,evidence,replyLanguage) {
+  const latest = messages.findLast(m => m.role === 'user')?.content;
+  const question = typeof latest === 'string' ? latest : (latest || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
+  const input = [...messages, {role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')},
+    {role:'user', content:JSON.stringify({question,draft:result.text,evidence})}];
+  return requestBody({...cfg,max_tokens:RESEARCH.verify.max_tokens}, {messages:input,stream:false,response_format:researchVerificationFormat(evidence)});
+}
+
+async function verifyResearchAnswer({upstream, messages, result, cfg, replyLanguage, signal}) {
+  const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
+  if (signal.aborted) throw searchFailure('cancelled');
+  if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
+  const body = researchVerificationBody(cfg,messages,result,evidence,replyLanguage);
+  const res = await fetch(PROVIDERS[cfg.provider].endpoint, {method:'POST',headers:requestHeaders(cfg.provider,upstream[PROVIDERS[cfg.provider].key]),body:JSON.stringify(body),signal});
+  if (typeof upstream.evalObserve === 'function') upstream.evalObserve(cfg.provider,cfg.model,res.clone(),false);
+  if (!res.ok) {
+    if (upstream.onUpstreamError) await upstream.onUpstreamError(cfg.provider,res.clone(),{signal});
+    res.body?.cancel().catch(() => {});
+    throw stageError('upstream','research_verification_http_'+res.status,'Web回答の根拠を確認できませんでした',{retryable:true});
+  }
+  const raw = await readLimited(res,RESEARCH.verify.reply_bytes,signal,RESEARCH.timeout_ms);
+  if (signal.aborted) throw searchFailure('cancelled');
+  const data = JSON.parse(raw), reason = cfg.provider === 'anthropic' ? anthropicStop(data.stop_reason) : data.choices?.[0]?.finish_reason;
+  const content = cfg.provider === 'anthropic' ? (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('') : data.choices?.[0]?.message?.content;
+  if (reason !== 'stop' || typeof content !== 'string') throw stageError('upstream','research_verification_incomplete','Web回答の根拠を確認できませんでした',{retryable:true});
+  return verifiedResearchResult(JSON.parse(content),evidence,replyLanguage);
+}
+
+async function researchAnswer({ upstream, messages, theme, replyLanguage, ip, signal, send, log }) {
+  const note = RESEARCH.limited_note[replyLanguage?.code] || RESEARCH.limited_note.en;
+  const withoutWeb = async reason => {
+    if (signal.aborted) throw searchFailure('cancelled');
+    log('research', reason);
+    send('integrated', { delta: note });
+    return note + await synthesize({ env: upstream, messages, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+  };
+  if (upstream.DB) {
+    const day = utcDay();
+    if (signal.aborted) throw searchFailure('cancelled');
+    if (await countUp(upstream.DB, 'research:' + ip, day, RESEARCH.daily_limit) == null) return withoutWeb('ip_limit');
+    if (signal.aborted) throw searchFailure('cancelled');
+    if (await countUp(upstream.DB, 'research:global', day, RESEARCH.global_daily_limit) == null) return withoutWeb('global_limit');
+  }
+  const verifiedNow = new Date(), verifiedAt = verifiedNow.toISOString();
+  // 確認時刻はモデルに作らせず、本文と同じ履歴へ保存する。出典の時刻とは別。
+  const checked = (replyLanguage?.code === 'ja' ? 'Web確認日時: ' : 'Web checked at: ') + verifiedAt + ' (UTC)\n\n';
+  const input = researchMessages(messages, verifiedNow);
+  const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
+  const primary = RESEARCH.primary_provider[theme === 'dark' ? 'dark' : 'light'];
+  let emitted = false;
+  for (const [attempt, model] of (primary === 'anthropic' ? [dark, light] : [light, dark]).entries()) {
+    const cfg = { ...model, reasoning_effort: RESEARCH.reasoning_effort };
+    if (signal.aborted) throw searchFailure('cancelled');
+    try {
+      const result = await withTimeout(RESEARCH.timeout_ms, async stop => {
+        // 原案を表示する前に出典の実本文と照合する。未確認の値を先にストリームへ漏らさない。
+        const reader = researchReader(cfg.provider, () => {}, RESEARCH.sources_max);
+        let body = researchRequestBody(cfg, input);
+        for (let paused = 0; ; paused++) {
+          if (stop.aborted) throw searchFailure('cancelled');
+          const key = upstream[PROVIDERS[cfg.provider].key];
+          if (!key) throw stageError('upstream', 'missing_api_key', 'Web検索のキーが未設定です', { retryable: false });
+          const res = await fetch(cfg.provider === 'openai' ? RESEARCH.openai_endpoint : PROVIDERS.anthropic.endpoint, {
+            method: 'POST', headers: requestHeaders(cfg.provider, key), body: JSON.stringify(body), signal: stop,
+          });
+          if (typeof upstream.evalObserve === 'function') upstream.evalObserve(cfg.provider, cfg.model, res.clone(), true);
+          if (!res.ok) {
+            if (upstream.onUpstreamError) await upstream.onUpstreamError(cfg.provider, res.clone(), { signal: stop });
+            res.body?.cancel().catch(() => {});
+            throw stageError('upstream', 'research_http_' + res.status, 'Web検索に失敗しました', { retryable: true });
+          }
+          const content = await readResearchResponse(res.body, reader, cfg.provider, stop);
+          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,result:reader.finish(),cfg,replyLanguage,signal:stop});
+          if (paused >= RESEARCH.max_pause_turns) throw stageError('upstream', 'research_pause_limit', 'Web検索が完了しませんでした', { retryable: true });
+          body = { ...body, messages: [...body.messages, { role: 'assistant', content }] };
+          reader.beginTurn();
+        }
+      }, signal);
+      if (signal.aborted) throw searchFailure('cancelled');
+      emitted = true;
+      send('integrated',{delta:checked});
+      if (signal.aborted) throw searchFailure('cancelled');
+      send('integrated',{delta:result.text});
+      if (signal.aborted) throw searchFailure('cancelled');
+      send('sources', { ...result.sources, marks: result.sources.marks.map(m => ({ ...m, at: m.at + checked.length })) });
+      log('research', 'ok', cfg.provider, attempt, result.sources.items.length);
+      return checked + result.text;
+    } catch (error) {
+      if (signal.aborted || emitted) {
+        if (error.name === 'ResearchStreamError') throw stageError('upstream', 'research_' + error.code, 'Web検索の回答を完了できませんでした', { retryable: true });
+        throw error;
+      }
+      log('research', 'failed', cfg.provider, error.envelope?.code || error.code || error.name);
+      if (attempt) return withoutWeb('both_failed');
+    }
+  }
+}
+
 // 悪意への返しには、ユーザーの本文・会話履歴・入力由来の言語sampleを渡さない。
 // 両社失敗の固定文も、本文が始まる前だけ使う。closed/doneは正常完了後に呼び出し元が送る。
 async function replyToMalice({ env, cards, classified, uiLanguage, theme, signal, send, log }) {
@@ -962,7 +1286,7 @@ async function replyToMalice({ env, cards, classified, uiLanguage, theme, signal
         { role: 'user', content: MALICE_REPLY.directions[classified.malice] }] });
   } catch (err) {
     if (emitted || signal.aborted) throw err;
-    send('integrated', { delta: MALICE_REPLY.fallback[replyCode === 'ja' ? 'ja' : 'en'] });
+    send('integrated', { delta: MALICE_REPLY.fallback[Object.hasOwn(MALICE_REPLY.fallback, replyCode) ? replyCode : 'en'] });
   }
 }
 
@@ -1097,6 +1421,7 @@ async function readChatInput(request) {
   // 出力の言語は状況説明を足す前の会話で決める（状況説明は日本語なので、足した後だと日本語に見える）
   const plainMessages = messages;
   const newContract = body.classification_state === true;
+  const factMode = newContract && body.fact_mode === true;
   const langNote = newContract ? null : replyLanguageNote(plainMessages);
   let context = null;
   if (body.context != null) {
@@ -1113,7 +1438,7 @@ async function readChatInput(request) {
     : null;
   if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
   return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
-    newContract, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
+    newContract, factMode, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
 function siteSelectionNote(choice) {
@@ -1323,7 +1648,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
@@ -1338,7 +1663,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   const cardsPromise = getPersonaCards(ctx, log);
   const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
     profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
-    seed, replyLanguage, uiLanguage, fallback: langNote,
+    seed, replyLanguage, uiLanguage, fallback: langNote, factMode,
   }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
   const refuse = res => {
     stop.abort();
@@ -1418,7 +1743,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (stop.signal.aborted) throw searchFailure('cancelled');
         langNote = classified.langNote;
         const classification = classified.classification;
-        if (classification) classification.magi_candidate = !classified.malice && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
+        if (classification) classification.magi_candidate = !classified.malice && classification.mode !== 'fact' && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
           && entry === 'chat' && classification.votable === 'yes' && !!contentText(plainMessages.at(-1).content).trim();
         if (newContract) send('classification', classification);
         if (classified.malice) {
@@ -1450,7 +1775,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (stop.signal.aborted) throw searchFailure('cancelled');
         if (motionEvent) send('motion', motionEvent);
         const motion = motionEvent?.votable ? motionEvent.text : null;
-        const shortDebate = !motion && newContract && ['site', 'music'].includes(classification.intent);
+        const shortDebate = !motion && newContract && !factMode && ['site', 'music'].includes(classification.intent);
 
         // サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
         // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
@@ -1490,9 +1815,13 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           pageChoice = await pagesPromise || { status: 'failed', results: [] };
           pagesPromise = null;
         }
-        const answer = await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,
-          adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
-          signal: stop.signal, send, log });
+        const answer = factMode && classification.mode === 'fact'
+          ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page,
+              research: classification.intent === 'research' && classification.fresh === 'yes',
+              replyLanguage: classification.reply_language, ip: requestIP(request), signal: stop.signal, send, log })
+          : await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,
+              adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
+              signal: stop.signal, send, log });
         // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
         if (wantSuggest) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,

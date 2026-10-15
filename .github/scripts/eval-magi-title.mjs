@@ -12,7 +12,7 @@ const ref=opt('ref'),label=opt('label',ref?'title-baseline':'title-candidate'),r
 assert.match(label,/^[a-z0-9-]+$/);assert(Number.isInteger(repeat)&&repeat>=1&&repeat<=5);
 const current=p=>readFileSync(new URL(p,root),'utf8');
 const read=p=>ref?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):current(p);
-const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
+const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),'src/index.js'];
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const calls=[];
 const context=vm.createContext({aiModels:JSON.parse(read('config/ai-models.json')),bundledContext:JSON.parse(current('data/magi-context.json')),

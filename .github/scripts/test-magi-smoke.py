@@ -6,6 +6,37 @@ from unittest.mock import patch
 import ai_models
 
 
+def web_stream(provider):
+    citation = {'url': 'https://example.com/', 'title': 'source'}
+    if provider == 'openai':
+        events = [
+            {'type': 'response.output_item.done', 'item': {'type': 'web_search_call', 'status': 'completed', 'action': {'sources': [citation]}}},
+            {'type': 'response.output_text.delta', 'output_index': 1, 'content_index': 0, 'delta': 'answer'},
+            {'type': 'response.output_text.annotation.added', 'output_index': 1, 'content_index': 0, 'annotation': {**citation, 'type': 'url_citation', 'start_index': 0, 'end_index': 6}},
+            {'type': 'response.completed', 'response': {'status': 'completed'}},
+        ]
+    else:
+        events = [
+            {'type': 'content_block_start', 'index': 0, 'content_block': {'type': 'web_search_tool_result', 'content': [{**citation, 'type': 'web_search_result'}]}},
+            {'type': 'content_block_start', 'index': 1, 'content_block': {'type': 'text', 'text': 'answer', 'citations': [{**citation, 'type': 'web_search_result_location'}]}},
+            {'type': 'content_block_stop', 'index': 1}, {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}, {'type': 'message_stop'},
+        ]
+    return ''.join('data: ' + json.dumps(e) + '\n\n' for e in events)
+
+
+def verifier_reply(provider, value=None, reason=None):
+    value = value or {'parts': [{'label': 'Current exhibition', 'text': 'The current status is unverified.',
+                                'status': 'unverified', 'citations': [{'n': 1, 'blocks': [0]}]}]}
+    if provider == 'anthropic':
+        return {'content': [{'type': 'text', 'text': json.dumps(value)}], 'stop_reason': reason or 'end_turn'}
+    return {'choices': [{'message': {'content': json.dumps(value)}, 'finish_reason': reason or 'stop'}]}
+
+
+def is_verifier(body):
+    return (body.get('response_format', {}).get('json_schema', {}).get('name') == 'research_verified_reply'
+            or 'parts' in body.get('output_config', {}).get('format', {}).get('schema', {}).get('properties', {}))
+
+
 class MagiSmokeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -24,6 +55,10 @@ class MagiSmokeTest(unittest.TestCase):
                 sent = []
                 def post(url, key, body, stream=False):
                     sent.append((body, stream))
+                    if body.get('tools'):
+                        return web_stream(provider)
+                    if is_verifier(body):
+                        return verifier_reply(provider)
                     return {'choices': [{'finish_reason': 'stop', 'message': {'content': 'OK'}}]}
                 with patch.object(ai_models, 'post_json', side_effect=post):
                     ai_models.smoke_magi_discussion('mock', 'private', 'candidate-for-test', provider, config)
@@ -48,6 +83,28 @@ class MagiSmokeTest(unittest.TestCase):
                     self.assertNotIn('top_p', sent[2][0])
                 else:
                     self.assertEqual(len(sent), 2)
+                # 悪意への短い返しは、統合のモデルを推論なしでストリーミングする本番の形を最後に送る
+                replies = [({**r['body'], 'model': 'candidate-for-test'}, True)
+                           for r in config['discussion']['malice_reply'] if r['provider'] == provider]
+                start = 3 if provider != 'deepseek' else 2
+                self.assertEqual(sent[start:start + len(replies)], replies)
+                additions = config['fact_smoke'] + config['research_smoke'] + config['verify_smoke']
+                self.assertEqual(sent[start + len(replies):], [({**r['body'], 'model': 'candidate-for-test'}, r['body']['stream'])
+                                 for r in additions if r['provider'] == provider])
+                for r in additions:
+                    if r['provider'] != provider:
+                        continue
+                    body = r['body']
+                    # Webはmedium、Webなしの直接回答はlow。本番の別設定を混同しない。
+                    actual = (body.get('reasoning', {}).get('effort') if body.get('input')
+                              else body.get('reasoning_effort') if provider == 'openai'
+                              else body['output_config']['effort'])
+                    self.assertEqual(actual, 'medium' if body.get('tools') or is_verifier(body) else 'low')
+                for body, _ in replies:
+                    if provider == 'openai':
+                        self.assertEqual(body['reasoning_effort'], 'none')
+                    else:
+                        self.assertEqual(body['thinking'], {'type': 'disabled'})
 
     def test_site_requests_keep_prompts_and_settings(self):
         sent = []
@@ -118,7 +175,9 @@ class MagiSmokeTest(unittest.TestCase):
         self.assertEqual(questions[1], {'malice', 'votable', 'intent', 'site_pages'})
         self.assertEqual(questions[3:5], [questions[1], questions[1]])
         self.assertTrue(all(q == {'language', 'malice'} for q in questions[5:7]))
-        self.assertTrue(all(q == {'language'} for q in questions[7:]))
+        self.assertTrue(all(q == {'language'} for q in questions[7:9]))
+        self.assertEqual(questions[9], questions[0] | {'fresh'})
+        self.assertEqual(questions[10:12], [questions[1] | {'fresh'}] * 2)
         # Jevの形式検査は閾値を使わず、0.68でも明確なchoiceなら受け付ける。
         sent = []
         def post(url, key, body):
@@ -136,7 +195,11 @@ class MagiSmokeTest(unittest.TestCase):
             for content in ['partial', '', '   ', None]:
                 with self.subTest(provider=provider, content=content):
                     response = {'choices': [{'finish_reason': 'length', 'message': {'content': content}}]}
-                    with patch.object(ai_models, 'post_json', return_value=response):
+                    def post(url, key, body, stream=False):
+                        if is_verifier(body):
+                            return verifier_reply(provider)
+                        return web_stream(provider) if body.get('tools') else response
+                    with patch.object(ai_models, 'post_json', side_effect=post):
                         if content == 'partial':
                             ai_models.smoke_magi_discussion('mock', 'private', 'candidate-for-test', provider, self.config)
                         else:
@@ -171,6 +234,24 @@ class MagiSmokeTest(unittest.TestCase):
                 else:
                     with self.assertRaises(RuntimeError):
                         ai_models.validate_chat_stream(raw)
+
+    def test_verifier_rejects_unknown_source_block_and_incomplete_or_unsupported_answer(self):
+        for provider in ['openai', 'anthropic']:
+            sample = next(v for v in self.config['verify_smoke'] if v['provider'] == provider)
+            for invalid in ['source', 'block', 'status', 'reason']:
+                value = json.loads(verifier_reply('openai')['choices'][0]['message']['content'])
+                part = value['parts'][0]
+                if invalid == 'source':
+                    part['citations'][0]['n'] = 2
+                if invalid == 'block':
+                    part['citations'][0]['blocks'] = [99]
+                if invalid == 'status':
+                    part['status'] = 'verified'
+                response = verifier_reply(provider, value, 'max_tokens' if invalid == 'reason' else None)
+                config = {'discussion': {'personas': [], 'synthesizer': {'provider': 'none'}, 'synthesizer_dark': {'provider': 'none'}, 'malice_reply': []},
+                          'fact_smoke': [], 'research_smoke': [], 'verify_smoke': [sample]}
+                with self.subTest(provider=provider, invalid=invalid), patch.object(ai_models, 'post_json', return_value=response), self.assertRaises(ai_models.subprocess.CalledProcessError):
+                    ai_models.smoke_magi_discussion('mock', 'private', 'candidate-for-test', provider, config)
 
     def test_magi_schema_smoke_uses_production_request_body(self):
         for provider, name in [('anthropic', 'motion'), ('openai', 'motion_fallback')]:

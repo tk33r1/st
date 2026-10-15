@@ -1,0 +1,908 @@
+{
+  "split": "final",
+  "authored_by": "agent (2026-10-14, 調整用を提示・承認した後の別の機会)",
+  "reviewed_by": "Shinya Takeda (曲の案内がmusicという方針の指摘と他項目の了承。音楽の文面・境界の期待はagentが方針に従い更新)",
+  "reviewed_at": "2026-10-14T10:34:10+09:00",
+  "notes": "調整用の結果を見る前に作成。本人による文面・期待値・静的な正解の確認前。調整が終わるまでAPIへ送らず、内容を見返さない。 2026-10-14: 本人の指摘に従いmusicを曲案内に限定。音楽説明を曲案内5件の枠から境界5件へ移し、判定用は結果を見る前に更新。旧freezeは今回の契約に使わず、調整用を再測定する。",
+  "cases": [
+    {
+      "id": "final-stable-01",
+      "group": "stable",
+      "text": "アボガドロ定数の値と単位を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "6.02214076×10²³ mol⁻¹（正確な値）。"
+    },
+    {
+      "id": "final-stable-02",
+      "group": "stable",
+      "text": "電気素量の値は何クーロン？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "1.602176634×10⁻¹⁹ C（正確な値）。"
+    },
+    {
+      "id": "final-stable-03",
+      "group": "stable",
+      "text": "グレゴリオ暦で、うるう年を判定する規則を説明して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "4で割り切れる年。100で割り切れる年は平年だが400で割り切れる年はうるう年。"
+    },
+    {
+      "id": "final-stable-04",
+      "group": "stable",
+      "text": "標準大気圧101325 Paで、純水の沸点は摂氏何度？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "通常の近似で100℃。"
+    },
+    {
+      "id": "final-stable-05",
+      "group": "stable",
+      "text": "12と18の最小公倍数を求めて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "36。"
+    },
+    {
+      "id": "final-stable-06",
+      "group": "stable",
+      "text": "3から8を引くと？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "−5。"
+    },
+    {
+      "id": "final-stable-07",
+      "group": "stable",
+      "text": "IPv4アドレスは何ビットですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "32ビット。"
+    },
+    {
+      "id": "final-stable-08",
+      "group": "stable",
+      "text": "HTMLの正式名称を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "HyperText Markup Language。"
+    },
+    {
+      "id": "final-stable-09",
+      "group": "stable",
+      "text": "通常のJPEG圧縮は可逆ですか、非可逆ですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "非可逆。JPEGには可逆の方式もあるが一般の写真用JPEGは非可逆。"
+    },
+    {
+      "id": "final-stable-10",
+      "group": "stable",
+      "text": "SQLでテーブルのデータを読み出す基本の文は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "SELECT文。"
+    },
+    {
+      "id": "final-stable-11",
+      "group": "stable",
+      "text": "Gitでリモートリポジトリを初めて複製するコマンドは？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "git clone。"
+    },
+    {
+      "id": "final-stable-12",
+      "group": "stable",
+      "text": "CSSのmarginとpaddingは、枠のどちら側の余白ですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "marginはborderの外側、paddingはborderの内側。"
+    },
+    {
+      "id": "final-stable-13",
+      "group": "stable",
+      "text": "JavaScriptのconstで宣言した変数に別の値を再代入できますか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "再代入できない。オブジェクトの中身の変更は別。"
+    },
+    {
+      "id": "final-stable-14",
+      "group": "stable",
+      "text": "SI接頭語のミリは10の何乗ですか。",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "10⁻³。"
+    },
+    {
+      "id": "final-stable-15",
+      "group": "stable",
+      "text": "What does CPU stand for?",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "answer_reference": "Central Processing Unit。"
+    },
+    {
+      "id": "final-fresh-01",
+      "group": "fresh",
+      "text": "今朝のJR山手線の運行状況を確認して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-02",
+      "group": "fresh",
+      "text": "今週末の東京国立博物館の開館時間と休館予定を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-03",
+      "group": "fresh",
+      "text": "現在のSpotify日本のPremium Individualの月額料金はいくら？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-04",
+      "group": "fresh",
+      "text": "直近に公表された日本の完全失業率と対象月を知りたい。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-05",
+      "group": "fresh",
+      "text": "現在、日本郵便で定形郵便25グラムを送る切手代はいくら？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-06",
+      "group": "fresh",
+      "text": "今月の国立天文台のほしぞら情報にある主な天文現象は？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-07",
+      "group": "fresh",
+      "text": "日本の最新の国勢調査結果として公開されている総人口と調査年を確認して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-08",
+      "group": "fresh",
+      "text": "直近のMLBワールドシリーズで優勝したチームはどこ？",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-09",
+      "group": "fresh",
+      "text": "今販売されているニンテンドーの据え置き兼携帯ゲーム機の公式名称と希望小売価格を知りたい。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-10",
+      "group": "fresh",
+      "text": "国立科学博物館で現在開催中の特別展を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-11",
+      "group": "fresh",
+      "text": "現在の日本国内の消費税の標準税率と軽減税率を確認して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-12",
+      "group": "fresh",
+      "text": "今日発表された気象庁の地震情報で最も新しい地震の発生時刻を教えて。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-13",
+      "group": "fresh",
+      "text": "What are the current baggage limits for ANA domestic flights?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-14",
+      "group": "fresh",
+      "text": "What is the most recently published Nobel Prize in Physics award, and who received it?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-fresh-15",
+      "group": "fresh",
+      "text": "What is the current official entrance fee for the Louvre Museum?",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    },
+    {
+      "id": "final-site-01",
+      "group": "site",
+      "text": "このサイトの画像の背景を消すツールへのリンクを教えて。",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-02",
+      "group": "site",
+      "text": "tk.stで音声や動画を変換できるページを探したい。",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-03",
+      "group": "site",
+      "text": "MAGIのライトとダークの切り替え方を教えて。",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-04",
+      "group": "site",
+      "text": "MAGIで保存した会話をMarkdownで書き出す操作を知りたい。",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-05",
+      "group": "site",
+      "text": "このサイトのリテールテックの日刊ブリーフはどこで読める？",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-06",
+      "group": "site",
+      "text": "Buy Me Oilの寄付の窓口に行きたい。",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-07",
+      "group": "site",
+      "text": "このサイトの検索で①と②と③は何が違う？",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-08",
+      "group": "site",
+      "text": "DJへの曲リクエストを送れる、このサイトのページはどこ？",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-09",
+      "group": "site",
+      "text": "Where is the QR Palette tool on tk.st?",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-site-10",
+      "group": "site",
+      "text": "How can I install the MAGI PWA from this website?",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-01",
+      "group": "consult",
+      "text": "新しいチームの人と打ち解ける方法を一緒に考えて。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-02",
+      "group": "consult",
+      "text": "部下への指摘をきつく聞こえないように伝えたい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-03",
+      "group": "consult",
+      "text": "締め切りが重なると全部後回しにしてしまう。優先順位を整理したい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-04",
+      "group": "consult",
+      "text": "自分の作品を人に見せるのが怖い。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-05",
+      "group": "consult",
+      "text": "家族と過ごす時間と一人の時間の折り合いに悩んでいます。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-06",
+      "group": "consult",
+      "text": "今日うまくいったことを聞いてほしい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-07",
+      "group": "consult",
+      "text": "失敗した企画について、次の一歩をどう考える？",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-08",
+      "group": "consult",
+      "text": "仕事を人に任せるのが苦手です。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-09",
+      "group": "consult",
+      "text": "資格の勉強を続けるために自分に合うやり方を考えたい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-10",
+      "group": "consult",
+      "text": "友人に断るとき罪悪感がある。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-11",
+      "group": "consult",
+      "text": "朝の時間をもっと気持ちよく過ごしたい。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-12",
+      "group": "consult",
+      "text": "調べた情報が多すぎて決断できない。頭を整理するのを手伝って。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-13",
+      "group": "consult",
+      "text": "I feel left out at work and want to talk through it.",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-14",
+      "group": "consult",
+      "text": "Help me figure out how to apologize to a friend.",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-consult-15",
+      "group": "consult",
+      "text": "I did something difficult today, and I'm glad it's over.",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-01",
+      "group": "music",
+      "text": "友人を家に招くときに流すジャズの曲を3曲案内して。",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-02",
+      "group": "music",
+      "text": "DJセットの最後を締めくくる曲を選びたい。",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-03",
+      "group": "music",
+      "text": "アコースティックギターが印象的な曲をおすすめして。",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-04",
+      "group": "music",
+      "text": "Suggest music for a relaxed dinner with friends.",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-05",
+      "group": "music",
+      "text": "Suggest three tracks for a late-night drive.",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-clarification-01",
+      "group": "clarification",
+      "text": "今月",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "失業率の公表値を確認したい。",
+        "questions": [
+          {
+            "question": "どの発表ですか。",
+            "options": [
+              "今月",
+              "昨年の同じ月",
+              "5年前"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-02",
+      "group": "clarification",
+      "text": "美術館の入館料",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "パリ旅行に必要な最新情報を知りたい。",
+        "questions": [
+          {
+            "question": "何の情報ですか。",
+            "options": [
+              "美術館の入館料",
+              "航空運賃",
+              "ホテル料金"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-03",
+      "group": "clarification",
+      "text": "ANA国内線、機内持ち込み",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "航空会社の現在の荷物の制限を確認して。",
+        "questions": [
+          {
+            "question": "どの会社と路線ですか。",
+            "options": [
+              "ANA国内線",
+              "JAL国際線",
+              "LCC国内線"
+            ]
+          },
+          {
+            "question": "どの荷物ですか。",
+            "options": [
+              "機内持ち込み",
+              "預け入れ"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-04",
+      "group": "clarification",
+      "text": "国立科学博物館、今週、特別展",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      },
+      "clarification": {
+        "original_question": "東京の博物館の展示を調べたい。",
+        "questions": [
+          {
+            "question": "どの施設ですか。",
+            "options": [
+              "国立科学博物館",
+              "東京国立博物館",
+              "日本科学未来館"
+            ]
+          },
+          {
+            "question": "いつ行きますか。",
+            "options": [
+              "今週",
+              "来月",
+              "来年"
+            ]
+          },
+          {
+            "question": "何を見たいですか。",
+            "options": [
+              "特別展",
+              "常設展"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "yes"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-05",
+      "group": "clarification",
+      "text": "半径3センチ",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "円の面積を計算して。",
+        "questions": [
+          {
+            "question": "半径はいくつですか。",
+            "options": [
+              "半径3センチ",
+              "半径5センチ",
+              "半径10センチ"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-06",
+      "group": "clarification",
+      "text": "外側と内側の違い、CSS",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "要素の周囲の余白の仕組みを説明して。",
+        "questions": [
+          {
+            "question": "何の違いですか。",
+            "options": [
+              "外側と内側の違い",
+              "上下と左右の違い"
+            ]
+          },
+          {
+            "question": "どの分野ですか。",
+            "options": [
+              "CSS",
+              "印刷",
+              "手書き"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "research",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-07",
+      "group": "clarification",
+      "text": "任せる範囲",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "人に仕事を任せるのが不安です。",
+        "questions": [
+          {
+            "question": "まず何を整理しますか。",
+            "options": [
+              "任せる範囲",
+              "伝え方",
+              "振り返り方"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "consult",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-08",
+      "group": "clarification",
+      "text": "友人への伝え方",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "約束を断るか悩んでいる。",
+        "questions": [
+          {
+            "question": "どこで悩んでいますか。",
+            "options": [
+              "友人への伝え方",
+              "自分の予定の整理",
+              "別の日の提案"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "consult",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-09",
+      "group": "clarification",
+      "text": "ディナー、ゆったりした曲",
+      "expected": {
+        "intent": "music",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "集まりで流す曲を選びたい。",
+        "questions": [
+          {
+            "question": "どんな集まりですか。",
+            "options": [
+              "ディナー",
+              "ダンスパーティー",
+              "朝の集まり"
+            ]
+          },
+          {
+            "question": "雰囲気は？",
+            "options": [
+              "ゆったりした曲",
+              "盛り上がる曲"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "music",
+          "fresh": "no"
+        }
+      }
+    },
+    {
+      "id": "final-clarification-10",
+      "group": "clarification",
+      "text": "動画の変換",
+      "expected": {
+        "intent": "site",
+        "fresh": "no"
+      },
+      "clarification": {
+        "original_question": "tk.stで作業したい。",
+        "questions": [
+          {
+            "question": "何をしたいですか。",
+            "options": [
+              "動画の変換",
+              "音声の変換",
+              "画像の変換"
+            ]
+          }
+        ],
+        "prior": {
+          "intent": "site",
+          "fresh": "no"
+        }
+      }
+    }
+  ],
+  "boundary_cases": [
+    {
+      "id": "final-music-boundary-01",
+      "group": "music-boundary",
+      "text": "楽譜の4分の4拍子はどういう意味？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-boundary-02",
+      "group": "music-boundary",
+      "text": "DJのビートマッチを耳で練習する方法を考えて。",
+      "expected": {
+        "intent": "consult",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-boundary-03",
+      "group": "music-boundary",
+      "text": "ギターのカポを使うと何が変わるの？",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-boundary-04",
+      "group": "music-boundary",
+      "text": "What makes a minor chord sound different from a major chord?",
+      "expected": {
+        "intent": "research",
+        "fresh": "no"
+      }
+    },
+    {
+      "id": "final-music-boundary-05",
+      "group": "music-boundary",
+      "text": "Björkの最新スタジオ・アルバムの題名と発売日を確認して。",
+      "expected": {
+        "intent": "research",
+        "fresh": "yes"
+      }
+    }
+  ],
+  "review_basis": "2026-10-14の本人の「音楽は、曲を案内する想定です」「それ以外は特に違和感はない」。変更した文面を本人が個別に読み直したとは記録しない。"
+}

@@ -6,7 +6,7 @@ export function classifySlice(text, limit) {
   return /[\uD800-\uDBFF]$/.test(out) ? out.slice(0, -1) : out;
 }
 
-export function classificationPayload({ profile = 'chat', texts = [], seed, hasLanguage = false }) {
+export function classificationPayload({ profile = 'chat', texts = [], seed, hasLanguage = false, factMode = false }) {
   const cfg = INTENT_CLASSIFY;
   const latest = texts.at(-1) || '';
   let state, names;
@@ -27,7 +27,10 @@ export function classificationPayload({ profile = 'chat', texts = [], seed, hasL
       ? !hasLanguage && !!languageSeed.trim() : !!latest.trim());
   }
   if (!names.length) return null;
-  return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name, cfg.questions[name]])) };
+  const fact = factMode && profile === 'chat';
+  if (fact && latest.trim()) names = [...names, 'fresh'];
+  return { model: cfg.model.model, state, questions: Object.fromEntries(names.map(name => [name,
+    fact && cfg.fact_questions[name] || cfg.questions[name]])) };
 }
 
 const languageControl = new RegExp(`[\\u0000-\\u001f\\u007f-\\u009f${BIDI_CONTROL_CHARS}]`);
@@ -64,16 +67,17 @@ export function languageNote(value) {
     ? REPLY_LANGUAGE.note(value.sample) : REPLY_LANGUAGE.named(INTENT_CLASSIFY.languages[value.code].name);
 }
 
-export function acceptedChoice(name, answer) {
-  return answer && (answer.type === undefined || answer.type === INTENT_CLASSIFY.questions[name].type)
-    && typeof answer.choice === 'string' && Object.hasOwn(INTENT_CLASSIFY.questions[name].criteria, answer.choice)
+export function acceptedChoice(name, answer, factMode = false) {
+  const question = factMode && INTENT_CLASSIFY.fact_questions[name] || INTENT_CLASSIFY.questions[name];
+  return question && answer && (answer.type === undefined || answer.type === question.type)
+    && typeof answer.choice === 'string' && Object.hasOwn(question.criteria, answer.choice)
     && typeof answer.confidence === 'number' && Number.isFinite(answer.confidence)
     && answer.confidence >= INTENT_CLASSIFY.min_confidence[name] && answer.confidence <= 1 ? answer.choice : null;
 }
 
 export async function classifyQuery(env, input, signal, log) {
-  const { profile, texts, seed, replyLanguage, uiLanguage, fallback } = input;
-  const payload = classificationPayload({ profile, texts, seed, hasLanguage: !!replyLanguage });
+  const { profile, texts, seed, replyLanguage, uiLanguage, fallback, factMode = false } = input;
+  const payload = classificationPayload({ profile, texts, seed, hasLanguage: !!replyLanguage, factMode });
   let answers = {};
   const started = Date.now();
   if (payload && env[INTENT_CLASSIFY.key] && !signal.aborted) {
@@ -91,7 +95,7 @@ export async function classifyQuery(env, input, signal, log) {
   }
   const choices = {};
   for (const name of Object.keys(payload?.questions || {})) {
-    choices[name] = acceptedChoice(name, answers[name]);
+    choices[name] = acceptedChoice(name, answers[name], factMode && profile === 'chat');
     log('classify', profile, name, choices[name] || 'fallback',
       typeof answers[name]?.confidence === 'number' && Number.isFinite(answers[name].confidence) ? answers[name].confidence : null,
       Date.now() - started);
@@ -103,11 +107,13 @@ export async function classifyQuery(env, input, signal, log) {
   const language = replyLanguage || (code && code !== 'other' ? { version: 1, code, source: 'jev' } : fixedLanguage(seed, uiLanguage));
   const dj = profile === 'dj-request';
   const noText = !(texts.at(-1) || '').trim();
+  const intent = dj ? 'music' : noText ? 'consult' : choices.intent || 'consult';
   return {
     langNote: languageNote(language),
     malice: ['identity', 'extraction', 'extreme'].includes(choices.malice) ? choices.malice : null,
     maliceConfidence: choices.malice ? answers.malice.confidence : null,
-    classification: { version: 1, intent: dj ? 'music' : noText ? 'consult' : choices.intent || 'consult',
+    classification: { version: 1, intent,
+      ...(factMode ? { mode: ['research', 'site'].includes(intent) ? 'fact' : 'consult', fresh: choices.fresh === 'yes' ? 'yes' : 'no' } : {}),
       site_pages: dj ? 'no' : choices.site_pages || 'uncertain', votable: dj || noText ? 'no' : choices.votable || 'uncertain',
       magi_candidate: false, reply_language: language },
   };

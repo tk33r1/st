@@ -74,7 +74,8 @@ PR本文にも同じ手順を出す。
 | Anthropic | 本番の非推論・JSONスキーマ。true/falseと空の議題の整合を検査 | 議題化 |
 | OpenAI | 本番の答え直し（`aux_fallback`）の非推論・strictなJSONスキーマ・元の役割の上限。議題化と同じ検査 | 議題化のLunaでの答え直し（Anthropicの失敗時） |
 | OpenAI | 本番の非推論・strictなJSONスキーマ。選択なし／1件の固定JSONと実在候補の検査 | 404とチャットのページ選び。Haikuは上限3件を超えたため採用を見送った |
-| TypeSafe | System One API の choice 質問。本番の `INTENT_CLASSIFY` と共通の組立てで初回4問・継続3問・DJ初回1問・旧画面1問を確認。答えの形と明確な例のchoiceを検査し、確信度の閾値は品質評価で確認する | magi2 の発言分類・初回言語判定と旧画面の互換経路 |
+| TypeSafe | 本番`INTENT_CLASSIFY`と共通のchoice。A1初回5問・継続4問、A2初回6問・継続5問、DJ初回2問、旧画面1問。音楽説明research/no・最新research/yes・曲案内music/noを含め、形式と明確な例のchoiceを検査。確信度の閾値は品質評価で確認する | magi2の発言分類・初回言語判定と互換経路 |
+| OpenAI / Anthropic | 本番の`requestBody`によるlowの事実回答の正常stream。Webは本番`researchRequestBody`によるResponses / Messagesのmedium・検索・ネイティブ引用を、同じ`research.js`で検査。表示前のJSON照合も同じスキーマ・番号検査で試し、過去の開幕記事だけから現在の開催を断定しない固定例を使う。候補のIDだけ置換する | A2の事実回答とWeb確認（回答の正確さ・最新性は別の品質評価） |
 | TypeSafe | System One APIのnoul質問を候補の数だけ1回に。`eval-site-rank.mjs --smoke-payload` が本番の `rankPayload` と手元の索引で組んだ決まった3問（日英。評価セットと重ねない）で、全候補の答えが有効で、期待するページが閾値以上か（npm の依存を読まない） | 404のサイト内検索の② |
 | TypeSafe | System One APIのnoul質問。本番の `nitori_social_filter.py` の採否基準で、テレビ台・通常の贈り物を採用し、PR・株を除外できるか | 日刊ニトリのX・TikTok内容判定 |
 | TypeSafe | System One APIのnoul質問。本番の `daily_news_filter.py` の採否基準で、食品売り場の技術導入と英語の店舗技術記事を採用し、食品紹介のみ・一般AI記事を除外できるか | 日刊リテールテックの国内・海外ニュース候補 |
