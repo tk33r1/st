@@ -1286,17 +1286,17 @@
     }
     .csuggest .csgo:hover, .csuggest .csgo:focus-visible { color: var(--heart-secondary); }
 
+    /* 送信・停止はアイコン（紙飛行機・■）だけの正方形 */
     .composer > button {
-      flex-shrink: 0; height: 48px; padding: 0 16px;
-      font-family: var(--f-dot);
-      font-weight: 400;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
+      flex-shrink: 0; width: 48px; height: 48px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
       border: 1px solid var(--heart-primary);
       border-radius: 0;
       background: var(--heart-primary);
       color: var(--bg);
     }
+
+    .composer > button svg { pointer-events: none; }
 
     .composer > button:hover:not(:disabled) {
       background: var(--fg);
@@ -1549,7 +1549,7 @@
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                   stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
           </div>
-          <button id="chatSend" disabled>送信</button>
+          <button id="chatSend" disabled title="送信" aria-label="送信" data-icon="send"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" /></svg></button>
         </div>
         <p class="hint" id="chatHint">AI が挙げた曲は iTunes Search API で照合しています。照合できなかった曲は、検索して探してください。</p>
       </section>
@@ -3723,6 +3723,10 @@ async function parseSSE(body, handlers, onChunk) {
     /* 相談まわりの表示・操作可否は、状態からこの一か所で決める。
        送信・履歴・受付停止の各処理が個別に hidden / disabled を触ると、
        組み合わせによって戻し忘れが起きるため。 */
+    // 送信ボタンの中身。回答を待つ間は ■（停止）に替える。どちらも固定の文字列で、来場者由来の値は入れない
+    const CHAT_SEND_ICON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" /></svg>';
+    const CHAT_STOP_ICON = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" /></svg>';
+
     function renderConsultUI() {
       const hasLog = $('#chatLog').children.length > 0;
       const hasSaved = savedCount > 0;
@@ -3757,7 +3761,12 @@ async function parseSSE(body, handlers, onChunk) {
       }
       // 回答を待つ間は停止ボタンになる（押せるまま）
       $('#chatSend').disabled = consultLocked || (!chatBusy && input.value.trim().length < 2);
-      $('#chatSend').textContent = chatBusy ? '■' : '送信';
+      // 入力のたびに描き直さない（押した瞬間に中の要素が入れ替わらないように）
+      const sendIcon = chatBusy ? CHAT_STOP_ICON : CHAT_SEND_ICON;
+      if ($('#chatSend').dataset.icon !== (chatBusy ? 'stop' : 'send')) {
+        $('#chatSend').innerHTML = sendIcon;
+        $('#chatSend').dataset.icon = chatBusy ? 'stop' : 'send';
+      }
       $('#chatSend').title = chatBusy ? '停止' : '送信';
       $('#chatSend').setAttribute('aria-label', chatBusy ? '停止' : '送信');
 
@@ -3835,10 +3844,11 @@ async function parseSSE(body, handlers, onChunk) {
     /* 入力欄：内容に合わせて伸ばし（上限は CSS の max-height）、2文字以上で送信可に */
     autoGrow($('#chatInput'));
     $('#chatInput').addEventListener('input', renderConsultUI);
-    // 物理キーボードのある環境だけ Enter 送信（スマホでは改行のまま）
+    // 物理キーボードのある環境（マウス・トラックパッドが主の入力）だけ Enter 送信（スマホ・タブレットでは改行のまま）。
+    // pointer: fine だけだとスタイラス付きの端末が当たるので、hover もそろうときに限る
     $('#chatInput').addEventListener('keydown', (e) => {
       if (e.isComposing || e.keyCode === 229) return;   // IME の変換確定は送信しない
-      const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+      const fine = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
       if (e.key === 'Enter' && !e.shiftKey && (fine || e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         sendConsult($('#chatInput').value);

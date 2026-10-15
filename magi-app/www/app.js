@@ -1438,10 +1438,14 @@ function exportAgentChat() {
 
 // ---- Wire up ----------------------------------------------------------------
 agentSendBtn.addEventListener('click', function () { if (agentBusy) agentStop(); else agentSend(); });
-// Enter で送信、Shift+Enter で改行（入力欄は textarea）。日本語入力の変換を確定する Enter では送らない
+// 物理キーボードのある環境（マウス・トラックパッドが主の入力）だけ Enter で送信、Shift+Enter で改行。
+// スマホ・タブレットの Enter は改行のまま（チャットの一般的な動き）で、送信はボタン。Ctrl/⌘+Enter はどこでも送信。
+// 日本語入力の変換を確定する Enter では送らない
 agentInput.addEventListener('keydown', function (e) {
   if (e.isComposing || e.keyCode === 229) return;
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentSend(); }
+  if (e.key !== 'Enter' || e.shiftKey) return;
+  var fine = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  if (fine || e.ctrlKey || e.metaKey) { e.preventDefault(); agentSend(); }
 });
 document.getElementById('btn-reset').addEventListener('click', resetAgent);
 document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);

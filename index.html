@@ -1969,7 +1969,7 @@
       background: var(--surface-hover);
       color: var(--text-color);
       word-break: break-word;
-      /* 入力欄の Shift+Enter で入れた改行をそのまま見せる */
+      /* 入力欄で入れた改行（PC は Shift+Enter、スマホは Enter）をそのまま見せる */
       white-space: pre-wrap;
     }
 
@@ -3656,7 +3656,7 @@
           <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
             aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
           <div id="agent-input-wrap" class="flex-1">
-            <!-- 内容に合わせて伸び縮みする（fitAgentInput）。Enter で送信、Shift+Enter で改行 -->
+            <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
             <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
               maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
               aria-label="Message MAGI"></textarea>
@@ -8289,8 +8289,11 @@ async function parseSSE(body, handlers, onChunk) {
       }
     }
     agentSendBtn.addEventListener('click', () => (agentBusy ? agentStop() : agentSend()));
-    // Enter で送信、Shift+Enter で改行（入力欄は textarea）
-    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentSend(); } });
+    // 物理キーボードのある環境（マウス・トラックパッドが主の入力）だけ Enter で送信、Shift+Enter で改行。
+    // スマホ・タブレットの Enter は改行のまま（チャットの一般的な動き）で、送信はボタン。Ctrl/⌘+Enter はどこでも送信
+    const agentEnterSends = e => !e.shiftKey && (e.ctrlKey || e.metaKey
+      || !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches));
+    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && agentEnterSends(e)) { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
 
     // --- リアクション（コピー / いいね / 絵文字）---

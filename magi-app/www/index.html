@@ -324,7 +324,7 @@
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
       </button>
       <div id="agent-input-wrap">
-        <!-- 内容に合わせて伸び縮みする（fitAgentInput）。Enter で送信、Shift+Enter で改行 -->
+        <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行 -->
         <textarea id="agent-input" rows="1" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI"></textarea>
         <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
         <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use" title="Use this question"
@@ -337,6 +337,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261014_4"></script>
+  <script src="app.js?v=20261015_1"></script>
 </body>
 </html>
