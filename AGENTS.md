@@ -260,7 +260,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   問いの書き方と閾値の決め方の知見、いまの利用箇所）。新しく使ったら、同じ資料の利用箇所の表に足す。
 - **magi2 の人格設定**: `workers/magi2/personas.js` が人格の骨格プロンプト、用途ごとの推論強度、
   トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
-  - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はサイト案内固定で、チャットと同じ3人格の2回討議とmediumの統合を使う。対応通知 `site_debate=1` が無い旧画面には409を返し、AIや利用回数を使わない。
+  - 404のAI検索とチャットのサイト案内は `SITE_SEARCH`／`site-search.js`。404検索はサイト案内固定で、討議なしの事実回答（`runFactAnswer`・`FACT_ANSWER`、推論low。テーマなしなのでOpenAI、本文前の失敗だけAnthropicへ1回）で答える。対応通知 `site_debate=1` が無い旧画面には409を返し、AIや利用回数を使わない。
     検索候補は `.github/scripts/site-search-index.py` が公開HTMLから作る `data/site-search.json`（生成物、手で編集しない）。
     `build.sh` は出荷するHTMLから毎回生成する。手元では `python -B .github/scripts/site-search-index.py` で更新する。
     noindex・転送・別URLをcanonicalとするページ・404は除く。ツール・ゲーム・Glitchの説明やタグは既存の正本JSONで補う。

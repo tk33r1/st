@@ -21,7 +21,7 @@ vm.runInContext(`globalThis.build=(question,draft,evidence,language,theme,date)=
   const messages=factAnswerMessages({cards,messages:[{role:'user',content:question}],
     langNote:languageNote(language),theme,research:true});
   const request=researchVerificationRequest({...DEFAULTS.models.synthesizer,reasoning_effort:RESEARCH.reasoning_effort},
-    researchMessages(messages,new Date(date)),{text:draft},evidence,language);
+    researchMessages(messages,new Date(date)),new Date(date),{text:draft},evidence,language);
   return requestBody(request.cfg,{messages:request.messages,stream:false,response_format:request.response_format});
 };`,ctx);
 export const verifiedResearchResult=(value,evidence,replyLanguage)=>JSON.parse(JSON.stringify(ctx.validate(value,evidence,replyLanguage)));

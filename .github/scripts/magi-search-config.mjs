@@ -108,11 +108,11 @@ vm.runInContext(`{
   const evidence=[{n:1,title:'Synthetic source',url:'https://example.com/',allowed:true,readable:true,
     blocks:[{id:0,text:'The exhibition opened on July 11 and ended on October 12.'}],truncated:false}];
   config.verify_smoke=['synthesizer','synthesizer_dark'].map(name=>{
-    const cfg={...DEFAULTS.models[name],reasoning_effort:RESEARCH.reasoning_effort,max_tokens:RESEARCH.verify.max_tokens};
-    const messages=[{role:'system',content:RESEARCH.verify_prompt+'\\nEstablished reply language: en'},
-      {role:'user',content:JSON.stringify({question:'Which exhibition is currently active on October 15?',
-        draft:'No exhibition is active and the next one starts on October 31.',evidence})}];
-    return {provider:cfg.provider,evidence,body:requestBody(cfg,{messages,stream:false,response_format:researchVerificationFormat(evidence)})};
+    const cfg={...DEFAULTS.models[name],reasoning_effort:RESEARCH.reasoning_effort};
+    // 本番の照合と同じ組立てを通す（質問の日付に合わせた確認日時）。
+    const request=researchVerificationRequest(cfg,[{role:'user',content:'Which exhibition is currently active on October 15?'}],
+      new Date('2026-10-15T03:00:00Z'),{text:'No exhibition is active and the next one starts on October 31.'},evidence,{code:'en'});
+    return {provider:cfg.provider,evidence,body:requestBody(request.cfg,{messages:request.messages,stream:false,response_format:request.response_format})};
   });
 }`,ctx);
 if (process.argv.includes('--validate-site-smoke')) {
