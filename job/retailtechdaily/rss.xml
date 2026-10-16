@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 16 Oct 2026 05:10:21 +0900</lastBuildDate>
+    <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 17 Oct 2026 04:48:00 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月17日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261017/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261017/</guid>
+      <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
+      <description>カインズがRELEXのシステムを導入し、需要予測と補充業務の高度化を進める。AI需要予測は在庫最適化の実務テーマとして国内小売に広がっている。 リテールメディアサミット2026へのブース出展など、購買データを活用した広告事業への関心が業界で高まっている。</description>
+    </item>
     <item>
       <title>2026年10月16日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261016/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261003/</guid>
       <pubDate>Sat, 03 Oct 2026 08:00:00 +0900</pubDate>
       <description>博報堂のAaaSが7社のリテールメディア事業者と連携し、認知から購買までを横断する統合プランニングへ。媒体間連携と効果検証の仕組みづくりが、広告主の投資判断を左右する。 セルフレジの硬貨投入や自治体窓口のセミセルフレジなど、セルフ決済の運用設計が注目点に。省人化だけでなく、利用者の使いやすさと機器負荷を両立する必要がある。</description>
-    </item>
-    <item>
-      <title>2026年10月2日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261002/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261002/</guid>
-      <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
-      <description>国内では、需要予測を倉庫の作業量見積もりやアパレルの発注・在庫運営に活用する動きが表面化。予測を現場の実行判断までつなぐ取り組みが進んでいます。 岡山市役所の新庁舎に無人決済コンビニが開店。カメラやセンサー、はかりを使った省人化店舗が、駅や商業施設に限らず公共施設にも広がる事例です。</description>
     </item>
   </channel>
 </rss>
