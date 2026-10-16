@@ -32,7 +32,7 @@ if(arg('scroll')){
  assert.equal(arg('scroll'),'down');
  const count=Number(arg('repeat','1'));assert(Number.isInteger(count)&&count>=1&&count<=12);
  for(let i=0;i<count;i++){
-  const {nodes}=snapshot(),scrolls=nodes.filter(n=>n.scrollable==='true');assert.equal(scrolls.length,1);
+  const {nodes}=snapshot(),scrolls=nodes.filter(n=>n.scrollable==='true'&&(!arg('scroll-id')||n['resource-id']===arg('scroll-id')));assert.equal(scrolls.length,1);
   const [x1,y1,x2,y2]=scrolls[0].bounds.match(/\d+/g).map(Number),x=Math.floor((x1+x2)/2);
   run('shell','input','swipe',String(x),String(y2-100),String(x),String(y1+100),'450');
  }

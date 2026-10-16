@@ -15,9 +15,9 @@ for(const script of ['collect-magi-a3-debates.mjs','eval-magi-a5-followups.mjs']
   assert.deepEqual(readFileSync(evaluationBudgetPath),before,'共有台帳は変更しない');
  });
 }
-test('DJカードの実モデル確認も台帳なしでは送信・予約しない',()=>{
+for(const script of ['eval-dj-song-card.mjs','eval-games-production-smoke.mjs'])test(script+'：台帳なしでは送信・予約しない',()=>{
  const before=readFileSync(evaluationBudgetPath);
- const r=spawnSync(process.execPath,['.github/scripts/eval-dj-song-card.mjs','--run'],{cwd,encoding:'utf8',timeout:10000});
+ const r=spawnSync(process.execPath,['.github/scripts/'+script,'--run'],{cwd,encoding:'utf8',timeout:10000});
  assert.ifError(r.error);assert.equal(r.status,1);assert.match(r.stderr,/Paid API evaluation is disabled/);
  assert.deepEqual(readFileSync(evaluationBudgetPath),before);
 });

@@ -59,11 +59,16 @@ assert.equal(dj.results.length,5);assert(dj.complete&&dj.results.every(r=>r.comp
 const android=read('workers/.wrangler/magi2-android-20261017/audit.json');
 assert.equal(android.device.app_version,'5.1');assert.equal(android.paid_ai_calls,0);
 assert(android.title_hashes_match&&Object.values(android.checks).every(v=>v===true));
+const monochrome=read('workers/.wrangler/magi2-android-20261017/monochrome-audit.json');
+assert(Object.values(monochrome.checks).every(v=>v===true));
+const gamePublic=read('workers/.wrangler/games-production-smoke-20261017/result.json');
+assert(gamePublic.complete&&gamePublic.status===200&&gamePublic.response.text==='READY');
 const ledger=read('workers/.wrangler/magi2-dialogue-a2/budget-20261015.json');
 const reserved={};for(const r of ledger.reservations)reserved[r.provider]=(reserved[r.provider]||0)+Math.ceil(r.max_usd*1e6);
 const total=Object.values(reserved).reduce((n,v)=>n+v,0);
 assert(total<=800000&&reserved.openai<=400000&&reserved.anthropic<=400000);
 for(const r of games.results.concat(kabuki.results,kabukiFinal.results,dj.results))assert.equal(ledger.reservations.filter(x=>x.request_hash===r.request_hash).length,1);
+assert.equal(ledger.reservations.filter(r=>r.request_hash===gamePublic.reservation.request_hash).length,1);
 const report={date:new Date().toISOString(),network_calls:0,new_quality_pass:false,
  a1:a1coverage,
  a2:{classification_records:a2class.results.length,stable_saved:a2stable.results.length,verified_source_saved:a2verified.results.length,
@@ -75,14 +80,15 @@ const report={date:new Date().toISOString(),network_calls:0,new_quality_pass:fal
   model_runs_for_new_suite:0,offline_planned_calls:a5plan.requests.length,
   primary_only_estimate_usd:Math.round(a5plan.mock_primary_reservation_usd*1e6)/1e6,
   limitation:'模擬の長い履歴を使った一次経路の概算。切替・再試行・実モデルの意味の評価は含まない。'},
- games:{new_paid_calls:13,reused_haiku_responses_in_final_seven:4,screen_replays:7,
+ games:{new_paid_calls:13,public_paid_smoke_calls:1,public_smoke_ms:gamePublic.elapsed_ms,reused_haiku_responses_in_final_seven:4,screen_replays:7,
   reserved_usd:Math.round((gamesPlan.total_max_usd+kabukiPlan.total_max_usd+kabukiFinalPlan.total_max_usd)*1e6)/1e6,
   final_agent_review:'修正後の単一7場面は字数・正常終了・指定形式・意味の整合を確認。旧Kabukiの矛盾と中間77字の不合格も保持。全プレイの保証ではない。後の採用・本番反映は対話改修保守公開20261017.mdを参照。'},
  dj:{new_paid_calls:dj.results.length,reserved_usd:djPlan.maximum_usd,live_search_calls:0,
   decision:'A2の検索品質比較と2026-10-17本人方針により、検索からカード生成までLuna継続。混成は採用しない。',
   limitation:'固定原典のカード生成5件の確認。実検索の品質・全段階25秒の合格ではない。'},
  android:{app_version:android.device.app_version,history_before:android.history_before,history_after:android.history_after,
-  title_hashes_match:android.title_hashes_match,checks:android.checks,paid_ai_calls:android.paid_ai_calls,limitations:android.limitations},
+  title_hashes_match:android.title_hashes_match,checks:android.checks,additional_monochrome:monochrome.checks,
+  paid_ai_calls:android.paid_ai_calls,limitations:android.limitations.map(s=>s.replace('・Androidの単色アイコン',''))},
  budget:{reserved_usd:Object.fromEntries(Object.entries(reserved).map(([p,v])=>[p,v/1e6])),total_reserved_usd:total/1e6,
   remaining_total_usd:(800000-total)/1e6},sources};
 const dir=new URL('workers/.wrangler/magi2-dialogue-full-20261017/',root);mkdirSync(dir,{recursive:true});
