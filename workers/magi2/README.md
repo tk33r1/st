@@ -50,6 +50,8 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 公開の結果と未確認範囲は[A3公開評価](A3公開評価.md)。APKはA4で更新する。
 
+A3〜A5の追加修正は2026-10-16に5.2の保守更新として公開した。確認質問の失敗後の復元、404の下書き保持・上限・取り消し、更新履歴の後退防止などの結果は[A3〜A5修正公開評価](A3-A5修正公開評価.md)。
+
 ## A5の404会話（5.2・2026-10-16公開）
 
 `/magi2/site-search?site_debate=1&site_chat=1`は`query`・`locale`・任意の`history`/`reply_language`を受け、既存のページ候補・commentへ`reply_language`と`closed`を追加する。履歴は最大6メッセージ（user/assistant交互の3往復）。user 200字、assistant 2,000字、assistantのpagesは最大3件の`{title,url}`（160/500字）。継続はreply_languageが必要。文字数はコードポイントで数える。本文は64KiB、既存の②と旧③は4KiB。
