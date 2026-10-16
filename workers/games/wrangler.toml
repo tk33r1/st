@@ -2,6 +2,10 @@ name            = "st-games-api"
 main            = "src/index.js"
 compatibility_date = "2025-01-01"
 
+[vars]
+# 2026-10-17：代表7場面の内容・形式・画面確認後、Haikuを採用。
+GAME_AI_PROVIDER = "anthropic"
+
 [[d1_databases]]
 binding       = "DB"
 database_name = "st-games-ranking-db"

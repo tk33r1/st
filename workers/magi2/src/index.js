@@ -546,6 +546,11 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       if (signal.aborted) throw searchFailure('cancelled');
       const upstream = searchUpstream(env, ctx, log, '404検索');
       let langNote = languageNote({ code: body.locale }), language = replyLanguage;
+      // 新旧③の応答形をここで揃える。旧③には会話の言語・終了状態を足さない。
+      const reply = (result, comment, closed = false) => jsonResponse({
+        request_id: requestId, ...result, comment: comment.replace(replyControls, ''),
+        ...(siteChat ? { reply_language: language, closed } : {}),
+      }, cors, 200, { 'Cache-Control': 'no-store' });
       if (siteChat) {
         const input = {profile:'site-search', texts:[...history.filter(m => m.role === 'user').map(m => m.content), query],
           seed:history[0]?.content || query, replyLanguage, uiLanguage:body.locale};
@@ -556,7 +561,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
           let comment = '';
           await replyToMalice({env:upstream,cards,classified,uiLanguage:body.locale,signal,
             send:(event, data) => {if(event === 'integrated') comment += data.delta;}, log});
-          return jsonResponse({request_id:requestId,status:'no_results',results:[],comment:comment.replace(replyControls, ''),reply_language:language,closed:true},cors,200,{'Cache-Control':'no-store'});
+          return reply({ status: 'no_results', results: [] }, comment, true);
         }
       }
       // 履歴のページ名は信頼せず、現行の索引で1回だけ照合して、ページ選びと回答の両方に使う
@@ -568,7 +573,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
         ...history.map(row => ({role:row.role,content:row.content})), {role:'user',content:query}];
       const answer = await runFactAnswer({ upstream, cards, messages,
         langNote, pageChoice: result, siteOnly: true, signal, send: discardEvents, log: stage => log('site_search', stage) });
-      return jsonResponse({ request_id: requestId, ...result, comment: answer.replace(replyControls, ''), ...(siteChat ? {reply_language:language,closed:false} : {}) }, cors, 200, { 'Cache-Control': 'no-store' });
+      return reply(result, answer);
     }, request.signal);
   } catch (_) {
     // ②がここに来るのは切断だけ（②の期限は内側で応答する）。②の記録は handleSiteRank の1行に任せる
@@ -910,12 +915,18 @@ function parseJudgement(text, active, allowUser) {
   return v;
 }
 
+// 正本のスキーマは変えず、利用者への確認を許可しない入口だけnext_stepを絞る。
+function judgementFormat(allowUser) {
+  if (allowUser) return DEBATE.format;
+  const format = JSON.parse(JSON.stringify(DEBATE.format));
+  format.json_schema.schema.properties.next_step = { type: 'string', enum: ['answer', 'ask_personas'] };
+  return format;
+}
+
 // 判定と質問を1コールで生成する。形式不正・HTTP失敗時だけ別会社へ1回切り替える。
 // 呼び出し元の同じ20秒のsignalを使い、切替時に締切を延ばさない。
 async function fetchJudgement(env, { system, input, active, allowUser = false }, signal, log) {
-  const format = allowUser ? DEBATE.format : { ...DEBATE.format, json_schema: { ...DEBATE.format.json_schema,
-    schema: { ...DEBATE.format.json_schema.schema, properties: { ...DEBATE.format.json_schema.schema.properties,
-      next_step: { type: 'string', enum: ['answer', 'ask_personas'] } } } } };
+  const format = judgementFormat(allowUser);
   for (const cfg of [DEFAULTS.models.judge, DEFAULTS.models.judge_fallback]) {
     if (signal.aborted) return null;
     try {
@@ -1304,11 +1315,10 @@ function researchVerificationFormat(evidence) {
 
 function verifiedResearchResult(value, evidence, replyLanguage) {
   const fail = () => {throw stageError('upstream', 'research_verification_invalid', 'Web回答の根拠を確認できませんでした', {retryable:true});};
-  const keys = (x, names) => x && typeof x === 'object' && !Array.isArray(x) && Object.keys(x).length === names.length && names.every(k => Object.hasOwn(x,k));
-  if (!keys(value,['parts']) || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
+  if (!exactKeys(value,['parts']) || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
   let text = ''; const items = [], marks = [], numbers = new Map();
   for (const p of value.parts) {
-    if (!keys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
+    if (!exactKeys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
       || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
       || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
       || !Array.isArray(p.citations) || p.status === 'verified' && !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
@@ -1318,7 +1328,7 @@ function verifiedResearchResult(value, evidence, replyLanguage) {
     const used = new Set();
     for (const c of p.citations) {
       const source = evidence.find(e => e.n === c?.n);
-      if (!keys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
+      if (!exactKeys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
         || !Array.isArray(c.blocks) || c.blocks.length > 20
         || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
         || p.status === 'verified' && (!source.readable || !c.blocks.length)) fail();

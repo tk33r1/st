@@ -1,0 +1,13 @@
+{
+  "scope": "公開原典を固定してJSON生成段階だけを比較。Anthropicの実検索応答の記録ではなく、検索・25秒の全段階品質を合格に数えない。メタデータは評価用。",
+  "captured_at": "2026-10-17",
+  "sources": [
+    {"url":"https://www.michaeljackson.com/albums/thriller/","title":"Michael Jackson公式：Thrillerの発売月と収録曲","excerpts":["Nov 1982","6 Billie Jean"]},
+    {"url":"https://sony.mediaroom.com/2007-11-30-Epic-Records-Legacy-Recordings-Unveil-The-25th-Anniversary-Edition-of-Michael-Jacksons-Thriller-The-Worlds-Biggest-Selling-Album-Of-All-Time","title":"Sony：Thrillerの原盤と25周年盤の発売告知","excerpts":["Originally released in the US 25 years ago on November 30, 1982","available in the U.S. on Tuesday, February 12, 2008."]}
+  ],
+  "cases": [
+    {"id":"original","song":{"title":"Billie Jean","artist":"Michael Jackson","album":"Thriller","releaseYear":1982},"expected":{"identified":true,"year":1982,"year_note":false}},
+    {"id":"reissue","song":{"title":"Billie Jean","artist":"Michael Jackson","album":"Thriller - 25th Anniversary Edition","releaseYear":2008},"expected":{"identified":true,"year":1982,"year_note":true}},
+    {"id":"unknown","song":{"title":"存在しない合成テスト曲20261017","artist":"合成テスト用の架空アーティスト","releaseYear":2026},"expected":{"identified":false,"year":null,"year_note":false}}
+  ]
+}

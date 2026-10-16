@@ -96,7 +96,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版（`magi/` が呼ぶ）。secret: `MAGI_API_KEY`、`CLIENT_API_KEY` |
 | `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*`、`tk.st/search/api/*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応。後述「magi2 の人格設定」）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_ANTHROPIC_API_KEY`、`CLIENT_API_KEY`。任意で `MAGI_TYPESAFE_API_KEY`（発言の分類と会話の初回の言語判定、404 のサイト内検索の②。無ければ手元の規則、②は使えない）、`SEARCH_CLICK_SALT`（共通検索の候補クリックの記録で IP をハッシュにする塩。無ければ記録しない）、`RESEND_API_KEY`・`ALERT_TO`・`ALERT_FROM`（各社の残高切れ・キーの失効をメールで知らせる。同 README.md） |
 | `workers/magi2`（env.eval） | tk-st-magi2-eval | `magi2-eval.tk.st/magi2*` | 評価専用（DB未作成）。専用DB `tk-st-magi2-eval-db` とAccessを先に設定し、手動で `--env eval` を付けて公開する。通常のdeploy-worker.ymlには入れず、評価後の片付けはmagi2/README.mdに従う |
-| `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。secret: `GAME_OPENAI_API_KEY` |
+| `workers/games` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、AI 呼び出し）。2026-10-17、代表7場面の確認後にHaikuを採用。D1: `st-games-ranking-db`。secret: `GAME_ANTHROPIC_API_KEY`（現行）、`GAME_OPENAI_API_KEY`（旧OpenAI設定用）。モデルはWorkerの`GAME_AI_PROVIDER`で選び、クライアントから変更させない |
 
 ## ビルドとテスト
 

@@ -792,7 +792,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <b>V</b><span>視点切替（三人称／一人称）</span>
       <b>N</b><span>音のオン／オフ</span>
     </div>
-    <div class="note" id="aistat">NPC の会話・行動生成: GPT-5.6 Luna</div>
+    <div class="note" id="aistat">NPC の会話・行動生成: Claude Haiku 5.5</div>
   </div>
   <div class="ver">KABUKI CRAFT ─ 1秒 = ゲーム内 1分 / 持ち時間 1日 = 24分</div>
 </div>
@@ -865,7 +865,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    単一HTML・外部ライブラリなしのボクセル・オープンワールド。
    構成: M4(行列) / Vox(ボクセル world) / Mesher(チャンク面生成+AO) /
          GL(自前WebGL2) / Ray(DDA) / Dig(採掘と設置) / Bag(インベントリ) /
-         Player(重力とジャンプ) / NPC / AI(GPT-5.6 Luna) / Terr(シマ) /
+         Player(重力とジャンプ) / NPC / AI(Claude Haiku 5.5) / Terr(シマ) /
          UI / Audio / Loop
    街は 144×144×48 の Uint8Array。16×16 のチャンクに切って面だけメッシュ化し、
    壊すたびに該当チャンク（と境界なら隣）だけ張り直す。
@@ -5739,7 +5739,7 @@ function moveShare(zi, from, to, amt) {
 }
 
 /* ============================================================================
-   10. AI（GPT-5.6 Luna）
+   10. AI（Claude Haiku 5.5）
    ========================================================================= */
 const AI = {
   busy: 0, capped: false, lastBark: 0,
@@ -5869,7 +5869,7 @@ const AI = {
       + `「${this.clean(playerLine)}」\n\n`
       + `# 指示\n${n.name}として反応せよ。上のやりとりの続きとして、話をつなげること。`
       + `自分が直前に言ったことと矛盾させない。好感度と畏怖に応じて態度を変えること。`
-      + `街を掘り崩して回っていることに触れてもよい。`
+      + `街を掘ったことに触れるなら、上の実際の採掘数に従え。0個なら、掘った・掘って回っているという事実や噂を作るな。`
       /* 金を渡されたときの読み方。額そのものではなく、相場と懐との比で受け取らせる。
          ここを書かないと、路上生活者への十渋沢とホストへの十渋沢が同じ扱いになる。
          出しすぎた額に fear を混ぜられるようにしてあるのが要点で、
@@ -5885,7 +5885,7 @@ const AI = {
       + `trust と fear は遠慮なく振れ。心が動いたなら 30〜50、腹の底から動いたなら`
       + `その上限まで使ってよい。何も起きていないときだけ 0 付近にせよ。\n`
       + `次のJSONだけを出力:\n`
-      + `{"say":"セリフ 70文字以内","act":"idle|follow|flee|attack|join|deal|inform|leave",`
+      + `{"say":"セリフ。目安40文字、必ず70文字以内。短く一言で","act":"idle|follow|flee|attack|join|deal|inform|leave",`
       + `"trust":-50〜50の整数,"fear":-50〜50の整数,`
       /* 金額は画面と同じ渋沢で答えさせる。円で聞くと、上の文脈が全部
          渋沢で書かれているせいで桁が四つずれた値が返ってくる */
@@ -9420,7 +9420,7 @@ function frame(now) {
 // マイクラのタイトルにある黄色い一言。開くたびに変わる
 const SPLASHES = [
   'アスファルトも掘れる！', '100% ボクセル！', 'ネオンは食えない', 'ツルハシを作れ！',
-  '素手じゃ無理だ', 'NPC は GPT 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
+  '素手じゃ無理だ', 'NPC は AI 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
   '金塊は地面の下', '終電はとっくにない', '1秒 = 1分', 'シャンパンコール！',
   '怪獣が見ている', '掘って、売って、建てる', 'ここは紅蓮一家のシマだ',
   '期限は無い', '資材で店が建つ', '無料案内所には寄るな',
@@ -9647,7 +9647,7 @@ $('t-load').onclick = () => { if (load()) begin(); else openChargen(); };
 (async () => {
   try {
     await AI.raw('{"ping":1} と出力せよ。JSONのみ。', 24);
-    $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#39ff88">GPT-5.6 Luna 接続済み</b>';
+    $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#39ff88">Claude Haiku 5.5 接続済み</b>';
   } catch (e) {
     $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#ffcf3f">オフライン（内蔵の応答で動作します）</b>';
   }

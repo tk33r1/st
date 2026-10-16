@@ -194,6 +194,7 @@ def smoke_anthropic(url, api_key, model):
     # 人格カード・X要約は共通部品でこの形を使う。生成物は書き換えない。
     card = message_payload(model, 'Return only READY.', 'A public synthetic source.', **CARD_OPTIONS)
     message_text(post_json(url, api_key, card))
+    smoke_auxiliary_anthropic(url, api_key, model)
     return '日刊/適応的推論、MAGI人格/画像、ダーク統合/stream、悪意への返し/非推論stream、議題化/スキーマ、人格カード・X要約/非推論'
 
 
@@ -206,15 +207,14 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 1024,
         'response_format': {'type': 'json_object'},
     }))
-    # ゲームAPI：非推論、低温、JSON出力
-    expect_ok_json(post_json(url, api_key, {
-        'model': model,
-        'messages': JSON_MESSAGES,
-        'reasoning_effort': 'none',
-        'temperature': 0.2,
-        'max_completion_tokens': 32,
-        'response_format': {'type': 'json_object'},
-    }))
+    # ゲームAPI：現行の非推論・本文出力。sampling/JSONの指定を足さない。
+    if auxiliary_config()['providers']['games'] == 'openai':
+        message_content(post_json(url, api_key, {
+            'model': model,
+            'messages': [{'role': 'user', 'content': 'Say READY.'}],
+            'reasoning_effort': 'none',
+            'max_completion_tokens': 200,
+        }))
     config = magi_config()
     smoke_magi_discussion(url, api_key, model, 'openai', config)
     smoke_magi_debate_judge(url, api_key, model, config['judge_fallback'])
@@ -223,7 +223,8 @@ def smoke_openai(url, api_key, model):
     smoke_magi_motion(url, api_key, model, config['magi'], name='motion_fallback')
     observations = smoke_openai_site_search(url, api_key, model, config)
     print('サイト選択smoke: ' + json.dumps(observations, ensure_ascii=False))
-    smoke_openai_web_search(api_key, model)
+    if auxiliary_config()['providers']['song'] == 'openai':
+        smoke_openai_web_search(api_key, model)
     return 'JSON/medium、JSON/非推論、MAGI人格・ライト統合/本番設定/サイト候補/画像/stream、悪意への返し/非推論stream、ページ選択・討議判定・議題化の答え直し/strictスキーマ、Web検索強制/推論/JSONスキーマ'
 
 
@@ -231,6 +232,29 @@ def magi_config():
     """magi2 の本番の設定（personas.js）を Node で読み出す。"""
     return json.loads(subprocess.check_output(
         ['node', str(REPO_ROOT / '.github/scripts/magi-search-config.mjs')], encoding='utf-8'))
+
+
+def auxiliary_config():
+    return json.loads(subprocess.check_output(
+        ['node', str(REPO_ROOT / '.github/scripts/aux-ai-config.mjs')], encoding='utf-8'))
+
+
+def smoke_auxiliary_anthropic(url, api_key, model, config=None):
+    """採用した経路だけを週次に試す。未採用の候補を自動で有料実行しない。"""
+    config = config if config is not None else auxiliary_config()
+    if config['providers']['games'] == 'anthropic':
+        text = message_text(post_json(url, api_key, {**config['game'], 'model': model}))
+        if text.strip() != 'READY':
+            raise RuntimeError('ゲームAPIの本文疎通に失敗しました')
+    if config['providers']['song'] == 'anthropic':
+        searched = post_json(url, api_key, {**config['search'], 'model': model})
+        script = str(REPO_ROOT / '.github/scripts/aux-ai-config.mjs')
+        card_body = json.loads(subprocess.check_output(['node', script, '--card-body'],
+            input=json.dumps(searched), encoding='utf-8'))
+        card = post_json(url, api_key, {**card_body, 'model': model})
+        subprocess.run(['node', script, '--validate-card'],
+            input=json.dumps({'searched': searched, 'card': card}), encoding='utf-8',
+            stdout=subprocess.PIPE, check=True)
 
 
 def smoke_magi_discussion(url, api_key, model, provider, config=None):

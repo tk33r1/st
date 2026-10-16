@@ -1,5 +1,6 @@
 // モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む。
 import aiModels from '../../../config/ai-models.json';
+import {callGameAnthropic} from '../anthropic.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st', 'http://127.0.0.1:5500'];
 
@@ -43,6 +44,12 @@ async function callGPT(env, { system, messages, maxTokens }) {
   if (!msgs.some(m => m.role !== 'system')) {
     return { ok: false, status: 400, error: 'no message content' };
   }
+
+  // 比較とゲーム画面の確認を終えてから、サーバー設定だけで移行する。クライアントからは選べない。
+  if (env.GAME_AI_PROVIDER === 'anthropic') return callGameAnthropic(env, {
+    system:msgs.find(m=>m.role==='system')?.content,
+    messages:msgs.filter(m=>m.role!=='system'),maxTokens,
+  });
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',

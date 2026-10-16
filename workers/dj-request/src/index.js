@@ -51,6 +51,7 @@
 // モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む（.github/AI_MODELS.md）
 import aiModels from '../../../config/ai-models.json';
 import { transitionScores } from './transitions.js';
+import {requestAnthropicSongInfo} from '../song-info-anthropic.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 const API_BASE = '/dj/api/req';
@@ -420,7 +421,7 @@ function normUrl(u) {
     const x = new URL(u);
     x.hash = '';
     [...x.searchParams.keys()].filter((k) => k.startsWith('utm_')).forEach((k) => x.searchParams.delete(k));
-    return (x.host.replace(/^www\./, '') + x.pathname.replace(/\/$/, '') + x.search).toLowerCase();
+    return x.host.replace(/^www\./, '').toLowerCase() + x.pathname.replace(/\/$/, '') + x.search;
   } catch {
     return '';
   }
@@ -494,6 +495,7 @@ async function requestSongInfo(env, song, timeoutMs) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
   try {
+    if (env.SONG_INFO_AI_PROVIDER === 'anthropic') return await requestAnthropicSongInfo(env, song, SONG_INFO_SCHEMA, ac.signal);
     const res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       signal: ac.signal,
@@ -558,11 +560,12 @@ async function saveSongInfo(env, trackId, result) {
         SET status = CASE WHEN ?1 IS NOT NULL OR card IS NOT NULL THEN 'ok' ELSE 'failed' END,
             card = COALESCE(?1, card), model = ?2, error = ?3, updated_at = CURRENT_TIMESTAMP
       WHERE track_id = ?4`
-  ).bind(card, SONG_INFO.model, result.error || '', trackId).run();
+  ).bind(card, env.SONG_INFO_AI_PROVIDER === 'anthropic' ? aiModels.anthropic.haiku.id : SONG_INFO.model, result.error || '', trackId).run();
 }
 
 /** カードを作れる曲か。trackId はブラウザが送る値なので、Apple の数字の ID だけ通す。 */
-const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && !!appleTrackId(song.trackId);
+const songInfoKey = env => env.SONG_INFO_AI_PROVIDER === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY;
+const canDescribe = (env, song) => !!songInfoKey(env) && !song.isFree && !!appleTrackId(song.trackId);
 
 /** ISO 8601 の長さ（"PT4M49S"）をミリ秒に。読めなければ 0 */
 function isoDurationMs(v) {
@@ -653,7 +656,9 @@ async function startSongInfo(env, song, { force = false, timeoutMs = SONG_INFO.t
   const left = timeoutMs - (Date.now() - t0);
   if (left < SONG_INFO.minWaitMs) return { skip: 'time' };
   if (!(await claimSongInfo(env, real.trackId, force))) return { skip: 'claim' };
-  const promise = requestSongInfo(env, real, left)
+  // DBでの先取りも同じ持ち時間に含め、2段階の生成に新しい期限を足さない。
+  const remaining = timeoutMs - (Date.now() - t0);
+  const promise = (remaining > 0 ? requestSongInfo(env, real, remaining) : Promise.reject(new DOMException('Aborted', 'AbortError')))
     .then((d) => ({ card: buildSongCard(d) }))
     .catch((e) => ({ error: e && e.name === 'AbortError' ? '時間切れ' : String((e && e.message) || e).slice(0, 200) }));
   return { promise };
@@ -1277,7 +1282,7 @@ async function adminDeleteEvent(code, env, cors) {
    失敗した曲をいつやり直すか（info_retry）は adminSongs の SQL が決める。
    同じ曲を二重に作らないのは claimSongInfo の役目。 */
 async function describeMissing(env, rows) {
-  if (!env.OPENAI_API_KEY) return;
+  if (!songInfoKey(env)) return;
   // canDescribe で作れない曲（数字でない trackId など）を選ぶと、startSongInfo が何も記録せずに戻るので
   // 毎回同じ曲を選び続け、それより前に入った曲のカードが作られなくなる。はじめから候補に入れない
   const s = rows.find((r) => (r.status === 'pending' || r.status === 'queued')

@@ -37,6 +37,8 @@ vm.runInContext(`for (const name of ['judge', 'judge_fallback']) {
     messages:[{role:'user', content:'Return exactly this JSON: ' + JSON.stringify(cfg.expected)}]});
 }`, ctx);
 vm.runInContext(worker.slice(worker.indexOf('function researchMessages('),worker.indexOf('// pause_turnで送り返す')),ctx);
+// 出典検査が共用するキー検査も、本番と同じ定義を読む。
+vm.runInContext(worker.slice(worker.indexOf('const exactKeys ='),worker.indexOf('const questionText =')),ctx);
 vm.runInContext(worker.slice(worker.indexOf('function researchSourceUrl('),worker.indexOf('async function verifyResearchAnswer(')),ctx);
 vm.runInContext('function stageError(_kind, code) {return new Error(code);}',ctx);
 vm.runInContext(worker.match(/^const withLangNote = .*$/m)[0], ctx);

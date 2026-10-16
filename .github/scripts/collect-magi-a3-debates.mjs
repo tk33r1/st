@@ -15,11 +15,14 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 const json=(url,value)=>writeFileSync(url,JSON.stringify(value,null,2)+'\n');
 const opt=(name,otherwise='')=>process.argv.find(s=>s.startsWith('--'+name+'='))?.slice(name.length+3)||otherwise;
 const mode=process.argv.includes('--run')?'run':process.argv.includes('--check')?'check':'plan';
+const full=process.argv.includes('--full');
+assert(!(full&&mode==='run'),'独立20相談は計画・模擬確認だけ。有料収集は新しい予算・入力の確認後に別途有効化する');
 const chosen=opt('cases','collect-01,collect-03,collect-05').split(',');
 assert(chosen.length>=1&&chosen.length<=3&&new Set(chosen).size===chosen.length,'1回の収集は異なる最大3件');
-const proposalPath='workers/magi2/A3追加評価入力案.md', proposal=read(proposalPath);
-const pool=[...proposal.matchAll(/^\| (collect-\d+) \| ([^\r\n|]+) \|/gm)].map(m=>({id:m[1],input:m[2].trim()}));
-const cases=chosen.map(id=>{const c=pool.find(c=>c.id===id);assert(c,'unknown input');return c;});
+const proposalPath=full?'.github/scripts/fixtures/magi-dialogue-a3-final-20261017.json':'workers/magi2/A3追加評価入力案.md', proposal=read(proposalPath);
+const pool=full?JSON.parse(proposal).cases:[...proposal.matchAll(/^\| (collect-\d+) \| ([^\r\n|]+) \|/gm)].map(m=>({id:m[1],input:m[2].trim()}));
+const cases=full?pool:chosen.map(id=>{const c=pool.find(c=>c.id===id);assert(c,'unknown input');return c;});
+if(full)assert.equal(cases.length,20);
 const files=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
 const sources=files.map(p=>read('workers/magi2/'+p)),registry=JSON.parse(read('config/ai-models.json'));
 const cards=JSON.parse(read('data/magi-context.json'));
@@ -45,7 +48,7 @@ ceiling.total=Object.values(ceiling).reduce((a,b)=>a+b,0);
 const plan={version:1,scope:'A3の合成相談、第1・第2回の3人格だけ。判定・統合・分類等は固定。',
   fingerprint,pricing_checked_at:'2026-10-15',rates,max_request_bytes:maxRequestBytes,input_ceiling:inputCeiling,
   attempts_per_persona_round:2,models:configs,cases,maximum_usd:ceiling};
-const planUrl=new URL('collection-plan.json',dir);
+const planUrl=new URL(full?'collection-full-plan-20261017.json':'collection-plan.json',dir);
 const outputUrl=new URL('collection-result.json',dir);
 const totalReserved=ledger=>ledger.reservations.reduce((sum,r)=>sum+r.max_usd,0);
 function checkBalance(ledger){

@@ -1358,7 +1358,7 @@
         ];
 
         const Narrator = {
-            // ワーカーの /api/gpt (GPT-5.6 Luna) を叩く。
+            // ワーカーの /api/gpt を叩く。
             // モデル指定と API キーはワーカー側にあり、ここは prompt を渡すだけ。
             async ask(prompt) {
                 const res = await fetch(`${WORKER_URL}/api/gpt`, {
@@ -1386,8 +1386,10 @@
                     const t = await this.ask(
                         'You are a veteran dabbawala (Mumbai lunchbox courier) who gives the daily order in the Indian puzzle game "Masala Tetris TIFFIN". '
                         + `Language: Japanese. Today is ${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}. `
-                        + 'Write TODAY\'S delivery instruction as ONE short line (max 30 Japanese characters), warm but gruff, like an old courier talking to his apprentice. '
-                        + 'It is flavor text only - do not invent game rules. No quotes, no emoji.');
+                        + 'Write TODAY\'S delivery instruction as ONE short line in Japanese: aim for 15-20 characters, never exceed 30 characters including punctuation. '
+                        + 'Sound warm but gruff, like an old courier talking to his apprentice. Give one simple reminder about careful delivery. '
+                        + 'It is flavor text only. Do not invent weather, road conditions, deadlines, quantities, or game rules. No quotes, no emoji, no explanation.');
+                    if ([...t].length > 30) throw new Error('daily order too long');
                     el.textContent = t;
                     localStorage.setItem(key, t);
                 } catch (e) {

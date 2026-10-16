@@ -95,6 +95,25 @@ jobs:
         fi
         printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put MAGI_ANTHROPIC_API_KEY --config magi2/wrangler.toml
 
+    # 条件付き移行の採用後だけ同期する。評価前のopenai設定では既存のキーを触らない。
+    - name: Prepare auxiliary Anthropic
+      if: ${{ (inputs.worker == 'games' || inputs.worker == 'dj-request') && !inputs.dry-run }}
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        WORKER: ${{ inputs.worker }}
+      run: |
+        if ! grep -Eq '^(GAME|SONG_INFO)_AI_PROVIDER = "anthropic"' "$WORKER/wrangler.toml"; then exit 0; fi
+        if [ -z "$ANTHROPIC_API_KEY" ]; then
+          echo "::error::ANTHROPIC_API_KEY が未設定のため、モデル移行を止めます"
+          exit 1
+        fi
+        KEY_NAME=ANTHROPIC_API_KEY
+        if [ "$WORKER" = "games" ]; then KEY_NAME=GAME_ANTHROPIC_API_KEY; fi
+        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put "$KEY_NAME" --config "$WORKER/wrangler.toml"
+
     - name: Deploy
       working-directory: workers
       env:

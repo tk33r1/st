@@ -61,11 +61,12 @@ PR本文にも同じ手順を出す。
 | --- | --- | --- |
 | Anthropic | 本番と共通のMessages API・適応的推論 medium（sampling指定なし）・JSON本文・正常終了 | 日刊生成（一次プロバイダー） |
 | OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（Anthropic が失敗したときのフォールバック） |
-| OpenAI | 非推論・temperature 0.2・JSON出力 | ゲームAPI |
+| OpenAI | 非推論・sampling指定なし・本文出力 | 現行ゲームAPI（OpenAI採用中だけ） |
+| Anthropic | 非推論・sampling指定なし・本文出力。DJは検索強制（high）→JSONスキーマの2段階で、実検索URLを既存のカード検査へ渡す | ゲーム・背景カードの移行候補。`wrangler.toml`でAnthropicを採用した箇所だけ週次実行し、未採用の候補を自動送信しない |
 | OpenAI | 本番設定の人格、サイト候補を含む入力、画像なし／data URL画像あり | magi2 の Strategist。推論・トークン上限・揺らぎ・top_pを `DEFAULTS` と `PERSONA_TEMPERATURE` から読む |
 | OpenAI | 本番設定の推論・上限・ストリーミング、サイト候補を含む入力 | magi2 のライトの統合。推論時にsamplingを送らない本番の組立てを使う |
-| OpenAI | 推論 low（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定。本番の `DEBATE` を読む |
-| OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
+| OpenAI | 推論 medium（temperature なし）・strictなJSONスキーマ（enum と配列） | magi2 の討議の判定の答え直し。本番の `DEBATE` を読む |
+| OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（OpenAI採用中だけ）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成（Anthropic・OpenAI が失敗したときのフォールバック） |
 | DeepSeek | 本番設定の推論・上限・揺らぎ・top_p、サイト候補を含む画像なし／画像あり入力 | magi2 の Enthusiast |
 | Anthropic | 本番のMessages API・推論なし・effort low・samplingなし、画像なし／base64画像あり | magi2 の Humanist |

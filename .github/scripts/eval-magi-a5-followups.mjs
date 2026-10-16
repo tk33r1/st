@@ -7,10 +7,22 @@ import {paidEvaluationGate,evaluationBudgetPath,evaluationRequestHash} from './m
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8'),hash=s=>createHash('sha256').update(s).digest('hex');
 const dir=new URL('../../workers/.wrangler/magi2-dialogue-a5/',import.meta.url);mkdirSync(dir,{recursive:true});
 const mode=process.argv.includes('--run')?'run':process.argv.includes('--check')?'check':'plan';
+const full=process.argv.includes('--full');
+assert(!(full&&mode==='run'),'全件は計画・模擬確認だけ。有料送信は入力と新しい費用上限の確認後に有効化する');
 const repair=process.argv.includes('--repair');
+assert(!(full&&repair),'全件と旧2相談の修正確認は分ける');
 const phase='a5-followups',hardCap=.18,budget=mode==='run'?paidEvaluationGate():null;
 let cases=[{id:'pdf',locale:'ja',expected:'/tools/pdf-studio/',questions:['PDFを結合したい。サイトのツールを案内してください。','それの使い方を教えてください。','画像にすることもできますか。']},
  {id:'qr',locale:'en',expected:'/tools/qr-palette/',questions:['Show me the tool on this site for creating a QR code.','How do I use that tool?','Can I change its colors and then save it?']}];
+if(full){
+ const fixture=JSON.parse(read('.github/scripts/fixtures/magi-dialogue-a5-full-20261017.json'));
+ const malice=JSON.parse(read('.github/scripts/fixtures/magi-dialogue-a1-final.json')).cases;
+ cases=fixture.cases.concat(fixture.malice_source_ids.flatMap(id=>{
+  const c=malice.find(c=>c.id===id);assert(c);
+  return [{id:id+'-initial',locale:'ja',expected:null,questions:[c.text],malice_at:1,malice:c.expected},
+   {id:id+'-followup',locale:'ja',expected:'/tools/pdf-studio/',questions:['PDFを結合したい',c.text],malice_at:2,malice:c.expected}];
+ }));
+}
 const original=repair?JSON.parse(read('workers/.wrangler/magi2-dialogue-a5/quality-result.json')):null;
 if(repair){assert(original.complete&&original.results.length===6);cases=cases.map(c=>{const first=original.results.find(r=>r.id===c.id&&r.turn===1);return {...c,questions:c.questions.slice(1),initial_history:[{role:'user',content:c.questions[0]},{role:'assistant',content:first.response.comment,pages:first.response.results.map(p=>({title:p.title,url:p.url}))}],initial_language:first.response.reply_language};});}
 const modules=['languages.js','personas.js','versions.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
@@ -19,7 +31,7 @@ const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'cons
 const code=sources.map(strip).join('\n').replace('export default {','globalThis.worker = {');
 const snapshot={...(repair?{original_result_hash:hash(JSON.stringify(original))}:{}),runner_hash:hash(read('.github/scripts/eval-magi-a5-followups.mjs')),worker_hash:hash(sources.join('\n')),cards_hash:hash(JSON.stringify(cards)),models_hash:hash(JSON.stringify(registry)),index_hash:hash(read('_site/data/site-search.json'))};
 let keys={},guardStopped=false,report={version:1,phase,hard_cap_usd:hardCap,...snapshot,cases,complete:false,results:[]},planned=[];
-const planFile=new URL(repair?'quality-repair-plan.json':'quality-plan.json',dir),resultFile=new URL(repair?'quality-repair-result.json':'quality-result.json',dir);
+const planFile=new URL(full?'quality-full-plan-20261017.json':repair?'quality-repair-plan.json':'quality-plan.json',dir),resultFile=new URL(repair?'quality-repair-result.json':'quality-result.json',dir);
 const save=()=>writeFileSync(resultFile,JSON.stringify(report,null,2)+'\n');
 if(mode==='run'){
  assert(!existsSync(resultFile),'完了・中断結果を上書きしない');
@@ -68,8 +80,8 @@ for(const sample of cases){
    if(provider==='openai')body.service_tier='default';const e=estimate(provider,body);
    if(mode!=='run'){
     planned.push({case:sample.id,turn:row.turn,provider,model:body.model,max_usd:e.max_usd});
-    if(provider==='typesafe')return Response.json({answers:Object.fromEntries(Object.keys(body.questions).map(k=>[k,{choice:k==='language'?sample.locale:'none',confidence:.99}]))});
-    if(!body.stream){const pages=await ctx.getSitePages({waitUntil(){}},sample.locale,new AbortController().signal);const page=pages.find(p=>p.url===sample.expected);assert(page);return Response.json({choices:[{message:{content:JSON.stringify({selections:[page.id]})},finish_reason:'stop'}]});}
+    if(provider==='typesafe')return Response.json({answers:Object.fromEntries(Object.keys(body.questions).map(k=>[k,{choice:k==='language'?sample.locale:k==='malice'&&row.malice?sample.malice:'none',confidence:.99}]))});
+    if(!body.stream){const pages=await ctx.getSitePages({waitUntil(){}},sample.locale,new AbortController().signal);const page=pages.find(p=>p.url===sample.expected);assert(page||sample.expected===null);return Response.json({choices:[{message:{content:JSON.stringify({selections:page?[page.id]:[]})},finish_reason:'stop'}]});}
     return new Response('data: '+JSON.stringify({choices:[{delta:{content:'😀'.repeat(2000)},finish_reason:null}]})+'\n\ndata: '+JSON.stringify({choices:[{delta:{},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n');
    }
    let reservation;
@@ -82,16 +94,16 @@ for(const sample of cases){
  if(repair)env.MAGI_TYPESAFE_API_KEY='';
  let history=sample.initial_history||[],language=sample.initial_language||null;
  for(const [i,query] of sample.questions.entries()){
-  row={id:sample.id,turn:i+1+(repair?1:0),calls:[],response:null};if(mode==='run'){report.results.push(row);save();}
+  row={id:sample.id,turn:i+1+(repair?1:0),...(full?{malice:sample.malice_at===i+1}:{}),calls:[],response:null};if(mode==='run'){report.results.push(row);save();}
   const body={query,locale:sample.locale,history,...(language?{reply_language:language}:{})},waits=[];
   const response=await ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search?site_debate=1&site_chat=1',{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(body)}),env,{waitUntil(p){waits.push(p);}});
   const result=await response.json();await Promise.allSettled(waits);row.status=response.status;row.response=result;if(mode==='run')save();
-  assert.equal(response.status,200);assert.equal(result.closed,false);assert(result.comment&&result.reply_language);
+  assert.equal(response.status,200);assert.equal(result.closed,!!row.malice);assert(result.comment&&result.reply_language);
   language=result.reply_language;history=history.concat([{role:'user',content:query},{role:'assistant',content:Array.from(result.comment).slice(0,2000).join(''),pages:result.results.map(p=>({title:p.title,url:p.url}))}]).slice(-6);
   console.log(JSON.stringify({mode,id:sample.id,turn:row.turn,status:response.status,calls:row.calls.length}));
  }
 }
 if(mode==='run'){report.complete=true;save();}else{
- const plan={version:1,phase,...snapshot,cases,hard_cap_usd:hardCap,mock_primary_reservation_usd:planned.reduce((n,r)=>n+r.max_usd,0),requests:planned,network_calls:0,limitations:'2相談・続き4件。独立20件の品質合格にはしない。実際の要求ごとに累計・会社別・段階上限を予約し、未計画のWeb・外部送信は拒否。失敗・再試行でも予約は戻さない。'};
+ const plan={version:1,phase,...snapshot,cases,hard_cap_usd:full?null:hardCap,mock_primary_reservation_usd:planned.reduce((n,r)=>n+r.max_usd,0),requests:planned,network_calls:0,limitations:full?'通常10相談30回答・悪意5入力10配置の模擬確認と一次経路の費用概算だけ。実モデルの品質は未評価。切替・再試行を含む全費用の上限ではなく、有料実行は明示的に停止している。':'2相談・続き4件。独立20件の品質合格にはしない。実際の要求ごとに累計・会社別・段階上限を予約し、未計画のWeb・外部送信は拒否。失敗・再試行でも予約は戻さない。'};
  if(mode==='plan'){assert(!existsSync(planFile),'既存計画を上書きしない');writeFileSync(planFile,JSON.stringify(plan,null,2)+'\n');}console.log(JSON.stringify(plan));
 }
