@@ -77,7 +77,7 @@ const report={date:new Date().toISOString(),network_calls:0,new_quality_pass:fal
   limitation:'模擬の長い履歴を使った一次経路の概算。切替・再試行・実モデルの意味の評価は含まない。'},
  games:{new_paid_calls:13,reused_haiku_responses_in_final_seven:4,screen_replays:7,
   reserved_usd:Math.round((gamesPlan.total_max_usd+kabukiPlan.total_max_usd+kabukiFinalPlan.total_max_usd)*1e6)/1e6,
-  final_agent_review:'修正後の単一7場面は字数・正常終了・指定形式・意味の整合を確認。旧Kabukiの矛盾と中間77字の不合格も保持。全プレイの保証ではない。本番反映未実施。'},
+  final_agent_review:'修正後の単一7場面は字数・正常終了・指定形式・意味の整合を確認。旧Kabukiの矛盾と中間77字の不合格も保持。全プレイの保証ではない。後の採用・本番反映は対話改修保守公開20261017.mdを参照。'},
  dj:{new_paid_calls:dj.results.length,reserved_usd:djPlan.maximum_usd,live_search_calls:0,
   decision:'A2の検索品質比較と2026-10-17本人方針により、検索からカード生成までLuna継続。混成は採用しない。',
   limitation:'固定原典のカード生成5件の確認。実検索の品質・全段階25秒の合格ではない。'},

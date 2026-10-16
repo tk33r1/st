@@ -2,7 +2,7 @@
 
 ランキングとAIの入口。`/api/gpt`・`/api/deepseek`は`{text}`、旧`/api/gemini`は`candidates[0].content.parts[0].text`を返す。
 
-## Haiku移行（2026-10-17、公開準備）
+## Haiku移行（2026-10-17、公開済み）
 
 代表7場面の内容・形式・画面を確認し、`GAME_AI_PROVIDER`を`anthropic`へ変更した。キーは`GAME_ANTHROPIC_API_KEY`。クライアントからは選べない。未設定の旧環境では従来のOpenAI経路を維持する。
 Messages API・推論なし・sampling指定なし。入力20件・各4000文字、出力800トークンまでを維持し、30秒で通信と本文の受信を打ち切る。
