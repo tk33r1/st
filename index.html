@@ -2269,8 +2269,9 @@
 
     .attach-chip {
       position: relative;
-      width: 42px;
-      height: 42px;
+      width: 80px;
+      height: 80px;
+      flex: 0 0 80px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
       overflow: hidden;
@@ -2283,14 +2284,27 @@
       position: absolute;
       top: 0;
       right: 0;
-      width: 15px;
-      height: 15px;
-      line-height: 14px;
-      font-size: 10px;
-      text-align: center;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .attach-chip .attach-x span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      line-height: 1;
+      font-size: 26px;
       color: #fff;
-      background: rgba(0, 0, 0, 0.6);
-      border-bottom-left-radius: 4px;
+      background: rgba(0, 0, 0, 0.78);
+      border-bottom-left-radius: 8px;
     }
 
     .attach-note { font-size: 10px; color: var(--secondary-color) }
@@ -8058,7 +8072,7 @@ async function parseSSE(body, handlers, onChunk) {
       if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
       attachTray.classList.remove('hidden');
       attachTray.innerHTML = attachments.map((a, i) => `<span class="attach-chip"><img src="${esc(a.thumb)}" alt="">`
-        + `<button type="button" class="attach-x" data-i="${i}" title="${tr('Remove', '削除')}" aria-label="${tr('Remove attachment', '添付を削除')}">×</button></span>`).join('')
+        + `<button type="button" class="attach-x" data-i="${i}" title="${tr('Remove', '削除')}" aria-label="${tr('Remove attachment', '添付を削除')}"><span aria-hidden="true">×</span></button></span>`).join('')
         + (attachNotice ? `<span class="attach-note">${esc(attachNotice)}</span>` : '');
     }
     function noticeAttach(msg) {

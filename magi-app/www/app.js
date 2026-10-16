@@ -908,7 +908,7 @@ function renderAttachTray() {
   attachTray.classList.remove('hidden');
   attachTray.innerHTML = attachments.map(function (a, i) {
     return '<span class="attach-chip"><img src="' + a.thumb + '" alt="">'
-      + '<button type="button" class="attach-x" data-i="' + i + '" aria-label="Remove attachment">×</button></span>';
+      + '<button type="button" class="attach-x" data-i="' + i + '" aria-label="Remove attachment"><span aria-hidden="true">×</span></button></span>';
   }).join('') + (attachNotice ? '<span class="attach-note">' + esc(attachNotice) + '</span>' : '');
 }
 function noticeAttach(msg) {
