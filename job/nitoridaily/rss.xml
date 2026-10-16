@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 16 Oct 2026 05:13:32 +0900</lastBuildDate>
+    <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 17 Oct 2026 04:51:42 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月17日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261017/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261017/</guid>
+      <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
+      <description>真空断熱ポット式コーヒーメーカー、卓上加湿器、人感ファンヒーターなど、冬の暮らしに向けた小型家電の新商品が相次いで登場し、季節商品の品揃えを広げています。 たい焼きクッションが累計490万個を突破し、ニャンポケ着る毛布も再投入されるなど、ユニークな雑貨のヒットとシリーズ展開が続いています。</description>
+    </item>
     <item>
       <title>2026年10月16日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261016/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261003/</guid>
       <pubDate>Sat, 03 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリの9月既存店売上高は前年を3カ月連続で上回り、足元の販売が堅調に推移している。 Nプラスは早期に100店を目指す意欲を表明。家具・住関連を越えたグループの事業拡張が焦点となる。</description>
-    </item>
-    <item>
-      <title>2026年10月2日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261002/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261002/</guid>
-      <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
-      <description>似鳥会長が直接指揮する月約1,000点の新商品開発が報じられ、商品投入の速度と開発体制が競争力の焦点に。 Nウォームの新柄・機能提案や、低価格ヘッドホンの評価記事から、価格だけでなく選ぶ楽しさや使用価値を磨く動きが見える。</description>
     </item>
   </channel>
 </rss>
