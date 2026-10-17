@@ -57,7 +57,7 @@ try{
   let history=[],language;
   for(const sample of plan.cases.filter(c=>c.theme===theme)){
    assert.equal(history.length,sample.history_messages);
-   const body={query:sample.text,locale:sample.locale,history,...(language?{reply_language:language}:{})};
+   const body={query:sample.text,locale:sample.locale,history:structuredClone(history),...(language?{reply_language:language}:{})};
    const row={id:sample.id,sent_at:new Date().toISOString(),body};report.results.push(row);save();
    const started=Date.now();
    const response=await fetch('https://workers.tk.st/magi2/site-search?site_debate=1&site_chat=1',{

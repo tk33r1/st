@@ -151,6 +151,18 @@ function counts() {
   }; } };
 }
 function enableSearch(w) { w.env.SITE_SEARCH_ENABLED = 'true'; w.env.DB = counts(); return w; }
+
+test('サイト手順は選ばれた既知のURLだけに添え、未登録ページや失敗へ混ぜない', () => {
+  const w=worker();
+  const note=w.ctx.siteSelectionNote({status:'results',results:[{title:'PDF Studio',description:'結合',url:'/tools/pdf-studio/'}]});
+  assert.match(note,/「書き出し」/);assert.match(note,/「書き出す」/);
+  assert.doesNotMatch(w.ctx.siteSelectionNote({status:'results',results:[{title:'PDF Studio',description:'別のページ',url:'/unknown/'}]}),/PDFの結合：/);
+  assert.doesNotMatch(w.ctx.siteSelectionNote({status:'failed',results:[]}),/PDFの結合：/);
+  const qr=w.ctx.siteSelectionNote({status:'results',results:[{title:'QR Palette',description:'QR',url:'/tools/qr-palette/'}]});
+  assert.match(qr,/PNGで保存/);assert.match(qr,/SVGで保存/);
+  for(const [file,labels] of [['tools/pdf-studio/index.html',['書き出し','書き出す','data-mode="pdf"','data-mode="image"']],
+    ['tools/qr-palette/index.html',['PNGで保存','SVGで保存','id="type-fields"']]])for(const label of labels)assert(read(file).includes(label),file+' の操作が変わった');
+});
 const searchRequest = (w, body = { query: 'PDFをまとめたい', locale: 'ja' }, ip) => w.request('/magi2/site-search?site_debate=1', body, ip);
 const searchReply = (value, finish = 'stop', refusal = null) => Response.json({ choices: [{ finish_reason: finish, message: { content: typeof value === 'string' ? value : JSON.stringify(value), refusal } }] });
 const validSearch = { selections: ['tool:7'], comment: '私のPDF Studioでまとめられます。(>_<)' };

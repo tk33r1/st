@@ -1624,7 +1624,8 @@ async function readChatInput(request) {
 function siteSelectionNote(choice) {
   if (choice.status === 'failed') return SITE_SEARCH.failed_note;
   return SITE_SEARCH.synth_header + '\n' + SITE_SEARCH.answer_note + '\n' + JSON.stringify({
-    status: choice.status, pages: choice.results.map(({ title, description }) => ({ title, description })),
+    status: choice.status, pages: choice.results.map(({ title, description, url }) => ({ title, description,
+      ...(SITE_SEARCH.usage[url] ? { usage: SITE_SEARCH.usage[url] } : {}) })),
   });
 }
 

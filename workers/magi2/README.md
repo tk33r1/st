@@ -2,6 +2,8 @@
 
 人格・呼び出し設定は `personas.js`、モデル ID と表示名は `config/ai-models.json` が正本。
 人格カードの生成と更新はルートの `AGENTS.md` を参照。
+
+2026-10-17の残課題修正は[修正・限定評価・実時間観測](残課題修正と観測20261017.md)を参照。選択ページに添えるPDF/QRの操作手順は`personas.js`の`SITE_SEARCH.usage`。対象ツールの操作を変えたら同時に照合する。検算・経験の推測・人格間の発言参照の規則も同ファイルが正本。
 人格の本文は120字の指示を維持し、指示を外した長い応答も `DEFAULTS.persona_response_max_chars`（4000字）で制限して討議の入力が膨らまないようにする。
 Jevを使う環境には `MAGI_TYPESAFE_API_KEY` をWrangler secretで設定する。手元の `.dev.vars` は本番へ自動反映されない。未設定でも回答は続くが、分類はフォールバックとなる。
 
