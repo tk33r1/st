@@ -5,6 +5,7 @@ import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } fr
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchReader } from '../research.js';
+import { qaBudgetEnv } from '../qa-budget.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -341,6 +342,7 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
   if (typeof env.evalObserve === 'function' && stream && cfg.provider !== 'anthropic') body.stream_options = { include_usage: true };
   const key = env[provider.key];
   if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
+  if (env.qaReserve) await env.qaReserve(cfg.provider, body);
   const res = await fetch(provider.endpoint, {
     method: 'POST',
     headers: requestHeaders(cfg.provider, key),
@@ -525,6 +527,7 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       const history = siteChat ? cleanSiteHistory(body.history) : [];
       const replyLanguage = siteChat && body.reply_language !== undefined ? cleanReplyLanguage(body.reply_language) : null;
       if (!history || siteChat && (body.reply_language !== undefined && !replyLanguage || history.length && !replyLanguage)) return fail(400, 'invalid_history');
+      if (env.MAGI_QA_PLAN) env = await qaBudgetEnv(env, {kind:'site',text:query,images:[],historyMessages:history.length});
       if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
       const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
       if (signal.aborted) throw searchFailure('cancelled');
@@ -1405,6 +1408,7 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
           if (stop.aborted) throw searchFailure('cancelled');
           const key = upstream[PROVIDERS[cfg.provider].key];
           if (!key) throw stageError('upstream', 'missing_api_key', 'Web検索のキーが未設定です', { retryable: false });
+          if (upstream.qaReserve) await upstream.qaReserve(cfg.provider, body);
           const res = await fetch(cfg.provider === 'openai' ? RESEARCH.openai_endpoint : PROVIDERS.anthropic.endpoint, {
             method: 'POST', headers: requestHeaders(cfg.provider, key), body: JSON.stringify(body), signal: stop,
           });
@@ -1827,6 +1831,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   catch (err) { return inputError(err, requestId, cors); }
   const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
+  if (env.MAGI_QA_PLAN) {
+    try {env = await qaBudgetEnv(env, {kind:'chat',text:contentText(plainMessages.at(-1).content),
+      images:contentImages(plainMessages.at(-1).content).map(p=>p.image_url.url),historyMessages:plainMessages.length-1});}
+    catch (error) {return httpError(409,{stage:'evaluation',code:error.message,message:'評価用の送信を停止しました',retryable:false},requestId,cors);}
+  }
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {

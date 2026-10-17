@@ -32,17 +32,17 @@ test('費用未確認・要求変更・ゼロのモデル費用は送信前に�
   value.estimates[evaluationRequestHash('openai',body)].max_usd=0;save();assert.throws(()=>g.reserve('openai',body),/exact/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,0);assert.equal(existsSync(path+'.lock'),false);
 }));
-test('失敗と実行をまたいでも予約額が残り、Lunaの$0.40を超えない',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',.2);save();gate().reserve('openai',body);gate().reserve('openai',body);
+test('失敗と実行をまたいでも予約額が残り、採用後のLunaの$1.20を超えない',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',.6);save();gate().reserve('openai',body);gate().reserve('openai',body);
   assert.throws(()=>gate().reserve('openai',body),/ceiling reached/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,2);
 }));
-test('Haikuの枠と、分類等を含む合計$0.80の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',.4);estimate('anthropic',.4);estimate('typesafe',.001);save();
-  const g=gate();g.reserve('openai',body);g.reserve('anthropic',body);
+test('Haikuの枠と、分類等を含む採用後の合計$2.80の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',1.2);estimate('anthropic',1.2);estimate('deepseek',.4);estimate('typesafe',.001);save();
+  const g=gate();g.reserve('openai',body);g.reserve('anthropic',body);g.reserve('deepseek',body);
   assert.throws(()=>g.reserve('typesafe',body),/ceiling reached/);
   assert.throws(()=>g.reserve('anthropic',body),/ceiling reached/);
-  assert.equal(JSON.parse(readFileSync(path)).reservations.length,2);
+  assert.equal(JSON.parse(readFileSync(path)).reservations.length,3);
 }));
 test('別の評価が台帳を使用中なら、予約も送信もせずそのロックを残す',()=>fixture(({estimate,save,gate,path})=>{
   estimate('openai',.1);save();writeFileSync(path+'.lock','busy');
