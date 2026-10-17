@@ -1,5 +1,67 @@
 [
   {
+    "date": "20261018",
+    "title": "2026年10月18日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジを1人で複数台回す店員の姿に「共感しかない」と反響が広がり、無人化と有人対応のバランスが生活者の関心事になっている。 人件費や物価高騰を背景に病院食堂の廃止・時短が相次ぐなか、無人セルフレジ売店が代替手段として注目されている。",
+    "count": 2,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジを1人で複数台回す店員の姿に「共感しかない」と反響が広がり、無人化と有人対応のバランスが生活者の関心事になっている。",
+      "人件費や物価高騰を背景に病院食堂の廃止・時短が相次ぐなか、無人セルフレジ売店が代替手段として注目されている。",
+      "本日の候補は既報の続報が多く、新規性の高い国内・海外の大型発表は限られた。省人化の現場課題が主要な論点となった。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「有人レジも入れろ」の声に共感集まる、1人で複数台のセルフレジを回す店員の奮闘",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-02",
+        "summary": "ウォーカープラスが報じた記事では、客から「有人レジも入れろ」という声が上がる一方、1人で複数台のセルフレジを回す店員の姿に「共感しかない」と反響が広がったことが紹介されています。セルフレジの普及によって、利用客の操作の戸惑いや現場スタッフの負担が可視化されている状況を伝えています。",
+        "why_it_matters": "セルフレジは省人化の切り札である一方、現場では店員が監視や補助に追われ、顧客の不満も生じやすい。無人化と有人対応のバランスは、顧客体験を損なわない運用設計の要点になる。監視業務の負荷を減らすアシスト機能の導入や、混雑時の有人レジ併設など、生活者の声を反映した改善が求められる。",
+        "tags": [
+          "セルフレジ",
+          "SNS話題",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "セルフレジ 店員 負担",
+          "self-checkout staff workload",
+          "self-checkout customer complaints"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBtZkV2Y0k2eGV1SU5hUEtzeWhXenprVldaSVFpcDF4Y0xPQmp0QUlSc0RyWm5pWk42aDVwYTRWNEdPVjM2T1VvTWp0MWJ4cEpZVTVvMGktcG9KTFRJd3BrdlN5OTdJSnlQZ1hkQ2REY1gtTTM5Sng2Q1BRQUVSN0E?oc=5",
+        "source_pub_ts": 1792240200
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "病院食堂の縮小を補う無人セルフレジ売店、済生会松山病院の事例",
+        "original_title": "",
+        "source": "西日本新聞me",
+        "source_id": "JP-03",
+        "summary": "西日本新聞meの記事では、病院食堂が人件費や物価高騰を背景に廃止や時短営業へ追い込まれるなか、院内売店で無人セルフレジを使い商品を購入する済生会松山病院のスタッフの姿が紹介されています。食堂の代わりにセルフレジ売店を置く動きが、医療機関の食環境を支える新たな手段として取り上げられています。",
+        "why_it_matters": "病院給食や食堂の運営は人手不足とコスト増で縮小が進んでおり、無人決済の売店は少人数でも提供を継続できる現実的な選択肢になりつつある。公共性の高い施設では利用者の年齢層や操作への不安にも配慮が必要で、誰でも迷わず使える決済UIの設計が重要になる。医療・介護など他業態への無人店舗の展開余地を示す事例といえる。",
+        "tags": [
+          "無人決済",
+          "セルフレジ",
+          "流通DX"
+        ],
+        "search_terms": [
+          "病院売店 無人決済",
+          "hospital shop self-checkout",
+          "unmanned store healthcare"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE00ZFYxWHAyTEU3Ql9OLVhKdUFtSmVOQnVIaDNvX2RyTEo0akQzRnc5SGFrT3JkdE9qX3VCQk9rMmE5UFgtQzRqRFEwOHBrU3BaVWM4bUwwYw?oc=5",
+        "source_pub_ts": 1792222469
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261017",
     "title": "2026年10月17日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "カインズがRELEXのシステムを導入し、需要予測と補充業務の高度化を進める。AI需要予測は在庫最適化の実務テーマとして国内小売に広がっている。 リテールメディアサミット2026へのブース出展など、購買データを活用した広告事業への関心が業界で高まっている。",
