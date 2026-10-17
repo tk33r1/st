@@ -13,7 +13,8 @@ const plan=JSON.parse(readFileSync(planFile,'utf8')),day=plan.started_at.slice(0
 assert(plan.version===1&&/^\d{4}-\d{2}-\d{2}$/.test(day)&&Number.isFinite(Date.parse(plan.due_at)));
 const report={at:new Date().toISOString(),due_at:plan.due_at,source_unchanged:sourceHash===plan.source_hash,models_http:null,global_counts:[],management_read_ok:false,errors:[],ai_calls:0,db_writes:0};
 try{const response=await fetch('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'},signal:AbortSignal.timeout(15000)});
- report.models_http=response.status;assert(response.ok);const body=await response.json();assert(Array.isArray(body.personas)&&body.personas.length===3);report.models_contract_valid=true;
+ report.models_http=response.status;assert(response.ok);const body=await response.json();
+ assert(body.personas&&!Array.isArray(body.personas)&&['MELCHIOR-1','BALTHASAR-2','CASPER-3'].every(c=>body.personas[c]));report.models_contract_valid=true;
 }catch{report.errors.push('public_catalog_unavailable');}
 const wrangler=fileURLToPath(new URL('workers/node_modules/wrangler/bin/wrangler.js',root));
 try{
@@ -21,12 +22,22 @@ try{
   `SELECT ip,day,count FROM rate_limit WHERE ip IN ('global','search:global','research:global') AND day>='${day}' ORDER BY day,ip`],
   {cwd:new URL('workers/',root),encoding:'utf8',timeout:45000,env:{...process.env,WRANGLER_LOG_PATH:fileURLToPath(new URL('wrangler-observe.log',dir))}});
  const records=JSON.parse(output)[0];assert(records.success);report.global_counts=records.results;report.management_read_ok=true;
+ const deployments=execFileSync(process.execPath,[wrangler,'deployments','list','--config','magi2/wrangler.toml'],
+  {cwd:new URL('workers/',root),encoding:'utf8',timeout:45000,env:{...process.env,WRANGLER_LOG_PATH:fileURLToPath(new URL('wrangler-observe.log',dir))}});
+ report.worker_version=[...deployments.matchAll(/Version\(s\):\s+\(100%\)\s+([a-f0-9-]+)/g)].at(-1)?.[1];assert(report.worker_version);
 }catch{report.errors.push('global_counter_read_unavailable');}
 const previousFile=new URL('samples.json',dir),samples=existsSync(previousFile)?JSON.parse(readFileSync(previousFile)):[];
 samples.push(report);writeFileSync(previousFile,JSON.stringify(samples,null,2)+'\n');
-const days=[...new Set(samples.filter(s=>s.models_http===200&&s.management_read_ok&&!s.errors.length).map(s=>s.at.slice(0,10)))];
+const correctionFile=new URL('sampler-corrections.json',dir);
+const corrections=existsSync(correctionFile)?JSON.parse(readFileSync(correctionFile)):[];
+const reliable=samples.filter(s=>!corrections.some(c=>c.sample_at===s.at));
+const days=[...new Set(reliable.filter(s=>s.models_http===200&&s.management_read_ok&&!s.errors.length).map(s=>s.at.slice(0,10)))];
 report.successful_utc_days=days.length;report.elapsed_days=(Date.now()-Date.parse(plan.started_at))/86400000;
-report.week_observed=Date.now()>=Date.parse(plan.due_at)&&days.length>=7&&samples.every(s=>s.errors.length===0&&s.source_unchanged);
+const expectedDays=[];for(let t=Date.parse(day+'T00:00:00Z');t<=Math.min(Date.now(),Date.parse(plan.due_at));t+=86400000)expectedDays.push(new Date(t).toISOString().slice(0,10));
+report.missing_utc_days=expectedDays.filter(d=>!days.includes(d));
+report.week_observed=Date.now()>=Date.parse(plan.due_at)&&days.length>=7&&!report.missing_utc_days.length&&reliable.every(s=>s.errors.length===0&&s.source_unchanged);
+report.invalid_sampler_samples=corrections.length;
+report.worker_versions=[...new Set(reliable.map(s=>s.worker_version).filter(Boolean))];
 report.limit='定時の疎通と全体カウンタの記録。観測間の無停止・全回答品質・会社の請求額を保証するものではない。';
 writeFileSync(new URL('latest.json',dir),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

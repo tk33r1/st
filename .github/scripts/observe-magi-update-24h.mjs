@@ -24,16 +24,19 @@ try{
   const timer=setTimeout(()=>reject(new Error('QA WebView inspection timed out')),15000);
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id===1){clearTimeout(timer);m.error?reject(new Error('CDP error')):resolve(m.result);}});
   socket.send(JSON.stringify({id:1,method:'Runtime.evaluate',params:{awaitPromise:true,returnByValue:true,expression:`(async()=>{
+   for(let i=0;i<50&&(typeof checkAppUpdate!=='function'||!localStorage.getItem('magi_qa_update_log'));i++)await new Promise(r=>setTimeout(r,100));
+   for(let i=0;i<60&&JSON.parse(localStorage.getItem('magi_qa_update_log')).requests.some(r=>r.status===null);i++)await new Promise(r=>setTimeout(r,100));
    const before=JSON.parse(localStorage.getItem('magi_qa_update_log'));
-   await checkAppUpdate();await checkAppUpdate();
+   await checkAppUpdate();const middle=JSON.parse(localStorage.getItem('magi_qa_update_log'));await checkAppUpdate();
    let blocked=false;try{await fetch('https://workers.tk.st/magi2/chat',{method:'POST',body:'{}'})}catch(e){blocked=e.message==='QA observation blocks paid sends'}
-   return {native:window.Capacitor.isNativePlatform(),now:Date.now(),checked:Number(localStorage.getItem('magi_update_checked')),before,after:JSON.parse(localStorage.getItem('magi_qa_update_log')),paid_post_blocked:blocked};
+   return {native:window.Capacitor.isNativePlatform(),now:Date.now(),checked:Number(localStorage.getItem('magi_update_checked')),before,middle,after:JSON.parse(localStorage.getItem('magi_qa_update_log')),paid_post_blocked:blocked};
   })()`}}));
  });
  assert(!result.exceptionDetails);const data=result.result.value;
  assert(data.native&&data.paid_post_blocked);assert.equal(data.after.app_js_sha256,build.app_js_sha256);
  assert(data.after.requests.length>=1&&data.after.requests[0].status===200,'初回の公開Release照会が成功すること');
- assert.equal(data.before.requests.length,data.after.requests.length,'同じ起動内の追加2確認では照会しない');
+ assert(data.middle.requests.length-data.before.requests.length>=0&&data.middle.requests.length-data.before.requests.length<=1,'期限到達時は1回だけ照会');
+ assert.equal(data.middle.requests.length,data.after.requests.length,'直後の2回目は照会しない');
  for(let i=1;i<data.after.requests.length;i++)assert(data.after.requests[i].at-data.after.requests[i-1].at>=86400000-100,'24時間未満に再照会していない');
  assert(Math.abs(data.now-Date.now())<120000,'端末とPCの実時計を確認');
  const baseline=new URL('baseline.json',dir);
