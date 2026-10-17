@@ -5,8 +5,16 @@ import assert from 'node:assert/strict';
 import {paidEvaluationGate,evaluationBudgetPath,evaluationRequestHash} from './magi-eval-budget.mjs';
 const dir=new URL('../../workers/.wrangler/magi2-compact-20261017/',import.meta.url);
 const read=name=>JSON.parse(readFileSync(new URL(name,dir),'utf8'));
-const plan=read('plan.json'),planHash=createHash('sha256').update(JSON.stringify(plan)).digest('hex');
 const gate=paidEvaluationGate(),group=process.argv.includes('--reserve-native')?'native':'site';
+const original=read('plan.json');
+const plan=group==='native'&&existsSync(new URL('native-plan.json',dir))?read('native-plan.json'):original;
+if(plan!==original){
+ // 接続待ちで失効した未送信の実機分だけ延長可能。既送信のsiteやケースID・費用枠を変更しない。
+ assert.deepEqual({...plan,expires_at:original.expires_at,cases:original.cases},original);
+ assert.deepEqual(plan.cases,original.cases.filter(c=>c.kind==='chat'));
+ assert(Date.parse(plan.expires_at)<=Date.now()+86400000,'延長は24時間以内');
+}
+const planHash=createHash('sha256').update(JSON.stringify(plan)).digest('hex');
 assert(plan.version===1 && Date.parse(plan.expires_at)>Date.now(),'期限切れの計画は実行しない');
 const file=new URL(group+'-reservations.json',dir);
 const selected=plan.cases.filter(c=>c.kind===(group==='native'?'chat':'site'));
