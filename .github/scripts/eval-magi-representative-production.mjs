@@ -3,7 +3,9 @@ import {readFileSync,writeFileSync,existsSync,openSync,closeSync,unlinkSync} fro
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {paidEvaluationGate,evaluationBudgetPath,evaluationRequestHash} from './magi-eval-budget.mjs';
-const dir=new URL('../../workers/.wrangler/magi2-compact-20261017/',import.meta.url);
+const session=process.argv.find(a=>a.startsWith('--session='))?.slice('--session='.length)||'magi2-compact-20261017';
+assert.match(session,/^[a-z0-9-]+$/);
+const dir=new URL('../../workers/.wrangler/'+session+'/',import.meta.url);
 const read=name=>JSON.parse(readFileSync(new URL(name,dir),'utf8'));
 const gate=paidEvaluationGate(),group=process.argv.includes('--reserve-native')?'native':'site';
 const original=read('plan.json');

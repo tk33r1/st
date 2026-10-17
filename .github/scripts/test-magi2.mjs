@@ -19,6 +19,54 @@ const between = (s, start, end) => s.slice(s.indexOf(start), s.indexOf(end, s.in
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const tick = () => new Promise(r => setImmediate(r));
 const encode = s => new TextEncoder().encode(s);
+
+// B0: Androidの橋渡しだけを動かし、Web/PWAと会話の処理へ影響しないことを見る。
+function nativeShell(capacitor) {
+  const calls = [], state = { panel: false, emoji: false, hidden: true, theme: 'dark' };
+  const app = {
+    addListener: (name, callback) => { state.back = callback; calls.push(name); return { remove: async () => {} }; },
+    exitApp: async () => { calls.push('exit'); },
+  };
+  const bars = { setStyle: async options => { calls.push(options.style); } };
+  const cap = capacitor && { ...capacitor, get Plugins() { calls.push('plugins'); return { App: app, SystemBars: bars }; } };
+  const ctx = vm.createContext({
+    window: { Capacitor: cap, history: { back() { calls.push('history'); } } },
+    document: {
+      documentElement: { getAttribute() { return state.theme; } },
+      querySelector(selector) { return selector === '.agent-panel' ? state.panel : state.emoji; },
+      getElementById() { return { classList: { contains() { return state.hidden; }, add() { state.hidden = true; calls.push('menu'); } } }; },
+    },
+    MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
+    closeAgentPanels() { state.panel = false; calls.push('panel'); },
+    closeEmojiPops() { state.emoji = false; calls.push('emoji'); },
+  });
+  vm.runInContext(between(mobile, '// NATIVE_SHELL_BEGIN', '// NATIVE_SHELL_END'), ctx);
+  return { calls, state };
+}
+
+test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
+  for (const cap of [undefined, { isNativePlatform: () => false }, { isNativePlatform: () => true, getPlatform: () => 'ios' }]) {
+    assert.deepEqual(nativeShell(cap).calls, []);
+  }
+});
+
+test('B0: Androidの戻るはパネル・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
+  const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
+  state.panel = true; state.hidden = false; state.emoji = true;
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'menu');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');
+  state.back({ canGoBack: true }); assert.equal(calls.at(-1), 'history');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'exit');
+});
+
+test('B0: 起動時・手動変更・端末への追従でバーの文字色が画面のテーマと合う', () => {
+  const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
+  assert.ok(calls.includes('DARK'));
+  state.theme = 'light'; state.changed(); assert.equal(calls.at(-1), 'LIGHT');
+  state.theme = 'dark'; state.changed(); assert.equal(calls.at(-1), 'DARK');
+});
+
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 const completion = (text = 'answer', reason = 'stop', done = true) =>
   `data: ${JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: null }] })}\n\n`

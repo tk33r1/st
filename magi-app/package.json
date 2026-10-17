@@ -1,6 +1,6 @@
 {
   "name": "magi-app",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "private": true,
   "description": "MAGI mobile — Multi-Agent Generative Intelligence client (PWA + Capacitor)",
   "scripts": {
@@ -8,17 +8,18 @@
     "icons": "node scripts/generate-icons.cjs",
     "add:ios": "npx cap add ios",
     "add:android": "npx cap add android",
-    "sync": "npx cap sync",
+    "sync": "npx cap sync android",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/cli": "8.5.3"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/ios": "^6.1.2"
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3"
   }
 }

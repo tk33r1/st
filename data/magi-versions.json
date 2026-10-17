@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "5.3",
+      "date": "2026-10-17",
+      "changes": {
+        "ja": [
+          "Android版の土台を更新しました。Android 7.0以降で利用できます。",
+          "画面端の余白と、戻る操作でパネルを閉じる動作を調整しました。"
+        ],
+        "en": [
+          "The Android app now requires Android 7.0 or later.",
+          "Screen insets and closing panels with the Android back action have been adjusted."
+        ]
+      }
+    },
+    {
       "version": "5.2",
       "date": "2026-10-16",
       "changes": {

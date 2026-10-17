@@ -22,6 +22,11 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <style>
     :root {
+      /* AndroidはSystemBarsの値、Web/PWAはブラウザのsafe areaを使う。 */
+      --magi-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+      --magi-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+      --magi-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+      --magi-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
       --phi: 1.618;
       --bg-color: #f3f4f6;
       --surface-color: #ffffff;
@@ -90,8 +95,9 @@
     .agent-panel {
       position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column;
       background: var(--surface-color);
-      padding: 0.75rem; padding-top: calc(0.75rem + env(safe-area-inset-top));
-      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+      padding: 0.75rem; padding-top: calc(0.75rem + var(--magi-safe-top));
+      padding-bottom: calc(0.75rem + var(--magi-safe-bottom));
+      padding-left: calc(0.75rem + var(--magi-safe-left)); padding-right: calc(0.75rem + var(--magi-safe-right));
     }
     .agent-panel-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
     .agent-panel-head .t { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--primary-color); font-weight: 700; }
@@ -116,13 +122,14 @@
     #app {
       position: relative;
       display: flex; flex-direction: column;
-      height: 100dvh; height: 100vh;
+      height: 100vh; height: 100dvh;
+      padding-left: var(--magi-safe-left); padding-right: var(--magi-safe-right);
       background: var(--surface-color);
     }
     header#bar {
       flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
       gap: 0.5rem; padding: 0.5rem 0.75rem;
-      padding-top: calc(0.5rem + env(safe-area-inset-top));
+      padding-top: calc(0.5rem + var(--magi-safe-top));
       border-bottom: 1px solid var(--border-color);
       background: var(--surface-alt);
     }
@@ -147,6 +154,10 @@
       -webkit-overflow-scrolling: touch;
       display: flex; flex-direction: column; gap: 0.5rem;
       padding: 0.75rem; font-size: 0.8rem; scroll-behavior: smooth;
+    }
+    /* 横向きのIMEで極端に低くなると、ログの余白だけでも入力欄を押し出す。 */
+    @media (max-height: 240px) {
+      #agent-log { padding-top: 0; padding-bottom: 0; }
     }
     .agent-user { display: flex; justify-content: flex-end; }
     .agent-user > span { display: inline-block; max-width: 85%; padding: 0.4rem 0.7rem; border-radius: 2px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
@@ -193,7 +204,7 @@
     /* input */
     #agent-inputline {
       flex-shrink: 0; display: flex; align-items: flex-end; gap: 0.5rem; padding: 0.6rem 0.75rem;
-      padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(0.6rem + var(--magi-safe-bottom));
       border-top: 1px solid var(--border-color); background: var(--surface-alt);
     }
     #agent-input { flex: 1; font-family: inherit; font-size: 16px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.55rem 0.7rem; color: var(--text-color); outline: none; transition: border-color var(--duration-fast), box-shadow var(--duration-fast); }
@@ -361,6 +372,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20261017_1"></script>
+  <script src="app.js?v=20261017_3"></script>
 </body>
 </html>

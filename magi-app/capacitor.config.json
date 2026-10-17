@@ -6,5 +6,11 @@
     "androidScheme": "https",
     "iosScheme": "https"
   },
-  "backgroundColor": "#0c0c0c"
+  "backgroundColor": "#0c0c0c",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
 }

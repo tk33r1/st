@@ -9,7 +9,8 @@ const arg=(name,fallback='')=>process.argv.find(a=>a.startsWith('--'+name+'='))?
 const adb=arg('adb');assert(adb,'--adbにSDKのadb.exeを指定する');
 const device=arg('device');assert(device,'--deviceで対象の端末を明示する');
 const run=(...args)=>execFileSync(adb,['-s',device,...args],{maxBuffer:16*1024*1024});
-const dir=fileURLToPath(new URL('../../workers/.wrangler/magi2-android-20261017/',import.meta.url));mkdirSync(dir,{recursive:true});
+const session=arg('session','magi2-android-20261017');assert.match(session,/^[a-z0-9-]+$/);
+const dir=fileURLToPath(new URL('../../workers/.wrangler/'+session+'/',import.meta.url));mkdirSync(dir,{recursive:true});
 const label=arg('snapshot');if(label)assert.match(label,/^[a-z0-9-]+$/);
 const decode=s=>s.replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
 function snapshot(){
@@ -29,12 +30,13 @@ if(arg('tap')||arg('tap-class')){
  console.log('Tapped observed UI label');
 }
 if(arg('scroll')){
- assert.equal(arg('scroll'),'down');
+ assert(['up','down'].includes(arg('scroll')));
  const count=Number(arg('repeat','1'));assert(Number.isInteger(count)&&count>=1&&count<=12);
  for(let i=0;i<count;i++){
   const {nodes}=snapshot(),scrolls=nodes.filter(n=>n.scrollable==='true'&&(!arg('scroll-id')||n['resource-id']===arg('scroll-id')));assert.equal(scrolls.length,1);
   const [x1,y1,x2,y2]=scrolls[0].bounds.match(/\d+/g).map(Number),x=Math.floor((x1+x2)/2);
-  run('shell','input','swipe',String(x),String(y2-100),String(x),String(y1+100),'450');
+  const up=arg('scroll')==='up';
+  run('shell','input','swipe',String(x),String(up?y1+100:y2-100),String(x),String(up?y2-100:y1+100),'450');
  }
 }
 if(arg('key')){assert(['BACK','HOME'].includes(arg('key')));run('shell','input','keyevent',arg('key'));}
@@ -43,6 +45,8 @@ if(label){
  writeFileSync(join(dir,label+'.png'),run('exec-out','screencap','-p'));
  // 任意の会話内容は標準出力へ出さない。操作するラベルの確認は保存XMLを必要に応じて読む。
  console.log(JSON.stringify({snapshot:label,nodes:nodes.length,clickable:nodes.filter(n=>n.clickable==='true').length,
+  input_enabled:nodes.find(n=>n['resource-id']==='agent-input')?.enabled,
+  send_label:nodes.find(n=>n['resource-id']==='agent-send')?.['content-desc'],
   update_notice:nodes.some(n=>/新しいバージョン|Version .* available/.test(n.text)),
   versions:nodes.filter(n=>/^ver \d/.test(n.text)).map(n=>n.text)}));
 }

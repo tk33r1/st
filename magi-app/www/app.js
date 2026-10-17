@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '5.2';
+var APP_VERSION = '5.3';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -1714,3 +1714,28 @@ async function checkAppUpdate() {
 initAgent();
 checkAppUpdate();
 if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
+
+// NATIVE_SHELL_BEGIN
+// Androidだけで、ビルド時に注入される橋渡しを使う。Web/PWAでは触らない。
+(function () {
+  var cap = window.Capacitor;
+  if (!cap || !cap.isNativePlatform() || cap.getPlatform() !== 'android') return;
+  var app = cap.Plugins && cap.Plugins.App, bars = cap.Plugins && cap.Plugins.SystemBars;
+  if (!app || !bars) return;
+  function syncBars() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    bars.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(function () {});
+  }
+  new MutationObserver(syncBars).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  syncBars();
+  app.addListener('backButton', function (event) {
+    // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
+    if (document.querySelector('.agent-panel')) { closeAgentPanels(); return; }
+    var menu = document.getElementById('agent-more-dropdown');
+    if (menu && !menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
+    if (document.querySelector('.emoji-pop')) { closeEmojiPops(); return; }
+    if (event.canGoBack) window.history.back();
+    else app.exitApp().catch(function () {});
+  });
+})();
+// NATIVE_SHELL_END

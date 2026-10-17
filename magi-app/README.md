@@ -64,7 +64,17 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
 
 - **iOS** requires macOS with Xcode.
 - **Android** requires Android Studio (any OS).
+- B0 (5.3): Capacitor **8.5.3**, Node **22+**,
+  Android Studio **Otter 2025.2.1+** with JDK **21**, Android SDK **36**,
+  AGP **8.13.0**, Gradle **8.14.3**. Android **7.0 / API 24+** is required.
+  Migration follows the official [6→7](https://capacitorjs.com/docs/updating/7-0)
+  and [7→8](https://capacitorjs.com/docs/updating/8-0) guides in order.
 - After changing `www/`, re-run `npm run sync`.
+  Sync now targets Android only; no iOS project is generated or updated.
+- The native Android shell uses the built-in SystemBars insets and the official
+  App back handler. Back closes panels / menus first, then exits at the root.
+  These plugins are never registered by the Web/PWA client. Keyboard visibility,
+  system bars and predictive back still require device checks for each release.
 - `npm run icons` uses the existing `@capacitor/assets` generator for Android,
   keeps splash backgrounds at `#0c0c0c`, restores both adaptive icons' `monochrome`
   layer, and rasterizes all three PWA PNGs. Sources are `resources/icon.svg` and
@@ -138,6 +148,11 @@ This reads every tracked `www/` file from Git and compares its exact bytes in
 `assets/public/`. A stale `cap sync`, missing file, extra non-runtime file, wrong
 version, certificate change or missing v1/v2 signature fails the check. Run
 `npx cap sync android` after the final edit. APKs and raw reports stay ignored.
+
+For an **unpublished prototype only**, replace `--commit HEAD` with
+`--working-tree` to compare saved local sources (including new, non-ignored
+`www/` files). The report marks `source: working-tree`; it does not certify a
+release commit. Repeat with `--commit` after committing, before distribution.
 
 The release build is signed with a keystore loaded from
 `android/keystore.properties` (both the keystore `*.jks` and that properties file
