@@ -52,6 +52,19 @@ function jsonResponse(body, cors, status = 200, headers = {}) {
 function httpError(status, envelope, requestId, cors) {
   return jsonResponse({ error: { ...envelope, request_id: requestId } }, cors, status);
 }
+// 評価用の予算ガード（qa-budget.js）。未設定なら何もしない。予算で止めたときはチャットと404で同じ409を返す。
+// D1の失敗などはガードの判定ではないので、各入口の503（unavailable）に任せ、内部のメッセージを応答に出さない
+async function qaGuard(env, sample, { requestId, cors, log }, unavailable) {
+  if (!env.MAGI_QA_PLAN) return { env };
+  try { return { env: await qaBudgetEnv(env, sample()) }; }
+  catch (error) {
+    const refused = error.message.startsWith('qa_budget_');
+    log('qa_budget', refused ? error.message : 'failed');
+    return { response: refused
+      ? httpError(409, { stage: 'evaluation', code: error.message, message: '評価用の送信を停止しました', retryable: false }, requestId, cors)
+      : unavailable() };
+  }
+}
 function inputError(err, requestId, cors) {
   return httpError(err.envelope?.http_status || 400, err.envelope || {
     stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false,
@@ -527,7 +540,10 @@ async function handleSiteSearch(request, env, ctx, { requestId, cors, log }) {
       const history = siteChat ? cleanSiteHistory(body.history) : [];
       const replyLanguage = siteChat && body.reply_language !== undefined ? cleanReplyLanguage(body.reply_language) : null;
       if (!history || siteChat && (body.reply_language !== undefined && !replyLanguage || history.length && !replyLanguage)) return fail(400, 'invalid_history');
-      if (env.MAGI_QA_PLAN) env = await qaBudgetEnv(env, {kind:'site',text:query,images:[],historyMessages:history.length});
+      const qa = await qaGuard(env, () => ({ kind: 'site', text: query, images: [], historyMessages: history.length }),
+        { requestId, cors, log }, () => fail(503, 'search_unavailable'));
+      if (qa.response) return qa.response;
+      env = qa.env;
       if (env.SITE_SEARCH_ENABLED !== 'true' || !env.DB) return fail(503, 'search_unavailable');
       const [pages, cards] = await Promise.all([getSitePages(ctx, body.locale, signal), getPersonaCards(ctx, () => {})]);
       if (signal.aborted) throw searchFailure('cancelled');
@@ -1624,8 +1640,8 @@ async function readChatInput(request) {
 function siteSelectionNote(choice) {
   if (choice.status === 'failed') return SITE_SEARCH.failed_note;
   return SITE_SEARCH.synth_header + '\n' + SITE_SEARCH.answer_note + '\n' + JSON.stringify({
-    status: choice.status, pages: choice.results.map(({ title, description, url }) => ({ title, description,
-      ...(SITE_SEARCH.usage[url] ? { usage: SITE_SEARCH.usage[url] } : {}) })),
+    // usageの無いページはJSON.stringifyが項目ごと落とす
+    status: choice.status, pages: choice.results.map(({ title, description, url }) => ({ title, description, usage: SITE_SEARCH.usage[url] })),
   });
 }
 
@@ -1649,6 +1665,27 @@ async function createMotion(env, plainMessages, langNote, signal, log) {
     if (!text) throw new Error('invalid_motion');
     return { text, votable: true };
   } catch (e) { log('motion', 'failed', e.name); return notVotable('failed'); }
+}
+
+// 討議の第2回：他の人格の初回意見を踏まえて、自分の考えを更新させる
+function rebuttalText(lastUser, motion, own, others) {
+  // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
+  return `${lastUser}${motion ? `\n【共通の議題】${motion}\n${MAGI_MODE.persona_rounds.debate}` : ''}\n\n[あなたの初回意見]\n${own}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
+}
+
+// 討議の第3回以降：統合人格の問いに答えさせる
+function followupText(lastUser, motion, round, own, others, ask) {
+  return `${lastUser}${motion ? `\n【共通の議題】${motion}\n${MAGI_MODE.persona_rounds.followup}` : ''}\n\n[あなたのこれまでの意見]\n${own}`
+    + (others ? `\n\n[他の人格のいまの意見]\n${others}` : '')
+    + `\n\n[3人の議論をまとめる Shinya Takeda から、あなたへの問い（第${round}回）]\n${ask}`
+    + '\n\n[この問いに、自分の関心と価値観から答えよ。考えが変わったなら変わったと言い、変わらないなら理由を足す。これまでの意見の繰り返しは避ける]';
+}
+
+// 第round回の前に討議を続けるかを決める判定のsystem。統合人格のカードと入力条件の検査を付ける
+function judgeSystemPrompt({ motion, round, maxRounds, clarification, cards, langNote }) {
+  const prompt = (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds, !!clarification);
+  return withLangNote(withCard({ ...SYNTHESIZER, system_prompt: prompt }, cards, PERSONA_CONTEXT.synth_header).system_prompt
+    + '\n\n' + DEBATE.constraint_rules, langNote);
 }
 
 // 札が読めない発言は推測せず確定する。前回の有効票を使うかはmagiTallyが決める。
@@ -1716,6 +1753,9 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       return { ...p, views: [v] };
     })), signal);
   const opinions = [];
+  // pの他の人格の意見（第2回は初回、第3回以降はいまの考え）
+  const othersText = (p, view) => opinions.filter(o => o.codename !== p.codename)
+    .map(o => `- ${o.name}（${o.codename}）: ${votedText(view(o))}`).join('\n');
   r1.forEach((r, i) => {
     if (r.status === 'fulfilled') { opinions.push(r.value); return; }
     absent(personas[i], 1, r.reason);
@@ -1731,11 +1771,9 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   log('persona_call', 'round2 start');
   await withTimeout(personaTimeoutMs, signal =>
     Promise.all(opinions.map(async (p) => {
-      const others = opinions.filter(o => o.codename !== p.codename)
-        .map(o => `- ${o.name}（${o.codename}）: ${votedText(o.views[0])}`).join('\n');
+      const others = othersText(p, o => o.views[0]);
       if (!others) { if (!newContract) absent(p, 2); return; }
-      // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
-      const dmsg = `${lastUser}${motion ? `\n【共通の議題】${motion}\n${MAGI_MODE.persona_rounds.debate}` : ''}\n\n[あなたの初回意見]\n${votedText(p.views[0])}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
+      const dmsg = rebuttalText(lastUser, motion, votedText(p.views[0]), others);
       try {
         const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
         p.views.push(respond(p, 2, text));
@@ -1752,9 +1790,8 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   let assessment = '', lastRound = opinions.length > 1 ? 2 : 1;
   for (let round = 3; round <= maxRounds && !signal.aborted; round++) {
     if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget'); break; }
-    const judgeSystem = withLangNote(withCard({ ...SYNTHESIZER, system_prompt: (motion ? MAGI_MODE.judge_prompt : DEBATE.system_prompt)(round - 1, maxRounds, !!clarification) }, cards, PERSONA_CONTEXT.synth_header).system_prompt + '\n\n' + DEBATE.constraint_rules, langNote);
     const judgement = await withTimeout(DEBATE.judge_ms, signal => fetchJudgement(upstream, {
-      system: judgeSystem, input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename), allowUser: !!clarification,
+      system: judgeSystemPrompt({ motion, round, maxRounds, clarification, cards, langNote }), input: (motion ? `【共通の議題】${motion}\n` : '') + judgeInput(plainMessages, context, opinions, langNote), active: opinions.map(o => o.codename), allowUser: !!clarification,
     }, signal, log), signal).catch(e => { if (signal.aborted) throw e; log('debate', 'judge', 'timeout'); return null; });
     if (signal.aborted) throw searchFailure('cancelled');
     if (judgement && judgement.assessment) assessment = judgement.assessment;
@@ -1771,12 +1808,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     await withTimeout(personaTimeoutMs, signal =>
       Promise.all(asked.map(async ({ p, ask }) => {
         const own = p.views.map(v => `${viewLabel(v)}: ${votedText(v)}`).join('\n');
-        const others = opinions.filter(o => o.codename !== p.codename)
-          .map(o => `- ${o.name}（${o.codename}）: ${votedText(o.views[o.views.length - 1])}`).join('\n');
-        const qmsg = `${lastUser}${motion ? `\n【共通の議題】${motion}\n${MAGI_MODE.persona_rounds.followup}` : ''}\n\n[あなたのこれまでの意見]\n${own}`
-          + (others ? `\n\n[他の人格のいまの意見]\n${others}` : '')
-          + `\n\n[3人の議論をまとめる Shinya Takeda から、あなたへの問い（第${round}回）]\n${ask}`
-          + '\n\n[この問いに、自分の関心と価値観から答えよ。考えが変わったなら変わったと言い、変わらないなら理由を足す。これまでの意見の繰り返しは避ける]';
+        const qmsg = followupText(lastUser, motion, round, own, othersText(p, o => o.views.at(-1)), ask);
         try {
           const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
           p.views.push(respond(p, round, text, ask));
@@ -1832,11 +1864,13 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   catch (err) { return inputError(err, requestId, cors); }
   const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
-  if (env.MAGI_QA_PLAN) {
-    try {env = await qaBudgetEnv(env, {kind:'chat',text:contentText(plainMessages.at(-1).content),
-      images:contentImages(plainMessages.at(-1).content).map(p=>p.image_url.url),historyMessages:plainMessages.length-1});}
-    catch (error) {return httpError(409,{stage:'evaluation',code:error.message,message:'評価用の送信を停止しました',retryable:false},requestId,cors);}
-  }
+  const qa = await qaGuard(env, () => {
+    const last = plainMessages.at(-1).content;
+    return { kind: 'chat', text: contentText(last), images: contentImages(last).map(p => p.image_url.url), historyMessages: plainMessages.length - 1 };
+  }, { requestId, cors, log }, () => httpError(503, { stage: 'internal', code: 'evaluation_unavailable',
+    message: '評価用の確認を行えませんでした', retryable: true }, requestId, cors));
+  if (qa.response) return qa.response;
+  env = qa.env;
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {

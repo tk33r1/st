@@ -86,7 +86,7 @@ export async function classifyQuery(env, input, signal, log) {
   const started = Date.now();
   if (payload && env[INTENT_CLASSIFY.key] && !signal.aborted) {
     try {
-      if (env.qaReserve) await env.qaReserve('typesafe',payload);
+      if (env.qaReserve) await env.qaReserve('typesafe', payload);
       const res = await fetch(INTENT_CLASSIFY.endpoint, {
         method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env[INTENT_CLASSIFY.key] },
         body: JSON.stringify(payload),

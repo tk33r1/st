@@ -11,7 +11,7 @@ Jevを使う環境には `MAGI_TYPESAFE_API_KEY` をWrangler secretで設定す�
 
 2026-10-17に本人が追加$2の代表案を採用。共通台帳の過去の予約を維持し、累計総額$2.80、OpenAI・Anthropic各$1.20の範囲で実施する。全件評価の再開ではない。
 
-`prepare-magi-representative.mjs`で合成入力・モデル・会社別上限を固定し、`eval-magi-representative-production.mjs --reserve-site` / `--reserve-native`で送信前に共通台帳へ予約する。その後だけ、固定したJSONを一時secret `MAGI_QA_PLAN`へ設定する。`qa-budget.js`は一致する合成入力だけに適用し、各要求を一度だけ受け付け、上流ごとの保守的な費用をD1へ原子的に加算する。通常入力・secret未設定時には適用しない。
+`prepare-magi-representative.mjs`で合成入力・モデル・会社別上限を固定し、`eval-magi-representative-production.mjs --reserve-site` / `--reserve-native`で送信前に共通台帳へ予約する。その後だけ、固定したJSONを一時secret `MAGI_QA_PLAN`へ設定する。`qa-budget.js`は一致する合成入力だけに適用し、各要求を一度だけ受け付け、上流ごとの保守的な費用をD1へ原子的に加算する。通常入力・secret未設定時には適用しない。受付前に止めたときは、チャットも404の③も409（`stage: evaluation`、`code`は`qa_budget_*`）を返す。D1の失敗などガードの判定でないものは、404は`search_unavailable`、チャットは`evaluation_unavailable`の503（再試行可）で、内部のメッセージは応答に出さない。
 
 接続待ちで計画が失効した実機分は、D1で未送信を確認した後だけ`native-plan.json`へ分けて期限を延長する。ケースID・日付・モデル・入力・費用枠を維持し、24時間以内の期限と元の実機ケースの完全一致を予約器で検査する。実機操作器`qa-magi-representative-android.mjs`は予約hash・本番設定済み記録・入力文の完全一致・画像枚数を確認し、観測したSendを1回だけ押す。[2026-10-17の実施結果](代表経路追加評価20261017.md)を参照。
 
