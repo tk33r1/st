@@ -1,5 +1,330 @@
 [
   {
+    "date": "20261018",
+    "title": "2026年10月18日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリホールディングスの会長が、数年以内にロボット接客を導入する考えを示し、店舗DXの方向性が経営トップの発言として示されました。 インド・ムンバイのSky City Mallで2号店が開店したと報じられ、海外での店舗網拡大が都市部で進んでいることが確認できます。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリホールディングスの会長が、数年以内にロボット接客を導入する考えを示し、店舗DXの方向性が経営トップの発言として示されました。",
+      "インド・ムンバイのSky City Mallで2号店が開店したと報じられ、海外での店舗網拡大が都市部で進んでいることが確認できます。",
+      "799円の皿や3Dステッカーなど手に取りやすい商品が話題になっており、SNSでは美容グッズの短尺動画が3万回超の再生を集めました。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリHD会長、数年以内のロボット接客導入に言及　アジア太平洋小売業者大会で",
+        "original_title": "",
+        "source": "日本経済新聞",
+        "source_id": "JP-04",
+        "summary": "アジア太平洋地域の小売業者が集う大会で、ニトリホールディングスの会長が「数年以内にロボット接客を導入する」との見通しを示したと日本経済新聞が報じた。店頭の接客を自動化する構想が、経営トップの口から具体的な時間軸とともに語られた点が注目される。人手不足が続く小売現場で、省人化と接客品質の両立をどう図るかは業界共通の課題であり、同社の方向性を示す発言といえる。",
+        "why_it_matters": "SPAとして店舗運営の効率化を進めるニトリにとって、ロボット接客は人件費や人材確保の制約を緩める有力な手段になりうる。一方で家具・インテリアは試座や相談など対面の提案価値が大きく、ロボットはスタッフ支援や商品案内の補助として位置づけられる可能性が高い。今後はIT投資の回収と顧客体験の両立がどこまで進むかが焦点となる。",
+        "tags": [
+          "ニトリ",
+          "DX",
+          "接客",
+          "小売"
+        ],
+        "search_terms": [
+          "ロボット接客 導入",
+          "retail robot customer service",
+          "ニトリ 会長 発言",
+          "Asia Pacific retail conference"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5UWGprX2pkb2s5VHlLbV9jalcwdjBEakRrODRXbXNFNVdKNFhISlhJV3c1ZHdMWnd0d291NXplLUtLWmtESEVyaUtvVGRXS3RSQW8wMWRsa2R1cWVpSW5Mb2h6OEc4aHZ3dVlQQQ?oc=5",
+        "source_pub_ts": 1792170000
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの799円皿が家族分まとめ買いされる人気に　「料理が映える」「軽いのに高見え」と評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-03",
+        "summary": "ニトリの799円の皿が、家族全員分まとめて購入されるほど好評を集めていると、ねとらぼが伝えた。ネット上では「料理がおしゃれで美味しそうに見える」「軽いのに高見え」「安っぽい感じなし」といった声が寄せられている。低価格ながら食卓の見栄えを高める器として、生活者に支持が広がっている様子がうかがえる。",
+        "why_it_matters": "価格は799円と手に取りやすいが、「高見え」という評価はデザイン面での満足度の高さを示唆している。食器は同じものを複数揃えるほど購入単位が増えるため、家族分の需要を取り込めたことは大きい。ニトリのSPAによる企画力と価格のバランスが、ヒット商品の型を再び示した例といえ、関連アイテムの拡充も検討余地がある。",
+        "tags": [
+          "ニトリ",
+          "食器",
+          "ヒット商品",
+          "SNS"
+        ],
+        "search_terms": [
+          "食器 ヒット 高見え",
+          "tableware hit product Nitori",
+          "低価格 皿 家族分 購入",
+          "affordable plate viral Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE53a05mT2lFQUxhS0FJbV9rZ2EwTXlyaW9tSkxLUEhWTE1HWFp3VEd6aDhrWXF5VXlCUmdFelpyMWNvRU1NVTZ1c1pkZ1ZFZkZqYmp1SlEyNElBQWxEQUptc0kyYjJCYjNlSDRuRXdlR3FUMHFIa2lybmx4clN6dGc?oc=5",
+        "source_pub_ts": 1792209900
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリから3Dステッカーが登場　作る楽しさと飾る楽しさを両立",
+        "original_title": "",
+        "source": "アニメージュプラス",
+        "source_id": "JP-02",
+        "summary": "アニメ情報サイトのアニメージュプラスが、ニトリの3Dステッカーを紹介した。作って楽しめるほか、完成後は飾って楽しめる点が特徴として伝えられている。ステッカーという手軽な雑貨を、工作とインテリア装飾の両面で楽しめる商品として打ち出している点が注目される。",
+        "why_it_matters": "ステッカーという手軽なアイテムは、子どもや趣味層が気軽に試せる入口商品になりうる。作る工程と飾る工程の両方を楽しめる設計は、完成品の写真を共有したくなる動機にもつながる。アニメ系メディアでの紹介は、カルチャー層への認知拡大という点でも示唆に富む。",
+        "tags": [
+          "ニトリ",
+          "ステッカー",
+          "新商品",
+          "カルチャー"
+        ],
+        "search_terms": [
+          "3Dステッカー 新商品",
+          "3D sticker craft kit",
+          "ステッカー 工作 インテリア",
+          "Nitori 3D sticker"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5mQUwyLWdmNFNPTGx5VkJZMzYzTHpOLWllN09DanpxaDRSM0xDaHhYRVVfWTlyVUN3WkExUWlOQmxiNjNIaVNvU3pRTk1TRWZ4eFYxRVNGTWVkSDdfREZjb3NjYWNkOVdJQk9RMjZ0aE55ZVdSNHRqQmVyLTBTWHc?oc=5",
+        "source_pub_ts": 1792224000
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリの「ぷっくり猫シール」がセール価格に　シール帳好きの間で注目",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-05",
+        "summary": "経済メディアのLIMOが、ニトリのぷっくりとした立体感のある猫シールがセール対象になったと紹介した。ボンボンドロップに似た見た目を持つシールとして、シール帳を華やかにしたい人に向けて今が買いどきだと伝えている。値下げを機に、文具・雑貨の購入を検討する層への訴求が強まっている。",
+        "why_it_matters": "値下げによって手に取りやすい価格になったことは、雑貨や文具カテゴリーで購入ハードルを下げる施策として機能しうる。シール帳など趣味性の高い層では、見た目の可愛さが購入動機となるため、価格訴求と組み合わせることで効果が高まる。セール情報を見た目の魅力とセットで伝える手法は、ニトリの文具・雑貨の訴求にも応用できる。",
+        "tags": [
+          "ニトリ",
+          "セール",
+          "文具",
+          "価格"
+        ],
+        "search_terms": [
+          "立体シール 値下げ",
+          "puffy sticker sale Japan",
+          "ぷっくりシール セール",
+          "Nitori stationery price cut"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE1uV0tZRXZsS1ZxNDV0MzA3T3NuVC1WTG5BVGJwZjZqQUY0TVIxV21jNDJ6N0VYV3pnOEVvNy1xeEJESk9xRXktSHZnOGk?oc=5",
+        "source_pub_ts": 1792243800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの調理器具4品をレシピ付きで紹介　「今日のごはん」に迷う日の味方に",
+        "original_title": "",
+        "source": "マイナビ子育て",
+        "source_id": "JP-06",
+        "summary": "子育て情報サイトのマイナビ子育てが、ニトリの便利な調理器具4品を、およねさんのレシピとともに紹介した。献立に迷いがちな日でも使える器具として位置づけられており、毎日の食事づくりを助けるアイテムとして伝えられている。器具の使い方が具体的なレシピで示されることで、購入後のイメージをつかみやすい構成になっている。",
+        "why_it_matters": "器具単体の機能説明ではなく、レシピと組み合わせて提案する手法は、生活者が使用シーンを具体的に想像できる点で購入判断を後押ししやすい。子育て世帯など時短ニーズが高い層には特に響きやすく、売り場や商品ページでのレシピ連動が有効と考えられる。",
+        "tags": [
+          "ニトリ",
+          "調理器具",
+          "レシピ",
+          "子育て"
+        ],
+        "search_terms": [
+          "調理器具 レシピ 提案",
+          "kitchen tools recipe guide",
+          "時短 献立 キッチン用品",
+          "Nitori cooking utensils"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9MT250ckxieG9BMFFYRzFBR1RHTVY4SEszenFoWlo2dXFJT1M4bzJJbzhMQWw4UXdKQ2NLMFl0b2s2YVdkZHlrX1Y1UE5TZl83ZkRN?oc=5",
+        "source_pub_ts": 1792203960
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、インド・ムンバイに2号店　Sky City Mallに出店",
+        "original_title": "Japanese furniture retailer Nitori opens second store in India at Sky City Mall, Mumbai for ₹20 lakh a month | Real Estate News",
+        "source": "Hindustan Times",
+        "source_id": "GL-01",
+        "summary": "Hindustan Timesによると、日本の家具小売大手ニトリがインド国内で2店舗目となる店舗を、ムンバイのSky City Mallに開いた。不動産ニュースとして、月額20ラーク（200万ルピー）の条件で出店したと報じられている。インド市場での店舗網を広げる動きとして注目される内容である。",
+        "why_it_matters": "インドは人口規模と住宅需要の拡大から家具・インテリア市場の成長余地が大きく、ニトリにとって海外展開の重点地域の一つとなりうる。2号店の出店は、単発の進出ではなく都市部での店舗網構築を進める段階に入ったことを示す。SPAとして現地の商品企画や物流をどこまで最適化できるかが、今後の収益性を左右する。",
+        "tags": [
+          "ニトリ",
+          "インド",
+          "海外展開",
+          "店舗"
+        ],
+        "search_terms": [
+          "インド 2号店 出店",
+          "India second store Mumbai",
+          "Nitori international expansion",
+          "家具 小売 海外進出"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMi_wFBVV95cUxNZjEzejBNTlZ0aldDZUpxN05UbF9pOS1YVXoya3FVVzdGdWVaU0xaZWlKNW9waGNJOXMzaFJIaXRYaVNVb1NSdTFJTkU2dEtjdlYzRXJrV25POERnZjQtdnFYRzUtYTNOSzdmaVlDSlJ2SXlsTGEtN2JjODBPQ3pQYnMzX3BaLVFrTVdNdjNBV2lJZms2Vi1fQ2tHS1Vaa3pTMnRuSEVSVmxfMU9yVjdHeU1HcmxBNzloSk5fUURJUmdHaDVIRTJwT1htdl9SY3dtY3NWWkJubmVobzlTYWZxSGU1RTBKSTZObjgwWDB0YzQ5Q1VDRUhxYVJ0MFJhVUXSAYQCQVVfeXFMT1luY1hmLTZhV1dDbUlKQTN1X180RmR5dHR5MVVOZ1V1X3YxTjBJZ2VpMDh5ZVh0YnB4cm5LbWNFTkVVLUFsS0VjbnFNRGJLcV91Sng4dHhYbGVURmtlWVBGaHhlcUNva3BsNnpnTWNFc2dUNjlHRXAxRFpLUW0ydTFwX0Q5MGJKRjUwOHRRZ0c0bk5kWVFOdkhDTmI0WExmVDliS3NmN2lmZ2t1TWQxVlh5XzA5WHh4UGg5LWxXeDMtRm9vSXlUSWNab0VDLWVKT1lRRWQ5am1OSERzRVd0VjVfcGVEX1M2d1FaVVdMNWY5RGV3QVhGQVJUd2plVkJ0Szc3WW4?oc=5",
+        "source_pub_ts": 1792230888
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "TikTokで3.3万回再生　ニトリの美容グッズが「実はめっちゃ優秀」と話題に",
+        "original_title": "",
+        "source": "TikTok（前日投稿）",
+        "source_id": "SNS-06",
+        "summary": "ニトリの美容グッズを紹介する短い動画が、前日投稿の中で3万3千回以上再生された。投稿では「実はめっちゃ優秀」と推す形で美容アイテムが取り上げられている。ハッシュタグには#ヘアアイロンや#ヘアアレンジ、#便利グッズ、#プチプラが付けられており、低価格で使える実用性への関心がうかがえる。",
+        "why_it_matters": "美容・ヘアケア領域は、ニトリが家具・インテリア中心の印象を超えて生活雑貨の購買動機を広げられる分野である。短尺動画では使用シーンや仕上がりの変化が共感を呼びやすく、「知らなかった」という発見型の反応が再生数を押し上げる傾向がある。プチプラ訴求と実用性の提示を一体で見せる発信が、商品力の認知拡大に有効と考えられる。",
+        "tags": [
+          "ニトリ",
+          "TikTok",
+          "美容",
+          "SNS"
+        ],
+        "search_terms": [
+          "美容グッズ 話題 動画",
+          "beauty tool TikTok viral Japan",
+          "ヘアアイロン 便利グッズ",
+          "Nitori beauty goods short video"
+        ],
+        "url": "https://www.tiktok.com/@tantei_cosme/video/7697174236502281490",
+        "source_pub_ts": 1792138041.0
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "UDFグローグーをニトリの収納ケースで飾る使い方に共感　「シリーズ4で全段揃う」",
+        "original_title": "",
+        "source": "X（旧Twitter）",
+        "source_id": "SNS-05",
+        "summary": "フィギュアのUDFグローグー全種を、ニトリの収納ケースで飾っている投稿が94いいねを集めた。別ブランドの3段ケースと迷いつつ、ニトリのケースを選んだ経緯が語られている。次のシリーズが出ればケースの段数が全段分そろうという期待も示されており、飾り方への関心が見える。",
+        "why_it_matters": "コレクション品を収納ケースで展示する使い方は、収納家具が「しまう」だけでなく「見せる」インテリアとしても機能していることを示す。サイズ感が「でかい」と感じられた一方で、段数やシリーズ拡張への期待が語られており、規格の揃いやすさは購買の継続につながりうる。ユーザーの飾り方を商品ページの提案に取り込むことで、コレクター需要を掘り起こせる。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "コレクション",
+          "SNS"
+        ],
+        "search_terms": [
+          "収納ケース 飾り方 コレクション",
+          "figure display storage case Japan",
+          "コレクション 収納 インテリア",
+          "Nitori storage display fans"
+        ],
+        "url": "https://x.com/kana_tokiwa/status/2111288506454802455",
+        "source_pub_ts": 1792234800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリでベッド選んでるみたいで可愛い pic.x.com/CGuAJXComa",
+        "platform": "x",
+        "author": "@Anno_Hirose",
+        "url": "https://x.com/Anno_Hirose/status/2111308875915993109",
+        "likes": 747,
+        "retweets": 19,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:10",
+        "captured_at": "",
+        "text": "ニトリでベッド選んでるみたいで可愛い pic.x.com/CGuAJXComa",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "つ、ついに ベッドの中に… ニトリにハズレなし‼️ pic.x.com/dK2UDdrWKm",
+        "platform": "x",
+        "author": "@aikikiyohisa",
+        "url": "https://x.com/aikikiyohisa/status/2111400431373132242",
+        "likes": 399,
+        "retweets": 28,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:14",
+        "captured_at": "",
+        "text": "つ、ついに ベッドの中に… ニトリにハズレなし‼️ pic.x.com/dK2UDdrWKm",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリでお買い物した🛍 #丁寧な暮らし︎︎︎︎☁ pic.x.com/HG9KUMJqVI",
+        "platform": "x",
+        "author": "@RUBY_UOxOU",
+        "url": "https://x.com/RUBY_UOxOU/status/2111268464929407297",
+        "likes": 330,
+        "retweets": 12,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:30",
+        "captured_at": "",
+        "text": "ニトリでお買い物した🛍 #丁寧な暮らし︎︎︎︎☁ pic.x.com/HG9KUMJqVI",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "カーペット届いて、中開けて敷きましたけど、185×185cmの寸法のやつ買ったし、パッケージにもそう書いてあるのに、どー計っても165cmぐ...",
+        "platform": "x",
+        "author": "@HIROSHI_T_777",
+        "url": "https://x.com/HIROSHI_T_777/status/2111313995131162713",
+        "likes": 94,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:30",
+        "captured_at": "",
+        "text": "カーペット届いて、中開けて敷きましたけど、185×185cmの寸法のやつ買ったし、パッケージにもそう書いてあるのに、どー計っても165cmぐらいしかない💦💦 おかしいから、ニトリオンラインショップに電話して確認してもらってる。 ウレタンだから伸びますって言われたけど、伸びても185にはならない。 pic.x.com/I7TBBXd8Mr",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "UDFグローグー全種はニトリの収納ケースで飾ってる。3段の3coinsのケースと迷ったけど正直でかい…。でもシリーズ4出たら全段揃うから実現...",
+        "platform": "x",
+        "author": "@kana_tokiwa",
+        "url": "https://x.com/kana_tokiwa/status/2111288506454802455",
+        "likes": 94,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:49",
+        "captured_at": "",
+        "text": "UDFグローグー全種はニトリの収納ケースで飾ってる。3段の3coinsのケースと迷ったけど正直でかい…。でもシリーズ4出たら全段揃うから実現して欲しい！ pic.x.com/aCvR0KKGC5",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリの美容グッズって実はめっちゃ優秀なの知ってた！？✨ #ニトリ #ヘアアイロン #ヘアアレンジ #便利グッズ #プチプラ",
+        "platform": "tiktok",
+        "author": "@美容探偵ちゃん🔍【検証のプロ】",
+        "url": "https://www.tiktok.com/@tantei_cosme/video/7697174236502281490",
+        "likes": 293,
+        "retweets": 16,
+        "views": 32700,
+        "comments": 0,
+        "posted_on": "2026-10-16 17:07",
+        "captured_at": "2026-10-17T18:00:22.136487+09:00",
+        "text": "ニトリの美容グッズって実はめっちゃ優秀なの知ってた！？✨ #ニトリ #ヘアアイロン #ヘアアレンジ #便利グッズ #プチプラ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿は、ベッドやカーペット、収納ケース、美容グッズなど幅広いアイテムに関する声が中心である。Xでは「可愛い」「ハズレなし」といった好意的な反応が多く、TikTokでは美容グッズを「実はめっちゃ優秀」と紹介する動画が3万回超の再生を集めた。一方で、カーペットの実寸に疑問を呈する投稿もあり、賛否の両面が見える。",
+    "sns_why_it_matters": "好意的な反応は、ニトリの商品が「選ぶ楽しさ」と「使ってみた満足」の両方を生活者に届けていることを示す。一方、寸法への疑問が公式オンラインショップへの問い合わせに発展した事例は、商品ページの寸法表示や伸縮素材の説明を一層丁寧にする必要性を示唆する。短尺動画では実際の使用シーンが伸びやすいため、提案型の発信との組み合わせが効果的といえる。"
+  },
+  {
     "date": "20261017",
     "title": "2026年10月17日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "真空断熱ポット式コーヒーメーカー、卓上加湿器、人感ファンヒーターなど、冬の暮らしに向けた小型家電の新商品が相次いで登場し、季節商品の品揃えを広げています。 たい焼きクッションが累計490万個を突破し、ニャンポケ着る毛布も再投入されるなど、ユニークな雑貨のヒットとシリーズ展開が続いています。",
