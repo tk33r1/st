@@ -6,6 +6,7 @@ import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, i
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchReader } from '../research.js';
 import { qaBudgetEnv } from '../qa-budget.js';
+import { SHARED } from '../personas.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -1589,6 +1590,24 @@ async function handleReaction(request, env, { requestId, cors, log }) {
 }
 
 // チャットの入力検証。会話処理に入る前に送信量と履歴を確定する。
+function cleanShared(value) {
+  if (value == null) return null;
+  const invalid = () => { throw stageError('bad_request', 'invalid_shared', '共有資料の形式または長さが不正です', { retryable: false }); };
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(k => !['title', 'url', 'text'].includes(k))) invalid();
+  const out = {};
+  for (const [key, limit] of [['title', SHARED.title_max_chars], ['url', SHARED.url_max_chars], ['text', SHARED.text_max_chars]]) {
+    if (typeof value[key] !== 'string' || value[key].length > limit) invalid();
+    out[key] = value[key].replace(new RegExp(LINE_CONTROL_RE.source, 'g'), '').trim();
+  }
+  if (!out.title || !out.text) invalid();
+  if (out.url) {
+    try { const url = new URL(out.url); if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) invalid(); }
+    catch (_) { invalid(); }
+  }
+  return out;
+}
+function sharedNote(shared) { return shared ? SHARED.header + '\n' + JSON.stringify(shared) + '\n【今回の質問】\n' : ''; }
+
 async function readChatInput(request) {
   const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
   let messages = body.messages;
@@ -1616,6 +1635,7 @@ async function readChatInput(request) {
   // 予測には添える前の会話と状況説明を別に渡す（ユーザーの発言に混ぜると、状況説明の回答ルールを予測がなぞる）
   // 出力の言語は状況説明を足す前の会話で決める（状況説明は日本語なので、足した後だと日本語に見える）
   const plainMessages = messages;
+  const shared = cleanShared(body.shared);
   const newContract = body.classification_state === true;
   const factMode = newContract && body.fact_mode === true;
   const langNote = newContract ? null : replyLanguageNote(plainMessages);
@@ -1633,8 +1653,9 @@ async function readChatInput(request) {
     ? typeof body.language_seed === 'string' ? body.language_seed : classifySlice(contentText(plainMessages.find(m => m.role === 'user').content), INTENT_CLASSIFY.language_seed_max_chars)
     : null;
   if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
+  if (shared) messages = messages.map((m, i) => i === messages.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m);
   return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
-    newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
+    shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
 function siteSelectionNote(choice) {
@@ -1862,7 +1883,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  const { messages, plainMessages, context, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {
     const last = plainMessages.at(-1).content;
@@ -1886,7 +1907,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   const originalQuestion = previousClarify && [...plainMessages.slice(0, -2)].reverse().find(m => m.role === 'user');
   const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
     profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
-    seed, replyLanguage, uiLanguage, fallback: langNote, factMode,
+    seed, replyLanguage, uiLanguage, fallback: langNote, factMode, sharedTitle: shared?.title,
     clarification: originalQuestion ? { original_question: classifySlice(contentText(originalQuestion.content), INTENT_CLASSIFY.latest_max_chars),
       questions: previousClarify.questions, prior: { intent: previousClarify.intent, fresh: previousClarify.fresh } } : null,
   }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
@@ -1986,9 +2007,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           return;
         }
         const motionPromise = classification?.magi_candidate ? withTimeout(MAGI_MODE.motion_ms,
-          signal => createMotion(upstream, plainMessages, langNote, signal, log), stop.signal)
+          signal => createMotion(upstream, shared ? messages : plainMessages, langNote, signal, log), stop.signal)
           .catch(() => notVotable('failed')) : null;
-        const lastUser = contentText(messages.at(-1).content);
+        const lastUser = contentText((shared ? plainMessages : messages).at(-1).content);
 
         // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
         // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
@@ -2048,7 +2069,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page,
               research: classification.intent === 'research' && classification.fresh === 'yes',
               replyLanguage: classification.reply_language, ip: requestIP(request), signal: stop.signal, send, log })
-          : await runDiscussion({ upstream, cards, plainMessages, messages, context, langNote, theme,
+          : await runDiscussion({ upstream, cards, plainMessages: shared ? messages : plainMessages, messages, context, langNote, theme,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,

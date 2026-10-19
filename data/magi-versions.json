@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "5.5",
+      "date": "2026-10-20",
+      "changes": {
+        "ja": [
+          "Android版の履歴を端末内のファイルに保存し、容量や件数で古い会話を消さないようにしました。送った画像は元のファイルも保存します。",
+          "Android版の設定から、使用量の確認・全会話の書き出し（画像を除く）・全削除ができます。Androidの自動バックアップには含めません。",
+          "Androidの共有メニューから文章や画像を新しい会話へ取り込めます。共有した記事は資料として読み、続けて質問できます。共有しただけでは送信しません。",
+          "Android版のマイクから音声で入力できます。認識した文章は入力欄に追加し、送信は自分で行います。"
+        ],
+        "en": [
+          "On Android, conversations are stored in app-private files without removing older chats to meet a size or count limit. Original image files are also saved.",
+          "Android Settings shows storage usage and lets you export all chats without images or delete them all. Android automatic backup is disabled.",
+          "Share text or images into a new Android conversation. Shared articles can stay attached for follow-up questions. Sharing does not send a message automatically.",
+          "Use the Android microphone button to dictate into the input field, then choose when to send."
+        ]
+      }
+    },
+    {
       "version": "5.3",
       "date": "2026-10-17",
       "changes": {

@@ -1,0 +1,10 @@
+{
+  "name": "@mozilla/readability",
+  "version": "0.6.0",
+  "source": "https://github.com/mozilla/readability/tree/0.6.0",
+  "license": "Apache-2.0",
+  "sha256": {
+    "Readability.js": "34dcab3d0832d0019f02990eed6b6124e029e8c32b9f0c6f2550544ff8dff174",
+    "LICENSE": "a5b1e8181751ce05b85b7bfaa832b785e87086250a5148e679d17ca9bdcfa958"
+  }
+}

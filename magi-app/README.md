@@ -8,7 +8,8 @@ The AI itself runs entirely server-side. This app is only the chat client; it
 streams from the existing Cloudflare Worker backend (`workers.tk.st/magi2/*`).
 Three personas (MELCHIOR / BALTHASAR / CASPER) deliberate, then a unified
 "Shinya Takeda" answer streams in. Likes / emoji reactions and per-conversation
-history (localStorage) are preserved from the original.
+history are preserved from the original. Web/PWA uses localStorage; Android 5.5
+uses app-private files.
 
 ## Layout
 
@@ -17,6 +18,7 @@ magi-app/
 ├── www/                     ← the app (this is what ships)
 │   ├── index.html           ← full-screen mobile UI
 │   ├── app.js               ← chat, SSE streaming, reactions, history
+│   ├── native-history.js    ← Android file history, migration and image storage
 │   ├── manifest.webmanifest ← PWA manifest
 │   ├── icon-*.png           ← PWA / home-screen icons (192, 512, maskable 512)
 │   └── sw.js                ← service worker (caches shell, never the API)
@@ -127,6 +129,55 @@ in the Worker and redeploy. For a quick test against any backend you control,
 use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
 ## Release (signed) APK
+
+Version 5.5 / 55 combines B1 history storage with B2 Android share intents and dictation. Shared text is
+placed in a new conversation without sending. Articles use bundled Mozilla
+Readability 0.6.0 (`scripts/vendor-readability.cjs`, recorded SHA-256 and license
+in `www/vendor/`). Shared document text stays with the conversation and is sent
+with subsequent questions; only its title is sent to the classifier.
+
+`MagiSharePlugin` copies up to four incoming content-URI images to app cache and
+queues incoming intents until the screen is ready. The native article reader
+uses OkHttp 4.12.0 with no cookie jar, manually checked redirects (at most three),
+an overall 8-second deadline and a 2MiB limit on the decoded HTTP body. This
+replaces the proposed CapacitorHttp call because its response API cannot enforce
+the size limit while reading. Public HTTP URLs are supported through Android's
+cleartext setting; chat still uses its fixed HTTPS endpoint. Native builds do
+not register the PWA service worker and remove old app-shell registrations.
+
+Speech uses `@capacitor-community/speech-recognition` 7.0.1. The deterministic
+`postinstall` script `scripts/patch-speech.cjs` adds final-result and error events,
+tags events with the recognition session ID, and resolves the stop promise
+in its Android implementation; run it after any install that used
+`--ignore-scripts`. Recognized text is appended only on final results. The device
+language is passed explicitly, with one English fallback for unsupported
+languages. Stopping for a conversation switch disables results immediately;
+events from earlier recognition sessions are ignored. Microphone permission is requested on the first button press. Voice
+may go to the device speech service; it never goes to the MAGI Worker.
+
+Deploy the Worker changes before distributing the APK. See
+[B2 verification](B2実装評価20261020.md) for remaining device checks and the release record.
+
+B1 history storage, included in 5.5, uses pinned official plugins `@capacitor/filesystem`
+8.1.5 and `@capacitor/share` 8.0.3. Android history lives in `Directory.Data/magi/`:
+an index, one JSON per conversation, current state, original images named by
+SHA-256, and migration metadata. Individual JSON files are written to temporary
+files and renamed; a pending journal recovers interrupted batches on startup.
+Migration reads files back before removing the old conversation keys. Failed
+migration keeps localStorage and retries on the next launch. Failed reads after
+migration stop startup rather than overwrite saved conversations.
+
+Android More options → Settings shows storage usage, exports all conversations
+through the system share sheet as JSON without images, and deletes all chats and
+their images after confirmation. Android automatic backup is disabled for the
+whole app. Device replacement requires exporting chats first; image originals
+are excluded from the export. Web/PWA retains its existing storage and menus.
+
+Local B1 regression checks run as part of `test-magi2.mjs`; the mock native UI
+check is `node .github/scripts/test-magi-native-shell.mjs`. Neither calls AI APIs.
+See [B1 implementation record](B1実装評価20261020.md) for coverage and outstanding
+release checks. A separate test application ID must be used for destructive
+fixtures on a physical device; never clear the installed production app.
 
 **Version display must always match the release.** Before every APK build, set the
 same `X.Y` in all four places: `magi-app/package.json` (`X.Y.0`), the

@@ -5,6 +5,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { nativeFilesystemFixture } from './magi-native-filesystem-fixture.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const out = resolve(root, 'workers/.wrangler/magi-b0-browser');
@@ -20,7 +21,7 @@ try {
       if (req.method() === 'POST') posts.push(url.pathname);
       if (url.origin === 'https://tk.st' && url.pathname.startsWith('/magi-app/www/')) {
         const name = url.pathname.slice('/magi-app/www/'.length) || 'index.html';
-        if (!/^[a-z0-9.-]+$/.test(name)) return route.abort();
+        if (!/^(?:[a-z0-9.-]+|vendor\/Readability\.js)$/.test(name)) return route.abort();
         const contentType = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : name.endsWith('.png') ? 'image/png' : 'application/json';
         return route.fulfill({ body: readFileSync(resolve(root, 'magi-app/www', name)), contentType });
       }
@@ -29,12 +30,15 @@ try {
       if (url.pathname === '/magi2/versions') return route.fulfill({ body: readFileSync(resolve(root, 'data/magi-versions.json')), contentType: 'application/json' });
       return route.abort();
     });
+    await context.addInitScript('window.makeNativeFilesystemFixture = ' + nativeFilesystemFixture.toString());
     await context.addInitScript(({ native }) => {
       window.shellCalls = [];
       // 実際のAndroidはregisterPluginではなくPluginsと同期addListenerを注入する。
       if (native) window.Capacitor = {
         isNativePlatform: () => true, getPlatform: () => 'android',
         Plugins: {
+          Filesystem: window.makeNativeFilesystemFixture().fs,
+          Share: { share: async options => { window.sharedExport = options; } },
           App: { addListener(name, callback) { window.nativeBack = callback; return { remove: async () => {} }; }, exitApp: async () => { window.shellCalls.push('exit'); } },
           SystemBars: { setStyle: async options => { window.shellCalls.push(options.style); } },
         },
@@ -85,7 +89,25 @@ try {
     assert.deepEqual(errors, []);
     assert.deepEqual(posts, []);
     if (!native) assert.deepEqual(await page.evaluate(() => window.shellCalls), []);
-    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('magi_saved_sessions')).length), 1);
+    assert.equal(await page.evaluate(() => JSON.parse(safeGet('magi_saved_sessions')).length), 1);
+    if (native) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.locator('#btn-more-agent').click();
+      await page.locator('#btn-settings-agent').click();
+      await page.waitForFunction(() => document.querySelector('#history-storage-status').textContent.includes('MB'));
+      await page.locator('#history-export').click();
+      await page.waitForFunction(() => !!window.sharedExport);
+      assert.match(await page.evaluate(() => window.sharedExport.files[0]), /magi-export.json$/);
+      assert.equal(await page.evaluate(async () => JSON.parse((await Capacitor.Plugins.Filesystem.readFile({ directory: 'CACHE', path: 'magi-export.json' })).data).sessions.length), 1);
+      page.once('dialog', dialog => dialog.accept());
+      await page.locator('#history-clear').click();
+      await page.waitForFunction(() => JSON.parse(safeGet('magi_saved_sessions') || '[]').length === 0 && !document.getElementById('agent-settings-panel'));
+      assert.equal(await page.locator('.agent-splash').count(), 1);
+      assert.equal(await page.evaluate(async () => {
+        try { await Capacitor.Plugins.Filesystem.readFile({ directory: 'CACHE', path: 'magi-export.json' }); return false; }
+        catch (e) { return e.code === 'OS-PLUG-FILE-0008'; }
+      }), true);
+    } else assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
     report.push({ nativeMock: native, savedChat: true, unsentDraft: true, insets: true, pageErrors: errors, aiPosts: posts.length });
     await context.close();
   }

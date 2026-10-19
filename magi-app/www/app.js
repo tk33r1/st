@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '5.3';
+var APP_VERSION = '5.5';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -393,12 +393,53 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function safeParse(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
-function safeGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
-function safeRemove(key) { try { localStorage.removeItem(key); } catch (_) {} }
+var nativeHistory = null;
+var nativeAndroid = !!(window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'android');
+var historyLoading = nativeAndroid;
+var agentShared = null, nativeInput = null, sharedLoading = false;
+function cleanAgentShared(value) {
+  if (!value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
+    || value.title.length > 200 || value.url.length > 2000 || value.text.length > 6000 || !value.title.trim() || !value.text.trim()) return null;
+  if (value.url) { try { if (!/^https?:$/.test(new URL(value.url).protocol)) return null; } catch (_) { return null; } }
+  return { title: value.title, url: value.url, text: value.text };
+}
+function renderSharedDocument() {
+  var tray = document.getElementById('agent-shared-tray'); if (!tray) return;
+  tray.replaceChildren(); tray.hidden = !nativeAndroid || !agentShared;
+  if (tray.hidden) return;
+  var open = document.createElement('button'); open.type = 'button';
+  open.textContent = 'Shared document / 共有資料: ' + agentShared.title + ' (' + agentShared.text.length.toLocaleString() + ')';
+  open.addEventListener('click', function () {
+    var panel = makeAgentPanel('agent-shared-panel', 'Shared document', '<pre class="shared-document-text"></pre>');
+    if (panel) panel.querySelector('pre').textContent = agentShared.title + '\n' + agentShared.url + '\n\n' + agentShared.text;
+  });
+  var remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×'; remove.ariaLabel = 'Remove shared document';
+  remove.addEventListener('click', function () { setSharedDocument(null); });
+  tray.append(open, remove);
+}
+function persistSharedDocument() {
+  if (agentShared) safeStore('magi_current_shared', agentShared); else safeRemove('magi_current_shared');
+  renderSharedDocument();
+}
+function setSharedDocument(value) {
+  agentShared = cleanAgentShared(value);
+  persistSharedDocument(); syncCurrentToSaved();
+}
+function safeGet(key) {
+  if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) return nativeHistory.get(key);
+  try { return localStorage.getItem(key); } catch (_) { return null; }
+}
+function safeRemove(key) {
+  if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) { nativeHistory.remove(key); return; }
+  try { localStorage.removeItem(key); } catch (_) {}
+}
 // 画像サムネを持つ履歴は容量を食う。あふれたら古い保存セッションを捨てて1回だけ再試行する。
 function safeStore(key, val) {
   var str = typeof val === 'string' ? val : JSON.stringify(val);
+  if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) { nativeHistory.set(key, str); return; }
   try { localStorage.setItem(key, str); } catch (_) {
+    // Androidの移行に失敗している間も、古い会話を容量で捨てない。
+    if (nativeAndroid) { announceAgent('Could not save this conversation. Free some device storage and reopen MAGI.'); return; }
     try {
       var ss = safeParse(localStorage.getItem('magi_saved_sessions'), []);
       while (ss.length > 5) ss.pop();
@@ -502,8 +543,8 @@ function syncCurrentToSaved() {
     currentSessionId = 'session_' + Date.now();
     safeStore('magi_current_session_id', currentSessionId);
   }
-  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage) });
-  if (sessions.length > 50) sessions.pop();
+  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage), ...(nativeAndroid && agentShared ? { shared: agentShared } : {}) });
+  if (!nativeAndroid && sessions.length > 50) sessions.pop();
   safeStore('magi_saved_sessions', sessions);
   if (document.getElementById('agent-history-list')) renderSavedSessionsList();
 }
@@ -630,6 +671,8 @@ function cleanHistory(history) {
 }
 function initAgent() {
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
+  agentShared = nativeAndroid ? cleanAgentShared(safeParse(safeGet('magi_current_shared'), null)) : null;
+  renderSharedDocument();
   setAgentTitle(safeGet('magi_current_title') || '');
   if (agentHistory && agentHistory.length > 0) renderHistoryToLog(agentHistory);
   else showSplashIfEmpty();
@@ -644,6 +687,8 @@ function dropAgentRequest() {
 }
 function resetAgent() {
   dropAgentRequest();
+  if (nativeInput) nativeInput.stopVoice();
+  sharedLoading = false; agentShared = null; persistSharedDocument();
   archiveCurrentHistory();
   agentHistory = []; agentBusy = false; agentDead = false; agentClosed = false;
   safeRemove('magi_current_history');
@@ -653,6 +698,7 @@ function resetAgent() {
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   announceAgent('');
   setAgentControlsEnabled(true); agentInput.value = ''; fitAgentInput();
+  if (nativeHistory && nativeHistory.active) attachments.forEach(function (a) { if (a.file) nativeHistory.releaseImage(a.file); });
   attachments = []; attachNotice = ''; renderAttachTray();
   setAgentSuggestion('');
   closeAgentPanels();
@@ -917,13 +963,17 @@ function noticeAttach(msg) {
 }
 async function addAttachments(files) {
   if (agentDead || agentClosed) return;
+  var generation = agentGen;
   var list = Array.prototype.slice.call(files || []).filter(isImageFile);
   if (!list.length) return;
   for (var i = 0; i < list.length; i++) {
     if (attachments.length >= ATTACH_MAX) { noticeAttach('Up to ' + ATTACH_MAX + ' images'); break; }
     try {
       var img = await loadImageFile(list[i]);
-      attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7) });
+      if (generation !== agentGen) return;
+      var original = nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
+      if (generation !== agentGen) { if (original) nativeHistory.releaseImage(original); return; }
+      attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
       renderAttachTray();
     } catch (_) { noticeAttach('Could not read that image'); }
   }
@@ -932,7 +982,7 @@ async function addAttachments(files) {
 function userContentHTML(content) {
   if (typeof content === 'string') return esc(content);
   var imgs = contentImages(content).map(function (p) {
-    return '<img src="' + p.image_url.url + '" alt="Attached image" loading="lazy">';
+    return '<img src="' + esc(p.image_url.url) + '"' + (nativeAndroid && p.file ? ' data-original="' + esc(p.file) + '" role="button" tabindex="0" aria-label="Open original image"' : '') + ' alt="Attached image" loading="lazy">';
   }).join('');
   return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + esc(contentText(content));
 }
@@ -941,7 +991,9 @@ attachBtn.addEventListener('click', function () { attachFile.click(); });
 attachFile.addEventListener('change', function () { addAttachments(attachFile.files); attachFile.value = ''; });
 attachTray.addEventListener('click', function (e) {
   var x = e.target.closest('.attach-x'); if (!x) return;
-  attachments.splice(Number(x.dataset.i), 1); renderAttachTray();
+  var removed = attachments.splice(Number(x.dataset.i), 1)[0];
+  if (removed && removed.file && nativeHistory && nativeHistory.active && !attachments.some(function (a) { return a.file === removed.file; })) nativeHistory.releaseImage(removed.file);
+  renderAttachTray();
 });
 // 画像はクリップボードからの貼り付けでも添付できる
 agentInput.addEventListener('paste', function (e) {
@@ -987,7 +1039,7 @@ function prepareAgentMessages(history, lastContent) {
     const kept = [];
     for (const part of m.content) {
       if (part.type !== 'image_url') kept.push(part);
-      else if (remaining > 0) { kept.push(part); remaining--; }
+      else if (remaining > 0) { var imagePart = Object.assign({}, part); delete imagePart.file; kept.push(imagePart); remaining--; }
     }
     // 画像だけだった古い質問も、会話上の位置は残す。
     m.content = kept.length ? kept : '[Earlier images omitted]';
@@ -1011,7 +1063,8 @@ function agentStop() {
 }
 
 async function agentSend() {
-  if (agentBusy || agentDead || agentClosed) return;
+  if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
+  if (nativeInput) nativeInput.stopVoice().catch(function () {});
   var draftText = agentInput.value;
   var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
@@ -1025,7 +1078,9 @@ async function agentSend() {
   // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）
   var partsOf = function (key) {
     return (text ? [{ type: 'text', text: text }] : []).concat(atts.map(function (a) {
-      return { type: 'image_url', image_url: { url: a[key] } };
+      var part = { type: 'image_url', image_url: { url: a[key] } };
+      if (key === 'thumb' && a.file) part.file = a.file;
+      return part;
     }));
   };
   var sendContent = atts.length ? partsOf('url') : text;
@@ -1092,7 +1147,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true))),
+      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {})),
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -1222,6 +1277,7 @@ async function agentSend() {
     setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
+    if (nativeHistory && nativeHistory.active && !agentInput.value) atts.forEach(function (a) { if (a.file) nativeHistory.retainImage(a.file); });
     var last = agentHistory[agentHistory.length - 1];
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
@@ -1397,7 +1453,7 @@ agentLog.addEventListener('click', function (e) {
 document.addEventListener('click', function (e) { if (!e.target.closest('.reaction-bar')) closeEmojiPops(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel'];
 function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); }); }
 function makeAgentPanel(id, title, bodyHTML) {
   if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
@@ -1455,7 +1511,11 @@ function loadSavedSession(id) {
   if (!session) return;
   dropAgentRequest();
   agentBusy = false;
+  if (nativeInput) nativeInput.stopVoice().catch(function () {});
+  sharedLoading = false;
   agentHistory = cleanHistory(session.history);
+  agentShared = nativeAndroid ? cleanAgentShared(session.shared) : null;
+  persistSharedDocument();
   safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
   currentSessionId = session.id;
@@ -1467,7 +1527,7 @@ function loadSavedSession(id) {
   updateAgentActionButtons();
 }
 function deleteSavedSession(id) {
-  if (currentSessionId === id) archiveCurrentHistory();
+  if (currentSessionId === id) resetAgent();
   var sessions = safeParse(safeGet('magi_saved_sessions'), []);
   sessions = sessions.filter(function (s) { return s.id !== id; });
   safeStore('magi_saved_sessions', sessions);
@@ -1559,7 +1619,83 @@ function showInfoPanel() {
   var list = panel.querySelector('.agent-privacy-list');
   renderAgentPrivacy(list, 'en', undefined);
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
+  if (nativeAndroid) {
+    var nativeNote = document.createElement('p');
+    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers.';
+    panel.querySelector('.agent-panel-body').appendChild(nativeNote);
+  }
 }
+
+// 設定はAndroidだけ。後続B2〜B4の権限・ウィジェットは対応する版で足す。
+async function showNativeSettings() {
+  if (!nativeAndroid) return;
+  var ja = document.documentElement.lang === 'ja';
+  var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
+    '<p id="history-storage-status" role="status">Loading…</p>'
+    + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
+    + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
+    + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>');
+  if (!panel) return;
+  var status = panel.querySelector('#history-storage-status');
+  var buttons = panel.querySelectorAll('.agent-panel-body button');
+  if (!nativeHistory || !nativeHistory.active) {
+    status.textContent = '履歴の移し替えは未完了です。空き容量を確かめ、アプリを開き直してください。既存の会話は残しています。';
+    buttons.forEach(function (b) { b.disabled = true; }); return;
+  }
+  async function refresh() {
+    var bytes = await nativeHistory.usage();
+    if (panel.isConnected) status.textContent = 'Storage / 使用量: ' + (bytes / 1048576).toFixed(2) + ' MB';
+  }
+  async function action(task) {
+    buttons.forEach(function (b) { b.disabled = true; });
+    try { await task(); }
+    catch (_) { status.textContent = '操作を完了できませんでした。空き容量を確かめて再試行してください。'; }
+    finally { buttons.forEach(function (b) { b.disabled = false; }); }
+  }
+  panel.querySelector('#history-export').addEventListener('click', function () {
+    action(async function () {
+      if (agentBusy) { status.textContent = '回答が終わってから書き出してください。'; return; }
+      syncCurrentToSaved();
+      var payload = await nativeHistory.exportData();
+      var fs = window.Capacitor.Plugins.Filesystem, share = window.Capacitor.Plugins.Share;
+      var path = 'magi-export.json';
+      // Share公式プラグインで渡せるcache領域。毎回同じファイルを置き換える。
+      await fs.writeFile({ directory: 'CACHE', path: path, encoding: 'utf8', data: JSON.stringify(payload), recursive: true });
+      var uri = (await fs.getUri({ directory: 'CACHE', path: path })).uri;
+      // 共有先が非同期に読む場合に備え、直後には消さない。次の書き出しで置き換える。
+      await share.share({ title: 'MAGI conversations', files: [uri], dialogTitle: 'Export MAGI conversations' });
+      await refresh();
+    });
+  });
+  panel.querySelector('#history-clear').addEventListener('click', function () {
+    action(async function () {
+      if (agentBusy) { status.textContent = '回答を停止してから削除してください。'; return; }
+      if (!window.confirm('すべての会話と保存画像を削除します。元には戻せません。Delete all conversations and images?')) return;
+      try { await window.Capacitor.Plugins.Filesystem.deleteFile({ directory: 'CACHE', path: 'magi-export.json' }); }
+      catch (error) { if (error.code !== 'OS-PLUG-FILE-0008' && error.code !== 'ENOENT') throw error; }
+      await nativeHistory.clear();
+      resetAgent();
+      await nativeHistory.flush();
+    });
+  });
+  try { await refresh(); } catch (_) { status.textContent = '使用量を読み込めませんでした。保存状態を確認してください。'; }
+}
+
+async function openOriginalImage(target) {
+  if (!nativeHistory || !nativeHistory.active) return;
+  try {
+    var uri = await nativeHistory.imageUri(target.dataset.original);
+    var panel = makeAgentPanel('agent-image-panel', 'Original image', '<img alt="Original attachment" style="max-width:100%;height:auto">');
+    if (panel) panel.querySelector('img').src = window.Capacitor.convertFileSrc(uri);
+  } catch (_) { announceAgent('Could not open the original image.'); }
+}
+agentLog.addEventListener('click', function (event) {
+  var image = event.target.closest('[data-original]');
+  if (image) openOriginalImage(image);
+});
+agentLog.addEventListener('keydown', function (event) {
+  if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-original]')) { event.preventDefault(); openOriginalImage(event.target); }
+});
 
 // ---- Export / share ---------------------------------------------------------
 function updateAgentActionButtons() {
@@ -1664,8 +1800,16 @@ document.getElementById('btn-theme').addEventListener('click', function () {
 });
 
 // service worker (PWA)
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !nativeAndroid) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
+}
+if ('serviceWorker' in navigator && nativeAndroid) {
+  // APKのwwwを毎回使う。同版候補の上書きでもPWAキャッシュを引き継がない。
+  navigator.serviceWorker.getRegistrations().then(function (registrations) {
+    return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
+  }).then(function () { return caches.keys(); }).then(function (keys) {
+    return Promise.all(keys.filter(function (key) { return key.indexOf('magi-shell-') === 0; }).map(function (key) { return caches.delete(key); }));
+  }).catch(function () {});
 }
 
 // APP_UPDATE_BEGIN
@@ -1711,7 +1855,65 @@ async function checkAppUpdate() {
 }
 // APP_UPDATE_END
 
-initAgent();
+async function initNativeInputs() {
+  if (!nativeAndroid || !window.MagiNativeInput) return;
+  var cap = window.Capacitor, voice = document.getElementById('agent-voice');
+  if (!cap.Plugins.MagiShare && !cap.Plugins.SpeechRecognition) return;
+  if (cap.Plugins.MagiShare && AGENT_PRIVACY_FEATURES.indexOf('share') < 0) AGENT_PRIVACY_FEATURES.push('share');
+  nativeInput = window.MagiNativeInput.create({ cap: cap,
+    generation: function () { return agentGen; },
+    beginShare: function () { syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent('Reading shared data… / 共有された内容を読み込み中…'); },
+    endShare: function (token) {
+      if (token !== agentGen) return;
+      sharedLoading = false;
+      if (agentStatusEl.textContent === 'Reading shared data… / 共有された内容を読み込み中…') announceAgent('Shared content is ready. / 共有された内容を入力しました。');
+    },
+    setDraft: function (text) { agentInput.value = text; fitAgentInput(); },
+    setShared: setSharedDocument,
+    attach: addAttachments,
+    notice: announceAgent,
+    appendDraft: function (text) { agentInput.value += (agentInput.value && text ? '\n' : '') + text; fitAgentInput(); },
+    interim: function (text) { document.getElementById('agent-voice-interim').textContent = text; },
+    voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? 'Stop voice input' : 'Voice input'; }
+  });
+  await nativeInput.init();
+  document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.stopVoice().catch(function () {}); });
+  if (cap.Plugins.SpeechRecognition) {
+    voice.hidden = false;
+    voice.addEventListener('click', function () {
+      if (!agentBusy && !agentDead && !agentClosed && !sharedLoading) nativeInput.startVoice();
+    });
+  }
+}
+async function initHistoryStorage() {
+  if (!nativeAndroid) { initAgent(); return; }
+  var appRoot = document.getElementById('app');
+  appRoot.inert = true;
+  announceAgent('Opening saved conversations…');
+  try {
+    var fs = window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+    if (!fs || !window.MagiNativeHistory) throw new Error('history_plugin_unavailable');
+    nativeHistory = window.MagiNativeHistory.create({
+      fs: fs, legacy: localStorage, cleanHistory: cleanHistory,
+      onError: function () { announceAgent('履歴を保存できませんでした。空き容量を確かめ、アプリを開き直してください。既存の会話は削除していません。'); }
+    });
+    var migrated = await nativeHistory.init();
+    currentSessionId = safeGet('magi_current_session_id') || null;
+    agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
+    agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+    initAgent();
+    historyLoading = false; appRoot.inert = false;
+    if (migrated) announceAgent('');
+    var settings = document.getElementById('btn-settings-agent');
+    if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
+    if (!migrated) announceAgent('履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
+    initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
+  } catch (_) {
+    // 移行済みファイルが読めないときは、新規データで上書きしない。
+    announceAgent('保存した履歴を開けませんでした。アプリを開き直してください。');
+  }
+}
+initHistoryStorage();
 checkAppUpdate();
 if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
 

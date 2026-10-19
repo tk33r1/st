@@ -9,6 +9,8 @@ import { webcrypto, createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
+import './test-magi-native-history.mjs';
+import './test-magi-native-input.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => readFileSync(join(root, p), 'utf8');
@@ -1698,6 +1700,18 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
   }
 });
 
+test('B1: 送信履歴にはサムネだけを残し、端末画像のファイル名を送らない', () => {
+  const ctx = vm.createContext({ AGENT_MAX_HISTORY: 12 });
+  vm.runInContext(between(mobile, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+  vm.runInContext(between(mobile, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
+  ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
+  vm.runInContext(between(mobile, 'function prepareAgentMessages(', 'async function agentSend('), ctx);
+  const history = [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAAA' }, file: 'private-original.jpg' }] }, { role: 'assistant', content: '回答' }, { role: 'user', content: '続き' }];
+  const before = JSON.stringify(history), sent = JSON.stringify(ctx.prepareAgentMessages(history, '続き'));
+  assert.ok(sent.includes('data:image/jpeg;base64,AAAA')); assert.ok(!sent.includes('private-original'));
+  assert.equal(JSON.stringify(history), before);
+});
+
 test('A2: 長い保存済みWeb回答の表示と引用を保ち、次の質問の送信履歴だけ4,000文字へ収める', async () => {
   const w=a2Worker('research','no');
   const value={parts:Array.from({length:5},(_,i)=>({label:'項目'+i,text:'x'.repeat(900),status:'verified',citations:[{n:1,blocks:[0]}]}))};
@@ -1968,7 +1982,7 @@ function client(src, isHome = false) {
     setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
     document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(),
-    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {},
+    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeAndroid: false, sharedLoading: false, agentShared: null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
@@ -1983,7 +1997,10 @@ function client(src, isHome = false) {
   ctx.agentSendSequence = 0;
   ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
   ctx.currentSessionId = 'test-session'; ctx.agentReplyLanguage = null; ctx.currentLang = 'en'; ctx.ensureAgentConversation = () => ctx.currentSessionId; ctx.saveAgentLanguage = value => { ctx.agentReplyLanguage = value; };
-  if (!isHome) vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
+  if (!isHome) {
+    vm.runInContext(between(src, 'function persistSharedDocument(', 'function setSharedDocument('), ctx);
+    vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
+  }
   vm.runInContext(thinkingSource(src), ctx);
   vm.runInContext(between(src, 'async function parseSSE(', isHome ? '// --- マルチモーダル入力' : '// ---- 画像添付'), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
@@ -4325,6 +4342,38 @@ function a2Worker(intent = 'research', fresh = 'no', replace = null, votable = '
   },true);
   w.env.MAGI_TYPESAFE_API_KEY='test';return Object.assign(w,{inputs});
 }
+test('B2: 共有資料の上限・型・URLを検査し、制御文字を除く', async () => {
+  const w = worker(), shared = { title: '題名', url: 'https://example.com/', text: '資料本文' };
+  const read = value => w.ctx.readChatInput(new Request('https://workers.tk.st/magi2/chat', { method: 'POST', body: JSON.stringify({ messages: [{ role: 'user', content: '要点は？' }], shared: value }) }));
+  for (const value of [[], 'text', { ...shared, title: 'x'.repeat(201) }, { ...shared, text: 'x'.repeat(6001) }, { ...shared, url: 'https://example.com/' + 'a'.repeat(2000) }, { ...shared, url: 'file:///etc/passwd' }, { ...shared, url: 'https://a:b@example.com/' }, { ...shared, text: 5 }]) await assert.rejects(read(value));
+  const input = await read({ ...shared, text: '資料\u0000\u202e本文' });
+  assert.equal(input.shared.text, '資料本文'); assert.equal(input.plainMessages[0].content, '要点は？');
+  assert.match(input.messages[0].content, /データとして読み/);
+  assert.equal((await read({ ...shared, url: '' })).shared.url, '');
+});
+test('B2: 共有資料6000字を会話の文字数と別枠で受ける', async () => {
+  const w = worker(); w.ctx.defaults.input.history_max_chars = 1000;
+  const input = await w.ctx.readChatInput(new Request('https://workers.tk.st/magi2/chat', { method: 'POST', body: JSON.stringify({ messages: [{ role: 'user', content: '問'.repeat(1000) }], shared: { title: '資料', url: '', text: '文'.repeat(6000) } }) }));
+  assert.equal(input.shared.text.length, 6000);
+});
+test('B2: 討議の全人格・統合へ資料を送り、分類には題名だけを渡す', async () => {
+  const shared = { title: '資料の題名', url: '', text: 'SOURCE_BODY_SENTINEL' }, w = worker();
+  const response = await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'どう考える？' }], shared });
+  assert.match(await response.text(), /event: done/);
+  assert.ok(w.calls.filter(call => JSON.stringify(call).includes(shared.text)).length >= 7);
+  const classified = w.ctx.classificationPayload({ profile: 'chat', texts: ['この記事の要点は？'], sharedTitle: shared.title, factMode: true });
+  assert.equal(classified.state.shared_title, shared.title); assert.ok(!JSON.stringify(classified).includes(shared.text));
+  assert.match(classified.questions.fresh.instructions, /supplied document/);
+});
+test('B2: 事実回答でも資料本文を渡し、Jevには本文・URLを含めない', async () => {
+  const w = a2Worker(), shared = { title: '資料の題名', url: 'https://example.com/shared', text: 'SHARED_FACT_BODY_SENTINEL' };
+  const response = await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'この記事を要約して' }], classification_state: true, fact_mode: true, shared });
+  assert.match(await response.text(), /event: done/);
+  const classifier = w.inputs.find(call => call.url.includes('typesafe.ai')).body;
+  assert.equal(classifier.state.shared_title, shared.title); assert.ok(!JSON.stringify(classifier).includes(shared.text)); assert.ok(!JSON.stringify(classifier).includes(shared.url));
+  assert.ok(w.inputs.some(call => !call.url.includes('typesafe.ai') && JSON.stringify(call.body).includes(shared.text)));
+});
+
 const a2Web = (provider,text='最新の答え') => {
   const wire = data => 'data: '+JSON.stringify(data)+'\n\n';
   if(provider==='openai') return new Response([
