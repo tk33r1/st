@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月20日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261020/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月20日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261020/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261020.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年10月20日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261020.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-favicon.svg">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261020/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年10月20日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。",
+      "url": "https://tk.st/job/retailtechdaily/20261020/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261020.webp",
+      "datePublished": "2026-10-20T08:00:00+09:00",
+      "dateModified": "2026-10-20T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "サプライチェーン・店舗自動化",
+        "店舗DX・次世代決済",
+        "SNS話題・生活者のリアル",
+        "グローバル先端トレンド",
+        "リテールメディア・広告"
+      ],
+      "keywords": [
+        "AI活用",
+        "SNS話題・生活者のリアル",
+        "キャッシュレス",
+        "グローバル先端トレンド",
+        "コード決済",
+        "サプライチェーン・店舗自動化",
+        "ショッパブルTV",
+        "セルフレジ",
+        "ドローン配送",
+        "パーソナライズ",
+        "ヒト型ロボット",
+        "モデル店舗",
+        "ラストワンマイル",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "レジ注文",
+        "万引き対策",
+        "処方薬",
+        "動画広告",
+        "外食DX",
+        "店舗DX・次世代決済",
+        "物流センター",
+        "生活者の声",
+        "省人化",
+        "鉄道連携",
+        "顧客体験"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-6"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261020/#art-7"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261020/#newslist",
+      "name": "2026年10月20日号 掲載ニュース一覧",
+      "numberOfItems": 7,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-1",
+            "position": 1,
+            "headline": "JCペニーが物流センターにヒト型ロボットを本格導入、投資が加速",
+            "description": "米百貨店JCペニーが物流センターへのヒト型ロボット導入を本格化させ、関連投資が急速に拡大していることが明らかになった。人手不足や繁忙期の作業負荷への対応が背景にあるとみられ、物流拠点の自動化が新たな段階に入りつつあることを示している。同社の動きは、倉庫・物流現場における省人化の流れを改めて浮き彫りにしている。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-1",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TWHF6MkJlcWhrUGp5MjA5UDNWaloxQjM4SFZOSXhLVDZraUVlZUpPVjJtNWJlRU9FSlFELVlNaDdVOHQtSzBtdlBZTHNqTU4wTGRfdXJBVENVTzBoaDVLVzd4MVMza1XSAWxBVV95cUxQYlYtdlpWWkVPbUJiM1Fkay1PRXRMblNUaWdpanNOTzNwZmZCQmQ1bkVYNXZOVG52U2gyX1JRcDBJYl9pUkE5dG9URXIzUTBPaWh5OE9OMThoenhMZUloZmNGRi1iWmljQjJOY18?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-10-20T05:00:00+09:00"
+            },
+            "keywords": [
+              "ヒト型ロボット",
+              "物流センター",
+              "省人化"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-2",
+            "position": 2,
+            "headline": "コメダ珈琲店、DXモデル店舗「板橋仲宿店」オープン　レジで注文式に",
+            "description": "コメダ珈琲店が、デジタル技術を活用したDXモデル店舗「コメダ珈琲店 板橋仲宿店」をオープンした。注文方法をレジで行う注文式に切り替えた点が特徴で、店舗運営の効率化と顧客体験の両立を目指す新たな試みとなる。今後の展開に向けた検証の場としても注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-2",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1QQU8zbzJWMWU0ZVBVc05mSnVZdzMybUVScl82OC1FMlpfbElaMmNQcnN2WHhnWG5kc1dCc2diY1hVb0twemkxNGNKUWRENDhr?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "流通ニュース"
+              },
+              "datePublished": "2026-10-19T13:54:00+09:00"
+            },
+            "keywords": [
+              "外食DX",
+              "レジ注文",
+              "モデル店舗"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-3",
+            "position": 3,
+            "headline": "クローガーが処方薬の配送網を拡充、アマゾンはドローン配送を強化",
+            "description": "米大手食品小売のクローガーが処方薬の配送網を拡充する一方、アマゾンはドローン配送をさらに強化する方針を示した。食品・医薬品のラストワンマイルをめぐり、小売業とEC大手がそれぞれ異なるアプローチで顧客の受け取り利便性を高めようとしている構図が浮かび上がる。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-3",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5vTmo5TlpXaDdpeG5PQTRFckdxTWNzTjFMUnJJWHdtWngzRFBJM3VWZFNPTGU2YUFOaGN3Q2d4c2JJMzIzS2RHaG9mdDRnOUlpQ2o4aTBJSWg3Wkl4R2lpZU82NjDSAWpBVV95cUxQQ0hOdjNXc0JJME9TSVJrRVdhcUNVRXVIN2VPU2RRZms1WFlRVXRSZFd4SURKUEFHVUs1bTVlcVZxXzV0NFpTMDJlbFQ0NU12bFhydk5RUWlSOGdmeUh4aFRRdkRHUDBJZUF3?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-10-19T11:01:06+09:00"
+            },
+            "keywords": [
+              "ラストワンマイル",
+              "ドローン配送",
+              "処方薬"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-4",
+            "position": 4,
+            "headline": "セルフレジ導入で万引き増加、「スキャン飛ばし」「重ね打ち」の手口が話題に",
+            "description": "セルフレジ導入後に万引きが増えているとして、「スキャン飛ばし」や「重ね打ち」といった手口が取り上げられた。バレた際の言い訳についても紹介され、無人化・セルフ化が進む店舗での不正対策の難しさが改めて注目を集めている。利用者側のモラルと店舗側の監視・設計のあり方をめぐる議論が広がっている。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-4",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE52R2YtZTVxNkM4T1pBNjlqdGVBS19LMTRLRVNVcnh2dVAtYk9RMDlXLVA1cnF3YzYyRXNYUFB3Y2JCWEZGVGV5NHVTRnJHSUl0eTVtREJ4SEFiLUtENWRhelRqWFJXOE1jR05mRWkwVlNyUGVYTHN30gF3QVVfeXFMTnZHZi1lNXE2QzhPWkE2OWp0ZUFLX0sxNEtFU1VyeHZ1UC1iT1EwOVctUDVycXdjNjJFc1hQUHdjYkJYRkZUZXk0dVNGckdJSXR5NW1EQnhIQWItS0Q1ZGF6VGpYUlc4TWNHTmZFaTBWU3JQZVhMc3c?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ｄメニューニュース"
+              },
+              "datePublished": "2026-10-19T10:57:00+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "万引き対策",
+              "生活者の声"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-5",
+            "position": 5,
+            "headline": "ビックカメラ、JR東日本のコード決済「teppay」を全店舗で導入",
+            "description": "ビックカメラは、JR東日本の新しいコード決済サービス「teppay」を10月20日から導入し、全店舗で利用可能にすると発表した。鉄道事業者の決済基盤を小売店舗の支払い手段として広げる動きで、交通系サービスと店舗決済の連携が進むことを示している。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-5",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9wUF9ORzVpbHUzQ2lOVXV4Y0owcHpQbHZvUHUzY2ZRbXE5VjQzZ2xMUzI4SkIzRmVIc2w3WmkxQjl4VkdwUUYxOVk1WTNnS0JqTWgw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-10-19T06:01:48+09:00"
+            },
+            "keywords": [
+              "コード決済",
+              "キャッシュレス",
+              "鉄道連携"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-6",
+            "position": 6,
+            "headline": "ライブセッション：NewAgeはAIを顧客体験全体でどう活用しているか",
+            "description": "米Modern Retailのライブセッションで、NewAgeがAIを顧客接点の全体にわたってどのように活用しているかが取り上げられる。商品発見から購入、その後の関係構築まで、各段階でのAI活用の実態が紹介されるとみられ、ブランドのデジタル施策を考える実務者にとって参考になる内容だ。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-6",
+            "articleSection": "グローバル先端トレンド",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNNGtBOElHYVM1NlB4ZHo0Z3NfS0JWbkNtLTZkWk5yWjVBa2lzM1MxSkdWVmhheWVhMTE0dm1HckpIOFBndkstRXhCT3JBTHFsWVowWm5yYjBYZTF4YXVRbXhlaUppZHFTWWZWalktSkFCZGtHVzB1UktqYzlFMHdFV1dzaDhvZFhvanJnTjM0Z2RwT0R5MHZycg?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Modern Retail"
+              },
+              "datePublished": "2026-10-19T23:12:10+09:00"
+            },
+            "keywords": [
+              "AI活用",
+              "顧客体験",
+              "パーソナライズ"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261020/#art-7",
+            "position": 7,
+            "headline": "NBCユニバーサルのショッパブルTV事業、『Traitors』『Love Island USA』効果で伸長",
+            "description": "NBCユニバーサルのショッパブルTV（番組視聴中に商品を購入できる仕組み）事業が、『Traitors』や『Love Island USA』といった人気番組によって伸びていることが報じられた。番組の視聴熱が購買行動に直結する動きで、コンテンツと広告・購買を結びつけるリテールメディアの新たな形を示している。",
+            "url": "https://tk.st/job/retailtechdaily/20261020/#art-7",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-20T08:00:00+09:00",
+            "dateModified": "2026-10-20T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261020/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxNX25Ub2hCUVMxTENOX1lPQTBDODZweUp5cXd2QTM5M0xMV2ViMGx0TlZEVnZoa1NGWTdjWmJpaXFGZzVBY1RZcUlRTFNEUEphTFM0el9kcWZKUDlXZkd6V1VxUHlQaERCVG42R1RTODVMeGYtTy1JQWs1NEc0UHhpZXFMSG8wUVFuRDdxeDltblhqUURqVkNNdDU0Q0JsbXVUc1lJQnJfTlN4Ui0yYUc5UEwxQzFudExFODNxNHVvbmthakJucVZ6c0dEbk9sRElpTGNDUA?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Modern Retail"
+              },
+              "datePublished": "2026-10-19T13:00:53+09:00"
+            },
+            "keywords": [
+              "ショッパブルTV",
+              "リテールメディア",
+              "動画広告"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261020/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月20日号",
+          "item": "https://tk.st/job/retailtechdaily/20261020/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月20日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月20日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月20日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約4分 / 2,444字
+          </span>
+          <span class="stat">全 7 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。</li><li>セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。</li><li>決済・配送・メディアの接点が広がっている。ビックカメラは鉄道系コード決済を全店で導入し、クローガーとアマゾンは処方薬やドローン配送を強化、NBCユニバーサルは番組視聴と購買を結びつけている。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">JCペニーが物流センターにヒト型ロボットを本格導入、投資が加速</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">コメダ珈琲店、DXモデル店舗「板橋仲宿店」オープン　レジで注文式に</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">クローガーが処方薬の配送網を拡充、アマゾンはドローン配送を強化</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・生活者のリアル</span></span>
+              <span class="qi-title">セルフレジ導入で万引き増加、「スキャン飛ばし」「重ね打ち」の手口が話題に</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">ビックカメラ、JR東日本のコード決済「teppay」を全店舗で導入</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">グローバル先端トレンド</span></span>
+              <span class="qi-title">ライブセッション：NewAgeはAIを顧客体験全体でどう活用しているか</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-7" class="qi-link">
+            <span class="qi-num">07</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">NBCユニバーサルのショッパブルTV事業、『Traitors』『Love Island USA』効果で伸長</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">7 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">7</strong> / 7</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">7</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">5</span></button><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">2</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="サプライチェーン・店舗自動化" aria-pressed="false">サプライチェーン・店舗自動化 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・生活者のリアル" aria-pressed="false">SNS話題・生活者のリアル <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="グローバル先端トレンド" aria-pressed="false">グローバル先端トレンド <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="リテールメディア・広告" aria-pressed="false">リテールメディア・広告 <span class="chip-count">1</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="JCペニーが物流センターにヒト型ロボットを本格導入、投資が加速" data-share-takeaway="ヒト型ロボットは従来の専用自動化機器と異なり、既存の作業スペースや人の作業工程をそのまま活かせる点が強みとされる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-1">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T05:00:00+09:00" title="出典の公開日時">公開 2026.10.20 05:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TWHF6MkJlcWhrUGp5MjA5UDNWaloxQjM4SFZOSXhLVDZraUVlZUpPVjJtNWJlRU9FSlFELVlNaDdVOHQtSzBtdlBZTHNqTU4wTGRfdXJBVENVTzBoaDVLVzd4MVMza1XSAWxBVV95cUxQYlYtdlpWWkVPbUJiM1Fkay1PRXRMblNUaWdpanNOTzNwZmZCQmQ1bkVYNXZOVG52U2gyX1JRcDBJYl9pUkE5dG9URXIzUTBPaWh5OE9OMThoenhMZUloZmNGRi1iWmljQjJOY18?oc=5" target="_blank" rel="noopener noreferrer">JCペニーが物流センターにヒト型ロボットを本格導入、投資が加速<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>米百貨店JCペニーが物流センターへのヒト型ロボット導入を本格化させ、関連投資が急速に拡大していることが明らかになった。人手不足や繁忙期の作業負荷への対応が背景にあるとみられ、物流拠点の自動化が新たな段階に入りつつあることを示している。同社の動きは、倉庫・物流現場における<strong class="kw-scan">省人化</strong>の流れを改めて浮き彫りにしている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">ヒト型ロボットは従来の専用自動化機器と異なり、既存の作業スペースや人の作業工程をそのまま活かせる点が強みとされる。</p>
+              </div>
+              <p class="wim-detail">国内でも物流センターの人手不足が深刻化するなか、導入の成否を分けるのは機器そのものより、現場の作業設計と既存WMSとの連携だ。小売企業は投資判断の前に、どの工程を置き換えるかを明確にする必要がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%92%E3%83%88%E5%9E%8B%E3%83%AD%E3%83%9C%E3%83%83%E3%83%88">#ヒト型ロボット</a><button type="button" class="topic-watch-btn" data-watch-topic="ヒト型ロボット" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%89%A9%E6%B5%81%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC">#物流センター</a><button type="button" class="topic-watch-btn" data-watch-topic="物流センター" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%9C%81%E4%BA%BA%E5%8C%96">#省人化</a><button type="button" class="topic-watch-btn" data-watch-topic="省人化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TWHF6MkJlcWhrUGp5MjA5UDNWaloxQjM4SFZOSXhLVDZraUVlZUpPVjJtNWJlRU9FSlFELVlNaDdVOHQtSzBtdlBZTHNqTU4wTGRfdXJBVENVTzBoaDVLVzd4MVMza1XSAWxBVV95cUxQYlYtdlpWWkVPbUJiM1Fkay1PRXRMblNUaWdpanNOTzNwZmZCQmQ1bkVYNXZOVG52U2gyX1JRcDBJYl9pUkE5dG9URXIzUTBPaWh5OE9OMThoenhMZUloZmNGRi1iWmljQjJOY18?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="コメダ珈琲店、DXモデル店舗「板橋仲宿店」オープン　レジで注文式に" data-share-takeaway="喫茶店業態でもレジ注文式とデジタル活用を組み合わせることで、接客の役割を注文受付から提供・おもてなしへシフトできる可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-2">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">流通ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-19T13:54:00+09:00" title="出典の公開日時">公開 2026.10.19 13:54 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1QQU8zbzJWMWU0ZVBVc05mSnVZdzMybUVScl82OC1FMlpfbElaMmNQcnN2WHhnWG5kc1dCc2diY1hVb0twemkxNGNKUWRENDhr?oc=5" target="_blank" rel="noopener noreferrer">コメダ珈琲店、DXモデル店舗「板橋仲宿店」オープン　レジで注文式に<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>コメダ珈琲店が、デジタル技術を活用したDXモデル店舗「コメダ珈琲店 板橋仲宿店」をオープンした。注文方法をレジで行う注文式に切り替えた点が特徴で、店舗運営の効率化と顧客体験の両立を目指す新たな試みとなる。今後の展開に向けた検証の場としても注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">喫茶店業態でもレジ注文式とデジタル活用を組み合わせることで、接客の役割を注文受付から提供・おもてなしへシフトできる可能性がある。</p>
+              </div>
+              <p class="wim-detail">ピーク時のレジ混雑や人手配置の課題に対して、どこまで省力化と満足度が両立できるかが焦点だ。外食チェーンのDXは、店舗ごとの実験結果をどう標準化できるかが横展開の鍵になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%A4%96%E9%A3%9FDX">#外食DX</a><button type="button" class="topic-watch-btn" data-watch-topic="外食DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AC%E3%82%B8%E6%B3%A8%E6%96%87">#レジ注文</a><button type="button" class="topic-watch-btn" data-watch-topic="レジ注文" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%A2%E3%83%87%E3%83%AB%E5%BA%97%E8%88%97">#モデル店舗</a><button type="button" class="topic-watch-btn" data-watch-topic="モデル店舗" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1QQU8zbzJWMWU0ZVBVc05mSnVZdzMybUVScl82OC1FMlpfbElaMmNQcnN2WHhnWG5kc1dCc2diY1hVb0twemkxNGNKUWRENDhr?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="クローガーが処方薬の配送網を拡充、アマゾンはドローン配送を強化" data-share-takeaway="処方薬や日用品の即日配送は、店舗網を持つ小売にとって来店外の新たな顧客接点になる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-3">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-19T11:01:06+09:00" title="出典の公開日時">公開 2026.10.19 11:01 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5vTmo5TlpXaDdpeG5PQTRFckdxTWNzTjFMUnJJWHdtWngzRFBJM3VWZFNPTGU2YUFOaGN3Q2d4c2JJMzIzS2RHaG9mdDRnOUlpQ2o4aTBJSWg3Wkl4R2lpZU82NjDSAWpBVV95cUxQQ0hOdjNXc0JJME9TSVJrRVdhcUNVRXVIN2VPU2RRZms1WFlRVXRSZFd4SURKUEFHVUs1bTVlcVZxXzV0NFpTMDJlbFQ0NU12bFhydk5RUWlSOGdmeUh4aFRRdkRHUDBJZUF3?oc=5" target="_blank" rel="noopener noreferrer">クローガーが処方薬の配送網を拡充、アマゾンはドローン配送を強化<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>米大手食品小売のクローガーが処方薬の配送網を拡充する一方、アマゾンはドローン配送をさらに強化する方針を示した。食品・医薬品のラストワンマイルをめぐり、小売業とEC大手がそれぞれ異なるアプローチで顧客の受け取り利便性を高めようとしている構図が浮かび上がる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">処方薬や日用品の即日配送は、店舗網を持つ小売にとって来店外の新たな顧客接点になる。</p>
+              </div>
+              <p class="wim-detail">一方、ドローンなどの新技術は規制や運用コストの課題も大きく、実用化の範囲は限定的だ。国内の小売企業も、自社店舗網と配送インフラをどう組み合わせるかを早期に検討する必要がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%A9%E3%82%B9%E3%83%88%E3%83%AF%E3%83%B3%E3%83%9E%E3%82%A4%E3%83%AB">#ラストワンマイル</a><button type="button" class="topic-watch-btn" data-watch-topic="ラストワンマイル" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%89%E3%83%AD%E3%83%BC%E3%83%B3%E9%85%8D%E9%80%81">#ドローン配送</a><button type="button" class="topic-watch-btn" data-watch-topic="ドローン配送" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%87%A6%E6%96%B9%E8%96%AC">#処方薬</a><button type="button" class="topic-watch-btn" data-watch-topic="処方薬" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE5vTmo5TlpXaDdpeG5PQTRFckdxTWNzTjFMUnJJWHdtWngzRFBJM3VWZFNPTGU2YUFOaGN3Q2d4c2JJMzIzS2RHaG9mdDRnOUlpQ2o4aTBJSWg3Wkl4R2lpZU82NjDSAWpBVV95cUxQQ0hOdjNXc0JJME9TSVJrRVdhcUNVRXVIN2VPU2RRZms1WFlRVXRSZFd4SURKUEFHVUs1bTVlcVZxXzV0NFpTMDJlbFQ0NU12bFhydk5RUWlSOGdmeUh4aFRRdkRHUDBJZUF3?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジ導入で万引き増加、「スキャン飛ばし」「重ね打ち」の手口が話題に" data-share-takeaway="セルフレジは人件費削減や待ち時間短縮の効果がある一方、スキャン漏れや不正が損失として表れやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-4">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・生活者のリアル" title="このカテゴリで絞り込み">SNS話題・生活者のリアル</button>
+              <span class="source-tag">ｄメニューニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-19T10:57:00+09:00" title="出典の公開日時">公開 2026.10.19 10:57 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE52R2YtZTVxNkM4T1pBNjlqdGVBS19LMTRLRVNVcnh2dVAtYk9RMDlXLVA1cnF3YzYyRXNYUFB3Y2JCWEZGVGV5NHVTRnJHSUl0eTVtREJ4SEFiLUtENWRhelRqWFJXOE1jR05mRWkwVlNyUGVYTHN30gF3QVVfeXFMTnZHZi1lNXE2QzhPWkE2OWp0ZUFLX0sxNEtFU1VyeHZ1UC1iT1EwOVctUDVycXdjNjJFc1hQUHdjYkJYRkZUZXk0dVNGckdJSXR5NW1EQnhIQWItS0Q1ZGF6VGpYUlc4TWNHTmZFaTBWU3JQZVhMc3c?oc=5" target="_blank" rel="noopener noreferrer">セルフレジ導入で万引き増加、「スキャン飛ばし」「重ね打ち」の手口が話題に<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">セルフレジ</strong>導入後に万引きが増えているとして、「スキャン飛ばし」や「重ね打ち」といった手口が取り上げられた。バレた際の言い訳についても紹介され、無人化・セルフ化が進む店舗での不正対策の難しさが改めて注目を集めている。利用者側のモラルと店舗側の監視・設計のあり方をめぐる議論が広がっている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>は人件費削減や待ち時間短縮の効果がある一方、スキャン漏れや不正が損失として表れやすい。</p>
+              </div>
+              <p class="wim-detail">対策は監視強化だけでは顧客体験を損ないやすく、商品重量センサーや映像解析、棚の配置など、不正が起きにくい設計との組み合わせが求められる。運用データを基に損失の傾向を把握することが第一歩になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%B8%87%E5%BC%95%E3%81%8D%E5%AF%BE%E7%AD%96">#万引き対策</a><button type="button" class="topic-watch-btn" data-watch-topic="万引き対策" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E5%A3%B0">#生活者の声</a><button type="button" class="topic-watch-btn" data-watch-topic="生活者の声" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMid0FVX3lxTE52R2YtZTVxNkM4T1pBNjlqdGVBS19LMTRLRVNVcnh2dVAtYk9RMDlXLVA1cnF3YzYyRXNYUFB3Y2JCWEZGVGV5NHVTRnJHSUl0eTVtREJ4SEFiLUtENWRhelRqWFJXOE1jR05mRWkwVlNyUGVYTHN30gF3QVVfeXFMTnZHZi1lNXE2QzhPWkE2OWp0ZUFLX0sxNEtFU1VyeHZ1UC1iT1EwOVctUDVycXdjNjJFc1hQUHdjYkJYRkZUZXk0dVNGckdJSXR5NW1EQnhIQWItS0Q1ZGF6VGpYUlc4TWNHTmZFaTBWU3JQZVhMc3c?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="ビックカメラ、JR東日本のコード決済「teppay」を全店舗で導入" data-share-takeaway="鉄道会社発のコード決済が家電量販店の全店で使えるようになると、駅利用客との接点を店舗決済で補完する効果が期待できる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-5">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-19T06:01:48+09:00" title="出典の公開日時">公開 2026.10.19 06:01 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE9wUF9ORzVpbHUzQ2lOVXV4Y0owcHpQbHZvUHUzY2ZRbXE5VjQzZ2xMUzI4SkIzRmVIc2w3WmkxQjl4VkdwUUYxOVk1WTNnS0JqTWgw?oc=5" target="_blank" rel="noopener noreferrer">ビックカメラ、JR東日本のコード決済「teppay」を全店舗で導入<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>ビックカメラは、JR東日本の新しいコード決済サービス「teppay」を10月20日から導入し、全店舗で利用可能にすると発表した。鉄道事業者の決済基盤を小売店舗の支払い手段として広げる動きで、交通系サービスと店舗決済の連携が進むことを示している。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">鉄道会社発のコード決済が家電量販店の全店で使えるようになると、駅利用客との接点を店舗決済で補完する効果が期待できる。</p>
+              </div>
+              <p class="wim-detail">小売側にとっては決済データと会員施策をどう結びつけるかが重要になる。加盟店の立場では、導入コストや既存POSとの連携負荷を事前に見極めることが求められる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B3%E3%83%BC%E3%83%89%E6%B1%BA%E6%B8%88">#コード決済</a><button type="button" class="topic-watch-btn" data-watch-topic="コード決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%AD%E3%83%A3%E3%83%83%E3%82%B7%E3%83%A5%E3%83%AC%E3%82%B9">#キャッシュレス</a><button type="button" class="topic-watch-btn" data-watch-topic="キャッシュレス" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%89%84%E9%81%93%E9%80%A3%E6%90%BA">#鉄道連携</a><button type="button" class="topic-watch-btn" data-watch-topic="鉄道連携" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE9wUF9ORzVpbHUzQ2lOVXV4Y0owcHpQbHZvUHUzY2ZRbXE5VjQzZ2xMUzI4SkIzRmVIc2w3WmkxQjl4VkdwUUYxOVk1WTNnS0JqTWgw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="ライブセッション：NewAgeはAIを顧客体験全体でどう活用しているか" data-share-takeaway="AIの活用は需要予測や広告運用など部分最適に留まりがちだが、顧客の購買旅程全体で一貫して使うことで体験価値が高まる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-6">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="グローバル先端トレンド" title="このカテゴリで絞り込み">グローバル先端トレンド</button>
+              <span class="source-tag">Modern Retail</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-19T23:12:10+09:00" title="出典の公開日時">公開 2026.10.19 23:12 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMimAFBVV95cUxNNGtBOElHYVM1NlB4ZHo0Z3NfS0JWbkNtLTZkWk5yWjVBa2lzM1MxSkdWVmhheWVhMTE0dm1HckpIOFBndkstRXhCT3JBTHFsWVowWm5yYjBYZTF4YXVRbXhlaUppZHFTWWZWalktSkFCZGtHVzB1UktqYzlFMHdFV1dzaDhvZFhvanJnTjM0Z2RwT0R5MHZycg?oc=5" target="_blank" rel="noopener noreferrer">ライブセッション：NewAgeはAIを顧客体験全体でどう活用しているか<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Live session: How NewAge uses AI across the customer journey</p>
+            <div class="card-summary"><p>米Modern Retailのライブセッションで、NewAgeがAIを顧客接点の全体にわたってどのように活用しているかが取り上げられる。商品発見から購入、その後の関係構築まで、各段階でのAI活用の実態が紹介されるとみられ、ブランドのデジタル施策を考える実務者にとって参考になる内容だ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">AIの活用は<strong class="kw-scan">需要予測</strong>や広告運用など部分最適に留まりがちだが、顧客の購買旅程全体で一貫して使うことで体験価値が高まる。</p>
+              </div>
+              <p class="wim-detail">国内の小売・ブランドにとっても、データを接点ごとに分断せず統合する設計が重要になる。実例から、社内で優先すべき適用領域を検討する材料となるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E6%B4%BB%E7%94%A8">#AI活用</a><button type="button" class="topic-watch-btn" data-watch-topic="AI活用" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%A1%A7%E5%AE%A2%E4%BD%93%E9%A8%93">#顧客体験</a><button type="button" class="topic-watch-btn" data-watch-topic="顧客体験" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%91%E3%83%BC%E3%82%BD%E3%83%8A%E3%83%A9%E3%82%A4%E3%82%BA">#パーソナライズ</a><button type="button" class="topic-watch-btn" data-watch-topic="パーソナライズ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMimAFBVV95cUxNNGtBOElHYVM1NlB4ZHo0Z3NfS0JWbkNtLTZkWk5yWjVBa2lzM1MxSkdWVmhheWVhMTE0dm1HckpIOFBndkstRXhCT3JBTHFsWVowWm5yYjBYZTF4YXVRbXhlaUppZHFTWWZWalktSkFCZGtHVzB1UktqYzlFMHdFV1dzaDhvZFhvanJnTjM0Z2RwT0R5MHZycg?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="NBCユニバーサルのショッパブルTV事業、『Traitors』『Love Island USA』効果で伸長" data-share-takeaway="人気番組の放映に連動して購買につながる仕組みは、コンテンツの熱量を売上に変換するリテールメディアの一形態だ。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-7">
+          <div class="card-index" aria-hidden="true">07</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">Modern Retail</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-19T13:00:53+09:00" title="出典の公開日時">公開 2026.10.19 13:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMi1AFBVV95cUxNX25Ub2hCUVMxTENOX1lPQTBDODZweUp5cXd2QTM5M0xMV2ViMGx0TlZEVnZoa1NGWTdjWmJpaXFGZzVBY1RZcUlRTFNEUEphTFM0el9kcWZKUDlXZkd6V1VxUHlQaERCVG42R1RTODVMeGYtTy1JQWs1NEc0UHhpZXFMSG8wUVFuRDdxeDltblhqUURqVkNNdDU0Q0JsbXVUc1lJQnJfTlN4Ui0yYUc5UEwxQzFudExFODNxNHVvbmthakJucVZ6c0dEbk9sRElpTGNDUA?oc=5" target="_blank" rel="noopener noreferrer">NBCユニバーサルのショッパブルTV事業、『Traitors』『Love Island USA』効果で伸長<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">NBCUniversal&#x27;s shoppable TV business is seeing a boost from shows like &#x27;Traitors&#x27; and &#x27;Love Island USA&#x27;</p>
+            <div class="card-summary"><p>NBCユニバーサルのショッパブルTV（番組視聴中に商品を購入できる仕組み）事業が、『Traitors』や『Love Island USA』といった人気番組によって伸びていることが報じられた。番組の視聴熱が購買行動に直結する動きで、コンテンツと広告・購買を結びつける<strong class="kw-scan">リテールメディア</strong>の新たな形を示している。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">人気番組の放映に連動して購買につながる仕組みは、コンテンツの熱量を売上に変換する<strong class="kw-scan">リテールメディア</strong>の一形態だ。</p>
+              </div>
+              <p class="wim-detail">国内でも動画配信や番組スポンサーと小売の購買データを組み合わせる動きが出ており、視聴データと購入データの接続が差別化要素になる。広告主側は効果測定の指標設計を早めに整える必要がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B7%E3%83%A7%E3%83%83%E3%83%91%E3%83%96%E3%83%ABTV">#ショッパブルTV</a><button type="button" class="topic-watch-btn" data-watch-topic="ショッパブルTV" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%8B%95%E7%94%BB%E5%BA%83%E5%91%8A">#動画広告</a><button type="button" class="topic-watch-btn" data-watch-topic="動画広告" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMi1AFBVV95cUxNX25Ub2hCUVMxTENOX1lPQTBDODZweUp5cXd2QTM5M0xMV2ViMGx0TlZEVnZoa1NGWTdjWmJpaXFGZzVBY1RZcUlRTFNEUEphTFM0el9kcWZKUDlXZkd6V1VxUHlQaERCVG42R1RTODVMeGYtTy1JQWs1NEc0UHhpZXFMSG8wUVFuRDdxeDltblhqUURqVkNNdDU0Q0JsbXVUc1lJQnJfTlN4Ui0yYUc5UEwxQzFudExFODNxNHVvbmthakJucVZ6c0dEbk9sRElpTGNDUA?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8820%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261019/" class="nav-prev">&larr; 2026.10.19 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+</body>
+</html>
