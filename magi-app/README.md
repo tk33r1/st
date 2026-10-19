@@ -156,7 +156,8 @@ events from earlier recognition sessions are ignored. Microphone permission is r
 may go to the device speech service; it never goes to the MAGI Worker.
 
 Deploy the Worker changes before distributing the APK. See
-[B2 verification](B2実装評価20261020.md) for remaining device checks and the release record.
+[B2 verification](B2実装評価20261020.md) for remaining device checks and
+[B1/B2 release verification](B1B2公開評価20261020.md) for the 5.5 release record.
 
 B1 history storage, included in 5.5, uses pinned official plugins `@capacitor/filesystem`
 8.1.5 and `@capacitor/share` 8.0.3. Android history lives in `Directory.Data/magi/`:
