@@ -106,3 +106,31 @@ test('B2: 停止した認識開始の応答が遅れて失敗しても次の録�
   f.events.partialResults({ matches: ['現在の音声'], final: true });
   assert.equal(f.draft, '現在の音声'); assert.equal(f.calls.some(([n, text]) => n === 'notice' && text.includes('Could not start')), false);
 });
+
+test('B2: URLを含む長文は本人の文章を資料にし、記事を取りに行かない', async () => {
+  const f = fixture(); let gets = 0; f.cap.Plugins.MagiShare.getArticle = async () => { gets++; return {}; };
+  const text = '選んだ抜き出し'.repeat(200) + ' https://example.com/article';
+  await f.input.receive({ text, images: [] });
+  assert.equal(gets, 0); assert.equal(f.draft, ''); assert.equal(f.shared.text, text);
+});
+test('B2: 送信などで止めると確定結果を入力へ入れ、届かなければ途中結果を入れる', async () => {
+  const f = fixture(); await f.input.init(); await f.input.startVoice();
+  f.events.partialResults({ matches: ['途中'] });
+  await f.input.finishVoice(); assert.ok(f.calls.some(([n]) => n === 'stop')); assert.equal(f.input.listening(), true);
+  f.events.partialResults({ matches: ['確定'], final: true });
+  assert.equal(f.draft, '確定'); assert.equal(f.input.listening(), false); assert.equal(f.timers.size, 0);
+  await f.input.startVoice(); f.events.partialResults({ matches: ['届かない確定'] });
+  await f.input.finishVoice(); [...f.timers.values()].forEach(fn => fn());
+  assert.equal(f.draft, '確定届かない確定'); assert.equal(f.interim, ''); assert.equal(f.input.listening(), false);
+});
+test('B2: 時間切れと認識エラーでも話した途中結果を残す', async () => {
+  const f = fixture(); await f.input.init(); await f.input.startVoice();
+  f.events.partialResults({ matches: ['長い話'] });
+  [...f.timers.values()].forEach(fn => fn()); await Promise.resolve();
+  assert.ok(f.calls.some(([n]) => n === 'stop')); assert.ok(f.calls.some(([n, text]) => n === 'notice' && text.includes('timed out')));
+  f.events.partialResults({ matches: ['長い話の確定'], final: true }); assert.equal(f.draft, '長い話の確定');
+  await f.input.startVoice(); f.events.partialResults({ matches: ['途切れた声'] });
+  await f.events.recognitionError({ code: 7 });
+  assert.equal(f.draft, '長い話の確定途切れた声');
+  assert.equal(f.calls.some(([n, text]) => n === 'notice' && text.includes('without a result')), false);
+});

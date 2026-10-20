@@ -1078,7 +1078,8 @@ function agentStop() {
 
 async function agentSend() {
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
-  if (nativeInput) nativeInput.stopVoice();
+  // 音声入力の途中なら、この回は止めて確定した文を入力欄へ入れるだけにする（確かめてから送る）。
+  if (nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
   var draftText = agentInput.value;
   var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
@@ -1891,7 +1892,7 @@ async function initNativeInputs() {
     voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? 'Stop voice input' : 'Voice input'; }
   });
   await nativeInput.init();
-  document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.stopVoice(); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.finishVoice(); });
   if (cap.Plugins.SpeechRecognition) {
     voice.hidden = false;
     voice.addEventListener('click', function () {

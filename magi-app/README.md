@@ -131,7 +131,8 @@ use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 ## Release (signed) APK
 
 Version 5.5 / 55 combines B1 history storage with B2 Android share intents and dictation. Shared text is
-placed in a new conversation without sending. Articles use bundled Mozilla
+placed in a new conversation without sending. Text over 1,000 characters becomes the shared
+document as-is, and a URL inside it is not fetched. Articles use bundled Mozilla
 Readability 0.6.0 (`scripts/vendor-readability.cjs`, recorded SHA-256 and license
 in `www/vendor/`). Shared document text stays with the conversation and is sent
 with subsequent questions; only its title is sent to the classifier.
@@ -149,7 +150,10 @@ Speech uses `@capacitor-community/speech-recognition` 7.0.1. The deterministic
 `postinstall` script `scripts/patch-speech.cjs` adds final-result and error events,
 tags events with the recognition session ID, and resolves the stop promise
 in its Android implementation; run it after any install that used
-`--ignore-scripts`. Recognized text is appended only on final results. The device
+`--ignore-scripts`. Recognized text is appended on final results. Tapping Send while
+listening, leaving the app or the 60-second limit stops listening without sending and
+appends the final result; if none arrives within 3 seconds, or recognition ends with an
+error, the last partial result is appended instead. The device
 language is passed explicitly, with one English fallback for unsupported
 languages. Stopping for a conversation switch disables results immediately;
 events from earlier recognition sessions are ignored. Microphone permission is requested on the first button press. Voice

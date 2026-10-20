@@ -107,6 +107,14 @@ try {
    await page.evaluate(() => voiceEvents.partialResults({ matches: ['確定した声'], final: true }));
    assert.match(await page.locator('#agent-input').inputValue(), /入力済み\n確定した声/);
    assert.equal(posts.length, 3);
+   // 音声入力の途中の送信は止めるだけ。確定した文を入力欄へ入れ、送らない。
+   await page.locator('#agent-voice').click(); await page.waitForFunction(() => voiceCalls.length === 2);
+   await page.evaluate(() => voiceEvents.partialResults({ matches: ['送信前の途中'] }));
+   await page.locator('#agent-send').click();
+   await page.evaluate(() => voiceEvents.partialResults({ matches: ['送信前の確定'], final: true }));
+   assert.match(await page.locator('#agent-input').inputValue(), /確定した声\n送信前の確定$/);
+   assert.equal(await page.locator('#agent-voice').getAttribute('aria-pressed'), 'false');
+   assert.equal(posts.length, 3);
    await page.evaluate(() => { shareQueue.push({ text: '<script>表示文字列</script>'.repeat(80), images: [] }); shareSignal(); });
    await page.waitForFunction(() => !!agentShared && !sharedLoading);
    await page.locator('#agent-shared-tray button').first().click();

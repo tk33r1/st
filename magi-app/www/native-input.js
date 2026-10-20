@@ -48,7 +48,7 @@
   }
   function create(options) {
     var cap = options.cap, bridge = cap.Plugins.MagiShare, speech = cap.Plugins.SpeechRecognition;
-    var draining = false, drainAgain = false, voiceGeneration = 0, recognitionId = 0, recording = false, starting = false, retried = false, language = '', voiceTimer = null;
+    var draining = false, drainAgain = false, interimText = '', finishTimer = null, voiceGeneration = 0, recognitionId = 0, recording = false, starting = false, retried = false, language = '', voiceTimer = null;
     var permissionNotice = 'Microphone permission is required. You can enable it in Android Settings. / マイクの許可が必要です（設定から許可できます）。';
     var articleNotice = 'Could not read the article (only the URL will be sent). / 本文を読めませんでした（URLだけ送ります）。';
     async function receive(payload) {
@@ -58,7 +58,8 @@
       options.setDraft(long ? '' : text);
       if (long) options.setShared({ title: 'Shared text / 共有された文章', url: '', text: cut(text, 6000) });
       try {
-        if (urls.length === 1) {
+        // 長文は本人が選んだ抜き出しとして扱い、中のURLの記事で置き換えない（URLは資料の本文に残る）。
+        if (!long && urls.length === 1) {
           var url = publicUrl(urls[0]);
           if (!url) options.notice(articleNotice);
           else {
@@ -99,8 +100,14 @@
       } finally { draining = false; }
     }
     function endVoice() {
-      recording = false; starting = false; clearTimeout(voiceTimer); voiceTimer = null;
+      recording = false; starting = false; clearTimeout(voiceTimer); voiceTimer = null; clearTimeout(finishTimer); finishTimer = null; interimText = '';
       options.voiceState(false); options.interim('');
+    }
+    // 確定結果が来ないまま終わるときは、表示していた途中結果を入力欄へ入れる。
+    function settle(text) {
+      text = text || interimText;
+      endVoice();
+      if (text) options.appendDraft(text);
     }
     async function stopVoice() {
       voiceGeneration++;
@@ -108,17 +115,26 @@
       endVoice();
       if (speech && wasRecording) await speech.stop().catch(function () {});
     }
+    // 送信・画面の切替・時間切れでは、認識を止めて確定結果を入力欄へ入れる（送らない）。結果を捨てるのはstopVoice。
+    async function finishVoice() {
+      if (!recording) { if (starting) await stopVoice(); return; }
+      if (finishTimer) return;
+      clearTimeout(voiceTimer); voiceTimer = null;
+      var token = voiceGeneration;
+      finishTimer = setTimeout(function () { if (token === voiceGeneration && recording) settle(); }, 3000);
+      try { await speech.stop(); } catch (_) { if (token === voiceGeneration && recording) settle(); }
+    }
     async function listen() {
       var token = voiceGeneration;
       await speech.start({ language: language, maxResults: 1, partialResults: true, popup: false, sessionId: String(++recognitionId) });
-      if (token === voiceGeneration && recording) voiceTimer = setTimeout(function () { stopVoice(); options.notice('Voice input timed out. / 音声入力を終了しました。'); }, 60000);
+      if (token === voiceGeneration && recording && !finishTimer) voiceTimer = setTimeout(function () { finishVoice(); options.notice('Voice input timed out. / 音声入力を終了しました。'); }, 60000);
     }
     function useEnglish() {
       language = 'en-US'; retried = true;
       options.notice('This language is unavailable. Using English. / この言語には対応していないため英語で認識します。');
     }
     async function startVoice() {
-      if (!speech || recording || starting) { if (recording) await speech.stop(); return; }
+      if (!speech || recording || starting) { if (recording) await finishVoice(); return; }
       starting = true; var token = ++voiceGeneration;
       try {
         if (!(await speech.available()).available) throw new Error('voice_unavailable');
@@ -147,24 +163,27 @@
       finally { if (token === voiceGeneration) starting = false; }
     }
     return {
-      receive: receive, startVoice: startVoice, stopVoice: stopVoice,
+      receive: receive, startVoice: startVoice, stopVoice: stopVoice, finishVoice: finishVoice,
+      listening: function () { return recording || starting; },
       async init() {
         if (bridge) { await bridge.addListener('shareAvailable', drain); await drain(); }
         if (speech) {
           await speech.addListener('partialResults', function (event) {
             if (!recording || event.sessionId !== String(recognitionId)) return;
             var text = event.matches && event.matches[0] || '';
-            if (event.final) { options.appendDraft(text); endVoice(); }
-            else options.interim(text);
+            if (event.final) settle(text);
+            else { interimText = text; options.interim(text); }
           });
           await speech.addListener('recognitionError', async function (event) {
             if (!recording || event.sessionId !== String(recognitionId)) return;
-            if ((event.code === 12 || event.code === 13) && !retried && !/^en\b/i.test(language)) {
+            if ((event.code === 12 || event.code === 13) && !retried && !finishTimer && !/^en\b/i.test(language)) {
               clearTimeout(voiceTimer); useEnglish();
               var token = voiceGeneration;
               try { await listen(); } catch (_) { if (token === voiceGeneration) endVoice(); } return;
             }
-            endVoice(); options.notice(event.code === 9 ? permissionNotice : 'Voice input ended without a result. / 音声を認識できませんでした。');
+            var heard = !!interimText;
+            settle();
+            if (!heard) options.notice(event.code === 9 ? permissionNotice : 'Voice input ended without a result. / 音声を認識できませんでした。');
           });
         }
       }
