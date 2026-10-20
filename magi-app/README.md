@@ -128,6 +128,70 @@ If you later host the PWA on a real domain, add that origin to `ALLOWED_ORIGINS`
 in the Worker and redeploy. For a quick test against any backend you control,
 use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
+## B3 native reply transport (5.6 candidate, unpublished)
+
+The [first prototype](B3試作評価20261020.md) showed that a foreground service alone
+did not keep the WebView processing events. Version 5.6 uses a native OkHttp
+connection owned by `MagiConversationService` (`dataSync`). It receives and saves
+SSE independently of JavaScript, enforces a 300-second deadline, and releases its
+wake lock and service on success, failure or cancellation. Capawesome is no
+longer a dependency. No location, overlay or battery-optimization exemption is requested.
+
+`magi/pending/<requestId>/` contains metadata and the received SSE. The screen
+reads these bytes through `native-background.js`, validates them with the existing
+parser, saves the conversation through B1, then acknowledges the pending data.
+Reopening after process death replays saved data without repeating the HTTP request.
+Conversation IDs and request IDs keep late replies attached to their original chat.
+The native service does not write B1's conversation JSON files.
+
+There are two notification channels: silent ongoing discussion and reply arrival.
+Notifications show the conversation title, and open it through `magi://open?id=`.
+The ongoing Stop action cancels the native HTTP call directly. Notification denial
+does not disable chat; Settings shows the permission state and opens Android's settings.
+
+Ordinary builds use the fixed production HTTPS endpoint. For isolated verification,
+build `android/gradlew assembleDebug -PmagiB3Probe=true` (Windows: `gradlew.bat`).
+This uses **st.tk.magi.b3probe** with a debug signature and a fixed loopback endpoint.
+It cannot send paid requests to production. Debug-only notification test actions
+are unavailable in normal builds. Do not distribute this test APK.
+
+`probe-magi-background-android.mjs` supplies local synthetic SSE through ADB reverse,
+disconnects DevTools, and reads native completion, persistence, notification and
+service-stop metadata before reopening the WebView. It then verifies exactly-once
+recovery; `--restart=on` also kills the test process before reopening.
+
+The probe checks that the installed APK matches its build file and holds only the
+test ACK until native metadata can be inspected. `--hold-ui=on` also pauses screen
+reads to demonstrate receipt without JavaScript progress. `--interrupt=on` kills an
+unfinished request; it must restore a draft without resending. The deadline case
+uses `--seconds=310 --case=stall --hold-ui=on` to exercise the actual 300-second
+native timeout. These hooks apply only to the isolated test run. For example:
+
+```powershell
+node .github/scripts/probe-magi-background-android.mjs --adb=<SDK>/platform-tools/adb.exe --transport=<ADB-transport-id> --mode=home --seconds=300 --label=home-300-1
+```
+
+The other modes are `browser` (opens Chrome at `about:blank`) and `lock` (turns off
+the display; unlock the device manually afterwards). The script force-stops only
+the test app and removes its forwarding rules at the end. Received replies stay
+in app-private pending files until they are saved to the conversation. Verification
+reports use synthetic text. Reports and APKs stay
+under ignored `workers/.wrangler/magi-b3-native-20261020/`. The approved scope uses
+nine synthetic long background trials and three guarded production representatives
+(normal, MAGI and a synthetic image). It does not claim that all nine long trials
+used production responses, or certify an unpublished candidate as a release.
+
+Local checks: `test-magi2.mjs`, `test-magi-native-background-browser.mjs`, the existing
+native shell/input browser checks, and `MagiSseReaderTest` / `MagiArticleReaderTest`.
+See [B3 implementation verification](B3実装評価20261020.md) for the current result and limits.
+
+Candidate verification completed on 2026-10-21 on one Android 16 device: all nine
+five-minute synthetic background trials passed, including replay after process
+death and while screen reads were held. The three approved production representatives
+also completed. Existing saved-list entries survived the upgrade; the new image's
+original reopened after external-file deletion and an app restart. The separate probe app was removed. Version 5.6
+is still unpublished; Android 13/14 and other devices remain unverified.
+
 ## Release (signed) APK
 
 Version 5.5 / 55 combines B1 history storage with B2 Android share intents and dictation. Shared text is

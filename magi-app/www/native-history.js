@@ -10,7 +10,7 @@
     // 保存した会話は物のまま持つ。画面は中身を書き換えず、変えた会話は新しい物で置き換える。
     // 会話ごとの保存用の文字列は物に紐付けて使い回し、変わった会話だけを作り直す。
     var state = {}, saved = [], entries = new WeakMap(), active = false, tail = Promise.resolve(), lastError = null;
-    var committed = {}, collected = null, pendingImages = new Set(), queued = false;
+    var committed = {}, collected = null, pendingImages = new Set(), draftImages = new Set(), queued = false;
     function owns(key) { return KEYS.indexOf(key) >= 0; }
     function clearLegacyHistory() { KEYS.forEach(function (key) { legacy.removeItem(key); }); }
     function args(path) { return { path: 'magi/' + path, directory: 'DATA' }; }
@@ -85,6 +85,7 @@
       docs.used.forEach(function (name) { pendingImages.delete(name); });
       var used = new Set(docs.used);
       pendingImages.forEach(function (name) { used.add(name); });
+      draftImages.forEach(function (name) { used.add(name); });
       // 会話と画像の顔ぶれが前回の片付けと同じなら、ディレクトリを読まない。
       var signature = Object.keys(docs.texts).sort().join('\n') + '\n\n' + Array.from(used).sort().join('\n');
       if (signature === collected) return;
@@ -101,6 +102,13 @@
       var result = tail.then(task);
       tail = result.catch(function () {});
       return result;
+    }
+    async function persist() {
+      try { await save(); lastError = null; }
+      catch (e) {
+        // 途中まで書けたファイルやjournalが残るため、次回は最新の全項目を書き直す。
+        committed = {}; collected = null; lastError = e; if (options.onError) options.onError(e);
+      }
     }
     function enqueue() {
       // 題名・会話ID・履歴など、同じ同期処理内の更新を1回にまとめる。
@@ -190,8 +198,12 @@
       },
       sessions() { return saved.slice(); },
       setSessions(list) { saved = list.slice(); enqueue(); },
-      retainImage(name) { if (imageName.test(name)) pendingImages.add(name); },
-      releaseImage(name) { pendingImages.delete(name); enqueue(); },
+      // 再送待ちの画像は、古い保存バッチの参照整理から独立して保持する。
+      retainImage(name) { if (imageName.test(name)) draftImages.add(name); },
+      releaseImage(name) {
+        // 古い保存の片付けが済むまで下書きの参照を残し、最新の正本で整理する。
+        tail = tail.then(async function () { pendingImages.delete(name); draftImages.delete(name); await persist(); });
+      },
       async flush() { await tail; if (lastError) throw lastError; },
       async storeImage(file) {
         var bytes = await file.arrayBuffer();
@@ -224,7 +236,7 @@
       },
       async clear() {
         await run(async function () {
-          state = { magi_current_history: '[]' }; saved = []; committed = {}; collected = null; pendingImages.clear();
+          state = { magi_current_history: '[]' }; saved = []; committed = {}; collected = null; pendingImages.clear(); draftImages.clear();
           // metaは残す。空の履歴を確定してから、会話ファイルと画像をcollectで削除する。
           await save(); lastError = null;
         });

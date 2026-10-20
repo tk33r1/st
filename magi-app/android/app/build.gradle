@@ -4,6 +4,8 @@ apply plugin: 'com.android.application'
 // Falls back gracefully so debug builds work without it.
 def keystorePropsFile = rootProject.file('keystore.properties')
 def keystoreProps = new Properties()
+// 実機の模擬通信だけに使う別ID。通常のdebug/releaseは固定した本番へ送る。
+def magiB3Probe = project.findProperty('magiB3Probe') == 'true'
 if (keystorePropsFile.exists()) {
     keystoreProps.load(new FileInputStream(keystorePropsFile))
 }
@@ -15,8 +17,8 @@ android {
         applicationId "st.tk.magi"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 55
-        versionName "5.5"
+        versionCode 56
+        versionName "5.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -38,7 +40,12 @@ android {
         }
     }
     buildTypes {
+        debug {
+            if (magiB3Probe) applicationIdSuffix '.b3probe'
+            buildConfigField 'boolean', 'MAGI_B3_PROBE', magiB3Probe.toString()
+        }
         release {
+            buildConfigField 'boolean', 'MAGI_B3_PROBE', 'false'
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             if (keystorePropsFile.exists()) {
@@ -46,6 +53,7 @@ android {
             }
         }
     }
+    buildFeatures { buildConfig = true }
 }
 
 repositories {

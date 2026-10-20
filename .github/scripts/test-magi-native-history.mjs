@@ -73,6 +73,23 @@ test('B1: 再送用に戻した画像を保持し、下書きを破棄すると�
   assert.ok(f.files.has('DATA:magi/images/' + name));
   s.releaseImage(name); await s.flush(); assert.equal(f.files.has('DATA:magi/images/' + name), false);
 });
+
+test('B1: 古い保存が遅れても、新しい発言へ移した元画像を整理で消さない', async () => {
+  const f = fixture(), s = f.create(); await s.init();
+  const name = await s.storeImage(new Blob(['original'], { type: 'image/png' })); s.retainImage(name);
+  let entered, resume; const reached = new Promise(resolve => { entered = resolve; });
+  const held = new Promise(resolve => { resume = resolve; }), rename = f.fs.rename;
+  let first = true;
+  f.fs.rename = async options => {
+    if (first && options.to === 'magi/current.json') { first = false; entered(); await held; }
+    return rename(options);
+  };
+  s.set('magi_current_title', 'old batch'); await reached;
+  s.set('magi_current_history', JSON.stringify([{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/png;base64,AA==' }, file: name }] }]));
+  s.releaseImage(name); resume(); await s.flush();
+  assert.equal(f.files.has('DATA:magi/images/' + name), true);
+  assert.equal(JSON.parse(f.files.get('DATA:magi/current.json')).history[0].content[0].file, name);
+});
 test('B1: 6MB超・60会話を保持し、書き出しに画像本体を含めない', async () => {
   const f = fixture(), s = f.create(); await s.init();
   const sessions = Array.from({ length: 60 }, (_, n) => ({ id: 'session_' + n, title: '会話' + n, history: [{ role: 'user', content: '文'.repeat(120000) }, { role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/png;base64,AAAA' } }] }] }));

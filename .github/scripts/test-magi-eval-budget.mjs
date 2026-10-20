@@ -37,8 +37,8 @@ test('失敗と実行をまたいでも予約額が残り、採用後のLunaの$
   assert.throws(()=>gate().reserve('openai',body),/ceiling reached/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,2);
 }));
-test('Haikuの枠と、分類等を含む採用後の合計$2.80の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',1.2);estimate('anthropic',1.2);estimate('deepseek',.4);estimate('typesafe',.001);save();
+test('Haikuの枠と、B3追加承認後の合計$3.12の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',1.2);estimate('anthropic',1.2);estimate('deepseek',.72);estimate('typesafe',.001);save();
   const g=gate();g.reserve('openai',body);g.reserve('anthropic',body);g.reserve('deepseek',body);
   assert.throws(()=>g.reserve('typesafe',body),/ceiling reached/);
   assert.throws(()=>g.reserve('anthropic',body),/ceiling reached/);

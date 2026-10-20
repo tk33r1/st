@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '5.5';
+var APP_VERSION = '5.6';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -397,6 +397,7 @@ var nativeHistory = null;
 var nativeAndroid = !!(window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'android');
 var historyLoading = nativeAndroid;
 var agentShared = null, nativeInput = null, sharedLoading = false;
+var nativeConversation = null;
 // 共有資料はAndroidだけ。ほかの画面では常にnullにする。
 function cleanAgentShared(value) {
   if (!nativeAndroid || !value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
@@ -987,6 +988,7 @@ async function addAttachments(files) {
       if (generation !== agentGen) return;
       var original = nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
       if (generation !== agentGen) { if (original) nativeHistory.releaseImage(original); return; }
+      if (original) nativeHistory.retainImage(original);
       attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
       renderAttachTray();
     } catch (_) { noticeAttach('Could not read that image'); }
@@ -1043,7 +1045,7 @@ function renderAgentPages(replyEl, data) {
 }
 
 function prepareAgentMessages(history, lastContent) {
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, ...m }) => agentFactHistoryMessage(m));
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -1076,17 +1078,19 @@ function agentStop() {
   agentCtrl.abort();
 }
 
-async function agentSend() {
+async function agentSend(recovered) {
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
-  // 音声入力の途中なら、この回は止めて確定した文を入力欄へ入れるだけにする（確かめてから送る）。
-  if (nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
-  var draftText = agentInput.value;
-  var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
+  // 音声入力中の送信は確定だけにする。保存列の復元は新規送信と区別する。
+  if (!recovered && nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
+  var savedUser = recovered ? agentHistory.at(-1) : null;
+  if (recovered && (!nativeConversation || !savedUser || savedUser.role !== 'user' || savedUser.native_request !== recovered.id)) return;
+  var draftText = recovered ? contentText(savedUser.content) : agentInput.value;
+  var text = recovered ? draftText : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
-  var atts = attachments.slice();
+  var atts = recovered ? contentImages(savedUser.content).map(function (p) { return { url: p.image_url.url, thumb: p.image_url.url, file: p.file }; }) : attachments.slice();
   if (!text && !atts.length) return;
   var clarifyDraft = freezeAgentClarify();
-  var startedAt = Date.now();
+  var startedAt = recovered ? recovered.startedAt : Date.now();
   setAgentSuggestion('');
   agentInput.value = ''; fitAgentInput();
   attachments = []; renderAttachTray();
@@ -1099,15 +1103,16 @@ async function agentSend() {
     }));
   };
   var sendContent = atts.length ? partsOf('url') : text;
-  var storeContent = atts.length ? partsOf('thumb') : text;
+  var storeContent = recovered ? savedUser.content : atts.length ? partsOf('thumb') : text;
   if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
   agentClarifyPlaceholder(false);
 
-  var u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = '<span>' + userContentHTML(storeContent) + '</span>';
-  agentLog.appendChild(u);
+  var u = recovered ? agentLog.lastElementChild : document.createElement('div');
+  if (!recovered) { u.className = 'agent-user fade-in'; u.innerHTML = '<span>' + userContentHTML(storeContent) + '</span>'; agentLog.appendChild(u); }
 
   var turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
-  var mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
+  var mid = recovered ? recovered.mid : genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
+  var nativeRunId = recovered ? recovered.id : nativeConversation ? nativeConversation.id() : null;
   turn.innerHTML = personaCardsHTML();
   var replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
   replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + reactionBarHTML('integrated');
@@ -1116,8 +1121,9 @@ async function agentSend() {
   var replyBody = replyEl.querySelector('.agent-reply-body');
   var thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
-  agentHistory.push({ role: 'user', content: storeContent });
+  if (!recovered) agentHistory.push({ role: 'user', content: storeContent, ...(nativeRunId ? { native_request: nativeRunId } : {}) });
   safeStore('magi_current_history', agentHistory);
+  if (!recovered && nativeHistory && nativeHistory.active) atts.forEach(function (a) { if (a.file) nativeHistory.releaseImage(a.file); });
 
   agentBusy = true; setAgentControlsEnabled(false);
   setAgentStopMode(true);
@@ -1133,7 +1139,7 @@ async function agentSend() {
   var gen = agentGen; agentCtrl = ctrl;
 
   var dropped = function () { return gen !== agentGen || conversationId !== currentSessionId || sendId !== agentSendSequence; };
-      const streamWatch = createMagiStreamWatch(ctrl, startedAt, {
+      const streamWatch = nativeConversation ? nativeConversation.watch() : createMagiStreamWatch(ctrl, startedAt, {
         alive: () => !dropped(), timeout: () => { timedOut = true; },
         notice: visible => magiStreamNotice(replyEl, visible, document.documentElement.lang === 'ja'),
         replaying: () => { agentSendBtn.title = agentSendBtn.ariaLabel = document.documentElement.lang === 'ja' ? 'すぐに全部表示' : 'Show all now'; },
@@ -1158,11 +1164,16 @@ async function agentSend() {
       // MAGI_SEND_END
 
   try {
+    if (dropped()) return;
+    if (ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     var outbound = prepareAgentMessages(agentHistory, sendContent);
-    var res = await fetch(AGENT_API, {
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
+    if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
+    if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
+    var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), agentShared ? { shared: agentShared } : {})),
+      body: requestBody,
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -1251,14 +1262,17 @@ async function agentSend() {
     }
   } catch (err) {
     errored = true;
+    if (err.code === 'timeout') timedOut = true;
     if (dropped()) return;
     if (!keepMagi()) turn.remove();
     // Stopped with the stop button: no error; the question goes back into the input below.
     if (!magiRetained && !ctrl.userStopped) {
       if (timedOut || err.name === 'AbortError') { renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
+      else if (err.code === 'interrupted') { renderAgentError({ message: document.documentElement.lang === 'ja' ? '前の接続が終了し、回答を受け取れませんでした。質問を確認して再送してください。' : 'The previous connection ended before the reply was received. Review your question and send it again.', code: 'interrupted' }); }
       else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: 'Could not receive the reply. Check your connection and try again.', code: 'network_error' }); }
     }
   } finally {
+    if (nativeConversation && nativeRunId && (!completed || errored || dropped())) await nativeConversation.cancel(nativeRunId).catch(function () {});
     streamWatch.finish();
     if (magiView) magiView.dispose();
     if (!completed || errored || dropped()) thinking.cancel();
@@ -1284,7 +1298,7 @@ async function agentSend() {
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
-    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
@@ -1299,7 +1313,34 @@ async function agentSend() {
     // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
     if (!agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
     restoreAgentClarify(clarifyDraft);
+    if (recovered && attachments === atts && atts.some(function (a) { return a.file; })) {
+      sharedLoading = true;
+      var restored = await restoreNativeRequestImages(atts);
+      if (!dropped()) {
+        sharedLoading = false;
+        if (attachments === atts) { attachments = restored; renderAttachTray(); }
+      }
+    }
   }
+  if (nativeConversation && nativeRunId) {
+    try { await nativeHistory.flush(); await nativeConversation.acknowledge(nativeRunId); }
+    catch (_) { announceAgent('Could not finish saving the reply. Reopen MAGI to recover it. / 保存を完了できませんでした。開き直すと受信データから復元します。'); }
+  }
+}
+
+async function restoreNativeRequestImages(items) {
+  var restored = [];
+  for (var item of items) {
+    if (!item.file) { restored.push(item); continue; }
+    try {
+      if (!/^[a-f0-9]{64}\.(?:jpg|png|gif|webp|heic|heif|avif)$/.test(item.file)) throw new Error('invalid_image');
+      var raw = await window.Capacitor.Plugins.Filesystem.readFile({ directory: 'DATA', path: 'magi/images/' + item.file });
+      var bytes = Uint8Array.from(atob(raw.data), function (ch) { return ch.charCodeAt(0); });
+      var img = await loadImageFile(new Blob([bytes], { type: 'image/' + item.file.split('.').pop().replace('jpg', 'jpeg') }));
+      restored.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: item.thumb, file: item.file });
+    } catch (_) { restored.push(item); announceAgent('Could not reopen an original image; the saved preview is available. / 元画像を開けないため、保存したプレビューを使います。'); }
+  }
+  return restored;
 }
 
 // ---- Reaction network -------------------------------------------------------
@@ -1540,10 +1581,12 @@ function loadSavedSession(id) {
   setAgentSuggestion('');
   renderHistoryToLog(agentHistory);
   updateAgentActionButtons();
+  if (nativeConversation) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
 }
 function deleteSavedSession(id) {
   if (currentSessionId === id) resetAgent();
   writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
+  if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
@@ -1634,21 +1677,31 @@ function showInfoPanel() {
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
   if (nativeAndroid) {
     var nativeNote = document.createElement('p');
-    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers.';
+    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification.';
     panel.querySelector('.agent-panel-body').appendChild(nativeNote);
   }
 }
 
-// 設定はAndroidだけ。後続B2〜B4の権限・ウィジェットは対応する版で足す。
+// 設定はAndroidだけ。通知と履歴の操作をまとめる。B4のウィジェットは別に足す。
 async function showNativeSettings() {
   if (!nativeAndroid) return;
   var ja = document.documentElement.lang === 'ja';
   var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
-    '<p id="history-storage-status" role="status">Loading…</p>'
+    '<p id="history-storage-status" role="status">Loading…</p><p id="native-notification-status" hidden></p>'
     + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
     + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
     + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>');
   if (!panel) return;
+  if (nativeConversation) {
+    var notifications = panel.querySelector('#native-notification-status'); notifications.hidden = false;
+    nativeConversation.permission().then(function (value) {
+      if (!panel.isConnected) return;
+      notifications.textContent = value.display === 'granted' ? '通知は許可されています / Notifications are allowed.' : '通知は許可されていません。会話は引き続き使えます / Notifications are off; chat still works.';
+      var button = document.createElement('button'); button.type = 'button'; button.textContent = '通知の設定 / Notification settings';
+      button.addEventListener('click', function () { nativeConversation.settings().catch(function () { announceAgent('Could not open notification settings.'); }); });
+      notifications.appendChild(button);
+    }).catch(function () { notifications.textContent = '通知の状態を確認できませんでした / Could not check notifications.'; });
+  }
   var status = panel.querySelector('#history-storage-status');
   var buttons = panel.querySelectorAll('.agent-panel-body button');
   if (!nativeHistory || !nativeHistory.active) {
@@ -1686,6 +1739,7 @@ async function showNativeSettings() {
       if (!window.confirm('すべての会話と保存画像を削除します。元には戻せません。Delete all conversations and images?')) return;
       try { await window.Capacitor.Plugins.Filesystem.deleteFile({ directory: 'CACHE', path: 'magi-export.json' }); }
       catch (error) { if (error.code !== 'OS-PLUG-FILE-0008' && error.code !== 'ENOENT') throw error; }
+      if (nativeConversation) await nativeConversation.clear();
       await nativeHistory.clear();
       resetAgent();
       await nativeHistory.flush();
@@ -1900,6 +1954,41 @@ async function initNativeInputs() {
     });
   }
 }
+async function recoverNativeConversation(id) {
+  if (!nativeConversation || agentBusy || historyLoading || id !== currentSessionId) return;
+  var rows = await nativeConversation.pending();
+  if (agentBusy || id !== currentSessionId) return;
+  for (var row of rows.filter(function (r) { return r.sessionId === id; }).sort(function (a, b) { return a.startedAt - b.startedAt; })) {
+    if (agentHistory.some(function (m) { return m.role === 'assistant' && m.native_request === row.id; })) {
+      await nativeHistory.flush(); await nativeConversation.acknowledge(row.id); continue;
+    }
+    var last = agentHistory.at(-1);
+    if (last && last.role === 'user' && last.native_request === row.id) { await agentSend(row); return; }
+    // 削除・古い版からの変更で対応する往復が無い列を、新しい質問として送らない。
+    announceAgent('A pending reply could not be matched to this conversation. / 受信データと会話の対応を確認できませんでした。');
+  }
+}
+function openNativeConversationLink(value) {
+  var id = null;
+  try {
+    var url = new URL(value), ids = url.searchParams.getAll('id');
+    if (url.protocol === 'magi:' && url.hostname === 'open' && !url.username && !url.password && !url.port && !url.hash
+      && (url.pathname === '' || url.pathname === '/') && ids.length === 1 && [...url.searchParams.keys()].every(function (key) { return key === 'id'; })) id = ids[0];
+  } catch (_) {}
+  var sessions = readSavedSessions();
+  if (!id || !sessions.some(function (s) { return s.id === id; })) { resetAgent(); return; }
+  if (id !== currentSessionId) loadSavedSession(id);
+  else if (!agentBusy) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply.'); });
+}
+async function initNativeConversationLinks() {
+  var app = window.Capacitor.Plugins.App;
+  if (app) {
+    await app.addListener('appUrlOpen', function (event) { if (event && typeof event.url === 'string') openNativeConversationLink(event.url); });
+    var launch = app.getLaunchUrl ? await app.getLaunchUrl() : null;
+    if (launch && launch.url) openNativeConversationLink(launch.url);
+  }
+  await recoverNativeConversation(currentSessionId);
+}
 async function initHistoryStorage() {
   if (!nativeAndroid) { initAgent(); return; }
   var appRoot = document.getElementById('app');
@@ -1915,11 +2004,15 @@ async function initHistoryStorage() {
     var migrated = await nativeHistory.init();
     loadCurrentSessionMeta();
     initAgent();
+    if (window.MagiNativeConversation && nativeHistory.active) {
+      nativeConversation = await window.MagiNativeConversation.create({ cap: window.Capacitor, notice: function (text) { announceAgent(text); noticeAttach(text); } });
+    }
     historyLoading = false; appRoot.inert = false;
     announceAgent(migrated ? '' : '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
     var settings = document.getElementById('btn-settings-agent');
     if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
     initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
+    if (nativeConversation) initNativeConversationLinks().catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
   } catch (_) {
     // 移行済みファイルが読めないときは、新規データで上書きしない。
     announceAgent('保存した履歴を開けませんでした。アプリを開き直してください。');

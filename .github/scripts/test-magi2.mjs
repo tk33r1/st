@@ -11,6 +11,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import './test-magi-native-history.mjs';
 import './test-magi-native-input.mjs';
+import './test-magi-native-background.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => readFileSync(join(root, p), 'utf8');
@@ -1981,8 +1982,8 @@ function client(src, isHome = false) {
     AbortController, JSON, TextDecoder, console: { error() {} }, window: {}, AGENT_API: 'mock', AGENT_MAX_HISTORY: 12, AGENT_PERSONAS: [],
     setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
     document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
-    agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(),
-    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
+    agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(), agentTitle: '',
+    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeConversation: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
@@ -2006,6 +2007,28 @@ function client(src, isHome = false) {
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
   return { ctx, timers, errors, clock };
 }
+
+test('B3: ネイティブ受信の正常完了・通信失敗・停止で会話を保存してから受信列を取り除く', async () => {
+  for (const outcome of ['done', 'error', 'stop']) {
+    const c = client(mobile), calls = []; let owner;
+    c.ctx.nativeHistory = { async flush() { calls.push('flush'); } };
+    c.ctx.nativeConversation = {
+      id() { return 'native-request'; }, watch() { return { chunk() {}, end() {}, finish() {}, isBuffered() { return false; } }; },
+      async open(body, options) { owner = options.ctrl; calls.push('open'); assert.ok(!body.includes('native_request')); if (outcome === 'error') throw new TypeError('offline'); return { ok: true, body: {} }; },
+      async cancel(id) { assert.equal(id, 'native-request'); calls.push('cancel'); },
+      async acknowledge(id) { assert.equal(id, 'native-request'); assert.equal(calls.at(-1), 'flush'); calls.push('acknowledge'); },
+    };
+    c.ctx.fetch = async () => { throw Error('native must not call JS fetch'); };
+    c.ctx.parseSSE = async (_, h) => {
+      if (outcome === 'stop') { c.ctx.agentStop(); throw new DOMException('stopped', 'AbortError'); }
+      h.integrated({ delta: 'answer' }); h.done();
+    };
+    await c.ctx.agentSend();
+    assert.equal(calls.at(-1), 'acknowledge'); assert.equal(calls[0], 'flush'); assert.ok(owner);
+    assert.equal(c.ctx.agentBusy, false);
+    assert.equal(c.ctx.agentHistory.length, outcome === 'done' ? 2 : 0);
+  }
+});
 
 test('両画面は最初の回答本文までの秒数を保存し、次の質問のAPIには送らない', async () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {

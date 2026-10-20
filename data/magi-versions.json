@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "5.6",
+      "date": "2026-10-20",
+      "changes": {
+        "ja": [
+          "Android版は別のアプリを使ったり画面を消したりしても回答を受信し、完了を通知で知らせます。通知を押すと、その会話を開けます。",
+          "討議中の通知から停止できます。通知を許可しなくても会話は使えます。",
+          "画面を開き直したとき、端末に保存した受信データから回答を復元します。接続が切れていた場合は、自動で再送せずに知らせます。"
+        ],
+        "en": [
+          "Android keeps receiving replies while another app is open or the display is off. Arrival notifications open the conversation.",
+          "Stop a request from its ongoing notification. Chat still works if notifications are denied.",
+          "Reopening the app restores replies from received data saved on the device. Interrupted requests are reported without being sent again automatically."
+        ]
+      }
+    },
+    {
       "version": "5.5",
       "date": "2026-10-20",
       "changes": {
