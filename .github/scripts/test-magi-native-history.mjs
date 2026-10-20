@@ -133,3 +133,16 @@ test('B2: 共有資料は会話JSONとcurrentへ保存し、再起動後も復�
   assert.deepEqual(JSON.parse(next.get('magi_current_shared')), shared);
   assert.deepEqual(JSON.parse(next.get('magi_saved_sessions'))[0].shared, shared);
 });
+test('B1: 変わった会話だけを書き直し、顔ぶれが同じなら片付けでディレクトリを読まない', async () => {
+  const f = fixture(), s = f.create(); await s.init();
+  s.setSessions(Array.from({ length: 3 }, (_, n) => ({ id: 'session_' + n, title: '会話' + n, history: [{ role: 'user', content: '質問' + n }] })));
+  await s.flush();
+  const list = s.sessions(); f.operations.length = 0;
+  list[1] = { ...list[1], title: '変更後' }; s.setSessions(list); await s.flush();
+  assert.deepEqual(f.operations.filter(([m]) => m === 'write').map(([, p]) => p).sort(), ['magi/index.json.tmp', 'magi/pending.json.tmp', 'magi/sessions/session_1.json.tmp']);
+  assert.equal(f.operations.some(([m]) => m === 'readdir'), false);
+  s.setSessions(s.sessions().filter(x => x.id !== 'session_2')); await s.flush();
+  assert.equal(f.files.has('DATA:magi/sessions/session_2.json'), false);
+  const next = f.create(); await next.init();
+  assert.deepEqual([...next.sessions().map(x => x.title)], ['会話0', '変更後']);
+});

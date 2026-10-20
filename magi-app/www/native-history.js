@@ -7,7 +7,10 @@
   function parse(raw, fallback) { return raw == null ? fallback : JSON.parse(raw); }
   function create(options) {
     var fs = options.fs, legacy = options.legacy, clean = options.cleanHistory;
-    var state = {}, active = false, tail = Promise.resolve(), lastError = null, committed = {}, pendingImages = new Set(), queued = false;
+    // 保存した会話は物のまま持つ。画面は中身を書き換えず、変えた会話は新しい物で置き換える。
+    // 会話ごとの保存用の文字列は物に紐付けて使い回し、変わった会話だけを作り直す。
+    var state = {}, saved = [], entries = new WeakMap(), active = false, tail = Promise.resolve(), lastError = null;
+    var committed = {}, collected = null, pendingImages = new Set(), queued = false;
     function owns(key) { return KEYS.indexOf(key) >= 0; }
     function clearLegacyHistory() { KEYS.forEach(function (key) { legacy.removeItem(key); }); }
     function args(path) { return { path: 'magi/' + path, directory: 'DATA' }; }
@@ -22,67 +25,76 @@
       await fs.writeFile(Object.assign(args(temp), { data: data, recursive: true }, encoding ? { encoding: encoding } : {}));
       await fs.rename({ from: 'magi/' + temp, to: 'magi/' + path, directory: 'DATA', toDirectory: 'DATA' });
     }
-    function atomic(path, value) { return atomicRaw(path, JSON.stringify(value), 'utf8'); }
     async function remove(path) { if (await exists(path)) await fs.deleteFile(args(path)); }
-    function snapshot() {
-      var result = {};
-      KEYS.forEach(function (key) { if (state[key] != null) result[key] = state[key]; });
-      return result;
+    function imagesIn(value, out) {
+      if (!value || typeof value !== 'object') return out;
+      if (imageName.test(value.file)) out.push(value.file);
+      Object.keys(value).forEach(function (key) { imagesIn(value[key], out); });
+      return out;
     }
-    function documents(data) {
-      var sessions = parse(data.magi_saved_sessions, []), docs = {}, index = [];
-      sessions.forEach(function (s) {
-        if (!sessionId.test(s.id)) throw new Error('invalid_session_id');
-        var item = Object.assign({}, s, { history: clean(s.history) });
-        docs['sessions/' + s.id + '.json'] = item;
-        var row = Object.assign({}, item); delete row.history; delete row.shared; index.push(row);
+    function entry(session) {
+      var e = entries.get(session);
+      if (e) return e;
+      if (!session || !sessionId.test(session.id)) throw new Error('invalid_session_id');
+      var item = Object.assign({}, session, { history: clean(session.history) });
+      var row = Object.assign({}, item); delete row.history; delete row.shared;
+      e = { path: 'sessions/' + session.id + '.json', text: JSON.stringify(item), row: row, images: imagesIn(item, []) };
+      entries.set(session, e);
+      return e;
+    }
+    function documents() {
+      var texts = {}, index = [], used = new Set();
+      saved.forEach(function (session) {
+        var e = entry(session);
+        texts[e.path] = e.text; index.push(e.row);
+        e.images.forEach(function (name) { used.add(name); });
       });
-      docs['index.json'] = index;
-      docs['current.json'] = {
-        id: data.magi_current_session_id || null, title: data.magi_current_title || '',
-        language: parse(data.magi_current_language, null), history: clean(parse(data.magi_current_history, [])),
-        shared: parse(data.magi_current_shared, null)
+      texts['index.json'] = JSON.stringify(index);
+      var current = {
+        id: state.magi_current_session_id || null, title: state.magi_current_title || '',
+        language: parse(state.magi_current_language, null), history: clean(parse(state.magi_current_history, [])),
+        shared: parse(state.magi_current_shared, null)
       };
-      return docs;
+      texts['current.json'] = JSON.stringify(current);
+      imagesIn(current, []).forEach(function (name) { used.add(name); });
+      return { texts: texts, used: used };
     }
-    async function apply(docs) {
-      for (var path of Object.keys(docs)) {
+    async function apply(texts) {
+      for (var path of Object.keys(texts)) {
         var session = /^sessions\/(.+)\.json$/.exec(path);
         if (!/^(?:index|current)\.json$/.test(path) && !(session && sessionId.test(session[1]))) throw new Error('invalid_journal');
-        await atomic(path, docs[path]);
+        await atomicRaw(path, texts[path], 'utf8');
       }
     }
-    async function save(data) {
-      var docs = documents(data), serialized = {}, changes = {};
-      Object.keys(docs).forEach(function (path) {
-        serialized[path] = JSON.stringify(docs[path]);
-        if (serialized[path] !== committed[path]) changes[path] = docs[path];
-      });
-      if (Object.keys(changes).length) {
+    async function save() {
+      var docs = documents(), changes = {};
+      var paths = Object.keys(docs.texts).filter(function (path) { return docs.texts[path] !== committed[path]; });
+      paths.forEach(function (path) { changes[path] = docs.texts[path]; });
+      if (paths.length) {
         // 複数ファイルの途中で止まったら、次の起動でjournalを再適用する。
-        await atomic('pending.json', changes);
+        await atomicRaw('pending.json', '{' + paths.map(function (path) { return JSON.stringify(path) + ':' + changes[path]; }).join(',') + '}', 'utf8');
         await apply(changes);
         await remove('pending.json');
       }
-      committed = serialized;
+      committed = docs.texts;
       await collect(docs);
       return docs;
     }
     async function files(path) { return (await exists(path)) ? (await fs.readdir(args(path))).files : []; }
     async function collect(docs) {
-      var used = new Set(pendingImages);
-      function walk(value) {
-        if (!value || typeof value !== 'object') return;
-        if (imageName.test(value.file)) { used.add(value.file); pendingImages.delete(value.file); }
-        Object.keys(value).forEach(function (key) { walk(value[key]); });
-      }
-      Object.values(docs).forEach(walk);
+      docs.used.forEach(function (name) { pendingImages.delete(name); });
+      var used = new Set(docs.used);
+      pendingImages.forEach(function (name) { used.add(name); });
+      // 会話と画像の顔ぶれが前回の片付けと同じなら、ディレクトリを読まない。
+      var signature = Object.keys(docs.texts).sort().join('\n') + '\n\n' + Array.from(used).sort().join('\n');
+      if (signature === collected) return;
       for (var file of await files('sessions')) {
-        if (file.type === 'file' && !docs['sessions/' + file.name]) await remove('sessions/' + file.name);
+        if (file.type === 'file' && docs.texts['sessions/' + file.name] == null) await remove('sessions/' + file.name);
       }
       for (var img of await files('images')) {
         if (img.type === 'file' && !used.has(img.name) && !used.has(img.name.replace(/\.tmp$/, ''))) await remove('images/' + img.name);
       }
+      collected = signature;
     }
     function enqueue() {
       // 題名・会話ID・履歴など、同じ同期処理内の更新を1回にまとめる。
@@ -90,45 +102,46 @@
       queued = true;
       tail = tail.then(async function () {
         queued = false;
-        try { await save(snapshot()); lastError = null; }
+        try { await save(); lastError = null; }
         catch (e) {
-          // 途中まで書けたファイルやjournalが残るため、次回は最新の全項目を書き直す。
-          committed = {}; lastError = e; if (options.onError) options.onError(e);
+          // 途中まで書けたファイルやjournalが残るため、次回は最新の全項目を書き直して片付ける。
+          committed = {}; collected = null; lastError = e; if (options.onError) options.onError(e);
         }
       });
     }
     async function load() {
-      if (await exists('pending.json')) { await apply(await read('pending.json')); await remove('pending.json'); }
+      if (await exists('pending.json')) {
+        var journal = await read('pending.json'), texts = {};
+        Object.keys(journal).forEach(function (path) { texts[path] = JSON.stringify(journal[path]); });
+        await apply(texts); await remove('pending.json');
+      }
       var index = await read('index.json'), current = await read('current.json');
       if (!Array.isArray(index)) throw new Error('invalid_index');
       index.forEach(function (row) { if (!sessionId.test(row.id)) throw new Error('invalid_session_id'); });
-      var sessions = await Promise.all(index.map(async function (row) {
+      saved = await Promise.all(index.map(async function (row) {
         var session = await read('sessions/' + row.id + '.json');
         if (session.id !== row.id) throw new Error('session_mismatch');
         session.history = clean(session.history);
         return session;
       }));
-      state.magi_saved_sessions = JSON.stringify(sessions);
       state.magi_current_history = JSON.stringify(clean(current.history));
       if (current.id) state.magi_current_session_id = current.id;
       if (current.title) state.magi_current_title = current.title;
       if (current.language) state.magi_current_language = JSON.stringify(current.language);
       if (current.shared) state.magi_current_shared = JSON.stringify(current.shared);
-      var docs = documents(snapshot());
-      Object.keys(docs).forEach(function (path) { committed[path] = JSON.stringify(docs[path]); });
+      committed = documents().texts;
     }
     function legacyData() {
       var result = {}, sessions;
-      KEYS.forEach(function (key) { var value = legacy.getItem(key); if (value !== null) result[key] = value; });
-      try { sessions = parse(result.magi_saved_sessions, []); } catch (_) { sessions = []; }
+      KEYS.forEach(function (key) { var value = legacy.getItem(key); if (value !== null && key !== 'magi_saved_sessions') result[key] = value; });
+      try { sessions = parse(legacy.getItem('magi_saved_sessions'), []); } catch (_) { sessions = []; }
       if (!Array.isArray(sessions)) sessions = [];
-      result.magi_saved_sessions = JSON.stringify(sessions.filter(function (s) { return s && sessionId.test(s.id); }).map(function (s) {
-        return Object.assign({}, s, { history: clean(s.history) });
-      }));
       try { result.magi_current_history = JSON.stringify(clean(parse(result.magi_current_history, []))); }
       catch (_) { result.magi_current_history = '[]'; }
       try { parse(result.magi_current_language, null); } catch (_) { delete result.magi_current_language; }
-      return result;
+      return { state: result, saved: sessions.filter(function (s) { return s && sessionId.test(s.id); }).map(function (s) {
+        return Object.assign({}, s, { history: clean(s.history) });
+      }) };
     }
     return {
       owns: owns,
@@ -143,21 +156,34 @@
         }
         var data = legacyData();
         try {
-          state = data;
+          state = data.state; saved = data.saved;
           // 書いた全ファイルの項目と本文を照合してから、完了の印を確定する。
-          var docs = await save(data);
-          for (var path of Object.keys(docs)) {
-            if (JSON.stringify(await read(path)) !== JSON.stringify(docs[path])) throw new Error('migration_mismatch');
+          var docs = await save();
+          for (var path of Object.keys(docs.texts)) {
+            if (JSON.stringify(await read(path)) !== docs.texts[path]) throw new Error('migration_mismatch');
           }
-          await atomic('meta.json', { version: 1, migrated: true });
-        } catch (e) { state = {}; if (options.onError) options.onError(e); return false; }
+          await atomicRaw('meta.json', JSON.stringify({ version: 1, migrated: true }), 'utf8');
+        } catch (e) { state = {}; saved = []; if (options.onError) options.onError(e); return false; }
         active = true;
         clearLegacyHistory();
         return true;
       },
-      get(key) { return state[key] == null ? null : state[key]; },
-      set(key, value) { state[key] = value; enqueue(); },
-      remove(key) { if (state[key] == null) return; delete state[key]; enqueue(); },
+      // magi_saved_sessions を文字列で読み書きする経路も残す（全会話を変換し直すので、画面は sessions/setSessions を使う）。
+      get(key) {
+        if (key === 'magi_saved_sessions') return JSON.stringify(saved);
+        return state[key] == null ? null : state[key];
+      },
+      set(key, value) {
+        if (key === 'magi_saved_sessions') saved = parse(value, []); else state[key] = value;
+        enqueue();
+      },
+      remove(key) {
+        if (key === 'magi_saved_sessions') { if (!saved.length) return; saved = []; }
+        else { if (state[key] == null) return; delete state[key]; }
+        enqueue();
+      },
+      sessions() { return saved.slice(); },
+      setSessions(list) { saved = list.slice(); enqueue(); },
       retainImage(name) { if (imageName.test(name)) pendingImages.add(name); },
       releaseImage(name) { pendingImages.delete(name); enqueue(); },
       async flush() { await tail; if (lastError) throw lastError; },
@@ -191,9 +217,9 @@
       },
       async clear() {
         await tail;
-        state = { magi_saved_sessions: '[]', magi_current_history: '[]' }; committed = {}; pendingImages.clear();
+        state = { magi_current_history: '[]' }; saved = []; committed = {}; collected = null; pendingImages.clear();
         // metaは残す。空の履歴を確定してから、会話ファイルと画像をcollectで削除する。
-        await save(snapshot()); lastError = null;
+        await save(); lastError = null;
         clearLegacyHistory();
       },
       async exportData() {
@@ -207,7 +233,7 @@
           Object.keys(value).forEach(function (key) { if (key !== 'file') result[key] = withoutImages(value[key]); });
           return result;
         }
-        return { version: 1, exportedAt: new Date().toISOString(), sessions: withoutImages(parse(state.magi_saved_sessions, [])), current: withoutImages(await read('current.json')) };
+        return { version: 1, exportedAt: new Date().toISOString(), sessions: withoutImages(saved), current: withoutImages(await read('current.json')) };
       }
     };
   }

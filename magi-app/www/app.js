@@ -449,6 +449,13 @@ function safeStore(key, val) {
     } catch (__) { /* どうにもならない場合は黙って諦める */ }
   }
 }
+// Androidの履歴は会話を物のまま渡し、変わった会話だけを書き直させる（中の会話は書き換えず、新しい物で置き換える）。
+function readSavedSessions() {
+  return nativeHistory && nativeHistory.active ? nativeHistory.sessions() : safeParse(safeGet('magi_saved_sessions'), []);
+}
+function writeSavedSessions(sessions) {
+  if (nativeHistory && nativeHistory.active) nativeHistory.setSessions(sessions); else safeStore('magi_saved_sessions', sessions);
+}
 var genMid = function () { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
 var agentScroll = function () { agentLog.scrollTop = agentLog.scrollHeight; };
 // 終わった往復とエラーを1回だけ読み上げる（#agent-log は読み上げ領域にしない。index.html の注記）。
@@ -543,7 +550,7 @@ function syncCurrentToSaved() {
   if (!firstUserMsg) return;
   var firstText = contentText(firstUserMsg.content) || 'Image';
   var title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
-  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
+  var sessions = readSavedSessions();
   if (currentSessionId) {
     sessions = sessions.filter(function (s) { return s.id !== currentSessionId; });
   } else {
@@ -552,7 +559,7 @@ function syncCurrentToSaved() {
   }
   sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage), ...(agentShared ? { shared: agentShared } : {}) });
   if (!nativeAndroid && sessions.length > 50) sessions.pop();
-  safeStore('magi_saved_sessions', sessions);
+  writeSavedSessions(sessions);
   if (document.getElementById('agent-history-list')) renderSavedSessionsList();
 }
 function applyReactionsToTurn(turn, reactions) {
@@ -1494,7 +1501,7 @@ var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24
 function renderSavedSessionsList() {
   var list = document.getElementById('agent-history-list');
   if (!list) return;
-  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
+  var sessions = readSavedSessions();
   if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">No saved conversations.</div>'; return; }
   list.innerHTML = sessions.map(function (s) {
     return '<div class="session-item" data-id="' + esc(s.id) + '">'
@@ -1513,7 +1520,7 @@ function renderSavedSessionsList() {
 }
 function loadSavedSession(id) {
   syncCurrentToSaved(); // keep the current conversation before switching
-  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
+  var sessions = readSavedSessions();
   var session = sessions.find(function (s) { return s.id === id; });
   if (!session) return;
   dropAgentRequest();
@@ -1535,9 +1542,7 @@ function loadSavedSession(id) {
 }
 function deleteSavedSession(id) {
   if (currentSessionId === id) resetAgent();
-  var sessions = safeParse(safeGet('magi_saved_sessions'), []);
-  sessions = sessions.filter(function (s) { return s.id !== id; });
-  safeStore('magi_saved_sessions', sessions);
+  writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
