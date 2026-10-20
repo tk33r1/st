@@ -7,12 +7,14 @@
         "ja": [
           "Android版は別のアプリを使ったり画面を消したりしても回答を受信し、完了を通知で知らせます。通知を押すと、その会話を開けます。",
           "討議中の通知から停止できます。通知を許可しなくても会話は使えます。",
-          "画面を開き直したとき、端末に保存した受信データから回答を復元します。接続が切れていた場合は、自動で再送せずに知らせます。"
+          "画面を開き直したとき、端末に保存した受信データから回答を復元します。接続が切れていた場合は、自動で再送せずに知らせます。",
+          "Android版の共有・音声入力・履歴を改善しました。長い文章の共有はそのまま資料にし、音声入力の途中で送信やアプリの切替をしても話した内容を入力欄に残します。履歴の保存を速くし、画像や会話の取りこぼしを防ぎました。"
         ],
         "en": [
           "Android keeps receiving replies while another app is open or the display is off. Arrival notifications open the conversation.",
           "Stop a request from its ongoing notification. Chat still works if notifications are denied.",
-          "Reopening the app restores replies from received data saved on the device. Interrupted requests are reported without being sent again automatically."
+          "Reopening the app restores replies from received data saved on the device. Interrupted requests are reported without being sent again automatically.",
+          "Android fixes: long shared text stays as the document, speech stays in the input if you tap Send or switch apps while dictating, and history saves faster without losing images or chats."
         ]
       }
     },
