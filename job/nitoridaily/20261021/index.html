@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily | tk.st</title>
+  <meta name="description" content="ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#009e96">
+
+  <link rel="canonical" href="https://tk.st/job/nitoridaily/20261021/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily">
+  <meta property="og:description" content="ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/nitoridaily/20261021/">
+  <meta property="og:site_name" content="Nitori Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/nitoridaily/20261021.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@dailynitori">
+  <meta name="twitter:title" content="2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily">
+  <meta name="twitter:description" content="ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/nitoridaily/20261021.webp">
+
+  <link rel="icon" href="../../../images/favicons/nitori-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/nitori-favicon.svg">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/nitoridaily/20261021/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Nitori Daily",
+        "url": "https://tk.st/job/nitoridaily/"
+      },
+      "headline": "2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ",
+      "description": "ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。",
+      "url": "https://tk.st/job/nitoridaily/20261021/",
+      "image": "https://tk.st/images/ogp/nitoridaily/20261021.webp",
+      "datePublished": "2026-10-21T08:00:00+09:00",
+      "dateModified": "2026-10-21T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "物流・サプライチェーン",
+        "デジタル・EC・アプリ",
+        "店舗展開・海外戦略",
+        "商品開発・ヒット商品",
+        "SNS話題・リアル反響"
+      ],
+      "keywords": [
+        "DX",
+        "EC",
+        "Nプラス",
+        "SNS",
+        "SNS話題・リアル反響",
+        "アパレル",
+        "インド",
+        "コーディネート",
+        "サステナビリティ",
+        "デコホーム",
+        "デジタル・EC・アプリ",
+        "ニトリ",
+        "リカバリーウェア",
+        "出店",
+        "同棲",
+        "商品開発",
+        "商品開発・ヒット商品",
+        "寝具",
+        "寝室",
+        "島忠",
+        "店舗展開",
+        "店舗展開・海外戦略",
+        "海外展開",
+        "物流",
+        "物流・サプライチェーン",
+        "資源循環"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-6"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-7"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261021/#art-8"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/nitoridaily/20261021/#newslist",
+      "name": "2026年10月21日号 掲載ニュース一覧",
+      "numberOfItems": 8,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-1",
+            "position": 1,
+            "headline": "ニトリ、資源循環の起点「リサイクルセンター」を2028年に稼働へ",
+            "description": "ニトリは、製造・物流・IT・小売を一体化した「循環」型小売業を目指す中で、資源循環の新たな起点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにした。拠点は埼玉県本庄市に開設される予定で、使用済み商品の回収から再資源化までを担う。SPAとして持つ物流網や在庫情報を活かし、廃棄削減とコスト低減の両立を狙う。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-1",
+            "articleSection": "物流・サプライチェーン",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQRnV0cmNLcnJtbDhaQmllUFh6bFFuaXJUcGZNaWR0aVdySV80WWZneEk0ZFBTaDhrT0ZpQTdEbUVmRFpUYnRuNFBaWV8yazdSRGdLRW5HSWgxZnNyWDFfaFBib1l4c05GU29Sa2F3czNCdjd1S2IyWkNJTGpINFYzN0Y3ZVdqQV92b3NhN1pfSnptOVRtczhVYUZ0SGpOZUNSYm9Qb0NnVVdLR3NmakxPblluckvSAbQBQVVfeXFMUEZ1dHJjS3JybWw4WkJpZVBYemxRbmlyVHBmTWlkdGlXcklfNFlmZ3hJNGRQU2g4a09GaUE3RG1FZkRaVGJ0bjRQWllfMms3UkRnS0VuR0loMWZzclgxX2hQYm9ZeHNORlNvUmthd3MzQnY3dUtiMlpDSUxqSDRWMzdGN2VXakFfdm9zYTdaX0p6bTlUbXM4VWFGdEhqTmVDUmJvUG9DZ1VXS0dzZmpMT25ZbnJL?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ｄメニューニュース"
+              },
+              "datePublished": "2026-10-20T09:00:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "物流",
+              "資源循環",
+              "サステナビリティ"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-2",
+            "position": 2,
+            "headline": "ニトリ環八用賀店、ロッカー受け取りを実証",
+            "description": "ニトリは環八用賀店で、ロッカーを使った商品受け取りの実証実験を開始した。PR TIMESでは「Quist」を活用した取り組みとして発表されている。店舗を受け取りの拠点として活用する試みで、EC利用が広がる中での受け取り体験の改善と運用面の検証を狙う。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-2",
+            "articleSection": "デジタル・EC・アプリ",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE9TU3BGVk5DUUpRTmF1R3o2NXI4TlB1R3c2U091aTZWSl9KSVdNUFZRUkk0SnMwNHJXcDhUazJsSG5McjA1bV9xUlN3?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "LOGISTICS TODAY"
+              },
+              "datePublished": "2026-10-20T16:53:47+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "物流",
+              "DX",
+              "EC"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-3",
+            "position": 3,
+            "headline": "デコホーム「ボーノ相模大野店」が10月23日オープン",
+            "description": "相模原市に、デコホームの新店「ボーノ相模大野店」が10月23日にオープンする。デコホームはニトリグループの雑貨・インテリア業態で、生活雑貨や季節商品を中心に品揃えを展開している。新店のオープンにより、地域の生活者に向けた暮らし提案の拠点が増え、近隣住民の来店需要の取り込みが焦点となる。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-3",
+            "articleSection": "店舗展開・海外戦略",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9RanJpekR5emRDU1N6cVBuQWZXTlFQbFZta0wwcjg4aWRWWmlweW5ZazJ1emIteWhyclNvXzdJaE95RWtLQjBTUWFIb3FJcFFTajBN?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "流通スーパーニュース"
+              },
+              "datePublished": "2026-10-20T13:59:50+09:00"
+            },
+            "keywords": [
+              "デコホーム",
+              "店舗展開",
+              "出店"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-4",
+            "position": 4,
+            "headline": "Nプラス、洗えるストレッチスウェード調ブルゾンとパンツを発売",
+            "description": "ニトリの衣料ブランド「Nプラス」は、洗えるストレッチスウェード調のブルゾンとパンツを新たに発売した。スウェード調の上質な見た目を保ちつつ、家庭での洗濯に対応する点が特徴だ。ストレッチ素材で動きやすさも備え、日常使いに向けた秋冬アイテムとして展開される。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-4",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBBNmlucWFrVzdwUWNsTTJEbENNZGh6Z1lrcGU5QUlwOElqWFNXVzN1bzFNMG9sZjNpWWhwTzRQMHlJZ0dqRGc?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Dellows News"
+              },
+              "datePublished": "2026-10-20T14:53:47+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "Nプラス",
+              "商品開発",
+              "アパレル"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-5",
+            "position": 5,
+            "headline": "島忠、着るだけで疲労回復をサポートする「Sミラク」を1,958円から発売",
+            "description": "島忠は、着るだけで疲労回復をサポートするリカバリーウェア「Sミラク」を新たに発売した。部屋着としても外出時にも着られる設計で、価格は1,958円（税込）から。ホームセンター・インテリア業態で培った生活提案の幅を衣料分野に広げる狙いで、日々の疲れをケアする商品として訴求する。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-5",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9JR1lEU1lkdlFQeVFJajZmMHdfTU5QMFVLYW9TNTVZcW9sc3dBRl9Zb2plR2hmV2x3VjhkVlRoeUdCQU0wbi11WTF2VVp2MFRzcS1hcW10SEtleHc?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "朝日新聞"
+              },
+              "datePublished": "2026-10-20T01:35:06+09:00"
+            },
+            "keywords": [
+              "島忠",
+              "リカバリーウェア",
+              "商品開発"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-6",
+            "position": 6,
+            "headline": "ニトリ、インド・ムンバイの「Sky City Mall」に2店舗目を開店",
+            "description": "ニトリはインド・ムンバイの商業施設「Sky City Mall」に、同国2店舗目となる店舗をオープンした。インドでは住宅需要の拡大に伴い家具・インテリア市場の成長が見込まれており、都市部での店舗網を広げる段階に入った。現地の住宅事情や生活様式に合わせた商品構成で、日本の暮らし提案を届ける狙いだ。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-6",
+            "articleSection": "店舗展開・海外戦略",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPbFhoYkZFVU80bk1GelU0NnFudEhyWlhLWVBPS1IxRkxEOUFqQlFmN1pwcVE3VmN0ZHVqQlFwdmhBT285UkFBdnpwbDdvT3U1VU5RRWQyMzNGdjlWdzdETGRLNHI0eDVTalgzamJrbTNRaVdMSlo4eXg3SEVtM1pKOHlLN2d5UWV2ejhybV9KdERGWXdhcm1lVW1TRDJTUnNJX3c0bFN0MzduejZfS05J?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Indian Retailer"
+              },
+              "datePublished": "2026-10-20T19:19:43+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "海外展開",
+              "インド",
+              "店舗展開"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-7",
+            "position": 7,
+            "headline": "ニトリの小上がりとHAYのオープンラックで作る「ジャパンディ」な寝室",
+            "description": "X上で、ニトリの小上がりとHAYのオープンラックを組み合わせた寝室づくりが「簡単にジャパンディな空間になる」として紹介された。投稿は41いいねと大きな数ではないが、ブランドを超えた組み合わせで空間を完成させる発想が共感を集めている。ニトリの低めの家具は、デザイン性のある収納と合わせることで空気感を変える素材として受け止められている。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-7",
+            "articleSection": "SNS話題・リアル反響",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://x.com/3Dcgrooms/status/2112520708181889462",
+              "publisher": {
+                "@type": "Organization",
+                "name": "X（Yahoo!リアルタイム検索）"
+              },
+              "datePublished": "2026-10-20T20:00:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "SNS",
+              "コーディネート",
+              "寝室"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261021/#art-8",
+            "position": 8,
+            "headline": "ニトリのベッド選びで浮かび上がった、同棲カップルの寝室と距離感",
+            "description": "X上では、同棲に向けてニトリでシングルベッドを2台選んだカップルのやり取りが82いいねを集めた。ベッドをくっつけて置くか、寝室を分けるかという問いは、生活スタイルや関係性を反映する選択として多くの共感を呼んだ。寝具の配置が、暮らし方そのものを映し出す話題として受け止められている。",
+            "url": "https://tk.st/job/nitoridaily/20261021/#art-8",
+            "articleSection": "SNS話題・リアル反響",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-21T08:00:00+09:00",
+            "dateModified": "2026-10-21T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261021/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://x.com/selfmastery40/status/2112476397583388741",
+              "publisher": {
+                "@type": "Organization",
+                "name": "X（Yahoo!リアルタイム検索）"
+              },
+              "datePublished": "2026-10-20T20:00:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "SNS",
+              "寝具",
+              "同棲"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/nitoridaily/20261021/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Nitori Daily",
+          "item": "https://tk.st/job/nitoridaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月21日号",
+          "item": "https://tk.st/job/nitoridaily/20261021/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+</head>
+<body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerNitoriBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#006b66" />
+      <stop offset="55%" stop-color="#009e96" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerNitoriBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.2" />
+  <path d="M13 26 L32 13 L51 26" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M21 48 V27 L43 48 V27" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Nitori Daily</span>
+          <span class="brand-tag">毎朝8時のニトリ速報＆SNS話題</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/dailynitori" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../retailtechdaily/" class="header-menu-media-link">Retail Tech Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Nitori Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月21日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月21日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ</h1>
+        <p class="issue-lede">ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約5分 / 2,674字
+          </span>
+          <span class="stat">全 8 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。</li><li>環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。</li><li>インドでの2店舗目出店が示すように海外展開は地域拡大の段階に入り、SNSでも「組み合わせて暮らしを作る」提案への共感が目立つ。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><a href="#snsBuzzSection" class="qi-sns-link"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> <span>Xリアル反響 (3件) ↓</span></a><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">物流・サプライチェーン</span></span>
+              <span class="qi-title">ニトリ、資源循環の起点「リサイクルセンター」を2028年に稼働へ</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">デジタル・EC・アプリ</span></span>
+              <span class="qi-title">ニトリ環八用賀店、ロッカー受け取りを実証</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗展開・海外戦略</span></span>
+              <span class="qi-title">デコホーム「ボーノ相模大野店」が10月23日オープン</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">Nプラス、洗えるストレッチスウェード調ブルゾンとパンツを発売</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">島忠、着るだけで疲労回復をサポートする「Sミラク」を1,958円から発売</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">店舗展開・海外戦略</span></span>
+              <span class="qi-title">ニトリ、インド・ムンバイの「Sky City Mall」に2店舗目を開店</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-7" class="qi-link">
+            <span class="qi-num">07</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・リアル反響</span></span>
+              <span class="qi-title">ニトリの小上がりとHAYのオープンラックで作る「ジャパンディ」な寝室</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-8" class="qi-link">
+            <span class="qi-num">08</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・リアル反響</span></span>
+              <span class="qi-title">ニトリのベッド選びで浮かび上がった、同棲カップルの寝室と距離感</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">8 stories</span>
+        </div>
+
+        <nav class="content-lane-nav" aria-label="情報種別"><a href="#lane-corporate"><span>企業・経営</span><strong>2</strong></a><a href="#lane-product"><span>商品・店舗</span><strong>4</strong></a><a href="#lane-consumer"><span>生活者SNS</span><strong>2</strong></a></nav>
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">8</strong> / 8</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">8</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">7</span></button><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">1</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="物流・サプライチェーン" aria-pressed="false">物流・サプライチェーン <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="デジタル・EC・アプリ" aria-pressed="false">デジタル・EC・アプリ <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗展開・海外戦略" aria-pressed="false">店舗展開・海外戦略 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="商品開発・ヒット商品" aria-pressed="false">商品開発・ヒット商品 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・リアル反響" aria-pressed="false">SNS話題・リアル反響 <span class="chip-count">2</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+<section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
+        <article class="news-card" id="art-1" data-region="JP" data-category="物流・サプライチェーン" data-lane="corporate" data-share-title="ニトリ、資源循環の起点「リサイクルセンター」を2028年に稼働へ" data-share-takeaway="回収と再資源化を自社の物流網に組み込めば、家具の処分に悩む顧客の負担を減らす新たなサービス接点になり得る。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-1">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="物流・サプライチェーン" title="このカテゴリで絞り込み">物流・サプライチェーン</button>
+              <span class="source-tag">ｄメニューニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T09:00:00+09:00" title="出典の公開日時">公開 2026.10.20 09:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxQRnV0cmNLcnJtbDhaQmllUFh6bFFuaXJUcGZNaWR0aVdySV80WWZneEk0ZFBTaDhrT0ZpQTdEbUVmRFpUYnRuNFBaWV8yazdSRGdLRW5HSWgxZnNyWDFfaFBib1l4c05GU29Sa2F3czNCdjd1S2IyWkNJTGpINFYzN0Y3ZVdqQV92b3NhN1pfSnptOVRtczhVYUZ0SGpOZUNSYm9Qb0NnVVdLR3NmakxPblluckvSAbQBQVVfeXFMUEZ1dHJjS3JybWw4WkJpZVBYemxRbmlyVHBmTWlkdGlXcklfNFlmZ3hJNGRQU2g4a09GaUE3RG1FZkRaVGJ0bjRQWllfMms3UkRnS0VuR0loMWZzclgxX2hQYm9ZeHNORlNvUmthd3MzQnY3dUtiMlpDSUxqSDRWMzdGN2VXakFfdm9zYTdaX0p6bTlUbXM4VWFGdEhqTmVDUmJvUG9DZ1VXS0dzZmpMT25ZbnJL?oc=5" target="_blank" rel="noopener noreferrer">ニトリ、資源循環の起点「リサイクルセンター」を2028年に稼働へ<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>は、製造・物流・IT・小売を一体化した「循環」型小売業を目指す中で、資源循環の新たな起点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにした。拠点は埼玉県本庄市に開設される予定で、使用済み商品の回収から再資源化までを担う。SPAとして持つ物流網や在庫情報を活かし、廃棄削減とコスト低減の両立を狙う。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">回収と再資源化を自社の物流網に組み込めば、家具の処分に悩む顧客の負担を減らす新たなサービス接点になり得る。</p>
+              </div>
+              <p class="wim-detail">企画から回収まで一気通貫で設計できるSPAは、循環型モデルを低コストで回せる点が強みだ。環境対応への社会的要請が高まる中、ブランド価値の差別化要因として機能するだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%89%A9%E6%B5%81">#物流</a><button type="button" class="topic-watch-btn" data-watch-topic="物流" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B3%87%E6%BA%90%E5%BE%AA%E7%92%B0">#資源循環</a><button type="button" class="topic-watch-btn" data-watch-topic="資源循環" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B5%E3%82%B9%E3%83%86%E3%83%8A%E3%83%93%E3%83%AA%E3%83%86%E3%82%A3">#サステナビリティ</a><button type="button" class="topic-watch-btn" data-watch-topic="サステナビリティ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMitAFBVV95cUxQRnV0cmNLcnJtbDhaQmllUFh6bFFuaXJUcGZNaWR0aVdySV80WWZneEk0ZFBTaDhrT0ZpQTdEbUVmRFpUYnRuNFBaWV8yazdSRGdLRW5HSWgxZnNyWDFfaFBib1l4c05GU29Sa2F3czNCdjd1S2IyWkNJTGpINFYzN0Y3ZVdqQV92b3NhN1pfSnptOVRtczhVYUZ0SGpOZUNSYm9Qb0NnVVdLR3NmakxPblluckvSAbQBQVVfeXFMUEZ1dHJjS3JybWw4WkJpZVBYemxRbmlyVHBmTWlkdGlXcklfNFlmZ3hJNGRQU2g4a09GaUE3RG1FZkRaVGJ0bjRQWllfMms3UkRnS0VuR0loMWZzclgxX2hQYm9ZeHNORlNvUmthd3MzQnY3dUtiMlpDSUxqSDRWMzdGN2VXakFfdm9zYTdaX0p6bTlUbXM4VWFGdEhqTmVDUmJvUG9DZ1VXS0dzZmpMT25ZbnJL?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="デジタル・EC・アプリ" data-lane="corporate" data-share-title="ニトリ環八用賀店、ロッカー受け取りを実証" data-share-takeaway="ECで購入した家具や雑貨の受け取りは、再配達や待ち時間が顧客満足を左右する課題だ。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-2">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="デジタル・EC・アプリ" title="このカテゴリで絞り込み">デジタル・EC・アプリ</button>
+              <span class="source-tag">LOGISTICS TODAY</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T16:53:47+09:00" title="出典の公開日時">公開 2026.10.20 16:53 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiSkFVX3lxTE9TU3BGVk5DUUpRTmF1R3o2NXI4TlB1R3c2U091aTZWSl9KSVdNUFZRUkk0SnMwNHJXcDhUazJsSG5McjA1bV9xUlN3?oc=5" target="_blank" rel="noopener noreferrer">ニトリ環八用賀店、ロッカー受け取りを実証<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>は環八用賀店で、ロッカーを使った商品受け取りの実証実験を開始した。PR TIMESでは「Quist」を活用した取り組みとして発表されている。店舗を受け取りの拠点として活用する試みで、EC利用が広がる中での受け取り体験の改善と運用面の検証を狙う。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">ECで購入した家具や雑貨の受け取りは、再配達や待ち時間が顧客満足を左右する課題だ。</p>
+              </div>
+              <p class="wim-detail">店舗併設型のロッカーは既存の店舗網を物流の受け口に変える発想で、大型商品を扱う企業ほど効率化の余地が大きい。実証の結果次第では、店舗在庫と配送を連携させるSPAらしい強みを一段と引き出す仕組みになるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%89%A9%E6%B5%81">#物流</a><button type="button" class="topic-watch-btn" data-watch-topic="物流" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=DX">#DX</a><button type="button" class="topic-watch-btn" data-watch-topic="DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=EC">#EC</a><button type="button" class="topic-watch-btn" data-watch-topic="EC" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiSkFVX3lxTE9TU3BGVk5DUUpRTmF1R3o2NXI4TlB1R3c2U091aTZWSl9KSVdNUFZRUkk0SnMwNHJXcDhUazJsSG5McjA1bV9xUlN3?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
+        <article class="news-card" id="art-3" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="デコホーム「ボーノ相模大野店」が10月23日オープン" data-share-takeaway="デコホームは生活雑貨やインテリア小物を中心に、日常的な買い回りや季節提案を担う業態だ。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-3">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗展開・海外戦略" title="このカテゴリで絞り込み">店舗展開・海外戦略</button>
+              <span class="source-tag">流通スーパーニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T13:59:50+09:00" title="出典の公開日時">公開 2026.10.20 13:59 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE9RanJpekR5emRDU1N6cVBuQWZXTlFQbFZta0wwcjg4aWRWWmlweW5ZazJ1emIteWhyclNvXzdJaE95RWtLQjBTUWFIb3FJcFFTajBN?oc=5" target="_blank" rel="noopener noreferrer">デコホーム「ボーノ相模大野店」が10月23日オープン<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>相模原市に、<strong class="kw-scan">デコホーム</strong>の新店「ボーノ相模大野店」が10月23日にオープンする。<strong class="kw-scan">デコホーム</strong>は<strong class="kw-scan">ニトリ</strong>グループの雑貨・インテリア業態で、生活雑貨や季節商品を中心に品揃えを展開している。新店のオープンにより、地域の生活者に向けた暮らし提案の拠点が増え、近隣住民の来店需要の取り込みが焦点となる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">デコホーム</strong>は生活雑貨やインテリア小物を中心に、日常的な買い回りや季節提案を担う業態だ。</p>
+              </div>
+              <p class="wim-detail">商業施設への出店は家族連れの来店動線と組み合わせやすく、衣食住にまたがる商品をまとめて提案できる利点がある。新店の売上動向は、業態別の出店戦略を検証する材料になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%87%E3%82%B3%E3%83%9B%E3%83%BC%E3%83%A0">#デコホーム</a><button type="button" class="topic-watch-btn" data-watch-topic="デコホーム" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B">#店舗展開</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗展開" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%87%BA%E5%BA%97">#出店</a><button type="button" class="topic-watch-btn" data-watch-topic="出店" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiU0FVX3lxTE9RanJpekR5emRDU1N6cVBuQWZXTlFQbFZta0wwcjg4aWRWWmlweW5ZazJ1emIteWhyclNvXzdJaE95RWtLQjBTUWFIb3FJcFFTajBN?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="Nプラス、洗えるストレッチスウェード調ブルゾンとパンツを発売" data-share-takeaway="スウェード調は手入れの難しさが購入の障壁になりやすいが、洗える仕様はその不安を解消する。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-4">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">Dellows News</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T14:53:47+09:00" title="出典の公開日時">公開 2026.10.20 14:53 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTFBBNmlucWFrVzdwUWNsTTJEbENNZGh6Z1lrcGU5QUlwOElqWFNXVzN1bzFNMG9sZjNpWWhwTzRQMHlJZ0dqRGc?oc=5" target="_blank" rel="noopener noreferrer">Nプラス、洗えるストレッチスウェード調ブルゾンとパンツを発売<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>の衣料ブランド「Nプラス」は、洗えるストレッチスウェード調のブルゾンとパンツを新たに発売した。スウェード調の上質な見た目を保ちつつ、家庭での洗濯に対応する点が特徴だ。ストレッチ素材で動きやすさも備え、日常使いに向けた秋冬アイテムとして展開される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">スウェード調は手入れの難しさが購入の障壁になりやすいが、洗える仕様はその不安を解消する。</p>
+              </div>
+              <p class="wim-detail">低価格帯で高見えと実用性を両立させる発想は、素材選定から企画まで自社で握れるSPAの強みだ。秋冬のリピート購入や、日常着としての買い替え需要につながる可能性がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=N%E3%83%97%E3%83%A9%E3%82%B9">#Nプラス</a><button type="button" class="topic-watch-btn" data-watch-topic="Nプラス" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA">#商品開発</a><button type="button" class="topic-watch-btn" data-watch-topic="商品開発" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%A2%E3%83%91%E3%83%AC%E3%83%AB">#アパレル</a><button type="button" class="topic-watch-btn" data-watch-topic="アパレル" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=N%E3%83%97%E3%83%A9%E3%82%B9" target="_blank" rel="noopener noreferrer">ニトリ公式で「Nプラス」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiRkFVX3lxTFBBNmlucWFrVzdwUWNsTTJEbENNZGh6Z1lrcGU5QUlwOElqWFNXVzN1bzFNMG9sZjNpWWhwTzRQMHlJZ0dqRGc?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="島忠、着るだけで疲労回復をサポートする「Sミラク」を1,958円から発売" data-share-takeaway="リカバリーウェアは健康志向の高まりを背景に市場が広がっており、価格を抑えた入口商品は初めての購入層を取り込みやすい。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-5">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">朝日新聞</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T01:35:06+09:00" title="出典の公開日時">公開 2026.10.20 01:35 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE9JR1lEU1lkdlFQeVFJajZmMHdfTU5QMFVLYW9TNTVZcW9sc3dBRl9Zb2plR2hmV2x3VjhkVlRoeUdCQU0wbi11WTF2VVp2MFRzcS1hcW10SEtleHc?oc=5" target="_blank" rel="noopener noreferrer">島忠、着るだけで疲労回復をサポートする「Sミラク」を1,958円から発売<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">島忠</strong>は、着るだけで疲労回復をサポートするリカバリーウェア「Sミラク」を新たに発売した。部屋着としても外出時にも着られる設計で、価格は1,958円（税込）から。ホームセンター・インテリア業態で培った生活提案の幅を衣料分野に広げる狙いで、日々の疲れをケアする商品として訴求する。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">リカバリーウェアは健康志向の高まりを背景に市場が広がっており、価格を抑えた入口商品は初めての購入層を取り込みやすい。</p>
+              </div>
+              <p class="wim-detail"><strong class="kw-scan">島忠</strong>の顧客が住まいの延長で衣料を選ぶ動線を作れれば、グループ内のクロスセルも期待できる。素材や機能の訴求が価格と釣り合うかが普及の鍵になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%B3%B6%E5%BF%A0">#島忠</a><button type="button" class="topic-watch-btn" data-watch-topic="島忠" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%82%AB%E3%83%90%E3%83%AA%E3%83%BC%E3%82%A6%E3%82%A7%E3%82%A2">#リカバリーウェア</a><button type="button" class="topic-watch-btn" data-watch-topic="リカバリーウェア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA">#商品開発</a><button type="button" class="topic-watch-btn" data-watch-topic="商品開発" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=%E5%B3%B6%E5%BF%A0" target="_blank" rel="noopener noreferrer">ニトリ公式で「島忠」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE9JR1lEU1lkdlFQeVFJajZmMHdfTU5QMFVLYW9TNTVZcW9sc3dBRl9Zb2plR2hmV2x3VjhkVlRoeUdCQU0wbi11WTF2VVp2MFRzcS1hcW10SEtleHc?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="ニトリ、インド・ムンバイの「Sky City Mall」に2店舗目を開店" data-share-takeaway="インドは人口構成が若く、住宅の新築や購入に伴うインテリア需要が伸びると期待される市場だ。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-6">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗展開・海外戦略" title="このカテゴリで絞り込み">店舗展開・海外戦略</button>
+              <span class="source-tag">Indian Retailer</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-20T19:19:43+09:00" title="出典の公開日時">公開 2026.10.20 19:19 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMirwFBVV95cUxPbFhoYkZFVU80bk1GelU0NnFudEhyWlhLWVBPS1IxRkxEOUFqQlFmN1pwcVE3VmN0ZHVqQlFwdmhBT285UkFBdnpwbDdvT3U1VU5RRWQyMzNGdjlWdzdETGRLNHI0eDVTalgzamJrbTNRaVdMSlo4eXg3SEVtM1pKOHlLN2d5UWV2ejhybV9KdERGWXdhcm1lVW1TRDJTUnNJX3c0bFN0MzduejZfS05J?oc=5" target="_blank" rel="noopener noreferrer">ニトリ、インド・ムンバイの「Sky City Mall」に2店舗目を開店<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">NITORI Opens Second India Store at Mumbai’s Sky City Mall</p>
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>はインド・ムンバイの商業施設「Sky City Mall」に、同国2店舗目となる店舗をオープンした。インドでは住宅需要の拡大に伴い家具・インテリア市場の成長が見込まれており、都市部での店舗網を広げる段階に入った。現地の住宅事情や生活様式に合わせた商品構成で、日本の暮らし提案を届ける狙いだ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">インドは人口構成が若く、住宅の新築や購入に伴うインテリア需要が伸びると期待される市場だ。</p>
+              </div>
+              <p class="wim-detail">大都市での2店舗目は単発の進出ではなく、地域展開を本格化させる段階を示す。SPAの低価格・高品質の仕組みを現地の価格感や嗜好に合わせて調整できるかが、今後の成長の分かれ目になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%B5%B7%E5%A4%96%E5%B1%95%E9%96%8B">#海外展開</a><button type="button" class="topic-watch-btn" data-watch-topic="海外展開" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%A4%E3%83%B3%E3%83%89">#インド</a><button type="button" class="topic-watch-btn" data-watch-topic="インド" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B">#店舗展開</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗展開" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMirwFBVV95cUxPbFhoYkZFVU80bk1GelU0NnFudEhyWlhLWVBPS1IxRkxEOUFqQlFmN1pwcVE3VmN0ZHVqQlFwdmhBT285UkFBdnpwbDdvT3U1VU5RRWQyMzNGdjlWdzdETGRLNHI0eDVTalgzamJrbTNRaVdMSlo4eXg3SEVtM1pKOHlLN2d5UWV2ejhybV9KdERGWXdhcm1lVW1TRDJTUnNJX3c0bFN0MzduejZfS05J?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="ニトリの小上がりとHAYのオープンラックで作る「ジャパンディ」な寝室" data-share-takeaway="生活者は単品の機能より、既存の家具と組み合わせて雰囲気を作る提案に反応している。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-7">
+          <div class="card-index" aria-hidden="true">07</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・リアル反響" title="このカテゴリで絞り込み">SNS話題・リアル反響</button>
+              <span class="source-tag">X（Yahoo!リアルタイム検索）</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-20T20:00:00+09:00" title="出典の公開日時">公開 2026.10.20 20:00 JST</time></div>
+            <h3 class="card-title"><a href="https://x.com/3Dcgrooms/status/2112520708181889462" target="_blank" rel="noopener noreferrer">ニトリの小上がりとHAYのオープンラックで作る「ジャパンディ」な寝室<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>X上で、<strong class="kw-scan">ニトリ</strong>の小上がりとHAYのオープンラックを組み合わせた寝室づくりが「簡単にジャパンディな空間になる」として紹介された。投稿は41いいねと大きな数ではないが、ブランドを超えた組み合わせで空間を完成させる発想が共感を集めている。<strong class="kw-scan">ニトリ</strong>の低めの家具は、デザイン性のある収納と合わせることで空気感を変える素材として受け止められている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">生活者は単品の機能より、既存の家具と組み合わせて雰囲気を作る提案に反応している。</p>
+              </div>
+              <p class="wim-detail"><strong class="kw-scan">ニトリ</strong>が空間を構成する商品を出すほど、他社の収納や照明と組み合わせるコーディネートが生まれやすい。店頭やSNSで組み合わせ例を示すことは、単品購入を空間づくりの購入へ広げる示唆になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS">#SNS</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B3%E3%83%BC%E3%83%87%E3%82%A3%E3%83%8D%E3%83%BC%E3%83%88">#コーディネート</a><button type="button" class="topic-watch-btn" data-watch-topic="コーディネート" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%AF%9D%E5%AE%A4">#寝室</a><button type="button" class="topic-watch-btn" data-watch-topic="寝室" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://x.com/3Dcgrooms/status/2112520708181889462" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-8" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="ニトリのベッド選びで浮かび上がった、同棲カップルの寝室と距離感" data-share-takeaway="寝具は家族や関係性の形を映す商品であり、サイズや配置の検討が暮らし方に直結する。" data-share-url="https://tk.st/job/nitoridaily/20261021/#art-8">
+          <div class="card-index" aria-hidden="true">08</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・リアル反響" title="このカテゴリで絞り込み">SNS話題・リアル反響</button>
+              <span class="source-tag">X（Yahoo!リアルタイム検索）</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-20T20:00:00+09:00" title="出典の公開日時">公開 2026.10.20 20:00 JST</time></div>
+            <h3 class="card-title"><a href="https://x.com/selfmastery40/status/2112476397583388741" target="_blank" rel="noopener noreferrer">ニトリのベッド選びで浮かび上がった、同棲カップルの寝室と距離感<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>X上では、同棲に向けて<strong class="kw-scan">ニトリ</strong>でシングルベッドを2台選んだカップルのやり取りが82いいねを集めた。ベッドをくっつけて置くか、寝室を分けるかという問いは、生活スタイルや関係性を反映する選択として多くの共感を呼んだ。寝具の配置が、暮らし方そのものを映し出す話題として受け止められている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">寝具は家族や関係性の形を映す商品であり、サイズや配置の検討が暮らし方に直結する。</p>
+              </div>
+              <p class="wim-detail"><strong class="kw-scan">ニトリ</strong>はサイズ展開の幅や複数購入のしやすさで支持されており、生活シーンごとの提案を店頭やサイトで示すことが購入の後押しになる。関係性に寄り添う売り場提案は、同棲や新生活の需要を取り込む機会になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS">#SNS</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%AF%9D%E5%85%B7">#寝具</a><button type="button" class="topic-watch-btn" data-watch-topic="寝具" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%90%8C%E6%A3%B2">#同棲</a><button type="button" class="topic-watch-btn" data-watch-topic="同棲" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://x.com/selfmastery40/status/2112476397583388741" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8821%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B8%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+      <section class="buzz-metrics" aria-labelledby="buzzMetricsTitle">
+      <div class="section-head"><h2 class="section-title" id="buzzMetricsTitle">SNSバズ推移</h2><span class="section-rule" aria-hidden="true"></span></div>
+      <div class="buzz-metrics-grid"><div class="buzz-metric">
+          <span class="buzz-metric-label">X・掲載 5件</span>
+          <strong>535</strong><span>いいね合計</span><span class="buzz-delta">前号掲載分比 -83%</span>
+        </div></div><p class="buzz-captured">各号発行時点のスナップショット。反応数は取得後に変動します。</p>
+    </section>
+
+    <section class="sns-section" id="snsBuzzSection">
+      <div class="section-head">
+        <h2 class="section-title">その他のX（Twitter）生活者バズ</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+        <span class="section-count">3 posts</span>
+      </div>
+      <div class="sns-intro">
+        <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
+        <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
+      </div>
+
+      <div class="sns-grid">
+
+        <article class="sns-card" id="sns-buzz-1" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/yuchaos_m/status/2112505987630616712" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@yuchaos_m</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="299 いいね">❤️ 299</span><span class="sns-stat-rt" title="12 リポスト">🔁 12</span></div>
+          </div>
+          <blockquote class="sns-card-body">東京インテリア、<strong class="kw-scan">ニトリ</strong>も無印も越えたコスパの良さ、、 pic.x.com/fvzziB3X9h</blockquote>
+          <a href="https://x.com/yuchaos_m/status/2112505987630616712" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-2" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/VHnwvdZ1tt61GXD/status/2112419037196267897" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@VHnwvdZ1tt61GXD</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="94 いいね">❤️ 94</span><span class="sns-stat-rt" title="7 リポスト">🔁 7</span></div>
+          </div>
+          <blockquote class="sns-card-body">今日のお昼٩( &#x27;ω&#x27; )و！ <strong class="kw-scan">ニトリ</strong>様に殿のベッド探し(￣▽￣;) で、 お昼ゎ2人のリクでCoCo壱様 10年近くご無沙汰だなwww 奢りみたいなので、 ゥチゎ アサリと海老のカレーラーメン 大盛り辛✖️10➕小ライス toppingカキフライ toppingクリームコロッケ ➕シーザーサラダ 殿ゎチキンカレーパリチキ pic.x.com/oWskZRCw6r</blockquote>
+          <a href="https://x.com/VHnwvdZ1tt61GXD/status/2112419037196267897" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-3" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/K_A_N/status/2112409440620327114" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@K_A_N</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="19 いいね">❤️ 19</span><span class="sns-stat-rt" title="2 リポスト">🔁 2</span></div>
+          </div>
+          <blockquote class="sns-card-body">スンスン<strong class="kw-scan">ニトリ</strong>だよ <strong class="kw-scan">ニトリ</strong>だよスンスン… 🐸いなかった… pic.x.com/IqdpoO91tQ</blockquote>
+          <a href="https://x.com/K_A_N/status/2112409440620327114" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+      </div>
+    </section>
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261020/" class="nav-prev">&larr; 2026.10.20 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/dailynitori" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @dailynitori"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=nitoridaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+</body>
+</html>

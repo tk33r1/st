@@ -1,5 +1,309 @@
 [
   {
+    "date": "20261021",
+    "title": "2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。",
+      "環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。",
+      "インドでの2店舗目出店が示すように海外展開は地域拡大の段階に入り、SNSでも「組み合わせて暮らしを作る」提案への共感が目立つ。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ、資源循環の起点「リサイクルセンター」を2028年に稼働へ",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-11",
+        "summary": "ニトリは、製造・物流・IT・小売を一体化した「循環」型小売業を目指す中で、資源循環の新たな起点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにした。拠点は埼玉県本庄市に開設される予定で、使用済み商品の回収から再資源化までを担う。SPAとして持つ物流網や在庫情報を活かし、廃棄削減とコスト低減の両立を狙う。",
+        "why_it_matters": "回収と再資源化を自社の物流網に組み込めば、家具の処分に悩む顧客の負担を減らす新たなサービス接点になり得る。企画から回収まで一気通貫で設計できるSPAは、循環型モデルを低コストで回せる点が強みだ。環境対応への社会的要請が高まる中、ブランド価値の差別化要因として機能するだろう。",
+        "tags": [
+          "ニトリ",
+          "物流",
+          "資源循環",
+          "サステナビリティ"
+        ],
+        "search_terms": [
+          "資源循環 リサイクルセンター",
+          "recycling center Nitori",
+          "循環型小売 circular retail",
+          "本庄市 物流拠点"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQRnV0cmNLcnJtbDhaQmllUFh6bFFuaXJUcGZNaWR0aVdySV80WWZneEk0ZFBTaDhrT0ZpQTdEbUVmRFpUYnRuNFBaWV8yazdSRGdLRW5HSWgxZnNyWDFfaFBib1l4c05GU29Sa2F3czNCdjd1S2IyWkNJTGpINFYzN0Y3ZVdqQV92b3NhN1pfSnptOVRtczhVYUZ0SGpOZUNSYm9Qb0NnVVdLR3NmakxPblluckvSAbQBQVVfeXFMUEZ1dHJjS3JybWw4WkJpZVBYemxRbmlyVHBmTWlkdGlXcklfNFlmZ3hJNGRQU2g4a09GaUE3RG1FZkRaVGJ0bjRQWllfMms3UkRnS0VuR0loMWZzclgxX2hQYm9ZeHNORlNvUmthd3MzQnY3dUtiMlpDSUxqSDRWMzdGN2VXakFfdm9zYTdaX0p6bTlUbXM4VWFGdEhqTmVDUmJvUG9DZ1VXS0dzZmpMT25ZbnJL?oc=5",
+        "source_pub_ts": 1792454400
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ環八用賀店、ロッカー受け取りを実証",
+        "original_title": "",
+        "source": "LOGISTICS TODAY",
+        "source_id": "JP-03",
+        "summary": "ニトリは環八用賀店で、ロッカーを使った商品受け取りの実証実験を開始した。PR TIMESでは「Quist」を活用した取り組みとして発表されている。店舗を受け取りの拠点として活用する試みで、EC利用が広がる中での受け取り体験の改善と運用面の検証を狙う。",
+        "why_it_matters": "ECで購入した家具や雑貨の受け取りは、再配達や待ち時間が顧客満足を左右する課題だ。店舗併設型のロッカーは既存の店舗網を物流の受け口に変える発想で、大型商品を扱う企業ほど効率化の余地が大きい。実証の結果次第では、店舗在庫と配送を連携させるSPAらしい強みを一段と引き出す仕組みになるだろう。",
+        "tags": [
+          "ニトリ",
+          "物流",
+          "DX",
+          "EC"
+        ],
+        "search_terms": [
+          "ロッカー受け取り 実証",
+          "locker pickup trial",
+          "店舗受け取り omnichannel",
+          "Quist 受け取り"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE9TU3BGVk5DUUpRTmF1R3o2NXI4TlB1R3c2U091aTZWSl9KSVdNUFZRUkk0SnMwNHJXcDhUazJsSG5McjA1bV9xUlN3?oc=5",
+        "source_pub_ts": 1792482827
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "デコホーム「ボーノ相模大野店」が10月23日オープン",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-07",
+        "summary": "相模原市に、デコホームの新店「ボーノ相模大野店」が10月23日にオープンする。デコホームはニトリグループの雑貨・インテリア業態で、生活雑貨や季節商品を中心に品揃えを展開している。新店のオープンにより、地域の生活者に向けた暮らし提案の拠点が増え、近隣住民の来店需要の取り込みが焦点となる。",
+        "why_it_matters": "デコホームは生活雑貨やインテリア小物を中心に、日常的な買い回りや季節提案を担う業態だ。商業施設への出店は家族連れの来店動線と組み合わせやすく、衣食住にまたがる商品をまとめて提案できる利点がある。新店の売上動向は、業態別の出店戦略を検証する材料になるだろう。",
+        "tags": [
+          "デコホーム",
+          "店舗展開",
+          "出店"
+        ],
+        "search_terms": [
+          "デコホーム 新店オープン",
+          "Deco Home new store",
+          "相模大野 出店",
+          "雑貨店 store opening Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9RanJpekR5emRDU1N6cVBuQWZXTlFQbFZta0wwcjg4aWRWWmlweW5ZazJ1emIteWhyclNvXzdJaE95RWtLQjBTUWFIb3FJcFFTajBN?oc=5",
+        "source_pub_ts": 1792472390
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "Nプラス、洗えるストレッチスウェード調ブルゾンとパンツを発売",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-12",
+        "summary": "ニトリの衣料ブランド「Nプラス」は、洗えるストレッチスウェード調のブルゾンとパンツを新たに発売した。スウェード調の上質な見た目を保ちつつ、家庭での洗濯に対応する点が特徴だ。ストレッチ素材で動きやすさも備え、日常使いに向けた秋冬アイテムとして展開される。",
+        "why_it_matters": "スウェード調は手入れの難しさが購入の障壁になりやすいが、洗える仕様はその不安を解消する。低価格帯で高見えと実用性を両立させる発想は、素材選定から企画まで自社で握れるSPAの強みだ。秋冬のリピート購入や、日常着としての買い替え需要につながる可能性がある。",
+        "tags": [
+          "ニトリ",
+          "Nプラス",
+          "商品開発",
+          "アパレル"
+        ],
+        "search_terms": [
+          "洗えるスウェード調 ブルゾン",
+          "washable suede jacket",
+          "ストレッチ パンツ 秋冬",
+          "N+ apparel Nitori"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBBNmlucWFrVzdwUWNsTTJEbENNZGh6Z1lrcGU5QUlwOElqWFNXVzN1bzFNMG9sZjNpWWhwTzRQMHlJZ0dqRGc?oc=5",
+        "source_pub_ts": 1792475627
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "島忠、着るだけで疲労回復をサポートする「Sミラク」を1,958円から発売",
+        "original_title": "",
+        "source": "朝日新聞",
+        "source_id": "JP-16",
+        "summary": "島忠は、着るだけで疲労回復をサポートするリカバリーウェア「Sミラク」を新たに発売した。部屋着としても外出時にも着られる設計で、価格は1,958円（税込）から。ホームセンター・インテリア業態で培った生活提案の幅を衣料分野に広げる狙いで、日々の疲れをケアする商品として訴求する。",
+        "why_it_matters": "リカバリーウェアは健康志向の高まりを背景に市場が広がっており、価格を抑えた入口商品は初めての購入層を取り込みやすい。島忠の顧客が住まいの延長で衣料を選ぶ動線を作れれば、グループ内のクロスセルも期待できる。素材や機能の訴求が価格と釣り合うかが普及の鍵になる。",
+        "tags": [
+          "島忠",
+          "リカバリーウェア",
+          "商品開発"
+        ],
+        "search_terms": [
+          "リカバリーウェア 新商品",
+          "recovery wear Japan",
+          "Sミラク 島忠",
+          "着る疲労ケア apparel"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9JR1lEU1lkdlFQeVFJajZmMHdfTU5QMFVLYW9TNTVZcW9sc3dBRl9Zb2plR2hmV2x3VjhkVlRoeUdCQU0wbi11WTF2VVp2MFRzcS1hcW10SEtleHc?oc=5",
+        "source_pub_ts": 1792427706
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、インド・ムンバイの「Sky City Mall」に2店舗目を開店",
+        "original_title": "NITORI Opens Second India Store at Mumbai’s Sky City Mall",
+        "source": "Indian Retailer",
+        "source_id": "GL-01",
+        "summary": "ニトリはインド・ムンバイの商業施設「Sky City Mall」に、同国2店舗目となる店舗をオープンした。インドでは住宅需要の拡大に伴い家具・インテリア市場の成長が見込まれており、都市部での店舗網を広げる段階に入った。現地の住宅事情や生活様式に合わせた商品構成で、日本の暮らし提案を届ける狙いだ。",
+        "why_it_matters": "インドは人口構成が若く、住宅の新築や購入に伴うインテリア需要が伸びると期待される市場だ。大都市での2店舗目は単発の進出ではなく、地域展開を本格化させる段階を示す。SPAの低価格・高品質の仕組みを現地の価格感や嗜好に合わせて調整できるかが、今後の成長の分かれ目になる。",
+        "tags": [
+          "ニトリ",
+          "海外展開",
+          "インド",
+          "店舗展開"
+        ],
+        "search_terms": [
+          "インド 2号店 出店",
+          "India second store Nitori",
+          "Mumbai furniture retail",
+          "海外店舗 expansion Asia"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPbFhoYkZFVU80bk1GelU0NnFudEhyWlhLWVBPS1IxRkxEOUFqQlFmN1pwcVE3VmN0ZHVqQlFwdmhBT285UkFBdnpwbDdvT3U1VU5RRWQyMzNGdjlWdzdETGRLNHI0eDVTalgzamJrbTNRaVdMSlo4eXg3SEVtM1pKOHlLN2d5UWV2ejhybV9KdERGWXdhcm1lVW1TRDJTUnNJX3c0bFN0MzduejZfS05J?oc=5",
+        "source_pub_ts": 1792491583
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの小上がりとHAYのオープンラックで作る「ジャパンディ」な寝室",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-04",
+        "summary": "X上で、ニトリの小上がりとHAYのオープンラックを組み合わせた寝室づくりが「簡単にジャパンディな空間になる」として紹介された。投稿は41いいねと大きな数ではないが、ブランドを超えた組み合わせで空間を完成させる発想が共感を集めている。ニトリの低めの家具は、デザイン性のある収納と合わせることで空気感を変える素材として受け止められている。",
+        "why_it_matters": "生活者は単品の機能より、既存の家具と組み合わせて雰囲気を作る提案に反応している。ニトリが空間を構成する商品を出すほど、他社の収納や照明と組み合わせるコーディネートが生まれやすい。店頭やSNSで組み合わせ例を示すことは、単品購入を空間づくりの購入へ広げる示唆になる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "コーディネート",
+          "寝室"
+        ],
+        "search_terms": [
+          "ジャパンディ 寝室 コーディネート",
+          "Japandi bedroom style",
+          "HAY オープンラック 組み合わせ",
+          "小上がり ニトリ styling"
+        ],
+        "url": "https://x.com/3Dcgrooms/status/2112520708181889462",
+        "source_pub_ts": 1792494000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリのベッド選びで浮かび上がった、同棲カップルの寝室と距離感",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-03",
+        "summary": "X上では、同棲に向けてニトリでシングルベッドを2台選んだカップルのやり取りが82いいねを集めた。ベッドをくっつけて置くか、寝室を分けるかという問いは、生活スタイルや関係性を反映する選択として多くの共感を呼んだ。寝具の配置が、暮らし方そのものを映し出す話題として受け止められている。",
+        "why_it_matters": "寝具は家族や関係性の形を映す商品であり、サイズや配置の検討が暮らし方に直結する。ニトリはサイズ展開の幅や複数購入のしやすさで支持されており、生活シーンごとの提案を店頭やサイトで示すことが購入の後押しになる。関係性に寄り添う売り場提案は、同棲や新生活の需要を取り込む機会になるだろう。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "寝具",
+          "同棲"
+        ],
+        "search_terms": [
+          "同棲 ベッド 選び方",
+          "cohabitation bedroom Japan",
+          "シングルベッド 2台 配置",
+          "bedding lifestyle SNS"
+        ],
+        "url": "https://x.com/selfmastery40/status/2112476397583388741",
+        "source_pub_ts": 1792494000
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "東京インテリア、ニトリも無印も越えたコスパの良さ、、 pic.x.com/fvzziB3X9h",
+        "platform": "x",
+        "author": "@yuchaos_m",
+        "url": "https://x.com/yuchaos_m/status/2112505987630616712",
+        "likes": 299,
+        "retweets": 12,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:27",
+        "captured_at": "",
+        "text": "東京インテリア、ニトリも無印も越えたコスパの良さ、、 pic.x.com/fvzziB3X9h",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "今日のお昼٩( 'ω' )و！ ニトリ様に殿のベッド探し(￣▽￣;) で、 お昼ゎ2人のリクでCoCo壱様 10年近くご無沙汰だなwww 奢...",
+        "platform": "x",
+        "author": "@VHnwvdZ1tt61GXD",
+        "url": "https://x.com/VHnwvdZ1tt61GXD/status/2112419037196267897",
+        "likes": 94,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:41",
+        "captured_at": "",
+        "text": "今日のお昼٩( 'ω' )و！ ニトリ様に殿のベッド探し(￣▽￣;) で、 お昼ゎ2人のリクでCoCo壱様 10年近くご無沙汰だなwww 奢りみたいなので、 ゥチゎ アサリと海老のカレーラーメン 大盛り辛✖️10➕小ライス toppingカキフライ toppingクリームコロッケ ➕シーザーサラダ 殿ゎチキンカレーパリチキ pic.x.com/oWskZRCw6r",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリで、同棲用にシングルベッドを2台選んでいた彼氏(33)。彼女(30)が「くっつけて置くの？」と聞くと、「いや、寝室は別にしたい」「毎日...",
+        "platform": "x",
+        "author": "@selfmastery40",
+        "url": "https://x.com/selfmastery40/status/2112476397583388741",
+        "likes": 82,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:29",
+        "captured_at": "",
+        "text": "ニトリで、同棲用にシングルベッドを2台選んでいた彼氏(33)。彼女(30)が「くっつけて置くの？」と聞くと、「いや、寝室は別にしたい」「毎日、一緒に寝るのは嫌ってこと？」「毎日は、やめたほうがいいと思う」これから一緒に暮らすのに。不安と寂しさを感じて彼女は黙ってしまった。そこで彼氏が、",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリの小上がりとHAYのオープンラック組み合わせると簡単にジャパンディな寝室作れるからオススメ pic.x.com/o6gSJyBDcy",
+        "platform": "x",
+        "author": "@3Dcgrooms",
+        "url": "https://x.com/3Dcgrooms/status/2112520708181889462",
+        "likes": 41,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:26",
+        "captured_at": "",
+        "text": "ニトリの小上がりとHAYのオープンラック組み合わせると簡単にジャパンディな寝室作れるからオススメ pic.x.com/o6gSJyBDcy",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "スンスンニトリだよ ニトリだよスンスン… 🐸いなかった… pic.x.com/IqdpoO91tQ",
+        "platform": "x",
+        "author": "@K_A_N",
+        "url": "https://x.com/K_A_N/status/2112409440620327114",
+        "likes": 19,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:03",
+        "captured_at": "",
+        "text": "スンスンニトリだよ ニトリだよスンスン… 🐸いなかった… pic.x.com/IqdpoO91tQ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿は、ニトリ店頭での家具選びや、他ブランドとの組み合わせによる空間づくり、コスパへの評価など、生活者が自宅の暮らしと結びつけて語る内容が中心だった。反響は数十〜数百いいねと大きくはないが、ベッドの配置や寝室の過ごし方など、日常の関係性に絡む話題が共感を集めている。",
+    "sns_why_it_matters": "投稿は商品単品より「どう暮らすか」を語る傾向が強く、ニトリの価格や品揃えは空間を組み立てる材料として受け止められている。店頭やアプリで他社品との組み合わせ例や、寝室・同棲などの生活シーン別提案を発信すれば、コスパ評価を購入行動へつなげやすい。生活者の投稿を集めて活用する仕組みも有効だ。"
+  },
+  {
     "date": "20261020",
     "title": "2026年10月20日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが韓国で6店舗目となる「ロッテモール チョンリャンリ店」の出店を発表し、海外店舗網の拡大が続いている。 デコホームがクリスマス新作20種以上と、パリ風の秋の花柄コレクションを相次いで発売し、季節商戦を強化している。",
