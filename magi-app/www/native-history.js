@@ -17,11 +17,12 @@
       catch (e) { if (e.code === 'OS-PLUG-FILE-0008' || e.code === 'ENOENT') return false; throw e; }
     }
     async function read(path) { return JSON.parse((await fs.readFile(Object.assign(args(path), { encoding: 'utf8' }))).data); }
-    async function atomic(path, value) {
+    async function atomicRaw(path, data, encoding) {
       var temp = path + '.tmp';
-      await fs.writeFile(Object.assign(args(temp), { data: JSON.stringify(value), encoding: 'utf8', recursive: true }));
+      await fs.writeFile(Object.assign(args(temp), { data: data, recursive: true }, encoding ? { encoding: encoding } : {}));
       await fs.rename({ from: 'magi/' + temp, to: 'magi/' + path, directory: 'DATA', toDirectory: 'DATA' });
     }
+    function atomic(path, value) { return atomicRaw(path, JSON.stringify(value), 'utf8'); }
     async function remove(path) { if (await exists(path)) await fs.deleteFile(args(path)); }
     function snapshot() {
       var result = {};
@@ -46,7 +47,8 @@
     }
     async function apply(docs) {
       for (var path of Object.keys(docs)) {
-        if (!/^(?:index|current)\.json$/.test(path) && !/^sessions\/[a-zA-Z0-9_-]{1,160}\.json$/.test(path)) throw new Error('invalid_journal');
+        var session = /^sessions\/(.+)\.json$/.exec(path);
+        if (!/^(?:index|current)\.json$/.test(path) && !(session && sessionId.test(session[1]))) throw new Error('invalid_journal');
         await atomic(path, docs[path]);
       }
     }
@@ -64,6 +66,7 @@
       }
       committed = serialized;
       await collect(docs);
+      return docs;
     }
     async function files(path) { return (await exists(path)) ? (await fs.readdir(args(path))).files : []; }
     async function collect(docs) {
@@ -96,14 +99,15 @@
     }
     async function load() {
       if (await exists('pending.json')) { await apply(await read('pending.json')); await remove('pending.json'); }
-      var index = await read('index.json'), current = await read('current.json'), sessions = [];
+      var index = await read('index.json'), current = await read('current.json');
       if (!Array.isArray(index)) throw new Error('invalid_index');
-      for (var row of index) {
-        if (!sessionId.test(row.id)) throw new Error('invalid_session_id');
+      index.forEach(function (row) { if (!sessionId.test(row.id)) throw new Error('invalid_session_id'); });
+      var sessions = await Promise.all(index.map(async function (row) {
         var session = await read('sessions/' + row.id + '.json');
         if (session.id !== row.id) throw new Error('session_mismatch');
-        session.history = clean(session.history); sessions.push(session);
-      }
+        session.history = clean(session.history);
+        return session;
+      }));
       state.magi_saved_sessions = JSON.stringify(sessions);
       state.magi_current_history = JSON.stringify(clean(current.history));
       if (current.id) state.magi_current_session_id = current.id;
@@ -139,9 +143,9 @@
         }
         var data = legacyData();
         try {
-          state = data; await save(data);
+          state = data;
           // 書いた全ファイルの項目と本文を照合してから、完了の印を確定する。
-          var docs = documents(data);
+          var docs = await save(data);
           for (var path of Object.keys(docs)) {
             if (JSON.stringify(await read(path)) !== JSON.stringify(docs[path])) throw new Error('migration_mismatch');
           }
@@ -166,10 +170,9 @@
         pendingImages.add(name);
         if (!(await exists('images/' + name))) {
           var data = await new Promise(function (resolve, reject) {
-            var fr = new FileReader(); fr.onerror = reject; fr.onload = function () { resolve(fr.result.split(',')[1]); }; fr.readAsDataURL(file);
+            var fr = new FileReader(); fr.onerror = reject; fr.onload = function () { resolve(fr.result.slice(fr.result.indexOf(',') + 1)); }; fr.readAsDataURL(file);
           });
-          await fs.writeFile(Object.assign(args('images/' + name + '.tmp'), { data: data, recursive: true }));
-          await fs.rename({ from: 'magi/images/' + name + '.tmp', to: 'magi/images/' + name, directory: 'DATA', toDirectory: 'DATA' });
+          await atomicRaw('images/' + name, data);
         }
         return name;
       },

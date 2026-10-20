@@ -37,10 +37,10 @@
     // template内は不活性。画像・iframeなどを取り除いてから、閲覧コンテキストの無い文書で抜き出す。
     var template = document.createElement('template'); template.innerHTML = decodePage(result);
     template.content.querySelectorAll('script,style,iframe,frame,img,video,audio,source,link,object,embed').forEach(function (el) { el.remove(); });
-    var doc = document.implementation.createHTMLDocument('');
-    doc.body.replaceChildren(template.content.cloneNode(true));
-    var title = template.content.querySelector('title') || doc.body.querySelector('h1');
+    var title = template.content.querySelector('title') || template.content.querySelector('h1');
     var sourceTitle = title ? title.textContent.trim() : '';
+    var doc = document.implementation.createHTMLDocument('');
+    doc.body.replaceChildren(template.content);
     if (sourceTitle) doc.title = sourceTitle;
     var parsed = new root.Readability(doc, { charThreshold: 0, maxElemsToParse: 20000 }).parse();
     if (!parsed || !parsed.textContent || !parsed.textContent.trim()) throw new Error('empty_article');
@@ -48,25 +48,25 @@
   }
   function create(options) {
     var cap = options.cap, bridge = cap.Plugins.MagiShare, speech = cap.Plugins.SpeechRecognition;
-    var draining = false, drainAgain = false, stopped = false, listeners = [], voiceGeneration = 0, recognitionId = 0, recording = false, starting = false, retried = false, language = '', voiceTimer = null;
+    var draining = false, drainAgain = false, voiceGeneration = 0, recognitionId = 0, recording = false, starting = false, retried = false, language = '', voiceTimer = null;
     var permissionNotice = 'Microphone permission is required. You can enable it in Android Settings. / マイクの許可が必要です（設定から許可できます）。';
+    var articleNotice = 'Could not read the article (only the URL will be sent). / 本文を読めませんでした（URLだけ送ります）。';
     async function receive(payload) {
       options.beginShare();
-      var token = options.generation(), text = String(payload.text || ''), shared = null;
+      var token = options.generation(), text = String(payload.text || ''), long = text.length > 1000;
       var urls = text.match(/https?:\/\/[^\s<>"']+/gi) || [];
-      if (text.length > 1000) shared = { title: 'Shared text / 共有された文章', url: '', text: cut(text, 6000) };
-      options.setDraft(text.length <= 1000 ? text : '');
-      if (shared) options.setShared(shared);
+      options.setDraft(long ? '' : text);
+      if (long) options.setShared({ title: 'Shared text / 共有された文章', url: '', text: cut(text, 6000) });
       try {
         if (urls.length === 1) {
           var url = publicUrl(urls[0]);
-          if (!url) options.notice('Could not read the article (only the URL will be sent). / 本文を読めませんでした（URLだけ送ります）。');
+          if (!url) options.notice(articleNotice);
           else {
             try {
               var result = await bridge.getArticle({ url: url });
               if (token !== options.generation()) return;
               options.setShared(article(result));
-            } catch (_) { if (token === options.generation()) options.notice('Could not read the article (only the URL will be sent). / 本文を読めませんでした（URLだけ送ります）。'); }
+            } catch (_) { if (token === options.generation()) options.notice(articleNotice); }
           }
         }
         if (token !== options.generation()) return;
@@ -86,17 +86,16 @@
       }
     }
     async function drain() {
-      if (stopped) return;
       if (draining) { drainAgain = true; return; }
       draining = true;
       try {
         do {
           drainAgain = false;
-          while (!stopped) {
+          while (true) {
             var next = await bridge.takeShare(); if (!next.share) break;
             await receive(next.share).catch(function () { options.notice('Could not read shared data. / 共有された内容を読めませんでした。'); });
           }
-        } while (drainAgain && !stopped);
+        } while (drainAgain);
       } finally { draining = false; }
     }
     function endVoice() {
@@ -150,15 +149,15 @@
     return {
       receive: receive, startVoice: startVoice, stopVoice: stopVoice,
       async init() {
-        if (bridge) { listeners.push(await bridge.addListener('shareAvailable', drain)); await drain(); }
+        if (bridge) { await bridge.addListener('shareAvailable', drain); await drain(); }
         if (speech) {
-          listeners.push(await speech.addListener('partialResults', function (event) {
+          await speech.addListener('partialResults', function (event) {
             if (!recording || event.sessionId !== String(recognitionId)) return;
             var text = event.matches && event.matches[0] || '';
             if (event.final) { options.appendDraft(text); endVoice(); }
             else options.interim(text);
-          }));
-          listeners.push(await speech.addListener('recognitionError', async function (event) {
+          });
+          await speech.addListener('recognitionError', async function (event) {
             if (!recording || event.sessionId !== String(recognitionId)) return;
             if ((event.code === 12 || event.code === 13) && !retried && !/^en\b/i.test(language)) {
               clearTimeout(voiceTimer); useEnglish();
@@ -166,11 +165,10 @@
               try { await listen(); } catch (_) { if (token === voiceGeneration) endVoice(); } return;
             }
             endVoice(); options.notice(event.code === 9 ? permissionNotice : 'Voice input ended without a result. / 音声を認識できませんでした。');
-          }));
+          });
         }
-      },
-      async destroy() { stopped = true; await stopVoice(); await Promise.all(listeners.map(function (l) { return l.remove(); })); }
+      }
     };
   }
-  root.MagiNativeInput = { create: create, publicUrl: publicUrl, decodePage: decodePage, article: article };
+  root.MagiNativeInput = { create: create, publicUrl: publicUrl, decodePage: decodePage };
 })(typeof window === 'undefined' ? globalThis : window);

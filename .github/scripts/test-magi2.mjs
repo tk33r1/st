@@ -1982,7 +1982,7 @@ function client(src, isHome = false) {
     setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
     document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(),
-    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeAndroid: false, sharedLoading: false, agentShared: null, renderSharedDocument() {},
+    agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},

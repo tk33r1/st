@@ -397,15 +397,16 @@ var nativeHistory = null;
 var nativeAndroid = !!(window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'android');
 var historyLoading = nativeAndroid;
 var agentShared = null, nativeInput = null, sharedLoading = false;
+// 共有資料はAndroidだけ。ほかの画面では常にnullにする。
 function cleanAgentShared(value) {
-  if (!value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
+  if (!nativeAndroid || !value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
     || value.title.length > 200 || value.url.length > 2000 || value.text.length > 6000 || !value.title.trim() || !value.text.trim()) return null;
   if (value.url) { try { if (!/^https?:$/.test(new URL(value.url).protocol)) return null; } catch (_) { return null; } }
   return { title: value.title, url: value.url, text: value.text };
 }
 function renderSharedDocument() {
   var tray = document.getElementById('agent-shared-tray'); if (!tray) return;
-  tray.replaceChildren(); tray.hidden = !nativeAndroid || !agentShared;
+  tray.replaceChildren(); tray.hidden = !agentShared;
   if (tray.hidden) return;
   var open = document.createElement('button'); open.type = 'button';
   open.textContent = 'Shared document / 共有資料: ' + agentShared.title + ' (' + agentShared.text.length.toLocaleString() + ')';
@@ -513,9 +514,15 @@ function persistReactions() { safeStore('magi_current_history', agentHistory); s
 // ---- Saved sessions (history) ----------------------------------------------
 // One id per active conversation (reset on New conversation). The current
 // conversation is synced into magi_saved_sessions in real time.
-var currentSessionId = safeGet('magi_current_session_id') || null;
-var agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
-var agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+var currentSessionId = null;
+var agentLanguageMeta = {}, agentReplyLanguage = null;
+// Androidは履歴ファイルを開いた後に読み直す。
+function loadCurrentSessionMeta() {
+  currentSessionId = safeGet('magi_current_session_id') || null;
+  agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
+  agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+}
+loadCurrentSessionMeta();
 function ensureAgentConversation() {
   if (!currentSessionId) { currentSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); safeStore('magi_current_session_id', currentSessionId); }
   return currentSessionId;
@@ -543,7 +550,7 @@ function syncCurrentToSaved() {
     currentSessionId = 'session_' + Date.now();
     safeStore('magi_current_session_id', currentSessionId);
   }
-  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage), ...(nativeAndroid && agentShared ? { shared: agentShared } : {}) });
+  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice(), reply_language: cleanReplyLanguage(agentReplyLanguage), ...(agentShared ? { shared: agentShared } : {}) });
   if (!nativeAndroid && sessions.length > 50) sessions.pop();
   safeStore('magi_saved_sessions', sessions);
   if (document.getElementById('agent-history-list')) renderSavedSessionsList();
@@ -671,7 +678,7 @@ function cleanHistory(history) {
 }
 function initAgent() {
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
-  agentShared = nativeAndroid ? cleanAgentShared(safeParse(safeGet('magi_current_shared'), null)) : null;
+  agentShared = cleanAgentShared(safeParse(safeGet('magi_current_shared'), null));
   renderSharedDocument();
   setAgentTitle(safeGet('magi_current_title') || '');
   if (agentHistory && agentHistory.length > 0) renderHistoryToLog(agentHistory);
@@ -1064,7 +1071,7 @@ function agentStop() {
 
 async function agentSend() {
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
-  if (nativeInput) nativeInput.stopVoice().catch(function () {});
+  if (nativeInput) nativeInput.stopVoice();
   var draftText = agentInput.value;
   var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
@@ -1147,7 +1154,7 @@ async function agentSend() {
     var outbound = prepareAgentMessages(agentHistory, sendContent);
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {})),
+      body: JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), agentShared ? { shared: agentShared } : {})),
       signal: ctrl.signal,
     });
     if (dropped()) return;
@@ -1511,10 +1518,10 @@ function loadSavedSession(id) {
   if (!session) return;
   dropAgentRequest();
   agentBusy = false;
-  if (nativeInput) nativeInput.stopVoice().catch(function () {});
+  if (nativeInput) nativeInput.stopVoice();
   sharedLoading = false;
   agentHistory = cleanHistory(session.history);
-  agentShared = nativeAndroid ? cleanAgentShared(session.shared) : null;
+  agentShared = cleanAgentShared(session.shared);
   persistSharedDocument();
   safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
@@ -1800,16 +1807,17 @@ document.getElementById('btn-theme').addEventListener('click', function () {
 });
 
 // service worker (PWA)
-if ('serviceWorker' in navigator && !nativeAndroid) {
-  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
-}
-if ('serviceWorker' in navigator && nativeAndroid) {
-  // APKのwwwを毎回使う。同版候補の上書きでもPWAキャッシュを引き継がない。
-  navigator.serviceWorker.getRegistrations().then(function (registrations) {
-    return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
-  }).then(function () { return caches.keys(); }).then(function (keys) {
-    return Promise.all(keys.filter(function (key) { return key.indexOf('magi-shell-') === 0; }).map(function (key) { return caches.delete(key); }));
-  }).catch(function () {});
+if ('serviceWorker' in navigator) {
+  if (!nativeAndroid) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
+  } else {
+    // APKのwwwを毎回使う。同版候補の上書きでもPWAキャッシュを引き継がない。
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
+    }).then(function () { return caches.keys(); }).then(function (keys) {
+      return Promise.all(keys.filter(function (key) { return key.indexOf('magi-shell-') === 0; }).map(function (key) { return caches.delete(key); }));
+    }).catch(function () {});
+  }
 }
 
 // APP_UPDATE_BEGIN
@@ -1860,13 +1868,14 @@ async function initNativeInputs() {
   var cap = window.Capacitor, voice = document.getElementById('agent-voice');
   if (!cap.Plugins.MagiShare && !cap.Plugins.SpeechRecognition) return;
   if (cap.Plugins.MagiShare && AGENT_PRIVACY_FEATURES.indexOf('share') < 0) AGENT_PRIVACY_FEATURES.push('share');
+  var readingShared = 'Reading shared data… / 共有された内容を読み込み中…';
   nativeInput = window.MagiNativeInput.create({ cap: cap,
     generation: function () { return agentGen; },
-    beginShare: function () { syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent('Reading shared data… / 共有された内容を読み込み中…'); },
+    beginShare: function () { syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent(readingShared); },
     endShare: function (token) {
       if (token !== agentGen) return;
       sharedLoading = false;
-      if (agentStatusEl.textContent === 'Reading shared data… / 共有された内容を読み込み中…') announceAgent('Shared content is ready. / 共有された内容を入力しました。');
+      if (agentStatusEl.textContent === readingShared) announceAgent('Shared content is ready. / 共有された内容を入力しました。');
     },
     setDraft: function (text) { agentInput.value = text; fitAgentInput(); },
     setShared: setSharedDocument,
@@ -1877,7 +1886,7 @@ async function initNativeInputs() {
     voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? 'Stop voice input' : 'Voice input'; }
   });
   await nativeInput.init();
-  document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.stopVoice().catch(function () {}); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.stopVoice(); });
   if (cap.Plugins.SpeechRecognition) {
     voice.hidden = false;
     voice.addEventListener('click', function () {
@@ -1898,15 +1907,12 @@ async function initHistoryStorage() {
       onError: function () { announceAgent('履歴を保存できませんでした。空き容量を確かめ、アプリを開き直してください。既存の会話は削除していません。'); }
     });
     var migrated = await nativeHistory.init();
-    currentSessionId = safeGet('magi_current_session_id') || null;
-    agentLanguageMeta = safeParse(safeGet('magi_current_language'), {}) || {};
-    agentReplyLanguage = currentSessionId && agentLanguageMeta.id === currentSessionId ? cleanReplyLanguage(agentLanguageMeta.reply_language) : null;
+    loadCurrentSessionMeta();
     initAgent();
     historyLoading = false; appRoot.inert = false;
-    if (migrated) announceAgent('');
+    announceAgent(migrated ? '' : '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
     var settings = document.getElementById('btn-settings-agent');
     if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
-    if (!migrated) announceAgent('履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
     initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
   } catch (_) {
     // 移行済みファイルが読めないときは、新規データで上書きしない。

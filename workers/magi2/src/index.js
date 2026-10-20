@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -6,7 +6,6 @@ import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, i
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchReader } from '../research.js';
 import { qaBudgetEnv } from '../qa-budget.js';
-import { SHARED } from '../personas.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
@@ -1593,11 +1592,11 @@ async function handleReaction(request, env, { requestId, cors, log }) {
 function cleanShared(value) {
   if (value == null) return null;
   const invalid = () => { throw stageError('bad_request', 'invalid_shared', '共有資料の形式または長さが不正です', { retryable: false }); };
-  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(k => !['title', 'url', 'text'].includes(k))) invalid();
+  if (typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(k => !['title', 'url', 'text'].includes(k))) invalid();
   const out = {};
   for (const [key, limit] of [['title', SHARED.title_max_chars], ['url', SHARED.url_max_chars], ['text', SHARED.text_max_chars]]) {
     if (typeof value[key] !== 'string' || value[key].length > limit) invalid();
-    out[key] = value[key].replace(new RegExp(LINE_CONTROL_RE.source, 'g'), '').trim();
+    out[key] = value[key].replace(replyControls, '').trim();
   }
   if (!out.title || !out.text) invalid();
   if (out.url) {
@@ -1606,7 +1605,7 @@ function cleanShared(value) {
   }
   return out;
 }
-function sharedNote(shared) { return shared ? SHARED.header + '\n' + JSON.stringify(shared) + '\n【今回の質問】\n' : ''; }
+function sharedNote(shared) { return SHARED.header + '\n' + JSON.stringify(shared) + '\n【今回の質問】\n'; }
 
 async function readChatInput(request) {
   const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
@@ -1653,8 +1652,10 @@ async function readChatInput(request) {
     ? typeof body.language_seed === 'string' ? body.language_seed : classifySlice(contentText(plainMessages.find(m => m.role === 'user').content), INTENT_CLASSIFY.language_seed_max_chars)
     : null;
   if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
-  if (shared) messages = messages.map((m, i) => i === messages.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m);
-  return { messages, plainMessages, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
+  // 共有資料は最後の発言の頭に添える。討議・議題は状況説明なしの会話に添え、サイト検索の語には含めない。
+  const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
+  const searchText = contentText(messages.at(-1).content);
+  return { messages: withShared(messages), plainMessages, discussMessages: withShared(plainMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
@@ -1883,7 +1884,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  const { messages, plainMessages, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {
     const last = plainMessages.at(-1).content;
@@ -2007,9 +2008,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           return;
         }
         const motionPromise = classification?.magi_candidate ? withTimeout(MAGI_MODE.motion_ms,
-          signal => createMotion(upstream, shared ? messages : plainMessages, langNote, signal, log), stop.signal)
+          signal => createMotion(upstream, discussMessages, langNote, signal, log), stop.signal)
           .catch(() => notVotable('failed')) : null;
-        const lastUser = contentText((shared ? plainMessages : messages).at(-1).content);
 
         // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
         // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
@@ -2031,7 +2031,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
         const searchOn = env.SITE_SEARCH_ENABLED === 'true';
         const allowPages = !motion && (!newContract || (entry !== 'dj-request' && classification.intent !== 'music' && classification.site_pages !== 'no' && wantSitePages));
-        const wantPages = allowPages && wantSitePages && searchOn && env.DB && lastUser.trim();
+        const wantPages = allowPages && wantSitePages && searchOn && env.DB && searchText.trim();
         const indexPromise = searchOn && (!newContract || env.DB) && ((allowPages && page) || wantPages) ? getSitePages(ctx, 'ja', pageStop.signal).catch(() => null) : null;
         const cards = await cardsPromise;
         // サイト案内（画面が page を送ったときだけ）。3人格を長く待たせないよう、索引は短い期限で待つ。
@@ -2050,11 +2050,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
           pagesPromise = (async () => {
             const locale = newContract ? classification.reply_language.code === 'ja' ? 'ja' : 'en'
-              : /[\u3040-\u30ff\u3400-\u9fff]/.test(lastUser) ? 'ja' : 'en';
+              : /[\u3040-\u30ff\u3400-\u9fff]/.test(searchText) ? 'ja' : 'en';
             // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
             if (!await indexPromise) throw searchFailure('list_fetch');
             const pages = await getSitePages(ctx, locale, pageStop.signal);
-            return selectSitePages({ query: searchSlice(lastUser, SITE_SEARCH.chat_query_max_chars), locale, pages, current: guide && guide.current,
+            return selectSitePages({ query: searchSlice(searchText, SITE_SEARCH.chat_query_max_chars), locale, pages, current: guide && guide.current,
               purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
               signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
           })().catch(() => { log('site_search', 'omitted'); return null; });
@@ -2069,7 +2069,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page,
               research: classification.intent === 'research' && classification.fresh === 'yes',
               replyLanguage: classification.reply_language, ip: requestIP(request), signal: stop.signal, send, log })
-          : await runDiscussion({ upstream, cards, plainMessages: shared ? messages : plainMessages, messages, context, langNote, theme,
+          : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
