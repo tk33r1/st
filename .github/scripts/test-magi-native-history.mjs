@@ -146,3 +146,27 @@ test('B1: 変わった会話だけを書き直し、顔ぶれが同じなら片�
   const next = f.create(); await next.init();
   assert.deepEqual([...next.sessions().map(x => x.title)], ['会話0', '変更後']);
 });
+test('B1: 画像の保存中に走った保存の片付けが、その画像を消さない', async () => {
+  const f = fixture(), s = f.create(); await s.init();
+  const blob = new Blob(['racing image'], { type: 'image/png' });
+  let openBytes, openList, listing;
+  const bytesGate = new Promise(r => { openBytes = r; }), listGate = new Promise(r => { openList = r; });
+  const listed = new Promise(r => { listing = r; });
+  const readdir = f.fs.readdir;
+  f.fs.readdir = async o => { listing(); await listGate; return readdir(o); };
+  const stored = s.storeImage({ type: blob.type, arrayBuffer: () => bytesGate.then(() => blob.arrayBuffer()) });
+  s.setSessions([{ id: 'other', title: '別の会話', history: [{ role: 'user', content: '質問' }] }]);
+  await listed; openBytes(); await new Promise(r => setTimeout(r, 20)); openList();
+  const name = await stored; await s.flush();
+  assert.ok(f.files.has('DATA:magi/images/' + name));
+});
+test('B1: 全削除の保存と同時に頼まれた保存を重ねて走らせない', async () => {
+  const f = fixture(); f.seed(); const s = f.create(); await s.init();
+  const cleared = s.clear(); s.set('magi_current_title', '削除中の変更');
+  await cleared; await s.flush();
+  assert.deepEqual(f.errors, []);
+  assert.equal([...f.files.keys()].some(k => k.endsWith('.tmp') || k.endsWith('pending.json')), false);
+  const next = f.create(); await next.init();
+  assert.equal(next.get('magi_current_title'), s.get('magi_current_title'));
+  assert.equal(next.get('magi_saved_sessions'), '[]');
+});

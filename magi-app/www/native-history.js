@@ -96,6 +96,12 @@
       }
       collected = signature;
     }
+    // ファイルを触る処理は1列に並べる（保存の片付けが、書きかけの画像や全削除と重ならない）。
+    function run(task) {
+      var result = tail.then(task);
+      tail = result.catch(function () {});
+      return result;
+    }
     function enqueue() {
       // 題名・会話ID・履歴など、同じ同期処理内の更新を1回にまとめる。
       if (queued) return;
@@ -188,18 +194,19 @@
       releaseImage(name) { pendingImages.delete(name); enqueue(); },
       async flush() { await tail; if (lastError) throw lastError; },
       async storeImage(file) {
-        await tail;
         var bytes = await file.arrayBuffer();
         var hash = Array.from(new Uint8Array(await root.crypto.subtle.digest('SHA-256', bytes))).map(function (n) { return n.toString(16).padStart(2, '0'); }).join('');
         var ext = ({ 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif', 'image/avif': 'avif' })[file.type] || 'jpg';
         var name = hash + '.' + ext;
-        pendingImages.add(name);
-        if (!(await exists('images/' + name))) {
+        // 使用中の印と書き込みは保存と同じ列で行う。間に保存が入っても、片付けが書いた画像を消さない。
+        await run(async function () {
+          pendingImages.add(name);
+          if (await exists('images/' + name)) return;
           var data = await new Promise(function (resolve, reject) {
             var fr = new FileReader(); fr.onerror = reject; fr.onload = function () { resolve(fr.result.slice(fr.result.indexOf(',') + 1)); }; fr.readAsDataURL(file);
           });
           await atomicRaw('images/' + name, data);
-        }
+        });
         return name;
       },
       async imageUri(name) {
@@ -216,10 +223,11 @@
         return size('');
       },
       async clear() {
-        await tail;
-        state = { magi_current_history: '[]' }; saved = []; committed = {}; collected = null; pendingImages.clear();
-        // metaは残す。空の履歴を確定してから、会話ファイルと画像をcollectで削除する。
-        await save(); lastError = null;
+        await run(async function () {
+          state = { magi_current_history: '[]' }; saved = []; committed = {}; collected = null; pendingImages.clear();
+          // metaは残す。空の履歴を確定してから、会話ファイルと画像をcollectで削除する。
+          await save(); lastError = null;
+        });
         clearLegacyHistory();
       },
       async exportData() {
