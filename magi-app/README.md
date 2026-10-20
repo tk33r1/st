@@ -128,7 +128,7 @@ If you later host the PWA on a real domain, add that origin to `ALLOWED_ORIGINS`
 in the Worker and redeploy. For a quick test against any backend you control,
 use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
-## B3 native reply transport (5.6 candidate, unpublished)
+## B3 native reply transport (5.6)
 
 The [first prototype](B3試作評価20261020.md) showed that a foreground service alone
 did not keep the WebView processing events. Version 5.6 uses a native OkHttp
@@ -189,12 +189,15 @@ Candidate verification completed on 2026-10-21 on one Android 16 device: all nin
 five-minute synthetic background trials passed, including replay after process
 death and while screen reads were held. The three approved production representatives
 also completed. Existing saved-list entries survived the upgrade; the new image's
-original reopened after external-file deletion and an app restart. The separate probe app was removed. Version 5.6
-is still unpublished; Android 13/14 and other devices remain unverified.
+original reopened after external-file deletion and an app restart. The separate probe app was removed.
+Version 5.6 was published on 2026-10-21 after integrating the newer history and input fixes.
+See [the release verification](B3公開評価20261021.md) for the final APK, additional checks,
+and the distinction between candidate and release testing. Android 13/14 and other devices remain unverified.
 
 ## Release (signed) APK
 
-Version 5.5 / 55 combines B1 history storage with B2 Android share intents and dictation. Shared text is
+Version 5.6 / 56 adds B3 background receipt and notifications to the B1 history storage
+and B2 Android share intents and dictation introduced in 5.5. Shared text is
 placed in a new conversation without sending. Text over 1,000 characters becomes the shared
 document as-is, and a URL inside it is not fetched. Articles use bundled Mozilla
 Readability 0.6.0 (`scripts/vendor-readability.cjs`, recorded SHA-256 and license
