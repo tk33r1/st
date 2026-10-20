@@ -1,5 +1,133 @@
 [
   {
+    "date": "20261021",
+    "title": "2026年10月21日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "需要予測AIの製品群を俯瞰するカオスマップが公開され、売上予測から在庫・発注、物流・配送まで84製品が整理された。AI需要予測の選定を支える判断材料が増えつつある。 JR品川駅で花や鉄道グッズを扱う無人決済店舗が10月に開業予定となり、駅ナカでの省人化型店舗の展開が広がっている。",
+    "count": 5,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "需要予測AIの製品群を俯瞰するカオスマップが公開され、売上予測から在庫・発注、物流・配送まで84製品が整理された。AI需要予測の選定を支える判断材料が増えつつある。",
+      "JR品川駅で花や鉄道グッズを扱う無人決済店舗が10月に開業予定となり、駅ナカでの省人化型店舗の展開が広がっている。",
+      "近鉄百貨店が公式アプリを11月10日にリニューアルし、会員向けサービスを強化する。百貨店による顧客データ活用とオンラインとの接点づくりが進んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "アイスマイリー、需要予測AIのカオスマップを公開　84製品を分類",
+        "original_title": "",
+        "source": "アットプレス",
+        "source_id": "JP-03",
+        "summary": "需要予測AIサービスを分類したカオスマップを、アイスマイリーが公開した。売上予測から在庫・発注、物流・配送予測まで、計84製品が掲載されている。需要予測AIは製品が増えて比較が難しくなっており、機能領域ごとに整理された俯瞰図は導入検討の出発点となる。",
+        "why_it_matters": "需要予測AIは在庫最適化や発注自動化の中核であり、売上予測・在庫・物流まで領域を横断して製品を俯瞰できる点が有用だ。導入企業は単機能の比較ではなく、自社のどの業務プロセスにAIを組み込むかを起点に選定すべきである。ベンダー側にとっても自社の立ち位置が可視化されるため、差別化ポイントの再整理が求められる局面と言える。",
+        "tags": [
+          "需要予測AI",
+          "サプライチェーン",
+          "在庫最適化"
+        ],
+        "search_terms": [
+          "需要予測AI 比較",
+          "demand forecasting AI map",
+          "AI需要予測 カオスマップ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1kMEdwOVJsTFdGSjVmdmJxa1RsWUlCbFFWeF9Nb3o0TjJjejRNek8wTUJVU01xYTJNSk1EckdScS16MHRsTy1CQlIzYm1IQlE?oc=5",
+        "source_pub_ts": 1792472400
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "TTGなど3社、JR品川駅に花・鉄道グッズの無人決済店舗を10月オープンへ",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "TTGなど3社が、JR品川駅構内に花や鉄道グッズを扱う無人決済店舗を10月にオープンすると報じられた。利用者の多い駅構内に小型店舗を展開する計画である。京急線などでも無人決済店舗の導入が進むなか、駅ナカでの省人化モデルとして注目される。",
+        "why_it_matters": "駅ナカは時間価値の高い買い物需要があり、無人決済は人件費を抑えつつ購買機会を広げる有効な手段だ。花や鉄道グッズというニッチ商材を組み合わせる点は、限られた売り場面積でも高い付加価値を生むモデルとして参考になる。一方で、万引き対策や在庫管理の仕組みをどう設計するかが収益性を左右する。",
+        "tags": [
+          "無人決済",
+          "駅ナカ",
+          "省人化店舗"
+        ],
+        "search_terms": [
+          "無人決済店舗 駅ナカ",
+          "unmanned store station",
+          "cashierless retail Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBnOXRjRi1jYk5LTkVvRmVnTWhuel9RUElHV3RIMlpuaHNydG9kQ2Y3bFl1Z0RaME15bHdIOHR5WGEzUEhWeUE?oc=5",
+        "source_pub_ts": 1792423118
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "近鉄百貨店、公式アプリを11月10日にリニューアル　会員向けサービス強化",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-05",
+        "summary": "近鉄百貨店は、公式アプリを11月10日にリニューアルし、会員向けサービスを強化すると発表した。アプリを起点に顧客接点を一本化し、会員ごとの情報提供や利便性向上を図る狙いとみられる。百貨店各社がオムニチャネル化を進めるなか、自社アプリを通じた顧客データの蓄積と再来店促進の重要性が高まっている。",
+        "why_it_matters": "百貨店にとって公式アプリは、会員の購買データを蓄積しパーソナライズされた販促につなげる重要な基盤だ。リニューアルの際は機能追加だけでなく、店舗来店とオンライン体験をどうつなぐかが成果を左右する。他社の成功例に頼るのではなく、地域顧客の行動に即した会員施策を設計することが求められる。",
+        "tags": [
+          "公式アプリ",
+          "会員施策",
+          "百貨店DX"
+        ],
+        "search_terms": [
+          "百貨店 公式アプリ 会員",
+          "department store app renewal",
+          "department store membership DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1nSTVhQW1IRVliUHZ3MEFvRnIxalJuUGhoclBmMU00NmY5M0FJSFF4bzN4YVlFRV9JRHdUZjhuVWMzNE9UOTEwRWtUS25HRlJ1X2xQYnVWTFU?oc=5",
+        "source_pub_ts": 1792461300
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "リテールメディアサミット2026、ADKマーケティング・ソリューションズが協賛に決定",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-08",
+        "summary": "リテールメディアに関するイベント「リテールメディアサミット 2026」の協賛に、ADKマーケティング・ソリューションズが決定した。小売業者の購買データを活用した広告展開が注目を集めるなか、業界の論点を共有する場としての存在感が高まっている。広告会社の参画は、広告主側の実装検討が進んでいることを示す動きと見られる。",
+        "why_it_matters": "リテールメディアは購買データと広告を融合させる新たな収益源であり、小売・メーカー・広告会社の連携が不可欠になりつつある。広告会社の協賛は、広告主がリテールメディア運用を具体化する流れの一端と捉えられる。小売企業は自社データを活かせるパートナーを見極め、運用体制づくりを急ぐ必要がある。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "広告連携"
+        ],
+        "search_terms": [
+          "リテールメディア 協賛",
+          "retail media summit 2026",
+          "retail media advertising Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9yQW14RlAzVXMyS2RVTE9lemdJRVNOeXNBZ2V5LV9ybm1VTWtPeWdyckJfWEtSMy1WcWxvMjgxdVVHblFLaWpETzczT096bkRJTC1jVlNPSWJhZzBtT3VUQQ?oc=5",
+        "source_pub_ts": 1792440391
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ウォルマート、西海岸の配送力強化へ次世代型カリフォルニア拠点を開設",
+        "original_title": "Walmart opens next-gen California facility to boost West Coast fulfillment",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "米ウォルマートが、カリフォルニア州に次世代型の施設を開設したと報じられた。西海岸エリアでのフルフィルメント（注文処理・配送）能力を高めることが目的とされる。ネット注文の拡大により配送の速さと精度が競争力を左右するなか、大手小売による物流拠点の再構築が続いている。",
+        "why_it_matters": "大手小売の物流拠点刷新は、ネット注文の迅速な配送を支える中核投資であり、地域ごとの需要に合わせた配置が重要になる。日本の小売でも店舗在庫を活用したフルフィルメントの高度化が課題であり、自動化や在庫の可視化と組み合わせた拠点設計が示唆となる。",
+        "tags": [
+          "フルフィルメント",
+          "物流拠点",
+          "店舗自動化"
+        ],
+        "search_terms": [
+          "ウォルマート 次世代拠点",
+          "Walmart next-gen fulfillment center",
+          "retail fulfillment automation California"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPVEFuNlV1SFNxYk51WTl5WFczV3piN1B2N1Y1c0RLUGxCbkIyZmRtd3NGZm91bV9kYm1fTnZ5NHpXMVRoR2dhMDJlTmNTNjNGMkdmNVA2SHBzUnNubDFXa0kxY0tZdmVLUll4SmYwbmFGTTZES1ZhR1ByTnVqUWZscUkzdTE4V0VNbDJCRXd6TkROYU5UeEJCUVZDZnFFTU56R0RjazZ3?oc=5",
+        "source_pub_ts": 1792453666
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261020",
     "title": "2026年10月20日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。",
