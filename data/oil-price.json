@@ -3,8 +3,8 @@
   "grade": "ハイオク",
   "price": 179.8,
   "unit": "円/L",
-  "surveyedOn": "2026-10-05",
+  "surveyedOn": "2026-10-19",
   "source": "資源エネルギー庁 石油製品価格調査",
   "sourceUrl": "https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/results.html",
-  "sourceFile": "https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/xlsx/261007.xlsx"
+  "sourceFile": "https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/xlsx/261021.xlsx"
 }
