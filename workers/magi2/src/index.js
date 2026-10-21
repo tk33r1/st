@@ -2121,6 +2121,8 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(request.url);
+    // 許可した Origin のページか、サイト外から API キーを付けた呼び出し（利用回数と POST の入口で使う）
+    const authorized = isAllowedOrigin(origin) || !!env.CLIENT_API_KEY && request.headers.get('x-api-key') === env.CLIENT_API_KEY;
 
     // --- 更新履歴（data/magi-versions.json）。tk.st からも同梱分からも読めなければ、CORS 付きの 503 で返す
     // （例外のまま返すと CORS ヘッダーの無い 500 になり、画面では原因の見えない失敗になる）---
@@ -2153,7 +2155,7 @@ export default {
     // 全利用者の合計の上限に達した日は、IPの回数が残っていても送れないので global_full で知らせる ---
     if (request.method === 'GET' && url.pathname === '/magi2/usage') {
       const noStore = { ...cors, 'Cache-Control': 'no-store' };
-      if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
+      if (!authorized) {
         return httpError(401, { stage: 'auth', code: 'unauthorized', message: '許可されていない Origin です', retryable: false }, requestId, noStore);
       }
       const unavailable = () => httpError(503, { stage: 'internal', code: 'usage_unavailable', message: '利用回数を読み込めませんでした', retryable: true }, requestId, noStore);
@@ -2181,7 +2183,7 @@ export default {
     if (!isChat && !isReaction && !isSiteSearch && !isRankSearch && !isSearchClick) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
-    if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
+    if (!authorized) {
       if (isSiteSearch || isRankSearch || isSearchClick) log('auth', 'rejected (site-search)');
       else log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
       return httpError(401, {

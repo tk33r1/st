@@ -1006,7 +1006,7 @@ async function addAttachments(files) {
   var generation = agentGen;
   var list = Array.prototype.slice.call(files || []).filter(isImageFile);
   // ファイルの一覧では画像以外も選べるので、黙って捨てずに知らせる
-  if (!list.length) { if (files && files.length) noticeAttach(document.documentElement.lang === 'ja' ? '画像だけを添付できます' : 'Only images can be attached'); return; }
+  if (!list.length) { if (files && files.length) noticeAttach(tr('Only images can be attached', '画像だけを添付できます')); return; }
   for (var i = 0; i < list.length; i++) {
     if (attachments.length >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); break; }
     try {
@@ -1033,22 +1033,16 @@ function userContentHTML(content) {
 // 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。どれも addAttachments が画像だけを受け付ける。
 var attachMenu = document.getElementById('agent-attach-menu');
 var ATTACH_SOURCES = {
-  camera: { accept: 'image/*', capture: 'environment', multiple: false, ja: 'カメラ', en: 'Camera' },
-  photo: { accept: 'image/*', multiple: true, ja: '写真', en: 'Photos' },
-  file: { accept: '*/*', multiple: true, ja: 'ファイル', en: 'Files' },
+  camera: { accept: 'image/*', capture: 'environment', multiple: false },
+  photo: { accept: 'image/*', multiple: true },
+  file: { accept: '*/*', multiple: true },
 };
 function setAttachMenu(open) {
   attachMenu.hidden = !open;
   attachBtn.setAttribute('aria-expanded', String(open));
   if (!open) return;
-  var ja = document.documentElement.lang === 'ja';
-  attachMenu.setAttribute('aria-label', ja ? '画像を追加' : 'Add an image');
-  attachMenu.querySelectorAll('[data-source]').forEach(function (item) {
-    var source = ATTACH_SOURCES[item.dataset.source];
-    item.querySelector('span').textContent = ja ? source.ja : source.en;
-    // 撮影できない PC ではカメラを出さない
-    if (item.dataset.source === 'camera') item.hidden = !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
-  });
+  // 撮影できない PC ではカメラを出さない
+  attachMenu.querySelector('[data-source="camera"]').hidden = !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
   attachMenu.querySelector('[data-source]:not([hidden])').focus();
 }
 // 開いていたら閉じて true を返す（Android の戻るボタンも使う）
@@ -1139,10 +1133,17 @@ function prepareAgentMessages(history, lastContent) {
 // connection, and the Worker stops its remaining upstream calls too.
 var AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 var AGENT_STOP_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
+function labelSendButton() {
+  agentSendBtn.title = agentSendBtn.ariaLabel = agentSendBtn.dataset.stop ? tr('Stop', '停止') : tr('Send', '送信');
+}
+function labelVoiceButton() {
+  var voice = document.getElementById('agent-voice');
+  voice.title = voice.getAttribute('aria-pressed') === 'true' ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力');
+}
 function setAgentStopMode(on) {
   agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
-  agentSendBtn.title = agentSendBtn.ariaLabel = on ? tr('Stop', '停止') : tr('Send', '送信');
   agentSendBtn.dataset.stop = on ? '1' : '';
+  labelSendButton();
   if (on) agentSendBtn.disabled = false;
   updateSendState();
 }
@@ -1640,21 +1641,15 @@ function showHistoryPanel() {
   panel.querySelector('#btn-reset').focus({ preventScroll: true });
 }
 function showInstallPanel() {
-  var panel = makeAgentPanel('agent-install-panel', tr('Use MAGI on iPhone', 'iPhoneでMAGIを使う'), isJa()
-    ? '<ul>'
-      + '<li>iPhoneの<strong>Safari</strong>で<strong>tk.st/magi-app/www/</strong>を開きます。</li>'
-      + '<li><strong>共有</strong>（上向きの矢印の付いた四角）を押します。Safariのレイアウトによっては、先にページのメニューを開きます。</li>'
-      + '<li><strong>ホーム画面に追加</strong>を選びます。見当たらなければ<strong>アクションを編集</strong>の中を探します。</li>'
-      + '<li>表示されたら<strong>Webアプリとして開く</strong>をオンにして、<strong>追加</strong>を押します。</li>'
-      + '<li>ホーム画面の新しいアイコンからMAGIを開きます。チャットにはインターネット接続が必要です。</li>'
-      + '</ul>'
-    : '<ul>'
-      + '<li>Open <strong>tk.st/magi-app/www/</strong> in <strong>Safari</strong> on your iPhone.</li>'
-      + '<li>Tap <strong>Share</strong> (the square with an upward arrow). Depending on the Safari layout, open the page menu first.</li>'
-      + '<li>Choose <strong>Add to Home Screen</strong>. If it is missing, find it under <strong>Edit Actions</strong>.</li>'
-      + '<li>If shown, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>.</li>'
-      + '<li>Launch MAGI from its new Home Screen icon. Chat requires an internet connection.</li>'
-      + '</ul>');
+  var steps = [
+    ['Open <strong>tk.st/magi-app/www/</strong> in <strong>Safari</strong> on your iPhone.', 'iPhoneの<strong>Safari</strong>で<strong>tk.st/magi-app/www/</strong>を開きます。'],
+    ['Tap <strong>Share</strong> (the square with an upward arrow). Depending on the Safari layout, open the page menu first.', '<strong>共有</strong>（上向きの矢印の付いた四角）を押します。Safariのレイアウトによっては、先にページのメニューを開きます。'],
+    ['Choose <strong>Add to Home Screen</strong>. If it is missing, find it under <strong>Edit Actions</strong>.', '<strong>ホーム画面に追加</strong>を選びます。見当たらなければ<strong>アクションを編集</strong>の中を探します。'],
+    ['If shown, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>.', '表示されたら<strong>Webアプリとして開く</strong>をオンにして、<strong>追加</strong>を押します。'],
+    ['Launch MAGI from its new Home Screen icon. Chat requires an internet connection.', 'ホーム画面の新しいアイコンからMAGIを開きます。チャットにはインターネット接続が必要です。'],
+  ];
+  var panel = makeAgentPanel('agent-install-panel', tr('Use MAGI on iPhone', 'iPhoneでMAGIを使う'),
+    '<ul>' + steps.map(function (step) { return '<li>' + tr(step[0], step[1]) + '</li>'; }).join('') + '</ul>');
   if (panel) panel.querySelector('.agent-panel-close').focus();
 }
 var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
@@ -1984,7 +1979,7 @@ var usageWrap = document.querySelector('.usage-wrap'), usagePop = document.getEl
 var usageBtn = document.getElementById('btn-usage'), agentUsage = null, usageLoadedAt = 0, usageRequest = null, usageAgain = false;
 function renderUsage() {
   if (!agentUsage) { usageWrap.hidden = true; closeUsagePop(); return; }
-  var ja = document.documentElement.lang === 'ja', used = agentUsage.used, limit = agentUsage.limit, globalFull = agentUsage.global_full;
+  var ja = isJa(), used = agentUsage.used, limit = agentUsage.limit, globalFull = agentUsage.global_full;
   // 全体の上限に達した日は、自分の回数が残っていても送れないので満杯の赤で出す
   var ratio = globalFull ? 1 : Math.min(1, used / limit);
   usageWrap.hidden = false;
@@ -2064,24 +2059,23 @@ function syncThemeLabel() {
   document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? tr('Light mode', 'ライトモード') : tr('Dark mode', 'ダークモード');
 }
 // 固定の文言は data-ja（文字）・data-ja-title・data-ja-aria・data-ja-ph（入力欄の例文）に日本語を持たせ、英語は最初の値を data-en* に控える。
+// JavaScript が毎回決める名前（送信・音声・利用回数のボタン）は HTML に日本語を持たせず、ここで呼ぶ関数が決める。
 // 描いた後の会話とスプラッシュは描き直す。回答の途中なら会話は描き直さず、これから出る分から切り替わる。
 function applyStaticLanguage() {
   var ja = isJa();
-  [['ja', 'en', 'textContent'], ['jaTitle', 'enTitle', 'title'], ['jaAria', 'enAria', 'aria-label'], ['jaPh', 'enPh', 'placeholder']].forEach(function (k) {
-    var attr = 'data-' + k[0].replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); });
-    document.querySelectorAll('[' + attr + ']').forEach(function (el) {
-      if (el.dataset[k[1]] === undefined) el.dataset[k[1]] = k[2] === 'textContent' ? el.textContent : el.getAttribute(k[2]) || '';
-      var value = ja ? el.dataset[k[0]] : el.dataset[k[1]];
-      if (k[2] === 'textContent') el.textContent = value; else el.setAttribute(k[2], value);
+  [['data-ja', 'ja', 'en', null], ['data-ja-title', 'jaTitle', 'enTitle', 'title'], ['data-ja-aria', 'jaAria', 'enAria', 'aria-label'], ['data-ja-ph', 'jaPh', 'enPh', 'placeholder']].forEach(function (row) {
+    var jaKey = row[1], enKey = row[2], target = row[3];
+    document.querySelectorAll('[' + row[0] + ']').forEach(function (el) {
+      if (el.dataset[enKey] === undefined) el.dataset[enKey] = target ? el.getAttribute(target) || '' : el.textContent;
+      var value = ja ? el.dataset[jaKey] : el.dataset[enKey];
+      if (target) el.setAttribute(target, value); else el.textContent = value;
     });
   });
   var langLabel = document.getElementById('btn-lang-label');
   langLabel.textContent = ja ? 'English' : '日本語'; langLabel.lang = ja ? 'en' : 'ja';
   syncThemeLabel();
   agentClarifyPlaceholder(['補足があれば入力', 'Add details if needed'].indexOf(agentInput.placeholder) >= 0);
-  agentSendBtn.title = agentSendBtn.ariaLabel = agentSendBtn.dataset.stop ? tr('Stop', '停止') : tr('Send', '送信');
-  var voice = document.getElementById('agent-voice');
-  voice.title = voice.getAttribute('aria-pressed') === 'true' ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力');
+  labelSendButton(); labelVoiceButton();
   renderAgentSuggest(); renderUsage();
   var banner = document.getElementById('app-update');
   if (banner && banner.dataset.version) labelAppUpdate(banner);
@@ -2098,9 +2092,8 @@ document.getElementById('btn-lang').addEventListener('click', function () {
   window.MagiLanguage.choose(isJa() ? 'en' : 'ja');
   applyLanguage();
 });
-applyStaticLanguage();
 new MutationObserver(syncThemeLabel).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-syncThemeLabel();
+applyStaticLanguage();
 
 // service worker (PWA)
 if ('serviceWorker' in navigator) {
@@ -2185,7 +2178,7 @@ async function initNativeInputs() {
     notice: function (text) { text = pickLang(text); announceAgent(text); noticeAttach(text); },
     appendDraft: function (text) { agentInput.value += (agentInput.value && text ? '\n' : '') + text; fitAgentInput(); },
     interim: function (text) { document.getElementById('agent-voice-interim').textContent = text; },
-    voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力'); }
+    voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); labelVoiceButton(); }
   });
   await nativeInput.init();
   document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.finishVoice(); });

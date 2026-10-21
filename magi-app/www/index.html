@@ -73,12 +73,13 @@
     /* kebab (more options) dropdown */
     .kebab-wrap, .usage-wrap { position: relative; display: inline-flex; }
     .usage-wrap[hidden] { display: none; }
-    #agent-more-dropdown {
-      position: absolute; right: 0; top: 100%; margin-top: 6px; width: 190px;
+    /* ヘッダーの右から下に開くもの（︙のメニュー・利用回数） */
+    .header-pop {
+      position: absolute; right: 0; top: 100%; margin-top: 6px; z-index: 60;
       background: var(--surface-color); border: 1px solid var(--border-color);
-      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); z-index: 60;
-      display: flex; flex-direction: column; padding: 4px 0;
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.35);
     }
+    #agent-more-dropdown { width: 190px; display: flex; flex-direction: column; padding: 4px 0; }
     #agent-more-dropdown button, #agent-more-dropdown a {
       display: flex; align-items: center; gap: 0.5rem; width: 100%;
       padding: 0.5rem 0.75rem; font-family: inherit; font-size: 12px; line-height: 1.4;
@@ -99,12 +100,7 @@
     .usage-fill { stroke: var(--primary-color); stroke-linecap: round; transition: stroke-dasharray var(--duration-normal) ease; }
     .usage-wrap[data-level="high"] .usage-fill { stroke: #f59e0b; }
     .usage-wrap[data-level="full"] .usage-fill { stroke: #ef4444; }
-    #agent-usage-pop {
-      position: absolute; right: 0; top: 100%; margin-top: 6px; width: 220px; z-index: 60;
-      padding: 0.75rem; background: var(--surface-color); border: 1px solid var(--border-color);
-      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-      font-size: 11px; line-height: 1.6; color: var(--secondary-color);
-    }
+    #agent-usage-pop { width: 220px; padding: 0.75rem; font-size: 11px; line-height: 1.6; color: var(--secondary-color); }
     #agent-usage-pop .usage-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary-color); }
     #agent-usage-pop .usage-count { margin: 0.15rem 0 0.35rem; font-size: 12px; color: var(--secondary-color); font-variant-numeric: tabular-nums; }
     #agent-usage-pop .usage-count b { font-size: 1.4rem; font-weight: 600; color: var(--text-color); }
@@ -392,16 +388,16 @@
       <div class="title glow"><span id="bar-title">MAGI</span></div>
       <div class="actions">
         <div class="usage-wrap" hidden>
-          <button id="btn-usage" class="icon-btn" title="Today's usage" aria-label="Today's usage" data-ja-title="今日の利用" data-ja-aria="今日の利用" aria-haspopup="dialog" aria-expanded="false" aria-controls="agent-usage-pop">
+          <button id="btn-usage" class="icon-btn" title="Today's usage" aria-label="Today's usage" aria-haspopup="dialog" aria-expanded="false" aria-controls="agent-usage-pop">
             <svg class="usage-ring" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><circle class="usage-track" cx="12" cy="12" r="8.5"/><circle class="usage-fill" cx="12" cy="12" r="8.5" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 12 12)"/></svg>
           </button>
-          <div id="agent-usage-pop" class="hidden" role="dialog" aria-label="Today's usage" data-ja-aria="今日の利用"></div>
+          <div id="agent-usage-pop" class="header-pop hidden" role="dialog" aria-label="Today's usage" data-ja-aria="今日の利用"></div>
         </div>
         <div class="kebab-wrap">
           <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options" data-ja-title="その他の操作" data-ja-aria="その他の操作">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
-          <div id="agent-more-dropdown" class="hidden">
+          <div id="agent-more-dropdown" class="header-pop hidden">
             <button id="btn-theme" type="button" title="Toggle theme" data-ja-title="テーマを切り替え">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               <span id="btn-theme-label">Theme</span>
@@ -444,9 +440,9 @@
       <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
       <div id="agent-composer">
         <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
-          <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Camera</span></button>
-          <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>Photos</span></button>
-          <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span>Files</span></button>
+          <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-ja="カメラ">Camera</span></button>
+          <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span data-ja="写真">Photos</span></button>
+          <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span data-ja="ファイル">Files</span></button>
         </div>
         <button id="agent-attach" title="Add an image" aria-label="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加" aria-haspopup="menu" aria-expanded="false">
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -460,7 +456,7 @@
                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
         </div>
         <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" data-ja-aria="音声入力" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
-        <button id="agent-send" class="is-empty" title="Send" aria-label="Send" data-ja-aria="送信">
+        <button id="agent-send" class="is-empty" title="Send" aria-label="Send">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         </button>
       </div>
@@ -472,6 +468,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261022_3"></script>
+  <script src="app.js?v=20261022_4"></script>
 </body>
 </html>

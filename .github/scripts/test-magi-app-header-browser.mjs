@@ -11,6 +11,21 @@ const out = resolve(root, 'workers/.wrangler/magi-app-header-browser');
 mkdirSync(out, { recursive: true });
 const title = 'Androidのホーム画面ウィジェットに音声入力のボタンを置くときのデザインの考え方';
 const usage = (used, extra = {}) => ({ used, limit: 60, day: '2026-10-22', resets_at: '2026-10-23T00:00:00.000Z', global_full: false, ...extra });
+// 画面のファイルは手元から返し、Worker の入口は api（パス→応答を返す関数）に任せる。それ以外は止める。
+function serve(context, api, posts = []) {
+  return context.route('**/*', async route => {
+    const req = route.request(), url = new URL(req.url());
+    if (req.method() === 'POST') posts.push(url.pathname);
+    if (url.origin === 'https://tk.st' && url.pathname.startsWith('/magi-app/www/')) {
+      const name = url.pathname.slice('/magi-app/www/'.length) || 'index.html';
+      if (!/^(?:[a-z0-9.-]+|vendor\/Readability\.js)$/.test(name)) return route.abort();
+      const contentType = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : name.endsWith('.png') ? 'image/png' : 'application/json';
+      return route.fulfill({ body: readFileSync(resolve(root, 'magi-app/www', name)), contentType });
+    }
+    const reply = api[url.pathname];
+    return reply ? route.fulfill(await reply()) : route.abort();
+  });
+}
 const browser = await chromium.launch({ headless: true });
 const report = [];
 try {
@@ -24,23 +39,14 @@ try {
     const context = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'en-US', colorScheme: scenario.scheme, serviceWorkers: 'block' });
     const errors = [], posts = [], usageCalls = [];
     let usageReply = scenario.reply, hold = null;
-    await context.route('**/*', async route => {
-      const req = route.request(), url = new URL(req.url());
-      if (req.method() === 'POST') posts.push(url.pathname);
-      if (url.origin === 'https://tk.st' && url.pathname.startsWith('/magi-app/www/')) {
-        const name = url.pathname.slice('/magi-app/www/'.length) || 'index.html';
-        if (!/^(?:[a-z0-9.-]+|vendor\/Readability\.js)$/.test(name)) return route.abort();
-        const contentType = name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : name.endsWith('.png') ? 'image/png' : 'application/json';
-        return route.fulfill({ body: readFileSync(resolve(root, 'magi-app/www', name)), contentType });
-      }
-      if (url.pathname === '/magi2/usage') {
+    await serve(context, {
+      '/magi2/usage': async () => {
         usageCalls.push(Date.now());
         if (hold) await hold;
-        return scenario.status ? route.fulfill({ status: scenario.status, json: {} }) : route.fulfill({ json: usageReply });
-      }
-      if (url.pathname === '/magi2/models') return route.fulfill({ json: {} });
-      return route.abort();
-    });
+        return scenario.status ? { status: scenario.status, json: {} } : { json: usageReply };
+      },
+      '/magi2/models': () => ({ json: {} }),
+    }, posts);
     await context.addInitScript(([t]) => {
       localStorage.setItem('magi_current_title', t);
       localStorage.setItem('magi_saved_sessions', JSON.stringify([
@@ -160,16 +166,9 @@ try {
   // 言語: 端末が日本語なら日本語で始まり、︙で切り替えると画面・会話・開き直した後も切り替わる
   const context = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'ja-JP', serviceWorkers: 'block' });
   const errors = [];
-  await context.route('**/*', async route => {
-    const url = new URL(route.request().url());
-    if (url.origin === 'https://tk.st' && url.pathname.startsWith('/magi-app/www/')) {
-      const name = url.pathname.slice('/magi-app/www/'.length) || 'index.html';
-      if (!/^(?:[a-z0-9.-]+|vendor\/Readability\.js)$/.test(name)) return route.abort();
-      return route.fulfill({ body: readFileSync(resolve(root, 'magi-app/www', name)), contentType: name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : 'application/json' });
-    }
-    if (url.pathname === '/magi2/usage') return route.fulfill({ json: usage(7) });
-    if (url.pathname === '/magi2/models') return route.fulfill({ json: { personas: { 'MELCHIOR-1': { provider: 'deepseek', provider_label: 'DeepSeek', model: 'M', desc: { en: 'Desc EN', ja: '説明 JA' }, context: { en: 'Ctx EN', ja: '素材 JA' }, theme: { en: 'Th EN', ja: 'テーマ JA' } } } } });
-    return route.abort();
+  await serve(context, {
+    '/magi2/usage': () => ({ json: usage(7) }),
+    '/magi2/models': () => ({ json: { personas: { 'MELCHIOR-1': { provider: 'deepseek', provider_label: 'DeepSeek', model: 'M', desc: { en: 'Desc EN', ja: '説明 JA' }, context: { en: 'Ctx EN', ja: '素材 JA' }, theme: { en: 'Th EN', ja: 'テーマ JA' } } } } }),
   });
   await context.addInitScript(() => {
     localStorage.setItem('magi_saved_sessions', JSON.stringify([{ id: 'l1', title: '保存した会話', timestamp: '2026-10-21T00:00:00Z',
