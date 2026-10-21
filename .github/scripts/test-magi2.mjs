@@ -41,6 +41,7 @@ function nativeShell(capacitor) {
       getElementById() { return { classList: { contains() { return state.hidden; }, add() { state.hidden = true; calls.push('menu'); } } }; },
     },
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
+    closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
     closeAgentPanels() { state.panel = false; calls.push('panel'); },
     closeEmojiPops() { state.emoji = false; calls.push('emoji'); },
   });
@@ -54,9 +55,10 @@ test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
   }
 });
 
-test('B0: Androidの戻るはパネル・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
+test('B0: Androidの戻るは添付メニュー・パネル・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
-  state.panel = true; state.hidden = false; state.emoji = true;
+  state.attach = true; state.panel = true; state.hidden = false; state.emoji = true;
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'menu');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');

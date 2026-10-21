@@ -984,7 +984,8 @@ async function addAttachments(files) {
   if (agentDead || agentClosed) return;
   var generation = agentGen;
   var list = Array.prototype.slice.call(files || []).filter(isImageFile);
-  if (!list.length) return;
+  // ファイルの一覧では画像以外も選べるので、黙って捨てずに知らせる
+  if (!list.length) { if (files && files.length) noticeAttach(document.documentElement.lang === 'ja' ? '画像だけを添付できます' : 'Only images can be attached'); return; }
   for (var i = 0; i < list.length; i++) {
     if (attachments.length >= ATTACH_MAX) { noticeAttach('Up to ' + ATTACH_MAX + ' images'); break; }
     try {
@@ -1007,7 +1008,51 @@ function userContentHTML(content) {
   return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + esc(contentText(content));
 }
 
-attachBtn.addEventListener('click', function () { attachFile.click(); });
+// ＋ から添付元を選ぶ。カメラは capture で撮影アプリを開く（Android は Capacitor が開き、カメラの権限は持たない）。
+// 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。どれも addAttachments が画像だけを受け付ける。
+var attachMenu = document.getElementById('agent-attach-menu');
+var ATTACH_SOURCES = {
+  camera: { accept: 'image/*', capture: 'environment', multiple: false, ja: 'カメラ', en: 'Camera' },
+  photo: { accept: 'image/*', multiple: true, ja: '写真', en: 'Photos' },
+  file: { accept: '*/*', multiple: true, ja: 'ファイル', en: 'Files' },
+};
+function setAttachMenu(open) {
+  attachMenu.hidden = !open;
+  attachBtn.setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  var ja = document.documentElement.lang === 'ja';
+  attachMenu.setAttribute('aria-label', ja ? '画像を追加' : 'Add an image');
+  attachMenu.querySelectorAll('[data-source]').forEach(function (item) {
+    var source = ATTACH_SOURCES[item.dataset.source];
+    item.querySelector('span').textContent = ja ? source.ja : source.en;
+    // 撮影できない PC ではカメラを出さない
+    if (item.dataset.source === 'camera') item.hidden = !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
+  });
+  attachMenu.querySelector('[data-source]:not([hidden])').focus();
+}
+// 開いていたら閉じて true を返す（Android の戻るボタンも使う）
+function closeAttachMenu() {
+  if (attachMenu.hidden) return false;
+  setAttachMenu(false); return true;
+}
+attachBtn.addEventListener('click', function () { setAttachMenu(attachMenu.hidden); });
+attachMenu.addEventListener('click', function (e) {
+  var item = e.target.closest('[data-source]'); if (!item) return;
+  var source = ATTACH_SOURCES[item.dataset.source];
+  attachFile.accept = source.accept; attachFile.multiple = source.multiple;
+  if (source.capture) attachFile.setAttribute('capture', source.capture); else attachFile.removeAttribute('capture');
+  setAttachMenu(false); attachFile.click();
+});
+attachMenu.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') { setAttachMenu(false); attachBtn.focus(); return; }
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  var items = Array.prototype.filter.call(attachMenu.querySelectorAll('[data-source]'), function (item) { return !item.hidden; });
+  var next = items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : -1);
+  e.preventDefault(); items[(next + items.length) % items.length].focus();
+});
+document.addEventListener('pointerdown', function (e) {
+  if (!attachMenu.hidden && !e.target.closest('#agent-attach-menu, #agent-attach')) setAttachMenu(false);
+});
 attachFile.addEventListener('change', function () { addAttachments(attachFile.files); attachFile.value = ''; });
 attachTray.addEventListener('click', function (e) {
   var x = e.target.closest('.attach-x'); if (!x) return;
@@ -2091,6 +2136,7 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
   syncBars();
   app.addListener('backButton', function (event) {
     // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
+    if (closeAttachMenu()) return;
     if (document.querySelector('.agent-panel')) { closeAgentPanels(); return; }
     var menu = document.getElementById('agent-more-dropdown');
     if (menu && !menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }

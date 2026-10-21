@@ -2181,6 +2181,7 @@
        入力欄が伸びても、ボタンは最終行の横に留める（align-items） */
     #agent-composer {
       --composer-button: calc(1.25rem + 0.8rem + 2px);
+      position: relative;
       flex: 1;
       min-width: 0;
       display: flex;
@@ -2269,6 +2270,35 @@
 
     #agent-attach:hover { background: var(--primary-bg); color: var(--primary-color) }
     #agent-attach:disabled { opacity: 0.4; pointer-events: none }
+
+    /* ＋ で開く添付元のメニュー（カメラ・写真・ファイル）。入力バーの上に出す */
+    #agent-attach-menu {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 0.35rem);
+      z-index: 60;
+      min-width: 9rem;
+      padding: 0.25rem;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    #agent-attach-menu[hidden], #agent-attach-menu button[hidden] { display: none }
+    #agent-attach-menu button {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: 100%;
+      min-height: 2.25rem;
+      padding: 0 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      text-align: left;
+      color: var(--text-color);
+    }
+    #agent-attach-menu button svg { flex-shrink: 0; color: var(--secondary-color) }
+    #agent-attach-menu button:hover, #agent-attach-menu button:focus-visible { background: var(--primary-bg); outline: none }
 
     #agent-attach-tray {
       display: flex;
@@ -3423,9 +3453,6 @@
     <symbol id="ic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </symbol>
-    <symbol id="ic-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-    </symbol>
     <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
       <path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" />
     </symbol>
@@ -3705,8 +3732,19 @@
           <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
             tabindex="-1">
           <div id="agent-composer">
-            <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
-              aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
+            <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
+              <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg><span
+                  data-ja="カメラ">Camera</span></button>
+              <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg><span
+                  data-ja="写真">Photos</span></button>
+              <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg><span
+                  data-ja="ファイル">Files</span></button>
+            </div>
+            <button id="agent-attach" title="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加"
+              aria-label="Add an image" aria-haspopup="menu" aria-expanded="false"><svg aria-hidden="true" width="18" height="18" stroke-width="2"><use href="#ic-plus" /></svg></button>
             <div id="agent-input-wrap" class="flex-1">
               <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
               <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
@@ -8098,7 +8136,8 @@ async function parseSSE(body, handlers, onChunk) {
     async function addAttachments(files) {
       if (agentDead || agentClosed) return;
       const list = Array.from(files || []).filter(isImageFile);
-      if (!list.length) return;
+      // ファイルの一覧では画像以外も選べるので、黙って捨てずに知らせる
+      if (!list.length) { if (files && files.length) noticeAttach(tr('Only images can be attached', '画像だけを添付できます')); return; }
       for (const f of list) {
         if (attachments.length >= ATTACH_MAX) { noticeAttach(tr(`Up to ${ATTACH_MAX} images`, `画像は最大${ATTACH_MAX}枚まで`)); break; }
         try {
@@ -8118,7 +8157,39 @@ async function parseSSE(body, handlers, onChunk) {
       return (imgs ? `<span class="agent-imgs">${imgs}</span>` : '') + esc(contentText(content));
     }
 
-    attachBtn.addEventListener('click', () => attachFile.click());
+    // ＋ から添付元を選ぶ。カメラは capture で撮影を開き、撮影できない PC では出さない。
+    // 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。どれも addAttachments が画像だけを受け付ける。
+    const attachMenu = document.getElementById('agent-attach-menu');
+    const ATTACH_SOURCES = {
+      camera: { accept: 'image/*', capture: 'environment', multiple: false },
+      photo: { accept: 'image/*', multiple: true },
+      file: { accept: '*/*', multiple: true },
+    };
+    function setAttachMenu(open) {
+      attachMenu.hidden = !open;
+      attachBtn.setAttribute('aria-expanded', String(open));
+      if (!open) return;
+      attachMenu.querySelector('[data-source="camera"]').hidden = !matchMedia('(pointer: coarse)').matches;
+      attachMenu.querySelector('[data-source]:not([hidden])').focus();
+    }
+    attachBtn.addEventListener('click', () => setAttachMenu(attachMenu.hidden));
+    attachMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-source]'); if (!item) return;
+      const source = ATTACH_SOURCES[item.dataset.source];
+      attachFile.accept = source.accept; attachFile.multiple = source.multiple;
+      if (source.capture) attachFile.setAttribute('capture', source.capture); else attachFile.removeAttribute('capture');
+      setAttachMenu(false); attachFile.click();
+    });
+    attachMenu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { setAttachMenu(false); attachBtn.focus(); return; }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = [...attachMenu.querySelectorAll('[data-source]')].filter(item => !item.hidden);
+      const next = items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : -1);
+      e.preventDefault(); items[(next + items.length) % items.length].focus();
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (!attachMenu.hidden && !e.target.closest('#agent-attach-menu, #agent-attach')) setAttachMenu(false);
+    });
     attachFile.addEventListener('change', () => { addAttachments(attachFile.files); attachFile.value = ''; });
     attachTray.addEventListener('click', (e) => {
       const x = e.target.closest('.attach-x'); if (!x) return;
