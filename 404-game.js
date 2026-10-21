@@ -25,7 +25,7 @@
   // 文字をまとまりに分ける要素（URL は「/」ごと）と、要素ごとにブロックにする範囲
   const WORDS = ['.error-code > span[aria-hidden]', 'header h1', 'header .intro', '#explore-heading', 'main > a.home'];
   const PATHS = ['header .requested-url'];
-  const BLOCKS = ['#search', '#sitemap', '.sitemap-extra'];
+  const BLOCKS = ['#theme-toggle', '#search', '#sitemap', '.sitemap-extra'];
   const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
