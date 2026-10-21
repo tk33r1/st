@@ -24,7 +24,7 @@ public class MagiConversationPlugin extends Plugin {
     private boolean testBuild() { return BuildConfig.DEBUG && BuildConfig.MAGI_B3_PROBE && getContext().getPackageName().equals("st.tk.magi.b3probe"); }
     @PluginMethod public void begin(PluginCall call) {
         String id = call.getString("id", ""), session = call.getString("sessionId", ""), mid = call.getString("mid", ""), body = call.getString("body", "");
-        if (!id.matches("[a-zA-Z0-9_-]{1,160}") || !session.matches("[a-zA-Z0-9_-]{1,160}") || !mid.matches("[a-zA-Z0-9_-]{1,160}")
+        if (!MagiStreamStore.validId(id) || !MagiStreamStore.validId(session) || !MagiStreamStore.validId(mid)
             || body.getBytes(StandardCharsets.UTF_8).length > 12 * 1024 * 1024 || body.isEmpty() || call.getBoolean("test", false) != testBuild()) {
             call.reject("invalid_request"); return;
         }

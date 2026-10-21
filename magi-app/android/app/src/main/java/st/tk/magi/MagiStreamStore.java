@@ -22,8 +22,9 @@ final class MagiStreamStore {
         String title = raw.replaceAll("[\\p{Cntrl}\\p{Cf}]", " ");
         return title.substring(0, Math.min(200, title.length()));
     }
+    static boolean validId(String id) { return id != null && id.matches("[a-zA-Z0-9_-]{1,160}"); }
     private File folder(String id) throws IOException {
-        if (id == null || !id.matches("[a-zA-Z0-9_-]{1,160}")) throw new IOException("invalid_request_id");
+        if (!validId(id)) throw new IOException("invalid_request_id");
         return new File(root, id);
     }
     private JSObject metadata(File folder) throws Exception {
@@ -103,20 +104,15 @@ final class MagiStreamStore {
         synchronized (LOCK) {
             File folder = folder(id); JSObject meta = metadata(folder);
             if (!"complete".equals(meta.getString("status")) || !sessionId.equals(meta.getString("sessionId"))) throw new IllegalStateException("widget_state_changed");
-            StringBuilder answer = new StringBuilder(); String[] verdict = { "" };
+            MagiWidgetData.Collector widget = new MagiWidgetData.Collector();
             try (FileInputStream input = new FileInputStream(new File(folder, "events.sse"))) {
                 MagiSseReader.read(input, (event, raw) -> {
-                    JSObject data = new JSObject(raw);
-                    if ("integrated".equals(event) && data.opt("delta") instanceof String) answer.append(data.getString("delta"));
-                    if ("verdict".equals(event)) {
-                        org.json.JSONObject tally = data.optJSONObject("tally");
-                        verdict[0] = tally == null ? "" : MagiWidgetData.verdict(data.getString("result", ""), tally.opt("approve"), tally.opt("reject"), tally.opt("none"));
-                    }
+                    widget.accept(event, new JSObject(raw));
                     if ("error".equals(event)) throw new IOException("incomplete_reply");
                     return "done".equals(event);
                 });
             }
-            return answer.toString().trim().isEmpty() ? null : new MagiWidgetData(sessionId, meta.getString("title", ""), answer.toString(), verdict[0]);
+            return widget.hasAnswer() ? widget.data(sessionId, meta.getString("title", "")) : null;
         }
     }
     void remove(String id) throws Exception {

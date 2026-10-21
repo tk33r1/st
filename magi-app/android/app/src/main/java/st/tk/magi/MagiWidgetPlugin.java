@@ -25,7 +25,7 @@ public class MagiWidgetPlugin extends Plugin {
         String id = call.getString("sessionId", ""), title = call.getString("title", ""), summary = call.getString("summary", ""), verdict = call.getString("verdict", "");
         String pendingId = call.getString("pendingId", ""), pendingSessionId = call.getString("pendingSessionId", "");
         Object revision = call.getData().opt("revision");
-        if ((!id.isEmpty() && !MagiWidgetData.validId(id)) || (!pendingId.isEmpty() && (!MagiWidgetData.validId(pendingId) || !MagiWidgetData.validId(pendingSessionId))) || title.length() > 1000 || summary.length() > 1000
+        if ((!id.isEmpty() && !MagiStreamStore.validId(id)) || (!pendingId.isEmpty() && (!MagiStreamStore.validId(pendingId) || !MagiStreamStore.validId(pendingSessionId))) || title.length() > 1000 || summary.length() > 1000
             || !(revision instanceof Number) || ((Number) revision).longValue() < 0 || ((Number) revision).doubleValue() != ((Number) revision).longValue()) { call.reject("invalid_widget_data"); return; }
         try {
             MagiWidgetData display = new MagiWidgetData(id, title, summary, verdict);
