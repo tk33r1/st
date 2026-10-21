@@ -49,6 +49,8 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 `GET /magi2/models`はモデル名・人格の説明に加えて`provider_label`と`privacy`を返す。段落の正本は`personas.js`の`PRIVACY`。日英の`[{text, requires?}]`を文字だけで持ち、画面が対応する機能の印をすべて満たす段落だけ表示する。送り先はOpenAI・DeepSeek・Anthropic。トップとアプリは10分で説明を取り直し、取得失敗・旧Workerでは会社名を挙げない案内を出す。`themes.light`はLuna、`themes.dark`はHaikuを返す。旧画面のため`synthesizer`はライトのモデルのまま維持する。
 
+`GET /magi2/usage`は今日（UTC）の通常チャットのIPごとの回数を`{used, limit, day, resets_at}`で返す。数えずに読むだけで、許可したOriginかAPIキーが要り、`Cache-Control: no-store`。アプリのヘッダーの円グラフが起動時・送信の後・画面に戻ったとき（60秒以上空いたら）に読む。失敗・旧Workerでは円グラフを隠す。
+
 ## 討議の回数（最大5回）
 
 `classification_state:true`と`fact_mode:true`の画面では、research・siteは討議なしのlow回答、musicは曲の案内としてadaptive_debateに従い最大5回。印のない新契約のsite・musicは第2回で統合する。consultと旧契約は、その後も統合人格（本人）が判定して回数を決める。新契約で第1回に1人だけ答えた場合は第2回を省き、呼んでいない回の欠席通知は送らない。

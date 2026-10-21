@@ -67,6 +67,7 @@ try {
     await page.locator('#btn-history-agent').click();
     await page.locator('.session-load').click();
     assert.match(await page.locator('#agent-log').innerText(), /Saved answer/);
+    await page.locator('#btn-more-agent').click();
     await page.locator('#btn-theme').click();
     if (native) {
       await page.waitForFunction(() => window.shellCalls.at(-1) === (document.documentElement.dataset.theme === 'dark' ? 'DARK' : 'LIGHT'));

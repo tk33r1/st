@@ -42,7 +42,7 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
       if(!blocked)assert.equal(await page.evaluate(()=>localStorage.getItem('magi_theme')),null);
       await page.emulateMedia({colorScheme:scheme==='light'?'dark':'light'});await page.waitForTimeout(50);
       assert.equal(await page.locator('html').getAttribute('data-theme'),scheme==='light'?'dark':'light');
-      await page.locator('#btn-theme').click();const chosen=await page.locator('html').getAttribute('data-theme');
+      await page.locator('#btn-more-agent').click();await page.locator('#btn-theme').click();const chosen=await page.locator('html').getAttribute('data-theme');
       await page.emulateMedia({colorScheme:scheme});assert.equal(await page.locator('html').getAttribute('data-theme'),chosen);
     }else assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
     await page.locator('#btn-info-agent').click();const list=page.locator('.agent-privacy-list');await list.waitFor();

@@ -2149,6 +2149,24 @@ export default {
       };
       return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
     }
+    // --- 今日の利用回数（IP×UTC日、通常チャットの上限）。アプリのヘッダーの円グラフが読む。数えずに読むだけ ---
+    if (request.method === 'GET' && url.pathname === '/magi2/usage') {
+      const noStore = { ...cors, 'Cache-Control': 'no-store' };
+      if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
+        return httpError(401, { stage: 'auth', code: 'unauthorized', message: '許可されていない Origin です', retryable: false }, requestId, noStore);
+      }
+      const unavailable = () => httpError(503, { stage: 'internal', code: 'usage_unavailable', message: '利用回数を読み込めませんでした', retryable: true }, requestId, noStore);
+      if (!env.DB) return unavailable();
+      try {
+        const day = utcDay(), limit = DEFAULTS.daily_limit;
+        const row = await env.DB.prepare('SELECT count FROM rate_limit WHERE ip = ?1 AND day = ?2').bind(requestIP(request), day).first();
+        const resets = new Date(day + 'T00:00:00Z'); resets.setUTCDate(resets.getUTCDate() + 1);
+        return jsonResponse({ used: Math.min(row ? row.count : 0, limit), limit, day, resets_at: resets.toISOString() }, noStore);
+      } catch (err) {
+        log('usage', 'db_error', err && err.message);
+        return unavailable();
+      }
+    }
 
     // 存在する POST の入口だけを、chat / react 共通の条件で認可する。
     const isChat = request.method === 'POST' && url.pathname === '/magi2/chat';

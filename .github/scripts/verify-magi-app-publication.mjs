@@ -55,6 +55,7 @@ try {
         assert.equal(await page.locator('html').getAttribute('data-theme'),scheme);
         await page.emulateMedia({colorScheme:scheme==='light'?'dark':'light'});
         await page.waitForFunction(t=>document.documentElement.getAttribute('data-theme')===t,scheme==='light'?'dark':'light');
+        if(!await page.locator('#btn-theme').isVisible())await page.locator('#btn-more-agent').click();
         await page.locator('#btn-theme').click();const manual=await page.locator('html').getAttribute('data-theme');
         await page.emulateMedia({colorScheme:scheme});await page.waitForTimeout(100);assert.equal(await page.locator('html').getAttribute('data-theme'),manual);
       }

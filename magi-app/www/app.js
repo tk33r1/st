@@ -303,6 +303,7 @@ var AGENT_SYNTH = { codename: 'Shinya Takeda', name: 'INTEGRATED', synth: true }
 // Fetched once, the first time a persona is opened on the splash (retried on the next open if it fails).
 // undefined = loading, null = unavailable.
 var MODELS_API = API_BASE + '/magi2/models';
+var USAGE_API = API_BASE + '/magi2/usage';
 var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', anthropic: 'Anthropic' };
 var agentModels;
 var agentModelsPromise = null;
@@ -511,6 +512,7 @@ var AGENT_HINT = '<div class="agent-splash">'
 function setAgentTitle(text) {
   agentTitle = (text || '').trim();
   barTitle.textContent = agentTitle || 'MAGI';
+  barTitle.parentNode.title = agentTitle;
   if (agentTitle) safeStore('magi_current_title', agentTitle);
   else safeRemove('magi_current_title');
 }
@@ -1341,6 +1343,7 @@ async function agentSend(recovered) {
     if (!dropped()) {
       replyEl.classList.remove('streaming');
       agentBusy = false;
+      loadUsage();
       // 短い返しで閉じる会話は、下の closeAgentConversation が閉じる。ここで開けてフォーカスすると
       // スマホでキーボードが一瞬開く
       if (agentDead) agentSendBtn.disabled = true;
@@ -1581,10 +1584,34 @@ function makeAgentPanel(id, title, bodyHTML) {
   panel.querySelector('.agent-panel-close').addEventListener('click', function () { panel.remove(); });
   return panel;
 }
+// ☰ で左から出す。新しい会話と保存した会話の一覧を並べ、外側の暗幕を押すと閉じる。
 function showHistoryPanel() {
-  var panel = makeAgentPanel('agent-history-panel', 'Saved Chats', '<div id="agent-history-list" style="display:flex;flex-direction:column;gap:0.4rem;"></div>');
-  if (!panel) return;
+  var menuBtn = document.getElementById('btn-history-agent');
+  var panel = makeAgentPanel('agent-history-panel', '✦ MAGI', '');
+  if (!panel) { menuBtn.setAttribute('aria-expanded', 'false'); return; }
+  panel.classList.add('agent-drawer');
+  panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Chats');
+  var sheet = document.createElement('nav');
+  sheet.className = 'agent-drawer-sheet';
+  sheet.setAttribute('aria-label', 'Chats');
+  panel.querySelector('.agent-panel-head .t').classList.add('glow');
+  panel.querySelector('.agent-panel-close').textContent = '✕';
+  panel.querySelector('.agent-panel-close').setAttribute('aria-label', 'Close');
+  panel.querySelector('.agent-panel-body').remove();
+  sheet.appendChild(panel.querySelector('.agent-panel-head'));
+  sheet.insertAdjacentHTML('beforeend', '<button type="button" id="btn-reset" class="drawer-new">'
+    + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+    + '<span>New chat</span></button><div class="drawer-label">Chats</div><div id="agent-history-list"></div>');
+  panel.appendChild(sheet);
+  menuBtn.setAttribute('aria-expanded', 'true');
+  new MutationObserver(function (_, observer) {
+    if (panel.isConnected) return;
+    observer.disconnect(); menuBtn.setAttribute('aria-expanded', 'false');
+  }).observe(panel.parentNode, { childList: true });
+  panel.addEventListener('click', function (e) { if (e.target === panel) panel.remove(); });
+  sheet.querySelector('#btn-reset').addEventListener('click', function () { resetAgent(); closeAgentPanels(); });
   renderSavedSessionsList();
+  sheet.querySelector('#btn-reset').focus({ preventScroll: true });
 }
 function showInstallPanel() {
   var panel = makeAgentPanel('agent-install-panel', 'Use MAGI on iPhone',
@@ -1915,15 +1942,62 @@ agentInput.addEventListener('keydown', function (e) {
   var fine = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
   if (fine || e.ctrlKey || e.metaKey) { e.preventDefault(); agentSend(); }
 });
-document.getElementById('btn-reset').addEventListener('click', resetAgent);
 document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
+
+// ---- 今日の利用回数 ---------------------------------------------------------------
+// Worker の上限（IP×UTC日）を読むだけで数えない。旧 Worker や通信の失敗では円グラフごと隠す。
+var usageWrap = document.querySelector('.usage-wrap'), usagePop = document.getElementById('agent-usage-pop');
+var usageBtn = document.getElementById('btn-usage'), agentUsage = null, usageLoadedAt = 0, usageRequest = null;
+function renderUsage() {
+  if (!agentUsage) { usageWrap.hidden = true; closeUsagePop(); return; }
+  var ja = document.documentElement.lang === 'ja', used = agentUsage.used, limit = agentUsage.limit;
+  var ratio = Math.min(1, used / limit);
+  usageWrap.hidden = false;
+  usageWrap.dataset.level = used >= limit ? 'full' : ratio >= 0.8 ? 'high' : '';
+  usageWrap.querySelector('.usage-fill').setAttribute('stroke-dasharray', (ratio * 100).toFixed(1) + ' 100');
+  var label = ja ? '今日の利用 ' + used + ' / ' + limit + '回' : "Today's usage: " + used + ' of ' + limit;
+  usageBtn.title = label; usageBtn.setAttribute('aria-label', label);
+  var reset = new Date(agentUsage.resets_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  usagePop.innerHTML = '<div class="usage-label">' + (ja ? '今日の利用' : "Today's usage") + '</div>'
+    + '<div class="usage-count"><b>' + used + '</b> / ' + limit + (ja ? ' 回' : '') + '</div>'
+    + '<p>' + esc(ja ? 'IPアドレスごとに1日' + limit + '回まで送れます。毎日 ' + reset + ' に戻ります。'
+      : 'Each IP address can send ' + limit + ' messages a day. Resets daily at ' + reset + '.') + '</p>';
+}
+function loadUsage() {
+  if (usageRequest) return usageRequest;
+  usageRequest = fetch(USAGE_API, { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (j) {
+      var ok = j && Number.isInteger(j.used) && Number.isInteger(j.limit) && j.limit > 0 && j.used >= 0 && !isNaN(Date.parse(j.resets_at));
+      agentUsage = ok ? { used: Math.min(j.used, j.limit), limit: j.limit, resets_at: j.resets_at } : null;
+    })
+    .catch(function () { agentUsage = null; })
+    .then(function () { usageLoadedAt = Date.now(); usageRequest = null; renderUsage(); });
+  return usageRequest;
+}
+function closeUsagePop() {
+  if (usagePop.classList.contains('hidden')) return false;
+  usagePop.classList.add('hidden'); usageBtn.setAttribute('aria-expanded', 'false');
+  return true;
+}
+usageBtn.addEventListener('click', function (e) {
+  e.stopPropagation();
+  if (closeUsagePop()) return;
+  document.getElementById('agent-more-dropdown').classList.add('hidden');
+  usagePop.classList.remove('hidden'); usageBtn.setAttribute('aria-expanded', 'true');
+  loadUsage();
+});
+document.addEventListener('click', function (e) { if (!e.target.closest('.usage-wrap')) closeUsagePop(); });
+// 日をまたいだり、ほかの端末で使ったりした分は、画面に戻ったときに取り直す
+document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - usageLoadedAt > 60000) loadUsage(); });
+loadUsage();
 
 // kebab dropdown
 (function () {
   var moreBtn = document.getElementById('btn-more-agent');
   var moreDropdown = document.getElementById('agent-more-dropdown');
   if (!moreBtn || !moreDropdown) return;
-  moreBtn.addEventListener('click', function (e) { e.stopPropagation(); moreDropdown.classList.toggle('hidden'); });
+  moreBtn.addEventListener('click', function (e) { e.stopPropagation(); closeUsagePop(); moreDropdown.classList.toggle('hidden'); });
   document.addEventListener('click', function (e) {
     if (!moreDropdown.classList.contains('hidden') && !e.target.closest('.kebab-wrap')) moreDropdown.classList.add('hidden');
   });
@@ -1941,6 +2015,12 @@ document.getElementById('btn-theme').addEventListener('click', function () {
   var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   window.MagiTheme.choose(next);
 });
+// メニューの項目は、押すと切り替わる先のテーマを書く
+function syncThemeLabel() {
+  document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Light mode' : 'Dark mode';
+}
+new MutationObserver(syncThemeLabel).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+syncThemeLabel();
 
 // service worker (PWA)
 if ('serviceWorker' in navigator) {
@@ -2134,6 +2214,7 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
     // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
     if (closeAttachMenu()) return;
     if (document.querySelector('.agent-panel')) { closeAgentPanels(); return; }
+    if (closeUsagePop()) return;
     var menu = document.getElementById('agent-more-dropdown');
     if (menu && !menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
     if (document.querySelector('.emoji-pop')) { closeEmojiPops(); return; }

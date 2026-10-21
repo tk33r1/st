@@ -71,9 +71,10 @@
     .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 
     /* kebab (more options) dropdown */
-    .kebab-wrap { position: relative; display: inline-flex; }
+    .kebab-wrap, .usage-wrap { position: relative; display: inline-flex; }
+    .usage-wrap[hidden] { display: none; }
     #agent-more-dropdown {
-      position: absolute; right: 0; top: 100%; margin-top: 6px; width: 170px;
+      position: absolute; right: 0; top: 100%; margin-top: 6px; width: 190px;
       background: var(--surface-color); border: 1px solid var(--border-color);
       border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.35); z-index: 60;
       display: flex; flex-direction: column; padding: 4px 0;
@@ -90,6 +91,45 @@
     #agent-more-dropdown button:disabled { opacity: 0.3; pointer-events: none; }
     #agent-more-dropdown hr { border: none; border-top: 1px solid var(--border-color); margin: 4px 0; width: 100%; }
     #agent-more-dropdown [hidden] { display: none; }
+
+    /* 今日の利用回数（IP×日）の円グラフ。8割で黄、上限で赤 */
+    .usage-ring { display: block; }
+    .usage-ring circle { fill: none; stroke-width: 3; }
+    .usage-track { stroke: var(--border-color); }
+    .usage-fill { stroke: var(--primary-color); stroke-linecap: round; transition: stroke-dasharray var(--duration-normal) ease; }
+    .usage-wrap[data-level="high"] .usage-fill { stroke: #f59e0b; }
+    .usage-wrap[data-level="full"] .usage-fill { stroke: #ef4444; }
+    #agent-usage-pop {
+      position: absolute; right: 0; top: 100%; margin-top: 6px; width: 220px; z-index: 60;
+      padding: 0.75rem; background: var(--surface-color); border: 1px solid var(--border-color);
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      font-size: 11px; line-height: 1.6; color: var(--secondary-color);
+    }
+    #agent-usage-pop .usage-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary-color); }
+    #agent-usage-pop .usage-count { margin: 0.15rem 0 0.35rem; font-size: 12px; color: var(--secondary-color); font-variant-numeric: tabular-nums; }
+    #agent-usage-pop .usage-count b { font-size: 1.4rem; font-weight: 600; color: var(--text-color); }
+    #agent-usage-pop p { margin: 0; }
+
+    /* ☰ で開く履歴。左から出るシートと、外側の暗幕（押すと閉じる） */
+    .agent-panel.agent-drawer { padding: 0; flex-direction: row; background: rgba(0,0,0,0.45); }
+    .agent-drawer-sheet {
+      display: flex; flex-direction: column; width: min(85%, 320px); height: 100%;
+      background: var(--surface-color); border-right: 1px solid var(--border-color);
+      padding: 0.75rem; padding-top: calc(0.75rem + var(--magi-safe-top));
+      padding-bottom: calc(0.75rem + var(--magi-safe-bottom)); padding-left: calc(0.75rem + var(--magi-safe-left));
+      animation: drawerIn var(--duration-normal) ease both;
+    }
+    @keyframes drawerIn { from { transform: translateX(-100%); } to { transform: none; } }
+    .agent-drawer .agent-panel-head { margin-bottom: 0.5rem; }
+    .agent-drawer .agent-panel-head .t { font-size: 0.95rem; letter-spacing: 0.08em; text-transform: none; font-weight: 400; }
+    .drawer-new {
+      flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0.5rem 0.75rem;
+      font: inherit; font-size: 12px; color: var(--primary-color); background: var(--primary-bg);
+      border: 1px solid var(--primary-color); border-radius: 6px; cursor: pointer;
+    }
+    .drawer-new:active { background: var(--primary-bg-hover); }
+    .drawer-label { flex-shrink: 0; margin: 1rem 0 0.4rem; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--secondary-color); }
+    #agent-history-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.4rem; }
 
     /* overlay panels (saved chats / info) */
     .agent-panel {
@@ -141,18 +181,20 @@
       padding-left: var(--magi-safe-left); padding-right: var(--magi-safe-right);
       background: var(--surface-color);
     }
+    /* Claude のアプリと同じ並び。左の ☰ で履歴と新しい会話、右に今日の利用回数と ︙ のメニュー。
+       タイトルは1行に収め、はみ出す分は … で切る */
     header#bar {
-      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-      gap: 0.5rem; padding: 0.5rem 0.75rem;
-      padding-top: calc(0.5rem + var(--magi-safe-top));
+      flex-shrink: 0; display: flex; align-items: center;
+      gap: 0.25rem; padding: 0.4rem 0.5rem;
+      padding-top: calc(0.4rem + var(--magi-safe-top));
       border-bottom: 1px solid var(--border-color);
       background: var(--surface-alt);
     }
-    #bar .title { font-size: 0.95rem; letter-spacing: 0.18em; color: var(--primary-color); }
-    #bar .actions { display: flex; align-items: center; gap: 0.75rem; }
+    #bar .title { flex: 1; min-width: 0; padding: 0 0.25rem; font-size: 0.95rem; letter-spacing: 0.08em; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #bar .actions { flex-shrink: 0; display: flex; align-items: center; gap: 0.15rem; }
     .icon-btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 2rem; height: 2rem; border: none; background: transparent;
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      width: 2.5rem; height: 2.5rem; border: none; background: transparent;
       color: var(--secondary-color); cursor: pointer; border-radius: 6px;
       transition: color var(--duration-fast), background-color var(--duration-fast);
     }
@@ -342,22 +384,26 @@
   <!-- End Google Tag Manager (noscript) -->
   <div id="app">
     <header id="bar">
-      <div class="title glow">✦ <span id="bar-title">MAGI</span></div>
+      <button id="btn-history-agent" class="icon-btn" title="Chats" aria-label="Chats" aria-haspopup="dialog" aria-expanded="false">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      </button>
+      <div class="title glow"><span id="bar-title">MAGI</span></div>
       <div class="actions">
-        <button id="btn-theme" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
-        <button id="btn-reset" class="icon-btn" title="New conversation" aria-label="New conversation">
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button id="btn-history-agent" class="icon-btn" title="Saved chats" aria-label="Saved chats">
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </button>
+        <div class="usage-wrap" hidden>
+          <button id="btn-usage" class="icon-btn" title="Today's usage" aria-label="Today's usage" aria-haspopup="dialog" aria-expanded="false" aria-controls="agent-usage-pop">
+            <svg class="usage-ring" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><circle class="usage-track" cx="12" cy="12" r="8.5"/><circle class="usage-fill" cx="12" cy="12" r="8.5" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 12 12)"/></svg>
+          </button>
+          <div id="agent-usage-pop" class="hidden" role="dialog" aria-label="Today's usage"></div>
+        </div>
         <div class="kebab-wrap">
           <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div id="agent-more-dropdown" class="hidden">
+            <button id="btn-theme" type="button" title="Toggle theme">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <span id="btn-theme-label">Theme</span>
+            </button>
             <button id="btn-share-agent" type="button" title="Share / copy conversation" disabled>
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               <span>Share Log</span>

@@ -42,6 +42,7 @@ function nativeShell(capacitor) {
     },
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
+    closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
     closeAgentPanels() { state.panel = false; calls.push('panel'); },
     closeEmojiPops() { state.emoji = false; calls.push('emoji'); },
   });
@@ -55,11 +56,12 @@ test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
   }
 });
 
-test('B0: Androidの戻るは添付メニュー・パネル・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
+test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
-  state.attach = true; state.panel = true; state.hidden = false; state.emoji = true;
+  state.attach = true; state.panel = true; state.usage = true; state.hidden = false; state.emoji = true;
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'usage');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'menu');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');
   state.back({ canGoBack: true }); assert.equal(calls.at(-1), 'history');
@@ -1990,7 +1992,7 @@ function client(src, isHome = false) {
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
-    updateSendState() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
+    updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLARIFY_BEGIN', '// AGENT_CLARIFY_END'), ctx);
@@ -2132,7 +2134,7 @@ test('モバイルは保存容量超過や保存禁止でもタイトル・回�
       setItem() { throw new DOMException('full', 'QuotaExceededError'); },
       removeItem() { throw new DOMException('blocked', 'SecurityError'); },
     };
-    c.ctx.barTitle = {}; c.ctx.document.getElementById = () => null;
+    c.ctx.barTitle = { parentNode: {} }; c.ctx.document.getElementById = () => null;
     c.ctx.contentText = c => typeof c === 'string' ? c : '';
     vm.runInContext(between(mobile, 'function safeParse(', 'var genMid'), c.ctx);
     vm.runInContext(between(mobile, 'function setAgentTitle(', '// ---- Reactions persistence'), c.ctx);
@@ -3749,6 +3751,27 @@ test('modelsはAnthropicとテーマ別の統合、日英の文字段落・機�
     }
   }
   assert.equal(w.calls.length, 0);
+});
+
+test('usageは許可したOriginにだけ、今日のIPの回数を数えずに返す', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-usage-'));
+  try {
+    const w = worker(), file = join(dir, 'usage.sqlite'), day = new Date().toISOString().slice(0, 10);
+    const get = (origin = 'https://localhost', ip = '203.0.113.9') => w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/usage',
+      { headers: { Origin: origin, 'CF-Connecting-IP': ip } }), w.env, { waitUntil() {} });
+    assert.equal((await get()).status, 503);
+    w.env.DB = database(file);
+    sqlite(file, 'INSERT INTO rate_limit (ip, day, count) VALUES (?, ?, ?)', ['203.0.113.9', day, 12]);
+    sqlite(file, 'INSERT INTO rate_limit (ip, day, count) VALUES (?, ?, ?)', ['203.0.113.9', '2000-01-01', 59]);
+    const res = await get(), data = await res.json();
+    assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store');
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://localhost');
+    assert.deepEqual(data, { used: 12, limit: 60, day, resets_at: new Date(Date.parse(day + 'T00:00:00Z') + 864e5).toISOString() });
+    assert.equal((await (await get('https://localhost', '198.51.100.1')).json()).used, 0);
+    assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ? AND day = ?', ['203.0.113.9', day]).row.count, 12);
+    assert.equal((await get('https://evil.example')).status, 401);
+    assert.equal(w.calls.length, 0);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('A4: 更新履歴の正本は日英2〜4行・日付・降順を満たし、壊れた全体を採用しない', () => {
