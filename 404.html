@@ -187,6 +187,7 @@
         <p class="game-prompt-title" id="game-prompt-title" data-ja="このページを崩しますか？" data-en="Crumble this page?">このページを崩しますか？</p>
         <div class="game-prompt-actions">
           <button type="button" class="game-go" id="game-go" data-ja="崩す" data-en="Crumble">崩す</button>
+          <button type="button" id="game-cancel" data-ja="崩さない" data-en="Don't">崩さない</button>
           <button type="button" class="game-sound" id="game-sound" role="switch" aria-checked="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="sound-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="sound-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
           </button>
@@ -858,6 +859,7 @@ function cleanReplyLanguage(v) {
         if (window.ST404Game) window.ST404Game.start(on);
         else { pending = true; load(); }
       });
+      document.getElementById('game-cancel').addEventListener('click', function () { close(true); });
       box.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); close(true); } });
       box.addEventListener('focusout', function (e) { if (e.relatedTarget && !box.contains(e.relatedTarget) && e.relatedTarget !== t) close(false); });
       document.addEventListener('pointerdown', function (e) { if (!box.hidden && !box.contains(e.target) && !t.contains(e.target)) close(false); });
