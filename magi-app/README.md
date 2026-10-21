@@ -194,24 +194,30 @@ Version 5.6 was published on 2026-10-21 after integrating the newer history and 
 See [the release verification](B3公開評価20261021.md) for the final APK, additional checks,
 and the distinction between candidate and release testing. Android 13/14 and other devices remain unverified.
 
-## B4 home widget (5.7)
+## B4 home widget (5.7, redesigned in 5.9)
 
-Version 5.7 / 57 adds a native Android home widget using RemoteViews. Small widgets
-offer new conversation, voice and continue; larger widgets can show the latest
-completed answer's title, first 120 characters (up to three lines) and MAGI verdict.
-Contents are hidden by default. Settings can change this and request home placement.
-The widget performs no network requests. Links open the app without sending a message.
+The Android home widget is a launcher only. From 5.9 it offers Chat, Camera, Album and
+Voice input, modelled on common AI assistant widgets; it shows no conversation content.
+Two or more rows place the chat bar above the three buttons; one row places all four in
+a line, with icons only below about 250dp. The widget performs no network requests.
+Links open the app without sending a message.
 
-`www/native-widget.js` publishes only display data after B1 saves. Native background
-completion updates `MagiWidgetStore` directly before the WebView resumes. Masking
-removes stored title, summary and verdict; revision checks reject stale screen updates.
-Pending B3 receipt is protected from replacement by older B1 history.
+Chat (`magi://new`) and voice (`magi://voice`) are handled by the screen. Camera and album
+(`magi://camera`, `magi://album`) are opened natively by `MagiSharePlugin`, because the
+WebView cannot open a file chooser without a user gesture. The captured photo (through
+the existing FileProvider, without the camera permission) or up to four photos from the
+system photo picker enter the existing share queue, so the screen starts a new
+conversation with them attached. Cancelling leaves the current conversation unchanged.
+When a killed process is restored, `MainActivity` drops the stale `magi://` launch link.
 
-Local checks include `test-magi-native-widget.mjs` through `test-magi2.mjs`,
-`test-magi-native-widget-browser.mjs`, and `MagiWidgetDataTest`. The existing isolated
-probe supports `--widget=on` to check updates before reopening the screen. Its debug-only
-`MagiWidgetProbeActivity` renders the same RemoteViews in a real AppWidgetHostView at
-three sizes; it is absent from release APKs. These tests use synthetic responses.
+5.7 and 5.8 also showed the last answer on larger widgets with a masking setting. 5.9
+removes that display, `MagiWidgetStore`, `MagiWidgetData` and the screen-to-widget sync,
+and deletes the old `magi-widget` preferences on upgrade. Settings keep only the
+request to add the widget to the home screen.
+
+Local checks are `test-magi-native-widget.mjs` through `test-magi2.mjs` and
+`test-magi-native-widget-browser.mjs`. The debug-only `MagiWidgetProbeActivity` renders
+the RemoteViews in a real AppWidgetHostView at three sizes; it is absent from release APKs.
 
 The initial candidate was installed over 5.6 on the test device, preserving all 14 saved-list
 entries. Device reboot, home-launcher resize gestures,

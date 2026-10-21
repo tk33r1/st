@@ -1,0 +1,10 @@
+<!-- 高さ1マスの形。同じ4つの入口を1列に並べる。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:padding="5dp" android:background="@drawable/magi_widget_background">
+    <LinearLayout android:id="@+id/widget_chat" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:paddingHorizontal="10dp" android:background="@drawable/magi_widget_chat" android:contentDescription="@string/widget_chat">
+        <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/magi_widget_logo" android:importantForAccessibility="no" />
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:singleLine="true" android:ellipsize="end" android:textSize="13sp" android:textColor="#9fc4ab" android:text="@string/widget_chat_short" android:importantForAccessibility="no" />
+    </LinearLayout>
+    <ImageButton android:id="@+id/widget_camera" android:layout_width="40dp" android:layout_height="match_parent" android:layout_marginStart="5dp" android:scaleType="center" android:background="@drawable/magi_widget_button" android:src="@drawable/magi_widget_camera" android:contentDescription="@string/widget_camera" />
+    <ImageButton android:id="@+id/widget_album" android:layout_width="40dp" android:layout_height="match_parent" android:layout_marginStart="5dp" android:scaleType="center" android:background="@drawable/magi_widget_button" android:src="@drawable/magi_widget_album" android:contentDescription="@string/widget_album" />
+    <ImageButton android:id="@+id/widget_voice" android:layout_width="40dp" android:layout_height="match_parent" android:layout_marginStart="5dp" android:scaleType="center" android:background="@drawable/magi_widget_button" android:src="@drawable/magi_widget_mic" android:contentDescription="@string/widget_voice" />
+</LinearLayout>

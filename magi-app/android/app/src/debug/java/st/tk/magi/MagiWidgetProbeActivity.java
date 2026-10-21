@@ -20,14 +20,14 @@ public class MagiWidgetProbeActivity extends Activity {
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void show() {
         if (!BuildConfig.MAGI_B3_PROBE || !getPackageName().equals("st.tk.magi.b3probe")) { finish(); return; }
-        String size = getIntent().getStringExtra("size"); if (size == null) size = "2x1";
-        int width = size.equals("4x3") ? 320 : size.equals("3x2") ? 230 : 150;
-        int height = size.equals("4x3") ? 240 : size.equals("3x2") ? 160 : 80;
+        String size = getIntent().getStringExtra("size"); if (size == null) size = "4x2";
+        int width = size.equals("3x1") ? 230 : 300;
+        int height = size.equals("3x1") ? 70 : size.equals("4x3") ? 220 : 140;
         LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setGravity(Gravity.CENTER_HORIZONTAL);
         root.setPadding(dp(12), dp(36), dp(12), dp(12)); root.setBackgroundColor(Color.rgb(25, 25, 25));
         TextView title = new TextView(this); title.setText("B4 RemoteViews / " + size); title.setTextColor(Color.WHITE); root.addView(title);
         LinearLayout row = new LinearLayout(this);
-        for (String option : new String[] { "2x1", "3x2", "4x3" }) {
+        for (String option : new String[] { "3x1", "4x2", "4x3" }) {
             Button button = new Button(this); button.setText(option); button.setOnClickListener(v -> { getIntent().putExtra("size", option); show(); }); row.addView(button);
         }
         root.addView(row);

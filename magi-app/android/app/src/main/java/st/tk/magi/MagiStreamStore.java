@@ -7,7 +7,6 @@ import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
@@ -56,12 +55,12 @@ final class MagiStreamStore {
             try (FileOutputStream out = new FileOutputStream(file, true)) { out.write(bytes); }
         }
     }
-    void finish(String id, String status, String error, String title, boolean widgetAnswer) throws Exception {
+    void finish(String id, String status, String error, String title) throws Exception {
         synchronized (LOCK) {
             File folder = folder(id);
             try (RandomAccessFile file = new RandomAccessFile(new File(folder, "events.sse"), "rw")) { file.getFD().sync(); }
             JSObject value = metadata(folder); value.put("status", status); value.put("error", error);
-            value.put("title", title); value.put("finishedAt", System.currentTimeMillis()); value.put("widgetAnswer", widgetAnswer); write(folder, value);
+            value.put("title", title); value.put("finishedAt", System.currentTimeMillis()); write(folder, value);
         }
     }
     void released(String id, boolean notified) throws Exception {
@@ -99,26 +98,11 @@ final class MagiStreamStore {
                     continue;
                 }
                 if ("receiving".equals(value.getString("status")) && !folder.getName().equals(active)) {
-                    finish(folder.getName(), "failed", "interrupted", value.getString("title", ""), false); value = metadata(folder);
+                    finish(folder.getName(), "failed", "interrupted", value.getString("title", "")); value = metadata(folder);
                 }
                 values.put(value);
             }
             return values;
-        }
-    }
-    MagiWidgetData widgetData(String id, String sessionId) throws Exception {
-        synchronized (LOCK) {
-            File folder = folder(id); JSObject meta = metadata(folder);
-            if (!"complete".equals(meta.getString("status")) || !sessionId.equals(meta.getString("sessionId"))) throw new IllegalStateException("widget_state_changed");
-            MagiWidgetData.Collector widget = new MagiWidgetData.Collector();
-            try (FileInputStream input = new FileInputStream(new File(folder, "events.sse"))) {
-                MagiSseReader.read(input, (event, raw) -> {
-                    widget.accept(event, new JSObject(raw));
-                    if ("error".equals(event)) throw new IOException("incomplete_reply");
-                    return "done".equals(event);
-                });
-            }
-            return widget.hasAnswer() ? widget.data(sessionId, meta.getString("title", "")) : null;
         }
     }
     void remove(String id) throws Exception {

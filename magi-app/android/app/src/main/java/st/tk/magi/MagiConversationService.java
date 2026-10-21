@@ -51,7 +51,6 @@ public class MagiConversationService extends Service {
         final AtomicBoolean released = new AtomicBoolean();
         final ArrayList<PluginCall> waiters = new ArrayList<>();
         volatile Call call; volatile MagiConversationService service; volatile String title;
-        final MagiWidgetData.Collector widget = new MagiWidgetData.Collector();
         PowerManager.WakeLock wake; Runnable deadline;
         Run(JSObject meta, String body, boolean test, PluginCall startCall) {
             this.meta = meta; this.body = body; this.test = test; this.startCall = startCall; title = meta.getString("title", "");
@@ -71,7 +70,7 @@ public class MagiConversationService extends Service {
                 ContextCompat.startForegroundService(context, new Intent(context, MagiConversationService.class).putExtra("id", run.id()));
             } catch (Exception ignored) {
                 current = null;
-                if (created) try { new MagiStreamStore(context).finish(run.id(), "failed", "service_unavailable", run.title, false); } catch (Exception ignoredAgain) {}
+                if (created) try { new MagiStreamStore(context).finish(run.id(), "failed", "service_unavailable", run.title); } catch (Exception ignoredAgain) {}
                 call.reject("service_unavailable");
             }
         });
@@ -121,24 +120,16 @@ public class MagiConversationService extends Service {
     }
     private static void persistFinish(Context context, Run run, String status, String error) {
         String finalStatus = status;
-        try { new MagiStreamStore(context).finish(run.id(), status, error, run.title, "complete".equals(status) && run.widget.hasAnswer()); }
+        try { new MagiStreamStore(context).finish(run.id(), status, error, run.title); }
         catch (Exception ignored) { finalStatus = "failed"; }
         final String savedStatus = finalStatus;
         MAIN.post(() -> {
             release(run);
-            if (savedStatus.equals("complete")) updateWidget(context, run);
             boolean notified = notifyArrival(context, run, status, savedStatus);
             try { new MagiStreamStore(context).released(run.id(), false); } catch (Exception ignored) {}
             // notifyの反映は非同期。古い通知を今回の到着と取り違えず、資源解放後に確認する。
             if (notified) MAIN.postDelayed(() -> recordNotified(context, run), 500L);
         });
-    }
-    private static void updateWidget(Context context, Run run) {
-        if (!run.widget.hasText()) return;
-        try {
-            MagiWidgetStore.update(context, run.widget.data(run.meta.getString("sessionId"), run.title));
-            MagiWidgetProvider.updateAll(context);
-        } catch (Exception ignored) { /* 会話の耐久保存と通知は表示キャッシュの失敗で止めない。 */ }
     }
     /** 保存済み状態を確定してから通知し、未保存の回答へ利用者を誘導しない。通知を依頼できたらtrue。 */
     private static boolean notifyArrival(Context context, Run run, String status, String savedStatus) {
@@ -227,7 +218,6 @@ public class MagiConversationService extends Service {
                         run.title = MagiStreamStore.cleanTitle(data.getString("text"));
                     }
                     if (event.equals("integrated") && data.opt("delta") instanceof String && !data.getString("delta").trim().isEmpty()) answer[0] = true;
-                    run.widget.accept(event, data);
                     if (event.equals("clarify") && data.opt("questions") instanceof org.json.JSONArray && data.getJSONArray("questions").length() > 0) answer[0] = true;
                     if (event.equals("done") && !answer[0]) throw new IOException("incomplete_reply");
                     store.append(run.id(), event, data);

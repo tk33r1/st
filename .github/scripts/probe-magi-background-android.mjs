@@ -123,15 +123,6 @@ try {
   assert(serviceStopped && wakeReleased);
   if (scenario === 'stall') assert.equal(meta.error, 'timeout');
   if (!interrupt) { assert(meta.serviceStoppedAt); assert.equal(meta.notified, notifications === 'granted' && !keepForeground && scenario !== 'stop'); }
-  if (arg('widget') === 'on') {
-    // B4: 画面を戻す前に、ネイティブだけで表示用キャッシュを更新したことを確認する。
-    const widget = run('shell', 'run-as', pkg, 'cat', 'shared_prefs/magi-widget.xml');
-    writeFileSync(dir + label + '-widget.xml', widget);
-    assert(widget.includes('name="masked" value="false"'));
-    assert(widget.includes('name="sessionId">' + meta.sessionId + '</string>'));
-    assert(widget.includes('name="summary">Synthetic background answer received.</string>'));
-    report.widgetUpdatedBeforeReopen = true;
-  }
   if (restart) run('shell', 'run-as', pkg, 'kill', '-9', pid);
   if (mode === 'lock') {
     run('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP');

@@ -1,22 +1,18 @@
-// B4の設定・起動・更新を実画面と外に保持した模擬ネイティブで確認する。実AI・録音なし。
+// B4のウィジェットの入口（チャット・カメラ・アルバム・音声入力・通知からの会話）と設定を、実画面と模擬ネイティブで確認する。実AI・録音なし。
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {nativeFilesystemFixture} from './magi-native-filesystem-fixture.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),out=root+'workers/.wrangler/magi-b4-20261021/';mkdirSync(out,{recursive:true});
-const fs=nativeFilesystemFixture(),calls=[],errors=[],runs=new Map();let masked=true,revision=0,cached={},launch=null,listenerGate=Promise.resolve();
+const fs=nativeFilesystemFixture(),calls=[],errors=[],runs=new Map();let launch=null,listenerGate=Promise.resolve();
 const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
 const event=(name,data)=>'event: '+name+'\ndata: '+JSON.stringify(data)+'\n\n';
 const answer=event('classification',{version:1,intent:'consult',mode:'consult',fresh:'no',votable:'no',site_pages:'no',magi_candidate:false,reply_language:{version:1,code:'en',source:'ui'}})
  +event('title',{text:'New widget conversation'})+event('integrated',{delta:'New answer for the home widget.'})+event('done',{});
 const methods={
- 'widget:information':async()=>({masked,revision,canPin:true}),
- 'widget:setMasked':async value=>{masked=value.masked;revision++;if(masked)cached={masked,sessionId:cached.sessionId||''};},
- 'widget:update':async value=>{assert.equal(value.revision,revision);assert.equal(value.masked,masked);cached={...value};
-  if(value.pendingId){const pending=runs.get(value.pendingId);assert.equal(pending.sessionId,value.pendingSessionId);assert.equal(pending.status,'complete');cached={...cached,...pending.widget};}
-  if(masked){delete cached.title;delete cached.summary;delete cached.verdict;}revision++;calls.push(['widget',value]);},
- 'widget:pin':async()=>{calls.push(['pin']);return{requested:true}},
+ 'widget:information':async()=>({canPin:true}),
+ 'widget:pin':async args=>{calls.push(['pin',args]);return{requested:true}},
  'conversation:information':async()=>({test:false}), 'conversation:checkPermissions':async()=>({display:'denied'}),
  'conversation:begin':async value=>{calls.push(['begin']);runs.set(value.id,{...value,status:'complete',data:answer,startedAt:Date.now()});},
  'conversation:read':async({id,offset})=>{const run=runs.get(id),bytes=Buffer.from(run.data).subarray(offset);return{status:run.status,base64:bytes.toString('base64'),offset:offset+bytes.length,length:Buffer.byteLength(run.data)};},
@@ -31,7 +27,7 @@ await context.addInitScript(()=>{
  window.voiceEvents={};window.voiceStarts=0;
  window.Capacitor={isNativePlatform:()=>true,getPlatform:()=>'android',Plugins:{
   Filesystem:plugin('fs',['stat','readFile','writeFile','rename','deleteFile','readdir','rmdir','getUri']),
-  MagiWidget:plugin('widget',['information','setMasked','update','pin']),
+  MagiWidget:plugin('widget',['information','pin']),
   MagiConversation:plugin('conversation',['information','checkPermissions','begin','read','pending','cancel','acknowledge','openNotificationSettings']),
   App:{addListener:async(_,fn)=>{window.widgetLink=fn},getLaunchUrl:()=>call('launch')},
   SpeechRecognition:{available:async()=>({available:true}),checkPermissions:async()=>({speechRecognition:'granted'}),
@@ -55,30 +51,20 @@ await context.route('**/*',route=>{const url=new URL(route.request().url());
 async function page(){const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto('https://tk.st/magi-app/www/');await p.waitForFunction(()=>nativeWidget&&!historyLoading&&window.widgetLink);return p}
 const results=[];
 try{
- let p=await page();await p.waitForFunction(()=>!!nativeWidget);await p.evaluate(()=>nativeWidget.sync());
- assert.equal(cached.masked,true);assert.equal('title'in cached,false);assert.equal('summary'in cached,false);results.push('masked by default without content crossing bridge');
- await p.evaluate(()=>showNativeSettings());await p.locator('#widget-masked').uncheck();await p.waitForFunction(()=>!document.getElementById('widget-masked').disabled);
- assert.equal(masked,false);assert.equal(cached.title,'Existing title');assert.equal(Array.from(cached.summary).length,120);assert.equal(cached.verdict,'approve');
- await p.locator('#widget-pin').click();assert(calls.some(x=>x[0]==='pin'));results.push('settings update content and pin request');
- const pendingA={id:'unimported_a',sessionId:'old',status:'complete',finishedAt:5,startedAt:2,widgetAnswer:true,widget:{sessionId:'old',title:'Pending title',summary:'Pending answer',verdict:''}};
- runs.set(pendingA.id,pendingA);
- await p.locator('#widget-masked').check();await p.waitForFunction(()=>!document.getElementById('widget-masked').disabled);assert.equal('summary'in cached,false);
- await p.locator('#widget-masked').uncheck();await p.waitForFunction(()=>!document.getElementById('widget-masked').disabled);assert.equal(cached.summary,'Pending answer');
- assert.equal(await p.evaluate(()=>agentHistory.some(m=>m.native_request==='unimported_a')),false);results.push('unmask restores pending answer without importing chat');
- runs.delete(pendingA.id);await p.evaluate(()=>nativeWidget.sync());
+ let p=await page();
+ await p.evaluate(()=>showNativeSettings());assert.equal(await p.locator('#widget-masked').count(),0);await p.locator('#widget-pin').waitFor();
+ await p.locator('#widget-pin').click();await p.waitForFunction(()=>true);assert.deepEqual(calls.filter(x=>x[0]==='pin'),[['pin',undefined]]);results.push('settings only request pinning without widget contents');
+ await p.evaluate(()=>closeAgentPanels());
+ await p.evaluate(()=>widgetLink({url:'magi://open?id=old'}));await p.waitForFunction(()=>currentSessionId==='old');
+ for(const url of ['magi://camera','magi://album']){await p.evaluate(u=>widgetLink({url:u}),url);assert.equal(await p.evaluate(()=>currentSessionId),'old');assert.equal(await p.evaluate(()=>agentHistory.length),2);}
+ results.push('camera and album leave the current chat to the native picker');
  await p.evaluate(()=>widgetLink({url:'magi://new'}));assert.equal(await p.evaluate(()=>agentHistory.length),0);assert.equal(calls.filter(x=>x[0]==='begin').length,0);
  await p.evaluate(()=>widgetLink({url:'magi://voice'}));await p.waitForFunction(()=>voiceStarts===1);
  await p.evaluate(()=>voiceEvents.partialResults({matches:['Confirmed voice'],final:true}));assert.equal(await p.locator('#agent-input').inputValue(),'Confirmed voice');assert.equal(calls.filter(x=>x[0]==='begin').length,0);
  await p.evaluate(()=>showNativeSettings());await p.evaluate(()=>widgetLink({url:'magi://open?id=old'}));await p.waitForFunction(()=>currentSessionId==='old');assert.equal(await p.locator('.agent-panel').count(),0);
- await p.evaluate(()=>widgetLink({url:'magi://open?id=old&send=true'}));assert.equal(await p.evaluate(()=>agentHistory.length),0);results.push('new voice and existing links never send');
- await p.locator('#agent-input').fill('Synthetic B4 question');await p.locator('#agent-send').click();await p.waitForFunction(()=>!agentBusy&&agentHistory.length===2);await p.evaluate(()=>nativeWidget.sync());
- const latest=await p.evaluate(()=>currentSessionId);assert.equal(cached.sessionId,latest);assert.equal(cached.summary,'New answer for the home widget.');assert.equal(calls.filter(x=>x[0]==='begin').length,1);results.push('completed answer updates only after durable save');
- runs.set(pendingA.id,pendingA);await p.evaluate(async()=>{await nativeWidget.setMasked(true);await nativeWidget.setMasked(false)});
- assert.equal(cached.sessionId,latest);assert.equal(cached.summary,'New answer for the home widget.');runs.delete(pendingA.id);results.push('older pending chat does not block newer saved answer');
- await p.evaluate(id=>deleteSavedSession(id),latest);await p.evaluate(()=>nativeWidget.sync());assert.equal(cached.sessionId,'old');
- await p.evaluate(()=>showNativeSettings());await p.locator('#widget-masked').check();await p.waitForFunction(()=>!document.getElementById('widget-masked').disabled);
- assert.equal('summary'in cached,false);assert.equal('title'in cached,false);results.push('deletion selects remaining answer and masking clears content');
- p.on('dialog',d=>d.accept());await p.locator('#history-clear').click();await p.waitForFunction(()=>agentHistory.length===0);await p.evaluate(()=>nativeWidget.sync());assert.equal(cached.sessionId,'');results.push('delete all empties widget');
+ await p.evaluate(()=>widgetLink({url:'magi://open?id=old&send=true'}));assert.equal(await p.evaluate(()=>agentHistory.length),0);results.push('chat voice and existing links never send');
+ await p.locator('#agent-input').fill('Synthetic B4 question');await p.locator('#agent-send').click();await p.waitForFunction(()=>!agentBusy&&agentHistory.length===2);
+ assert.equal(calls.filter(x=>x[0]==='begin').length,1);assert.equal(calls.filter(x=>x[0]==='pin').length,1);results.push('completed answer does not update the widget');
  await p.close();launch='magi://voice';let ready;listenerGate=new Promise(r=>{ready=r});p=await page();assert.equal(await p.evaluate(()=>voiceStarts),0);ready();await p.waitForFunction(()=>voiceStarts===1);
  assert.equal(calls.filter(x=>x[0]==='begin').length,1);results.push('cold voice link waits for input initialization');
  await p.evaluate(()=>nativeInput.stopVoice());assert.equal(jsPosts,0);assert.deepEqual(errors,[]);

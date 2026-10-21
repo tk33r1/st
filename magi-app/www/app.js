@@ -399,9 +399,6 @@ var historyLoading = nativeAndroid;
 var agentShared = null, nativeInput = null, sharedLoading = false;
 var nativeConversation = null;
 var nativeWidget = null, nativeInputReady = Promise.resolve();
-function updateNativeWidget() {
-  if (nativeWidget) nativeWidget.sync().catch(function () { announceAgent('Could not update the home widget. / ウィジェットを更新できませんでした。'); });
-}
 // 共有資料はAndroidだけ。ほかの画面では常にnullにする。
 function cleanAgentShared(value) {
   if (!nativeAndroid || !value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
@@ -1352,7 +1349,6 @@ async function agentSend(recovered) {
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
-    updateNativeWidget();
     setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
@@ -1636,8 +1632,7 @@ function loadSavedSession(id) {
 function deleteSavedSession(id) {
   if (currentSessionId === id) resetAgent();
   writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
-  if (nativeConversation) nativeConversation.clear(id).then(updateNativeWidget).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
-  else updateNativeWidget();
+  if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
@@ -1733,25 +1728,14 @@ function showInfoPanel() {
   }
 }
 
-// 設定パネルにあるウィジェットの状態読込と操作を受け持つ。
+// 設定パネルの「ホーム画面に追加」を受け持つ。ウィジェットは入口だけで、設定は持たない。
 function initNativeWidgetSettings(panel, ja) {
   if (!nativeWidget) return;
-  var widgetBox = panel.querySelector('#native-widget-settings'), masked = panel.querySelector('#widget-masked'), widgetStatus = panel.querySelector('#widget-status');
+  var widgetBox = panel.querySelector('#native-widget-settings'), widgetStatus = panel.querySelector('#widget-status');
   widgetBox.hidden = false;
   nativeWidget.state().then(function (value) {
-    if (!panel.isConnected) return;
-    masked.checked = value.masked !== false; masked.disabled = false;
-    panel.querySelector('#widget-pin').hidden = !value.canPin;
-  }).catch(function () { widgetStatus.textContent = 'Could not read widget settings. / 設定を読み込めませんでした。'; });
-  masked.addEventListener('change', async function () {
-    masked.disabled = true;
-    try { await nativeWidget.setMasked(masked.checked); widgetStatus.textContent = ''; }
-    catch (_) {
-      try { masked.checked = (await nativeWidget.state()).masked !== false; } catch (_) {}
-      widgetStatus.textContent = 'Could not update the widget. / 更新できませんでした。';
-    }
-    finally { if (panel.isConnected) masked.disabled = false; }
-  });
+    if (panel.isConnected) panel.querySelector('#widget-pin').hidden = !value.canPin;
+  }).catch(function () {});
   panel.querySelector('#widget-pin').addEventListener('click', function () {
     nativeWidget.pin().then(function (value) { if (!value.requested) widgetStatus.textContent = ja ? 'ホーム画面のウィジェット一覧から追加してください。' : 'Add it from your home screen’s widget picker.'; })
       .catch(function () { widgetStatus.textContent = 'Could not open the widget picker. / 追加画面を開けませんでした。'; });
@@ -1764,8 +1748,8 @@ async function showNativeSettings() {
   var ja = document.documentElement.lang === 'ja';
   var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
     '<p id="history-storage-status" role="status">Loading…</p><p id="native-notification-status" hidden></p>'
-    + '<div id="native-widget-settings" hidden><label><input type="checkbox" id="widget-masked" checked disabled> ' + (ja ? 'ウィジェットの内容を伏せる' : 'Hide widget contents') + '</label>'
-    + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。' : 'Add “Ask MAGI” from your home screen’s widget picker.') + '</p>'
+    + '<div id="native-widget-settings" hidden>'
+    + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
     + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
     + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
     + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
@@ -1823,7 +1807,6 @@ async function showNativeSettings() {
       await nativeHistory.clear();
       resetAgent();
       await nativeHistory.flush();
-      if (nativeWidget) await nativeWidget.sync();
     });
   });
   try { await refresh(); } catch (_) { status.textContent = '使用量を読み込めませんでした。保存状態を確認してください。'; }
@@ -2051,6 +2034,8 @@ async function recoverNativeConversation(id) {
 }
 function openNativeConversationLink(value) {
   var target = window.MagiNativeWidget.link(value), id = target && target.id;
+  // カメラ・アルバムはネイティブが開く。選ばれた画像は共有と同じく新しい会話に入るので、取り消したときは今の会話のまま。
+  if (target && (target.action === 'camera' || target.action === 'album')) return;
   if (target && (target.action === 'new' || target.action === 'voice')) {
     syncCurrentToSaved(); resetAgent(); agentInput.focus({ preventScroll: true });
     if (target.action === 'voice') {
@@ -2106,10 +2091,7 @@ async function initHistoryStorage() {
     if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
     nativeInputReady = initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
     if (window.MagiNativeWidget && nativeHistory.active) {
-      nativeWidget = await window.MagiNativeWidget.create({ cap: window.Capacitor,
-        flush: function () { return nativeHistory.flush(); }, sessions: readSavedSessions,
-        pending: function () { return nativeConversation ? nativeConversation.pending() : Promise.resolve([]); } });
-      updateNativeWidget();
+      nativeWidget = await window.MagiNativeWidget.create({ cap: window.Capacitor });
     }
     if (nativeConversation) initNativeConversationLinks().catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
   } catch (_) {

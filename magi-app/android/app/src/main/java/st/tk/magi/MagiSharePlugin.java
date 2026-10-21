@@ -3,6 +3,10 @@ package st.tk.magi;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Base64;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.FileProvider;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -14,16 +18,20 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** 共有intentの受取と、上限付き・Cookieなしの資料取得。本文をログへ書かない。 */
+/** 共有intentとウィジェットのカメラ・アルバムの受取、上限付き・Cookieなしの資料取得。本文をログへ書かない。 */
 @CapacitorPlugin(name = "MagiShare")
 public class MagiSharePlugin extends Plugin {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ArrayDeque<JSObject> pending = new ArrayDeque<>();
     private final MagiArticleReader articles = new MagiArticleReader();
     private static final int IMAGE_LIMIT = 20 * 1024 * 1024;
+    private ActivityResultLauncher<Uri> camera;
+    private ActivityResultLauncher<PickVisualMediaRequest> album;
+    private File photo;
 
     @Override public void load() {
         File folder = new File(getContext().getCacheDir(), "magi-incoming");
@@ -31,8 +39,39 @@ public class MagiSharePlugin extends Plugin {
         if (old != null) for (File file : old) if (file.getName().startsWith("shared-") && System.currentTimeMillis() - file.lastModified() > 86400000L) file.delete();
         // Capacitor 8のBridgeActivity.loadが初回intentもonNewIntentへ渡す。
         // ここでも受けると、起動時だけ同じ共有を2回取り込んでしまう。
+        // 画面のJavaScriptは利用者の操作なしにファイル選択を開けないので、ウィジェットのカメラ・アルバムはここで開く。
+        // 結果は共有された画像と同じ経路で画面へ渡し、新しい会話に添付する（送信はしない）。
+        camera = getActivity().registerForActivityResult(new ActivityResultContracts.TakePicture(), saved -> {
+            File file = photo; photo = null;
+            if (file == null) return;
+            if (!Boolean.TRUE.equals(saved) || file.length() == 0) { file.delete(); return; }
+            JSObject payload = new JSObject(); JSArray images = new JSArray(); JSObject image = new JSObject();
+            image.put("path", file.getAbsolutePath()); image.put("type", "image/jpeg"); images.put(image);
+            payload.put("text", ""); payload.put("images", images); payload.put("truncated", false);
+            offer(payload);
+        });
+        album = getActivity().registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(4), uris -> {
+            if (uris != null && !uris.isEmpty()) io.execute(() -> copy("", new ArrayList<>(uris)));
+        });
     }
-    @Override protected void handleOnNewIntent(Intent intent) { receive(intent); }
+    @Override protected void handleOnNewIntent(Intent intent) {
+        Uri link = intent == null ? null : intent.getData();
+        if (Intent.ACTION_VIEW.equals(intent == null ? null : intent.getAction()) && link != null && "magi".equals(link.getScheme())) pick(link.getHost());
+        else receive(intent);
+    }
+
+    private void pick(String source) {
+        try {
+            if ("camera".equals(source)) {
+                File folder = new File(getContext().getCacheDir(), "magi-incoming"); folder.mkdirs();
+                if (photo != null) photo.delete();
+                photo = File.createTempFile("shared-", ".jpg", folder);
+                camera.launch(FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", photo));
+            } else if ("album".equals(source)) {
+                album.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+            }
+        } catch (Exception ignored) { if (photo != null) { photo.delete(); photo = null; } }
+    }
 
     @SuppressWarnings("deprecation")
     private void receive(Intent intent) {
@@ -42,9 +81,7 @@ public class MagiSharePlugin extends Plugin {
         if (type == null || !(type.equals("text/plain") || type.startsWith("image/"))) return;
         // URIの読取許可がある間にキャッシュへ写す。準備前の画面にはqueueをtakeShareで渡す。
         io.execute(() -> {
-            JSObject payload = new JSObject();
             CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-            payload.put("text", text == null ? "" : text.toString().substring(0, Math.min(text.length(), 12000)));
             ArrayList<Uri> uris = new ArrayList<>();
             if (type.startsWith("image/")) {
                 if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
@@ -60,35 +97,44 @@ public class MagiSharePlugin extends Plugin {
                     }
                 }
             }
-            JSArray images = new JSArray();
-            File folder = new File(getContext().getCacheDir(), "magi-incoming");
-            folder.mkdirs();
-            for (int i = 0; i < Math.min(4, uris.size()); i++) {
-                Uri uri = uris.get(i);
-                if (!"content".equals(uri.getScheme())) continue;
-                File target = null;
-                try {
-                    String mime = getContext().getContentResolver().getType(uri);
-                    if (mime == null || !mime.startsWith("image/")) continue;
-                    target = File.createTempFile("shared-", ".image", folder);
-                    try (InputStream input = getContext().getContentResolver().openInputStream(uri);
-                         FileOutputStream output = new FileOutputStream(target)) {
-                        byte[] buffer = new byte[8192]; int total = 0, n;
-                        while ((n = input.read(buffer)) != -1) {
-                            total += n; if (total > IMAGE_LIMIT) throw new IllegalArgumentException("image_too_large");
-                            output.write(buffer, 0, n);
-                        }
-                    }
-                    JSObject image = new JSObject(); image.put("path", target.getAbsolutePath()); image.put("type", mime); images.put(image);
-                } catch (Exception ignored) { if (target != null) target.delete(); payload.put("imageError", true); }
-            }
-            payload.put("images", images); payload.put("truncated", uris.size() > 4);
-            synchronized (pending) {
-                if (pending.size() >= 8) { discard(payload); return; }
-                pending.add(payload);
-            }
-            notifyListeners("shareAvailable", new JSObject(), true);
+            copy(text == null ? "" : text.toString().substring(0, Math.min(text.length(), 12000)), uris);
         });
+    }
+
+    // URIの読取許可がある間にキャッシュへ写し、画面へ渡す列に加える。
+    private void copy(String text, List<Uri> uris) {
+        JSObject payload = new JSObject(); payload.put("text", text);
+        JSArray images = new JSArray();
+        File folder = new File(getContext().getCacheDir(), "magi-incoming");
+        folder.mkdirs();
+        for (int i = 0; i < Math.min(4, uris.size()); i++) {
+            Uri uri = uris.get(i);
+            if (!"content".equals(uri.getScheme())) continue;
+            File target = null;
+            try {
+                String mime = getContext().getContentResolver().getType(uri);
+                if (mime == null || !mime.startsWith("image/")) continue;
+                target = File.createTempFile("shared-", ".image", folder);
+                try (InputStream input = getContext().getContentResolver().openInputStream(uri);
+                     FileOutputStream output = new FileOutputStream(target)) {
+                    byte[] buffer = new byte[8192]; int total = 0, n;
+                    while ((n = input.read(buffer)) != -1) {
+                        total += n; if (total > IMAGE_LIMIT) throw new IllegalArgumentException("image_too_large");
+                        output.write(buffer, 0, n);
+                    }
+                }
+                JSObject image = new JSObject(); image.put("path", target.getAbsolutePath()); image.put("type", mime); images.put(image);
+            } catch (Exception ignored) { if (target != null) target.delete(); payload.put("imageError", true); }
+        }
+        payload.put("images", images); payload.put("truncated", uris.size() > 4);
+        offer(payload);
+    }
+    private void offer(JSObject payload) {
+        synchronized (pending) {
+            if (pending.size() >= 8) { discard(payload); return; }
+            pending.add(payload);
+        }
+        notifyListeners("shareAvailable", new JSObject(), true);
     }
 
     @PluginMethod public void takeShare(PluginCall call) {

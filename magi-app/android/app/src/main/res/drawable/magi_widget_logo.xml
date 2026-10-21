@@ -1,0 +1,6 @@
+<!-- アプリのアイコン（ic_launcher_monochrome）の3つの枠と線。ウィジェットの大きさに合わせて数字は省く。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="88" android:viewportHeight="88">
+    <group android:translateX="-16" android:translateY="-12">
+        <path android:fillColor="#00000000" android:strokeColor="#4ade80" android:strokeWidth="5" android:strokeLineJoin="round" android:pathData="M51.5,49 L43.5,63 M76.5,63 L68.5,49 M52,78 L68,78 M43,14 L77,14 L77,44 L68,54 L52,54 L43,44 Z M18,58 L40,58 L52,68 L52,98 L18,98 Z M80,58 L102,58 L102,98 L68,98 L68,68 Z" />
+    </group>
+</vector>
