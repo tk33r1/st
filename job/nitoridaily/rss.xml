@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 21 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 21 Oct 2026 05:21:05 +0900</lastBuildDate>
+    <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 22 Oct 2026 05:29:58 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月22日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261022/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261022/</guid>
+      <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
+      <description>N+がリブニットシリーズやNウォーム素材採用のアパレルを展開し、ニトリグループが自社素材と企画を衣料へ横展開する動きが鮮明になった。 199円エコバッグ、699円ストッカー、スカラップバスマットなど、低価格帯でも実用性を磨いたPB商品が生活者から高い評価を集めている。</description>
+    </item>
     <item>
       <title>2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261021/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261008/</guid>
       <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
       <description>北大とニトリのAI研究は、インテリアの好みを定量化し、理想の住空間とのギャップを可視化するもの。提案販売や住まい起点の顧客理解につながる可能性がある。 家具リサイクルでは年間1万トン超という処理量目標が示された。既報の施設計画に具体的な規模が加わり、販売後の回収・再資源化の実行力が焦点となる。</description>
-    </item>
-    <item>
-      <title>2026年10月7日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261007/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261007/</guid>
-      <pubDate>Wed, 07 Oct 2026 08:00:00 +0900</pubDate>
-      <description>島忠ホームズ新川崎にN+が10月9日オープン。既存のホームセンター・家具売場への出店で、グループ内の顧客接点をアパレルにも広げる動きが具体化した。 猫モチーフのチャームや手頃な美濃焼マグなど、価格の分かりやすさと愛着を生むデザインを組み合わせた商品が注目された。</description>
     </item>
   </channel>
 </rss>

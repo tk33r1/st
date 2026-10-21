@@ -1,5 +1,325 @@
 [
   {
+    "date": "20261022",
+    "title": "2026年10月22日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "N+がリブニットシリーズやNウォーム素材採用のアパレルを展開し、ニトリグループが自社素材と企画を衣料へ横展開する動きが鮮明になった。 199円エコバッグ、699円ストッカー、スカラップバスマットなど、低価格帯でも実用性を磨いたPB商品が生活者から高い評価を集めている。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "N+がリブニットシリーズやNウォーム素材採用のアパレルを展開し、ニトリグループが自社素材と企画を衣料へ横展開する動きが鮮明になった。",
+      "199円エコバッグ、699円ストッカー、スカラップバスマットなど、低価格帯でも実用性を磨いたPB商品が生活者から高い評価を集めている。",
+      "SNSでは賃貸でも楽しめる和の空間や、ラタン小物を置くだけで整う提案が反響を集め、商品と暮らしのシーンを結びつける発信の重要性が高まっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "N+、リブニットシリーズを2026年9月末より順次発売へ",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-02",
+        "summary": "ニトリグループのアパレルブランド「N+（エヌプラス）」が、リブニットシリーズを2026年9月末より順次発売すると発表した。リブ編みの伸縮性や型崩れのしにくさを生かした定番素材の商品群で、家具・インテリアで培った品質へのこだわりを衣料へ広げる狙いがうかがえる。",
+        "why_it_matters": "リブニットは体になじむ着心地と定番性を兼ね備えた素材で、日常使いの商品を継続的に販売しやすい。企画から製造、販売までを自社で一貫して手がけるSPAの強みを、衣料の基本アイテムで訴求できる点が重要である。価格と品質の両立を明確に示せれば、ファッション領域での存在感を高める布石になる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "アパレル",
+          "商品開発"
+        ],
+        "search_terms": [
+          "リブニット 新シリーズ",
+          "ribbed knit apparel",
+          "N+ Nitori apparel launch",
+          "ニトリ アパレル 新作"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE01aTFmd3NuNzRJb1c5S21VcVd5c1RFTTIteHRaRWxydnNBamxPWk1rSWhUWC0wRTlwMmhFWDFrRWZUOG5INmc?oc=5",
+        "source_pub_ts": 1792570153
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "199円エコバッグが「各サイズ買い」で大好評、マチの広さと丈夫さに支持",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-03",
+        "summary": "ニトリの199円エコバッグが「各サイズ買いました」と話題になっている。投稿では「サブバッグとして使いやすい」「マチが広くて丈夫」「肩で担げる」といった声が挙がり、用途に応じてサイズ違いをそろえる利用者も見られる。低価格ながら実用性が評価された形だ。",
+        "why_it_matters": "価格の手頃さに加え、マチや持ち手など使い勝手の設計が満足度を高め、複数購入や再購入を促している。低価格帯でも機能性で差をつけるニトリのPB開発力が表れた事例である。サイズ展開を提案することで、来店時のついで買いや客単価の向上にもつなげやすい。",
+        "tags": [
+          "ニトリ",
+          "エコバッグ",
+          "ヒット商品",
+          "SNS"
+        ],
+        "search_terms": [
+          "199円エコバッグ 人気",
+          "low-price eco bag",
+          "Nitori reusable bag",
+          "ニトリ エコバッグ サイズ展開"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTFBqNGM0QS1pTEI5UXNITzB6MURSV2d6Y1ZiTE14YzVBeC01elFsd2oxVFR3LVBla0Z4QnlSczgzc1Ezek02RFJTM1hyaC1TQzVVdkswZi1FdlRyMXZuYkhBdWh1NXg4VEZzSUlzSllUeGYyY2s?oc=5",
+        "source_pub_ts": 1792561892
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "699円ストッカーが「下から取りやすい」と高評価、キッチン収納の悩みに応える",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-06",
+        "summary": "ニトリの699円ストッカーが、ねとらぼリサーチで高評価を得ている。「下から手を伸ばしても取りやすい」「忙しい時でも整ったキッチンが保てます」といった声が寄せられ、複数個をそろえて使う投稿も見られた。上段の物を取り出す手間を減らす点が支持されている。",
+        "why_it_matters": "低価格でも生活動線への配慮があれば、商品価値として強く伝わることを示している。キッチンは収納の悩みが多い場所であり、同じ商品を複数導入するリピート需要も生まれやすい。収納提案と組み合わせた売り場づくりにより、まとめ買いを促す余地がある。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "キッチン",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "699円ストッカー 評判",
+          "kitchen storage stacker",
+          "Nitori kitchen organizer",
+          "キッチン収納 取りやすさ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1vUlhaYnJJSDRILTd6Q1NEbTdyX0ZFOGlHaFNHdjh2ZlVyS1Z2WlBRMjI1QW54S2JkVl95a3M0bnpEdi13NTU3STJGM1hQQjFtM29OSzFYbkxSMDcyRS1vWWVUTXozUUczc3RB?oc=5",
+        "source_pub_ts": 1792557000
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "N+、ニトリの保温素材「Nウォーム」を初採用した新作アパレルシリーズ登場",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-07",
+        "summary": "N+（ニトリグループ）が、ニトリの保温素材「Nウォーム」を初めて採用した新作アパレルシリーズを発表した。吸湿発熱などの機能で知られる素材を衣料に展開し、冬季の防寒需要を取り込む狙いがある。自社素材を活用した機能性衣料としての位置づけが明確だ。",
+        "why_it_matters": "自社開発素材を寝具やインテリアから衣料へ横展開できる点は、SPAならではの強みである。既存の機能を検証済みの素材として転用すれば、開発リスクを抑えながら差別化した機能訴求が可能になる。秋冬の衣料競争が激しい中、暖かさを手頃な価格で示せるかが今後の鍵となる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "Nウォーム",
+          "アパレル"
+        ],
+        "search_terms": [
+          "Nウォーム 素材 衣料",
+          "heat retention apparel",
+          "N+ warm clothing Nitori",
+          "ニトリ 保温 アパレル 新作"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5hZ01JUXdsWk1jc3c4alJOUEk2bDE5ZUV4N3VtbFNSMlRLV3ZYakgxandfeGhLMlJhRl9HRVhmS05Ea0tNZWdkYjQtdk1KSW1VQkJQbXdITzlBSkhmaE1kSEpYM2xyOUtLS0E?oc=5",
+        "source_pub_ts": 1792555202
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "床への水染み込みを軽減するスカラップバスマット、ニトリが発売",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "ニトリが、床への水分の染み込みを軽減するスカラップバスマットを発売した。浴室後の床がびしょびしょになるという生活上の悩みに着目した機能性商品である。日常の小さな不満を解決する商品として位置づけられている。",
+        "why_it_matters": "生活のストレスに直結する課題を、形状や素材の工夫で解決する商品は指名買いされやすい。こうした課題解決型の商品は低価格PBでも付加価値を示しやすく、他カテゴリーにも応用できる開発手法である。浴室周りの提案を広げる入口として、関連商品との同時提案も有効だ。",
+        "tags": [
+          "ニトリ",
+          "バスマット",
+          "商品開発",
+          "機能性"
+        ],
+        "search_terms": [
+          "スカラップバスマット 発売",
+          "absorbent bath mat",
+          "Nitori bath mat water",
+          "バスマット 水はね対策"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE9uNzNiaGQ1V2Y0Y0c0LXhUZTRJdmVqbjFMTlpkR2hmR3EtV29rZWo5QXgzS2ZuWTVHS2g1VVJZX1lFZVRZQnc?oc=5",
+        "source_pub_ts": 1792554100
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "賃貸でも畳スペースが作れる、い草香るニトリ商品がSNSで話題",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-03",
+        "summary": "Xで「賃貸なのに畳スペースが作れて、い草の香りまでするやつ」とニトリの商品が紹介され、約78いいね・60リポストを集めた。賃貸住宅でも和室の心地よさを手軽に得たいというニーズに刺さった投稿である。香りという五感の要素が共感を呼んでいる。",
+        "why_it_matters": "賃貸では床の施工変更が難しいため、置くだけで空間の印象を変えられる商品の訴求力は高い。い草の香りという体験要素を添えた表現が、機能だけでない暮らしの豊かさを伝えている。店頭では設置イメージを示す展示や、部屋ごとの活用提案が購入を後押しするだろう。",
+        "tags": [
+          "ニトリ",
+          "賃貸",
+          "和室",
+          "SNS"
+        ],
+        "search_terms": [
+          "賃貸 畳スペース 置き畳",
+          "tatami mat rental home",
+          "igusa scent Nitori",
+          "ニトリ 畳 SNS反響"
+        ],
+        "url": "https://x.com/china_mom0622/status/2112836271395713163",
+        "source_pub_ts": 1792580400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ラタンラウンドトレーで「置くだけおしゃれ」、TikTokで1.3万回再生",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-07",
+        "summary": "TikTokでニトリのラタンラウンドトレーを紹介した投稿が、約1.3万回再生を記録した。ナチュラルなラタン素材で高見えし、置くだけで空間が整うという点が評価された。収納や飾りのアイデアとして様々な場所での使い方が共有されている。",
+        "why_it_matters": "短尺動画では、置く・飾るといった具体的な使用シーンが見えることで共感が広がりやすい。素材感と使い道を一度に示す投稿は、商品価値を直感的に伝える力がある。店舗やECでも置いた状態の写真や動画を増やし、小物の購買につなげる施策が有効である。",
+        "tags": [
+          "ニトリ",
+          "ラタン",
+          "収納",
+          "TikTok"
+        ],
+        "search_terms": [
+          "ラタントレー 収納アイデア",
+          "rattan round tray",
+          "Nitori tray styling video",
+          "ニトリ 小物 置くだけ"
+        ],
+        "url": "https://www.tiktok.com/@nappe_no_kurashi/video/7698986608132885767",
+        "source_pub_ts": 1792560015.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "「結婚しちゃダメな人」と「結婚するべき人」 ニトリの買い物ですぐバレます pic.x.com/fHokqw2BGb x.com/kiyo_m...",
+        "platform": "x",
+        "author": "@kiyo_money28",
+        "url": "https://x.com/kiyo_money28/status/2112740657773326433",
+        "likes": 666,
+        "retweets": 36,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:00",
+        "captured_at": "",
+        "text": "「結婚しちゃダメな人」と「結婚するべき人」 ニトリの買い物ですぐバレます pic.x.com/fHokqw2BGb x.com/kiyo_money28/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "こんばんは🏯 エルニーニョ現象の影響なのか台風も日本へ接近するし本日は夏日の手前でした🥵 使っていたヒーターも古くなりニトリで欲しかったヒー...",
+        "platform": "x",
+        "author": "@hide07348756",
+        "url": "https://x.com/hide07348756/status/2112865008829018299",
+        "likes": 90,
+        "retweets": 10,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:14",
+        "captured_at": "",
+        "text": "こんばんは🏯 エルニーニョ現象の影響なのか台風も日本へ接近するし本日は夏日の手前でした🥵 使っていたヒーターも古くなりニトリで欲しかったヒーターが在庫一個でしたので早めに購入🛒 加湿器機能も付いてるので冬は安心かな🏠️🔥🚰 秋を感じた散策🚶🍁🍂 今日も一日お疲れ様でした☕🍵🙇 pic.x.com/cUSgAoKlBk",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリ、やばいもの売ってた。 賃貸なのに畳スペースが作れて い草の香りまでするやつ。 pic.x.com/2OkEZbkpof x.com/...",
+        "platform": "x",
+        "author": "@china_mom0622",
+        "url": "https://x.com/china_mom0622/status/2112836271395713163",
+        "likes": 78,
+        "retweets": 60,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:19",
+        "captured_at": "",
+        "text": "ニトリ、やばいもの売ってた。 賃貸なのに畳スペースが作れて い草の香りまでするやつ。 pic.x.com/2OkEZbkpof x.com/china_mom0622/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリのベッド売り場で、 隣のカップルが同棲用のを見てた。 店員さんの「ダブルですか」に 彼が「シングル2つで」 彼女が「え」って、マットレ...",
+        "platform": "x",
+        "author": "@aya_love0529",
+        "url": "https://x.com/aya_love0529/status/2112778910618575355",
+        "likes": 60,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:32",
+        "captured_at": "",
+        "text": "ニトリのベッド売り場で、 隣のカップルが同棲用のを見てた。 店員さんの「ダブルですか」に 彼が「シングル2つで」 彼女が「え」って、マットレスから手を離した。 店員さんに「おふたりで？」って聞かれて 彼が言ったのが、",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "🥇 そこも服、売ってるの？ ・N＋〈ニトリグループ〉 「お、ねだん以上」って服まであるん ・ヒラキ 靴だけ見て帰るの、もったいなかった。 ・...",
+        "platform": "x",
+        "author": "@pakico_happy",
+        "url": "https://x.com/pakico_happy/status/2112651951716639139",
+        "likes": 56,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 6:07",
+        "captured_at": "",
+        "text": "🥇 そこも服、売ってるの？ ・N＋〈ニトリグループ〉 「お、ねだん以上」って服まであるん ・ヒラキ 靴だけ見て帰るの、もったいなかった。 ・トライアル 食料品を買いに来たのに、服まで候補に。 ・ドン・キホーテ お菓子と洗剤の買い物に、デニムが加わる。 ・コストコ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリの新作カーテンがすごい😳👏🏼",
+        "platform": "tiktok",
+        "author": "@user9845765071793",
+        "url": "https://www.tiktok.com/@user9845765071793/video/7697960599069707542",
+        "likes": 243,
+        "retweets": 20,
+        "views": 15600,
+        "comments": 0,
+        "posted_on": "2026-10-18 19:58",
+        "captured_at": "2026-10-21T18:49:10.673913+09:00",
+        "text": "ニトリの新作カーテンがすごい😳👏🏼",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "他の投稿はこちら▸ ▸ ▸@nappe_no_kurashi ニトリのかわいいラタンラウンドトレー🧺 ナチュラルなラタン素材が かわいいし高...",
+        "platform": "tiktok",
+        "author": "@なっぺ⌇白×木目で作る心地良いおうち",
+        "url": "https://www.tiktok.com/@nappe_no_kurashi/video/7698986608132885767",
+        "likes": 99,
+        "retweets": 1,
+        "views": 13300,
+        "comments": 1,
+        "posted_on": "2026-10-21 14:20",
+        "captured_at": "2026-10-21T18:49:10.673913+09:00",
+        "text": "他の投稿はこちら▸ ▸ ▸@nappe_no_kurashi ニトリのかわいいラタンラウンドトレー🧺 ナチュラルなラタン素材が かわいいし高見えで 置くだけでおしゃれな空間になるし いろんな場所で使えるのが嬉しい🤍 🧺ニトリ ◎ラタンラウンドトレー みんなもマネしてみてね🕊️ ✎︎＿＿＿＿＿＿＿＿＿＿＿＿＿＿ @nappe_no_kurashi ここまで読んでいただき ありがとうございます🕊️ いいね🤍コメント✍️フォロー✨ いただけると励みになります🌼 気になることがあれば お気軽にDMください🩶🩶 ✎︎＿＿＿＿＿＿＿＿＿＿＿＿＿＿ #ニトリ #ラタンラウンドトレー #収納アイデア #マネするだけで整う",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿はX（いいね数上位は約666件）とTikTok（再生数約1.3万〜1.6万回）が中心で、生活者が「ニトリの商品で部屋や暮らしがどう変わるか」を具体的に語る傾向が目立つ。賃貸での和室風空間、同棲カップルの寝室選び、売り場で服を発見する驚きなど、購買の場面と生活シーンが結びついた投稿が反響を集めた。",
+    "sns_why_it_matters": "Xは共感やつぶやきが広がりやすく、TikTokは使用シーンや組み合わせ提案が再生を伸ばすという媒体差が見える。ニトリが「商品を買う場所」から「暮らしを提案する場所」として語られていることは、売り場の陳列やコーディネート提案を強化する根拠になる。SNSで生まれた使い方を公式が取り込み、次の商品企画に生かす循環づくりが重要である。"
+  },
+  {
     "date": "20261021",
     "title": "2026年10月21日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。",
