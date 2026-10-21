@@ -51,7 +51,7 @@
     if (!plugin) return null;
     var tail = Promise.resolve();
     function run(task) { var result = tail.then(task); tail = result.catch(function () {}); return result; }
-    async function sync(attempt) {
+    async function sync(attempt = 0) {
       // データを読む前の版を保持し、途中のネイティブ更新を確実に競合として扱う。
       var state = await plugin.information();
       await options.flush();
@@ -59,12 +59,13 @@
       var payload = Object.assign(data(sessions, state.masked !== false), { revision: state.revision }), row = pendingAnswer(sessions, pending);
       if (row) Object.assign(payload, { pendingId: row.id, pendingSessionId: row.sessionId });
       try { await plugin.update(payload); }
-      catch (error) { if (error.message !== 'widget_state_changed' || (attempt || 0) >= 2) throw error; await sync((attempt || 0) + 1); }
+      catch (error) { if (error.message !== 'widget_state_changed' || attempt >= 2) throw error; await sync(attempt + 1); }
     }
     return {
-      sync: function () { return run(sync); },
+      // runは直前の処理の結果を引数に渡すため、再試行の回数は0から明示して始める。
+      sync: function () { return run(function () { return sync(0); }); },
       state: function () { return run(function () { return plugin.information(); }); },
-      setMasked: function (masked) { return run(async function () { await plugin.setMasked({ masked: masked }); await sync(); }); },
+      setMasked: function (masked) { return run(async function () { await plugin.setMasked({ masked: masked }); await sync(0); }); },
       pin: function () { return plugin.pin(); }
     };
   }

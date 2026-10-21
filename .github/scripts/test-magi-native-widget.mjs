@@ -74,3 +74,12 @@ test('B4: 設定変更を直列化し、ネイティブで受信が先に完了�
  await Promise.all([bridge.sync(),bridge.setMasked(true)]);assert.equal(calls[0][1].masked,false);assert.deepEqual(calls[1],['mask',true]);
  assert.equal(calls[2][1].masked,true);assert.equal('title' in calls[2][1],false);assert.equal('summary' in calls[2][1],false);
 });
+test('B4: 状態の読取の直後でも、競合の再試行は3回で止める',async()=>{
+ // 上限が効かない場合も止まるよう、11回目は成功させる。
+ const f=fixture();let updates=0;
+ const plugin={information:async()=>({masked:false,revision:1,canPin:true}),setMasked:async()=>{},update:async()=>{if(++updates<=10)throw Error('widget_state_changed')}};
+ const bridge=await f.create({cap:{isNativePlatform:()=>true,getPlatform:()=>'android',Plugins:{MagiWidget:plugin}},sessions:()=>sessions,flush:async()=>{},pending:async()=>[]});
+ for(const step of [()=>bridge.sync(),async()=>{await bridge.state();return bridge.sync()},async()=>{await bridge.state();return bridge.setMasked(true)}]){
+  updates=0;await assert.rejects(step(),/widget_state_changed/);assert.equal(updates,3);
+ }
+});
