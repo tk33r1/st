@@ -8,16 +8,16 @@
   const TOUCH = matchMedia('(pointer: coarse)').matches;
   const PRESS = JA ? (TOUCH ? 'タップ' : 'Space・クリック') : (TOUCH ? 'Tap' : 'Space or click');
   const T = JA ? {
-    about: 'ページを壊すブロック崩し。「404」から4つのボールが飛び出します。矢印キー・マウス・ドラッグでバーを動かし、全部落とすとゲームオーバーです。Esc か戻る操作で終わり、M で消音します。',
-    hint: TOUCH ? 'ドラッグでバーを動かす・戻るで終わる' : '← → / マウスでバーを動かす・M 消音・Esc で終わる',
-    clear: 'ページを全部壊しました。',
+    about: 'ページを壊すブロック崩し。「404」から4つのボールが飛び出します。矢印キー・マウス・ドラッグでバーを動かし、全部落とすとゲームオーバーです。Esc か戻る操作で終わり、M で音を切り替えます。',
+    hint: TOUCH ? 'ドラッグでバーを動かす・戻るで終わる' : '← → / マウスでバーを動かす・M 音・Esc で終わる',
+    clear: 'ページを全部崩しました。',
     over: 'ゲームオーバー。ページが崩れ落ちました。',
     restore: `${PRESS}で元に戻す`,
     restored: 'ページを元に戻しました。',
   } : {
-    about: 'A breakout game that breaks this page. Four balls burst out of the 404. Move the paddle with the arrow keys, the mouse, or by dragging; lose all the balls and the game is over. Press Esc or go back to stop, and M to mute.',
-    hint: TOUCH ? 'Drag to move · go back to stop' : '← → / mouse to move · M mute · Esc to stop',
-    clear: 'You broke the whole page.',
+    about: 'A breakout game that breaks this page. Four balls burst out of the 404. Move the paddle with the arrow keys, the mouse, or by dragging; lose all the balls and the game is over. Press Esc or go back to stop, and M to toggle sound.',
+    hint: TOUCH ? 'Drag to move · go back to stop' : '← → / mouse to move · M sound · Esc to stop',
+    clear: 'You crumbled the whole page.',
     over: 'Game over. The page collapsed.',
     restore: `${PRESS} to restore`,
     restored: 'The page has been restored.',
@@ -30,9 +30,8 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // ---- 音（波形をその場で鳴らす） ----
-  let muted = false, lastThud = 0, master = null;
-  try { muted = localStorage.getItem('st-404-mute') === '1'; } catch (e) {}
-  // 入口のクリックの中で作った AudioContext を使う（作れなかった環境では鳴らさない）
+  // 音を出すかはスタート画面で選ぶ（start の引数）。AudioContext は 404.html が操作の中で作る（ST404Unlock。作れなかった環境では鳴らさない）
+  let muted = true, lastThud = 0, master = null;
   function audio() {
     const ac = window.ST404Audio;
     if (!ac) return null;
@@ -295,10 +294,11 @@
     document.body.append(wrap);
   }
 
-  function start() {
+  function start(sound) {
     if (state !== 'closed') return;
     // 前回の終わりに外した履歴の popstate がまだ届いていなければ、届いてから始める（届いた popstate で新しいゲームが終わらないように）
-    if (backPending) { window.addEventListener('popstate', start, { once: true }); return; }
+    if (backPending) { window.addEventListener('popstate', () => start(sound), { once: true }); return; }
+    muted = !sound;
     state = 'starting';
     saved = { overflow: doc.style.overflow, gutter: doc.style.scrollbarGutter };
     try {
@@ -489,6 +489,7 @@
     if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey) { // Cmd+M（最小化）などは除く
       muted = !muted;
       try { localStorage.setItem('st-404-mute', muted ? '1' : '0'); } catch (err) {}
+      if (!muted && window.ST404Unlock) window.ST404Unlock(); // オフで始めた人が途中でオンにしたときは、ここで作る
       return;
     }
     if (e.target !== canvas) return;
@@ -568,5 +569,12 @@
     if (target) target.focus();
   }
 
-  window.ST404Game = { start };
+  // スタート画面で音をオンにしたときの試し鳴らし（遊んでいる間は鳴らさない）
+  function preview() {
+    if (state !== 'closed') return;
+    muted = false;
+    sfx.restore();
+  }
+
+  window.ST404Game = { start, preview };
 })();
