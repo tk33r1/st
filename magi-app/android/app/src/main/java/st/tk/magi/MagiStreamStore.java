@@ -91,7 +91,13 @@ final class MagiStreamStore {
             if (folders == null) return values;
             for (File folder : folders) {
                 if (!folder.isDirectory()) continue;
-                JSObject value = metadata(folder);
+                JSObject value;
+                try { value = metadata(folder); }
+                catch (Exception error) {
+                    // 作成・削除の途中でプロセスが終わった列は取り込めない。一覧・全削除・ウィジェットを止めないよう片付ける。
+                    if (!new File(folder, "meta.json").exists()) try { remove(folder.getName()); } catch (Exception ignored) {}
+                    continue;
+                }
                 if ("receiving".equals(value.getString("status")) && !folder.getName().equals(active)) {
                     finish(folder.getName(), "failed", "interrupted", value.getString("title", ""), false); value = metadata(folder);
                 }
@@ -119,6 +125,8 @@ final class MagiStreamStore {
         synchronized (LOCK) {
             File folder = folder(id); if (!folder.exists()) return;
             File[] files = folder.listFiles();
+            // 途中で終わっても、meta.jsonが残る間は一覧から状態を読めるよう最後に消す。
+            if (files != null) java.util.Arrays.sort(files, (a, b) -> Boolean.compare(a.getName().equals("meta.json"), b.getName().equals("meta.json")));
             if (files != null) for (File file : files) {
                 if (!file.isFile() || !file.delete()) throw new IOException("storage_unavailable");
             }

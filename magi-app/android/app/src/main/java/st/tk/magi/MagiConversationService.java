@@ -173,13 +173,23 @@ public class MagiConversationService extends Service {
             else if (run == null) stopSelf(startId);
             return START_NOT_STICKY;
         }
-        if (run == null || intent == null || !run.id().equals(intent.getStringExtra("id"))) { stopSelf(startId); return START_NOT_STICKY; }
+        if (run == null || intent == null || !run.id().equals(intent.getStringExtra("id"))) {
+            // 開始前に停止・解放された要求も、startForegroundServiceで起動した以上は先にstartForegroundを呼ぶ。
+            // 呼ばずに止めるとOSがアプリを終了させる。別の要求が待っている場合はその開始が呼ぶ。
+            if (run == null && intent != null) {
+                try {
+                    channels(this);
+                    foreground(new NotificationCompat.Builder(this, ACTIVE_CHANNEL).setSmallIcon(R.drawable.ic_stat_magi).setContentTitle("MAGI").setSilent(true).build());
+                    stopForeground(STOP_FOREGROUND_REMOVE);
+                } catch (Exception ignored) {}
+            }
+            stopSelf(startId); return START_NOT_STICKY;
+        }
         if (run.service != null) return START_NOT_STICKY;
         run.service = this;
         try {
             channels(this);
-            if (Build.VERSION.SDK_INT >= 29) startForeground(ACTIVE_NOTIFICATION, ongoing(run), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-            else startForeground(ACTIVE_NOTIFICATION, ongoing(run));
+            foreground(ongoing(run));
             if (run.ended.get()) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return START_NOT_STICKY; }
             PowerManager power = (PowerManager) getSystemService(POWER_SERVICE);
             run.wake = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getPackageName() + ":magi-conversation"); run.wake.acquire(305000L);
@@ -188,6 +198,10 @@ public class MagiConversationService extends Service {
             new Thread(() -> receive(run), "magi-conversation").start();
         } catch (Exception ignored) { if (run.startCall != null) { run.startCall.reject("service_unavailable"); run.startCall = null; } finish(this, run, "failed", "service_unavailable"); }
         return START_NOT_STICKY;
+    }
+    private void foreground(Notification note) {
+        if (Build.VERSION.SDK_INT >= 29) startForeground(ACTIVE_NOTIFICATION, note, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        else startForeground(ACTIVE_NOTIFICATION, note);
     }
     private void receive(Run run) {
         try {

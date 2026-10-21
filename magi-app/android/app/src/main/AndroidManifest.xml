@@ -31,14 +31,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="magi" android:host="open" />
-                <data android:scheme="magi" android:host="new" />
-                <data android:scheme="magi" android:host="voice" />
-            </intent-filter>
+            <!-- magi:// は通知・ウィジェットの宛先指定のPendingIntentだけで使う。Webページから操作させないため、intent-filterは置かない。 -->
         </activity>
 
         <service
