@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月22日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261022/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月22日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261022/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261022.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年10月22日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261022.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-favicon.svg">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261022/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年10月22日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。",
+      "url": "https://tk.st/job/retailtechdaily/20261022/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261022.webp",
+      "datePublished": "2026-10-22T08:00:00+09:00",
+      "dateModified": "2026-10-22T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "サプライチェーン・店舗自動化",
+        "グローバル先端トレンド",
+        "流通DX一般"
+      ],
+      "keywords": [
+        "AIアシスタント",
+        "オムニチャネル",
+        "グローバル先端トレンド",
+        "サプライチェーン・店舗自動化",
+        "スマートロッカー",
+        "ホリデー販促",
+        "店舗フォーマット",
+        "店舗受け取り",
+        "店舗改革",
+        "流通DX一般",
+        "買い物体験",
+        "食品小売"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261022/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261022/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261022/#art-3"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261022/#newslist",
+      "name": "2026年10月22日号 掲載ニュース一覧",
+      "numberOfItems": 3,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261022/#art-1",
+            "position": 1,
+            "headline": "ニトリ、スマートロッカー「Quist」で店舗受け取りの実験を開始",
+            "description": "ニトリは、スマートロッカーシステム「Quist（クイスト）」を活用した店舗受け取りの実験を開始した。ネットで注文した商品を店舗のロッカーで受け取れる仕組みを試験的に導入し、非対面での受け取り体験を検証する。今回の取り組みは、店舗を受け取り拠点として活用する際の利便性や運用面を確かめる位置づけとみられる。",
+            "url": "https://tk.st/job/retailtechdaily/20261022/#art-1",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-22T08:00:00+09:00",
+            "dateModified": "2026-10-22T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261022/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1fTGt0R243cFV6X05MVXcyNzczelNRamZoSUxBZ0hFZjVtU19TZUdBNlFvQVJmc3R3QlRCUVNFZXNhLTduak9xX1A3MHVSRTI1?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "流通ニュース"
+              },
+              "datePublished": "2026-10-21T10:15:00+09:00"
+            },
+            "keywords": [
+              "スマートロッカー",
+              "店舗受け取り",
+              "オムニチャネル"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261022/#art-2",
+            "position": 2,
+            "headline": "Target、ホリデー販促で価格訴求・限定商品と並びAIアシスタントを前面に",
+            "description": "米小売大手Targetは、ホリデーシーズンに向けた販促で、手頃な価格、独占的な商品に加えてAIアシスタントの活用を前面に打ち出している。Modern Retailが報じた。価格訴求と限定商品に、AIアシスタントを販促の柱として組み合わせた点が今回の特徴で、買い物体験の向上を狙う動きとして注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261022/#art-2",
+            "articleSection": "グローバル先端トレンド",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-22T08:00:00+09:00",
+            "dateModified": "2026-10-22T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261022/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOOWZpcGlKS1I1TFczMXJ3SzUyVmxSUzl2cmVvUW5OSFVUNzVXa3hPYXRCcElrTXRwUTdhbTJiNjZ2TjYxUzQ4d1lDV1dTSm8zZzMxaFAyX1YwcDRBaDVYdnlIRHN5Y01SRm8tYV9KbUNzUmQwRWJyTklQY3o4Vno0QjBBVHVLd2xvUEREVmMwbEtqc1ZkSEVpN3BxOWRnR2t2OUY2QjVhWnh3bFpSSVNsa1lkYw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Modern Retail"
+              },
+              "datePublished": "2026-10-21T19:02:41+09:00"
+            },
+            "keywords": [
+              "AIアシスタント",
+              "ホリデー販促",
+              "買い物体験"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261022/#art-3",
+            "position": 3,
+            "headline": "Kroger、刷新した3つの新店舗フォーマットを発表",
+            "description": "米大手食品小売のKrogerは、刷新した3つの新しい店舗フォーマットを発表した。Grocery Diveが報じた。各フォーマットの具体的な機能や投資規模は、今回の候補情報の範囲では確認できないため、詳細は今後の発表で明らかになる見込みだ。店舗体験の再設計を通じて、来店客の買い物行動の変化に対応する狙いがうかがえる。",
+            "url": "https://tk.st/job/retailtechdaily/20261022/#art-3",
+            "articleSection": "流通DX一般",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-22T08:00:00+09:00",
+            "dateModified": "2026-10-22T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261022/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxQYldRZ3BmbTlWZ2V0RTdlYnV1WXFEVmxSYzJadkhwa1pmZ000cHcxR1ZPTXAwdmwyWTBRbGxfeG9hdmVtUXR0a1JTaGFjNW1uZFUwWXJxTlh3Nm5xVWltN3A0ajJqbWhFa085Q0Z5ajllenNWVzZmVU9Kbm5hUmNLQlJSVDlQXzhWSVQ3WXQ2QTRvODFfMTVwMFFB?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Grocery Dive"
+              },
+              "datePublished": "2026-10-22T00:36:08+09:00"
+            },
+            "keywords": [
+              "店舗フォーマット",
+              "店舗改革",
+              "食品小売"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261022/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月22日号",
+          "item": "https://tk.st/job/retailtechdaily/20261022/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月22日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月22日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月22日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約2分 / 1,213字
+          </span>
+          <span class="stat">全 3 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="daily-status" aria-labelledby="dailyStatusTitle">
+          <span class="daily-status-label">LOW VOLUME BRIEF</span>
+          <h2 id="dailyStatusTitle">本日の概況</h2>
+          <p>国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。</p>
+        </section>
+
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">3 stories</span>
+        </div>
+
+
+
+
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ニトリ、スマートロッカー「Quist」で店舗受け取りの実験を開始" data-share-takeaway="ロッカー型の受け取りは、店舗在庫を受け取り拠点として活かしつつ、顧客の来店動線を整理し再配達を減らす施策として注目される。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-1">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">サプライチェーン・店舗自動化</span>
+              <span class="source-tag">流通ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-21T10:15:00+09:00" title="出典の公開日時">公開 2026.10.21 10:15 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1fTGt0R243cFV6X05MVXcyNzczelNRamZoSUxBZ0hFZjVtU19TZUdBNlFvQVJmc3R3QlRCUVNFZXNhLTduak9xX1A3MHVSRTI1?oc=5" target="_blank" rel="noopener noreferrer">ニトリ、スマートロッカー「Quist」で店舗受け取りの実験を開始<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>ニトリは、スマートロッカーシステム「Quist（クイスト）」を活用した店舗受け取りの実験を開始した。ネットで注文した商品を店舗のロッカーで受け取れる仕組みを試験的に導入し、非対面での受け取り体験を検証する。今回の取り組みは、店舗を受け取り拠点として活用する際の利便性や運用面を確かめる位置づけとみられる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">ロッカー型の受け取りは、店舗在庫を受け取り拠点として活かしつつ、顧客の来店動線を整理し再配達を減らす施策として注目される。</p>
+              </div>
+              <p class="wim-detail">家具や大型商品を扱うニトリにとっては、ラストワンマイルの効率化と店舗の<strong class="kw-scan">オムニチャネル</strong>化を同時に進められるかが検証ポイントになる。他の小売チェーンにも応用しやすい運用モデルになる可能性があり、実験結果の公表が待たれる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%83%AD%E3%83%83%E3%82%AB%E3%83%BC">#スマートロッカー</a><button type="button" class="topic-watch-btn" data-watch-topic="スマートロッカー" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E5%8F%97%E3%81%91%E5%8F%96%E3%82%8A">#店舗受け取り</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗受け取り" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%AA%E3%83%A0%E3%83%8B%E3%83%81%E3%83%A3%E3%83%8D%E3%83%AB">#オムニチャネル</a><button type="button" class="topic-watch-btn" data-watch-topic="オムニチャネル" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1fTGt0R243cFV6X05MVXcyNzczelNRamZoSUxBZ0hFZjVtU19TZUdBNlFvQVJmc3R3QlRCUVNFZXNhLTduak9xX1A3MHVSRTI1?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8822%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="Target、ホリデー販促で価格訴求・限定商品と並びAIアシスタントを前面に" data-share-takeaway="小売大手がホリデー販促の中核にAIアシスタントを位置づけたことは、生成AIが商品探索や提案を通じて購買を支える段階に入りつつあることを示す。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-2">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-global">海外 GLOBAL</span>
+              <span class="category-badge">グローバル先端トレンド</span>
+              <span class="source-tag">Modern Retail</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-21T19:02:41+09:00" title="出典の公開日時">公開 2026.10.21 19:02 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOOWZpcGlKS1I1TFczMXJ3SzUyVmxSUzl2cmVvUW5OSFVUNzVXa3hPYXRCcElrTXRwUTdhbTJiNjZ2TjYxUzQ4d1lDV1dTSm8zZzMxaFAyX1YwcDRBaDVYdnlIRHN5Y01SRm8tYV9KbUNzUmQwRWJyTklQY3o4Vno0QjBBVHVLd2xvUEREVmMwbEtqc1ZkSEVpN3BxOWRnR2t2OUY2QjVhWnh3bFpSSVNsa1lkYw?oc=5" target="_blank" rel="noopener noreferrer">Target、ホリデー販促で価格訴求・限定商品と並びAIアシスタントを前面に<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Target’s holiday push stresses affordability, exclusives and an AI assistant</p>
+            <div class="card-summary"><p>米小売大手Targetは、ホリデーシーズンに向けた販促で、手頃な価格、独占的な商品に加えてAIアシスタントの活用を前面に打ち出している。Modern Retailが報じた。価格訴求と限定商品に、AIアシスタントを販促の柱として組み合わせた点が今回の特徴で、買い物体験の向上を狙う動きとして注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">小売大手がホリデー販促の中核にAIアシスタントを位置づけたことは、<strong class="kw-scan">生成AI</strong>が商品探索や提案を通じて購買を支える段階に入りつつあることを示す。</p>
+              </div>
+              <p class="wim-detail">価格訴求や独占商品と組み合わせることで、AIが比較検討を助ける体験として定着するかが焦点になる。国内小売にとっても、自社アプリや店頭接客を補完するAI活用を検討する材料になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E3%82%A2%E3%82%B7%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%88">#AIアシスタント</a><button type="button" class="topic-watch-btn" data-watch-topic="AIアシスタント" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%9B%E3%83%AA%E3%83%87%E3%83%BC%E8%B2%A9%E4%BF%83">#ホリデー販促</a><button type="button" class="topic-watch-btn" data-watch-topic="ホリデー販促" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B2%B7%E3%81%84%E7%89%A9%E4%BD%93%E9%A8%93">#買い物体験</a><button type="button" class="topic-watch-btn" data-watch-topic="買い物体験" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOOWZpcGlKS1I1TFczMXJ3SzUyVmxSUzl2cmVvUW5OSFVUNzVXa3hPYXRCcElrTXRwUTdhbTJiNjZ2TjYxUzQ4d1lDV1dTSm8zZzMxaFAyX1YwcDRBaDVYdnlIRHN5Y01SRm8tYV9KbUNzUmQwRWJyTklQY3o4Vno0QjBBVHVLd2xvUEREVmMwbEtqc1ZkSEVpN3BxOWRnR2t2OUY2QjVhWnh3bFpSSVNsa1lkYw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8822%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="Kroger、刷新した3つの新店舗フォーマットを発表" data-share-takeaway="店舗フォーマットの再設計は、デジタルとリアルの役割分担を見直す動きの一つとして捉えられる。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-3">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-global">海外 GLOBAL</span>
+              <span class="category-badge">流通DX一般</span>
+              <span class="source-tag">Grocery Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-22T00:36:08+09:00" title="出典の公開日時">公開 2026.10.22 00:36 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMimgFBVV95cUxQYldRZ3BmbTlWZ2V0RTdlYnV1WXFEVmxSYzJadkhwa1pmZ000cHcxR1ZPTXAwdmwyWTBRbGxfeG9hdmVtUXR0a1JTaGFjNW1uZFUwWXJxTlh3Nm5xVWltN3A0ajJqbWhFa085Q0Z5ajllenNWVzZmVU9Kbm5hUmNLQlJSVDlQXzhWSVQ3WXQ2QTRvODFfMTVwMFFB?oc=5" target="_blank" rel="noopener noreferrer">Kroger、刷新した3つの新店舗フォーマットを発表<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Kroger unveils 3 refreshed store formats</p>
+            <div class="card-summary"><p>米大手食品小売のKrogerは、刷新した3つの新しい店舗フォーマットを発表した。Grocery Diveが報じた。各フォーマットの具体的な機能や投資規模は、今回の候補情報の範囲では確認できないため、詳細は今後の発表で明らかになる見込みだ。店舗体験の再設計を通じて、来店客の買い物行動の変化に対応する狙いがうかがえる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">店舗フォーマットの再設計は、デジタルとリアルの役割分担を見直す動きの一つとして捉えられる。</p>
+              </div>
+              <p class="wim-detail">自動化やデータ活用をどの業態にどう組み込むかによって、店舗運営の効率と顧客体験に差が生まれる。国内の小売チェーンにとっても、業態ごとに最適な店舗像を検討する際の参考になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88">#店舗フォーマット</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗フォーマット" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E6%94%B9%E9%9D%A9">#店舗改革</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗改革" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%A3%9F%E5%93%81%E5%B0%8F%E5%A3%B2">#食品小売</a><button type="button" class="topic-watch-btn" data-watch-topic="食品小売" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMimgFBVV95cUxQYldRZ3BmbTlWZ2V0RTdlYnV1WXFEVmxSYzJadkhwa1pmZ000cHcxR1ZPTXAwdmwyWTBRbGxfeG9hdmVtUXR0a1JTaGFjNW1uZFUwWXJxTlh3Nm5xVWltN3A0ajJqbWhFa085Q0Z5ajllenNWVzZmVU9Kbm5hUmNLQlJSVDlQXzhWSVQ3WXQ2QTRvODFfMTVwMFFB?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8822%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261021/" class="nav-prev">&larr; 2026.10.21 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+</body>
+</html>

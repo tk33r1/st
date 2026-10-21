@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 21 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 21 Oct 2026 05:16:04 +0900</lastBuildDate>
+    <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 22 Oct 2026 05:26:32 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月22日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261022/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261022/</guid>
+      <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
+      <description>国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。</description>
+    </item>
     <item>
       <title>2026年10月21日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261021/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261008/</guid>
       <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
       <description>国内では、アパレル基幹システムとAI需要予測の連携、アウトレットでのAI警備・人流データ活用など、AIを実際の業務や店舗運営につなぐ実証・連携が目立った。 トライアルHDとスギ薬局によるリテールメディア研究会の発足は、事業者間で知見を共有し、広告・販促の発展を探る動きとして注目される。</description>
-    </item>
-    <item>
-      <title>2026年10月7日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261007/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261007/</guid>
-      <pubDate>Wed, 07 Oct 2026 08:00:00 +0900</pubDate>
-      <description>国内では、商業施設アプリへのAI提案機能やJR東日本の新コード決済など、買い物・決済の接点を更新する動きが表面化した。 リテールメディアでは、広告配信前に消費者パネルデータで効果を分析するサービスが登場。事後検証に偏らない投資判断が焦点となる。</description>
     </item>
   </channel>
 </rss>
