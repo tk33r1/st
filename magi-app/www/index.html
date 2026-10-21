@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="color-scheme" content="dark light" />
-  <script src="app-theme.js?v=20261012_2"></script>
+  <script src="app-theme.js?v=20261022_1"></script>
   <!-- Ahrefs -->
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
   <!-- Google Tag Manager -->
@@ -386,40 +386,44 @@
   <!-- End Google Tag Manager (noscript) -->
   <div id="app">
     <header id="bar">
-      <button id="btn-history-agent" class="icon-btn" title="Chats" aria-label="Chats" aria-haspopup="dialog" aria-expanded="false">
+      <button id="btn-history-agent" class="icon-btn" title="Chats" aria-label="Chats" data-ja-title="チャット" data-ja-aria="チャット" aria-haspopup="dialog" aria-expanded="false">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
       </button>
       <div class="title glow"><span id="bar-title">MAGI</span></div>
       <div class="actions">
         <div class="usage-wrap" hidden>
-          <button id="btn-usage" class="icon-btn" title="Today's usage" aria-label="Today's usage" aria-haspopup="dialog" aria-expanded="false" aria-controls="agent-usage-pop">
+          <button id="btn-usage" class="icon-btn" title="Today's usage" aria-label="Today's usage" data-ja-title="今日の利用" data-ja-aria="今日の利用" aria-haspopup="dialog" aria-expanded="false" aria-controls="agent-usage-pop">
             <svg class="usage-ring" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><circle class="usage-track" cx="12" cy="12" r="8.5"/><circle class="usage-fill" cx="12" cy="12" r="8.5" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 12 12)"/></svg>
           </button>
-          <div id="agent-usage-pop" class="hidden" role="dialog" aria-label="Today's usage"></div>
+          <div id="agent-usage-pop" class="hidden" role="dialog" aria-label="Today's usage" data-ja-aria="今日の利用"></div>
         </div>
         <div class="kebab-wrap">
-          <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options">
+          <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options" data-ja-title="その他の操作" data-ja-aria="その他の操作">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div id="agent-more-dropdown" class="hidden">
-            <button id="btn-theme" type="button" title="Toggle theme">
+            <button id="btn-theme" type="button" title="Toggle theme" data-ja-title="テーマを切り替え">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               <span id="btn-theme-label">Theme</span>
             </button>
-            <button id="btn-share-agent" type="button" title="Share / copy conversation" disabled>
-              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              <span>Share Log</span>
+            <button id="btn-lang" type="button" title="Change language" data-ja-title="言語を切り替え">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+              <span id="btn-lang-label" lang="ja">日本語</span>
             </button>
-            <button id="btn-export-agent" type="button" title="Export conversation as Markdown" disabled>
+            <button id="btn-share-agent" type="button" title="Share / copy conversation" data-ja-title="会話を共有・コピー" disabled>
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              <span data-ja="会話を共有">Share Log</span>
+            </button>
+            <button id="btn-export-agent" type="button" title="Export conversation as Markdown" data-ja-title="会話をMarkdownで書き出す" disabled>
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Download MD</span>
+              <span data-ja="Markdownで保存">Download MD</span>
             </button>
             <hr />
-            <button id="btn-install-agent" type="button" hidden>Add to Home Screen</button>
-            <button id="btn-settings-agent" type="button" hidden>Settings</button>
-            <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" title="Legacy MAGI deliberation (v1)">
+            <button id="btn-install-agent" type="button" data-ja="ホーム画面に追加" hidden>Add to Home Screen</button>
+            <button id="btn-settings-agent" type="button" data-ja="設定" hidden>Settings</button>
+            <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" title="Legacy MAGI deliberation (v1)" data-ja-title="旧MAGIの討議（v1）">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              <span>Legacy MAGI</span>
+              <span data-ja="旧MAGI">Legacy MAGI</span>
             </a>
           </div>
         </div>
@@ -439,24 +443,24 @@
     <div id="agent-inputline">
       <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
       <div id="agent-composer">
-        <div id="agent-attach-menu" role="menu" aria-label="Add an image" hidden>
+        <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
           <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Camera</span></button>
           <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>Photos</span></button>
           <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span>Files</span></button>
         </div>
-        <button id="agent-attach" title="Add an image" aria-label="Add an image" aria-haspopup="menu" aria-expanded="false">
+        <button id="agent-attach" title="Add an image" aria-label="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加" aria-haspopup="menu" aria-expanded="false">
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
         <div id="agent-input-wrap">
           <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行 -->
-          <textarea id="agent-input" rows="1" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI"></textarea>
+          <textarea id="agent-input" rows="1" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI" data-ja-aria="MAGIへのメッセージ"></textarea>
           <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
-          <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use" title="Use this question"
+          <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use" title="Use this question" data-ja-title="この質問を使う"
               aria-label="Use the suggested question"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
         </div>
-        <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
-        <button id="agent-send" class="is-empty" title="Send" aria-label="Send">
+        <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" data-ja-aria="音声入力" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
+        <button id="agent-send" class="is-empty" title="Send" aria-label="Send" data-ja-aria="送信">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         </button>
       </div>
@@ -468,6 +472,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261022_2"></script>
+  <script src="app.js?v=20261022_3"></script>
 </body>
 </html>

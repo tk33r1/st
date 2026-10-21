@@ -6,7 +6,7 @@ import {chromium} from 'playwright';
 import {nativeFilesystemFixture} from './magi-native-filesystem-fixture.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),out=root+'workers/.wrangler/magi-b4-20261021/';mkdirSync(out,{recursive:true});
 const fs=nativeFilesystemFixture(),calls=[],errors=[],runs=new Map();let launch=null,listenerGate=Promise.resolve();
-const browser=await chromium.launch({headless:true}),context=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+const browser=await chromium.launch({headless:true}),context=await browser.newContext({locale:'en-US',serviceWorkers:'block',viewport:{width:390,height:844}});
 const event=(name,data)=>'event: '+name+'\ndata: '+JSON.stringify(data)+'\n\n';
 const answer=event('classification',{version:1,intent:'consult',mode:'consult',fresh:'no',votable:'no',site_pages:'no',magi_candidate:false,reply_language:{version:1,code:'en',source:'ui'}})
  +event('title',{text:'New widget conversation'})+event('integrated',{delta:'New answer for the home widget.'})+event('done',{});

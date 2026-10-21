@@ -14,7 +14,7 @@ const browser = await chromium.launch({ headless: true });
 const report = [];
 try {
   for (const native of [false, true]) {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-US', serviceWorkers: 'block' });
     const errors = [], posts = [];
     await context.route('**/*', async route => {
       const req = route.request(), url = new URL(req.url());

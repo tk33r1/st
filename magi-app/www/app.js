@@ -34,6 +34,19 @@ var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
 var APP_VERSION = '5.8';
 
+// 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
+function isJa() { return document.documentElement.lang === 'ja'; }
+function tr(en, ja) { return isJa() ? ja : en; }
+// ネイティブの部品は「English / 日本語」の1文で知らせる。画面の言語の側だけを出す（日本語の側が無ければそのまま）。
+function pickLang(text) {
+  text = String(text || '');
+  var at = text.indexOf(' / ');
+  if (at < 0) return text;
+  var ja = text.slice(at + 3);
+  if (!Array.from(ja).some(function (c) { return c.charCodeAt(0) >= 0x3000; })) return text;
+  return isJa() ? ja : text.slice(0, at);
+}
+
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
 function cleanReplyLanguage(v) {
@@ -321,15 +334,15 @@ function loadAgentModels() {
 function personaDescHTML(p) {
   var m = agentModels && (p.synth ? agentModels.synthesizer : agentModels.personas && agentModels.personas[p.codename]);
   var head = '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>';
-  if (!m) return head + esc(agentModels === undefined ? '…' : 'Could not load the description.');
-  function text(o) { return esc(o && o.en ? o.en : ''); }
+  if (!m) return head + esc(agentModels === undefined ? '…' : tr('Could not load the description.', '説明を取得できませんでした。'));
+  function text(o) { return esc(o ? (isJa() && o.ja) || o.en || '' : ''); }
   return head + text(m.desc)
     + '<dl class="magi-desc-meta">'
     + '<dt>LLM</dt><dd>' + (p.synth && agentModels.themes && agentModels.themes.light && agentModels.themes.dark
-      ? ['light', 'dark'].map(function (theme) { var model = agentModels.themes[theme]; return esc((model.provider_label || PROVIDER_LABEL[model.provider] || model.provider) + ' · ' + model.model + (theme === 'light' ? ' (Light)' : ' (Dark)')); }).join('<br>')
+      ? ['light', 'dark'].map(function (theme) { var model = agentModels.themes[theme]; return esc((model.provider_label || PROVIDER_LABEL[model.provider] || model.provider) + ' · ' + model.model + (theme === 'light' ? tr(' (Light)', '（ライト）') : tr(' (Dark)', '（ダーク）'))); }).join('<br>')
       : esc((m.provider_label || PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model)) + '</dd>'
-    + '<dt>Context</dt><dd>' + text(m.context) + '</dd>'
-    + '<dt>Theme</dt><dd>' + text(m.theme) + '</dd>'
+    + '<dt>' + tr('Context', '素材') + '</dt><dd>' + text(m.context) + '</dd>'
+    + '<dt>' + tr('Theme', 'テーマ') + '</dt><dd>' + text(m.theme) + '</dd>'
     + '</dl>';
 }
 var REACT_EMOJIS = ['👎', '❤️', '😂', '🎉', '🔥', '👏', '🙏', '💯', '🤔', '👀', '😮', '😢', '😍', '🤯', '🙌', '🥳', '😎', '😅', '🤝', '💪', '✨', '💡', '✅', '🚀', '👌', '🫡', '🤩', '😇', '🥹', '🫶'];
@@ -356,7 +369,7 @@ function renderAgentSuggest() {
   agentInput.classList.toggle('has-suggest', show);
   if (!show) return;
   agentSuggestText.textContent = agentSuggestion;
-  agentSuggestUse.setAttribute('aria-label', 'Use the suggested question: ' + agentSuggestion);
+  agentSuggestUse.setAttribute('aria-label', tr('Use the suggested question: ', '予測した質問を入れる：') + agentSuggestion);
 }
 function setAgentSuggestion(text) { agentSuggestion = String(text || '').trim(); renderAgentSuggest(); }
 agentSuggestUse.addEventListener('click', function () {
@@ -419,12 +432,12 @@ function renderSharedDocument() {
   tray.replaceChildren(); tray.hidden = !agentShared;
   if (tray.hidden) return;
   var open = document.createElement('button'); open.type = 'button';
-  open.textContent = 'Shared document / 共有資料: ' + agentShared.title + ' (' + agentShared.text.length.toLocaleString() + ')';
+  open.textContent = tr('Shared document: ', '共有資料: ') + agentShared.title + ' (' + agentShared.text.length.toLocaleString() + ')';
   open.addEventListener('click', function () {
-    var panel = makeAgentPanel('agent-shared-panel', 'Shared document', '<pre class="shared-document-text"></pre>');
+    var panel = makeAgentPanel('agent-shared-panel', tr('Shared document', '共有資料'), '<pre class="shared-document-text"></pre>');
     if (panel) panel.querySelector('pre').textContent = agentShared.title + '\n' + agentShared.url + '\n\n' + agentShared.text;
   });
-  var remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×'; remove.ariaLabel = 'Remove shared document';
+  var remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×'; remove.ariaLabel = tr('Remove shared document', '共有資料を外す');
   remove.addEventListener('click', function () { setSharedDocument(null); });
   tray.append(open, remove);
 }
@@ -450,7 +463,7 @@ function safeStore(key, val) {
   if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) { nativeHistory.set(key, str); return; }
   try { localStorage.setItem(key, str); } catch (_) {
     // Androidの移行に失敗している間も、古い会話を容量で捨てない。
-    if (nativeAndroid) { announceAgent('Could not save this conversation. Free some device storage and reopen MAGI.'); return; }
+    if (nativeAndroid) { announceAgent(tr('Could not save this conversation. Free some device storage and reopen MAGI.', 'この会話を保存できませんでした。端末の空き容量を増やして、MAGIを開き直してください。')); return; }
     try {
       var ss = safeParse(localStorage.getItem('magi_saved_sessions'), []);
       while (ss.length > 5) ss.pop();
@@ -479,16 +492,17 @@ var ICON_REACT = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24
 
 function reactionBarHTML(target) {
   return '<div class="reaction-bar" data-target="' + esc(target) + '">'
-    + '<button type="button" class="react-btn" data-act="copy" title="Copy">' + ICON_COPY + '</button>'
-    + '<button type="button" class="react-btn" data-act="like" title="Like">' + ICON_LIKE + '</button>'
-    + '<button type="button" class="react-btn" data-act="emoji" title="React">' + ICON_REACT + '</button>'
+    + '<button type="button" class="react-btn" data-act="copy" title="' + tr('Copy', 'コピー') + '">' + ICON_COPY + '</button>'
+    + '<button type="button" class="react-btn" data-act="like" title="' + tr('Like', 'いいね') + '">' + ICON_LIKE + '</button>'
+    + '<button type="button" class="react-btn" data-act="emoji" title="' + tr('React', 'リアクション') + '">' + ICON_REACT + '</button>'
     + '</div>';
 }
 
 // インストール済みのPWA・ネイティブアプリには追加の案内を出さない。
 var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
   && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
-var AGENT_HINT = '<div class="agent-splash">'
+// 言語を切り替えたら描き直すので、毎回組み立てる
+function agentHintHTML() { return '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
   + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
   + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
@@ -500,13 +514,13 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
   + '</svg>'
   + '<div class="magi-title">MAGI</div>'
-  + '<div class="magi-sub">Multi-Agent Generative Intelligence<button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="Release History">ver ' + APP_VERSION + '</button>'
+  + '<div class="magi-sub">Multi-Agent Generative Intelligence<button type="button" id="btn-info-agent" class="magi-info-btn" title="' + tr('System & Privacy', 'システムとプライバシー') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver ' + APP_VERSION + '</button>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
-  + (WEB_INSTALL ? '<div class="magi-nodes"><button type="button" class="magi-node" data-install-agent>Add to Home Screen</button></div>' : '')
-  + '</div>';
+  + (WEB_INSTALL ? '<div class="magi-nodes"><button type="button" class="magi-node" data-install-agent>' + tr('Add to Home Screen', 'ホーム画面に追加') + '</button></div>' : '')
+  + '</div>'; }
 
 // ---- Title ------------------------------------------------------------------
 function setAgentTitle(text) {
@@ -559,7 +573,7 @@ function syncCurrentToSaved() {
   if (!agentHistory || agentHistory.length === 0) return;
   var firstUserMsg = agentHistory.find(function (m) { return m.role === 'user'; });
   if (!firstUserMsg) return;
-  var firstText = contentText(firstUserMsg.content) || 'Image';
+  var firstText = contentText(firstUserMsg.content) || tr('Image', '画像');
   var title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
   var sessions = readSavedSessions();
   if (currentSessionId) {
@@ -596,8 +610,8 @@ var reEmoji = function (v) { return (typeof v === 'string' ? v : (v && v.em) || 
 // 第3回以降の枠。統合人格がこの人格に聞き返した回だけ出す（debate の followups: [{ round, ask, text }]）
 function followupHTML(f) {
   var n = Number(f.round) || 0;
-  return '<div class="persona-round" data-round="' + n + '"><span class="persona-round-label">Round ' + (n || '') + '</span>'
-    + '<div class="persona-ask">✦ ' + esc(f.ask || '') + '</div><div class="persona-text">' + esc(magiBody(f.text, f.vote, false) || '…') + '</div></div>';
+  return '<div class="persona-round" data-round="' + n + '"><span class="persona-round-label">' + tr('Round ' + (n || ''), '第' + (n || '') + '回') + '</span>'
+    + '<div class="persona-ask">✦ ' + esc(f.ask || '') + '</div><div class="persona-text">' + esc(magiBody(f.text, f.vote, isJa()) || '…') + '</div></div>';
 }
 
 // 新規送信と履歴復元で同じカードを使う。debate 未指定なら考え中として描画する。
@@ -607,8 +621,8 @@ function personaCardsHTML(debate) {
     var r2has = typeof d.round2 === 'string' && d.round2 !== '…';
     return '<div class="persona-card' + (debate ? '' : ' thinking') + '" data-codename="' + p.codename + '">'
       + '<div class="persona-head"><span class="persona-hex">⬡</span><span class="persona-code">' + p.codename + '</span><span class="persona-name">' + p.name + '</span></div>'
-      + '<div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">' + esc(magiBody(d.round1, d.round1Vote, false) || '…') + '</div></div>'
-      + '<div class="persona-round" data-round="2"' + (r2has ? '' : ' hidden') + '><span class="persona-round-label">After debate</span><div class="persona-text">' + esc(magiBody(d.round2, d.round2Vote, false) || '…') + '</div></div>'
+      + '<div class="persona-round" data-round="1"><span class="persona-round-label">' + tr('Initial', '初回') + '</span><div class="persona-text">' + esc(magiBody(d.round1, d.round1Vote, isJa()) || '…') + '</div></div>'
+      + '<div class="persona-round" data-round="2"' + (r2has ? '' : ' hidden') + '><span class="persona-round-label">' + tr('After debate', '討議後') + '</span><div class="persona-text">' + esc(magiBody(d.round2, d.round2Vote, isJa()) || '…') + '</div></div>'
       + (Array.isArray(d.followups) ? d.followups : []).map(followupHTML).join('')
       + reactionBarHTML(p.codename)
       + '</div>';
@@ -684,7 +698,7 @@ function renderHistoryToLog(history) {
 
 // ---- Lifecycle --------------------------------------------------------------
 function showSplashIfEmpty() {
-  if (!agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+  if (!agentLog.children.length && !agentDead) agentLog.innerHTML = agentHintHTML();
 }
 function cleanHistory(history) {
   return Array.isArray(history) ? history.filter(function (m) {
@@ -733,7 +747,7 @@ function resetAgent() {
 }
 function agentDegrade(msg) {
   agentDead = true;
-  agentDegraded.textContent = msg || 'MAGI is currently unreachable. Check your connection and try again.';
+  agentDegraded.textContent = msg || tr('MAGI is currently unreachable. Check your connection and try again.', 'MAGIに接続できません。接続を確認して、もう一度お試しください。');
   agentDegraded.classList.remove('hidden');
   announceAgent(agentDegraded.textContent);
   setAgentControlsEnabled(false);
@@ -746,9 +760,9 @@ function renderAgentError(env) {
   var lines = [];
   if (meta) lines.push('<div class="agent-rid">' + esc(meta) + '</div>');
   if (env.request_id) lines.push('<div class="agent-rid">request_id: ' + esc(env.request_id) + '</div>');
-  div.innerHTML = '⚠ ' + esc(env.message || 'An error occurred') + lines.join('');
+  div.innerHTML = '⚠ ' + esc(env.message || tr('An error occurred', 'エラーが発生しました')) + lines.join('');
   agentLog.appendChild(div);
-  announceAgent(env.message || 'An error occurred');
+  announceAgent(env.message || tr('An error occurred', 'エラーが発生しました'));
   agentScroll();
 }
 
@@ -994,7 +1008,7 @@ async function addAttachments(files) {
   // ファイルの一覧では画像以外も選べるので、黙って捨てずに知らせる
   if (!list.length) { if (files && files.length) noticeAttach(document.documentElement.lang === 'ja' ? '画像だけを添付できます' : 'Only images can be attached'); return; }
   for (var i = 0; i < list.length; i++) {
-    if (attachments.length >= ATTACH_MAX) { noticeAttach('Up to ' + ATTACH_MAX + ' images'); break; }
+    if (attachments.length >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); break; }
     try {
       var img = await loadImageFile(list[i]);
       if (generation !== agentGen) return;
@@ -1003,7 +1017,7 @@ async function addAttachments(files) {
       if (original) nativeHistory.retainImage(original);
       attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
       renderAttachTray();
-    } catch (_) { noticeAttach('Could not read that image'); }
+    } catch (_) { noticeAttach(tr('Could not read that image', 'その画像を読み込めませんでした')); }
   }
 }
 // ユーザー発言の吹き出し中身（サムネ＋本文）
@@ -1127,7 +1141,7 @@ var AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" viewBox="0
 var AGENT_STOP_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
 function setAgentStopMode(on) {
   agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
-  agentSendBtn.title = agentSendBtn.ariaLabel = on ? 'Stop' : 'Send';
+  agentSendBtn.title = agentSendBtn.ariaLabel = on ? tr('Stop', '停止') : tr('Send', '送信');
   agentSendBtn.dataset.stop = on ? '1' : '';
   if (on) agentSendBtn.disabled = false;
   updateSendState();
@@ -1228,7 +1242,7 @@ async function agentSend(recovered) {
     if (ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     var outbound = prepareAgentMessages(agentHistory, sendContent);
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
     if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await fetch(AGENT_API, {
@@ -1317,7 +1331,7 @@ async function agentSend(recovered) {
           if (magiView && completed && !errored && !dropped()) await magiView.wait();
       if (!dropped() && !errored && (!completed || !reply.trim())) {
         errored = true; if (!keepMagi()) turn.remove();
-        if (!magiRetained) renderAgentError({ message: 'The complete reply was not received. Please try again.', code: 'incomplete_reply' });
+        if (!magiRetained) renderAgentError({ message: tr('The complete reply was not received. Please try again.', '返事を最後まで受け取れませんでした。もう一度お試しください。'), code: 'incomplete_reply' });
       }
     }
   } catch (err) {
@@ -1327,9 +1341,9 @@ async function agentSend(recovered) {
     if (!keepMagi()) turn.remove();
     // Stopped with the stop button: no error; the question goes back into the input below.
     if (!magiRetained && !ctrl.userStopped) {
-      if (timedOut || err.name === 'AbortError') { renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
+      if (timedOut || err.name === 'AbortError') { renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
       else if (err.code === 'interrupted') { renderAgentError({ message: document.documentElement.lang === 'ja' ? '前の接続が終了し、回答を受け取れませんでした。質問を確認して再送してください。' : 'The previous connection ended before the reply was received. Review your question and send it again.', code: 'interrupted' }); }
-      else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: 'Could not receive the reply. Check your connection and try again.', code: 'network_error' }); }
+      else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: tr('Could not receive the reply. Check your connection and try again.', '返事を受け取れませんでした。接続を確認して、もう一度お試しください。'), code: 'network_error' }); }
     }
   } finally {
     if (nativeConversation && nativeRunId && (!completed || errored || dropped())) await nativeConversation.cancel(nativeRunId).catch(function () {});
@@ -1354,7 +1368,7 @@ async function agentSend(recovered) {
   if (completed && reply.trim() && !errored || magiRetained) {
     renderAgentPages(replyEl, sitePages);
         renderAgentSources(replyBody, replyEl, reply, replySources, document.documentElement.lang === "ja");
-    if (!magiView) announceAgent('MAGI replied. ' + reply);
+    if (!magiView) announceAgent(tr('MAGI replied. ', 'MAGIが回答しました。') + reply);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     if (closedReply) closeAgentConversation(turn);
@@ -1385,7 +1399,7 @@ async function agentSend(recovered) {
   }
   if (nativeConversation && nativeRunId) {
     try { await nativeHistory.flush(); await nativeConversation.acknowledge(nativeRunId); }
-    catch (_) { announceAgent('Could not finish saving the reply. Reopen MAGI to recover it. / 保存を完了できませんでした。開き直すと受信データから復元します。'); }
+    catch (_) { announceAgent(tr('Could not finish saving the reply. Reopen MAGI to recover it.', '保存を完了できませんでした。開き直すと受信データから復元します。')); }
   }
 }
 
@@ -1399,7 +1413,7 @@ async function restoreNativeRequestImages(items) {
       var bytes = Uint8Array.from(atob(raw.data), function (ch) { return ch.charCodeAt(0); });
       var img = await loadImageFile(new Blob([bytes], { type: 'image/' + item.file.split('.').pop().replace('jpg', 'jpeg') }));
       restored.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: item.thumb, file: item.file });
-    } catch (_) { restored.push(item); announceAgent('Could not reopen an original image; the saved preview is available. / 元画像を開けないため、保存したプレビューを使います。'); }
+    } catch (_) { restored.push(item); announceAgent(tr('Could not reopen an original image; the saved preview is available.', '元画像を開けないため、保存したプレビューを使います。')); }
   }
   return restored;
 }
@@ -1486,7 +1500,7 @@ async function undoReaction(bar, target, resetBtn) {
   bar.dataset.removing = 'true';
   try {
     if (await unregisterReaction(bar, target)) { resetBtn(); bar.classList.remove('locked'); }
-    else renderAgentError({ message: 'Could not remove the reaction. Please try again.', code: 'reaction_remove_failed' });
+    else renderAgentError({ message: tr('Could not remove the reaction. Please try again.', 'リアクションを取り消せませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' });
   } finally { delete bar.dataset.removing; }
 }
 function flashReactBtn(btn, sym) {
@@ -1585,7 +1599,7 @@ function makeAgentPanel(id, title, bodyHTML) {
   var panel = document.createElement('div');
   panel.id = id; panel.className = 'agent-panel fade-in';
   panel.innerHTML = '<div class="agent-panel-head"><span class="t">' + title + '</span>'
-    + '<button type="button" class="agent-panel-close">✕ CLOSE</button></div>'
+    + '<button type="button" class="agent-panel-close">' + tr('✕ CLOSE', '✕ 閉じる') + '</button></div>'
     + '<div class="agent-panel-body">' + bodyHTML + '</div>';
   document.getElementById('app').appendChild(panel);
   panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
@@ -1600,11 +1614,11 @@ function showHistoryPanel() {
   closeAgentPanels();
   var panel = document.createElement('div');
   panel.id = 'agent-history-panel'; panel.className = 'agent-panel agent-drawer fade-in';
-  panel.innerHTML = '<div class="agent-drawer-sheet" role="dialog" aria-modal="true" aria-label="Chats">'
-    + '<div class="agent-panel-head"><span class="t glow">✦ MAGI</span><button type="button" class="agent-panel-close" aria-label="Close">✕</button></div>'
+  panel.innerHTML = '<div class="agent-drawer-sheet" role="dialog" aria-modal="true" aria-label="' + tr('Chats', 'チャット') + '">'
+    + '<div class="agent-panel-head"><span class="t glow">✦ MAGI</span><button type="button" class="agent-panel-close" aria-label="' + tr('Close', '閉じる') + '">✕</button></div>'
     + '<button type="button" id="btn-reset" class="drawer-new">'
     + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
-    + '<span>New chat</span></button><div class="drawer-label">Chats</div><div id="agent-history-list"></div></div>';
+    + '<span>' + tr('New chat', '新しいチャット') + '</span></button><div class="drawer-label">' + tr('Chats', 'チャット') + '</div><div id="agent-history-list"></div></div>';
   panel.onAgentClose = function (hadFocus) {
     menuBtn.setAttribute('aria-expanded', 'false');
     if (hadFocus) menuBtn.focus({ preventScroll: true });
@@ -1626,14 +1640,21 @@ function showHistoryPanel() {
   panel.querySelector('#btn-reset').focus({ preventScroll: true });
 }
 function showInstallPanel() {
-  var panel = makeAgentPanel('agent-install-panel', 'Use MAGI on iPhone',
-    '<ul>'
-    + '<li>Open <strong>tk.st/magi-app/www/</strong> in <strong>Safari</strong> on your iPhone.</li>'
-    + '<li>Tap <strong>Share</strong> (the square with an upward arrow). Depending on the Safari layout, open the page menu first.</li>'
-    + '<li>Choose <strong>Add to Home Screen</strong>. If it is missing, find it under <strong>Edit Actions</strong>.</li>'
-    + '<li>If shown, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>.</li>'
-    + '<li>Launch MAGI from its new Home Screen icon. Chat requires an internet connection.</li>'
-    + '</ul>');
+  var panel = makeAgentPanel('agent-install-panel', tr('Use MAGI on iPhone', 'iPhoneでMAGIを使う'), isJa()
+    ? '<ul>'
+      + '<li>iPhoneの<strong>Safari</strong>で<strong>tk.st/magi-app/www/</strong>を開きます。</li>'
+      + '<li><strong>共有</strong>（上向きの矢印の付いた四角）を押します。Safariのレイアウトによっては、先にページのメニューを開きます。</li>'
+      + '<li><strong>ホーム画面に追加</strong>を選びます。見当たらなければ<strong>アクションを編集</strong>の中を探します。</li>'
+      + '<li>表示されたら<strong>Webアプリとして開く</strong>をオンにして、<strong>追加</strong>を押します。</li>'
+      + '<li>ホーム画面の新しいアイコンからMAGIを開きます。チャットにはインターネット接続が必要です。</li>'
+      + '</ul>'
+    : '<ul>'
+      + '<li>Open <strong>tk.st/magi-app/www/</strong> in <strong>Safari</strong> on your iPhone.</li>'
+      + '<li>Tap <strong>Share</strong> (the square with an upward arrow). Depending on the Safari layout, open the page menu first.</li>'
+      + '<li>Choose <strong>Add to Home Screen</strong>. If it is missing, find it under <strong>Edit Actions</strong>.</li>'
+      + '<li>If shown, turn on <strong>Open as Web App</strong>, then tap <strong>Add</strong>.</li>'
+      + '<li>Launch MAGI from its new Home Screen icon. Chat requires an internet connection.</li>'
+      + '</ul>');
   if (panel) panel.querySelector('.agent-panel-close').focus();
 }
 var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
@@ -1641,13 +1662,13 @@ function renderSavedSessionsList() {
   var list = document.getElementById('agent-history-list');
   if (!list) return;
   var sessions = readSavedSessions();
-  if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">No saved conversations.</div>'; return; }
+  if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">' + tr('No saved conversations.', '保存したチャットはありません。') + '</div>'; return; }
   list.innerHTML = sessions.map(function (s) {
     return '<div class="session-item" data-id="' + esc(s.id) + '">'
       + '<button type="button" class="session-load" data-id="' + esc(s.id) + '">'
       + '<span class="session-title">' + esc(s.title) + '</span>'
       + '<span class="session-time">' + esc(new Date(s.timestamp).toLocaleString()) + '</span></button>'
-      + '<button type="button" class="session-del" data-id="' + esc(s.id) + '" title="Delete chat">' + ICON_TRASH + '</button>'
+      + '<button type="button" class="session-del" data-id="' + esc(s.id) + '" title="' + tr('Delete chat', 'チャットを削除') + '">' + ICON_TRASH + '</button>'
       + '</div>';
   }).join('');
   list.querySelectorAll('.session-load').forEach(function (el) {
@@ -1683,7 +1704,7 @@ function loadSavedSession(id) {
 function deleteSavedSession(id) {
   if (currentSessionId === id) resetAgent();
   writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
-  if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
+  if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent(tr('Could not remove pending reply data.', '受信データを削除できませんでした。')); });
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
@@ -1767,14 +1788,15 @@ function showVersionsPanel() {
 
 
 function showInfoPanel() {
-  var panel = makeAgentPanel('agent-info-panel', 'System & Privacy', '<ul class="agent-privacy-list"></ul>');
+  var panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'), '<ul class="agent-privacy-list"></ul>');
   if (!panel) return;
-  var list = panel.querySelector('.agent-privacy-list');
-  renderAgentPrivacy(list, 'en', undefined);
-  loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
+  var list = panel.querySelector('.agent-privacy-list'), lang = isJa() ? 'ja' : 'en';
+  renderAgentPrivacy(list, lang, undefined);
+  loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
   if (nativeAndroid) {
     var nativeNote = document.createElement('p');
-    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets hide chat contents by default. If you enable contents in Settings, the title and the beginning of the last answer can appear on your home screen. Widgets do not connect to the network themselves.';
+    nativeNote.textContent = tr('On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets only open MAGI and show no chat contents. Widgets do not connect to the network themselves.',
+      'Androidでは、会話と元の画像はこの端末のアプリ内に保存します。Androidの自動バックアップは無効で、ほかの端末へ自動では移りません。文字の控えは設定から書き出せます（画像は含みません）。共有した資料は、質問のたびに会話と同じ送り先へ送られます。共有されたURLは端末がCookieなしで読み込みます。音声入力は端末の音声認識サービス（多くはGoogle）を使い、端末内で認識できないときは音声がそのサービスに送られることがあります。音声はMAGIのサーバーには送りません。ほかのアプリを使っている間や画面を消している間は、Androidのフォアグラウンドサービスが回答を受け取ります。受け取ったデータは、会話に保存されるまでこの端末に残ります。許可すると、到着の通知に会話のタイトルが出ます。進行中の通知から送信を止められます。ホーム画面のウィジェットはMAGIを開くだけで、会話の内容は表示しません。ウィジェット自体は通信しません。');
     panel.querySelector('.agent-panel-body').appendChild(nativeNote);
   }
 }
@@ -1796,9 +1818,9 @@ function initNativeWidgetSettings(panel, ja) {
 // 設定はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
 async function showNativeSettings() {
   if (!nativeAndroid) return;
-  var ja = document.documentElement.lang === 'ja';
+  var ja = isJa();
   var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
-    '<p id="history-storage-status" role="status">Loading…</p><p id="native-notification-status" hidden></p>'
+    '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p><p id="native-notification-status" hidden></p>'
     + '<div id="native-widget-settings" hidden>'
     + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
     + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
@@ -1811,31 +1833,31 @@ async function showNativeSettings() {
     var notifications = panel.querySelector('#native-notification-status'); notifications.hidden = false;
     nativeConversation.permission().then(function (value) {
       if (!panel.isConnected) return;
-      notifications.textContent = value.display === 'granted' ? '通知は許可されています / Notifications are allowed.' : '通知は許可されていません。会話は引き続き使えます / Notifications are off; chat still works.';
-      var button = document.createElement('button'); button.type = 'button'; button.textContent = '通知の設定 / Notification settings';
-      button.addEventListener('click', function () { nativeConversation.settings().catch(function () { announceAgent('Could not open notification settings.'); }); });
+      notifications.textContent = value.display === 'granted' ? tr('Notifications are allowed.', '通知は許可されています。') : tr('Notifications are off; chat still works.', '通知は許可されていません。会話は引き続き使えます。');
+      var button = document.createElement('button'); button.type = 'button'; button.textContent = tr('Notification settings', '通知の設定');
+      button.addEventListener('click', function () { nativeConversation.settings().catch(function () { announceAgent(tr('Could not open notification settings.', '通知の設定を開けませんでした。')); }); });
       notifications.appendChild(button);
-    }).catch(function () { notifications.textContent = '通知の状態を確認できませんでした / Could not check notifications.'; });
+    }).catch(function () { notifications.textContent = tr('Could not check notifications.', '通知の状態を確認できませんでした。'); });
   }
   var status = panel.querySelector('#history-storage-status');
   var buttons = panel.querySelectorAll('.agent-panel-body button');
   if (!nativeHistory || !nativeHistory.active) {
-    status.textContent = '履歴の移し替えは未完了です。空き容量を確かめ、アプリを開き直してください。既存の会話は残しています。';
+    status.textContent = tr('Moving your history has not finished. Check free storage and reopen the app. Your existing chats are kept.', '履歴の移し替えは未完了です。空き容量を確かめ、アプリを開き直してください。既存の会話は残しています。');
     buttons.forEach(function (b) { b.disabled = true; }); return;
   }
   async function refresh() {
     var bytes = await nativeHistory.usage();
-    if (panel.isConnected) status.textContent = 'Storage / 使用量: ' + (bytes / 1048576).toFixed(2) + ' MB';
+    if (panel.isConnected) status.textContent = tr('Storage: ', '使用量: ') + (bytes / 1048576).toFixed(2) + ' MB';
   }
   async function action(task) {
     buttons.forEach(function (b) { b.disabled = true; });
     try { await task(); }
-    catch (_) { status.textContent = '操作を完了できませんでした。空き容量を確かめて再試行してください。'; }
+    catch (_) { status.textContent = tr('Could not finish. Check free storage and try again.', '操作を完了できませんでした。空き容量を確かめて再試行してください。'); }
     finally { buttons.forEach(function (b) { b.disabled = false; }); }
   }
   panel.querySelector('#history-export').addEventListener('click', function () {
     action(async function () {
-      if (agentBusy) { status.textContent = '回答が終わってから書き出してください。'; return; }
+      if (agentBusy) { status.textContent = tr('Export after the reply finishes.', '回答が終わってから書き出してください。'); return; }
       syncCurrentToSaved();
       var payload = await nativeHistory.exportData();
       var fs = window.Capacitor.Plugins.Filesystem, share = window.Capacitor.Plugins.Share;
@@ -1850,8 +1872,8 @@ async function showNativeSettings() {
   });
   panel.querySelector('#history-clear').addEventListener('click', function () {
     action(async function () {
-      if (agentBusy) { status.textContent = '回答を停止してから削除してください。'; return; }
-      if (!window.confirm('すべての会話と保存画像を削除します。元には戻せません。Delete all conversations and images?')) return;
+      if (agentBusy) { status.textContent = tr('Stop the reply before deleting.', '回答を停止してから削除してください。'); return; }
+      if (!window.confirm(tr('Delete all conversations and saved images? This cannot be undone.', 'すべての会話と保存画像を削除します。元には戻せません。'))) return;
       try { await window.Capacitor.Plugins.Filesystem.deleteFile({ directory: 'CACHE', path: 'magi-export.json' }); }
       catch (error) { if (error.code !== 'OS-PLUG-FILE-0008' && error.code !== 'ENOENT') throw error; }
       if (nativeConversation) await nativeConversation.clear();
@@ -1860,16 +1882,16 @@ async function showNativeSettings() {
       await nativeHistory.flush();
     });
   });
-  try { await refresh(); } catch (_) { status.textContent = '使用量を読み込めませんでした。保存状態を確認してください。'; }
+  try { await refresh(); } catch (_) { status.textContent = tr('Could not read storage usage. Check the saved data.', '使用量を読み込めませんでした。保存状態を確認してください。'); }
 }
 
 async function openOriginalImage(target) {
   if (!nativeHistory || !nativeHistory.active) return;
   try {
     var uri = await nativeHistory.imageUri(target.dataset.original);
-    var panel = makeAgentPanel('agent-image-panel', 'Original image', '<img alt="Original attachment" style="max-width:100%;height:auto">');
+    var panel = makeAgentPanel('agent-image-panel', tr('Original image', '元の画像'), '<img alt="' + tr('Original attachment', '添付した元の画像') + '" style="max-width:100%;height:auto">');
     if (panel) panel.querySelector('img').src = window.Capacitor.convertFileSrc(uri);
-  } catch (_) { announceAgent('Could not open the original image.'); }
+  } catch (_) { announceAgent(tr('Could not open the original image.', '元の画像を開けませんでした。')); }
 }
 agentLog.addEventListener('click', function (event) {
   var image = event.target.closest('[data-original]');
@@ -2039,8 +2061,44 @@ document.getElementById('btn-theme').addEventListener('click', function () {
 });
 // メニューの項目は、押すと切り替わる先のテーマを書く
 function syncThemeLabel() {
-  document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? 'Light mode' : 'Dark mode';
+  document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? tr('Light mode', 'ライトモード') : tr('Dark mode', 'ダークモード');
 }
+// 固定の文言は data-ja（文字）・data-ja-title・data-ja-aria・data-ja-ph（入力欄の例文）に日本語を持たせ、英語は最初の値を data-en* に控える。
+// 描いた後の会話とスプラッシュは描き直す。回答の途中なら会話は描き直さず、これから出る分から切り替わる。
+function applyStaticLanguage() {
+  var ja = isJa();
+  [['ja', 'en', 'textContent'], ['jaTitle', 'enTitle', 'title'], ['jaAria', 'enAria', 'aria-label'], ['jaPh', 'enPh', 'placeholder']].forEach(function (k) {
+    var attr = 'data-' + k[0].replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); });
+    document.querySelectorAll('[' + attr + ']').forEach(function (el) {
+      if (el.dataset[k[1]] === undefined) el.dataset[k[1]] = k[2] === 'textContent' ? el.textContent : el.getAttribute(k[2]) || '';
+      var value = ja ? el.dataset[k[0]] : el.dataset[k[1]];
+      if (k[2] === 'textContent') el.textContent = value; else el.setAttribute(k[2], value);
+    });
+  });
+  var langLabel = document.getElementById('btn-lang-label');
+  langLabel.textContent = ja ? 'English' : '日本語'; langLabel.lang = ja ? 'en' : 'ja';
+  syncThemeLabel();
+  agentClarifyPlaceholder(['補足があれば入力', 'Add details if needed'].indexOf(agentInput.placeholder) >= 0);
+  agentSendBtn.title = agentSendBtn.ariaLabel = agentSendBtn.dataset.stop ? tr('Stop', '停止') : tr('Send', '送信');
+  var voice = document.getElementById('agent-voice');
+  voice.title = voice.getAttribute('aria-pressed') === 'true' ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力');
+  renderAgentSuggest(); renderUsage();
+  var banner = document.getElementById('app-update');
+  if (banner && banner.dataset.version) labelAppUpdate(banner);
+}
+function applyLanguage() {
+  applyStaticLanguage();
+  if (!agentBusy) {
+    closeAgentPanels(); closeAttachMenu(); closeEmojiPops();
+    if (agentHistory.length) renderHistoryToLog(agentHistory);
+    else if (agentLog.querySelector('.agent-splash')) agentLog.innerHTML = agentHintHTML();
+  }
+}
+document.getElementById('btn-lang').addEventListener('click', function () {
+  window.MagiLanguage.choose(isJa() ? 'en' : 'ja');
+  applyLanguage();
+});
+applyStaticLanguage();
 new MutationObserver(syncThemeLabel).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 syncThemeLabel();
 
@@ -2090,14 +2148,19 @@ async function checkAppUpdate() {
       if (safeGet('magi_update_dismissed') === version) return;
       var banner = document.getElementById('app-update');
       if (!banner) return;
-      var ja = /^ja(?:-|$)/i.test(navigator.language || '');
-      banner.querySelector('.app-update-text').textContent = ja ? '新しいバージョン（' + version + '）があります' : 'Version ' + version + ' is available';
-      banner.querySelector('a').textContent = ja ? 'ダウンロード' : 'Download';
-      var close = banner.querySelector('button'); close.setAttribute('aria-label', ja ? 'この版の通知を閉じる' : 'Dismiss this version');
+      banner.dataset.version = version;
+      labelAppUpdate(banner);
+      var close = banner.querySelector('button');
       close.onclick = function () { banner.hidden = true; updateStore('magi_update_dismissed', version); };
       banner.hidden = false;
     } finally { clearTimeout(timer); }
   } catch (_) { /* 機内モード・保存不可・壊れた応答でも起動を続ける */ }
+}
+function labelAppUpdate(banner) {
+  var ja = document.documentElement.lang === 'ja', version = banner.dataset.version;
+  banner.querySelector('.app-update-text').textContent = ja ? '新しいバージョン（' + version + '）があります' : 'Version ' + version + ' is available';
+  banner.querySelector('a').textContent = ja ? 'ダウンロード' : 'Download';
+  banner.querySelector('button').setAttribute('aria-label', ja ? 'この版の通知を閉じる' : 'Dismiss this version');
 }
 // APP_UPDATE_END
 
@@ -2106,23 +2169,23 @@ async function initNativeInputs() {
   var cap = window.Capacitor, voice = document.getElementById('agent-voice');
   if (!cap.Plugins.MagiShare && !cap.Plugins.SpeechRecognition) return;
   if (cap.Plugins.MagiShare && AGENT_PRIVACY_FEATURES.indexOf('share') < 0) AGENT_PRIVACY_FEATURES.push('share');
-  var readingShared = 'Reading shared data… / 共有された内容を読み込み中…';
+  var readingShared = tr('Reading shared data…', '共有された内容を読み込み中…');
   nativeInput = window.MagiNativeInput.create({ cap: cap,
     generation: function () { return agentGen; },
     beginShare: function () { syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent(readingShared); },
     endShare: function (token) {
       if (token !== agentGen) return;
       sharedLoading = false;
-      if (agentStatusEl.textContent === readingShared) announceAgent('Shared content is ready. / 共有された内容を入力しました。');
+      if (agentStatusEl.textContent === readingShared) announceAgent(tr('Shared content is ready.', '共有された内容を入力しました。'));
     },
     setDraft: function (text) { agentInput.value = text; fitAgentInput(); },
     setShared: setSharedDocument,
     attach: addAttachments,
     // 読み上げだけでなく、添付の欄にも短く出して画面で分かるようにする。
-    notice: function (text) { announceAgent(text); noticeAttach(text); },
+    notice: function (text) { text = pickLang(text); announceAgent(text); noticeAttach(text); },
     appendDraft: function (text) { agentInput.value += (agentInput.value && text ? '\n' : '') + text; fitAgentInput(); },
     interim: function (text) { document.getElementById('agent-voice-interim').textContent = text; },
-    voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? 'Stop voice input' : 'Voice input'; }
+    voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力'); }
   });
   await nativeInput.init();
   document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.finishVoice(); });
@@ -2145,7 +2208,7 @@ async function recoverNativeConversation(id) {
     var last = agentHistory.at(-1);
     if (last && last.role === 'user' && last.native_request === row.id) { await agentSend(row); return; }
     // 削除・古い版からの変更で対応する往復が無い列を、新しい質問として送らない。
-    announceAgent('A pending reply could not be matched to this conversation. / 受信データと会話の対応を確認できませんでした。');
+    announceAgent(tr('A pending reply could not be matched to this conversation.', '受信データと会話の対応を確認できませんでした。'));
   }
 }
 function openNativeConversationLink(value) {
@@ -2172,7 +2235,7 @@ function openNativeConversationLink(value) {
   if (!id || !sessions.some(function (s) { return s.id === id; })) { syncCurrentToSaved(); resetAgent(); return; }
   closeAgentPanels();
   if (id !== currentSessionId) loadSavedSession(id);
-  else if (!agentBusy) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply.'); });
+  else if (!agentBusy) recoverNativeConversation(id).catch(function () { announceAgent(tr('Could not recover the pending reply.', '未保存の回答を復元できませんでした。')); });
 }
 async function initNativeConversationLinks() {
   var app = window.Capacitor.Plugins.App;
@@ -2187,22 +2250,22 @@ async function initHistoryStorage() {
   if (!nativeAndroid) { initAgent(); return; }
   var appRoot = document.getElementById('app');
   appRoot.inert = true;
-  announceAgent('Opening saved conversations…');
+  announceAgent(tr('Opening saved conversations…', '保存した会話を開いています…'));
   try {
     var fs = window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
     if (!fs || !window.MagiNativeHistory) throw new Error('history_plugin_unavailable');
     nativeHistory = window.MagiNativeHistory.create({
       fs: fs, legacy: localStorage, cleanHistory: cleanHistory,
-      onError: function () { announceAgent('履歴を保存できませんでした。空き容量を確かめ、アプリを開き直してください。既存の会話は削除していません。'); }
+      onError: function () { announceAgent(tr('Could not save your history. Check free storage and reopen the app. No existing chats were deleted.', '履歴を保存できませんでした。空き容量を確かめ、アプリを開き直してください。既存の会話は削除していません。')); }
     });
     var migrated = await nativeHistory.init();
     loadCurrentSessionMeta();
     initAgent();
     if (window.MagiNativeConversation && nativeHistory.active) {
-      nativeConversation = await window.MagiNativeConversation.create({ cap: window.Capacitor, notice: function (text) { announceAgent(text); noticeAttach(text); } });
+      nativeConversation = await window.MagiNativeConversation.create({ cap: window.Capacitor, notice: function (text) { text = pickLang(text); announceAgent(text); noticeAttach(text); } });
     }
     historyLoading = false; appRoot.inert = false;
-    announceAgent(migrated ? '' : '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
+    announceAgent(migrated ? '' : tr('Could not move your history. Chats are opened from the previous storage. Check free storage and reopen the app.', '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。'));
     var settings = document.getElementById('btn-settings-agent');
     if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
     nativeInputReady = initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
@@ -2212,7 +2275,7 @@ async function initHistoryStorage() {
     if (nativeConversation) initNativeConversationLinks().catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
   } catch (_) {
     // 移行済みファイルが読めないときは、新規データで上書きしない。
-    announceAgent('保存した履歴を開けませんでした。アプリを開き直してください。');
+    announceAgent(tr('Could not open your saved history. Reopen the app.', '保存した履歴を開けませんでした。アプリを開き直してください。'));
   }
 }
 initHistoryStorage();

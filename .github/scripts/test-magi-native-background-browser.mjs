@@ -6,7 +6,7 @@ import { resolve, dirname } from 'node:path';
 import { chromium } from 'playwright';
 import { nativeFilesystemFixture } from './magi-native-filesystem-fixture.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..'), out = resolve(root, 'workers/.wrangler/magi-b3-native-20261020'); mkdirSync(out, { recursive: true });
-const browser = await chromium.launch({ headless: true }), context = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
+const browser = await chromium.launch({ headless: true }), context = await browser.newContext({ locale: 'en-US', serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
 const storage = nativeFilesystemFixture(), runs = new Map(), calls = [], errors = [];
 let completeImmediately = true, launchUrl = null;
 const event = (name, data) => 'event: ' + name + '\ndata: ' + JSON.stringify(data) + '\n\n';

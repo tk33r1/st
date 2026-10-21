@@ -24,3 +24,15 @@
   window.MagiTheme = { choose: function (theme) { manual = true; apply(theme === 'dark' ? 'dark' : 'light'); } };
   follow();
 })();
+
+// 描画前に画面の言語を決める。︙のメニューで選んだ言語は保存し、無ければ端末の言語（日本語以外は英語）。
+(function () {
+  'use strict';
+  var saved = null;
+  try { saved = localStorage.getItem('magi_lang'); } catch (_) {}
+  document.documentElement.lang = saved === 'ja' || saved === 'en' ? saved : /^ja(?:-|$)/i.test(navigator.language || '') ? 'ja' : 'en';
+  window.MagiLanguage = { choose: function (lang) {
+    document.documentElement.lang = lang === 'ja' ? 'ja' : 'en';
+    try { localStorage.setItem('magi_lang', document.documentElement.lang); } catch (_) {}
+  } };
+})();

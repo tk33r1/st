@@ -1,9 +1,9 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
-var CACHE = 'magi-shell-v83';
+var CACHE = 'magi-shell-v84';
 // Shell files, icons included (they are committed in www/).
 var CORE = [
-  './', './index.html', './app.js?v=20261022_2', './native-widget.js?v=20261022_1', './native-background.js?v=20261021_1', './native-history.js?v=20261021_1', './native-input.js?v=20261022_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261012_2', './manifest.webmanifest',
+  './', './index.html', './app.js?v=20261022_3', './native-widget.js?v=20261022_1', './native-background.js?v=20261021_1', './native-history.js?v=20261021_1', './native-input.js?v=20261022_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261022_1', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png'
 ];
 

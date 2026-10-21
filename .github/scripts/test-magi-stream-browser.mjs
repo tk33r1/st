@@ -31,7 +31,7 @@ try {
     for (const mode of modes) {
       if (process.argv.includes('--quick') && !mode.endsWith('pass')) continue;
       const malice = mode.startsWith('malice'), fact = mode.startsWith('fact'), buffered = !mode.endsWith('pass');
-      const page = await browser.newPage({ viewport: { width, height: 900 }, serviceWorkers: 'block' }), errors = [];
+      const page = await browser.newPage({ viewport: { width, height: 900 }, locale: 'en-US', serviceWorkers: 'block' }), errors = [];
       page.on('pageerror', e => errors.push(e.message));
       let release, posted = false; const requests = [];
       const gate = new Promise(r => { release = r; });

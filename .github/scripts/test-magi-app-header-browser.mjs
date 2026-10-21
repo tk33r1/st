@@ -21,7 +21,7 @@ try {
     { name: 'global', scheme: 'light', reply: usage(3, { global_full: true }), dash: '100.0 100', level: 'full', warn: true },
     { name: 'old-worker', scheme: 'dark', status: 404 },
   ]) {
-    const context = await browser.newContext({ viewport: { width: 360, height: 780 }, colorScheme: scenario.scheme, serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'en-US', colorScheme: scenario.scheme, serviceWorkers: 'block' });
     const errors = [], posts = [], usageCalls = [];
     let usageReply = scenario.reply, hold = null;
     await context.route('**/*', async route => {
@@ -148,16 +148,72 @@ try {
       // 絵文字の吹き出しも、円グラフを押すと閉じる
       await page.locator('#btn-history-agent').click(); await page.locator('.session-load').first().click();
       const emoji = page.locator('.react-btn[data-act="emoji"]').first();
-      if (await emoji.count()) {
-        await emoji.click(); assert.equal(await page.locator('.emoji-pop').count(), 1);
-        await page.locator('#btn-usage').click(); assert.equal(await page.locator('.emoji-pop').count(), 0);
-        report.push({ emojiChecked: true });
-      }
+      assert.ok(await emoji.count());
+      await emoji.click(); assert.equal(await page.locator('.emoji-pop').count(), 1);
+      await page.locator('#btn-usage').click(); assert.equal(await page.locator('.emoji-pop').count(), 0);
     }
     assert.deepEqual(errors, []); assert.deepEqual(posts, []);
     report.push({ scenario: scenario.name, usageCalls: usageCalls.length, errors, posts: posts.length });
     await context.close();
   }
+
+  // 言語: 端末が日本語なら日本語で始まり、︙で切り替えると画面・会話・開き直した後も切り替わる
+  const context = await browser.newContext({ viewport: { width: 360, height: 780 }, locale: 'ja-JP', serviceWorkers: 'block' });
+  const errors = [];
+  await context.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.origin === 'https://tk.st' && url.pathname.startsWith('/magi-app/www/')) {
+      const name = url.pathname.slice('/magi-app/www/'.length) || 'index.html';
+      if (!/^(?:[a-z0-9.-]+|vendor\/Readability\.js)$/.test(name)) return route.abort();
+      return route.fulfill({ body: readFileSync(resolve(root, 'magi-app/www', name)), contentType: name.endsWith('.html') ? 'text/html' : name.endsWith('.js') ? 'text/javascript' : 'application/json' });
+    }
+    if (url.pathname === '/magi2/usage') return route.fulfill({ json: usage(7) });
+    if (url.pathname === '/magi2/models') return route.fulfill({ json: { personas: { 'MELCHIOR-1': { provider: 'deepseek', provider_label: 'DeepSeek', model: 'M', desc: { en: 'Desc EN', ja: '説明 JA' }, context: { en: 'Ctx EN', ja: '素材 JA' }, theme: { en: 'Th EN', ja: 'テーマ JA' } } } } });
+    return route.abort();
+  });
+  await context.addInitScript(() => {
+    localStorage.setItem('magi_saved_sessions', JSON.stringify([{ id: 'l1', title: '保存した会話', timestamp: '2026-10-21T00:00:00Z',
+      history: [{ role: 'user', content: 'q' }, { role: 'assistant', content: 'a', mid: 'm1', debate: { 'MELCHIOR-1': { round1: 'r1', round2: 'r2' } } }] }]));
+  });
+  const page = await context.newPage();
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('https://tk.st/magi-app/www/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !window.usageRequest && window.usageLoadedAt > 0);
+  const labels = () => page.evaluate(() => ({ lang: document.documentElement.lang, placeholder: document.getElementById('agent-input').placeholder,
+    menu: document.getElementById('agent-more-dropdown').innerText, chats: document.getElementById('btn-history-agent').getAttribute('aria-label'),
+    attach: document.getElementById('agent-attach').getAttribute('aria-label'), usage: document.getElementById('btn-usage').getAttribute('aria-label') }));
+  let l = await labels();
+  assert.equal(l.lang, 'ja'); assert.equal(l.placeholder, '武田伸也AIに質問…'); assert.equal(l.chats, 'チャット'); assert.equal(l.attach, '画像を追加');
+  assert.match(l.usage, /今日の利用 7 \/ 60回/);
+  await page.locator('#btn-more-agent').click();
+  l = await labels();
+  for (const text of ['ライトモード|ダークモード', 'English', '会話を共有', 'Markdownで保存', '旧MAGI']) assert.match(l.menu, new RegExp(text));
+  await page.screenshot({ path: resolve(out, 'lang-ja-menu.png'), clip: { x: 0, y: 0, width: 360, height: 360 } });
+  await page.keyboard.press('Escape'); await page.locator('#agent-log').click({ position: { x: 20, y: 500 } });
+  // スプラッシュの人格の説明も日本語
+  await page.locator('.magi-node[data-codename="MELCHIOR-1"]').click();
+  await page.waitForFunction(() => /説明 JA/.test(document.querySelector('.magi-desc').textContent));
+  assert.match(await page.locator('.magi-desc').innerText(), /素材[\s\S]*素材 JA/);
+  await page.locator('#btn-history-agent').click();
+  assert.match(await page.locator('#agent-history-panel').innerText(), /新しいチャット[\s\S]*チャット[\s\S]*保存した会話/);
+  await page.locator('.session-load').click();
+  assert.match(await page.locator('#agent-log').innerText(), /初回[\s\S]*討議後/);
+  // English に切り替える
+  await page.locator('#btn-more-agent').click(); await page.locator('#btn-lang').click();
+  l = await labels();
+  assert.equal(l.lang, 'en'); assert.equal(l.placeholder, 'Ask Shinya Takeda AI...'); assert.equal(l.chats, 'Chats'); assert.equal(l.attach, 'Add an image');
+  assert.match(l.usage, /Today's usage: 7 of 60/); assert.match(l.menu, /日本語/); assert.match(l.menu, /Share Log/);
+  assert.match(await page.locator('#agent-log').innerText(), /Initial[\s\S]*After debate/);
+  assert.equal(await page.evaluate(() => localStorage.getItem('magi_lang')), 'en');
+  // 開き直しても選んだ言語のまま
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !window.usageRequest && window.usageLoadedAt > 0);
+  l = await labels(); assert.equal(l.lang, 'en'); assert.equal(l.chats, 'Chats');
+  await page.locator('#btn-more-agent').click(); await page.locator('#btn-lang').click();
+  assert.equal((await labels()).placeholder, '武田伸也AIに質問…');
+  assert.deepEqual(errors, []);
+  report.push({ scenario: 'language', errors });
+  await context.close();
 } finally {
   await browser.close();
 }

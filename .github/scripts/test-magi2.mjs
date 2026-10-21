@@ -1990,7 +1990,7 @@ function client(src, isHome = false) {
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(), agentTitle: '',
     agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeConversation: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
-    userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, announceAgent() {},
+    userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
@@ -3165,7 +3165,7 @@ function recordClient(src) {
   Object.assign(c, {
     AGENT_PERSONAS: [{ codename: 'MELCHIOR-1', name: 'Enthusiast' }],
     esc: value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
-    tr: en => en, currentLang: 'en', pick: (item, key) => item[key], reactionBarHTML: () => '',
+    tr: en => en, isJa: () => false, currentLang: 'en', pick: (item, key) => item[key], reactionBarHTML: () => '',
     document: { createElement: element },
   });
   const cards = src === home
@@ -3879,12 +3879,12 @@ test('両画面の説明キャッシュは並行取得を共有し、10分後と
 
 function appUpdateFixture({native = true, stored = {}, reply = {tag_name:'v4.7'}, failure, blocked = false, language = 'ja-JP'} = {}) {
   const clock = streamClock(), calls = [];
-  const banner = {hidden:true, text:{}, link:{}, button:{setAttribute() {}}, querySelector(s) { return s === 'a' ? this.link : s === 'button' ? this.button : this.text; }};
+  const banner = {hidden:true, dataset:{}, text:{}, link:{}, button:{setAttribute() {}}, querySelector(s) { return s === 'a' ? this.link : s === 'button' ? this.button : this.text; }};
   const ctx = vm.createContext({...clock, APP_VERSION:'4.6', AbortController,
     Number, navigator:{language}, window:native ? {Capacitor:{isNativePlatform:()=>true}} : {},
     safeGet(key) { return blocked ? null : stored[key] ?? null; },
     localStorage:{setItem(k,v) { if(blocked) throw new Error('blocked'); stored[k]=v; }},
-    document:{getElementById:()=>banner},
+    document:{getElementById:()=>banner, documentElement:{lang:/^ja/.test(language) ? 'ja' : 'en'}},
     fetch(url,options) { calls.push({url,options}); return failure === 'pending' ? new Promise(()=>{}) : failure === 'throw' ? Promise.reject(new Error('offline')) : Promise.resolve({ok:failure !== 'http', json:()=>failure === 'json' ? Promise.reject(new Error('json')) : Promise.resolve(reply)}); }
   });
   vm.runInContext(between(mobile, '// APP_UPDATE_BEGIN', '// APP_UPDATE_END'), ctx);
@@ -3913,11 +3913,25 @@ test('更新通知は5秒で諦め、壊れたJSON・HTTP・保存不可でも�
   }
   const f=appUpdateFixture({blocked:true,language:'en'});await f.ctx.checkAppUpdate();f.banner.button.onclick();assert.equal(f.banner.hidden,true);
 });
+test('画面の言語は保存した選択、無ければ端末の言語で決め、保存できなくても切り替えられる', () => {
+  for (const [saved, language, expected] of [[null, 'ja-JP', 'ja'], [null, 'ja', 'ja'], [null, 'en-US', 'en'], [null, 'jav', 'en'], [null, '', 'en'],
+    ['en', 'ja-JP', 'en'], ['ja', 'en-US', 'ja'], ['fr', 'ja-JP', 'ja'], ['throw', 'ja-JP', 'ja']]) {
+    const stored = {}, root = {style:{}, setAttribute() {}};
+    const ctx = vm.createContext({Date, navigator:{language}, document:{documentElement:root}, window:{},
+      localStorage:{removeItem() {}, getItem() { if (saved === 'throw') throw new Error('blocked'); return saved; }, setItem(k, v) { if (saved === 'throw') throw new Error('blocked'); stored[k] = v; }}});
+    vm.runInContext(read('magi-app/www/app-theme.js'), ctx);
+    assert.equal(root.lang, expected, `${saved} ${language}`);
+    ctx.window.MagiLanguage.choose(expected === 'ja' ? 'en' : 'ja');
+    assert.equal(root.lang, expected === 'ja' ? 'en' : 'ja');
+    assert.equal(stored.magi_lang, saved === 'throw' ? undefined : root.lang);
+    ctx.window.MagiLanguage.choose('fr'); assert.equal(root.lang, 'en');
+  }
+});
 test('起動テーマは前回の保存値を消し、端末設定・読めない時刻の境界・手動後の不追従を守る', () => {
   for(const [mode,hour,expected]of[['dark',12,'dark'],['light',0,'light'],['none',5,'dark'],['none',6,'light'],['none',17,'light'],['none',18,'dark'],['throw',12,'light']]) {
     let removed=false;const attr={},media={};
     const ctx=vm.createContext({Date:class extends Date {getHours(){return hour;}},localStorage:{removeItem(){removed=true;throw new Error('blocked');}},
-      document:{documentElement:{style:{},setAttribute(k,v){attr[k]=v;}}},window:{matchMedia(q){if(mode==='throw')throw new Error('unsupported');return media[q]={matches:q.includes(mode),addEventListener(_,fn){this.changed=fn;}};}}});
+      navigator:{language:'en-US'},document:{documentElement:{style:{},setAttribute(k,v){attr[k]=v;}}},window:{matchMedia(q){if(mode==='throw')throw new Error('unsupported');return media[q]={matches:q.includes(mode),addEventListener(_,fn){this.changed=fn;}};}}});
     vm.runInContext(read('magi-app/www/app-theme.js'),ctx);assert.equal(attr['data-theme'],expected);assert.equal(removed,true);
     if(mode==='light') {media['(prefers-color-scheme: light)'].matches=false;media['(prefers-color-scheme: dark)'].matches=true;media['(prefers-color-scheme: dark)'].changed();assert.equal(attr['data-theme'],'dark');}
     ctx.window.MagiTheme.choose('light');for(const m of Object.values(media)){m.matches=true;m.changed();}assert.equal(attr['data-theme'],'light');

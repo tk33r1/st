@@ -382,3 +382,13 @@ keytool -genkeypair -v -keystore magi-app/release.jks -alias magi \
   modified by this project — MAGI here is a faithful re-implementation of that
   client, mobile-first (full screen instead of the right-hand dock).
 - No build step or framework: plain HTML/CSS/JS, so it stays light.
+- Header (5.9): ☰ opens the saved chats and New chat; the ring shows today's
+  per-IP usage from `GET /magi2/usage`; ⋮ holds theme, language, share, export
+  and the remaining actions.
+- Language (5.9): English or Japanese. `app-theme.js` sets `<html lang>` before
+  the first paint from the saved choice (`magi_lang`) or the device language.
+  Fixed strings carry Japanese in `data-ja`, `data-ja-title`, `data-ja-aria` and
+  `data-ja-ph`; built strings use `tr(en, ja)`. Notices from the native helpers
+  are written as `English / 日本語` and `pickLang` shows one side. Switching
+  redraws the splash and the conversation unless a reply is streaming. The
+  chosen language also becomes `ui_language`, the fallback reply language.
