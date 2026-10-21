@@ -2149,7 +2149,8 @@ export default {
       };
       return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
     }
-    // --- 今日の利用回数（IP×UTC日、通常チャットの上限）。アプリのヘッダーの円グラフが読む。数えずに読むだけ ---
+    // --- 今日の利用回数（IP×UTC日、通常チャットの上限）。アプリのヘッダーの円グラフが読む。数えずに読むだけ。
+    // 全利用者の合計の上限に達した日は、IPの回数が残っていても送れないので global_full で知らせる ---
     if (request.method === 'GET' && url.pathname === '/magi2/usage') {
       const noStore = { ...cors, 'Cache-Control': 'no-store' };
       if (!isAllowedOrigin(origin) && (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY)) {
@@ -2159,9 +2160,11 @@ export default {
       if (!env.DB) return unavailable();
       try {
         const day = utcDay(), limit = DEFAULTS.daily_limit;
-        const row = await env.DB.prepare('SELECT count FROM rate_limit WHERE ip = ?1 AND day = ?2').bind(requestIP(request), day).first();
+        const read = key => env.DB.prepare('SELECT count FROM rate_limit WHERE ip = ?1 AND day = ?2').bind(key, day).first();
+        const [row, total] = await Promise.all([read(requestIP(request)), read('global')]);
         const resets = new Date(day + 'T00:00:00Z'); resets.setUTCDate(resets.getUTCDate() + 1);
-        return jsonResponse({ used: Math.min(row ? row.count : 0, limit), limit, day, resets_at: resets.toISOString() }, noStore);
+        return jsonResponse({ used: Math.min(row ? row.count : 0, limit), limit, day, resets_at: resets.toISOString(),
+          global_full: !!total && total.count >= DEFAULTS.global_daily_limit }, noStore);
       } catch (err) {
         log('usage', 'db_error', err && err.message);
         return unavailable();

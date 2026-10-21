@@ -49,7 +49,7 @@ npx wrangler deploy --config magi2/wrangler.toml
 
 `GET /magi2/models`はモデル名・人格の説明に加えて`provider_label`と`privacy`を返す。段落の正本は`personas.js`の`PRIVACY`。日英の`[{text, requires?}]`を文字だけで持ち、画面が対応する機能の印をすべて満たす段落だけ表示する。送り先はOpenAI・DeepSeek・Anthropic。トップとアプリは10分で説明を取り直し、取得失敗・旧Workerでは会社名を挙げない案内を出す。`themes.light`はLuna、`themes.dark`はHaikuを返す。旧画面のため`synthesizer`はライトのモデルのまま維持する。
 
-`GET /magi2/usage`は今日（UTC）の通常チャットのIPごとの回数を`{used, limit, day, resets_at}`で返す。数えずに読むだけで、許可したOriginかAPIキーが要り、`Cache-Control: no-store`。アプリのヘッダーの円グラフが起動時・送信の後・画面に戻ったとき（60秒以上空いたら）に読む。失敗・旧Workerでは円グラフを隠す。
+`GET /magi2/usage`は今日（UTC）の通常チャットのIPごとの回数を`{used, limit, day, resets_at, global_full}`で返す（`global_full`は全利用者の合計が上限に達した日にtrue）。数えずに読むだけで、許可したOriginかAPIキーが要り、`Cache-Control: no-store`。アプリのヘッダーの円グラフが起動時・送信の後・画面に戻ったとき（60秒以上空いたら）に読む。取得は6秒で打ち切り、取得中に呼ばれたら終わった後に読み直す。旧Worker（404など）では円グラフを隠し、通信の失敗では前の値を残す。
 
 ## 討議の回数（最大5回）
 

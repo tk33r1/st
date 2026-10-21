@@ -109,6 +109,7 @@
     #agent-usage-pop .usage-count { margin: 0.15rem 0 0.35rem; font-size: 12px; color: var(--secondary-color); font-variant-numeric: tabular-nums; }
     #agent-usage-pop .usage-count b { font-size: 1.4rem; font-weight: 600; color: var(--text-color); }
     #agent-usage-pop p { margin: 0; }
+    #agent-usage-pop .usage-warn { margin-top: 0.4rem; color: #ef4444; }
 
     /* ☰ で開く履歴。左から出るシートと、外側の暗幕（押すと閉じる） */
     .agent-panel.agent-drawer { padding: 0; flex-direction: row; background: rgba(0,0,0,0.45); }
@@ -161,10 +162,11 @@
     #agent-voice-interim:empty { display: none; }
     .session-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: background-color var(--duration-fast); }
     .session-item:hover, .session-item:active { background: var(--surface-alt); }
-    .session-load { flex: 1; min-width: 0; }
-    .session-title { font-size: 12px; font-weight: 600; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-load { flex: 1; min-width: 0; padding: 0; font: inherit; text-align: left; color: inherit; background: none; border: none; cursor: pointer; }
+    .session-load:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    .session-title { display: block; font-size: 12px; font-weight: 600; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .session-item:hover .session-title { color: var(--primary-color); }
-    .session-time { font-size: 9px; color: var(--secondary-color); margin-top: 0.15rem; }
+    .session-time { display: block; font-size: 9px; color: var(--secondary-color); margin-top: 0.15rem; }
     .session-del { flex-shrink: 0; display: inline-flex; padding: 0.35rem; background: transparent; border: none; color: var(--secondary-color); cursor: pointer; opacity: 0.6; }
     .session-del:hover, .session-del:active { color: #ef4444; opacity: 1; }
     .agent-panel-empty { text-align: center; color: var(--secondary-color); padding: 2rem 0; font-size: 11px; }
@@ -466,6 +468,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261022_1"></script>
+  <script src="app.js?v=20261022_2"></script>
 </body>
 </html>

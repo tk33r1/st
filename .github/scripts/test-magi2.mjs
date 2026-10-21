@@ -3766,7 +3766,12 @@ test('usageは許可したOriginにだけ、今日のIPの回数を数えずに�
     const res = await get(), data = await res.json();
     assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store');
     assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://localhost');
-    assert.deepEqual(data, { used: 12, limit: 60, day, resets_at: new Date(Date.parse(day + 'T00:00:00Z') + 864e5).toISOString() });
+    assert.deepEqual(data, { used: 12, limit: 60, day, resets_at: new Date(Date.parse(day + 'T00:00:00Z') + 864e5).toISOString(), global_full: false });
+    // 全利用者の合計が上限に達した日は、IPの回数が残っていても知らせる
+    sqlite(file, 'INSERT INTO rate_limit (ip, day, count) VALUES (?, ?, ?)', ['global', day, 299]);
+    assert.equal((await (await get()).json()).global_full, false);
+    sqlite(file, 'UPDATE rate_limit SET count = 300 WHERE ip = ? AND day = ?', ['global', day]);
+    assert.equal((await (await get()).json()).global_full, true);
     assert.equal((await (await get('https://localhost', '198.51.100.1')).json()).used, 0);
     assert.equal(sqlite(file, 'SELECT count FROM rate_limit WHERE ip = ? AND day = ?', ['203.0.113.9', day]).row.count, 12);
     assert.equal((await get('https://evil.example')).status, 401);

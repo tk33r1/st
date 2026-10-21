@@ -1571,9 +1571,16 @@ document.addEventListener('click', function (e) { if (!e.target.closest('.reacti
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
 var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel'];
-function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); }); }
+// パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
+function removeAgentPanel(panel) {
+  if (!panel.isConnected) return;
+  var hadFocus = panel.contains(document.activeElement);
+  panel.remove();
+  if (panel.onAgentClose) panel.onAgentClose(hadFocus);
+}
+function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) removeAgentPanel(p); }); }
 function makeAgentPanel(id, title, bodyHTML) {
-  if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
+  if (document.getElementById(id)) { removeAgentPanel(document.getElementById(id)); return null; }
   closeAgentPanels();
   var panel = document.createElement('div');
   panel.id = id; panel.className = 'agent-panel fade-in';
@@ -1581,37 +1588,42 @@ function makeAgentPanel(id, title, bodyHTML) {
     + '<button type="button" class="agent-panel-close">✕ CLOSE</button></div>'
     + '<div class="agent-panel-body">' + bodyHTML + '</div>';
   document.getElementById('app').appendChild(panel);
-  panel.querySelector('.agent-panel-close').addEventListener('click', function () { panel.remove(); });
+  panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
   return panel;
 }
-// ☰ で左から出す。新しい会話と保存した会話の一覧を並べ、外側の暗幕を押すと閉じる。
+// ☰ で左から出す。新しい会話と保存した会話の一覧を並べ、外側の暗幕・✕・Esc・戻るで閉じる。
+// 開いている間は Tab をシートの中で回し、閉じたらフォーカスを ☰ に戻す。
 function showHistoryPanel() {
   var menuBtn = document.getElementById('btn-history-agent');
-  var panel = makeAgentPanel('agent-history-panel', '✦ MAGI', '');
-  if (!panel) { menuBtn.setAttribute('aria-expanded', 'false'); return; }
-  panel.classList.add('agent-drawer');
-  panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Chats');
-  var sheet = document.createElement('nav');
-  sheet.className = 'agent-drawer-sheet';
-  sheet.setAttribute('aria-label', 'Chats');
-  panel.querySelector('.agent-panel-head .t').classList.add('glow');
-  panel.querySelector('.agent-panel-close').textContent = '✕';
-  panel.querySelector('.agent-panel-close').setAttribute('aria-label', 'Close');
-  panel.querySelector('.agent-panel-body').remove();
-  sheet.appendChild(panel.querySelector('.agent-panel-head'));
-  sheet.insertAdjacentHTML('beforeend', '<button type="button" id="btn-reset" class="drawer-new">'
+  var open = document.getElementById('agent-history-panel');
+  if (open) { removeAgentPanel(open); return; }
+  closeAgentPanels();
+  var panel = document.createElement('div');
+  panel.id = 'agent-history-panel'; panel.className = 'agent-panel agent-drawer fade-in';
+  panel.innerHTML = '<div class="agent-drawer-sheet" role="dialog" aria-modal="true" aria-label="Chats">'
+    + '<div class="agent-panel-head"><span class="t glow">✦ MAGI</span><button type="button" class="agent-panel-close" aria-label="Close">✕</button></div>'
+    + '<button type="button" id="btn-reset" class="drawer-new">'
     + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
-    + '<span>New chat</span></button><div class="drawer-label">Chats</div><div id="agent-history-list"></div>');
-  panel.appendChild(sheet);
+    + '<span>New chat</span></button><div class="drawer-label">Chats</div><div id="agent-history-list"></div></div>';
+  panel.onAgentClose = function (hadFocus) {
+    menuBtn.setAttribute('aria-expanded', 'false');
+    if (hadFocus) menuBtn.focus({ preventScroll: true });
+  };
+  panel.addEventListener('click', function (e) { if (e.target === panel) removeAgentPanel(panel); });
+  panel.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); removeAgentPanel(panel); return; }
+    if (e.key !== 'Tab') return;
+    var items = panel.querySelectorAll('button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])');
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
+  panel.querySelector('#btn-reset').addEventListener('click', function () { resetAgent(); closeAgentPanels(); });
+  document.getElementById('app').appendChild(panel);
   menuBtn.setAttribute('aria-expanded', 'true');
-  new MutationObserver(function (_, observer) {
-    if (panel.isConnected) return;
-    observer.disconnect(); menuBtn.setAttribute('aria-expanded', 'false');
-  }).observe(panel.parentNode, { childList: true });
-  panel.addEventListener('click', function (e) { if (e.target === panel) panel.remove(); });
-  sheet.querySelector('#btn-reset').addEventListener('click', function () { resetAgent(); closeAgentPanels(); });
   renderSavedSessionsList();
-  sheet.querySelector('#btn-reset').focus({ preventScroll: true });
+  panel.querySelector('#btn-reset').focus({ preventScroll: true });
 }
 function showInstallPanel() {
   var panel = makeAgentPanel('agent-install-panel', 'Use MAGI on iPhone',
@@ -1632,9 +1644,9 @@ function renderSavedSessionsList() {
   if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">No saved conversations.</div>'; return; }
   list.innerHTML = sessions.map(function (s) {
     return '<div class="session-item" data-id="' + esc(s.id) + '">'
-      + '<div class="session-load" data-id="' + esc(s.id) + '">'
-      + '<div class="session-title">' + esc(s.title) + '</div>'
-      + '<div class="session-time">' + esc(new Date(s.timestamp).toLocaleString()) + '</div></div>'
+      + '<button type="button" class="session-load" data-id="' + esc(s.id) + '">'
+      + '<span class="session-title">' + esc(s.title) + '</span>'
+      + '<span class="session-time">' + esc(new Date(s.timestamp).toLocaleString()) + '</span></button>'
       + '<button type="button" class="session-del" data-id="' + esc(s.id) + '" title="Delete chat">' + ICON_TRASH + '</button>'
       + '</div>';
   }).join('');
@@ -1947,32 +1959,44 @@ document.getElementById('btn-history-agent').addEventListener('click', showHisto
 // ---- 今日の利用回数 ---------------------------------------------------------------
 // Worker の上限（IP×UTC日）を読むだけで数えない。旧 Worker や通信の失敗では円グラフごと隠す。
 var usageWrap = document.querySelector('.usage-wrap'), usagePop = document.getElementById('agent-usage-pop');
-var usageBtn = document.getElementById('btn-usage'), agentUsage = null, usageLoadedAt = 0, usageRequest = null;
+var usageBtn = document.getElementById('btn-usage'), agentUsage = null, usageLoadedAt = 0, usageRequest = null, usageAgain = false;
 function renderUsage() {
   if (!agentUsage) { usageWrap.hidden = true; closeUsagePop(); return; }
-  var ja = document.documentElement.lang === 'ja', used = agentUsage.used, limit = agentUsage.limit;
-  var ratio = Math.min(1, used / limit);
+  var ja = document.documentElement.lang === 'ja', used = agentUsage.used, limit = agentUsage.limit, globalFull = agentUsage.global_full;
+  // 全体の上限に達した日は、自分の回数が残っていても送れないので満杯の赤で出す
+  var ratio = globalFull ? 1 : Math.min(1, used / limit);
   usageWrap.hidden = false;
-  usageWrap.dataset.level = used >= limit ? 'full' : ratio >= 0.8 ? 'high' : '';
+  usageWrap.dataset.level = used >= limit || globalFull ? 'full' : ratio >= 0.8 ? 'high' : '';
   usageWrap.querySelector('.usage-fill').setAttribute('stroke-dasharray', (ratio * 100).toFixed(1) + ' 100');
-  var label = ja ? '今日の利用 ' + used + ' / ' + limit + '回' : "Today's usage: " + used + ' of ' + limit;
+  var label = (ja ? '今日の利用 ' + used + ' / ' + limit + '回' : "Today's usage: " + used + ' of ' + limit)
+    + (globalFull ? (ja ? '（全体の上限に達しました）' : ' (site-wide limit reached)') : '');
   usageBtn.title = label; usageBtn.setAttribute('aria-label', label);
   var reset = new Date(agentUsage.resets_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   usagePop.innerHTML = '<div class="usage-label">' + (ja ? '今日の利用' : "Today's usage") + '</div>'
     + '<div class="usage-count"><b>' + used + '</b> / ' + limit + (ja ? ' 回' : '') + '</div>'
     + '<p>' + esc(ja ? 'IPアドレスごとに1日' + limit + '回まで送れます。毎日 ' + reset + ' に戻ります。'
-      : 'Each IP address can send ' + limit + ' messages a day. Resets daily at ' + reset + '.') + '</p>';
+      : 'Each IP address can send ' + limit + ' messages a day. Resets daily at ' + reset + '.') + '</p>'
+    + (globalFull ? '<p class="usage-warn">' + esc(ja ? '今日は全利用者の合計の上限に達したため、' + reset + ' まで送れません。'
+      : 'The site-wide daily limit has been reached. You can send again at ' + reset + '.') + '</p>' : '');
 }
+// 取得中に呼ばれたら（送信の直後など）、その取得は送信の前の回数かもしれないので、終わってからもう一度読む。
+// Worker が応じない（旧版の404・形の違う応答）なら隠し、通信の失敗・6秒の打ち切りでは前の値を残す。
 function loadUsage() {
-  if (usageRequest) return usageRequest;
-  usageRequest = fetch(USAGE_API, { cache: 'no-store' })
-    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function (j) {
-      var ok = j && Number.isInteger(j.used) && Number.isInteger(j.limit) && j.limit > 0 && j.used >= 0 && !isNaN(Date.parse(j.resets_at));
-      agentUsage = ok ? { used: Math.min(j.used, j.limit), limit: j.limit, resets_at: j.resets_at } : null;
+  if (usageRequest) { usageAgain = true; return usageRequest; }
+  var controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 6000);
+  usageRequest = fetch(USAGE_API, { cache: 'no-store', signal: controller.signal })
+    .then(function (r) {
+      if (!r.ok) { agentUsage = null; return; }
+      return r.json().then(function (j) {
+        var ok = j && Number.isInteger(j.used) && Number.isInteger(j.limit) && j.limit > 0 && j.used >= 0 && !isNaN(Date.parse(j.resets_at));
+        agentUsage = ok ? { used: Math.min(j.used, j.limit), limit: j.limit, resets_at: j.resets_at, global_full: j.global_full === true } : null;
+      });
     })
-    .catch(function () { agentUsage = null; })
-    .then(function () { usageLoadedAt = Date.now(); usageRequest = null; renderUsage(); });
+    .catch(function () {})
+    .then(function () {
+      clearTimeout(timer); usageLoadedAt = Date.now(); usageRequest = null; renderUsage();
+      if (usageAgain) { usageAgain = false; loadUsage(); }
+    });
   return usageRequest;
 }
 function closeUsagePop() {
@@ -1980,10 +2004,8 @@ function closeUsagePop() {
   usagePop.classList.add('hidden'); usageBtn.setAttribute('aria-expanded', 'false');
   return true;
 }
-usageBtn.addEventListener('click', function (e) {
-  e.stopPropagation();
+usageBtn.addEventListener('click', function () {
   if (closeUsagePop()) return;
-  document.getElementById('agent-more-dropdown').classList.add('hidden');
   usagePop.classList.remove('hidden'); usageBtn.setAttribute('aria-expanded', 'true');
   loadUsage();
 });
@@ -1997,7 +2019,7 @@ loadUsage();
   var moreBtn = document.getElementById('btn-more-agent');
   var moreDropdown = document.getElementById('agent-more-dropdown');
   if (!moreBtn || !moreDropdown) return;
-  moreBtn.addEventListener('click', function (e) { e.stopPropagation(); closeUsagePop(); moreDropdown.classList.toggle('hidden'); });
+  moreBtn.addEventListener('click', function () { moreDropdown.classList.toggle('hidden'); });
   document.addEventListener('click', function (e) {
     if (!moreDropdown.classList.contains('hidden') && !e.target.closest('.kebab-wrap')) moreDropdown.classList.add('hidden');
   });
