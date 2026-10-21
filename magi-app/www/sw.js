@@ -3,7 +3,7 @@
 var CACHE = 'magi-shell-v82';
 // Shell files, icons included (they are committed in www/).
 var CORE = [
-  './', './index.html', './app.js?v=20261021_5', './native-widget.js?v=20261021_6', './native-background.js?v=20261021_1', './native-history.js?v=20261021_1', './native-input.js?v=20261021_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261012_2', './manifest.webmanifest',
+  './', './index.html', './app.js?v=20261022_1', './native-widget.js?v=20261021_6', './native-background.js?v=20261021_1', './native-history.js?v=20261021_1', './native-input.js?v=20261021_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261012_2', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png'
 ];
 
