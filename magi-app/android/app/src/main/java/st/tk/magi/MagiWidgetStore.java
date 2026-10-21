@@ -10,9 +10,9 @@ final class MagiWidgetStore {
     static synchronized boolean masked(Context context) { return prefs(context).getBoolean("masked", true); }
     static synchronized long revision(Context context) { return prefs(context).getLong("revision", 0); }
     static synchronized MagiWidgetData read(Context context) {
-        SharedPreferences p = prefs(context);
-        return new MagiWidgetData(p.getString("sessionId", ""), masked(context) ? "" : p.getString("title", ""),
-            masked(context) ? "" : p.getString("summary", ""), masked(context) ? "" : p.getString("verdict", ""));
+        SharedPreferences p = prefs(context); boolean masked = masked(context);
+        return new MagiWidgetData(p.getString("sessionId", ""), masked ? "" : p.getString("title", ""),
+            masked ? "" : p.getString("summary", ""), masked ? "" : p.getString("verdict", ""));
     }
     static synchronized void mask(Context context, boolean value) throws IOException {
         SharedPreferences.Editor edit = prefs(context).edit().putBoolean("masked", value).putLong("revision", revision(context) + 1);

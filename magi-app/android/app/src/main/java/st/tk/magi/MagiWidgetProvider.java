@@ -59,15 +59,12 @@ public class MagiWidgetProvider extends AppWidgetProvider {
     }
     static RemoteViews responsive(Context c, Bundle options) {
         synchronized (MagiWidgetStore.class) {
-        RemoteViews views;
-        if (Build.VERSION.SDK_INT >= 31) {
+            if (Build.VERSION.SDK_INT < 31) {
+                return view(c, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) >= 180 && options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) >= 110);
+            }
             Map<SizeF, RemoteViews> sizes = new LinkedHashMap<>();
             sizes.put(new SizeF(110, 40), view(c, false)); sizes.put(new SizeF(180, 110), view(c, true));
-            views = new RemoteViews(sizes);
-        } else {
-            views = view(c, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) >= 180 && options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) >= 110);
-        }
-        return views;
+            return new RemoteViews(sizes);
         }
     }
     @Override public void onUpdate(Context c, AppWidgetManager manager, int[] ids) { for (int id : ids) update(c, manager, id); }

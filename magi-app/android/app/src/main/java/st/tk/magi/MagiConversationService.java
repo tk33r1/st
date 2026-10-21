@@ -126,41 +126,44 @@ public class MagiConversationService extends Service {
         final String savedStatus = finalStatus;
         MAIN.post(() -> {
             release(run);
-            if (savedStatus.equals("complete") && run.widget.hasText()) {
-                try {
-                    MagiWidgetStore.update(context, run.widget.data(run.meta.getString("sessionId"), run.title));
-                    MagiWidgetProvider.updateAll(context);
-                } catch (Exception ignored) { /* 会話の耐久保存と通知は表示キャッシュの失敗で止めない。 */ }
-            }
-            // 保存済み状態を確定してから通知し、未保存の回答へ利用者を誘導しない。
-            boolean allowed = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-            boolean notificationRequested = false;
-            if (!foreground && !status.equals("stopped") && allowed) {
-                channels(context);
-                String title = savedStatus.equals("complete") ? "回答が届きました" : "回答を受け取れませんでした";
-                Bundle extras = new Bundle(); extras.putString("magi_request_id", run.id());
-                Notification note = new NotificationCompat.Builder(context, DONE_CHANNEL).setSmallIcon(R.drawable.ic_stat_magi)
-                    .setContentTitle(title).setContentText(run.title).setContentIntent(open(context, run)).setAutoCancel(true)
-                    .setExtras(extras).setVisibility(NotificationCompat.VISIBILITY_PRIVATE).build();
-                try {
-                    NotificationManager manager = context.getSystemService(NotificationManager.class); manager.notify(DONE_NOTIFICATION, note);
-                    notificationRequested = true;
-                } catch (Exception ignored) {}
-            }
+            if (savedStatus.equals("complete")) updateWidget(context, run);
+            boolean notified = notifyArrival(context, run, status, savedStatus);
             try { new MagiStreamStore(context).released(run.id(), false); } catch (Exception ignored) {}
-            if (notificationRequested) {
-                // notifyの反映は非同期。古い通知を今回の到着と取り違えず、資源解放後に確認する。
-                MAIN.postDelayed(() -> {
-                    boolean posted = false;
-                    try {
-                        for (android.service.notification.StatusBarNotification row : context.getSystemService(NotificationManager.class).getActiveNotifications()) {
-                            if (row.getId() == DONE_NOTIFICATION && run.id().equals(row.getNotification().extras.getString("magi_request_id"))) posted = true;
-                        }
-                        new MagiStreamStore(context).released(run.id(), posted);
-                    } catch (Exception ignored) {}
-                }, 500L);
-            }
+            // notifyの反映は非同期。古い通知を今回の到着と取り違えず、資源解放後に確認する。
+            if (notified) MAIN.postDelayed(() -> recordNotified(context, run), 500L);
         });
+    }
+    private static void updateWidget(Context context, Run run) {
+        if (!run.widget.hasText()) return;
+        try {
+            MagiWidgetStore.update(context, run.widget.data(run.meta.getString("sessionId"), run.title));
+            MagiWidgetProvider.updateAll(context);
+        } catch (Exception ignored) { /* 会話の耐久保存と通知は表示キャッシュの失敗で止めない。 */ }
+    }
+    /** 保存済み状態を確定してから通知し、未保存の回答へ利用者を誘導しない。通知を依頼できたらtrue。 */
+    private static boolean notifyArrival(Context context, Run run, String status, String savedStatus) {
+        // 停止の判定は要求時のstatus、通知の文面は保存後のsavedStatusで決める。
+        boolean allowed = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        if (foreground || status.equals("stopped") || !allowed) return false;
+        channels(context);
+        String title = savedStatus.equals("complete") ? "回答が届きました" : "回答を受け取れませんでした";
+        Bundle extras = new Bundle(); extras.putString("magi_request_id", run.id());
+        Notification note = new NotificationCompat.Builder(context, DONE_CHANNEL).setSmallIcon(R.drawable.ic_stat_magi)
+            .setContentTitle(title).setContentText(run.title).setContentIntent(open(context, run)).setAutoCancel(true)
+            .setExtras(extras).setVisibility(NotificationCompat.VISIBILITY_PRIVATE).build();
+        try {
+            NotificationManager manager = context.getSystemService(NotificationManager.class); manager.notify(DONE_NOTIFICATION, note);
+            return true;
+        } catch (Exception ignored) { return false; }
+    }
+    private static void recordNotified(Context context, Run run) {
+        boolean posted = false;
+        try {
+            for (android.service.notification.StatusBarNotification row : context.getSystemService(NotificationManager.class).getActiveNotifications()) {
+                if (row.getId() == DONE_NOTIFICATION && run.id().equals(row.getNotification().extras.getString("magi_request_id"))) posted = true;
+            }
+            new MagiStreamStore(context).released(run.id(), posted);
+        } catch (Exception ignored) {}
     }
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         latestStartId = startId;
