@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "5.8",
+      "date": "2026-10-21",
+      "changes": {
+        "ja": [
+          "通知とウィジェットから開くリンクを、Webページのリンクからは操作できないようにしました。",
+          "受信データの一部が壊れていても、未保存の回答の復元・会話の削除・ウィジェットの更新が止まらないようにしました。",
+          "送信の直後に停止したとき、まれにアプリが終了する問題を修正しました。",
+          "ウィジェットの更新が競合し続けたとき、再試行が止まらないことがある問題を修正しました。"
+        ],
+        "en": [
+          "Links opened from notifications and widgets can no longer be triggered from web pages.",
+          "A damaged piece of received data no longer blocks recovering unsaved replies, deleting chats, or updating widgets.",
+          "Fixed a rare app exit when stopping right after sending.",
+          "Fixed widget updates retrying without limit when changes kept conflicting."
+        ]
+      }
+    },
+    {
       "version": "5.7",
       "date": "2026-10-21",
       "changes": {
