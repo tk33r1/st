@@ -162,6 +162,13 @@
     .game-trigger:hover::after { animation: none; }
     @keyframes game-caret { 50% { opacity: 0; } }
     @media (prefers-reduced-motion: reduce) { .game-trigger::after { animation: none; opacity: .6; } }
+    /* 「404」を押すと出るスタート画面。ページを隠さず、「404」の下に重ねて出す（位置を空けないので、下の文字がずれない） */
+    header { position: relative; }
+    .game-prompt { position: absolute; z-index: 10; max-width: calc(100vw - 32px); margin-top: 4px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 12px 30px #0003; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; }
+    .game-prompt-title::before { content: "> "; color: var(--accent); }
+    .game-prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .game-prompt button { min-height: 44px; padding: 8px 14px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+    .game-prompt .game-go { color: var(--surface); background: var(--accent); border-color: var(--accent); font-weight: 600; }
   </style>
   <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_15">
 </head>
@@ -170,7 +177,14 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
   <main>
     <header>
-      <p class="error-code"><span aria-hidden="true">~$ </span><button type="button" class="game-trigger" id="game-trigger">404</button></p>
+      <p class="error-code"><span aria-hidden="true">~$ </span><button type="button" class="game-trigger" id="game-trigger" aria-expanded="false" aria-controls="game-prompt">404</button></p>
+      <div class="game-prompt" id="game-prompt" role="dialog" aria-labelledby="game-prompt-title" hidden>
+        <p class="game-prompt-title" id="game-prompt-title" data-ja="このページを崩しますか？" data-en="Crumble this page?">このページを崩しますか？</p>
+        <div class="game-prompt-actions">
+          <button type="button" class="game-go" id="game-go" data-ja="崩す" data-en="Crumble">崩す</button>
+          <button type="button" id="game-sound" role="switch" aria-checked="false"></button>
+        </div>
+      </div>
       <h1 data-ja="ページが見つかりませんでした" data-en="Page not found">ページが見つかりませんでした</h1>
       <p class="intro" data-ja="URLが変わったか、入力に誤りがあるかもしれません。" data-en="The address may have changed, or there may be a typo.">URLが変わったか、入力に誤りがあるかもしれません。</p>
       <p class="requested-url" id="requested-url" hidden></p>
@@ -773,32 +787,73 @@ function cleanReplyLanguage(v) {
     })();
   </script>
   <script>
-    // ミニゲーム（ページそのものを壊すブロック崩し）の入口。「404」を押したときだけ /404-game.js を読み込む。
+    // ミニゲーム（ページそのものを崩すブロック崩し）の入口。「404」を押すとスタート画面を出し、その間に /404-game.js を読み込む。
     // 言語は上のスクリプトが html の lang に決めた後で読む
     (function () {
-      var t = document.getElementById('game-trigger'), loading = false;
-      if (!t) return;
-      t.setAttribute('aria-label', document.documentElement.lang === 'en' ? '404 (press for a mini game)' : '404（押すとミニゲーム）');
-      t.addEventListener('click', function () {
-        // 音はこのクリックの中で有効にする（読み込みを待ってからだと、ブラウザによっては操作の外とみなされて鳴らない）
+      var t = document.getElementById('game-trigger'), box = document.getElementById('game-prompt');
+      var go = document.getElementById('game-go'), sound = document.getElementById('game-sound');
+      if (!t || !box) return;
+      var ja = document.documentElement.lang !== 'en', KEY = 'st-404-mute', on = false, loading = false, pending = false;
+      t.setAttribute('aria-label', ja ? '404（押すとミニゲーム）' : '404 (press for a mini game)');
+      sound.setAttribute('aria-label', ja ? '音' : 'Sound');
+      function paint() {
+        sound.setAttribute('aria-checked', String(on));
+        sound.textContent = ja ? '音: ' + (on ? 'オン' : 'オフ') : 'Sound: ' + (on ? 'on' : 'off');
+      }
+      // 音はこのクリックの中で有効にする（読み込みを待ってからだと、ブラウザによっては操作の外とみなされて鳴らない）。
+      // 音を選んだときだけ作る（iPhone では作るだけでほかのアプリの音楽が止まる）。ambient でマナーモードに従わせ、音楽とも混ぜる
+      window.ST404Unlock = function () {
         var A = window.AudioContext || window.webkitAudioContext;
-        if (A) {
-          try {
-            window.ST404Audio = window.ST404Audio || new A();
-            var p = window.ST404Audio.resume();
-            if (p && p.catch) p.catch(function () {});
-          } catch (e) {}
-        }
-        if (window.ST404Game) return window.ST404Game.start();
-        if (loading) return;
+        if (!A) return;
+        try {
+          if (navigator.audioSession) navigator.audioSession.type = 'ambient';
+          window.ST404Audio = window.ST404Audio || new A();
+          var p = window.ST404Audio.resume();
+          if (p && p.catch) p.catch(function () {});
+        } catch (e) {}
+      };
+      function load() {
+        if (window.ST404Game || loading) return;
         loading = true;
         var s = document.createElement('script');
-        s.src = '/404-game.js?v=20261012_1';
+        s.src = '/404-game.js?v=20261021_1';
         // 読み込めても本体が動かなかった（古いブラウザなど）ときは、もう一度押せるように戻す
-        s.onload = function () { loading = false; if (window.ST404Game) window.ST404Game.start(); };
-        s.onerror = function () { loading = false; };
+        s.onload = function () { loading = false; if (pending && window.ST404Game) window.ST404Game.start(on); pending = false; };
+        s.onerror = function () { loading = pending = false; };
         document.head.appendChild(s);
+      }
+      function open() {
+        // 音は選んだ人にだけ出す（初めてはオフ）。ゲーム中の M キーと同じ所に覚える
+        try { on = localStorage.getItem(KEY) === '0'; } catch (e) {}
+        paint();
+        box.hidden = false;
+        t.setAttribute('aria-expanded', 'true');
+        go.focus();
+        load();
+      }
+      function close(back) {
+        if (box.hidden) return;
+        box.hidden = true;
+        t.setAttribute('aria-expanded', 'false');
+        if (back) t.focus();
+      }
+      t.addEventListener('click', function () { if (box.hidden) open(); else close(true); });
+      sound.addEventListener('click', function () {
+        on = !on;
+        try { localStorage.setItem(KEY, on ? '0' : '1'); } catch (e) {}
+        paint();
+        // オンにしたら小さく鳴らして、音量をここで確かめてもらう
+        if (on) { window.ST404Unlock(); if (window.ST404Game) window.ST404Game.preview(); }
       });
+      go.addEventListener('click', function () {
+        close(false);
+        if (on) window.ST404Unlock();
+        if (window.ST404Game) window.ST404Game.start(on);
+        else { pending = true; load(); }
+      });
+      box.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); close(true); } });
+      box.addEventListener('focusout', function (e) { if (e.relatedTarget && !box.contains(e.relatedTarget) && e.relatedTarget !== t) close(false); });
+      document.addEventListener('pointerdown', function (e) { if (!box.hidden && !box.contains(e.target) && !t.contains(e.target)) close(false); });
     })();
   </script>
 </body>
