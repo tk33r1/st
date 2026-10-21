@@ -169,6 +169,11 @@
     .game-prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .game-prompt button { min-height: 44px; padding: 8px 14px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
     .game-prompt .game-go { color: var(--surface); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    /* 音のオン・オフはスピーカーのアイコンで示す（波線がオン、×がオフ） */
+    .game-prompt .game-sound { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; }
+    .game-sound svg { width: 22px; height: 22px; }
+    .game-sound[aria-checked="true"] .sound-off, .game-sound[aria-checked="false"] .sound-on { display: none; }
+    .game-sound[aria-checked="false"] { color: var(--muted); }
   </style>
   <link rel="stylesheet" href="/assets/search-ui.css?v=20261012_15">
 </head>
@@ -182,7 +187,9 @@
         <p class="game-prompt-title" id="game-prompt-title" data-ja="このページを崩しますか？" data-en="Crumble this page?">このページを崩しますか？</p>
         <div class="game-prompt-actions">
           <button type="button" class="game-go" id="game-go" data-ja="崩す" data-en="Crumble">崩す</button>
-          <button type="button" id="game-sound" role="switch" aria-checked="false"></button>
+          <button type="button" class="game-sound" id="game-sound" role="switch" aria-checked="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="sound-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="sound-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+          </button>
         </div>
       </div>
       <h1 data-ja="ページが見つかりませんでした" data-en="Page not found">ページが見つかりませんでした</h1>
@@ -798,7 +805,7 @@ function cleanReplyLanguage(v) {
       sound.setAttribute('aria-label', ja ? '音' : 'Sound');
       function paint() {
         sound.setAttribute('aria-checked', String(on));
-        sound.textContent = ja ? '音: ' + (on ? 'オン' : 'オフ') : 'Sound: ' + (on ? 'on' : 'off');
+        sound.title = ja ? '音: ' + (on ? 'オン' : 'オフ') : 'Sound: ' + (on ? 'on' : 'off');
       }
       // 音はこのクリックの中で有効にする（読み込みを待ってからだと、ブラウザによっては操作の外とみなされて鳴らない）。
       // 音を選んだときだけ作る（iPhone では作るだけでほかのアプリの音楽が止まる）。ambient でマナーモードに従わせ、音楽とも混ぜる
