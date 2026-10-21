@@ -10,14 +10,14 @@
   const T = JA ? {
     about: 'ページを壊すブロック崩し。「404」から4つのボールが飛び出します。矢印キー・マウス・ドラッグでバーを動かし、全部落とすとゲームオーバーです。Esc か戻る操作で終わり、M で音を切り替えます。',
     hint: TOUCH ? 'ドラッグでバーを動かす・戻るで終わる' : '← → / マウスでバーを動かす・M 音・Esc で終わる',
-    clear: 'ページを全部壊しました。',
+    clear: 'ページを全部崩しました。',
     over: 'ゲームオーバー。ページが崩れ落ちました。',
     restore: `${PRESS}で元に戻す`,
     restored: 'ページを元に戻しました。',
   } : {
     about: 'A breakout game that breaks this page. Four balls burst out of the 404. Move the paddle with the arrow keys, the mouse, or by dragging; lose all the balls and the game is over. Press Esc or go back to stop, and M to toggle sound.',
     hint: TOUCH ? 'Drag to move · go back to stop' : '← → / mouse to move · M sound · Esc to stop',
-    clear: 'You broke the whole page.',
+    clear: 'You crumbled the whole page.',
     over: 'Game over. The page collapsed.',
     restore: `${PRESS} to restore`,
     restored: 'The page has been restored.',

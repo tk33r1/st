@@ -816,7 +816,7 @@ function cleanReplyLanguage(v) {
         if (window.ST404Game || loading) return;
         loading = true;
         var s = document.createElement('script');
-        s.src = '/404-game.js?v=20261021_1';
+        s.src = '/404-game.js?v=20261021_2';
         // 読み込めても本体が動かなかった（古いブラウザなど）ときは、もう一度押せるように戻す
         s.onload = function () { loading = false; if (pending && window.ST404Game) window.ST404Game.start(on); pending = false; };
         s.onerror = function () { loading = pending = false; };
