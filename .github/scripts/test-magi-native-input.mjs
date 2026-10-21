@@ -59,6 +59,13 @@ test('B2: マイク拒否では認識せず設定案内を出す', async () => {
   const f = fixture(); f.setPermission('denied'); await f.input.init(); await f.input.startVoice();
   assert.ok(!f.calls.some(([n]) => n === 'start')); assert.ok(f.calls.some(([n, text]) => n === 'notice' && text.includes('許可が必要')));
 });
+test('B2: 音声認識のサービスが無い環境ではマイクを出さず、開始を求められたら使えないと知らせる', async () => {
+  const f = fixture(); f.cap.Plugins.SpeechRecognition.available = async () => ({ available: false }); await f.input.init();
+  assert.equal(await f.input.voiceAvailable(), false); await f.input.startVoice();
+  assert.ok(!f.calls.some(([n]) => n === 'start' || n === 'voiceState')); assert.ok(f.calls.some(([n, text]) => n === 'notice' && text.includes('音声入力を使えません')));
+  f.cap.Plugins.SpeechRecognition.available = async () => { throw new Error('service_missing'); }; assert.equal(await f.input.voiceAvailable(), false);
+  assert.equal(await fixture().input.voiceAvailable(), true);
+});
 for (const detectedBy of ['language_list', 'recognition_error']) test('B2: 非対応言語は英語で1回だけ切り替える (' + detectedBy + ')', async () => {
   const f = fixture();
   if (detectedBy === 'language_list') f.cap.Plugins.SpeechRecognition.getSupportedLanguages = async () => ({ languages: ['en-US'] });

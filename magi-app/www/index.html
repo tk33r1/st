@@ -246,9 +246,11 @@
     #agent-suggest-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--secondary-color); opacity: 0.55; }
     #agent-suggest-use { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 2.2rem; align-self: stretch; border: none; border-radius: 6px; background: transparent; color: var(--primary-color); cursor: pointer; pointer-events: auto; }
     #agent-suggest-use:hover, #agent-suggest-use:active, #agent-suggest-use:focus-visible { background: var(--primary-bg); }
-    #agent-send { display: flex; align-items: center; justify-content: center; width: var(--composer-button); height: var(--composer-button); flex-shrink: 0; border-radius: 50%; border: none; background: var(--primary-color); color: var(--surface-color); cursor: pointer; }
+    /* ChatGPT と同じ大きさの丸。1行の入力欄の高さの中で上下を揃える */
+    #agent-send { --send-size: 2.25rem; display: flex; align-items: center; justify-content: center; width: var(--send-size); height: var(--send-size); margin: calc((var(--composer-button) - var(--send-size)) / 2); flex-shrink: 0; border-radius: 50%; border: none; background: var(--primary-color); color: var(--surface-color); cursor: pointer; transition: opacity var(--duration-fast); }
     #agent-send:active { opacity: 0.8; }
-    #agent-send:disabled { opacity: 0.4; }
+    /* 送るものが無いときは薄くして、押せないことを見せる */
+    #agent-send:disabled, #agent-send.is-empty { opacity: 0.35; cursor: default; }
     /* 画像添付（マルチモーダル入力） */
     #agent-attach { display: flex; align-items: center; justify-content: center; width: var(--composer-button); height: var(--composer-button); flex-shrink: 0; border-radius: 50%; border: none; background: transparent; color: var(--secondary-color); cursor: pointer; }
     #agent-attach:active { background: var(--surface-hover); }
@@ -406,8 +408,8 @@
                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
         </div>
         <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
-        <button id="agent-send" title="Send" aria-label="Send">
-          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+        <button id="agent-send" class="is-empty" title="Send" aria-label="Send">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         </button>
       </div>
     </div>
@@ -415,7 +417,7 @@
 
   <script src="native-history.js?v=20261021_1"></script>
   <script src="vendor/Readability.js?v=0.6.0"></script>
-  <script src="native-input.js?v=20261021_1"></script>
+  <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
   <script src="app.js?v=20261022_1"></script>

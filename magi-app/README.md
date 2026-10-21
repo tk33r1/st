@@ -209,6 +209,8 @@ the existing FileProvider, without the camera permission) or up to four photos f
 system photo picker enter the existing share queue, so the screen starts a new
 conversation with them attached. Cancelling leaves the current conversation unchanged.
 When a killed process is restored, `MainActivity` drops the stale `magi://` launch link.
+Where no speech recognition service exists (Samsung Secure Folder has none), the voice
+button stays hidden and the voice link shows a visible notice instead of failing silently.
 
 5.7 and 5.8 also showed the last answer on larger widgets with a masking setting. 5.9
 removes that display, `MagiWidgetStore`, `MagiWidgetData` and the screen-to-widget sync,

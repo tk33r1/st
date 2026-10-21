@@ -51,6 +51,7 @@
     var draining = false, drainAgain = false, interimText = '', finishTimer = null, voiceGeneration = 0, recognitionId = 0, recording = false, starting = false, retried = false, language = '', voiceTimer = null;
     var permissionNotice = 'Microphone permission is required. You can enable it in Android Settings. / マイクの許可が必要です（設定から許可できます）。';
     var articleNotice = 'Could not read the article (only the URL will be sent). / 本文を読めませんでした（URLだけ送ります）。';
+    var unavailableNotice = 'Voice input is not available here (no speech recognition service). / この端末では音声入力を使えません（音声認識のサービスがありません）。';
     async function receive(payload) {
       options.beginShare();
       var token = options.generation(), text = String(payload.text || ''), long = text.length > 1000;
@@ -137,7 +138,8 @@
       if (!speech || recording || starting) { if (recording) await finishVoice(); return; }
       starting = true; var token = ++voiceGeneration;
       try {
-        if (!(await speech.available()).available) throw new Error('voice_unavailable');
+        // セキュアフォルダなど、音声認識のサービスが無い環境がある。
+        if (!(await speech.available()).available) { options.notice(unavailableNotice); return; }
         var permission = await speech.checkPermissions();
         if (token !== voiceGeneration) return;
         if (permission.speechRecognition !== 'granted') {
@@ -164,6 +166,7 @@
     }
     return {
       receive: receive, startVoice: startVoice, stopVoice: stopVoice, finishVoice: finishVoice,
+      voiceAvailable: async function () { try { return !!speech && (await speech.available()).available === true; } catch (_) { return false; } },
       listening: function () { return recording || starting; },
       async init() {
         if (bridge) { await bridge.addListener('shareAvailable', drain); await drain(); }

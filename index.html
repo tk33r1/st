@@ -2366,12 +2366,15 @@
 
     .agent-imgs img.expanded { max-width: 100%; max-height: none; cursor: zoom-out }
 
+    /* ChatGPT と同じ比率の丸。1行の入力欄の高さの中で上下を揃える */
     #agent-send {
+      --send-size: 1.75rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: var(--composer-button);
-      height: var(--composer-button);
+      width: var(--send-size);
+      height: var(--send-size);
+      margin: calc((var(--composer-button) - var(--send-size)) / 2);
       flex-shrink: 0;
       border-radius: 50%;
       background: var(--primary-color);
@@ -2380,7 +2383,8 @@
     }
 
     #agent-send:hover { opacity: 0.8 }
-    #agent-send:disabled { opacity: 0.4 }
+    /* 送るものが無いときは薄くして、押せないことを見せる */
+    #agent-send:disabled, #agent-send.is-empty { opacity: 0.35; cursor: default }
 
     @keyframes magiFlow {
         from { stroke-dashoffset: 20 }
@@ -3454,7 +3458,7 @@
       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </symbol>
     <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" />
+      <path d="M12 19V5M5 12l7-7 7 7" />
     </symbol>
     <symbol id="ic-remote" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="5,0 11.5,4 5,8" /><polyline points="17,6 10.5,10 17,14" />
@@ -3756,8 +3760,8 @@
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                     stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
             </div>
-            <button id="agent-send" title="Send" data-ja-title="送信"
-              data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg></button>
+            <button id="agent-send" class="is-empty" title="Send" data-ja-title="送信"
+              data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg></button>
           </div>
         </div>
       </aside>
@@ -7534,7 +7538,10 @@
     agentInput.addEventListener('input', renderAgentSuggest);
     // 入力欄は内容に合わせて伸び縮みさせる（上限は CSS の max-height。超えたら欄の中でスクロール）。
     // コードから値を入れたとき（予測の › ・送信後の空欄・リセット）も呼ぶ。
+    // 送信ボタンの濃さ。添付の配列を宣言した後で中身を入れる（それより前に入力欄を整えても失敗しない）。
+    let updateSendState = () => {};
     function fitAgentInput() {
+      updateSendState();
       agentInput.style.height = 'auto';
       const border = agentInput.offsetHeight - agentInput.clientHeight; // box-sizing: border-box なので枠を足す
       const max = parseFloat(getComputedStyle(agentInput).maxHeight) || Infinity;
@@ -8093,6 +8100,14 @@ async function parseSSE(body, handlers, onChunk) {
     const attachFile = document.getElementById('agent-file');
     let attachments = [];   // { url: 送信用 data URL, thumb: 保存・表示用 data URL }
     let attachNotice = '';  // トレイに一時表示する注意書き
+    // 送るもの（文字・画像・確認質問の選択）が無いときは送信ボタンを薄くする。停止ボタンのときは常に濃く出す。
+    updateSendState = () => {
+      const clarify = lastAgentTurn()?._clarify;
+      const ready = !!agentInput.value.trim() || attachments.length > 0 || !!clarify?.picks.some(p => p !== undefined);
+      agentSendBtn.classList.toggle('is-empty', !ready && !agentSendBtn.dataset.stop);
+    };
+    // 確認質問の選択肢を押したあと、送信ボタンの濃さを見直す
+    agentLog.addEventListener('click', () => updateSendState());
 
     // content（文字列 or パート配列）からテキスト / 画像枚数を取り出す
     const contentText = (c) => typeof c === 'string' ? c : c.filter(p => p.type === 'text').map(p => p.text).join('\n');
@@ -8123,6 +8138,7 @@ async function parseSSE(body, handlers, onChunk) {
       fr.readAsDataURL(file);
     });
     function renderAttachTray() {
+      updateSendState();
       if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
       attachTray.classList.remove('hidden');
       attachTray.innerHTML = attachments.map((a, i) => `<span class="attach-chip"><img src="${esc(a.thumb)}" alt="">`
@@ -8306,12 +8322,14 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
     // 生成中は送信ボタンを停止ボタン（■）に変える。押すと接続を切り、Worker も続きの呼び出しを止める
-    const AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg>';
+    const AGENT_SEND_ICON = '<svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg>';
     const AGENT_STOP_ICON = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" /></svg>';
     function setAgentStopMode(on) {
       agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
       agentSendBtn.title = agentSendBtn.ariaLabel = on ? tr('Stop', '停止') : tr('Send', '送信');
+      agentSendBtn.dataset.stop = on ? '1' : '';
       if (on) agentSendBtn.disabled = false;
+      updateSendState();
     }
     function agentStop() {
       if (!agentCtrl) return;

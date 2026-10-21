@@ -370,7 +370,14 @@ agentSuggestUse.addEventListener('click', function () {
 agentInput.addEventListener('input', renderAgentSuggest);
 // 入力欄は内容に合わせて伸び縮みさせる（上限は CSS の max-height。超えたら欄の中でスクロール）。
 // コードから値を入れたとき（予測の › ・送信後の空欄・リセット）も呼ぶ。
+// 送るもの（文字・画像・確認質問の選択）が無いときは送信ボタンを薄くする。停止ボタンのときは常に濃く出す。
+function updateSendState() {
+  var turn = lastAgentTurn(), clarify = turn && turn._clarify;
+  var ready = !!agentInput.value.trim() || !!(attachments && attachments.length) || !!(clarify && clarify.picks.some(function (p) { return p !== undefined; }));
+  agentSendBtn.classList.toggle('is-empty', !ready && !agentSendBtn.dataset.stop);
+}
 function fitAgentInput() {
+  updateSendState();
   agentInput.style.height = 'auto';
   var border = agentInput.offsetHeight - agentInput.clientHeight; // box-sizing: border-box なので枠を足す
   var max = parseFloat(getComputedStyle(agentInput).maxHeight) || Infinity;
@@ -966,6 +973,7 @@ function loadImageFile(file) {
   });
 }
 function renderAttachTray() {
+  updateSendState();
   if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
   attachTray.classList.remove('hidden');
   attachTray.innerHTML = attachments.map(function (a, i) {
@@ -1063,6 +1071,8 @@ agentInput.addEventListener('paste', function (e) {
   if (!files.length) return;
   e.preventDefault(); addAttachments(files);
 });
+// 確認質問の選択肢を押したあと、送信ボタンの濃さを見直す
+agentLog.addEventListener('click', updateSendState);
 // 送信済みサムネはタップで拡大／縮小
 agentLog.addEventListener('click', function (e) {
   var img = e.target.closest('.agent-imgs img');
@@ -1111,12 +1121,14 @@ function prepareAgentMessages(history, lastContent) {
 
 // While a reply is being generated the send button becomes a stop button (■). Pressing it drops the
 // connection, and the Worker stops its remaining upstream calls too.
-var AGENT_SEND_ICON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>';
+var AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 var AGENT_STOP_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
 function setAgentStopMode(on) {
   agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
   agentSendBtn.title = agentSendBtn.ariaLabel = on ? 'Stop' : 'Send';
+  agentSendBtn.dataset.stop = on ? '1' : '';
   if (on) agentSendBtn.disabled = false;
+  updateSendState();
 }
 function agentStop() {
   if (!agentCtrl) return;
@@ -2004,14 +2016,16 @@ async function initNativeInputs() {
     setDraft: function (text) { agentInput.value = text; fitAgentInput(); },
     setShared: setSharedDocument,
     attach: addAttachments,
-    notice: announceAgent,
+    // 読み上げだけでなく、添付の欄にも短く出して画面で分かるようにする。
+    notice: function (text) { announceAgent(text); noticeAttach(text); },
     appendDraft: function (text) { agentInput.value += (agentInput.value && text ? '\n' : '') + text; fitAgentInput(); },
     interim: function (text) { document.getElementById('agent-voice-interim').textContent = text; },
     voiceState: function (on) { voice.setAttribute('aria-pressed', String(on)); voice.title = on ? 'Stop voice input' : 'Voice input'; }
   });
   await nativeInput.init();
   document.addEventListener('visibilitychange', function () { if (document.hidden) nativeInput.finishVoice(); });
-  if (cap.Plugins.SpeechRecognition) {
+  // 音声認識のサービスが無い環境（セキュアフォルダなど）ではマイクを出さない。
+  if (cap.Plugins.SpeechRecognition && await nativeInput.voiceAvailable()) {
     voice.hidden = false;
     voice.addEventListener('click', function () {
       if (!agentBusy && !agentDead && !agentClosed && !sharedLoading) nativeInput.startVoice();
