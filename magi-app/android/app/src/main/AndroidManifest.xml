@@ -36,6 +36,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="magi" android:host="open" />
+                <data android:scheme="magi" android:host="new" />
+                <data android:scheme="magi" android:host="voice" />
             </intent-filter>
         </activity>
 
@@ -43,6 +45,15 @@
             android:name=".MagiConversationService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <receiver android:name=".MagiWidgetProvider" android:exported="false" android:label="@string/widget_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/magi_widget_info" />
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

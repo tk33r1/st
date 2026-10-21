@@ -30,8 +30,7 @@ public class MagiConversationPlugin extends Plugin {
         }
         try { new JSObject(body); } catch (Exception ignored) { call.reject("invalid_request"); return; }
         JSObject meta = new JSObject(); meta.put("id", id); meta.put("sessionId", session); meta.put("mid", mid);
-        String title = call.getString("title", "MAGI").replaceAll("[\\p{Cntrl}\\p{Cf}]", " ");
-        meta.put("title", title.substring(0, Math.min(200, title.length()))); meta.put("status", "receiving"); meta.put("startedAt", System.currentTimeMillis());
+        meta.put("title", MagiStreamStore.cleanTitle(call.getString("title", "MAGI"))); meta.put("status", "receiving"); meta.put("startedAt", System.currentTimeMillis());
         MagiConversationService.begin(getContext(), meta, body, testBuild(), call);
     }
     @PluginMethod public void read(PluginCall call) {
@@ -49,7 +48,7 @@ public class MagiConversationPlugin extends Plugin {
     }
     @PluginMethod public void pending(PluginCall call) {
         try {
-            JSObject result = new JSObject(); result.put("runs", new MagiStreamStore(getContext()).list(MagiConversationService.activeId())); call.resolve(result);
+            JSObject result = new JSObject(); result.put("runs", new MagiStreamStore(getContext()).list(MagiConversationService::activeId)); call.resolve(result);
         } catch (Exception ignored) { call.reject("stream_storage_unavailable"); }
     }
     @PluginMethod public void cancel(PluginCall call) { MagiConversationService.cancel(getContext(), call.getString("id", ""), call); }

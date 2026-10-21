@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "5.7",
+      "date": "2026-10-21",
+      "changes": {
+        "ja": [
+          "Androidのホーム画面にウィジェットを追加できます。新しい議題・音声入力・前回の続きへすぐ移れます。",
+          "大きくすると前回の題名と結論、MAGIの決議を表示できます。内容は初期状態では伏せ、設定から表示を切り替えられます。",
+          "ウィジェットは回答の完了や会話の削除に合わせて更新します。ウィジェット自体は外部へ通信しません。",
+          "背景受信の開始時に起こる競合と、ウィジェットに古い回答が戻る・内容を再表示できない不具合を修正しました。"
+        ],
+        "en": [
+          "Add an Android home widget to open a new discussion, start voice input, or continue your last chat.",
+          "Larger widgets can show the last title, answer and MAGI resolution. Contents are hidden by default; change this in Settings.",
+          "Widgets update when replies finish or chats are deleted. The widget itself does not connect to the network.",
+          "Fixed a race when starting background receipt, stale widget answers, and contents failing to reappear after being unhidden."
+        ]
+      }
+    },
+    {
       "version": "5.6",
       "date": "2026-10-21",
       "changes": {

@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '5.6';
+var APP_VERSION = '5.7';
 
 // AGENT_CLASSIFY_BEGIN
 var MAGI_LANGUAGE_CODES = ' aa ab ae af ak am an ar as av ay az ba be bg bi bm bn bo br bs ca ce ch co cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl gn gu gv ha he hi ho hr ht hu hy hz ia id ie ig ii ik io is it iu ja jv ka kg ki kj kk kl km kn ko kr ks ku kv kw ky la lb lg li ln lo lt lu lv mg mh mi mk ml mn mr ms mt my na nb nd ne ng nl nn no nr nv ny oc oj om or os pa pi pl ps pt qu rm rn ro ru rw sa sc sd se sg si sk sl sm sn so sq sr ss st su sv sw ta te tg th ti tk tl tn to tr ts tt tw ty ug uk ur uz ve vi vo wa wo xh yi yo za zh zu ';
@@ -398,6 +398,10 @@ var nativeAndroid = !!(window.Capacitor && window.Capacitor.isNativePlatform() &
 var historyLoading = nativeAndroid;
 var agentShared = null, nativeInput = null, sharedLoading = false;
 var nativeConversation = null;
+var nativeWidget = null, nativeInputReady = Promise.resolve();
+function updateNativeWidget() {
+  if (nativeWidget) nativeWidget.sync().catch(function () { announceAgent('Could not update the home widget. / ウィジェットを更新できませんでした。'); });
+}
 // 共有資料はAndroidだけ。ほかの画面では常にnullにする。
 function cleanAgentShared(value) {
   if (!nativeAndroid || !value || typeof value.title !== 'string' || typeof value.url !== 'string' || typeof value.text !== 'string'
@@ -1303,6 +1307,7 @@ async function agentSend(recovered) {
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
+    updateNativeWidget();
     setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
@@ -1586,7 +1591,8 @@ function loadSavedSession(id) {
 function deleteSavedSession(id) {
   if (currentSessionId === id) resetAgent();
   writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
-  if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
+  if (nativeConversation) nativeConversation.clear(id).then(updateNativeWidget).catch(function () { announceAgent('Could not remove pending reply data. / 受信データを削除できませんでした。'); });
+  else updateNativeWidget();
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
@@ -1677,21 +1683,50 @@ function showInfoPanel() {
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, 'en', data); });
   if (nativeAndroid) {
     var nativeNote = document.createElement('p');
-    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification.';
+    nativeNote.textContent = 'On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets hide chat contents by default. If you enable contents in Settings, the title and the beginning of the last answer can appear on your home screen. Widgets do not connect to the network themselves.';
     panel.querySelector('.agent-panel-body').appendChild(nativeNote);
   }
 }
 
-// 設定はAndroidだけ。通知と履歴の操作をまとめる。B4のウィジェットは別に足す。
+// 設定パネルにあるウィジェットの状態読込と操作を受け持つ。
+function initNativeWidgetSettings(panel, ja) {
+  if (!nativeWidget) return;
+  var widgetBox = panel.querySelector('#native-widget-settings'), masked = panel.querySelector('#widget-masked'), widgetStatus = panel.querySelector('#widget-status');
+  widgetBox.hidden = false;
+  nativeWidget.state().then(function (value) {
+    if (!panel.isConnected) return;
+    masked.checked = value.masked !== false; masked.disabled = false;
+    panel.querySelector('#widget-pin').hidden = !value.canPin;
+  }).catch(function () { widgetStatus.textContent = 'Could not read widget settings. / 設定を読み込めませんでした。'; });
+  masked.addEventListener('change', async function () {
+    masked.disabled = true;
+    try { await nativeWidget.setMasked(masked.checked); widgetStatus.textContent = ''; }
+    catch (_) {
+      try { masked.checked = (await nativeWidget.state()).masked !== false; } catch (_) {}
+      widgetStatus.textContent = 'Could not update the widget. / 更新できませんでした。';
+    }
+    finally { if (panel.isConnected) masked.disabled = false; }
+  });
+  panel.querySelector('#widget-pin').addEventListener('click', function () {
+    nativeWidget.pin().then(function (value) { if (!value.requested) widgetStatus.textContent = ja ? 'ホーム画面のウィジェット一覧から追加してください。' : 'Add it from your home screen’s widget picker.'; })
+      .catch(function () { widgetStatus.textContent = 'Could not open the widget picker. / 追加画面を開けませんでした。'; });
+  });
+}
+
+// 設定はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
 async function showNativeSettings() {
   if (!nativeAndroid) return;
   var ja = document.documentElement.lang === 'ja';
   var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
     '<p id="history-storage-status" role="status">Loading…</p><p id="native-notification-status" hidden></p>'
+    + '<div id="native-widget-settings" hidden><label><input type="checkbox" id="widget-masked" checked disabled> ' + (ja ? 'ウィジェットの内容を伏せる' : 'Hide widget contents') + '</label>'
+    + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。' : 'Add “Ask MAGI” from your home screen’s widget picker.') + '</p>'
+    + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
     + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
     + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
     + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>');
   if (!panel) return;
+  initNativeWidgetSettings(panel, ja);
   if (nativeConversation) {
     var notifications = panel.querySelector('#native-notification-status'); notifications.hidden = false;
     nativeConversation.permission().then(function (value) {
@@ -1743,6 +1778,7 @@ async function showNativeSettings() {
       await nativeHistory.clear();
       resetAgent();
       await nativeHistory.flush();
+      if (nativeWidget) await nativeWidget.sync();
     });
   });
   try { await refresh(); } catch (_) { status.textContent = '使用量を読み込めませんでした。保存状態を確認してください。'; }
@@ -1969,14 +2005,26 @@ async function recoverNativeConversation(id) {
   }
 }
 function openNativeConversationLink(value) {
-  var id = null;
-  try {
-    var url = new URL(value), ids = url.searchParams.getAll('id');
-    if (url.protocol === 'magi:' && url.hostname === 'open' && !url.username && !url.password && !url.port && !url.hash
-      && (url.pathname === '' || url.pathname === '/') && ids.length === 1 && [...url.searchParams.keys()].every(function (key) { return key === 'id'; })) id = ids[0];
-  } catch (_) {}
+  var target = window.MagiNativeWidget.link(value), id = target && target.id;
+  if (target && (target.action === 'new' || target.action === 'voice')) {
+    syncCurrentToSaved(); resetAgent(); agentInput.focus({ preventScroll: true });
+    if (target.action === 'voice') {
+      var generation = agentGen;
+      nativeInputReady.then(function () {
+        function start() {
+          if (generation === agentGen && nativeInput && !agentBusy && !agentClosed && !sharedLoading) nativeInput.startVoice();
+        }
+        if (!document.hidden) start();
+        else document.addEventListener('visibilitychange', function visible() {
+          if (!document.hidden) { document.removeEventListener('visibilitychange', visible); start(); }
+        });
+      });
+    }
+    return;
+  }
   var sessions = readSavedSessions();
-  if (!id || !sessions.some(function (s) { return s.id === id; })) { resetAgent(); return; }
+  if (!id || !sessions.some(function (s) { return s.id === id; })) { syncCurrentToSaved(); resetAgent(); return; }
+  closeAgentPanels();
   if (id !== currentSessionId) loadSavedSession(id);
   else if (!agentBusy) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply.'); });
 }
@@ -2011,7 +2059,13 @@ async function initHistoryStorage() {
     announceAgent(migrated ? '' : '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。');
     var settings = document.getElementById('btn-settings-agent');
     if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
-    initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
+    nativeInputReady = initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
+    if (window.MagiNativeWidget && nativeHistory.active) {
+      nativeWidget = await window.MagiNativeWidget.create({ cap: window.Capacitor,
+        flush: function () { return nativeHistory.flush(); }, sessions: readSavedSessions,
+        pending: function () { return nativeConversation ? nativeConversation.pending() : Promise.resolve([]); } });
+      updateNativeWidget();
+    }
     if (nativeConversation) initNativeConversationLinks().catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
   } catch (_) {
     // 移行済みファイルが読めないときは、新規データで上書きしない。

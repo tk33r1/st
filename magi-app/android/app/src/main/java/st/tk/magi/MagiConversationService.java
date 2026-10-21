@@ -51,6 +51,7 @@ public class MagiConversationService extends Service {
         final AtomicBoolean released = new AtomicBoolean();
         final ArrayList<PluginCall> waiters = new ArrayList<>();
         volatile Call call; volatile MagiConversationService service; volatile String title;
+        final StringBuilder widgetAnswer = new StringBuilder(); String widgetVerdict = "";
         PowerManager.WakeLock wake; Runnable deadline;
         Run(JSObject meta, String body, boolean test, PluginCall startCall) {
             this.meta = meta; this.body = body; this.test = test; this.startCall = startCall; title = meta.getString("title", "");
@@ -66,11 +67,11 @@ public class MagiConversationService extends Service {
             boolean created = false;
             try {
                 MagiStreamStore store = new MagiStreamStore(context);
-                store.create(meta); created = true; current = run;
+                store.create(meta, () -> current = run); created = true;
                 ContextCompat.startForegroundService(context, new Intent(context, MagiConversationService.class).putExtra("id", run.id()));
             } catch (Exception ignored) {
                 current = null;
-                if (created) try { new MagiStreamStore(context).finish(run.id(), "failed", "service_unavailable", run.title); } catch (Exception ignoredAgain) {}
+                if (created) try { new MagiStreamStore(context).finish(run.id(), "failed", "service_unavailable", run.title, false); } catch (Exception ignoredAgain) {}
                 call.reject("service_unavailable");
             }
         });
@@ -91,10 +92,7 @@ public class MagiConversationService extends Service {
         manager.createNotificationChannel(new NotificationChannel(DONE_CHANNEL, "回答の到着", NotificationManager.IMPORTANCE_DEFAULT));
     }
     private static PendingIntent open(Context context, Run run) {
-        Uri link = new Uri.Builder().scheme("magi").authority("open").appendQueryParameter("id", run.meta.getString("sessionId")).build();
-        Intent intent = new Intent(context, MainActivity.class).setAction(Intent.ACTION_VIEW).setData(link)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return PendingIntent.getActivity(context, 5302, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return MagiAppLink.create(context, "open", run.meta.getString("sessionId"), 5302);
     }
     private Notification ongoing(Run run) {
         PendingIntent stop = PendingIntent.getService(this, 5301,
@@ -123,11 +121,17 @@ public class MagiConversationService extends Service {
     }
     private static void persistFinish(Context context, Run run, String status, String error) {
         String finalStatus = status;
-        try { new MagiStreamStore(context).finish(run.id(), status, error, run.title); }
+        try { new MagiStreamStore(context).finish(run.id(), status, error, run.title, "complete".equals(status) && !run.widgetAnswer.toString().trim().isEmpty()); }
         catch (Exception ignored) { finalStatus = "failed"; }
         final String savedStatus = finalStatus;
         MAIN.post(() -> {
             release(run);
+            if (savedStatus.equals("complete") && run.widgetAnswer.length() > 0) {
+                try {
+                    MagiWidgetStore.update(context, new MagiWidgetData(run.meta.getString("sessionId"), run.title, run.widgetAnswer.toString(), run.widgetVerdict));
+                    MagiWidgetProvider.updateAll(context);
+                } catch (Exception ignored) { /* 会話の耐久保存と通知は表示キャッシュの失敗で止めない。 */ }
+            }
             // 保存済み状態を確定してから通知し、未保存の回答へ利用者を誘導しない。
             boolean allowed = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
             boolean notificationRequested = false;
@@ -203,10 +207,14 @@ public class MagiConversationService extends Service {
                     if (!event.matches("classification|title|motion|persona|ask|judge|verdict|integrated|integrated_end|clarify|closed|pages|sources|suggest|error|done")) return false;
                     JSObject data = new JSObject(text);
                     if (event.equals("title") && data.opt("text") instanceof String) {
-                        run.title = data.getString("text").replaceAll("[\\p{Cntrl}\\p{Cf}]", " ");
-                        if (run.title.length() > 200) run.title = run.title.substring(0, 200);
+                        run.title = MagiStreamStore.cleanTitle(data.getString("text"));
                     }
                     if (event.equals("integrated") && data.opt("delta") instanceof String && !data.getString("delta").trim().isEmpty()) answer[0] = true;
+                    if (event.equals("integrated") && data.opt("delta") instanceof String) run.widgetAnswer.append(data.getString("delta"));
+                    if (event.equals("verdict")) {
+                        org.json.JSONObject tally = data.optJSONObject("tally");
+                        run.widgetVerdict = tally == null ? "" : MagiWidgetData.verdict(data.getString("result", ""), tally.opt("approve"), tally.opt("reject"), tally.opt("none"));
+                    }
                     if (event.equals("clarify") && data.opt("questions") instanceof org.json.JSONArray && data.getJSONArray("questions").length() > 0) answer[0] = true;
                     if (event.equals("done") && !answer[0]) throw new IOException("incomplete_reply");
                     store.append(run.id(), event, data);

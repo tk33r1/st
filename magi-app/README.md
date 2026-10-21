@@ -194,10 +194,47 @@ Version 5.6 was published on 2026-10-21 after integrating the newer history and 
 See [the release verification](B3公開評価20261021.md) for the final APK, additional checks,
 and the distinction between candidate and release testing. Android 13/14 and other devices remain unverified.
 
+## B4 home widget (5.7)
+
+Version 5.7 / 57 adds a native Android home widget using RemoteViews. Small widgets
+offer new conversation, voice and continue; larger widgets can show the latest
+completed answer's title, first 120 characters (up to three lines) and MAGI verdict.
+Contents are hidden by default. Settings can change this and request home placement.
+The widget performs no network requests. Links open the app without sending a message.
+
+`www/native-widget.js` publishes only display data after B1 saves. Native background
+completion updates `MagiWidgetStore` directly before the WebView resumes. Masking
+removes stored title, summary and verdict; revision checks reject stale screen updates.
+Pending B3 receipt is protected from replacement by older B1 history.
+
+Local checks include `test-magi-native-widget.mjs` through `test-magi2.mjs`,
+`test-magi-native-widget-browser.mjs`, and `MagiWidgetDataTest`. The existing isolated
+probe supports `--widget=on` to check updates before reopening the screen. Its debug-only
+`MagiWidgetProbeActivity` renders the same RemoteViews in a real AppWidgetHostView at
+three sizes; it is absent from release APKs. These tests use synthetic responses.
+
+The initial candidate was installed over 5.6 on the test device, preserving all 14 saved-list
+entries. Device reboot, home-launcher resize gestures,
+other Android versions and launchers remain unverified. Actual speech recognition
+is outside this widget check. See [B4 verification](B4実装評価20261021.md).
+
+The later [B3/B4 simplify changes](B3B4simplify確認20261021.md) keep the same version
+and behavior: title normalization and native activity intents are shared, and widget
+settings initialization is extracted. The rebuilt candidate was checked locally;
+it did not replace the earlier candidate on the device during that verification.
+
+The subsequent [review fixes](B3B4レビュー修正20261021.md) register active receipt
+under the stream-store lock and read its ID under the same lock. Widget sync captures
+the revision first, selects pending answers per conversation, and can restore display
+data from the saved SSE without importing or resending the chat. An unrelated pending
+answer no longer blocks unmasking a newer conversation. The fixed APK has not been
+installed on the test device; its verification is distinct from the initial candidate.
+
 ## Release (signed) APK
 
-Version 5.6 / 56 adds B3 background receipt and notifications to the B1 history storage
-and B2 Android share intents and dictation introduced in 5.5. Shared text is
+Version 5.7 / 57 adds B4 home widgets and the B3/B4 review fixes to background receipt
+and notifications from 5.6, and B1 history storage and B2 Android share intents and
+dictation introduced in 5.5. Shared text is
 placed in a new conversation without sending. Text over 1,000 characters becomes the shared
 document as-is, and a URL inside it is not fetched. Articles use bundled Mozilla
 Readability 0.6.0 (`scripts/vendor-readability.cjs`, recorded SHA-256 and license

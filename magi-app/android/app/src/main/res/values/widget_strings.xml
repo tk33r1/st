@@ -1,0 +1,7 @@
+<resources>
+    <string name="widget_description">Ask MAGI</string>
+    <string name="widget_new">New discussion</string><string name="widget_new_short">＋ New</string>
+    <string name="widget_voice">Voice input</string><string name="widget_resume">Continue last chat</string><string name="widget_resume_short">Continue</string>
+    <string name="widget_empty">Ask MAGI</string><string name="widget_masked">Last chat (hidden)</string>
+    <string name="widget_approve">APPROVE</string><string name="widget_reject">REJECT</string><string name="widget_hold">HOLD</string>
+</resources>

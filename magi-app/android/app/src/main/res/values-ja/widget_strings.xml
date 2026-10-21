@@ -1,0 +1,7 @@
+<resources>
+    <string name="widget_description">MAGI に聞く</string>
+    <string name="widget_new">新しい議題</string><string name="widget_new_short">＋ 議題</string>
+    <string name="widget_voice">音声入力</string><string name="widget_resume">前回の続き</string><string name="widget_resume_short">続き</string>
+    <string name="widget_empty">MAGI に聞く</string><string name="widget_masked">前回の会話（非表示）</string>
+    <string name="widget_approve">承認</string><string name="widget_reject">否決</string><string name="widget_hold">保留</string>
+</resources>
