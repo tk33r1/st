@@ -230,12 +230,21 @@ data from the saved SSE without importing or resending the chat. An unrelated pe
 answer no longer blocks unmasking a newer conversation. The fixed APK has not been
 installed on the test device; its verification is distinct from the initial candidate.
 
+Version 5.8 / 58 adds [further simplification](B3B4simplify追加20261021.md) and
+[review fixes](B3B4再レビュー修正20261021.md). The `magi://` intent-filter was removed:
+notifications and widgets open `MainActivity` through explicit PendingIntents, so web
+pages can no longer reset a chat or start voice input. Pending-stream folders without
+`meta.json` no longer break listing, deletion or widget sync, and a service started
+after its request already ended calls `startForeground` before stopping.
+
 ## Release (signed) APK
 
-Version 5.7 was published on 2026-10-21. See [release verification](B4公開評価20261021.md)
+Version 5.8 was published on 2026-10-21. See [release verification](B3B4追加公開評価20261021.md)
 for the source commit, APK digest, production checks and remaining device checks.
+The 5.7 record is [B4 release verification](B4公開評価20261021.md).
 
-Version 5.7 / 57 adds B4 home widgets and the B3/B4 review fixes to background receipt
+Version 5.8 / 58 hardens B3/B4 links, pending streams and service start on top of
+5.7, which added B4 home widgets and the B3/B4 review fixes to background receipt
 and notifications from 5.6, and B1 history storage and B2 Android share intents and
 dictation introduced in 5.5. Shared text is
 placed in a new conversation without sending. Text over 1,000 characters becomes the shared
