@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "5.9",
+      "date": "2026-10-22",
+      "changes": {
+        "ja": [
+          "入力バーを1つの枠にまとめ、「＋」からカメラ・写真・ファイルを選べるようにしました。送信ボタンは「↑」にし、送れるときだけ濃く表示します。",
+          "画面上部を整理しました。「☰」で履歴と新しいチャット、「︙」でそのほかの操作を開き、今日の利用回数を円グラフで表示します。",
+          "アプリの表示を日本語と英語で切り替えられるようにしました。最初は端末の言語で表示します。",
+          "Android版のウィジェットを、チャット・カメラ・アルバム・音声入力の入口にしました。前回の続きと内容の表示はなくしました。"
+        ],
+        "en": [
+          "The input bar is now one field, and + offers Camera, Photos and Files. The send button is an up arrow that darkens only when there is something to send.",
+          "The header is simpler: ☰ opens chats and New chat, ⋮ holds the other actions, and a ring shows today's usage.",
+          "The app can switch between English and Japanese. It starts in the device language.",
+          "The Android widget now opens Chat, Camera, Album and Voice input. The continue entry and the content display were removed."
+        ]
+      }
+    },
+    {
       "version": "5.8",
       "date": "2026-10-21",
       "changes": {
