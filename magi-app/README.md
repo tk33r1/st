@@ -232,6 +232,9 @@ installed on the test device; its verification is distinct from the initial cand
 
 ## Release (signed) APK
 
+Version 5.7 was published on 2026-10-21. See [release verification](B4公開評価20261021.md)
+for the source commit, APK digest, production checks and remaining device checks.
+
 Version 5.7 / 57 adds B4 home widgets and the B3/B4 review fixes to background receipt
 and notifications from 5.6, and B1 history storage and B2 Android share intents and
 dictation introduced in 5.5. Shared text is
