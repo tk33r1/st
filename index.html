@@ -2175,26 +2175,35 @@
     .agent-clarify input { width:100%; box-sizing:border-box }
     .agent-clarify input[hidden] { display:none }
 
-    #agent-inputline {
-      gap: 0.4rem;
-      padding: 0.6rem;
-      /* 入力欄が伸びても、添付と送信のボタンは最終行の横に留める */
-      align-items: flex-end;
-    }
+    #agent-inputline { padding: 0.6rem }
 
-    #agent-input {
+    /* 添付と送信は枠の中に置き、入力欄の幅を取らない。ボタンは1行の入力欄と同じ高さ（--composer-button）。
+       入力欄が伸びても、ボタンは最終行の横に留める（align-items） */
+    #agent-composer {
+      --composer-button: calc(1.25rem + 0.8rem + 2px);
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.15rem;
+      padding: 0.2rem;
       background: var(--surface-alt);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.4rem 0.6rem;
-      color: var(--text-color);
-      outline: none;
+      border-radius: calc(var(--composer-button) / 2 + 0.2rem);
       transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
     }
 
-    #agent-input:focus {
+    #agent-composer:focus-within {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 2px var(--primary-bg);
+    }
+
+    #agent-input {
+      background: transparent;
+      border: 1px solid transparent;
+      padding: 0.4rem 0.3rem;
+      color: var(--text-color);
+      outline: none;
     }
 
     #agent-input:disabled { opacity: 0.5 }
@@ -2210,10 +2219,12 @@
     /* 次の質問の予測：空の入力欄に薄く重ね、右の › で入れる。文字は入力欄と同じ位置・大きさに揃える */
     #agent-input-wrap { position: relative; min-width: 0; display: flex }
     #agent-input-wrap #agent-input { width: 100%; min-width: 0 }
+    /* 案内文は狭い画面でも折り返さず省略し、1行の高さを保つ */
+    #agent-input::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
     #agent-input.has-suggest::placeholder { color: transparent }
     #agent-suggest {
       position: absolute;
-      inset: 1px 1px 1px calc(0.6rem + 1px);
+      inset: 1px 1px 1px calc(0.3rem + 1px);
       display: flex;
       align-items: center;
       gap: 0.15rem;
@@ -2248,10 +2259,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 1.8rem;
-      height: 1.8rem;
+      width: var(--composer-button);
+      height: var(--composer-button);
       flex-shrink: 0;
-      border-radius: 6px;
+      border-radius: 50%;
       color: var(--secondary-color);
       transition: background-color var(--duration-fast), color var(--duration-fast);
     }
@@ -2329,14 +2340,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 2rem;
-      height: 2rem;
+      width: var(--composer-button);
+      height: var(--composer-button);
       flex-shrink: 0;
-      border-radius: 6px;
-      transition: background-color var(--duration-fast), opacity var(--duration-fast);
+      border-radius: 50%;
+      background: var(--primary-color);
+      color: var(--surface-color);
+      transition: opacity var(--duration-fast);
     }
 
-    #agent-send:hover { background: var(--primary-bg) }
+    #agent-send:hover { opacity: 0.8 }
+    #agent-send:disabled { opacity: 0.4 }
 
     @keyframes magiFlow {
         from { stroke-dashoffset: 20 }
@@ -3687,24 +3701,26 @@
         <div id="agent-status" class="sr-only" aria-live="polite"></div>
         <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
         <div id="agent-attach-tray" class="hidden border-t border-color"></div>
-        <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
+        <div id="agent-inputline" class="flex border-t border-color">
           <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
             tabindex="-1">
-          <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
-            aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
-          <div id="agent-input-wrap" class="flex-1">
-            <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
-            <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
-              maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
-              aria-label="Message MAGI"></textarea>
-            <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
-            <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
-                title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                  stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
+          <div id="agent-composer">
+            <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
+              aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
+            <div id="agent-input-wrap" class="flex-1">
+              <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
+              <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
+                maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
+                aria-label="Message MAGI"></textarea>
+              <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
+              <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
+                  title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                    stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
+            </div>
+            <button id="agent-send" title="Send" data-ja-title="送信"
+              data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg></button>
           </div>
-          <button id="agent-send" class="text-primary hover:opacity-70" title="Send" data-ja-title="送信"
-            data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg></button>
         </div>
       </aside>
     </div>
