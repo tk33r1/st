@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 22 Oct 2026 05:26:32 +0900</lastBuildDate>
+    <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 23 Oct 2026 05:32:07 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月23日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261023/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261023/</guid>
+      <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
+      <description>食品売り場でも有人レジを廃止する動きが出ており、セルフレジの省人化が店舗運営の中心へ移りつつある一方、混雑や不公平感など生活者の反発も表面化している イオンがネットスーパー専用の物流施設を開設し、リテールメディアでも独自完結型とネットワーク型の両面戦略を進めるなど、小売各社の物流・広告投資が加速している</description>
+    </item>
     <item>
       <title>2026年10月22日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261022/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261009/</guid>
       <pubDate>Fri, 09 Oct 2026 08:00:00 +0900</pubDate>
       <description>インタセクトとユーシーカードが無人店舗でのクレジットカードのタッチ決済に対応し、入店から決済までを非接触・カード一枚で完結させる動きが広がっています。 需要予測では住関連データなど外部データを取り込んで精度を高める動きが目立ち、AI需要予測の実装が高度化しています。</description>
-    </item>
-    <item>
-      <title>2026年10月8日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261008/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261008/</guid>
-      <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
-      <description>国内では、アパレル基幹システムとAI需要予測の連携、アウトレットでのAI警備・人流データ活用など、AIを実際の業務や店舗運営につなぐ実証・連携が目立った。 トライアルHDとスギ薬局によるリテールメディア研究会の発足は、事業者間で知見を共有し、広告・販促の発展を探る動きとして注目される。</description>
     </item>
   </channel>
 </rss>
