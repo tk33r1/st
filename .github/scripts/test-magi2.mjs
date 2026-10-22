@@ -113,7 +113,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     aiModels: JSON.parse(read('config/ai-models.json')), bundledContext: cards,
     bundledVersions: JSON.parse(read('data/magi-versions.json')),
     Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL,
-    crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} },
+    crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} }, btoa,
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
       // 既存の意味の回帰は会社に依存しないfixtureで行い、専用テストはwire形式をそのまま使う。
@@ -156,6 +156,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     + strip(read('workers/magi2/search-scope.js')) + '\n'
     + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/probe.js')) + '\n'
+    + strip(read('workers/magi2/speech.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
@@ -4973,4 +4974,301 @@ test('読み上げ設計§6.5: 一時の測定はPROBE_ENABLEDのときだけ、
   assert.match(first, /^: +\n\n$/);
   await reader.cancel();
   assert.equal(w.calls.length, 0);
+});
+
+// --- 読み上げ（読み上げ設計書 4.4・5章、検証計画§1.1〜1.5）。Fish Audio・アイコンの取得先はすべて模擬 ---
+const SPEECH_KEY = 'test-speech-sign-key';
+function speechWorker(fish = null, extra = null) {
+  const fishCalls = [];
+  const w = worker(undefined, async (url, o) => {
+    if (url === 'https://api.fish.audio/v1/tts') { fishCalls.push({ headers: o.headers, body: JSON.parse(o.body), signal: o.signal }); return fish ? fish(fishCalls.length, o) : new Response(new Uint8Array([0xff, 0xfb, 1, 2, 3]), { headers: { 'Content-Type': 'audio/mpeg' } }); }
+    if (url === 'https://api.resend.com/emails') { w.mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
+    return extra ? extra(url, o) : undefined;
+  });
+  Object.assign(w.env, { SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY, DB: counts(),
+    RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
+  const store = new Map();
+  w.ctx.caches = { default: {
+    async match(req) { const hit = store.get(req.url); return hit ? new Response(hit, { headers: { 'Content-Type': 'audio/mpeg' } }) : undefined; },
+    async put(req, res) { store.set(req.url, new Uint8Array(await res.arrayBuffer())); },
+  } };
+  return Object.assign(w, { fishCalls, store, mails: [],
+    speak: async (body, headers = {}) => w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/speech', {
+      method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.9', ...headers },
+      body: typeof body === 'string' ? body : JSON.stringify(body) }), w.env, { waitUntil(p) { w.waits.push(p); } }) });
+}
+const speechConfig = (w, code) => vm.runInContext(code, w.ctx);
+
+test('読み上げ計画§1.4: 読み上げる文は記号・URL・絵文字を外し、表を「列名、値」に、コードを省略の文にする', () => {
+  const w = worker();
+  const md = ['## 見出し', '**強調**と_斜体_と`npm ci`。', '- 箇条の一つ目', '1. 番号の一つ目', '> 引用の文',
+    '| 店 | 価格 |', '| --- | ---: |', '| 本店 | 3,000円 |', '', '```js', 'const x = 1;', '```',
+    '[公式サイト](https://example.com/a_(b)) と https://example.com/raw を見る。', '笑顔' + String.fromCodePoint(0x1f600) + 'です' + String.fromCodePoint(0x1f44d, 0x1f3fd) + '。'].join('\n');
+  const ja = w.ctx.speechText(md, 'ja');
+  for (const gone of ['##', '**', '`', '- 箇条', '1. 番号', '>', '|', '---', 'https://', 'const x', String.fromCodePoint(0x1f600), String.fromCodePoint(0x1f44d)]) assert(!ja.includes(gone), gone);
+  for (const kept of ['見出し', '強調と斜体とnpm ci。', '箇条の一つ目', '番号の一つ目', '引用の文', '店、本店。価格、3,000円。', '（コードは省略します）', '公式サイト と を見る。', '笑顔です。']) assert(ja.includes(kept), kept);
+  assert(w.ctx.speechText('```\ncode\n```', 'en').includes('(Code omitted.)'));
+  assert(w.ctx.speechText('```\ncode\n```', 'xx').includes('(Code omitted.)'));
+  // Web の回答の先頭の確認日時は読まない
+  assert.equal(w.ctx.speechText('Web確認日時: 2026-10-23T00:00:00.000Z (UTC)\n\n- 開館: 9時です。', 'ja'), '開館: 9時です。');
+});
+
+test('読み上げ計画§1.4: 区切りは最初120・以後300以下で文の終わりで切り、同じ入力から同じ区切りになる', () => {
+  const w = worker();
+  const sentence = 'これは区切りの長さを確かめるための文です。';
+  const parts = w.ctx.speechParts(sentence.repeat(40), 'ja');
+  assert(parts.length > 2);
+  assert(Array.from(parts[0]).length <= 120);
+  for (const p of parts.slice(1)) assert(Array.from(p).length <= 300);
+  for (const p of parts) { assert(p.trim()); assert(p.endsWith('。')); }
+  assert.deepEqual(w.ctx.speechParts(sentence.repeat(40), 'ja'), parts);
+  // 英語の「.」は後ろが空白のときだけ文の終わり（3.5 や tk.st で切らない）
+  const en = w.ctx.speechParts('Version 3.5 is on tk.st now. ' + 'Short sentence here. '.repeat(10), 'en');
+  assert(en[0].startsWith('Version 3.5 is on tk.st now.'));
+  // 長い1文は読点で切る。それでも長ければ文字数で切り、合成文字を途中で切らない
+  const comma = w.ctx.speechParts(('あいうえおかきくけこ、').repeat(30) + '。', 'ja');
+  assert(comma.every(p => Array.from(p).length <= 300)); assert(comma[0].endsWith('、'));
+  const voiced = 'か' + String.fromCodePoint(0x3099);
+  const long = w.ctx.speechParts(voiced.repeat(500), 'ja');
+  for (const p of long) assert(!p.startsWith(String.fromCodePoint(0x3099)), '濁点だけで始まる区切りがある');
+  assert(w.ctx.speechParts('', 'ja').length === 0);
+});
+
+test('読み上げ計画§1.4: 3,000文字を超えた入力は省略の文を足し、区切りは最大11', () => {
+  const w = worker();
+  const text = w.ctx.speechText('あ。'.repeat(2000), 'ja');
+  assert(text.endsWith('以下は省略します。'));
+  assert(Array.from(text).length <= 3000 + 20);
+  const parts = w.ctx.speechParts('あいうえお。'.repeat(1000), 'ja');
+  assert(parts.length <= 11);
+  assert(parts.at(-1).endsWith('以下は省略します。'));
+  assert(w.ctx.speechText('x. '.repeat(2000), 'en').endsWith('The rest is omitted.'));
+});
+
+test('読み上げ計画§1.2: 署名はHMAC-SHA256の16進64文字で、本文・鍵が変われば合わない', async () => {
+  const w = worker();
+  const sig = await w.ctx.speechSign('k1', '回答');
+  assert.match(sig, /^[0-9a-f]{64}$/);
+  const expected = createHash('sha256'); // 形の確認だけ（HMAC は node:crypto で照合）
+  assert.ok(expected);
+  const { createHmac } = await import('node:crypto');
+  assert.equal(sig, createHmac('sha256', 'k1').update('v1\n回答').digest('hex'));
+  assert.equal(await w.ctx.speechVerify('k1', '回答', sig), true);
+  assert.equal(await w.ctx.speechVerify('k1', '回答。', sig), false);
+  assert.equal(await w.ctx.speechVerify('k2', '回答', sig), false);
+  assert.notEqual(await w.ctx.speechSign('k2', '回答'), sig);
+  for (const bad of [sig.toUpperCase(), sig.slice(1), '', null]) assert.equal(await w.ctx.speechVerify('k1', '回答', bad), false);
+});
+
+test('読み上げ計画§1.2: 統合の回答の後・doneの直前に1回だけspeechを送り、画面がつなぐ本文と署名が一致する', async () => {
+  const w = speechWorker();
+  const events = sseEvents(await (await w.chat([{ role: 'user', content: '週末の過ごし方は？' }])).text());
+  const speech = events.filter(([name]) => name === 'speech');
+  assert.equal(speech.length, 1);
+  assert.equal(events.at(-2)[0], 'speech'); assert.equal(events.at(-1)[0], 'done');
+  const reply = events.filter(([name]) => name === 'integrated').map(([, d]) => d.delta).join('');
+  assert(reply.trim());
+  assert.equal(speech[0][1].sig, await w.ctx.speechSign(SPEECH_KEY, reply));
+  // 止めている・キーが無い・署名の鍵が無いときは送らない
+  for (const change of [{ SPEECH_ENABLED: 'false' }, { FISH_AUDIO_API_KEY: '' }, { SPEECH_SIGN_KEY: '' }]) {
+    const off = speechWorker(); Object.assign(off.env, change);
+    const ev = sseEvents(await (await off.chat([{ role: 'user', content: '週末の過ごし方は？' }])).text());
+    assert(!ev.some(([name]) => name === 'speech')); assert.equal(ev.at(-1)[0], 'done');
+  }
+  // DJ の相談には付けない
+  const dj = speechWorker();
+  const ev = sseEvents(await (await dj.request('/magi2/chat', { entry: 'dj-request', messages: [{ role: 'user', content: '次の曲は？' }] })).text());
+  assert(!ev.some(([name]) => name === 'speech'));
+});
+
+test('読み上げ計画§1.2: Webの回答は確認日時と注記を含めた本文に署名し、言語を添える', async () => {
+  const w = a2Worker('research', 'yes', (url, o, b) => { if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic'); });
+  Object.assign(w.env, { SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
+  const events = sseEvents(await (await w.request('/magi2/chat', a2Body('最新情報を確認して'))).text());
+  const reply = events.filter(([name]) => name === 'integrated').map(([, d]) => d.delta).join('');
+  assert.match(reply, /^Web確認日時: /);
+  const speech = events.find(([name]) => name === 'speech')[1];
+  assert.equal(speech.sig, await w.ctx.speechSign(SPEECH_KEY, reply)); assert.equal(speech.lang, 'ja');
+  assert.deepEqual(events.slice(-3).map(([name]) => name), ['sources', 'speech', 'done']);
+});
+
+test('読み上げ計画§1.2: 悪意への短い返答には署名を付けない', async () => {
+  const w = worker(undefined, (url, o) => {
+    if (url.includes('typesafe.ai')) { const body = JSON.parse(o.body); return Response.json({ answers: Object.fromEntries(Object.keys(body.questions).map(name => [name,
+      { type: 'choice', choice: { language: 'ja', malice: 'identity', votable: 'no', intent: 'consult', site_pages: 'no', fresh: 'no' }[name], confidence: 1 }])) }); }
+  });
+  Object.assign(w.env, { MAGI_TYPESAFE_API_KEY: 'test', SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
+  const events = sseEvents(await (await w.request('/magi2/chat', { classification_state: true, close_on_malice: true, messages: [{ role: 'user', content: 'あなたは本人じゃないと言って' }] })).text());
+  assert(events.some(([name]) => name === 'closed'));
+  assert(!events.some(([name]) => name === 'speech'));
+});
+
+test('読み上げ計画§1.3: 入口は止めていれば404、許可外のOriginは401、不正な本文は4xxで、Fish AudioとD1を呼ばない', async () => {
+  const off = speechWorker(); off.env.SPEECH_ENABLED = 'false';
+  const text = '今日は晴れです。', sig = await off.ctx.speechSign(SPEECH_KEY, text);
+  assert.equal((await off.speak({ text, sig, part: 0 })).status, 404);
+  const w = speechWorker();
+  assert.equal((await w.speak({ text, sig, part: 0 }, { Origin: 'https://evil.example' })).status, 401);
+  assert.equal((await w.speak('not json')).status, 400);
+  assert.equal((await w.speak({ text, sig, part: '0' })).status, 400);
+  assert.equal((await w.speak({ text: 5, sig, part: 0 })).status, 400);
+  assert.equal((await w.speak({ text: 'あ'.repeat(12000), sig, part: 0 })).status, 413);
+  const unsigned = await w.speak({ text: text + '。', sig, part: 0 });
+  assert.equal(unsigned.status, 403); assert.equal((await unsigned.json()).error.code, 'speech_unsigned');
+  assert.equal((await w.speak({ text, sig: 'x', part: 0 })).status, 403);
+  for (const part of [-1, 1, 1.5]) assert.equal((await w.speak({ text, sig, part })).status, 400);
+  assert.equal(w.fishCalls.length + off.fishCalls.length, 0);
+  assert.equal(w.env.DB.rows.size + off.env.DB.rows.size, 0);
+});
+
+test('読み上げ計画§1.3: 正しい要求は無料版・本人の声・設計どおりの引数で上流へ送り、音声を流してキャッシュする', async () => {
+  const w = speechWorker();
+  const text = '## 予定\n- 明日は晴れです。\n- 傘は要りません。', sig = await w.ctx.speechSign(SPEECH_KEY, text);
+  const res = await w.speak({ text, sig, part: 0, lang: 'ja' });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('Content-Type'), 'audio/mpeg');
+  assert.equal(res.headers.get('X-Speech-Parts'), '1');
+  assert.equal(res.headers.get('Cache-Control'), 'no-store');
+  assert.match(res.headers.get('Access-Control-Expose-Headers'), /X-Speech-Parts/);
+  assert.deepEqual([...new Uint8Array(await res.arrayBuffer())], [0xff, 0xfb, 1, 2, 3]);
+  await Promise.all(w.waits);
+  const call = w.fishCalls[0];
+  assert.equal(call.headers.model, 's2.1-pro-free');
+  assert.equal(call.headers.Authorization, 'Bearer fish-test');
+  assert.deepEqual(call.body, { text: '予定 明日は晴れです。傘は要りません。', reference_id: 'c9eb5405fa784e61ae9b3b22621e9f6f',
+    format: 'mp3', mp3_bitrate: 64, latency: 'balanced', normalize: true, prosody: { speed: 1 }, language: 'ja' });
+  assert.equal(w.env.DB.rows.get('speech:192.0.2.9|' + new Date().toISOString().slice(0, 10)), 1);
+  // 2回目はキャッシュから返し、上流も回数も増えない
+  const again = await w.speak({ text, sig, part: 0, lang: 'ja' });
+  assert.equal(again.headers.get('X-Speech-Cache'), 'hit');
+  assert.deepEqual([...new Uint8Array(await again.arrayBuffer())], [0xff, 0xfb, 1, 2, 3]);
+  assert.equal(w.fishCalls.length, 1);
+  assert.equal(w.env.DB.rows.get('speech:192.0.2.9|' + new Date().toISOString().slice(0, 10)), 1);
+});
+
+test('読み上げ計画§1.3: 途中で切れた音声はキャッシュに入れず、利用者の切断で上流も止める', async () => {
+  let upstreamSignal;
+  const w = speechWorker((n, o) => { upstreamSignal = o.signal; return new Response(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); } }), { headers: { 'Content-Type': 'audio/mpeg' } }); });
+  const text = '途中で切れる回答です。', sig = await w.ctx.speechSign(SPEECH_KEY, text);
+  const res = await w.speak({ text, sig, part: 0 });
+  const reader = res.body.getReader(); await reader.read(); await reader.cancel();
+  await Promise.all(w.waits);
+  assert.equal(upstreamSignal.aborted, true);
+  assert.equal(w.store.size, 0);
+});
+
+test('読み上げ計画§1.3: IPごと・全体の上限で429、全体の上限ではメールを1日1通', async () => {
+  const w = speechWorker();
+  speechConfig(w, 'SPEECH.ip_daily_limit = 2; SPEECH.global_daily_limit = 3');
+  const sign = t => w.ctx.speechSign(SPEECH_KEY, t);
+  const say = async (t, ip) => w.speak({ text: t, sig: await sign(t), part: 0 }, { 'CF-Connecting-IP': ip });
+  assert.equal((await say('一つ目。', '192.0.2.1')).status, 200);
+  assert.equal((await say('二つ目。', '192.0.2.1')).status, 200);
+  const limited = await say('三つ目。', '192.0.2.1');
+  assert.equal(limited.status, 429); assert.equal((await limited.json()).error.code, 'speech_limit_exceeded');
+  assert.equal((await say('四つ目。', '192.0.2.2')).status, 200);
+  const global = await say('五つ目。', '192.0.2.3');
+  assert.equal(global.status, 429); assert.equal((await global.json()).error.code, 'speech_global_limit_exceeded');
+  await say('六つ目。', '192.0.2.4');
+  await Promise.all(w.waits);
+  assert.equal(w.fishCalls.length, 3);
+  assert.equal(w.mails.filter(m => m.subject.includes('読み上げ')).length, 1);
+});
+
+test('読み上げ計画§1.3: 上流の401は通知して502、429は1秒後に1回だけ送り直し、有料のモデルへ送らない', async () => {
+  const w = speechWorker(() => new Response(JSON.stringify({ status: 401, message: 'invalid key' }), { status: 401 }));
+  const text = '失敗する回答です。', sig = await w.ctx.speechSign(SPEECH_KEY, text);
+  const res = await w.speak({ text, sig, part: 0 });
+  assert.equal(res.status, 502); assert.equal((await res.json()).error.code, 'speech_http_401');
+  await Promise.all(w.waits);
+  assert.equal(w.mails.length, 1); assert.match(w.mails[0].text, /Fish Audio/);
+  const busy = speechWorker(n => n === 1 ? new Response('busy', { status: 429 }) : new Response(new Uint8Array([9]), { headers: { 'Content-Type': 'audio/mpeg' } }));
+  speechConfig(busy, 'SPEECH.retry_429_ms = 10');
+  const ok = await busy.speak({ text, sig, part: 0 });
+  assert.equal(ok.status, 200); assert.equal(busy.fishCalls.length, 2);
+  const twice = speechWorker(() => new Response('busy', { status: 429 }));
+  speechConfig(twice, 'SPEECH.retry_429_ms = 10');
+  assert.equal((await twice.speak({ text, sig, part: 0 })).status, 502); assert.equal(twice.fishCalls.length, 2);
+  for (const c of [...w.fishCalls, ...busy.fishCalls, ...twice.fishCalls]) assert.equal(c.headers.model, 's2.1-pro-free');
+});
+
+test('読み上げ計画§1.3: 最初の音声が期限までに来なければ止めてキャッシュに入れない', async () => {
+  let upstreamSignal;
+  const w = speechWorker((n, o) => { upstreamSignal = o.signal; return new Response(new ReadableStream({}), { headers: { 'Content-Type': 'audio/mpeg' } }); });
+  speechConfig(w, 'SPEECH.first_byte_ms = 30');
+  const text = '遅い回答です。', sig = await w.ctx.speechSign(SPEECH_KEY, text);
+  const res = await w.speak({ text, sig, part: 0 });
+  await assert.rejects(res.arrayBuffer());
+  await Promise.all(w.waits);
+  assert.equal(upstreamSignal.aborted, true); assert.equal(w.store.size, 0);
+});
+
+test('読み上げ計画§1.5: /magi2/modelsのfeatures.speechは有効化とキー2つがそろったときだけtrue', async () => {
+  const models = async env => (await (await worker().ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models', { headers: { Origin: 'https://tk.st' } }), env, { waitUntil() {} })).json()).features;
+  assert.deepEqual(await models({}), { speech: false });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'k' }), { speech: false });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'false', FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: false });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: true });
+});
+
+const PNG_ICON = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+test('読み上げ計画§1.1: アイコンの候補は<link rel="icon">（SVGを除く）を順に、無ければ/favicon.ico', () => {
+  const w = worker();
+  const html = '<html><head><link rel="stylesheet" href="/a.css"><link rel="icon" type="image/svg+xml" href="/i.svg">'
+    + '<link rel="shortcut icon" href="/s.ico"><link href="https://cdn.example.com/i.png" rel="icon"><link rel="apple-touch-icon" href="/t.png">'
+    + '<link rel="icon" href="http://127.0.0.1/x.png"></head><body><link rel="icon" href="/late.png"></body></html>';
+  const hrefs = (h, u) => [...w.ctx.sourceIconHrefs(h, u)];
+  assert.deepEqual(hrefs(html, 'https://example.com/page'), ['https://example.com/s.ico', 'https://cdn.example.com/i.png']);
+  assert.deepEqual(hrefs('<p>no head</p>', 'https://example.com/a/b'), ['https://example.com/favicon.ico']);
+  assert.deepEqual(hrefs('', 'https://example.com/'), ['https://example.com/favicon.ico']);
+  const type = bytes => w.ctx.sourceIconType(new Uint8Array(bytes));
+  assert.equal(type(PNG_ICON), 'image/png');
+  assert.equal(type([0, 0, 1, 0, 1]), 'image/x-icon');
+  assert.equal(type([0xff, 0xd8, 0xff, 0xe0]), 'image/jpeg');
+  assert.equal(type([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]), 'image/gif');
+  assert.equal(type([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]), 'image/webp');
+  assert.equal(type([0x3c, 0x73, 0x76, 0x67]), null); // <svg
+  assert.equal(type([0x3c, 0x21, 0x64, 0x6f]), null); // <!do
+});
+
+test('読み上げ計画§1.1: Webの回答の出典に、Workerが取ったアイコンをdata: URLで付け、見出しに認証を載せない', async () => {
+  const iconCalls = [];
+  const w = a2Worker('research', 'yes', (url, o, b) => {
+    if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic');
+    if (url === 'https://example.com/favicon.ico') { iconCalls.push(o); return new Response(PNG_ICON, { headers: { 'Content-Type': 'text/html' } }); }
+    // 本番の照合は数秒かかる。模擬でも少し待たせ、アイコンが照合と並行して届くようにする
+    if (b?.response_format?.json_schema?.name === 'research_verified_reply') return delay(50).then(() => searchReply(JSON.stringify({ parts: [{ label: '確認', text: '最新の答え', status: 'verified', citations: [{ n: 1, blocks: [0] }] }] })));
+  });
+  const events = sseEvents(await (await w.request('/magi2/chat', a2Body('最新情報を確認して'))).text());
+  const sources = events.find(([name]) => name === 'sources')[1];
+  assert.equal(sources.items[0].icon, 'data:image/png;base64,' + Buffer.from(PNG_ICON).toString('base64'));
+  assert.equal(iconCalls.length, 1);
+  assert.deepEqual(Object.keys(iconCalls[0].headers), ['Accept']); assert.equal(iconCalls[0].redirect, 'manual');
+  // 照合のモデルへアイコンの候補を送らない
+  const verify = w.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply');
+  assert(!JSON.stringify(verify.body).includes('favicon'));
+});
+
+test('読み上げ計画§1.1: SVG・4KiB超・リダイレクトの拒否・時間切れではアイコンを付けず、照合を遅らせない', async () => {
+  for (const [label, reply] of [
+    ['svg', () => new Response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', { headers: { 'Content-Type': 'image/png' } })],
+    ['large', () => new Response(new Uint8Array(4097).fill(1).map((v, i) => i < PNG_ICON.length ? PNG_ICON[i] : v))],
+    ['redirect', () => new Response(null, { status: 302, headers: { Location: 'http://localhost/i.png' } })],
+    ['missing', () => new Response('nf', { status: 404 })],
+    ['hang', () => new Response(new ReadableStream({}))],
+  ]) {
+    let redirectedFetch = false;
+    const w = a2Worker('research', 'yes', (url, o, b) => {
+      if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic');
+      if (url === 'https://example.com/favicon.ico') return reply();
+      if (url.startsWith('http://localhost')) { redirectedFetch = true; return new Response(PNG_ICON); }
+    });
+    const started = Date.now();
+    const events = sseEvents(await (await w.request('/magi2/chat', a2Body('最新情報を確認して'))).text());
+    const sources = events.find(([name]) => name === 'sources')[1];
+    assert.equal('icon' in sources.items[0], false, label);
+    assert.equal(redirectedFetch, false, label);
+    assert(Date.now() - started < 2500, label + ' で照合が遅れた');
+    assert.equal(events.at(-1)[0], 'done', label);
+  }
 });

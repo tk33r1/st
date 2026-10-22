@@ -1,6 +1,6 @@
 // 読み上げ検証計画§0.2: Fish Audio の声のモデルと無料版の応答を確かめる（実 API。費用 0）。
 // node .github/scripts/probe-magi-speech.mjs model|tts|errors|all
-// キーは環境変数 FISH_AUDIO_API_KEY。モデルは無料版の s2.1-pro-free だけを送り、ほかは拒否する。
+// キーは環境変数 FISH_AUDIO_API_KEY。モデルは config/ai-models.json の fishaudio.tts で、無料版（末尾が -free）でなければ送らない。
 // 公正利用を守るため、計画全体の読み上げの区切り（最大60）を Git 管理外の台帳で数え、超える要求は送らない。
 // 結果と音声は Git 管理外の workers/.wrangler/magi2-speech/ に置く（公開リポジトリに入れない）。
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -11,7 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const dir = join(root, 'workers/.wrangler/magi2-speech');
 const ledgerPath = join(dir, 'ledger.json');
 const API = 'https://api.fish.audio';
-const MODEL = 's2.1-pro-free';
+const MODEL = JSON.parse(readFileSync(join(root, 'config/ai-models.json'), 'utf8')).fishaudio.tts.id;
 const VOICE = 'c9eb5405fa784e61ae9b3b22621e9f6f';
 const LIMIT = 60;
 const PLAN_STEP = '0.2';
@@ -53,7 +53,7 @@ async function timed(url, init) {
 
 function tts(text, { key = process.env.FISH_AUDIO_API_KEY, voice = VOICE } = {}) {
   const model = MODEL;
-  if (model !== 's2.1-pro-free') throw new Error('paid_model_refused');
+  if (!model.endsWith('-free')) throw new Error('paid_model_refused');
   return timed(`${API}/v1/tts`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', model },

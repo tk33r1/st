@@ -22,5 +22,11 @@
       "id": "jev-latest",
       "display_name": "Jev"
     }
+  },
+  "fishaudio": {
+    "tts": {
+      "id": "s2.1-pro-free",
+      "display_name": "Fish Audio S2.1-Pro Free"
+    }
   }
 }

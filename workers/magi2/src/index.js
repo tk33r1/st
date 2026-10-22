@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SOURCE_ICON, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
@@ -11,6 +11,7 @@ import { qaBudgetEnv } from '../qa-budget.js';
 import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
 import { handleProbe } from '../probe.js';
+import { speechLanguage, speechParts, speechSign, speechVerify } from '../speech.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -393,6 +394,7 @@ const PROVIDER_ROLES = {
   deepseek: 'DeepSeek（MELCHIOR-1）',
   anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・両テーマの討議判定・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
   typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
+  fishaudio: 'Fish Audio（統合人格の回答の読み上げ）',
 };
 async function alertUpstream(env, log, provider, res, ctx, signal) {
   // 判定に使う先頭500バイト（エラー本文はASCIIのJSONなので500文字）だけを最大2秒で読む（届いた部分とHTTPコードだけで判定する）。
@@ -409,7 +411,9 @@ async function alertUpstream(env, log, provider, res, ctx, signal) {
     '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
     provider === 'typesafe'
       ? '言語の判定は手元の規則に切り替えて、会話は続けます（英字の混ざった日本語に、他の言語で答えることがあります）。'
-      : 'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
+      : provider === 'fishaudio'
+        ? '読み上げは画面に「読み上げできませんでした」と返します。有料のモデルへは切り替えません（無料版の公正利用の超過もこの形で届くことがあります）。'
+        : 'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
     '同じ会社・同じ状態のメールは UTC の1日に1通です。',
   ]);
   // 本文の判定は呼び出し側が待ち、メールの送信だけを裏で続ける。
@@ -1316,13 +1320,89 @@ async function readResearchSource(item, signal) {
         if (stop.aborted) throw searchFailure('cancelled');
         const content = researchSourceBlocks(raw, /text\/html/i.test(type));
         return {...item, allowed:true, readable:content.blocks.length > 0, ...content,
-          truncated:content.truncated || truncated};
+          truncated:content.truncated || truncated, icons:sourceIconHrefs(/text\/html/i.test(type) ? raw : '', url)};
       }
     }, signal);
   } catch (e) {
     if (signal.aborted) throw searchFailure('cancelled');
     return unread(true);
   }
+}
+
+// --- 出典のアイコン（読み上げ設計§4.4）。画面から外部へ取りに行かせず、Worker が出典と同じホストから取って data: URL で渡す ---
+// 候補は HTML の <link rel="icon">（SVG を除く）を書かれた順に、無ければ /favicon.ico。URL の検査は出典の本文と同じ
+function sourceIconHrefs(html, pageUrl) {
+  const attr = (tag, name) => {
+    const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
+    return m ? (m[1] ?? m[2] ?? m[3]).replace(/&amp;/g, '&').trim() : '';
+  };
+  const head = html.split(/<\/head\s*>/i)[0];
+  const hrefs = [];
+  for (const [tag] of head.matchAll(/<link\b[^>]*>/gi)) {
+    if (!attr(tag, 'rel').toLowerCase().split(/\s+/).includes('icon')) continue;
+    const href = attr(tag, 'href'), type = attr(tag, 'type').toLowerCase();
+    if (!href || type.includes('svg') || /\.svgz?(?:[?#]|$)/i.test(href) || !URL.canParse(href, pageUrl)) continue;
+    const abs = researchSourceUrl(new URL(href, pageUrl).href);
+    if (abs && !hrefs.includes(abs)) hrefs.push(abs);
+  }
+  if (!hrefs.length && URL.canParse(pageUrl)) hrefs.push(new URL('/favicon.ico', pageUrl).href);
+  return hrefs.slice(0, 3);
+}
+// 中身の先頭のバイトで種類を決める（Content-Type は信じない）。PNG・ICO・JPEG・GIF・WebP 以外は付けない
+function sourceIconType(b) {
+  const at = (i, ...v) => v.every((x, k) => b[i + k] === x);
+  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png';
+  if (at(0, 0x00, 0x00, 0x01, 0x00)) return 'image/x-icon';
+  if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+  return null;
+}
+async function fetchSourceIcon(hrefs, signal) {
+  try {
+    return await searchDeadline(SOURCE_ICON.ms, async stop => {
+      for (const first of hrefs) {
+        let url = first;
+        for (let redirects = 0; url; redirects++) {
+          const res = await fetch(url, { redirect: 'manual', signal: stop, headers: { Accept: 'image/*' } });
+          if ([301, 302, 303, 307, 308].includes(res.status)) {
+            res.body?.cancel().catch(() => {});
+            const next = res.headers.get('location');
+            url = redirects < SOURCE_ICON.max_redirects && next && URL.canParse(next, url) ? researchSourceUrl(new URL(next, url).href) : null;
+            continue;
+          }
+          if (!res.ok || !res.body) { res.body?.cancel().catch(() => {}); break; }
+          const reader = res.body.getReader(), chunks = [];
+          let size = 0;
+          try {
+            while (size <= SOURCE_ICON.max_bytes) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value); size += value.byteLength;
+            }
+          } finally { reader.cancel().catch(() => {}); }
+          if (!size || size > SOURCE_ICON.max_bytes) break;
+          const bytes = new Uint8Array(size); let at = 0;
+          for (const c of chunks) { bytes.set(c, at); at += c.byteLength; }
+          const type = sourceIconType(bytes);
+          if (type) return `data:${type};base64,${btoa(String.fromCharCode(...bytes))}`;
+          break;
+        }
+      }
+      return null;
+    }, signal);
+  } catch { return null; }
+}
+// 出典ごとにアイコンを取り始め、呼んだ時点で取れている分だけを返す関数を返す（照合の完了を待たせない）
+function startSourceIcons(evidence, signal) {
+  const got = new Map(), byHost = new Map();
+  for (const e of evidence) {
+    if (!e.icons?.length) continue;
+    const host = new URL(e.url).hostname;
+    if (!byHost.has(host)) byHost.set(host, fetchSourceIcon(e.icons, signal));
+    byHost.get(host).then(icon => { if (icon) got.set(e.url, icon); });
+  }
+  return url => got.get(url);
 }
 
 function researchVerificationFormat(evidence) {
@@ -1376,6 +1456,22 @@ async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cf
   const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
   if (signal.aborted) throw searchFailure('cancelled');
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
+  // アイコンは照合と並行して取り、照合が終わった時点で取れている分だけ付ける。取り残しは照合の終わりで止める
+  const iconStop = new AbortController(), stopIcons = () => iconStop.abort();
+  signal.addEventListener('abort', stopIcons, { once: true });
+  const iconFor = startSourceIcons(evidence, iconStop.signal);
+  try { return withSourceIcons(await checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, evidence}), iconFor); }
+  finally { iconStop.abort(); signal.removeEventListener('abort', stopIcons); }
+}
+
+function withSourceIcons(verified, iconFor) {
+  for (const item of verified.sources.items) { const icon = iconFor(item.url); if (icon) item.icon = icon; }
+  return verified;
+}
+
+async function checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, evidence}) {
+  // 照合の材料からアイコンの候補を外す（モデルへ送るのは出典の番号・題名・URL・本文の区画だけ）
+  evidence = evidence.map(({icons, ...e}) => e);
   const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
   const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage),
     stream:false, signal, replyLimit:limit});
@@ -1967,10 +2063,15 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
     start(controller) {
       const enc = new TextEncoder();
       let closed = false, clarified = false;
+      // 画面が integrated の差分をつないで保存するのと同じ文字列（読み上げの署名の対象。読み上げ設計§5.2）
+      let spoken = '';
       const send = (event, data) => {
         if (closed || clarified && event === 'title') return;
         if (event === 'clarify') clarified = true;
-        try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {}
+        try {
+          controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          if (event === 'integrated' && typeof data.delta === 'string') spoken += data.delta;
+        } catch (_) {}
       };
       let pingTimer = null;
       const stopPing = () => { clearInterval(pingTimer); pingTimer = null; };
@@ -2083,6 +2184,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         }
         // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
         if (titlePromise) await titlePromise;
+        // 読み上げの署名（読み上げ設計§5.2）。確認質問・DJ の相談・読み上げを止めているときは送らない
+        if (speechReady(env) && entry !== 'dj-request' && !clarified && spoken.trim() && !stop.signal.aborted) {
+          send('speech', { sig: await speechSign(env.SPEECH_SIGN_KEY, spoken),
+            ...(speechLanguage(classification?.reply_language?.code) ? { lang: classification.reply_language.code } : {}) });
+        }
         send('done', { request_id: requestId });
         close();
       } catch (err) {
@@ -2110,6 +2216,139 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   return new Response(stream, {
     headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
   });
+}
+
+// --- 読み上げ（読み上げ設計§5.4）。Worker が署名した統合人格の回答だけを、区切りごとに Fish Audio で音声にする ---
+// 音声は端末に保存させない（no-store）。同じ区切りは Cache API に入れ、2回目からは Fish Audio を呼ばず回数にも数えない。
+// ログには区切りの数・バイト数・キャッシュの当否・所要時間だけを出し、文・署名・キーは出さない
+const speechReady = env => env.SPEECH_ENABLED === 'true' && !!env.FISH_AUDIO_API_KEY && !!env.SPEECH_SIGN_KEY;
+const speechCache = () => typeof caches !== 'undefined' && caches.default ? caches.default : null;
+async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
+  const headers = { ...cors, 'Cache-Control': 'no-store', 'Access-Control-Expose-Headers': 'X-Speech-Parts' };
+  const fail = (status, stage, code, message, retryable = false) => httpError(status, { stage, code, message, retryable }, requestId, headers);
+  if (!speechReady(env)) return fail(503, 'internal', 'speech_unavailable', '読み上げできませんでした', true);
+  let body;
+  try { body = await readJsonLimited(request, SPEECH.request_bytes); }
+  catch (err) { return inputError(err, requestId, headers); }
+  const { text, sig, part } = body && typeof body === 'object' ? body : {};
+  if (typeof text !== 'string' || !text.trim() || typeof sig !== 'string' || !Number.isInteger(part) || body.lang != null && typeof body.lang !== 'string') {
+    return fail(400, 'bad_request', 'invalid_speech_request', '読み上げの要求が不正です');
+  }
+  if (!await speechVerify(env.SPEECH_SIGN_KEY, text, sig)) {
+    log('speech', 'unsigned');
+    return fail(403, 'auth', 'speech_unsigned', 'この回答は読み上げできません');
+  }
+  const lang = speechLanguage(body.lang);
+  const parts = speechParts(text, lang);
+  if (part < 0 || part >= parts.length) return fail(400, 'bad_request', 'speech_part_out_of_range', '読み上げの区切りが範囲外です');
+  headers['X-Speech-Parts'] = String(parts.length);
+  const started = Date.now();
+  const cache = speechCache();
+  const key = cache && new Request('https://workers.tk.st/magi2/speech-cache/'
+    + await sha256([SPEECH.model, SPEECH.voice_id, SPEECH.params_version, lang || '', parts[part]].join('|')));
+  if (cache) {
+    const hit = await cache.match(key).catch(() => null);
+    if (hit) {
+      log('speech', 'cache_hit', part, parts.length, Date.now() - started);
+      return new Response(hit.body, { headers: { ...headers, 'Content-Type': 'audio/mpeg', 'X-Speech-Cache': 'hit' } });
+    }
+  }
+
+  // 回数は Fish Audio へ実際に送る区切りだけを数える（チャットの回数とは別。設計§5.5）
+  if (env.DB) {
+    try {
+      const ip = requestIP(request), day = utcDay();
+      if (await countUp(env.DB, 'speech:' + ip, day, SPEECH.ip_daily_limit) == null) {
+        log('speech', 'ip_limit', day);
+        return fail(429, 'rate_limit', 'speech_limit_exceeded', '本日の読み上げの上限に達しました');
+      }
+      if (await countUp(env.DB, 'speech:global', day, SPEECH.global_daily_limit) == null) {
+        log('speech', 'global_limit', day);
+        ctx.waitUntil(sendAlert(env, log, 'alert:speech-global', `[MAGI] 本日の読み上げの全体の上限（${SPEECH.global_daily_limit}区切り）に達しました`, [
+          `MAGI（magi2）の読み上げが、UTC の ${day} に全利用者の合計で ${SPEECH.global_daily_limit} 区切りを超えました。`,
+          '今日（UTC）の残りは、どの利用者にも「本日の読み上げの上限に達しました」と返しています。',
+          '無料版の公正利用の範囲を超えていないか、ログ（wrangler tail）で使われ方を確かめてください。',
+          '上限は workers/magi2/personas.js の SPEECH.global_daily_limit です。',
+        ]).catch(e => log('alert', 'failed', e && e.message)));
+        return fail(429, 'rate_limit', 'speech_global_limit_exceeded', '本日の読み上げの上限に達しました');
+      }
+    } catch (err) {
+      log('speech', 'db_error', err && err.message);
+      return fail(500, 'internal', 'speech_db_error', '読み上げできませんでした', true);
+    }
+  }
+
+  // 最初の音声まで first_byte_ms・全体で total_ms。利用者が切ったら上流も止める
+  const stop = new AbortController();
+  const onClient = () => stop.abort();
+  if (request.signal.aborted) stop.abort(); else request.signal.addEventListener('abort', onClient, { once: true });
+  const totalTimer = setTimeout(() => stop.abort(), SPEECH.total_ms);
+  let firstTimer = setTimeout(() => stop.abort(), SPEECH.first_byte_ms);
+  const cleanup = () => { clearTimeout(totalTimer); clearTimeout(firstTimer); request.signal.removeEventListener('abort', onClient); };
+  const upstreamFailed = (status, code) => { cleanup(); log('speech', 'failed', code, Date.now() - started); return fail(status, 'upstream', code, '読み上げできませんでした', true); };
+  const call = () => fetch(SPEECH.endpoint, {
+    method: 'POST', signal: stop.signal,
+    headers: { Authorization: `Bearer ${env.FISH_AUDIO_API_KEY}`, 'Content-Type': 'application/json', model: SPEECH.model },
+    body: JSON.stringify({ text: parts[part], reference_id: SPEECH.voice_id, ...SPEECH.params, ...(lang ? { language: lang } : {}) }),
+  });
+  let res;
+  try {
+    res = await call();
+    // 同時実行の上限（429）は1回だけ送り直す。有料のモデルへは切り替えない
+    if (res.status === 429) {
+      res.body?.cancel().catch(() => {});
+      await new Promise((resolve, reject) => {
+        const t = setTimeout(resolve, SPEECH.retry_429_ms);
+        stop.signal.addEventListener('abort', () => { clearTimeout(t); reject(stop.signal.reason); }, { once: true });
+      });
+      res = await call();
+    }
+  } catch (err) {
+    return upstreamFailed(request.signal.aborted ? 499 : 504, request.signal.aborted ? 'speech_cancelled' : 'speech_timeout');
+  }
+  if (!res.ok || !res.body) {
+    if ([401, 402, 403, 429].includes(res.status)) await alertUpstream(env, log, 'fishaudio', res.clone(), ctx, stop.signal).catch(e => log('upstream_alert', 'failed', e && e.message));
+    res.body?.cancel().catch(() => {});
+    return upstreamFailed(502, 'speech_http_' + res.status);
+  }
+
+  // 上流の本文を溜めずに流し、最後までそろったときだけキャッシュに入れる（途中で切れたものは入れない）
+  const reader = res.body.getReader(), chunks = [];
+  // 期限・切断で止めたら、上流が本文を閉じなくても読み取りを打ち切る（止めた後の終わりを完了と取り違えない）
+  const aborted = new Promise((_, reject) => {
+    const onAbort = () => reject(new Error('speech_aborted'));
+    if (stop.signal.aborted) onAbort(); else stop.signal.addEventListener('abort', onAbort, { once: true });
+  });
+  aborted.catch(() => {});
+  let bytes = 0, finished = false;
+  const finish = complete => {
+    if (finished) return;
+    finished = true; cleanup();
+    log('speech', complete ? 'ok' : 'incomplete', part, parts.length, bytes, Date.now() - started);
+    if (!complete || !cache) return;
+    const audio = new Uint8Array(bytes); let at = 0;
+    for (const c of chunks) { audio.set(c, at); at += c.byteLength; }
+    ctx.waitUntil(cache.put(key, new Response(audio, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': `public, max-age=${SPEECH.cache_seconds}` } }))
+      .catch(e => log('speech', 'cache_failed', e && e.message)));
+  };
+  const out = new ReadableStream({
+    async pull(controller) {
+      try {
+        const { done, value } = await Promise.race([reader.read(), aborted]);
+        if (done) { controller.close(); finish(true); return; }
+        clearTimeout(firstTimer);
+        bytes += value.byteLength;
+        if (cache) chunks.push(value);
+        controller.enqueue(value);
+      } catch (err) {
+        reader.cancel().catch(() => {});
+        finish(false);
+        controller.error(err);
+      }
+    },
+    cancel() { stop.abort(); reader.cancel().catch(() => {}); finish(false); },
+  });
+  return new Response(out, { headers: { ...headers, 'Content-Type': 'audio/mpeg', 'X-Speech-Cache': 'miss' } });
 }
 
 export default {
@@ -2152,6 +2391,8 @@ export default {
         synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
         themes: { light: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer), dark: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer_dark) },
         privacy: PRIVACY,
+        // 画面はこれを見て読み上げのボタンを出す（読み上げ設計§7）。Worker の設定だけで全画面に出し入れできる
+        features: { speech: speechReady(env) },
       };
       return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
     }
@@ -2183,8 +2424,10 @@ export default {
     const isSiteSearch = request.method === 'POST' && url.pathname === '/magi2/site-search';
     const isRankSearch=request.method==='POST' && url.pathname==='/search/api/rank';
     const isSearchClick = request.method === 'POST' && url.pathname === '/search/api/click';
+    // 読み上げは SPEECH_ENABLED が "true" のときだけ開く（止めているときは入口ごと無い）
+    const isSpeech = request.method === 'POST' && url.pathname === '/magi2/speech' && env.SPEECH_ENABLED === 'true';
     if (isSiteSearch || isRankSearch || isSearchClick) cors['Cache-Control'] = 'no-store';
-    if (!isChat && !isReaction && !isSiteSearch && !isRankSearch && !isSearchClick) {
+    if (!isChat && !isReaction && !isSiteSearch && !isRankSearch && !isSearchClick && !isSpeech) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
     if (!authorized) {
@@ -2198,6 +2441,7 @@ export default {
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
+    if (isSpeech) return handleSpeech(request, env, ctx, context);
     if (isSearchClick) return handleSearchClick(request, env, context);
     if (isSiteSearch || isRankSearch) return handleSiteSearch(request, env, ctx, context);
     return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);

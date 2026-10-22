@@ -900,6 +900,35 @@ export const RESEARCH = {
     it: 'Non è stato possibile verificare questo dato nella fonte citata.',
   },
 };
+// 読み上げ（読み上げ設計書 5章）。モデルIDは config/ai-models.json（fishaudio.tts）、キーは secret の FISH_AUDIO_API_KEY、
+// 署名の鍵は secret の SPEECH_SIGN_KEY。入口は wrangler.toml の SPEECH_ENABLED が "true" のときだけ開く。
+// 声は本人の声から作った公開の声のモデル（ID は公開情報）。上限は費用ではなく、乱用と無料版の公正利用の超過を防ぐためのもの
+export const SPEECH = {
+  model: aiModels.fishaudio.tts.id,
+  endpoint: 'https://api.fish.audio/v1/tts',
+  voice_id: 'c9eb5405fa784e61ae9b3b22621e9f6f',
+  // Fish Audio へ送る引数。変えたら params_version を上げる（キャッシュの鍵に入れて、古い音声を返さない）
+  params: { format: 'mp3', mp3_bitrate: 64, latency: 'balanced', normalize: true, prosody: { speed: 1 } },
+  params_version: 1,
+  first_chars: 120, part_chars: 300, max_chars: 3000, max_parts: 11,
+  request_bytes: 32768,
+  first_byte_ms: 15000, total_ms: 30000, retry_429_ms: 1000,
+  ip_daily_limit: 30, global_daily_limit: 300,
+  cache_seconds: 2592000,
+  // 言語は RESEARCH.limited_note と同じ9つ。無い言語は英語
+  code_note: {
+    ja: '（コードは省略します）', en: '(Code omitted.)', zh: '（代码省略）', ko: '(코드는 생략합니다)', es: '(Se omite el código.)',
+    fr: '(Code omis.)', de: '(Code ausgelassen.)', pt: '(Código omitido.)', it: '(Codice omesso.)',
+  },
+  cut_note: {
+    ja: '以下は省略します。', en: 'The rest is omitted.', zh: '以下省略。', ko: '이하는 생략합니다.', es: 'El resto se omite.',
+    fr: 'La suite est omise.', de: 'Der Rest wird ausgelassen.', pt: 'O restante foi omitido.', it: 'Il resto è omesso.',
+  },
+};
+
+// 出典のアイコン（読み上げ設計書 4.4）。出典の本文と同じホストから取り、照合を待たせない
+export const SOURCE_ICON = { ms: 3000, max_bytes: 4096, max_redirects: 3 };
+
 // 更新履歴の公開JSON。タイムアウトと上限もここを正本にする。
 export const VERSION_HISTORY = {
   url: 'https://tk.st/data/magi-versions.json', cache_ms: 600000,

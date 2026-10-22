@@ -28,7 +28,8 @@ MODEL_LITERAL_RE = re.compile(
     r'(?<![\w.-])(?:'
     r'gpt-[0-9][a-z0-9._-]*|o[1-9](?:-(?:mini|pro|preview)[a-z0-9._-]*)?|'
     r'deepseek-[a-z0-9._-]+|claude-[a-z0-9._-]+|gemini-[a-z0-9._-]+|'
-    r'mistral-[a-z0-9._-]+|grok-[a-z0-9._-]+|command-r[a-z0-9._-]*|llama-[a-z0-9._-]+|jev-[a-z0-9._-]+'
+    r'mistral-[a-z0-9._-]+|grok-[a-z0-9._-]+|command-r[a-z0-9._-]*|llama-[a-z0-9._-]+|jev-[a-z0-9._-]+|'
+    r's[12](?:[.][0-9]+)?-pro(?:-free)?|drama-[0-9]+'
     r')(?![\w.-])',
     re.IGNORECASE,
 )
@@ -516,6 +517,29 @@ def smoke_typesafe(url, api_key, model):
     return 'MAGI分類/初回4問・継続3問/votable yes・no、言語/日英・短い返事/DJ・旧画面、サイト内検索/noul/全候補・日英3問、SNS採否/noul/テレビ台・贈り物・PR・株、ニュース採否/noul/リテール技術・食品のみ・一般AI、ニトリ出店・N＋・投資・同名別物、DJ相性/score/BPM・キー・年代・ジャンル'
 
 
+def smoke_fishaudio(url, api_key, model):
+    """読み上げ（magi2 の /magi2/speech）と同じ引数・同じ声で短い文を1回読み、MP3 が返ることを確かめる。"""
+    personas = (REPO_ROOT / 'workers/magi2/personas.js').read_text(encoding='utf-8')
+    voice = re.search(r"voice_id: '([0-9a-f]{32})'", personas)
+    if not voice:
+        raise RuntimeError('personas.js の SPEECH.voice_id が見つかりません')
+    payload = {'text': 'MAGI の読み上げの確認です。', 'reference_id': voice.group(1), 'format': 'mp3',
+               'mp3_bitrate': 64, 'latency': 'balanced', 'normalize': True, 'language': 'ja'}
+    request = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), method='POST', headers={
+        'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json', 'model': model,
+        'User-Agent': 'tk.st-ai-model-smoke/1.0',
+    })
+    try:
+        with urllib.request.urlopen(request, timeout=60) as res:
+            audio = res.read()
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f'HTTP {e.code}: {e.read()[:300].decode("utf-8", "replace")}') from e
+    # MP3 は ID3 の見出しか、フレームの同期（0xFFE）で始まる
+    if not (audio[:3] == b'ID3' or len(audio) > 1 and audio[0] == 0xFF and audio[1] & 0xE0 == 0xE0):
+        raise RuntimeError('MP3 の音声が返りませんでした')
+    return f'読み上げ/MP3 {len(audio)} バイト'
+
+
 # プロバイダー固有の知識はここだけに置き、正本にはモデルIDと表示名を持つ。
 # channels の値は版番号を抜き出すパターンで、より新しい版がモデル一覧に出たら更新候補にする。
 # None はIDが固定のエイリアス。互換性に加え、公式のモデル詳細で背後の版も確認する。
@@ -553,6 +577,16 @@ PROVIDERS = {
         'channels': {'jev': None},
         'watch': False,
         'smoke': smoke_typesafe,
+    },
+    # 読み上げ（Fish Audio）。無料版のエイリアスを使い、モデル一覧の API が無いので更新の監視はしない。
+    # キー（リポジトリ Secret の FISH_AUDIO_API_KEY）が無い間は smoke を飛ばす（読み上げを有効にする前の準備期間のため）
+    'fishaudio': {
+        'key_env': 'FISH_AUDIO_API_KEY',
+        'key_optional': True,
+        'chat_url': 'https://api.fish.audio/v1/tts',
+        'channels': {'tts': None},
+        'watch': False,
+        'smoke': smoke_fishaudio,
     },
 }
 
@@ -879,6 +913,9 @@ def smoke_test():
     registry = load_registry()
     failures = []
     for provider, pconf in PROVIDERS.items():
+        if pconf.get('key_optional') and not os.environ.get(pconf['key_env'], '').strip():
+            print(f'[SKIP] {provider}: {pconf["key_env"]} が未設定のため、スモークテストを飛ばします')
+            continue
         try:
             api_key = api_key_for(provider, pconf)
         except RuntimeError as e:

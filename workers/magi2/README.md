@@ -192,6 +192,30 @@ npx wrangler secret put ALERT_FROM     --config magi2/wrangler.toml   # 例: MAG
 全利用者の合計にも1日の上限（`DEFAULTS.global_daily_limit`、いまは300回）を掛けている。Origin は名乗れるので、
 IP を替えながら大量に呼ばれても費用に天井を作るため。超えた最初の1回で同じ仕組みのメールを送る（`alert:global`）。
 
+## 読み上げ（C1・準備中）
+
+統合人格の回答を Fish Audio の無料版（`config/ai-models.json` の `fishaudio.tts`）と本人の声のモデルで読み上げる（[読み上げ設計書](../../magi2読み上げ設計書.md)、[実装前確認](読み上げ実装前確認.md)）。
+
+- **署名**: `SPEECH_ENABLED` が `"true"` で secret の `FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` がそろうと、チャットは `done` の直前に `speech` イベント `{ sig, lang }` を送る。
+  `sig` は画面へ実際に送った `integrated` の差分をつないだ本文の `HMAC-SHA256(SPEECH_SIGN_KEY, "v1\n" + 本文)`。確認質問・悪意への短い返答・DJ の相談・エラー・停止には付けない。
+- **入口** `POST /magi2/speech` `{ text, sig, part, lang? }`: 署名が合わなければ 403 `speech_unsigned`。区切りは `speech.js` の `speechParts`（最初 120・以後 300文字、全体 3,000文字・最大 11区切り）で毎回作り直し、`X-Speech-Parts` で数を返す。
+  同じ区切りは Cache API（データセンターごと）から返し、Fish Audio を呼ばず回数にも数えない。数えるのは送った区切りだけで、`speech:<IP>`（30）・`speech:global`（300）／UTC 日。全体の上限ではメールを1日1通（`alert:speech-global`）。
+  上流の 401・402・403 と残高・枠の不足を示す 429 は残高切れの通知（`alert:fishaudio:<状態>`）。429 は1秒後に1回だけ送り直す。有料のモデルへは切り替えない。
+- `/magi2/models` の `features.speech` が上の3つがそろったときだけ true になり、画面はこれを見て 🔊 を出す。
+- 値は `personas.js` の `SPEECH`。引数を変えたら `params_version` を上げる（キャッシュの鍵に入る）。
+- **有効にする手順**（C1b。本人の試聴と `PRIVACY` の段落の了承の後）:
+
+```sh
+cd workers
+npx wrangler secret put FISH_AUDIO_API_KEY --config magi2/wrangler.toml
+node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))" | npx wrangler secret put SPEECH_SIGN_KEY --config magi2/wrangler.toml
+# wrangler.toml の SPEECH_ENABLED を "true" にして出す
+```
+
+- **止め方**: `SPEECH_ENABLED` を `"false"` にして出す。全画面から 🔊 が消え、`/magi2/speech` は 404。`SPEECH_SIGN_KEY` を入れ替えると、それまでの回答は読めなくなる。
+- **出典のアイコン**: Web で確かめた回答（A2）の出典の本文を読むときに、同じページの `<link rel="icon">`（SVG を除く。無ければ `/favicon.ico`）をホストごとに1回だけ取り、
+  PNG・ICO・JPEG・GIF・WebP の 4KiB 以下を中身の先頭バイトで確かめて `sources.items[].icon` に data: URL で入れる（`SOURCE_ICON`）。照合と並行して取り、照合が終わった時点で取れていた分だけ付ける。URL の検査・認証を付けないことは出典の本文と同じ。
+
 ## 停止
 
 画面は生成中に送信ボタンを停止ボタン（■）に変え、押すと接続を切る。Worker はストリームの `cancel` で
