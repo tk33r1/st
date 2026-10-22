@@ -910,7 +910,10 @@ export const SPEECH = {
   // Fish Audio へ送る引数。変えたら params_version を上げる（キャッシュの鍵に入れて、古い音声を返さない）
   params: { format: 'mp3', mp3_bitrate: 64, latency: 'balanced', normalize: true, prosody: { speed: 1 } },
   params_version: 1,
-  first_chars: 120, part_chars: 300, max_chars: 3000, max_parts: 11,
+  // 区切りの長さ（文字）。画面は区切りを全部受け取ってから鳴らすので、押してから音が出るまでは最初の区切りの生成の時間になる。
+  // 生成は再生の約2倍の速さ（実装前確認§0.2、2026-10-23）なので、前の区切りを鳴らす間に次を取れるよう倍々に伸ばし、
+  // 1区切りの生成が15秒に収まる長さで止める（日本語で約0.08秒／文字）。最後の値をくり返す
+  part_chars: [40, 80, 160, 180], max_chars: 2000, max_parts: 14,
   request_bytes: 32768,
   first_byte_ms: 15000, total_ms: 30000, retry_429_ms: 1000,
   ip_daily_limit: 30, global_daily_limit: 300,

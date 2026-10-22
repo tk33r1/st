@@ -5013,13 +5013,15 @@ test('読み上げ計画§1.4: 読み上げる文は記号・URL・絵文字を�
   assert.equal(w.ctx.speechText('Web確認日時: 2026-10-23T00:00:00.000Z (UTC)\n\n- 開館: 9時です。', 'ja'), '開館: 9時です。');
 });
 
-test('読み上げ計画§1.4: 区切りは最初120・以後300以下で文の終わりで切り、同じ入力から同じ区切りになる', () => {
+const SPEECH_LIMITS = [40, 80, 160, 180];
+const speechLimit = i => SPEECH_LIMITS[Math.min(i, SPEECH_LIMITS.length - 1)];
+test('読み上げ計画§1.4: 区切りは40・80・160・180文字以下へ倍々に伸ばして文の終わりで切り、同じ入力から同じ区切りになる', () => {
   const w = worker();
   const sentence = 'これは区切りの長さを確かめるための文です。';
   const parts = w.ctx.speechParts(sentence.repeat(40), 'ja');
-  assert(parts.length > 2);
-  assert(Array.from(parts[0]).length <= 120);
-  for (const p of parts.slice(1)) assert(Array.from(p).length <= 300);
+  assert(parts.length > 4);
+  parts.forEach((p, i) => assert(Array.from(p).length <= speechLimit(i), i + ': ' + p));
+  assert(Array.from(parts[3]).length > 160, '4つ目から180文字まで詰める');
   for (const p of parts) { assert(p.trim()); assert(p.endsWith('。')); }
   assert.deepEqual(w.ctx.speechParts(sentence.repeat(40), 'ja'), parts);
   // 英語の「.」は後ろが空白のときだけ文の終わり（3.5 や tk.st で切らない）
@@ -5027,22 +5029,28 @@ test('読み上げ計画§1.4: 区切りは最初120・以後300以下で文の�
   assert(en[0].startsWith('Version 3.5 is on tk.st now.'));
   // 長い1文は読点で切る。それでも長ければ文字数で切り、合成文字を途中で切らない
   const comma = w.ctx.speechParts(('あいうえおかきくけこ、').repeat(30) + '。', 'ja');
-  assert(comma.every(p => Array.from(p).length <= 300)); assert(comma[0].endsWith('、'));
+  comma.forEach((p, i) => assert(Array.from(p).length <= speechLimit(i))); assert(comma[0].endsWith('、'));
   const voiced = 'か' + String.fromCodePoint(0x3099);
   const long = w.ctx.speechParts(voiced.repeat(500), 'ja');
   for (const p of long) assert(!p.startsWith(String.fromCodePoint(0x3099)), '濁点だけで始まる区切りがある');
+  long.forEach((p, i) => assert(Array.from(new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(p)).length <= speechLimit(i)));
   assert(w.ctx.speechParts('', 'ja').length === 0);
 });
 
-test('読み上げ計画§1.4: 3,000文字を超えた入力は省略の文を足し、区切りは最大11', () => {
+test('読み上げ計画§1.4: 2,000文字を超えた入力は省略の文を足し、区切りは最大14', () => {
   const w = worker();
-  const text = w.ctx.speechText('あ。'.repeat(2000), 'ja');
+  const text = w.ctx.speechText('あ。'.repeat(1500), 'ja');
   assert(text.endsWith('以下は省略します。'));
-  assert(Array.from(text).length <= 3000 + 20);
+  assert(Array.from(text).length <= 2000 + 20);
   const parts = w.ctx.speechParts('あいうえお。'.repeat(1000), 'ja');
-  assert(parts.length <= 11);
+  assert(parts.length <= 14);
+  // 詰めにくい長さの文（区切りに1文しか入らない）でも14で止め、最後に省略の文を足す
+  const capped = w.ctx.speechParts(('あ'.repeat(100) + '。').repeat(19), 'ja');
+  assert.equal(capped.length, 14); assert(capped.at(-1).endsWith('以下は省略します。'));
+  // 上限ちょうどの長さの日本語の回答は省略されない
+  assert(!w.ctx.speechParts('あいうえお。'.repeat(333), 'ja').at(-1).endsWith('以下は省略します。'));
   assert(parts.at(-1).endsWith('以下は省略します。'));
-  assert(w.ctx.speechText('x. '.repeat(2000), 'en').endsWith('The rest is omitted.'));
+  assert(w.ctx.speechText('x. '.repeat(1000), 'en').endsWith('The rest is omitted.'));
 });
 
 test('読み上げ計画§1.2: 署名はHMAC-SHA256の16進64文字で、本文・鍵が変われば合わない', async () => {
@@ -5190,6 +5198,18 @@ test('読み上げ計画§1.3: 上流の401は通知して502、429は1秒後に
   speechConfig(twice, 'SPEECH.retry_429_ms = 10');
   assert.equal((await twice.speak({ text, sig, part: 0 })).status, 502); assert.equal(twice.fishCalls.length, 2);
   for (const c of [...w.fishCalls, ...busy.fishCalls, ...twice.fishCalls]) assert.equal(c.headers.model, 's2.1-pro-free');
+});
+
+test('読み上げ計画§1.3: 声のモデルが無い（400 Reference not found）ときは通知して502、ほかの400は通知しない', async () => {
+  for (const [message, mails] of [['Reference not found', 1], ['Invalid text', 0]]) {
+    const w = speechWorker(() => new Response(JSON.stringify({ message, status: 400 }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    const text = '声の無い回答です。', sig = await w.ctx.speechSign(SPEECH_KEY, text);
+    const res = await w.speak({ text, sig, part: 0 });
+    assert.equal(res.status, 502); assert.equal((await res.json()).error.code, 'speech_http_400');
+    await Promise.all(w.waits);
+    assert.equal(w.mails.length, mails, message);
+    if (mails) assert.match(w.mails[0].subject, /声のモデル/);
+  }
 });
 
 test('読み上げ計画§1.3: 最初の音声が期限までに来なければ止めてキャッシュに入れない', async () => {

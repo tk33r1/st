@@ -2308,6 +2308,16 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   }
   if (!res.ok || !res.body) {
     if ([401, 402, 403, 429].includes(res.status)) await alertUpstream(env, log, 'fishaudio', res.clone(), ctx, stop.signal).catch(e => log('upstream_alert', 'failed', e && e.message));
+    // 声のモデルが消えた・非公開になった（400 {"message":"Reference not found"}。実装前確認§0.2）
+    else if (res.status === 400 && /reference not found/i.test(await readLimited(res.clone(), 500, stop.signal, 2000))) {
+      log('speech', 'voice_missing');
+      ctx.waitUntil(sendAlert(env, log, 'alert:fishaudio:voice', '[MAGI] 読み上げの声のモデルが見つかりません', [
+        `MAGI（magi2）の読み上げで、Fish Audio が声のモデル（${SPEECH.voice_id}）を見つけられませんでした（HTTP 400 Reference not found）。`,
+        '声のモデルが消えたか、非公開になった可能性があります。読み上げは画面に「読み上げできませんでした」と返しています。',
+        '声のモデルを作り直したら workers/magi2/personas.js の SPEECH.voice_id を直して出してください。止めるときは SPEECH_ENABLED を "false" にします。',
+        '同じ通知は UTC の1日に1通です。',
+      ]).catch(e => log('alert', 'failed', e && e.message)));
+    }
     res.body?.cancel().catch(() => {});
     return upstreamFailed(502, 'speech_http_' + res.status);
   }

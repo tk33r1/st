@@ -198,9 +198,9 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 
 - **署名**: `SPEECH_ENABLED` が `"true"` で secret の `FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` がそろうと、チャットは `done` の直前に `speech` イベント `{ sig, lang }` を送る。
   `sig` は画面へ実際に送った `integrated` の差分をつないだ本文の `HMAC-SHA256(SPEECH_SIGN_KEY, "v1\n" + 本文)`。確認質問・悪意への短い返答・DJ の相談・エラー・停止には付けない。
-- **入口** `POST /magi2/speech` `{ text, sig, part, lang? }`: 署名が合わなければ 403 `speech_unsigned`。区切りは `speech.js` の `speechParts`（最初 120・以後 300文字、全体 3,000文字・最大 11区切り）で毎回作り直し、`X-Speech-Parts` で数を返す。
+- **入口** `POST /magi2/speech` `{ text, sig, part, lang? }`: 署名が合わなければ 403 `speech_unsigned`。区切りは `speech.js` の `speechParts`（40・80・160・180文字と伸ばし以後 180、全体 2,000文字・最大 14区切り）で毎回作り直し、`X-Speech-Parts` で数を返す。
   同じ区切りは Cache API（データセンターごと）から返し、Fish Audio を呼ばず回数にも数えない。数えるのは送った区切りだけで、`speech:<IP>`（30）・`speech:global`（300）／UTC 日。全体の上限ではメールを1日1通（`alert:speech-global`）。
-  上流の 401・402・403 と残高・枠の不足を示す 429 は残高切れの通知（`alert:fishaudio:<状態>`）。429 は1秒後に1回だけ送り直す。有料のモデルへは切り替えない。
+  上流の 401・402・403 と残高・枠の不足を示す 429 は残高切れの通知（`alert:fishaudio:<状態>`）、声のモデルが無い 400（`Reference not found`）は `alert:fishaudio:voice`。429 は1秒後に1回だけ送り直す。有料のモデルへは切り替えない。
 - `/magi2/models` の `features.speech` が上の3つがそろったときだけ true になり、画面はこれを見て 🔊 を出す。
 - 値は `personas.js` の `SPEECH`。引数を変えたら `params_version` を上げる（キャッシュの鍵に入る）。
 - **有効にする手順**（C1b。本人の試聴と `PRIVACY` の段落の了承の後）:

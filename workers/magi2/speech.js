@@ -89,11 +89,11 @@ function splitLong(chars, limit) {
   return pieces;
 }
 
-// 読み上げの区切り（設計§5.1・5.3）。最初は短く、以後は長く詰める。空の区切りは作らない
+// 読み上げの区切り（設計§5.1・5.3）。最初は短く、だんだん長く詰める。空の区切りは作らない
 export function speechParts(markdown, lang) {
   const parts = [];
   let buf = [];
-  const limit = () => parts.length ? SPEECH.part_chars : SPEECH.first_chars;
+  const limit = () => SPEECH.part_chars[Math.min(parts.length, SPEECH.part_chars.length - 1)];
   const flush = () => { const t = buf.join('').replace(/\s+/g, ' ').trim(); if (t) parts.push(t); buf = []; };
   for (const s of sentences(graphemes(speechText(markdown, lang)))) {
     if (!s.join('').trim()) continue;
