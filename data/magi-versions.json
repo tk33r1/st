@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.0",
+      "date": "2026-10-23",
+      "changes": {
+        "ja": [
+          "回答の下の操作を「コピー・共有・いいね・︙」の並びにしました。絵文字のリアクションは「︙」から選びます。",
+          "回答を共有できるようにしました。本文と出典を端末の共有シートに渡し、共有できない環境ではコピーします。",
+          "Webで確かめた回答の出典を「ソース」にまとめ、サイトのアイコン付きの一覧で開けるようにしました。アイコンはサーバーが取得し、端末から出典のサイトへは取りに行きません。"
+        ],
+        "en": [
+          "Actions under each reply are now Copy, Share, Like and ⋮. Emoji reactions are under ⋮.",
+          "Replies can be shared. The text and its sources go to your device's share sheet, or are copied where sharing is unavailable.",
+          "Sources for web-checked replies are grouped under Sources, listed with site icons. The server fetches the icons, so your device does not contact the source sites."
+        ]
+      }
+    },
+    {
       "version": "5.9",
       "date": "2026-10-22",
       "changes": {
