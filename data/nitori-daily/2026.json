@@ -1,5 +1,280 @@
 [
   {
+    "date": "20261023",
+    "title": "2026年10月23日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリ初の家具・大型家電「ブラックフライデー」が10月30日から始まり、約600アイテムを期間限定価格で提供します。価格訴求を強めた年末商戦の大型施策です。 スマートバスマットの新色ライムグリーンは、ニトリ会員の投票で決まりました。顧客の声を企画に反映する共創型の商品開発が進んでいます。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリ初の家具・大型家電「ブラックフライデー」が10月30日から始まり、約600アイテムを期間限定価格で提供します。価格訴求を強めた年末商戦の大型施策です。",
+      "スマートバスマットの新色ライムグリーンは、ニトリ会員の投票で決まりました。顧客の声を企画に反映する共創型の商品開発が進んでいます。",
+      "SNSでは購入前の比較検討や、実際の住空間に置いた写真による共有が見られます。生活者が商品を判断する材料として、実例コンテンツの重要性が高まっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ初の「ブラックフライデー」、家具・大型家電約600アイテムを期間限定価格で",
+        "original_title": "",
+        "source": "日本経済新聞",
+        "source_id": "JP-06",
+        "summary": "ニトリは家具・大型家電を対象とする「ブラックフライデー」を初めて開催すると発表しました。10月30日から約600アイテムを期間限定価格で提供し、予算に合わせて必要な家具・家電から選べる構成です。ダイニングセットが1万円台から揃うなど、価格を訴求する大型施策となります。",
+        "why_it_matters": "大型家電や家具は客単価が高く、購入頻度が低いカテゴリーです。SPAとして企画・調達を自社で担うニトリにとって、年末商戦前に価格の分かりやすさで来店と購入を引き寄せる初の大型施策は、価格戦略の新たな武器になります。競合量販店との比較購買を意識したプロモーションとして、会員施策やネット販売との連動効果も注目されます。",
+        "tags": [
+          "ニトリ",
+          "ブラックフライデー",
+          "価格戦略",
+          "家電"
+        ],
+        "search_terms": [
+          "ブラックフライデー 家具 家電",
+          "Black Friday furniture sale",
+          "Nitori Black Friday"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE16cklkVXF2d3FuR21wQ250dkxyM0RIS0tiR0t5U2dYTm9wRmtoLWVDY1RXZG5CSWNaZTRtS1FmdFg1WGdkOW5xRjBUc1p1dmZGTHlkQm5MQnEwRUxhOGo2ejFFNnRwdUpzMVFZTQ?oc=5",
+        "source_pub_ts": 1792641772
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ会員投票で決定、スマートバスマットに新色ライムグリーン",
+        "original_title": "",
+        "source": "Smart Watch Life",
+        "source_id": "JP-01",
+        "summary": "ニトリの公式コミュニティ会員1,988人の投票により、スマートバスマットの新色ライムグリーンが商品化されたと報じられました。ニトリネットマーケットプレイス発の共創企画として、会員の声を商品に反映させた形です。本体価格は19,800円で、11月8日まではニトリネットにて16,830円で販売されます。",
+        "why_it_matters": "顧客投票を起点に色を決める共創型の商品開発は、SPAの需要把握力を可視化する取り組みです。開発前に需要を測ることで在庫リスクを抑えつつ、投票参加者が購入の当事者になるため、ファン化と初動販売の両立が期待できます。ECで期間限定の価格を組み合わせる手法は、他の新色展開にも応用しやすいモデルです。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "共創",
+          "ニトリネット"
+        ],
+        "search_terms": [
+          "共創 商品開発 会員投票",
+          "co-creation product color vote",
+          "smart bath mat Nitori"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBXREIxa1pJb25QUW5VU0tZSGlOTFZpdnU4c3gtcTJ1SkpvcXRMa0Jlck4xOGl0ZGNUNEw5TlZweEZ3U0NMOXVFbjNKRHM?oc=5",
+        "source_pub_ts": 1792680573
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "幅60cmのスリム設計、450L大型冷蔵庫を99,900円で発売へ",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-11",
+        "summary": "ニトリは幅60cmのスリム設計で容量450Lの大型冷蔵庫を99,900円で発売すると発表し、予約受付を開始しました。大容量を確保しながら設置幅を抑えた設計で、ファミリー層や限られたキッチンスペースを持つ住まいを想定した商品と考えられます。家電の価格とサイズを両立させた点が特徴です。",
+        "why_it_matters": "容量450Lで99,900円という価格は、家電量販店の同容量帯と比べて価格訴求力を持つ可能性があります。SPAの企画・調達力を生かし、家具で培った収納・空間設計の知見を家電に広げる動きとして、住空間全体を提案する総合インテリア企業としての強みを示すものです。予約販売の反応は今後の需要を測る指標になります。",
+        "tags": [
+          "ニトリ",
+          "家電",
+          "商品開発",
+          "価格戦略"
+        ],
+        "search_terms": [
+          "大型冷蔵庫 スリム 450L",
+          "slim large refrigerator",
+          "Nitori refrigerator launch"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE9oXzd1ZldTZU91SGxKMDFuRGZISEcyRnV1V3pIX1hlT1E5Q2FxMlg1U2xCV2dFRzFrMHhuVHpyMi15ZzNsTEE?oc=5",
+        "source_pub_ts": 1792630659
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "799円超の軽量食器に「重い食器は処分した」と高評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-05",
+        "summary": "ニトリの799円以上の軽量食器が、ねとらぼリサーチの声で高評価を集めていると報じられました。投稿では「もっと早く出会いたかった」「具沢山の汁物を入れても軽い」といった声が紹介されています。重い食器を手放したという具体的な買い替え行動も見られ、日常使いの満足度の高さがうかがえます。",
+        "why_it_matters": "食器は毎日使う消耗品で、重さは使い勝手に直結する不満点です。軽量性という機能を低価格で実現した点は、ユーザーの「もっと早く欲しかった」という潜在ニーズに応えた好例です。実際の使用シーンでの評価が口コミとして広がることは、SNS時代のヒット商品の起点となり得ます。",
+        "tags": [
+          "ニトリ",
+          "食器",
+          "軽量",
+          "口コミ"
+        ],
+        "search_terms": [
+          "軽量食器 口コミ",
+          "lightweight tableware reviews",
+          "Nitori tableware"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9VZHZrNXdpbnBhMjNnU0pBRW5EX0hESnpIdkx2TGRaZUhndGFlX0xsSTJQamZmNXdiVVRyUXZtSTFUVGYwajIxZ3E1c2xfbXlBaUlhY0h4MF81WHFDc1NZeHU5azJPQlhKS1Nj?oc=5",
+        "source_pub_ts": 1792643400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "猫になれる「デコネコ着る毛布」、猫耳・肉球・ネコアイマスク付き",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-02",
+        "summary": "ニトリの「デコネコ着る毛布」は、猫耳・肉球・ネコアイマスクが付いた着る毛布として紹介されています。着用すると猫になりきれる遊び心のあるデザインが特徴です。かわいさを前面に出した商品設計により、リラックスタイムを楽しく演出する一着として注目されています。",
+        "why_it_matters": "着る毛布は寒さ対策と癒やしを同時に満たす一方、デザインの個性が購入動機を左右します。猫耳や肉球などのパーツを組み込み、着用時の体験を商品価値にした点は、ユーザーがSNSで写真共有したくなる仕掛けにもなります。アイマスクなど複数機能の組み合わせは、ホームウェア分野で差別化を図る手法です。",
+        "tags": [
+          "ニトリ",
+          "着る毛布",
+          "商品開発",
+          "ホームウェア"
+        ],
+        "search_terms": [
+          "着る毛布 猫 デザイン",
+          "cat-themed blanket wearable",
+          "Nitori wearable blanket"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1hXzNnazZ0c3ZDbmxXTFQybmp0U1Y3dEo2dXhKLTViZFlGVlR6V2NyQnFKM2J1TnBYWVA3Zy1MRjNseGQ1bzFoNU5hY1hjdjc1akxfVDVaY1ZrRTRRbDItNW5XZkxzUmI1UGdLbmVSdVpvTGo3dHBiTEFsWGZUM1E?oc=5",
+        "source_pub_ts": 1792675863
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ニトリでインテリアを揃える前に見ておいてよかった」という比較検討の声",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Xでは、IKEAやニトリでインテリアを揃える前にインテリア系アカウントの投稿を見ておいてよかったとする声が185いいねを集めました。画像付きの投稿とともに、同アカウントの情報を参照する形で広がっています。購入前に複数ブランドを比べ、信頼できる発信者の情報を頼りにする生活者の行動が読み取れます。",
+        "why_it_matters": "ニトリを含む複数の家具ブランドを比較検討する際、第三者の発信者が選択の指針になっています。ニトリの低価格と豊富な品ぞろえは、こうした比較検討の中で選ばれやすい一方、コーディネート例や空間イメージの提供が決め手になります。公式発信とインフルエンサーの協働により、比較段階の顧客を取り込む余地があります。",
+        "tags": [
+          "ニトリ",
+          "IKEA",
+          "インテリア",
+          "SNS"
+        ],
+        "search_terms": [
+          "インテリア 比較検討 SNS",
+          "interior comparison social media",
+          "furniture shopping X post"
+        ],
+        "url": "https://x.com/iro_to_kurashi/status/2113038777329557677",
+        "source_pub_ts": 1792666800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "新しいニトリのカーペット、敷いてみたらジャストフィットの声",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "Xで、ニトリのカーペットを敷いたところサイズがぴったり合ったとの投稿が91いいねを集めました。写真付きで実際の敷き心地や寸法の合い具合を伝えた点が、共感を呼んでいます。購入者による住空間への敷設報告が、生活のイメージを具体化する役割を果たしています。",
+        "why_it_matters": "カーペットのように床の広さに合わせて選ぶ商品は、サイズ適合の不安が購入の障壁になりがちです。実際の部屋に敷いた写真は、寸法や質感を直感的に伝える強力な情報源です。ニトリが提供する室内写真や寸法ガイドと組み合わせることで、購入後の満足度と再購入につながる体験設計が期待できます。",
+        "tags": [
+          "ニトリ",
+          "カーペット",
+          "SNS",
+          "生活提案"
+        ],
+        "search_terms": [
+          "カーペット 敷いた 実例",
+          "carpet fit real home photo",
+          "Nitori carpet SNS"
+        ],
+        "url": "https://x.com/burton_burindle/status/2113156554270900335",
+        "source_pub_ts": 1792666800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "IKEA、ニトリでインテリア揃える前にこのアカウント見といてよかったぁ…！！ pic.x.com/sVZxYBCuam x.com/iro_...",
+        "platform": "x",
+        "author": "@iro_to_kurashi",
+        "url": "https://x.com/iro_to_kurashi/status/2113038777329557677",
+        "likes": 185,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 7:44",
+        "captured_at": "",
+        "text": "IKEA、ニトリでインテリア揃える前にこのアカウント見といてよかったぁ…！！ pic.x.com/sVZxYBCuam x.com/iro_to_kurashi…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "【🔥ニトリ×teppayが激アツ‼️】 ニトリのブラックフライデー、これteppayの20％還元と組み合わせたらめちゃくちゃお得じゃない⁉️...",
+        "platform": "x",
+        "author": "@Yu_ko_otoku",
+        "url": "https://x.com/Yu_ko_otoku/status/2113079522610540591",
+        "likes": 110,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:26",
+        "captured_at": "",
+        "text": "【🔥ニトリ×teppayが激アツ‼️】 ニトリのブラックフライデー、これteppayの20％還元と組み合わせたらめちゃくちゃお得じゃない⁉️🤣 🛋️ ニトリのブラックフライデー 📅10月30日(金)〜11月24日(火) 🎉約600アイテムがセール対象！ しかも‼️ pic.x.com/WZW4dYJhBH x.com/yu_ko_otoku/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "新しくニトリのカーペット敷いてみた、ジャストフィット😄 pic.x.com/g7jXdrBNKy",
+        "platform": "x",
+        "author": "@burton_burindle",
+        "url": "https://x.com/burton_burindle/status/2113156554270900335",
+        "likes": 91,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 15:32",
+        "captured_at": "",
+        "text": "新しくニトリのカーペット敷いてみた、ジャストフィット😄 pic.x.com/g7jXdrBNKy",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリで売ってたチャームサンタボウシはセリナにぴったりだった♥かわいい♥ pic.x.com/FuocOtEJB8",
+        "platform": "x",
+        "author": "@yuzudes2",
+        "url": "https://x.com/yuzudes2/status/2113223890713686233",
+        "likes": 60,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:00",
+        "captured_at": "",
+        "text": "ニトリで売ってたチャームサンタボウシはセリナにぴったりだった♥かわいい♥ pic.x.com/FuocOtEJB8",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "我慢できなくて ハロウィン終わってないのに クリスマスがはみ出しはじめている🎅 ニトリのミニツリー🎄 pic.x.com/q8TMZI6bCj",
+        "platform": "x",
+        "author": "@kappy_vtuber",
+        "url": "https://x.com/kappy_vtuber/status/2113107731565707649",
+        "likes": 46,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:18",
+        "captured_at": "",
+        "text": "我慢できなくて ハロウィン終わってないのに クリスマスがはみ出しはじめている🎅 ニトリのミニツリー🎄 pic.x.com/q8TMZI6bCj",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "今回のX投稿は、ニトリ関連で購入前の比較検討、ブラックフライデーへの期待、実際の住空間に商品を取り入れた報告など、多様な反響が見られます。いいね数は46〜185と大きくはないものの、写真付きの自宅報告や季節先取りの飾り付けなど、生活の具体的な場面に結び付いた投稿が目立ちます。",
+    "sns_why_it_matters": "生活者は、購入前の比較ではインフルエンサーの情報を参照し、購入後は自宅に置いた写真で商品の適合を共有しています。ニトリの商品開発やSNS発信では、寸法や空間イメージを示す実例コンテンツを増やすことが有効です。季節商品やセール情報を生活シーンと結び付けて届けることで、共感と購入意欲を同時に高める示唆が得られます。"
+  },
+  {
     "date": "20261022",
     "title": "2026年10月22日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "N+がリブニットシリーズやNウォーム素材採用のアパレルを展開し、ニトリグループが自社素材と企画を衣料へ横展開する動きが鮮明になった。 199円エコバッグ、699円ストッカー、スカラップバスマットなど、低価格帯でも実用性を磨いたPB商品が生活者から高い評価を集めている。",
