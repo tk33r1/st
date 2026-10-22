@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://tk.st/</loc>
-<lastmod>2026-10-22T07:40:27+09:00</lastmod>
+<lastmod>2026-10-21T22:41:17Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/dj/</loc>
@@ -102,11 +102,11 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/</loc>
-<lastmod>2026-10-21T20:30:04Z</lastmod>
+<lastmod>2026-10-22T20:27:44Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/</loc>
-<lastmod>2026-10-21T20:26:42Z</lastmod>
+<lastmod>2026-10-22T20:32:19Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/magi-app/www/</loc>
@@ -306,7 +306,11 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/20261022/</loc>
-<lastmod>2026-10-21T20:30:01Z</lastmod>
+<lastmod>2026-10-22T20:27:41Z</lastmod>
+</url>
+<url>
+<loc>https://tk.st/job/nitoridaily/20261023/</loc>
+<lastmod>2026-10-22T20:27:41Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/20260912/</loc>
@@ -470,6 +474,10 @@
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/20261022/</loc>
-<lastmod>2026-10-21T20:26:40Z</lastmod>
+<lastmod>2026-10-22T20:32:19Z</lastmod>
+</url>
+<url>
+<loc>https://tk.st/job/retailtechdaily/20261023/</loc>
+<lastmod>2026-10-22T20:32:19Z</lastmod>
 </url>
 </urlset>

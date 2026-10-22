@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 22 Oct 2026 05:29:58 +0900</lastBuildDate>
+    <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 23 Oct 2026 05:27:38 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月23日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261023/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261023/</guid>
+      <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ニトリ初の家具・大型家電「ブラックフライデー」が10月30日から始まり、約600アイテムを期間限定価格で提供します。価格訴求を強めた年末商戦の大型施策です。 スマートバスマットの新色ライムグリーンは、ニトリ会員の投票で決まりました。顧客の声を企画に反映する共創型の商品開発が進んでいます。</description>
+    </item>
     <item>
       <title>2026年10月22日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261022/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261009/</guid>
       <pubDate>Fri, 09 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリの似鳥会長がAI家具の開発加速と接客ロボットの数年内導入を示し、SPAの企画・販売データを活かした商品開発の進化が鮮明になった シンガポールで7店舗目となる大型商業施設内店舗が発表され、海外店舗網の定着フェーズと店舗展開の着実な拡大が確認された</description>
-    </item>
-    <item>
-      <title>2026年10月8日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261008/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261008/</guid>
-      <pubDate>Thu, 08 Oct 2026 08:00:00 +0900</pubDate>
-      <description>北大とニトリのAI研究は、インテリアの好みを定量化し、理想の住空間とのギャップを可視化するもの。提案販売や住まい起点の顧客理解につながる可能性がある。 家具リサイクルでは年間1万トン超という処理量目標が示された。既報の施設計画に具体的な規模が加わり、販売後の回収・再資源化の実行力が焦点となる。</description>
     </item>
   </channel>
 </rss>
