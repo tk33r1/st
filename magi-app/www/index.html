@@ -253,6 +253,42 @@
     .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.1rem; padding: 0.3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
     .emoji-pop button { font-size: 17px; line-height: 1; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 4px; cursor: pointer; }
     .emoji-pop button:hover, .emoji-pop button:active { background: var(--primary-bg); }
+    /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる範囲は 44px（ボタン 34px と周り 5px） */
+    .reply-bar { gap: 0.65rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .reply-bar .react-btn { min-width: 34px; height: 34px; position: relative; }
+    .reply-bar .react-btn::after { content: ''; position: absolute; inset: -5px; }
+    .reply-bar .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.6rem; }
+    .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
+    .react-picked { margin-left: 0.3rem; font-size: 14px; }
+    .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
+    .speak-wait { animation: speak-spin 0.9s linear infinite; }
+    @keyframes speak-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
+    .src-icons { display: inline-flex; }
+    .src-icons .src-icon + .src-icon { margin-left: -5px; }
+    .src-icon { width: 16px; height: 16px; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-color); box-shadow: 0 0 0 1.5px var(--bg-color); }
+    .src-letter { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-weight: 700; line-height: 1; }
+    .reply-note { margin-top: 0.35rem; font-size: 11px; color: var(--secondary-color); }
+    /* ［ソース］の一覧。下から出るシートと、外側の暗幕（押すと閉じる） */
+    .agent-panel.agent-sheet { padding: 0; justify-content: flex-end; background: rgba(0,0,0,0.45); }
+    .agent-sheet-body {
+      display: flex; flex-direction: column; max-height: 70%; background: var(--surface-color);
+      border-top: 1px solid var(--border-color); border-radius: 12px 12px 0 0;
+      padding: 0.75rem; padding-bottom: calc(0.75rem + var(--magi-safe-bottom));
+      padding-left: calc(0.75rem + var(--magi-safe-left)); padding-right: calc(0.75rem + var(--magi-safe-right));
+      animation: sheetIn var(--duration-normal) ease both;
+    }
+    @keyframes sheetIn { from { transform: translateY(100%); } to { transform: none; } }
+    .agent-sheet .agent-panel-close { min-width: 44px; min-height: 44px; font-size: 14px; }
+    .agent-sheet .src-list { overflow-y: auto; -webkit-overflow-scrolling: touch; display: grid; gap: 2px; }
+    .src-row { display: flex; align-items: center; gap: 0.7rem; min-height: 48px; padding: 0.35rem 0.4rem; border-radius: 6px; color: var(--text-color); text-decoration: none; font-size: 13px; }
+    .src-row:active, .src-row:focus-visible { background: var(--primary-bg); }
+    .src-row .src-icon { width: 20px; height: 20px; }
+    .src-row .src-letter { font-size: 11px; }
+    .src-text { display: grid; min-width: 0; }
+    .src-title { color: var(--primary-color); overflow-wrap: anywhere; }
+    .src-domain { font-size: 11px; color: var(--secondary-color); overflow-wrap: anywhere; }
     .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 11px; word-break: break-word; border-radius: 4px; }
     .agent-err .agent-rid { color: var(--secondary-color); }
 

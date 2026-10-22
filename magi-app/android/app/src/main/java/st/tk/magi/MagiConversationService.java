@@ -212,7 +212,7 @@ public class MagiConversationService extends Service {
                 MagiSseReader.read(response.body().byteStream(), (event, text) -> {
                     if (run.ended.get()) throw new IOException("stopped");
                     // 未知のイベントは画面と同様に無視する。既知の本文はobjectのJSONだけ。
-                    if (!event.matches("classification|title|motion|persona|ask|judge|verdict|integrated|integrated_end|clarify|closed|pages|sources|suggest|error|done")) return false;
+                    if (!event.matches("classification|title|motion|persona|ask|judge|verdict|integrated|integrated_end|clarify|closed|pages|sources|suggest|speech|error|done")) return false;
                     JSObject data = new JSObject(text);
                     if (event.equals("title") && data.opt("text") instanceof String) {
                         run.title = MagiStreamStore.cleanTitle(data.getString("text"));

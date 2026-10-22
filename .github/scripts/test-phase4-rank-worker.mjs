@@ -19,7 +19,7 @@ function worker() {
       return Response.json({answers:Object.fromEntries(Object.keys(body.questions).map(id=>[id,{type:'noul',noul:.9}]))});
     }};
   const ctx=vm.createContext(sandbox),strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
-  const modules=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js'];
+  const modules=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','probe.js','speech.js'];
   vm.runInContext(modules.map(f=>strip(read('workers/magi2/'+f))).join('\n')+'\n'+strip(read('workers/magi2/src/index.js')).replace('export default {','globalThis.worker={')
     +'\nglobalThis.helpers={makeListSnapshot,fetchSearchSource,getRankSnapshot,rankSnapshotUpdates,listSnapshots,searchSources,cache,rankTargets};',ctx);
   const env={SITE_RANK_ENABLED:'true',SITE_RANK_SCOPES:'site,nitori,retail,tools,game',MAGI_TYPESAFE_API_KEY:'synthetic-key',

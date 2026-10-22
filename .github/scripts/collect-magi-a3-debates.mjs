@@ -23,7 +23,7 @@ const proposalPath=full?'.github/scripts/fixtures/magi-dialogue-a3-final-2026101
 const pool=full?JSON.parse(proposal).cases:[...proposal.matchAll(/^\| (collect-\d+) \| ([^\r\n|]+) \|/gm)].map(m=>({id:m[1],input:m[2].trim()}));
 const cases=full?pool:chosen.map(id=>{const c=pool.find(c=>c.id===id);assert(c,'unknown input');return c;});
 if(full)assert.equal(cases.length,20);
-const files=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','src/index.js'];
+const files=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','probe.js','speech.js','src/index.js'];
 const sources=files.map(p=>read('workers/magi2/'+p)),registry=JSON.parse(read('config/ai-models.json'));
 const cards=JSON.parse(read('data/magi-context.json'));
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');

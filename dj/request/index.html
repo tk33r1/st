@@ -3136,7 +3136,10 @@ function cleanAgentSources(value, text) {
       var u = new URL(item.url);
       if (!['http:','https:'].includes(u.protocol) || urls.has(u.href)) return;
       numbers.add(item.n); urls.add(u.href);
-      items.push({ n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href });
+      var row = { n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href };
+      // 出典のアイコンは Worker が取った data: URL の画像だけを通し、<img src> にだけ入れる（読み上げ設計§4.4）
+      if (typeof item.icon === 'string' && item.icon.length <= 6144 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
+      items.push(row);
     } catch (_) {}
   });
   var marks = [], seen = new Set();
@@ -3149,7 +3152,7 @@ function cleanAgentSources(value, text) {
   marks.sort(function (a, b) { return a.at - b.at || a.n - b.n; });
   return items.length && marks.length ? { items: items, marks: marks } : null;
 }
-function renderAgentSources(body, replyEl, text, raw, ja) {
+function renderAgentSources(body, replyEl, text, raw, ja, panel) {
   var data = cleanAgentSources(raw, text);
   if (!data || !body || !replyEl) return;
   body.replaceChildren();
@@ -3163,6 +3166,8 @@ function renderAgentSources(body, replyEl, text, raw, ja) {
   });
   body.appendChild(document.createTextNode(text.slice(last)));
   var previous = replyEl.querySelector('.agent-sources'); if (previous) previous.remove();
+  // 操作列の［ソース］から一覧を開く画面（トップページ・アプリ）は、回答の下に一覧を置かない
+  if (panel === false) return;
   var panel = document.createElement('div'); panel.className = 'agent-sources';
   panel.style.cssText = 'display:grid;gap:6px;margin-top:12px;font-size:12px;line-height:1.6;overflow-wrap:anywhere';
   var label = document.createElement('strong'); label.textContent = ja ? '出典' : 'Sources'; panel.appendChild(label);

@@ -227,7 +227,10 @@ function cleanAgentSources(value, text) {
       var u = new URL(item.url);
       if (!['http:','https:'].includes(u.protocol) || urls.has(u.href)) return;
       numbers.add(item.n); urls.add(u.href);
-      items.push({ n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href });
+      var row = { n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href };
+      // 出典のアイコンは Worker が取った data: URL の画像だけを通し、<img src> にだけ入れる（読み上げ設計§4.4）
+      if (typeof item.icon === 'string' && item.icon.length <= 6144 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
+      items.push(row);
     } catch (_) {}
   });
   var marks = [], seen = new Set();
@@ -240,7 +243,7 @@ function cleanAgentSources(value, text) {
   marks.sort(function (a, b) { return a.at - b.at || a.n - b.n; });
   return items.length && marks.length ? { items: items, marks: marks } : null;
 }
-function renderAgentSources(body, replyEl, text, raw, ja) {
+function renderAgentSources(body, replyEl, text, raw, ja, panel) {
   var data = cleanAgentSources(raw, text);
   if (!data || !body || !replyEl) return;
   body.replaceChildren();
@@ -254,6 +257,8 @@ function renderAgentSources(body, replyEl, text, raw, ja) {
   });
   body.appendChild(document.createTextNode(text.slice(last)));
   var previous = replyEl.querySelector('.agent-sources'); if (previous) previous.remove();
+  // 操作列の［ソース］から一覧を開く画面（トップページ・アプリ）は、回答の下に一覧を置かない
+  if (panel === false) return;
   var panel = document.createElement('div'); panel.className = 'agent-sources';
   panel.style.cssText = 'display:grid;gap:6px;margin-top:12px;font-size:12px;line-height:1.6;overflow-wrap:anywhere';
   var label = document.createElement('strong'); label.textContent = ja ? '出典' : 'Sources'; panel.appendChild(label);
@@ -275,6 +280,165 @@ function agentFactMarkdown(text, raw) {
   return out;
 }
 // AGENT_FACT_END
+
+// AGENT_SPEECH_BEGIN
+// 統合人格の回答の操作列の共通部分（読み上げ設計書 4・5章）。トップページとアプリで同じ中身にする（テストで照合）。
+function cleanSpeechSig(value) { return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value) ? value : null; }
+function cleanSpeechLang(value) { return typeof value === 'string' && /^[a-z]{2}$/.test(value) ? value : null; }
+// 保存した回答の署名を確かめる。確認質問・短い返答で閉じた回答と、形の違う値は落とす
+function cleanAgentSpeechItem(item) {
+  if (!item || item.role !== 'assistant' || !('speech_sig' in item || 'speech_lang' in item)) return item;
+  var out = Object.assign({}, item), sig = cleanSpeechSig(item.speech_sig), lang = cleanSpeechLang(item.speech_lang);
+  delete out.speech_sig; delete out.speech_lang;
+  if (sig && item.closed !== true && !item.clarify) { out.speech_sig = sig; if (lang) out.speech_lang = lang; }
+  return out;
+}
+// 出典のドメイン（www. を除く）と、アイコンの無い出典に出す頭文字の丸。色はドメインから決める
+function agentSourceDomain(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; } }
+function agentSourceBadge(item) {
+  var domain = agentSourceDomain(item.url), hue = 0;
+  for (var i = 0; i < domain.length; i++) hue = (hue * 31 + domain.charCodeAt(i)) % 360;
+  // 国際化ドメイン（xn--）は表示用の文字に戻せないので、題名の頭文字を使う
+  var seed = domain && domain.indexOf('xn--') !== 0 ? domain : String(item.title || '?');
+  return { letter: (Array.from(seed.trim())[0] || '?').toUpperCase(), color: 'hsl(' + hue + ' 42% 40%)' };
+}
+function agentSourceIconEl(item) {
+  if (item.icon) {
+    var img = document.createElement('img');
+    img.className = 'src-icon'; img.src = item.icon; img.alt = ''; img.width = 16; img.height = 16;
+    return img;
+  }
+  var badge = agentSourceBadge(item), span = document.createElement('span');
+  span.className = 'src-icon src-letter'; span.textContent = badge.letter; span.style.background = badge.color;
+  span.setAttribute('aria-hidden', 'true');
+  return span;
+}
+// 出典の一覧の1行（アイコン・題名・ドメイン）。新しいタブで開く
+function agentSourceRowEl(item) {
+  var a = document.createElement('a');
+  a.className = 'src-row'; a.href = item.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  var text = document.createElement('span'); text.className = 'src-text';
+  var title = document.createElement('span'); title.className = 'src-title'; title.textContent = item.title;
+  var domain = document.createElement('span'); domain.className = 'src-domain'; domain.textContent = agentSourceDomain(item.url);
+  text.appendChild(title); text.appendChild(domain);
+  a.appendChild(agentSourceIconEl(item)); a.appendChild(text);
+  return a;
+}
+// 操作列の［ソース］の中身（アイコンを最大3つ重ね、「ソース」と書く）。出典が無ければ隠す
+function renderAgentSourceButton(btn, text, raw, ja) {
+  var data = cleanAgentSources(raw, text);
+  btn.hidden = !data; btn.replaceChildren();
+  if (!data) return null;
+  var icons = document.createElement('span'); icons.className = 'src-icons';
+  data.items.slice(0, 3).forEach(function (item) { icons.appendChild(agentSourceIconEl(item)); });
+  var label = document.createElement('span'); label.textContent = ja ? 'ソース' : 'Sources';
+  btn.appendChild(icons); btn.appendChild(label);
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-label', (ja ? 'ソース（' : 'Sources (') + data.items.length + (ja ? '件）' : ')'));
+  return data;
+}
+// 共有する文。本文（出典の [n] 入り。コピーと同じ）と出典の一覧で、会話の URL は付けない
+function agentShareText(text, raw, ja) {
+  var data = cleanAgentSources(raw, text);
+  if (!data) return text;
+  var out = '', last = 0;
+  data.marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
+  out += text.slice(last) + '\n\n' + (ja ? '出典' : 'Sources');
+  data.items.forEach(function (item) { out += '\n[' + item.n + '] ' + item.title + '\n' + item.url; });
+  return out;
+}
+// 読み上げ（設計§5.6）。<audio> は画面に1つだけで、区切りを順に取り、鳴らしている間に次を取る。
+// 音声は Blob の URL で鳴らし、使い終わったら解放する（端末に保存しない）。hooks.state(btn, 'idle'|'loading'|'playing')、
+// hooks.notice(btn, code) で画面に知らせる
+function createAgentSpeech(api, hooks) {
+  var audio = null, run = null;
+  // 1サンプルの無音の WAV。iPhone は利用者の操作の中で一度鳴らした要素なら、その後も続けて鳴らせる
+  function silence() {
+    var b = new ArrayBuffer(46), v = new DataView(b);
+    var put = function (at, t) { for (var i = 0; i < t.length; i++) v.setUint8(at + i, t.charCodeAt(i)); };
+    put(0, 'RIFF'); v.setUint32(4, 38, true); put(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); put(36, 'data'); v.setUint32(40, 2, true);
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  }
+  function drop(r, url) { var at = r.urls.indexOf(url); if (at >= 0) { r.urls.splice(at, 1); URL.revokeObjectURL(url); } }
+  function stop() {
+    var r = run;
+    if (!r) return;
+    run = null; r.ctrl.abort();
+    if (audio) { audio.pause(); audio.removeAttribute('src'); }
+    r.urls.splice(0).forEach(function (url) { URL.revokeObjectURL(url); });
+    hooks.state(r.btn, 'idle');
+  }
+  function fetchPart(r, i) {
+    return fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: r.ctrl.signal,
+      body: JSON.stringify(Object.assign({ text: r.text, sig: r.sig, part: i }, r.lang ? { lang: r.lang } : {})) })
+      .then(function (res) {
+        if (!res.ok) return res.json().catch(function () { return null; }).then(function (j) {
+          var err = new Error('speech_failed'); err.code = j && j.error && typeof j.error.code === 'string' ? j.error.code : 'http_' + res.status; throw err;
+        });
+        var n = Number(res.headers.get('X-Speech-Parts'));
+        if (Number.isInteger(n) && n > 0 && n <= 30) r.total = n;
+        return res.blob();
+      })
+      .then(function (blob) {
+        if (run !== r) throw new Error('speech_stopped');
+        var url = URL.createObjectURL(blob); r.urls.push(url); return url;
+      });
+  }
+  function ended(r) {
+    return new Promise(function (resolve, reject) {
+      function done() { off(); resolve(); }
+      function fail() { off(); var err = new Error('speech_audio'); err.code = 'speech_audio'; reject(err); }
+      function off() { audio.removeEventListener('ended', done); audio.removeEventListener('error', fail); r.ctrl.signal.removeEventListener('abort', done); }
+      audio.addEventListener('ended', done); audio.addEventListener('error', fail); r.ctrl.signal.addEventListener('abort', done);
+    });
+  }
+  async function play(r) {
+    var next = fetchPart(r, 0), i = 0;
+    try {
+      while (run === r) {
+        var url = await next;
+        if (run !== r) return;
+        // 鳴らしている間に次の区切りを取る（取り終わっていれば途切れずにつながる）
+        next = i + 1 < r.total ? fetchPart(r, i + 1) : null;
+        if (next) next.catch(function () {});
+        audio.src = url;
+        var playing = ended(r);
+        await audio.play();
+        if (run !== r) return;
+        hooks.state(r.btn, 'playing');
+        await playing;
+        if (run !== r) return;
+        drop(r, url);
+        if (!next) { stop(); return; }
+        i++;
+      }
+    } catch (err) {
+      if (run !== r) return;
+      var btn = r.btn;
+      stop();
+      hooks.notice(btn, err && err.code || 'speech_failed');
+    }
+  }
+  return {
+    // 同じボタンをもう一度押すと止める。別の回答を押したら前を止めて、新しい回答を区切り 0 から読む
+    toggle: function (btn, text, sig, lang) {
+      var same = run && run.btn === btn;
+      stop();
+      if (same) return;
+      if (!audio) audio = new Audio();
+      var r = run = { btn: btn, text: text, sig: sig, lang: lang, ctrl: new AbortController(), urls: [], total: 1 };
+      var unlock = silence(); r.urls.push(unlock);
+      audio.src = unlock;
+      var p = audio.play(); if (p && p.catch) p.catch(function () {});
+      hooks.state(btn, 'loading');
+      play(r);
+    },
+    stop: stop,
+    active: function () { return run ? run.btn : null; },
+  };
+}
+// AGENT_SPEECH_END
 
 
 // AGENT_CLOSED_BEGIN
@@ -498,6 +662,110 @@ function reactionBarHTML(target) {
     + '</div>';
 }
 
+// 統合人格の回答の操作列（読み上げ設計§4.1）。［コピー］［🔊］［共有］［いいね］［︙］と、右寄せの［ソース］。
+// いいね・絵文字の data-act と保存は人格のカードと共通。🔊 と［ソース］は回答がそろってから setupReplyBar で出す
+var SPEECH_API = API_BASE + '/magi2/speech';
+var ICON_SPEAK = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+var ICON_SPEAK_STOP = '<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
+var ICON_SPEAK_WAIT = '<svg aria-hidden="true" class="speak-wait" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+var ICON_SHARE = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+var ICON_MORE = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>';
+function replyBarHTML() {
+  function b(act, label, icon, extra) { return '<button type="button" class="react-btn" data-act="' + act + '" title="' + label + '" aria-label="' + label + '"' + (extra || '') + '>' + icon + '</button>'; }
+  return '<div class="reaction-bar reply-bar" data-target="integrated">'
+    + b('copy', tr('Copy', 'コピー'), ICON_COPY)
+    + b('speak', tr('Read aloud', '読み上げ'), ICON_SPEAK, ' aria-pressed="false" hidden')
+    + b('share', tr('Share', '共有'), ICON_SHARE)
+    + b('like', tr('Like', 'いいね'), ICON_LIKE)
+    + b('emoji', tr('More: reactions', 'その他（リアクション）'), ICON_MORE, ' data-more="1" aria-haspopup="true"')
+    + '<button type="button" class="react-btn reply-src" data-act="sources" hidden></button>'
+    + '</div>';
+}
+// 絵文字を付けた・外したときの見た目。［︙］は記号を残して右に絵文字を出し、人格のカードはボタンを絵文字に置き換える
+function showReactEmoji(trigger, em) {
+  trigger.classList.add('reacted');
+  if (!trigger.dataset.more) { trigger.textContent = em; return; }
+  trigger.innerHTML = ICON_MORE;
+  var picked = document.createElement('span'); picked.className = 'react-picked'; picked.textContent = em; trigger.appendChild(picked);
+}
+function clearReactEmoji(trigger) { trigger.classList.remove('reacted'); trigger.innerHTML = trigger.dataset.more ? ICON_MORE : ICON_REACT; }
+var agentSpeechOn = false, agentSpeechPlayer = null;
+function agentSpeech() {
+  return agentSpeechPlayer || (agentSpeechPlayer = createAgentSpeech(SPEECH_API, {
+    state: function (btn, s) {
+      btn.dataset.state = s; btn.setAttribute('aria-pressed', String(s !== 'idle'));
+      btn.innerHTML = s === 'idle' ? ICON_SPEAK : s === 'loading' ? ICON_SPEAK_WAIT : ICON_SPEAK_STOP;
+      var label = s === 'idle' ? tr('Read aloud', '読み上げ') : s === 'loading' ? tr('Loading audio (press to stop)', '読み込み中（押すと止まります）') : tr('Stop reading', '読み上げを止める');
+      btn.title = label; btn.setAttribute('aria-label', label);
+    },
+    notice: function (btn, code) {
+      var bar = btn.closest('.reaction-bar');
+      if (bar) showReplyNote(bar, code === 'speech_unsigned' ? tr('This reply cannot be read aloud.', 'この回答は読み上げできません')
+        : /limit_exceeded$/.test(code) ? tr("Today's read-aloud limit has been reached.", '本日の読み上げの上限に達しました')
+        : tr('Could not read the reply aloud.', '読み上げできませんでした'));
+    },
+  }));
+}
+function showReplyNote(bar, text) {
+  bar.parentElement.querySelectorAll('.reply-note').forEach(function (n) { n.remove(); });
+  var note = document.createElement('div'); note.className = 'reply-note'; note.setAttribute('role', 'status'); note.textContent = text;
+  bar.after(note); setTimeout(function () { note.remove(); }, 4000);
+}
+function agentItemFor(el) {
+  var turn = el.closest('.agent-turn'), mid = turn && turn.dataset.mid;
+  return mid ? agentHistory.find(function (it) { return it.mid === mid && it.role === 'assistant'; }) : null;
+}
+function setupReplyBar(turn, item) {
+  var bar = turn.querySelector('.agent-reply .reply-bar');
+  if (!bar || !item) return;
+  var speak = bar.querySelector('[data-act="speak"]'); if (speak) speak.hidden = !(agentSpeechOn && item.speech_sig);
+  var src = bar.querySelector('[data-act="sources"]'); if (src) renderAgentSourceButton(src, item.content, item.sources, isJa());
+}
+function syncSpeakButtons() {
+  if (!agentSpeechOn && agentSpeechPlayer) agentSpeechPlayer.stop();
+  agentLog.querySelectorAll('.reply-bar [data-act="speak"]').forEach(function (btn) { var item = agentItemFor(btn); btn.hidden = !(agentSpeechOn && item && item.speech_sig); });
+}
+// 🔊 を出すかは Worker の /magi2/models の features.speech で決める（Worker の設定だけで全画面から出し入れできる）
+function refreshSpeechFeature() {
+  loadAgentModels().then(function (j) { var on = !!(j && j.features && j.features.speech); if (on !== agentSpeechOn) { agentSpeechOn = on; syncSpeakButtons(); } });
+}
+// 共有は回答の本文と出典だけ。会話は公開しないので URL は付けない。Android の WebView は navigator.share を持たないので
+// 公式の Share プラグインで OS の共有シートへ渡す。共有できない環境ではコピーする
+async function shareAgentReply(btn, bar, item) {
+  var text = agentShareText(item.content, item.sources, isJa()), title = agentTitle || 'MAGI';
+  var native = window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
+  try {
+    if (native) { await native.share({ title: title, text: text, dialogTitle: tr('Share reply', '回答を共有') }); return; }
+    if (navigator.share) { await navigator.share({ title: title, text: text }); return; }
+  } catch (err) {
+    if (err && (err.name === 'AbortError' || /cancel/i.test(String(err.message || '')))) return;
+  }
+  try { await navigator.clipboard.writeText(text); flashReactBtn(btn, '✓'); showReplyNote(bar, tr('Copied.', 'コピーしました')); }
+  catch (_) { showReplyNote(bar, tr('Could not share the reply.', '共有できませんでした')); }
+}
+// ［ソース］の一覧は下からのシート。アイコンは Worker が付けたものだけで、画面から出典のサイトへ取りに行かない
+function showAgentSourcesSheet(btn, item) {
+  var open = document.getElementById('agent-sources-panel');
+  if (open) { removeAgentPanel(open); return; }
+  var data = cleanAgentSources(item.sources, item.content);
+  if (!data) return;
+  closeAgentPanels();
+  var panel = document.createElement('div');
+  panel.id = 'agent-sources-panel'; panel.className = 'agent-panel agent-sheet fade-in';
+  panel.innerHTML = '<div class="agent-sheet-body" role="dialog" aria-modal="true" aria-label="' + tr('Sources', 'ソース') + '">'
+    + '<div class="agent-panel-head"><span class="t">' + tr('Sources', 'ソース') + '</span><button type="button" class="agent-panel-close" aria-label="' + tr('Close', '閉じる') + '">✕</button></div>'
+    + '<div class="src-list"></div></div>';
+  var list = panel.querySelector('.src-list');
+  data.items.forEach(function (it) { list.appendChild(agentSourceRowEl(it)); });
+  panel.onAgentClose = function () { btn.setAttribute('aria-expanded', 'false'); if (btn.isConnected) btn.focus({ preventScroll: true }); };
+  panel.addEventListener('click', function (e) { if (e.target === panel) removeAgentPanel(panel); });
+  panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); removeAgentPanel(panel); } });
+  panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
+  document.getElementById('app').appendChild(panel);
+  btn.setAttribute('aria-expanded', 'true');
+  panel.querySelector('.agent-panel-close').focus({ preventScroll: true });
+}
+
 // インストール済みのPWA・ネイティブアプリには追加の案内を出さない。
 var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
   && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
@@ -600,7 +868,7 @@ function applyReactionsToTurn(turn, reactions) {
       if (likeBtn) likeBtn.classList.add('liked');
     } else {
       var trigger = bar.querySelector('.react-btn[data-act="emoji"]');
-      if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
+      if (trigger) showReactEmoji(trigger, em);
     }
     bar.classList.add('locked');
   });
@@ -667,9 +935,10 @@ function startMagiThinking(target, startedAt) {
 // ---- Render persisted history ----------------------------------------------
 function turnHTML(item) {
   return (item.closed === true || item.mode === 'fact' ? '' : personaCardsHTML(item.debate || {}))
-    + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda' + magiThinkingHTML(item.thinkingSeconds) + '</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + reactionBarHTML('integrated') + '</div>';
+    + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda' + magiThinkingHTML(item.thinkingSeconds) + '</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + replyBarHTML() + '</div>';
 }
 function renderHistoryToLog(history) {
+  if (agentSpeechPlayer) agentSpeechPlayer.stop();
   agentClosed = false;
   if (!agentDead) setAgentControlsEnabled(true);
   agentLog.innerHTML = '';
@@ -686,7 +955,8 @@ function renderHistoryToLog(history) {
       turn.dataset.mid = item.mid;
       turn.innerHTML = turnHTML(item);
       agentLog.appendChild(turn);
-      renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, document.documentElement.lang === "ja");
+      renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, document.documentElement.lang === "ja", false);
+      setupReplyBar(turn, item);
       if (item.clarify) { renderAgentClarify(turn, item.clarify, item === cleanHistoryLast); turn.querySelector('.agent-reply .reaction-bar')?.remove(); }
       if (item.magi) magiReplay(turn, item, { ja: document.documentElement.lang === 'ja', id: item.mid, log: agentLog });
       applyReactionsToTurn(turn, item.reactions);
@@ -694,6 +964,7 @@ function renderHistoryToLog(history) {
     }
   });
   agentScroll();
+  refreshSpeechFeature();
 }
 
 // ---- Lifecycle --------------------------------------------------------------
@@ -706,7 +977,7 @@ function cleanHistory(history) {
       && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
         return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
       })));
-  }).map(magiCleanItem).map(cleanAgentClarifyItem) : [];
+  }).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem) : [];
 }
 function initAgent() {
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
@@ -726,6 +997,7 @@ function dropAgentRequest() {
 }
 function resetAgent() {
   dropAgentRequest();
+  if (agentSpeechPlayer) agentSpeechPlayer.stop();
   if (nativeInput) nativeInput.stopVoice();
   sharedLoading = false; agentShared = null; persistSharedDocument();
   archiveCurrentHistory();
@@ -849,7 +1121,7 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','clarify','sources','pages','suggest','done'].indexOf(ev) < 0) return false;
+        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','clarify','sources','pages','suggest','speech','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
@@ -1111,7 +1383,8 @@ function renderAgentPages(replyEl, data) {
 }
 
 function prepareAgentMessages(history, lastContent) {
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, ...m }) => agentFactHistoryMessage(m));
+  // 考えた秒数・受信の印・読み上げの署名は画面のためだけのもので、次の質問の API には送らない
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -1154,6 +1427,7 @@ function agentStop() {
 }
 
 async function agentSend(recovered) {
+  if (agentSpeechPlayer) agentSpeechPlayer.stop();
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
   // 音声入力中の送信は確定だけにする。保存列の復元は新規送信と区別する。
   if (!recovered && nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
@@ -1190,7 +1464,7 @@ async function agentSend(recovered) {
   var nativeRunId = recovered ? recovered.id : nativeConversation ? nativeConversation.id() : null;
   turn.innerHTML = personaCardsHTML();
   var replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-  replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + reactionBarHTML('integrated');
+  replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + replyBarHTML();
   turn.appendChild(replyEl);
   agentLog.appendChild(turn); agentScroll();
   var replyBody = replyEl.querySelector('.agent-reply-body');
@@ -1204,7 +1478,7 @@ async function agentSend(recovered) {
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
-      var closedReply = false, factReply = false, replySources = null, clarifyReply = null;
+      var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechSig = null, speechLang = null;
       var sendId = ++agentSendSequence;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
@@ -1327,6 +1601,8 @@ async function agentSend(recovered) {
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
         pages: function (d) { if (!dropped()) sitePages = d; },
         sources: function (d) { if (!dropped()) replySources = d; },
+        // 読み上げの署名（読み上げ設計§5.2）。Worker が書いた回答の本文に対するもので、履歴に保存する
+        speech: function (d) { if (!dropped()) { speechSig = cleanSpeechSig(d && d.sig); speechLang = cleanSpeechLang(d && d.lang); } },
         done: function () { completed = true; streamWatch.finish(); },
       });
           if (magiView && completed && !errored && !dropped()) await magiView.wait();
@@ -1368,14 +1644,16 @@ async function agentSend(recovered) {
   if (dropped()) return; // 予約したリアクションは finally で消してある
   if (completed && reply.trim() && !errored || magiRetained) {
     renderAgentPages(replyEl, sitePages);
-        renderAgentSources(replyBody, replyEl, reply, replySources, document.documentElement.lang === "ja");
+        renderAgentSources(replyBody, replyEl, reply, replySources, document.documentElement.lang === "ja", false);
     if (!magiView) announceAgent(tr('MAGI replied. ', 'MAGIが回答しました。') + reply);
     // この送信だけのオブジェクトで、ストリーム終了後は更新しないので、そのまま保存する。
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
-    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
+    setupReplyBar(turn, agentHistory[agentHistory.length - 1]);
+    refreshSpeechFeature();
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
@@ -1540,7 +1818,7 @@ agentLog.addEventListener('click', function (e) {
     var em = emo.textContent;
     var ctx = getReactionContext(bar);
     var trigger = bar.querySelector('.react-btn[data-act="emoji"]');
-    trigger.classList.add('reacted'); trigger.textContent = em;
+    showReactEmoji(trigger, em);
     bar.classList.add('locked');
     registerReaction(bar, ctx.target, em, ctx);
     closeEmojiPops();
@@ -1552,6 +1830,14 @@ agentLog.addEventListener('click', function (e) {
   var act = btn.getAttribute('data-act');
   var ctx2 = getReactionContext(bar2);
 
+  if (act === 'speak' || act === 'share' || act === 'sources') {
+    var item = agentItemFor(bar2);
+    if (!item) return;
+    if (act === 'speak') { if (item.speech_sig) agentSpeech().toggle(btn, item.content, item.speech_sig, item.speech_lang || null); }
+    else if (act === 'share') shareAgentReply(btn, bar2, item);
+    else showAgentSourcesSheet(btn, item);
+    return;
+  }
   if (act === 'copy') {
     if (ctx2.response && navigator.clipboard) navigator.clipboard.writeText(ctx2.response).catch(function () { });
     flashReactBtn(btn, '✓');
@@ -1570,7 +1856,7 @@ agentLog.addEventListener('click', function (e) {
   if (act === 'emoji') {
     if (btn.classList.contains('reacted')) {
       // toggle off existing emoji
-      undoReaction(bar2, ctx2.target, function () { btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; });
+      undoReaction(bar2, ctx2.target, function () { clearReactEmoji(btn); });
       return;
     }
     if (bar2.classList.contains('locked')) return; // a like is already selected
@@ -1583,9 +1869,11 @@ agentLog.addEventListener('click', function (e) {
   }
 });
 document.addEventListener('click', function (e) { if (!e.target.closest('.reaction-bar')) closeEmojiPops(); });
+// 画面を離れたら読み上げを止める（バックグラウンドでは鳴らさない）
+document.addEventListener('visibilitychange', function () { if (document.hidden && agentSpeechPlayer) agentSpeechPlayer.stop(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;

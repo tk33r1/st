@@ -1993,13 +1993,15 @@ function client(src, isHome = false) {
     agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeConversation: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
-    personaCardsHTML: () => '', reactionBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
+    personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
+    agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {},
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLARIFY_BEGIN', '// AGENT_CLARIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLOSED_BEGIN', '// AGENT_CLOSED_END'), ctx);
   vm.runInContext(between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
+  vm.runInContext(between(src, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END'), ctx);
   vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
   vm.runInContext(between(src, '// MAGI_VIEW_BEGIN', '// MAGI_VIEW_END'), ctx);
   ctx.agentSendSequence = 0;
@@ -5290,5 +5292,168 @@ test('読み上げ計画§1.1: SVG・4KiB超・リダイレクトの拒否・時
     assert.equal(redirectedFetch, false, label);
     assert(Date.now() - started < 2500, label + ' で照合が遅れた');
     assert.equal(events.at(-1)[0], 'done', label);
+  }
+});
+
+// --- 回答の操作列・読み上げ・共有・ソース（読み上げ計画§1.6・§2.3 の単体。画面の部品を模擬の環境で動かす）---
+const speechBlock = src => between(src, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END').replaceAll('\r\n', '\n');
+const speechTick = () => new Promise(resolve => setTimeout(resolve, 0));
+function speechCtx(extra = {}) {
+  const urls = { created: [], revoked: [] };
+  class FakeURL extends URL {
+    static createObjectURL() { const u = 'blob:' + (urls.created.length + 1); urls.created.push(u); return u; }
+    static revokeObjectURL(u) { urls.revoked.push(u); }
+  }
+  const ctx = vm.createContext({ URL: FakeURL, Blob, AbortController, setTimeout, clearTimeout, ...extra });
+  vm.runInContext(between(home, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END') + '\n' + between(home, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END'), ctx);
+  return Object.assign(ctx, { urls });
+}
+
+test('読み上げ計画§1.6: 操作列の共通区画はトップページとアプリで同じで、受信はspeechを通す', () => {
+  assert.equal(speechBlock(home), speechBlock(mobile));
+  assert(speechBlock(home).includes('function createAgentSpeech('));
+  for (const src of [home, mobile]) assert(src.includes("'suggest','speech','done'].indexOf(ev) < 0"));
+  assert(read('magi-app/android/app/src/main/java/st/tk/magi/MagiConversationService.java').includes('|suggest|speech|error|done'));
+  // DJ の画面は読み上げを使わない（Worker も dj-request には署名を付けない）
+  assert(!dj.includes('AGENT_SPEECH_BEGIN'));
+});
+
+test('読み上げ計画§1.6: 出典のアイコンは許した画像のdata: URLで6KiB以下だけを通し、ほかの項目と番号は残す', () => {
+  const ctx = speechCtx(), png = 'data:image/png;base64,iVBORw0KGgo=';
+  const icons = [png, 'javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=', 'data:text/html;base64,PGI+', 'data:image/png;base64,' + 'A'.repeat(6200), 5,
+    'data:image/x-icon;base64,AAABAA==', 'data:image/vnd.microsoft.icon;base64,AAABAA==', 'data:image/png;base64,iVBO"><img src=x>'];
+  for (const [i, icon] of icons.entries()) {
+    const raw = { items: [{ n: 1, url: 'https://a.example/', title: 'A', icon }], marks: [{ at: 1, n: 1 }] };
+    const clean = JSON.parse(JSON.stringify(ctx.cleanAgentSources(raw, 'abc')));
+    assert.equal(clean.items.length, 1); assert.equal(clean.items[0].title, 'A'); assert.deepEqual(clean.marks, [{ at: 1, n: 1 }]);
+    assert.equal(clean.items[0].icon, [0, 6, 7].includes(i) ? icon : undefined, String(icon).slice(0, 40));
+  }
+});
+
+test('読み上げ計画§1.6: 保存した署名は16進64文字だけを残し、確認質問・閉じた回答・不正な言語は落とす', () => {
+  const ctx = speechCtx(), sig = 'a'.repeat(64);
+  const clean = item => JSON.parse(JSON.stringify(ctx.cleanAgentSpeechItem(item)));
+  assert.deepEqual(clean({ role: 'assistant', content: 'x', speech_sig: sig, speech_lang: 'ja' }), { role: 'assistant', content: 'x', speech_sig: sig, speech_lang: 'ja' });
+  assert.deepEqual(clean({ role: 'assistant', content: 'x', speech_sig: sig, speech_lang: 'JA-jp' }), { role: 'assistant', content: 'x', speech_sig: sig });
+  for (const bad of ['A'.repeat(64), 'a'.repeat(63), 5, null]) assert.deepEqual(clean({ role: 'assistant', content: 'x', speech_sig: bad }), { role: 'assistant', content: 'x' });
+  assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, closed: true }).speech_sig, undefined);
+  assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, clarify: { questions: [] } }).speech_sig, undefined);
+  const user = { role: 'user', content: 'q', speech_sig: sig };
+  assert.equal(ctx.cleanAgentSpeechItem(user), user);
+});
+
+test('読み上げ計画§1.6・2.2: 頭文字の丸はドメインから同じ文字と色になり、共有の文は本文の[n]と出典だけ', () => {
+  const ctx = speechCtx();
+  const a = ctx.agentSourceBadge({ url: 'https://www.example.com/a', title: 'T' }), b = ctx.agentSourceBadge({ url: 'https://example.com/b', title: 'U' });
+  assert.equal(a.letter, 'E'); assert.equal(a.color, b.color);
+  assert.notEqual(ctx.agentSourceBadge({ url: 'https://other.example/' }).color, a.color);
+  assert.equal(ctx.agentSourceBadge({ url: 'https://xn--wgv71a.jp/', title: '日本の題名' }).letter, '日');
+  assert.equal(ctx.agentSourceDomain('https://www.example.com/x'), 'example.com');
+  const raw = { items: [{ n: 1, url: 'https://example.com/p', title: '公式' }], marks: [{ at: 2, n: 1 }] };
+  assert.equal(ctx.agentShareText('答え。続き', raw, true), '答え[1]。続き\n\n出典\n[1] 公式\nhttps://example.com/p');
+  assert.equal(ctx.agentShareText('答えだけ', null, false), '答えだけ');
+});
+
+// 模擬の <audio> と、区切りごとに返し方を決められる fetch
+function speechPlayerHarness(responder) {
+  const audios = [], calls = [], states = [], notices = [];
+  class FakeAudio {
+    constructor() { audios.push(this); this.listeners = {}; this.src = ''; this.plays = []; }
+    addEventListener(t, f) { (this.listeners[t] ||= new Set()).add(f); }
+    removeEventListener(t, f) { this.listeners[t]?.delete(f); }
+    play() { this.plays.push(this.src); return Promise.resolve(); }
+    pause() {}
+    removeAttribute(name) { if (name === 'src') this.src = ''; }
+    fire(t) { [...(this.listeners[t] || [])].forEach(f => f()); }
+  }
+  const pending = [];
+  const fetch = (url, options) => {
+    const body = JSON.parse(options.body); calls.push({ url, body, signal: options.signal });
+    return new Promise((resolve, reject) => {
+      pending[body.part] = { resolve, reject };
+      options.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+      const r = responder?.(body.part);
+      if (r) resolve(r);
+    });
+  };
+  const ctx = speechCtx({ Audio: FakeAudio, fetch });
+  const player = ctx.createAgentSpeech('https://workers.tk.st/magi2/speech', {
+    state(btn, s) { states.push([btn, s]); }, notice(btn, code) { notices.push([btn, code]); },
+  });
+  const ok = (parts = 3) => ({ ok: true, status: 200, headers: { get: k => k === 'X-Speech-Parts' ? String(parts) : null }, blob: async () => new Blob(['mp3']) });
+  const fail = (status, code) => ({ ok: false, status, headers: { get: () => null }, json: async () => ({ error: { code } }) });
+  return { ctx, player, audios, calls, states, notices, pending, ok, fail };
+}
+
+test('読み上げ計画§2.3: 区切り0を鳴らす間に次を取り、最後まで鳴らしたら元に戻り、作ったBlobのURLを全部解放する', async () => {
+  const h = speechPlayerHarness();
+  h.player.toggle('b1', '回答の本文', 'a'.repeat(64), 'ja');
+  assert.deepEqual(h.states.at(-1), ['b1', 'loading']);
+  assert.equal(h.audios.length, 1); assert.equal(h.audios[0].plays[0], 'blob:1', '押した操作の中で無音を一度鳴らす');
+  assert.deepEqual(h.calls[0].body, { text: '回答の本文', sig: 'a'.repeat(64), part: 0, lang: 'ja' });
+  h.pending[0].resolve(h.ok(3)); await speechTick(); await speechTick();
+  assert.deepEqual(h.states.at(-1), ['b1', 'playing']);
+  assert.equal(h.calls.length, 2, '鳴らす前に区切り1を取りに行く'); assert.equal(h.calls[1].body.part, 1);
+  h.pending[1].resolve(h.ok(3)); await speechTick();
+  h.audios[0].fire('ended'); await speechTick(); await speechTick();
+  assert.equal(h.calls.length, 3); assert.equal(h.audios[0].plays.length, 3);
+  h.pending[2].resolve(h.ok(3)); await speechTick();
+  h.audios[0].fire('ended'); await speechTick(); await speechTick();
+  h.audios[0].fire('ended'); await speechTick(); await speechTick();
+  assert.deepEqual(h.states.at(-1), ['b1', 'idle']);
+  assert.equal(h.audios[0].plays.length, 4);
+  assert.deepEqual([...h.ctx.urls.revoked].sort(), [...h.ctx.urls.created].sort());
+  assert.equal(h.player.active(), null);
+});
+
+test('読み上げ計画§2.3: もう一度押すと止めて要求を中止し、別の回答を押すと前を止めて区切り0から読む', async () => {
+  const h = speechPlayerHarness();
+  h.player.toggle('b1', '一つ目', 'a'.repeat(64), null);
+  h.player.toggle('b1', '一つ目', 'a'.repeat(64), null);
+  assert.equal(h.calls[0].signal.aborted, true);
+  assert.deepEqual(h.states.at(-1), ['b1', 'idle']); assert.equal(h.player.active(), null);
+  assert.equal('lang' in h.calls[0].body, false);
+  h.player.toggle('b1', '一つ目', 'a'.repeat(64), null);
+  h.pending[0].resolve(h.ok(2)); await speechTick(); await speechTick();
+  h.player.toggle('b2', '二つ目', 'b'.repeat(64), 'en');
+  assert(h.states.some(([b, s]) => b === 'b1' && s === 'idle'));
+  assert.deepEqual(h.states.at(-1), ['b2', 'loading']); assert.equal(h.calls.at(-1).body.part, 0); assert.equal(h.calls.at(-1).body.text, '二つ目');
+  assert.equal(h.audios.length, 1, '<audio> は1つだけ');
+  h.player.stop(); await speechTick();
+  assert.deepEqual([...h.ctx.urls.revoked].sort(), [...h.ctx.urls.created].sort());
+  assert.equal(h.notices.length, 0, '止めたときは知らせない');
+});
+
+test('読み上げ計画§2.3: 区切り0の失敗・署名の不一致・途中の区切りの失敗は、元に戻して知らせる', async () => {
+  const unsigned = speechPlayerHarness(part => part === 0 ? speechPlayerHarness().fail(403, 'speech_unsigned') : null);
+  unsigned.player.toggle('b1', 'x', 'a'.repeat(64), null); await speechTick(); await speechTick();
+  assert.deepEqual(unsigned.notices, [['b1', 'speech_unsigned']]); assert.deepEqual(unsigned.states.at(-1), ['b1', 'idle']);
+  const broken = speechPlayerHarness(part => part === 0 ? speechPlayerHarness().ok(2) : speechPlayerHarness().fail(500, 'speech_http_500'));
+  broken.player.toggle('b1', 'x', 'a'.repeat(64), null); await speechTick(); await speechTick(); await speechTick();
+  assert.deepEqual(broken.notices, [], '鳴らしている区切りは最後まで鳴らす');
+  broken.audios[0].fire('ended'); await speechTick(); await speechTick();
+  assert.deepEqual(broken.notices, [['b1', 'speech_http_500']]); assert.deepEqual(broken.states.at(-1), ['b1', 'idle']);
+  assert.equal(broken.audios[0].plays.length, 2, '無音と区切り0だけ鳴らした');
+  assert.deepEqual([...broken.ctx.urls.revoked].sort(), [...broken.ctx.urls.created].sort());
+  const offline = speechPlayerHarness();
+  offline.player.toggle('b1', 'x', 'a'.repeat(64), null);
+  offline.pending[0].reject(new Error('offline')); await speechTick(); await speechTick();
+  assert.deepEqual(offline.notices, [['b1', 'speech_failed']]); assert.deepEqual(offline.states.at(-1), ['b1', 'idle']);
+});
+
+test('読み上げ計画§1.2・1.6: 両画面はspeechの署名と言語を回答と一緒に保存し、次の質問のAPIには送らない', async () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    const c = client(src, isHome), outbound = [], sig = 'c'.repeat(64);
+    c.ctx.fetch = async (_, options) => { outbound.push(JSON.parse(options.body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, handlers) => { handlers.integrated({ delta: '回答' }); handlers.speech({ sig, lang: 'ja' }); handlers.done(); };
+    await c.ctx.agentSend();
+    const saved = c.ctx.agentHistory.at(-1);
+    assert.equal(saved.speech_sig, sig); assert.equal(saved.speech_lang, 'ja');
+    c.ctx.agentInput.value = '次の質問';
+    c.ctx.parseSSE = async (_, handlers) => { handlers.integrated({ delta: '次' }); handlers.speech({ sig: 'not-hex', lang: 'xx-long' }); handlers.done(); };
+    await c.ctx.agentSend();
+    const prior = outbound[1].messages.find(m => m.role === 'assistant');
+    assert.equal(Object.hasOwn(prior, 'speech_sig'), false); assert.equal(Object.hasOwn(prior, 'speech_lang'), false);
+    assert.equal(Object.hasOwn(c.ctx.agentHistory.at(-1), 'speech_sig'), false, '形の違う署名は保存しない');
   }
 });

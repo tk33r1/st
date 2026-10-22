@@ -79,7 +79,7 @@ const ctx = vm.createContext({ aiModels:registry, bundledContext:cards,
     return res;
   },
 });
-vm.runInContext(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),'src/index.js'].map(p=>strip(read('workers/magi2/'+p))).join('\n')
+vm.runInContext(['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),...['probe.js','speech.js'].filter(f=>!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/'+f],{cwd:root,encoding:'utf8'}).trim()),'src/index.js'].map(p=>strip(read('workers/magi2/'+p))).join('\n')
   .replace('export default {','globalThis.worker = {')+'\nglobalThis.config=DEFAULTS;globalThis.magi= MAGI_MODE;',ctx);
 const rated = new Map();
 env.DB={prepare(){return {bind(key,day,limit){return {async first(){const n=(rated.get(key)||0)+1;rated.set(key,n);return n<=limit?{count:n}:null;}};}};}};

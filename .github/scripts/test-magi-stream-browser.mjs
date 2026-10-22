@@ -87,11 +87,15 @@ try {
         if(fact) {
           assert.equal(await page.locator('.agent-personas').count(),0);
           assert.equal(await body.locator('a').count(),1);assert.equal(await body.locator('a').getAttribute('href'),'https://example.com/source');
-          assert.equal(await page.locator('.agent-sources script').count(),0);assert.equal(await page.locator('.agent-sources a').textContent(),'[1] <script>alert(1)</script>');
+          // 出典の一覧は操作列の［ソース］から開く（読み上げ設計§4.4。トップページは操作列の下、アプリは下からのシート）
+          const srcBtn=page.locator('.reply-bar [data-act="sources"]').last();assert.equal(await srcBtn.isHidden(),false);await srcBtn.click();
+          const srcRow=page.locator(name.startsWith('home')?'.src-list .src-row':'#agent-sources-panel .src-row');await until(async()=>await srcRow.count()===1);
+          assert.equal(await page.locator('.src-list script, #agent-sources-panel script').count(),0);assert.equal(await srcRow.locator('.src-title').textContent(),'<script>alert(1)</script>');
+          assert.equal(await srcRow.getAttribute('href'),'https://example.com/source');await page.keyboard.press('Escape');
           const item=JSON.parse(saved).at(-1);assert.equal(item.mode,'fact');assert.equal(item.debate,undefined);assert.equal(item.sources.items.length,1);
           await page.reload({waitUntil:'domcontentloaded'});
           assert.equal(await page.locator('.agent-reply-body').last().textContent(),answer.slice(0,18)+'[1]'+answer.slice(18));
-          assert.equal(await page.locator('.agent-sources a').getAttribute('href'),'https://example.com/source');assert.equal(await page.locator('.agent-personas').count(),0);
+          assert.equal(await page.locator('.reply-bar [data-act="sources"]:not([hidden])').count(),1);assert.equal(await page.locator('.agent-personas').count(),0);
           if(process.argv.includes('--fact-long')) {
             assert.ok(answer.length>4000);
             await page.locator(input).fill('続けて説明して');await page.locator(send).click();

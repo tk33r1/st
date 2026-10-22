@@ -13,7 +13,7 @@ assert(!faultProvider||['anthropic','openai'].includes(faultProvider));
 assert.match(label,/^[a-z0-9-]+$/);
 const current=p=>readFileSync(new URL(p,root),'utf8');
 const read=p=>ref?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):current(p);
-const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),'src/index.js'];
+const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),...['probe.js','speech.js'].filter(f=>!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/'+f],{cwd:root,encoding:'utf8'}).trim()),'src/index.js'];
 const cards=JSON.parse(current('data/magi-context.json'));
 const registry=JSON.parse(read('config/ai-models.json'));
 const source=files.map(p=>read('workers/magi2/'+p));
