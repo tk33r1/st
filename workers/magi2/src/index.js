@@ -10,6 +10,7 @@ import { qaBudgetEnv } from '../qa-budget.js';
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
+import { handleProbe } from '../probe.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -2121,6 +2122,9 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(request.url);
+    // 読み上げ設計§6.5 の一時の測定（PROBE_ENABLED のときだけ）。測定が済んだら外す
+    const probe = handleProbe(request, env);
+    if (probe) return probe;
     // 許可した Origin のページか、サイト外から API キーを付けた呼び出し（利用回数と POST の入口で使う）
     const authorized = isAllowedOrigin(origin) || !!env.CLIENT_API_KEY && request.headers.get('x-api-key') === env.CLIENT_API_KEY;
 

@@ -174,7 +174,7 @@ Worker の `speechText(text)` が、回答の Markdown を読み上げ用の文�
 | 4 | キャッシュ（Cache API。鍵は `モデル|声|引数の版|区切りの文` の SHA-256）にあれば、そのまま返す。回数に数えない |
 | 5 | 回数を数える（5.5）。上限なら 429 |
 | 6 | Fish Audio へ `POST /v1/tts`（`format: mp3`、`mp3_bitrate: 64`、`latency: balanced`、`normalize: true`、`language`、`reference_id`）。最初の音声まで 15秒・全体 30秒。利用者の切断で止める（`request.signal`） |
-| 7 | 応答の本文をそのまま `audio/mpeg` で流しつつ、全部そろったらキャッシュに入れる（`ctx.waitUntil`。途中で切れたら入れない） |
+| 7 | 応答の本文をそのまま `audio/mpeg` で流しつつ、全部そろったらキャッシュに入れる（`ctx.waitUntil`。応答を返した後 30秒まで。途中で切れたら入れない）。キャッシュはデータセンターごとで、複製されない |
 
 - 失敗: 401（キーの失効）・402 と、無料版の公正利用の超過を示す応答は、今の残高切れの通知（`alertUpstream`）に Fish Audio を足して知らせる（どの応答で示されるかは準備で確かめる）。429（同時実行の上限）は1回だけ 1秒後に取り直す。有料版へは切り替えない（費用が発生する変更は本人が決める）。どれも画面には「読み上げできませんでした」。
 - 値（上限・期限・引数・区切りの長さ）は `personas.js` の `SPEECH` に置く。モデル ID は `config/ai-models.json`（`fishaudio.tts` に `s2.1-pro-free`）。声の ID は公開情報なので `SPEECH.voice_id` に書く（`c9eb5405fa784e61ae9b3b22621e9f6f`）。キーだけ secret `FISH_AUDIO_API_KEY`。
@@ -214,7 +214,8 @@ Worker の `speechText(text)` が、回答の Markdown を読み上げ用の文�
 - WebSocket では、各イベントを `{ "event": <名前>, "data": <今と同じ> }` のテキストで送る。10秒ごとに `{ "event": "ping" }` を送る。`done`・`error` の後に 1000 で閉じる。
 - 利用回数の超過・入力の誤りなど、今は HTTP の 4xx で返しているものは、`{ "event": "error", "data": <今と同じ封筒。http_status を含む> }` を送ってから 1008 で閉じる。
 - 停止: 画面は `{ "type": "stop" }` を送ってから閉じる。Worker は `stop`・`close`・`error` のどれでも今の `stop.abort()` を呼ぶ（払うのは止めた時点までの分だけ、は今と同じ）。
-- 1メッセージの上限: チャットの要求は画像を含めて最大 12MiB（`DEFAULTS.input.max_request_bytes`）。Cloudflare の WebSocket の1メッセージの上限がこれを下回るなら、画像付きの要求は SSE で送る（準備で確かめる）。
+- 1メッセージの上限: チャットの要求は画像を含めて最大 12MiB（`DEFAULTS.input.max_request_bytes`）。Worker が受ける WebSocket のメッセージは 32MiB までなので、画像付きの要求もそのまま送れる（[実装前確認](workers/magi2/読み上げ実装前確認.md) §0.5）。
+- magi2 の `compatibility_date`（2025-01-01）では、相手の Close に Worker が自分で `close()` を返す。返さないと画面は 1006 で閉じたと見る。
 
 ### 6.3 画面
 

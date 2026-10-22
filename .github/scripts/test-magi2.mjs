@@ -155,6 +155,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/search-scope.js')) + '\n'
     + strip(read('workers/magi2/site-rank.js')) + '\n'
+    + strip(read('workers/magi2/probe.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
@@ -4947,4 +4948,29 @@ test('A5: 履歴付きの本文が止まっても受付期限で中止し、上�
  const res=await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/site-search?site_debate=1&site_chat=1',{
   method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:stream,duplex:'half'}),w.env,{waitUntil(){}});
  assert.equal(res.status,400);assert.equal(cancelled,true);assert.equal(w.inputs.length,0);assert.equal(w.env.DB.rows.size,0);
+});
+
+test('読み上げ設計§6.5: 一時の測定はPROBE_ENABLEDのときだけ、測定のページからのGETだけを受け、AIもD1も使わない', async () => {
+  const w = worker();
+  const get = (path, headers = {}, method = 'GET') => w.ctx.worker.fetch(new Request('https://workers.tk.st' + path, { method, headers }), w.env, { waitUntil() {} });
+  assert.equal((await get('/magi2/probe')).status, 404);
+  w.env.PROBE_ENABLED = 'true';
+  const page = await get('/magi2/probe');
+  assert.equal(page.status, 200);
+  assert.equal(page.headers.get('X-Robots-Tag'), 'noindex');
+  assert.match(await page.text(), /AI は呼びません/);
+  assert.equal((await get('/magi2/probe', {}, 'POST')).status, 404);
+  assert.equal((await get('/magi2/probe/other')).status, 404);
+  assert.equal((await get('/magi2/probe/sse')).status, 403);
+  assert.equal((await get('/magi2/probe/sse', { Origin: 'https://tk.st' })).status, 403);
+  assert.equal((await get('/magi2/probe/sse', { Referer: 'https://evil.example/magi2/probe' })).status, 403);
+  assert.equal((await get('/magi2/probe/ws', { Origin: 'https://workers.tk.st' })).status, 426);
+  const sse = await get('/magi2/probe/sse', { Referer: 'https://workers.tk.st/magi2/probe' });
+  assert.equal(sse.status, 200);
+  assert.match(sse.headers.get('Content-Type'), /^text\/event-stream/);
+  const reader = sse.body.getReader();
+  const first = new TextDecoder().decode((await reader.read()).value);
+  assert.match(first, /^: +\n\n$/);
+  await reader.cancel();
+  assert.equal(w.calls.length, 0);
 });
