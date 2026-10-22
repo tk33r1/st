@@ -63,7 +63,7 @@
 
 | 項目 | 決定 |
 | --- | --- |
-| 声 | 本人の声から作った声のモデル（統合人格＝本人の声）。モデルは作成済みで、ID は本人から渡し済み。リポジトリには書かず secret `FISH_AUDIO_VOICE_ID` に置く（5.4）。本人の声で任意の文を言わせる道具にならないよう、5.2 の署名を必須にする |
+| 声 | 本人の声から作った声のモデル（統合人格＝本人の声）。モデルは作成済みで、ID は `c9eb5405fa784e61ae9b3b22621e9f6f`（公開情報。本人、2026-10-22）。`personas.js` の `SPEECH.voice_id` に書く（5.4）。tk.st が本人の声で任意の文を言わせる道具にならないよう、5.2 の署名を必須にする |
 | モデル | 無料版の `s2.1-pro-free`（本番も同じ）。TTFA と DPA の保証が無いことを `PRIVACY` に書く（8章）。有料の `s2.1-pro` へ自動では切り替えない（5.4） |
 | 利用の上限 | 無料版の公正利用の範囲に収める。費用の上限ではなく、乱用と公正利用の超過で止められないための上限として、IP ごと・全体の1日の区切りの数を置く（5.5） |
 | ［︙］の中身 | 絵文字のリアクションだけを入れる。［いいね］は操作列に残す（4.1） |
@@ -75,7 +75,7 @@
 | --- | --- | --- | --- |
 | 準備 | — | Fish Audio の契約とキー、声、規約の確認、WebSocket の測定（9.1） | — |
 | 1番目 | C1 | Worker（出典のアイコン、読み上げの入口と署名。`SPEECH_ENABLED="false"`）→ 画面・APK（操作列・共有・ソース） | 作る |
-| 2番目 | C1b | Worker だけ（声の ID の secret、`SPEECH_ENABLED="true"`、`PRIVACY` の段落） | 作らない |
+| 2番目 | C1b | Worker だけ（`SPEECH_ENABLED="true"`、`PRIVACY` の段落） | 作らない |
 | 3番目 | C2 | 条件付き。Worker（WebSocket の入口）→ トップページ・PWA | 作らない（6.6） |
 
 - C1 の画面は、`/magi2/models` が `speech: true` を返したときだけ 🔊 を出す。C1b は Worker の設定だけで全画面に 🔊 が出る（先行 5.6 の、説明を Worker から配る考え方と同じ）。声の録音や試聴が長引いても C1 を止めない。
@@ -146,9 +146,10 @@
 
 - Worker は統合人格の回答を書き終えたら、`done` の直前に `speech` イベント `{ sig }` を送る。`sig` は `HMAC-SHA256(SPEECH_SIGN_KEY, "v1\n" + 回答の本文)` の16進。
   本文は画面が `integrated` の差分をつないで保存するものと同じ文字列にする（照合をテストで固定する）。
-- 送らない場合: 悪意への短い返答（A1）、確認質問（A3）、エラー・中断、`SPEECH_ENABLED` が true でも声が未設定のとき。
+- 送らない場合: 悪意への短い返答（A1）、確認質問（A3）、エラー・中断、`SPEECH_ENABLED` が true でもキー `FISH_AUDIO_API_KEY` が無いとき。
 - 画面は `sig` を履歴の項目に `speech_sig` として保存する。読み上げの要求は `{ text, sig, part }` で、Worker は署名を確かめてから区切りを作り直す（Worker は回答を保存しない。区切りは同じ文から毎回同じに作る）。
 - 署名は期限を持たない（同じ文しか読めないので、履歴の古い回答も読める）。`SPEECH_SIGN_KEY` を入れ替えると、それまでの回答は読めなくなる（🔊 を押すと「この回答は読み上げできません」）。
+- 声のモデルは公開なので、Fish Audio の上では誰でも自分のキーでこの声を使える。署名が守るのは、tk.st（と本サイトの無料枠）が任意の文の読み上げに使われないことまで。
 - それでも利用者が回答を誘導して本人の声で言わせることはできる。音声をダウンロードする手段は付けず、音声は端末に保存しない（再生のたびに取り直す。5.4 のキャッシュで費用は増えない）。
 
 ### 5.3 読み上げる文
@@ -176,7 +177,7 @@ Worker の `speechText(text)` が、回答の Markdown を読み上げ用の文�
 | 7 | 応答の本文をそのまま `audio/mpeg` で流しつつ、全部そろったらキャッシュに入れる（`ctx.waitUntil`。途中で切れたら入れない） |
 
 - 失敗: 401（キーの失効）・402 と、無料版の公正利用の超過を示す応答は、今の残高切れの通知（`alertUpstream`）に Fish Audio を足して知らせる（どの応答で示されるかは準備で確かめる）。429（同時実行の上限）は1回だけ 1秒後に取り直す。有料版へは切り替えない（費用が発生する変更は本人が決める）。どれも画面には「読み上げできませんでした」。
-- 値（上限・期限・引数・区切りの長さ）は `personas.js` の `SPEECH` に置く。モデル ID は `config/ai-models.json`（`fishaudio.tts` に `s2.1-pro-free`）。声の ID は本人の声のモデルを指すので Wrangler の secret `FISH_AUDIO_VOICE_ID` にする（リポジトリ・本書・評価の記録に書かない）。キーは secret `FISH_AUDIO_API_KEY`。
+- 値（上限・期限・引数・区切りの長さ）は `personas.js` の `SPEECH` に置く。モデル ID は `config/ai-models.json`（`fishaudio.tts` に `s2.1-pro-free`）。声の ID は公開情報なので `SPEECH.voice_id` に書く（`c9eb5405fa784e61ae9b3b22621e9f6f`）。キーだけ secret `FISH_AUDIO_API_KEY`。
 - ログには区切りの数・バイト数・キャッシュの当否・所要時間だけを出し、文は出さない。
 
 ### 5.5 回数の上限
@@ -245,7 +246,7 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 
 ## 7. Worker のそのほかの変更
 
-- `/magi2/models` に `features: { speech: <SPEECH_ENABLED かつ声が設定済み> }` を足す。画面はこれを見て 🔊 を出す。
+- `/magi2/models` に `features: { speech: <SPEECH_ENABLED かつキーが設定済み> }` を足す。画面はこれを見て 🔊 を出す。
 - `PRIVACY` に `requires: ['speech']` の段落を日英で足す（8章）。画面は 🔊 を出せるときに機能の名前 `speech` を持つ。
 - 先行 4.7 の残高切れ・キーの失効の通知に Fish Audio を足す（`PROVIDER_ROLES` に `fishaudio: 'Fish Audio（読み上げ）'`）。残高切れの語は Fish Audio の公式の文書の語で作る。
 
@@ -255,7 +256,7 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 | --- | --- | --- |
 | Worker の `PRIVACY`（`requires: ['speech']`） | 🔊 を押したときだけ、その回答の本文を Fish Audio に送って音声にすること。質問の本文・画像・履歴は送らないこと。音声は端末に保存しないこと。Cloudflare に区切りの音声を一時的にキャッシュすること。Fish Audio の保持・学習の扱い（規約の確認後に書く）。無料版を使っていて、Fish Audio の DPA（データ処理の取り決め）の保証が無いこと。1日の上限 | C1b |
 | トップページとアプリの「System & Privacy」 | 送り先の数・会社の名前を固定で書いている箇所があれば、Worker から配る段落に寄せる（先行 5.6・B 8章の約束） | C1 |
-| [AGENTS.md](AGENTS.md) | Workers 一覧の magi2 の secret に `FISH_AUDIO_API_KEY`・`FISH_AUDIO_VOICE_ID`・`SPEECH_SIGN_KEY` を足す。「討議する入力は3社すべてに送られる」の段に、読み上げは押したときだけ Fish Audio へ送ることを足す。C2 を実装したら WebSocket の入口 | C1・C1b・C2 |
+| [AGENTS.md](AGENTS.md) | Workers 一覧の magi2 の secret に `FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` を足す。「討議する入力は3社すべてに送られる」の段に、読み上げは押したときだけ Fish Audio へ送ることを足す。C2 を実装したら WebSocket の入口 | C1・C1b・C2 |
 | [workers/magi2/README.md](workers/magi2/README.md) | 読み上げの入口・署名・上限・止め方（`SPEECH_ENABLED` を false）。C2 の入口と止め方（`WS_ENABLED`） | C1・C2 |
 | [.github/AI_MODELS.md](.github/AI_MODELS.md)・[config/ai-models.json](config/ai-models.json) | Fish Audio のモデルと smoke | C1 |
 | `data/magi-versions.json` | 各公開の更新履歴（A 7.2） | C1・C1b・C2 |
@@ -267,7 +268,7 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 
 1. Fish Audio の公式サイトで、文書（1.3）・利用規約・プライバシーポリシーを読み直す。入力の保持・学習・声のモデルの扱いを8章の説明の材料にする。
 2. Fish Audio のサポートに無料版の公正利用の目安と、超過したときの応答を確かめる。
-3. 渡し済みの声のモデルが `visibility=private` で `trained` になっていることを API で確かめる。試聴は `s2.1-pro-free` で、保存済みの回答から選んだ日英の代表 10件（見出し・リスト・表・コード・URL・数字・固有名詞を含む）を読む。費用 0。
+3. 声のモデル（`c9eb5405fa784e61ae9b3b22621e9f6f`）が `trained` で、Worker のキーから使えることを `GET /model/{id}` で確かめる。試聴は `s2.1-pro-free` で、保存済みの回答から選んだ日英の代表 10件（見出し・リスト・表・コード・URL・数字・固有名詞を含む）を読む。費用 0。
 4. 保存済みの回答の長さから、1回答あたりの区切りの数の分布を手元で計算し、5.5 の上限を確かめる（API は呼ばない）。
 5. WebSocket の測定（6.5）。Cloudflare の WebSocket の1メッセージの上限と、Worker から外部への接続の数え方を確かめる。
 
@@ -276,7 +277,7 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 | 段 | 作業 | 公開 |
 | --- | --- | --- |
 | C1 | Worker: 出典のアイコン（4.4）、`speech` イベントと署名・`/magi2/speech`・`SPEECH`・Fish Audio の通知（5章・7章）を `SPEECH_ENABLED="false"` で出す。画面: 操作列・共有・ソースの一覧（4章）。APK: `@capacitor/share` | Worker → Web・APK |
-| C1b | 声の ID と secret、`PRIVACY` の段落、`SPEECH_ENABLED="true"`。本番で本人の確認用の回答を数件読む | Worker |
+| C1b | secret `FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY`、`PRIVACY` の段落、`SPEECH_ENABLED="true"`。本番で本人の確認用の回答を数件読む | Worker |
 | C2 | 測定の結果が条件を満たしたときだけ。`runChat` の切り出し → WebSocket の入口 → トップページ・PWA | Worker → Web |
 
 - 各段で `test-magi2.mjs`・構文チェック・模擬の Fish Audio（固定の mp3 を返す手元のサーバー）を使った画面の確認を通す。実 API の確認も本番と同じ `s2.1-pro-free` を使う（費用 0。公正利用の範囲で、本番の確認は数件にする）。
