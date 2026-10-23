@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
 import { magiDisplayVersion } from './magi-version.mjs';
+import { verifyDailyPublication } from './magi2-daily-publication.mjs';
 import './test-magi-native-history.mjs';
 import './test-magi-native-input.mjs';
 import './test-magi-native-background.mjs';
@@ -5572,4 +5573,21 @@ test('読み上げ計画§1.2・1.6: 両画面はspeechの署名と言語を回�
     assert.equal(Object.hasOwn(prior, 'speech_sig'), false); assert.equal(Object.hasOwn(prior, 'speech_lang'), false);
     assert.equal(Object.hasOwn(c.ctx.agentHistory.at(-1), 'speech_sig'), false, '形の違う署名は保存しない');
   }
+});
+
+test('A6: 公開後確認の全要求は実WorkerでAI・D1・メールへ到達せず、新旧の履歴と拒否を検証する',async()=>{
+  const w=worker(),db=[],upstream=[];
+  w.env.DB={prepare(sql){db.push(sql);throw new Error('DB must not be touched');}};
+  w.env.SITE_SEARCH_ENABLED='true';w.env.SITE_RANK_ENABLED='true';w.env.SITE_RANK_SCOPES='site';w.env.MAGI_TYPESAFE_API_KEY='synthetic';
+  w.ctx.fetch=async url=>{
+    const path=String(url).replace('https://tk.st/','');
+    if(/^data\/(magi-versions|site-search|tools|game|glitch)\.json$/.test(path))return Response.json(JSON.parse(read(path)));
+    upstream.push(String(url));throw new Error('upstream must not be called');
+  };
+  const expected={id:'synthetic-deployment',sha:'a'.repeat(40),version:JSON.parse(read('data/magi-versions.json')).versions[0].version};
+  const report=await verifyDailyPublication({expected,readDeployment:()=>({id:expected.id,message:expected.sha}),
+    fetcher:(url,options)=>w.ctx.worker.fetch(new Request(url,options),w.env,{waitUntil(p){w.waits.push(p);}})});
+  await Promise.all(w.waits);
+  assert.deepEqual(db,[]);assert.deepEqual(upstream,[]);assert.deepEqual(w.calls,[]);
+  assert.equal(report.ok,true,JSON.stringify(report.cases));assert.equal(report.cases.length,10);
 });
