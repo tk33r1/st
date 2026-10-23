@@ -66,6 +66,7 @@ jobs:
         sparse-checkout: |
           .github/workflows/deploy-worker.yml
           .github/scripts/magi2-daily-cloudflare.mjs
+          .github/scripts/magi2-daily-http.mjs
           workers/magi2/wrangler.toml
         sparse-checkout-cone-mode: false
         persist-credentials: false

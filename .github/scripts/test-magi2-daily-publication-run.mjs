@@ -11,7 +11,7 @@ import {publicationRequests} from './magi2-daily-publication.mjs';
 const id='11111111-1111-1111-1111-111111111111',deployment='22222222-2222-2222-2222-222222222222';
 const row=version=>({version,date:'2026-10-23',changes:{ja:['表示を改善しました','操作を改善しました'],en:['Improved display','Improved controls']}});
 const history={versions:[row('6.0')]};
-function fixture(run) {
+async function fixture(run) {
   const root=mkdtempSync(join(tmpdir(),'magi2-publication-run-'));
   const git=(...args)=>execFileSync('git',['-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false','-c','commit.gpgsign=false',
     '-c','user.name=Synthetic test','-c','user.email=synthetic@example.invalid',...args],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
@@ -20,8 +20,8 @@ function fixture(run) {
     git('init','-b','main');git('add','.');git('commit','-m','published target');const target=git('rev-parse','HEAD');
     writeFileSync(join(root,'data/magi-versions.json'),JSON.stringify({versions:[row('6.1'),...history.versions]}));
     git('add','.');git('commit','-m','later manual change');
-    return Promise.resolve(run({root,git,target})).finally(()=>rmSync(root,{recursive:true,force:true}));
-  } catch(error){rmSync(root,{recursive:true,force:true});throw error;}
+    return await run({root,git,target});
+  } finally {rmSync(root,{recursive:true,force:true});}
 }
 test('公開する履歴はtargetのgitオブジェクトから読み、後続mainをcheckout・実行しない',()=>fixture(f=>{
   const head=f.git('rev-parse','HEAD');
@@ -65,6 +65,7 @@ test('共通公開は同期前の版チェック・構造化出力・版IDの返
   assert.match(core,/if:.*expected-version-id != '' && !inputs.dry-run/);
   assert.match(core,/WRANGLER_OUTPUT_FILE_PATH: \$\{\{ runner.temp \}\}\/worker-deployment.jsonl/);
   assert.match(core,/\.deploy-caller\/\.github\/scripts\/magi2-daily-cloudflare.mjs --published/);
+  assert.match(core,/sparse-checkout:[\s\S]*\.github\/scripts\/magi2-daily-http.mjs/);
   const daily=readFileSync('.github/workflows/magi2-daily-merge.yml','utf8');
   assert.doesNotMatch(daily,/uses:.*magi2-daily-publication|uses:.*deploy-worker-core/);
 });

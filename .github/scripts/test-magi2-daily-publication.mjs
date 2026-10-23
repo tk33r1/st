@@ -2,12 +2,32 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {publicationRequests,verifyDailyPublication} from './magi2-daily-publication.mjs';
+import {limitedJSON} from './magi2-daily-http.mjs';
 
 const history=JSON.parse(readFileSync('data/magi-versions.json','utf8'));
 const expected={id:'deployed-version',sha:'a'.repeat(40),version:history.versions[0].version};
 const body={desc:{ja:'説明',en:'description'},context:{ja:'素材',en:'context'},theme:{ja:'テーマ',en:'theme'}};
 const catalog={personas:Object.fromEntries(['MELCHIOR-1','BALTHASAR-2','CASPER-3'].map(k=>[k,body])),synthesizer:body,privacy:{ja:[{text:'説明'}],en:[{text:'Description'}]}};
 const version=()=>({id:expected.id,message:expected.sha});
+test('制限付きJSON読込は分割されたUTF-8を読み、文字数ではなくバイト数で上限を守る',async()=>{
+  const bytes=new TextEncoder().encode('"あ"');
+  const response=new Response(new ReadableStream({start(controller){
+    controller.enqueue(bytes.slice(0,2));controller.enqueue(bytes.slice(2));controller.close();
+  }}));
+  assert.equal(await limitedJSON(response,bytes.length),'あ');
+  assert.equal(response.body.locked,false);
+  await assert.rejects(limitedJSON(new Response(bytes),bytes.length-1),/response_too_large/);
+});
+test('上限超過・不正UTF-8では残りの受信を中断し、空や壊れたJSONも拒否する',async()=>{
+  for(const [bytes,limit] of [[new Uint8Array([32,32]),1],[new Uint8Array([255]),10]]) {
+    let cancelled=false;
+    const stream=new ReadableStream({start(controller){controller.enqueue(bytes);},cancel(){cancelled=true;}});
+    await assert.rejects(limitedJSON(new Response(stream),limit));
+    assert.equal(cancelled,true);assert.equal(stream.locked,false);
+  }
+  for(const response of [new Response(null),new Response('{'),new Response(new Uint8Array([34,227,129]))])
+    await assert.rejects(limitedJSON(response,100));
+});
 function transport(patch=()=>null) {
   return async(url,options)=>{
     assert.equal(options.redirect,'error');

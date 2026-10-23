@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {cleanVersionHistory,versionOrder,VERSION_HISTORY_LIMITS} from '../../workers/magi2/version-history.js';
 import {catalogObservation} from './magi2-daily-observe.mjs';
+import {limitedJSON} from './magi2-daily-http.mjs';
 
 const legacyValid=vm.runInNewContext(readFileSync(new URL('./fixtures/magi-versions-apk59.js',import.meta.url),'utf8')+'\nvalidAgentVersions;');
 const origin='https://tk.st',api='https://workers.tk.st';
@@ -24,18 +25,6 @@ export function publicationRequests() {
   ];
 }
 
-async function limitedJSON(response) {
-  const reader=response.body.getReader();let text='',bytes=0;const decoder=new TextDecoder('utf-8',{fatal:true});
-  try {
-    while(true) {
-      const {done,value}=await reader.read();if(done)break;
-      bytes+=value.byteLength;if(bytes>VERSION_HISTORY_LIMITS.max_bytes)throw new Error('response_too_large');
-      text+=decoder.decode(value,{stream:true});
-    }
-    return JSON.parse(text+decoder.decode());
-  } finally {await reader.cancel().catch(()=>{});reader.releaseLock();}
-}
-
 export async function verifyDailyPublication({fetcher,readDeployment,expected}={}) {
   if(typeof fetcher!=='function'||typeof readDeployment!=='function'||!expected||typeof expected.id!=='string'||!expected.id
     ||!/^[a-f0-9]{40}$/.test(expected.sha||'')||versionOrder(expected.version)===null)throw new Error('publication_inputs');
@@ -52,7 +41,7 @@ export async function verifyDailyPublication({fetcher,readDeployment,expected}={
   for(const probe of publicationRequests()) {
     try {
       const response=await fetcher(probe.url,{...probe.options,redirect:'error',signal:AbortSignal.timeout(10000)});
-      const data=await limitedJSON(response);let ok=response.status===probe.status;
+      const data=await limitedJSON(response,VERSION_HISTORY_LIMITS.max_bytes);let ok=response.status===probe.status;
       if(probe.name==='versions')ok=ok&&!!cleanVersionHistory(data)&&data.versions.some(row=>row.version===expected.version);
       else if(probe.name==='legacy_versions')ok=ok&&!!legacyValid(data)&&data.versions.every(row=>row.version==='earlier'||/^\d{1,2}\.\d$/.test(row.version));
       else if(probe.name==='old_generation_rejected')ok=ok&&data.status==='failed'&&data.complete===false

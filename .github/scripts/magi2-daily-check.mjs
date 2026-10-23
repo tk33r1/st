@@ -213,17 +213,9 @@ export function checkPlan(mode,paths=[]) {
   const node=process.execPath,python=process.env.PYTHON||'python',commands=[
     [node,'--test','--test-force-exit','.github/scripts/test-magi2.mjs'],
     [python,'-B','.github/scripts/test-magi-smoke.py'],
-    [node,'--test','.github/scripts/test-magi-qa-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi-eval-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-check.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-review.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-control.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-stage1.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-deploy.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-publication.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-cloudflare.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-publication-run.mjs'],
+    ...['qa-budget','eval-budget'].map(name=>[node,'--test','.github/scripts/test-magi-'+name+'.mjs']),
+    ...['check','review','budget','control','stage1','deploy','publication','cloudflare','publication-run']
+      .map(name=>[node,'--test','.github/scripts/test-magi2-daily-'+name+'.mjs']),
     [python,'-B','.github/scripts/ai_models.py','check'],
   ];
   if(mode==='full'&&(paths.some(isScreen)||paths.some(p=>p.startsWith('data/'))))commands.push(['bash','build.sh']);

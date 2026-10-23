@@ -2,23 +2,13 @@
 import {readFileSync,writeFileSync,appendFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {limitedJSON} from './magi2-daily-http.mjs';
 
 const uuid=value=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 export function magiWorkerName() {
   const name=readFileSync(new URL('../../workers/magi2/wrangler.toml',import.meta.url),'utf8').match(/^name\s*=\s*"([a-z][a-z0-9-]*)"/m)?.[1];
   if(!name)throw new Error('cloudflare_worker_configuration');return name;
-}
-async function limitedJSON(response) {
-  if(!response.body)throw new Error('cloudflare_response_missing');
-  const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});let text='',bytes=0;
-  try {
-    while(true) {
-      const {done,value}=await reader.read();if(done)break;bytes+=value.byteLength;
-      if(bytes>1048576)throw new Error('cloudflare_response_too_large');text+=decoder.decode(value,{stream:true});
-    }
-    return JSON.parse(text+decoder.decode());
-  } finally {await reader.cancel().catch(()=>{});reader.releaseLock();}
 }
 function activeVersion(result) {
   const row=result?.deployments?.[0];
@@ -36,7 +26,7 @@ export function cloudflareVersionReader({accountId,token,fetcher,workerName=magi
     try{response=await fetcher(base+path,{method:'GET',headers:{Authorization:'Bearer '+token},redirect:'error',signal:AbortSignal.timeout(10000)});}
     catch{throw new Error('cloudflare_transport_failed');}
     if(!response.ok){await response.body?.cancel().catch(()=>{});throw new Error('cloudflare_http_'+response.status);}
-    let data;try{data=await limitedJSON(response);}catch{throw new Error('cloudflare_response_invalid');}
+    let data;try{data=await limitedJSON(response,1048576);}catch{throw new Error('cloudflare_response_invalid');}
     if(data?.success!==true||!data.result)throw new Error('cloudflare_api_failed');return data.result;
   };
   return async()=>{
