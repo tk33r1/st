@@ -1,5 +1,209 @@
 [
   {
+    "date": "20261024",
+    "title": "2026年10月24日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "無人食堂や給油所を活用した無人店舗など、無人化・省人化の取り組みが業態を越えて広がっている AIが買い物の起点になりつつあるなか、リテールメディアは購買データとAIとの接点をどう設計するかが問われ始めた",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "無人食堂や給油所を活用した無人店舗など、無人化・省人化の取り組みが業態を越えて広がっている",
+      "AIが買い物の起点になりつつあるなか、リテールメディアは購買データとAIとの接点をどう設計するかが問われ始めた",
+      "需要予測AIの導入や価格変動の運用は、在庫最適化と生活者の信頼をどう両立させるかが重要な論点になっている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "韓国で無人食堂が拡大、客が自ら調理するスタイルも登場",
+        "original_title": "",
+        "source": "조선일보",
+        "source_id": "JP-01",
+        "summary": "韓国で無人食堂の店舗が広がっていることが報じられた。記事の見出しによれば、料理を客自身が調理する形態も登場しており、人手を抑えながら食事を提供する新しい外食のかたちが注目されている。無人化は省人化と営業効率の向上につながる一方、調理の手間を顧客に委ねることで体験価値をどう設計するかが課題となる。",
+        "why_it_matters": "無人店舗の対象が決済や入店だけでなく、調理や提供の工程にまで広がりつつある点が示唆的だ。日本でも無人決済店舗やセルフ型の外食が増えるなか、省人化の効果と顧客満足のバランスをどう取るかが問われる。セルフ調理型は客単価や回転率にも影響し得るため、店舗運営の設計と合わせて検討する価値がある。",
+        "tags": [
+          "無人店舗",
+          "省人化",
+          "外食DX"
+        ],
+        "search_terms": [
+          "無人食堂 セルフ調理",
+          "unmanned restaurant Korea",
+          "self-service dining automation",
+          "省人化 外食 無人店舗"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPNFZKYWRHNUsweUpyejhWeUZYdGFtd0FLVU9ZcVRkMWpCRVZObnhscFItTmU1VDM5RUVuN3o1TkVxNlZzYzVJZnhsX1lLdVRRWk5DVFBad29pY0Q3TE82QWJ4WW1EV0ZscV96ZHFydE1TbERKS0lNMVBYSjNLU0VIbzJiVVpoT0hOczE1YVl3?oc=5",
+        "source_pub_ts": 1792769400
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "AIが買い物する時代、リテールメディアは次の段階へ進めるか",
+        "original_title": "",
+        "source": "Exchangewire Japan",
+        "source_id": "JP-02",
+        "summary": "ExchangeWire Japanが紹介するATS Tokyo 2026の注目セッションで、AIによる買い物代行が普及する中でリテールメディアがどう進化できるかが取り上げられた。生活者の購買判断をAIエージェントが担うようになると、広告の届け方や商品の選ばれ方も変わる可能性がある。リテールメディアが次のステージに進めるかが焦点となる。",
+        "why_it_matters": "AIが商品を選ぶ環境では、従来の検索連動型広告や陳列型の露出だけでは影響力を保ちにくくなる。小売企業が保有する購買データと広告の接点をどうAIに届けるかが競争軸になる。自社メディアを持つ小売業者にとっては、AIエージェントに正しく商品情報を伝えるための情報整備も新たな課題となる。",
+        "tags": [
+          "リテールメディア",
+          "AIエージェント",
+          "広告"
+        ],
+        "search_terms": [
+          "リテールメディア AI購買",
+          "retail media AI agent",
+          "AI shopping advertising",
+          "ATS Tokyo 2026"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBZZkpBSlFVeGhqazhiZ29qYVFtR28xcDU4NW5zZlhQWUw1cmpULVJTZlRfdi15dmRZb2xMZnVCY2tJOFp0bndiS1o0b0hiMndqTzcteF8wdElrTVF4aEQ2d3dmZWEzZjhtQjNiWDN0Y3I?oc=5",
+        "source_pub_ts": 1792739411
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "AI需要予測「Deep Predictor」、販促品通販アルファに提供開始",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-04",
+        "summary": "販促品の企画・通販を手がけるアルファが、AI需要予測サービス「Deep Predictor」の提供を開始したことを発表した。販促品は在庫の過不足が起きやすいため、需要を予測して発注や在庫を最適化する仕組みの導入が進むとみられる。AIによる予測を業務に組み込む動きが、専門性の高い販促品の領域にも広がっていることを示す。",
+        "why_it_matters": "需要予測AIは食品や日用品だけでなく、季節性や案件単位の変動が大きい販促品の分野でも活用が広がりつつある。BtoB通販では在庫リスクを抑えつつ欠品を防ぐことが収益に直結する。流通事業者は、自社の品目特性に合った予測精度と、現場の発注業務への組み込み方を見極めることが重要だ。",
+        "tags": [
+          "AI需要予測",
+          "在庫最適化",
+          "BtoB通販"
+        ],
+        "search_terms": [
+          "AI需要予測 在庫最適化",
+          "demand forecasting AI",
+          "Deep Predictor 販促品",
+          "promotional products inventory AI"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5mZHU5WVpmTmZkNGVmS1lOdkFhamxfMmFrT2VzSXJiWmRyekExRHB4MTFXTDBjR3VUMHNnUmFxU29ldUhmRWhJeGhWX1JIbU1oSHRwaFVFMTJWN3Y0N3hBSmozSVJkalF4d0E?oc=5",
+        "source_pub_ts": 1792737001
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "給油所の一角に室内ゴルフ、土浦に無人店舗が開業",
+        "original_title": "",
+        "source": "茨城新聞クロスアイ",
+        "source_id": "JP-06",
+        "summary": "茨城県土浦市で、給油所を活用した室内ゴルフの無人店舗が開業したことが報じられた。既存の給油所の敷地や空間を生かし、スタッフを常駐させない形で利用者が施設を使える仕組みとなっている。遊休化しやすいスペースを無人店舗として再活用する事例であり、地域の空間をサービス業に転換する動きとして注目される。",
+        "why_it_matters": "給油需要の減少が続くなか、ガソリンスタンドの土地や店舗を非給油サービスに転換する動きは今後も広がる可能性がある。無人運営はオペレーションコストを抑えられるが、予約、決済、入退場管理などのシステム基盤が事業の成否を左右する。小売・サービス業の遊休資産活用を考える際の参考になる。",
+        "tags": [
+          "無人店舗",
+          "遊休資産活用",
+          "予約・決済"
+        ],
+        "search_terms": [
+          "無人店舗 給油所 活用",
+          "unmanned store gas station",
+          "遊休スペース 再活用 無人",
+          "unattended retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1YbFRXc1dxdHduMkMyZWFLb0tqM2tKUkRmd203Y1JvOTRRRnBEem9pTkNFSTZ6RjRadkFTUk5SaG1raEM5THV3bEdHMGVBR0o5bFpKUWNRempPYU1SM0ZxR0RDaU5UdlRoTXQzNW5hZ2xiSW8?oc=5",
+        "source_pub_ts": 1792713874
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "米国で広がるダイナミックプライシング、一部消費者は反発",
+        "original_title": "",
+        "source": "週刊エコノミスト Online",
+        "source_id": "JP-07",
+        "summary": "週刊エコノミストの連載「ワールドウオッチ」が、アメリカで一部の消費者が嫌悪感を示すダイナミックプライシングを取り上げた。需要や時間帯に応じて価格を変動させる仕組みは収益最適化の手段として広がる一方、同じ商品が状況により異なる価格で提示されることへの不信感を招きやすい。価格の公平性をどう説明するかが課題として浮かび上がっている。",
+        "why_it_matters": "電子棚札などのデジタル価格表示により、日本でも価格を機動的に変える環境が整いつつある。しかし値付けの透明性が損なわれると、顧客の信頼やブランド評価を下げるリスクがある。価格変動の理由の説明や対象商品の設計など、生活者の受け止めを踏まえた運用ルールが求められる。",
+        "tags": [
+          "ダイナミックプライシング",
+          "電子棚札",
+          "価格への反応"
+        ],
+        "search_terms": [
+          "ダイナミックプライシング 反発",
+          "dynamic pricing consumer backlash",
+          "電子棚札 価格変動",
+          "price transparency retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9MVEM0eFVueGNtaERaRkxCOExqbkJGbjhEWXhjS0hCS092ZDVvamRwMUdkSDNwZXlha0FVOE5sTlZPMGVLLUtnTFNVSXM3Z1hNQ0wzQ2RqSmtPa1pfaUNqbElkOUdBUlppQjVMTDFwNGE1aHFINkM2RHZ0aXRRX0k?oc=5",
+        "source_pub_ts": 1792709612
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Big Y、オムニチャネルの外食向け注文機能を追加",
+        "original_title": "Big Y adds omnichannel foodservice ordering",
+        "source": "Grocery Dive",
+        "source_id": "GL-03",
+        "summary": "米国の食品スーパーBig Yが、外食（フードサービス）向けの注文機能を拡充したと報じられた。見出しからは、複数の販路をまたいで注文を受け付ける仕組みを強化したことがうかがえる。業務用の顧客にとっても、注文や購買の経路を選べる環境が広がる取り組みといえる。",
+        "why_it_matters": "業務用顧客と一般顧客の注文チャネルを統合すると、需要データの一元化や在庫配分の最適化につながる。日本のスーパーでも中食や法人向け販売は増えており、オムニチャネル化の設計は参考になる。注文履歴を活かした提案の精度向上も期待できる。",
+        "tags": [
+          "オムニチャネル",
+          "フードサービス",
+          "注文システム"
+        ],
+        "search_terms": [
+          "オムニチャネル 外食 注文",
+          "omnichannel foodservice ordering",
+          "Big Y supermarket",
+          "業務用 注文 スーパー"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPZ1pCUUJYdlFXbFlkWVYxM1dFUGV1YUswYTZHem5RUVlsanEwaUJ6a1ctQ1lhd25Sd2Q3Ylg1bFRVdlpBN2FscFZJZ3k0SUVhQlowcTZYMTYxdExyenVfcmdzZElDTHVMOXVHd2tVTXUtR2xOS0h3Nm9TZEltVUJnSWlmVEE1Z1VPc1A2bDRhT3dXVXgtQ3VDWmV2TlUwZzFyWlE?oc=5",
+        "source_pub_ts": 1792766537
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "AIは感謝祭の献立を立案できるか",
+        "original_title": "More than a Store: Can AI plan my Thanksgiving meal?",
+        "source": "Grocery Dive",
+        "source_id": "GL-04",
+        "summary": "Grocery Diveの連載「More than a Store」は、AIが感謝祭（サンクスギビング）の献立を立案できるかを取り上げている。食材の選定から買い物リストの作成まで、AIとの対話で購買を完結させる体験が小売の新たな接点になり得ることを示す。ただし実際の使い勝手や提案の質はまだ検証途上にある。",
+        "why_it_matters": "AIが献立提案から買い物リスト作成までを担えば、顧客は商品探索ではなく課題解決を起点に買い物をするようになる。小売業者にとっては、レシピや季節需要と商品データを連携させることが重要になる。提案精度と在庫の連動が伴わなければ、体験は離脱の原因にもなり得る。",
+        "tags": [
+          "AIアシスタント",
+          "買い物体験",
+          "季節需要"
+        ],
+        "search_terms": [
+          "AI 献立提案 買い物",
+          "AI meal planning grocery",
+          "conversational commerce AI",
+          "AIアシスタント 食品小売"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOcHozalNyeFU2TWdWLXFrN0N5SGJQeXRPVnBYN1FKRXVtYnJWejdkLXhwZ1BGWTNxeWtselpJVDFIMVhEbUI4Vi1sOFlMbzMtRTRxdTM3UDlQczg3encxZzAyQVpLR012alAtRUdmSUVwVHJDUFlYdjZjWjViUk5PSEpqZWxoMXFoclU0Y2NseGVmNU5NTFBNbGo5S0xQMDlPYkxyRXRzMTJ0dw?oc=5",
+        "source_pub_ts": 1792686368
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Bath & Body Works、新たな店舗コンセプトを発表",
+        "original_title": "Bath & Body Works introduces new store concept",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "米国のボディケア・フレグランス専門店Bath & Body Worksが、新しい店舗コンセプトを導入したと報じられた。店舗体験の再設計を通じて、来店客の回遊や商品理解を高める狙いがあるとみられる。実店舗の役割を見直す動きとして、専門小売の店舗戦略の方向性を示す事例となる。",
+        "why_it_matters": "実店舗の価値を販売の場から体験や来店動機の創出へ移す流れは、リテールテックの活用領域とも重なる。デジタルサイネージやセルフ決済、データ連携を店内体験に組み込めば、店舗の役割はさらに広がる。新コンセプトの成果指標を明確にすることが、他社にとっての参考になる。",
+        "tags": [
+          "店舗コンセプト",
+          "店内体験",
+          "専門小売"
+        ],
+        "search_terms": [
+          "新店舗コンセプト 専門小売",
+          "new store concept retail",
+          "Bath & Body Works store",
+          "店内体験 リニューアル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQYW9SNS1ZblF4WFNwZnIwMUJ1dHBPY3plTENkcFJyT1NKM0hqbTRGcm1iNEhYSi1HcmRwc0VsMUlXSlB0aVFoeTh6MHhIUzBtVHlqUFBHRDk3R1NHckp3ZmRuZlZ5QURTYUsxc3JuY1JjQU1ITkRDSzRlRUJrUERVbm9uN0xfNnlsempv?oc=5",
+        "source_pub_ts": 1792771566
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": "",
+    "x_post_id": "2113725333107007704",
+    "x_posted_at": "2026-10-24T05:12:45+09:00"
+  },
+  {
     "date": "20261023",
     "title": "2026年10月23日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "食品売り場でも有人レジを廃止する動きが出ており、セルフレジの省人化が店舗運営の中心へ移りつつある一方、混雑や不公平感など生活者の反発も表面化している イオンがネットスーパー専用の物流施設を開設し、リテールメディアでも独自完結型とネットワーク型の両面戦略を進めるなど、小売各社の物流・広告投資が加速している",

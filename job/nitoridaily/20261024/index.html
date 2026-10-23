@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily | tk.st</title>
+  <meta name="description" content="10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#009e96">
+
+  <link rel="canonical" href="https://tk.st/job/nitoridaily/20261024/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily">
+  <meta property="og:description" content="10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/nitoridaily/20261024/">
+  <meta property="og:site_name" content="Nitori Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/nitoridaily/20261024.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@dailynitori">
+  <meta name="twitter:title" content="2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily">
+  <meta name="twitter:description" content="10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/nitoridaily/20261024.webp">
+
+  <link rel="icon" href="../../../images/favicons/nitori-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/nitori-favicon.svg">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/nitoridaily/20261024/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Nitori Daily",
+        "url": "https://tk.st/job/nitoridaily/"
+      },
+      "headline": "2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ",
+      "description": "10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。",
+      "url": "https://tk.st/job/nitoridaily/20261024/",
+      "image": "https://tk.st/images/ogp/nitoridaily/20261024.webp",
+      "datePublished": "2026-10-24T08:00:00+09:00",
+      "dateModified": "2026-10-24T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "店舗展開・海外戦略",
+        "商品開発・ヒット商品",
+        "経営・価格戦略・PB",
+        "SNS話題・リアル反響"
+      ],
+      "keywords": [
+        "SNS",
+        "SNS話題・リアル反響",
+        "TikTok",
+        "グループ",
+        "ドアミラー",
+        "ニトリ",
+        "ヒット商品",
+        "リスク管理",
+        "リビング",
+        "価格戦略",
+        "冬限定",
+        "品質",
+        "商品開発",
+        "商品開発・ヒット商品",
+        "家電",
+        "店舗展開",
+        "店舗展開・海外戦略",
+        "座椅子",
+        "旗艦店",
+        "梅田",
+        "秋冬新商品",
+        "経営・価格戦略・PB",
+        "販売員",
+        "購入品"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-6"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-7"
+        },
+        {
+          "@id": "https://tk.st/job/nitoridaily/20261024/#art-8"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/nitoridaily/20261024/#newslist",
+      "name": "2026年10月24日号 掲載ニュース一覧",
+      "numberOfItems": 8,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-1",
+            "position": 1,
+            "headline": "世界最大の旗艦店「ニトリ 梅田茶屋町店」10月30日オープン、約2,700坪の8フロア構成",
+            "description": "大阪・梅田の梅田ロフト跡地に、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンします。家具・インテリアからアパレル、ガジェットまで全8フロアで構成され、世界最大の旗艦店と位置づけられています。オープンを記念し、全国166店舗で記念セールも開催される予定です。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-1",
+            "articleSection": "店舗展開・海外戦略",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5HRndFQk1nbVFYb3ZtbEpQWmRtTHU2cmlNVTRDQ2hUdXlGZElVdWZOMUNhSXU5WHlGOTgwMEFfZFFTMkFCQm43MUR4UlpLeTNQbUxQbGRn?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "AMP[アンプ]"
+              },
+              "datePublished": "2026-10-23T16:01:16+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "旗艦店",
+              "店舗展開",
+              "梅田"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-2",
+            "position": 2,
+            "headline": "ハンガーにかけたまま乾かせる、コンパクトになる衣類乾燥機が新発売",
+            "description": "ニトリの新商品として、ハンガーラックにかけたまま衣類を乾かせる衣類乾燥機が発売されました。使わない時はコンパクトになる点が特徴として紹介されています。梅雨や冬季に部屋干しが増える時季に、限られた住空間でも使える家電として生活者の関心を集めそうです。洗濯物をそのまま乾燥に移せる手軽さが、暮らしの動線をどう変えるかが注目点です。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-2",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1IUnFDcXRUUF9Ed0dvZFhlWklkSDYyLV9HSzdSZzVpRW9TLW0tbEtsQkdCQ0QzeHUzeHdWeGpqWGdUQnY5eHk1SHJBRHRjOEc1UWc?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ウレぴあ総研"
+              },
+              "datePublished": "2026-10-23T21:00:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "家電",
+              "商品開発"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-3",
+            "position": 3,
+            "headline": "ニトリグループ、秋冬新商品約420アイテムを披露 コーディネートから美容・オーディオまで",
+            "description": "ニトリグループが秋冬の新商品約420アイテムを披露した開催レポートが公開されました。トータルコーディネートをはじめ、美容やオーディオまで幅広いカテゴリーを扱い、新たな暮らしを提案する内容です。家具やインテリアにとどまらず、生活全般を提案するグループの商品展開が示されています。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-3",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE40M1JuaU1oODJsdVVHUC12elNkRU1zalp1Mm5tTGlRbHNXMmFoZzNfcmRsYXJ3LWg1eU43RnB3bFpYM2hlWHAzN0RVNjlrWmk4SVU1NU1MYlMtUFFhcWlPVzFtRk1mb1lPenc?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "PR TIMES"
+              },
+              "datePublished": "2026-10-23T10:00:02+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "秋冬新商品",
+              "商品開発",
+              "グループ"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-4",
+            "position": 4,
+            "headline": "ニトリ、冬限定「2026 WINTER COLLECTION」97アイテムを発売",
+            "description": "ニトリから冬限定の「2026 WINTER COLLECTION」が発売され、97アイテムがラインアップされました。季節限定の商品群を一括で打ち出すことで、冬の買い替え需要や季節の模様替えの動きを取り込む狙いがうかがえます。限定感を生かした訴求が来店動機の創出につながるかが注目されます。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-4",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1qMFhDZ3JqMjFER0YzdUs5WTduRFRwOWZ2UzF5Q3V1SlFKNEVsMkhSMWFRSFU0eG5YWG44TDNTSC1KZzdvUGRFdEZnYlJtMnUtUjRSZWZnQUhoSld1cVE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "流通スーパーニュース"
+              },
+              "datePublished": "2026-10-23T11:02:36+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "冬限定",
+              "商品開発"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-5",
+            "position": 5,
+            "headline": "レバー座椅子がクッション厚とくつろぎ心地で好評、「座ると動きたくなくなる」の声",
+            "description": "ニトリの「くつろげるレバー座椅子」が、ねとらぼリサーチの記事で好評を集めています。クッションの厚みがソファ並みである点や、座り心地の良さを評価する声が紹介されています。「座りながら寝られるレベル」といったユーザーの反応から、座椅子の快適性が支持されていることがうかがえます。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-5",
+            "articleSection": "商品開発・ヒット商品",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE0ydVBlaW5xMDMzSVZtSWpVSktvclZ0QWFiUDF1aHJWbHRLYVRBa1RnVF9XdGI1X1c5U29ubFdCLWE4WWxZXzBrNFpERTd1SUw3dkgtV1U2VExDWktvRU85alB1eS0yUGR10gFoQVVfeXFMTTJ1UGVpbnEwMzNJVm1JalVKS29yVnRBYWJQMXVoclZsdEthVEFrVGdUX1d0YjVfVzlTb25sV0ItYThZbFlfMGs0WkRFN3VJTDd2SC1XVTZUTENaS29FTzlqUHV5LTJQZHU?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ねとらぼ"
+              },
+              "datePublished": "2026-10-23T21:50:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "座椅子",
+              "ヒット商品",
+              "リビング"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-6",
+            "position": 6,
+            "headline": "1,990円のドア掛けミラーが「場所を取らない」と人気",
+            "description": "ニトリで販売されている1,990円のドア掛けミラーが、ねとらぼリサーチの記事で人気を集めています。「場所を取らないのが何よりも素敵」「お値段もとてもリーズナブル」といった声が紹介され、手頃な価格と省スペース性が評価されています。ドアに掛けるだけで使える手軽さが、購入者の満足度につながっているようです。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-6",
+            "articleSection": "経営・価格戦略・PB",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5NbGd4b3pGSWFSUXMtQjFsdV9oUE9xak1yY1B4T0lvV1N6LUtMMDNqR3cxV1JsTzYwd25GdzlMQXJOSURlQ0FGak96cTNwZi1JTC0yNlctZ01DdHdVYkxpN2FwWdIBaEFVX3lxTE9SNVVRZ1NlQTZDN3F4RXBXZjlaNklRdGFqaFhtS19WODd0a1hrUlc1M2hqNFgxVkU5b0cwXzVfRGdUd25UWEhRc1V5WHVhdHVOY3RtYXA2aFhpOXB1SERwaTItdGpfQnAt?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ねとらぼ"
+              },
+              "datePublished": "2026-10-23T13:30:00+09:00"
+            },
+            "keywords": [
+              "ニトリ",
+              "ドアミラー",
+              "価格戦略",
+              "ヒット商品"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-7",
+            "position": 7,
+            "headline": "「ニトリ販売員が教える爆売れ商品」動画が1.3万回再生、現場目線の推薦が共感を集める",
+            "description": "TikTokで「ニトリ販売員が教える爆売れの神商品10選」と題した投稿が、1.3万回以上再生されています。販売員という現場の目線から売れ筋商品を紹介する形式で、前半の1位から5位までが公開されています。ハッシュタグには「おすすめ」「購入品」が付けられており、実際の購入体験への関心の高さがうかがえます。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-7",
+            "articleSection": "SNS話題・リアル反響",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://www.tiktok.com/@kknavi9977/video/7699424551842614549",
+              "publisher": {
+                "@type": "Organization",
+                "name": "TikTok"
+              },
+              "datePublished": "2026-10-22T18:39:39+09:00"
+            },
+            "keywords": [
+              "SNS",
+              "TikTok",
+              "販売員",
+              "購入品"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/nitoridaily/20261024/#art-8",
+            "position": 8,
+            "headline": "油圧式昇降テーブルの油漏れ投稿が2,197いいね、製品品質への不安が拡散",
+            "description": "Xで、ニトリで購入した油圧式昇降テーブルから油が噴出したという投稿が2,197いいねを集めています。使用年数の経過による故障である点は示されつつも、周囲の家具が被害を受けたことや、臭い・汚れ、粗大ごみ回収までの待ち時間への不満が綴られています。同様の被害を経験したという反応も続き、注意喚起として広がっています。",
+            "url": "https://tk.st/job/nitoridaily/20261024/#art-8",
+            "articleSection": "SNS話題・リアル反響",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-24T08:00:00+09:00",
+            "dateModified": "2026-10-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/nitoridaily/20261024/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://x.com/ikz28/status/2113372309826474453",
+              "publisher": {
+                "@type": "Organization",
+                "name": "X"
+              },
+              "datePublished": "2026-10-23T20:00:00+09:00"
+            },
+            "keywords": [
+              "SNS",
+              "品質",
+              "リスク管理"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/nitoridaily/20261024/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Nitori Daily",
+          "item": "https://tk.st/job/nitoridaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月24日号",
+          "item": "https://tk.st/job/nitoridaily/20261024/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+</head>
+<body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerNitoriBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#006b66" />
+      <stop offset="55%" stop-color="#009e96" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerNitoriBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.2" />
+  <path d="M13 26 L32 13 L51 26" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M21 48 V27 L43 48 V27" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Nitori Daily</span>
+          <span class="brand-tag">毎朝8時のニトリ速報＆SNS話題</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/dailynitori" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../retailtechdaily/" class="header-menu-media-link">Retail Tech Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Nitori Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月24日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月24日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ</h1>
+        <p class="issue-lede">ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約5分 / 2,814字
+          </span>
+          <span class="stat">全 8 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。</li><li>秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。</li><li>SNSでは座椅子やドア掛けミラーが価格と省スペース性で支持を集める一方、油圧式昇降テーブルの油漏れ投稿が拡散した。ポジティブな評価を伸ばしつつ、品質情報の発信と迅速な対応が課題となる。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><a href="#snsBuzzSection" class="qi-sns-link"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg> <span>SNSリアル反響 (5件) ↓</span></a><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗展開・海外戦略</span></span>
+              <span class="qi-title">世界最大の旗艦店「ニトリ 梅田茶屋町店」10月30日オープン、約2,700坪の8フロア構成</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">ハンガーにかけたまま乾かせる、コンパクトになる衣類乾燥機が新発売</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">ニトリグループ、秋冬新商品約420アイテムを披露 コーディネートから美容・オーディオまで</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">ニトリ、冬限定「2026 WINTER COLLECTION」97アイテムを発売</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">商品開発・ヒット商品</span></span>
+              <span class="qi-title">レバー座椅子がクッション厚とくつろぎ心地で好評、「座ると動きたくなくなる」の声</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">経営・価格戦略・PB</span></span>
+              <span class="qi-title">1,990円のドア掛けミラーが「場所を取らない」と人気</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-7" class="qi-link">
+            <span class="qi-num">07</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・リアル反響</span></span>
+              <span class="qi-title">「ニトリ販売員が教える爆売れ商品」動画が1.3万回再生、現場目線の推薦が共感を集める</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-8" class="qi-link">
+            <span class="qi-num">08</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・リアル反響</span></span>
+              <span class="qi-title">油圧式昇降テーブルの油漏れ投稿が2,197いいね、製品品質への不安が拡散</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">8 stories</span>
+        </div>
+
+        <nav class="content-lane-nav" aria-label="情報種別"><a href="#lane-corporate"><span>企業・経営</span><strong>1</strong></a><a href="#lane-product"><span>商品・店舗</span><strong>5</strong></a><a href="#lane-consumer"><span>生活者SNS</span><strong>2</strong></a></nav>
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">8</strong> / 8</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">8</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">8</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗展開・海外戦略" aria-pressed="false">店舗展開・海外戦略 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="商品開発・ヒット商品" aria-pressed="false">商品開発・ヒット商品 <span class="chip-count">4</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="経営・価格戦略・PB" aria-pressed="false">経営・価格戦略・PB <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・リアル反響" aria-pressed="false">SNS話題・リアル反響 <span class="chip-count">2</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+<section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
+        <article class="news-card" id="art-6" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="1,990円のドア掛けミラーが「場所を取らない」と人気" data-share-takeaway="1,990円という価格帯と置かずに掛けるという省スペース設計の組み合わせは、賃貸や狭小空間の悩みに直接応える価値です。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-6">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="経営・価格戦略・PB" title="このカテゴリで絞り込み">経営・価格戦略・PB</button>
+              <span class="source-tag">ねとらぼ</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T13:30:00+09:00" title="出典の公開日時">公開 2026.10.23 13:30 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE5NbGd4b3pGSWFSUXMtQjFsdV9oUE9xak1yY1B4T0lvV1N6LUtMMDNqR3cxV1JsTzYwd25GdzlMQXJOSURlQ0FGak96cTNwZi1JTC0yNlctZ01DdHdVYkxpN2FwWdIBaEFVX3lxTE9SNVVRZ1NlQTZDN3F4RXBXZjlaNklRdGFqaFhtS19WODd0a1hrUlc1M2hqNFgxVkU5b0cwXzVfRGdUd25UWEhRc1V5WHVhdHVOY3RtYXA2aFhpOXB1SERwaTItdGpfQnAt?oc=5" target="_blank" rel="noopener noreferrer">1,990円のドア掛けミラーが「場所を取らない」と人気<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>で販売されている1,990円のドア掛けミラーが、ねとらぼリサーチの記事で人気を集めています。「場所を取らないのが何よりも素敵」「お値段もとてもリーズナブル」といった声が紹介され、手頃な価格と省スペース性が評価されています。ドアに掛けるだけで使える手軽さが、購入者の満足度につながっているようです。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">1,990円という価格帯と置かずに掛けるという省スペース設計の組み合わせは、賃貸や狭小空間の悩みに直接応える価値です。</p>
+              </div>
+              <p class="wim-detail">ドアという既存の空間を活用する発想は、住まいの課題を小さな商品で解決する提案型PBの典型です。価格訴求と機能性を両立させる商品開発の参考になります。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%89%E3%82%A2%E3%83%9F%E3%83%A9%E3%83%BC">#ドアミラー</a><button type="button" class="topic-watch-btn" data-watch-topic="ドアミラー" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%BE%A1%E6%A0%BC%E6%88%A6%E7%95%A5">#価格戦略</a><button type="button" class="topic-watch-btn" data-watch-topic="価格戦略" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%92%E3%83%83%E3%83%88%E5%95%86%E5%93%81">#ヒット商品</a><button type="button" class="topic-watch-btn" data-watch-topic="ヒット商品" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE5NbGd4b3pGSWFSUXMtQjFsdV9oUE9xak1yY1B4T0lvV1N6LUtMMDNqR3cxV1JsTzYwd25GdzlMQXJOSURlQ0FGak96cTNwZi1JTC0yNlctZ01DdHdVYkxpN2FwWdIBaEFVX3lxTE9SNVVRZ1NlQTZDN3F4RXBXZjlaNklRdGFqaFhtS19WODd0a1hrUlc1M2hqNFgxVkU5b0cwXzVfRGdUd25UWEhRc1V5WHVhdHVOY3RtYXA2aFhpOXB1SERwaTItdGpfQnAt?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="世界最大の旗艦店「ニトリ 梅田茶屋町店」10月30日オープン、約2,700坪の8フロア構成" data-share-takeaway="旗艦店は売場の拡大だけでなく、ニトリの商品ラインアップ全体を体験させるショーケースの役割を担います。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-1">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗展開・海外戦略" title="このカテゴリで絞り込み">店舗展開・海外戦略</button>
+              <span class="source-tag">AMP[アンプ]</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T16:01:16+09:00" title="出典の公開日時">公開 2026.10.23 16:01 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5HRndFQk1nbVFYb3ZtbEpQWmRtTHU2cmlNVTRDQ2hUdXlGZElVdWZOMUNhSXU5WHlGOTgwMEFfZFFTMkFCQm43MUR4UlpLeTNQbUxQbGRn?oc=5" target="_blank" rel="noopener noreferrer">世界最大の旗艦店「ニトリ 梅田茶屋町店」10月30日オープン、約2,700坪の8フロア構成<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>大阪・梅田の梅田ロフト跡地に、約2,700坪の旗艦店「<strong class="kw-scan">ニトリ</strong> 梅田茶屋町店」が10月30日にオープンします。家具・インテリアからアパレル、ガジェットまで全8フロアで構成され、世界最大の旗艦店と位置づけられています。オープンを記念し、全国166店舗で記念セールも開催される予定です。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">旗艦店は売場の拡大だけでなく、<strong class="kw-scan">ニトリ</strong>の商品ラインアップ全体を体験させるショーケースの役割を担います。</p>
+              </div>
+              <p class="wim-detail">SPAとして開発・調達した商品を一度に提案できる強みを、都市部の回遊型商業施設で訴求する狙いが読み取れます。大型店での体験価値が既存店や全国セールへの送客にどう波及するかが、今後の注目点です。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%97%97%E8%89%A6%E5%BA%97">#旗艦店</a><button type="button" class="topic-watch-btn" data-watch-topic="旗艦店" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B">#店舗展開</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗展開" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%A2%85%E7%94%B0">#梅田</a><button type="button" class="topic-watch-btn" data-watch-topic="梅田" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5HRndFQk1nbVFYb3ZtbEpQWmRtTHU2cmlNVTRDQ2hUdXlGZElVdWZOMUNhSXU5WHlGOTgwMEFfZFFTMkFCQm43MUR4UlpLeTNQbUxQbGRn?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ハンガーにかけたまま乾かせる、コンパクトになる衣類乾燥機が新発売" data-share-takeaway="家電カテゴリでは、住空間の制約に合わせた収納性と家事動線を一体で設計する提案が差別化の鍵になります。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-2">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">ウレぴあ総研</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T21:00:00+09:00" title="出典の公開日時">公開 2026.10.23 21:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE1IUnFDcXRUUF9Ed0dvZFhlWklkSDYyLV9HSzdSZzVpRW9TLW0tbEtsQkdCQ0QzeHUzeHdWeGpqWGdUQnY5eHk1SHJBRHRjOEc1UWc?oc=5" target="_blank" rel="noopener noreferrer">ハンガーにかけたまま乾かせる、コンパクトになる衣類乾燥機が新発売<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>の新商品として、ハンガーラックにかけたまま衣類を乾かせる衣類乾燥機が発売されました。使わない時はコンパクトになる点が特徴として紹介されています。梅雨や冬季に部屋干しが増える時季に、限られた住空間でも使える家電として生活者の関心を集めそうです。洗濯物をそのまま乾燥に移せる手軽さが、暮らしの動線をどう変えるかが注目点です。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">家電カテゴリでは、住空間の制約に合わせた収納性と家事動線を一体で設計する提案が差別化の鍵になります。</p>
+              </div>
+              <p class="wim-detail">ハンガーごと乾かせる仕様は、洗う・干す・しまうの工程を短縮する価値であり、<strong class="kw-scan">ニトリ</strong>の生活提案型の商品開発と親和性が高い領域です。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%AE%B6%E9%9B%BB">#家電</a><button type="button" class="topic-watch-btn" data-watch-topic="家電" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA">#商品開発</a><button type="button" class="topic-watch-btn" data-watch-topic="商品開発" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=%E5%AE%B6%E9%9B%BB" target="_blank" rel="noopener noreferrer">ニトリ公式で「家電」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE1IUnFDcXRUUF9Ed0dvZFhlWklkSDYyLV9HSzdSZzVpRW9TLW0tbEtsQkdCQ0QzeHUzeHdWeGpqWGdUQnY5eHk1SHJBRHRjOEc1UWc?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリグループ、秋冬新商品約420アイテムを披露 コーディネートから美容・オーディオまで" data-share-takeaway="420アイテムという規模は、各事業会社の商品開発を束ねて一度に提示できるSPAならではの総合力を示します。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-3">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">PR TIMES</span>
+            </div>
+            <div class="source-details"><span class="source-kind">プレスリリース</span><time datetime="2026-10-23T10:00:02+09:00" title="出典の公開日時">公開 2026.10.23 10:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE40M1JuaU1oODJsdVVHUC12elNkRU1zalp1Mm5tTGlRbHNXMmFoZzNfcmRsYXJ3LWg1eU43RnB3bFpYM2hlWHAzN0RVNjlrWmk4SVU1NU1MYlMtUFFhcWlPVzFtRk1mb1lPenc?oc=5" target="_blank" rel="noopener noreferrer">ニトリグループ、秋冬新商品約420アイテムを披露 コーディネートから美容・オーディオまで<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>グループが秋冬の新商品約420アイテムを披露した開催レポートが公開されました。トータルコーディネートをはじめ、美容やオーディオまで幅広いカテゴリーを扱い、新たな暮らしを提案する内容です。家具やインテリアにとどまらず、生活全般を提案するグループの商品展開が示されています。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">420アイテムという規模は、各事業会社の商品開発を束ねて一度に提示できるSPAならではの総合力を示します。</p>
+              </div>
+              <p class="wim-detail">美容・オーディオといった非家具領域への拡張は、客単価と来店頻度を高める施策として機能します。今後はカテゴリ横断の販売データを商品企画に還流させられるかが鍵となります。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%A7%8B%E5%86%AC%E6%96%B0%E5%95%86%E5%93%81">#秋冬新商品</a><button type="button" class="topic-watch-btn" data-watch-topic="秋冬新商品" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA">#商品開発</a><button type="button" class="topic-watch-btn" data-watch-topic="商品開発" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%97">#グループ</a><button type="button" class="topic-watch-btn" data-watch-topic="グループ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=%E7%A7%8B%E5%86%AC%E6%96%B0%E5%95%86%E5%93%81" target="_blank" rel="noopener noreferrer">ニトリ公式で「秋冬新商品」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiakFVX3lxTE40M1JuaU1oODJsdVVHUC12elNkRU1zalp1Mm5tTGlRbHNXMmFoZzNfcmRsYXJ3LWg1eU43RnB3bFpYM2hlWHAzN0RVNjlrWmk4SVU1NU1MYlMtUFFhcWlPVzFtRk1mb1lPenc?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ、冬限定「2026 WINTER COLLECTION」97アイテムを発売" data-share-takeaway="季節限定コレクションは、SPAの短サイクル企画力を実証する施策です。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-4">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">流通スーパーニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T11:02:36+09:00" title="出典の公開日時">公開 2026.10.23 11:02 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1qMFhDZ3JqMjFER0YzdUs5WTduRFRwOWZ2UzF5Q3V1SlFKNEVsMkhSMWFRSFU0eG5YWG44TDNTSC1KZzdvUGRFdEZnYlJtMnUtUjRSZWZnQUhoSld1cVE?oc=5" target="_blank" rel="noopener noreferrer">ニトリ、冬限定「2026 WINTER COLLECTION」97アイテムを発売<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>から冬限定の「2026 WINTER COLLECTION」が発売され、97アイテムがラインアップされました。季節限定の商品群を一括で打ち出すことで、冬の買い替え需要や季節の模様替えの動きを取り込む狙いがうかがえます。限定感を生かした訴求が来店動機の創出につながるかが注目されます。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">季節限定コレクションは、SPAの短サイクル企画力を実証する施策です。</p>
+              </div>
+              <p class="wim-detail">97アイテムを一括で発売することで、店頭の売場提案を季節ごとに切り替え、来店頻度を高める効果が期待できます。限定品は在庫計画と値下げ判断の精度が問われるため、需要予測と物流の連動が重要になります。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%86%AC%E9%99%90%E5%AE%9A">#冬限定</a><button type="button" class="topic-watch-btn" data-watch-topic="冬限定" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA">#商品開発</a><button type="button" class="topic-watch-btn" data-watch-topic="商品開発" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=%E5%86%AC%E9%99%90%E5%AE%9A" target="_blank" rel="noopener noreferrer">ニトリ公式で「冬限定」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE1qMFhDZ3JqMjFER0YzdUs5WTduRFRwOWZ2UzF5Q3V1SlFKNEVsMkhSMWFRSFU0eG5YWG44TDNTSC1KZzdvUGRFdEZnYlJtMnUtUjRSZWZnQUhoSld1cVE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="レバー座椅子がクッション厚とくつろぎ心地で好評、「座ると動きたくなくなる」の声" data-share-takeaway="座椅子はソファの代替として、狭小住宅や一人暮らしの居場所づくりを担う商品です。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-5">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="商品開発・ヒット商品" title="このカテゴリで絞り込み">商品開発・ヒット商品</button>
+              <span class="source-tag">ねとらぼ</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T21:50:00+09:00" title="出典の公開日時">公開 2026.10.23 21:50 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE0ydVBlaW5xMDMzSVZtSWpVSktvclZ0QWFiUDF1aHJWbHRLYVRBa1RnVF9XdGI1X1c5U29ubFdCLWE4WWxZXzBrNFpERTd1SUw3dkgtV1U2VExDWktvRU85alB1eS0yUGR10gFoQVVfeXFMTTJ1UGVpbnEwMzNJVm1JalVKS29yVnRBYWJQMXVoclZsdEthVEFrVGdUX1d0YjVfVzlTb25sV0ItYThZbFlfMGs0WkRFN3VJTDd2SC1XVTZUTENaS29FTzlqUHV5LTJQZHU?oc=5" target="_blank" rel="noopener noreferrer">レバー座椅子がクッション厚とくつろぎ心地で好評、「座ると動きたくなくなる」の声<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ニトリ</strong>の「くつろげるレバー座椅子」が、ねとらぼリサーチの記事で好評を集めています。クッションの厚みがソファ並みである点や、座り心地の良さを評価する声が紹介されています。「座りながら寝られるレベル」といったユーザーの反応から、座椅子の快適性が支持されていることがうかがえます。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">座椅子はソファの代替として、狭小住宅や一人暮らしの居場所づくりを担う商品です。</p>
+              </div>
+              <p class="wim-detail">クッション厚という構造的な仕様が体験者の評価に直結している点は、スペックを生活シーンの言葉に翻訳する商品訴求の好例です。レビューで語られた快適性を、商品説明やPOPに反映させる余地があります。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%8B%E3%83%88%E3%83%AA">#ニトリ</a><button type="button" class="topic-watch-btn" data-watch-topic="ニトリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%A7%E6%A4%85%E5%AD%90">#座椅子</a><button type="button" class="topic-watch-btn" data-watch-topic="座椅子" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%92%E3%83%83%E3%83%88%E5%95%86%E5%93%81">#ヒット商品</a><button type="button" class="topic-watch-btn" data-watch-topic="ヒット商品" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%93%E3%83%B3%E3%82%B0">#リビング</a><button type="button" class="topic-watch-btn" data-watch-topic="リビング" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+            <a class="product-search-link" href="https://www.nitori-net.jp/ec/search/?q=%E5%BA%A7%E6%A4%85%E5%AD%90" target="_blank" rel="noopener noreferrer">ニトリ公式で「座椅子」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE0ydVBlaW5xMDMzSVZtSWpVSktvclZ0QWFiUDF1aHJWbHRLYVRBa1RnVF9XdGI1X1c5U29ubFdCLWE4WWxZXzBrNFpERTd1SUw3dkgtV1U2VExDWktvRU85alB1eS0yUGR10gFoQVVfeXFMTTJ1UGVpbnEwMzNJVm1JalVKS29yVnRBYWJQMXVoclZsdEthVEFrVGdUX1d0YjVfVzlTb25sV0ItYThZbFlfMGs0WkRFN3VJTDd2SC1XVTZUTENaS29FTzlqUHV5LTJQZHU?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="「ニトリ販売員が教える爆売れ商品」動画が1.3万回再生、現場目線の推薦が共感を集める" data-share-takeaway="販売員が語る実際に売れている商品は、広告より信頼性の高い推薦情報として機能します。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-7">
+          <div class="card-index" aria-hidden="true">07</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・リアル反響" title="このカテゴリで絞り込み">SNS話題・リアル反響</button>
+              <span class="source-tag">TikTok</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-22T18:39:39+09:00" title="出典の公開日時">公開 2026.10.22 18:39 JST</time></div>
+            <h3 class="card-title"><a href="https://www.tiktok.com/@kknavi9977/video/7699424551842614549" target="_blank" rel="noopener noreferrer">「ニトリ販売員が教える爆売れ商品」動画が1.3万回再生、現場目線の推薦が共感を集める<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>TikTokで「<strong class="kw-scan">ニトリ</strong>販売員が教える爆売れの神商品10選」と題した投稿が、1.3万回以上再生されています。販売員という現場の目線から売れ筋商品を紹介する形式で、前半の1位から5位までが公開されています。ハッシュタグには「おすすめ」「購入品」が付けられており、実際の購入体験への関心の高さがうかがえます。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">販売員が語る実際に売れている商品は、広告より信頼性の高い推薦情報として機能します。</p>
+              </div>
+              <p class="wim-detail">短尺動画では、商品を手に取って比較する過程や使用シーンが伸びやすく、購入品紹介の文脈が購買の後押しになります。店頭スタッフの知見をコンテンツ化する取り組みは、公式発信との連携で効果を高められます。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS">#SNS</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=TikTok">#TikTok</a><button type="button" class="topic-watch-btn" data-watch-topic="TikTok" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B2%A9%E5%A3%B2%E5%93%A1">#販売員</a><button type="button" class="topic-watch-btn" data-watch-topic="販売員" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B3%BC%E5%85%A5%E5%93%81">#購入品</a><button type="button" class="topic-watch-btn" data-watch-topic="購入品" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://www.tiktok.com/@kknavi9977/video/7699424551842614549" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-8" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="油圧式昇降テーブルの油漏れ投稿が2,197いいね、製品品質への不安が拡散" data-share-takeaway="耐久性や経年劣化の情報は、購入前の不安を左右する重要な品質情報です。" data-share-url="https://tk.st/job/nitoridaily/20261024/#art-8">
+          <div class="card-index" aria-hidden="true">08</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・リアル反響" title="このカテゴリで絞り込み">SNS話題・リアル反響</button>
+              <span class="source-tag">X</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-23T20:00:00+09:00" title="出典の公開日時">公開 2026.10.23 20:00 JST</time></div>
+            <h3 class="card-title"><a href="https://x.com/ikz28/status/2113372309826474453" target="_blank" rel="noopener noreferrer">油圧式昇降テーブルの油漏れ投稿が2,197いいね、製品品質への不安が拡散<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>Xで、<strong class="kw-scan">ニトリ</strong>で購入した油圧式昇降テーブルから油が噴出したという投稿が2,197いいねを集めています。使用年数の経過による故障である点は示されつつも、周囲の家具が被害を受けたことや、臭い・汚れ、粗大ごみ回収までの待ち時間への不満が綴られています。同様の被害を経験したという反応も続き、注意喚起として広がっています。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">耐久性や経年劣化の情報は、購入前の不安を左右する重要な品質情報です。</p>
+              </div>
+              <p class="wim-detail">SNS上では故障事例が長く残り、ブランドへの信頼を揺るがしかねません。問い合わせ窓口の案内や保証・修理の情報を事前に分かりやすく示し、製品の安全性への説明責任を果たす姿勢が重要になります。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS">#SNS</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%93%81%E8%B3%AA">#品質</a><button type="button" class="topic-watch-btn" data-watch-topic="品質" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%82%B9%E3%82%AF%E7%AE%A1%E7%90%86">#リスク管理</a><button type="button" class="topic-watch-btn" data-watch-topic="リスク管理" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://x.com/ikz28/status/2113372309826474453" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B410%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B8%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article></section>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+      <section class="buzz-metrics" aria-labelledby="buzzMetricsTitle">
+      <div class="section-head"><h2 class="section-title" id="buzzMetricsTitle">SNSバズ推移</h2><span class="section-rule" aria-hidden="true"></span></div>
+      <div class="buzz-metrics-grid"><div class="buzz-metric">
+          <span class="buzz-metric-label">X・掲載 5件</span>
+          <strong>2,817</strong><span>いいね合計</span><span class="buzz-delta">前号掲載分比 +473%</span>
+        </div><div class="buzz-metric">
+          <span class="buzz-metric-label">TikTok・掲載 2件</span>
+          <strong>27,400</strong><span>再生合計</span>
+        </div></div><p class="buzz-captured">取得時点: 2026-10-23T18:44:39.929401+09:00</p>
+    </section>
+
+    <section class="sns-section" id="snsBuzzSection">
+      <div class="section-head">
+        <h2 class="section-title">その他のSNS生活者バズ（X / TikTok）</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+        <span class="section-count">5 posts</span>
+      </div>
+      <div class="sns-intro">
+        <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> X <span class="sns-badge-count">4</span></span><span class="sns-badge-tiktok"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg> TikTok <span class="sns-badge-count">1</span></span></div>
+        <p class="sns-sub">X は昨日の投稿、TikTok は直近1週間で再生数を伸ばした投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
+      </div>
+
+      <div class="sns-grid">
+
+        <article class="sns-card" id="sns-buzz-1" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/hana870224/status/2113582394372759563" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@hana870224</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="341 いいね">❤️ 341</span><span class="sns-stat-rt" title="49 リポスト">🔁 49</span></div>
+          </div>
+          <blockquote class="sns-card-body">大阪🐙 ついに世界最大の<strong class="kw-scan">ニトリ</strong>くるーーー‼️😳 しかもオープンに合わせて全国でもセール6つ同時開催&amp;【初】のブラックフライデー開催‼️🔥 <strong class="kw-scan">ニトリ</strong>かぁ..とか言ってごめん❗️😂 📍<strong class="kw-scan">ニトリ</strong> 梅田茶屋町店 🗓2026年10月30日(金)OPEN 1〜8階・約2,700坪！ pic.x.com/3ldkSCscLJ x.com/hana870224/sta…</blockquote>
+          <a href="https://x.com/hana870224/status/2113582394372759563" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-2" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/KOBA_B3Y/status/2113640136739275097" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@KOBA_B3Y</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="102 いいね">❤️ 102</span><span class="sns-stat-rt" title="36 リポスト">🔁 36</span></div>
+          </div>
+          <blockquote class="sns-card-body"><strong class="kw-scan">ニトリ</strong>の油圧式昇降テーブル被害者の会がまた1人…… 賃貸の床に油が飛び散って大変困った記憶が蘇った pic.x.com/3cfmjfLpFJ x.com/ikz28/status/2…</blockquote>
+          <a href="https://x.com/KOBA_B3Y/status/2113640136739275097" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-3" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/ikz28/status/2113603861105775044" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@ikz28</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="100 いいね">❤️ 100</span><span class="sns-stat-rt" title="9 リポスト">🔁 9</span></div>
+          </div>
+          <blockquote class="sns-card-body">特に前触れもなかったので、同様の商品を使っている方にもこういうことが起こりうるという注意喚起をした次第です。 あまりに突然で家具も汚れてしまったから衝動的に呟いてしまったことは否定しません。 今までもこれからも<strong class="kw-scan">ニトリ</strong>の製品にはお世話になるつもりです。</blockquote>
+          <a href="https://x.com/ikz28/status/2113603861105775044" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-4" data-platform="x">
+          <div class="sns-card-head">
+            <a href="https://x.com/3Dcgrooms/status/2113430956032041292" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@3Dcgrooms</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-likes" title="77 いいね">❤️ 77</span><span class="sns-stat-rt" title="4 リポスト">🔁 4</span></div>
+          </div>
+          <blockquote class="sns-card-body">リプパネルを貼るだけで今っぽいお部屋が爆誕するから真似してみて！！！<strong class="kw-scan">ニトリ</strong>で買えるよ↓ （詳細はリプ欄から↓） pic.x.com/N69gVKl4Hs</blockquote>
+          <a href="https://x.com/3Dcgrooms/status/2113430956032041292" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>Xでポストを見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+        <article class="sns-card" id="sns-buzz-5" data-platform="tiktok">
+          <div class="sns-card-head">
+            <a href="https://www.tiktok.com/@momo_ol22/video/7699068716260101397" target="_blank" rel="noopener noreferrer" class="sns-card-author"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg><span>@yuan🐰💕</span><span class="sns-card-date">2026-10-21 19:38</span></a>
+            <div class="sns-card-stats"><span class="sns-stat-views" title="14,200 回再生">▶️ 14,200</span><span class="sns-stat-likes" title="130 いいね">❤️ 130</span><span class="sns-stat-comments" title="0 コメント">💬 0</span></div>
+          </div>
+          <blockquote class="sns-card-body">仕事帰りに<strong class="kw-scan">ニトリ</strong>行ってきた〜🚗 #<strong class="kw-scan">ニトリ</strong> #ダイソー購入品 #生活音 #vlog #購入品</blockquote>
+          <a href="https://www.tiktok.com/@momo_ol22/video/7699068716260101397" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>TikTokで動画を見る</span><svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+        </article>
+      </div>
+    </section>
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261023/" class="nav-prev">&larr; 2026.10.23 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/dailynitori" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @dailynitori"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=nitoridaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+</body>
+</html>

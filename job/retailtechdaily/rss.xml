@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 23 Oct 2026 05:32:07 +0900</lastBuildDate>
+    <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 24 Oct 2026 05:11:39 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月24日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261024/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261024/</guid>
+      <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
+      <description>無人食堂や給油所を活用した無人店舗など、無人化・省人化の取り組みが業態を越えて広がっている AIが買い物の起点になりつつあるなか、リテールメディアは購買データとAIとの接点をどう設計するかが問われ始めた</description>
+    </item>
     <item>
       <title>2026年10月23日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261023/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261010/</guid>
       <pubDate>Sat, 10 Oct 2026 08:00:00 +0900</pubDate>
       <description>セルフレジでの万引き手口（スキャン飛ばし、バーコード偽装、カート上段だけの精算）が問題化し、カメラやAIによる抑止策が焦点になっている。 リテールメディアは、メーカーと小売の共創をテーマとする業界イベントの開催が決まり、協業の具体像をめぐる議論が本格化しそうだ。</description>
-    </item>
-    <item>
-      <title>2026年10月9日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261009/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261009/</guid>
-      <pubDate>Fri, 09 Oct 2026 08:00:00 +0900</pubDate>
-      <description>インタセクトとユーシーカードが無人店舗でのクレジットカードのタッチ決済に対応し、入店から決済までを非接触・カード一枚で完結させる動きが広がっています。 需要予測では住関連データなど外部データを取り込んで精度を高める動きが目立ち、AI需要予測の実装が高度化しています。</description>
     </item>
   </channel>
 </rss>
