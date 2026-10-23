@@ -1358,23 +1358,32 @@ async function readResearchSource(item, signal) {
 }
 
 // --- 出典のアイコン（読み上げ設計§4.4）。画面から外部へ取りに行かせず、Worker が出典と同じホストから取って data: URL で渡す ---
-// 候補は HTML の <link rel="icon">（SVG を除く）を書かれた順に、無ければ /favicon.ico。URL の検査は出典の本文と同じ
+// 候補は HTML の <link rel="icon">（SVG を除く）を書かれた順に、無ければ /favicon.ico。最後に apple-touch-icon（PNG のことが多く、
+// 大きな .ico から1枚も取り出せないサイトの控え。宣言した大きさの小さいもの）。URL の検査は出典の本文と同じ
 function sourceIconHrefs(html, pageUrl) {
   const attr = (tag, name) => {
     const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
     return m ? (m[1] ?? m[2] ?? m[3]).replace(/&amp;/g, '&').trim() : '';
   };
   const head = html.split(/<\/head\s*>/i)[0];
-  const hrefs = [];
+  const hrefs = [], touch = [];
+  const absolute = href => href && URL.canParse(href, pageUrl) ? researchSourceUrl(new URL(href, pageUrl).href) : null;
   for (const [tag] of head.matchAll(/<link\b[^>]*>/gi)) {
-    if (!attr(tag, 'rel').toLowerCase().split(/\s+/).includes('icon')) continue;
-    const href = attr(tag, 'href'), type = attr(tag, 'type').toLowerCase();
-    if (!href || type.includes('svg') || /\.svgz?(?:[?#]|$)/i.test(href) || !URL.canParse(href, pageUrl)) continue;
-    const abs = researchSourceUrl(new URL(href, pageUrl).href);
-    if (abs && !hrefs.includes(abs)) hrefs.push(abs);
+    const rel = attr(tag, 'rel').toLowerCase().split(/\s+/), href = attr(tag, 'href'), type = attr(tag, 'type').toLowerCase();
+    if (!href || type.includes('svg') || /\.svgz?(?:[?#]|$)/i.test(href)) continue;
+    if (rel.includes('icon')) { const abs = absolute(href); if (abs && !hrefs.includes(abs)) hrefs.push(abs); }
+    else if (rel.includes('apple-touch-icon') || rel.includes('apple-touch-icon-precomposed')) {
+      const abs = absolute(href), size = Number((attr(tag, 'sizes').match(/^(\d+)x\d+/i) || [])[1]) || 180;
+      if (abs) touch.push({ abs, size });
+    }
   }
-  if (!hrefs.length && URL.canParse(pageUrl)) hrefs.push(new URL('/favicon.ico', pageUrl).href);
-  return hrefs.slice(0, 3);
+  const root = URL.canParse(pageUrl) ? new URL('/favicon.ico', pageUrl).href : null;
+  if (!hrefs.length && root) hrefs.push(root);
+  const small = touch.sort((a, b) => a.size - b.size).find(t => !hrefs.includes(t.abs));
+  if (small) hrefs.splice(Math.min(hrefs.length, SOURCE_ICON.max_candidates - 2), 0, small.abs);
+  // 宣言したアイコンがどれも大きいサイト（NHK など）でも、/favicon.ico の中の小さな1枚で付ける
+  if (root && !hrefs.includes(root)) hrefs.splice(SOURCE_ICON.max_candidates - 1, Infinity, root);
+  return hrefs.slice(0, SOURCE_ICON.max_candidates);
 }
 // 中身の先頭のバイトで種類を決める（Content-Type は信じない）。PNG・ICO・JPEG・GIF・WebP 以外は付けない
 function sourceIconType(b) {
@@ -1385,6 +1394,31 @@ function sourceIconType(b) {
   if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
   if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
   return null;
+}
+// 画面へ渡す1枚に収める。上限を超える .ico は、収まる画像のうち 32px に近いもの（16px の表示を高精細な画面でも粗くしない。
+// 同じ近さなら大きい方）を選び、PNG ならそのまま、BMP なら1枚だけの .ico に詰め直す。ほかの種類は上限を超えたら付けない
+function sourceIconFit(bytes) {
+  const type = sourceIconType(bytes);
+  if (!type) return null;
+  if (bytes.length <= SOURCE_ICON.max_bytes) return { type, bytes };
+  if (type !== 'image/x-icon' || bytes.length < 6) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let best = null;
+  for (let i = 0, count = view.getUint16(4, true); i < count && 22 + 16 * i <= bytes.length; i++) {
+    const at = 6 + 16 * i, width = bytes[at] || 256, size = view.getUint32(at + 8, true), offset = view.getUint32(at + 12, true);
+    if (!size || offset < 6 + 16 * count || offset + size > bytes.length) continue;
+    const png = sourceIconType(bytes.subarray(offset, offset + 8)) === 'image/png';
+    if ((png ? size : 22 + size) > SOURCE_ICON.max_bytes) continue;
+    const score = Math.abs(width - 32);
+    if (!best || score < best.score || score === best.score && width > best.width) best = { score, width, at, size, offset, png };
+  }
+  if (!best) return null;
+  const image = bytes.subarray(best.offset, best.offset + best.size);
+  if (best.png) return { type: 'image/png', bytes: image };
+  const out = new Uint8Array(22 + best.size);
+  out.set([0, 0, 1, 0, 1, 0]); out.set(bytes.subarray(best.at, best.at + 12), 6);
+  new DataView(out.buffer).setUint32(18, 22, true); out.set(image, 22);
+  return { type: 'image/x-icon', bytes: out };
 }
 async function fetchSourceIcon(hrefs, signal) {
   try {
@@ -1403,17 +1437,17 @@ async function fetchSourceIcon(hrefs, signal) {
           const reader = res.body.getReader(), chunks = [];
           let size = 0;
           try {
-            while (size <= SOURCE_ICON.max_bytes) {
+            while (size <= SOURCE_ICON.fetch_bytes) {
               const { done, value } = await reader.read();
               if (done) break;
               chunks.push(value); size += value.byteLength;
             }
           } finally { reader.cancel().catch(() => {}); }
-          if (!size || size > SOURCE_ICON.max_bytes) break;
+          if (!size || size > SOURCE_ICON.fetch_bytes) break;
           const bytes = new Uint8Array(size); let at = 0;
           for (const c of chunks) { bytes.set(c, at); at += c.byteLength; }
-          const type = sourceIconType(bytes);
-          if (type) return `data:${type};base64,${btoa(String.fromCharCode(...bytes))}`;
+          const icon = sourceIconFit(bytes);
+          if (icon) return `data:${icon.type};base64,${btoa(String.fromCharCode(...icon.bytes))}`;
           break;
         }
       }

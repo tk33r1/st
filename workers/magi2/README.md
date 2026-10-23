@@ -224,8 +224,12 @@ node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))
 ```
 
 - **止め方**: `SPEECH_ENABLED` を `"false"` にして出す。全画面から 🔊 が消え、`/magi2/speech` は 404。`SPEECH_SIGN_KEY` を入れ替えると、それまでの回答は読めなくなる。
-- **出典のアイコン**: Web で確かめた回答（A2）の出典の本文を読むときに、同じページの `<link rel="icon">`（SVG を除く。無ければ `/favicon.ico`）をホストごとに1回だけ取り、
-  PNG・ICO・JPEG・GIF・WebP の 4KiB 以下を中身の先頭バイトで確かめて `sources.items[].icon` に data: URL で入れる（`SOURCE_ICON`）。照合と並行して取り、照合が終わった時点で取れていた分だけ付ける。URL の検査・認証を付けないことは出典の本文と同じ。
+- **出典のアイコン**: Web で確かめた回答（A2）の出典の本文を読むときに、同じページの `<link rel="icon">`（SVG を除く。無ければ `/favicon.ico`）、
+  控えの apple-touch-icon（宣言した大きさの小さいもの）、最後に `/favicon.ico` の順で最大4つをホストごとに試し、
+  PNG・ICO・JPEG・GIF・WebP を中身の先頭バイトで確かめて `sources.items[].icon` に data: URL で入れる（`SOURCE_ICON`）。画面へ渡すのは 4KiB 以下の1枚で、
+  取るファイルは 64KiB まで。複数の大きさをまとめた .ico（tenki.jp・ウェザーニュース・新聞各社は 4〜44KB で、4KiB に収まらず付かなかった。2026-10-24）は、
+  収まる画像のうち 32px に近いものを取り出して1枚の .ico（PNG ならそのまま PNG）にする。照合と並行して取り、照合が終わった時点で取れていた分だけ付ける。
+  URL の検査・認証を付けないこと・名乗り（`RESEARCH.user_agent`）は出典の本文と同じ。
 
 ## WebSocket の入口（C2）
 

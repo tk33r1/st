@@ -37,8 +37,8 @@ export const PRIVACY = {
     { text: 'Strict limits: max 1,000 characters per input, limited output tokens, and 60 daily requests. Each reply is written with the last 12 messages (about 6 exchanges) as context; anything older drops out.' },
     { text: 'Images can be attached (up to 4 per message, resized on your device before sending) and are sent to the API just like text.' },
     { text: 'When site guidance is enabled, OpenAI also uses up to 500 characters of your latest message and the public page list to choose relevant tk.st links. These links are displayed for that reply and are not saved in chat history.', requires: ['site_pages'] },
-    { text: 'By default, inputs are not saved in the database, unless you react to a reply (👍/emoji) to help improve MAGI.' },
-    { text: 'Your IP address is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you react to it.' },
+    { text: 'By default, inputs are not saved in the database, unless you rate a reply (Good / Bad) to help improve MAGI.' },
+    { text: 'Your IP address is recorded in the database to enforce the usage limits (as a count per day), and is saved together with an exchange when you rate it.' },
     { text: "Chat history is stored in your device's local storage (not permanent; please export important chats)." },
     { text: 'Powered by OpenAI API, DeepSeek API and Anthropic API. Each persona runs on a different one, so requests handled by a persona discussion (including images) are sent to all three.' },
     { text: 'On this screen, factual questions and site guidance are answered directly by OpenAI (light theme) or Anthropic (dark theme), without a persona discussion. Questions that need current information use OpenAI’s Web search in both themes; before answer text starts, Anthropic’s search and page retrieval may be tried once if OpenAI fails. This Worker also fetches cited public pages and sends their text to the answering provider for a check before display; a page that draws its text with JavaScript may be opened in Cloudflare’s browser to read it. The city and region estimated from your network (not GPS) are also sent to the searching provider, and used only when a question that depends on location, such as local weather or nearby shops, names no place; the answer then shows the estimated place. Items that cannot be supported are marked unverified. Web search has a limit of 20 requests per IP and 300 for the whole site per UTC day. If unavailable, the answer explains that it has not checked the Web. Citations are saved with the answer on your device. Music recommendations and personal advice still use the three personas.', requires: ['fact_mode'] },
@@ -60,8 +60,8 @@ export const PRIVACY = {
     { text: '利用制限：1回あたりの入力は最大1,000文字まで、出力トークン数制限あり、1日あたり60回のリクエストまで。回答は直近12メッセージ（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。' },
     { text: '画像も添付できます（1メッセージ最大4枚。送信前に端末側で縮小されます）。テキスト同様にAPIへ送信されます。' },
     { text: 'サイト案内が有効なときは、最新の本文の先頭500文字までと公開ページ一覧をOpenAIに送り、関連するtk.stのリンクを選びます。リンクはその回答でのみ表示し、会話の履歴には保存しません。', requires: ['site_pages'] },
-    { text: 'デフォルトでは、MAGI向上のために回答へリアクション（👍や絵文字）をしない限り、入力内容はデータベースに保存されません。' },
-    { text: '利用上限のため、IPアドレスを日ごとの回数としてデータベースに記録します。リアクションした場合は、そのやり取りと一緒にIPアドレスも保存されます。' },
+    { text: 'デフォルトでは、MAGI向上のために回答を評価（Good / Bad）しない限り、入力内容はデータベースに保存されません。' },
+    { text: '利用上限のため、IPアドレスを日ごとの回数としてデータベースに記録します。評価した場合は、そのやり取りと一緒にIPアドレスも保存されます。' },
     { text: 'チャット履歴はお使いの端末のローカルストレージに保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。' },
     { text: 'OpenAI API・DeepSeek API・Anthropic APIを使用しています。人格ごとに別のAPIで動くため、討議する入力内容（画像を含む）は3社すべてへ送信されます。' },
     { text: 'この画面では、事実の質問とサイト案内は討議せず、ライトはOpenAI、ダークはAnthropicが直接答えます。最新情報が必要な場合は両テーマともOpenAIのWeb検索を使い、本文が始まる前の失敗ではAnthropicの検索・ページ取得へ1回送り直すことがあります。引用する公開ページをこのWorkerでも取得し、その本文を回答する会社へ送って表示前に照合します。本文をJavaScriptで描くページは、Cloudflareのブラウザで開いて読むことがあります。通信元から推定した市や地域（GPSではありません）も検索する会社へ送り、天気や近くの店など場所で答えが変わる質問に場所の指定が無いときだけ使います。使ったときは回答に推定した場所を出します。裏付けられない項目は未確認と伝えます。Web検索はUTCの日ごとにIPあたり20回・サイト全体で300回まで。検索を使えない場合は、Webで確認していない旨を添えて答えます。引用は回答と一緒に端末へ保存します。曲の推薦と個人的な相談は3人格で討議します。', requires: ['fact_mode'] },
@@ -952,7 +952,9 @@ export const SPEECH = {
 };
 
 // 出典のアイコン（読み上げ設計書 4.4）。出典の本文と同じホストから取り、照合を待たせない
-export const SOURCE_ICON = { ms: 3000, max_bytes: 4096, max_redirects: 3 };
+// max_bytes は画面へ渡す1枚の上限、fetch_bytes は取りに行く1ファイルの上限。複数の大きさをまとめた .ico（数十KB。
+// tenki.jp・ウェザーニュース・新聞各社。2026-10-24）は、max_bytes に収まる1枚だけを取り出して渡す
+export const SOURCE_ICON = { ms: 3000, max_bytes: 4096, fetch_bytes: 65536, max_redirects: 3, max_candidates: 4 };
 
 // 更新履歴の公開JSONの取得先と期限。形式と上限はversion-history.jsで共有する。
 export const VERSION_HISTORY = {
