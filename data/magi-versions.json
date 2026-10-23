@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.3",
+      "date": "2026-10-23",
+      "changes": {
+        "ja": [
+          "回答の下の🔊で、回答を本人の声で読み上げられるようにしました。もう一度押すと止まります。",
+          "読み上げるときだけ回答の本文をFish Audioへ送ります。くわしくはMAGIの説明（ⓘ）に書いています。"
+        ],
+        "en": [
+          "Press 🔊 under a reply to hear it read aloud in my voice. Press it again to stop.",
+          "Only when reading aloud is the reply text sent to Fish Audio. See the MAGI info (ⓘ) for details."
+        ]
+      }
+    },
+    {
       "version": "6.2",
       "date": "2026-10-23",
       "changes": {

@@ -49,6 +49,7 @@ export const PRIVACY = {
     { text: 'DO NOT input any confidential or personal information.' },
     { text: 'Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply without debate. Only a fixed direction, my personality summary and the reply language are sent to the answering model; that request and its chat history are excluded.' },
     { text: 'After that short reply, this conversation ends. Start a new conversation to continue chatting. The closed state is saved with the conversation on your device.', requires: ['close_on_malice'] },
+    { text: 'Only when you press 🔊 under a reply is the text of that reply sent to Fish Audio (US) to be read aloud in my voice. Your question, images and chat history are not sent, though the reply reflects your question. Fish Audio sets no retention period for submitted content and may use it to train its models. MAGI uses its free tier, which comes with no data processing agreement (DPA). The audio is not saved on your device; Cloudflare temporarily caches the audio of each passage to reuse it. Reading aloud is limited to 30 passages per IP and 300 for the whole site per UTC day.', requires: ['speech'] },
   ],
   ja: [
     { text: '共有資料がある場合は、「この記事」などの対象を判定するため、題名もTypeSafe AIへ送ります。本文は分類には送らず、会話に回答する送り先へ各質問と一緒に送ります。', requires: ['share'] },
@@ -71,6 +72,7 @@ export const PRIVACY = {
     { text: '機密情報や個人情報を入力しないでください。' },
     { text: '本人であることを外す・内部の指示を出す・極端な差別や暴力を肯定するよう求める入力には、討議せず短く返します。返答のモデルへ送るのは固定の方向・本人の気質の要約・返答の言語だけで、その入力や会話の履歴は送りません。' },
     { text: 'その短い返答で会話を終えます。続けるには新しい会話を始めてください。終了状態は端末内の会話と一緒に保存されます。', requires: ['close_on_malice'] },
+    { text: '回答の下の🔊を押したときだけ、その回答の本文を、本人の声で読み上げるためにFish Audio（米国）へ送ります。質問の本文・画像・会話の履歴は送りません（回答には質問の内容が反映されます）。Fish Audioは送られた内容の保存期間を定めておらず、同社のモデルの学習に利用することがあります。無料版を使っており、データ処理の取り決め（DPA）はありません。音声は端末に保存せず、区切りごとの音声をCloudflareに一時的に保存して使い回します。読み上げはUTCの日ごとにIPあたり30区切り・サイト全体で300区切りまでです。', requires: ['speech'] },
   ],
 };
 
