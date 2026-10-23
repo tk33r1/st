@@ -23,7 +23,7 @@ SITE_RANK_ENABLED = "true"
 SITE_RANK_SCOPES = "site,nitori,retail,tools,game"
 # 共通検索の候補クリックの記録（/search/api/click）。"true" のときだけ D1 に書く。止めても画面と検索は変わらない
 SEARCH_CLICK_ENABLED = "true"
-# 読み上げ（/magi2/speech）。"true" かつ secret の FISH_AUDIO_API_KEY・SPEECH_SIGN_KEY があるときだけ開き、回答に署名を付ける（読み上げ設計§5）
+# 読み上げ（/magi2/speech）。"true" かつ secret の MAGI_FISH_AUDIO_API_KEY・SPEECH_SIGN_KEY があるときだけ開き、回答に署名を付ける（読み上げ設計§5）
 SPEECH_ENABLED = "true"
 # WebSocket の入口（/magi2/ws。読み上げ設計§6）。"false" にすると画面は開く前の失敗として SSE に切り替わる（画面の出し直しは要らない）
 WS_ENABLED = "true"

@@ -2292,7 +2292,7 @@ function handleChatSocket(request, env, ctx, { requestId, cors, log }) {
 // --- 読み上げ（読み上げ設計§5.4）。Worker が署名した統合人格の回答だけを、区切りごとに Fish Audio で音声にする ---
 // 音声は端末に保存させない（no-store）。同じ区切りは Cache API に入れ、2回目からは Fish Audio を呼ばず回数にも数えない。
 // ログには区切りの数・バイト数・キャッシュの当否・所要時間だけを出し、文・署名・キーは出さない
-const speechReady = env => env.SPEECH_ENABLED === 'true' && !!env.FISH_AUDIO_API_KEY && !!env.SPEECH_SIGN_KEY;
+const speechReady = env => env.SPEECH_ENABLED === 'true' && !!env.MAGI_FISH_AUDIO_API_KEY && !!env.SPEECH_SIGN_KEY;
 const speechCache = () => typeof caches !== 'undefined' && caches.default ? caches.default : null;
 async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   const headers = { ...cors, 'Cache-Control': 'no-store', 'Access-Control-Expose-Headers': 'X-Speech-Parts' };
@@ -2359,7 +2359,7 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   const upstreamFailed = (status, code) => { cleanup(); log('speech', 'failed', code, Date.now() - started); return fail(status, 'upstream', code, '読み上げできませんでした', true); };
   const call = () => fetch(SPEECH.endpoint, {
     method: 'POST', signal: stop.signal,
-    headers: { Authorization: `Bearer ${env.FISH_AUDIO_API_KEY}`, 'Content-Type': 'application/json', model: SPEECH.model },
+    headers: { Authorization: `Bearer ${env.MAGI_FISH_AUDIO_API_KEY}`, 'Content-Type': 'application/json', model: SPEECH.model },
     body: JSON.stringify({ text: parts[part], reference_id: SPEECH.voice_id, ...SPEECH.params, ...(lang ? { language: lang } : {}) }),
   });
   let res;

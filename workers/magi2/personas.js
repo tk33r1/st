@@ -903,7 +903,7 @@ export const RESEARCH = {
     it: 'Non è stato possibile verificare questo dato nella fonte citata.',
   },
 };
-// 読み上げ（読み上げ設計書 5章）。モデルIDは config/ai-models.json（fishaudio.tts）、キーは secret の FISH_AUDIO_API_KEY、
+// 読み上げ（読み上げ設計書 5章）。モデルIDは config/ai-models.json（fishaudio.tts）、キーは secret の MAGI_FISH_AUDIO_API_KEY、
 // 署名の鍵は secret の SPEECH_SIGN_KEY。入口は wrangler.toml の SPEECH_ENABLED が "true" のときだけ開く。
 // 声は本人の声から作った公開の声のモデル（ID は公開情報）。上限は費用ではなく、乱用と無料版の公正利用の超過を防ぐためのもの
 export const SPEECH = {

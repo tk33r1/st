@@ -10,7 +10,7 @@ Jev はモデル一覧の API が無く、`jev-latest` は版を追う固定の�
 Jev の API の形・料金・規約・使い方の知見は [JEV.md](JEV.md) にまとめてある。
 magi2 の読み上げには Fish Audio（`fishaudio.tts`。無料版の `s2.1-pro-free`）を使う。モデル一覧の API が無いので更新の監視はせず（`watch: False`）、
 週次のスモークテストで `personas.js` の `SPEECH.voice_id` の声を使って短い文を1回読み、MP3 が返ることを確かめる（費用 0）。
-キーはリポジトリ Secret の `FISH_AUDIO_API_KEY`（Worker と同じキーでよい）。未設定の間はスモークテストを飛ばす（`key_optional`）。
+キーはリポジトリ Secret の `FISH_AUDIO_API_KEY`（Worker の secret `MAGI_FISH_AUDIO_API_KEY` と同じキーでよい）。未設定の間はスモークテストを飛ばす（`key_optional`）。
 料金・新しいモデルは [料金の文書](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits.md) を手で確かめる。
 
 ## 仕組み

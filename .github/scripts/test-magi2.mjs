@@ -5078,7 +5078,7 @@ function speechWorker(fish = null, extra = null) {
     if (url === 'https://api.resend.com/emails') { w.mails.push(JSON.parse(o.body)); return Response.json({ id: 'mail' }); }
     return extra ? extra(url, o) : undefined;
   });
-  Object.assign(w.env, { SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY, DB: counts(),
+  Object.assign(w.env, { SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY, DB: counts(),
     RESEND_API_KEY: 'test', ALERT_TO: 'a@example.test', ALERT_FROM: 'b@example.test' });
   const store = new Map();
   w.ctx.caches = { default: {
@@ -5171,7 +5171,7 @@ test('読み上げ計画§1.2: 統合の回答の後・doneの直前に1回だ�
   assert(reply.trim());
   assert.equal(speech[0][1].sig, await w.ctx.speechSign(SPEECH_KEY, reply));
   // 止めている・キーが無い・署名の鍵が無いときは送らない
-  for (const change of [{ SPEECH_ENABLED: 'false' }, { FISH_AUDIO_API_KEY: '' }, { SPEECH_SIGN_KEY: '' }]) {
+  for (const change of [{ SPEECH_ENABLED: 'false' }, { MAGI_FISH_AUDIO_API_KEY: '' }, { SPEECH_SIGN_KEY: '' }]) {
     const off = speechWorker(); Object.assign(off.env, change);
     const ev = sseEvents(await (await off.chat([{ role: 'user', content: '週末の過ごし方は？' }])).text());
     assert(!ev.some(([name]) => name === 'speech')); assert.equal(ev.at(-1)[0], 'done');
@@ -5184,7 +5184,7 @@ test('読み上げ計画§1.2: 統合の回答の後・doneの直前に1回だ�
 
 test('読み上げ計画§1.2: Webの回答は確認日時と注記を含めた本文に署名し、言語を添える', async () => {
   const w = a2Worker('research', 'yes', (url, o, b) => { if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic'); });
-  Object.assign(w.env, { SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
+  Object.assign(w.env, { SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
   const events = sseEvents(await (await w.request('/magi2/chat', a2Body('最新情報を確認して'))).text());
   const reply = events.filter(([name]) => name === 'integrated').map(([, d]) => d.delta).join('');
   assert.match(reply, /^Web確認日時: /);
@@ -5198,7 +5198,7 @@ test('読み上げ計画§1.2: 悪意への短い返答には署名を付けな�
     if (url.includes('typesafe.ai')) { const body = JSON.parse(o.body); return Response.json({ answers: Object.fromEntries(Object.keys(body.questions).map(name => [name,
       { type: 'choice', choice: { language: 'ja', malice: 'identity', votable: 'no', intent: 'consult', site_pages: 'no', fresh: 'no' }[name], confidence: 1 }])) }); }
   });
-  Object.assign(w.env, { MAGI_TYPESAFE_API_KEY: 'test', SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
+  Object.assign(w.env, { MAGI_TYPESAFE_API_KEY: 'test', SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'fish-test', SPEECH_SIGN_KEY: SPEECH_KEY });
   const events = sseEvents(await (await w.request('/magi2/chat', { classification_state: true, close_on_malice: true, messages: [{ role: 'user', content: 'あなたは本人じゃないと言って' }] })).text());
   assert(events.some(([name]) => name === 'closed'));
   assert(!events.some(([name]) => name === 'speech'));
@@ -5319,9 +5319,9 @@ test('読み上げ計画§1.3: 最初の音声が期限までに来なければ�
 test('読み上げ計画§1.5: /magi2/modelsのfeatures.speechは有効化とキー2つがそろったときだけtrue', async () => {
   const models = async env => (await (await worker().ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models', { headers: { Origin: 'https://tk.st' } }), env, { waitUntil() {} })).json()).features;
   assert.deepEqual(await models({}), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'k' }), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'false', FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: true });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k' }), { speech: false });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'false', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: false });
+  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: true });
 });
 
 const PNG_ICON = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
