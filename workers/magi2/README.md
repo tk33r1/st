@@ -82,6 +82,10 @@ site_chatのない旧③は従来どおり。②は最初に分岐し、会話�
 
 ## A2の事実確認（4.9・2026-10-15公開）
 
+**出典の読み取り（2026-10-24）**: 出典の HTML は 1MiB まで読む（`RESEARCH.verify.source_bytes`。天気予報のページは 600KB 前後あり、表が 256KB より後ろにあった）。
+`<main>`・`<article>` の本文が400字未満で、ページ全体がその倍を超えるときは全体を読む（`section_min_chars`。tenki.jp は区画に知らせだけがあり、予報の表が外にある）。
+取得には `RESEARCH.user_agent`（`tk.st-MAGI/1.0`）を名乗る（名乗りが無いと tenki.jp は 403）。
+
 **推定所在地（2026-10-24）**: Web で調べるときは、Cloudflare が通信元の IP から推定した市・地域・国（`request.cf`。GPS ではない。精度は市や県の単位）を、検索の会社の `user_location`、検索の指示（場所の指定が無い質問にだけ使う）、照合の材料（`estimated_place`）に渡す。
 照合の JSON の `place_used` が true のときだけ、確認日時の次の行に「推定した場所: …」を出す。WebSocket では開いたときの要求の `cf` を使う。値の正本は `RESEARCH.place_prompt`・`place_rules`・`place_label`。
 
