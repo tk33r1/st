@@ -8,16 +8,22 @@ import {candidateChanges} from './magi2-daily-merge.mjs';
 import {inspectChanges} from './magi2-daily-check.mjs';
 
 export const seedBranch='automation/magi2-daily-seeded-base';
+const apk59Fixture='.github/scripts/fixtures/magi-versions-apk59.js';
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 export function eligibleSeedPR(pr,actor='tk33r1',label='magi2-daily-A') {
   return pr?.base?.ref===seedBranch&&eligibleDailyPR({...pr,base:{...pr.base,ref:'main'}},{actor,label});
+}
+function seedPRClassification(pr,actor) {
+  if(pr?.state!=='open')return null;
+  if(eligibleSeedPR(pr,actor,'magi2-daily-B'))return 'B';
+  return !pr.draft&&eligibleSeedPR(pr,actor)?'A':null;
 }
 export async function discoverSeedTrial({client,number,base,head,actor='tk33r1',changes=(base,head)=>candidateChanges(process.cwd(),base,head)}) {
   if(!Number.isSafeInteger(number)||number<1||!sha(base)||!sha(head))throw new Error('seed_trial_inputs');
   const pr=await client.request('/pulls/'+number),branch=await client.request('/branches/'+encodeURIComponent(seedBranch));
   const snapshot={number,base,head,selected:false,validate:false,reason:'ineligible'};
-  const classification=eligibleSeedPR(pr,actor)?'A':eligibleSeedPR(pr,actor,'magi2-daily-B')?'B':null;
-  if(!classification||pr.state!=='open'||classification==='A'&&pr.draft)return snapshot;
+  const classification=seedPRClassification(pr,actor);
+  if(!classification)return snapshot;
   snapshot.selected=true;snapshot.classification=classification;
   if(pr.head.sha!==head||branch.commit.sha!==base)return {...snapshot,reason:'snapshot_changed'};
   if(classification==='B')return {...snapshot,reason:'B_proposal'};
@@ -28,7 +34,7 @@ export async function discoverSeedTrial({client,number,base,head,actor='tk33r1',
     const delta=changes(base,head);
     mechanical=inspectChanges(delta);
     // このfixtureは検査用のtrusted版に差し替えるため、候補からの変更は受理しない。
-    if(delta.commits.some(c=>c.files.some(f=>f.path==='.github/scripts/fixtures/magi-versions-apk59.js')))
+    if(delta.commits.some(c=>c.files.some(f=>f.path===apk59Fixture)))
       mechanical={ok:false,errors:[{code:'trial_fixture_change'}]};
   } catch{mechanical={ok:false,errors:[{code:'trial_diff_unavailable'}]};}
   return {...snapshot,mechanical,validate:mechanical.ok,reason:mechanical.ok?'validate':'mechanical_failed'};
@@ -41,7 +47,7 @@ export function installSeedHarness({trustedRoot,candidateRoot}) {
   const paths=[...readdirSync(join(trustedRoot,scripts)).filter(name=>/^(?:test-)?magi2-daily-.*\.mjs$/.test(name)
       ||['magi-version.mjs','magi-eval-budget.mjs','push-with-retry.sh'].includes(name)).map(name=>scripts+'/'+name),
     ...readdirSync(join(trustedRoot,workflows)).filter(name=>name.endsWith('.yml')).map(name=>workflows+'/'+name),
-    scripts+'/fixtures/magi-versions-apk59.js'];
+    apk59Fixture];
   const files=[];
   for(const path of paths) {
     const from=join(trustedRoot,path),to=join(candidateRoot,path);
@@ -62,8 +68,7 @@ export async function reportSeedTrial({client,snapshot,validation,issue,actor='t
   const pr=await client.request('/pulls/'+snapshot.number),branch=await client.request('/branches/'+encodeURIComponent(seedBranch));
   const prs=await client.pages('/pulls?state=open&base='+encodeURIComponent(seedBranch));
   const classification=snapshot.classification||'A',openA=prs.filter(row=>eligibleSeedPR(row,actor)).length;
-  const label=classification==='B'?'magi2-daily-B':'magi2-daily-A';
-  if(!eligibleSeedPR(pr,actor,label)||pr.state!=='open'||classification==='A'&&pr.draft||pr.head.sha!==snapshot.head||branch.commit.sha!==snapshot.base
+  if(seedPRClassification(pr,actor)!==classification||pr.head.sha!==snapshot.head||branch.commit.sha!==snapshot.base
     ||classification==='A'&&(snapshot.reason==='duplicate_or_missing_A'?openA<2:openA!==1))return {reported:false,reason:'snapshot_changed'};
   if(typeof runUrl!=='string'||!/^https:\/\/github\.com\/tk33r1\/st\/actions\/runs\/[1-9]\d*$/.test(runUrl))throw new Error('seed_trial_run_url');
   const codes=snapshot.mechanical?.errors?.map(row=>row.code)||[];
