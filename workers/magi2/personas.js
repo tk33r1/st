@@ -918,7 +918,8 @@ export const SPEECH = {
   // 1区切りの生成が15秒に収まる長さで止める（日本語で約0.08秒／文字）。最後の値をくり返す
   part_chars: [40, 80, 160, 180], max_chars: 2000, max_parts: 14,
   request_bytes: 32768,
-  first_byte_ms: 15000, total_ms: 30000, retry_429_ms: 1000,
+  // 無料版は応答の速さを保証しない。しばらく使われていない声は最初の音声まで 15秒を超えた（本番 2026-10-23。2回目以降は約2秒）
+  first_byte_ms: 30000, total_ms: 60000, retry_429_ms: 1000,
   ip_daily_limit: 30, global_daily_limit: 300,
   cache_seconds: 2592000,
   // 言語は RESEARCH.limited_note と同じ9つ。無い言語は英語
