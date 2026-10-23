@@ -2017,7 +2017,7 @@ var agentVersionsCache = null, agentVersionsAt = 0, agentVersionsPending = null;
 function validAgentVersions(data) {
   return data && Array.isArray(data.versions) && data.versions.length > 0 && data.versions.length <= 60
     && data.versions.every(function (row) { return row && typeof row.version === 'string'
-      && (/^\d{1,2}\.\d$/.test(row.version) || row.version === 'earlier')
+      && (/^\d{1,2}\.\d[1-9]?$/.test(row.version) || row.version === 'earlier')
       && (row.version === 'earlier' ? row.date === null : typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.date))
       && row.changes && ['ja','en'].every(function (lang) { return Array.isArray(row.changes[lang])
         && row.changes[lang].length >= 2 && row.changes[lang].length <= 4
@@ -2027,7 +2027,7 @@ function loadAgentVersions() {
   if (agentVersionsCache && Date.now() - agentVersionsAt < 600000) return Promise.resolve(agentVersionsCache);
   if (agentVersionsPending) return agentVersionsPending;
   var controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 6000);
-  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions'), {signal:controller.signal})
+  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions?format=2'), {signal:controller.signal})
     .then(function (response) { if (!response.ok) throw new Error('versions_unavailable'); return response.json(); })
     .then(function (data) { if (!validAgentVersions(data)) throw new Error('versions_invalid');
       agentVersionsCache = data; agentVersionsAt = Date.now(); return data; })
@@ -2400,14 +2400,15 @@ if ('serviceWorker' in navigator) {
 // APP_UPDATE_BEGIN
 // ネイティブだけが公開Releaseを1日1回確認する。遅延・失敗は会話に影響させない。
 function releaseVersion(tag) {
-  var match = typeof tag === 'string' && /^v(\d+)\.(\d+)$/.exec(tag);
+  var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)$/.exec(tag);
   if (!match) return null;
   var parts = [Number(match[1]), Number(match[2])];
   return parts.every(Number.isSafeInteger) ? parts : null;
 }
 function newerRelease(parts, current) {
-  var installed = releaseVersion('v' + current);
-  return !!installed && (parts[0] > installed[0] || parts[0] === installed[0] && parts[1] > installed[1]);
+  var installed = typeof current === 'string' && /^(\d{1,2})\.(\d)([1-9])?$/.exec(current);
+  return !!parts && !!installed && parts[0] * 100 + parts[1] * 10
+    > Number(installed[1]) * 100 + Number(installed[2]) * 10 + Number(installed[3] || 0);
 }
 function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
 async function checkAppUpdate() {

@@ -47,12 +47,25 @@ assert files
 def source_bytes(file):
     return (root / file).read_bytes() if args.working_tree else git('show', commit + ':' + file)
 
-version = json.loads(source_bytes('magi-app/package.json'))['version'].rsplit('.', 1)[0]
+def release_version(package_version):
+    # APKを作る時だけ採番する。Webの自律更新でversionCodeは変えない。
+    import re
+    match = re.fullmatch(r'(\d{1,2})\.(\d)\.(\d)', package_version)
+    if not match:
+        raise ValueError('invalid_magi_package_version')
+    major, minor, patch = match.groups()
+    display = major + '.' + minor + (patch if patch != '0' else '')
+    return display, int(major) * 100 + int(minor) * 10 + int(patch)
+
+version, version_code = release_version(json.loads(source_bytes('magi-app/package.json'))['version'])
+gradle = source_bytes('magi-app/android/app/build.gradle').decode('utf-8')
+assert re.search(r'versionName\s+"([^"]+)"', gradle).group(1) == version
+assert int(re.search(r'versionCode\s+(\d+)', gradle).group(1)) == version_code, 'APK作成時にversionCodeを整数×100＋2桁の小数部へ更新する'
 aapt = tools / ('aapt.exe' if os.name == 'nt' else 'aapt')
 metadata = run([str(aapt), 'dump', 'badging', str(Path(args.apk).resolve())]).decode('utf-8')
 assert "name='st.tk.magi'" in metadata
 assert "versionName='" + version + "'" in metadata
-assert "versionCode='" + version.replace('.', '') + "'" in metadata
+assert "versionCode='" + str(version_code) + "'" in metadata
 variables = source_bytes('magi-app/android/variables.gradle').decode('utf-8')
 min_sdk = int(re.search(r'minSdkVersion\s*=\s*(\d+)', variables).group(1))
 target_sdk = int(re.search(r'targetSdkVersion\s*=\s*(\d+)', variables).group(1))
@@ -72,7 +85,7 @@ with zipfile.ZipFile(args.apk) as archive:
         checked[file] = hashlib.sha256(actual).hexdigest()
     extras = sorted(path for path in names if path.startswith('assets/public/') and not path.endswith('/') and path not in {'assets/public/' + file.removeprefix('magi-app/www/') for file in files})
     assert all(path in ['assets/public/capacitor.js', 'assets/public/capacitor.plugins.json', 'assets/public/cordova.js', 'assets/public/cordova_plugins.js'] for path in extras), extras
-report = {'pass': True, 'commit': commit, 'versionName': version, 'versionCode': int(version.replace('.', '')), 'apkSha256': hashlib.sha256(Path(args.apk).read_bytes()).hexdigest(), 'certificateSha256': cert, 'v1': True, 'v2': True, 'wwwFiles': checked, 'runtimeExtras': extras}
+report = {'pass': True, 'commit': commit, 'versionName': version, 'versionCode': version_code, 'apkSha256': hashlib.sha256(Path(args.apk).read_bytes()).hexdigest(), 'certificateSha256': cert, 'v1': True, 'v2': True, 'wwwFiles': checked, 'runtimeExtras': extras}
 report['source'] = 'working-tree' if args.working_tree else 'commit'
 report['minSdk'] = min_sdk
 report['targetSdk'] = target_sdk

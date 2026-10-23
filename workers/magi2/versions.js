@@ -1,6 +1,13 @@
 import bundledVersions from '../../data/magi-versions.json';
 import { VERSION_HISTORY } from './personas.js';
 
+// X.Y と X.YZ（Z は1〜9）を同じ尺度で比較する。5.9=590、5.91=591、6.0=600。
+export function versionOrder(version) {
+  if (typeof version !== 'string' || !/^\d{1,2}\.\d[1-9]?$/.test(version)) return null;
+  const [major, fraction] = version.split('.');
+  return Number(major) * 100 + Number(fraction.padEnd(2, '0'));
+}
+
 // 公開データを丸ごと検査する。一部だけを取り込んで履歴を欠落させない。
 export function cleanVersionHistory(value) {
   const object = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -15,8 +22,8 @@ export function cleanVersionHistory(value) {
     if (!object(row) || Object.keys(row).some(k => !['version', 'date', 'changes'].includes(k))) return null;
     const earlier = row.version === 'earlier';
     if (earlier ? i !== value.versions.length - 1 || row.date !== null
-      : typeof row.version !== 'string' || !/^\d{1,2}\.\d$/.test(row.version) || !date(row.date)) return null;
-    const order = earlier ? -1 : Number(row.version.split('.')[0]) * 10 + Number(row.version.split('.')[1]);
+      : versionOrder(row.version) === null || !date(row.date)) return null;
+    const order = earlier ? -1 : versionOrder(row.version);
     if (order >= previous || !earlier && row.date > previousDate) return null;
     if (!object(row.changes) || Object.keys(row.changes).length !== 2 || !['ja', 'en'].every(lang =>
       Array.isArray(row.changes[lang]) && row.changes[lang].length >= 2 && row.changes[lang].length <= 4
@@ -57,7 +64,7 @@ export async function getVersionHistory() {
         if (!data) throw new Error('versions_invalid');
         // Workerを画面より先に出す間も、そのWorkerに同梱した最新の版を欠かさない。
         if (data.versions[0].version === 'earlier'
-          || Number(data.versions[0].version) < Number(bundledVersions.versions[0].version)) throw new Error('versions_older');
+          || versionOrder(data.versions[0].version) < versionOrder(bundledVersions.versions[0].version)) throw new Error('versions_older');
         return data;
       };
       versionHistoryCache = await Promise.race([load(), deadline]);

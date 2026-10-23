@@ -15,20 +15,45 @@ const providers=['openai','anthropic','deepseek','typesafe'];
 const cents=value=>Math.ceil(value*1e6); // 比較は百万分の1ドル、端数は切り上げる。
 export const evaluationRequestHash=(provider,body)=>createHash('sha256').update(JSON.stringify({provider,body})).digest('hex');
 
-export function paidEvaluationGate(args=process.argv,expectedLedgerPath=evaluationBudgetPath) {
+const dailyBudgetRoot=fileURLToPath(new URL('../../workers/.wrangler/magi2-daily/',import.meta.url));
+export function dailyEvaluationBudgetPath(now=new Date()) {
+  return resolve(dailyBudgetRoot,'budget-'+now.toISOString().slice(0,7).replace('-','')+'.json');
+}
+
+// CLIから別の月・別の保存先を指定して枠を増やさない。A2の既存の入口と上限は維持する。
+export function evaluationBudgetPolicy(path,now=new Date()) {
+  if(resolve(path)===resolve(evaluationBudgetPath))return {scope,caps};
+  if(resolve(path)===dailyEvaluationBudgetPath(now))return {
+    scope:'magi2-daily-'+now.toISOString().slice(0,7).replace('-',''),caps:{total:.50},
+    month:now.toISOString().slice(0,7),
+  };
+  throw new Error('Use the shared budget-20261015.json ledger or the current A6 monthly ledger.');
+}
+
+export function paidEvaluationGate(args=process.argv,expectedLedgerPath) {
   const argument=args.find(a=>a.startsWith('--budget-ledger='))?.slice('--budget-ledger='.length);
   if(!argument)throw new Error('Paid API evaluation is disabled. Use recorded replay, or provide --budget-ledger with reviewed per-request cost estimates.');
   const path=resolve(argument);
-  if(path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger. A different file would reset the cumulative budget.');
+  // 第2引数は既存のA2単体テストの一時台帳用。通常の評価器からは渡さない。
+  if(expectedLedgerPath!==undefined&&path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger.');
+  const policy=expectedLedgerPath===undefined?evaluationBudgetPolicy(path):{scope,caps};
+  return evaluationLedgerGate(path,policy);
+}
+
+// I/Oと予約の検査。入口の保存先判定と分け、外部APIを使わずに両方の台帳を検証する。
+export function evaluationLedgerGate(path,policy) {
+  const {scope,caps,month}=policy;
   const validate=ledger=>{
     if(ledger.version!==1||ledger.scope!==scope||!ledger.estimates||typeof ledger.estimates!=='object'||Array.isArray(ledger.estimates)
       ||!Array.isArray(ledger.reservations))throw new Error('Invalid evaluation budget ledger.');
-    for(const r of ledger.reservations)if(!providers.includes(r.provider)||!Number.isFinite(r.max_usd)||r.max_usd<0)throw new Error('Invalid budget reservation.');
+    for(const r of ledger.reservations)if(!providers.includes(r.provider)||!Number.isFinite(r.max_usd)||r.max_usd<0
+      ||month&&(!/^\d{4}-\d{2}-\d{2}T/.test(r.at||'')||r.at.slice(0,7)!==month))throw new Error('Invalid budget reservation.');
     return ledger;
   };
   validate(JSON.parse(readFileSync(path,'utf8')));
   return {
     reserve(provider,body) {
+      if(month&&new Date().toISOString().slice(0,7)!==month)throw new Error('The A6 budget month changed. Open the current monthly ledger.');
       if(!providers.includes(provider)||!body?.model)throw new Error('Unknown paid API request.');
       const request_hash=evaluationRequestHash(provider,body),lock=path+'.lock';
       let handle;

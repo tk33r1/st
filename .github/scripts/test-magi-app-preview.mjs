@@ -1,12 +1,17 @@
 // 公開2の実画面検査。API/Releaseは固定応答で、端末の設定と保存禁止も再現する。
 import assert from 'node:assert/strict';
+import {magiDisplayVersion} from './magi-version.mjs';
+import {nativeFilesystemFixture} from './magi-native-filesystem-fixture.mjs';
 import {createServer} from 'node:http';
 import {readFileSync, existsSync, mkdirSync, writeFileSync} from 'node:fs';
 import {resolve, extname, sep} from 'node:path';
 import {chromium} from 'playwright';
 const root=resolve(process.argv[2]||'.'),out=resolve('workers/.wrangler/magi2-app47-eval');mkdirSync(out,{recursive:true});
-const appVersion=JSON.parse(readFileSync(resolve(root,'magi-app/package.json'),'utf8')).version.split('.').slice(0,2).join('.');
-const nextVersion=appVersion.split('.')[0]+'.'+(Number(appVersion.split('.')[1])+1),laterVersion=appVersion.split('.')[0]+'.'+(Number(appVersion.split('.')[1])+2);
+const appVersion=magiDisplayVersion(JSON.parse(readFileSync(resolve(root,'magi-app/package.json'),'utf8')).version);
+// 公開ReleaseはX.Y。自律のX.YZが入っても、次の本人の版を作る。
+const releaseBase=Number(appVersion.split('.')[0])*10+Number(appVersion.split('.')[1][0]);
+const releaseAfter=n=>Math.floor((releaseBase+n)/10)+'.'+((releaseBase+n)%10);
+const nextVersion=releaseAfter(1),laterVersion=releaseAfter(2);
 const server=createServer((req,res)=>{
   let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';
   const file=resolve(root,'.'+path);if(!file.startsWith(root+sep)||!existsSync(file)){res.writeHead(404);res.end();return;}
@@ -15,14 +20,15 @@ const server=createServer((req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true});const results=[];
 const model={provider:'future',provider_label:'Future Co <literal>',model:'test model',desc:{en:'description',ja:'説明'},context:{en:'context',ja:'素材'},theme:{en:'theme',ja:'テーマ'}};
-const paragraphs=[{text:'Shared text <strong>literal</strong>'},{text:'Site guidance',requires:['site_pages']},{text:'Web search hidden',requires:['fact_mode']},{text:'Unknown hidden',requires:['future']},{text:'Partial hidden',requires:['site_pages','future']}];
+const paragraphs=[{text:'Shared text <strong>literal</strong>'},{text:'Site guidance',requires:['site_pages']},{text:'Web search',requires:['fact_mode']},{text:'Unknown hidden',requires:['future']},{text:'Partial hidden',requires:['site_pages','future']}];
 const models={personas:{'MELCHIOR-1':model},synthesizer:model,themes:{light:model,dark:{...model,provider_label:'Dark Co'}},privacy:{en:paragraphs,ja:paragraphs}};
 async function scenario(name,path,{native=false,scheme='light',api='ok',stored={},language='en',blocked=false}={}){
   const ctx=await browser.newContext({viewport:{width:path==='/'?1280:390,height:900},locale:language,colorScheme:scheme,serviceWorkers:'block'});
   const page=await ctx.newPage(),errors=[],releases=[],modelCalls=[];let modelMode=api,release='v'+nextVersion;
   page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript('window.makeNativeFilesystemFixture = '+nativeFilesystemFixture.toString());
   await page.addInitScript(({native,stored,blocked})=>{
-    if(native)window.Capacitor={isNativePlatform:()=>true};
+    if(native)window.Capacitor={isNativePlatform:()=>true,getPlatform:()=> 'android',Plugins:{Filesystem:window.makeNativeFilesystemFixture().fs}};
     localStorage.setItem('magi_theme','dark');localStorage.setItem('st-analytics','off');
     Object.entries(stored).forEach(([k,v])=>localStorage.setItem(k,v));
     if(blocked){Storage.prototype.getItem=()=>{throw new Error('blocked');};Storage.prototype.setItem=()=>{throw new Error('blocked');};Storage.prototype.removeItem=()=>{throw new Error('blocked');};}
@@ -35,7 +41,17 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
     if(url.origin!==origin){await route.fulfill({status:200,body:''});return;}await route.continue();
   });
   try{
-    await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.locator('.magi-ver').waitFor();
+    await page.goto(origin+path,{waitUntil:'domcontentloaded'});
+    if(native && blocked){
+      // Androidの履歴移行は保存先を読めなければ画面をロックする。更新確認は独立して続く。
+      await page.locator('#agent-status').filter({hasText:'Could not open your saved history.'}).waitFor();
+      assert.equal(await page.locator('#app').evaluate(e=>e.inert),true);
+      await page.locator('#app-update').waitFor({state:'visible'});assert.equal(releases.length,1);
+      assert.ok((await page.locator('#app-update').innerText()).includes(nextVersion));
+      await page.reload();await page.locator('#app-update').waitFor({state:'visible'});assert.equal(releases.length,2);
+      assert.deepEqual(errors,[]);results.push({name,pass:true,historyLocked:true,releaseCalls:releases.length});console.log(name+' OK');return;
+    }
+    await page.locator('.magi-ver').waitFor();
     assert.ok((await page.locator('.magi-ver').textContent()).includes('ver '+appVersion));
     if(path!=='/'){
       assert.equal(await page.locator('html').getAttribute('data-theme'),scheme);
@@ -48,7 +64,7 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
     await page.locator('#btn-info-agent').click();const list=page.locator('.agent-privacy-list');await list.waitFor();
     if(api==='ok'){
       await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();
-      assert.equal(await list.locator('strong').count(),0);assert.ok((await list.textContent()).includes('Site guidance'));assert.ok(!(await list.textContent()).includes('hidden'));
+      assert.equal(await list.locator('strong').count(),0);assert.ok((await list.textContent()).includes('Site guidance'));assert.ok((await list.textContent()).includes('Web search'));assert.ok(!(await list.textContent()).includes('hidden'));
       assert.equal(modelCalls.length,1);await page.locator('.agent-panel-close').click();await page.locator('#btn-info-agent').click();await page.waitForTimeout(50);assert.equal(modelCalls.length,1);
     }else{
       await page.waitForTimeout(100);const text=await list.textContent();assert.match(text,/Could not load|取得できません/);assert.doesNotMatch(text,/OpenAI|DeepSeek|Google|Gemini|Future Co/);
@@ -67,6 +83,7 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
 try{
   for(const [path,label]of[['/','top'],['/magi-app/www/','PWA']])for(const api of ['ok','failure','legacy'])await scenario(label+'-'+api,path,{api});
   await scenario('PWA-dark','/magi-app/www/',{scheme:'dark'});
+  await scenario('PWA-storage-blocked','/magi-app/www/',{blocked:true});
   await scenario('native-ja','/magi-app/www/',{native:true,language:'ja-JP'});
   await scenario('native-en','/magi-app/www/',{native:true});
   await scenario('native-storage-blocked','/magi-app/www/',{native:true,blocked:true});

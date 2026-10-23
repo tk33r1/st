@@ -24,7 +24,7 @@ Jevを使う環境には `MAGI_TYPESAFE_API_KEY` をWrangler secretで設定す�
 ```sh
 cd workers
 npx wrangler d1 execute tk-st-magi2-db --remote --file=magi2/migrations/0001_reaction_ownership.sql
-npx wrangler deploy --config magi2/wrangler.toml
+npx wrangler deploy --config magi2/wrangler.toml --message "$(node ../.github/scripts/magi2-daily-check.mjs --deployment-message)"
 ```
 
 登録時は `id` と `delete_token` を返し、取り消しには両方が必要。DBにはトークンのSHA-256だけを保存する。
@@ -333,6 +333,18 @@ IP は secret の `SEARCH_CLICK_SALT` を混ぜたハッシュの先頭16桁（`
 - 出す順番: 上の初期化 → Worker のデプロイ → サイトの push。逆でも壊れない（テーブルが無ければ 503、Worker が古ければ 404 で、どちらも画面は無視する）。
 - 集計は `.github/workflows/search-boost.yml`（毎日）。画面は `data/search-boost.json` を読むだけで、検索のたびに D1 を読まない。
 - 止め方: `wrangler.toml` の `SEARCH_CLICK_ENABLED` を `"false"` にして出す（204 を返して何も書かない）。検索と並び順は、最後に集計した JSON のまま動く。
+
+## 継続改善の準備と手動公開
+
+手順の正本は[継続改善の実行手順](../../.github/magi2-daily/README.md)。本人の指示で段0を保留して準備を先行している。現在の毎時workflowは検証・報告だけを行い、自動マージ・公開はしない。レビュー経路も未設定で、模擬結果は実レビューの完了に数えない。
+
+手動のActions公開は`deploy-worker-core.yml`で対象SHAを固定し、Anthropicキーの同期後に`--message <SHA>`を付ける。手元から出す場合も、リポジトリのルートで次を実行して得た値を`wrangler deploy --message`に渡す。
+
+```sh
+node .github/scripts/magi2-daily-check.mjs --deployment-message
+```
+
+本番依存に未コミットの変更があれば`-dirty`が付く。出した内容とgitの履歴が違うことを表すため、後に自動公開を接続したときは停止対象になる。コミットして出し直すまで印を外さない。手元からも従来どおりAnthropicキーの同期を先に行い、secretの値はコミットや公開ログに出さない。
 
 ## ローカル検証のコマンド
 

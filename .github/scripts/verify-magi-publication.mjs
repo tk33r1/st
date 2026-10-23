@@ -1,13 +1,14 @@
 // MAGIの公開確認。本番の固定URLだけを使い、合成入力でSSE・検索・画面を点検する。
 // 結果にキーや会話本文を入れず、公開後の少数確認として品質評価と区別する。
 import assert from 'node:assert/strict';
+import {magiDisplayVersion} from './magi-version.mjs';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {chromium} from 'playwright';
 const option=(key,fallback)=>{const i=process.argv.indexOf(key);return i<0?fallback:process.argv[i+1];};
 const phase=option('--phase','worker');assert.ok(['worker','pages'].includes(phase));
-const version=option('--version',JSON.parse(readFileSync('magi-app/package.json','utf8')).version.split('.').slice(0,2).join('.'));
+const version=option('--version',magiDisplayVersion(JSON.parse(readFileSync('magi-app/package.json','utf8')).version));
 const out=resolve(option('--report','workers/.wrangler/magi2-stream-eval/magi-'+phase+'.json'));
 const report={phase,version,started:new Date().toISOString(),pass:false,cases:[],limitations:'Chromiumのみ。Android実機・会社PC・OSのIMEは含まない。'};
 const origin='https://tk.st',api='https://workers.tk.st';let browser;

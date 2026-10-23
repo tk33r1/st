@@ -42,88 +42,13 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    # wrangler は全 Worker 共通で workers/package.json に入れてある
-    - name: Install wrangler
-      working-directory: workers
-      run: npm ci --no-audit --no-fund
-
-    - name: Validate Cloudflare credentials
-      if: ${{ !inputs.dry-run }}
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      run: |
-        if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-          echo "::error::リポジトリ Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID を登録してください"
-          exit 1
-        fi
-
-    # DB更新が通ってからキーを設定する。権限不足なら既存のキーを変更せず止める。
-    # dry-runでは本番を変更しない。
-    - name: Prepare DJ NEXT
-      if: ${{ inputs.worker == 'dj-request' && !inputs.dry-run }}
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-      run: |
-        if ! npx wrangler d1 execute dj-request-db --remote --config dj-request/wrangler.toml --file dj-request/migrations/0008_transition_scores.sql; then
-          echo "::error::DJ NEXTのDB更新に失敗しました。CLOUDFLARE_API_TOKEN に Account > D1 > Edit があるか確認し、上のエラーを解消して再実行してください"
-          exit 1
-        fi
-        if [ -n "$TYPESAFE_API_KEY" ]; then
-          printf '%s' "$TYPESAFE_API_KEY" | npx wrangler secret put TYPESAFE_API_KEY --config dj-request/wrangler.toml
-        fi
-
-    # モデルの切り替え前にキーを同期する。Geminiを含む既存のsecretは消さない。
-    - name: Prepare MAGI Anthropic
-      if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      run: |
-        if [ -z "$ANTHROPIC_API_KEY" ]; then
-          echo "::error::リポジトリ Secret ANTHROPIC_API_KEY が未設定です。MAGIのモデル切り替えを止めます"
-          exit 1
-        fi
-        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put MAGI_ANTHROPIC_API_KEY --config magi2/wrangler.toml
-
-    # 条件付き移行の採用後だけ同期する。評価前のopenai設定では既存のキーを触らない。
-    - name: Prepare auxiliary Anthropic
-      if: ${{ (inputs.worker == 'games' || inputs.worker == 'dj-request') && !inputs.dry-run }}
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        WORKER: ${{ inputs.worker }}
-      run: |
-        if ! grep -Eq '^(GAME|SONG_INFO)_AI_PROVIDER = "anthropic"' "$WORKER/wrangler.toml"; then exit 0; fi
-        if [ -z "$ANTHROPIC_API_KEY" ]; then
-          echo "::error::ANTHROPIC_API_KEY が未設定のため、モデル移行を止めます"
-          exit 1
-        fi
-        KEY_NAME=ANTHROPIC_API_KEY
-        if [ "$WORKER" = "games" ]; then KEY_NAME=GAME_ANTHROPIC_API_KEY; fi
-        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put "$KEY_NAME" --config "$WORKER/wrangler.toml"
-
-    - name: Deploy
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        WORKER: ${{ inputs.worker }}
-        DRY_RUN: ${{ inputs.dry-run }}
-      run: |
-        if [ "$DRY_RUN" = "true" ]; then
-          npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/bundle" --config "$WORKER/wrangler.toml"
-          exit 0
-        fi
-        npx wrangler deploy --config "$WORKER/wrangler.toml"
+    uses: ./.github/workflows/deploy-worker-core.yml
+    with:
+      worker: ${{ inputs.worker }}
+      dry-run: ${{ inputs.dry-run }}
+      sha: ${{ github.sha }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}

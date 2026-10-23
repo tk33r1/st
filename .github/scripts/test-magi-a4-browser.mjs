@@ -19,10 +19,12 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=remote || 'htt
 const browser=await chromium.launch(),results=[];
 try {
  for(const [label,path,width,lang,theme] of [['home-ja-light','/',1280,'ja','light'],['home-en-dark','/',390,'en','dark'],['app-ja-dark','/magi-app/www/',390,'ja','dark'],['app-en-light','/magi-app/www/',1280,'en','light']]){
-  const page=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'}),errors=[];let mode='normal',calls=0;
+  const page=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'}),errors=[],formats=[];let mode='normal',calls=0;
   page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
   await page.route('**/*',async route=>{const url=new URL(route.request().url());
-   if(url.pathname==='/magi2/versions'){calls++;const payload=structuredClone(data);if(mode==='xss')payload.versions[0].changes[lang][0]='<img src=x onerror=alert(1)> & <確認>';
+   if(url.pathname==='/magi2/versions'){calls++;formats.push(url.searchParams.get('format'));const payload=structuredClone(data);if(mode==='xss')payload.versions[0].changes[lang][0]='<img src=x onerror=alert(1)> & <確認>';
+    if(mode==='micro')payload.versions=['6.1','6.09','6.01','6.0','5.99','5.91','5.9'].map(version=>({...structuredClone(data.versions[0]),version}));
+    if(mode==='invalid')payload.versions[0].version='6.00';
     return route.fulfill(mode==='failure'?{status:503,body:''}:{json:payload,headers:{'Access-Control-Allow-Origin':origin}});}
    if(url.pathname==='/magi2/models')return route.fulfill({json:models});
    if(url.pathname==='/magi2/chat'){const event=(name,data)=>`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -48,9 +50,12 @@ try {
   if(path==='/'){await page.evaluate(()=>setLanguage('en'));assert.equal(await list.getAttribute('lang'),'en');assert.equal(await page.locator('.agent-versions-title').textContent(),'Release History');}
   await page.locator('#agent-versions-panel .agent-panel-close').click();await page.locator('#btn-versions-agent').click();assert.equal(calls,1);
   mode='xss';await open();await page.locator('#btn-versions-agent').click();await list.locator('section').first().waitFor();assert.equal(await list.locator('img').count(),0);assert.ok((await list.textContent()).includes('<img src=x onerror=alert(1)>'));
+  mode='micro';await open();await page.locator('#btn-versions-agent').click();await list.locator('section').first().waitFor();
+  assert.deepEqual(await list.locator('h3').allTextContents(),['6.1','6.09','6.01','6.0','5.99','5.91','5.9'].map(v=>'ver '+v));
+  mode='invalid';await open();await page.locator('#btn-versions-agent').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
   mode='failure';await open();await page.locator('#btn-versions-agent').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
   await page.locator('#agent-versions-panel .agent-panel-close').click();await page.locator('#agent-input').fill('履歴取得の失敗後の確認');await page.locator('#agent-send').click();await page.locator('.agent-turn .agent-reply').filter({hasText:'回答しました。'}).waitFor();
-  assert.deepEqual(errors,[]);results.push({label,pass:true});console.log(label+' OK');await page.close();
+  assert.deepEqual(errors,[]);assert.ok(formats.length && formats.every(v=>v==='2'));results.push({label,pass:true,microVersions:true,format:2});console.log(label+' OK');await page.close();
  }
  writeFileSync(resolve(out,'results.json'),JSON.stringify(results,null,2));
 }finally{await browser.close();await new Promise(r=>server.close(r));}

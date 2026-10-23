@@ -9,6 +9,7 @@ import { webcrypto, createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
+import { magiDisplayVersion } from './magi-version.mjs';
 import './test-magi-native-history.mjs';
 import './test-magi-native-input.mjs';
 import './test-magi-native-background.mjs';
@@ -3727,14 +3728,15 @@ test('404 の③のリンクの検査はサイト内のパスだけを通す（�
 test('MAGI の版はトップ・アプリの定数・package・Androidで一致し、同梱画面も同じ定数を使う', () => {
   const shown = src => [...src.matchAll(/class="magi-ver"[^>]*>ver (\d+\.\d+)</g)].map(m => m[1]);
   const home = shown(read('index.html')), app = mobile.match(/var APP_VERSION = '(\d+\.\d+)'/);
-  const pkg = JSON.parse(read('magi-app/package.json')).version.split('.').slice(0, 2).join('.');
+  const pkg = magiDisplayVersion(JSON.parse(read('magi-app/package.json')).version);
   assert.equal(home.length, 1); assert.ok(app);
   assert.equal(home[0], pkg); assert.equal(app[1], pkg);
   assert.ok(mobile.includes('>ver \' + APP_VERSION + \'</button>'));
   assert.equal(JSON.parse(read('data/magi-versions.json')).versions[0].version, pkg);
   const gradle = read('magi-app/android/app/build.gradle');
   assert.equal(gradle.match(/versionName "([^"]+)"/)[1], pkg);
-  assert.equal(Number(gradle.match(/versionCode (\d+)/)[1]), Number(pkg.split('.').join('')));
+  // 自律のWeb更新ではversionCodeを据え置く。APKの採番と実物の一致はverify-apk.pyで検査する。
+  assert.ok(Number(gradle.match(/versionCode (\d+)/)[1]) > 0);
 });
 
 test('modelsはAnthropicとテーマ別の統合、日英の文字段落・機能の印を配る', async () => {
@@ -3798,7 +3800,124 @@ test('A4: 更新履歴の正本は日英2〜4行・日付・降順を満たし�
 });
 
 const versionRequest = (w, origin = 'https://localhost') => w.ctx.worker.fetch(
-  new Request('https://workers.tk.st/magi2/versions', {headers:{Origin:origin}}), w.env, {waitUntil(){}});
+  new Request('https://workers.tk.st/magi2/versions?format=2', {headers:{Origin:origin}}), w.env, {waitUntil(){}});
+
+// 版ごとの境界検査は公開履歴の更新に依存させない。正本自体の検査はA4で別に行う。
+const versionHistoryFixture = (...versions) => ({versions:versions.map(version => ({version,
+  date:version==='earlier'?null:'2026-10-23',changes:{ja:['表示を改善しました','操作を改善しました'],en:['Improved display','Improved controls']}}))});
+
+test('A6: 履歴の版は X.Y と X.YZ を受け付け、小数部を2桁にそろえて並べる', () => {
+  const w = worker(), template = JSON.parse(read('data/magi-versions.json')).versions[0];
+  const history = versions => ({versions:versions.map(version => ({...structuredClone(template), version}))});
+  const ascending = ['5.9','5.91','5.99','6.0','6.01','6.09','6.1'];
+  assert.ok(w.ctx.cleanVersionHistory(history([...ascending].reverse())));
+  for (const version of ascending) {
+    const data = history([version]);
+    assert.ok(w.ctx.cleanVersionHistory(data), version);
+    for (const source of [home, mobile]) {
+      const ctx = vm.createContext({});
+      vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
+      assert.equal(ctx.validAgentVersions(data), true, version);
+    }
+  }
+  for (const version of ['5.90','5.100','5.910','6.00','5.9a']) {
+    const data = history([version]);
+    assert.equal(w.ctx.cleanVersionHistory(data), null, version);
+    for (const source of [home, mobile]) {
+      const ctx = vm.createContext({});
+      vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
+      assert.equal(ctx.validAgentVersions(data), false, version);
+    }
+  }
+  for (let i = 1; i < ascending.length; i++) {
+    assert.equal(w.ctx.cleanVersionHistory(history([ascending[i-1],ascending[i]])), null);
+  }
+});
+
+test('A6: format=2 だけが自律の版を受け取り、旧 APK 5.9 の履歴検査にも通る', async () => {
+  const bundled = versionHistoryFixture('6.0','5.9','earlier');
+  const remote = versionHistoryFixture('6.01','6.0','5.9','earlier');
+  let loads = 0;
+  const w = worker(completion(), async url => {
+    if (url.endsWith('/magi-versions.json')) { loads++; return Response.json(remote); }
+  });
+  w.ctx.bundledVersions = structuredClone(bundled);
+  const request = query => w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions'+query,
+    {headers:{Origin:'https://tk.st'}}), w.env, {waitUntil(){}});
+  const [modern, legacy, unknown] = await Promise.all(['?format=2','','?format=3'].map(request));
+  assert.deepEqual(await modern.json(), remote);
+  const oldData = await legacy.json();
+  assert.deepEqual(oldData, bundled);
+  assert.deepEqual(await unknown.json(), oldData);
+  assert.equal(loads, 1); assert.equal(w.calls.length, 0);
+  const ctx = vm.createContext({});
+  vm.runInContext(read('.github/scripts/fixtures/magi-versions-apk59.js'), ctx);
+  assert.equal(ctx.validAgentVersions(oldData), true);
+  assert.equal(ctx.validAgentVersions(remote), false);
+});
+
+test('A6: 両画面は format=2 を送り、旧 Worker の X.Y だけの応答も受け取る', async () => {
+  const data = versionHistoryFixture('6.0','5.9','earlier');
+  for (const source of [home, mobile]) {
+    let requested;
+    const ctx = vm.createContext({AGENT_API:'https://example.test/magi2/chat',AbortController,setTimeout,clearTimeout,
+      fetch:async url => {requested = url; return Response.json(data);}});
+    vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
+    assert.deepEqual(await ctx.loadAgentVersions(), data);
+    assert.equal(requested, 'https://example.test/magi2/versions?format=2');
+  }
+});
+
+test('A6: APK の更新通知は自律の版と次の本人の版を区別する', () => {
+  const {ctx} = appUpdateFixture();
+  for (const [tag,current,expected] of [['v6.0','5.91',true],['v5.9','5.91',false],
+    ['v6.1','6.01',true],['v6.0','6.01',false],['v6.1','6.09',true],['v6.0','6.0',false]]) {
+    assert.equal(ctx.newerRelease(ctx.releaseVersion(tag),current), expected, tag+' / '+current);
+  }
+});
+
+test('A6: packageの版を表示へ写し、APK検査も同じ版と新しいversionCodeを使う', () => {
+  const cases = [['5.9.0','5.9',590],['5.9.1','5.91',591],['5.9.9','5.99',599],
+    ['6.0.0','6.0',600],['6.0.1','6.01',601],['6.0.9','6.09',609],['6.1.0','6.1',610]];
+  for (const [pkg, display] of cases) assert.equal(magiDisplayVersion(pkg), display);
+  for (const pkg of ['5.9','5.9.10','5.10.0','6.0.0-beta']) assert.throws(() => magiDisplayVersion(pkg));
+  // CLIの引数・Androidツールを動かさず、実際の検査スクリプトの変換関数を取り出して照合する。
+  const script = "import ast,json,pathlib\ns=ast.parse(pathlib.Path('magi-app/scripts/verify-apk.py').read_text(encoding='utf-8'))\n"
+    + "f=next(n for n in s.body if isinstance(n,ast.FunctionDef) and n.name=='release_version')\n"
+    + "ns={}\nexec(compile(ast.Module(body=[f],type_ignores=[]),'verify-apk.py','exec'),ns)\n"
+    + "cases=json.loads(input())\nfor pkg,display,code in cases:\n assert ns['release_version'](pkg)==(display,code)\n";
+  const result = spawnSync('python', ['-B','-c',script], {cwd:root,input:JSON.stringify(cases),encoding:'utf8'});
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('A6: 同梱版が自律の版でも、古い履歴やearlierだけの履歴へ置き換わらない', async () => {
+  for (const earlierOnly of [false,true]) {
+    const remote = versionHistoryFixture('6.0','5.9','earlier');
+    if (earlierOnly) remote.versions = [remote.versions.at(-1)];
+    const w = worker(completion(), async url => url.endsWith('/magi-versions.json') ? Response.json(remote) : undefined);
+    w.ctx.bundledVersions = versionHistoryFixture('6.01','6.0','5.9','earlier');
+    assert.deepEqual(await w.ctx.getVersionHistory(), w.ctx.bundledVersions);
+    assert.equal(w.calls.length, 0);
+  }
+});
+
+test('R1: 6.01以降の履歴でも新画面には全件、旧APKには本人の版だけを返す', async () => {
+  for(const latest of ['6.01','6.09','6.1']) {
+    const history=versionHistoryFixture(latest,'6.0','5.9','earlier');
+    let loads=0;
+    const w=worker(completion(),async url=>{
+      if(url.endsWith('/magi-versions.json')){loads++;return Response.json(history);}
+    });
+    w.ctx.bundledVersions=structuredClone(history);
+    assert.ok(w.ctx.cleanVersionHistory(history));
+    assert.deepEqual(await (await versionRequest(w)).json(),history);
+    const legacy=await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions',
+      {headers:{Origin:'https://localhost'}}),w.env,{waitUntil(){}});
+    const expected=latest==='6.1'?history:versionHistoryFixture('6.0','5.9','earlier');
+    assert.deepEqual(await legacy.json(),expected);
+    assert.equal(loads,1);assert.equal(w.calls.length,0);
+  }
+});
 
 test('A4: 公開JSONを取得し、同時要求と10分キャッシュを共有し、CORSはmodelsと同じ', async () => {
   const remote = JSON.parse(read('data/magi-versions.json')); remote.versions[0].changes.ja[0] = '公開後の説明 <確認>';
@@ -3895,12 +4014,12 @@ function appUpdateFixture({native = true, stored = {}, reply = {tag_name:'v4.7'}
   return {ctx, clock, banner, calls, stored};
 }
 test('更新通知はネイティブ限定、数字比較、正しいReleaseタグだけで新しい版を表示する', async () => {
-  for(const [tag,expected] of [['v4.7',true],['v4.6',false],['v4.5',false],['v4.10',true],['v4.8-beta',false],['magi-4.8',false],['v999999999999999999999.0',false]]) {
+  for(const [tag,expected] of [['v4.7',true],['v4.6',false],['v4.5',false],['v4.10',false],['v4.8-beta',false],['magi-4.8',false],['v999999999999999999999.0',false]]) {
     const f=appUpdateFixture({reply:{tag_name:tag}});await f.ctx.checkAppUpdate();assert.equal(!f.banner.hidden,expected,tag);assert.equal(f.clock.timers.size,0);
     if(expected){assert.ok(f.banner.text.textContent.includes(tag.slice(1)));assert.equal(f.banner.link.textContent,'ダウンロード');}
   }
   const web=appUpdateFixture({native:false});await web.ctx.checkAppUpdate();assert.equal(web.calls.length,0);
-  const f=appUpdateFixture();assert.equal(f.ctx.newerRelease(f.ctx.releaseVersion('v4.10'),'4.9'),true);
+  const f=appUpdateFixture();assert.equal(f.ctx.newerRelease(f.ctx.releaseVersion('v5.0'),'4.9'),true);
 });
 test('更新通知は24時間で再確認し、閉じた版を抑止して次の版は知らせる', async () => {
   const f=appUpdateFixture();await f.clock.advance(86400000);await f.ctx.checkAppUpdate();f.banner.button.onclick();assert.equal(f.banner.hidden,true);

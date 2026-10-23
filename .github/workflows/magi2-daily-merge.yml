@@ -1,0 +1,118 @@
+name: MAGI Daily Validation
+
+# 段階1の準備版。main側で判定し、PRコードのジョブにはsecretを渡さない。
+# 自動マージ・デプロイは段0と実経路でのレビュー・公開試行が成立した後に別途実装する。
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magi2-daily-merge
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    if: github.ref == 'refs/heads/main' && vars.MAGI2_DAILY_ISSUE != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      snapshot: ${{ steps.snapshot.outputs.snapshot }}
+      validate: ${{ steps.snapshot.outputs.validate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch candidate refs without persisting credentials
+        run: |
+          # 公開リポジトリなのでgitのfetchは認証不要。PRのコードは取り出さずgitオブジェクトとして読む。
+          git remote set-url origin https://github.com/tk33r1/st.git
+      - name: Inspect trusted diff
+        id: snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
+        run: node .github/scripts/magi2-daily-control.mjs --discover --output "$RUNNER_TEMP/snapshot.json"
+
+  validate:
+    needs: discover
+    if: needs.discover.outputs.validate == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Integrate the recorded main without running hooks
+        working-directory: candidate
+        env:
+          DAILY_BASE: ${{ fromJSON(needs.discover.outputs.snapshot).base }}
+        run: |
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c user.name=validation -c user.email=validation@example.invalid merge --no-commit --no-ff "$DAILY_BASE"
+      - name: Install verification dependencies
+        working-directory: candidate
+        run: |
+          npm --prefix workers ci --no-audit --no-fund
+          npm --prefix .github/scripts ci --no-audit --no-fund
+          .github/scripts/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run the trusted full checker
+        working-directory: candidate
+        env:
+          DAILY_BASE: ${{ fromJSON(needs.discover.outputs.snapshot).base }}
+          DAILY_HEAD: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
+        run: node ../trusted/.github/scripts/magi2-daily-check.mjs --full --root "$PWD" --base "$DAILY_BASE" --head "$DAILY_HEAD"
+
+  report:
+    needs: [discover, validate]
+    if: always() && needs.discover.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Report using main code and only the validation job result
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
+          MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+          MAGI2_DAILY_STAGE: ${{ vars.MAGI2_DAILY_STAGE }}
+          DAILY_SNAPSHOT: ${{ needs.discover.outputs.snapshot }}
+          DAILY_VALIDATION: ${{ needs.validate.result }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
+        run: node .github/scripts/magi2-daily-control.mjs --report

@@ -1,0 +1,47 @@
+name: MAGI Daily Weekly Observation
+
+on:
+  schedule:
+    # 月曜04:15 JST。利用回数は完了したUTC日の直近7日分。
+    - cron: '15 19 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magi2-daily-observe
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    if: github.ref == 'refs/heads/main' && vars.MAGI2_DAILY_ISSUE != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install wrangler
+        working-directory: workers
+        run: npm ci --no-audit --no-fund
+      - name: Read only aggregated counts
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node .github/scripts/magi2-daily-observe.mjs --sql > "$RUNNER_TEMP/daily-counts.sql"
+          cd workers
+          npx wrangler d1 execute tk-st-magi2-db --config magi2/wrangler.toml --remote --json --file "$RUNNER_TEMP/daily-counts.sql" > "$RUNNER_TEMP/daily-counts.json"
+      - name: Publish counts without user text
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+        run: node .github/scripts/magi2-daily-observe.mjs --rows "$RUNNER_TEMP/daily-counts.json"

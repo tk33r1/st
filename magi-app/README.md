@@ -308,13 +308,29 @@ See [B1 implementation record](B1実装評価20261020.md) for coverage and outst
 release checks. A separate test application ID must be used for destructive
 fixtures on a physical device; never clear the installed production app.
 
-**Version display must always match the release.** Before every APK build, set the
-same `X.Y` in all four places: `magi-app/package.json` (`X.Y.0`), the
-`APP_VERSION` constant in `www/app.js`, the `ver X.Y` display in the top page `../index.html`, and `versionName` in
-`android/app/build.gradle` (raise `versionCode` too, e.g. 4.5 → 45). Push the web
-side (with the `app.js?v=` / `sw.js` cache bump) in the same release so the PWA,
-the top page and the APK show the same version. `node --test .github/scripts/test-magi2.mjs`
-fails if any disagree (including Android versionCode).
+**Version display must always match the release.** Owner releases use `X.Y`
+(e.g. `6.0`); autonomous daily releases use `X.YZ`, with Z from 1 to 9 (e.g.
+`6.01`). Do not use `6.00`, `5.90`, or `5.100`. Keep `APP_VERSION` in `www/app.js`,
+the top page display, Android `versionName`, and the first entry in
+`data/magi-versions.json` aligned. The npm version in `package.json` and
+`package-lock.json` is `X.Y.0` / `X.Y.Z` (`6.01` becomes `6.0.1`).
+
+Autonomous updates leave Android `versionCode` unchanged and do not create APKs,
+GitHub Releases, or tags. Starting with the next APK build, set `versionCode` to
+major × 100 plus the two-digit fractional part (`5.9` → 590, `5.91` → 591,
+`6.0` → 600). `verify-apk.py` checks this rule against Gradle and the actual APK;
+the source regression test checks the aligned display versions independently of
+APK build timing. Owner Release tags retain the `vX.Y` form.
+
+Publish the Worker before the web changes. Updated screens request
+`/magi2/versions?format=2`, which includes `X.YZ`. Older APKs and cached screens
+omit `format=2` and receive only `X.Y` entries, so autonomous releases do not
+appear in their history. Add an `X.YZ` history entry only after both Worker and
+screens have been published. Bump `app.js?v=` and the `sw.js` cache for PWA
+updates; Android receives the changed shell with the next APK. Keep each used
+daily version number reserved even after a revert, and stop at `X.Y9`; see
+[the daily improvement design](../magi2継続改善設計書.md#24-版の上げ方2026-10-23-本人決定)
+for bump conditions, numbering, and history limits.
 
 Before uploading any APK, verify the actual packaged files against the Git
 commit, Android version and the previous distribution's certificate:

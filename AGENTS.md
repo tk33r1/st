@@ -198,6 +198,20 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     - サイトにすぐ出したい生成物（号ページ、`magi-context.json` など）のコミットに `[skip ci]` を付けない
       （Cloudflare Pages もビルドを省略し、次の push まで公開されない）。
 
+### MAGI の版番号
+
+- 本人の公開は `X.Y`（例: 6.0）、継続改善の自律公開は小数第2位を上げた `X.YZ`（Zは1〜9。例: 6.01）を使う。`6.00`・`5.90`・`5.100` は使わない。
+- `APP_VERSION`・トップページの表示・Android の versionName・`data/magi-versions.json` の先頭は同じ表示にする。package.json と package-lock.json の version は `X.Y.0` / `X.Y.Z`（例: 6.01 → 6.0.1）でそろえる。
+- 自律更新では versionCode を変えない。次に APK を作るときから、整数×100＋2桁の小数部（5.9 → 590、5.91 → 591、6.0 → 600）にする。実物との照合は `magi-app/scripts/verify-apk.py` で行う。
+- 更新履歴は新画面が `/magi2/versions?format=2` で取得する。`format=2` の無い旧 APK には X.YZ を除いて返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。
+- 自律更新で版を上げる条件・番号の再利用禁止・上限は [継続改善設計§2.4](magi2継続改善設計書.md) に従う。
+
+### MAGI の継続改善
+
+- 点検とレビューの手順は [`.github/magi2-daily/README.md`](.github/magi2-daily/README.md)。区分Aの条件・互換性・利用体験への影響を確認し、変更の意味が曖昧ならBにする。現在は準備中で自動マージしない。
+- 再レビューは過去の指摘IDごとに `fixed / withdrawn / open` と対象headの根拠を結果表へ残す。表の欠落・記載漏れ・状態コメントのreadyを合格とみなさない。経路未設定は未設定のまま扱う。
+- 手動のmagi2公開もコミットを版に残す。`node .github/scripts/magi2-daily-check.mjs --deployment-message` の値を `wrangler deploy --message` に渡す。Workerの本番依存に未コミットの変更があれば `-dirty` になり、後に自動公開を接続してもその状態では出さない。Anthropicキーの同期は従来どおり先に行う。
+
 ## コーディング規約
 
 - **言語**: コメント・ドキュメントは原則**日本語**（magi-app の README や tools-ui.js の一部など例外あり）。
