@@ -4,7 +4,9 @@
 
 現在の`magi2-daily-merge.yml`は**段階1の検証・報告専用**。自動マージ・デプロイのジョブは無い。変数を2へ替えたり、PRにreadyと書いたりしても公開されない。ChatGPTレビューの実経路は未設定で、依頼・ラウンド・24時間期限を開始しない。
 
-固定Issueは[#14](https://github.com/tk33r1/st/issues/14)。6ラベルと`MAGI2_DAILY_ISSUE=14`・`MAGI2_DAILY_STAGE=1`は準備済み。レビュー省略の変数は設定していない。workflowのコードはまだmainへ反映しておらず、定期実行も未開始。
+固定Issueは[#14](https://github.com/tk33r1/st/issues/14)。6ラベルと`MAGI2_DAILY_ISSUE=14`・`MAGI2_DAILY_STAGE=1`は段2で準備済み。レビュー省略の変数は設定していない。2026-10-23、mainの`cad22a9f`に準備版workflowが入ったことを確認した。実際のActions実行・通知の成功は未確認。
+
+段3は[種まき手順](種まき手順.md)に従う。4組・組4の5状態を独立したGitへ作る準備器とローカル検査を用意した。Claudeによる実際の検出、仕込みPRへのActions接続、実サービスの交互レビューの合格とは区別する。[開始記録](../../workers/magi2/継続改善段3開始記録.md)を参照。
 
 ## 点検を始める前
 
