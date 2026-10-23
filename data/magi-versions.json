@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.2",
+      "date": "2026-10-23",
+      "changes": {
+        "ja": [
+          "回答の下に、使えない読み上げボタンと空の枠が出ていたのを直しました。書いている途中のカーソルは本文の末尾に出ます。",
+          "PCで「共有」を押すと、回答と出典をコピーするようにしました。共有シートはスマホとタブレットで開きます。"
+        ],
+        "en": [
+          "Fixed an unusable read-aloud button and an empty box under replies. The typing cursor now stays at the end of the text.",
+          "On computers, Share now copies the reply and its sources. The share sheet opens on phones and tablets."
+        ]
+      }
+    },
+    {
       "version": "6.1",
       "date": "2026-10-23",
       "changes": {
