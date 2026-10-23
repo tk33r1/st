@@ -214,7 +214,7 @@ export function checkPlan(mode,paths=[]) {
     [node,'--test','--test-force-exit','.github/scripts/test-magi2.mjs'],
     [python,'-B','.github/scripts/test-magi-smoke.py'],
     ...['qa-budget','eval-budget'].map(name=>[node,'--test','.github/scripts/test-magi-'+name+'.mjs']),
-    ...['check','review','budget','control','stage1','deploy','deploy-worker','publication','cloudflare','publication-run','automation']
+    ...['check','review','budget','control','stage1','deploy','deploy-worker','publication','cloudflare','publication-run','automation','seed-trial']
       .map(name=>[node,'--test','.github/scripts/test-magi2-daily-'+name+'.mjs']),
     [python,'-B','.github/scripts/ai_models.py','check'],
   ];

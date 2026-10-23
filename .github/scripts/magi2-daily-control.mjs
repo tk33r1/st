@@ -72,6 +72,12 @@ async function reportState(client,snapshot,{issue,actor,validation,stage,mail,re
   const halts=await client.pages('/issues?state=open&labels=magi2-daily-halt');
   const evidence=await readReview({client,number:pr.number,head:snapshot.head,base:snapshot.base});
   const review=reviewState({...evidence,head:snapshot.head,base:snapshot.base});
+  // 正式サービスの取得中にも更新・取消が入り得る。古い結果で状態や区分を変えない。
+  const refreshed=await client.pages('/pulls?state=open');
+  const currentA=refreshed.filter(p=>eligibleDailyPR(p,{actor}));
+  const currentMain=await client.request('/branches/main');
+  if(currentA.length!==1||currentA[0].number!==snapshot.number||currentA[0].head.sha!==snapshot.head
+    ||currentMain.commit.sha!==snapshot.base)return;
   const state={version:1,head:snapshot.head,base:snapshot.base,...review,review_route:evidence.route?.configured?evidence.route.name:'unconfigured',
     validation,stage:String(stage),halt:halts.some(row=>!row.pull_request),merge_enabled:false};
   await stateComment(client,pr.number,state);

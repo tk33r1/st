@@ -195,6 +195,21 @@ test('手動公開も共通workflowを使い、40桁SHAを固定しAnthropic同�
   assert.ok(deploy.includes("'--message',target"));assert.ok(deploy.includes('!anthropicKey.trim()'));
   assert.ok(core.includes('0008_transition_scores.sql'));assert.ok(core.includes('persist-credentials: false'));
 });
+test('正式レビュー取得中のhead/base更新・ラベル取消・PR終了には古い判定を書かない',async()=>{
+  for(const kind of ['head','base','label','closed']) {
+    const f=clientFixture(),snapshot={number:7,head:f.prs[0].head.sha,base:f.main,mechanical:{ok:true},open_a:[7]};
+    let currentBase=f.main;
+    const request=f.client.request;f.client.request=async(path,options)=>!options&&path==='/branches/main'?{commit:{sha:currentBase}}:request(path,options);
+    await report(f.client,snapshot,{issue:14,validation:'success',readReview:async()=>{
+      if(kind==='head')f.prs[0].head.sha='c'.repeat(40);
+      if(kind==='base')currentBase='c'.repeat(40);
+      if(kind==='label')f.prs[0].labels=[];
+      if(kind==='closed')f.prs.length=0;
+      return {route:null,requests:[],results:[],records:[],claude:[]};
+    }});
+    assert.equal(f.calls.length,0,kind);
+  }
+});
 test('共通公開はdispatchのoptionsだけでWorkerを選び、未知名は理由を示して拒否する',()=>{
   const wrapper=readFileSync('.github/workflows/deploy-worker.yml','utf8');
   const core=readFileSync('.github/workflows/deploy-worker-core.yml','utf8');
