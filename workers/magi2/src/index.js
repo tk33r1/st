@@ -1327,7 +1327,8 @@ async function readResearchSource(item, signal) {
       let url = item.url;
       for (let redirects = 0; ; redirects++) {
         if (stop.aborted) throw searchFailure('cancelled');
-        const res = await fetch(url, {redirect:'manual', signal:stop, headers:{Accept:'text/html, text/plain, application/json'}});
+        // 名乗り（User-Agent）の無い取得を断るサイト（tenki.jp など）があるので、MAGI の取得だと正直に名乗る
+        const res = await fetch(url, {redirect:'manual', signal:stop, headers:{Accept:'text/html, text/plain, application/json', 'User-Agent':RESEARCH.user_agent}});
         if ([301,302,303,307,308].includes(res.status)) {
           res.body?.cancel().catch(() => {});
           const next = res.headers.get('location');
@@ -1391,7 +1392,7 @@ async function fetchSourceIcon(hrefs, signal) {
       for (const first of hrefs) {
         let url = first;
         for (let redirects = 0; url; redirects++) {
-          const res = await fetch(url, { redirect: 'manual', signal: stop, headers: { Accept: 'image/*' } });
+          const res = await fetch(url, { redirect: 'manual', signal: stop, headers: { Accept: 'image/*', 'User-Agent': RESEARCH.user_agent } });
           if ([301, 302, 303, 307, 308].includes(res.status)) {
             res.body?.cancel().catch(() => {});
             const next = res.headers.get('location');

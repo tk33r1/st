@@ -5356,7 +5356,8 @@ test('読み上げ計画§1.1: Webの回答の出典に、Workerが取ったア�
   const sources = events.find(([name]) => name === 'sources')[1];
   assert.equal(sources.items[0].icon, 'data:image/png;base64,' + Buffer.from(PNG_ICON).toString('base64'));
   assert.equal(iconCalls.length, 1);
-  assert.deepEqual(Object.keys(iconCalls[0].headers), ['Accept']); assert.equal(iconCalls[0].redirect, 'manual');
+  assert.deepEqual(Object.keys(iconCalls[0].headers), ['Accept', 'User-Agent']); assert.equal(iconCalls[0].redirect, 'manual');
+  assert.match(iconCalls[0].headers['User-Agent'], /tk\.st-MAGI/);
   // 照合のモデルへアイコンの候補を送らない
   const verify = w.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply');
   assert(!JSON.stringify(verify.body).includes('favicon'));

@@ -839,6 +839,8 @@ export const RESEARCH = {
   timeout_ms: 45000, max_uses: 3, max_pause_turns: 1, sources_max: 5,
   fetch: { type: 'web_fetch_20260309', max_uses: 3, max_content_tokens: 12000 },
   // source_bytes: 出典の HTML を読む上限。天気予報のページは 600KB 前後あり、表が 256KB より後ろにあった（2026-10-24）
+  // 出典の本文・アイコンを取るときの名乗り。無いと 403 を返すサイトがある（tenki.jp。2026-10-24）
+  user_agent: 'Mozilla/5.0 (compatible; tk.st-MAGI/1.0; +https://tk.st/magi/)',
   // section_min_chars: <main>・<article> の本文がこれより短ければ、ページ全体（ナビ・ヘッダー・フッターを除く）を読む
   verify: { source_ms: 8000, source_bytes: 1048576, source_chars: 24000, block_chars: 400, section_min_chars: 400,
     reply_bytes: 32768, max_tokens: 4096, max_parts: 8, label_chars: 80, text_chars: 1200 },
