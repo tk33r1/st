@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.3';
+var APP_VERSION = '6.4';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -1964,7 +1964,8 @@ function showHistoryPanel() {
   panel.innerHTML = '<div class="agent-drawer-sheet" role="dialog" aria-modal="true" aria-label="' + tr('Chats', 'チャット') + '">'
     + '<div class="agent-panel-head"><span class="t glow">✦ MAGI</span><button type="button" class="agent-panel-close" aria-label="' + tr('Close', '閉じる') + '">✕</button></div>'
     + '<button type="button" id="btn-reset" class="drawer-new">'
-    + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+    // 新しい会話は四角とペン（画像の追加の「＋」と見分ける。トップページと同じ形）
+    + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>'
     + '<span>' + tr('New chat', '新しいチャット') + '</span></button><div class="drawer-label">' + tr('Chats', 'チャット') + '</div><div id="agent-history-list"></div></div>';
   panel.onAgentClose = function (hadFocus) {
     menuBtn.setAttribute('aria-expanded', 'false');

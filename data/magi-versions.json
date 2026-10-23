@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.4",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "「新しい会話」のボタンを、画像を追加する「＋」と見分けやすい形（四角とペン）にしました。",
+          "Webで調べる質問で場所の指定が無いとき（天気や近くの店など）は、通信元から推定した場所で調べ、回答に推定した場所を出すようにしました。"
+        ],
+        "en": [
+          "The New conversation button now shows a square and pen, so it is easy to tell apart from the + that adds an image.",
+          "When a web question depends on location but names no place, such as the weather or nearby shops, MAGI searches the place estimated from your network and shows it in the reply."
+        ]
+      }
+    },
+    {
       "version": "6.3",
       "date": "2026-10-23",
       "changes": {
