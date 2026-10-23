@@ -25,6 +25,9 @@ SITE_RANK_SCOPES = "site,nitori,retail,tools,game"
 SEARCH_CLICK_ENABLED = "true"
 # 読み上げ（/magi2/speech）。"true" かつ secret の MAGI_FISH_AUDIO_API_KEY・SPEECH_SIGN_KEY があるときだけ開き、回答に署名を付ける（読み上げ設計§5）
 SPEECH_ENABLED = "true"
+# Web の回答で、本文を JavaScript で描く出典を Cloudflare Browser Run で読むときのアカウント（識別子で、秘密ではない）。
+# 鍵は secret の BROWSER_RUN_API_TOKEN（権限は Browser Run - Edit）。無ければ描画しない
+BROWSER_RUN_ACCOUNT_ID = "28a9a66a67a07a598cb99f7cc0ab54ed"
 # WebSocket の入口（/magi2/ws。読み上げ設計§6）。"false" にすると画面は開く前の失敗として SSE に切り替わる（画面の出し直しは要らない）
 WS_ENABLED = "true"
 # 本番測定だけでscopeを一時的に足すときは、同じscopeをSITE_RANK_EVAL_SCOPESにも指定する。

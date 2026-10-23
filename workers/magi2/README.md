@@ -82,6 +82,10 @@ site_chatのない旧③は従来どおり。②は最初に分岐し、会話�
 
 ## A2の事実確認（4.9・2026-10-15公開）
 
+**JavaScript で描く出典の描画（2026-10-24）**: 出典の HTML から取れた本文が400字未満なら、本文の最も少ない1件だけを Cloudflare Browser Run の `/markdown`（REST）で描画して本文を取り直す（`renderThinSource`・`RESEARCH.render`）。気象庁の台風・天気のページのように、本文を JavaScript で描くページのためのもの。
+Browser Run は無料枠（全体で10秒に1回・1日10分）なので、1日100件（`render:global`）まで・15秒で打ち切り、429・失敗は描画しなかった扱いで照合を続ける。送るのは公開ページの URL だけ。
+鍵は secret `BROWSER_RUN_API_TOKEN`（Cloudflare の API トークン。権限は Account の Browser Run - Edit だけ）、アカウントは `wrangler.toml` の `BROWSER_RUN_ACCOUNT_ID`。鍵が無ければ描画しない（止め方も鍵の削除でよい）。
+
 問いと閾値は`INTENT_CLASSIFY.fact_questions`が正本。初回6問・継続5問、DJは初回2問・継続1問のまま。音楽理論・楽譜・コード・楽器の説明はresearch、曲推薦・選曲だけmusic。本人やサイトの事実はsite。旧契約の問いを維持する。
 
 最新情報のresearchは両テーマともOpenAI ResponsesのWeb検索（2026-10-15本人採用）。Webの推論はmedium（2026-10-14本人採用）、Webなしの事実説明はlowで、通常のダーク回答はAnthropicを維持する。URLを持つ検索結果より前の前置きは送らず、本文前の失敗だけAnthropicの検索・ページ取得へ1回答え直す。両社失敗やUTC日ごとのWeb上限（IP20回・全体300回）では注記とWebなしlowへ進む（Webの指示を含まない通常の事実回答の入力で答える）。Webの回答はページ選びを待たずに始め、選んだページのリンクは回答の後に出す。カウンタは既存のdaily_limitsを使い、DB移行は不要。各試行は45秒、Anthropicの検索と取得はそれぞれ最大3回、pause_turnはassistantのcontentを保持して1回だけ続ける。停止・本文後の失敗では答え直さない。UTCの確認日時とは別に日本の現在日付と曜日をWorkerが計算して上流へ渡す。

@@ -5779,3 +5779,73 @@ test('読み上げ計画§1.7・2.4: 開いた後に切れてもSSEで送り直�
   await assert.rejects(already.ctx.openAgentChat('https://workers.tk.st/magi2/chat', '{}', ac3.signal), e => e.name === 'AbortError');
   assert.equal(already.sockets.length, 0);
 });
+
+// --- Web の回答の出典の描画（RESEARCH.render。Cloudflare Browser Run の /markdown は模擬）---
+const RENDER_URL = 'https://api.cloudflare.com/client/v4/accounts/acct/browser-run/markdown';
+function renderWorker(render) {
+  const renders = [];
+  const w = a2Worker('research', 'yes', (url, o, b) => {
+    if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic');
+    if (url === RENDER_URL) { renders.push({ headers: o.headers, body: JSON.parse(o.body) }); return render(renders.length); }
+  });
+  Object.assign(w.env, { BROWSER_RUN_API_TOKEN: 'render-test', BROWSER_RUN_ACCOUNT_ID: 'acct', DB: counts() });
+  return Object.assign(w, { renders });
+}
+const renderedPage = '---\ntitle: "台風情報"\n---\n# 台風情報\n![](https://example.com/map.png)\n[ホーム](https://example.com/)\n## 台風第30号\n2026年10月24日03時 中心気圧 990hPa、北へ 15km/h。' + '詳細な予報の本文。'.repeat(60);
+const verifyCall = w => w.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply');
+
+test('Web回答: 本文の少ないHTMLの出典だけをBrowser Runで描画し、描画した本文で照合する', async () => {
+  const w = renderWorker(() => Response.json({ success: true, result: renderedPage }));
+  const events = sseEvents(await (await w.request('/magi2/chat', a2Body('台風の予定を確認して'))).text());
+  assert.equal(events.at(-1)[0], 'done');
+  assert.equal(w.renders.length, 1);
+  assert.equal(w.renders[0].headers.Authorization, 'Bearer render-test');
+  assert.equal(w.renders[0].body.url, 'https://example.com/');
+  assert.equal(w.renders[0].body.gotoOptions.waitUntil, 'networkidle2');
+  const evidence = JSON.parse(verifyCall(w).body.messages.at(-1).content).evidence;
+  const text = evidence[0].blocks.map(b => b.text).join('');
+  assert.match(text, /台風第30号/); assert.match(text, /中心気圧 990hPa/);
+  assert.doesNotMatch(text, /map\.png|https:\/\/example\.com\/\)|title:/, '画像・リンク先・前置きは本文にしない');
+  assert.equal(evidence[0].readable, true);
+  for (const key of ['html', 'textChars', 'rendered', 'icons']) assert.equal(key in evidence[0], false, key + ' はモデルへ送らない');
+  assert.equal(w.env.DB.rows.get('render:global|' + new Date().toISOString().slice(0, 10)), 1);
+});
+
+test('Web回答: 鍵が無い・上限・429・壊れた応答・時間切れでは描画せず、今までどおり照合を続ける', async () => {
+  const none = renderWorker(() => Response.json({ success: true, result: renderedPage }));
+  delete none.env.BROWSER_RUN_API_TOKEN;
+  assert.equal(sseEvents(await (await none.request('/magi2/chat', a2Body('台風の予定を確認して'))).text()).at(-1)[0], 'done');
+  assert.equal(none.renders.length, 0);
+  const limited = renderWorker(() => Response.json({ success: true, result: renderedPage }));
+  limited.ctx.searchConfig; // 同じ worker の設定を使う
+  const day = new Date().toISOString().slice(0, 10), cap = vm.runInContext('RESEARCH.render.daily_limit', limited.ctx);
+  for (let i = 0; i < cap; i++) await limited.env.DB.prepare('INSERT RETURNING count').bind('render:global', day, cap).first();
+  assert.equal(sseEvents(await (await limited.request('/magi2/chat', a2Body('台風の予定を確認して'))).text()).at(-1)[0], 'done');
+  assert.equal(limited.renders.length, 0);
+  for (const [label, reply] of [['429', () => Response.json({ success: false, errors: [{ code: 2001 }] }, { status: 429 })],
+    ['bad', () => new Response('not json')], ['fail', () => Response.json({ success: false })], ['short', () => Response.json({ success: true, result: 'x' })]]) {
+    const w = renderWorker(reply);
+    const events = sseEvents(await (await w.request('/magi2/chat', a2Body('台風の予定を確認して'))).text());
+    assert.equal(events.at(-1)[0], 'done', label); assert.equal(w.renders.length, 1, label);
+    const text = JSON.parse(verifyCall(w).body.messages.at(-1).content).evidence[0].blocks.map(b => b.text).join('');
+    assert.equal(text, '最新の答え', label + ' は元の本文のまま');
+  }
+  const slow = renderWorker(() => new Promise(() => {}));
+  vm.runInContext('RESEARCH.render.timeout_ms = 30', slow.ctx);
+  assert.equal(sseEvents(await (await slow.request('/magi2/chat', a2Body('台風の予定を確認して'))).text()).at(-1)[0], 'done');
+});
+
+test('Web回答: 本文が十分な出典は描画せず、描画は1回答につき1件まで', async () => {
+  const ctxW = worker();
+  const richSeen = [];
+  ctxW.ctx.fetch = async (url, o) => { richSeen.push(url); return Response.json({ success: true, result: renderedPage }); };
+  await ctxW.ctx.renderThinSource({ BROWSER_RUN_API_TOKEN: 't', BROWSER_RUN_ACCOUNT_ID: 'a' },
+    [{ url: 'https://a.example/', html: true, textChars: 400, blocks: [] }, { url: 'https://c.example/', html: false, textChars: 0, blocks: [] }], new AbortController().signal, () => {});
+  assert.equal(richSeen.length, 0, '本文が 400字以上の HTML と、HTML でない出典は描画しない');
+  const evidence = [{ url: 'https://a.example/', html: true, textChars: 10, blocks: [] }, { url: 'https://b.example/', html: true, textChars: 5, blocks: [] }, { url: 'https://c.example/', html: false, textChars: 0, blocks: [] }];
+  const seen = [];
+  ctxW.ctx.fetch = async (url, o) => { seen.push(JSON.parse(o.body).url); return Response.json({ success: true, result: renderedPage }); };
+  await ctxW.ctx.renderThinSource({ BROWSER_RUN_API_TOKEN: 't', BROWSER_RUN_ACCOUNT_ID: 'a' }, evidence, new AbortController().signal, () => {});
+  assert.deepEqual(seen, ['https://b.example/'], '本文の最も少ない HTML の出典1件だけ');
+  assert.equal(evidence[1].rendered, true); assert.equal(evidence[0].rendered, undefined);
+});

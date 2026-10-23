@@ -1319,7 +1319,8 @@ async function readResearchSource(item, signal) {
         const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
         if (stop.aborted) throw searchFailure('cancelled');
         const content = researchSourceBlocks(raw, /text\/html/i.test(type));
-        return {...item, allowed:true, readable:content.blocks.length > 0, ...content,
+        return {...item, allowed:true, readable:content.blocks.length > 0, ...content, html:/text\/html/i.test(type),
+          textChars:content.blocks.reduce((n, b) => n + b.text.length, 0),
           truncated:content.truncated || truncated, icons:sourceIconHrefs(/text\/html/i.test(type) ? raw : '', url)};
       }
     }, signal);
@@ -1452,10 +1453,45 @@ function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,re
   return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
-async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal}) {
+// 本文を JavaScript で描くページ（気象庁の台風・天気など）は HTML に本文が無い。取れた本文がごく少ない HTML の出典を
+// 1回答につき1件だけ、Cloudflare Browser Run の /markdown で描画して本文を取り直す（RESEARCH.render）。
+// 無料枠は全体で10秒に1回・1日10分なので、429・上限・失敗は今までどおり読めなかった出典のまま進む。
+// 描画するのは researchSourceUrl を通った公開ページの URL だけで、利用者の質問や回答は送らない
+async function renderThinSource(env, evidence, signal, log) {
+  const cfg = RESEARCH.render;
+  if (!env.BROWSER_RUN_API_TOKEN || !env.BROWSER_RUN_ACCOUNT_ID) return;
+  const thin = evidence.filter(e => e.html && e.textChars < cfg.min_chars).sort((a, b) => a.textChars - b.textChars)[0];
+  if (!thin) return;
+  if (env.DB && await countUp(env.DB, 'render:global', utcDay(), cfg.daily_limit) == null) { log('research', 'render_limit'); return; }
+  try {
+    const markdown = await searchDeadline(cfg.timeout_ms, async stop => {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.BROWSER_RUN_ACCOUNT_ID}/browser-run/markdown`, {
+        method: 'POST', signal: stop, headers: { Authorization: `Bearer ${env.BROWSER_RUN_API_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: thin.url, gotoOptions: { waitUntil: 'networkidle2', timeout: cfg.page_ms }, rejectRequestPattern: cfg.reject_patterns }),
+      });
+      if (!res.ok) { res.body?.cancel().catch(() => {}); throw new Error('render_http_' + res.status); }
+      const data = JSON.parse(await readLimited(res, cfg.max_bytes, stop, cfg.timeout_ms));
+      return data && data.success === true && typeof data.result === 'string' ? data.result : null;
+    }, signal);
+    if (!markdown) return;
+    // 見出しの前置き（front matter）・画像・リンク先の URL は本文にしない（リンクは文字だけ残す）
+    const text = markdown.replace(/^---\n[\s\S]*?\n---\n/, '').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+    const content = researchSourceBlocks(text, false);
+    const chars = content.blocks.reduce((n, b) => n + b.text.length, 0);
+    if (chars <= thin.textChars) return;
+    Object.assign(thin, content, { readable: true, textChars: chars, rendered: true });
+    log('research', 'rendered', chars);
+  } catch (e) {
+    if (signal.aborted) throw searchFailure('cancelled');
+    log('research', 'render_failed', e && (e.envelope?.code || e.message));
+  }
+}
+
+async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, log = () => {}}) {
   const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
   if (signal.aborted) throw searchFailure('cancelled');
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
+  await renderThinSource(upstream, evidence, signal, log);
   // アイコンは照合と並行して取り、照合が終わった時点で取れている分だけ付ける。取り残しは照合の終わりで止める
   const iconStop = new AbortController(), stopIcons = () => iconStop.abort();
   signal.addEventListener('abort', stopIcons, { once: true });
@@ -1470,8 +1506,8 @@ function withSourceIcons(verified, iconFor) {
 }
 
 async function checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, evidence}) {
-  // 照合の材料からアイコンの候補を外す（モデルへ送るのは出典の番号・題名・URL・本文の区画だけ）
-  evidence = evidence.map(({icons, ...e}) => e);
+  // 照合の材料からアイコンの候補と内部の印を外す（モデルへ送るのは出典の番号・題名・URL・本文の区画だけ）
+  evidence = evidence.map(({icons, html, textChars, rendered, ...e}) => e);
   const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
   const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage),
     stream:false, signal, replyLimit:limit});
@@ -1532,7 +1568,7 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
             throw stageError('upstream', 'research_http_' + res.status, 'Web検索に失敗しました', { retryable: true });
           }
           const content = await readResearchResponse(res.body, reader, cfg.provider, stop);
-          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,verifiedNow,result:reader.finish(),cfg,replyLanguage,signal:stop});
+          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,verifiedNow,result:reader.finish(),cfg,replyLanguage,signal:stop,log});
           if (paused >= RESEARCH.max_pause_turns) throw stageError('upstream', 'research_pause_limit', 'Web検索が完了しませんでした', { retryable: true });
           body = { ...body, messages: [...body.messages, { role: 'assistant', content }] };
           reader.beginTurn();
