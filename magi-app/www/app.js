@@ -791,13 +791,14 @@ function refreshSpeechFeature() {
   loadAgentModels().then(function (j) { var on = !!(j && j.features && j.features.speech); if (on !== agentSpeechOn) { agentSpeechOn = on; syncSpeakButtons(); } });
 }
 // 共有は回答の本文と出典だけ。会話は公開しないので URL は付けない。Android の WebView は navigator.share を持たないので
-// 公式の Share プラグインで OS の共有シートへ渡す。共有できない環境ではコピーする
+// 公式の Share プラグインで OS の共有シートへ渡す。ブラウザの共有シートは指で操作する端末だけで使い、
+// PC（マウス・トラックパッド）ではコピーする（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る）
 async function shareAgentReply(btn, bar, item) {
   var text = agentShareText(item.content, item.sources, isJa()), title = agentTitle || 'MAGI';
   var native = window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
   try {
     if (native) { await native.share({ title: title, text: text, dialogTitle: tr('Share reply', '回答を共有') }); return; }
-    if (navigator.share) { await navigator.share({ title: title, text: text }); return; }
+    if (navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: title, text: text }); return; }
   } catch (err) {
     if (err && (err.name === 'AbortError' || /cancel/i.test(String(err.message || '')))) return;
   }

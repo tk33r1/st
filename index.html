@@ -2067,7 +2067,8 @@
 
     .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-    .agent-reply.streaming::after {
+    /* 書いている途中のカーソルは本文の末尾に付ける（操作列の下に出さない） */
+    .agent-reply.streaming .agent-reply-body::after {
       content: '▌';
       color: var(--primary-color);
       animation: blink calc(60s / var(--bpm)) step-end infinite;
@@ -2158,6 +2159,8 @@
     .reply-bar { gap: 0.75rem; flex-wrap: wrap; margin-top: 0.6rem; }
     .reply-bar .react-btn { min-width: 2rem; height: 2rem; position: relative; }
     .reply-bar .react-btn::after { content: ''; position: absolute; inset: -6px; }
+    /* hidden 属性（🔊・［ソース］を出さないとき）を .react-btn の display に負けさせない */
+    .reply-bar .react-btn[hidden] { display: none; }
     .reply-bar .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
     .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.55rem; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
@@ -7462,10 +7465,11 @@
     function refreshSpeechFeature() {
       loadAgentModels().then(j => { const on = !!(j && j.features && j.features.speech); if (on !== agentSpeechOn) { agentSpeechOn = on; syncSpeakButtons(); } });
     }
-    // 共有は回答の本文と出典だけ。会話は公開しないので URL は付けない。共有できない環境ではコピーする
+    // 共有は回答の本文と出典だけ。会話は公開しないので URL は付けない。共有シートは指で操作する端末だけで使い、
+    // PC（マウス・トラックパッド）ではコピーする（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る）
     async function shareAgentReply(btn, bar, item) {
       const text = agentShareText(item.content, item.sources, isJaPage()), title = agentTitle || 'MAGI';
-      if (navigator.share) {
+      if (navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
         try { await navigator.share({ title, text }); return; }
         catch (err) { if (err && err.name === 'AbortError') return; }
       }

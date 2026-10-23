@@ -234,7 +234,8 @@
     .agent-reply { margin-top: 0.4rem; padding: 0.6rem 0.7rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
     .agent-reply .agent-who { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
     .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
+    /* 書いている途中のカーソルは本文の末尾に付ける（操作列の下に出さない） */
+    .agent-reply.streaming .agent-reply-body::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
     .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
     .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
     .agent-page span { font-size: 11px; opacity: .8; }
@@ -257,6 +258,8 @@
     .reply-bar { gap: 0.65rem; flex-wrap: wrap; margin-top: 0.6rem; }
     .reply-bar .react-btn { min-width: 34px; height: 34px; position: relative; }
     .reply-bar .react-btn::after { content: ''; position: absolute; inset: -5px; }
+    /* hidden 属性（🔊・［ソース］を出さないとき）を .react-btn の display に負けさせない */
+    .reply-bar .react-btn[hidden] { display: none; }
     .reply-bar .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
     .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.6rem; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }

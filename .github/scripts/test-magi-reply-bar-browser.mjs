@@ -36,8 +36,51 @@ const until = async (check, label) => { for (let i = 0; i < 300; i++) { if (awai
 const captures = resolve(root, 'workers/.wrangler/magi2-speech/captures');
 let checked = 0;
 try {
+  // 読み上げを止めていて出典の無い回答: 見えるのは［コピー］［共有］［いいね］［︙］だけで、空の枠を残さない。
+  // 書いている途中のカーソルは本文の末尾に付き、操作列の下には出ない
+  for (const [name, path, width] of [['home-off', '/', 1280], ['app-off', '/magi-app/www/', 390]]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, locale: 'ja-JP', serviceWorkers: 'block' });
+    const page = await context.newPage(), errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.addInitScript(() => { localStorage.setItem('st-analytics', 'off'); sessionStorage.setItem('magi_transport', 'sse'); });
+    await page.route('**/*', async route => {
+      const url = new URL(route.request().url());
+      if (url.pathname === '/magi2/models') { await route.fulfill({ json: { personas: {}, synthesizer: {}, features: { speech: false } }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
+      if (url.pathname === '/magi2/usage') { await route.fulfill({ json: { used: 1, limit: 60, day: '2026-10-23', resets_at: '2026-10-24T00:00:00Z', global_full: false }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
+      if (url.pathname === '/magi2/chat') {
+        await route.fulfill({ contentType: 'text/event-stream', headers: { 'Access-Control-Allow-Origin': origin }, body: ': padding\n\n'
+          + event('classification', { version: 1, intent: 'research', mode: 'fact', fresh: 'no', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: { version: 1, code: 'ja', source: 'ui' } })
+          + event('integrated', { delta: answer }) + event('done', {}) });
+        return;
+      }
+      if (url.origin !== origin) { await route.fulfill({ status: 204, body: '' }); return; }
+      await route.continue();
+    });
+    await page.goto(origin + path, { waitUntil: 'domcontentloaded' });
+    if (name.startsWith('home') && !(await page.locator('#agentdock:not(.collapsed)').count())) await page.locator('#activitybar [data-act="agent"]').click();
+    await page.locator('#agent-input').fill('開館時間を教えて');
+    await page.locator('#agent-send').click();
+    const bar = page.locator('.agent-reply .reply-bar').last();
+    await until(async () => (await page.locator('.agent-reply.streaming').count()) === 0 && (await bar.count()) === 1, 'reply done');
+    await page.waitForTimeout(300);
+    assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'share', 'like', 'emoji'], name);
+    const cursor = await page.evaluate(() => {
+      const reply = [...document.querySelectorAll('.agent-reply')].at(-1), body = reply.querySelector('.agent-reply-body');
+      reply.classList.add('streaming');
+      const out = { body: getComputedStyle(body, '::after').content, reply: getComputedStyle(reply, '::after').content };
+      reply.classList.remove('streaming');
+      return out;
+    });
+    assert.equal(cursor.body, '"\u{258C}"', name + ' cursor on body'); assert.equal(cursor.reply, 'none', name + ' no cursor below the bar');
+    if (process.argv.includes('--screenshots')) { mkdirSync(captures, { recursive: true }); await page.screenshot({ path: resolve(captures, name + '-bar.png'), animations: 'disabled' }); }
+    assert.deepEqual(errors, [], name + ' page errors');
+    await context.close();
+    checked++;
+  }
   for (const [name, path, width, lang] of [['home-light', '/', 1280, 'ja-JP'], ['home-dark', '/', 1280, 'en-US'], ['app', '/magi-app/www/', 390, 'ja-JP'], ['app-320', '/magi-app/www/', 320, 'en-US']]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 }, locale: lang, serviceWorkers: 'block' });
+    // アプリの画面はスマホ相当（指で操作する端末）。共有シートはこのときだけ使い、PC ではコピーする
+    const touch = !name.startsWith('home');
+    const context = await browser.newContext({ viewport: { width, height: 900 }, locale: lang, serviceWorkers: 'block', isMobile: touch, hasTouch: touch });
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
     const page = await context.newPage(), errors = [], external = [], speech = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -72,12 +115,13 @@ try {
     const sentAt = external.length;
     await page.locator('#agent-send').click();
     const bar = page.locator('.agent-reply .reply-bar').last();
-    await until(async () => (await bar.locator('[data-act="sources"]:not([hidden])').count()) === 1, 'sources button');
+    await until(async () => (await bar.locator('[data-act="sources"]:visible').count()) === 1, 'sources button');
 
     // §2.1 並び: ［コピー］［🔊］［共有］［いいね］［︙］、右寄せの［ソース］。押せる大きさ
-    const acts = await bar.locator('button:not([hidden])').evaluateAll(list => list.map(b => b.dataset.act));
+    await until(async () => (await bar.locator('[data-act="speak"]:visible').count()) === 1, 'speak button');
+    const acts = await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act));
     assert.deepEqual(acts, ['copy', 'speak', 'share', 'like', 'emoji', 'sources'], name);
-    for (const box of await bar.locator('button:not([hidden])').evaluateAll(list => list.map(b => b.getBoundingClientRect().height))) assert(box >= 32, name + ' button height ' + box);
+    for (const box of await bar.locator('button:visible').evaluateAll(list => list.map(b => b.getBoundingClientRect().height))) assert(box >= 32, name + ' button height ' + box);
     const src = bar.locator('[data-act="sources"]');
     assert.equal(await src.locator('img.src-icon').count(), 1); assert.equal(await src.locator('.src-letter').count(), 1);
     assert.equal(await page.locator('.agent-reply .agent-sources').count(), 0, '回答の下に旧い一覧を出さない');
@@ -100,17 +144,27 @@ try {
     assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.dataset.act), 'sources');
     assert.deepEqual(external.slice(sentAt), [], name + ' external requests');
 
-    // §2.2 共有: 題名と本文（[n]と出典の一覧）を渡し、URL は渡さない。共有が無ければコピーして知らせる
-    await bar.locator('[data-act="share"]').click();
-    await until(async () => (await page.evaluate(() => window.__shared.length)) === 1, 'share');
-    const shared = await page.evaluate(() => window.__shared[0]);
-    assert.deepEqual(Object.keys(shared).sort(), ['text', 'title']);
-    assert.match(shared.text, /\[1\]/); assert.match(shared.text, /https:\/\/www\.example\.com\/hours/);
-    await page.evaluate(() => { delete navigator.share; Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); });
-    await bar.locator('[data-act="share"]').click();
-    await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
+    // §2.2 共有: 題名と本文（[n]と出典の一覧）を渡し、URL は渡さない。PC と、共有が無い環境ではコピーして知らせる
     // Windows のクリップボードは改行を CRLF にして返す
-    assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n'), shared.text);
+    const copied = async () => (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
+    let sharedText;
+    if (touch) {
+      await bar.locator('[data-act="share"]').click();
+      await until(async () => (await page.evaluate(() => window.__shared.length)) === 1, 'share');
+      const shared = await page.evaluate(() => window.__shared[0]);
+      assert.deepEqual(Object.keys(shared).sort(), ['text', 'title']);
+      sharedText = shared.text;
+      await page.evaluate(() => { delete navigator.share; Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); });
+      await bar.locator('[data-act="share"]').click();
+      await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
+      assert.equal(await copied(), sharedText);
+    } else {
+      await bar.locator('[data-act="share"]').click();
+      await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
+      assert.equal(await page.evaluate(() => window.__shared.length), 0, 'PC では共有シートを開かない');
+      sharedText = await copied();
+    }
+    assert.match(sharedText, /\[1\]/); assert.match(sharedText, /https:\/\/www\.example\.com\/hours/);
 
     // §2.3 読み上げ: 押すと区切り0と1を取り、鳴らし終えたら元に戻る。もう一度押すとすぐ止まる
     const speak = bar.locator('[data-act="speak"]');
@@ -128,8 +182,8 @@ try {
     await page.reload({ waitUntil: 'domcontentloaded' });
     if (home && !(await page.locator('#agentdock:not(.collapsed)').count())) await page.locator('#activitybar [data-act="agent"]').click();
     const restored = page.locator('.agent-reply .reply-bar').last();
-    await until(async () => (await restored.locator('[data-act="speak"]:not([hidden])').count()) === 1, 'restored speak');
-    assert.equal(await restored.locator('[data-act="sources"]:not([hidden])').count(), 1);
+    await until(async () => (await restored.locator('[data-act="speak"]:visible').count()) === 1, 'restored speak');
+    assert.equal(await restored.locator('[data-act="sources"]:visible').count(), 1);
     assert.deepEqual(errors, [], name + ' page errors');
     await context.close();
     checked++;
