@@ -2,7 +2,6 @@ import bundledVersions from '../../data/magi-versions.json';
 import { VERSION_HISTORY } from './personas.js';
 
 import { cleanVersionHistory, versionOrder, VERSION_HISTORY_LIMITS } from './version-history.js';
-export { cleanVersionHistory, versionOrder } from './version-history.js';
 
 let versionHistoryCache = null, versionHistoryExpires = 0, versionHistoryPending = null;
 export async function getVersionHistory() {

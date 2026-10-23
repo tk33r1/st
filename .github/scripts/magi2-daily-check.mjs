@@ -5,7 +5,6 @@ import {resolve,join,relative,sep} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {magiDisplayVersion} from './magi-version.mjs';
-import {Script} from 'node:vm';
 import {cleanVersionHistory,versionOrder as order,VERSION_HISTORY_LIMITS} from '../../workers/magi2/version-history.js';
 
 const repo=fileURLToPath(new URL('../../',import.meta.url));
@@ -26,7 +25,7 @@ const versionFiles=[...versionRequired,'magi-app/www/sw.js','magi-app/www/index.
 const protectedFile=path=>/^\.github\/(?:workflows\/|magi2-daily\/)/.test(path)
   ||/^\.github\/scripts\/(?:test-)?magi2-daily-/.test(path)
   ||['.github/scripts/magi-version.mjs','.github/scripts/magi-eval-budget.mjs','config/ai-models.json',
-    'workers/magi2/personas.js','workers/magi2/wrangler.toml','workers/magi2/schema.sql'].includes(path)
+    'workers/magi2/personas.js','workers/magi2/version-history.js','workers/magi2/wrangler.toml','workers/magi2/schema.sql'].includes(path)
   ||/^workers\/magi2\/migrations\//.test(path);
 const inScope=path=>isScreen(path)||isTest(path)||isWorkerInput(path)
   ||['AGENTS.md','.github/JEV.md','.github/AI_MODELS.md','magi-app/README.md','workers/magi2/README.md'].includes(path)
@@ -52,29 +51,6 @@ function newline(text) {
   return !lf?'none':!crlf?'lf':lf===crlf?'crlf':'mixed';
 }
 function cacheNumber(text) {return Number(text?.match(/magi-shell-v(\d+)/)?.[1]);}
-// 新規の名前付きヘルパーだけはreturnを許す。Nodeの構文解析だけを使い、テストは実行しない。
-// モジュール直下で完結する宣言に限り、既存のヘルパーやtestのcallbackへのreturn追加は拒否する。
-function testBypass(file) {
-  let added=file.added.join('\n');
-  if(/\b(?:skip|todo)\b|process\.exit|\.only\s*\(/.test(added))return true;
-  const declaration=/^(?:(?:async )?function\s+[\w$]+\s*\(|(?:const|let)\s+[\w$]+\s*=\s*(?:async\s+)?(?:\([^{}\n]*\)|[\w$]+)\s*=>\s*\{)/gm;
-  if(!file.path.endsWith('.py'))for(const match of added.matchAll(declaration)) {
-    try {
-      for(let end=added.indexOf('}',match.index);end>=0;end=added.indexOf('}',end+1)) {
-        const helper=added.slice(match.index,end+1);
-        try {new Script(/^(?:const|let)\b/.test(helper)?helper:'('+helper+')');}catch{continue;}
-        const offset=file.after?.indexOf(helper);
-        if(offset>=0&&offset===file.after.lastIndexOf(helper)&&!file.before?.includes(helper)) {
-          const prefix=file.after.slice(0,offset).replace(/^import\s+(?!\()[\s\S]*?;\r?$/gm,'');
-          new Script(prefix); // callbackの引数の途中や既存関数内なら構文が閉じず拒否する。
-          added=added.replace(helper,' '.repeat(helper.length));
-        }
-        break;
-      }
-    }catch{}
-  }
-  return /\breturn\b/.test(added);
-}
 function shellScripts(html) {
   return [...(html||'').matchAll(/<script\b[^>]*\bsrc=["'](?:\.\/)?([^"'?#]+\.js)(?:\?([^"'#]*))?["']/gi)]
     .filter(m=>!m[1].includes(':')&&!m[1].startsWith('/'))
@@ -152,7 +128,8 @@ export function inspectChanges({commits,baseFiles={},usedVersions=[]}) {
       if(before&&path.endsWith('.md')&&before.split('\n').slice(0,8).some(line=>/^実装済み/.test(line.trim())))fail(commit,'frozen_document',path);
       if(before&&after&&newline(before)!=='none'&&newline(after)!=='none'&&newline(before)!==newline(after))fail(commit,'line_endings',path);
       if(isTest(path)&&before!==null&&removed.length)fail(commit,'test_removal',path);
-      if(isTest(path)&&testBypass(file))fail(commit,'test_bypass',path);
+      // 意図までは判定できないので、ヘルパーのreturnも含めて追加行のreturnはBへ回す（安全側）。
+      if(isTest(path)&&added.some(line=>/\b(?:skip|todo|return)\b|process\.exit|\.only\s*\(/.test(line)))fail(commit,'test_bypass',path);
       if(added.some(line=>upstream.test(line)))fail(commit,'production_endpoint',path);
       if(path==='index.html') {
         if(!version&&Buffer.byteLength(after||'')>Buffer.byteLength(before||''))fail(commit,'home_size',path);

@@ -48,6 +48,11 @@ test('A6専用の入口を明示した場合だけ当月台帳を予約し、A2�
     assert.throws(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+api.evaluationBudgetPath]),/shared/);
     value.scope='magi-dialogue-20261015';writeFileSync(path,JSON.stringify(value));
     assert.throws(()=>api.dailyPaidEvaluationGate(args),/Invalid/);
+    // 保存先と枠の月は同じ時刻で決める。月末の境目でも、その月の台帳として扱う。
+    const edge=new Date('2026-10-31T23:59:59.999Z'),edgePath=api.dailyEvaluationBudgetPath(edge);
+    writeFileSync(edgePath,JSON.stringify({...value,scope:'magi2-daily-202610'}));
+    assert.doesNotThrow(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+edgePath],edge));
+    assert.throws(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+edgePath],new Date('2026-11-01T00:00:00Z')),/shared/);
   } finally {assert.equal(dirname(dir),resolve(tmpdir()));rmSync(dir,{recursive:true,force:true});}
 });
 test('A6: 全社合計$0.50を超える予約を拒否し、実行をまたいで予約を減らさない',()=>fixture(f=>{

@@ -29,7 +29,7 @@
 | 片方だけ | 各コミットが、Worker の取り込むファイル（設計§3.4 の定義）と、利用者に配る画面の両方には触れていない。テスト・文書はどちらと一緒でもよい（設計§2.2 の10。版のコミットは除く） | 毎回 | ○ | ○ |
 | 大きさ | ルートの `index.html` のバイト数が、版の表示の桁の分を除いて増えていない（設計§2.2 の5） | `index.html` を変えたとき | ○ | ○ |
 | 外部の参照 | トップページの追加された行に `http://`・`https://`・`//` で始まる読み込み（`src`・`href`・`url(`・`import`・`fetch`）が無い（設計§2.2 の5） | `index.html` を変えたとき | ○ | ○ |
-| テストを緩めていない | 既存のテストファイルの差分が追加だけで、`assert` の削除・条件の書き換え・テストの飛ばし（`skip`・早期の `return`）が無い。新しいモジュール直下のJSヘルパー宣言全体（名前付きfunction・変数へ代入するarrow）の`return`は許す。既存ヘルパーへの追加・callback内・構文上の範囲が不明なものは外れ | テストを変えたとき | ○ | ○ |
+| テストを緩めていない | 既存のテストファイルの差分が追加だけで、`assert` の削除・条件の書き換え・テストの飛ばし（`skip`・早期の `return`）が無い。早期の `return` と区別できないので、追加した行の `return` はヘルパーでも外れ | テストを変えたとき | ○ | ○ |
 | 触れてはいけない場所 | `.github/workflows/`・`.github/magi2-daily/README.md`・`.github/scripts/magi2-daily-check.mjs` とそのテスト・生成物・「実装済み」の文書・`workers/magi2/schema.sql`・`workers/magi2/migrations/` に差分が無い。`magi-app/android/` は `build.gradle` の versionName の1行だけ | 毎回 | ○ | ○ |
 | 印 | PR のコミットがすべて `[magi2-daily]` 付き | 毎回 | ○ | ○ |
 | 本番の入口 | 追加された行に、本番の入口（`tk.st` の API・`workers.tk.st`・`magi2-eval.tk.st`）と各社の API のホスト名が新しく現れない。既にある行は対象外で、正当な追加は区分 B（Actions の検証のジョブのネットワークは絞れないため。設計§3.2） | 毎回 | ○ | ○ |

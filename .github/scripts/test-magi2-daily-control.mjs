@@ -196,13 +196,16 @@ test('共通公開はdispatchのoptionsだけでWorkerを選び、未知名は�
   const wrapper=readFileSync('.github/workflows/deploy-worker.yml','utf8');
   const core=readFileSync('.github/workflows/deploy-worker-core.yml','utf8');
   assert.doesNotMatch(core,/case "\$WORKER" in/);
+  // 一覧は公開対象ではなく呼び出し側のコミットから読む。
+  assert.match(core,/ref: \$\{\{ github\.sha \}\}\n\s+path: \.deploy-caller/);
+  assert.match(core,/OPTIONS_FILE: \.deploy-caller\/\.github\/workflows\/deploy-worker\.yml/);
   const script=core.match(/node --input-type=module <<'JS'\n([\s\S]*?)^        JS$/m)?.[1];assert.ok(script);
   const dir=mkdtempSync(join(tmpdir(),'magi2-worker-options-'));
   try {
     const path=join(dir,'.github/workflows/deploy-worker.yml');mkdirSync(dirname(path),{recursive:true});
     writeFileSync(path,wrapper.replace('          - games','          - games\n          - future-worker'));
     const run=worker=>spawnSync(process.execPath,['--input-type=module','-e',script],
-      {cwd:dir,encoding:'utf8',env:{PATH:process.env.PATH,WORKER:worker}});
+      {cwd:dir,encoding:'utf8',env:{PATH:process.env.PATH,WORKER:worker,OPTIONS_FILE:path}});
     assert.equal(run('magi2').status,0);assert.equal(run('future-worker').status,0);
     const invalid=run('missing');assert.notEqual(invalid.status,0);assert.match(invalid.stderr,/::error::Worker must be listed/);
   } finally {assert.equal(dirname(dir),resolve(tmpdir()));rmSync(dir,{recursive:true,force:true});}

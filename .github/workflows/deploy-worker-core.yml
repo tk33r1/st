@@ -42,6 +42,15 @@ jobs:
       with:
         ref: ${{ inputs.sha }}
         persist-credentials: false
+    # 許可する一覧は呼び出し側のコミット（手動なら選んだコミット、自動公開ならmain）から読む。
+    # 公開対象のコミットが自分で一覧を広げられないよう、対象のcheckoutとは分ける。
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        path: .deploy-caller
+        sparse-checkout: .github/workflows/deploy-worker.yml
+        sparse-checkout-cone-mode: false
+        persist-credentials: false
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
@@ -49,10 +58,11 @@ jobs:
     - name: Validate Worker against dispatch options
       env:
         WORKER: ${{ inputs.worker }}
+        OPTIONS_FILE: .deploy-caller/.github/workflows/deploy-worker.yml
       run: |
         node --input-type=module <<'JS'
         import {readFileSync} from 'node:fs';
-        const workflow=readFileSync('.github/workflows/deploy-worker.yml','utf8');
+        const workflow=readFileSync(process.env.OPTIONS_FILE,'utf8');
         const options=workflow.match(/^        options:\n((?:          - [a-z][a-z0-9-]*\n)+)/m)?.[1]
           .trim().split('\n').map(line=>line.trim().slice(2));
         if(!options?.includes(process.env.WORKER)) {

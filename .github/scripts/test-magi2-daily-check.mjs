@@ -45,7 +45,7 @@ test('Workerと日次検査が同じ履歴の境界条件を使う',()=>{
 test('機械的条件: 保護ファイル・範囲外・完了済み文書・印なしを落とす',()=>{
   for(const path of ['.github/workflows/a.yml','.github/magi2-daily/README.md','.github/scripts/magi2-daily-check.mjs',
     '.github/scripts/test-magi2-daily-check.mjs','workers/magi2/migrations/0003_a.sql','workers/magi2/schema.sql',
-    'workers/magi2/personas.js','config/ai-models.json','data/magi-context.json','tools/test/index.html','magi-app/android/a.java']) {
+    'workers/magi2/personas.js','workers/magi2/version-history.js','config/ai-models.json','data/magi-context.json','tools/test/index.html','magi-app/android/a.java']) {
     assert.ok(has(inspect([file(path)]),'protected_path'),path);
   }
   assert.ok(has(inspect([file('workers/magi2/README.md','# 記録\n\n実装済み（2026-10-23）。\n','new\n')]),'frozen_document'));
@@ -70,18 +70,17 @@ test('機械的条件: トップの肥大化・外部アセット・PWAキャッ
   assert.ok(has(inspect([file('index.html',null,'<script src="https://example.test/a.js"></script>')]),'external_asset'));
   assert.ok(has(inspect([file('magi-app/www/app.js')]),'pwa_cache'));
 });
-test('追加したモジュール直下のヘルパーのreturnは許し、テスト内の早期returnは拒否する',()=>{
+test('追加したテストの行のreturnは、ヘルパーでもテストの中でもBへ回す',()=>{
   const path='.github/scripts/test-magi2.mjs';
-  const helper="function fixture(value) {\n  return value + 1;\n}\nassert.equal(fixture(1),2);\n";
-  assert.equal(inspect([file(path,null,helper)]).ok,true);
-  assert.equal(inspect([file(path,null,"const helper = value => {\n  return value + 1;\n};\nassert.equal(helper(1),2);\n")]).ok,true);
-  for(const source of ["test('case',()=>{ return; assert.ok(false); });\n",
-    "test('case',()=>{ return true; assert.ok(false); });\n",
-    "test('case',\nfunction callback() {\n return;\n});\n"])assert.ok(has(inspect([file(path,null,source)]),'test_bypass'));
-  assert.ok(has(inspect([file(path,null,"test('case',()=>{\nconst helper = value => { return value; };\nreturn helper(1);\n});\n")]),'test_bypass'));
-  assert.ok(has(inspect([file(path,null,"function helper() { test.skip('case',()=>{}); return 1; }\n")]),'test_bypass'));
-  assert.ok(has(inspect([file(path,"function helper() {\n  assert.ok(value);\n}\n",
-    "function helper() {\n  return value;\n  assert.ok(value);\n}\n")]),'test_bypass'));
+  // 構文や配置から意図は判定できない。名前付きの関数へ移した早期returnもすり抜けさせない。
+  for(const source of ["function fixture(value) {\n  return value + 1;\n}\nassert.equal(fixture(1),2);\n",
+    "const helper = value => {\n  return value + 1;\n};\nassert.equal(helper(1),2);\n",
+    "test('case',()=>{ return; assert.ok(false); });\n",
+    "test('case',\nfunction callback() {\n return;\n});\n",
+    "function body() {\n  return;\n  assert.ok(false);\n}\ntest('case', body);\n",
+    "function register() {\n  test('case', () => { return; assert.ok(false); });\n}\nregister();\n",
+    "test.skip('case',()=>{});\n"])assert.ok(has(inspect([file(path,null,source)]),'test_bypass'),source);
+  assert.equal(inspect([file(path,null,"test('case',()=>{ assert.equal(1+1,2); });\n")]).ok,true);
   assert.ok(has(inspect([file(path,null,"new Request('https://workers.tk.st/magi2');\n")]),'production_endpoint'));
 });
 test('PWAのすべての版付きスクリプトで、HTMLとSWの版の一致と変更時の更新を検査する',()=>{
