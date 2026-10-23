@@ -1141,7 +1141,7 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
 
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
-  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, signal, send, log }) {
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, place = null, signal, send, log }) {
   // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
   const pagesWait = pagesPromise ? awaitPageChoice(pagesPromise, pageChoice, signal) : null;
   if (pagesWait && !research) pageChoice = await pagesWait;
@@ -1149,7 +1149,7 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
   const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly };
   const input = factAnswerMessages({ ...options, research });
   const answer = research
-    ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, signal, send, log })
+    ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, place, signal, send, log })
     : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
   if (pagesWait && research) pageChoice = await pagesWait;
   pageChoice = withoutCurrentPage(pageChoice, page);
@@ -1158,12 +1158,24 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
 }
 
 // 日付・項目・出典の指示は実経路と週次smokeで同じ形から作る。
-function researchMessages(messages, verifiedNow) {
+function researchMessages(messages, verifiedNow, place = null) {
   const localDate = researchLocalDate(verifiedNow);
   const firstUser = messages.findIndex(m => m.role !== 'system');
   return [...messages.slice(0, firstUser),
-    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
+    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${place ? RESEARCH.place_prompt + placeName(place) + '。' + RESEARCH.place_rules + '\n' : ''}${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
 }
+
+// 利用者の推定所在地（Cloudflare が通信元の IP から推定した市・地域・国）。精度は市や県の単位で、外れることがある。
+// Web で調べるときだけ、場所の指定が無い質問（天気・近くの店など）の前提に使う。GPS は使わない
+function requestPlace(request) {
+  const cf = request && request.cf || {};
+  const name = v => typeof v === 'string' && /^[\p{L}\p{M}0-9 .'’-]{1,60}$/u.test(v.trim()) ? v.trim() : null;
+  const country = typeof cf.country === 'string' && /^[A-Z]{2}$/.test(cf.country) ? cf.country : null;
+  const city = name(cf.city), region = name(cf.region);
+  const timezone = typeof cf.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(cf.timezone) ? cf.timezone : null;
+  return country && (city || region) ? { country, ...(city ? { city } : {}), ...(region ? { region } : {}), ...(timezone ? { timezone } : {}) } : null;
+}
+const placeName = place => [place.city, place.region !== place.city ? place.region : null, place.country].filter(Boolean).join(', ');
 
 // 検索と照合で、同じ「日本の現在日付」を使う。
 function researchLocalDate(verifiedNow) {
@@ -1174,9 +1186,12 @@ function researchLocalDate(verifiedNow) {
 }
 
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
-function researchRequestBody(cfg, messages) {
+function researchRequestBody(cfg, messages, place = null) {
+  // 検索の会社にも推定所在地を渡し、地域の結果を優先させる（無ければ今までどおり日本・東京の時刻）
+  const location = place ? { type: 'approximate', country: place.country, ...(place.city ? { city: place.city } : {}),
+    ...(place.region ? { region: place.region } : {}), timezone: place.timezone || RESEARCH.location.timezone } : RESEARCH.location;
   if (cfg.provider === 'anthropic') return { ...requestBody(cfg, { messages, stream: true }),
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, user_location: RESEARCH.location },
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, user_location: location },
       { ...RESEARCH.fetch, name: 'web_fetch', allowed_callers: ['direct'], use_cache: false, citations: { enabled: true } }] };
   const instructions = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
   const input = messages.filter(m => m.role !== 'system').map(({ role, content }) => ({ role,
@@ -1185,7 +1200,7 @@ function researchRequestBody(cfg, messages) {
       : { type: 'input_image', image_url: part.image_url.url }) }));
   return { model: cfg.model, stream: true, store: false, instructions, input,
     reasoning: { effort: cfg.reasoning_effort }, max_output_tokens: cfg.max_tokens, max_tool_calls: RESEARCH.max_uses,
-    tools: [{ type: 'web_search', user_location: RESEARCH.location }], tool_choice: 'required', include: ['web_search_call.action.sources'] };
+    tools: [{ type: 'web_search', user_location: location }], tool_choice: 'required', include: ['web_search_call.action.sources'] };
 }
 
 // pause_turnで送り返すassistantのcontentを、届いたブロックと差分からそのまま復元する。
@@ -1411,12 +1426,14 @@ function researchVerificationFormat(evidence) {
     properties:{parts:{type:'array', items:{type:'object', additionalProperties:false, properties:{label:{type:'string'}, text:{type:'string'},
       status:{type:'string', enum:['verified','unverified']}, citations:{type:'array', items:{type:'object', additionalProperties:false,
         properties:{n:{type:'integer', enum:evidence.map(e => e.n)}, blocks:{type:'array', items:{type:'integer'}}}, required:['n','blocks']}}},
-      required:['label','text','status','citations']}}}, required:['parts']}}};
+      required:['label','text','status','citations']}}, place_used:{type:'boolean'}}, required:['parts','place_used']}}};
 }
 
+// place_used は、場所の指定が無い質問に推定所在地を使ったか（使ったら画面に前提を出す）。保存済みの評価の値（parts だけ）も読む
 function verifiedResearchResult(value, evidence, replyLanguage) {
   const fail = () => {throw stageError('upstream', 'research_verification_invalid', 'Web回答の根拠を確認できませんでした', {retryable:true});};
-  if (!exactKeys(value,['parts']) || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
+  if (!(exactKeys(value,['parts']) || exactKeys(value,['parts','place_used']) && typeof value.place_used === 'boolean')
+    || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
   let text = ''; const items = [], marks = [], numbers = new Map();
   for (const p of value.parts) {
     if (!exactKeys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
@@ -1438,18 +1455,19 @@ function verifiedResearchResult(value, evidence, replyLanguage) {
       marks.push({at:text.length, n:numbers.get(c.n)});
     }
   }
-  return {text, sources:{items,marks}};
+  return {text, sources:{items,marks}, placeUsed:value.place_used === true};
 }
 
 // callModelへ渡す設定・会話・出力形式。本番と保存済み出典の評価で同じものを使う。
 // 照合にはカード・検索の指示・画像を送り直さない。前の会話は、質問が何を指すかを読むための文字だけを渡す。
-function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage) {
+function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage,place = null) {
   const text = content => typeof content === 'string' ? content : (content || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
   const turns = messages.filter(m => m.role !== 'system'), latest = turns.findLastIndex(m => m.role === 'user');
   const conversation = turns.slice(0, latest).map(m => ({role:m.role, text:text(m.content)})).filter(m => m.text.trim());
   const input = [{role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')
       + `\nChecked at: ${verifiedNow.toISOString()} (UTC). Current date in Japan: ${researchLocalDate(verifiedNow)} (${RESEARCH.location.timezone}).`},
-    {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence})}];
+    {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence,
+      estimated_place:place ? placeName(place) : null})}];
   return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
@@ -1487,7 +1505,7 @@ async function renderThinSource(env, evidence, signal, log) {
   }
 }
 
-async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, log = () => {}}) {
+async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cfg, replyLanguage, place = null, signal, log = () => {}}) {
   const evidence = (await Promise.all(result.sources.items.map(item => readResearchSource(item, signal)))).filter(e => e.allowed);
   if (signal.aborted) throw searchFailure('cancelled');
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
@@ -1496,7 +1514,7 @@ async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cf
   const iconStop = new AbortController(), stopIcons = () => iconStop.abort();
   signal.addEventListener('abort', stopIcons, { once: true });
   const iconFor = startSourceIcons(evidence, iconStop.signal);
-  try { return withSourceIcons(await checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, evidence}), iconFor); }
+  try { return withSourceIcons(await checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, place, signal, evidence}), iconFor); }
   finally { iconStop.abort(); signal.removeEventListener('abort', stopIcons); }
 }
 
@@ -1505,11 +1523,11 @@ function withSourceIcons(verified, iconFor) {
   return verified;
 }
 
-async function checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, signal, evidence}) {
+async function checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, place = null, signal, evidence}) {
   // 照合の材料からアイコンの候補と内部の印を外す（モデルへ送るのは出典の番号・題名・URL・本文の区画だけ）
   evidence = evidence.map(({icons, html, textChars, rendered, ...e}) => e);
   const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
-  const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage),
+  const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage,place),
     stream:false, signal, replyLimit:limit});
   if (!res.ok) {
     res.body?.cancel().catch(() => {});
@@ -1523,7 +1541,7 @@ async function checkResearchEvidence({upstream, messages, verifiedNow, result, c
 }
 
 // fallbackMessagesはWebの指示を含まない事実回答の入力。Webを使えないときはこちらで答える。
-async function researchAnswer({ upstream, messages, fallbackMessages = messages, theme, replyLanguage, ip, signal, send, log }) {
+async function researchAnswer({ upstream, messages, fallbackMessages = messages, theme, replyLanguage, ip, place = null, signal, send, log }) {
   const note = RESEARCH.limited_note[replyLanguage?.code] || RESEARCH.limited_note.en;
   const withoutWeb = async reason => {
     if (signal.aborted) throw searchFailure('cancelled');
@@ -1540,8 +1558,8 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
   }
   const verifiedNow = new Date(), verifiedAt = verifiedNow.toISOString();
   // 確認時刻はモデルに作らせず、本文と同じ履歴へ保存する。出典の時刻とは別。
-  const checked = (RESEARCH.checked_label[replyLanguage?.code] || RESEARCH.checked_label.en) + verifiedAt + ' (UTC)\n\n';
-  const input = researchMessages(messages, verifiedNow);
+  const checkedAt = (RESEARCH.checked_label[replyLanguage?.code] || RESEARCH.checked_label.en) + verifiedAt + ' (UTC)\n';
+  const input = researchMessages(messages, verifiedNow, place);
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const primary = RESEARCH.primary_provider[theme === 'dark' ? 'dark' : 'light'];
   let emitted = false;
@@ -1552,7 +1570,7 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
       const result = await withTimeout(RESEARCH.timeout_ms, async stop => {
         // 原案を表示する前に出典の実本文と照合する。未確認の値を先にストリームへ漏らさない。
         const reader = researchReader(cfg.provider, () => {}, RESEARCH.sources_max);
-        let body = researchRequestBody(cfg, input);
+        let body = researchRequestBody(cfg, input, place);
         for (let paused = 0; ; paused++) {
           if (stop.aborted) throw searchFailure('cancelled');
           const key = upstream[PROVIDERS[cfg.provider].key];
@@ -1568,7 +1586,7 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
             throw stageError('upstream', 'research_http_' + res.status, 'Web検索に失敗しました', { retryable: true });
           }
           const content = await readResearchResponse(res.body, reader, cfg.provider, stop);
-          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,verifiedNow,result:reader.finish(),cfg,replyLanguage,signal:stop,log});
+          if (!reader.paused) return verifyResearchAnswer({upstream,messages:input,verifiedNow,result:reader.finish(),cfg,replyLanguage,place,signal:stop,log});
           if (paused >= RESEARCH.max_pause_turns) throw stageError('upstream', 'research_pause_limit', 'Web検索が完了しませんでした', { retryable: true });
           body = { ...body, messages: [...body.messages, { role: 'assistant', content }] };
           reader.beginTurn();
@@ -1576,6 +1594,9 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
       }, signal);
       if (signal.aborted) throw searchFailure('cancelled');
       emitted = true;
+      // 推定所在地を前提に答えたときは、確認日時の次の行にその前提を出す（違えば場所を書いて聞き直せるように）
+      const checked = checkedAt + (result.placeUsed && place
+        ? (RESEARCH.place_label[replyLanguage?.code] || RESEARCH.place_label.en).replace('{place}', placeName(place)) + '\n' : '') + '\n';
       send('integrated',{delta:checked});
       if (signal.aborted) throw searchFailure('cancelled');
       send('integrated',{delta:result.text});
@@ -2016,7 +2037,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
 // transport（省略できる）を渡すと、SSE の代わりにその受け口へ同じイベントを送る（WebSocket の入口。読み上げ設計§6.2）。
 // 受け口は { event(名前, data), comment(文字), end() }。入力の誤り・回数の超過は今と同じ HTTP の応答を返し、
 // 受け口へ流し始めたら null を返す
-async function handleChat(request, env, ctx, { requestId, cors, log }, transport = null) {
+async function handleChat(request, env, ctx, { requestId, cors, log, place = requestPlace(request) }, transport = null) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
@@ -2207,7 +2228,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }, transport
         const answer = factMode && classification.mode === 'fact'
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page,
               research: classification.intent === 'research' && classification.fresh === 'yes',
-              replyLanguage: classification.reply_language, ip: requestIP(request), signal: stop.signal, send, log })
+              replyLanguage: classification.reply_language, ip: requestIP(request), place, signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
@@ -2308,7 +2329,8 @@ function handleChatSocket(request, env, ctx, { requestId, cors, log }) {
     const headers = { 'Content-Type': 'application/json', Origin: request.headers.get('Origin') || '' };
     if (request.headers.get('CF-Connecting-IP')) headers['CF-Connecting-IP'] = request.headers.get('CF-Connecting-IP');
     const chat = new Request(new URL('/magi2/chat', request.url), { method: 'POST', headers, body: JSON.stringify(message.body), signal: ac.signal });
-    ctx.waitUntil(handleChat(chat, env, ctx, { requestId, cors, log }, {
+    // 作り直した要求には通信元の情報（cf）が無いので、開いたときの要求から推定所在地を渡す
+    ctx.waitUntil(handleChat(chat, env, ctx, { requestId, cors, log, place: requestPlace(request) }, {
       event: (name, data) => sendJSON({ event: name, data }),
       comment: text => { if (text.trim() === 'ping') sendJSON({ event: 'ping' }); },
       end: () => close(1000, 'done'),

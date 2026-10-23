@@ -82,6 +82,9 @@ site_chatのない旧③は従来どおり。②は最初に分岐し、会話�
 
 ## A2の事実確認（4.9・2026-10-15公開）
 
+**推定所在地（2026-10-24）**: Web で調べるときは、Cloudflare が通信元の IP から推定した市・地域・国（`request.cf`。GPS ではない。精度は市や県の単位）を、検索の会社の `user_location`、検索の指示（場所の指定が無い質問にだけ使う）、照合の材料（`estimated_place`）に渡す。
+照合の JSON の `place_used` が true のときだけ、確認日時の次の行に「推定した場所: …」を出す。WebSocket では開いたときの要求の `cf` を使う。値の正本は `RESEARCH.place_prompt`・`place_rules`・`place_label`。
+
 **JavaScript で描く出典の描画（2026-10-24）**: 出典の HTML から取れた本文が400字未満なら、本文の最も少ない1件だけを Cloudflare Browser Run の `/markdown`（REST）で描画して本文を取り直す（`renderThinSource`・`RESEARCH.render`）。気象庁の台風・天気のページのように、本文を JavaScript で描くページのためのもの。
 Browser Run は無料枠（全体で10秒に1回・1日10分）なので、1日100件（`render:global`）まで・15秒で打ち切り、429・失敗は描画しなかった扱いで照合を続ける。送るのは公開ページの URL だけ。
 鍵は secret `BROWSER_RUN_API_TOKEN`（Cloudflare の API トークン。権限は Account の Browser Run - Edit だけ）、アカウントは `wrangler.toml` の `BROWSER_RUN_ACCOUNT_ID`。鍵が無ければ描画しない（止め方も鍵の削除でよい）。

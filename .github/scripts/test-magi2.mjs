@@ -5849,3 +5849,77 @@ test('Web回答: 本文が十分な出典は描画せず、描画は1回答に�
   assert.deepEqual(seen, ['https://b.example/'], '本文の最も少ない HTML の出典1件だけ');
   assert.equal(evidence[1].rendered, true); assert.equal(evidence[0].rendered, undefined);
 });
+
+// --- Web の回答の推定所在地（requestPlace。Cloudflare の request.cf は模擬）---
+const TOKYO = { country: 'JP', city: 'Shinjuku', region: 'Tokyo', timezone: 'Asia/Tokyo' };
+function placeRequest(w, body, cf) {
+  const req = new Request('https://workers.tk.st/magi2/chat', { method: 'POST', headers: { Origin: 'https://tk.st', 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.1' }, body: JSON.stringify(body) });
+  if (cf) Object.defineProperty(req, 'cf', { value: cf });
+  return w.ctx.worker.fetch(req, w.env, { waitUntil(p) { w.waits.push(p); } });
+}
+function placeWorker(placeUsed) {
+  const searches = [];
+  const w = a2Worker('research', 'yes', (url, o, b) => {
+    if (b?.tools) { searches.push(b); return a2Web(url.includes('openai') ? 'openai' : 'anthropic'); }
+    if (b?.response_format?.json_schema?.name === 'research_verified_reply' && placeUsed !== undefined)
+      return searchReply(JSON.stringify({ parts: [{ label: '天気', text: '最新の答え', status: 'verified', citations: [{ n: 1, blocks: [0] }] }], place_used: placeUsed }));
+  });
+  return Object.assign(w, { searches });
+}
+
+test('推定所在地: request.cf の国・市・地域・時刻帯だけを、形を確かめて使う', () => {
+  const w = worker();
+  const req = cf => { const r = new Request('https://x/'); if (cf) Object.defineProperty(r, 'cf', { value: cf }); return r; };
+  assert.deepEqual(JSON.parse(JSON.stringify(w.ctx.requestPlace(req({ ...TOKYO, latitude: '35.69', asn: 1 })))), TOKYO);
+  assert.equal(w.ctx.requestPlace(req(null)), null);
+  assert.equal(w.ctx.requestPlace(req({ country: 'JP' })), null, '市も地域も無ければ使わない');
+  assert.equal(w.ctx.requestPlace(req({ country: 'jp', city: 'Tokyo' })), null);
+  assert.deepEqual(JSON.parse(JSON.stringify(w.ctx.requestPlace(req({ country: 'JP', city: 'Tokyo<script>', region: 'Tokyo', timezone: '../x' })))), { country: 'JP', region: 'Tokyo' });
+});
+
+test('推定所在地: Web で調べるとき、検索の所在地と指示・照合の材料に渡し、使ったときだけ回答に前提を出す', async () => {
+  const used = placeWorker(true);
+  const events = sseEvents(await (await placeRequest(used, a2Body('今日の天気は？'), TOKYO)).text());
+  const search = used.searches[0];
+  assert.deepEqual(JSON.parse(JSON.stringify(search.tools[0].user_location)), { type: 'approximate', country: 'JP', city: 'Shinjuku', region: 'Tokyo', timezone: 'Asia/Tokyo' });
+  assert.match(search.instructions, /利用者の推定所在地[^\n]*Shinjuku, Tokyo, JP/);
+  assert.match(search.instructions, /場所の指定が無いときだけ/);
+  const verify = used.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply').body;
+  assert.equal(JSON.parse(verify.messages.at(-1).content).estimated_place, 'Shinjuku, Tokyo, JP');
+  assert.deepEqual(verify.response_format.json_schema.schema.required, ['parts', 'place_used']);
+  const reply = events.filter(([n]) => n === 'integrated').map(([, d]) => d.delta).join('');
+  const lines = reply.split('\n');
+  assert.match(lines[0], /^Web確認日時: /);
+  assert.equal(lines[1], '推定した場所: Shinjuku, Tokyo, JP（通信元からの推定。違うときは場所を書いて聞き直してください）');
+  assert.equal(lines[2], ''); assert.match(lines[3], /^- 天気: 最新の答え/);
+  const sources = events.find(([n]) => n === 'sources')[1];
+  assert.equal(reply.slice(sources.marks[0].at - 5, sources.marks[0].at), '最新の答え'.slice(-5), '出典の位置が前提の行の分だけずれる');
+  // 照合が使っていないと言えば前提を出さない
+  const unused = placeWorker(false);
+  const reply2 = sseEvents(await (await placeRequest(unused, a2Body('東京タワーの営業時間は？'), TOKYO)).text()).filter(([n]) => n === 'integrated').map(([, d]) => d.delta).join('');
+  assert.doesNotMatch(reply2, /推定した場所/); assert.match(reply2, /^Web確認日時: [^\n]+\n\n- /);
+});
+
+test('推定所在地: 通信元が分からないときは今までどおりで、照合には null を渡す', async () => {
+  const w = placeWorker(undefined);
+  const reply = sseEvents(await (await placeRequest(w, a2Body('今日の天気は？'), null)).text()).filter(([n]) => n === 'integrated').map(([, d]) => d.delta).join('');
+  assert.deepEqual(JSON.parse(JSON.stringify(w.searches[0].tools[0].user_location)), JSON.parse(JSON.stringify(vm.runInContext('RESEARCH.location', w.ctx))));
+  assert.doesNotMatch(w.searches[0].instructions, /推定所在地/);
+  const verify = w.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply').body;
+  assert.equal(JSON.parse(verify.messages.at(-1).content).estimated_place, null);
+  assert.doesNotMatch(reply, /推定した場所/);
+});
+
+test('推定所在地: WebSocket は開いたときの要求の通信元を使う', async () => {
+  const w = wsWorker();
+  let seen = 'unset';
+  const original = w.ctx.handleChat;
+  w.ctx.handleChat = async (req, env, ctx, context, transport) => { seen = context.place; transport.end(); return null; };
+  const req = new Request('https://workers.tk.st/magi2/ws', { headers: { Origin: 'https://tk.st', Upgrade: 'websocket' } });
+  Object.defineProperty(req, 'cf', { value: TOKYO });
+  await w.ctx.worker.fetch(req, w.env, { waitUntil(p) { w.waits.push(p); } });
+  w.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [{ role: 'user', content: 'x' }] } }) });
+  await Promise.all(w.waits);
+  assert.deepEqual(JSON.parse(JSON.stringify(seen)), TOKYO);
+  w.ctx.handleChat = original;
+});
