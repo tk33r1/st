@@ -17,7 +17,7 @@ export async function discoverSeedTrial({client,number,base,head,actor='tk33r1',
   const pr=await client.request('/pulls/'+number),branch=await client.request('/branches/'+encodeURIComponent(seedBranch));
   const snapshot={number,base,head,selected:false,validate:false,reason:'ineligible'};
   const classification=eligibleSeedPR(pr,actor)?'A':eligibleSeedPR(pr,actor,'magi2-daily-B')?'B':null;
-  if(!classification||pr.state!=='open'||pr.draft)return snapshot;
+  if(!classification||pr.state!=='open'||classification==='A'&&pr.draft)return snapshot;
   snapshot.selected=true;snapshot.classification=classification;
   if(pr.head.sha!==head||branch.commit.sha!==base)return {...snapshot,reason:'snapshot_changed'};
   if(classification==='B')return {...snapshot,reason:'B_proposal'};
@@ -48,7 +48,8 @@ export function installSeedHarness({trustedRoot,candidateRoot}) {
     if(lstatSync(from).isSymbolicLink())throw new Error('seed_trial_harness_symlink');
     let ancestor=dirname(to);while(!existsSync(ancestor))ancestor=dirname(ancestor);
     const parent=relative(candidateRoot,realpathSync(ancestor));
-    if(isAbsolute(parent)||parent==='..'||parent.startsWith('..'+sep)||existsSync(to)&&lstatSync(to).isSymbolicLink())
+    // existsSyncは切れたsymlinkでfalseになるため、リンク自体を調べる。
+    if(isAbsolute(parent)||parent==='..'||parent.startsWith('..'+sep)||lstatSync(to,{throwIfNoEntry:false})?.isSymbolicLink())
       throw new Error('seed_trial_harness_escape');
     mkdirSync(dirname(to),{recursive:true});
     copyFileSync(from,to);
@@ -62,7 +63,7 @@ export async function reportSeedTrial({client,snapshot,validation,issue,actor='t
   const prs=await client.pages('/pulls?state=open&base='+encodeURIComponent(seedBranch));
   const classification=snapshot.classification||'A',openA=prs.filter(row=>eligibleSeedPR(row,actor)).length;
   const label=classification==='B'?'magi2-daily-B':'magi2-daily-A';
-  if(!eligibleSeedPR(pr,actor,label)||pr.state!=='open'||pr.draft||pr.head.sha!==snapshot.head||branch.commit.sha!==snapshot.base
+  if(!eligibleSeedPR(pr,actor,label)||pr.state!=='open'||classification==='A'&&pr.draft||pr.head.sha!==snapshot.head||branch.commit.sha!==snapshot.base
     ||classification==='A'&&(snapshot.reason==='duplicate_or_missing_A'?openA<2:openA!==1))return {reported:false,reason:'snapshot_changed'};
   if(typeof runUrl!=='string'||!/^https:\/\/github\.com\/tk33r1\/st\/actions\/runs\/[1-9]\d*$/.test(runUrl))throw new Error('seed_trial_run_url');
   const codes=snapshot.mechanical?.errors?.map(row=>row.code)||[];

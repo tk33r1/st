@@ -52,7 +52,7 @@ test('head/baseの変化とA複数では検証へ進まず、複数の理由を�
   const result=await f.report(snapshot);assert.equal(result.status,'duplicate_or_missing_A');assert.equal(f.mails,0);
 });
 test('検証後の更新・取消では古い結果をコメント・メールへ流さない',async()=>{
-  for(const patch of [f=>f.pr.head.sha='c'.repeat(40),f=>f.base='c'.repeat(40),f=>f.pr.state='closed',f=>f.pr.labels=[]]) {
+  for(const patch of [f=>f.pr.head.sha='c'.repeat(40),f=>f.base='c'.repeat(40),f=>f.pr.state='closed',f=>f.pr.labels=[],f=>f.pr.draft=true]) {
     const f=fixture(),snapshot=await discoverSeedTrial(f.discover);patch(f);
     assert.equal((await f.report(snapshot)).reported,false);assert.equal(f.calls.length,0);assert.equal(f.mails,0);
   }
@@ -71,6 +71,20 @@ test('Bは提案用の枝も受理し、検証・マージせず通知済みの�
   assert.equal(snapshot.classification,'B');assert.equal(snapshot.validate,false);
   await f.report(snapshot);await f.report(snapshot);assert.equal(f.mails,1);
   assert.ok(f.pr.labels.some(row=>row.name==='magi2-daily-notified'));
+});
+test('draftのBと発見後にdraftへ戻したBも記録・通知し、再実行では重複送信しない',async()=>{
+  for(const initialDraft of [true,false]) {
+    const f=fixture();f.pr.draft=initialDraft;f.pr.labels=[{name:'magi2-daily-B'}];f.pr.head.ref+='-proposal1';
+    const snapshot=await discoverSeedTrial({...f.discover,changes:()=>assert.fail('B diff must not execute')});
+    assert.equal(snapshot.selected,true);assert.equal(snapshot.classification,'B');assert.equal(snapshot.validate,false);
+    f.pr.draft=true;
+    const result=await f.report(snapshot);assert.equal(result.reported,true);assert.equal(result.merge_enabled,false);
+    assert.ok(f.comments.get('/issues/7/comments').some(row=>row.body.includes('B_proposal')));
+    assert.ok(f.comments.get('/issues/14/comments').some(row=>row.body.includes('B_proposal')));
+    assert.ok(f.pr.labels.some(row=>row.name==='magi2-daily-notified'));assert.equal(f.pr.draft,true);
+    const writes=f.calls.length;await f.report(snapshot);assert.equal(f.mails,1);assert.equal(f.calls.length,writes);
+    assert.ok(f.calls.every(call=>call.path.endsWith('/comments')||call.path.endsWith('/labels')));
+  }
 });
 function harnessFixture(run) {
   const root=mkdtempSync(join(tmpdir(),'magi2-seed-harness-')),trusted=join(root,'trusted'),candidate=join(root,'candidate');
@@ -95,6 +109,17 @@ test('運用基盤のコピー先が外へのsymlinkなら、外部のディレ�
   assert.throws(()=>installSeedHarness({trustedRoot:f.trusted,candidateRoot:f.candidate}),/escape/);
   assert.equal(existsSync(join(outside,'scripts')),false);
 }));
+test('コピー先ファイルが外へのsymlinkなら、リンク先の有無によらず作成・上書きせず拒否する',()=>{
+  for(const existing of [false,true])harnessFixture(f=>{
+    const outside=join(f.root,'outside'),target=join(outside,'unexpected.mjs');mkdirSync(outside);
+    if(existing)writeFileSync(target,'outside content');
+    mkdirSync(join(f.candidate,'.github/scripts'),{recursive:true});
+    symlinkSync(target,join(f.candidate,'.github/scripts/magi2-daily-check.mjs'));
+    assert.throws(()=>installSeedHarness({trustedRoot:f.trusted,candidateRoot:f.candidate}),/escape/);
+    assert.equal(existsSync(target),existing);
+    if(existing)assert.equal(readFileSync(target,'utf8'),'outside content');
+  });
+});
 test('試行workflowはmainの手動起動だけで、PRコードへ書き込み権限やsecretを渡さない',()=>{
   const source=readFileSync('.github/workflows/magi2-daily-seed-trial.yml','utf8');
   assert.match(source,/workflow_dispatch:/);assert.doesNotMatch(source,/^\s+(?:schedule|pull_request|pull_request_target):/m);
