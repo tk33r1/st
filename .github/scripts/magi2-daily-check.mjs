@@ -222,6 +222,8 @@ export function checkPlan(mode,paths=[]) {
     [node,'--test','.github/scripts/test-magi2-daily-stage1.mjs'],
     [node,'--test','.github/scripts/test-magi2-daily-deploy.mjs'],
     [node,'--test','.github/scripts/test-magi2-daily-publication.mjs'],
+    [node,'--test','.github/scripts/test-magi2-daily-cloudflare.mjs'],
+    [node,'--test','.github/scripts/test-magi2-daily-publication-run.mjs'],
     [python,'-B','.github/scripts/ai_models.py','check'],
   ];
   if(mode==='full'&&(paths.some(isScreen)||paths.some(p=>p.startsWith('data/'))))commands.push(['bash','build.sh']);

@@ -1,0 +1,64 @@
+name: MAGI Daily Publication Check
+
+# 信頼する公開ジョブからだけ呼ぶ。PRコードは実行せず、merge/deploy/rollbackはしない。
+# 現時点の毎時workflowには接続しない。定常運用への接続はレビュー経路と本番試行の成立後。
+on:
+  workflow_call:
+    inputs:
+      target-sha:
+        required: true
+        type: string
+      version-id:
+        required: true
+        type: string
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate pinned deployment inputs
+        env:
+          DAILY_TARGET: ${{ inputs.target-sha }}
+          DAILY_VERSION_ID: ${{ inputs.version-id }}
+        run: |
+          [[ "$DAILY_TARGET" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$DAILY_VERSION_ID" =~ ^[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$ ]] || exit 1
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch target objects without checking out or executing target code
+        env:
+          DAILY_TARGET: ${{ inputs.target-sha }}
+        run: |
+          git remote set-url origin https://github.com/tk33r1/st.git
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false fetch --no-tags origin "$DAILY_TARGET"
+      - name: Verify exact deployment and fixed public responses
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DAILY_TARGET: ${{ inputs.target-sha }}
+          DAILY_VERSION_ID: ${{ inputs.version-id }}
+          DAILY_REPORT: ${{ runner.temp }}/magi2-daily-publication.json
+        run: node .github/scripts/magi2-daily-publication-run.mjs
+      - name: Save status-only publication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: magi2-daily-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/magi2-daily-publication.json
+          if-no-files-found: ignore
+          retention-days: 7

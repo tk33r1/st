@@ -346,6 +346,8 @@ node .github/scripts/magi2-daily-check.mjs --deployment-message
 
 本番依存に未コミットの変更があれば`-dirty`が付く。出した内容とgitの履歴が違うことを表すため、後に自動公開を接続したときは停止対象になる。コミットして出し直すまで印を外さない。手元からも従来どおりAnthropicキーの同期を先に行い、secretの値はコミットや公開ログに出さない。
 
+共通公開はmagi2の実公開時にWranglerの構造化出力から`version-id`を返す。任意の`expected-version-id`を指定した場合はAnthropicキー同期前に本番版を照合する。`magi2-daily-publication.yml`はその版と対象SHAの公開後確認用で、現在の毎時処理には未接続。Cloudflare本番やActionsでの実試行は未完了（[段4接続記録](継続改善段4接続記録.md)）。
+
 ## ローカル検証のコマンド
 
 ```sh
