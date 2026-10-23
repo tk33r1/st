@@ -1254,18 +1254,29 @@ function researchSourceUrl(value) {
   } catch { return null; }
 }
 
-function researchSourceBlocks(raw, html) {
-  if (html) {
-    raw = raw.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
-    // 本文の区画はすべて読み、記事の見出し（公開日・更新日を置くことが多い）を残す。区画が無いページだけ周りの部品を外す。
-    const sections = [...raw.matchAll(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].map(m => m[2]).filter(t => t.trim());
-    raw = sections.length ? sections.join(' ').replace(/<nav\b[^>]*>[\s\S]*?<\/nav\s*>/gi, ' ')
-      : raw.replace(/<(nav|header|footer)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
-    raw = raw.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
+// HTML のタグ・コメントを外し、文字参照を戻す
+function decodeSourceHtml(raw) {
+  return raw.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
       .replace(/&#(x[\da-f]+|\d+);/gi, (_, n) => {
         const cp = n[0].toLowerCase() === 'x' ? parseInt(n.slice(1), 16) : +n;
         return cp > 0 && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff) ? String.fromCodePoint(cp) : '';
       }).replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, n => ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'",'&nbsp;':' '}[n]));
+}
+
+function researchSourceBlocks(raw, html) {
+  if (html) {
+    raw = raw.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
+    // 本文の区画はすべて読み、記事の見出し（公開日・更新日を置くことが多い）を残す。区画が無いページは周りの部品を外して全体を読む。
+    // 区画の本文がごく短いページ（天気予報の表が区画の外にある tenki.jp など。2026-10-24）も全体を読む
+    const sections = [...raw.matchAll(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].map(m => m[2]).filter(t => t.trim());
+    const picked = sections.length ? decodeSourceHtml(sections.join(' ').replace(/<nav\b[^>]*>[\s\S]*?<\/nav\s*>/gi, ' ')) : '';
+    const size = s => s.replace(/\s+/g, '').length;
+    if (size(picked) >= RESEARCH.verify.section_min_chars) raw = picked;
+    else {
+      // 区画の外にも本文がある（全体が区画の倍を超える）ときだけ全体を読む。短い記事は区画の見出し（更新日など）を残す
+      const all = decodeSourceHtml(raw.replace(/<(nav|header|footer)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' '));
+      raw = size(all) > size(picked) * 2 ? all : picked;
+    }
   }
   const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
   const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;

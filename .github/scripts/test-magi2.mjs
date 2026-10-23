@@ -5923,3 +5923,16 @@ test('推定所在地: WebSocket は開いたときの要求の通信元を使�
   assert.deepEqual(JSON.parse(JSON.stringify(seen)), TOKYO);
   w.ctx.handleChat = original;
 });
+
+test('A2: 区画（main/article）の本文がごく短く、区画の外に本文があるページは全体を読む', () => {
+  const w = worker();
+  // tenki.jp のように、区画には知らせだけが入り、予報の表は区画の外にある
+  const forecast = '<table><tr><th>時刻</th><th>天気</th><th>気温</th></tr>' + Array.from({ length: 24 }, (_, h) => `<tr><td>${h}時</td><td>晴れ</td><td>${15 + h % 5}℃</td></tr>`).join('') + '</table>';
+  const page = '<header>サイト名</header><main><p>台風31号が発生しました</p></main><section>' + forecast + '<p>' + '川口市の1時間天気の説明。'.repeat(20) + '</p></section><footer>著作権</footer>';
+  const text = w.ctx.researchSourceBlocks(page, true).blocks.map(b => b.text).join('');
+  assert.match(text, /台風31号/); assert.match(text, /12時 晴れ 17°C/); // NFKC で ℃ は °C になる assert.doesNotMatch(text, /サイト名|著作権/);
+  // 区画の本文が十分なら区画だけを読む
+  const article = '<nav>メニュー</nav><article><p>' + '本文の段落。'.repeat(80) + '</p></article><aside>関連記事の一覧</aside>';
+  const text2 = w.ctx.researchSourceBlocks(article, true).blocks.map(b => b.text).join('');
+  assert.match(text2, /本文の段落/); assert.doesNotMatch(text2, /関連記事|メニュー/);
+});
