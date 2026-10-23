@@ -13,7 +13,7 @@ export function observationPeriod(now=new Date()) {
 }
 export function observationSQL(period=observationPeriod()) {
   if(!validDay(period.from)||!validDay(period.until)||period.from>=period.until)throw new Error('observation_period');
-  return "SELECT day, ip AS kind, count FROM rate_limit WHERE ip IN ('global','search:global','research:global')"
+  return "SELECT day, ip AS kind, count FROM rate_limit WHERE ip IN ("+kinds.map(k=>"'"+k+"'").join(',')+")"
     +" AND day >= '"+period.from+"' AND day < '"+period.until+"' ORDER BY day, kind;\n"
     +"SELECT substr(created_at,1,10) AS day, COUNT(*) AS count FROM reactions WHERE created_at >= '"+period.from+"T00:00:00'"
     +" AND created_at < '"+period.until+"T00:00:00' GROUP BY substr(created_at,1,10) ORDER BY day;";

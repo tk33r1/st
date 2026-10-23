@@ -19,8 +19,10 @@ export const workerInputs=Object.freeze([
 export const isWorkerInput=path=>workerInputs.includes(path);
 const isScreen=path=>['index.html','404.html'].includes(path)||/^(magi-app\/www\/|dj\/request\/)/.test(path);
 const isTest=path=>/^\.github\/scripts\/(?:test-magi[^/]*\.(?:mjs|py)|magi-native-filesystem-fixture\.mjs|fixtures\/magi[^/]*\.(?:json|js))$/.test(path);
-const versionFiles=['index.html','magi-app/www/app.js','magi-app/package.json','magi-app/package-lock.json',
-  'magi-app/android/app/build.gradle','data/magi-versions.json','magi-app/www/sw.js','magi-app/www/index.html'];
+// 版のコミットで必ず変える6つと、PWAを変えたときだけ変えるキャッシュの2つ。
+const versionRequired=['index.html','magi-app/www/app.js','magi-app/package.json','magi-app/package-lock.json',
+  'magi-app/android/app/build.gradle','data/magi-versions.json'];
+const versionFiles=[...versionRequired,'magi-app/www/sw.js','magi-app/www/index.html'];
 const protectedFile=path=>/^\.github\/(?:workflows\/|magi2-daily\/)/.test(path)
   ||/^\.github\/scripts\/(?:test-)?magi2-daily-/.test(path)
   ||['.github/scripts/magi-version.mjs','.github/scripts/magi-eval-budget.mjs','config/ai-models.json',
@@ -83,8 +85,7 @@ function shellVersions(sw,path) {
     .filter(m=>m[1]===path).map(m=>new URLSearchParams(m[2]||'').get('v'));
 }
 function replaceOne(text,pattern,value) {
-  const matches=[...text.matchAll(new RegExp(pattern.source,pattern.flags.includes('g')?pattern.flags:pattern.flags+'g'))];
-  if(matches.length!==1)throw new Error('version_field_count');
+  if(text.match(new RegExp(pattern.source,'g'))?.length!==1)throw new Error('version_field_count');
   return text.replace(pattern,value);
 }
 
@@ -92,36 +93,34 @@ function checkVersion(commit,expected,errors) {
   const fail=code=>errors.push({commit:commit.sha,code});
   if(!expected){fail('version_exhausted');return;}
   const paths=commit.files.map(f=>f.path);
-  const required=versionFiles.slice(0,4).concat('magi-app/android/app/build.gradle','data/magi-versions.json');
-  if(!required.every(p=>paths.includes(p))||paths.some(p=>!versionFiles.includes(p))){fail('version_files');return;}
+  if(!versionRequired.every(p=>paths.includes(p))||paths.some(p=>!versionFiles.includes(p))){fail('version_files');return;}
   try {
-    for(const file of commit.files) {
-      const before=file.before,after=file.after;
+    for(const {path,before,after} of commit.files) {
       if(before===null||after===null)throw new Error('version_file_missing');
-      if(file.path==='index.html') {
+      if(path==='index.html') {
         if(after!==replaceOne(before,/>ver \d{1,2}\.\d[1-9]?</,'>ver '+expected+'<'))throw new Error('version_home_only');
-      } else if(file.path==='magi-app/www/app.js') {
+      } else if(path==='magi-app/www/app.js') {
         if(after!==replaceOne(before,/var APP_VERSION = '[^']+';/,"var APP_VERSION = '"+expected+"';"))throw new Error('version_app_only');
-      } else if(file.path==='magi-app/android/app/build.gradle') {
+      } else if(path==='magi-app/android/app/build.gradle') {
         if(after!==replaceOne(before,/versionName "[^"]+"/,'versionName "'+expected+'"'))throw new Error('version_android_only');
-      } else if(file.path==='magi-app/package.json'||file.path==='magi-app/package-lock.json') {
+      } else if(path==='magi-app/package.json'||path==='magi-app/package-lock.json') {
         const old=JSON.parse(before),value=JSON.parse(after);
         if(magiDisplayVersion(value.version)!==expected)throw new Error('version_package');
         value.version=old.version;
-        if(file.path.endsWith('package-lock.json')) {
+        if(path.endsWith('package-lock.json')) {
           if(magiDisplayVersion(value.packages[''].version)!==expected)throw new Error('version_lock');
           value.packages[''].version=old.packages[''].version;
         }
         if(!equal(old,value))throw new Error('version_package_only');
-      } else if(file.path==='data/magi-versions.json') {
+      } else if(path==='data/magi-versions.json') {
         const old=JSON.parse(before),value=JSON.parse(after),row=value.versions[0];
         if(!validHistory(value)||Buffer.byteLength(after)>VERSION_HISTORY_LIMITS.max_bytes||row.version!==expected||!equal(value.versions.slice(1),old.versions)
           ||!['ja','en'].every(lang=>row.changes[lang].length===2)
           ||/\b(?:Worker|SSE|Jev|OpenAI|Anthropic|DeepSeek|GPT|Claude|function)\b|関数|モデル名/i.test(JSON.stringify(row.changes)))throw new Error('version_history');
-      } else if(file.path==='magi-app/www/sw.js') {
+      } else if(path==='magi-app/www/sw.js') {
         const strip=s=>s.replace(/magi-shell-v\d+/g,'CACHE').replace(/app\.js\?v=\d{8}_\d+/g,'app.js?v=CACHE');
         if(strip(before)!==strip(after))throw new Error('version_sw_only');
-      } else if(file.path==='magi-app/www/index.html') {
+      } else if(path==='magi-app/www/index.html') {
         if(before.replace(/app\.js\?v=\d{8}_\d+/g,'CACHE')!==after.replace(/app\.js\?v=\d{8}_\d+/g,'CACHE'))throw new Error('version_app_html_only');
       }
     }
@@ -199,7 +198,7 @@ export function deploymentMessage(root=repo) {
 }
 function blob(root,sha,path) {
   try {const value=git(root,['show',sha+':'+path],{encoding:'buffer'});return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(value);}
-  catch(error){if(error.status!==undefined&&/does not exist|exists on disk, but not in|does not exist in/.test(String(error.stderr)))return null;throw error;}
+  catch(error){if(error.status!==undefined&&/does not exist|exists on disk, but not in/.test(String(error.stderr)))return null;throw error;}
 }
 export function usedVersionsAt(root,base) {
   if(git(root,['rev-parse','--is-shallow-repository']).trim()==='true')throw new Error('full_history_required');
@@ -270,7 +269,7 @@ export function assertBundleInputs(metadata,root=repo) {
 }
 
 function run(command,root) {
-  console.log(command.map(v=>String(v)).join(' '));
+  console.log(command.join(' '));
   const result=spawnSync(command[0],command.slice(1),{cwd:root,stdio:'inherit',env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
   if(result.error)throw result.error;if(result.status!==0)throw new Error('check_failed: '+command[1]);
 }
@@ -300,11 +299,7 @@ export function runChecks(mode,changes,root=repo) {
         '--outdir',join(temporary,'bundle'),'--metafile',metadata],join(root,'workers'));
       assertBundleInputs(JSON.parse(readFileSync(metadata,'utf8')),root);
     }
-  } finally {
-    const path=relative(resolve(tmpdir()),resolve(temporary));
-    if(path.startsWith('..')||!path)throw new Error('unexpected_temporary_directory');
-    rmSync(temporary,{recursive:true,force:true});
-  }
+  } finally {rmSync(temporary,{recursive:true,force:true});}
 }
 
 async function main(args) {

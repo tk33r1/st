@@ -65,7 +65,7 @@ async function reportState(client,snapshot,{issue,actor,validation,stage,mail}) 
     await commentOnce(client,pr.number,['validation',snapshot.head,reason],reason+'。区分Bへ移して本人確認にします。\n\n'+JSON.stringify(errors));
     await client.request('/issues/'+pr.number+'/labels',{method:'POST',body:{labels:['magi2-daily-B']}});
     await client.request('/issues/'+pr.number+'/labels/magi2-daily-A',{method:'DELETE'});
-    await notifyB(client,issue,{...pr,labels:[...pr.labels.filter(l=>l.name!=='magi2-daily-A'),{name:'magi2-daily-B'}]},mail);return;
+    await notifyB(client,issue,pr,mail);return;
   }
   const halts=await client.pages('/issues?state=open&labels=magi2-daily-halt');
   const state={version:1,head:snapshot.head,base:snapshot.base,next:'unconfigured',review_route:'unconfigured',
