@@ -148,7 +148,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     },
   });
   const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
-  vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
+  vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/version-history.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
     + strip(read('workers/magi2/versions.js')) + '\n'
     + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/research.js')) + '\n'
@@ -3809,25 +3809,22 @@ const versionHistoryFixture = (...versions) => ({versions:versions.map(version =
 test('A6: 履歴の版は X.Y と X.YZ を受け付け、小数部を2桁にそろえて並べる', () => {
   const w = worker(), template = JSON.parse(read('data/magi-versions.json')).versions[0];
   const history = versions => ({versions:versions.map(version => ({...structuredClone(template), version}))});
+  const screens = data => [home, mobile].map(source => {
+    const ctx = vm.createContext({});
+    vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
+    return ctx.validAgentVersions(data);
+  });
   const ascending = ['5.9','5.91','5.99','6.0','6.01','6.09','6.1'];
   assert.ok(w.ctx.cleanVersionHistory(history([...ascending].reverse())));
   for (const version of ascending) {
     const data = history([version]);
     assert.ok(w.ctx.cleanVersionHistory(data), version);
-    for (const source of [home, mobile]) {
-      const ctx = vm.createContext({});
-      vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
-      assert.equal(ctx.validAgentVersions(data), true, version);
-    }
+    assert.deepEqual(screens(data), [true, true], version);
   }
   for (const version of ['5.90','5.100','5.910','6.00','5.9a']) {
     const data = history([version]);
     assert.equal(w.ctx.cleanVersionHistory(data), null, version);
-    for (const source of [home, mobile]) {
-      const ctx = vm.createContext({});
-      vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
-      assert.equal(ctx.validAgentVersions(data), false, version);
-    }
+    assert.deepEqual(screens(data), [false, false], version);
   }
   for (let i = 1; i < ascending.length; i++) {
     assert.equal(w.ctx.cleanVersionHistory(history([ascending[i-1],ascending[i]])), null);

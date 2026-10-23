@@ -5,34 +5,34 @@ import {resolve,join,relative,sep} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {magiDisplayVersion} from './magi-version.mjs';
+import {cleanVersionHistory,versionOrder as order,VERSION_HISTORY_LIMITS} from '../../workers/magi2/version-history.js';
 
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // 本番エントリの依存だけを宣言する。eval専用src/eval.jsは自動公開しない。
 export const workerInputs=Object.freeze([
   'workers/magi2/src/index.js',
   ...['classification','languages','magi-mode','personas','probe','qa-budget','research','search-scope',
-    'site-rank','site-search','speech','versions'].map(name=>'workers/magi2/'+name+'.js'),
+    'site-rank','site-search','speech','versions','version-history'].map(name=>'workers/magi2/'+name+'.js'),
   'config/ai-models.json','data/magi-context.json','data/magi-versions.json','workers/magi2/wrangler.toml',
 ]);
 export const isWorkerInput=path=>workerInputs.includes(path);
 const isScreen=path=>['index.html','404.html'].includes(path)||/^(magi-app\/www\/|dj\/request\/)/.test(path);
 const isTest=path=>/^\.github\/scripts\/(?:test-magi[^/]*\.(?:mjs|py)|magi-native-filesystem-fixture\.mjs|fixtures\/magi[^/]*\.(?:json|js))$/.test(path);
-const versionFiles=['index.html','magi-app/www/app.js','magi-app/package.json','magi-app/package-lock.json',
-  'magi-app/android/app/build.gradle','data/magi-versions.json','magi-app/www/sw.js','magi-app/www/index.html'];
+// 版のコミットで必ず変える6つと、PWAを変えたときだけ変えるキャッシュの2つ。
+const versionRequired=['index.html','magi-app/www/app.js','magi-app/package.json','magi-app/package-lock.json',
+  'magi-app/android/app/build.gradle','data/magi-versions.json'];
+const versionFiles=[...versionRequired,'magi-app/www/sw.js','magi-app/www/index.html'];
 const protectedFile=path=>/^\.github\/(?:workflows\/|magi2-daily\/)/.test(path)
   ||/^\.github\/scripts\/(?:test-)?magi2-daily-/.test(path)
   ||['.github/scripts/magi-version.mjs','.github/scripts/magi-eval-budget.mjs','config/ai-models.json',
-    'workers/magi2/personas.js','workers/magi2/wrangler.toml','workers/magi2/schema.sql'].includes(path)
+    'workers/magi2/personas.js','workers/magi2/version-history.js','workers/magi2/wrangler.toml','workers/magi2/schema.sql'].includes(path)
   ||/^workers\/magi2\/migrations\//.test(path);
 const inScope=path=>isScreen(path)||isTest(path)||isWorkerInput(path)
   ||['AGENTS.md','.github/JEV.md','.github/AI_MODELS.md','magi-app/README.md','workers/magi2/README.md'].includes(path)
   ||versionFiles.includes(path);
 const upstream=/\b(?:workers\.tk\.st|magi2-eval\.tk\.st|tk\.st\/(?:magi2|search\/api|dj\/api)|api\.(?:openai|anthropic|deepseek|typesafe)\.(?:com|ai)|api\.fish\.audio)\b/i;
 const externalLoad=/(?:\b(?:src|href)\s*=\s*["'](?:https?:)?\/\/|url\(\s*["']?(?:https?:)?\/\/|\b(?:fetch|import(?:Scripts)?)\s*\(?\s*["'](?:https?:)?\/\/|\bimport\b.*\bfrom\s*["'](?:https?:)?\/\/)/i;
-const versionPattern=/^\d{1,2}\.\d[1-9]?$/;
-const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const order=v=>typeof v==='string'&&versionPattern.test(v)?Number(v.split('.')[0])*100+Number(v.split('.')[1].padEnd(2,'0')):null;
 
 export function nextVersion(current,used=[]) {
   if(typeof current!=='string'||order(current)===null)throw new Error('invalid_current_version');
@@ -43,20 +43,7 @@ export function nextVersion(current,used=[]) {
 }
 
 export function validHistory(data) {
-  if(!object(data)||Object.keys(data).join()!=='versions'||!Array.isArray(data.versions)
-    ||!data.versions.length||data.versions.length>60||Buffer.byteLength(JSON.stringify(data))>65536)return false;
-  let last=Infinity,date='9999-12-31';
-  return data.versions.every((row,i)=>{
-    if(!object(row)||Object.keys(row).some(k=>!['version','date','changes'].includes(k)))return false;
-    const earlier=row.version==='earlier',n=earlier?-1:order(row.version);
-    if(n===null||n>=last||earlier&&(i!==data.versions.length-1||row.date!==null))return false;
-    if(!earlier&&(typeof row.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(row.date)
-      ||Number.isNaN(Date.parse(row.date))||new Date(row.date).toISOString().slice(0,10)!==row.date||row.date>date))return false;
-    if(!object(row.changes)||Object.keys(row.changes).sort().join()!=='en,ja'||!['ja','en'].every(lang=>
-      Array.isArray(row.changes[lang])&&row.changes[lang].length>=2&&row.changes[lang].length<=4
-      &&row.changes[lang].every(text=>typeof text==='string'&&text.trim()&&Array.from(text).length<=200&&!/[\u0000-\u001f\u007f-\u009f]/.test(text))))return false;
-    last=n;if(!earlier)date=row.date;return true;
-  });
+  return !!cleanVersionHistory(data)&&Buffer.byteLength(JSON.stringify(data))<=VERSION_HISTORY_LIMITS.max_bytes;
 }
 
 function newline(text) {
@@ -64,9 +51,17 @@ function newline(text) {
   return !lf?'none':!crlf?'lf':lf===crlf?'crlf':'mixed';
 }
 function cacheNumber(text) {return Number(text?.match(/magi-shell-v(\d+)/)?.[1]);}
+function shellScripts(html) {
+  return [...(html||'').matchAll(/<script\b[^>]*\bsrc=["'](?:\.\/)?([^"'?#]+\.js)(?:\?([^"'#]*))?["']/gi)]
+    .filter(m=>!m[1].includes(':')&&!m[1].startsWith('/'))
+    .map(m=>({path:m[1],version:new URLSearchParams(m[2]||'').get('v')}));
+}
+function shellVersions(sw,path) {
+  return [...(sw||'').matchAll(/["']\.\/([^"'?#]+\.js)(?:\?([^"'#]*))?["']/g)]
+    .filter(m=>m[1]===path).map(m=>new URLSearchParams(m[2]||'').get('v'));
+}
 function replaceOne(text,pattern,value) {
-  const matches=[...text.matchAll(new RegExp(pattern.source,pattern.flags.includes('g')?pattern.flags:pattern.flags+'g'))];
-  if(matches.length!==1)throw new Error('version_field_count');
+  if(text.match(new RegExp(pattern.source,'g'))?.length!==1)throw new Error('version_field_count');
   return text.replace(pattern,value);
 }
 
@@ -74,36 +69,34 @@ function checkVersion(commit,expected,errors) {
   const fail=code=>errors.push({commit:commit.sha,code});
   if(!expected){fail('version_exhausted');return;}
   const paths=commit.files.map(f=>f.path);
-  const required=versionFiles.slice(0,4).concat('magi-app/android/app/build.gradle','data/magi-versions.json');
-  if(!required.every(p=>paths.includes(p))||paths.some(p=>!versionFiles.includes(p))){fail('version_files');return;}
+  if(!versionRequired.every(p=>paths.includes(p))||paths.some(p=>!versionFiles.includes(p))){fail('version_files');return;}
   try {
-    for(const file of commit.files) {
-      const before=file.before,after=file.after;
+    for(const {path,before,after} of commit.files) {
       if(before===null||after===null)throw new Error('version_file_missing');
-      if(file.path==='index.html') {
+      if(path==='index.html') {
         if(after!==replaceOne(before,/>ver \d{1,2}\.\d[1-9]?</,'>ver '+expected+'<'))throw new Error('version_home_only');
-      } else if(file.path==='magi-app/www/app.js') {
+      } else if(path==='magi-app/www/app.js') {
         if(after!==replaceOne(before,/var APP_VERSION = '[^']+';/,"var APP_VERSION = '"+expected+"';"))throw new Error('version_app_only');
-      } else if(file.path==='magi-app/android/app/build.gradle') {
+      } else if(path==='magi-app/android/app/build.gradle') {
         if(after!==replaceOne(before,/versionName "[^"]+"/,'versionName "'+expected+'"'))throw new Error('version_android_only');
-      } else if(file.path==='magi-app/package.json'||file.path==='magi-app/package-lock.json') {
+      } else if(path==='magi-app/package.json'||path==='magi-app/package-lock.json') {
         const old=JSON.parse(before),value=JSON.parse(after);
         if(magiDisplayVersion(value.version)!==expected)throw new Error('version_package');
         value.version=old.version;
-        if(file.path.endsWith('package-lock.json')) {
+        if(path.endsWith('package-lock.json')) {
           if(magiDisplayVersion(value.packages[''].version)!==expected)throw new Error('version_lock');
           value.packages[''].version=old.packages[''].version;
         }
         if(!equal(old,value))throw new Error('version_package_only');
-      } else if(file.path==='data/magi-versions.json') {
+      } else if(path==='data/magi-versions.json') {
         const old=JSON.parse(before),value=JSON.parse(after),row=value.versions[0];
-        if(!validHistory(value)||Buffer.byteLength(after)>65536||row.version!==expected||!equal(value.versions.slice(1),old.versions)
+        if(!validHistory(value)||Buffer.byteLength(after)>VERSION_HISTORY_LIMITS.max_bytes||row.version!==expected||!equal(value.versions.slice(1),old.versions)
           ||!['ja','en'].every(lang=>row.changes[lang].length===2)
           ||/\b(?:Worker|SSE|Jev|OpenAI|Anthropic|DeepSeek|GPT|Claude|function)\b|関数|モデル名/i.test(JSON.stringify(row.changes)))throw new Error('version_history');
-      } else if(file.path==='magi-app/www/sw.js') {
+      } else if(path==='magi-app/www/sw.js') {
         const strip=s=>s.replace(/magi-shell-v\d+/g,'CACHE').replace(/app\.js\?v=\d{8}_\d+/g,'app.js?v=CACHE');
         if(strip(before)!==strip(after))throw new Error('version_sw_only');
-      } else if(file.path==='magi-app/www/index.html') {
+      } else if(path==='magi-app/www/index.html') {
         if(before.replace(/app\.js\?v=\d{8}_\d+/g,'CACHE')!==after.replace(/app\.js\?v=\d{8}_\d+/g,'CACHE'))throw new Error('version_app_html_only');
       }
     }
@@ -135,6 +128,7 @@ export function inspectChanges({commits,baseFiles={},usedVersions=[]}) {
       if(before&&path.endsWith('.md')&&before.split('\n').slice(0,8).some(line=>/^実装済み/.test(line.trim())))fail(commit,'frozen_document',path);
       if(before&&after&&newline(before)!=='none'&&newline(after)!=='none'&&newline(before)!==newline(after))fail(commit,'line_endings',path);
       if(isTest(path)&&before!==null&&removed.length)fail(commit,'test_removal',path);
+      // 意図までは判定できないので、ヘルパーのreturnも含めて追加行のreturnはBへ回す（安全側）。
       if(isTest(path)&&added.some(line=>/\b(?:skip|todo|return)\b|process\.exit|\.only\s*\(/.test(line)))fail(commit,'test_bypass',path);
       if(added.some(line=>upstream.test(line)))fail(commit,'production_endpoint',path);
       if(path==='index.html') {
@@ -152,9 +146,18 @@ export function inspectChanges({commits,baseFiles={},usedVersions=[]}) {
     const old=cacheNumber(baseFiles['magi-app/www/sw.js']),current=cacheNumber(state['magi-app/www/sw.js']);
     if(!Number.isSafeInteger(old)||current!==old+1)errors.push({code:'pwa_cache'});
     const html=state['magi-app/www/index.html'],sw=state['magi-app/www/sw.js'];
-    if(html&&sw&&html.match(/app\.js\?v=([^"']+)/)?.[1]!==sw.match(/app\.js\?v=([^"']+)/)?.[1])errors.push({code:'pwa_asset_version'});
-    if(paths.includes('magi-app/www/app.js')&&html?.match(/app\.js\?v=([^"']+)/)?.[1]
-      ===baseFiles['magi-app/www/index.html']?.match(/app\.js\?v=([^"']+)/)?.[1])errors.push({code:'pwa_asset_not_bumped'});
+    const previous=shellScripts(baseFiles['magi-app/www/index.html']),scripts=shellScripts(html);
+    for(const path of new Set([...previous,...scripts].map(s=>s.path))) {
+      const before=previous.filter(s=>s.path===path),after=scripts.filter(s=>s.path===path),versions=shellVersions(sw,path);
+      if(!after.length) {
+        if(paths.includes('magi-app/www/'+path))errors.push({code:'pwa_asset_version',path});
+        continue;
+      }
+      if(after.length!==1||!after[0].version||versions.length!==1||versions[0]!==after[0].version)
+        errors.push({code:'pwa_asset_version',path});
+      if(paths.includes('magi-app/www/'+path)&&before.some(s=>s.version===after[0].version))
+        errors.push({code:'pwa_asset_not_bumped',path});
+    }
   }
   return {ok:!errors.length,errors,worker:paths.some(isWorkerInput),screens:paths.some(isScreen),version:versionCommits?expected:null};
 }
@@ -172,7 +175,7 @@ export function deploymentMessage(root=repo) {
 }
 function blob(root,sha,path) {
   try {const value=git(root,['show',sha+':'+path],{encoding:'buffer'});return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(value);}
-  catch(error){if(error.status!==undefined&&/does not exist|exists on disk, but not in|does not exist in/.test(String(error.stderr)))return null;throw error;}
+  catch(error){if(error.status!==undefined&&/does not exist|exists on disk, but not in/.test(String(error.stderr)))return null;throw error;}
 }
 export function usedVersionsAt(root,base) {
   if(git(root,['rev-parse','--is-shallow-repository']).trim()==='true')throw new Error('full_history_required');
@@ -243,7 +246,7 @@ export function assertBundleInputs(metadata,root=repo) {
 }
 
 function run(command,root) {
-  console.log(command.map(v=>String(v)).join(' '));
+  console.log(command.join(' '));
   const result=spawnSync(command[0],command.slice(1),{cwd:root,stdio:'inherit',env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
   if(result.error)throw result.error;if(result.status!==0)throw new Error('check_failed: '+command[1]);
 }
@@ -273,11 +276,7 @@ export function runChecks(mode,changes,root=repo) {
         '--outdir',join(temporary,'bundle'),'--metafile',metadata],join(root,'workers'));
       assertBundleInputs(JSON.parse(readFileSync(metadata,'utf8')),root);
     }
-  } finally {
-    const path=relative(resolve(tmpdir()),resolve(temporary));
-    if(path.startsWith('..')||!path)throw new Error('unexpected_temporary_directory');
-    rmSync(temporary,{recursive:true,force:true});
-  }
+  } finally {rmSync(temporary,{recursive:true,force:true});}
 }
 
 async function main(args) {

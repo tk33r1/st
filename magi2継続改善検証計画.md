@@ -29,11 +29,11 @@
 | 片方だけ | 各コミットが、Worker の取り込むファイル（設計§3.4 の定義）と、利用者に配る画面の両方には触れていない。テスト・文書はどちらと一緒でもよい（設計§2.2 の10。版のコミットは除く） | 毎回 | ○ | ○ |
 | 大きさ | ルートの `index.html` のバイト数が、版の表示の桁の分を除いて増えていない（設計§2.2 の5） | `index.html` を変えたとき | ○ | ○ |
 | 外部の参照 | トップページの追加された行に `http://`・`https://`・`//` で始まる読み込み（`src`・`href`・`url(`・`import`・`fetch`）が無い（設計§2.2 の5） | `index.html` を変えたとき | ○ | ○ |
-| テストを緩めていない | 既存のテストファイルの差分が追加だけで、`assert` の削除・条件の書き換え・テストの飛ばし（`skip`・早期の `return`）が無い | テストを変えたとき | ○ | ○ |
+| テストを緩めていない | 既存のテストファイルの差分が追加だけで、`assert` の削除・条件の書き換え・テストの飛ばし（`skip`・早期の `return`）が無い。早期の `return` と区別できないので、追加した行の `return` はヘルパーでも外れ | テストを変えたとき | ○ | ○ |
 | 触れてはいけない場所 | `.github/workflows/`・`.github/magi2-daily/README.md`・`.github/scripts/magi2-daily-check.mjs` とそのテスト・生成物・「実装済み」の文書・`workers/magi2/schema.sql`・`workers/magi2/migrations/` に差分が無い。`magi-app/android/` は `build.gradle` の versionName の1行だけ | 毎回 | ○ | ○ |
 | 印 | PR のコミットがすべて `[magi2-daily]` 付き | 毎回 | ○ | ○ |
 | 本番の入口 | 追加された行に、本番の入口（`tk.st` の API・`workers.tk.st`・`magi2-eval.tk.st`）と各社の API のホスト名が新しく現れない。既にある行は対象外で、正当な追加は区分 B（Actions の検証のジョブのネットワークは絞れないため。設計§3.2） | 毎回 | ○ | ○ |
-| PWA のキャッシュ | `magi-app/www/` を変えたら `sw.js` のキャッシュ名が1つ上がっている | `magi-app/www/` を変えたとき | ○ | ○ |
+| PWA のキャッシュ | `magi-app/www/` を変えたら `sw.js` のキャッシュ名が1つ上がっている。HTMLが読むローカルJSすべての`?v=`がSWのCOREと一致し、変更したJSの値がbaseより更新されている | `magi-app/www/` を変えたとき | ○ | ○ |
 | 版（下の表） | 版を上げた日だけ | 版のコミット | ○ | ○ |
 
 版のコミットの確認（設計§2.4）:
@@ -278,7 +278,7 @@
 | 確認 | 合格条件 |
 | --- | --- |
 | A2 の維持 | 既存の `test-magi-eval-budget.mjs` が変えずに通る。台帳を指定しない実行は今までどおりキーを読む前に拒否し、A2 の台帳・scope・上限（$3.12 と各社 $1.20）は変わらない |
-| A6 の台帳 | `workers/.wrangler/magi2-daily/budget-<YYYYMM>.json` を選ぶと、scope が A6 のものと照合され、月の予約の合計が $0.50 を超える要求は送る前に拒否される |
+| A6 の台帳 | A6専用の`dailyPaidEvaluationGate()`を明示的に呼び、`workers/.wrangler/magi2-daily/budget-<YYYYMM>.json` を選ぶと、scope が A6 のものと照合され、月の予約の合計が $0.50 を超える要求は送る前に拒否される。既存の`paidEvaluationGate()`ではA6台帳を受け付けない |
 | 台帳の取り違え | A2 の台帳に A6 の scope で、又は A6 の台帳に A2 の scope で予約しようとすると拒否する。別の月の台帳で今月の枠を広げられない |
 | 月の中 | 失敗・中断した要求の予約が減らず、同じ月の中では枠が戻らない |
 

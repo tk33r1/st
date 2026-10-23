@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,copyFileSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {dailyEvaluationBudgetPath,evaluationBudgetPath,evaluationBudgetPolicy,evaluationLedgerGate,evaluationRequestHash,paidEvaluationGate} from './magi-eval-budget.mjs';
 
 const body={model:'synthetic-model',messages:[{role:'user',content:'synthetic'}]};
@@ -23,6 +24,36 @@ test('A6: 保存先とscopeは今月だけで、A2の既定拒否・上限は変
   assert.deepEqual(policy.caps,{total:.50});assert.equal(policy.scope,'magi2-daily-'+month.replace('-',''));
   assert.throws(()=>evaluationBudgetPolicy(dailyEvaluationBudgetPath(new Date('2000-01-01T00:00:00Z'))),/shared/);
   assert.throws(()=>evaluationBudgetPolicy(join(tmpdir(),'budget-'+month.replace('-','')+'.json')),/shared/);
+});
+test('既存のA2評価器の入口では、当月のA6台帳を指定しても拒否する',()=>{
+  assert.throws(()=>paidEvaluationGate(['--budget-ledger='+dailyEvaluationBudgetPath()]),/shared/);
+});
+test('A6専用の入口を明示した場合だけ当月台帳を予約し、A2とscopeの取り違えを拒否する',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'magi2-budget-entry-'));
+  try {
+    const module=join(dir,'.github/scripts/magi-eval-budget.mjs');mkdirSync(dirname(module),{recursive:true});
+    copyFileSync(new URL('./magi-eval-budget.mjs',import.meta.url),module);
+    const api=await import(pathToFileURL(module).href),path=api.dailyEvaluationBudgetPath();mkdirSync(dirname(path),{recursive:true});
+    const value={version:1,scope:api.evaluationBudgetPolicy(path).scope,reservations:[],estimates:{
+      [api.evaluationRequestHash('openai',body)]:{provider:'openai',model:body.model,max_usd:.3,
+        pricing_checked_at:new Date().toISOString().slice(0,10),basis:'合成入力のみ'},
+    }};
+    writeFileSync(path,JSON.stringify(value));const args=['--budget-ledger='+path];
+    assert.throws(()=>api.paidEvaluationGate(args),/shared/);
+    assert.equal(JSON.parse(readFileSync(path)).reservations.length,0);
+    api.dailyPaidEvaluationGate(args).reserve('openai',body);
+    assert.throws(()=>api.dailyPaidEvaluationGate(args).reserve('openai',body),/ceiling/);
+    assert.equal(JSON.parse(readFileSync(path)).reservations.length,1);
+    assert.throws(()=>api.dailyPaidEvaluationGate([]),/disabled/);
+    assert.throws(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+api.evaluationBudgetPath]),/shared/);
+    value.scope='magi-dialogue-20261015';writeFileSync(path,JSON.stringify(value));
+    assert.throws(()=>api.dailyPaidEvaluationGate(args),/Invalid/);
+    // 保存先と枠の月は同じ時刻で決める。月末の境目でも、その月の台帳として扱う。
+    const edge=new Date('2026-10-31T23:59:59.999Z'),edgePath=api.dailyEvaluationBudgetPath(edge);
+    writeFileSync(edgePath,JSON.stringify({...value,scope:'magi2-daily-202610'}));
+    assert.doesNotThrow(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+edgePath],edge));
+    assert.throws(()=>api.dailyPaidEvaluationGate(['--budget-ledger='+edgePath],new Date('2026-11-01T00:00:00Z')),/shared/);
+  } finally {assert.equal(dirname(dir),resolve(tmpdir()));rmSync(dir,{recursive:true,force:true});}
 });
 test('A6: 全社合計$0.50を超える予約を拒否し、実行をまたいで予約を減らさない',()=>fixture(f=>{
   f.estimate('openai',.3);f.estimate('anthropic',.2);f.estimate('typesafe',.000001);f.save();

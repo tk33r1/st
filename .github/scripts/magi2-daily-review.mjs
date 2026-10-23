@@ -33,6 +33,8 @@ export function reviewState({head,base,route=null,requests=[],results=[],records
   const nowMs=+now,known=new Map(),accepted=new Set(),seen=new Map();
   const output=(next,reason,extra={})=>({next,reason,rounds:accepted.size,remaining:Math.max(0,3-accepted.size),
     unresolved:[...known.values()].filter(f=>f.priority<=1&&f.status==='open').map(f=>f.finding_id),...extra});
+  // 3ラウンドを使い切ったら本人、残っていれば Claude が直して再依頼する。
+  const retry=reason=>output(accepted.size>=3?'human':'claude',reason);
   // 設定だけで実経路の合格を代用しない。点検・レビューの登録と実試行が必要。
   const configured=route?.configured===true&&route.live_trial_passed===true&&route.name&&route.result_actor&&route.routine_actor;
   const ordered=[...requests].sort((a,b)=>time(a.created_at)-time(b.created_at));
@@ -102,11 +104,11 @@ export function reviewState({head,base,route=null,requests=[],results=[],records
   if(!latest)return output('claude','review_required');
   if(latest.head!==head||latest.base!==base)return output(accepted.size>=3?'human':'claude',accepted.size>=3?'round_limit':'head_changed');
   if(!latestValid) {
-    if(latestFailed)return output(accepted.size>=3?'human':'claude','request_failed');
-    if(invalidTable)return output(accepted.size>=3?'human':'claude','invalid_table');
+    if(latestFailed)return retry('request_failed');
+    if(invalidTable)return retry('invalid_table');
     return output('chatgpt','awaiting_result',{request_id:latest.id,deadline:new Date(time(latest.created_at)+day).toISOString()});
   }
-  if([...known.values()].some(f=>f.priority<=1&&f.status==='open'))return output(accepted.size>=3?'human':'claude','open_findings');
+  if([...known.values()].some(f=>f.priority<=1&&f.status==='open'))return retry('open_findings');
   if(!claudeModelEvidence(claude,head,route.routine_actor))return output('claude','claude_settings_missing');
   return output('ready','completed',{claude_model_evidence:'self_report',independent_claude_model_proof:false});
 }

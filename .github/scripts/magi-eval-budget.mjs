@@ -16,28 +16,39 @@ const cents=value=>Math.ceil(value*1e6); // 比較は百万分の1ドル、端�
 export const evaluationRequestHash=(provider,body)=>createHash('sha256').update(JSON.stringify({provider,body})).digest('hex');
 
 const dailyBudgetRoot=fileURLToPath(new URL('../../workers/.wrangler/magi2-daily/',import.meta.url));
+const utcMonth=now=>now.toISOString().slice(0,7); // YYYY-MM
 export function dailyEvaluationBudgetPath(now=new Date()) {
-  return resolve(dailyBudgetRoot,'budget-'+now.toISOString().slice(0,7).replace('-','')+'.json');
+  return resolve(dailyBudgetRoot,'budget-'+utcMonth(now).replace('-','')+'.json');
 }
 
 // CLIから別の月・別の保存先を指定して枠を増やさない。A2の既存の入口と上限は維持する。
 export function evaluationBudgetPolicy(path,now=new Date()) {
   if(resolve(path)===resolve(evaluationBudgetPath))return {scope,caps};
-  if(resolve(path)===dailyEvaluationBudgetPath(now))return {
-    scope:'magi2-daily-'+now.toISOString().slice(0,7).replace('-',''),caps:{total:.50},
-    month:now.toISOString().slice(0,7),
-  };
+  const month=utcMonth(now);
+  if(resolve(path)===dailyEvaluationBudgetPath(now))return {scope:'magi2-daily-'+month.replace('-',''),caps:{total:.50},month};
   throw new Error('Use the shared budget-20261015.json ledger or the current A6 monthly ledger.');
 }
 
-export function paidEvaluationGate(args=process.argv,expectedLedgerPath) {
+// 台帳の指定が無ければ送らない。実APIの評価はどの入口も既定で停止する。
+function ledgerArgument(args,message) {
   const argument=args.find(a=>a.startsWith('--budget-ledger='))?.slice('--budget-ledger='.length);
-  if(!argument)throw new Error('Paid API evaluation is disabled. Use recorded replay, or provide --budget-ledger with reviewed per-request cost estimates.');
-  const path=resolve(argument);
-  // 第2引数は既存のA2単体テストの一時台帳用。通常の評価器からは渡さない。
-  if(expectedLedgerPath!==undefined&&path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger.');
-  const policy=expectedLedgerPath===undefined?evaluationBudgetPolicy(path):{scope,caps};
-  return evaluationLedgerGate(path,policy);
+  if(!argument)throw new Error('Paid API evaluation is disabled. '+message);
+  return resolve(argument);
+}
+
+export function paidEvaluationGate(args=process.argv,expectedLedgerPath=evaluationBudgetPath) {
+  const path=ledgerArgument(args,'Use recorded replay, or provide --budget-ledger with reviewed per-request cost estimates.');
+  // 既存の評価器はA2だけを使う。第2引数は既存単体テストの一時台帳用。
+  if(path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger.');
+  return evaluationLedgerGate(path,{scope,caps});
+}
+
+// A6用の呼び出しだけが明示的に選ぶ入口。A2や別月の台帳では実行しない。
+export function dailyPaidEvaluationGate(args=process.argv,now=new Date()) {
+  const path=ledgerArgument(args,'Provide the current A6 monthly ledger.');
+  // 月末をまたいでも、保存先と枠の月を同じ時刻で決める。
+  if(path!==dailyEvaluationBudgetPath(now))throw new Error('Use the shared current A6 monthly ledger.');
+  return evaluationLedgerGate(path,evaluationBudgetPolicy(path,now));
 }
 
 // I/Oと予約の検査。入口の保存先判定と分け、外部APIを使わずに両方の台帳を検証する。
@@ -53,7 +64,7 @@ export function evaluationLedgerGate(path,policy) {
   validate(JSON.parse(readFileSync(path,'utf8')));
   return {
     reserve(provider,body) {
-      if(month&&new Date().toISOString().slice(0,7)!==month)throw new Error('The A6 budget month changed. Open the current monthly ledger.');
+      if(month&&utcMonth(new Date())!==month)throw new Error('The A6 budget month changed. Open the current monthly ledger.');
       if(!providers.includes(provider)||!body?.model)throw new Error('Unknown paid API request.');
       const request_hash=evaluationRequestHash(provider,body),lock=path+'.lock';
       let handle;

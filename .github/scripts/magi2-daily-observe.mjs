@@ -13,7 +13,7 @@ export function observationPeriod(now=new Date()) {
 }
 export function observationSQL(period=observationPeriod()) {
   if(!validDay(period.from)||!validDay(period.until)||period.from>=period.until)throw new Error('observation_period');
-  return "SELECT day, ip AS kind, count FROM rate_limit WHERE ip IN ('global','search:global','research:global')"
+  return "SELECT day, ip AS kind, count FROM rate_limit WHERE ip IN ("+kinds.map(k=>"'"+k+"'").join(',')+")"
     +" AND day >= '"+period.from+"' AND day < '"+period.until+"' ORDER BY day, kind;\n"
     +"SELECT substr(created_at,1,10) AS day, COUNT(*) AS count FROM reactions WHERE created_at >= '"+period.from+"T00:00:00'"
     +" AND created_at < '"+period.until+"T00:00:00' GROUP BY substr(created_at,1,10) ORDER BY day;";
@@ -46,11 +46,17 @@ export async function catalogObservation(fetcher=fetch) {
       status:response.status,elapsed_ms:Date.now()-start};
   } catch{return {ok:false,status:null,elapsed_ms:Date.now()-start};}
 }
-export function observationText(report,catalog,prs=[],version=null) {
+export async function weeklyPRs(client,period=observationPeriod()) {
+  // updated降順なので、期間開始より古くなった最初の行で打ち切れる。
+  return client.pages('/pulls?state=all&sort=updated&direction=desc',{
+    stop:pr=>typeof pr.updated_at==='string'&&pr.updated_at<period.from+'T00:00:00Z',
+  });
+}
+export function observationText(report,catalog,prs=[],version=null,{actor='tk33r1'}={}) {
   const start=report.period.from,end=report.period.until;
   const inWeek=value=>typeof value==='string'&&value.slice(0,10)>=start&&value.slice(0,10)<end;
-  const a=prs.filter(p=>eligibleDailyPR(p)&&inWeek(p.merged_at)).length;
-  const b=prs.filter(p=>eligibleDailyPR(p,{label:'magi2-daily-B'})&&inWeek(p.created_at)).length;
+  const a=prs.filter(p=>eligibleDailyPR(p,{actor})&&inWeek(p.merged_at)).length;
+  const b=prs.filter(p=>eligibleDailyPR(p,{actor,label:'magi2-daily-B'})&&inWeek(p.created_at)).length;
   return '週次まとめ（UTC '+start+' 以上、'+end+' 未満）\n\n'
     +'公開カタログ: '+(catalog.ok?'正常':'要確認')+'（HTTP '+(catalog.status??'応答なし')+'）\n'
     +'区分Aのマージ '+a+'件、区分Bの新規PR '+b+'件。現在の履歴の版: '+(version||'未確認')+'。\n\n'
@@ -65,9 +71,9 @@ async function main(args) {
   const report=cleanObservation(JSON.parse(readFileSync(args[index+1],'utf8')),period);
   const catalog=await catalogObservation();
   const client=githubClient(process.env.GITHUB_TOKEN,{repository:process.env.GITHUB_REPOSITORY});
-  const prs=await client.pages('/pulls?state=all&sort=updated&direction=desc');
+  const prs=await weeklyPRs(client,period);
   const version=JSON.parse(readFileSync('data/magi-versions.json','utf8')).versions[0].version;
-  const text=observationText(report,catalog,prs,version);
+  const text=observationText(report,catalog,prs,version,{actor:process.env.MAGI2_DAILY_ACTOR||'tk33r1'});
   await commentOnce(client,dailyIssueNumber(process.env.MAGI2_DAILY_ISSUE),['weekly',period.from],text);
   console.log(JSON.stringify({period,catalog,reported:true}));
 }

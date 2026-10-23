@@ -2401,9 +2401,7 @@ if ('serviceWorker' in navigator) {
 // ネイティブだけが公開Releaseを1日1回確認する。遅延・失敗は会話に影響させない。
 function releaseVersion(tag) {
   var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)$/.exec(tag);
-  if (!match) return null;
-  var parts = [Number(match[1]), Number(match[2])];
-  return parts.every(Number.isSafeInteger) ? parts : null;
+  return match ? [Number(match[1]), Number(match[2])] : null;
 }
 function newerRelease(parts, current) {
   var installed = typeof current === 'string' && /^(\d{1,2})\.(\d)([1-9])?$/.exec(current);
