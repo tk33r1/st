@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.1",
+      "date": "2026-10-23",
+      "changes": {
+        "ja": [
+          "トップページとWeb版で、通信をまとめて届ける環境（会社のネットワークなど）でも、回答が少しずつ届くようにしました。",
+          "この接続を使えないときは、今までの方法で最後まで受け取ります。Android版の受け取り方は変わりません。"
+        ],
+        "en": [
+          "On tk.st and the web app, replies now arrive progressively even on networks that hold back streamed data, such as some office networks.",
+          "If that connection cannot be used, replies arrive in full the previous way. The Android app receives replies as before."
+        ]
+      }
+    },
+    {
       "version": "6.0",
       "date": "2026-10-23",
       "changes": {

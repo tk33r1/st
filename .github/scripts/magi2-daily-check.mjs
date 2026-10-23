@@ -11,7 +11,7 @@ const repo=fileURLToPath(new URL('../../',import.meta.url));
 // 本番エントリの依存だけを宣言する。eval専用src/eval.jsは自動公開しない。
 export const workerInputs=Object.freeze([
   'workers/magi2/src/index.js',
-  ...['classification','languages','magi-mode','personas','probe','qa-budget','research','search-scope',
+  ...['classification','languages','magi-mode','personas','qa-budget','research','search-scope',
     'site-rank','site-search','speech','versions','version-history'].map(name=>'workers/magi2/'+name+'.js'),
   'config/ai-models.json','data/magi-context.json','data/magi-versions.json','workers/magi2/wrangler.toml',
 ]);
