@@ -147,8 +147,8 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
       return body.stream ? new Response(stream) : Response.json({ choices: [{ message: { content: 'opinion' }, finish_reason: 'stop' }] });
     },
   });
-  const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
-  vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
+  const strip = s => s.replace(/^(?:import .*|export \{.*\} from .*);\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
+  vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/version-history.js')) + '\n' + strip(read('workers/magi2/personas.js')) + '\n'
     + strip(read('workers/magi2/versions.js')) + '\n'
     + strip(read('workers/magi2/classification.js')) + '\n'
     + strip(read('workers/magi2/research.js')) + '\n'

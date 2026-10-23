@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {observationSQL,cleanObservation,catalogObservation,observationText,observationPeriod} from './magi2-daily-observe.mjs';
+import {observationSQL,cleanObservation,catalogObservation,observationText,observationPeriod,weeklyPRs} from './magi2-daily-observe.mjs';
 import {eligibleDailyPR,githubClient,commentOnce,stateComment,notifyDaily} from './magi2-daily-github.mjs';
 import {report} from './magi2-daily-control.mjs';
 
@@ -60,6 +62,43 @@ test('カタログは固定GETだけで形を点検し、本文やモデル名�
   assert.equal((await catalogObservation(async()=>Response.json({}))).ok,false);
   assert.equal((await catalogObservation(async()=>{throw new Error('PRIVATE');})).status,null);
   const text=observationText(cleanObservation(empty(),period),result,[],'6.0');assert.doesNotMatch(text,/PRIVATE|description/);
+});
+test('週次workflowはD1の文ごとの結果を得るcommandを使い、登録した作成者を集計する',()=>{
+  const workflow=readFileSync('.github/workflows/magi2-daily-observe.yml','utf8');
+  assert.match(workflow,/--command /);assert.doesNotMatch(workflow,/--file /);
+  assert.match(workflow,/MAGI2_DAILY_ACTOR: \$\{\{ vars\.MAGI2_DAILY_ACTOR \}\}/);
+  const a=pr();a.user.login='daily-bot';a.merged_at='2026-10-20T00:00:00Z';
+  const b=pr();b.user.login='daily-bot';b.labels=[{name:'magi2-daily-B'}];b.created_at='2026-10-21T00:00:00Z';
+  const text=observationText(cleanObservation(empty(),period),{ok:true,status:200},[a,b],'6.0',{actor:'daily-bot'});
+  assert.match(text,/区分Aのマージ 1件、区分Bの新規PR 1件/);
+});
+test('週次PR取得はupdated降順で期間開始に達したら打ち切り、期間開始ちょうどは含める',async()=>{
+  const calls=[],rows=Array.from({length:100},()=>({...pr(),updated_at:'2026-10-20T00:00:00Z'}));
+  const client=githubClient('synthetic',{fetcher:async url=>{
+    calls.push(url);assert.match(url,/sort=updated&direction=desc/);
+    return Response.json(calls.length===1?rows:[
+      {...pr(),updated_at:period.from+'T00:00:00Z'},
+      {...pr(),updated_at:'2026-10-15T23:59:59Z'},
+    ]);
+  }});
+  const result=await weeklyPRs(client,period);assert.equal(result.length,101);assert.equal(calls.length,2);
+  const all=githubClient('synthetic',{fetcher:async()=>Response.json([{number:1}])});
+  assert.deepEqual(await all.pages('/pulls?state=open'),[{number:1}]);
+});
+test('Bのメールが失敗しても他PRの状態とA重複の報告を続け、未通知分は次回再試行する',async()=>{
+  const b=pr();b.number=8;b.labels=[{name:'magi2-daily-B'}];
+  const f=clientFixture([b,pr()]),snapshot={number:7,head:'a'.repeat(40),base:f.main,mechanical:{ok:true},open_a:[7]};
+  await assert.rejects(()=>report(f.client,snapshot,{issue:10,validation:'success',mail:async()=>{throw new Error('daily_mail_not_configured');}}));
+  assert.ok(f.calls.some(c=>c.path==='/issues/7/comments'&&c.body.body.includes('"next": "unconfigured"')));
+  assert.ok(!f.prs[0].labels.some(l=>l.name==='magi2-daily-notified'));
+  let sent=0;await report(f.client,snapshot,{issue:10,mail:async()=>{sent++;}});assert.equal(sent,1);
+  const duplicate=clientFixture([b]);
+  await assert.rejects(()=>report(duplicate.client,{open_a:[7,9]},{issue:10,mail:async()=>{throw new Error('daily_mail_500');}}));
+  assert.ok(duplicate.calls.some(c=>c.body?.body?.includes('区分Aが複数')));
+  const b2=structuredClone(b);b2.number=9;
+  const others=clientFixture([b,b2]);
+  await assert.rejects(()=>report(others.client,{open_a:[]},{issue:10,mail:async(text,key)=>{if(key[1]===8)throw new Error('daily_mail_500');}}));
+  assert.ok(others.prs[1].labels.some(l=>l.name==='magi2-daily-notified'));
 });
 test('同じrepo・本人・規定ブランチ・Aだけを候補にし、forkと別の人は外す',()=>{
   assert.equal(eligibleDailyPR(pr()),true);
@@ -152,4 +191,19 @@ test('手動公開も共通workflowを使い、40桁SHAを固定しAnthropic同�
   assert.ok(core.includes('^[a-f0-9]{40}$'));assert.ok(core.includes('--message "$DEPLOY_SHA"'));
   assert.ok(core.includes('secret put MAGI_ANTHROPIC_API_KEY'));assert.ok(core.includes("inputs.worker == 'magi2' && !inputs.dry-run"));
   assert.ok(core.includes('0008_transition_scores.sql'));assert.ok(core.includes('persist-credentials: false'));
+});
+test('共通公開はdispatchのoptionsだけでWorkerを選び、未知名は理由を示して拒否する',()=>{
+  const wrapper=readFileSync('.github/workflows/deploy-worker.yml','utf8');
+  const core=readFileSync('.github/workflows/deploy-worker-core.yml','utf8');
+  assert.doesNotMatch(core,/case "\$WORKER" in/);
+  const script=core.match(/node --input-type=module <<'JS'\n([\s\S]*?)^        JS$/m)?.[1];assert.ok(script);
+  const dir=mkdtempSync(join(tmpdir(),'magi2-worker-options-'));
+  try {
+    const path=join(dir,'.github/workflows/deploy-worker.yml');mkdirSync(dirname(path),{recursive:true});
+    writeFileSync(path,wrapper.replace('          - games','          - games\n          - future-worker'));
+    const run=worker=>spawnSync(process.execPath,['--input-type=module','-e',script],
+      {cwd:dir,encoding:'utf8',env:{PATH:process.env.PATH,WORKER:worker}});
+    assert.equal(run('magi2').status,0);assert.equal(run('future-worker').status,0);
+    const invalid=run('missing');assert.notEqual(invalid.status,0);assert.match(invalid.stderr,/::error::Worker must be listed/);
+  } finally {assert.equal(dirname(dir),resolve(tmpdir()));rmSync(dir,{recursive:true,force:true});}
 });

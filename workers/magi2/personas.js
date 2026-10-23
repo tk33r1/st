@@ -932,8 +932,8 @@ export const SPEECH = {
 // 出典のアイコン（読み上げ設計書 4.4）。出典の本文と同じホストから取り、照合を待たせない
 export const SOURCE_ICON = { ms: 3000, max_bytes: 4096, max_redirects: 3 };
 
-// 更新履歴の公開JSON。タイムアウトと上限もここを正本にする。
+// 更新履歴の公開JSONの取得先と期限。形式と上限はversion-history.jsで共有する。
 export const VERSION_HISTORY = {
   url: 'https://tk.st/data/magi-versions.json', cache_ms: 600000,
-  fetch_timeout_ms: 3000, max_bytes: 65536, max_versions: 60, max_change_chars: 200,
+  fetch_timeout_ms: 3000,
 };

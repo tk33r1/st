@@ -30,14 +30,22 @@ export function evaluationBudgetPolicy(path,now=new Date()) {
   throw new Error('Use the shared budget-20261015.json ledger or the current A6 monthly ledger.');
 }
 
-export function paidEvaluationGate(args=process.argv,expectedLedgerPath) {
+export function paidEvaluationGate(args=process.argv,expectedLedgerPath=evaluationBudgetPath) {
   const argument=args.find(a=>a.startsWith('--budget-ledger='))?.slice('--budget-ledger='.length);
   if(!argument)throw new Error('Paid API evaluation is disabled. Use recorded replay, or provide --budget-ledger with reviewed per-request cost estimates.');
   const path=resolve(argument);
-  // 第2引数は既存のA2単体テストの一時台帳用。通常の評価器からは渡さない。
-  if(expectedLedgerPath!==undefined&&path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger.');
-  const policy=expectedLedgerPath===undefined?evaluationBudgetPolicy(path):{scope,caps};
-  return evaluationLedgerGate(path,policy);
+  // 既存の評価器はA2だけを使う。第2引数は既存単体テストの一時台帳用。
+  if(path!==resolve(expectedLedgerPath))throw new Error('Use the shared budget-20261015.json ledger.');
+  return evaluationLedgerGate(path,{scope,caps});
+}
+
+// A6用の呼び出しだけが明示的に選ぶ入口。A2や別月の台帳では実行しない。
+export function dailyPaidEvaluationGate(args=process.argv) {
+  const argument=args.find(a=>a.startsWith('--budget-ledger='))?.slice('--budget-ledger='.length);
+  if(!argument)throw new Error('Paid API evaluation is disabled. Provide the current A6 monthly ledger.');
+  const path=resolve(argument);
+  if(path!==dailyEvaluationBudgetPath())throw new Error('Use the shared current A6 monthly ledger.');
+  return evaluationLedgerGate(path,evaluationBudgetPolicy(path));
 }
 
 // I/Oと予約の検査。入口の保存先判定と分け、外部APIを使わずに両方の台帳を検証する。

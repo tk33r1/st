@@ -37,7 +37,7 @@ jobs:
         WORKER: ${{ inputs.worker }}
       run: |
         [[ "$DEPLOY_SHA" =~ ^[a-f0-9]{40}$ ]] || { echo '::error::A full commit SHA is required'; exit 1; }
-        case "$WORKER" in dj-request|dj-schedule|dj-offer|comments|magi|magi2|games) ;; *) exit 1 ;; esac
+        [[ "$WORKER" =~ ^[a-z][a-z0-9-]*$ ]] || { echo '::error::Invalid Worker name'; exit 1; }
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.sha }}
@@ -45,6 +45,21 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
+    # 手動選択肢を唯一の一覧として使う。workflow_callの任意文字列も同じ一覧で検査する。
+    - name: Validate Worker against dispatch options
+      env:
+        WORKER: ${{ inputs.worker }}
+      run: |
+        node --input-type=module <<'JS'
+        import {readFileSync} from 'node:fs';
+        const workflow=readFileSync('.github/workflows/deploy-worker.yml','utf8');
+        const options=workflow.match(/^        options:\n((?:          - [a-z][a-z0-9-]*\n)+)/m)?.[1]
+          .trim().split('\n').map(line=>line.trim().slice(2));
+        if(!options?.includes(process.env.WORKER)) {
+          console.error('::error::Worker must be listed in deploy-worker.yml dispatch options');
+          process.exit(1);
+        }
+        JS
 
     # wrangler は全 Worker 共通で workers/package.json に入れてある
     - name: Install wrangler

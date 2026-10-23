@@ -4,7 +4,8 @@ import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
-import {nextVersion,inspectChanges,isWorkerInput,readChanges,usedVersionsAt,checkPlan,workerInputs,assertBundleInputs,deploymentMessage} from './magi2-daily-check.mjs';
+import {nextVersion,inspectChanges,isWorkerInput,readChanges,usedVersionsAt,checkPlan,workerInputs,assertBundleInputs,deploymentMessage,validHistory} from './magi2-daily-check.mjs';
+import {cleanVersionHistory} from '../../workers/magi2/version-history.js';
 
 const row=version=>({version,date:'2026-10-23',changes:{ja:['表示を改善しました','操作を改善しました'],en:['Improved display','Improved controls']}});
 const baseFiles={
@@ -31,6 +32,15 @@ test('採番は系列とmainまでの使用済み番号を使い、戻した番�
   for(const [current,used,expected] of [['5.9',[],'5.91'],['6.0',[],'6.01'],['5.9',['5.91'],'5.92'],
     ['6.08',[],'6.09'],['5.99',[],null],['5.98',['5.99'],null],['6.0',['5.99'],'6.01']])assert.equal(nextVersion(current,used),expected);
   assert.throws(()=>nextVersion('5.90'));
+});
+test('Workerと日次検査が同じ履歴の境界条件を使う',()=>{
+  const valid={versions:[row('6.01'),row('6.0')]};
+  assert.equal(validHistory(valid),true);assert.equal(cleanVersionHistory(valid),valid);
+  for(const change of [d=>d.versions[0].changes.extra=[],d=>d.versions[0].changes.ja[0]='   ',
+    d=>d.versions[0].changes.en[0]='a\u0001b',d=>d.versions[0].date='2026-02-30',
+    d=>d.versions[0].version='6.00',d=>d.versions.reverse()]) {
+    const value=structuredClone(valid);change(value);assert.equal(validHistory(value),false);assert.equal(cleanVersionHistory(value),null);
+  }
 });
 test('機械的条件: 保護ファイル・範囲外・完了済み文書・印なしを落とす',()=>{
   for(const path of ['.github/workflows/a.yml','.github/magi2-daily/README.md','.github/scripts/magi2-daily-check.mjs',
@@ -59,6 +69,34 @@ test('機械的条件: トップの肥大化・外部アセット・PWAキャッ
   assert.ok(has(inspect([file('index.html','old','longer')]),'home_size'));
   assert.ok(has(inspect([file('index.html',null,'<script src="https://example.test/a.js"></script>')]),'external_asset'));
   assert.ok(has(inspect([file('magi-app/www/app.js')]),'pwa_cache'));
+});
+test('追加したモジュール直下のヘルパーのreturnは許し、テスト内の早期returnは拒否する',()=>{
+  const path='.github/scripts/test-magi2.mjs';
+  const helper="function fixture(value) {\n  return value + 1;\n}\nassert.equal(fixture(1),2);\n";
+  assert.equal(inspect([file(path,null,helper)]).ok,true);
+  assert.equal(inspect([file(path,null,"const helper = value => {\n  return value + 1;\n};\nassert.equal(helper(1),2);\n")]).ok,true);
+  for(const source of ["test('case',()=>{ return; assert.ok(false); });\n",
+    "test('case',()=>{ return true; assert.ok(false); });\n",
+    "test('case',\nfunction callback() {\n return;\n});\n"])assert.ok(has(inspect([file(path,null,source)]),'test_bypass'));
+  assert.ok(has(inspect([file(path,null,"test('case',()=>{\nconst helper = value => { return value; };\nreturn helper(1);\n});\n")]),'test_bypass'));
+  assert.ok(has(inspect([file(path,null,"function helper() { test.skip('case',()=>{}); return 1; }\n")]),'test_bypass'));
+  assert.ok(has(inspect([file(path,"function helper() {\n  assert.ok(value);\n}\n",
+    "function helper() {\n  return value;\n  assert.ok(value);\n}\n")]),'test_bypass'));
+  assert.ok(has(inspect([file(path,null,"new Request('https://workers.tk.st/magi2');\n")]),'production_endpoint'));
+});
+test('PWAのすべての版付きスクリプトで、HTMLとSWの版の一致と変更時の更新を検査する',()=>{
+  for(const name of ['app','native-history','native-input','native-widget','native-background','app-theme','vendor/Readability']) {
+    const html=`<script src="${name}.js?v=20261023_1"></script>\n`;
+    const sw=`var CACHE = 'magi-shell-v1';\nvar CORE = ['./${name}.js?v=20261023_1'];\n`;
+    const base={...baseFiles,'magi-app/www/index.html':html,'magi-app/www/sw.js':sw};
+    const run=(h,s)=>inspectChanges({baseFiles:base,commits:[commit([
+      file('magi-app/www/'+name+'.js','old\n','new\n'),file('magi-app/www/index.html',html,h),
+      file('magi-app/www/sw.js',sw,s.replace('shell-v1','shell-v2'))]) ]});
+    assert.ok(has(run(html,sw),'pwa_asset_not_bumped'),name);
+    assert.ok(has(run(html.replace('_1','_2'),sw),'pwa_asset_version'),name);
+    assert.equal(run(html.replace('_1','_2'),sw.replace('_1','_2')).ok,true,name);
+    assert.ok(has(run(html.replace('?v=20261023_1',''),sw.replace('?v=20261023_1','')),'pwa_asset_version'),name);
+  }
 });
 test('文書だけではWorkerを出さず、研究処理はWorkerの依存と判定する',()=>{
   const result=inspect([file('workers/magi2/README.md')]);assert.equal(result.ok,true);assert.equal(result.worker,false);

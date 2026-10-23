@@ -13,11 +13,13 @@ export function githubClient(token,{fetcher=fetch,repository=dailyRepository}={}
     if(!response.ok)throw new Error('github_'+response.status+'_'+method+'_'+path.split('?')[0]);
     return response.status===204?null:response.json();
   };
-  const pages=async path=>{
+  const pages=async (path,{stop}={})=>{
     const values=[];
     for(let page=1;page<=100;page++) {
       const rows=await request(path+(path.includes('?')?'&':'?')+'per_page=100&page='+page);
-      if(!Array.isArray(rows))throw new Error('github_page_shape');values.push(...rows);if(rows.length<100)return values;
+      if(!Array.isArray(rows))throw new Error('github_page_shape');
+      for(const row of rows){if(stop?.(row))return values;values.push(row);}
+      if(rows.length<100)return values;
     }
     throw new Error('github_pagination_limit');
   };

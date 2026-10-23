@@ -28,11 +28,23 @@ async function notifyB(client,issue,pr,mail) {
   const key=['B',pr.number];
   const text='区分Bの本人確認: '+pr.html_url+'\n内容・メリット・デメリット・費用と送り先への影響をPRで確認してください。';
   await commentOnce(client,issue,key,text);
-  await mail(text,key);
+  if(await mail(text,key)===false)return;
   await client.request('/issues/'+pr.number+'/labels',{method:'POST',body:{labels:['magi2-daily-notified']}});
 }
 
 export async function report(client,snapshot,{issue,actor='tk33r1',validation='skipped',stage='1',mail=notifyDaily}={}) {
+  const failures=[];
+  const send=async(text,key)=>{
+    try {await mail(text,key);}
+    catch(error){failures.push({number:key[1],error});return false;}
+  };
+  await reportState(client,snapshot,{issue,actor,validation,stage,mail:send});
+  // 通知済みの印は付けず、他PRの報告を終えてからジョブを失敗にする。
+  if(failures.length)throw new AggregateError(failures.map(f=>f.error),
+    'B notifications failed: '+failures.map(f=>'PR #'+f.number+' ('+f.error.message+')').join(', '));
+}
+
+async function reportState(client,snapshot,{issue,actor,validation,stage,mail}) {
   const prs=await client.pages('/pulls?state=open'),a=prs.filter(p=>eligibleDailyPR(p,{actor}));
   for(const pr of prs.filter(p=>eligibleDailyPR(p,{actor,label:'magi2-daily-B'}))) {
     // Bを先に付けた後に中断した移行を再開する。両ラベルがあるPRはAの候補にしない。

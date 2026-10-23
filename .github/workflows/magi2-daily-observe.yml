@@ -39,9 +39,10 @@ jobs:
         run: |
           node .github/scripts/magi2-daily-observe.mjs --sql > "$RUNNER_TEMP/daily-counts.sql"
           cd workers
-          npx wrangler d1 execute tk-st-magi2-db --config magi2/wrangler.toml --remote --json --file "$RUNNER_TEMP/daily-counts.sql" > "$RUNNER_TEMP/daily-counts.json"
+          npx wrangler d1 execute tk-st-magi2-db --config magi2/wrangler.toml --remote --json --command "$(cat "$RUNNER_TEMP/daily-counts.sql")" > "$RUNNER_TEMP/daily-counts.json"
       - name: Publish counts without user text
         env:
           GITHUB_TOKEN: ${{ github.token }}
           MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
         run: node .github/scripts/magi2-daily-observe.mjs --rows "$RUNNER_TEMP/daily-counts.json"
