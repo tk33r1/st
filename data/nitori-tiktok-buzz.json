@@ -1,35 +1,61 @@
 {
-  "captured_at": "2026-10-22T18:50:16.729524+09:00",
-  "captured_date": "20261022",
+  "captured_at": "2026-10-23T18:44:39.929401+09:00",
+  "captured_date": "20261023",
   "window_days": 7,
   "min_views": 10000,
   "items": [
     {
-      "title": "【TikTokで5.8万回再生】ニトリの美容グッズって実はめっちゃ優秀なの知ってた！？✨ #ニトリ #ヘアアイロン #ヘアアレンジ #便利グッズ #プチプラ",
-      "description": "TikTokで再生数57,700回を集めた動画（いいね445 / コメント1）：\n「ニトリの美容グッズって実はめっちゃ優秀なの知ってた！？✨ #ニトリ #ヘアアイロン #ヘアアレンジ #便利グッズ #プチプラ」",
-      "source": "TikTok (@美容探偵ちゃん🔍【検証のプロ】)",
-      "link": "https://www.tiktok.com/@tantei_cosme/video/7697174236502281490",
-      "pub_date": "2026-10-16 17:07",
-      "pub_ts": 1792138041.0,
+      "title": "【TikTokで1.4万回再生】仕事帰りにニトリ行ってきた〜🚗 #ニトリ #ダイソー購入品 #生活音 #vlog #購入品",
+      "description": "TikTokで再生数14,200回を集めた動画（いいね130 / コメント0）：\n「仕事帰りにニトリ行ってきた〜🚗 #ニトリ #ダイソー購入品 #生活音 #vlog #購入品」",
+      "source": "TikTok (@yuan🐰💕)",
+      "link": "https://www.tiktok.com/@momo_ol22/video/7699068716260101397",
+      "pub_date": "2026-10-21 19:38",
+      "pub_ts": 1792579130.0,
       "is_sns_raw": true,
       "platform": "tiktok",
-      "author": "@美容探偵ちゃん🔍【検証のプロ】",
-      "author_handle": "@tantei_cosme",
+      "author": "@yuan🐰💕",
+      "author_handle": "@momo_ol22",
       "hashtags": [
         "ニトリ",
-        "ヘアアイロン",
-        "ヘアアレンジ",
-        "便利グッズ",
-        "プチプラ"
+        "ダイソー購入品",
+        "生活音",
+        "vlog",
+        "購入品"
       ],
-      "likes": 445,
-      "retweets": 26,
-      "views": 57700,
-      "comments": 1,
-      "raw_text": "ニトリの美容グッズって実はめっちゃ優秀なの知ってた！？✨ #ニトリ #ヘアアイロン #ヘアアレンジ #便利グッズ #プチプラ",
+      "likes": 130,
+      "retweets": 0,
+      "views": 14200,
+      "comments": 0,
+      "raw_text": "仕事帰りにニトリ行ってきた〜🚗 #ニトリ #ダイソー購入品 #生活音 #vlog #購入品",
       "consumer_filter": {
-        "signature": "f4ae98847cbe3c0ae000e543a10591a122f28692e574b590dceb6a4ec2d0e848",
-        "probability": 0.92
+        "signature": "2972b4f8c898b6bf19e66cf34b58a9a92e57b8779b839c2ff94832f029d14eef",
+        "probability": 0.96
+      }
+    },
+    {
+      "title": "【TikTokで1.3万回再生】ニトリ販売員が教えるクソ爆売れの神商品10選(1~5)#おすすめ #購入品 #ニトリ",
+      "description": "TikTokで再生数13,200回を集めた動画（いいね122 / コメント3）：\n「ニトリ販売員が教えるクソ爆売れの神商品10選(1~5)#おすすめ #購入品 #ニトリ」",
+      "source": "TikTok (@kknavi9977)",
+      "link": "https://www.tiktok.com/@kknavi9977/video/7699424551842614549",
+      "pub_date": "2026-10-22 18:39",
+      "pub_ts": 1792661979.0,
+      "is_sns_raw": true,
+      "platform": "tiktok",
+      "author": "@kknavi9977",
+      "author_handle": "@kknavi9977",
+      "hashtags": [
+        "おすすめ",
+        "購入品",
+        "ニトリ"
+      ],
+      "likes": 122,
+      "retweets": 7,
+      "views": 13200,
+      "comments": 3,
+      "raw_text": "ニトリ販売員が教えるクソ爆売れの神商品10選(1~5)#おすすめ #購入品 #ニトリ",
+      "consumer_filter": {
+        "signature": "25a09483e0793f88b9ab64b578a3354f01a3bb712f5de716241ddd56305fc7d7",
+        "probability": 0.6
       }
     }
   ]
