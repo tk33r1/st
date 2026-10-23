@@ -1,11 +1,13 @@
 // 段階1の発見・報告。PRのコードを動かすジョブの出力値や状態コメントを承認として使わない。
-// レビュー経路と公開試行が未成立のため、この準備版にマージ・デプロイの操作は実装しない。
+// マージ・公開は別のmain側ジョブ。状態コメント自体をその承認にしない。
 import {execFileSync} from 'node:child_process';
 import {writeFileSync,appendFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {githubClient,dailyRepository,dailyIssueNumber,eligibleDailyPR,commentOnce,stateComment,notifyDaily} from './magi2-daily-github.mjs';
 import {readChanges,inspectChanges} from './magi2-daily-check.mjs';
+import {readReviewEvidence} from './magi2-daily-review-source.mjs';
+import {reviewState} from './magi2-daily-review.mjs';
 
 const labels=pr=>pr.labels.map(row=>row.name);
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
@@ -32,19 +34,19 @@ async function notifyB(client,issue,pr,mail) {
   await client.request('/issues/'+pr.number+'/labels',{method:'POST',body:{labels:['magi2-daily-notified']}});
 }
 
-export async function report(client,snapshot,{issue,actor='tk33r1',validation='skipped',stage='1',mail=notifyDaily}={}) {
+export async function report(client,snapshot,{issue,actor='tk33r1',validation='skipped',stage='1',mail=notifyDaily,readReview=readReviewEvidence}={}) {
   const failures=[];
   const send=async(text,key)=>{
     try {await mail(text,key);}
     catch(error){failures.push({number:key[1],error});return false;}
   };
-  await reportState(client,snapshot,{issue,actor,validation,stage,mail:send});
+  await reportState(client,snapshot,{issue,actor,validation,stage,mail:send,readReview});
   // 通知済みの印は付けず、他PRの報告を終えてからジョブを失敗にする。
   if(failures.length)throw new AggregateError(failures.map(f=>f.error),
     'B notifications failed: '+failures.map(f=>'PR #'+f.number+' ('+f.error.message+')').join(', '));
 }
 
-async function reportState(client,snapshot,{issue,actor,validation,stage,mail}) {
+async function reportState(client,snapshot,{issue,actor,validation,stage,mail,readReview}) {
   const prs=await client.pages('/pulls?state=open'),a=prs.filter(p=>eligibleDailyPR(p,{actor}));
   for(const pr of prs.filter(p=>eligibleDailyPR(p,{actor,label:'magi2-daily-B'}))) {
     // Bを先に付けた後に中断した移行を再開する。両ラベルがあるPRはAの候補にしない。
@@ -68,11 +70,19 @@ async function reportState(client,snapshot,{issue,actor,validation,stage,mail}) 
     await notifyB(client,issue,pr,mail);return;
   }
   const halts=await client.pages('/issues?state=open&labels=magi2-daily-halt');
-  const state={version:1,head:snapshot.head,base:snapshot.base,next:'unconfigured',review_route:'unconfigured',
-    validation,stage:String(stage),halt:halts.some(row=>!row.pull_request),rounds:0,
-    merge_enabled:false,reason:'段0・交互レビュー経路・公開試行は未成立。現在は検証と採点のみ。'};
+  const evidence=await readReview({client,number:pr.number,head:snapshot.head,base:snapshot.base});
+  const review=reviewState({...evidence,head:snapshot.head,base:snapshot.base});
+  const state={version:1,head:snapshot.head,base:snapshot.base,...review,review_route:evidence.route?.configured?evidence.route.name:'unconfigured',
+    validation,stage:String(stage),halt:halts.some(row=>!row.pull_request),merge_enabled:false};
   await stateComment(client,pr.number,state);
-  await commentOnce(client,issue,['review_route','unconfigured'],
+  if(review.next==='human') {
+    await commentOnce(client,pr.number,['review_human',snapshot.head,review.reason],
+      '交互レビューを本人確認へ移します。理由: '+review.reason+'。残った指摘ID: '+review.unresolved.join(', '));
+    await client.request('/issues/'+pr.number+'/labels',{method:'POST',body:{labels:['magi2-daily-B']}});
+    await client.request('/issues/'+pr.number+'/labels/magi2-daily-A',{method:'DELETE'});
+    await notifyB(client,issue,pr,mail);
+  }
+  if(review.next==='unconfigured')await commentOnce(client,issue,['review_route','unconfigured'],
     'ChatGPTの指定モデル・highと正式な実行記録を扱う経路は未設定です。提案・検証・採点は進めますが、Aをマージせず、レビューの依頼・ラウンド・24時間期限も始めません。');
 }
 

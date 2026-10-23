@@ -58,7 +58,7 @@ test('Actionsは呼び出し専用・読み取り権限で、失敗をcontinue-o
   assert.match(text,/fetch --no-tags origin "\$DAILY_TARGET"/);assert.doesNotMatch(text,/ref: \$\{\{ inputs.target-sha/);
   assert.match(text,/if: always\(\)/);assert.match(text,/retention-days: 7/);
 });
-test('共通公開は版照合とキー反映を同じ公開入口で行い、毎時処理には未接続',()=>{
+test('共通公開は版照合とキー反映を同じ公開入口で行い、毎時処理もその入口を使う',()=>{
   const core=readFileSync('.github/workflows/deploy-worker-core.yml','utf8');
   assert.match(core,/version-id: \$\{\{ steps.published.outputs.version-id \}\}/);
   assert.doesNotMatch(core,/secret put MAGI_ANTHROPIC_API_KEY/);
@@ -70,5 +70,6 @@ test('共通公開は版照合とキー反映を同じ公開入口で行い、�
   assert.match(core,/sparse-checkout:[\s\S]*\.github\/scripts\/magi2-daily-http.mjs/);
   assert.match(core,/sparse-checkout:[\s\S]*\.github\/scripts\/magi2-daily-deploy-worker.mjs/);
   const daily=readFileSync('.github/workflows/magi2-daily-merge.yml','utf8');
-  assert.doesNotMatch(daily,/uses:.*magi2-daily-publication|uses:.*deploy-worker-core/);
+  assert.match(daily,/uses:.*deploy-worker-core/);assert.match(daily,/uses:.*magi2-daily-publication/);
+  assert.match(daily,/vars.MAGI2_DAILY_STAGE == '2'/);
 });

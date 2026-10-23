@@ -1,7 +1,7 @@
 name: MAGI Daily Publication Check
 
 # 信頼する公開ジョブからだけ呼ぶ。PRコードは実行せず、merge/deploy/rollbackはしない。
-# 現時点の毎時workflowには接続しない。定常運用への接続はレビュー経路と本番試行の成立後。
+# 毎時workflowのマージ・公開が成立したときだけ呼ぶ。正式レビュー未設定の間は到達しない。
 on:
   workflow_call:
     inputs:
