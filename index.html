@@ -2099,73 +2099,69 @@
       line-height: 1;
       color: var(--secondary-color);
       background: transparent;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
+      border: 1px solid transparent;
+      border-radius: 6px;
       cursor: pointer;
       outline: none;
-      transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast);
+      transition: color var(--duration-fast), background-color var(--duration-fast);
     }
 
+    /* 操作のボタンは枠で囲わない。指した・押したときだけ薄い地を敷く */
     .react-btn:hover {
       color: var(--primary-color);
-      border-color: var(--primary-color);
-    }
-
-    .react-btn.liked, .react-btn.reacted {
-      color: var(--primary-color);
-      border-color: var(--primary-color);
       background: var(--primary-bg);
     }
 
-    .reaction-bar.locked .react-btn[data-act="like"]:not(.liked), .reaction-bar.locked .react-btn[data-act="emoji"]:not(.reacted) {
-      opacity: 0.3;
-      pointer-events: none;
-    }
+    .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
+    .react-btn.rated { color: var(--primary-color); }
+    .react-btn[hidden] { display: none; }
 
-    .emoji-pop {
+    /* 回答の評価（Good / Bad）。評価のボタンの上に開く */
+    .rate-pop {
       position: absolute;
       bottom: 100%;
-      left: 0;
       margin-bottom: 0.25rem;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 0.05rem;
-      padding: 0.3rem;
+      display: flex;
+      gap: 2px;
+      padding: 0.25rem;
       background: var(--surface-color);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
+      border-radius: 8px;
       z-index: 50;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     }
 
-    .emoji-pop button {
-      font-size: 15px;
-      line-height: 1;
-      width: 1.7rem;
-      height: 1.7rem;
-      display: flex;
+    .rate-pop button {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 0.4rem;
+      min-height: 2.25rem;
+      padding: 0 0.7rem;
+      font: inherit;
+      font-size: 12px;
+      color: var(--text-color);
       background: transparent;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color var(--duration-fast);
+      white-space: nowrap;
     }
 
-    .emoji-pop button:hover { background: var(--primary-bg) }
+    .rate-pop button:hover, .rate-pop button:focus-visible { background: var(--primary-bg); outline: none; }
+    .rate-pop button[aria-checked="true"] { color: var(--primary-color); }
 
-    /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる範囲は 44px（ボタン 32px と周り 6px） */
-    .reply-bar { gap: 0.75rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .react-btn .rate-icon { width: 18px; height: 18px; }
+    /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる高さは 44px（ボタン 32px と上下 6px）。
+       横は隣のボタンに重ねない。［ソース］まで1行に収まるよう、間は詰める */
+    .reply-bar { gap: 2px; flex-wrap: wrap; margin-top: 0.5rem; }
     .reply-bar .react-btn { min-width: 2rem; height: 2rem; position: relative; }
-    .reply-bar .react-btn::after { content: ''; position: absolute; inset: -6px; }
-    /* hidden 属性（🔊・［ソース］を出さないとき）を .react-btn の display に負けさせない */
-    .reply-bar .react-btn[hidden] { display: none; }
-    .reply-bar .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    .reply-bar .react-btn::after { content: ''; position: absolute; inset: -6px -1px; }
+    .reply-bar .react-btn svg { width: 17px; height: 17px; }
+    .reply-bar .react-btn .rate-icon { width: 20px; height: 20px; }
     .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.55rem; }
+    .reply-time { padding: 0 0.35rem; font-size: 11px; color: var(--secondary-color); white-space: nowrap; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
-    .react-picked { margin-left: 0.3rem; font-size: 13px; }
-    .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
+    .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); }
     .speak-wait { animation: speak-spin 0.9s linear infinite; }
     @keyframes speak-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
@@ -3350,7 +3346,7 @@
               "name": "What is MAGI, and where do my messages go?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Messages and images handled by a persona debate are sent to OpenAI, DeepSeek, and Anthropic. Factual questions and site guidance use OpenAI in Light or Anthropic in Dark. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. Debate decisions use Anthropic in both themes (OpenAI on failure), with the current text, recent conversation, debate, persona card and screen context. Only when classifying an answer to a clarification, TypeSafe AI also receives the original request, clarification questions and options, and previous classification. Ordinary AI replies, debates, images and screen context are excluded from that classification. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as \"Should I go for ramen tonight?\" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: \"Without taking a vote, outline the factors to consider for the previous proposal.\" Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Messages and images handled by a persona debate are sent to OpenAI, DeepSeek, and Anthropic. Factual questions and site guidance use OpenAI in Light or Anthropic in Dark. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. Debate decisions use Anthropic in both themes (OpenAI on failure), with the current text, recent conversation, debate, persona card and screen context. Only when classifying an answer to a clarification, TypeSafe AI also receives the original request, clarification questions and options, and previous classification. Ordinary AI replies, debates, images and screen context are excluded from that classification. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you rate a reply. Do not send confidential or personal information."
               }
             },
             {
@@ -4316,7 +4312,7 @@
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
         question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
-        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Messages and images handled by a persona debate are sent to OpenAI, DeepSeek, and Anthropic. Factual questions and site guidance use OpenAI in Light or Anthropic in Dark. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. Debate decisions use Anthropic in both themes (OpenAI on failure), with the current text, recent conversation, debate, persona card and screen context. Only when classifying an answer to a clarification, TypeSafe AI also receives the original request, clarification questions and options, and previous classification. Ordinary AI replies, debates, images and screen context are excluded from that classification. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Ask a yes/no question such as "Should I go for ramen tonight?" MAGI automatically deliberates and votes on eligible questions. For an explanation without a vote, ask: "Without taking a vote, outline the factors to consider for the previous proposal." Requests to change my identity, reveal hidden instructions or endorse extreme discrimination or violence receive a short reply, then this conversation ends. Start a new conversation to continue. Messages and images handled by a persona debate are sent to OpenAI, DeepSeek, and Anthropic. Factual questions and site guidance use OpenAI in Light or Anthropic in Dark. The latest and up to two preceding user messages are also sent to TypeSafe AI to classify each request, with the first message used to fix the conversation language. Debate decisions use Anthropic in both themes (OpenAI on failure), with the current text, recent conversation, debate, persona card and screen context. Only when classifying an answer to a clarification, TypeSafe AI also receives the original request, clarification questions and options, and previous classification. Ordinary AI replies, debates, images and screen context are excluded from that classification. The short-reply model receives only a fixed direction, my personality summary and the reply language; that request and its chat history are excluded. Chat history stays in your browser; the site database keeps an exchange only when you rate a reply. Do not send confidential or personal information.',
         answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。「今夜ラーメンを食べに行くべき？」のように賛否を尋ねると、審議できる問いはMAGIが自動で採決します。採決ではなく説明がほしいときは「採決せず、直前の議題の判断材料を整理して」と入力できます。本人設定の変更・内部指示の開示・極端な差別や暴力の肯定を求める入力には、討議せず短く返して会話を終えます。続けるときは新しい会話を始めてください。人格の討議を行うメッセージと画像は OpenAI・DeepSeek・Anthropic の3社へ送信されます。事実の質問とサイト案内はライトがOpenAI、ダークがAnthropicへ直接送ります。毎回の分類には、今回の本文と直前2件までのユーザー本文を TypeSafe AI に送り、初回の言語判定には最初の本文を使います。討議の判定には両テーマともAnthropicへ今回の本文・直近の会話・討議・人格カード・状況説明を送り、失敗時だけOpenAIへ1回送り直します。確認質問への回答を分類するときだけ、元の相談・質問と選択肢・直前の分類もTypeSafe AIへ送ります。画像・通常のAI回答・討議・状況説明は分類に送りません。短い返答のモデルには固定の方向・本人の要約・返答の言語だけを送り、その入力と会話の履歴は渡しません。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
@@ -7391,48 +7387,92 @@
       ? 'http://localhost:8787' : 'https://workers.tk.st';
     const AGENT_API = MAGI_ORIGIN + '/magi2/chat';
     const REACT_API = MAGI_ORIGIN + '/magi2/react';
+    const AGENT_OPENED_AT = Date.now(); // これより後に付けた mid は送った時刻を表さない（agentReplyAt）
+    let agentLastSend = null; // 画像付きの質問を送り直すための原寸。この画面で最後に送った質問の分だけ持つ
     // リアクションボタンのアイコン（周囲の細線SVGアイコンと世界観を統一）
     const ICON_COPY = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    const ICON_LIKE = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
-    // React: スマイル＋プラス（キャプチャの「リアクション追加」アイコンに準拠）
-    const ICON_REACT = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a9 9 0 1 0 4.9 4.9"/><circle cx="9" cy="10" r="0.6" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="0.6" fill="currentColor" stroke="none"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><line x1="19.5" y1="2.5" x2="19.5" y2="7.5"/><line x1="17" y1="5" x2="22" y2="5"/></svg>`;
-    // React で選べる厳選リアクション絵文字
-    const REACT_EMOJIS = ['👎', '❤️', '😂', '🎉', '🔥', '👏', '🙏', '💯', '🤔', '👀', '😮', '😢', '😍', '🤯', '🙌', '🥳', '😎', '😅', '🤝', '💪', '✨', '💡', '✅', '🚀', '👌', '🫡', '🤩', '😇', '🥹', '🫶'];
-    // 各人格カード / 統合回答に付けるリアクションバー（target = 人格コードネーム or 'integrated'）
+    // 回答の評価。押すと Good / Bad を選ぶ（上下の親指を重ねた形）。選んだ後はその親指だけを出す
+    const ICON_RATE = `<svg aria-hidden="true" class="rate-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path vector-effect="non-scaling-stroke" transform="translate(-0.5 -0.5) scale(0.6)" d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/><path vector-effect="non-scaling-stroke" transform="translate(10.1 10.1) scale(0.6)" d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
+    const ICON_GOOD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+    const ICON_BAD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
+    const ICON_RETRY = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.8-4.2L3 9"/><polyline points="3 4 3 9 8 9"/><path d="M4 13a8 8 0 0 0 14.8 4.2L21 15"/><polyline points="21 20 21 15 16 15"/></svg>`;
+    const rateBtnHTML = () => `<button type="button" class="react-btn" data-act="rate" title="${tr('Rate this reply', '回答を評価')}" aria-label="${tr('Rate this reply', '回答を評価')}" aria-haspopup="menu" aria-expanded="false">${ICON_RATE}</button>`;
+    // 各人格カードの操作列（target = 人格コードネーム）。［コピー］［評価］
     function reactionBarHTML(target) {
       return `<div class="reaction-bar" data-target="${esc(target)}">`
-        + `<button type="button" class="react-btn" data-act="copy" title="${tr('Copy', 'コピー')}">${ICON_COPY}</button>`
-        + `<button type="button" class="react-btn" data-act="like" title="${tr('Like', 'いいね')}">${ICON_LIKE}</button>`
-        + `<button type="button" class="react-btn" data-act="emoji" title="${tr('React', 'リアクション')}">${ICON_REACT}</button>`
+        + `<button type="button" class="react-btn" data-act="copy" title="${tr('Copy', 'コピー')}" aria-label="${tr('Copy', 'コピー')}">${ICON_COPY}</button>`
+        + rateBtnHTML()
         + `</div>`;
     }
-    // 統合人格の回答の操作列（読み上げ設計§4.1）。［コピー］［🔊］［共有］［いいね］［︙］と、右寄せの［ソース］。
-    // いいね・絵文字の data-act と保存は人格のカードと共通。🔊 と［ソース］は回答がそろってから setupReplyBar で出す
+    // 統合人格の回答の操作列（読み上げ設計§4.1）。［コピー］［共有］［🔊］［もう一度］［評価］と日時、右寄せの［ソース］。
+    // 共有は共有シートを開ける端末だけ（PC ではコピーと同じになるので出さない）。🔊・［もう一度］・日時・［ソース］は回答がそろってから setupReplyBar で出す
     const SPEECH_API = MAGI_ORIGIN + '/magi2/speech';
     const ICON_SPEAK = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
     const ICON_SPEAK_STOP = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>`;
     const ICON_SPEAK_WAIT = `<svg aria-hidden="true" class="speak-wait" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>`;
     const ICON_SHARE = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
-    const ICON_MORE = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>`;
+    const agentCanShare = () => !!(navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     function replyBarHTML() {
       const b = (act, label, icon, extra = '') => `<button type="button" class="react-btn" data-act="${act}" title="${label}" aria-label="${label}"${extra}>${icon}</button>`;
       return `<div class="reaction-bar reply-bar" data-target="integrated">`
         + b('copy', tr('Copy', 'コピー'), ICON_COPY)
+        + (agentCanShare() ? b('share', tr('Share', '共有'), ICON_SHARE) : '')
         + b('speak', tr('Read aloud', '読み上げ'), ICON_SPEAK, ' aria-pressed="false" hidden')
-        + b('share', tr('Share', '共有'), ICON_SHARE)
-        + b('like', tr('Like', 'いいね'), ICON_LIKE)
-        + b('emoji', tr('More: reactions', 'その他（リアクション）'), ICON_MORE, ' data-more="1" aria-haspopup="true"')
+        + b('retry', tr('Try again', 'もう一度試す'), ICON_RETRY, ' hidden')
+        + rateBtnHTML()
+        + `<time class="reply-time" hidden></time>`
         + `<button type="button" class="react-btn reply-src" data-act="sources" hidden></button>`
         + `</div>`;
     }
-    // 絵文字を付けた・外したときの見た目。［︙］は記号を残して右に絵文字を出し、人格のカードはボタンを絵文字に置き換える
-    function showReactEmoji(trigger, em) {
-      trigger.classList.add('reacted');
-      if (!trigger.dataset.more) { trigger.textContent = em; return; }
-      trigger.innerHTML = ICON_MORE;
-      const picked = document.createElement('span'); picked.className = 'react-picked'; picked.textContent = em; trigger.appendChild(picked);
+    // 評価の見た目（value = 'good' | 'bad' | null）
+    function showRating(bar, value) {
+      const btn = bar.querySelector('[data-act="rate"]');
+      if (!btn) return;
+      btn.classList.toggle('rated', !!value);
+      btn.innerHTML = value === 'good' ? ICON_GOOD : value === 'bad' ? ICON_BAD : ICON_RATE;
+      const label = value ? tr('Rated ' + (value === 'good' ? 'Good' : 'Bad') + ' (press to change)', '評価: ' + (value === 'good' ? 'Good' : 'Bad') + '（押すと変更）') : tr('Rate this reply', '回答を評価');
+      btn.title = label; btn.setAttribute('aria-label', label);
     }
-    function clearReactEmoji(trigger) { trigger.classList.remove('reacted'); trigger.innerHTML = trigger.dataset.more ? ICON_MORE : ICON_REACT; }
+    function closeRatePops(focus) {
+      agentLog.querySelectorAll('.rate-pop').forEach(pop => {
+        const btn = pop.parentElement.querySelector('[data-act="rate"]');
+        pop.remove();
+        if (btn) { btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus({ preventScroll: true }); }
+      });
+    }
+    // 評価のボタンの上に Good / Bad を開く。いまの評価に印を付け、同じものを選ぶと取り消す
+    function openRatePop(btn, bar) {
+      const open = bar.querySelector('.rate-pop');
+      closeRatePops(false);
+      if (open) return;
+      const store = reactionStoreFor(bar), current = agentRatingOf(store && store[bar.dataset.target]);
+      const pop = document.createElement('div'); pop.className = 'rate-pop'; pop.setAttribute('role', 'menu');
+      pop.setAttribute('aria-label', tr('Rate this reply', '回答を評価'));
+      [['good', ICON_GOOD], ['bad', ICON_BAD]].forEach(([value, icon]) => {
+        const item = document.createElement('button'); item.type = 'button'; item.dataset.rate = value;
+        item.setAttribute('role', 'menuitemradio'); item.setAttribute('aria-checked', String(current === value));
+        item.innerHTML = icon; item.append(value === 'good' ? 'Good' : 'Bad');
+        pop.appendChild(item);
+      });
+      pop.style.left = btn.offsetLeft + 'px';
+      bar.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+      pop.querySelector('button').focus({ preventScroll: true });
+    }
+    // 評価を付ける・付け替える・取り消す。付いているもの（以前の絵文字のリアクションを含む）は消せてから次を付ける
+    async function rateReply(bar, value) {
+      if (bar.dataset.removing === 'true') return;
+      const ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target];
+      if (current) {
+        bar.dataset.removing = 'true';
+        try {
+          if (!await unregisterReaction(bar, ctx.target)) { renderAgentError({ message: tr('Could not change the rating. Please try again.', '評価を変更できませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' }); return; }
+        } finally { delete bar.dataset.removing; }
+        showRating(bar, null);
+        if (agentRatingOf(current) === value) return;
+      }
+      showRating(bar, value);
+      registerReaction(bar, ctx.target, AGENT_RATINGS[value], ctx);
+    }
     let agentSpeechOn = false, agentSpeechPlayer = null;
     const isJaPage = () => document.documentElement.lang === 'ja';
     const agentSpeech = () => agentSpeechPlayer || (agentSpeechPlayer = createAgentSpeech(SPEECH_API, {
@@ -7460,6 +7500,30 @@
       if (!bar || !item) return;
       const speak = bar.querySelector('[data-act="speak"]'); if (speak) speak.hidden = !(agentSpeechOn && item.speech_sig);
       const src = bar.querySelector('[data-act="sources"]'); if (src) renderAgentSourceButton(src, item.content, item.sources, isJaPage());
+      const time = bar.querySelector('.reply-time'), at = agentReplyAt(item, AGENT_OPENED_AT);
+      if (time && at) {
+        const d = new Date(at);
+        time.hidden = false; time.dateTime = d.toISOString();
+        time.textContent = agentReplyTimeText(at, isJaPage(), Date.now()); time.title = d.toLocaleString(isJaPage() ? 'ja-JP' : 'en-US', { dateStyle: 'full', timeStyle: 'short' });
+      }
+    }
+    // ［もう一度］は会話の最後の回答にだけ出す（送り直すと、その回答と入れ替える）
+    function syncRetryButtons() {
+      const last = agentHistory[agentHistory.length - 1];
+      agentLog.querySelectorAll('.reply-bar [data-act="retry"]').forEach(btn => {
+        const item = agentItemFor(btn);
+        btn.hidden = !(item && item === last && !item.closed && !item.clarify && !agentClosed && !agentDead
+          && agentRetryInput(agentHistory[agentHistory.length - 2], item.mid, agentLastSend));
+      });
+    }
+    function agentRetry(btn) {
+      if (agentBusy || agentDead || agentClosed) return;
+      const item = agentItemFor(btn), user = agentHistory[agentHistory.length - 2];
+      if (!item || item !== agentHistory[agentHistory.length - 1]) return;
+      const again = agentRetryInput(user, item.mid, agentLastSend);
+      const turn = btn.closest('.agent-turn'), userEl = turn.previousElementSibling;
+      if (!again || !userEl || !userEl.classList.contains('agent-user')) return;
+      agentSend({ text: again.text, atts: again.atts, items: [user, item], els: [userEl, turn] });
     }
     function syncSpeakButtons() {
       if (!agentSpeechOn && agentSpeechPlayer) agentSpeechPlayer.stop();
@@ -7470,10 +7534,11 @@
       loadAgentModels().then(j => { const on = !!(j && j.features && j.features.speech); if (on !== agentSpeechOn) { agentSpeechOn = on; syncSpeakButtons(); } });
     }
     // 共有は回答の本文と出典だけ。会話は公開しないので URL は付けない。共有シートは指で操作する端末だけで使い、
-    // PC（マウス・トラックパッド）ではコピーする（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る）
+    // PC（マウス・トラックパッド）には［共有］を出さない（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る。
+    // コピーで足りる）。共有シートが開けなかったときはコピーする
     async function shareAgentReply(btn, bar, item) {
       const text = agentShareText(item.content, item.sources, isJaPage()), title = agentTitle || 'MAGI';
-      if (navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+      if (agentCanShare()) {
         try { await navigator.share({ title, text }); return; }
         catch (err) { if (err && err.name === 'AbortError') return; }
       }
@@ -7516,22 +7581,13 @@
       saveCurrentHistory();
       syncCurrentToSaved();
     }
-    // 復元：保存済み reactions をターン内のバーに反映（いいね or 絵文字＋ロック）
+    // 復元：保存済みの評価をターン内のバーに反映（以前の絵文字のリアクションは出さない）
     function applyReactionsToTurn(turn, reactions) {
       if (!reactions) return;
       Object.keys(reactions).forEach(target => {
-        const em = reEmoji(reactions[target]);
-        if (!em) return;
-        const bar = turn.querySelector(`.reaction-bar[data-target="${cssEsc(target)}"]`);
-        if (!bar) return;
-        if (em === '👍') {
-          const likeBtn = bar.querySelector('.react-btn[data-act="like"]');
-          if (likeBtn) likeBtn.classList.add('liked');
-        } else {
-          const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
-          if (trigger) showReactEmoji(trigger, em);
-        }
-        bar.classList.add('locked');
+        const value = agentRatingOf(reactions[target]);
+        const bar = value && turn.querySelector(`.reaction-bar[data-target="${cssEsc(target)}"]`);
+        if (bar) showRating(bar, value);
       });
     }
     // 人格の名前（討議カードとスプラッシュのボタンに出す）。説明（気質・素材・テーマによる違い）と使っている LLM は
@@ -7600,7 +7656,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence<button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.4</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.5</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -8062,6 +8118,41 @@ function cleanAgentSpeechItem(item) {
   delete out.speech_sig; delete out.speech_lang;
   if (sig && item.closed !== true && !item.clarify) { out.speech_sig = sig; if (lang) out.speech_lang = lang; }
   return out;
+}
+// 回答の評価（Good / Bad）。Worker へは以前のいいね・絵文字のリアクションと同じ形で 👍・👎 を送る。
+// 保存した値は文字列（旧データ）か { em, id, delete_token }。ほかの絵文字（以前のリアクション）は評価として出さない
+var AGENT_RATINGS = { good: '\u{1F44D}', bad: '\u{1F44E}' };
+function agentRatingOf(stored) {
+  var em = typeof stored === 'string' ? stored : stored && stored.em;
+  return em === AGENT_RATINGS.good ? 'good' : em === AGENT_RATINGS.bad ? 'bad' : null;
+}
+// 回答の日時（ミリ秒）。保存した at を使い、無い回答は mid の先頭（送ったときの時刻を36進で8桁）から読む。
+// 画面を開いた後（openedAt 以降）に付けた mid は、mid の無かった古い回答に後から付けたもので時刻を表さない
+function agentReplyAt(item, openedAt) {
+  var floor = Date.UTC(2024, 0, 1), at = item && item.at;
+  if (Number.isSafeInteger(at) && at > floor && at < Date.now() + 864e5) return at;
+  var m = item && typeof item.mid === 'string' ? /^m([0-9a-z]{8})/.exec(item.mid) : null, t = m ? parseInt(m[1], 36) : NaN;
+  return t > floor && t < openedAt ? t : null;
+}
+// 操作列に収まる短い書き方（端末の時刻）。「今日 15:38」「昨日 15:38」「10/22(木) 15:38」「2025/10/22 15:38」、
+// 英語は「Today 15:38」「Yesterday 15:38」「Oct 22, 15:38」「Oct 22, 2025, 15:38」。曜日まで書いた日時は title に出す
+function agentReplyTimeText(at, ja, now) {
+  var d = new Date(at), n = new Date(now), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  var days = Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  if (days === 0) return (ja ? '今日 ' : 'Today ') + hm;
+  if (days === 1) return (ja ? '昨日 ' : 'Yesterday ') + hm;
+  var month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' + d.getDate();
+  if (d.getFullYear() !== n.getFullYear()) return ja ? d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm : month + ', ' + d.getFullYear() + ', ' + hm;
+  return ja ? (d.getMonth() + 1) + '/' + d.getDate() + '(' + '日月火水木金土'.charAt(d.getDay()) + ') ' + hm : month + ', ' + hm;
+}
+// ［もう一度］で送り直す質問（{ text, atts }）。文字だけの質問は保存した本文から作る。画像付きの質問は保存したのが縮小版なので、
+// この画面で送った原寸（lastSend = { mid, atts }。その回答の mid のときだけ）があるときに限る。送れなければ null
+function agentRetryInput(user, mid, lastSend) {
+  if (!user || user.role !== 'user') return null;
+  var c = user.content, parts = typeof c === 'string' ? [{ type: 'text', text: c }] : Array.isArray(c) ? c : [];
+  var text = parts.filter(function (p) { return p && p.type === 'text'; }).map(function (p) { return p.text; }).join('\n');
+  if (!parts.some(function (p) { return p && p.type === 'image_url'; })) return text.trim() ? { text: text, atts: [] } : null;
+  return lastSend && lastSend.mid === mid && lastSend.atts.length ? { text: text, atts: lastSend.atts.slice() } : null;
 }
 // 出典のドメイン（www. を除く）と、アイコンの無い出典に出す頭文字の丸。色はドメインから決める
 function agentSourceDomain(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; } }
@@ -8653,8 +8744,8 @@ async function parseSSE(body, handlers, onChunk) {
     }
 
     function prepareAgentMessages(history, lastContent) {
-      // 考えた秒数と読み上げの署名は画面の表示のためだけのもので、次の質問の API には送らない
-      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, speech_sig, speech_lang, ...m }) => agentFactHistoryMessage(m));
+      // 考えた秒数・読み上げの署名・回答の日時は画面の表示のためだけのもので、次の質問の API には送らない
+      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, speech_sig, speech_lang, at, ...m }) => agentFactHistoryMessage(m));
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
       messages[messages.length - 1].content = lastContent;
       let remaining = 8;
@@ -8688,19 +8779,23 @@ async function parseSSE(body, handlers, onChunk) {
       agentCtrl.abort();
     }
 
-    async function agentSend() {
+    // retry: ［もう一度］のときの { text, atts, items: [質問, 回答], els: [質問, 回答の要素] }。入力欄には触れない。
+    // 古い往復は隠して、送る履歴からだけ外す。新しい回答が届いたら履歴からも消し、届かなければ見せ直す
+    // （途中で開き直す・会話を切り替えても、古い回答は保存した履歴に残る）
+    async function agentSend(retry) {
       if (agentBusy || agentDead || agentClosed) return;
       if (agentSpeechPlayer) agentSpeechPlayer.stop();
-      var draftText = agentInput.value;
-      var text = agentClarifyAnswer(lastAgentTurn(), draftText.trim());
+      var draftText = retry ? retry.text : agentInput.value;
+      var text = retry ? retry.text : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
-      const atts = attachments.slice();
+      const atts = retry ? retry.atts : attachments.slice();
       if (!text && !atts.length) return;
-  var clarifyDraft = freezeAgentClarify();
+      if (retry) retry.els.forEach(el => { el.hidden = true; });
+      const sendHistory = () => retry ? agentHistory.filter(it => !retry.items.includes(it)) : agentHistory;
+  var clarifyDraft = retry ? null : freezeAgentClarify();
       const startedAt = Date.now();
       setAgentSuggestion('');
-      agentInput.value = ''; fitAgentInput();
-      attachments = []; renderAttachTray();
+      if (!retry) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
       // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
       // localStorage をすぐ食い潰すので、保存用と送信用で解像度を分ける。
       const partsOf = (key) => [
@@ -8722,6 +8817,7 @@ async function parseSSE(body, handlers, onChunk) {
 
       agentHistory.push({ role: 'user', content: storeContent });
       saveCurrentHistory();
+      syncRetryButtons();
 
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
@@ -8764,9 +8860,9 @@ async function parseSSE(body, handlers, onChunk) {
         const theme = isDarkNow() ? 'dark' : 'light';
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
-        const outbound = prepareAgentMessages(agentHistory, sendContent);
+        const outbound = prepareAgentMessages(sendHistory(), sendContent);
         // WebSocket で受け、開けなければ SSE（openAgentChat。読み上げ設計§6.3）
-        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, currentLang, 'chat', true))), ctrl.signal);
+        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true }, classificationFields(sendHistory(), agentReplyLanguage, currentLang, 'chat', true))), ctrl.signal);
         if (dropped()) return;
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
@@ -8889,9 +8985,12 @@ async function parseSSE(body, handlers, onChunk) {
         Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
         if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
-        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid, reactions: pendingReactions[mid] || {} });
+        if (retry) { agentHistory = sendHistory(); retry.els.forEach(el => el.remove()); }
+        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
+        agentLastSend = atts.length ? { mid, atts } : null;
         setupReplyBar(turn, agentHistory[agentHistory.length - 1]);
+        syncRetryButtons();
         refreshSpeechFeature();
         saveCurrentHistory();
         updateAgentActionButtons();
@@ -8904,11 +9003,13 @@ async function parseSSE(body, handlers, onChunk) {
         if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
         delete pendingReactions[mid];
         u.remove();
+        // ［もう一度］が届かなければ、前の往復を見せ直す（質問は入力欄に戻さない）
+        if (retry) { retry.els.forEach(el => { el.hidden = false; }); syncRetryButtons(); }
         if (agentHistory.length) saveCurrentHistory();
         else safeRemove('magi_current_history');
         syncCurrentToSaved(); updateAgentActionButtons();
         // 中断・通信失敗でも、質問と画像を戻す。待つ間に打ち始めた文があればそちらを残す。
-        if (!agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+        if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
     restoreAgentClarify(clarifyDraft);
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
@@ -8949,8 +9050,6 @@ async function parseSSE(body, handlers, onChunk) {
       btn.innerHTML = sym;
       setTimeout(() => { btn.innerHTML = orig; }, 1200);
     }
-    // 旧データの絵文字文字列と、現行の { em, id, delete_token } を読めるようにする。
-    const reEmoji = (v) => (typeof v === 'string' ? v : (v && v.em) || '');
     async function sendReaction(target, reaction, request, response) {
       if (!response) return undefined;
       try {
@@ -9007,15 +9106,6 @@ async function parseSSE(body, handlers, onChunk) {
         return true;
       } finally { if (typeof receipt === 'object') reactionRemovals.delete(receipt); }
     }
-    async function undoReaction(bar, target, resetBtn) {
-      // 見た目も削除成功後に戻す。失敗時はトークンと選択を保ち、もう一度押して再試行できる。
-      if (bar.dataset.removing === 'true') return;
-      bar.dataset.removing = 'true';
-      try {
-        if (await unregisterReaction(bar, target)) { resetBtn(); bar.classList.remove('locked'); }
-        else renderAgentError({ message: tr('Could not remove the reaction. Please try again.', 'リアクションを取り消せませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' });
-      } finally { delete bar.dataset.removing; }
-    }
     // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {
       // Android APK Download button
@@ -9044,18 +9134,12 @@ async function parseSSE(body, handlers, onChunk) {
         if (!agentModels || Date.now() >= agentModelsExpires) loadAgentModels().then(() => { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
         return;
       }
-      // 絵文字グリッドから選択
-      const emo = e.target.closest('.emoji-pop button');
-      if (emo) {
-        const em = emo.getAttribute('data-emoji');
-        const pop = emo.closest('.emoji-pop');
-        const bar = pop.closest('.reaction-bar');
-        const ctx = getReactionContext(bar);
-        const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
-        if (trigger) showReactEmoji(trigger, em);
-        pop.remove();
-        bar.classList.add('locked'); // いいね/絵文字は1回のみ：他方を非活性に
-        registerReaction(bar, ctx.target, em, ctx);
+      // 評価のメニューから Good / Bad を選ぶ
+      const pick = e.target.closest('.rate-pop button');
+      if (pick) {
+        const bar = pick.closest('.reaction-bar');
+        closeRatePops(true);
+        rateReply(bar, pick.dataset.rate);
         return;
       }
       const btn = e.target.closest('.react-btn');
@@ -9063,6 +9147,8 @@ async function parseSSE(body, handlers, onChunk) {
       const bar = btn.closest('.reaction-bar');
       const act = btn.getAttribute('data-act');
       const ctx = getReactionContext(bar);
+      if (act === 'rate') { openRatePop(btn, bar); return; }
+      if (act === 'retry') { agentRetry(btn); return; }
       if (act === 'speak' || act === 'share' || act === 'sources') {
         const item = agentItemFor(bar);
         if (!item) return;
@@ -9073,35 +9159,18 @@ async function parseSSE(body, handlers, onChunk) {
       }
       if (act === 'copy') {
         navigator.clipboard.writeText(ctx.response || '').then(() => flashReactBtn(btn, '✓')).catch(() => { });
-        return;
-      }
-      if (act === 'like') {
-        if (btn.classList.contains('liked')) { undoReaction(bar, ctx.target, () => btn.classList.remove('liked')); return; }
-        if (bar.classList.contains('locked')) return; // 絵文字が選択済み
-        btn.classList.add('liked');
-        bar.classList.add('locked'); // いいね/絵文字は排他：他方を非活性に
-        registerReaction(bar, ctx.target, '👍', ctx);
-      } else if (act === 'emoji') {
-        if (btn.classList.contains('reacted')) { // 取り消し（選んだ絵文字ボタンを再押下）
-          undoReaction(bar, ctx.target, () => clearReactEmoji(btn));
-          return;
-        }
-        if (bar.classList.contains('locked')) return; // いいねが選択済み
-        const existing = bar.querySelector('.emoji-pop');
-        document.querySelectorAll('.emoji-pop').forEach(p => p.remove());
-        if (existing) return; // トグルで閉じる
-        const pop = document.createElement('div');
-        pop.className = 'emoji-pop';
-        pop.innerHTML = REACT_EMOJIS.map(em => `<button type="button" data-emoji="${em}" title="${em}">${em}</button>`).join('');
-        bar.appendChild(pop);
       }
     });
-    // 絵文字ポップオーバー外クリックで閉じる
+    // 評価のメニュー・ソースの一覧は、外を押したら閉じる
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.reaction-bar')) document.querySelectorAll('.emoji-pop').forEach(p => p.remove());
+      if (!e.target.closest('.rate-pop, [data-act="rate"]')) closeRatePops(false);
       if (!e.target.closest('.src-list, .reply-src')) closeAgentSourceLists(false);
     });
-    agentLog.addEventListener('keydown', (e) => { if (e.key === 'Escape' && agentLog.querySelector('.src-list')) { e.preventDefault(); closeAgentSourceLists(true); } });
+    agentLog.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (agentLog.querySelector('.rate-pop')) { e.preventDefault(); closeRatePops(true); }
+      else if (agentLog.querySelector('.src-list')) { e.preventDefault(); closeAgentSourceLists(true); }
+    });
     // 画面を離れたら読み上げを止める（バックグラウンドでは鳴らさない）
     document.addEventListener('visibilitychange', () => { if (document.hidden && agentSpeechPlayer) agentSpeechPlayer.stop(); });
 
@@ -9125,6 +9194,7 @@ async function parseSSE(body, handlers, onChunk) {
         agentLog.appendChild(turn);
         if (item.closed === true) closeAgentConversation(turn);
       });
+      syncRetryButtons();
       agentScroll();
       refreshSpeechFeature();
     }

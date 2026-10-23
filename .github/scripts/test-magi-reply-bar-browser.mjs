@@ -1,5 +1,6 @@
 // 読み上げ設計の公開C1の実画面（読み上げ検証計画§2.1〜2.3）。トップページ（ライト・ダーク）とアプリ（390px・320px）で、
-// 固定のSSEとWorkerの模擬を使い、操作列の並び・ソースの一覧・共有・読み上げの再生と停止・履歴からの復元を確かめる。
+// 固定のSSEとWorkerの模擬を使い、操作列の並び・枠の無いボタン・日時・ソースの一覧・共有・読み上げの再生と停止・
+// ［もう一度］（成功と失敗）・評価（Good / Bad の付け替え）・履歴からの復元を確かめる。
 // AI・Fish Audio・計測は呼ばない。node .github/scripts/test-magi-reply-bar-browser.mjs [リポジトリのパス] [--screenshots]
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -36,7 +37,7 @@ const until = async (check, label) => { for (let i = 0; i < 300; i++) { if (awai
 const captures = resolve(root, 'workers/.wrangler/magi2-speech/captures');
 let checked = 0;
 try {
-  // 読み上げを止めていて出典の無い回答: 見えるのは［コピー］［共有］［いいね］［︙］だけで、空の枠を残さない。
+  // 読み上げを止めていて出典の無い回答: PC で見えるのは［コピー］［もう一度］［評価］と日時だけで、空の枠を残さない。
   // 書いている途中のカーソルは本文の末尾に付き、操作列の下には出ない
   for (const [name, path, width] of [['home-off', '/', 1280], ['app-off', '/magi-app/www/', 390]]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, locale: 'ja-JP', serviceWorkers: 'block' });
@@ -63,7 +64,10 @@ try {
     const bar = page.locator('.agent-reply .reply-bar').last();
     await until(async () => (await page.locator('.agent-reply.streaming').count()) === 0 && (await bar.count()) === 1, 'reply done');
     await page.waitForTimeout(300);
-    assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'share', 'like', 'emoji'], name);
+    assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'retry', 'rate'], name);
+    // ボタンは枠で囲わない。日時は操作列に出す
+    for (const border of await bar.locator('button:visible').evaluateAll(list => list.map(b => getComputedStyle(b).borderTopColor))) assert.equal(border, 'rgba(0, 0, 0, 0)', name + ' border');
+    assert.match(await bar.locator('time.reply-time:visible').textContent(), /^(今日|Today) \d{2}:\d{2}$/, name + ' time');
     const cursor = await page.evaluate(() => {
       const reply = [...document.querySelectorAll('.agent-reply')].at(-1), body = reply.querySelector('.agent-reply-body');
       reply.classList.add('streaming');
@@ -82,7 +86,8 @@ try {
     const touch = !name.startsWith('home');
     const context = await browser.newContext({ viewport: { width, height: 900 }, locale: lang, serviceWorkers: 'block', isMobile: touch, hasTouch: touch });
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
-    const page = await context.newPage(), errors = [], external = [], speech = [];
+    const page = await context.newPage(), errors = [], external = [], speech = [], chats = [], reacts = [];
+    let chatFails = false;
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(() => {
       (localStorage.setItem('st-analytics', 'off'),sessionStorage.setItem('magi_transport','sse'));
@@ -94,9 +99,16 @@ try {
       if (url.pathname === '/magi2/models') { await route.fulfill({ json: { personas: {}, synthesizer: {}, features: { speech: true } }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
       if (url.pathname === '/magi2/usage') { await route.fulfill({ json: { used: 1, limit: 60, day: '2026-10-23', resets_at: '2026-10-24T00:00:00Z', global_full: false }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
       if (url.pathname === '/magi2/chat') {
+        chats.push(JSON.parse(request.postData()));
+        if (chatFails) { await route.fulfill({ status: 500, json: { error: { message: 'boom', code: 'internal' } }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
         await route.fulfill({ contentType: 'text/event-stream', headers: { 'Access-Control-Allow-Origin': origin }, body: ': padding\n\n'
           + event('classification', { version: 1, intent: 'research', mode: 'fact', fresh: 'yes', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: { version: 1, code: 'ja', source: 'ui' } })
-          + event('integrated', { delta: answer }) + event('sources', sources) + event('speech', { sig: SIG, lang: 'ja' }) + event('done', {}) });
+          + event('integrated', { delta: chats.length > 1 ? answer.replace('9時', '9時半') : answer }) + event('sources', sources) + event('speech', { sig: SIG, lang: 'ja' }) + event('done', {}) });
+        return;
+      }
+      if (url.pathname === '/magi2/react') {
+        const body = JSON.parse(request.postData()); reacts.push(body);
+        await route.fulfill({ json: body.op === 'remove' ? { ok: true, deleted: 1 } : { id: reacts.length, delete_token: 'c'.repeat(64) }, headers: { 'Access-Control-Allow-Origin': origin } });
         return;
       }
       if (url.pathname === '/magi2/speech') {
@@ -117,10 +129,16 @@ try {
     const bar = page.locator('.agent-reply .reply-bar').last();
     await until(async () => (await bar.locator('[data-act="sources"]:visible').count()) === 1, 'sources button');
 
-    // §2.1 並び: ［コピー］［🔊］［共有］［いいね］［︙］、右寄せの［ソース］。押せる大きさ
+    // §2.1 並び: ［コピー］［共有］（指で操作する端末だけ）［🔊］［もう一度］［評価］と日時、右寄せの［ソース］。押せる大きさ
     await until(async () => (await bar.locator('[data-act="speak"]:visible').count()) === 1, 'speak button');
     const acts = await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act));
-    assert.deepEqual(acts, ['copy', 'speak', 'share', 'like', 'emoji', 'sources'], name);
+    assert.deepEqual(acts, [...(touch ? ['copy', 'share'] : ['copy']), 'speak', 'retry', 'rate', 'sources'], name);
+    assert.equal(await bar.locator('time.reply-time:visible').count(), 1, name + ' time');
+    // 390px 以上は［ソース］まで1行に収める（それより狭い端末では［ソース］だけ2行目の右端へ回る）
+    if (width >= 390) {
+      const [copyTop, srcTop] = await Promise.all(['copy', 'sources'].map(act => bar.locator(`[data-act="${act}"]`).evaluate(b => b.getBoundingClientRect().top)));
+      assert(Math.abs(copyTop - srcTop) < 2, name + ' one line ' + copyTop + ' ' + srcTop);
+    }
     for (const box of await bar.locator('button:visible').evaluateAll(list => list.map(b => b.getBoundingClientRect().height))) assert(box >= 32, name + ' button height ' + box);
     const src = bar.locator('[data-act="sources"]');
     assert.equal(await src.locator('img.src-icon').count(), 1); assert.equal(await src.locator('.src-letter').count(), 1);
@@ -158,13 +176,8 @@ try {
       await bar.locator('[data-act="share"]').click();
       await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
       assert.equal(await copied(), sharedText);
-    } else {
-      await bar.locator('[data-act="share"]').click();
-      await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
-      assert.equal(await page.evaluate(() => window.__shared.length), 0, 'PC では共有シートを開かない');
-      sharedText = await copied();
-    }
-    assert.match(sharedText, /\[1\]/); assert.match(sharedText, /https:\/\/www\.example\.com\/hours/);
+      assert.match(sharedText, /\[1\]/); assert.match(sharedText, /https:\/\/www\.example\.com\/hours/);
+    } else assert.equal(await bar.locator('[data-act="share"]').count(), 0, 'PC では［共有］を出さない（コピーと同じになる）');
 
     // §2.3 読み上げ: 押すと区切り0と1を取り、鳴らし終えたら元に戻る。もう一度押すとすぐ止まる
     const speak = bar.locator('[data-act="speak"]');
@@ -178,12 +191,48 @@ try {
     assert.equal(await speak.getAttribute('data-state'), 'idle');
     assert.equal(await page.locator('audio').count(), 0, '<audio> は文書に挿さない');
 
+    // ［もう一度］: 同じ質問だけを送り直し（前の回答は送らない）、新しい回答と入れ替える
+    await bar.locator('[data-act="retry"]').click();
+    await until(async () => chats.length === 2 && (await page.locator('.agent-reply.streaming').count()) === 0
+      && (await page.locator('.agent-reply-body').last().textContent()).includes('9時半'), 'retried');
+    assert.deepEqual(chats[1].messages.map(m => [m.role, m.content]), [['user', '開館時間を確認して']]);
+    assert.equal(await page.locator('.agent-user').count(), 1); assert.equal(await page.locator('.agent-turn').count(), 1);
+    // 届かなければ前の往復を見せ直し、入力欄には戻さない
+    chatFails = true;
+    await page.locator('.agent-reply .reply-bar').last().locator('[data-act="retry"]').click();
+    await until(async () => chats.length === 3 && (await page.locator('.agent-err').count()) === 1, 'retry failed');
+    await until(async () => (await page.locator('.agent-turn:visible').count()) === 1, 'old reply back');
+    assert.equal(await page.locator('.agent-user:visible').count(), 1);
+    assert.match(await page.locator('.agent-reply-body').last().textContent(), /9時半/);
+    assert.equal(await page.locator('#agent-input').inputValue(), '');
+    chatFails = false;
+
+    // 評価: Good / Bad の2択。付け替えは前の評価を消してから付ける
+    const latest = page.locator('.agent-reply .reply-bar').last(), rate = latest.locator('[data-act="rate"]');
+    await rate.click();
+    assert.deepEqual(await page.locator('.rate-pop button').allTextContents(), ['Good', 'Bad']);
+    if (process.argv.includes('--screenshots')) await page.screenshot({ path: resolve(captures, name + '-rate.png'), animations: 'disabled' });
+    await page.locator('.rate-pop [data-rate="good"]').click();
+    await until(async () => reacts.length === 1, 'rated good');
+    assert.equal(reacts[0].reaction, '\u{1F44D}'); assert.equal(reacts[0].target, 'integrated');
+    assert.equal(await page.locator('.rate-pop').count(), 0); assert.match(await rate.getAttribute('class'), /rated/);
+    await rate.click();
+    assert.equal(await page.locator('.rate-pop [data-rate="good"]').getAttribute('aria-checked'), 'true');
+    await page.locator('.rate-pop [data-rate="bad"]').click();
+    await until(async () => reacts.length === 3, 'rated bad');
+    assert.deepEqual(reacts.slice(1).map(r => r.op || r.reaction), ['remove', '\u{1F44E}']);
+    await rate.click(); await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.rate-pop').count(), 0);
+
     // 履歴から開き直しても、保存した署名で 🔊 と［ソース］が出る
     await page.reload({ waitUntil: 'domcontentloaded' });
     if (home && !(await page.locator('#agentdock:not(.collapsed)').count())) await page.locator('#activitybar [data-act="agent"]').click();
     const restored = page.locator('.agent-reply .reply-bar').last();
     await until(async () => (await restored.locator('[data-act="speak"]:visible').count()) === 1, 'restored speak');
     assert.equal(await restored.locator('[data-act="sources"]:visible').count(), 1);
+    assert.match(await restored.locator('[data-act="rate"]').getAttribute('class'), /rated/, '評価を復元する');
+    assert.equal(await restored.locator('[data-act="retry"]:visible').count(), 1, '開き直しても文字の質問は送り直せる');
+    assert.equal(await restored.locator('time.reply-time:visible').count(), 1);
     assert.deepEqual(errors, [], name + ' page errors');
     await context.close();
     checked++;

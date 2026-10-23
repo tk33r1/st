@@ -244,27 +244,31 @@
 
     /* reactions */
     .reaction-bar { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; position: relative; }
-    .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.7rem; height: 1.7rem; padding: 0 0.35rem; font-size: 12px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
-    /* tap feedback only while pressed; gate :hover behind real pointers so the
-       green outline never "sticks" on touch (so cancelling a like is visible) */
-    @media (hover: hover) { .react-btn:hover { color: var(--primary-color); border-color: var(--primary-color); } }
-    .react-btn:active { color: var(--primary-color); border-color: var(--primary-color); }
-    .react-btn.liked, .react-btn.reacted { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
-    .reaction-bar.locked .react-btn[data-act="like"]:not(.liked), .reaction-bar.locked .react-btn[data-act="emoji"]:not(.reacted) { opacity: 0.3; pointer-events: none; }
-    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.1rem; padding: 0.3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
-    .emoji-pop button { font-size: 17px; line-height: 1; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 4px; cursor: pointer; }
-    .emoji-pop button:hover, .emoji-pop button:active { background: var(--primary-bg); }
-    /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる範囲は 44px（ボタン 34px と周り 5px） */
-    .reply-bar { gap: 0.65rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.7rem; height: 1.7rem; padding: 0 0.35rem; font-size: 12px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: color var(--duration-fast), background-color var(--duration-fast); }
+    /* 操作のボタンは枠で囲わない。指した・押したときだけ薄い地を敷く（触る端末では指したままの見た目を残さない） */
+    @media (hover: hover) { .react-btn:hover { color: var(--primary-color); background: var(--primary-bg); } }
+    .react-btn:active { color: var(--primary-color); background: var(--primary-bg); }
+    .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
+    .react-btn.rated { color: var(--primary-color); }
+    .react-btn[hidden] { display: none; }
+    /* 回答の評価（Good / Bad）。評価のボタンの上に開く */
+    .rate-pop { position: absolute; bottom: 100%; margin-bottom: 0.25rem; display: flex; gap: 2px; padding: 0.25rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+    .rate-pop button { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0 0.85rem; font: inherit; font-size: 13px; color: var(--text-color); background: transparent; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+    .rate-pop button:active, .rate-pop button:focus-visible { background: var(--primary-bg); outline: none; }
+    @media (hover: hover) { .rate-pop button:hover { background: var(--primary-bg); } }
+    .rate-pop button[aria-checked="true"] { color: var(--primary-color); }
+    .react-btn .rate-icon { width: 19px; height: 19px; }
+    /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる高さは 44px（ボタン 34px と上下 5px）。
+       横は隣のボタンに重ねない。［ソース］まで1行に収まるよう、間は詰める */
+    .reply-bar { gap: 2px; flex-wrap: wrap; margin-top: 0.5rem; }
     .reply-bar .react-btn { min-width: 34px; height: 34px; position: relative; }
-    .reply-bar .react-btn::after { content: ''; position: absolute; inset: -5px; }
-    /* hidden 属性（🔊・［ソース］を出さないとき）を .react-btn の display に負けさせない */
-    .reply-bar .react-btn[hidden] { display: none; }
-    .reply-bar .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-    .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.6rem; }
+    .reply-bar .react-btn::after { content: ''; position: absolute; inset: -5px -1px; }
+    .reply-bar .react-btn svg { width: 18px; height: 18px; }
+    .reply-bar .react-btn .rate-icon { width: 21px; height: 21px; }
+    .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.5rem; }
+    .reply-time { padding: 0 0.2rem; font-size: 11px; color: var(--secondary-color); white-space: nowrap; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
-    .react-picked { margin-left: 0.3rem; font-size: 14px; }
-    .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
+    .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); }
     .speak-wait { animation: speak-spin 0.9s linear infinite; }
     @keyframes speak-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
@@ -507,6 +511,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261024_1"></script>
+  <script src="app.js?v=20261024_2"></script>
 </body>
 </html>

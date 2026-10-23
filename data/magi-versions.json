@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.5",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "回答の下のボタンを枠で囲わない形にし、「もう一度試す」と回答の日時を足しました。PCでは、コピーと同じになる「共有」を出さないようにしました。",
+          "「いいね」と絵文字のリアクションを、回答の評価（Good / Bad の2択）にまとめました。",
+          "Webで確かめた回答の出典に、サイトのアイコンが出ることが増えました。"
+        ],
+        "en": [
+          "The buttons under a reply no longer have frames, and now include Try again and the time of the reply. On a PC, Share is hidden because it would only copy the reply.",
+          "Like and emoji reactions are replaced by a rating of the reply: Good or Bad.",
+          "Sources of web-checked replies now show the site icon more often."
+        ]
+      }
+    },
+    {
       "version": "6.4",
       "date": "2026-10-24",
       "changes": {

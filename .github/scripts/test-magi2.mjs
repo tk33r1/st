@@ -27,7 +27,7 @@ const encode = s => new TextEncoder().encode(s);
 
 // B0: Androidの橋渡しだけを動かし、Web/PWAと会話の処理へ影響しないことを見る。
 function nativeShell(capacitor) {
-  const calls = [], state = { panel: false, emoji: false, hidden: true, theme: 'dark' };
+  const calls = [], state = { panel: false, rate: false, hidden: true, theme: 'dark' };
   const app = {
     addListener: (name, callback) => { state.back = callback; calls.push(name); return { remove: async () => {} }; },
     exitApp: async () => { calls.push('exit'); },
@@ -38,14 +38,14 @@ function nativeShell(capacitor) {
     window: { Capacitor: cap, history: { back() { calls.push('history'); } } },
     document: {
       documentElement: { getAttribute() { return state.theme; } },
-      querySelector(selector) { return selector === '.agent-panel' ? state.panel : state.emoji; },
+      querySelector(selector) { return selector === '.agent-panel' ? state.panel : selector === '.rate-pop' && state.rate; },
       getElementById() { return { classList: { contains() { return state.hidden; }, add() { state.hidden = true; calls.push('menu'); } } }; },
     },
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
     closeAgentPanels() { state.panel = false; calls.push('panel'); },
-    closeEmojiPops() { state.emoji = false; calls.push('emoji'); },
+    closeRatePops() { state.rate = false; calls.push('rate'); },
   });
   vm.runInContext(between(mobile, '// NATIVE_SHELL_BEGIN', '// NATIVE_SHELL_END'), ctx);
   return { calls, state };
@@ -57,14 +57,14 @@ test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
   }
 });
 
-test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メニュー・絵文字を閉じてから履歴または終了へ進む', () => {
+test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メニュー・評価のメニューを閉じてから履歴または終了へ進む', () => {
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
-  state.attach = true; state.panel = true; state.usage = true; state.hidden = false; state.emoji = true;
+  state.attach = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'usage');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'menu');
-  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'rate');
   state.back({ canGoBack: true }); assert.equal(calls.at(-1), 'history');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'exit');
 });
@@ -1994,7 +1994,7 @@ function client(src, isHome = false) {
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
-    agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {},
+    agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
@@ -2197,18 +2197,20 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
   }
 });
 
-test('両画面は削除失敗でトークンと選択を保持し、再試行の成功後だけ解除する', async () => {
-  for (const [src, isHome, end] of [[mobile, false, 'function flashReactBtn('], [home, true, '// agent-log 内の全クリック']]) {
+test('両画面の評価: 付け替えは前の評価を消せてから付け、消せなければトークンと評価を保つ。同じものを選ぶと取り消す', async () => {
+  for (const [src, end, speech] of [[mobile, 'function flashReactBtn(', '// AGENT_SPEECH_BEGIN'], [home, '// agent-log 内の全クリック', '// AGENT_SPEECH_BEGIN']]) {
     for (const failure of ['network', '429', '500', 'invalid_json', 'invalid_ack', 'timeout']) {
       const receipt = { em: '👍', id: 7, delete_token: 'a'.repeat(64) };
-      const store = { integrated: receipt }, posts = [], errors = [], timers = new Map();
-      let resets = 0, unlocked = 0, failed = true;
-      const bar = { dataset: {}, classList: { remove(name) { assert.equal(name, 'locked'); unlocked++; } } };
+      const store = { integrated: receipt }, posts = [], errors = [], timers = new Map(), shown = [];
+      let failed = true;
+      const bar = { dataset: { target: 'integrated' } };
       const ctx = vm.createContext({ REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
-        renderAgentError(e) { errors.push(e); },
+        renderAgentError(e) { errors.push(e); }, showRating(_, value) { shown.push(value); },
+        getReactionContext: () => ({ target: 'integrated', request: 'q', response: 'a' }),
         setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
         fetch: async (_, options) => {
-          posts.push(JSON.parse(options.body));
+          const body = JSON.parse(options.body); posts.push(body);
+          if (body.op !== 'remove') return Response.json({ id: 8, delete_token: 'b'.repeat(64) });
           if (!failed) return Response.json({ ok: true, deleted: 1 });
           if (failure === 'network') throw new TypeError('Failed to fetch');
           if (failure === 'timeout') return new Promise((_, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError'))));
@@ -2216,21 +2218,29 @@ test('両画面は削除失敗でトークンと選択を保持し、再試行�
           return Response.json({ ok: false }, { status: /^\d+$/.test(failure) ? Number(failure) : 200 });
         },
       });
+      vm.runInContext(between(src, speech, '// AGENT_SPEECH_END'), ctx);
       vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
-      const pending = ctx.undoReaction(bar, 'integrated', () => { resets++; });
+      vm.runInContext(between(src, 'async function rateReply(', src === home ? 'let agentSpeechOn' : 'var agentSpeechOn'), ctx);
+      const pending = ctx.rateReply(bar, 'bad');
       await tick();
       if (failure === 'timeout') {
-        await ctx.undoReaction(bar, 'integrated', () => { resets++; });
+        await ctx.rateReply(bar, 'bad');
         assert.equal(posts.length, 1, '処理中の連打では削除を重ねない');
         [...timers.values()][0]();
       }
       await pending;
-      assert.equal(store.integrated, receipt); assert.equal(resets, 0); assert.equal(unlocked, 0);
+      assert.equal(store.integrated, receipt); assert.deepEqual(shown, []);
       assert.equal(errors.at(-1).code, 'reaction_remove_failed'); assert.equal(bar.dataset.removing, undefined); assert.equal(timers.size, 0);
       failed = false;
-      await ctx.undoReaction(bar, 'integrated', () => { resets++; });
-      assert.equal(store.integrated, undefined); assert.equal(resets, 1); assert.equal(unlocked, 1);
-      assert.equal(posts.at(-1).delete_token, receipt.delete_token); assert.equal(timers.size, 0);
+      await ctx.rateReply(bar, 'bad'); await tick();
+      assert.deepEqual(shown, [null, 'bad']);
+      assert.equal(posts.at(-2).op, 'remove'); assert.equal(posts.at(-2).delete_token, receipt.delete_token);
+      assert.equal(posts.at(-1).reaction, '👎'); assert.equal(store.integrated.em, '👎'); assert.equal(store.integrated.id, 8);
+      // 同じ Bad を選ぶと取り消すだけで、付け直さない
+      const count = posts.length;
+      await ctx.rateReply(bar, 'bad');
+      assert.equal(posts.length, count + 1); assert.equal(posts.at(-1).op, 'remove'); assert.equal(store.integrated, undefined);
+      assert.deepEqual(shown, [null, 'bad', null]);
     }
   }
 });
@@ -5331,7 +5341,12 @@ test('読み上げ計画§1.1: アイコンの候補は<link rel="icon">（SVG�
     + '<link rel="shortcut icon" href="/s.ico"><link href="https://cdn.example.com/i.png" rel="icon"><link rel="apple-touch-icon" href="/t.png">'
     + '<link rel="icon" href="http://127.0.0.1/x.png"></head><body><link rel="icon" href="/late.png"></body></html>';
   const hrefs = (h, u) => [...w.ctx.sourceIconHrefs(h, u)];
-  assert.deepEqual(hrefs(html, 'https://example.com/page'), ['https://example.com/s.ico', 'https://cdn.example.com/i.png']);
+  // 宣言したアイコンの後に、控えの apple-touch-icon と /favicon.ico
+  assert.deepEqual(hrefs(html, 'https://example.com/page'), ['https://example.com/s.ico', 'https://cdn.example.com/i.png', 'https://example.com/t.png', 'https://example.com/favicon.ico']);
+  const many = '<head>' + [1, 2, 3, 4].map(n => `<link rel="icon" href="/i${n}.png">`).join('')
+    + '<link rel="apple-touch-icon" sizes="180x180" href="/t180.png"><link rel="apple-touch-icon-precomposed" sizes="57x57" href="/t57.png"></head>';
+  assert.deepEqual(hrefs(many, 'https://example.com/'), ['https://example.com/i1.png', 'https://example.com/i2.png', 'https://example.com/t57.png', 'https://example.com/favicon.ico']);
+  assert.deepEqual(hrefs('<head><link rel="apple-touch-icon" href="/t.png"></head>', 'https://example.com/'), ['https://example.com/favicon.ico', 'https://example.com/t.png']);
   assert.deepEqual(hrefs('<p>no head</p>', 'https://example.com/a/b'), ['https://example.com/favicon.ico']);
   assert.deepEqual(hrefs('', 'https://example.com/'), ['https://example.com/favicon.ico']);
   const type = bytes => w.ctx.sourceIconType(new Uint8Array(bytes));
@@ -5342,6 +5357,45 @@ test('読み上げ計画§1.1: アイコンの候補は<link rel="icon">（SVG�
   assert.equal(type([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]), 'image/webp');
   assert.equal(type([0x3c, 0x73, 0x76, 0x67]), null); // <svg
   assert.equal(type([0x3c, 0x21, 0x64, 0x6f]), null); // <!do
+});
+
+// 大きさの違う画像をまとめた .ico（width, 中身）を作る。中身は BMP の代わりの埋め草か PNG
+function multiIco(entries) {
+  const head = 6 + 16 * entries.length, total = head + entries.reduce((s, [, d]) => s + d.length, 0);
+  const out = new Uint8Array(total), view = new DataView(out.buffer);
+  view.setUint16(2, 1, true); view.setUint16(4, entries.length, true);
+  let offset = head;
+  entries.forEach(([width, data], i) => {
+    const at = 6 + 16 * i;
+    out[at] = out[at + 1] = width % 256; view.setUint16(at + 4, 1, true); view.setUint16(at + 6, 32, true);
+    view.setUint32(at + 8, data.length, true); view.setUint32(at + 12, offset, true);
+    out.set(data, offset); offset += data.length;
+  });
+  return out;
+}
+test('出典のアイコン: 上限を超える .ico から、収まる 32px に近い1枚を取り出す（tenki.jp・新聞各社の favicon は数十KB）', () => {
+  const w = worker(), fit = b => w.ctx.sourceIconFit(b);
+  const bmp = (n, fill) => new Uint8Array(n).fill(fill);
+  // 16px・32px（収まる）・48px（収まらない）。32px を選び、1枚だけの .ico に詰め直す
+  const ico = multiIco([[16, bmp(1128, 1)], [32, bmp(3000, 2)], [48, bmp(9640, 3)]]);
+  const got = fit(ico);
+  assert.equal(got.type, 'image/x-icon'); assert.equal(got.bytes.length, 22 + 3000);
+  assert.deepEqual([...got.bytes.slice(0, 6)], [0, 0, 1, 0, 1, 0]);
+  assert.equal(got.bytes[6], 32); assert.equal(new DataView(got.bytes.buffer).getUint32(18, true), 22);
+  assert(got.bytes.slice(22).every(v => v === 2));
+  // 32px が収まらなければ 16px。PNG の画像はそのまま PNG で渡す
+  assert.equal(fit(multiIco([[16, bmp(1128, 1)], [32, bmp(4264, 2)], [48, bmp(9640, 3)]])).bytes[6], 16);
+  const png = new Uint8Array(1500); png.set(PNG_ICON);
+  const asPng = fit(multiIco([[16, bmp(1128, 1)], [32, png], [0, bmp(9000, 3)]]));
+  assert.equal(asPng.type, 'image/png'); assert.equal(asPng.bytes.length, 1500);
+  // 上限以内のファイルは手を加えない。どれも収まらない .ico・上限超えの PNG・壊れた目次には付けない
+  const small = multiIco([[16, bmp(1000, 1)]]);
+  assert.equal(fit(small).bytes, small);
+  assert.equal(fit(multiIco([[32, bmp(4264, 2)]])), null);
+  const bigPng = new Uint8Array(5000); bigPng.set(PNG_ICON);
+  assert.equal(fit(bigPng), null);
+  const broken = multiIco([[16, bmp(5000, 1)]]); new DataView(broken.buffer).setUint32(14, 9000, true);
+  assert.equal(fit(broken), null);
 });
 
 test('読み上げ計画§1.1: Webの回答の出典に、Workerが取ったアイコンをdata: URLで付け、見出しに認証を載せない', async () => {
@@ -5444,6 +5498,46 @@ test('読み上げ計画§1.6・2.2: 頭文字の丸はドメインから同じ�
   const raw = { items: [{ n: 1, url: 'https://example.com/p', title: '公式' }], marks: [{ at: 2, n: 1 }] };
   assert.equal(ctx.agentShareText('答え。続き', raw, true), '答え[1]。続き\n\n出典\n[1] 公式\nhttps://example.com/p');
   assert.equal(ctx.agentShareText('答えだけ', null, false), '答えだけ');
+});
+
+test('回答の評価: 保存した 👍・👎（文字列と登録の記録）だけを Good / Bad として読み、以前の絵文字は出さない', () => {
+  const ctx = speechCtx();
+  assert.equal(ctx.agentRatingOf('\u{1F44D}'), 'good');
+  assert.equal(ctx.agentRatingOf({ em: '\u{1F44E}', id: 3, delete_token: 'a'.repeat(64) }), 'bad');
+  for (const other of ['\u{1F525}', { em: '\u{2764}\u{FE0F}' }, '', null, undefined, 5]) assert.equal(ctx.agentRatingOf(other), null);
+  assert.equal(ctx.AGENT_RATINGS.good, '\u{1F44D}'); assert.equal(ctx.AGENT_RATINGS.bad, '\u{1F44E}');
+});
+
+test('回答の日時: 保存した at を使い、無ければ送ったときの mid から読む。画面を開いた後に付けた mid は使わない', () => {
+  const ctx = speechCtx();
+  const sent = Date.UTC(2026, 9, 24, 6, 38), opened = sent + 3600e3, mid = 'm' + sent.toString(36) + 'ab12';
+  assert.equal(ctx.agentReplyAt({ at: sent + 5, mid }, opened), sent + 5);
+  assert.equal(ctx.agentReplyAt({ mid }, opened), sent);
+  assert.equal(ctx.agentReplyAt({ mid: 'm' + (opened + 1).toString(36) + 'zz' }, opened), null);
+  for (const bad of [{ at: 'x' }, { at: 1000 }, { at: Date.now() + 864e6 }, { mid: 'legacy' }, {}, null]) assert.equal(ctx.agentReplyAt(bad, opened), null);
+  // 表示は端末の時刻で、操作列に収まる短い形。今日・昨日・今年・それより前
+  const at = new Date(2026, 9, 24, 15, 8).getTime(), later = (d, h = 9) => new Date(2026, 9, 24 + d, h).getTime();
+  assert.equal(ctx.agentReplyTimeText(at, true, later(0, 23)), '今日 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, false, at), 'Today 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, true, later(1, 0)), '昨日 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, false, later(1)), 'Yesterday 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, true, later(2)), '10/24(土) 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, false, later(2)), 'Oct 24, 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, true, new Date(2027, 0, 2).getTime()), '2026/10/24 15:08');
+  assert.equal(ctx.agentReplyTimeText(at, false, new Date(2027, 0, 2).getTime()), 'Oct 24, 2026, 15:08');
+});
+
+test('もう一度: 文字の質問は保存した本文で、画像付きは同じ回答の原寸を覚えているときだけ送り直す', () => {
+  const ctx = speechCtx(), plain = r => r && JSON.parse(JSON.stringify(r));
+  assert.deepEqual(plain(ctx.agentRetryInput({ role: 'user', content: '天気は？' }, 'm1', null)), { text: '天気は？', atts: [] });
+  assert.deepEqual(plain(ctx.agentRetryInput({ role: 'user', content: [{ type: 'text', text: 'a' }, { type: 'text', text: 'b' }] }, 'm1', null)), { text: 'a\nb', atts: [] });
+  const image = { role: 'user', content: [{ type: 'text', text: 'これは？' }, { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AA' } }] };
+  const atts = [{ url: 'data:image/jpeg;base64,FULL', thumb: 'data:image/jpeg;base64,AA' }];
+  assert.equal(ctx.agentRetryInput(image, 'm1', null), null);
+  assert.equal(ctx.agentRetryInput(image, 'm1', { mid: 'm2', atts }), null);
+  const again = ctx.agentRetryInput(image, 'm1', { mid: 'm1', atts });
+  assert.equal(again.text, 'これは？'); assert.equal(again.atts[0].url, atts[0].url); assert.notEqual(again.atts, atts);
+  for (const bad of [null, { role: 'assistant', content: 'x' }, { role: 'user', content: '  ' }]) assert.equal(ctx.agentRetryInput(bad, 'm1', null), null);
 });
 
 // 模擬の <audio> と、区切りごとに返し方を決められる fetch

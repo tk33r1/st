@@ -152,12 +152,12 @@ try {
       hold = null; usageReply = usage(14);
       await page.evaluate(() => loadUsage());
       await page.waitForFunction(() => document.querySelector('.usage-fill').getAttribute('stroke-dasharray') === '23.3 100');
-      // 絵文字の吹き出しも、円グラフを押すと閉じる
+      // 評価のメニューも、円グラフを押すと閉じる
       await page.locator('#btn-history-agent').click(); await page.locator('.session-load').first().click();
-      const emoji = page.locator('.react-btn[data-act="emoji"]').first();
-      assert.ok(await emoji.count());
-      await emoji.click(); assert.equal(await page.locator('.emoji-pop').count(), 1);
-      await page.locator('#btn-usage').click(); assert.equal(await page.locator('.emoji-pop').count(), 0);
+      const rate = page.locator('.react-btn[data-act="rate"]').first();
+      assert.ok(await rate.count());
+      await rate.click(); assert.equal(await page.locator('.rate-pop').count(), 1);
+      await page.locator('#btn-usage').click(); assert.equal(await page.locator('.rate-pop').count(), 0);
     }
     assert.deepEqual(errors, []); assert.deepEqual(posts, []);
     report.push({ scenario: scenario.name, usageCalls: usageCalls.length, errors, posts: posts.length });
