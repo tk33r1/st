@@ -84,8 +84,9 @@ export function prepareSeed({source=repo,base,caseId,output}) {
   git(source,'cat-file','-e',base+'^{commit}');
   // EEXISTで止め、以前の仕込みや本人の作業を消さない。元のGitには書かない。
   mkdirSync(output);const root=join(output,'repo');
-  git(output,'clone','--local','--no-checkout','--no-hardlinks',source,root);
-  git(root,'remote','remove','origin');
+  // cloneは最新ブランチやタグの正解コードまで複写するため、baseの祖先だけを取得する。
+  git(output,'init',root);
+  git(root,'-c','protocol.file.allow=always','fetch','--no-tags','--no-write-fetch-head','--no-recurse-submodules',source,base);
   git(root,'checkout','-b','automation/magi2-daily-seeded-base',base);
   const read=path=>readFileSync(join(root,path),'utf8');
   const write=(path,value)=>writeFileSync(join(root,path),value);

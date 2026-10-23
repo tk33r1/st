@@ -102,6 +102,6 @@ A2の`paidEvaluationGate()`はA2台帳だけを受け付け、A6台帳の指定�
 - 検証ジョブは読み取り権限・secretなし。報告はmain側の別ジョブが検証のresultだけを使い、PRが書ける出力値を採用しない。
 - 月曜04:15 JSTの週次workflowは、本番の公開カタログの形と、完了したUTC日の直近7日分の固定カウンター・リアクション件数だけを読む。SQLはSELECTのみ。本文・IP・検索語は保存・出力しない。現在の週次報告は件数とPR件数・現在の版まで。
 - 週次のPR件数にも`MAGI2_DAILY_ACTOR`を使い、未設定時は`tk33r1`。PRは更新日時の降順に取得し、集計期間の開始より古い行に達したら打ち切る。D1集計は文ごとの結果が返る`wrangler d1 execute --command`を使う。
-- 手動のWorker公開は共通workflowで確定SHAをcheckoutし、Anthropicのキー同期後に`--message <SHA>`を付ける。自動公開・公開後確認・rollback/revert・停止Issueの自動作成はまだ接続していない。
+- 手動のWorker公開は共通workflowで確定SHAをcheckoutし、`--message <SHA>`を付ける。magi2のAnthropicキーは`--secrets-file`でコードと同時に反映し、独立したキー同期を挟まない。`expected-version-id`を渡した呼び出しは公開開始直前に照合する。自動公開・公開後確認・rollback/revert・停止Issueの自動作成はまだ接続していない。
 - 本人の手元からmagi2を出すときは、`node .github/scripts/magi2-daily-check.mjs --deployment-message`の値を`wrangler deploy --message`へ渡す。未コミットの本番依存があれば`-dirty`になる。キー同期は従来の手順に従う。
 - 停止Issueが開いていればAの作成・更新・依頼をしない。段階の変更・停止の解除は本人だけが行う。現在の準備版はマージしないが、本番の運用を始める前に残る実装と実試行を終える。

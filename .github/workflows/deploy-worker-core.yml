@@ -66,6 +66,7 @@ jobs:
         sparse-checkout: |
           .github/workflows/deploy-worker.yml
           .github/scripts/magi2-daily-cloudflare.mjs
+          .github/scripts/magi2-daily-deploy-worker.mjs
           .github/scripts/magi2-daily-http.mjs
           workers/magi2/wrangler.toml
         sparse-checkout-cone-mode: false
@@ -106,16 +107,6 @@ jobs:
           exit 1
         fi
 
-    # secret put自体が版を変え得るので、本人の割り込みを確かめるのは自分の同期より前。
-    # 版の取得は公開対象ではなく呼び出し側コミットのコードで行う。
-    - name: Check recorded MAGI version before secret synchronization
-      if: ${{ inputs.worker == 'magi2' && inputs.expected-version-id != '' && !inputs.dry-run }}
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        EXPECTED_VERSION_ID: ${{ inputs.expected-version-id }}
-      run: node .deploy-caller/.github/scripts/magi2-daily-cloudflare.mjs --read --expect-id "$EXPECTED_VERSION_ID"
-
     # DB更新が通ってからキーを設定する。権限不足なら既存のキーを変更せず止める。
     # dry-runでは本番を変更しない。
     - name: Prepare DJ NEXT
@@ -133,21 +124,6 @@ jobs:
         if [ -n "$TYPESAFE_API_KEY" ]; then
           printf '%s' "$TYPESAFE_API_KEY" | npx wrangler secret put TYPESAFE_API_KEY --config dj-request/wrangler.toml
         fi
-
-    # モデルの切り替え前にキーを同期する。Geminiを含む既存のsecretは消さない。
-    - name: Prepare MAGI Anthropic
-      if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      run: |
-        if [ -z "$ANTHROPIC_API_KEY" ]; then
-          echo "::error::リポジトリ Secret ANTHROPIC_API_KEY が未設定です。MAGIのモデル切り替えを止めます"
-          exit 1
-        fi
-        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put MAGI_ANTHROPIC_API_KEY --config magi2/wrangler.toml
 
     # 条件付き移行の採用後だけ同期する。評価前のopenai設定では既存のキーを触らない。
     - name: Prepare auxiliary Anthropic
@@ -176,13 +152,19 @@ jobs:
         WORKER: ${{ inputs.worker }}
         DRY_RUN: ${{ inputs.dry-run }}
         DEPLOY_SHA: ${{ inputs.sha }}
+        EXPECTED_VERSION_ID: ${{ inputs.expected-version-id }}
+        ANTHROPIC_API_KEY: ${{ inputs.worker == 'magi2' && secrets.ANTHROPIC_API_KEY || '' }}
         WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/worker-deployment.jsonl
       run: |
         if [ "$DRY_RUN" = "true" ]; then
           npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/bundle" --config "$WORKER/wrangler.toml"
           exit 0
         fi
-        npx wrangler deploy --config "$WORKER/wrangler.toml" --message "$DEPLOY_SHA"
+        if [ "$WORKER" = magi2 ]; then
+          node ../.deploy-caller/.github/scripts/magi2-daily-deploy-worker.mjs
+        else
+          npx wrangler deploy --config "$WORKER/wrangler.toml" --message "$DEPLOY_SHA"
+        fi
 
     - name: Capture the published MAGI version from structured Wrangler output
       id: published

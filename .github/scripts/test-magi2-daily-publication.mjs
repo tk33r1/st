@@ -65,6 +65,18 @@ test('200だけでは通さず、旧版へのX.YZ混入・欠けた新版本文�
     url=>url.endsWith('/chat')?Response.json({error:{code:'other'}},{status:400}):null,
   ])assert.equal((await verifyDailyPublication({fetcher:transport(patch),readDeployment:version,expected})).ok,false);
 });
+test('プライバシー説明の壊れた行と200以外のカタログは公開成功にしない',async()=>{
+  for(const rows of [[null],[{}],[{text:''}],[{text:'   '}],[{text:'説明',requires:'share'}],
+    [{text:'説明',requires:[null]}],[{text:'説明'},null]]) {
+    const invalid={...catalog,privacy:{ja:rows,en:catalog.privacy.en}};
+    const report=await verifyDailyPublication({fetcher:transport(url=>url.endsWith('/models')?Response.json(invalid):null),readDeployment:version,expected});
+    assert.equal(report.ok,false);assert.equal(report.cases.find(row=>row.name==='catalog').ok,false);
+  }
+  for(const status of [201,206]) {
+    const report=await verifyDailyPublication({fetcher:transport(url=>url.endsWith('/models')?Response.json(catalog,{status}):null),readDeployment:version,expected});
+    assert.equal(report.ok,false);assert.equal(report.cases.find(row=>row.name==='catalog').status,status);
+  }
+});
 test('通信障害・巨大な履歴を不合格にし、通信関数の省略では本番fetchを使わない',async()=>{
   const failed=await verifyDailyPublication({fetcher:async()=>{throw new Error('PRIVATE_CREDENTIAL');},readDeployment:version,expected});
   assert.equal(failed.ok,false);assert.doesNotMatch(JSON.stringify(failed),/PRIVATE/);

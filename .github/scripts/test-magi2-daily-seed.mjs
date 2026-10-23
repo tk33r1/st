@@ -67,11 +67,19 @@ test('全8状態を独立Gitへ再現し、元ブランチ・remote・作業フ�
     for(const path of paths){mkdirSync(dirname(join(source,path)),{recursive:true});writeFileSync(join(source,path),read(path));}
     git(source,'init','-b','main');git(source,'add','.');git(source,'commit','-m','synthetic baseline');
     git(source,'remote','add','origin','https://example.invalid/do-not-contact');const base=git(source,'rev-parse','HEAD');
+    const answer='.github/scripts/magi2-daily-seed.mjs';
+    mkdirSync(dirname(join(source,answer)),{recursive:true});writeFileSync(join(source,answer),'LATER_ANSWER_KEY');
+    git(source,'add','.');git(source,'commit','-m','later answer definitions');const future=git(source,'rev-parse','HEAD');
+    git(source,'tag','later-answer',future);
     writeFileSync(join(source,'untracked.txt'),'user work');
     for(const row of seedCases()) {
       const output=join(dir,row.id),manifest=prepareSeed({source,base,caseId:row.id,output}),root=join(output,'repo');
       assert.equal(git(root,'remote'), '');assert.equal(git(root,'branch','--show-current'),manifest.branch);
       assert.equal(git(root,'status','--porcelain'),'');assert.equal(git(root,'rev-parse','HEAD^'),base);
+      assert.equal(git(root,'for-each-ref','--format=%(refname)'),'refs/heads/'+manifest.branch);
+      assert.throws(()=>git(root,'cat-file','-e',future+'^{commit}'));
+      assert.throws(()=>git(root,'show','HEAD:'+answer));
+      assert.throws(()=>git(root,'show',future+':'+answer));
       assert.equal(manifest.actual_claude_inspection,'not_run');assert.equal(manifest.actual_actions_trial,'not_run');
       assert.ok(manifest.files.every(f=>f.before_sha256!==f.after_sha256));
       assert.equal(manifest.expectations.filter(e=>e.classification==='A').length<=5,true);
@@ -87,7 +95,7 @@ test('全8状態を独立Gitへ再現し、元ブランチ・remote・作業フ�
       assert.throws(()=>prepareSeed({source,base,caseId:row.id,output}),/EEXIST/);
       rmSync(output,{recursive:true,force:true});
     }
-    assert.equal(git(source,'rev-parse','HEAD'),base);assert.equal(git(source,'branch','--show-current'),'main');
+    assert.equal(git(source,'rev-parse','HEAD'),future);assert.equal(git(source,'branch','--show-current'),'main');
     assert.equal(git(source,'status','--porcelain'),'?? untracked.txt');
     assert.equal(read(join(source,'untracked.txt')),'user work');
     assert.equal(git(source,'remote','get-url','origin'),'https://example.invalid/do-not-contact');

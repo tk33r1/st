@@ -189,7 +189,10 @@ test('手動公開も共通workflowを使い、40桁SHAを固定しAnthropic同�
   assert.match(wrapper,/uses: \.\/\.github\/workflows\/deploy-worker-core\.yml/);
   assert.match(wrapper,/sha: \$\{\{ github\.sha \}\}/);assert.match(core,/ref: \$\{\{ inputs\.sha \}\}/);
   assert.ok(core.includes('^[a-f0-9]{40}$'));assert.ok(core.includes('--message "$DEPLOY_SHA"'));
-  assert.ok(core.includes('secret put MAGI_ANTHROPIC_API_KEY'));assert.ok(core.includes("inputs.worker == 'magi2' && !inputs.dry-run"));
+  const deploy=readFileSync('.github/scripts/magi2-daily-deploy-worker.mjs','utf8');
+  assert.ok(core.includes('node ../.deploy-caller/.github/scripts/magi2-daily-deploy-worker.mjs'));
+  assert.ok(deploy.includes('MAGI_ANTHROPIC_API_KEY:anthropicKey'));assert.ok(deploy.includes("'--secrets-file'"));
+  assert.ok(deploy.includes("'--message',target"));assert.ok(deploy.includes('!anthropicKey.trim()'));
   assert.ok(core.includes('0008_transition_scores.sql'));assert.ok(core.includes('persist-credentials: false'));
 });
 test('共通公開はdispatchのoptionsだけでWorkerを選び、未知名は理由を示して拒否する',()=>{
