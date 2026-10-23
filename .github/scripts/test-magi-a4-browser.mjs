@@ -20,7 +20,7 @@ const browser=await chromium.launch(),results=[];
 try {
  for(const [label,path,width,lang,theme] of [['home-ja-light','/',1280,'ja','light'],['home-en-dark','/',390,'en','dark'],['app-ja-dark','/magi-app/www/',390,'ja','dark'],['app-en-light','/magi-app/www/',1280,'en','light']]){
   const page=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'}),errors=[],formats=[];let mode='normal',calls=0;
-  page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
+  page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>(localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
   await page.route('**/*',async route=>{const url=new URL(route.request().url());
    if(url.pathname==='/magi2/versions'){calls++;formats.push(url.searchParams.get('format'));const payload=structuredClone(data);if(mode==='xss')payload.versions[0].changes[lang][0]='<img src=x onerror=alert(1)> & <確認>';
     if(mode==='micro')payload.versions=['6.1','6.09','6.01','6.0','5.99','5.91','5.9'].map(version=>({...structuredClone(data.versions[0]),version}));

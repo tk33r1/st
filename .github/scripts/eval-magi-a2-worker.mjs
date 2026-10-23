@@ -17,7 +17,7 @@ const paceMs=Number(opt('pace-ms','0'));assert(Number.isInteger(paceMs)&&paceMs>
 assert.match(label,/^[a-z0-9-]+$/);assert(['stable','fresh','site','music-boundary','route','404'].includes(set));assert(['both','light','dark'].includes(theme));assert(!fault||['openai','anthropic'].includes(fault));
 const fixture=JSON.parse(read('.github/scripts/fixtures/magi-dialogue-a2-final.json'));
 assert(fixture.reviewed_at && fixture.reviewed_by,'final fixture must be reviewed');
-const modules=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref?['research.js','probe.js','speech.js']:[]),'src/index.js'];
+const modules=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref?['research.js','speech.js']:[]),'src/index.js'];
 const source=modules.map(p=>ref?execFileSync('git',['show',ref+':workers/magi2/'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):read('workers/magi2/'+p));
 const registry=JSON.parse(ref?execFileSync('git',['show',ref+':config/ai-models.json'],{cwd:root,encoding:'utf8'}):read('config/ai-models.json'));
 const cards=JSON.parse(read('data/magi-context.json')),vars=read('workers/magi2/.dev.vars');

@@ -32,6 +32,7 @@ try {
     });
     await context.addInitScript('window.makeNativeFilesystemFixture = ' + nativeFilesystemFixture.toString());
     await context.addInitScript(({ native }) => {
+      try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
       window.shellCalls = [];
       // 実際のAndroidはregisterPluginではなくPluginsと同期addListenerを注入する。
       if (native) window.Capacitor = {

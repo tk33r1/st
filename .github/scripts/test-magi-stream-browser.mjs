@@ -35,7 +35,7 @@ try {
       page.on('pageerror', e => errors.push(e.message));
       let release, posted = false; const requests = [];
       const gate = new Promise(r => { release = r; });
-      await page.addInitScript(() => localStorage.setItem('st-analytics','off'));
+      await page.addInitScript(() => (localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
       await page.route('**/*', async route => {
         const request = route.request(), url = new URL(request.url());
         if (url.pathname === '/magi2/chat') {

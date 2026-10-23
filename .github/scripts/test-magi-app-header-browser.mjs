@@ -48,6 +48,7 @@ try {
       '/magi2/models': () => ({ json: {} }),
     }, posts);
     await context.addInitScript(([t]) => {
+      try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
       localStorage.setItem('magi_current_title', t);
       localStorage.setItem('magi_saved_sessions', JSON.stringify([
         { id: 'h1', title: '旅行の持ち物リスト', timestamp: '2026-10-21T00:00:00Z', history: [{ role: 'user', content: 'Saved question' }, { role: 'assistant', content: 'Saved answer', mid: 'm1' }] },
@@ -171,6 +172,7 @@ try {
     '/magi2/models': () => ({ json: { personas: { 'MELCHIOR-1': { provider: 'deepseek', provider_label: 'DeepSeek', model: 'M', desc: { en: 'Desc EN', ja: '説明 JA' }, context: { en: 'Ctx EN', ja: '素材 JA' }, theme: { en: 'Th EN', ja: 'テーマ JA' } } } } }),
   });
   await context.addInitScript(() => {
+    try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
     localStorage.setItem('magi_saved_sessions', JSON.stringify([{ id: 'l1', title: '保存した会話', timestamp: '2026-10-21T00:00:00Z',
       history: [{ role: 'user', content: 'q' }, { role: 'assistant', content: 'a', mid: 'm1', debate: { 'MELCHIOR-1': { round1: 'r1', round2: 'r2' } } }] }]));
   });

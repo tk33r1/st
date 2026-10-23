@@ -33,7 +33,7 @@ try {
   ]) {
     const page = await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'}), errors = [], sent = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript(() => localStorage.setItem('st-analytics','off'));
+    await page.addInitScript(() => (localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
     let answer = 'one';
     await page.route('**/*', async route => {
       const request = route.request(), url = new URL(request.url());

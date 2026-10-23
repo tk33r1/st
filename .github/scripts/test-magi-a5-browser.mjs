@@ -17,7 +17,7 @@ const browser=await chromium.launch(),results=[];
 try{
  for(const [lang,width,off] of [['ja',390,true],['en',1280,false]]){
   const page=await browser.newPage({viewport:{width,height:900},locale:lang==='ja'?'ja-JP':'en-US',serviceWorkers:'block'}),errors=[],posts=[],rank=[];let mode='normal',release;
-  page.on('pageerror',e=>errors.push(e.message));if(off)await page.addInitScript(()=>localStorage.setItem('st-analytics','off'));
+  page.on('pageerror',e=>errors.push(e.message));if(off)await page.addInitScript(()=>(localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
   await page.route('**/*',async route=>{const req=route.request(),url=new URL(req.url());
    if(url.pathname==='/search/api/rank'){const body=req.postDataJSON();rank.push(body);return route.fulfill({json:{status:'no_results',complete:true,cached:false,results:[],searched:{scope:body.scope,filters:body.filters,generation:body.generation,total:20,candidates:20,judged:20}}});}
    if(url.pathname==='/magi2/site-search'){const body=req.postDataJSON();posts.push(body);assert.equal(url.search,'?site_debate=1&site_chat=1');

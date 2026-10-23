@@ -30,6 +30,7 @@ await context.exposeBinding('bridge', async (_, method, args) => {
   catch (error) { return { error: { message: error.message, code: error.code } }; }
 });
 await context.addInitScript(() => {
+  try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
   const call = async (method, args) => { const result = await window.bridge(method, args); if (result.error) throw Object.assign(new Error(result.error.message), { code: result.error.code }); return result.value; };
   window.magiOpenLink = null;
   window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins: {

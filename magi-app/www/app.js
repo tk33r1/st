@@ -440,6 +440,67 @@ function createAgentSpeech(api, hooks) {
 }
 // AGENT_SPEECH_END
 
+// AGENT_TRANSPORT_BEGIN
+// 回答の受信（読み上げ設計§6.3）。通信を溜めるプロキシの下でも少しずつ届くよう WebSocket で受け、開く前に失敗したら SSE に切り替える。
+// 受けたイベントは SSE の文字列に組み直して Response の本文にし、今の parseSSE・まとめて届いたときの再生・保存をそのまま使う。
+// 開いて要求を送った後に切れたら SSE で送り直さない（Worker が回数を数えて AI を呼び始めているかもしれない）。トップページとアプリで同じ中身
+var AGENT_WS_OPEN_MS = 5000;
+// 開く前の失敗が1回あったら、その画面を閉じるまで SSE を使う
+function agentPreferSSE(remember) {
+  try {
+    if (remember) sessionStorage.setItem('magi_transport', 'sse');
+    return sessionStorage.getItem('magi_transport') === 'sse';
+  } catch (_) { return !!remember; }
+}
+function agentSocketUrl(api) { return api.replace(/^http/, 'ws').replace(/\/magi2\/chat$/, '/magi2/ws'); }
+function openAgentChat(api, body, signal) {
+  function sse() { return fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, signal: signal }); }
+  if (typeof WebSocket !== 'function' || agentPreferSSE(false)) return sse();
+  if (signal && signal.aborted) return Promise.reject(new DOMException('Aborted', 'AbortError'));
+  return new Promise(function (resolve, reject) {
+    var ws, opened = false, settled = false, timer = null, controller = null;
+    function aborted() { return new DOMException('Aborted', 'AbortError'); }
+    function stop() {
+      try { if (ws.readyState === 1) ws.send('{"type":"stop"}'); } catch (_) {}
+      try { ws.close(1000); } catch (_) {}
+    }
+    function onAbort() {
+      stop();
+      if (!settled) { settled = true; clearTimeout(timer); reject(aborted()); }
+      else if (controller) { try { controller.error(aborted()); } catch (_) {} }
+    }
+    function fallback() {
+      if (settled) return;
+      settled = true; clearTimeout(timer);
+      try { ws.close(); } catch (_) {}
+      if (signal) signal.removeEventListener('abort', onAbort);
+      agentPreferSSE(true);
+      resolve(sse());
+    }
+    if (signal) signal.addEventListener('abort', onAbort, { once: true });
+    try { ws = new WebSocket(agentSocketUrl(api)); } catch (_) { fallback(); return; }
+    timer = setTimeout(fallback, AGENT_WS_OPEN_MS);
+    ws.onerror = function () { if (!opened) fallback(); };
+    ws.onclose = function () { if (!opened) fallback(); };
+    ws.onopen = function () {
+      if (settled) { try { ws.close(); } catch (_) {} return; }
+      opened = true; settled = true; clearTimeout(timer);
+      var enc = new TextEncoder();
+      var stream = new ReadableStream({ start: function (c) { controller = c; }, cancel: function () { stop(); } });
+      ws.onmessage = function (event) {
+        var m; try { m = JSON.parse(event.data); } catch (_) { return; }
+        if (!m || typeof m.event !== 'string' || !/^[a-z_]+$/.test(m.event)) return;
+        try { controller.enqueue(enc.encode(m.event === 'ping' ? ': ping\n\n' : 'event: ' + m.event + '\ndata: ' + JSON.stringify(m.data === undefined ? {} : m.data) + '\n\n')); } catch (_) {}
+      };
+      ws.onclose = function () { if (signal) signal.removeEventListener('abort', onAbort); try { controller.close(); } catch (_) {} };
+      ws.onerror = function () { try { controller.error(new Error('ws_error')); } catch (_) {} };
+      ws.send('{"type":"chat","v":1,"body":' + body + '}');
+      resolve(new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream; charset=utf-8' } }));
+    };
+  });
+}
+// AGENT_TRANSPORT_END
+
 
 // AGENT_CLOSED_BEGIN
 // 予測の描画・フォーカスは呼び出し元が行う。ここでは3つの操作の状態だけを揃える。
@@ -1520,11 +1581,7 @@ async function agentSend(recovered) {
     var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(agentHistory, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
     if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
-    var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await fetch(AGENT_API, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: requestBody,
-      signal: ctrl.signal,
-    });
+    var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
     if (dropped()) return;
     if (!res.ok || !res.body) {
       var raw = await res.text().catch(function () { return ''; });

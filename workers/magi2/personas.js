@@ -147,7 +147,8 @@ export const SITE_GUIDE = {
 };
 
 // SSE のコメントは旧画面も読み飛ばす。中継の無通信切断と少量のバッファリングを避ける。
-export const STREAM = { padding_bytes: 2048, ping_ms: 10000 };
+// ws_first_message_ms: WebSocket を開いてから最初の要求（chat）を待つ時間（読み上げ設計§6.2）
+export const STREAM = { padding_bytes: 2048, ping_ms: 10000, ws_first_message_ms: 10000 };
 
 export const DEFAULTS = {
   temperature: 1.0,

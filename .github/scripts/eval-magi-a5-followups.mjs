@@ -25,7 +25,7 @@ if(full){
 }
 const original=repair?JSON.parse(read('workers/.wrangler/magi2-dialogue-a5/quality-result.json')):null;
 if(repair){assert(original.complete&&original.results.length===6);cases=cases.map(c=>{const first=original.results.find(r=>r.id===c.id&&r.turn===1);return {...c,questions:c.questions.slice(1),initial_history:[{role:'user',content:c.questions[0]},{role:'assistant',content:first.response.comment,pages:first.response.results.map(p=>({title:p.title,url:p.url}))}],initial_language:first.response.reply_language};});}
-const modules=['languages.js','personas.js','version-history.js','versions.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','probe.js','speech.js','src/index.js'];
+const modules=['languages.js','personas.js','version-history.js','versions.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','speech.js','src/index.js'];
 const sources=modules.map(p=>read('workers/magi2/'+p)),cards=JSON.parse(read('data/magi-context.json')),registry=JSON.parse(read('config/ai-models.json')),versions=JSON.parse(read('data/magi-versions.json'));
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const code=sources.map(strip).join('\n').replace('export default {','globalThis.worker = {');

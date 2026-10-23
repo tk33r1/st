@@ -29,7 +29,7 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
   await page.addInitScript('window.makeNativeFilesystemFixture = '+nativeFilesystemFixture.toString());
   await page.addInitScript(({native,stored,blocked})=>{
     if(native)window.Capacitor={isNativePlatform:()=>true,getPlatform:()=> 'android',Plugins:{Filesystem:window.makeNativeFilesystemFixture().fs}};
-    localStorage.setItem('magi_theme','dark');localStorage.setItem('st-analytics','off');
+    localStorage.setItem('magi_theme','dark');(localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse'));
     Object.entries(stored).forEach(([k,v])=>localStorage.setItem(k,v));
     if(blocked){Storage.prototype.getItem=()=>{throw new Error('blocked');};Storage.prototype.setItem=()=>{throw new Error('blocked');};Storage.prototype.removeItem=()=>{throw new Error('blocked');};}
   },{native,stored,blocked});

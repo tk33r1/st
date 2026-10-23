@@ -22,6 +22,7 @@ const methods={
 };
 await context.exposeBinding('bridge',async(_,method,args)=>{try{return{value:method.startsWith('fs:')?await fs.fs[method.slice(3)](args):await methods[method](args)}}catch(e){return{error:{message:e.message,code:e.code}}}});
 await context.addInitScript(()=>{
+ try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
  const call=async(method,args)=>{const r=await bridge(method,args);if(r.error)throw Object.assign(Error(r.error.message),r.error);return r.value};
  const plugin=(prefix,methods)=>Object.fromEntries(methods.map(name=>[name,args=>call(prefix+':'+name,args)]));
  window.voiceEvents={};window.voiceStarts=0;

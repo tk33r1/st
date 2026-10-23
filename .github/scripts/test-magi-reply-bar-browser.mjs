@@ -42,7 +42,7 @@ try {
     const page = await context.newPage(), errors = [], external = [], speech = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(() => {
-      localStorage.setItem('st-analytics', 'off');
+      (localStorage.setItem('st-analytics', 'off'),sessionStorage.setItem('magi_transport','sse'));
       window.__shared = [];
       Object.defineProperty(navigator, 'share', { configurable: true, value: data => { window.__shared.push(data); return Promise.resolve(); } });
     });

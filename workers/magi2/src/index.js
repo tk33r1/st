@@ -10,7 +10,7 @@ import { qaBudgetEnv } from '../qa-budget.js';
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
-import { handleProbe } from '../probe.js';
+
 import { speechLanguage, speechParts, speechSign, speechVerify } from '../speech.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -1977,7 +1977,10 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   return answer;
 }
 
-async function handleChat(request, env, ctx, { requestId, cors, log }) {
+// transport（省略できる）を渡すと、SSE の代わりにその受け口へ同じイベントを送る（WebSocket の入口。読み上げ設計§6.2）。
+// 受け口は { event(名前, data), comment(文字), end() }。入力の誤り・回数の超過は今と同じ HTTP の応答を返し、
+// 受け口へ流し始めたら null を返す
+async function handleChat(request, env, ctx, { requestId, cors, log }, transport = null) {
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
@@ -2058,10 +2061,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
   const pageStop = new AbortController();
   const stopPages = () => pageStop.abort();
   stop.signal.addEventListener('abort', stopPages, { once: true });
-  const stream = new ReadableStream({
-    cancel() { log('client', 'cancelled'); stop.abort(); },
-    start(controller) {
-      const enc = new TextEncoder();
+  // 送り方（SSE か WebSocket）に関わらない本体。sink は { event, comment, end }
+  const run = sink => {
       let closed = false, clarified = false;
       // 画面が integrated の差分をつないで保存するのと同じ文字列（読み上げの署名の対象。読み上げ設計§5.2）
       let spoken = '';
@@ -2069,7 +2070,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         if (closed || clarified && event === 'title') return;
         if (event === 'clarify') clarified = true;
         try {
-          controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          sink.event(event, data);
           if (event === 'integrated' && typeof data.delta === 'string') spoken += data.delta;
         } catch (_) {}
       };
@@ -2077,14 +2078,14 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
       const stopPing = () => { clearInterval(pingTimer); pingTimer = null; };
       const close = () => {
         stopPing(); stop.signal.removeEventListener('abort', close);
-        if (!closed) { closed = true; try { controller.close(); } catch (_) {} }
+        if (!closed) { closed = true; try { sink.end(); } catch (_) {} }
       };
       stop.signal.addEventListener('abort', close, { once: true });
       if (stop.signal.aborted) close();
       else {
-        controller.enqueue(enc.encode(':' + ' '.repeat(STREAM.padding_bytes - 3) + '\n\n'));
+        sink.comment(' '.repeat(STREAM.padding_bytes - 3));
         pingTimer = setInterval(() => {
-          if (!closed) { try { controller.enqueue(enc.encode(': ping\n\n')); } catch (_) { close(); } }
+          if (!closed) { try { sink.comment(' ping'); } catch (_) { close(); } }
         }, STREAM.ping_ms);
       }
 
@@ -2210,12 +2211,82 @@ async function handleChat(request, env, ctx, { requestId, cors, log }) {
         stop.signal.removeEventListener('abort', stopPages);
         request.signal.removeEventListener('abort', stopRequest);
       } })());
+  };
+  if (transport) { run(transport); return null; }
+  const stream = new ReadableStream({
+    cancel() { log('client', 'cancelled'); stop.abort(); },
+    start(controller) {
+      const enc = new TextEncoder();
+      run({
+        event: (event, data) => controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)),
+        comment: text => controller.enqueue(enc.encode(':' + text + '\n\n')),
+        end: () => controller.close(),
+      });
     },
   });
 
   return new Response(stream, {
     headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive', 'X-Request-Id': requestId, ...cors },
   });
+}
+
+// --- WebSocket の入口（読み上げ設計§6.2）。通信を溜めるプロキシの下でも少しずつ届くよう、SSE と同じイベントを WebSocket で送る ---
+// 開いた後の最初のメッセージ { type: 'chat', v: 1, body: <POST /magi2/chat と同じ JSON> } を1回だけ受け、今の handleChat に渡す。
+// 各イベントは { event, data } のテキスト、10秒ごとに { event: 'ping' }。done・error の後は 1000 で閉じる。
+// 入力の誤り・回数の超過は今の封筒（http_status を含む）を error で送ってから 1008 で閉じる。
+// 画面の { type: 'stop' }・切断・エラーは、どれも SSE の切断と同じく続きの呼び出しを止める
+function handleChatSocket(request, env, ctx, { requestId, cors, log }) {
+  if (request.headers.get('Upgrade') !== 'websocket') return new Response('Upgrade Required', { status: 426, headers: cors });
+  const { 0: client, 1: server } = new WebSocketPair();
+  server.accept();
+  const ac = new AbortController();
+  let closed = false, started = false;
+  const close = (code, reason) => {
+    if (closed) return;
+    closed = true; clearTimeout(firstTimer); ac.abort();
+    try { server.close(code, reason); } catch (_) {}
+  };
+  const sendJSON = value => { if (closed) return; try { server.send(JSON.stringify(value)); } catch (_) { close(1011, 'send'); } };
+  const fail = (envelope, httpStatus) => {
+    sendJSON({ event: 'error', data: { ...envelope, http_status: httpStatus, request_id: requestId } });
+    close(1008, 'error');
+  };
+  const firstTimer = setTimeout(() => {
+    log('ws', 'no_request');
+    fail({ stage: 'bad_request', code: 'ws_no_request', message: '要求が届きませんでした', retryable: true }, 408);
+  }, STREAM.ws_first_message_ms);
+  // compatibility_date が 2026-04-07 より前なので、相手の Close には自分で close() を返す
+  server.addEventListener('close', () => { if (!closed) log('client', 'closed (ws)'); close(1000, 'closed'); });
+  server.addEventListener('error', () => close(1011, 'error'));
+  server.addEventListener('message', event => {
+    let message = null;
+    try { message = typeof event.data === 'string' ? JSON.parse(event.data) : null; } catch (_) {}
+    if (message && message.type === 'stop') { log('client', 'stopped (ws)'); close(1000, 'stopped'); return; }
+    if (started || !message || message.type !== 'chat' || message.v !== 1 || !message.body || typeof message.body !== 'object' || Array.isArray(message.body)) {
+      log('ws', started ? 'duplicate_request' : 'invalid_message');
+      fail({ stage: 'bad_request', code: started ? 'ws_duplicate_request' : 'ws_invalid_message', message: 'WebSocket の要求が不正です', retryable: false }, 400);
+      return;
+    }
+    started = true; clearTimeout(firstTimer);
+    // 入力の検査・上限・回数は POST と同じ処理に任せる（本文は今の POST と同じ JSON）
+    const headers = { 'Content-Type': 'application/json', Origin: request.headers.get('Origin') || '' };
+    if (request.headers.get('CF-Connecting-IP')) headers['CF-Connecting-IP'] = request.headers.get('CF-Connecting-IP');
+    const chat = new Request(new URL('/magi2/chat', request.url), { method: 'POST', headers, body: JSON.stringify(message.body), signal: ac.signal });
+    ctx.waitUntil(handleChat(chat, env, ctx, { requestId, cors, log }, {
+      event: (name, data) => sendJSON({ event: name, data }),
+      comment: text => { if (text.trim() === 'ping') sendJSON({ event: 'ping' }); },
+      end: () => close(1000, 'done'),
+    }).then(async res => {
+      if (!res) return;
+      let envelope = null;
+      try { envelope = (await res.json()).error; } catch (_) {}
+      fail(envelope || { stage: 'internal', code: 'internal_error', message: '内部エラーが発生しました', retryable: true }, res.status);
+    }, err => {
+      log('ws', 'failed', err && err.message);
+      fail({ stage: 'internal', code: 'internal_error', message: '内部エラーが発生しました', retryable: true }, 500);
+    }));
+  });
+  return new Response(null, { status: 101, webSocket: client });
 }
 
 // --- 読み上げ（読み上げ設計§5.4）。Worker が署名した統合人格の回答だけを、区切りごとに Fish Audio で音声にする ---
@@ -2371,9 +2442,16 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(request.url);
-    // 読み上げ設計§6.5 の一時の測定（PROBE_ENABLED のときだけ）。測定が済んだら外す
-    const probe = handleProbe(request, env);
-    if (probe) return probe;
+    // WebSocket の入口（読み上げ設計§6.2）。WS_ENABLED が "true" のときだけ開く。ブラウザの WebSocket は見出しを足せないので
+    // x-api-key は使わず、許可した Origin だけを受ける（Cookie を使わないので、Origin の確認が CSWSH の対策を兼ねる）
+    if (request.method === 'GET' && url.pathname === '/magi2/ws') {
+      if (env.WS_ENABLED !== 'true') return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
+      if (!isAllowedOrigin(origin)) {
+        log('auth', 'rejected (ws)', origin);
+        return httpError(403, { stage: 'auth', code: 'forbidden_origin', message: '許可されていない Origin です', retryable: false }, requestId, cors);
+      }
+      return handleChatSocket(request, env, ctx, { requestId, cors, log });
+    }
     // 許可した Origin のページか、サイト外から API キーを付けた呼び出し（利用回数と POST の入口で使う）
     const authorized = isAllowedOrigin(origin) || !!env.CLIENT_API_KEY && request.headers.get('x-api-key') === env.CLIENT_API_KEY;
 

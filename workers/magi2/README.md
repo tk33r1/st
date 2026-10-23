@@ -216,6 +216,22 @@ node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))
 - **出典のアイコン**: Web で確かめた回答（A2）の出典の本文を読むときに、同じページの `<link rel="icon">`（SVG を除く。無ければ `/favicon.ico`）をホストごとに1回だけ取り、
   PNG・ICO・JPEG・GIF・WebP の 4KiB 以下を中身の先頭バイトで確かめて `sources.items[].icon` に data: URL で入れる（`SOURCE_ICON`）。照合と並行して取り、照合が終わった時点で取れていた分だけ付ける。URL の検査・認証を付けないことは出典の本文と同じ。
 
+## WebSocket の入口（C2）
+
+会社のプロキシは SSE の応答を最後まで溜めて一度に流すが、WebSocket は素通しにする（[読み上げ設計書](../../magi2読み上げ設計書.md) 6.7 の測定）。
+そこでトップページと PWA は回答を WebSocket で受け、開けないときだけ SSE を使う。`dj/request/` と Android のアプリ（ネイティブ受信）は SSE のまま。
+
+- **入口** `GET /magi2/ws`（`Upgrade: websocket`）: `WS_ENABLED` が `"true"` でなければ 404、許可した Origin でなければ 403（`x-api-key` は使わない）、`Upgrade` が無ければ 426。
+- 開いた後の最初のメッセージ `{ "type": "chat", "v": 1, "body": <POST /magi2/chat と同じ JSON> }` を1回だけ受け、今の `handleChat` に渡す（入力の検査・上限・回数は POST と同じ）。
+  10秒来ない（`STREAM.ws_first_message_ms`）・解釈できない・2回目の chat は `error` を送って 1008 で閉じる。
+- 各イベントは `{ "event": <名前>, "data": <SSE と同じ> }`。10秒ごとに `{ "event": "ping" }`。`done`・`error` の後は 1000 で閉じる。入力の誤り・回数の超過は今の封筒に `http_status` を足して `error` で送り、1008 で閉じる。
+- 画面の `{ "type": "stop" }`・切断・エラーは、どれも SSE の切断と同じく続きの呼び出しを止める。
+- SSE と WebSocket は同じ本体（`handleChat` の `run`）を使い、送り方（sink）だけが違う。SSE の出力は変えていない。
+- 画面（`openAgentChat`。トップページと `app.js` の `AGENT_TRANSPORT` の区画）は、開く前の失敗（5秒で開かない・開く前の error・close）だけ SSE で同じ要求を1回送り、その画面を閉じるまで SSE を使う（`sessionStorage` の `magi_transport`）。
+  開いて要求を送った後に切れたら送り直さない（二重の課金を避ける）。
+- **止め方**: `wrangler.toml` の `WS_ENABLED` を `"false"` にして出す。画面は開く前の失敗として SSE に切り替わるので、画面を出し直さなくてよい。
+- 確認: `test-magi2.mjs`（入口・受け渡し）、`node .github/scripts/test-magi-ws-browser.mjs`（実ブラウザ。WebSocket の Worker は模擬）。ほかの画面のテストは SSE の経路を見るため、`magi_transport` を `sse` にして始める。
+
 ## 停止
 
 画面は生成中に送信ボタンを停止ボタン（■）に変え、押すと接続を切る。Worker はストリームの `cancel` で

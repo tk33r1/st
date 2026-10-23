@@ -16,7 +16,7 @@ function worker() {
     Request,Response,ReadableStream,TextEncoder,TextDecoder,AbortController,URL,crypto:webcrypto,setTimeout,clearTimeout,console:{log(){}},
     fetch:async()=>{throw new Error('外部への通信はしない');}};
   const ctx=vm.createContext(sandbox),strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
-  const modules=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','probe.js','speech.js'];
+  const modules=['languages.js','personas.js','classification.js','research.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js','speech.js'];
   vm.runInContext(modules.map(f=>strip(read('workers/magi2/'+f))).join('\n')+'\n'+strip(read('workers/magi2/src/index.js')).replace('export default {','globalThis.worker={'),ctx);
   const DB={prepare(sql){return {bind(...args){return {
     async first(){assert.match(sql,/RETURNING count/);const [key,day,limit]=args,id=key+'|'+day,n=counts.get(id)||0;if(n>=limit) return null;counts.set(id,n+1);return {count:n+1};},

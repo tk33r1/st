@@ -30,6 +30,7 @@ try {
   });
   await context.addInitScript('window.makeNativeFilesystemFixture = ' + nativeFilesystemFixture.toString());
   await context.addInitScript(({ native }) => {
+   try { sessionStorage.setItem('magi_transport', 'sse'); } catch (_) {} // 既存の検証は SSE の経路を見る。WebSocket（読み上げ設計§6.3）は test-magi-ws-browser.mjs で確かめ、ここでは手元・本番のどちらへも開かない
    window.shareQueue = [{ text: '起動前に共有した文章', images: [] }]; window.voiceEvents = {}; window.voiceCalls = [];
    const tiny = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=';
    if (native) window.Capacitor = {

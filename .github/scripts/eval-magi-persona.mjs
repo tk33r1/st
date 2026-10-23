@@ -14,7 +14,7 @@ const repeat=Number(opt('repeat','3')),repeatReported=Number(opt('repeat-reporte
 assert.match(label,/^[a-z0-9-]+$/);assert(Number.isInteger(repeat)&&repeat>=1&&repeat<=10);assert(Number.isInteger(repeatReported)&&repeatReported>=1&&repeatReported<=20);
 const current=p=>readFileSync(new URL(p,root),'utf8');
 const read=p=>ref?execFileSync('git',['show',ref+':'+p],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}):current(p);
-const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),...['probe.js','speech.js'].filter(f=>!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/'+f],{cwd:root,encoding:'utf8'}).trim()),'src/index.js'];
+const files=['languages.js','personas.js','classification.js','magi-mode.js','site-search.js','search-scope.js','site-rank.js',...(!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/research.js'],{cwd:root,encoding:'utf8'}).trim() ? ['research.js'] : []),...['speech.js'].filter(f=>!ref || execFileSync('git',['ls-tree','--name-only',ref,'workers/magi2/'+f],{cwd:root,encoding:'utf8'}).trim()),'src/index.js'];
 const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'const ').replace(/export (?=(?:async )?function)/g,'');
 const env={MAGI_ANTHROPIC_API_KEY:process.env.MAGI_ANTHROPIC_API_KEY,MAGI_OPENAI_API_KEY:process.env.MAGI_OPENAI_API_KEY,MAGI_DEEPSEEK_API_KEY:process.env.MAGI_DEEPSEEK_API_KEY};
 for(const [k,v] of Object.entries(env))assert(v,k+' is required');

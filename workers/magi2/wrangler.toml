@@ -25,8 +25,8 @@ SITE_RANK_SCOPES = "site,nitori,retail,tools,game"
 SEARCH_CLICK_ENABLED = "true"
 # 読み上げ（/magi2/speech）。"true" かつ secret の FISH_AUDIO_API_KEY・SPEECH_SIGN_KEY があるときだけ開き、回答に署名を付ける（読み上げ設計§5）
 SPEECH_ENABLED = "false"
-# 読み上げ設計§6.5 の一時の測定（/magi2/probe。AI・D1 を使わない）。測定が済んだら probe.js と一緒に外す
-PROBE_ENABLED = "true"
+# WebSocket の入口（/magi2/ws。読み上げ設計§6）。"false" にすると画面は開く前の失敗として SSE に切り替わる（画面の出し直しは要らない）
+WS_ENABLED = "true"
 # 本番測定だけでscopeを一時的に足すときは、同じscopeをSITE_RANK_EVAL_SCOPESにも指定する。
 # その媒体はsecret SITE_RANK_EVAL_KEYをx-api-keyで送る要求だけ許す。通常の画面はdisabledのまま。
 # 測定後はこの正本で再デプロイして一時変数を外し、測定キーを削除する。

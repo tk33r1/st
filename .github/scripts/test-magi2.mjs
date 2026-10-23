@@ -156,7 +156,6 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     + strip(read('workers/magi2/site-search.js')) + '\n'
     + strip(read('workers/magi2/search-scope.js')) + '\n'
     + strip(read('workers/magi2/site-rank.js')) + '\n'
-    + strip(read('workers/magi2/probe.js')) + '\n'
     + strip(read('workers/magi2/speech.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
@@ -2003,6 +2002,7 @@ function client(src, isHome = false) {
   vm.runInContext(between(src, '// AGENT_CLOSED_BEGIN', '// AGENT_CLOSED_END'), ctx);
   vm.runInContext(between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
   vm.runInContext(between(src, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END'), ctx);
+  vm.runInContext(between(src, '// AGENT_TRANSPORT_BEGIN', '// AGENT_TRANSPORT_END'), ctx);
   vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
   vm.runInContext(between(src, '// MAGI_VIEW_BEGIN', '// MAGI_VIEW_END'), ctx);
   ctx.agentSendSequence = 0;
@@ -5069,31 +5069,6 @@ test('A5: 履歴付きの本文が止まっても受付期限で中止し、上�
  assert.equal(res.status,400);assert.equal(cancelled,true);assert.equal(w.inputs.length,0);assert.equal(w.env.DB.rows.size,0);
 });
 
-test('読み上げ設計§6.5: 一時の測定はPROBE_ENABLEDのときだけ、測定のページからのGETだけを受け、AIもD1も使わない', async () => {
-  const w = worker();
-  const get = (path, headers = {}, method = 'GET') => w.ctx.worker.fetch(new Request('https://workers.tk.st' + path, { method, headers }), w.env, { waitUntil() {} });
-  assert.equal((await get('/magi2/probe')).status, 404);
-  w.env.PROBE_ENABLED = 'true';
-  const page = await get('/magi2/probe');
-  assert.equal(page.status, 200);
-  assert.equal(page.headers.get('X-Robots-Tag'), 'noindex');
-  assert.match(await page.text(), /AI は呼びません/);
-  assert.equal((await get('/magi2/probe', {}, 'POST')).status, 404);
-  assert.equal((await get('/magi2/probe/other')).status, 404);
-  assert.equal((await get('/magi2/probe/sse')).status, 403);
-  assert.equal((await get('/magi2/probe/sse', { Origin: 'https://tk.st' })).status, 403);
-  assert.equal((await get('/magi2/probe/sse', { Referer: 'https://evil.example/magi2/probe' })).status, 403);
-  assert.equal((await get('/magi2/probe/ws', { Origin: 'https://workers.tk.st' })).status, 426);
-  const sse = await get('/magi2/probe/sse', { Referer: 'https://workers.tk.st/magi2/probe' });
-  assert.equal(sse.status, 200);
-  assert.match(sse.headers.get('Content-Type'), /^text\/event-stream/);
-  const reader = sse.body.getReader();
-  const first = new TextDecoder().decode((await reader.read()).value);
-  assert.match(first, /^: +\n\n$/);
-  await reader.cancel();
-  assert.equal(w.calls.length, 0);
-});
-
 // --- 読み上げ（読み上げ設計書 4.4・5章、検証計画§1.1〜1.5）。Fish Audio・アイコンの取得先はすべて模擬 ---
 const SPEECH_KEY = 'test-speech-sign-key';
 function speechWorker(fish = null, extra = null) {
@@ -5572,4 +5547,235 @@ test('読み上げ計画§1.2・1.6: 両画面はspeechの署名と言語を回�
     assert.equal(Object.hasOwn(prior, 'speech_sig'), false); assert.equal(Object.hasOwn(prior, 'speech_lang'), false);
     assert.equal(Object.hasOwn(c.ctx.agentHistory.at(-1), 'speech_sig'), false, '形の違う署名は保存しない');
   }
+});
+
+// --- WebSocket の入口（読み上げ設計§6.2、検証計画§1.7）。WebSocketPair と 101 の応答は模擬 ---
+function wsWorker(stream, upstream) {
+  const w = worker(stream, upstream), sockets = [];
+  class FakeSocket {
+    constructor() { this.sent = []; this.listeners = {}; this.closed = null; }
+    accept() { this.accepted = true; }
+    send(text) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(text)); }
+    close(code, reason) { this.closed = { code, reason }; }
+    addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
+    emit(type, event = {}) { (this.listeners[type] || []).forEach(fn => fn(event)); }
+  }
+  w.ctx.WebSocketPair = function () { const server = new FakeSocket(); sockets.push(server); return { 0: { client: true }, 1: server }; };
+  // Node の Response は 101 を作れないので、Workers と同じく webSocket を持つ応答を模擬する
+  const Base = w.ctx.Response;
+  w.ctx.Response = class extends Base {
+    constructor(body, init) {
+      if (init && init.status === 101) { super(null, { status: 200 }); this.wsStatus = 101; this.webSocket = init.webSocket; }
+      else super(body, init);
+    }
+  };
+  w.env.WS_ENABLED = 'true';
+  const open = (headers = {}) => w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/ws', {
+    headers: { Origin: 'https://tk.st', Upgrade: 'websocket', 'CF-Connecting-IP': '192.0.2.7', ...headers } }), w.env, { waitUntil(p) { w.waits.push(p); } });
+  const settle = async socket => { for (let i = 0; i < 200 && !socket.closed; i++) { await Promise.all(w.waits); await new Promise(r => setTimeout(r, 2)); } await Promise.all(w.waits); };
+  return Object.assign(w, { sockets, open, settle });
+}
+const wsEvents = socket => socket.sent.filter(m => m.event !== 'ping').map(m => [m.event, m.data]);
+const withoutIds = events => JSON.parse(JSON.stringify(events, (k, v) => k === 'request_id' ? undefined : v));
+
+test('読み上げ計画§1.7: WebSocketはWS_ENABLEDと許可したOriginとUpgradeがそろったときだけ開き、AIもD1も呼ばない', async () => {
+  const w = wsWorker();
+  w.env.WS_ENABLED = 'false';
+  assert.equal((await w.open()).status, 404);
+  w.env.WS_ENABLED = 'true';
+  assert.equal((await w.open({ Origin: 'https://evil.example' })).status, 403);
+  const noOrigin = await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/ws', { headers: { Upgrade: 'websocket' } }), w.env, { waitUntil() {} });
+  assert.equal(noOrigin.status, 403);
+  assert.equal((await w.open({ Upgrade: '' })).status, 426);
+  const ok = await w.open();
+  assert.equal(ok.wsStatus, 101); assert.equal(w.sockets.length, 1); assert.equal(w.sockets[0].accepted, true);
+  assert.equal(w.calls.length, 0);
+});
+
+test('読み上げ計画§1.7: 同じ要求のイベントの名前・中身・順はSSEと同じで、doneの後に1000で閉じる', async () => {
+  const body = { messages: [{ role: 'user', content: '週末の過ごし方は？' }], theme: 'light' };
+  const sse = wsWorker();
+  const expected = sseEvents(await (await sse.request('/magi2/chat', body)).text());
+  const w = wsWorker();
+  await w.open();
+  const socket = w.sockets[0];
+  socket.emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body }) });
+  await w.settle(socket);
+  assert.deepEqual(withoutIds(wsEvents(socket)), withoutIds(expected));
+  assert.equal(wsEvents(socket).at(-1)[0], 'done');
+  assert.deepEqual(socket.closed, { code: 1000, reason: 'done' });
+  assert.equal(w.calls.length, sse.calls.length, '上流の呼び出しの数も同じ');
+});
+
+test('読み上げ計画§1.7: chatが来ない・解釈できない・2回目のchatはerrorを送って1008で閉じ、討議を二重に始めない', async () => {
+  const late = wsWorker();
+  vm.runInContext('STREAM.ws_first_message_ms = 20', late.ctx);
+  await late.open();
+  await late.settle(late.sockets[0]);
+  assert.equal(wsEvents(late.sockets[0])[0][1].code, 'ws_no_request'); assert.equal(late.sockets[0].closed.code, 1008);
+  for (const data of ['not json', JSON.stringify({ type: 'chat', v: 2, body: {} }), JSON.stringify({ type: 'chat', v: 1, body: [] }), JSON.stringify({ type: 'hello' })]) {
+    const w = wsWorker(); await w.open();
+    w.sockets[0].emit('message', { data });
+    await w.settle(w.sockets[0]);
+    const [name, envelope] = wsEvents(w.sockets[0])[0];
+    assert.equal(name, 'error'); assert.equal(envelope.code, 'ws_invalid_message'); assert.equal(envelope.http_status, 400);
+    assert.equal(w.sockets[0].closed.code, 1008); assert.equal(w.calls.length, 0);
+  }
+  const twice = wsWorker(); await twice.open();
+  const body = { messages: [{ role: 'user', content: '週末の過ごし方は？' }] };
+  twice.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body }) });
+  twice.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body }) });
+  await twice.settle(twice.sockets[0]);
+  assert(wsEvents(twice.sockets[0]).some(([name, d]) => name === 'error' && d.code === 'ws_duplicate_request'));
+  assert.equal(twice.sockets[0].closed.code, 1008);
+  const single = wsWorker(); await single.open();
+  single.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body }) });
+  await single.settle(single.sockets[0]);
+  assert(twice.calls.length <= single.calls.length, '2回目の chat で上流を二重に呼ばない');
+});
+
+test('読み上げ計画§1.7: 入力の誤り・回数の超過は今の封筒をhttp_status付きのerrorで送り1008で閉じる', async () => {
+  const bad = wsWorker(); await bad.open();
+  bad.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [] } }) });
+  await bad.settle(bad.sockets[0]);
+  const [name, envelope] = wsEvents(bad.sockets[0])[0];
+  assert.equal(name, 'error'); assert.equal(envelope.http_status, 400); assert.equal(envelope.stage, 'bad_request'); assert.ok(envelope.request_id);
+  assert.equal(bad.sockets[0].closed.code, 1008); assert.equal(bad.calls.length, 0);
+  const limited = wsWorker(); limited.env.DB = counts();
+  const day = new Date().toISOString().slice(0, 10);
+  for (let i = 0; i < limited.ctx.defaults.daily_limit; i++) await limited.env.DB.prepare('INSERT RETURNING count').bind('192.0.2.7', day, limited.ctx.defaults.daily_limit).first();
+  await limited.open();
+  limited.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [{ role: 'user', content: 'こんにちは' }] } }) });
+  await limited.settle(limited.sockets[0]);
+  const [, over] = wsEvents(limited.sockets[0])[0];
+  assert.equal(over.http_status, 429); assert.equal(over.code, 'daily_limit_exceeded'); assert.equal(limited.sockets[0].closed.code, 1008);
+});
+
+test('読み上げ計画§1.7: 画面のstop・接続の切断で上流の要求が止まる', async () => {
+  for (const how of ['stop', 'close', 'error']) {
+    let upstreamSignal = null;
+    const w = wsWorker(undefined, (url, o) => { if (o?.signal && !upstreamSignal) { upstreamSignal = o.signal; return new Response(new ReadableStream({})); } });
+    await w.open();
+    const socket = w.sockets[0];
+    socket.emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [{ role: 'user', content: '週末の過ごし方は？' }] } }) });
+    for (let i = 0; i < 100 && !upstreamSignal; i++) await new Promise(r => setTimeout(r, 2));
+    assert.ok(upstreamSignal, how + ': 上流へ送った');
+    if (how === 'stop') socket.emit('message', { data: JSON.stringify({ type: 'stop' }) }); else socket.emit(how);
+    await new Promise(r => setTimeout(r, 10));
+    assert.equal(upstreamSignal.aborted, true, how);
+    assert.ok(socket.closed, how);
+  }
+});
+
+test('読み上げ計画§1.7: WebSocketでも10秒ごとにpingを送り、SSEの出力は変わらない', async () => {
+  const w = wsWorker(); vm.runInContext('STREAM.ping_ms = 5', w.ctx);
+  let release;
+  const gate = new Promise(r => { release = r; });
+  const slow = wsWorker(undefined, async () => { await gate; });
+  vm.runInContext('STREAM.ping_ms = 5', slow.ctx);
+  await slow.open();
+  slow.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [{ role: 'user', content: '週末の過ごし方は？' }] } }) });
+  await new Promise(r => setTimeout(r, 40));
+  assert(slow.sockets[0].sent.some(m => m.event === 'ping' && Object.keys(m).length === 1));
+  release(); await slow.settle(slow.sockets[0]);
+  // SSE は今までどおり、先頭に 2KiB の合図、ping はコメント
+  const res = await w.request('/magi2/chat', { messages: [{ role: 'user', content: '週末の過ごし方は？' }] });
+  const reader = res.body.getReader(), first = new TextDecoder().decode((await reader.read()).value);
+  assert.match(first, /^: {2045}\n\n/); await reader.cancel();
+});
+
+// --- 画面の受信（読み上げ設計§6.3、検証計画§1.7 の画面の受け渡し）。WebSocket・sessionStorage・fetch は模擬 ---
+function transportHarness({ socket = 'open', storage = true } = {}) {
+  const sockets = [], fetches = [], store = new Map();
+  class FakeWebSocket {
+    constructor(url) {
+      this.url = url; this.sent = []; this.readyState = 0; this.closed = null; sockets.push(this);
+      if (socket === 'open') setTimeout(() => { this.readyState = 1; this.onopen?.(); }, 0);
+      if (socket === 'refuse') setTimeout(() => { this.onerror?.(); this.readyState = 3; this.onclose?.({ code: 1006 }); }, 0);
+    }
+    send(text) { this.sent.push(text); }
+    close(code) { if (this.closed) return; this.closed = { code }; this.readyState = 3; }
+    serverSend(value) { this.onmessage?.({ data: JSON.stringify(value) }); }
+    serverClose() { this.readyState = 3; this.onclose?.({ code: 1000 }); }
+  }
+  const ctx = vm.createContext({
+    WebSocket: socket === 'missing' ? undefined : FakeWebSocket, TextEncoder, TextDecoder, ReadableStream, Response, DOMException, setTimeout, clearTimeout, JSON,
+    sessionStorage: storage ? { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) } : { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } },
+    fetch: async (url, options) => { fetches.push({ url, options }); return new Response('event: done\ndata: {}\n\n'); },
+  });
+  vm.runInContext(between(home, '// AGENT_TRANSPORT_BEGIN', '// AGENT_TRANSPORT_END'), ctx);
+  return { ctx, sockets, fetches, store };
+}
+const transportBlock = src => between(src, '// AGENT_TRANSPORT_BEGIN', '// AGENT_TRANSPORT_END').replaceAll('\r\n', '\n');
+
+test('読み上げ計画§1.7: 受信の共通区画はトップページとアプリで同じで、両画面の送信が使い、DJの画面は使わない', () => {
+  assert.equal(transportBlock(home), transportBlock(mobile));
+  assert(home.includes('const res = await openAgentChat(AGENT_API, JSON.stringify('));
+  assert(mobile.includes(': await openAgentChat(AGENT_API, requestBody, ctrl.signal);'));
+  assert(mobile.includes('nativeConversation ? await nativeConversation.open('), 'Android はネイティブ受信のまま');
+  assert(!dj.includes('AGENT_TRANSPORT_BEGIN'));
+});
+
+test('読み上げ計画§1.7: WebSocketで受けた各メッセージを、同じ内容のSSEと同じ文字列に組み直す', async () => {
+  const t = transportHarness();
+  const body = JSON.stringify({ messages: [{ role: 'user', content: 'こんにちは' }], theme: 'light' });
+  const res = await t.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, new AbortController().signal);
+  const ws = t.sockets[0];
+  assert.equal(ws.url, 'wss://workers.tk.st/magi2/ws');
+  assert.deepEqual(JSON.parse(ws.sent[0]), { type: 'chat', v: 1, body: JSON.parse(body) });
+  const events = [['classification', { version: 1, intent: 'consult' }], ['integrated', { delta: '答え\n改行' }], ['speech', { sig: 'a'.repeat(64) }], ['done', { request_id: 'r1' }]];
+  ws.serverSend({ event: 'ping' });
+  for (const [event, data] of events) ws.serverSend({ event, data });
+  ws.serverSend({ event: '<bad>', data: {} });
+  ws.serverClose();
+  const text = await res.text();
+  assert.equal(text, ': ping\n\n' + events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join(''));
+  assert.equal(t.fetches.length, 0);
+  assert.equal(res.headers.get('Content-Type'), 'text/event-stream; charset=utf-8');
+  assert.equal(t.ctx.agentSocketUrl('http://localhost:8787/magi2/chat'), 'ws://localhost:8787/magi2/ws');
+});
+
+test('読み上げ計画§1.7・2.4: 開く前の失敗・5秒で開かないときだけSSEで1回送り、その画面ではもうWebSocketを試さない', async () => {
+  const refused = transportHarness({ socket: 'refuse' });
+  const body = '{"messages":[]}', signal = new AbortController().signal;
+  await refused.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(refused.fetches.length, 1); assert.equal(refused.fetches[0].options.body, body); assert.equal(refused.fetches[0].options.signal, signal);
+  assert.equal(refused.store.get('magi_transport'), 'sse');
+  await refused.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(refused.sockets.length, 1, '2回目は WebSocket を開かない'); assert.equal(refused.fetches.length, 2);
+  const silent = transportHarness({ socket: 'never' });
+  vm.runInContext('AGENT_WS_OPEN_MS = 10', silent.ctx);
+  await silent.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(silent.fetches.length, 1); assert.ok(silent.sockets[0].closed);
+  silent.sockets[0].readyState = 1; silent.sockets[0].onopen?.();
+  assert.equal(silent.sockets[0].sent.length, 0, '遅れて開いても要求を送らない');
+  const missing = transportHarness({ socket: 'missing' });
+  await missing.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(missing.fetches.length, 1);
+  const blocked = transportHarness({ socket: 'refuse', storage: false });
+  await blocked.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(blocked.fetches.length, 1, '保存が禁止されていても SSE へ切り替える');
+});
+
+test('読み上げ計画§1.7・2.4: 開いた後に切れてもSSEで送り直さず、停止ボタンはstopを送って閉じる', async () => {
+  const cut = transportHarness();
+  const res = await cut.ctx.openAgentChat('https://workers.tk.st/magi2/chat', '{}', new AbortController().signal);
+  cut.sockets[0].serverSend({ event: 'integrated', data: { delta: '途中' } });
+  cut.sockets[0].serverClose();
+  assert.equal(await res.text(), 'event: integrated\ndata: {"delta":"途中"}\n\n');
+  assert.equal(cut.fetches.length, 0); assert.equal(cut.store.get('magi_transport'), undefined);
+  const stopped = transportHarness(), ac = new AbortController();
+  const res2 = await stopped.ctx.openAgentChat('https://workers.tk.st/magi2/chat', '{}', ac.signal);
+  const reading = res2.text();
+  ac.abort();
+  await assert.rejects(reading, e => e.name === 'AbortError');
+  assert.equal(stopped.sockets[0].sent.at(-1), '{"type":"stop"}'); assert.equal(stopped.sockets[0].closed.code, 1000);
+  const early = transportHarness({ socket: 'never' }), ac2 = new AbortController();
+  const pending = early.ctx.openAgentChat('https://workers.tk.st/magi2/chat', '{}', ac2.signal);
+  ac2.abort();
+  await assert.rejects(pending, e => e.name === 'AbortError');
+  assert.equal(early.fetches.length, 0); assert.ok(early.sockets[0].closed);
+  const already = transportHarness(), ac3 = new AbortController(); ac3.abort();
+  await assert.rejects(already.ctx.openAgentChat('https://workers.tk.st/magi2/chat', '{}', ac3.signal), e => e.name === 'AbortError');
+  assert.equal(already.sockets.length, 0);
 });
