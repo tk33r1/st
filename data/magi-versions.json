@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.75",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "「MAGIについて」の右端に矢印を追加。アプリ管理と各情報画面の見出しを中央・大きめにそろえ、左上の丸い戻る矢印に統一しました。",
+          "Androidの戻る操作で、各詳細から「MAGIについて」へ一段ずつ戻れるよう修正しました。更新履歴からはバージョン情報へ戻り、元の画面と下書きを保持します。",
+          "アプリ起動画面の説明行の行高と、タイトル・版番号の間の余白を広げました。Android版を6.75に更新しました。"
+        ],
+        "en": [
+          "Added a chevron to About MAGI and centered larger headings in app management and information pages, with a circular back arrow at the top left.",
+          "Android Back now returns one level from details to About MAGI and from release history to version information, preserving the previous page and draft.",
+          "Increased the start-screen subtitle line height and spacing around the title and version. The Android app is updated to 6.75."
+        ]
+      }
+    },
+    {
       "version": "6.74",
       "date": "2026-10-24",
       "changes": {
