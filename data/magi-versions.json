@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.8",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "アプリ管理の「位置情報サービス」と「通知」をオン・オフのトグルにしました。位置情報をオフにすると、IPから推定した市・地域を次の送信から検索に使いません。",
+          "Web・アプリ共通のメニューに「バグを報告」を追加しました。最大2000文字の内容をmagi@tk.stへ送信でき、失敗時は入力を保持します。",
+          "設定と報告画面のレビュー修正を含め、Androidの署名済みAPKを6.8に更新しました。"
+        ],
+        "en": [
+          "Added Location services and Notifications toggles to App management. Turning location off excludes the city and region estimated from your IP address from searches starting with your next message.",
+          "Added Report a bug to the Web and app menus. Send up to 2,000 characters to magi@tk.st; failed submissions keep your text.",
+          "Updated the signed Android app to 6.8, including reviewed settings and report-screen fixes."
+        ]
+      }
+    },
+    {
       "version": "6.76",
       "date": "2026-10-24",
       "changes": {
