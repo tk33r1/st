@@ -3277,6 +3277,10 @@
 .magi-record{margin-top:8px;min-width:0}.magi-record summary{cursor:pointer;font-size:11px;margin-bottom:6px}.magi-record .agent-personas{margin-top:6px}.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
 /* MAGI_PANEL_CSS_END */
 
+
+    .agent-privacy-list { list-style: none; padding: 0; margin: 0; }
+    .agent-privacy-list li { font: inherit; font-size: 12px; line-height: 1.75; margin-bottom: 1rem; overflow-wrap: anywhere; }
+    .agent-privacy-list strong { display: block; color: var(--text-color); font-size: inherit; margin-bottom: 0.2rem; }
   </style>
   <script type="application/ld+json">
     {
@@ -3286,7 +3290,7 @@
           "@type": "ProfilePage",
           "@id": "https://tk.st/#profile-page",
           "dateCreated": "2026-03-26T12:00:00+09:00",
-          "dateModified": "2026-10-24T19:27:01+09:00",
+          "dateModified": "2026-10-24T05:51:44+09:00",
           "mainEntity": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake",
@@ -7599,7 +7603,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence<button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.71</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.72</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -9379,6 +9383,7 @@ async function parseSSE(body, handlers, onChunk) {
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
 var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech'];
+var agentPrivacyNativeRows = [];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
@@ -9386,12 +9391,17 @@ function renderAgentPrivacy(list, lang, data) {
     : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
   var rows = data && data.privacy && data.privacy[lang];
   rows = Array.isArray(rows) ? rows.filter(function (row) {
-    return row && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+    return row && !(row.id === 'history' && agentPrivacyNativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
       || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
   }) : [];
   list.replaceChildren();
-  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
-    var li = document.createElement('li'); li.textContent = row.text; list.appendChild(li);
+  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(agentPrivacyNativeRows).forEach(function (row) {
+    var li = document.createElement('li');
+    if (typeof row.title === 'string' && row.title.trim()) {
+      var title = document.createElement('strong'); title.textContent = row.title; li.appendChild(title);
+      var text = document.createElement('span'); text.textContent = row.text; li.appendChild(text);
+    } else li.textContent = row.text;
+    list.appendChild(li);
   });
 }
 // AGENT_PRIVACY_END
@@ -9457,7 +9467,7 @@ function showVersionsPanel() {
 
     function showInfoPanel() {
       const panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'),
-        '<div class="flex-1 overflow-y-auto pr-1 pb-4 text-normal leading-relaxed"><ul class="agent-privacy-list space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed"></ul></div>');
+        '<div class="flex-1 overflow-y-auto pr-1 pb-4 text-normal leading-relaxed"><ul class="agent-privacy-list text-secondary"></ul></div>');
       if (!panel) return;
       const list = panel.querySelector('.agent-privacy-list'), lang = currentLang === 'ja' ? 'ja' : 'en';
       renderAgentPrivacy(list, lang, undefined);

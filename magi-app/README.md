@@ -113,6 +113,9 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   `textContent`; all `requires` flags must be supported by this screen. A failed
   fetch or legacy Worker gives a recipient-neutral fallback instead of stale
   company names. Model labels use `provider_label`, and `themes` can show two LLMs.
+  Optional `title` fields are rendered as plain-text headings; legacy Workers
+  without them still work. Android notes use the same list and typography, and
+  replace the `id: history` browser-storage paragraph with app-storage details.
 
 ## Backend CORS
 

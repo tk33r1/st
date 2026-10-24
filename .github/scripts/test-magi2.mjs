@@ -4022,12 +4022,20 @@ test('説明の文字描画は日英・両画面で一致し、機能の印は�
   assert.equal(blocks[0],blocks[1]);
   for(const lang of ['en','ja']) {
     const children=[],list={isConnected:true,replaceChildren(){children.length=0;},appendChild(el){children.push(el);}};
-    const ctx=vm.createContext({document:{createElement(){return {};}}});vm.runInContext(blocks[0],ctx);
+    const ctx=vm.createContext({document:{createElement(){return {children:[],appendChild(el){this.children.push(el);}};}}});vm.runInContext(blocks[0],ctx);
     ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'<strong>文字</strong>'},{text:'all',requires:['classification_state','site_pages']},{text:'no',requires:['future_feature']},{text:'no',requires:['site_pages','unknown']},{text:'no',requires:'site_pages'}]}});
     assert.deepEqual(children.map(c=>c.textContent),['<strong>文字</strong>','all']);
     for(const data of [null,{}, {privacy:{[lang]:[]}}]) {ctx.renderAgentPrivacy(list,lang,data);assert.equal(children.length,1);assert.ok(!/OpenAI|Google|DeepSeek|Gemini|TypeSafe/.test(children[0].textContent));}
     // 取得中は失敗の案内を出さない
     ctx.renderAgentPrivacy(list,lang,undefined);assert.deepEqual(children.map(c=>c.textContent),[lang==='ja'?'読み込み中…':'Loading…']);
+    // 見出しもHTMLにせず、Androidではブラウザの保存説明と重ねない。
+    ctx.agentPrivacyNativeRows=[{title:'Android',text:'device storage'}];
+    ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{id:'history',text:'browser storage'},{title:'<img>',text:'<script>'}]}});
+    assert.equal(children.length,2);
+    assert.deepEqual(children[0].children.map(c=>c.textContent),['<img>','<script>']);
+    assert.deepEqual(children[1].children.map(c=>c.textContent),['Android','device storage']);
+    ctx.renderAgentPrivacy(list,lang,null);assert.equal(children.length,2);
+    ctx.agentPrivacyNativeRows=[];
     list.isConnected=false;ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'late'}]}});assert.notEqual(children[0].textContent,'late');
   }
 });

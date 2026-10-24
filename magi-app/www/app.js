@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.71';
+var APP_VERSION = '6.72';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2156,6 +2156,7 @@ function deleteSavedSession(id) {
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
 var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech'];
+var agentPrivacyNativeRows = [];
 function renderAgentPrivacy(list, lang, data) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
@@ -2163,12 +2164,17 @@ function renderAgentPrivacy(list, lang, data) {
     : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
   var rows = data && data.privacy && data.privacy[lang];
   rows = Array.isArray(rows) ? rows.filter(function (row) {
-    return row && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+    return row && !(row.id === 'history' && agentPrivacyNativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
       || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
   }) : [];
   list.replaceChildren();
-  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).forEach(function (row) {
-    var li = document.createElement('li'); li.textContent = row.text; list.appendChild(li);
+  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(agentPrivacyNativeRows).forEach(function (row) {
+    var li = document.createElement('li');
+    if (typeof row.title === 'string' && row.title.trim()) {
+      var title = document.createElement('strong'); title.textContent = row.title; li.appendChild(title);
+      var text = document.createElement('span'); text.textContent = row.text; li.appendChild(text);
+    } else li.textContent = row.text;
+    list.appendChild(li);
   });
 }
 // AGENT_PRIVACY_END
@@ -2236,14 +2242,14 @@ function showInfoPanel() {
   var panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'), '<ul class="agent-privacy-list"></ul>');
   if (!panel) return;
   var list = panel.querySelector('.agent-privacy-list'), lang = isJa() ? 'ja' : 'en';
+  agentPrivacyNativeRows = nativeAndroid ? [
+    { title: tr("Android storage", "Androidの保存"), text: tr("Conversations and original images stay in this app. Automatic backup is disabled; history does not transfer to a new device. Export a copy without images from App management.", "会話と元の画像はアプリ内に保存します。自動バックアップは無効で、機種変更では引き継がれません。「アプリ管理」から画像を除く控えを書き出せます。") },
+    { title: tr("URLs and voice input", "URLと音声入力"), text: tr("Your device fetches shared URLs without cookies. Voice input uses the device’s recognition service (often Google), which may receive audio if on-device recognition is unavailable. Audio is not sent to MAGI servers.", "共有URLは端末がCookieなしで読み込みます。音声入力は端末の認識サービス（多くはGoogle）を使い、端末内で認識できない場合は音声をそのサービスへ送ることがあります。音声はMAGIのサーバーに送りません。") },
+    { title: tr("Replies and notifications", "受信と通知"), text: tr("Replies continue arriving while you use another app or turn off the display, and stay on your device until saved to the chat. If allowed, notifications show the chat title. Stop a request from its ongoing notification.", "別のアプリの使用中や画面消灯中も回答を受信し、会話へ保存するまで端末に残します。許可した通知には会話のタイトルが出ます。進行中の通知から送信を止められます。") },
+    { title: tr("Widgets", "ウィジェット"), text: tr("Home widgets open MAGI. They show no chat contents and make no network requests themselves.", "ホーム画面からMAGIを開く入口です。会話の内容は表示せず、ウィジェット自体は通信しません。") }
+  ] : [];
   renderAgentPrivacy(list, lang, undefined);
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
-  if (nativeAndroid) {
-    var nativeNote = document.createElement('p');
-    nativeNote.textContent = tr('On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations from “App management” to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets only open MAGI and show no chat contents. Widgets do not connect to the network themselves.',
-      'Androidでは、会話と元の画像はこの端末のアプリ内に保存します。Androidの自動バックアップは無効で、ほかの端末へ自動では移りません。文字の控えは「アプリ管理」から書き出せます（画像は含みません）。共有した資料は、質問のたびに会話と同じ送り先へ送られます。共有されたURLは端末がCookieなしで読み込みます。音声入力は端末の音声認識サービス（多くはGoogle）を使い、端末内で認識できないときは音声がそのサービスに送られることがあります。音声はMAGIのサーバーには送りません。ほかのアプリを使っている間や画面を消している間は、Androidのフォアグラウンドサービスが回答を受け取ります。受け取ったデータは、会話に保存されるまでこの端末に残ります。許可すると、到着の通知に会話のタイトルが出ます。進行中の通知から送信を止められます。ホーム画面のウィジェットはMAGIを開くだけで、会話の内容は表示しません。ウィジェット自体は通信しません。');
-    panel.querySelector('.agent-panel-body').appendChild(nativeNote);
-  }
 }
 
 // 設定パネルの「ホーム画面に追加」を受け持つ。ウィジェットは入口だけで、設定は持たない。
