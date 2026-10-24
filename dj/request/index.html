@@ -3138,7 +3138,7 @@ function cleanAgentSources(value, text) {
       numbers.add(item.n); urls.add(u.href);
       var row = { n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href };
       // 出典のアイコンは Worker が取った data: URL の画像だけを通し、<img src> にだけ入れる（読み上げ設計§4.4）
-      if (typeof item.icon === 'string' && item.icon.length <= 6144 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
+      if (typeof item.icon === 'string' && item.icon.length <= 11000 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
       items.push(row);
     } catch (_) {}
   });
@@ -3177,11 +3177,15 @@ function renderAgentSources(body, replyEl, text, raw, ja, panel) {
   });
   replyEl.appendChild(panel);
 }
+// 検査済みの引用位置に出典番号を挿入する（Markdown 書き出し・共有の本文で共用）。
+function agentCitedText(text, marks) {
+  var out = '', last = 0;
+  marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
+  return out + text.slice(last);
+}
 function agentFactMarkdown(text, raw) {
   var data = cleanAgentSources(raw, text); if (!data) return text;
-  var out = '', last = 0;
-  data.marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
-  out += text.slice(last) + '\n\n### Sources\n';
+  var out = agentCitedText(text, data.marks) + '\n\n### Sources\n';
   data.items.forEach(function (item) {
     var title = item.title.replace(/([\\\[\]<>*`_])/g, '\\$1');
     out += '[' + item.n + '] ' + title + ' (<'+ item.url +'>)\n';

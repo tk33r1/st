@@ -76,17 +76,16 @@ function sentences(chars) {
   return list;
 }
 
-// 長すぎる1文を、読点・空白で、それでも長ければ文字数で limit 以下に切る
-function splitLong(chars, limit) {
-  const pieces = [];
-  while (chars.length > limit) {
+// 長すぎる1文を、読点・空白で、それでも長ければ文字数で切る。区切るたびに上限を選び直す
+function* splitLong(chars, getLimit) {
+  while (chars.length > getLimit()) {
+    const limit = getLimit();
     let at = -1;
     for (let k = limit; k > limit / 3; k--) if (SOFT_BREAK.has(chars[k - 1])) { at = k; break; }
     if (at < 0) at = limit;
-    pieces.push(chars.slice(0, at)); chars = chars.slice(at);
+    yield chars.slice(0, at); chars = chars.slice(at);
   }
-  if (chars.length) pieces.push(chars);
-  return pieces;
+  if (chars.length) yield chars;
 }
 
 // 読み上げの区切り（設計§5.1・5.3）。最初は短く、だんだん長く詰める。空の区切りは作らない
@@ -99,7 +98,7 @@ export function speechParts(markdown, lang) {
     if (!s.join('').trim()) continue;
     if (buf.length && buf.length + s.length > limit()) flush();
     if (s.length > limit()) {
-      for (const piece of splitLong(s, limit())) { buf = piece; flush(); }
+      for (const piece of splitLong(s, limit)) { buf = piece; flush(); }
       continue;
     }
     buf.push(...s);

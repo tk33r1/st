@@ -1994,7 +1994,7 @@ function client(src, isHome = false) {
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
-    agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, agentLastSend: null,
+    agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
@@ -2037,6 +2037,38 @@ test('B3: ネイティブ受信の正常完了・通信失敗・停止で会話�
     assert.equal(calls.at(-1), 'acknowledge'); assert.equal(calls[0], 'flush'); assert.ok(owner);
     assert.equal(c.ctx.agentBusy, false);
     assert.equal(c.ctx.agentHistory.length, outcome === 'done' ? 2 : 0);
+  }
+});
+
+test('もう一度: 送り直しの最中にアプリが閉じても、受信の復元で前の往復を外して送り、届いたら置き換える', async () => {
+  for (const outcome of ['done', 'error']) {
+    const c = client(mobile), bodies = [];
+    vm.runInContext(between(mobile, 'function contentText(', 'function downscaleImage('), c.ctx);
+    const els = [element(), element()];
+    c.ctx.agentRetryEls = mid => mid === 'mOLD' ? els : [];
+    c.ctx.nativeHistory = { async flush() {} };
+    c.ctx.nativeConversation = {
+      id() { return 'native-request'; }, watch() { return { chunk() {}, end() {}, finish() {}, isBuffered() { return false; } }; },
+      async open(body) { bodies.push(JSON.parse(body)); if (outcome === 'error') throw new TypeError('offline'); return { ok: true, body: {} }; },
+      async cancel() {}, async acknowledge() {},
+    };
+    c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: 'new answer' }); h.done(); };
+    c.ctx.agentLog.lastElementChild = element();
+    const oldUser = { role: 'user', content: '開館時間は？' }, oldReply = { role: 'assistant', content: 'old answer', mid: 'mOLD' };
+    const retried = { role: 'user', content: '開館時間は？', native_request: 'native-request', retry_of: 'mOLD' };
+    c.ctx.agentHistory = [{ role: 'user', content: '前の質問' }, { role: 'assistant', content: '前の答え', mid: 'mA' }, oldUser, oldReply, retried];
+    await c.ctx.agentSend({ id: 'native-request', mid: 'mNEW', startedAt: 0 });
+    // 送る履歴から前の往復を外し、印は API に送らない
+    assert.deepEqual(bodies[0].messages.map(m => m.content), ['前の質問', '前の答え', '開館時間は？']);
+    assert(!JSON.stringify(bodies[0]).includes('retry_of'));
+    if (outcome === 'done') {
+      assert.deepEqual(c.ctx.agentHistory.map(m => m.content), ['前の質問', '前の答え', '開館時間は？', 'new answer']);
+      assert.equal(c.ctx.agentHistory[2].retry_of, undefined);
+      assert(els.every(el => el.removed));
+    } else {
+      // 届かなければ前の往復を残し、見せ直す
+      assert(c.ctx.agentHistory.includes(oldReply)); assert(els.every(el => el.hidden === false && !el.removed));
+    }
   }
 });
 
@@ -2205,7 +2237,7 @@ test('両画面の評価: 付け替えは前の評価を消せてから付け、
       let failed = true;
       const bar = { dataset: { target: 'integrated' } };
       const ctx = vm.createContext({ REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
-        renderAgentError(e) { errors.push(e); }, showRating(_, value) { shown.push(value); },
+        renderAgentError(e) { errors.push(e); },
         getReactionContext: () => ({ target: 'integrated', request: 'q', response: 'a' }),
         setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
         fetch: async (_, options) => {
@@ -2220,7 +2252,8 @@ test('両画面の評価: 付け替えは前の評価を消せてから付け、
       });
       vm.runInContext(between(src, speech, '// AGENT_SPEECH_END'), ctx);
       vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
-      vm.runInContext(between(src, 'async function rateReply(', src === home ? 'let agentSpeechOn' : 'var agentSpeechOn'), ctx);
+      // 見た目は記録だけにする（共通の区画の showRating を差し替える）
+      ctx.showRating = (_, value) => { shown.push(value); };
       const pending = ctx.rateReply(bar, 'bad');
       await tick();
       if (failure === 'timeout') {
@@ -5140,6 +5173,18 @@ test('読み上げ計画§1.4: 区切りは40・80・160・180文字以下へ倍
   assert(w.ctx.speechParts('', 'ja').length === 0);
 });
 
+test('読み上げ: 長い一文でも区切りを伸ばし、2,000文字以内の本文を途中で省略しない', () => {
+  const w = worker();
+  const length = text => Array.from(new Intl.Segmenter('ja', { granularity: 'grapheme' }).segment(text)).length;
+  for (const text of ['あ'.repeat(1000) + '。', 'あ'.repeat(1999) + '。', 'か\u3099'.repeat(1000) + '。']) {
+    const parts = w.ctx.speechParts(text, 'ja');
+    assert.equal(parts.join(''), text, '本文をすべて読み、合成文字も保持する');
+    assert.deepEqual(Array.from(parts.slice(0, 4), length), SPEECH_LIMITS);
+    assert(parts.length <= 14);
+    parts.forEach((part, i) => assert(length(part) <= speechLimit(i)));
+  }
+});
+
 test('読み上げ計画§1.4: 2,000文字を超えた入力は省略の文を足し、区切りは最大14', () => {
   const w = worker();
   const text = w.ctx.speechText('あ。'.repeat(1500), 'ja');
@@ -5347,6 +5392,11 @@ test('読み上げ計画§1.1: アイコンの候補は<link rel="icon">（SVG�
     + '<link rel="apple-touch-icon" sizes="180x180" href="/t180.png"><link rel="apple-touch-icon-precomposed" sizes="57x57" href="/t57.png"></head>';
   assert.deepEqual(hrefs(many, 'https://example.com/'), ['https://example.com/i1.png', 'https://example.com/i2.png', 'https://example.com/t57.png', 'https://example.com/favicon.ico']);
   assert.deepEqual(hrefs('<head><link rel="apple-touch-icon" href="/t.png"></head>', 'https://example.com/'), ['https://example.com/favicon.ico', 'https://example.com/t.png']);
+  // 控えが無ければ宣言したアイコンを3つまで。宣言に /favicon.ico があっても2回は試さず、最後に回す
+  const three = '<head>' + [1, 2, 3, 4].map(n => `<link rel="icon" href="/i${n}.png">`).join('') + '</head>';
+  assert.deepEqual(hrefs(three, 'https://example.com/'), ['https://example.com/i1.png', 'https://example.com/i2.png', 'https://example.com/i3.png', 'https://example.com/favicon.ico']);
+  assert.deepEqual(hrefs('<head><link rel="icon" href="/favicon.ico"><link rel="icon" href="/a.png"><link rel="apple-touch-icon" href="/t.png"></head>', 'https://example.com/'),
+    ['https://example.com/favicon.ico', 'https://example.com/a.png', 'https://example.com/t.png']);
   assert.deepEqual(hrefs('<p>no head</p>', 'https://example.com/a/b'), ['https://example.com/favicon.ico']);
   assert.deepEqual(hrefs('', 'https://example.com/'), ['https://example.com/favicon.ico']);
   const type = bytes => w.ctx.sourceIconType(new Uint8Array(bytes));
@@ -5359,21 +5409,21 @@ test('読み上げ計画§1.1: アイコンの候補は<link rel="icon">（SVG�
   assert.equal(type([0x3c, 0x21, 0x64, 0x6f]), null); // <!do
 });
 
-// 大きさの違う画像をまとめた .ico（width, 中身）を作る。中身は BMP の代わりの埋め草か PNG
+// 大きさの違う画像をまとめた .ico（width, 中身, 色のビット数）を作る。中身は BMP の代わりの埋め草か PNG
 function multiIco(entries) {
   const head = 6 + 16 * entries.length, total = head + entries.reduce((s, [, d]) => s + d.length, 0);
   const out = new Uint8Array(total), view = new DataView(out.buffer);
   view.setUint16(2, 1, true); view.setUint16(4, entries.length, true);
   let offset = head;
-  entries.forEach(([width, data], i) => {
+  entries.forEach(([width, data, bpp = 32], i) => {
     const at = 6 + 16 * i;
-    out[at] = out[at + 1] = width % 256; view.setUint16(at + 4, 1, true); view.setUint16(at + 6, 32, true);
+    out[at] = out[at + 1] = width % 256; view.setUint16(at + 4, 1, true); view.setUint16(at + 6, bpp, true);
     view.setUint32(at + 8, data.length, true); view.setUint32(at + 12, offset, true);
     out.set(data, offset); offset += data.length;
   });
   return out;
 }
-test('出典のアイコン: 上限を超える .ico から、収まる 32px に近い1枚を取り出す（tenki.jp・新聞各社の favicon は数十KB）', () => {
+test('出典のアイコン: .ico から、上限に収まる 32px に近い1枚を取り出す（tenki.jp・新聞各社の favicon は数十KB）', () => {
   const w = worker(), fit = b => w.ctx.sourceIconFit(b);
   const bmp = (n, fill) => new Uint8Array(n).fill(fill);
   // 16px・32px（収まる）・48px（収まらない）。32px を選び、1枚だけの .ico に詰め直す
@@ -5384,18 +5434,32 @@ test('出典のアイコン: 上限を超える .ico から、収まる 32px に
   assert.equal(got.bytes[6], 32); assert.equal(new DataView(got.bytes.buffer).getUint32(18, true), 22);
   assert(got.bytes.slice(22).every(v => v === 2));
   // 32px が収まらなければ 16px。PNG の画像はそのまま PNG で渡す
-  assert.equal(fit(multiIco([[16, bmp(1128, 1)], [32, bmp(4264, 2)], [48, bmp(9640, 3)]])).bytes[6], 16);
+  assert.equal(fit(multiIco([[16, bmp(1128, 1)], [32, bmp(8200, 2)], [48, bmp(9640, 3)]])).bytes[6], 16);
+  // 上限以内の .ico でも、32px に近い1枚だけにする（履歴に入る大きさを抑える）
+  const within = fit(multiIco([[16, bmp(1128, 1)], [32, bmp(2000, 2)], [48, bmp(4000, 3)]]));
+  assert.equal(within.bytes.length, 22 + 2000); assert.equal(within.bytes[6], 32);
+  // 32px 1枚だけの .ico（4,286 バイト。川口市・ロイターの形）は 8KiB の上限に収まる
+  assert.equal(fit(multiIco([[32, bmp(4264, 2)]])).bytes.length, 4286);
   const png = new Uint8Array(1500); png.set(PNG_ICON);
   const asPng = fit(multiIco([[16, bmp(1128, 1)], [32, png], [0, bmp(9000, 3)]]));
   assert.equal(asPng.type, 'image/png'); assert.equal(asPng.bytes.length, 1500);
-  // 上限以内のファイルは手を加えない。どれも収まらない .ico・上限超えの PNG・壊れた目次には付けない
-  const small = multiIco([[16, bmp(1000, 1)]]);
-  assert.equal(fit(small).bytes, small);
-  assert.equal(fit(multiIco([[32, bmp(4264, 2)]])), null);
-  const bigPng = new Uint8Array(5000); bigPng.set(PNG_ICON);
+  // 上限以内の PNG は手を加えない。どれも収まらない .ico・上限超えの PNG・壊れた目次には付けない
+  const smallPng = new Uint8Array(3000); smallPng.set(PNG_ICON);
+  assert.equal(fit(smallPng).bytes, smallPng);
+  assert.equal(fit(multiIco([[64, bmp(16936, 2)]])), null);
+  const bigPng = new Uint8Array(8193); bigPng.set(PNG_ICON);
   assert.equal(fit(bigPng), null);
-  const broken = multiIco([[16, bmp(5000, 1)]]); new DataView(broken.buffer).setUint32(14, 9000, true);
+  const broken = multiIco([[16, bmp(9000, 1)]]); new DataView(broken.buffer).setUint32(14, 99999, true);
   assert.equal(fit(broken), null);
+  // 目次が崩れていても上限以内なら、これまでどおりファイルのまま渡す（ブラウザは描ける）
+  const loose = multiIco([[16, bmp(3000, 1)]]); new DataView(loose.buffer).setUint32(14, 3010, true);
+  assert.equal(fit(loose).bytes, loose);
+  // 同じ大きさが色数違いで並ぶ古い .ico は、色数の多い方を選ぶ
+  const depths = fit(multiIco([[32, bmp(744, 1), 4], [32, bmp(2216, 2), 8], [32, bmp(4264, 3), 32]]));
+  assert.equal(depths.bytes.length, 22 + 4264); assert(depths.bytes.slice(22).every(v => v === 3));
+  // 先頭だけ（取る上限で切った大きな .ico）でも、範囲の内の画像は取り出し、外の画像は飛ばす
+  const head = multiIco([[16, bmp(1128, 1)], [32, bmp(4264, 2)], [256, bmp(90000, 3)]]).slice(0, 65536);
+  assert.equal(fit(head).bytes[6], 32);
 });
 
 test('読み上げ計画§1.1: Webの回答の出典に、Workerが取ったアイコンをdata: URLで付け、見出しに認証を載せない', async () => {
@@ -5417,10 +5481,22 @@ test('読み上げ計画§1.1: Webの回答の出典に、Workerが取ったア�
   assert(!JSON.stringify(verify.body).includes('favicon'));
 });
 
-test('読み上げ計画§1.1: SVG・4KiB超・リダイレクトの拒否・時間切れではアイコンを付けず、照合を遅らせない', async () => {
+test('出典のアイコン: 取る上限（64KiB）を超える大きな .ico も、先頭の小さな画像を取り出して付ける', async () => {
+  const big = multiIco([[16, new Uint8Array(1128).fill(1)], [32, new Uint8Array(4264).fill(2)], [256, new Uint8Array(200000).fill(3)]]);
+  const w = a2Worker('research', 'yes', (url, o, b) => {
+    if (b?.tools) return a2Web(url.includes('openai') ? 'openai' : 'anthropic');
+    if (url === 'https://example.com/favicon.ico') return new Response(big);
+    if (b?.response_format?.json_schema?.name === 'research_verified_reply') return delay(50).then(() => searchReply(JSON.stringify({ parts: [{ label: '確認', text: '最新の答え', status: 'verified', citations: [{ n: 1, blocks: [0] }] }] })));
+  });
+  const events = sseEvents(await (await w.request('/magi2/chat', a2Body('最新情報を確認して'))).text());
+  const icon = Buffer.from(events.find(([name]) => name === 'sources')[1].items[0].icon.split(',')[1], 'base64');
+  assert.equal(icon.length, 22 + 4264); assert.equal(icon[6], 32);
+});
+
+test('読み上げ計画§1.1: SVG・8KiB超・リダイレクトの拒否・時間切れではアイコンを付けず、照合を遅らせない', async () => {
   for (const [label, reply] of [
     ['svg', () => new Response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', { headers: { 'Content-Type': 'image/png' } })],
-    ['large', () => new Response(new Uint8Array(4097).fill(1).map((v, i) => i < PNG_ICON.length ? PNG_ICON[i] : v))],
+    ['large', () => new Response(new Uint8Array(8193).fill(1).map((v, i) => i < PNG_ICON.length ? PNG_ICON[i] : v))],
     ['redirect', () => new Response(null, { status: 302, headers: { Location: 'http://localhost/i.png' } })],
     ['missing', () => new Response('nf', { status: 404 })],
     ['hang', () => new Response(new ReadableStream({}))],
@@ -5464,15 +5540,16 @@ test('読み上げ計画§1.6: 操作列の共通区画はトップページと�
   assert(!dj.includes('AGENT_SPEECH_BEGIN'));
 });
 
-test('読み上げ計画§1.6: 出典のアイコンは許した画像のdata: URLで6KiB以下だけを通し、ほかの項目と番号は残す', () => {
+test('読み上げ計画§1.6: 出典のアイコンは許した画像のdata: URLで11,000文字（Workerの8KiB）以下だけを通し、ほかの項目と番号は残す', () => {
   const ctx = speechCtx(), png = 'data:image/png;base64,iVBORw0KGgo=';
-  const icons = [png, 'javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=', 'data:text/html;base64,PGI+', 'data:image/png;base64,' + 'A'.repeat(6200), 5,
-    'data:image/x-icon;base64,AAABAA==', 'data:image/vnd.microsoft.icon;base64,AAABAA==', 'data:image/png;base64,iVBO"><img src=x>'];
+  const icons = [png, 'javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=', 'data:text/html;base64,PGI+', 'data:image/png;base64,' + 'A'.repeat(11000), 5,
+    'data:image/x-icon;base64,AAABAA==', 'data:image/vnd.microsoft.icon;base64,AAABAA==', 'data:image/png;base64,iVBO"><img src=x>',
+    'data:image/x-icon;base64,' + 'A'.repeat(Math.ceil(8192 / 3) * 4)];
   for (const [i, icon] of icons.entries()) {
     const raw = { items: [{ n: 1, url: 'https://a.example/', title: 'A', icon }], marks: [{ at: 1, n: 1 }] };
     const clean = JSON.parse(JSON.stringify(ctx.cleanAgentSources(raw, 'abc')));
     assert.equal(clean.items.length, 1); assert.equal(clean.items[0].title, 'A'); assert.deepEqual(clean.marks, [{ at: 1, n: 1 }]);
-    assert.equal(clean.items[0].icon, [0, 6, 7].includes(i) ? icon : undefined, String(icon).slice(0, 40));
+    assert.equal(clean.items[0].icon, [0, 6, 7, 9].includes(i) ? icon : undefined, String(icon).slice(0, 40));
   }
 });
 
@@ -5850,6 +5927,15 @@ test('読み上げ計画§1.7・2.4: 開く前の失敗・5秒で開かないと
   const blocked = transportHarness({ socket: 'refuse', storage: false });
   await blocked.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
   assert.equal(blocked.fetches.length, 1, '保存が禁止されていても SSE へ切り替える');
+  await blocked.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(blocked.sockets.length, 1, '保存が禁止されていても次の送信は WebSocket を開かない');
+  assert.equal(blocked.fetches.length, 2);
+  const blockedSilent = transportHarness({ socket: 'never', storage: false });
+  vm.runInContext('AGENT_WS_OPEN_MS = 10', blockedSilent.ctx);
+  await blockedSilent.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  await blockedSilent.ctx.openAgentChat('https://workers.tk.st/magi2/chat', body, signal);
+  assert.equal(blockedSilent.sockets.length, 1, '保存禁止・タイムアウトでも次の送信は SSE を使う');
+  assert.equal(blockedSilent.fetches.length, 2);
 });
 
 test('読み上げ計画§1.7・2.4: 開いた後に切れてもSSEで送り直さず、停止ボタンはstopを送って閉じる', async () => {

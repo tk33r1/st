@@ -229,7 +229,7 @@ function cleanAgentSources(value, text) {
       numbers.add(item.n); urls.add(u.href);
       var row = { n: item.n, url: u.href, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 300) : u.href };
       // 出典のアイコンは Worker が取った data: URL の画像だけを通し、<img src> にだけ入れる（読み上げ設計§4.4）
-      if (typeof item.icon === 'string' && item.icon.length <= 6144 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
+      if (typeof item.icon === 'string' && item.icon.length <= 11000 && /^data:image\/(?:png|x-icon|vnd\.microsoft\.icon|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/.test(item.icon)) row.icon = item.icon;
       items.push(row);
     } catch (_) {}
   });
@@ -268,11 +268,15 @@ function renderAgentSources(body, replyEl, text, raw, ja, panel) {
   });
   replyEl.appendChild(panel);
 }
+// 検査済みの引用位置に出典番号を挿入する（Markdown 書き出し・共有の本文で共用）。
+function agentCitedText(text, marks) {
+  var out = '', last = 0;
+  marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
+  return out + text.slice(last);
+}
 function agentFactMarkdown(text, raw) {
   var data = cleanAgentSources(raw, text); if (!data) return text;
-  var out = '', last = 0;
-  data.marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
-  out += text.slice(last) + '\n\n### Sources\n';
+  var out = agentCitedText(text, data.marks) + '\n\n### Sources\n';
   data.items.forEach(function (item) {
     var title = item.title.replace(/([\\\[\]<>*`_])/g, '\\$1');
     out += '[' + item.n + '] ' + title + ' (<'+ item.url +'>)\n';
@@ -328,6 +332,86 @@ function agentRetryInput(user, mid, lastSend) {
   if (!parts.some(function (p) { return p && p.type === 'image_url'; })) return text.trim() ? { text: text, atts: [] } : null;
   return lastSend && lastSend.mid === mid && lastSend.atts.length ? { text: text, atts: lastSend.atts.slice() } : null;
 }
+// 以下は統合人格の回答の操作列（評価のメニュー・［もう一度］・日時）。画面の agentLog・agentHistory・ICON_*・agentItemFor・
+// reactionStoreFor・getReactionContext・(un)registerReaction・agentLastSend・agentClosed・agentDead などを使う
+// 評価の見た目（value = 'good' | 'bad' | null）
+function showRating(bar, value) {
+  var btn = bar.querySelector('[data-act="rate"]');
+  if (!btn) return;
+  btn.classList.toggle('rated', !!value);
+  btn.innerHTML = value === 'good' ? ICON_GOOD : value === 'bad' ? ICON_BAD : ICON_RATE;
+  var label = value ? tr('Rated ' + (value === 'good' ? 'Good' : 'Bad') + ' (press to change)', '評価: ' + (value === 'good' ? 'Good' : 'Bad') + '（押すと変更）') : tr('Rate this reply', '回答を評価');
+  btn.title = label; btn.setAttribute('aria-label', label);
+}
+function closeRatePops(focus) {
+  agentLog.querySelectorAll('.rate-pop').forEach(function (pop) {
+    var btn = pop.parentElement.querySelector('[data-act="rate"]');
+    pop.remove();
+    if (btn) { btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus({ preventScroll: true }); }
+  });
+}
+// 評価のボタンの上に Good / Bad を開く。いまの評価に印を付け、同じものを選ぶと取り消す
+function openRatePop(btn, bar) {
+  var open = bar.querySelector('.rate-pop');
+  closeRatePops(false);
+  if (open) return;
+  var store = reactionStoreFor(bar), current = agentRatingOf(store && store[bar.dataset.target]);
+  var pop = document.createElement('div'); pop.className = 'rate-pop'; pop.setAttribute('role', 'menu');
+  pop.setAttribute('aria-label', tr('Rate this reply', '回答を評価'));
+  [['good', ICON_GOOD], ['bad', ICON_BAD]].forEach(function (pair) {
+    var item = document.createElement('button'); item.type = 'button'; item.dataset.rate = pair[0];
+    item.setAttribute('role', 'menuitemradio'); item.setAttribute('aria-checked', String(current === pair[0]));
+    item.innerHTML = pair[1]; item.append(pair[0] === 'good' ? 'Good' : 'Bad');
+    pop.appendChild(item);
+  });
+  pop.style.left = btn.offsetLeft + 'px';
+  bar.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+  pop.querySelector('button').focus({ preventScroll: true });
+}
+// 評価を付ける・付け替える・取り消す。付いているもの（以前の絵文字のリアクションを含む）は消せてから次を付ける
+async function rateReply(bar, value) {
+  if (bar.dataset.removing === 'true') return;
+  var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target];
+  if (current) {
+    bar.dataset.removing = 'true';
+    try {
+      if (!await unregisterReaction(bar, ctx.target)) { renderAgentError({ message: tr('Could not change the rating. Please try again.', '評価を変更できませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' }); return; }
+    } finally { delete bar.dataset.removing; }
+    showRating(bar, null);
+    if (agentRatingOf(current) === value) return;
+  }
+  showRating(bar, value);
+  registerReaction(bar, ctx.target, AGENT_RATINGS[value], ctx);
+}
+// 日時の欄を書く。「今日」「昨日」は日付が変わると変わるので、画面に戻ったときと新しい回答が届いたときにも書き直す
+function writeReplyTime(time, at) {
+  var ja = document.documentElement.lang === 'ja';
+  time.textContent = agentReplyTimeText(at, ja, Date.now());
+  time.title = new Date(at).toLocaleString(ja ? 'ja-JP' : 'en-US', { dateStyle: 'full', timeStyle: 'short' });
+}
+function refreshReplyTimes() {
+  agentLog.querySelectorAll('.reply-time[datetime]').forEach(function (t) { var at = Date.parse(t.dateTime); if (at) writeReplyTime(t, at); });
+}
+// ［もう一度］で送る内容（{ text, atts, mid（置き換える回答） }）。会話の最後の回答で、閉じていない会話のときだけ。送れなければ null
+function agentRetryFor(btn) {
+  var item = agentItemFor(btn);
+  if (!item || item !== agentHistory[agentHistory.length - 1] || item.closed || item.clarify || agentClosed || agentDead) return null;
+  var again = agentRetryInput(agentHistory[agentHistory.length - 2], item.mid, agentLastSend);
+  return again && { text: again.text, atts: again.atts, mid: item.mid };
+}
+function syncRetryButtons() {
+  agentLog.querySelectorAll('.reply-bar [data-act="retry"]').forEach(function (btn) { btn.hidden = !agentRetryFor(btn); });
+}
+// ［もう一度］で置き換える往復（回答の mid と、その直前の質問）。履歴の項目と画面の要素を、そのときの状態から探す
+function agentRetryPair(mid) {
+  var at = mid ? agentHistory.findIndex(function (it) { return it.role === 'assistant' && it.mid === mid; }) : -1;
+  return at > 0 && agentHistory[at - 1].role === 'user' ? [agentHistory[at - 1], agentHistory[at]] : [];
+}
+function agentRetryEls(mid) {
+  var turn = mid ? Array.prototype.find.call(agentLog.querySelectorAll('.agent-turn'), function (t) { return t.dataset.mid === mid; }) : null;
+  var user = turn && turn.previousElementSibling;
+  return turn ? (user && user.classList.contains('agent-user') ? [user, turn] : [turn]) : [];
+}
 // 出典のドメイン（www. を除く）と、アイコンの無い出典に出す頭文字の丸。色はドメインから決める
 function agentSourceDomain(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; } }
 function agentSourceBadge(item) {
@@ -376,9 +460,7 @@ function renderAgentSourceButton(btn, text, raw, ja) {
 function agentShareText(text, raw, ja) {
   var data = cleanAgentSources(raw, text);
   if (!data) return text;
-  var out = '', last = 0;
-  data.marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
-  out += text.slice(last) + '\n\n' + (ja ? '出典' : 'Sources');
+  var out = agentCitedText(text, data.marks) + '\n\n' + (ja ? '出典' : 'Sources');
   data.items.forEach(function (item) { out += '\n[' + item.n + '] ' + item.title + '\n' + item.url; });
   return out;
 }
@@ -481,11 +563,14 @@ function createAgentSpeech(api, hooks) {
 // 開いて要求を送った後に切れたら SSE で送り直さない（Worker が回数を数えて AI を呼び始めているかもしれない）。トップページとアプリで同じ中身
 var AGENT_WS_OPEN_MS = 5000;
 // 開く前の失敗が1回あったら、その画面を閉じるまで SSE を使う
+var agentSSEOnly = false; // 保存が禁止されていても、この画面では切り替えを保持する
 function agentPreferSSE(remember) {
+  if (remember) agentSSEOnly = true;
   try {
     if (remember) sessionStorage.setItem('magi_transport', 'sse');
-    return sessionStorage.getItem('magi_transport') === 'sse';
-  } catch (_) { return !!remember; }
+    agentSSEOnly = agentSSEOnly || sessionStorage.getItem('magi_transport') === 'sse';
+  } catch (_) {}
+  return agentSSEOnly;
 }
 function agentSocketUrl(api) { return api.replace(/^http/, 'ws').replace(/\/magi2\/chat$/, '/magi2/ws'); }
 function openAgentChat(api, body, signal) {
@@ -783,56 +868,9 @@ function replyBarHTML() {
     + '<button type="button" class="react-btn reply-src" data-act="sources" hidden></button>'
     + '</div>';
 }
-// 評価の見た目（value = 'good' | 'bad' | null）
-function showRating(bar, value) {
-  var btn = bar.querySelector('[data-act="rate"]');
-  if (!btn) return;
-  btn.classList.toggle('rated', !!value);
-  btn.innerHTML = value === 'good' ? ICON_GOOD : value === 'bad' ? ICON_BAD : ICON_RATE;
-  var label = value ? tr('Rated ' + (value === 'good' ? 'Good' : 'Bad') + ' (press to change)', '評価: ' + (value === 'good' ? 'Good' : 'Bad') + '（押すと変更）') : tr('Rate this reply', '回答を評価');
-  btn.title = label; btn.setAttribute('aria-label', label);
-}
-function closeRatePops(focus) {
-  agentLog.querySelectorAll('.rate-pop').forEach(function (pop) {
-    var btn = pop.parentElement.querySelector('[data-act="rate"]');
-    pop.remove();
-    if (btn) { btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus({ preventScroll: true }); }
-  });
-}
-// 評価のボタンの上に Good / Bad を開く。いまの評価に印を付け、同じものを選ぶと取り消す
-function openRatePop(btn, bar) {
-  var open = bar.querySelector('.rate-pop');
-  closeRatePops(false);
-  if (open) return;
-  var store = reactionStoreFor(bar), current = agentRatingOf(store && store[bar.dataset.target]);
-  var pop = document.createElement('div'); pop.className = 'rate-pop'; pop.setAttribute('role', 'menu');
-  pop.setAttribute('aria-label', tr('Rate this reply', '回答を評価'));
-  [['good', ICON_GOOD], ['bad', ICON_BAD]].forEach(function (pair) {
-    var item = document.createElement('button'); item.type = 'button'; item.dataset.rate = pair[0];
-    item.setAttribute('role', 'menuitemradio'); item.setAttribute('aria-checked', String(current === pair[0]));
-    item.innerHTML = pair[1]; item.append(pair[0] === 'good' ? 'Good' : 'Bad');
-    pop.appendChild(item);
-  });
-  pop.style.left = btn.offsetLeft + 'px';
-  bar.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
-  pop.querySelector('button').focus({ preventScroll: true });
-}
-// 評価を付ける・付け替える・取り消す。付いているもの（以前の絵文字のリアクションを含む）は消せてから次を付ける
-async function rateReply(bar, value) {
-  if (bar.dataset.removing === 'true') return;
-  var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target];
-  if (current) {
-    bar.dataset.removing = 'true';
-    try {
-      if (!await unregisterReaction(bar, ctx.target)) { renderAgentError({ message: tr('Could not change the rating. Please try again.', '評価を変更できませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' }); return; }
-    } finally { delete bar.dataset.removing; }
-    showRating(bar, null);
-    if (agentRatingOf(current) === value) return;
-  }
-  showRating(bar, value);
-  registerReaction(bar, ctx.target, AGENT_RATINGS[value], ctx);
-}
 var agentSpeechOn = false, agentSpeechPlayer = null;
+var AGENT_OPENED_AT = Date.now(); // これより後に付けた mid は送った時刻を表さない（agentReplyAt）
+var agentLastSend = null; // 画像付きの質問を送り直すための原寸。この画面で最後に送った質問の分だけ持つ
 function agentSpeech() {
   return agentSpeechPlayer || (agentSpeechPlayer = createAgentSpeech(SPEECH_API, {
     state: function (btn, s) {
@@ -864,31 +902,7 @@ function setupReplyBar(turn, item) {
   var speak = bar.querySelector('[data-act="speak"]'); if (speak) speak.hidden = !(agentSpeechOn && item.speech_sig);
   var src = bar.querySelector('[data-act="sources"]'); if (src) renderAgentSourceButton(src, item.content, item.sources, isJa());
   var time = bar.querySelector('.reply-time'), at = agentReplyAt(item, AGENT_OPENED_AT);
-  if (time && at) {
-    var d = new Date(at);
-    time.hidden = false; time.dateTime = d.toISOString();
-    time.textContent = agentReplyTimeText(at, isJa(), Date.now()); time.title = d.toLocaleString(isJa() ? 'ja-JP' : 'en-US', { dateStyle: 'full', timeStyle: 'short' });
-  }
-}
-// ［もう一度］は会話の最後の回答にだけ出す（送り直すと、その回答と入れ替える）
-var AGENT_OPENED_AT = Date.now(); // これより後に付けた mid は送った時刻を表さない（agentReplyAt）
-var agentLastSend = null; // 画像付きの質問を送り直すための原寸。この画面で最後に送った質問の分だけ持つ
-function syncRetryButtons() {
-  var last = agentHistory[agentHistory.length - 1];
-  agentLog.querySelectorAll('.reply-bar [data-act="retry"]').forEach(function (btn) {
-    var item = agentItemFor(btn);
-    btn.hidden = !(item && item === last && !item.closed && !item.clarify && !agentClosed && !agentDead
-      && agentRetryInput(agentHistory[agentHistory.length - 2], item.mid, agentLastSend));
-  });
-}
-function agentRetry(btn) {
-  if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
-  var item = agentItemFor(btn), user = agentHistory[agentHistory.length - 2];
-  if (!item || item !== agentHistory[agentHistory.length - 1]) return;
-  var again = agentRetryInput(user, item.mid, agentLastSend);
-  var turn = btn.closest('.agent-turn'), userEl = turn.previousElementSibling;
-  if (!again || !userEl || !userEl.classList.contains('agent-user')) return;
-  agentSend(null, { text: again.text, atts: again.atts, items: [user, item], els: [userEl, turn] });
+  if (time && at) { time.hidden = false; time.dateTime = new Date(at).toISOString(); writeReplyTime(time, at); }
 }
 function syncSpeakButtons() {
   if (!agentSpeechOn && agentSpeechPlayer) agentSpeechPlayer.stop();
@@ -930,7 +944,14 @@ function showAgentSourcesSheet(btn, item) {
   data.items.forEach(function (it) { list.appendChild(agentSourceRowEl(it)); });
   panel.onAgentClose = function () { btn.setAttribute('aria-expanded', 'false'); if (btn.isConnected) btn.focus({ preventScroll: true }); };
   panel.addEventListener('click', function (e) { if (e.target === panel) removeAgentPanel(panel); });
-  panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); removeAgentPanel(panel); } });
+  panel.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); removeAgentPanel(panel); return; }
+    if (e.key !== 'Tab') return;
+    var items = panel.querySelectorAll('button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])');
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
   panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
   document.getElementById('app').appendChild(panel);
   btn.setAttribute('aria-expanded', 'true');
@@ -1546,8 +1567,8 @@ function renderAgentPages(replyEl, data) {
 }
 
 function prepareAgentMessages(history, lastContent) {
-  // 考えた秒数・受信の印・読み上げの署名・回答の日時は画面のためだけのもので、次の質問の API には送らない
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, at, ...m }) => agentFactHistoryMessage(m));
+  // 考えた秒数・受信の印・読み上げの署名・回答の日時・送り直しの印は画面のためだけのもので、次の質問の API には送らない
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, at, retry_of, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -1589,9 +1610,10 @@ function agentStop() {
   agentCtrl.abort();
 }
 
-// retry: ［もう一度］のときの { text, atts, items: [質問, 回答], els: [質問, 回答の要素] }。入力欄には触れない。
+// retry: ［もう一度］のときの { text, atts, mid（置き換える回答） }。入力欄には触れない。
 // 古い往復は隠して、送る履歴からだけ外す。新しい回答が届いたら履歴からも消し、届かなければ見せ直す
-// （途中で開き直す・会話を切り替えても、古い回答は保存した履歴に残る）
+// （途中で開き直す・会話を切り替えても、古い回答は保存した履歴に残る）。質問に retry_of を付けて保存するので、
+// 送り直しの最中にアプリが閉じても、受信の復元（recovered）で同じように置き換える
 async function agentSend(recovered, retry) {
   if (agentSpeechPlayer) agentSpeechPlayer.stop();
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
@@ -1604,8 +1626,9 @@ async function agentSend(recovered, retry) {
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
   var atts = recovered ? contentImages(savedUser.content).map(function (p) { return { url: p.image_url.url, thumb: p.image_url.url, file: p.file }; }) : retry ? retry.atts : attachments.slice();
   if (!text && !atts.length) return;
-  if (retry) retry.els.forEach(function (el) { el.hidden = true; });
-  var sendHistory = function () { return retry ? agentHistory.filter(function (it) { return retry.items.indexOf(it) < 0; }) : agentHistory; };
+  var retryOf = retry ? retry.mid : recovered && typeof savedUser.retry_of === 'string' ? savedUser.retry_of : null;
+  agentRetryEls(retryOf).forEach(function (el) { el.hidden = true; });
+  var sendHistory = function () { var pair = agentRetryPair(retryOf); return pair.length ? agentHistory.filter(function (it) { return pair.indexOf(it) < 0; }) : agentHistory; };
   var clarifyDraft = retry ? null : freezeAgentClarify();
   var startedAt = recovered ? recovered.startedAt : Date.now();
   setAgentSuggestion('');
@@ -1637,7 +1660,8 @@ async function agentSend(recovered, retry) {
   var replyBody = replyEl.querySelector('.agent-reply-body');
   var thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
-  if (!recovered) agentHistory.push({ role: 'user', content: storeContent, ...(nativeRunId ? { native_request: nativeRunId } : {}) });
+  var userItem = recovered ? savedUser : { role: 'user', content: storeContent, ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(retryOf ? { retry_of: retryOf } : {}) };
+  if (!recovered) agentHistory.push(userItem);
   safeStore('magi_current_history', agentHistory);
   syncRetryButtons();
   if (!recovered && nativeHistory && nativeHistory.active) atts.forEach(function (a) { if (a.file) nativeHistory.releaseImage(a.file); });
@@ -1684,8 +1708,9 @@ async function agentSend(recovered, retry) {
     if (dropped()) return;
     if (ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-    var outbound = prepareAgentMessages(sendHistory(), sendContent);
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(sendHistory(), agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
+    var history = sendHistory();
+    var outbound = prepareAgentMessages(history, sendContent);
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
     if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
@@ -1814,12 +1839,12 @@ async function agentSend(recovered, retry) {
     Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
     if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
-    if (retry) { agentHistory = sendHistory(); retry.els.forEach(function (el) { el.remove(); }); }
+    if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(function (el) { el.remove(); }); delete userItem.retry_of; }
     agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid: mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     agentLastSend = atts.length ? { mid: mid, atts: atts } : null;
     setupReplyBar(turn, agentHistory[agentHistory.length - 1]);
-    syncRetryButtons();
+    syncRetryButtons(); refreshReplyTimes();
     refreshSpeechFeature();
     safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
@@ -1830,8 +1855,9 @@ async function agentSend(recovered, retry) {
     if (!retry && nativeHistory && nativeHistory.active && !agentInput.value) atts.forEach(function (a) { if (a.file) nativeHistory.retainImage(a.file); });
     var last = agentHistory[agentHistory.length - 1];
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
-    // ［もう一度］が届かなければ、前の往復を見せ直す（質問は入力欄に戻さない）
-    if (retry) { retry.els.forEach(function (el) { el.hidden = false; }); syncRetryButtons(); }
+    // ［もう一度］が届かなければ前の往復を見せ直す（質問は入力欄に戻さない）。最後の回答の［もう一度］も出し直す
+    agentRetryEls(retryOf).forEach(function (el) { el.hidden = false; });
+    syncRetryButtons();
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
     // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
     if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
@@ -1981,10 +2007,9 @@ agentLog.addEventListener('click', function (e) {
   if (!btn) return;
   var bar2 = btn.closest('.reaction-bar');
   var act = btn.getAttribute('data-act');
-  var ctx2 = getReactionContext(bar2);
 
   if (act === 'rate') { openRatePop(btn, bar2); return; }
-  if (act === 'retry') { agentRetry(btn); return; }
+  if (act === 'retry') { var retry = agentRetryFor(btn); if (retry) agentSend(null, retry); return; }
   if (act === 'speak' || act === 'share' || act === 'sources') {
     var item = agentItemFor(bar2);
     if (!item) return;
@@ -1994,6 +2019,7 @@ agentLog.addEventListener('click', function (e) {
     return;
   }
   if (act === 'copy') {
+    var ctx2 = getReactionContext(bar2);
     if (ctx2.response && navigator.clipboard) navigator.clipboard.writeText(ctx2.response).catch(function () { });
     flashReactBtn(btn, '✓');
   }
@@ -2002,7 +2028,7 @@ agentLog.addEventListener('click', function (e) {
 document.addEventListener('click', function (e) { if (!e.target.closest('.rate-pop, [data-act="rate"]')) closeRatePops(false); });
 agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && agentLog.querySelector('.rate-pop')) { e.preventDefault(); closeRatePops(true); } });
 // 画面を離れたら読み上げを止める（バックグラウンドでは鳴らさない）
-document.addEventListener('visibilitychange', function () { if (document.hidden && agentSpeechPlayer) agentSpeechPlayer.stop(); });
+document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
 var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];

@@ -155,6 +155,16 @@ try {
     assert.equal(await src.getAttribute('aria-expanded'), 'true');
     assert.deepEqual(await rows.evaluateAll(list => list.map(a => [a.target, a.rel, a.querySelector('.src-domain').textContent])),
       [['_blank', 'noopener noreferrer', 'example.com'], ['_blank', 'noopener noreferrer', 'news.example.org']]);
+    if (!home) {
+      const close = page.locator('#agent-sources-panel .agent-panel-close');
+      assert(await close.evaluate(btn => btn === document.activeElement), 'ソースのモーダルは閉じるボタンへフォーカスする');
+      await page.keyboard.press('Shift+Tab');
+      assert(await rows.last().evaluate(a => a === document.activeElement), 'Shift+Tab は背景へ抜けず最後の出典へ回る');
+      await page.keyboard.press('Tab');
+      assert(await close.evaluate(btn => btn === document.activeElement), '最後の出典の Tab は閉じるボタンへ戻る');
+      await page.keyboard.press('Tab');
+      assert(await rows.first().evaluate(a => a === document.activeElement), 'Tab は最初の出典へ進む');
+    }
     if (process.argv.includes('--screenshots')) await page.screenshot({ path: resolve(captures, name + '-sources.png'), animations: 'disabled' });
     await page.keyboard.press('Escape');
     await until(async () => (await rows.count()) === 0, 'close sources');
@@ -205,6 +215,12 @@ try {
     assert.equal(await page.locator('.agent-user:visible').count(), 1);
     assert.match(await page.locator('.agent-reply-body').last().textContent(), /9時半/);
     assert.equal(await page.locator('#agent-input').inputValue(), '');
+    // ふつうの送信が届かなかったときも、前の回答の［もう一度］を出し直す
+    await page.locator('#agent-input').fill('休館日は？');
+    await page.locator('#agent-send').click();
+    await until(async () => chats.length === 4 && (await page.locator('#agent-input').inputValue()) === '休館日は？', 'send failed');
+    await until(async () => (await page.locator('.agent-reply .reply-bar').last().locator('[data-act="retry"]:visible').count()) === 1, 'retry back');
+    await page.locator('#agent-input').fill('');
     chatFails = false;
 
     // 評価: Good / Bad の2択。付け替えは前の評価を消してから付ける

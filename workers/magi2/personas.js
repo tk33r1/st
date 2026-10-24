@@ -952,9 +952,10 @@ export const SPEECH = {
 };
 
 // 出典のアイコン（読み上げ設計書 4.4）。出典の本文と同じホストから取り、照合を待たせない
-// max_bytes は画面へ渡す1枚の上限、fetch_bytes は取りに行く1ファイルの上限。複数の大きさをまとめた .ico（数十KB。
-// tenki.jp・ウェザーニュース・新聞各社。2026-10-24）は、max_bytes に収まる1枚だけを取り出して渡す
-export const SOURCE_ICON = { ms: 3000, max_bytes: 4096, fetch_bytes: 65536, max_redirects: 3, max_candidates: 4 };
+// max_bytes は画面へ渡す1枚の上限（回答と一緒に端末の履歴へ入る。1回答で出典5件まで）、fetch_bytes は取りに行く1ファイルの上限。
+// .ico は max_bytes に収まる1枚だけを取り出して渡す（複数の大きさをまとめた数十KBの .ico が多い。tenki.jp・新聞各社）。
+// 4KiB では 32px 1枚だけの .ico（4,286〜4,418 バイト。川口市・ロイター）が付かなかったので 8KiB（2026-10-24。実物30サイトで確認）
+export const SOURCE_ICON = { ms: 3000, max_bytes: 8192, fetch_bytes: 65536, max_redirects: 3, max_candidates: 4 };
 
 // 更新履歴の公開JSONの取得先と期限。形式と上限はversion-history.jsで共有する。
 export const VERSION_HISTORY = {

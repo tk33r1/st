@@ -1378,12 +1378,10 @@ function sourceIconHrefs(html, pageUrl) {
     }
   }
   const root = URL.canParse(pageUrl) ? new URL('/favicon.ico', pageUrl).href : null;
-  if (!hrefs.length && root) hrefs.push(root);
-  const small = touch.sort((a, b) => a.size - b.size).find(t => !hrefs.includes(t.abs));
-  if (small) hrefs.splice(Math.min(hrefs.length, SOURCE_ICON.max_candidates - 2), 0, small.abs);
-  // 宣言したアイコンがどれも大きいサイト（NHK など）でも、/favicon.ico の中の小さな1枚で付ける
-  if (root && !hrefs.includes(root)) hrefs.splice(SOURCE_ICON.max_candidates - 1, Infinity, root);
-  return hrefs.slice(0, SOURCE_ICON.max_candidates);
+  const small = touch.sort((a, b) => a.size - b.size).find(t => !hrefs.includes(t.abs))?.abs;
+  // 最後の /favicon.ico は、宣言したアイコンがどれも大きいサイト（NHK など）でも、その中の小さな1枚で付けるため
+  const first = hrefs.length ? hrefs.slice(0, SOURCE_ICON.max_candidates - (small ? 2 : 1)) : [root];
+  return [...new Set([...first, small, root].filter(Boolean))];
 }
 // 中身の先頭のバイトで種類を決める（Content-Type は信じない）。PNG・ICO・JPEG・GIF・WebP 以外は付けない
 function sourceIconType(b) {
@@ -1395,13 +1393,15 @@ function sourceIconType(b) {
   if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
   return null;
 }
-// 画面へ渡す1枚に収める。上限を超える .ico は、収まる画像のうち 32px に近いもの（16px の表示を高精細な画面でも粗くしない。
-// 同じ近さなら大きい方）を選び、PNG ならそのまま、BMP なら1枚だけの .ico に詰め直す。ほかの種類は上限を超えたら付けない
+// 画面へ渡す1枚に収める。.ico は上限以内のファイルでも、収まる画像のうち 32px に近いもの（16px の表示を高精細な画面でも
+// 粗くしない。同じ近さなら大きい方、同じ大きさなら色数の多い方）だけを選び（履歴に入る大きさを抑える）、PNG ならそのまま、
+// BMP なら1枚だけの .ico に詰め直す。目次が崩れていて取り出せない .ico も、上限以内ならブラウザは描けるのでそのまま渡す。
+// bytes は .ico なら先頭だけのこともある（範囲の外の画像は飛ばす）。ほかの種類は上限を超えたら付けない
 function sourceIconFit(bytes) {
   const type = sourceIconType(bytes);
   if (!type) return null;
-  if (bytes.length <= SOURCE_ICON.max_bytes) return { type, bytes };
-  if (type !== 'image/x-icon' || bytes.length < 6) return null;
+  const whole = bytes.length <= SOURCE_ICON.max_bytes ? { type, bytes } : null;
+  if (type !== 'image/x-icon' || bytes.length < 6) return whole;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let best = null;
   for (let i = 0, count = view.getUint16(4, true); i < count && 22 + 16 * i <= bytes.length; i++) {
@@ -1409,10 +1409,10 @@ function sourceIconFit(bytes) {
     if (!size || offset < 6 + 16 * count || offset + size > bytes.length) continue;
     const png = sourceIconType(bytes.subarray(offset, offset + 8)) === 'image/png';
     if ((png ? size : 22 + size) > SOURCE_ICON.max_bytes) continue;
-    const score = Math.abs(width - 32);
-    if (!best || score < best.score || score === best.score && width > best.width) best = { score, width, at, size, offset, png };
+    const score = Math.abs(width - 32), depth = png ? 32 : view.getUint16(at + 6, true);
+    if (!best || score < best.score || score === best.score && (width > best.width || width === best.width && depth > best.depth)) best = { score, width, depth, at, size, offset, png };
   }
-  if (!best) return null;
+  if (!best) return whole;
   const image = bytes.subarray(best.offset, best.offset + best.size);
   if (best.png) return { type: 'image/png', bytes: image };
   const out = new Uint8Array(22 + best.size);
@@ -1443,9 +1443,11 @@ async function fetchSourceIcon(hrefs, signal) {
               chunks.push(value); size += value.byteLength;
             }
           } finally { reader.cancel().catch(() => {}); }
-          if (!size || size > SOURCE_ICON.fetch_bytes) break;
-          const bytes = new Uint8Array(size); let at = 0;
-          for (const c of chunks) { bytes.set(c, at); at += c.byteLength; }
+          if (!size) break;
+          // 上限を超えたファイルも先頭だけを渡す。大きな .ico（256px まで入れた 100KB 前後のもの）は目次と小さな画像が先頭にあり、
+          // 範囲の外の画像は sourceIconFit が飛ばす。.ico 以外は画面へ渡す上限より大きいので付かない
+          const length = Math.min(size, SOURCE_ICON.fetch_bytes), bytes = new Uint8Array(length); let at = 0;
+          for (const c of chunks) { if (at >= length) break; const part = c.subarray(0, length - at); bytes.set(part, at); at += part.byteLength; }
           const icon = sourceIconFit(bytes);
           if (icon) return `data:${icon.type};base64,${btoa(String.fromCharCode(...icon.bytes))}`;
           break;
