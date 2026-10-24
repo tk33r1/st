@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.72';
+var APP_VERSION = '6.73';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2638,6 +2638,11 @@ function showAppUpdatePanel() {
     action.hidden = !button; action.disabled = false; action.textContent = button || ''; action.onclick = onclick || null;
     page.hidden = !fallback;
   }
+  function showInstallPermissionHelp(profile) {
+    show(profile
+      ? tr('This copy of MAGI cannot install updates from this profile. Open MAGI in your main profile and update it there. You can also download the APK in your main profile from the link below. Your chats stay in each profile.', 'このプロファイルではアプリ内から更新できません。通常側のMAGIを開いて更新するか、通常側で下のリンクからAPKを入手してください。会話はそれぞれのプロファイルに残ります。')
+      : tr('Install permission was not granted to this copy of MAGI. If it already looks allowed, you may be viewing settings for another profile. Update from MAGI or the download page in your main profile. This screen will not reopen permission settings automatically.', 'このMAGIにはインストールの許可が反映されていません。許可済みに見える場合は、別のプロファイルの設定を開いている可能性があります。通常側のMAGI、またはダウンロードページから更新してください。許可画面へは自動で戻りません。'), '', null, true);
+  }
   async function check() {
     show(tr('Checking…', '確認しています…'));
     try { release = await fetchLatestRelease(); } catch (_) { release = null; }
@@ -2646,6 +2651,14 @@ function showAppUpdatePanel() {
     if (!release.newer) return show(tr('You have the latest version.', '最新のバージョンです。'));
     var found = tr('Version ' + release.version + ' is available.', '新しいバージョン（' + release.version + '）があります。');
     if (!plugin || !release.sha256) return show(found + tr(' Get it from the download page.', 'ダウンロードページから入手してください。'), '', null, true);
+    // 旧APKのプラグインにはinformationが無い。取得失敗でも従来の更新操作は残す。
+    if (typeof plugin.information === 'function') {
+      try {
+        var info = await plugin.information();
+        if (!panel.isConnected) return;
+        if (info.needsMainProfile) return showInstallPermissionHelp(true);
+      } catch (_) { if (!panel.isConnected) return; }
+    }
     show(found, tr('Update', 'アップデート'), install);
   }
   async function install() {
@@ -2663,7 +2676,7 @@ function showAppUpdatePanel() {
       var result = await plugin.install({ version: release.version, sha256: release.sha256 });
       if (!panel.isConnected) return;
       if (result.state === 'installer') show(tr('The installer is open. Follow the steps on screen, then reopen MAGI.', 'インストール画面を開きました。画面の案内に従って更新し、MAGIを開き直してください。'));
-      else show(tr('Installing is not allowed yet. Turn on “Allow from this source”, then tap Update again.', 'インストールが許可されていません。「この提供元のアプリを許可」をオンにしてから、もう一度［アップデート］を押してください。'), tr('Update', 'アップデート'), install);
+      else showInstallPermissionHelp(result.state === 'profile');
     } catch (error) {
       if (!panel.isConnected) return;
       show(error && error.code === 'busy' ? tr('The update is already downloading. Wait a moment and try again.', 'アップデートをダウンロード中です。少し待ってから、もう一度お試しください。')

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
+import android.os.UserManager;
 import android.provider.Settings;
 import androidx.activity.result.ActivityResult;
 import androidx.core.content.FileProvider;
@@ -66,6 +67,9 @@ public class MagiUpdatePlugin extends Plugin {
         String version = call.getString("version", ""), sha256 = call.getString("sha256", "");
         if (!VERSION.matcher(version).matches() || !SHA256.matcher(sha256).matches()) { call.reject("invalid_release"); return; }
         if (!busy.compareAndSet(false, true)) { call.reject("busy"); return; }
+        // 複製側から許可画面を開くと、機種によって通常側の設定へ転送される。
+        // 通常側を許可してもこのプロファイルには反映されないので、ダウンロード前に案内へ戻す。
+        if (needsMainProfile()) { finish(call, "profile"); return; }
         io.execute(() -> {
             File apk = file();
             try {
@@ -75,6 +79,17 @@ public class MagiUpdatePlugin extends Plugin {
                 getActivity().runOnUiThread(() -> open(call, apk));
             } catch (Exception e) { apk.delete(); fail(call, "download_failed"); }
         });
+    }
+
+    @PluginMethod public void information(PluginCall call) {
+        JSObject data = new JSObject();
+        data.put("needsMainProfile", needsMainProfile());
+        call.resolve(data);
+    }
+
+    private boolean needsMainProfile() {
+        UserManager users = getContext().getSystemService(UserManager.class);
+        return !canInstall() && Build.VERSION.SDK_INT >= 33 && users != null && users.isProfile();
     }
 
     private File file() {
@@ -137,6 +152,7 @@ public class MagiUpdatePlugin extends Plugin {
     // 初回は「この提供元のアプリを許可」の画面を開く。戻ったときに許可されていれば、そのままインストーラーへ進む。
     private void open(PluginCall call, File apk) {
         if (canInstall()) { launch(call, apk); return; }
+        if (needsMainProfile()) { finish(call, "profile"); return; }
         JSObject state = new JSObject(); state.put("phase", "permission");
         notifyListeners("progress", state);
         startActivityForResult(call, new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())), "permissionResult");

@@ -105,6 +105,12 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   this source”). Without a digest or the plugin, it links to the download page.
   The banner's Download opens the same panel. Builds before 6.7 lack this and
   must be updated manually once.
+  In 6.73, a profile that cannot request installs (Android 13+) is detected before
+  downloading. It directs users to update from the main profile instead of
+  opening a permission screen that may belong to a different profile (observed
+  with Samsung DUAL_APP). Returning without permission now offers the download
+  page and does not offer the same install retry. Profiles already allowed to
+  install retain the normal update flow. No install restrictions are bypassed.
 - The owner-requested 6.71 APK supports `vX.YZ` release tags as well as `vX.Y`.
   Version 6.7 recognizes only `vX.Y`, so install 6.71 from the Android download
   link once. This manual APK release does not change the no-APK policy for

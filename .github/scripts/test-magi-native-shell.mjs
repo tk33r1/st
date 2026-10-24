@@ -44,8 +44,9 @@ try {
           SystemBars: { setStyle: async options => { window.shellCalls.push(options.style); } },
           // アップデートの確認: 実機のダウンロード・照合・インストーラーの代わりに、進み具合を1回送って開いたことにする。
           MagiUpdate: {
+            information: async () => { if (window.updateInfoFails) throw new Error('unavailable'); return { needsMainProfile: !!window.updateNeedsMainProfile }; },
             addListener: async (name, callback) => { window.updateProgress = callback; return { remove: async () => { window.updateProgress = null; } }; },
-            install: async options => { window.updateInstall = options; window.updateProgress({ phase: 'download', received: 1, total: 2 }); return { state: 'installer' }; },
+            install: async options => { window.updateInstallCalls = (window.updateInstallCalls || 0) + 1; window.updateInstall = options; window.updateProgress({ phase: 'download', received: 1, total: 2 }); return { state: window.updateResult || 'installer' }; },
           },
         },
       };
@@ -133,6 +134,32 @@ try {
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
       assert.deepEqual(await page.evaluate(() => window.updateInstall), { version: '99.9', sha256 });
       assert.equal(await page.locator('#app-update-page').isVisible(), false);
+      await page.locator('.agent-panel-close').click();
+      // 許可が反映されない場合に同じ設定画面へ誘導し続けない。
+      for (const state of ['denied', 'profile']) {
+        await page.evaluate(state => { window.updateResult = state; }, state);
+        await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+        await page.locator('#app-update-action').click();
+        await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
+        assert.equal(await page.locator('#app-update-action').isVisible(), false);
+        assert.match(await page.locator('#app-update-status').textContent(), /main profile/);
+        await page.locator('.agent-panel-close').click();
+      }
+      // 複製側はパネルを開き直しても、取得・許可設定・インストーラーを呼ばない。
+      await page.evaluate(() => { window.updateNeedsMainProfile = true; });
+      const installs = await page.evaluate(() => window.updateInstallCalls);
+      for (let i = 0; i < 2; i++) {
+        await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+        await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
+        assert.equal(await page.locator('#app-update-action').isVisible(), false);
+        assert.equal(await page.evaluate(() => window.updateInstallCalls), installs);
+        await page.locator('.agent-panel-close').click();
+      }
+      // 判定APIがない旧プラグインでも、通常の更新操作を維持する。
+      await page.evaluate(() => { window.updateInfoFails = true; window.updateResult = 'installer'; });
+      await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+      await page.locator('#app-update-action').click();
+      await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
       await page.locator('.agent-panel-close').click();
     } else {
       assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
