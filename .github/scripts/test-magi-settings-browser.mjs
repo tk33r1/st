@@ -7,8 +7,8 @@ const out = resolve(root, 'workers/.wrangler/magi-settings-browser'); mkdirSync(
 async function assertFocused(locator) { assert.equal(await locator.evaluate(el => document.activeElement === el), true); }
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const mobile of [true, false]) {
-    const context = await browser.newContext({ viewport: { width: mobile ? 390 : 1600, height: 850 } });
+  for (const [mobile, width] of [[true, 320], [true, 360], [true, 390], [false, 360], [false, 1600]]) {
+    const context = await browser.newContext({ viewport: { width, height: 850 } });
     await context.addInitScript(() => localStorage.setItem('lang', 'ja'));
     let requests = [], status = 503;
     await context.route('**/*', async route => {
@@ -30,12 +30,21 @@ try {
     });
     const page = await context.newPage();
     await page.goto('https://tk.st/' + (mobile ? 'magi-app/www/' : ''));
-    if (!mobile && await page.locator('#agentdock').evaluate(e => e.classList.contains('collapsed'))) await page.locator('[data-act="agent"]').click();
+    if (!mobile && await page.locator('#agentdock').evaluate(e => innerWidth < 768 ? !e.classList.contains('open') : e.classList.contains('collapsed'))) await page.locator('[data-act="agent"]').click();
     await page.locator('#btn-more-agent').click();
     await page.screenshot({ path: resolve(out, mobile ? 'app-menu.png' : 'web-menu.png') });
     await page.locator('#btn-bug-report-agent').click();
     const input = page.locator('#agent-bug-message');
     const send = page.locator('#agent-bug-form button');
+    const layout = await input.evaluate(e => {
+      const r = e.getBoundingClientRect(), form = e.form.getBoundingClientRect();
+      return { left: r.left, right: r.right, viewport: innerWidth, form: form.width, scroll: e.form.scrollWidth, client: e.form.clientWidth };
+    });
+    assert.ok(layout.left >= 0 && layout.right <= layout.viewport, JSON.stringify(layout));
+    assert.ok(layout.scroll <= layout.client + 1, JSON.stringify(layout));
+    assert.match(await page.locator('#agent-bug-note').innerText(), /^(Do not include passwords or other sensitive information\.|パスワードなどの機密情報は入力しないでください。)$/);
+    assert.equal(await page.locator('#btn-bug-report-agent svg rect').count(), 1);
+
     assert.equal(await send.isDisabled(), true);
     await input.fill('あ'.repeat(2001));
     assert.equal(Array.from(await input.inputValue()).length, 2000);
@@ -63,6 +72,10 @@ try {
     await page.locator('#btn-more-agent').click();
     await page.locator('#btn-about-agent').click();
     const aboutBack = page.locator('#agent-about-panel .agent-page-back');
+    await page.locator('[data-about="faq"]').click();
+    assert.equal(await page.locator('#agent-faq-panel details').count(), 12);
+    await page.locator('#agent-faq-panel .agent-page-back').click();
+
     const versionLink = page.locator('[data-about="version"]');
     await versionLink.focus();
     await page.keyboard.press('Tab');
@@ -109,6 +122,6 @@ try {
       assert.equal(await location.getAttribute('aria-checked'), 'false');
     }
     await context.close();
-    console.log(mobile ? 'app: passed' : 'web: passed');
+    console.log((mobile ? 'app' : 'web') + ' ' + width + ': passed');
   }
 } finally { await browser.close(); }

@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.8';
+var APP_VERSION = '6.81';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2311,6 +2311,13 @@ function showFAQPanel() {
     [tr('Does every question start a debate?', 'どの質問でも討議する？'), tr('Factual questions and site guidance can be answered without debate. Eligible yes/no questions trigger a vote; add “without taking a vote” for an explanation only.', '事実の質問やサイト内の案内は、討議せず答えることがあります。賛否を問う質問では採決します。説明だけがほしいときは「採決なしで」と添えてください。')],
     [tr('What are the limits?', '利用上限は？'), tr('Up to 1,000 characters and four images per message, and 60 requests a day. Replies use the last 12 messages (about six exchanges). Additional search and voice limits are described in the Privacy Policy.', '入力は1回1,000文字・画像4枚まで、1日60回までです。回答には直近12メッセージ（約6往復）を使います。検索や読み上げの追加上限はプライバシーポリシーで確認できます。')],
     [tr('How do I save a conversation?', '会話を残すには？'), tr('Use “Save as Markdown” in the more menu. History is stored on your device; keep a separate copy of important chats.', '︙の「Markdownで保存」から書き出せます。履歴は端末に保存されるため、重要な会話は別途控えを残してください。')],
+    [tr('Can I trust the answers?', '回答は正しい？'), tr('AI can make mistakes, even when the answer sounds confident. Check sources and dates for important information. If your question is about a particular place or time, include those details.', 'AIは断定的に答えていても間違えることがあります。重要な情報は出典と日時を確認してください。特定の場所や時期について聞くときは、その条件も書くと伝わりやすくなります。')],
+    [tr('What if a reply stops or never arrives?', '回答が止まった・届かないときは？'), tr('Check your connection and wait briefly. Use the stop button if needed, then try again. On Android, replies can continue arriving in the background; on the Web or PWA, return to the screen to check progress. Keep a copy of a long question before reopening the app.', '接続を確認し、少し待ってください。必要なら停止ボタンで止めてから、もう一度試してください。Androidは別のアプリを使っている間も受信を続けます。Web・PWAは画面に戻って進み具合を確認してください。開き直す場合は、長い質問を控えておくと安心です。')],
+    [tr('Can I use MAGI offline?', 'オフラインでも使える？'), tr('You need an internet connection to send a question and receive an answer. Previously saved conversations may still be available on the same device.', '質問の送信と回答の受信にはインターネット接続が必要です。同じ端末に保存済みの会話は、オフラインでも確認できる場合があります。')],
+    [tr('Does history transfer to another device?', '別の端末でも履歴を使える？'), tr('History is saved on the device and does not sync automatically. Uninstalling the app or clearing browser data can erase it. Export important conversations before changing devices. Android can export all chats from App management; exports do not include images.', '履歴は端末ごとに保存され、自動同期されません。アプリの削除やブラウザのデータ消去で失われることがあります。機種変更の前に大切な会話を書き出してください。Androidは「アプリ管理」から全会話を書き出せます。書き出しには画像を含みません。')],
+    [tr('What does Location services do?', '位置情報サービスは何に使う？'), tr('It helps answer questions about nearby places using a city or region estimated from your connection. It does not use GPS and may be inaccurate, so specify a place when needed. Android can turn this off in App management; the change applies to your next message.', '通信元から推定した市・地域を、近くの場所についての質問などに使います。GPSは使わず、場所がずれることもあるので、必要なら地名を指定してください。Androidは「アプリ管理」でオフにでき、次の送信から反映します。')],
+    [tr('How do I turn notifications on or off?', '通知をオン・オフにするには？'), tr('On Android, open App management in the more menu and use the Notifications toggle. Android may also ask for permission. Turning alerts off does not stop receiving replies. The ongoing background task indicator is managed by Android.', 'Androidは︙の「アプリ管理」にある「通知」で切り替えます。Android側の許可が必要な場合もあります。通知をオフにしても回答の受信は続きます。バックグラウンド受信中の表示はAndroidが管理します。')],
+    [tr('How do I report a problem?', '不具合を見つけたら？'), tr('Choose Report a bug in the more menu and describe what you did, what happened and what you expected, in up to 2,000 characters. Do not include passwords or other sensitive information.', '︙の「バグを報告」から、行った操作・起きたこと・期待していた動作を2000文字以内で教えてください。パスワードなどの機密情報は入力しないでください。')],
     [tr('Where can I check for updates?', '更新はどこで確認する？'), tr('Open “Version information” under “About MAGI”. Android checks for app updates there; the Web and PWA versions show the current version and release history.', '「MAGIについて」の「バージョン情報」を開いてください。Androidではアプリの更新を確認でき、Web・PWAでは現在の版と更新履歴を確認できます。')]
   ];
   var panel = makeAgentPanel('agent-faq-panel', 'FAQ', aboutBody(rows.map(function (row) {
@@ -2636,7 +2643,7 @@ function showBugReportPanel() {
   var panel = makeAgentPanel('agent-bug-report-panel', tr('Report a bug', 'バグを報告'),
     '<form id="agent-bug-form"><label for="agent-bug-message">' + tr('What problem did you experience?', 'どのような問題が発生しましたか？') + '</label>'
     + '<textarea id="agent-bug-message" rows="7" maxlength="4000" required aria-describedby="agent-bug-count agent-bug-note"></textarea>'
-    + '<p id="agent-bug-count">0 / 2000</p><p id="agent-bug-note">' + tr('Your description will be emailed to magi@tk.st via Resend. Chat history and images are not attached. Please leave out passwords and other sensitive information.', '入力した内容をResend経由でmagi@tk.stへメール送信します。会話履歴・画像は添付しません。パスワードなどの機密情報は入力しないでください。') + '</p>'
+    + '<p id="agent-bug-count">0 / 2000</p><p id="agent-bug-note">' + tr('Do not include passwords or other sensitive information.', 'パスワードなどの機密情報は入力しないでください。') + '</p>'
     + '<button type="submit" disabled>' + tr('Send', '送信') + '</button><p id="agent-bug-status" role="status"></p></form>');
   if (!panel) return;
   var form = panel.querySelector('form'), input = panel.querySelector('textarea');
