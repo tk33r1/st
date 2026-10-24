@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 24 Oct 2026 05:11:39 +0900</lastBuildDate>
+    <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 25 Oct 2026 04:13:23 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月25日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261025/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261025/</guid>
+      <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
+      <description>10月24日は、大手流通チェーンによる次世代レジやカートの現場導入検証が活発化しました。 店頭サイネージと購買データを掛け合わせたリテールメディアの戦略が引き続き注目を集めています。</description>
+    </item>
     <item>
       <title>2026年10月24日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261024/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261011/</guid>
       <pubDate>Sun, 11 Oct 2026 08:00:00 +0900</pubDate>
       <description>ファミリーマートが新たなリテールメディアを開始し、コンビニの顧客接点を広告媒体として活用する動きが広がっています。 ローソンはマルチコピー機の設置を自治体施設へ拡大しており、店舗の外に生活インフラとしての接点を増やす取り組みが進んでいます。</description>
-    </item>
-    <item>
-      <title>2026年10月10日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261010/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261010/</guid>
-      <pubDate>Sat, 10 Oct 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジでの万引き手口（スキャン飛ばし、バーコード偽装、カート上段だけの精算）が問題化し、カメラやAIによる抑止策が焦点になっている。 リテールメディアは、メーカーと小売の共創をテーマとする業界イベントの開催が決まり、協業の具体像をめぐる議論が本格化しそうだ。</description>
     </item>
   </channel>
 </rss>
