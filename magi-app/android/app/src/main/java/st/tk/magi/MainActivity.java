@@ -17,6 +17,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(MagiConversationPlugin.class);
         registerPlugin(MagiWidgetPlugin.class);
         registerPlugin(MagiUpdatePlugin.class);
+        registerPlugin(MagiLocationPlugin.class);
         super.onCreate(savedInstanceState);
         // Android 7以降で共通に画面端まで描き、SystemBarsが余白を画面へ伝える。
         EdgeToEdge.enable(this);
