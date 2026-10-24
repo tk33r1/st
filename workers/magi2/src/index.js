@@ -1981,6 +1981,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   r1.forEach((r, i) => {
     if (r.status === 'fulfilled') { opinions.push(r.value); return; }
     absent(personas[i], 1, r.reason);
+    // 旧画面専用。この経路を使う新画面はない。
     if (!newContract) absent(personas[i], 2);
   });
   // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
