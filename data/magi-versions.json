@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.74",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "インフォメーションマークをなくし、︙の「MAGIについて」にFAQ・利用規約・プライバシーポリシー・バージョン情報をまとめました。",
+          "Web・PWAのバージョン情報には現在の版と更新履歴を表示し、Androidでは更新の確認とインストールができます。起動画面の版番号からも同じ画面を開けます。Android版を6.74に更新しました。"
+        ],
+        "en": [
+          "Replaced the information icon with About MAGI in the more menu, bringing FAQ, Terms of Use, Privacy Policy and Version information together.",
+          "Web and PWA show the current version and release history; Android also checks for and installs updates. The start-screen version opens the same panel. The Android app is updated to 6.74."
+        ]
+      }
+    },
+    {
       "version": "6.73",
       "date": "2026-10-24",
       "changes": {
