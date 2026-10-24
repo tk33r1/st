@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.82",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "Androidで送信時にGPSを優先して現在地を取得し、場所に応じた検索に使えるようになりました。取得できない場合はIP由来の市・地域へ切り替えて通知し、位置情報サービスをオフにすると両方を使いません。",
+          "端末時計のずれで正常な現在地が破棄される問題を修正しました。座標は会話履歴の項目として保存しません。Android版を6.82に更新しました。"
+        ],
+        "en": [
+          "Android now prefers GPS when getting your location for searches. If unavailable, it falls back to the IP-estimated city and region with a notice. Turning location services off disables both.",
+          "Fixed valid locations being rejected when the device clock differs. Coordinates are not saved as conversation history fields. Updated Android to 6.82."
+        ]
+      }
+    },
+    {
       "version": "6.81",
       "date": "2026-10-25",
       "changes": {
