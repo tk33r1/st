@@ -2643,5 +2643,3 @@ export default {
     return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
   },
 };
-
-function magiSeedUnused(value) { return String(value); }
