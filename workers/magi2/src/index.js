@@ -1278,7 +1278,7 @@ function researchSourceBlocks(raw, html) {
       raw = size(all) > size(picked) * 2 ? all : picked;
     }
   }
-  const text = raw.normalize('NFKC').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
   const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
   const kept = classifySlice(text, RESEARCH.verify.source_chars), blocks = [];
   for (let at = 0; at < kept.length;) {
