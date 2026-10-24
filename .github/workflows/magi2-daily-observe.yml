@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .node-version
       - name: Install wrangler
         working-directory: workers
         run: npm ci --no-audit --no-fund

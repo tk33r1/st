@@ -44,7 +44,7 @@ jobs:
         fetch-depth: 0  # title評価の旧版を git show で読む
     - uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version-file: .node-version
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'

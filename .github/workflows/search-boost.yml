@@ -30,7 +30,7 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version-file: .node-version
 
     # wrangler は全 Worker 共通で workers/package.json に入れてある
     - name: Install wrangler

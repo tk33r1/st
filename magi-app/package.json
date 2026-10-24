@@ -26,5 +26,8 @@
     "@capacitor/filesystem": "8.1.5",
     "@capacitor/ios": "8.5.3",
     "@capacitor/share": "8.0.3"
+  },
+  "engines": {
+    "node": ">=24.22.1"
   }
 }

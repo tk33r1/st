@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .node-version
       - name: Fetch candidate refs without persisting credentials
         run: |
           # 公開リポジトリなのでgitのfetchは認証不要。PRのコードは取り出さずgitオブジェクトとして読む。
@@ -65,7 +65,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: trusted/.node-version
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -103,7 +103,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .node-version
       - name: Report using main code and only the validation job result
         env:
           GITHUB_TOKEN: ${{ github.token }}

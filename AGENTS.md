@@ -119,6 +119,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   ```
 - Worker のローカル実行: `npx wrangler dev --local`（`workers/dj-schedule/wrangler.dev.toml`
   はローカル D1 用の設定例。同 README.md「ローカル確認」節を参照）。
+- Node.js は 24 LTS を使い、版の正本はルートの `.node-version`。Cloudflare Pages と GitHub Actions もこれを読む。
+  Pages に `NODE_VERSION` の環境変数を設定している場合は、`.node-version` とそろえる。
 - npm を使うのは次の4つだけ:
   - `magi-app/`: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
   - `game/reverse-recaptcha/`: `npm ci` → `npm run build`（本番は `build.sh` がビルドする）。
