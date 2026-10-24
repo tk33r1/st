@@ -95,7 +95,7 @@ try {
     // ︙ の中のテーマ切り替えは、切り替わる先を書く
     await page.locator('#btn-more-agent').click();
     const before = await page.locator('html').getAttribute('data-theme');
-    assert.equal(await page.locator('#btn-theme-label').textContent(), before === 'dark' ? 'Light mode' : 'Dark mode');
+    assert.equal(await page.locator('#btn-theme-label').textContent(), before === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
     await page.locator('#btn-theme').click();
     assert.notEqual(await page.locator('html').getAttribute('data-theme'), before);
     assert.equal(await page.locator('#agent-more-dropdown').isVisible(), false);
@@ -184,7 +184,7 @@ try {
     menu: document.getElementById('agent-more-dropdown').innerText, chats: document.getElementById('btn-history-agent').getAttribute('aria-label'),
     attach: document.getElementById('agent-attach').getAttribute('aria-label'), usage: document.getElementById('btn-usage').getAttribute('aria-label') }));
   let l = await labels();
-  assert.equal(l.lang, 'ja'); assert.equal(l.placeholder, '武田伸也AIに質問…'); assert.equal(l.chats, 'チャット'); assert.equal(l.attach, '画像を追加');
+  assert.equal(l.lang, 'ja'); assert.equal(l.placeholder, 'MAGIに質問'); assert.equal(l.chats, 'チャット'); assert.equal(l.attach, '画像を追加');
   assert.match(l.usage, /今日の利用 7 \/ 60回/);
   await page.locator('#btn-more-agent').click();
   l = await labels();
@@ -202,8 +202,8 @@ try {
   // English に切り替える
   await page.locator('#btn-more-agent').click(); await page.locator('#btn-lang').click();
   l = await labels();
-  assert.equal(l.lang, 'en'); assert.equal(l.placeholder, 'Ask Shinya Takeda AI...'); assert.equal(l.chats, 'Chats'); assert.equal(l.attach, 'Add an image');
-  assert.match(l.usage, /Today's usage: 7 of 60/); assert.match(l.menu, /日本語/); assert.match(l.menu, /Share Log/);
+  assert.equal(l.lang, 'en'); assert.equal(l.placeholder, 'Ask MAGI'); assert.equal(l.chats, 'Chats'); assert.equal(l.attach, 'Add an image');
+  assert.match(l.usage, /Today's usage: 7 of 60/); assert.match(l.menu, /Switch to Japanese/); assert.match(l.menu, /Share conversation/);
   assert.match(await page.locator('#agent-log').innerText(), /Initial[\s\S]*After debate/);
   assert.equal(await page.evaluate(() => localStorage.getItem('magi_lang')), 'en');
   // 開き直しても選んだ言語のまま
@@ -211,7 +211,7 @@ try {
   await page.waitForFunction(() => !window.usageRequest && window.usageLoadedAt > 0);
   l = await labels(); assert.equal(l.lang, 'en'); assert.equal(l.chats, 'Chats');
   await page.locator('#btn-more-agent').click(); await page.locator('#btn-lang').click();
-  assert.equal((await labels()).placeholder, '武田伸也AIに質問…');
+  assert.equal((await labels()).placeholder, 'MAGIに質問');
   assert.deepEqual(errors, []);
   report.push({ scenario: 'language', errors });
   await context.close();

@@ -94,7 +94,7 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   hours, stop after 5 seconds and quietly ignore failures. Web/PWA never contact
   GitHub for updates. Dismissing a version hides that version; the next one can
   still be shown.
-- ☰ → **Check for Updates…** (Android only) checks on every press. When a newer
+- ︙ → **Check for updates** (Android only) checks on every press. When a newer
   Release exists, `MagiUpdatePlugin` downloads `magi-android.apk` from this
   repository's Release (only the version and SHA-256 come from the screen; the
   URL is fixed and redirects must stay on https `github.com` /
@@ -105,6 +105,10 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   this source”). Without a digest or the plugin, it links to the download page.
   The banner's Download opens the same panel. Builds before 6.7 lack this and
   must be updated manually once.
+- The owner-requested 6.71 APK supports `vX.YZ` release tags as well as `vX.Y`.
+  Version 6.7 recognizes only `vX.Y`, so install 6.71 from the Android download
+  link once. This manual APK release does not change the no-APK policy for
+  autonomous daily releases.
 - System & Privacy comes from `/magi2/models` (10-minute cache). Paragraphs use
   `textContent`; all `requires` flags must be supported by this screen. A failed
   fetch or legacy Worker gives a recipient-neutral fallback instead of stale

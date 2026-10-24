@@ -38,7 +38,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * ☰の「アップデートの確認…」から、公開ReleaseのAPKを落としてAndroidのインストーラーへ渡す。
+ * ︙の「アップデートを確認」から、公開ReleaseのAPKを落としてAndroidのインストーラーへ渡す。
  * 取得先はこのリポジトリのRelease固定で、画面から受け取るのは版とSHA-256だけ（URLは受け取らない）。
  * SHA-256・パッケージ名・署名・versionCodeがすべて合ったときだけインストーラーを開く。
  */
@@ -46,7 +46,7 @@ import okhttp3.Response;
 public class MagiUpdatePlugin extends Plugin {
     static final long LIMIT = 64L * 1024 * 1024;
     private static final String RELEASES = "https://github.com/tk33r1/st/releases/download/";
-    private static final Pattern VERSION = Pattern.compile("\\d{1,2}\\.\\d");
+    private static final Pattern VERSION = Pattern.compile("\\d{1,2}\\.\\d[1-9]?");
     private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final AtomicBoolean busy = new AtomicBoolean();

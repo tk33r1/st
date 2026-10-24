@@ -3910,9 +3910,14 @@ test('A6: 両画面は format=2 を送り、旧 Worker の X.Y だけの応答�
 
 test('A6: APK の更新通知は自律の版と次の本人の版を区別する', () => {
   const {ctx} = appUpdateFixture();
+  const native = read('magi-app/android/app/src/main/java/st/tk/magi/MagiUpdatePlugin.java');
+  const nativePattern = new RegExp('^(?:' + JSON.parse(native.match(/Pattern\.compile\(("(?:\\.|[^"])*")\)/)[1]) + ')$');
   for (const [tag,current,expected] of [['v6.0','5.91',true],['v5.9','5.91',false],
-    ['v6.1','6.01',true],['v6.0','6.01',false],['v6.1','6.09',true],['v6.0','6.0',false]]) {
+    ['v6.1','6.01',true],['v6.0','6.01',false],['v6.1','6.09',true],['v6.0','6.0',false],
+    ['v6.71','6.7',true],['v6.71','6.71',false],['v6.7','6.71',false],['v6.72','6.71',true],['v6.8','6.71',true],
+    ['v6.70','6.7',false],['v6.710','6.7',false]]) {
     assert.equal(ctx.newerRelease(ctx.releaseVersion(tag),current), expected, tag+' / '+current);
+    assert.equal(nativePattern.test(tag.slice(1)), ctx.releaseVersion(tag) !== null, 'Android: ' + tag);
   }
 });
 
@@ -4078,6 +4083,9 @@ test('更新通知は5秒で諦め、壊れたJSON・HTTP・保存不可でも�
 });
 test('アップデートの確認はAPKの添付に記録されたSHA-256だけを照合に使う', async () => {
   const hash='ab'.repeat(32), apk=(name,digest)=>({name,digest});
+  const patch=appUpdateFixture({reply:{tag_name:'v6.71',assets:[apk('magi-android.apk','sha256:'+hash)]}});
+  patch.ctx.APP_VERSION='6.7';
+  assert.deepEqual({...await patch.ctx.fetchLatestRelease()},{version:'6.71',newer:true,sha256:hash});
   for(const [assets,expected] of [[[apk('magi-android.apk','sha256:'+hash)],hash],[[apk('other.apk','sha256:'+hash)],''],
     [[apk('magi-android.apk','sha256:'+hash.toUpperCase())],''],[[apk('magi-android.apk','sha512:'+hash)],''],[[apk('magi-android.apk',null)],''],[undefined,''],['broken','']]) {
     const f=appUpdateFixture({reply:{tag_name:'v4.7',assets}});

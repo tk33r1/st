@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.7';
+var APP_VERSION = '6.71';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -128,7 +128,7 @@ function agentClarifyText(v) {
   return v.questions.map(function (q, i) { return (i + 1) + '. ' + q.question; }).join('\n');
 }
 function agentClarifyPlaceholder(on) {
-  agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : '武田伸也AIに質問…') : (on ? 'Add details if needed' : 'Ask Shinya Takeda AI...');
+  agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : 'MAGIに質問') : (on ? 'Add details if needed' : 'Ask MAGI');
 }
 function lastAgentTurn() {
   return Array.from(agentLog.querySelectorAll('.agent-turn')).at(-1) || null;
@@ -964,11 +964,13 @@ var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
 // 言語を切り替えたら描き直すので、毎回組み立てる
 function agentHintHTML() { return '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+  // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
+  + '<defs><g id="magi-emblem-frames"><polygon points="43,14 77,14 77,44 68,54 52,54 43,44"/><polygon points="18,58 40,58 52,68 52,98 18,98"/><polygon points="80,58 102,58 102,98 68,98 68,68"/></g><mask id="magi-emblem-links-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><rect width="120" height="120" fill="white"/><use href="#magi-emblem-frames" fill="black" stroke="black" stroke-width="2"/></mask></defs>'
+  + '<g mask="url(#magi-emblem-links-mask)">'
   + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
   + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
-  + '<polygon class="hx" points="43,14 77,14 77,44 68,54 52,54 43,44"/>'
-  + '<polygon class="hx" points="18,58 40,58 52,68 52,98 18,98"/>'
-  + '<polygon class="hx" points="80,58 102,58 102,98 68,98 68,68"/>'
+  + '</g>'
+  + '<use class="hx" href="#magi-emblem-frames"/>'
   + '<text class="hn" x="60" y="39" text-anchor="middle">2</text>'
   + '<text class="hn" x="35" y="83" text-anchor="middle">3</text>'
   + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
@@ -2067,10 +2069,6 @@ function showHistoryPanel() {
     // 新しい会話は四角とペン（画像の追加の「＋」と見分ける。トップページと同じ形）
     + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>'
     + '<span>' + tr('New chat', '新しいチャット') + '</span></button><div class="drawer-label">' + tr('Chats', 'チャット') + '</div><div id="agent-history-list"></div>'
-    // APKはストアを通らないので、更新の入口をAndroidだけに置く。PWAは配信元の更新で入れ替わる。
-    + (nativeAndroid ? '<button type="button" id="btn-update-check" class="drawer-foot">'
-      + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>'
-      + '<span>' + tr('Check for Updates…', 'アップデートの確認…') + '</span></button>' : '')
     + '</div>';
   panel.onAgentClose = function (hadFocus) {
     menuBtn.setAttribute('aria-expanded', 'false');
@@ -2087,8 +2085,6 @@ function showHistoryPanel() {
   });
   panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
   panel.querySelector('#btn-reset').addEventListener('click', function () { resetAgent(); closeAgentPanels(); });
-  var updateCheck = panel.querySelector('#btn-update-check');
-  if (updateCheck) updateCheck.addEventListener('click', showAppUpdatePanel);
   document.getElementById('app').appendChild(panel);
   menuBtn.setAttribute('aria-expanded', 'true');
   renderSavedSessionsList();
@@ -2244,8 +2240,8 @@ function showInfoPanel() {
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
   if (nativeAndroid) {
     var nativeNote = document.createElement('p');
-    nativeNote.textContent = tr('On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations in Settings to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets only open MAGI and show no chat contents. Widgets do not connect to the network themselves.',
-      'Androidでは、会話と元の画像はこの端末のアプリ内に保存します。Androidの自動バックアップは無効で、ほかの端末へ自動では移りません。文字の控えは設定から書き出せます（画像は含みません）。共有した資料は、質問のたびに会話と同じ送り先へ送られます。共有されたURLは端末がCookieなしで読み込みます。音声入力は端末の音声認識サービス（多くはGoogle）を使い、端末内で認識できないときは音声がそのサービスに送られることがあります。音声はMAGIのサーバーには送りません。ほかのアプリを使っている間や画面を消している間は、Androidのフォアグラウンドサービスが回答を受け取ります。受け取ったデータは、会話に保存されるまでこの端末に残ります。許可すると、到着の通知に会話のタイトルが出ます。進行中の通知から送信を止められます。ホーム画面のウィジェットはMAGIを開くだけで、会話の内容は表示しません。ウィジェット自体は通信しません。');
+    nativeNote.textContent = tr('On Android, conversations and original images stay in this app on this device. Android automatic backup is disabled. They will not transfer to another device automatically. Export conversations from “App management” to keep a text copy; images are not included. Shared documents are sent to the same recipients as the conversation with each question. Your device fetches shared URLs without cookies. Voice input uses the device speech recognition service (often Google), which may receive audio when offline recognition is unavailable. Audio is not sent to MAGI servers. An Android foreground service receives replies while you use another app or turn off the display. Received data stays on this device until it is saved to the conversation. If allowed, arrival notifications show the conversation title. You can stop a request from its ongoing notification. Home widgets only open MAGI and show no chat contents. Widgets do not connect to the network themselves.',
+      'Androidでは、会話と元の画像はこの端末のアプリ内に保存します。Androidの自動バックアップは無効で、ほかの端末へ自動では移りません。文字の控えは「アプリ管理」から書き出せます（画像は含みません）。共有した資料は、質問のたびに会話と同じ送り先へ送られます。共有されたURLは端末がCookieなしで読み込みます。音声入力は端末の音声認識サービス（多くはGoogle）を使い、端末内で認識できないときは音声がそのサービスに送られることがあります。音声はMAGIのサーバーには送りません。ほかのアプリを使っている間や画面を消している間は、Androidのフォアグラウンドサービスが回答を受け取ります。受け取ったデータは、会話に保存されるまでこの端末に残ります。許可すると、到着の通知に会話のタイトルが出ます。進行中の通知から送信を止められます。ホーム画面のウィジェットはMAGIを開くだけで、会話の内容は表示しません。ウィジェット自体は通信しません。');
     panel.querySelector('.agent-panel-body').appendChild(nativeNote);
   }
 }
@@ -2264,11 +2260,11 @@ function initNativeWidgetSettings(panel, ja) {
   });
 }
 
-// 設定はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
+// アプリ管理はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
 async function showNativeSettings() {
   if (!nativeAndroid) return;
   var ja = isJa();
-  var panel = makeAgentPanel('agent-settings-panel', ja ? '設定' : 'Settings',
+  var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
     '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p><p id="native-notification-status" hidden></p>'
     + '<div id="native-widget-settings" hidden>'
     + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
@@ -2500,6 +2496,11 @@ loadUsage();
 })();
 document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
 document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+// APKはストアを通らないので、更新の入口をAndroidだけに置く。PWAは配信元の更新で入れ替わる。
+var updateCheckBtn = document.getElementById('btn-update-check');
+updateCheckBtn.hidden = !nativeAndroid;
+updateCheckBtn.addEventListener('click', showAppUpdatePanel);
+document.getElementById('agent-app-actions-divider').hidden = !(nativeAndroid || WEB_INSTALL);
 var installBtn = document.getElementById('btn-install-agent');
 installBtn.hidden = !WEB_INSTALL;
 installBtn.addEventListener('click', showInstallPanel);
@@ -2510,7 +2511,7 @@ document.getElementById('btn-theme').addEventListener('click', function () {
 });
 // メニューの項目は、押すと切り替わる先のテーマを書く
 function syncThemeLabel() {
-  document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? tr('Light mode', 'ライトモード') : tr('Dark mode', 'ダークモード');
+  document.getElementById('btn-theme-label').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? tr('Switch to light mode', 'ライトモードに切替') : tr('Switch to dark mode', 'ダークモードに切替');
 }
 // 固定の文言は data-ja（文字）・data-ja-title・data-ja-aria・data-ja-ph（入力欄の例文）に日本語を持たせ、英語は最初の値を data-en* に控える。
 // JavaScript が毎回決める名前（送信・音声・利用回数のボタン）は HTML に日本語を持たせず、ここで呼ぶ関数が決める。
@@ -2526,7 +2527,7 @@ function applyStaticLanguage() {
     });
   });
   var langLabel = document.getElementById('btn-lang-label');
-  langLabel.textContent = ja ? 'English' : '日本語'; langLabel.lang = ja ? 'en' : 'ja';
+  langLabel.textContent = ja ? 'Englishに切替' : 'Switch to Japanese'; langLabel.lang = ja ? 'ja' : 'en';
   syncThemeLabel();
   agentClarifyPlaceholder(['補足があれば入力', 'Add details if needed'].indexOf(agentInput.placeholder) >= 0);
   labelSendButton(); labelVoiceButton();
@@ -2564,14 +2565,14 @@ if ('serviceWorker' in navigator) {
 }
 
 // APP_UPDATE_BEGIN
-// ネイティブだけが公開Releaseを確認する。自動は1日1回、☰の「アップデートの確認…」は押すたび。遅延・失敗は会話に影響させない。
+// ネイティブだけが公開Releaseを確認する。自動は1日1回、︙の「アップデートを確認」は押すたび。遅延・失敗は会話に影響させない。
 function releaseVersion(tag) {
-  var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)$/.exec(tag);
-  return match ? [Number(match[1]), Number(match[2])] : null;
+  var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)([1-9])?$/.exec(tag);
+  return match ? [Number(match[1]), match[2] + (match[3] || '')] : null;
 }
 function newerRelease(parts, current) {
   var installed = typeof current === 'string' && /^(\d{1,2})\.(\d)([1-9])?$/.exec(current);
-  return !!parts && !!installed && parts[0] * 100 + parts[1] * 10
+  return !!parts && !!installed && parts[0] * 100 + Number(parts[1].padEnd(2, '0'))
     > Number(installed[1]) * 100 + Number(installed[2]) * 10 + Number(installed[3] || 0);
 }
 function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
@@ -2615,7 +2616,7 @@ async function checkAppUpdate() {
     banner.hidden = false;
   } catch (_) { /* 機内モード・保存不可・壊れた応答でも起動を続ける */ }
 }
-// ☰の「アップデートの確認…」。新しい版はネイティブがAPKを落とし、SHA-256・署名・versionCodeを照合してからAndroidのインストーラーを開く。
+// ︙の「アップデートを確認」。新しい版はネイティブがAPKを落とし、SHA-256・署名・versionCodeを照合してからAndroidのインストーラーを開く。
 // 照合用のSHA-256が無い・プラグインが無いときは、ダウンロードページへの案内だけにする。
 function showAppUpdatePanel() {
   var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MagiUpdate;

@@ -1900,15 +1900,17 @@
     .dock-menu-item {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 12px;
       width: 100%;
-      padding: 0.375rem 0.8125rem;
+      min-height: 44px;
+      flex-shrink: 0;
+      padding: 10px 14px;
       text-align: left;
       background: transparent;
       border-width: 0;
       text-decoration: none;
       cursor: pointer;
-      color: var(--secondary-color);
+      color: var(--text-color);
       transition: color var(--duration-fast), background-color var(--duration-fast);
     }
 
@@ -1919,7 +1921,7 @@
 
     /* Share / Download stay off until there is a conversation (updateAgentActionButtons). */
     .dock-menu-item.disabled {
-      opacity: 0.3;
+      opacity: 0.38;
       pointer-events: none;
     }
 
@@ -1928,21 +1930,30 @@
       right: 0;
       top: 100%;
       margin-top: 6px;
-      width: 140px;
+      width: 256px;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 100px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--surface-color);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
+      border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       z-index: 50;
       display: flex;
       flex-direction: column;
-      padding: 4px 0;
+      padding: 6px 0;
     }
 
     #agent-more-dropdown button, #agent-more-dropdown a {
-      font-size: 12px !important;
-      line-height: 1.5 !important;
+      font-size: 14px;
+      line-height: 20px;
     }
+    #agent-more-dropdown button:focus-visible, #agent-more-dropdown a:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -3px; }
+    #agent-more-dropdown .menu-label { flex: 1; min-width: 0; }
+    #agent-more-dropdown svg { flex: 0 0 16px; width: 16px; height: 16px; }
+    #agent-more-dropdown .menu-next { flex-basis: 14px; width: 14px; height: 14px; }
+    #agent-more-dropdown hr { flex-shrink: 0; border: none; border-top: 1px solid var(--border-color); margin: 5px 0; width: 100%; }
 
     /* #agentdock-resizer geometry + :hover live with #sidebar-resizer (same control). */
 
@@ -3275,7 +3286,7 @@
           "@type": "ProfilePage",
           "@id": "https://tk.st/#profile-page",
           "dateCreated": "2026-03-26T12:00:00+09:00",
-          "dateModified": "2026-10-24T15:54:03+09:00",
+          "dateModified": "2026-10-24T05:51:44+09:00",
           "mainEntity": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake",
@@ -3725,24 +3736,25 @@
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" stroke-width="2"><use href="#ic-kebab" /></svg>
               </button>
-              <div id="agent-more-dropdown" class="hidden text-[10px]">
+              <div id="agent-more-dropdown" class="hidden">
                 <button id="btn-share-agent" class="dock-menu-item disabled" disabled
                   title="Share/Copy conversation">
                   <svg aria-hidden="true" width="12" height="12" stroke-width="1.8"><use href="#ic-share" /></svg>
-                  <span data-ja="共有">Share</span>
+                  <span class="menu-label" data-ja="会話を共有">Share conversation</span>
                 </button>
                 <button id="btn-export-agent" class="dock-menu-item disabled" disabled
                   title="Export conversation as Markdown">
                   <svg aria-hidden="true" width="12" height="12" stroke-width="1.8">
                     <use href="#ic-download" />
                   </svg>
-                  <span data-ja="ダウンロード">Download</span>
+                  <span class="menu-label" data-ja="Markdownで保存">Save as Markdown</span>
                 </button>
-                <hr class="border-t border-color my-1 w-full" />
+                <hr />
                 <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer"
                   class="dock-menu-item" title="Legacy MAGI deliberation (v1)">
-                  <svg aria-hidden="true" width="12" height="12" stroke-width="1.8"><use href="#ic-extlink" /></svg>
-                  <span data-ja="旧MAGIシステム">Legacy MAGI</span>
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
+                  <span class="menu-label" data-ja="旧MAGIを開く">Open Legacy MAGI</span>
+                  <svg class="menu-next" aria-hidden="true" width="14" height="14" stroke-width="1.8"><use href="#ic-extlink" /></svg>
                 </a>
               </div>
             </div>
@@ -3779,7 +3791,7 @@
             <div id="agent-input-wrap" class="flex-1">
               <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
               <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
-                maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
+                maxlength="1000" placeholder="Ask MAGI" data-ja-ph="MAGIに質問" data-ja-aria="MAGIにメッセージ"
                 aria-label="Message MAGI"></textarea>
               <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
               <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
@@ -7574,18 +7586,20 @@
     const AGENT_MAX_HISTORY = 12;
     const agentHintHTML = () => '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+      // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
+      + '<defs><g id="magi-emblem-frames"><polygon points="43,14 77,14 77,44 68,54 52,54 43,44"/><polygon points="18,58 40,58 52,68 52,98 18,98"/><polygon points="80,58 102,58 102,98 68,98 68,68"/></g><mask id="magi-emblem-links-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><rect width="120" height="120" fill="white"/><use href="#magi-emblem-frames" fill="black" stroke="black" stroke-width="2"/></mask></defs>'
+      + '<g mask="url(#magi-emblem-links-mask)">'
       + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
       + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
-      + '<polygon class="hx" points="43,14 77,14 77,44 68,54 52,54 43,44"/>'
-      + '<polygon class="hx" points="18,58 40,58 52,68 52,98 18,98"/>'
-      + '<polygon class="hx" points="80,58 102,58 102,98 68,98 68,68"/>'
+      + '</g>'
+      + '<use class="hx" href="#magi-emblem-frames"/>'
       + '<text class="hn" x="60" y="39" text-anchor="middle">2</text>'
       + '<text class="hn" x="35" y="83" text-anchor="middle">3</text>'
       + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence<button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.7</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver 6.71</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -7883,7 +7897,7 @@ function agentClarifyText(v) {
   return v.questions.map(function (q, i) { return (i + 1) + '. ' + q.question; }).join('\n');
 }
 function agentClarifyPlaceholder(on) {
-  agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : '武田伸也AIに質問…') : (on ? 'Add details if needed' : 'Ask Shinya Takeda AI...');
+  agentInput.placeholder = document.documentElement.lang === 'ja' ? (on ? '補足があれば入力' : 'MAGIに質問') : (on ? 'Add details if needed' : 'Ask MAGI');
 }
 function lastAgentTurn() {
   return Array.from(agentLog.querySelectorAll('.agent-turn')).at(-1) || null;
