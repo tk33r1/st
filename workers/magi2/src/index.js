@@ -100,7 +100,7 @@ async function readJsonLimited(request, maxBytes, signal = null, metrics = null)
 }
 
 function checkText(text, maxChars, counters) {
-  if (text.length >= maxChars) throw stageError('bad_request', 'text_too_long', `本文は ${maxChars} 文字までです`, { retryable: false });
+  if (text.length > maxChars) throw stageError('bad_request', 'text_too_long', `本文は ${maxChars} 文字までです`, { retryable: false });
   counters.text += text.length;
   if (counters.text > DEFAULTS.input.history_max_chars) throw stageError('bad_request', 'history_too_long', '会話の履歴が文字数の上限を超えています', { retryable: false });
 }
