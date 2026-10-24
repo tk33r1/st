@@ -1,3 +1,4 @@
+import {gameAiDb} from './fixtures/game-ai-db.mjs';
 // 7画面から取得した合成入力だけ。既定は無通信の計画作成、--runは承認後に共有台帳で予約する。
 import {readFileSync,writeFileSync,existsSync,openSync,closeSync,unlinkSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -18,14 +19,14 @@ const samples=captured.results.map(({game,ok})=>{
  return request;
 });
 const planned=[];
-const ctx=vm.createContext({aiModels:registry,Request,Response,URL,Headers,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
+const ctx=vm.createContext({crypto:globalThis.crypto,TextEncoder,AbortSignal,aiModels:registry,Request,Response,URL,Headers,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
  fetch:async(url,options)=>{assert.equal(url,'https://api.anthropic.com/v1/messages');planned.push(JSON.parse(options.body));
   return Response.json({stop_reason:'end_turn',content:[{type:'text',text:'plan'}]});}});
 vm.runInContext(paths.slice(1).map(p=>stripAuxImports(read(p)).replace('export default {','globalThis.worker = {')).join('\n'),ctx);
 for(const sample of samples){
  const response=await ctx.worker.fetch(new Request('https://st-games-api.tk33r1.workers.dev'+sample.path,
   {method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(sample.body)}),
-  {GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'plan-only'});
+  {DB:gameAiDb(),GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'plan-only'});
  assert.equal(response.status,200);
 }
 const estimates=planned.map(body=>{

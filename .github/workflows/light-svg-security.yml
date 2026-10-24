@@ -1,0 +1,39 @@
+name: SVG tool security
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/light-svg/**'
+      - 'assets/vendor/svgo@*/**'
+      - '.github/scripts/test-light-svg-security.mjs'
+      - '.github/workflows/light-svg-security.yml'
+      - '.node-version'
+  pull_request:
+    paths:
+      - 'tools/light-svg/**'
+      - 'assets/vendor/svgo@*/**'
+      - '.github/scripts/test-light-svg-security.mjs'
+      - '.github/workflows/light-svg-security.yml'
+      - '.node-version'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Install fixed browser tools
+        working-directory: .github/scripts
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Check isolated preview and optimizer limits
+        run: node .github/scripts/test-light-svg-security.mjs

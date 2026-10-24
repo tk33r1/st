@@ -1,3 +1,4 @@
+import {gameAiDb} from './fixtures/game-ai-db.mjs';
 // 条件付きのHaiku移行。外部API・本番DBを使わず、旧入口と2段階の出典照合・期限を確認する。
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -16,12 +17,12 @@ const card=()=>({identified:true,original_year:1982,year_note:null,facts:[{kind:
   floor_tip_source:'https://invented.example/',mix_hint:null});
 function load(kind,upstream){
  const calls=[];
- const ctx=vm.createContext({aiModels:registry,Request,Response,URL,Headers,AbortController,DOMException,TextDecoder,TextEncoder,
+ const ctx=vm.createContext({aiModels:registry,Request,Response,URL,Headers,AbortController,AbortSignal,DOMException,TextDecoder,TextEncoder,
   setTimeout,clearTimeout,console,crypto:globalThis.crypto,transitionScores(){throw new Error('Unexpected Jev call');},
   fetch:async(url,options)=>{calls.push({url,options,body:JSON.parse(options.body)});return upstream(url,options,calls.length);}});
  const paths=['workers/shared/anthropic.js',kind==='games'?'workers/games/anthropic.js':'workers/dj-request/song-info-anthropic.js',`workers/${kind}/src/index.js`];
  vm.runInContext(paths.map(p=>stripAuxImports(read(p)).replace('export default {','globalThis.worker = {')).join('\n'),ctx);
- return {ctx,calls,env:kind==='games'?{GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'private'}:{SONG_INFO_AI_PROVIDER:'anthropic',ANTHROPIC_API_KEY:'private'}};
+ return {ctx,calls,env:kind==='games'?{DB:gameAiDb(),GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'private'}:{SONG_INFO_AI_PROVIDER:'anthropic',ANTHROPIC_API_KEY:'private'}};
 }
 const req=(w,path,body)=>w.ctx.worker.fetch(new Request('https://game.example'+path,{method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(body)}),w.env);
 
@@ -47,7 +48,7 @@ test('ゲーム：20メッセージ・4000文字の上限と旧assistant末尾�
  assert.ok(body.messages.slice(0,-1).every(m=>m.content.length===4000));assert.equal(body.messages.at(-1).role,'user');
 });
 test('ゲーム：移行前の既定値はOpenAI、キー欠落・HTTP失敗・拒否・空文を正しく返す',async()=>{
- const old=load('games',()=>Response.json({choices:[{message:{content:'old'}}]}));old.env={GAME_OPENAI_API_KEY:'old-key'};
+ const old=load('games',()=>Response.json({choices:[{message:{content:'old'}}]}));old.env={...old.env,GAME_AI_PROVIDER:'openai',GAME_OPENAI_API_KEY:'old-key'};
  assert.equal((await(await req(old,'/api/gpt',{prompt:'question'})).json()).text,'old');assert.ok(old.calls[0].url.includes('openai'));
  const missing=load('games',()=>{throw new Error('Must not call');});delete missing.env.GAME_ANTHROPIC_API_KEY;
  assert.equal((await req(missing,'/api/gpt',{prompt:'q'})).status,503);assert.equal(missing.calls.length,0);

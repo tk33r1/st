@@ -199,13 +199,14 @@
       justify-content: center;
       padding: 22px;
     }
-    .svg-compare-before svg,
-    .svg-compare-after svg {
+    .svg-compare-before img,
+    .svg-compare-after img {
       max-width: 100%;
       max-height: 100%;
-      width: auto;
-      height: auto;
+      width: 100%;
+      height: 100%;
       display: block;
+      object-fit: contain;
       pointer-events: none;
     }
     /* The wrap covers the whole sheet and reveals the After layer from the
@@ -719,6 +720,10 @@
       </div>
 
       <div class="modal-sec">
+        <h4><i data-lucide="shield" class="w-4 h-4"></i> SVGのプレビュー</h4>
+        <p>プレビューは画像として表示します。SVGは5MBまで、最適化は5秒までです。保存するSVGを安全化する機能ではありません。信頼できないSVGのコードをWebページに直接埋め込まないでください。</p>
+      </div>
+      <div class="modal-sec">
         <h4><i data-lucide="link" class="w-4 h-4"></i> Data URI について</h4>
         <p>CSS の <code>background-image</code> や <code>img src</code> にそのまま貼れる形式（<code>data:image/svg+xml,...</code>）でコピーします。Base64 より軽い URL エンコード形式です。</p>
       </div>
@@ -741,7 +746,6 @@
 
 
   <script type="module">
-    import { optimize } from '../../assets/vendor/svgo@3.2.0/svgo.browser.js';
 
     const {
       formatBytes, showToast, switchView: baseSwitchView, setupDropzone, saveBlob,
@@ -774,9 +778,7 @@
     // or the number would never settle while you drag.
 
     // Read the artwork's own dimensions for the drawing's dimension line.
-    function readSvgDims(host) {
-      const svg = host.querySelector('svg');
-      if (!svg) return null;
+    function readSvgDims(svg) {
       const vb = svg.getAttribute('viewBox');
       if (vb) {
         const parts = vb.trim().split(/[\s,]+/).map(Number);
@@ -865,16 +867,75 @@
         .replace(/\s+/g, ' ');
     }
 
-    // Drop intrinsic width/height so the SVG scales with its flex parent and
-    // the Before / After layers always render at matching dimensions.
-    function injectSvg(host, svgText) {
-      host.innerHTML = svgText;
-      const svg = host.querySelector('svg');
-      if (svg) {
-        svg.removeAttribute('width');
-        svg.removeAttribute('height');
-      }
+    // SVGを文書へ挿入しない。画像として読み、スクリプトや外部参照を不活性にする。
+    const previewUrls = new Map();
+    function clearPreview(host) {
+      host.replaceChildren();
+      const url = previewUrls.get(host);
+      if (url) URL.revokeObjectURL(url);
+      previewUrls.delete(host);
     }
+    function injectSvg(host, svgText) {
+      clearPreview(host);
+      const url = URL.createObjectURL(new Blob([svgText], { type: 'image/svg+xml' }));
+      previewUrls.set(host, url);
+      const img = document.createElement('img');
+      img.alt = host === compareBefore ? '最適化前のSVG' : '最適化後のSVG';
+      img.draggable = false;
+      img.src = url;
+      host.replaceChildren(img);
+    }
+
+    const MAX_SVG_BYTES = 5 * 1024 * 1024;
+    const OPTIMIZE_TIMEOUT_MS = 5000;
+    let optimizationRevision = 0, optimizationAbort = null, fileGeneration = 0;
+    let workerSourcePromise = null;
+    function cancelOptimization() {
+      optimizationRevision++;
+      optimizationAbort?.abort();
+      optimizationAbort = null;
+    }
+    async function optimizeInWorker(svg, config, signal) {
+      workerSourcePromise ||= fetch(new URL('./optimizer-worker.js?v=20261024_1', import.meta.url), { signal: AbortSignal.timeout(5000) })
+        .then(r => { if (!r.ok) throw new Error('optimizer unavailable'); return r.text(); })
+        .catch(err => { workerSourcePromise = null; throw err; });
+      const source = await workerSourcePromise;
+      signal.throwIfAborted();
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+        let worker, timer, settled = false;
+        const stop = (error, value) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          signal.removeEventListener('abort', abort);
+          worker?.terminate();
+          URL.revokeObjectURL(url);
+          if (error) reject(error); else resolve(value);
+        };
+        const abort = () => stop(new DOMException('Cancelled', 'AbortError'));
+        try {
+          worker = new Worker(url, { type: 'module' });
+          worker.onmessage = ({ data }) => {
+            if (data?.ok && typeof data.svg === 'string') stop(null, data.svg);
+            else stop(new Error(data?.error || 'optimize failed'));
+          };
+          worker.onerror = () => stop(new Error('optimizer failed'));
+          signal.addEventListener('abort', abort, { once: true });
+          timer = setTimeout(() => stop(new Error('最適化が5秒以内に終わりませんでした。SVGを小さくしてお試しください。')), OPTIMIZE_TIMEOUT_MS);
+          worker.postMessage({ svg, config });
+        } catch (error) { stop(error); }
+      });
+    }
+
+    window.addEventListener('pagehide', event => {
+      cancelOptimization();
+      if (!event.persisted) { clearPreview(compareBefore); clearPreview(compareAfter); }
+    });
+
+    window.addEventListener('pageshow', event => {
+      if (event.persisted && currentSvgText) runOptimization(false);
+    });
 
     let comparePercent = 50;
     function applyComparePercent(p) {
@@ -958,18 +1019,24 @@
       el.classList.add('value-pop');
     }
 
-    function runOptimization(animate) {
+    async function runOptimization(animate) {
       if (!currentSvgText) return;
+      cancelOptimization();
+      const revision = optimizationRevision;
+      const controller = new AbortController();
+      optimizationAbort = controller;
       const startedAt = performance.now();
       let candidate;
       try {
-        candidate = optimize(currentSvgText, buildConfig()).data;
+        candidate = await optimizeInWorker(currentSvgText, buildConfig(), controller.signal);
+        if (revision !== optimizationRevision) return;
       } catch (err) {
+        if (revision !== optimizationRevision || controller.signal.aborted) return;
         console.error('Optimization error:', err);
         optResult.textContent = '✗ ' + (err.message || 'optimize failed');
         optResult.parentElement.className = 'cl err';
         setStatus('optimize failed', 'err');
-        showToast('最適化中にエラーが発生しました。設定を緩めてみてください。', 'error');
+        showToast(err.message || '最適化中にエラーが発生しました。', 'error');
         return;
       }
 
@@ -1059,6 +1126,24 @@
     }
 
     function startEditing(svgText, filename) {
+      let svg;
+      try {
+        if (new Blob([svgText]).size > MAX_SVG_BYTES) throw new Error('SVGは5MB以下にしてください。');
+        if (/<!DOCTYPE|<!ENTITY/i.test(svgText)) throw new Error('DOCTYPE・ENTITYを含むSVGは読み込めません。');
+        const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+        svg = doc.documentElement;
+        if (doc.querySelector('parsererror') || svg.localName !== 'svg' || svg.namespaceURI !== 'http://www.w3.org/2000/svg') {
+          throw new Error('有効なSVGファイルを選択してください。');
+        }
+      } catch (error) {
+        showToast(error.message, 'error');
+        switchView('view-upload');
+        return;
+      }
+      cancelOptimization();
+      clearPreview(compareAfter);
+      optimizedSvgData = '';
+      optCode.textContent = '';
       currentSvgText = svgText;
       originalFileSize = new Blob([svgText]).size;
       if (filename) {
@@ -1080,7 +1165,7 @@
       applyComparePercent(50);
 
       outName.textContent = currentFileName || '—';
-      svgDims.textContent = readSvgDims(compareBefore) || 'unknown';
+      svgDims.textContent = readSvgDims(svg) || 'unknown';
       barAfter.style.width = '0%';
       logLine(`✓ loaded  ${formatBytes(originalFileSize)}`, 'ok');
       setStatus('editing', 'idle');
@@ -1095,6 +1180,8 @@
 
     async function handleFile(file) {
       if (!file) return;
+      const generation = ++fileGeneration;
+      cancelOptimization();
 
       const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
       const isImage = file.type.startsWith('image/');
@@ -1104,6 +1191,7 @@
         return;
       }
 
+      if (isSvg && file.size > MAX_SVG_BYTES) { showToast('SVGは5MB以下にしてください。', 'error'); return; }
       switchView('view-loading');
       clearLog();
       setStatus('working');
@@ -1111,7 +1199,7 @@
       if (isSvg) {
         loadingMsg.textContent = `read ${file.name}`;
         const text = await file.text();
-        startEditing(text, file.name);
+        if (generation === fileGeneration) startEditing(text, file.name);
         return;
       }
 
@@ -1132,9 +1220,10 @@
 
       const reader = new FileReader();
       reader.onload = (e) => {
+        if (generation !== fileGeneration) return;
         try {
           ImageTracer.imageToSVG(e.target.result, (svgStr) => {
-            startEditing(svgStr, file.name);
+            if (generation === fileGeneration) startEditing(svgStr, file.name);
           }, {
             ltres: 0.1,
             qtres: 0.1,
@@ -1221,6 +1310,11 @@
     });
 
     btnReset.addEventListener('click', () => {
+      fileGeneration++;
+      cancelOptimization();
+      clearTimeout(rerunTimer);
+      clearPreview(compareBefore);
+      clearPreview(compareAfter);
       currentSvgText = '';
       optimizedSvgData = '';
       clearLog();

@@ -49,12 +49,12 @@
    "from": "https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/LICENSE",
    "sha256": "60d2c28d19d2bdf7bbaa59829e7a595234265e8111a01ccb74d25d6c4d2d013a"
   },
-  "svgo@3.2.0/svgo.browser.js": {
-   "from": "https://cdn.jsdelivr.net/npm/svgo@3.2.0/dist/svgo.browser.js",
-   "sha256": "bdcbbf4e38db6a2bfc1d3c2d3d9a1638e1c14d894774bfadb92c890ec12b79d6"
+  "svgo@3.3.5/svgo.browser.js": {
+   "from": "https://cdn.jsdelivr.net/npm/svgo@3.3.5/dist/svgo.browser.js",
+   "sha256": "308ce102809fce37a7d3846711b79aad359a755feef97194113cd105e3f4499c"
   },
-  "svgo@3.2.0/LICENSE": {
-   "from": "https://cdn.jsdelivr.net/npm/svgo@3.2.0/LICENSE",
+  "svgo@3.3.5/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/svgo@3.3.5/LICENSE",
    "sha256": "d2b5640808aeec9c243152ae733cf9cca3a86189ad7817bf50335290dbb31012"
   },
   "pdfjs-dist@3.11.174/pdf.min.js": {
