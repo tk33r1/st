@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.7",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "Androidのアプリで、左上の☰に「アップデートの確認…」を足しました。新しい版があれば、そこからダウンロードしてインストールできます（この版から使えます）。",
+          "ダウンロードしたアプリは、公開した版と同じものか・同じ署名かを確かめてから、Androidのインストール画面へ渡します。起動時のお知らせの［ダウンロード］も同じ画面を開きます。"
+        ],
+        "en": [
+          "The Android app adds Check for Updates… to the ☰ menu. When a newer version is out, you can download and install it from there (available from this version on).",
+          "The download is checked against the published release and its signature before it goes to Android’s installer. Download in the launch notice opens the same screen."
+        ]
+      }
+    },
+    {
       "version": "6.6",
       "date": "2026-10-24",
       "changes": {

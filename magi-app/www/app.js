@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.6';
+var APP_VERSION = '6.7';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2031,7 +2031,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;
@@ -2066,7 +2066,12 @@ function showHistoryPanel() {
     + '<button type="button" id="btn-reset" class="drawer-new">'
     // 新しい会話は四角とペン（画像の追加の「＋」と見分ける。トップページと同じ形）
     + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>'
-    + '<span>' + tr('New chat', '新しいチャット') + '</span></button><div class="drawer-label">' + tr('Chats', 'チャット') + '</div><div id="agent-history-list"></div></div>';
+    + '<span>' + tr('New chat', '新しいチャット') + '</span></button><div class="drawer-label">' + tr('Chats', 'チャット') + '</div><div id="agent-history-list"></div>'
+    // APKはストアを通らないので、更新の入口をAndroidだけに置く。PWAは配信元の更新で入れ替わる。
+    + (nativeAndroid ? '<button type="button" id="btn-update-check" class="drawer-foot">'
+      + '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>'
+      + '<span>' + tr('Check for Updates…', 'アップデートの確認…') + '</span></button>' : '')
+    + '</div>';
   panel.onAgentClose = function (hadFocus) {
     menuBtn.setAttribute('aria-expanded', 'false');
     if (hadFocus) menuBtn.focus({ preventScroll: true });
@@ -2082,6 +2087,8 @@ function showHistoryPanel() {
   });
   panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
   panel.querySelector('#btn-reset').addEventListener('click', function () { resetAgent(); closeAgentPanels(); });
+  var updateCheck = panel.querySelector('#btn-update-check');
+  if (updateCheck) updateCheck.addEventListener('click', showAppUpdatePanel);
   document.getElementById('app').appendChild(panel);
   menuBtn.setAttribute('aria-expanded', 'true');
   renderSavedSessionsList();
@@ -2557,7 +2564,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // APP_UPDATE_BEGIN
-// ネイティブだけが公開Releaseを1日1回確認する。遅延・失敗は会話に影響させない。
+// ネイティブだけが公開Releaseを確認する。自動は1日1回、☰の「アップデートの確認…」は押すたび。遅延・失敗は会話に影響させない。
 function releaseVersion(tag) {
   var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)$/.exec(tag);
   return match ? [Number(match[1]), Number(match[2])] : null;
@@ -2568,32 +2575,96 @@ function newerRelease(parts, current) {
     > Number(installed[1]) * 100 + Number(installed[2]) * 10 + Number(installed[3] || 0);
 }
 function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+// 公開中の最新Releaseを5秒で諦めて取る。APKの添付にGitHubが記録したSHA-256があれば返し、ネイティブはそれと照合してから入れる。
+async function fetchLatestRelease() {
+  var controller = new AbortController(), timer;
+  try {
+    var data = await Promise.race([
+      fetch('https://api.github.com/repos/tk33r1/st/releases/latest', { signal: controller.signal, headers: { Accept: 'application/vnd.github+json' } })
+        .then(function (res) { if (!res.ok) throw new Error('release unavailable'); return res.json(); }),
+      new Promise(function (_, reject) { timer = setTimeout(function () { controller.abort(); reject(new Error('release timeout')); }, 5000); })
+    ]);
+    var parts = releaseVersion(data && data.tag_name);
+    if (!parts || data.draft || data.prerelease) return null;
+    var apk = (Array.isArray(data.assets) ? data.assets : []).filter(function (a) { return a && a.name === 'magi-android.apk'; })[0];
+    var digest = apk && typeof apk.digest === 'string' && /^sha256:([0-9a-f]{64})$/.exec(apk.digest);
+    return { version: parts.join('.'), newer: newerRelease(parts, APP_VERSION), sha256: digest ? digest[1] : '' };
+  } finally { clearTimeout(timer); }
+}
 async function checkAppUpdate() {
   try {
     if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
     var now = Date.now(), last = Number(safeGet('magi_update_checked'));
     if (last > 0 && now >= last && now - last < 86400000) return;
     updateStore('magi_update_checked', String(now));
-    var controller = new AbortController(), timer;
-    try {
-      var data = await Promise.race([
-        fetch('https://api.github.com/repos/tk33r1/st/releases/latest', { signal: controller.signal, headers: { Accept: 'application/vnd.github+json' } })
-          .then(function (res) { if (!res.ok) throw new Error('release unavailable'); return res.json(); }),
-        new Promise(function (_, reject) { timer = setTimeout(function () { controller.abort(); reject(new Error('release timeout')); }, 5000); })
-      ]);
-      var parts = releaseVersion(data && data.tag_name);
-      if (!parts || data.draft || data.prerelease || !newerRelease(parts, APP_VERSION)) return;
-      var version = parts.join('.');
-      if (safeGet('magi_update_dismissed') === version) return;
-      var banner = document.getElementById('app-update');
-      if (!banner) return;
-      banner.dataset.version = version;
-      labelAppUpdate(banner);
-      var close = banner.querySelector('button');
-      close.onclick = function () { banner.hidden = true; updateStore('magi_update_dismissed', version); };
-      banner.hidden = false;
-    } finally { clearTimeout(timer); }
+    var release = await fetchLatestRelease();
+    if (!release || !release.newer) return;
+    var version = release.version;
+    if (safeGet('magi_update_dismissed') === version) return;
+    var banner = document.getElementById('app-update');
+    if (!banner) return;
+    banner.dataset.version = version;
+    labelAppUpdate(banner);
+    var close = banner.querySelector('button');
+    close.onclick = function () { banner.hidden = true; updateStore('magi_update_dismissed', version); };
+    // アプリ内で入れられる版は、ブラウザへ出さずに同じパネルを開く。
+    banner.querySelector('a').onclick = function (event) {
+      if (!window.Capacitor.Plugins || !window.Capacitor.Plugins.MagiUpdate) return;
+      event.preventDefault(); showAppUpdatePanel();
+    };
+    banner.hidden = false;
   } catch (_) { /* 機内モード・保存不可・壊れた応答でも起動を続ける */ }
+}
+// ☰の「アップデートの確認…」。新しい版はネイティブがAPKを落とし、SHA-256・署名・versionCodeを照合してからAndroidのインストーラーを開く。
+// 照合用のSHA-256が無い・プラグインが無いときは、ダウンロードページへの案内だけにする。
+function showAppUpdatePanel() {
+  var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MagiUpdate;
+  var panel = makeAgentPanel('agent-update-panel', tr('Check for Updates', 'アップデートの確認'),
+    '<p>' + tr('Installed: ', 'このアプリ: ') + 'ver ' + APP_VERSION + '</p><p id="app-update-status" role="status"></p>'
+    + '<div class="native-settings-actions"><button type="button" id="app-update-action" hidden></button>'
+    + '<a id="app-update-page" href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" hidden>' + tr('Open the download page', 'ダウンロードページを開く') + '</a></div>');
+  if (!panel) return;
+  var status = panel.querySelector('#app-update-status'), action = panel.querySelector('#app-update-action'), page = panel.querySelector('#app-update-page');
+  var release = null;
+  function show(text, button, onclick, fallback) {
+    status.textContent = text;
+    action.hidden = !button; action.disabled = false; action.textContent = button || ''; action.onclick = onclick || null;
+    page.hidden = !fallback;
+  }
+  async function check() {
+    show(tr('Checking…', '確認しています…'));
+    try { release = await fetchLatestRelease(); } catch (_) { release = null; }
+    if (!panel.isConnected) return;
+    if (!release) return show(tr('Could not check for updates. Check your connection and try again.', 'アップデートを確認できませんでした。通信を確かめて、もう一度お試しください。'), tr('Try again', '再試行'), check);
+    if (!release.newer) return show(tr('You have the latest version.', '最新のバージョンです。'));
+    var found = tr('Version ' + release.version + ' is available.', '新しいバージョン（' + release.version + '）があります。');
+    if (!plugin || !release.sha256) return show(found + tr(' Get it from the download page.', 'ダウンロードページから入手してください。'), '', null, true);
+    show(found, tr('Update', 'アップデート'), install);
+  }
+  async function install() {
+    // 入れ替えるとアプリが終了するので、回答の受信中は始めない。
+    if (agentBusy) return show(tr('Update after the reply finishes.', '回答が終わってからアップデートしてください。'), tr('Update', 'アップデート'), install);
+    action.disabled = true;
+    status.textContent = tr('Downloading…', 'ダウンロードしています…');
+    var listener = await plugin.addListener('progress', function (event) {
+      if (!panel.isConnected) return;
+      status.textContent = event.phase === 'permission'
+        ? tr('Turn on “Allow from this source” for MAGI, then go back.', 'MAGIの「この提供元のアプリを許可」をオンにして、戻ってください。')
+        : tr('Downloading… ', 'ダウンロードしています… ') + (event.total > 0 ? Math.min(100, Math.floor(event.received * 100 / event.total)) + '%' : (event.received / 1048576).toFixed(1) + ' MB');
+    });
+    try {
+      var result = await plugin.install({ version: release.version, sha256: release.sha256 });
+      if (!panel.isConnected) return;
+      if (result.state === 'installer') show(tr('The installer is open. Follow the steps on screen, then reopen MAGI.', 'インストール画面を開きました。画面の案内に従って更新し、MAGIを開き直してください。'));
+      else show(tr('Installing is not allowed yet. Turn on “Allow from this source”, then tap Update again.', 'インストールが許可されていません。「この提供元のアプリを許可」をオンにしてから、もう一度［アップデート］を押してください。'), tr('Update', 'アップデート'), install);
+    } catch (error) {
+      if (!panel.isConnected) return;
+      show(error && error.code === 'busy' ? tr('The update is already downloading. Wait a moment and try again.', 'アップデートをダウンロード中です。少し待ってから、もう一度お試しください。')
+        : tr('Could not download or verify the update. Try again, or use the download page.', 'アップデートを取得・確認できませんでした。もう一度お試しいただくか、ダウンロードページから入手してください。'), tr('Try again', '再試行'), install, true);
+    } finally { listener.remove(); }
+  }
+  panel.querySelector('.agent-panel-close').focus();
+  check();
 }
 function labelAppUpdate(banner) {
   var ja = document.documentElement.lang === 'ja', version = banner.dataset.version;

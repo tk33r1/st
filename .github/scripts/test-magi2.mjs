@@ -4076,6 +4076,17 @@ test('更新通知は5秒で諦め、壊れたJSON・HTTP・保存不可でも�
   }
   const f=appUpdateFixture({blocked:true,language:'en'});await f.ctx.checkAppUpdate();f.banner.button.onclick();assert.equal(f.banner.hidden,true);
 });
+test('アップデートの確認はAPKの添付に記録されたSHA-256だけを照合に使う', async () => {
+  const hash='ab'.repeat(32), apk=(name,digest)=>({name,digest});
+  for(const [assets,expected] of [[[apk('magi-android.apk','sha256:'+hash)],hash],[[apk('other.apk','sha256:'+hash)],''],
+    [[apk('magi-android.apk','sha256:'+hash.toUpperCase())],''],[[apk('magi-android.apk','sha512:'+hash)],''],[[apk('magi-android.apk',null)],''],[undefined,''],['broken','']]) {
+    const f=appUpdateFixture({reply:{tag_name:'v4.7',assets}});
+    assert.deepEqual({...await f.ctx.fetchLatestRelease()},{version:'4.7',newer:true,sha256:expected});
+  }
+  const same=appUpdateFixture({reply:{tag_name:'v4.6'}});assert.equal((await same.ctx.fetchLatestRelease()).newer,false);
+  for(const reply of [{tag_name:'v4.7',draft:true},{tag_name:'v4.7',prerelease:true},{tag_name:'4.7'}])
+    assert.equal(await appUpdateFixture({reply}).ctx.fetchLatestRelease(),null);
+});
 test('画面の言語は保存した選択、無ければ端末の言語で決め、保存できなくても切り替えられる', () => {
   for (const [saved, language, expected] of [[null, 'ja-JP', 'ja'], [null, 'ja', 'ja'], [null, 'en-US', 'en'], [null, 'jav', 'en'], [null, '', 'en'],
     ['en', 'ja-JP', 'en'], ['ja', 'en-US', 'ja'], ['fr', 'ja-JP', 'ja'], ['throw', 'ja-JP', 'ja']]) {

@@ -126,7 +126,13 @@
     }
     .drawer-new:active { background: var(--primary-bg-hover); }
     .drawer-label { flex-shrink: 0; margin: 1rem 0 0.4rem; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--secondary-color); }
-    #agent-history-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.4rem; }
+    .drawer-foot {
+      flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; min-height: 44px; margin-top: 0.5rem; padding: 0.5rem 0.75rem;
+      font: inherit; font-size: 12px; color: var(--secondary-color); background: none; border: 0; border-top: 1px solid var(--border-color); cursor: pointer; text-align: left;
+    }
+    .drawer-foot:active { background: var(--surface-hover); }
+    .drawer-foot:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    #agent-history-list { flex: 1;min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.4rem; }
 
     /* overlay panels (saved chats / info) */
     .agent-panel {
@@ -511,6 +517,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261024_5"></script>
+  <script src="app.js?v=20261024_6"></script>
 </body>
 </html>

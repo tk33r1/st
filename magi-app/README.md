@@ -94,6 +94,17 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   hours, stop after 5 seconds and quietly ignore failures. Web/PWA never contact
   GitHub for updates. Dismissing a version hides that version; the next one can
   still be shown.
+- ☰ → **Check for Updates…** (Android only) checks on every press. When a newer
+  Release exists, `MagiUpdatePlugin` downloads `magi-android.apk` from this
+  repository's Release (only the version and SHA-256 come from the screen; the
+  URL is fixed and redirects must stay on https `github.com` /
+  `*.githubusercontent.com`, at most 64MiB). It installs only when the SHA-256
+  matches the asset `digest` GitHub reports, and the package name, signing
+  certificate and a higher `versionCode` match the installed app; then it opens
+  Android's installer (`REQUEST_INSTALL_PACKAGES`, first use asks for “Allow from
+  this source”). Without a digest or the plugin, it links to the download page.
+  The banner's Download opens the same panel. Builds before 6.7 lack this and
+  must be updated manually once.
 - System & Privacy comes from `/magi2/models` (10-minute cache). Paragraphs use
   `textContent`; all `requires` flags must be supported by this screen. A failed
   fetch or legacy Worker gives a recipient-neutral fallback instead of stale

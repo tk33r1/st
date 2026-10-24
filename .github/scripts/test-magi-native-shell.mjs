@@ -42,6 +42,11 @@ try {
           Share: { share: async options => { window.sharedExport = options; } },
           App: { addListener(name, callback) { window.nativeBack = callback; return { remove: async () => {} }; }, exitApp: async () => { window.shellCalls.push('exit'); } },
           SystemBars: { setStyle: async options => { window.shellCalls.push(options.style); } },
+          // アップデートの確認: 実機のダウンロード・照合・インストーラーの代わりに、進み具合を1回送って開いたことにする。
+          MagiUpdate: {
+            addListener: async (name, callback) => { window.updateProgress = callback; return { remove: async () => { window.updateProgress = null; } }; },
+            install: async options => { window.updateInstall = options; window.updateProgress({ phase: 'download', received: 1, total: 2 }); return { state: 'installer' }; },
+          },
         },
       };
       localStorage.setItem('magi_saved_sessions', JSON.stringify([{ id: 'b0-fixture', title: 'B0 saved chat', timestamp: '2026-10-17T00:00:00Z',
@@ -109,7 +114,29 @@ try {
         try { await Capacitor.Plugins.Filesystem.readFile({ directory: 'CACHE', path: 'magi-export.json' }); return false; }
         catch (e) { return e.code === 'OS-PLUG-FILE-0008'; }
       }), true);
-    } else assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
+      // ☰の「アップデートの確認…」: 同じ版なら最新と出し、新しい版はSHA-256付きでネイティブへ渡す。
+      await page.locator('#btn-history-agent').click();
+      await page.locator('#btn-update-check').click();
+      await page.waitForFunction(() => document.querySelector('#app-update-status').textContent === 'You have the latest version.');
+      assert.equal(await page.locator('#app-update-action').isVisible(), false);
+      const sha256 = 'ab'.repeat(32);
+      await page.route('**/releases/latest', route => route.fulfill({ json: { tag_name: 'v99.9', draft: false, prerelease: false,
+        assets: [{ name: 'magi-android.apk', digest: 'sha256:' + sha256 }] } }));
+      await page.locator('.agent-panel-close').click();
+      await page.locator('#btn-history-agent').click();
+      await page.locator('#btn-update-check').click();
+      await page.waitForFunction(() => document.querySelector('#app-update-status').textContent === 'Version 99.9 is available.');
+      await page.locator('#app-update-action').click();
+      await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
+      assert.deepEqual(await page.evaluate(() => window.updateInstall), { version: '99.9', sha256 });
+      assert.equal(await page.locator('#app-update-page').isVisible(), false);
+      await page.locator('.agent-panel-close').click();
+    } else {
+      assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
+      await page.locator('#btn-history-agent').click();
+      assert.equal(await page.locator('#btn-update-check').count(), 0);
+      await page.locator('.agent-panel-close').click();
+    }
     report.push({ nativeMock: native, savedChat: true, unsentDraft: true, insets: true, pageErrors: errors, aiPosts: posts.length });
     await context.close();
   }
