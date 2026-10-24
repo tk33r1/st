@@ -6,7 +6,8 @@ const strip=s=>s.replace(/^import .*;\r?\n/gm,'').replace(/export const /g,'cons
 const ctx=vm.createContext({aiModels:JSON.parse(read('config/ai-models.json')),URL,
   fetch(){throw new Error('Network is disabled in recorded verification replay.');}});
 vm.runInContext(['languages.js','personas.js','classification.js'].map(p=>strip(read('workers/magi2/'+p))).join('\n'),ctx);
-const worker=read('workers/magi2/src/index.js'),start=worker.indexOf('function researchSourceUrl('),end=worker.indexOf('async function verifyResearchAnswer(');
+vm.runInContext(strip(read('workers/magi2/research.js')),ctx);
+const worker=read('workers/magi2/src/index.js'),start=worker.indexOf('function researchVerificationFormat('),end=worker.indexOf('async function verifyResearchAnswer(');
 if(start<0||end<=start)throw new Error('Verification block not found');
 // 出典検査が共用するキー検査も、本番と同じ定義を読む。
 vm.runInContext(worker.slice(worker.indexOf('const exactKeys ='),worker.indexOf('const questionText =')),ctx);

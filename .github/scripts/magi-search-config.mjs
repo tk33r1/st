@@ -26,6 +26,7 @@ vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('w
   + ' { input: { factMode: true, hasLanguage: true, texts: ["作業用に聴く曲を3曲すすめて。"] }, expected: { intent: "music", fresh: "no" } }'
   + ' ].map(test => { const payload = classificationPayload(test.input); return { payload, expected: { ...(payload.questions.malice ? { malice: "none" } : {}), ...test.expected } }; }) };', ctx);
 // 会社ごとのパラメーター名・推論時のsampling除外も本番の組立てを使う。
+vm.runInContext(strip(read('workers/magi2/research.js')), ctx);
 const worker = read('workers/magi2/src/index.js');
 const start = worker.indexOf('function requestBody('), end = worker.indexOf('\nasync function callModel(', start);
 if (start < 0 || end < 0) throw new Error('requestBody block not found');
@@ -39,7 +40,7 @@ vm.runInContext(`for (const name of ['judge', 'judge_fallback']) {
 vm.runInContext(worker.slice(worker.indexOf('function researchMessages('),worker.indexOf('// pause_turnで送り返す')),ctx);
 // 出典検査が共用するキー検査も、本番と同じ定義を読む。
 vm.runInContext(worker.slice(worker.indexOf('const exactKeys ='),worker.indexOf('const questionText =')),ctx);
-vm.runInContext(worker.slice(worker.indexOf('function researchSourceUrl('),worker.indexOf('async function verifyResearchAnswer(')),ctx);
+vm.runInContext(worker.slice(worker.indexOf('function researchVerificationFormat('),worker.indexOf('async function verifyResearchAnswer(')),ctx);
 vm.runInContext('function stageError(_kind, code) {return new Error(code);}',ctx);
 vm.runInContext(worker.match(/^const withLangNote = .*$/m)[0], ctx);
 // 議題化の答え直し（callAuxModel）は同じ中身を aux_fallback へ、上限は元の役割の値で送る。

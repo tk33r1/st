@@ -1,10 +1,10 @@
-import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SOURCE_ICON, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
 import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
 import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
-import { researchReader } from '../research.js';
+import { researchReader, researchSourceUrl, researchSourceBlocks, readResearchSource, startSourceIcons } from '../research.js';
 import { qaBudgetEnv } from '../qa-budget.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
@@ -1336,232 +1336,6 @@ async function readResearchResponse(body, reader, provider, signal) {
   } finally { signal.removeEventListener('abort', cancel); input.cancel().catch(() => {}); input.releaseLock(); }
 }
 
-// 出典は公開ホストのみ。リダイレクトも各段で検査し、認証・Cookie・APIキーを付けずに読む。
-function researchSourceUrl(value) {
-  try {
-    const u = new URL(value), host = u.hostname.toLowerCase().replace(/\.+$/, '');
-    return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password
-      && (!u.port || ['80', '443'].includes(u.port)) && host.includes('.')
-      && !host.includes(':') && !/^\d+(?:\.\d+){3}$/.test(host)
-      && !/(?:^|\.)(?:localhost|local|internal|invalid|test|onion)$/.test(host) ? u.href : null;
-  } catch { return null; }
-}
-
-// HTML のタグ・コメントを外し、文字参照を戻す
-function decodeSourceHtml(raw) {
-  return raw.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')
-      .replace(/&#(x[\da-f]+|\d+);/gi, (_, n) => {
-        const cp = n[0].toLowerCase() === 'x' ? parseInt(n.slice(1), 16) : +n;
-        return cp > 0 && cp <= 0x10ffff && !(cp >= 0xd800 && cp <= 0xdfff) ? String.fromCodePoint(cp) : '';
-      }).replace(/&(?:amp|lt|gt|quot|apos|nbsp);/g, n => ({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'",'&nbsp;':' '}[n]));
-}
-
-function researchSourceBlocks(raw, html) {
-  if (html) {
-    raw = raw.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
-    // 本文の区画はすべて読み、記事の見出し（公開日・更新日を置くことが多い）を残す。区画が無いページは周りの部品を外して全体を読む。
-    // 区画の本文がごく短いページ（天気予報の表が区画の外にある tenki.jp など。2026-10-24）も全体を読む
-    const sections = [...raw.matchAll(/<(main|article)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].map(m => m[2]).filter(t => t.trim());
-    const picked = sections.length ? decodeSourceHtml(sections.join(' ').replace(/<nav\b[^>]*>[\s\S]*?<\/nav\s*>/gi, ' ')) : '';
-    const size = s => s.replace(/\s+/g, '').length;
-    if (size(picked) >= RESEARCH.verify.section_min_chars) raw = picked;
-    else {
-      // 区画の外にも本文がある（全体が区画の倍を超える）ときだけ全体を読む。短い記事は区画の見出し（更新日など）を残す
-      const all = decodeSourceHtml(raw.replace(/<(nav|header|footer)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' '));
-      raw = size(all) > size(picked) * 2 ? all : picked;
-    }
-  }
-  const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
-  const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
-  const kept = classifySlice(text, RESEARCH.verify.source_chars), blocks = [];
-  for (let at = 0; at < kept.length;) {
-    const end = boundary(Math.min(kept.length, at + RESEARCH.verify.block_chars));
-    blocks.push({id: blocks.length, text: kept.slice(at, end)}); at = end;
-  }
-  return {blocks, truncated: kept.length < text.length};
-}
-
-// エラー用readLimitedは途中の本文を返すため、根拠の取得では完了と打切りを別に扱う。
-async function readResearchSourceBody(res, signal, html, charset) {
-  if (!res.body) return {raw:'',truncated:false};
-  const reader = res.body.getReader(), chunks = [];
-  let size = 0, onStop;
-  const decode = truncated => {
-    const bytes = new Uint8Array(size); let at = 0;
-    for (const chunk of chunks) {bytes.set(chunk,at);at += chunk.length;}
-    const head = html ? new TextDecoder().decode(bytes.subarray(0,2048)) : '';
-    const declared = charset || head.match(/<meta\b[^>]*\bcharset\s*=\s*["']?([^\s;"'/>]+)/i)?.[1] || 'utf-8';
-    if (!/^(?:utf-8|utf8|us-ascii|shift_jis|shift-jis|sjis|windows-31j|euc-jp|iso-2022-jp)$/i.test(declared)) throw new Error('unsupported_source_encoding');
-    return {raw:new TextDecoder(declared,{fatal:true}).decode(bytes,{stream:truncated}),truncated};
-  };
-  const stopped = new Promise((_,reject) => {
-    onStop = () => reject(searchFailure('cancelled'));
-    if (signal.aborted) onStop(); else signal.addEventListener('abort',onStop,{once:true});
-  });
-  try {
-    while (size < RESEARCH.verify.source_bytes) {
-      const {done,value} = await Promise.race([reader.read(),stopped]);
-      if (done) return decode(false);
-      const kept = value.subarray(0,RESEARCH.verify.source_bytes - size); size += kept.byteLength;
-      chunks.push(kept);
-    }
-    return decode(true);
-  } finally {
-    signal.removeEventListener('abort',onStop); reader.cancel().catch(() => {});
-    try {reader.releaseLock();} catch {}
-  }
-}
-
-async function readResearchSource(item, signal) {
-  const unread = allowed => ({...item, allowed, readable:false, blocks:[]});
-  if (!researchSourceUrl(item.url)) return unread(false);
-  try {
-    return await searchDeadline(RESEARCH.verify.source_ms, async stop => {
-      let url = item.url;
-      for (let redirects = 0; ; redirects++) {
-        if (stop.aborted) throw searchFailure('cancelled');
-        // 名乗り（User-Agent）の無い取得を断るサイト（tenki.jp など）があるので、MAGI の取得だと正直に名乗る
-        const res = await fetch(url, {redirect:'manual', signal:stop, headers:{Accept:'text/html, text/plain, application/json', 'User-Agent':RESEARCH.user_agent}});
-        if ([301,302,303,307,308].includes(res.status)) {
-          res.body?.cancel().catch(() => {});
-          const next = res.headers.get('location');
-          const target = next && researchSourceUrl(URL.canParse(next,url) ? new URL(next,url).href : '');
-          if (redirects >= 3 || !target) return unread(false);
-          url = target; continue;
-        }
-        const type = res.headers.get('content-type') || '';
-        const charset = type.match(/charset\s*=\s*["']?([^\s;"']+)/i)?.[1];
-        // 403・404なども、PDFや時間切れと同じく取得を試みた未読の出典として残し、照合で未確認にする。
-        if (!res.ok || !/(?:text\/html|text\/plain|application\/json)/i.test(type)) {
-          res.body?.cancel().catch(() => {});
-          return unread(true);
-        }
-        const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
-        if (stop.aborted) throw searchFailure('cancelled');
-        const content = researchSourceBlocks(raw, /text\/html/i.test(type));
-        return {...item, allowed:true, readable:content.blocks.length > 0, ...content, html:/text\/html/i.test(type),
-          textChars:content.blocks.reduce((n, b) => n + b.text.length, 0),
-          truncated:content.truncated || truncated, icons:sourceIconHrefs(/text\/html/i.test(type) ? raw : '', url)};
-      }
-    }, signal);
-  } catch (e) {
-    if (signal.aborted) throw searchFailure('cancelled');
-    return unread(true);
-  }
-}
-
-// --- 出典のアイコン（読み上げ設計§4.4）。画面から外部へ取りに行かせず、Worker が出典と同じホストから取って data: URL で渡す ---
-// 候補は HTML の <link rel="icon">（SVG を除く）を書かれた順に、無ければ /favicon.ico。最後に apple-touch-icon（PNG のことが多く、
-// 大きな .ico から1枚も取り出せないサイトの控え。宣言した大きさの小さいもの）。URL の検査は出典の本文と同じ
-function sourceIconHrefs(html, pageUrl) {
-  const attr = (tag, name) => {
-    const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
-    return m ? (m[1] ?? m[2] ?? m[3]).replace(/&amp;/g, '&').trim() : '';
-  };
-  const head = html.split(/<\/head\s*>/i)[0];
-  const hrefs = [], touch = [];
-  const absolute = href => href && URL.canParse(href, pageUrl) ? researchSourceUrl(new URL(href, pageUrl).href) : null;
-  for (const [tag] of head.matchAll(/<link\b[^>]*>/gi)) {
-    const rel = attr(tag, 'rel').toLowerCase().split(/\s+/), href = attr(tag, 'href'), type = attr(tag, 'type').toLowerCase();
-    if (!href || type.includes('svg') || /\.svgz?(?:[?#]|$)/i.test(href)) continue;
-    if (rel.includes('icon')) { const abs = absolute(href); if (abs && !hrefs.includes(abs)) hrefs.push(abs); }
-    else if (rel.includes('apple-touch-icon') || rel.includes('apple-touch-icon-precomposed')) {
-      const abs = absolute(href), size = Number((attr(tag, 'sizes').match(/^(\d+)x\d+/i) || [])[1]) || 180;
-      if (abs) touch.push({ abs, size });
-    }
-  }
-  const root = URL.canParse(pageUrl) ? new URL('/favicon.ico', pageUrl).href : null;
-  const small = touch.sort((a, b) => a.size - b.size).find(t => !hrefs.includes(t.abs))?.abs;
-  // 最後の /favicon.ico は、宣言したアイコンがどれも大きいサイト（NHK など）でも、その中の小さな1枚で付けるため
-  const first = hrefs.length ? hrefs.slice(0, SOURCE_ICON.max_candidates - (small ? 2 : 1)) : [root];
-  return [...new Set([...first, small, root].filter(Boolean))];
-}
-// 中身の先頭のバイトで種類を決める（Content-Type は信じない）。PNG・ICO・JPEG・GIF・WebP 以外は付けない
-function sourceIconType(b) {
-  const at = (i, ...v) => v.every((x, k) => b[i + k] === x);
-  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png';
-  if (at(0, 0x00, 0x00, 0x01, 0x00)) return 'image/x-icon';
-  if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
-  if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
-  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
-  return null;
-}
-// 画面へ渡す1枚に収める。.ico は上限以内のファイルでも、収まる画像のうち 32px に近いもの（16px の表示を高精細な画面でも
-// 粗くしない。同じ近さなら大きい方、同じ大きさなら色数の多い方）だけを選び（履歴に入る大きさを抑える）、PNG ならそのまま、
-// BMP なら1枚だけの .ico に詰め直す。目次が崩れていて取り出せない .ico も、上限以内ならブラウザは描けるのでそのまま渡す。
-// bytes は .ico なら先頭だけのこともある（範囲の外の画像は飛ばす）。ほかの種類は上限を超えたら付けない
-function sourceIconFit(bytes) {
-  const type = sourceIconType(bytes);
-  if (!type) return null;
-  const whole = bytes.length <= SOURCE_ICON.max_bytes ? { type, bytes } : null;
-  if (type !== 'image/x-icon' || bytes.length < 6) return whole;
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let best = null;
-  for (let i = 0, count = view.getUint16(4, true); i < count && 22 + 16 * i <= bytes.length; i++) {
-    const at = 6 + 16 * i, width = bytes[at] || 256, size = view.getUint32(at + 8, true), offset = view.getUint32(at + 12, true);
-    if (!size || offset < 6 + 16 * count || offset + size > bytes.length) continue;
-    const png = sourceIconType(bytes.subarray(offset, offset + 8)) === 'image/png';
-    if ((png ? size : 22 + size) > SOURCE_ICON.max_bytes) continue;
-    const score = Math.abs(width - 32), depth = png ? 32 : view.getUint16(at + 6, true);
-    if (!best || score < best.score || score === best.score && (width > best.width || width === best.width && depth > best.depth)) best = { score, width, depth, at, size, offset, png };
-  }
-  if (!best) return whole;
-  const image = bytes.subarray(best.offset, best.offset + best.size);
-  if (best.png) return { type: 'image/png', bytes: image };
-  const out = new Uint8Array(22 + best.size);
-  out.set([0, 0, 1, 0, 1, 0]); out.set(bytes.subarray(best.at, best.at + 12), 6);
-  new DataView(out.buffer).setUint32(18, 22, true); out.set(image, 22);
-  return { type: 'image/x-icon', bytes: out };
-}
-async function fetchSourceIcon(hrefs, signal) {
-  try {
-    return await searchDeadline(SOURCE_ICON.ms, async stop => {
-      for (const first of hrefs) {
-        let url = first;
-        for (let redirects = 0; url; redirects++) {
-          const res = await fetch(url, { redirect: 'manual', signal: stop, headers: { Accept: 'image/*', 'User-Agent': RESEARCH.user_agent } });
-          if ([301, 302, 303, 307, 308].includes(res.status)) {
-            res.body?.cancel().catch(() => {});
-            const next = res.headers.get('location');
-            url = redirects < SOURCE_ICON.max_redirects && next && URL.canParse(next, url) ? researchSourceUrl(new URL(next, url).href) : null;
-            continue;
-          }
-          if (!res.ok || !res.body) { res.body?.cancel().catch(() => {}); break; }
-          const reader = res.body.getReader(), chunks = [];
-          let size = 0;
-          try {
-            while (size <= SOURCE_ICON.fetch_bytes) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value); size += value.byteLength;
-            }
-          } finally { reader.cancel().catch(() => {}); }
-          if (!size) break;
-          // 上限を超えたファイルも先頭だけを渡す。大きな .ico（256px まで入れた 100KB 前後のもの）は目次と小さな画像が先頭にあり、
-          // 範囲の外の画像は sourceIconFit が飛ばす。.ico 以外は画面へ渡す上限より大きいので付かない
-          const length = Math.min(size, SOURCE_ICON.fetch_bytes), bytes = new Uint8Array(length); let at = 0;
-          for (const c of chunks) { if (at >= length) break; const part = c.subarray(0, length - at); bytes.set(part, at); at += part.byteLength; }
-          const icon = sourceIconFit(bytes);
-          if (icon) return `data:${icon.type};base64,${btoa(String.fromCharCode(...icon.bytes))}`;
-          break;
-        }
-      }
-      return null;
-    }, signal);
-  } catch { return null; }
-}
-// 出典ごとにアイコンを取り始め、呼んだ時点で取れている分だけを返す関数を返す（照合の完了を待たせない）
-function startSourceIcons(evidence, signal) {
-  const got = new Map(), byHost = new Map();
-  for (const e of evidence) {
-    if (!e.icons?.length) continue;
-    const host = new URL(e.url).hostname;
-    if (!byHost.has(host)) byHost.set(host, fetchSourceIcon(e.icons, signal));
-    byHost.get(host).then(icon => { if (icon) got.set(e.url, icon); });
-  }
-  return url => got.get(url);
-}
-
 function researchVerificationFormat(evidence) {
   return {type:'json_schema', json_schema:{name:'research_verified_reply', strict:true, schema:{type:'object', additionalProperties:false,
     properties:{parts:{type:'array', items:{type:'object', additionalProperties:false, properties:{label:{type:'string'}, text:{type:'string'},
@@ -2021,6 +1795,41 @@ function resolveVotes(opinions, round, send) {
   }
 }
 
+// 人格の入力だけを組み立てる。呼び出し・回数・期限はrunDiscussionで管理する。
+function discussionPersonas({ cards, motion, guide, music, pageChoice, personalization, langNote }) {
+  const personaPageNote = pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : '';
+  return PERSONAS.map(p => {
+    const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
+    return { ...base, system_prompt: withLangNote(base.system_prompt
+      + (guide ? '\n\n' + guide.persona : '')
+      + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
+      + personaPageNote + personalizationNote(personalization), langNote) };
+  });
+}
+
+// 判定のメモと上限を含む討議記録。本文・改行の順序は統合への入力契約として保つ。
+function discussionSynthesisText({ lastUser, lastRound, opinions, assessment, magiVerdict, motion, longDebate, maxRounds }) {
+  return `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
+    + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
+    + (magiVerdict ? `\n\n【共通の議題と確定した採決】${motion}\n${JSON.stringify(magiVerdict)}\n採決は変更せず、その根拠を説明する。` : '')
+    + (longDebate && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
+}
+
+function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, content }) {
+  return [
+    // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
+    { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + SYNTHESIZER.role[motion ? 'magi' : 'chat'] }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
+    ...(bias ? [{ role: 'system', content: bias }] : []),
+    ...(guide ? [{ role: 'system', content: guide.synth }] : []),
+    ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
+    ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
+    { role: 'system', content: SYNTHESIZER.voice_rules },
+    { role: 'system', content: SYNTHESIZER.constraint_rules + personalizationNote(personalization) },
+    ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
+    { role: 'user', content },
+  ];
+}
+
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
   pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, signal, send, log }) {
@@ -2036,14 +1845,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
   // 人格カード（サイト本文由来の「いまの中身」）とサイト案内を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-  const personaPageNote = pageChoice ? '\n\n' + siteSelectionNote(pageChoice) : '';
-  const personas = PERSONAS.map(p => {
-    const base = withCard({ ...p, magi: !!motion, system_prompt: p.system_prompt + '\n\n' + p.role[motion ? 'magi' : 'chat'] }, cards);
-    return { ...base, system_prompt: withLangNote(base.system_prompt
-      + (guide ? '\n\n' + guide.persona : '')
-      + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
-      + personaPageNote + personalizationNote(personalization), langNote) };
-  });
+  const personas = discussionPersonas({ cards, motion, guide, music, pageChoice, personalization, langNote });
 
   // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
   // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
@@ -2146,11 +1948,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   if (magiVerdict) send('verdict', magiVerdict);
 
   // --- 統合コール（推論あり・stream）---
-  // 判定のメモ（一致・対立とその扱い）と、上限で打ち切ったことも添える
-  const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
-    + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
-    + (magiVerdict ? `\n\n【共通の議題と確定した採決】${motion}\n${JSON.stringify(magiVerdict)}\n採決は変更せず、その根拠を説明する。` : '')
-    + (longDebate && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
+  const augmented = discussionSynthesisText({ lastUser, lastRound, opinions, assessment, magiVerdict, motion, longDebate, maxRounds });
   // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
   const bias = !motion && theme ? SYNTH_BIAS[theme] : null;
   if (bias) log('synthesizer_call', 'bias', theme);
@@ -2161,18 +1959,8 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   }
   pageChoice = withoutCurrentPage(pageChoice, page);
   const hasPages = pageChoice && pageChoice.results.length;
-  const synthMessages = [
-    // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
-    { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + SYNTHESIZER.role[motion ? 'magi' : 'chat'] }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
-    ...(bias ? [{ role: 'system', content: bias }] : []),
-    ...(guide ? [{ role: 'system', content: guide.synth }] : []),
-    ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
-    ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
-    { role: 'system', content: SYNTHESIZER.voice_rules },
-    { role: 'system', content: SYNTHESIZER.constraint_rules + personalizationNote(personalization) },
-    ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
-    { role: 'user', content: withImages(noteLang(augmented), lastImages) },
-  ];
+  const synthMessages = discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history,
+    content: withImages(noteLang(augmented), lastImages) });
 
   const answer = await synthesize({ env: upstream, messages: synthMessages, theme, signal, send, log });
   log('synthesizer_call', 'ok');
@@ -2652,6 +2440,18 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   return new Response(out, { headers: { ...headers, 'Content-Type': 'audio/mpeg', 'X-Speech-Cache': 'miss' } });
 }
 
+// POSTの入口と、認可時に必要な違いだけを定義する。GET・WebSocketはそれぞれの契約で扱う。
+const POST_ROUTES = new Map([
+  ['/magi2/chat', { handle: handleChat }],
+  ['/magi2/react', { handle: (request, env, _ctx, context) => handleReaction(request, env, context), reaction: true }],
+  ['/magi2/bug-report', { handle: (request, env, _ctx, context) => handleBugReport(request, env, context) }],
+  ['/magi2/site-search', { handle: handleSiteSearch, search: true }],
+  ['/search/api/rank', { handle: handleSiteSearch, search: true }],
+  ['/search/api/click', { handle: (request, env, _ctx, context) => handleSearchClick(request, env, context), search: true }],
+  // 止めているときは、認可より先に入口ごと無いものとして扱う。
+  ['/magi2/speech', { handle: handleSpeech, enabled: env => env.SPEECH_ENABLED === 'true' }],
+]);
+
 export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
@@ -2731,33 +2531,22 @@ export default {
     }
 
     // 存在する POST の入口だけを、chat / react 共通の条件で認可する。
-    const isChat = request.method === 'POST' && url.pathname === '/magi2/chat';
-    const isReaction = request.method === 'POST' && url.pathname === '/magi2/react';
-    const isBugReport = request.method === 'POST' && url.pathname === '/magi2/bug-report';
-    const isSiteSearch = request.method === 'POST' && url.pathname === '/magi2/site-search';
-    const isRankSearch=request.method==='POST' && url.pathname==='/search/api/rank';
-    const isSearchClick = request.method === 'POST' && url.pathname === '/search/api/click';
-    // 読み上げは SPEECH_ENABLED が "true" のときだけ開く（止めているときは入口ごと無い）
-    const isSpeech = request.method === 'POST' && url.pathname === '/magi2/speech' && env.SPEECH_ENABLED === 'true';
-    if (isSiteSearch || isRankSearch || isSearchClick) cors['Cache-Control'] = 'no-store';
-    if (!isChat && !isReaction && !isBugReport && !isSiteSearch && !isRankSearch && !isSearchClick && !isSpeech) {
+    const route = request.method === 'POST' ? POST_ROUTES.get(url.pathname) : null;
+    if (!route || route.enabled && !route.enabled(env)) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
+    if (route.search) cors['Cache-Control'] = 'no-store';
     if (!authorized) {
-      if (isSiteSearch || isRankSearch || isSearchClick) log('auth', 'rejected (site-search)');
-      else log('auth', isReaction ? 'rejected (react)' : 'rejected', origin);
+      if (route.search) log('auth', 'rejected (site-search)');
+      else log('auth', route.reaction ? 'rejected (react)' : 'rejected', origin);
       return httpError(401, {
         stage: 'auth', code: 'unauthorized',
-        message: isReaction ? '許可されていない Origin です'
+        message: route.reaction ? '許可されていない Origin です'
           : `許可されていない Origin です（許可: ${ALLOWED_ORIGINS.join(', ')}, localhost）。外部利用は x-api-key が必要です`,
         retryable: false,
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
-    if (isBugReport) return handleBugReport(request, env, context);
-    if (isSpeech) return handleSpeech(request, env, ctx, context);
-    if (isSearchClick) return handleSearchClick(request, env, context);
-    if (isSiteSearch || isRankSearch) return handleSiteSearch(request, env, ctx, context);
-    return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
+    return route.handle(request, env, ctx, context);
   },
 };
