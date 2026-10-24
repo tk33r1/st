@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.83",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "「バグを報告」に画像添付を追加しました。PNG・JPEG・WebPを3枚まで（1枚5MB・合計10MB）添付でき、サムネイル右上の×で外せます。",
+          "送信失敗時は本文と画像を保持し、同じ報告の再試行でメールの重複を抑えます。6.82のGPS対応を維持し、位置情報のFAQも更新しました。",
+          "画像添付と6.81の変更を合わせてレビュー・回帰検証し、Android版を6.83に更新しました。"
+        ],
+        "en": [
+          "Added image attachments to Report a bug: up to three PNG, JPEG or WebP images, 5 MB each and 10 MB total. Remove an image with the × at the top right of its thumbnail.",
+          "Failed submissions keep text and images, and retries suppress duplicate emails. Preserved GPS support from 6.82 and updated the location FAQ.",
+          "Reviewed image reporting together with the 6.81 changes, ran regression checks and updated Android to 6.83."
+        ]
+      }
+    },
+    {
       "version": "6.82",
       "date": "2026-10-25",
       "changes": {
