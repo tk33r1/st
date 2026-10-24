@@ -2209,6 +2209,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           await replyToMalice({ env: upstream, cards, classified, uiLanguage, theme, signal: stop.signal, send, log });
           if (stop.signal.aborted) throw searchFailure('cancelled');
           send('closed', { reason: 'malice' });
+          send('done', { request_id: requestId });
           close();
           return;
         }
