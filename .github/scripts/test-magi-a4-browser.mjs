@@ -34,10 +34,19 @@ try {
    await page.evaluate(({lang,theme})=>{if(typeof setLanguage==='function')setLanguage(lang);document.documentElement.lang=lang;document.documentElement.setAttribute('data-theme',theme);},{lang,theme});}
   await open();assert.equal(calls,0);
   await page.screenshot({path:resolve(out,label+'-splash.png'),animations:'disabled'});
-  assert.equal(await page.locator('.magi-sub #btn-info-agent').count(),1);
-  await page.locator('#btn-info-agent').click();await page.locator('#agent-info-panel').waitFor();
+  assert.equal(await page.locator('#btn-info-agent').count(),0);
+  await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click();
+  assert.equal(await page.locator('[data-about]').count(),4);
+  await page.screenshot({path:resolve(out,label+'-about.png'),animations:'disabled'});
+  for (const section of ['faq','terms','version']) {
+    await page.locator('[data-about="'+section+'"]').click();
+    await page.locator('.agent-about-back').click();
+    assert.equal(await page.locator('#agent-about-panel').count(),1);
+  }
+  await page.locator('[data-about="privacy"]').click();await page.locator('#agent-info-panel').waitFor();
+  await page.screenshot({path:resolve(out,label+'-privacy.png'),animations:'disabled'});
   await page.locator('#agent-info-panel .agent-panel-close').click();
-  await page.locator('#btn-versions-agent').click();await page.locator('.agent-versions-list section').first().waitFor();
+  await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await page.locator('.agent-versions-list section').first().waitFor();
   assert.equal(await page.locator('.agent-versions-list section').count(),data.versions.length);
   assert.equal(await page.locator('.agent-versions-list h3').first().textContent(),'ver '+data.versions[0].version);
   assert.equal(await page.locator('.agent-versions-title').textContent(),lang==='ja'?'更新履歴':'Release History');
@@ -48,12 +57,12 @@ try {
   await list.evaluate(e=>e.scrollTop=e.scrollHeight);
   assert.equal(await list.locator('h3').last().textContent(),lang==='ja'?'それ以前':'Earlier releases');
   if(path==='/'){await page.evaluate(()=>setLanguage('en'));assert.equal(await list.getAttribute('lang'),'en');assert.equal(await page.locator('.agent-versions-title').textContent(),'Release History');}
-  await page.locator('#agent-versions-panel .agent-panel-close').click();await page.locator('#btn-versions-agent').click();assert.equal(calls,1);
-  mode='xss';await open();await page.locator('#btn-versions-agent').click();await list.locator('section').first().waitFor();assert.equal(await list.locator('img').count(),0);assert.ok((await list.textContent()).includes('<img src=x onerror=alert(1)>'));
-  mode='micro';await open();await page.locator('#btn-versions-agent').click();await list.locator('section').first().waitFor();
+  await page.locator('#agent-versions-panel .agent-panel-close').click();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();assert.equal(calls,1);
+  mode='xss';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('section').first().waitFor();assert.equal(await list.locator('img').count(),0);assert.ok((await list.textContent()).includes('<img src=x onerror=alert(1)>'));
+  mode='micro';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('section').first().waitFor();
   assert.deepEqual(await list.locator('h3').allTextContents(),['6.1','6.09','6.01','6.0','5.99','5.91','5.9'].map(v=>'ver '+v));
-  mode='invalid';await open();await page.locator('#btn-versions-agent').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
-  mode='failure';await open();await page.locator('#btn-versions-agent').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
+  mode='invalid';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
+  mode='failure';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
   await page.locator('#agent-versions-panel .agent-panel-close').click();await page.locator('#agent-input').fill('履歴取得の失敗後の確認');await page.locator('#agent-send').click();await page.locator('.agent-turn .agent-reply').filter({hasText:'回答しました。'}).waitFor();
   assert.deepEqual(errors,[]);assert.ok(formats.length && formats.every(v=>v==='2'));results.push({label,pass:true,microVersions:true,format:2});console.log(label+' OK');await page.close();
  }

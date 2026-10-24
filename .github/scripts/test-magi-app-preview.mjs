@@ -61,14 +61,14 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
       await page.locator('#btn-more-agent').click();await page.locator('#btn-theme').click();const chosen=await page.locator('html').getAttribute('data-theme');
       await page.emulateMedia({colorScheme:scheme});assert.equal(await page.locator('html').getAttribute('data-theme'),chosen);
     }else assert.equal(await page.locator('html').getAttribute('data-theme'),'light');
-    await page.locator('#btn-info-agent').click();const list=page.locator('.agent-privacy-list');await list.waitFor();
+    await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();const list=page.locator('.agent-privacy-list');await list.waitFor();
     if(api==='ok'){
       await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();
-      assert.equal(await list.locator('strong').count(),0);assert.ok((await list.textContent()).includes('Site guidance'));assert.ok((await list.textContent()).includes('Web search'));assert.ok(!(await list.textContent()).includes('hidden'));
-      assert.equal(modelCalls.length,1);await page.locator('.agent-panel-close').click();await page.locator('#btn-info-agent').click();await page.waitForTimeout(50);assert.equal(modelCalls.length,1);
+      assert.equal(await list.locator('li').first().locator('strong').count(),0);assert.ok((await list.textContent()).includes('Site guidance'));assert.ok((await list.textContent()).includes('Web search'));assert.ok(!(await list.textContent()).includes('hidden'));
+      assert.equal(modelCalls.length,1);await page.locator('.agent-panel-close').click();await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await page.waitForTimeout(50);assert.equal(modelCalls.length,1);
     }else{
       await page.waitForTimeout(100);const text=await list.textContent();assert.match(text,/Could not load|取得できません/);assert.doesNotMatch(text,/OpenAI|DeepSeek|Google|Gemini|Future Co/);
-      if(api==='failure'){await page.locator('.agent-panel-close').click();modelMode='ok';await page.locator('#btn-info-agent').click();await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();assert.equal(modelCalls.length,2);}
+      if(api==='failure'){await page.locator('.agent-panel-close').click();modelMode='ok';await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();assert.equal(modelCalls.length,2);}
     }
     await page.locator('.agent-panel-close').click();
     await page.locator('.magi-node[data-codename="Shinya Takeda"]').click();const desc=page.locator('.magi-desc');await desc.waitFor();await page.waitForTimeout(100);

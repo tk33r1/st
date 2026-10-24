@@ -115,7 +115,8 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   Version 6.7 recognizes only `vX.Y`, so install 6.71 from the Android download
   link once. This manual APK release does not change the no-APK policy for
   autonomous daily releases.
-- System & Privacy comes from `/magi2/models` (10-minute cache). Paragraphs use
+- About MAGI in the more menu opens FAQ, Terms of Use, Privacy Policy and Version information. Android checks for APK updates from Version information; Web/PWA shows the current version and release history.
+- Privacy Policy comes from `/magi2/models` (10-minute cache). Paragraphs use
   `textContent`; all `requires` flags must be supported by this screen. A failed
   fetch or legacy Worker gives a recipient-neutral fallback instead of stale
   company names. Model labels use `provider_label`, and `themes` can show two LLMs.

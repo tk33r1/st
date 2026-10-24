@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.73';
+var APP_VERSION = '6.74';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -976,8 +976,8 @@ function agentHintHTML() { return '<div class="agent-splash">'
   + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
   + '</svg>'
   + '<div class="magi-title">MAGI</div>'
-  + '<div class="magi-sub">Multi-Agent Generative Intelligence<button type="button" id="btn-info-agent" class="magi-info-btn" title="' + tr('System & Privacy', 'システムとプライバシー') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Release History', '更新履歴') + '">ver ' + APP_VERSION + '</button>'
+  + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver ' + APP_VERSION + '</button>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -1978,9 +1978,8 @@ function flashReactBtn(btn, sym) {
 // ---- Click delegation -------------------------------------------------------
 agentLog.addEventListener('click', function (e) {
   if (e.target.closest('[data-install-agent]')) { showInstallPanel(); return; }
-  // splash: System & Privacy info button (next to the version string)
-  if (e.target.closest('#btn-versions-agent')) { e.preventDefault(); showVersionsPanel(); return; }
-      if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
+  // スプラッシュの版番号から更新履歴を開く
+  if (e.target.closest('#btn-versions-agent')) { e.preventDefault(); showVersionInfoPanel(); return; }
   // splash persona node
   var node = e.target.closest('.magi-node');
   if (node) {
@@ -2033,7 +2032,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;
@@ -2234,12 +2233,69 @@ function showVersionsPanel() {
   var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
   title.classList.add('agent-versions-title');
   fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
+  addAboutBack(panel);
 }
 // AGENT_VERSIONS_END
 
 
+// アプリ情報の導線。本文は文字で描き、Workerのプライバシー説明は従来どおり取得する。
+function aboutBody(html) {
+  return '<div class="agent-about-content">' + html + '</div>';
+}
+function addAboutBack(panel) {
+  if (!panel) return;
+  var back = document.createElement('button');
+  back.type = 'button'; back.className = 'agent-about-back';
+  back.textContent = tr('‹ Back', '‹ 戻る');
+  back.title = tr('Back to About MAGI', 'MAGIについてに戻る');
+  back.addEventListener('click', showAboutPanel);
+  panel.querySelector('.agent-panel-close').parentNode.insertBefore(back, panel.querySelector('.agent-panel-close'));
+}
+function showAboutPanel() {
+  var panel = makeAgentPanel('agent-about-panel', tr('About MAGI', 'MAGIについて'), aboutBody(
+    '<p class="agent-about-version">MAGI / ver ' + APP_VERSION + '</p><div class="agent-about-links">'
+    + [['faq', 'FAQ', 'FAQ'], ['terms', 'Terms of Use', '利用規約'], ['privacy', 'Privacy Policy', 'プライバシーポリシー'], ['version', 'Version information', 'バージョン情報']].map(function (item) {
+      return '<button type="button" data-about="' + item[0] + '"><span>' + tr(item[1], item[2]) + '</span><span aria-hidden="true">›</span></button>';
+    }).join('') + '</div>'));
+  if (!panel) return;
+  var actions = { faq: showFAQPanel, terms: showTermsPanel, privacy: showInfoPanel, version: showVersionInfoPanel };
+  panel.querySelectorAll('[data-about]').forEach(function (button) {
+    button.addEventListener('click', actions[button.dataset.about]);
+  });
+  panel.querySelector('[data-about]').focus();
+}
+function showFAQPanel() {
+  var rows = [
+    [tr('What is MAGI?', 'MAGIとは？'), tr('An experimental parody inspired by Evangelion’s MAGI. Three personas draw on Shinya Takeda’s personality and tk.st to discuss questions and produce a final answer.', '「新世紀エヴァンゲリオン」のMAGIに着想を得た実験的なパロディです。武田伸也の人格とtk.stをもとにした3人格が討議し、回答をまとめます。')],
+    [tr('Does every question start a debate?', 'どの質問でも討議する？'), tr('Factual questions and site guidance can be answered without debate. Eligible yes/no questions trigger a vote; add “without taking a vote” for an explanation only.', '事実の質問やサイト内の案内は、討議せず答えることがあります。賛否を問う質問では採決します。説明だけがほしいときは「採決なしで」と添えてください。')],
+    [tr('What are the limits?', '利用上限は？'), tr('Up to 1,000 characters and four images per message, and 60 requests a day. Replies use the last 12 messages (about six exchanges). Additional search and voice limits are described in the Privacy Policy.', '入力は1回1,000文字・画像4枚まで、1日60回までです。回答には直近12メッセージ（約6往復）を使います。検索や読み上げの追加上限はプライバシーポリシーで確認できます。')],
+    [tr('How do I save a conversation?', '会話を残すには？'), tr('Use “Save as Markdown” in the more menu. History is stored on your device; keep a separate copy of important chats.', '︙の「Markdownで保存」から書き出せます。履歴は端末に保存されるため、重要な会話は別途控えを残してください。')],
+    [tr('Where can I check for updates?', '更新はどこで確認する？'), tr('Open “Version information” under “About MAGI”. Android checks for app updates there; the Web and PWA versions show the current version and release history.', '「MAGIについて」の「バージョン情報」を開いてください。Androidではアプリの更新を確認でき、Web・PWAでは現在の版と更新履歴を確認できます。')]
+  ];
+  var panel = makeAgentPanel('agent-faq-panel', 'FAQ', aboutBody(rows.map(function (row) {
+    return '<details><summary>' + row[0] + '</summary><p>' + row[1] + '</p></details>';
+  }).join('')));
+  addAboutBack(panel);
+}
+function showTermsPanel() {
+  var panel = makeAgentPanel('agent-terms-panel', tr('Terms of Use', '利用規約'), aboutBody(
+    '<p>' + tr('MAGI is an experimental parody operated by Shinya Takeda on tk.st. It is not intended for practical work.', 'MAGIは武田伸也がtk.stで運営する実験的なパロディです。実務での利用は想定していません。') + '</p>'
+    + '<p>' + tr('AI answers may contain errors. Check important information yourself before using it.', 'AIの回答には誤りが含まれることがあります。重要な情報は、ご自身で確かめてから利用してください。') + '</p>'
+    + '<p>' + tr('Do not enter confidential or personal information. Do not use the service for illegal activity, infringement of others’ rights, discrimination or violence.', '機密情報や個人情報を入力しないでください。違法行為、他者の権利の侵害、差別や暴力を助長する目的で利用しないでください。') + '</p>'
+    + '<p>' + tr('Usage limits and reply restrictions apply. See the FAQ for usage and the Privacy Policy for recipients and data handling.', '利用回数や回答内容に制限があります。使い方はFAQ、入力の送信先やデータの扱いはプライバシーポリシーをご確認ください。') + '</p>'));
+  addAboutBack(panel);
+}
+function showVersionInfoPanel() {
+  if (nativeAndroid) { showAppUpdatePanel(); return; }
+  var panel = makeAgentPanel('agent-version-info-panel', tr('Version information', 'バージョン情報'), aboutBody(
+    '<p>MAGI / ver ' + APP_VERSION + '</p><p>' + tr('The Web and PWA versions fetch updates automatically. If a new version does not appear, finish your conversation and reopen the page or app. Updates may take time to appear.', 'Web・PWA版は自動で更新を取得します。新しい版が表示されない場合は、会話を終えてからページやアプリを開き直してください。反映に時間がかかることがあります。') + '</p><button type="button" class="agent-open-versions">' + tr('Release History', '更新履歴') + '</button>'));
+  if (!panel) return;
+  panel.querySelector('.agent-open-versions').addEventListener('click', showVersionsPanel);
+  addAboutBack(panel);
+}
+
 function showInfoPanel() {
-  var panel = makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'), '<ul class="agent-privacy-list"></ul>');
+  var panel = makeAgentPanel('agent-info-panel', tr('Privacy Policy', 'プライバシーポリシー'), '<ul class="agent-privacy-list"></ul>');
   if (!panel) return;
   var list = panel.querySelector('.agent-privacy-list'), lang = isJa() ? 'ja' : 'en';
   agentPrivacyNativeRows = nativeAndroid ? [
@@ -2250,6 +2306,7 @@ function showInfoPanel() {
   ] : [];
   renderAgentPrivacy(list, lang, undefined);
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
+  addAboutBack(panel);
 }
 
 // 設定パネルの「ホーム画面に追加」を受け持つ。ウィジェットは入口だけで、設定は持たない。
@@ -2502,10 +2559,7 @@ loadUsage();
 })();
 document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
 document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
-// APKはストアを通らないので、更新の入口をAndroidだけに置く。PWAは配信元の更新で入れ替わる。
-var updateCheckBtn = document.getElementById('btn-update-check');
-updateCheckBtn.hidden = !nativeAndroid;
-updateCheckBtn.addEventListener('click', showAppUpdatePanel);
+document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
 document.getElementById('agent-app-actions-divider').hidden = !(nativeAndroid || WEB_INSTALL);
 var installBtn = document.getElementById('btn-install-agent');
 installBtn.hidden = !WEB_INSTALL;
@@ -2571,7 +2625,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // APP_UPDATE_BEGIN
-// ネイティブだけが公開Releaseを確認する。自動は1日1回、︙の「アップデートを確認」は押すたび。遅延・失敗は会話に影響させない。
+// ネイティブだけが公開Releaseを確認する。自動は1日1回、「MAGIについて」の「バージョン情報」は押すたび。遅延・失敗は会話に影響させない。
 function releaseVersion(tag) {
   var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)([1-9])?$/.exec(tag);
   return match ? [Number(match[1]), match[2] + (match[3] || '')] : null;
@@ -2622,15 +2676,21 @@ async function checkAppUpdate() {
     banner.hidden = false;
   } catch (_) { /* 機内モード・保存不可・壊れた応答でも起動を続ける */ }
 }
-// ︙の「アップデートを確認」。新しい版はネイティブがAPKを落とし、SHA-256・署名・versionCodeを照合してからAndroidのインストーラーを開く。
+// 「MAGIについて」の「バージョン情報」。新しい版はネイティブがAPKを落とし、SHA-256・署名・versionCodeを照合してからAndroidのインストーラーを開く。
 // 照合用のSHA-256が無い・プラグインが無いときは、ダウンロードページへの案内だけにする。
 function showAppUpdatePanel() {
   var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MagiUpdate;
-  var panel = makeAgentPanel('agent-update-panel', tr('Check for Updates', 'アップデートの確認'),
+  var panel = makeAgentPanel('agent-update-panel', tr('Version information', 'バージョン情報'),
     '<p>' + tr('Installed: ', 'このアプリ: ') + 'ver ' + APP_VERSION + '</p><p id="app-update-status" role="status"></p>'
     + '<div class="native-settings-actions"><button type="button" id="app-update-action" hidden></button>'
     + '<a id="app-update-page" href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" hidden>' + tr('Open the download page', 'ダウンロードページを開く') + '</a></div>');
   if (!panel) return;
+  addAboutBack(panel);
+  var historyButton = document.createElement('button');
+  historyButton.type = 'button'; historyButton.className = 'agent-open-versions';
+  historyButton.textContent = tr('Release History', '更新履歴');
+  historyButton.addEventListener('click', showVersionsPanel);
+  panel.querySelector('.agent-panel-body').appendChild(historyButton);
   var status = panel.querySelector('#app-update-status'), action = panel.querySelector('#app-update-action'), page = panel.querySelector('#app-update-page');
   var release = null;
   function show(text, button, onclick, fallback) {

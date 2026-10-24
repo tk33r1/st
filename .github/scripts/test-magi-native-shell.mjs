@@ -119,7 +119,7 @@ try {
       // ︙の「アップデートの確認」: 同じ版なら最新と出し、新しい版はSHA-256付きでネイティブへ渡す。
       await page.locator('#btn-more-agent').click();
       assert.doesNotMatch(await page.locator('#agent-more-dropdown').innerText(), /\bSettings\b/);
-      await page.locator('#agent-more-dropdown #btn-update-check').click();
+      await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
       assert.match(await page.locator('#agent-more-dropdown').getAttribute('class'), /hidden/);
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent === 'You have the latest version.');
       assert.equal(await page.locator('#app-update-action').isVisible(), false);
@@ -128,7 +128,7 @@ try {
         assets: [{ name: 'magi-android.apk', digest: 'sha256:' + sha256 }] } }));
       await page.locator('.agent-panel-close').click();
       await page.locator('#btn-more-agent').click();
-      await page.locator('#btn-update-check').click();
+      await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent === 'Version 99.9 is available.');
       await page.locator('#app-update-action').click();
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
@@ -138,7 +138,7 @@ try {
       // 許可が反映されない場合に同じ設定画面へ誘導し続けない。
       for (const state of ['denied', 'profile']) {
         await page.evaluate(state => { window.updateResult = state; }, state);
-        await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+        await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
         await page.locator('#app-update-action').click();
         await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
         assert.equal(await page.locator('#app-update-action').isVisible(), false);
@@ -149,7 +149,7 @@ try {
       await page.evaluate(() => { window.updateNeedsMainProfile = true; });
       const installs = await page.evaluate(() => window.updateInstallCalls);
       for (let i = 0; i < 2; i++) {
-        await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+        await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
         await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
         assert.equal(await page.locator('#app-update-action').isVisible(), false);
         assert.equal(await page.evaluate(() => window.updateInstallCalls), installs);
@@ -157,7 +157,7 @@ try {
       }
       // 判定APIがない旧プラグインでも、通常の更新操作を維持する。
       await page.evaluate(() => { window.updateInfoFails = true; window.updateResult = 'installer'; });
-      await page.locator('#btn-more-agent').click(); await page.locator('#btn-update-check').click();
+      await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
       await page.locator('#app-update-action').click();
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
       await page.locator('.agent-panel-close').click();
