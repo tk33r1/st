@@ -1194,7 +1194,7 @@ function researchMessages(messages, verifiedNow, place = null) {
   const localDate = researchLocalDate(verifiedNow);
   const firstUser = messages.findIndex(m => m.role !== 'system');
   return [...messages.slice(0, firstUser),
-    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${place ? RESEARCH.place_prompt + placeName(place) + '。' + RESEARCH.place_rules + '\n' : ''}${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
+    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${researchPlaceNote(place)}${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
 }
 
 // 利用者の推定所在地（Cloudflare が通信元の IP から推定した市・地域・国）。精度は市や県の単位で、外れることがある。
@@ -1209,6 +1209,36 @@ function requestPlace(request) {
 }
 const placeName = place => [place.city, place.region !== place.city ? place.region : null, place.country].filter(Boolean).join(', ');
 
+// 座標は検索用の構造化データに限定する。表示名に混ぜず、通常会話・保存用の履歴にも足さない。
+function devicePlace(value, now = Date.now()) {
+  const fresh = value && (Object.hasOwn(value, 'age_ms')
+    ? Number.isFinite(value.age_ms) && value.age_ms >= 0 && value.age_ms <= 300000
+    : Number.isFinite(value.timestamp) && now - value.timestamp <= 300000 && value.timestamp <= now + 10000);
+  if (!value || typeof value !== 'object' || !Number.isFinite(value.latitude) || Math.abs(value.latitude) > 90
+    || !Number.isFinite(value.longitude) || Math.abs(value.longitude) > 180
+    || !Number.isFinite(value.accuracy) || value.accuracy < 0 || value.accuracy > 10000
+    || !fresh) return null;
+  const place = { source: 'device', coordinates: { latitude: Math.round(value.latitude * 10000) / 10000,
+    longitude: Math.round(value.longitude * 10000) / 10000, accuracy: Math.ceil(value.accuracy) } };
+  for (const key of ['city', 'region']) {
+    if (typeof value[key] === 'string' && /^[\p{L}\p{M}0-9 .'’-]{1,60}$/u.test(value[key].trim())) place[key] = value[key].trim();
+  }
+  if (typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country)) place.country = value.country;
+  if (typeof value.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(value.timezone)) place.timezone = value.timezone;
+  return place;
+}
+function researchPlaceNote(place) {
+  if (!place) return '';
+  if (place.source !== 'device') return RESEARCH.place_prompt + placeName(place) + '。' + RESEARCH.place_rules + '\n';
+  return RESEARCH.device_place_prompt + JSON.stringify({ place: placeName(place) || null, coordinates: place.coordinates })
+    + '。' + RESEARCH.place_rules + '\n';
+}
+function researchPlaceLabel(place, lang) {
+  if (place.source !== 'device') return (RESEARCH.place_label[lang] || RESEARCH.place_label.en).replace('{place}', placeName(place));
+  return (RESEARCH.device_place_label[lang] || RESEARCH.device_place_label.en)
+    .replace('{place}', placeName(place) || (lang === 'ja' ? '現在地' : 'current location')).replace('{accuracy}', place.coordinates.accuracy);
+}
+
 // 検索と照合で、同じ「日本の現在日付」を使う。
 function researchLocalDate(verifiedNow) {
   const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
@@ -1220,7 +1250,7 @@ function researchLocalDate(verifiedNow) {
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
 function researchRequestBody(cfg, messages, place = null) {
   // 推定所在地が使えない・無効の場合は、検索の会社にも所在地を指定しない。
-  const location = place ? { type: 'approximate', country: place.country, ...(place.city ? { city: place.city } : {}),
+  const location = place && place.country ? { type: 'approximate', country: place.country, ...(place.city ? { city: place.city } : {}),
     ...(place.region ? { region: place.region } : {}), timezone: place.timezone || RESEARCH.location.timezone } : null;
   if (cfg.provider === 'anthropic') return { ...requestBody(cfg, { messages, stream: true }),
     tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, ...(location ? { user_location: location } : {}) },
@@ -1547,7 +1577,8 @@ function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,re
   const input = [{role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')
       + `\nChecked at: ${verifiedNow.toISOString()} (UTC). Current date in Japan: ${researchLocalDate(verifiedNow)} (${RESEARCH.location.timezone}).`},
     {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence,
-      estimated_place:place ? placeName(place) : null})}];
+      estimated_place:place ? placeName(place) : null,
+      ...(place?.source === 'device' ? { device_coordinates: place.coordinates } : {})})}];
   return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
@@ -1676,7 +1707,7 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
       emitted = true;
       // 推定所在地を前提に答えたときは、確認日時の次の行にその前提を出す（違えば場所を書いて聞き直せるように）
       const checked = checkedAt + (result.placeUsed && place
-        ? (RESEARCH.place_label[replyLanguage?.code] || RESEARCH.place_label.en).replace('{place}', placeName(place)) + '\n' : '') + '\n';
+        ? researchPlaceLabel(place, replyLanguage?.code) + '\n' : '') + '\n';
       send('integrated',{delta:checked});
       if (signal.aborted) throw searchFailure('cancelled');
       send('integrated',{delta:result.text});
@@ -1891,6 +1922,7 @@ async function readChatInput(request) {
   const searchText = contentText(messages.at(-1).content);
   return { messages: withShared(messages), plainMessages, discussMessages: withShared(plainMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
     locationEnabled: body.location_enabled !== false,
+    devicePlace: body.location_enabled === false ? null : devicePlace(body.device_location),
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
@@ -2122,7 +2154,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
-  if (!input.locationEnabled) place = null;
+  place = input.locationEnabled ? input.devicePlace || place : null;
   const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {

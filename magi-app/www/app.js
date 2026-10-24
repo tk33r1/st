@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.81';
+var APP_VERSION = '6.82';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -1712,7 +1712,9 @@ async function agentSend(recovered, retry) {
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     var history = sendHistory();
     var outbound = prepareAgentMessages(history, sendContent);
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, location_enabled: locationServiceEnabled() }, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
+    var deviceLocation = !recovered ? await locationForMessage(ctrl.signal, turn) : null;
+    if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, location_enabled: locationServiceEnabled() }, locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
     if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
@@ -2367,10 +2369,24 @@ function initNativeWidgetSettings(panel, ja) {
   });
 }
 
-// 概略の所在地（IP由来）の利用設定。GPSの権限は要求しない。
+// Androidは送信時だけ測位する。オフなら端末・IPのどちらも検索に使わない。
 function locationServiceEnabled() {
   try { return localStorage.getItem('magi_location_enabled') !== '0'; }
   catch (_) { return false; }
+}
+async function locationForMessage(signal, turn) {
+  if (!nativeAndroid || !locationServiceEnabled() || !window.MagiNativeLocation) return null;
+  var value = await window.MagiNativeLocation.current(signal);
+  if (signal.aborted || !locationServiceEnabled()) return null;
+  if (!value) {
+    var notice = tr('Device location unavailable. Searches will use the city and region estimated from your IP address.', '端末の現在地を取得できなかったため、検索にはIPアドレスから推定した市・地域を使います。');
+    if (turn) {
+      var note = document.createElement('p'); note.className = 'agent-location-notice'; note.textContent = notice;
+      turn.appendChild(note);
+    }
+    announceAgent(notice);
+  }
+  return value;
 }
 // アプリ管理はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
 async function showNativeSettings() {
@@ -2379,7 +2395,7 @@ async function showNativeSettings() {
   var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
     '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p>'
     + '<div class="native-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="native-location-note">' + tr('Use the city and region estimated from your IP address for searches. GPS is not used. Changes apply to your next message.', 'IPアドレスから推定した市・地域を検索に使います。GPSは使いません。変更は次の送信から反映します。') + '</p>'
+    + '<p id="native-location-note">' + tr('Get your device location, preferring GPS, when sending a message. Android permission is required. Coordinates and city/region go to MAGI and the search provider for location-based searches. If unavailable, use your IP-estimated city/region and show a notice. Turning this off disables both. Changes apply to your next message.', '送信時にGPSを優先して端末の現在地を取得します。Androidの許可が必要です。場所に応じた検索のため、座標と市・地域をMAGIと検索する会社へ送ります。取得できなければIP由来の市・地域を使い、その旨を表示します。オフでは両方を使いません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
     + '<div class="native-setting" id="native-notification-setting" hidden><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" hidden></p>'
     + '<div id="native-widget-settings" hidden>'
     + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
@@ -2391,10 +2407,24 @@ async function showNativeSettings() {
   initNativeWidgetSettings(panel, ja);
   var locationToggle = panel.querySelector('#native-location-toggle');
   locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
-  locationToggle.addEventListener('click', function () {
+  locationToggle.addEventListener('click', async function () {
     try {
       localStorage.setItem('magi_location_enabled', locationServiceEnabled() ? '0' : '1');
       locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
+      panel.querySelector('#native-location-status').textContent = '';
+      if (window.MagiNativeLocation) {
+        if (!locationServiceEnabled()) { await window.MagiNativeLocation.cancel(); return; }
+        locationToggle.disabled = true;
+        try {
+          var permission = await window.MagiNativeLocation.permission(true);
+          if (panel.isConnected) panel.querySelector('#native-location-status').textContent = permission.precision === 'precise'
+            ? tr('Precise location is allowed.', '正確な位置情報の利用が許可されています。') : permission.precision === 'approximate'
+            ? tr('Android allows approximate location only.', 'Androidでおおよその位置情報のみ許可されています。')
+            : tr('Location permission is unavailable. Searches will use your IP-estimated city and region.', '位置情報が許可されていないため、検索にはIP由来の市・地域を使います。');
+        } catch (_) {
+          if (panel.isConnected) panel.querySelector('#native-location-status').textContent = tr('Could not check location permission. Searches will use your IP-estimated city and region.', '位置情報の許可を確認できなかったため、検索にはIP由来の市・地域を使います。');
+        } finally { locationToggle.disabled = false; }
+      }
     } catch (_) { announceAgent(tr('Could not save this setting.', '設定を保存できませんでした。')); }
   });
   if (nativeConversation) {

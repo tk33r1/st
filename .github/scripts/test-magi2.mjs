@@ -14,6 +14,7 @@ import './test-magi-native-history.mjs';
 import './test-magi-native-input.mjs';
 import './test-magi-native-background.mjs';
 import './test-magi-native-widget.mjs';
+import './test-magi-native-location.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => readFileSync(join(root, p), 'utf8');
@@ -6212,4 +6213,80 @@ test('位置情報サービス: オフならIPの所在地を検索と照合へ�
   assert.equal(w.searches[0].tools[0].user_location, undefined);
   assert.doesNotMatch(w.searches[0].instructions, /推定所在地/);
   assert.equal(JSON.parse(verifyCall(w).body.messages.at(-1).content).estimated_place, null);
+});
+
+const DEVICE_PLACE = () => ({ latitude: 34.123456, longitude: 135.123456, accuracy: 18.2, timestamp: Date.now(), country: 'JP', city: 'Synthetic City', region: 'Synthetic Region', timezone: 'Asia/Tokyo' });
+test('GPS: 端末の所在地はIPより優先し、検索・照合に座標を渡すが表示名には入れない', async () => {
+  const w = placeWorker(true);
+  const reply = sseEvents(await (await placeRequest(w, { ...a2Body('近くの店は？'), device_location: DEVICE_PLACE() }, TOKYO)).text())
+    .filter(([n]) => n === 'integrated').map(([, d]) => d.delta).join('');
+  assert.equal(w.searches[0].tools[0].user_location.city, 'Synthetic City');
+  assert.match(w.searches[0].instructions, /端末から取得した現在地/);
+  assert.match(w.searches[0].instructions, /"latitude":34.1235/);
+  assert.doesNotMatch(w.searches[0].instructions, /Shinjuku/);
+  const verified = JSON.parse(verifyCall(w).body.messages.at(-1).content);
+  assert.deepEqual(verified.device_coordinates, { latitude: 34.1235, longitude: 135.1235, accuracy: 19 });
+  assert.equal(verified.estimated_place, 'Synthetic City, Synthetic Region, JP');
+  assert.match(reply, /端末から取得した場所: Synthetic City, Synthetic Region, JP/);
+  assert.doesNotMatch(reply, /34\.1235|135\.1235|通信元からの推定/);
+});
+test('GPS: 地名へ変換できなくても座標で検索し、IPの別地域を混ぜない', async () => {
+  const w = placeWorker(true), { country, city, region, timezone, ...coords } = DEVICE_PLACE();
+  const reply = await (await placeRequest(w, { ...a2Body('近くの店は？'), device_location: coords }, TOKYO)).text();
+  assert.equal(w.searches[0].tools[0].user_location, undefined);
+  assert.match(w.searches[0].instructions, /"latitude":34.1235/);
+  assert.doesNotMatch(w.searches[0].instructions, /Shinjuku/);
+  assert.match(reply, /端末から取得した場所: 現在地/);
+});
+test('GPS: 不正・古い座標はIPへ戻し、無効設定では正しい座標も破棄する', async () => {
+  const w = worker();
+  for (const diff of [{ latitude: 91 }, { longitude: '135' }, { accuracy: -1 }, { accuracy: 10001 }, { timestamp: Date.now() - 360000 }, { timestamp: Date.now() + 20000 }])
+    assert.equal(w.ctx.devicePlace({ ...DEVICE_PLACE(), ...diff }), null);
+  const invalid = placeWorker(false);
+  await (await placeRequest(invalid, { ...a2Body('今日の天気は？'), device_location: { ...DEVICE_PLACE(), latitude: 91 } }, TOKYO)).text();
+  assert.equal(invalid.searches[0].tools[0].user_location.city, 'Shinjuku');
+  const disabled = placeWorker(false);
+  await (await placeRequest(disabled, { ...a2Body('今日の天気は？'), location_enabled: false, device_location: DEVICE_PLACE() }, TOKYO)).text();
+  assert.equal(disabled.searches[0].tools[0].user_location, undefined);
+  assert.doesNotMatch(disabled.searches[0].instructions, /34\.1235|Shinjuku|現在地/);
+  assert.equal(JSON.parse(verifyCall(disabled).body.messages.at(-1).content).device_coordinates, undefined);
+});
+test('GPS: Androidの送信本文だけに座標を添え、履歴へは保存せず、オフとWebでは取得しない', async () => {
+  for (const [android, enabled] of [[true, true], [true, false], [false, true]]) {
+    const c = client(mobile), bodies = []; let locations = 0;
+    c.ctx.nativeAndroid = android;
+    c.ctx.localStorage.getItem = () => enabled ? '1' : '0';
+    c.ctx.window.MagiNativeLocation = { async current() { locations++; return DEVICE_PLACE(); } };
+    c.ctx.openAgentChat = async (_, body) => { bodies.push(JSON.parse(body)); return { ok: true, body: {} }; };
+    c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: 'answer' }); h.done(); };
+    await c.ctx.agentSend();
+    assert.equal(c.errors.length, 0);
+    assert.equal(locations, android && enabled ? 1 : 0);
+    assert.equal(!!bodies[0].device_location, android && enabled);
+    assert.equal(bodies[0].location_enabled, enabled);
+    assert.doesNotMatch(JSON.stringify(c.ctx.agentHistory), /latitude|longitude|device_location/);
+  }
+});
+test('GPS: 取得失敗時に見える通知を出し、取得中にオフ又は停止したら座標を送らない', async () => {
+  const c = client(mobile), turn = element(), notices = [];
+  c.ctx.nativeAndroid = true; c.ctx.localStorage.getItem = () => '1'; c.ctx.announceAgent = text => notices.push(text);
+  c.ctx.window.MagiNativeLocation = { async current() { return null; } };
+  assert.equal(await c.ctx.locationForMessage(new AbortController().signal, turn), null);
+  assert.match(notices[0], /IP address/); assert.equal(turn.children.length, 1);
+  for (const stop of ['off', 'abort']) {
+    let resolvePosition, entered;
+    const ready = new Promise(r => { entered = r; });
+    c.ctx.localStorage.getItem = () => '1';
+    c.ctx.window.MagiNativeLocation.current = () => { entered(); return new Promise(r => { resolvePosition = r; }); };
+    const ctrl = new AbortController(), result = c.ctx.locationForMessage(ctrl.signal, turn);
+    await ready;
+    if (stop === 'off') c.ctx.localStorage.getItem = () => '0'; else ctrl.abort();
+    resolvePosition(DEVICE_PLACE()); assert.equal(await result, null);
+  }
+});
+
+test('GPS: 経過時間があれば端末とサーバーの時計差を使わず、不正な経過時間は旧時刻へ逃がさない', () => {
+  const w = worker();
+  for (const shift of [-86400000, 86400000]) assert.ok(w.ctx.devicePlace({ ...DEVICE_PLACE(), age_ms: 100 }, Date.now() + shift));
+  for (const age_ms of [-1, 300001, '100', null]) assert.equal(w.ctx.devicePlace({ ...DEVICE_PLACE(), age_ms }), null);
 });
