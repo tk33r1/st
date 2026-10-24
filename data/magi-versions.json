@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.76",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "情報画面のCSS名がサイト案内リンクと衝突していた問題を修正し、意図しない緑枠と緑の本文色を解消しました。",
+          "Androidの安全領域を含む上余白を復元し、タイトルと戻るボタンがステータスバーに重ならないよう修正しました。実機のワイヤレスデバッグで明暗14画面を確認し、Android版を6.76に更新しました。"
+        ],
+        "en": [
+          "Fixed a CSS class collision with site-guidance links that caused unwanted green borders and green body text on information pages.",
+          "Restored Android safe-area padding so titles and back buttons stay below the status bar. Verified 14 light/dark screens on a device over wireless debugging and updated the Android app to 6.76."
+        ]
+      }
+    },
+    {
       "version": "6.75",
       "date": "2026-10-24",
       "changes": {
