@@ -219,7 +219,10 @@ try {
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
       await closePanels(page);
     } else {
-      assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
+      await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+      assert.equal(await page.locator('#personal-enabled').isVisible(), true);
+      assert.equal(await page.locator('#native-location-toggle').count(), 0);
+      await closePanels(page);
       await page.locator('#btn-history-agent').click();
       assert.equal(await page.locator('#btn-update-check').isVisible(), false);
       await closePanels(page);

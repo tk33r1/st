@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "7.0",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "一時チャットの案内を画面中央にまとめ、「詳細を見る」で保存・外部AIの学習利用などの説明を開けるようにしました。点線の吹き出し＋から通常チャットへ戻れます。",
+          "一時チャットごとにパーソナライズの適用を選べます。通常の設定を変えず、選択は一時チャットの終了時に破棄します。",
+          "パーソナライズのオン／オフをトグル化し、呼び方・カスタム指示とともに「アプリ管理」に統合しました。"
+        ],
+        "en": [
+          "Temporary chats now show a centered introduction and a Learn more dialog explaining storage and external AI policies. Use the dotted bubble with a plus to return to normal chat.",
+          "Choose personalization for each temporary chat without changing normal settings. The temporary choice is discarded when the chat ends.",
+          "Moved personalization into App management with a toggle, preferred name and custom instructions."
+        ]
+      }
+    },
+    {
       "version": "6.9",
       "date": "2026-10-25",
       "changes": {

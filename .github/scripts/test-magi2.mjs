@@ -51,6 +51,45 @@ test('一時/設定: 一時の最初にsessionを返し、タイトルも設定�
   assert.equal(JSON.stringify(w.calls).includes('PRIVATE-'), false);
 });
 
+test('一時/設定: 明示した一時パーソナライズだけを適用し、タイトル・D1本文保存を増やさない', async () => {
+  const w = worker(); w.env.DB = counts();
+  const body = { privacy_contract: 1, conversation_mode: 'temporary', temporary_personalization: true,
+    personalization: { enabled: true, preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-INSTRUCTION' }, messages: [{ role: 'user', content: 'q' }] };
+  const stream = sseEvents(await (await w.request('/magi2/chat', body)).text());
+  assert.equal(stream[0][1].personalization_applied, true);
+  assert.equal(stream.some(([name]) => name === 'title'), false);
+  const withSettings = w.calls.filter(call => JSON.stringify(call).includes('PRIVATE-INSTRUCTION'));
+  assert.ok(withSettings.length >= 4, '3人格と統合には設定を適用する');
+  assert.ok(w.calls.filter(call => call.response_format?.json_schema?.name === 'debate_judge').every(call => !JSON.stringify(call).includes('PRIVATE-')));
+  assert.equal(JSON.stringify([...w.env.DB.rows]).includes('PRIVATE-'), false);
+  const { temporary_personalization, ...oldBody } = body;
+  assert.equal(w.ctx.chatPrivacy(oldBody).personalization, null);
+  assert.equal(w.ctx.chatPrivacy({ ...body, temporary_personalization: false }).personalization, null);
+});
+
+test('一時/設定: 一時の選択は型・契約・上限を検査し、停止中や未対応なら要求を送らない', async () => {
+  const w = worker(); w.env.DB = counts();
+  const base = { privacy_contract: 1, conversation_mode: 'temporary', temporary_personalization: true, messages: [{ role: 'user', content: 'q' }] };
+  for (const body of [{ ...base, conversation_mode: 'normal' }, { temporary_personalization: true }, { ...base, temporary_personalization: 'true' },
+    { ...base, personalization: { enabled: true, custom_instructions: 'x'.repeat(2001) } }]) assert.throws(() => w.ctx.chatPrivacy(body));
+  w.env.PERSONALIZATION_ENABLED = 'false';
+  assert.equal(w.ctx.privacyFeatures(w.env).temporary_personalization, false);
+  assert.equal((await w.request('/magi2/chat', base)).status, 409);
+  assert.equal(w.env.DB.rows.size, 0); assert.equal(w.calls.length, 0);
+  for (const source of [home, mobile]) {
+    const ctx = vm.createContext({ AbortController, setTimeout: () => 0, clearTimeout,
+      localStorage: { getItem: () => JSON.stringify({ version: 1, enabled: false, preferred_name: 'LOCAL', custom_instructions: '' }) },
+      fetch: async () => Response.json({ features: { privacy_contract: 1, temporary_chat: true, personalization: true } }), AGENT_API: '/magi2/chat' });
+    vm.runInContext(between(source, '// AGENT_EPHEMERAL_BEGIN', '// AGENT_EPHEMERAL_END'), ctx);
+    ctx.agentPrivacyState.mode = 'temporary'; ctx.agentPrivacyState.temporaryPersonalization = true;
+    await assert.rejects(ctx.agentPrivacyRequest(), /privacy_unavailable/, '旧Workerに設定を黙って落として送らない');
+    ctx.fetch = async () => Response.json({ features: { privacy_contract: 1, temporary_chat: true, personalization: true, temporary_personalization: true } });
+    const body = await ctx.agentPrivacyRequest();
+    assert.equal(body.temporary_personalization, true); assert.equal(body.personalization.preferred_name, 'LOCAL');
+    assert.equal(body.personalization.enabled, true, '通常のオフ設定から独立して選べる');
+  }
+});
+
 test('一時/設定: 通常では人格と統合だけに呼び方・指示を加え、タイトル・分類・判定から分離する', async () => {
   const w = worker();
   const stream = sseEvents(await (await w.request('/magi2/chat', { privacy_contract: 1, conversation_mode: 'normal',
@@ -208,6 +247,7 @@ function nativeShell(capacitor) {
       getElementById() { return { classList: { contains() { return state.hidden; }, add() { state.hidden = true; calls.push('menu'); } } }; },
     },
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
+    closeAgentPrivacyDialog() { if (!state.dialog) return false; state.dialog = false; calls.push('dialog'); return true; },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
     backAgentPage() { if (!state.page) return false; state.page = false; calls.push('page'); return true; },
@@ -226,7 +266,8 @@ test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
 
 test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メニュー・評価のメニューを閉じてから履歴または終了へ進む', () => {
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
-  state.attach = true; state.page = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
+  state.dialog = true; state.attach = true; state.page = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'dialog');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'page');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
@@ -2167,7 +2208,7 @@ function client(src, isHome = false) {
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
-  if (!isHome) vm.runInContext(between(src, 'function locationServiceEnabled()', '// アプリ管理はAndroidだけ。'), ctx);
+  if (!isHome) vm.runInContext(between(src, 'function locationServiceEnabled()', '// 共通のアプリ管理にAndroid専用'), ctx);
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLARIFY_BEGIN', '// AGENT_CLARIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLOSED_BEGIN', '// AGENT_CLOSED_END'), ctx);

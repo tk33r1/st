@@ -117,7 +117,7 @@ try {
   assert.deepEqual(restoredImage, { count: 1, file: originalName, jpeg: true });
   assert(storage.files.has('DATA:magi/images/' + originalName)); results.push('interrupted image restores the original for a full-size retry');
   // 受信列を全削除の対象に含め、通知拒否の状態を画面へ出す。
-  await p.evaluate(() => showNativeSettings()); assert.match(await p.locator('#native-notification-status').innerText(), /Notifications are off/);
+  await p.evaluate(() => showAgentSettings()); assert.match(await p.locator('#native-notification-status').innerText(), /Notifications are off/);
   await p.locator('#native-notification-status button').click(); assert.ok(calls.some(c => c[0] === 'settings'));
   p.on('dialog', dialog => dialog.accept()); await p.locator('#history-clear').click(); await p.waitForFunction(() => agentHistory.length === 0);
   assert.equal(runs.size, 0); results.push('notification settings and deletion of pending streams');

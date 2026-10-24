@@ -8,14 +8,17 @@ const invalid = () => {
 };
 export function privacyFeatures(env) {
   return { privacy_contract: 1, temporary_chat: env.TEMPORARY_CHAT_ENABLED !== 'false',
-    personalization: env.PERSONALIZATION_ENABLED !== 'false', temporary_speech: env.TEMPORARY_CHAT_ENABLED !== 'false' };
+    personalization: env.PERSONALIZATION_ENABLED !== 'false',
+    temporary_personalization: env.TEMPORARY_CHAT_ENABLED !== 'false' && env.PERSONALIZATION_ENABLED !== 'false', temporary_speech: env.TEMPORARY_CHAT_ENABLED !== 'false' };
 }
 export function chatPrivacy(body) {
-  const declared = ['privacy_contract', 'conversation_mode', 'personalization'].some(key => Object.hasOwn(body, key));
+  const declared = ['privacy_contract', 'conversation_mode', 'personalization', 'temporary_personalization'].some(key => Object.hasOwn(body, key));
   if (declared && (body.privacy_contract !== 1 || !['normal', 'temporary'].includes(body.conversation_mode))) invalid();
   const mode = declared ? body.conversation_mode : 'normal';
+  if (Object.hasOwn(body, 'temporary_personalization') && (mode !== 'temporary' || typeof body.temporary_personalization !== 'boolean')) invalid();
   let personalization = null;
-  if (mode === 'normal' && body.personalization != null) {
+  // 旧画面の一時要求は従来どおり設定を破棄する。新画面の明示選択だけを受け付ける。
+  if ((mode === 'normal' || body.temporary_personalization === true) && body.personalization != null) {
     const p = body.personalization;
     if (typeof p !== 'object' || Array.isArray(p) || typeof p.enabled !== 'boolean') invalid();
     if (p.enabled) {
@@ -26,7 +29,8 @@ export function chatPrivacy(body) {
       if (name.trim() || instructions.trim()) personalization = { preferred_name: name.trim(), custom_instructions: instructions.trim() };
     }
   }
-  return { privacyContract: declared, conversationMode: mode, personalization };
+  return { privacyContract: declared, conversationMode: mode, personalization,
+    ...(body.temporary_personalization === true ? { temporaryPersonalization: true } : {}) };
 }
 export function personalizationNote(settings) {
   return settings ? '\n\n' + PERSONALIZATION.prompt + '\n' + JSON.stringify(settings) : '';

@@ -487,3 +487,5 @@ AndroidのGPS対応APKは、OSの許可を得た送信時の `device_location`�
 ## 一時チャット・パーソナライズ（6.9）
 
 設計と検証は[設計書](magi2一時チャット・パーソナライズ設計書.md)・[検証計画](magi2一時チャット・パーソナライズ検証計画.md)、実装の確認範囲は[記録](一時チャット・パーソナライズ実装記録.md)を参照。`privacy.js`が要求の契約と設定の検査を担う。`TEMPORARY_CHAT_ENABLED=false`・`PERSONALIZATION_ENABLED=false`で個別停止でき、未設定時は有効。一時音声はv2署名でモード・言語・本文を固定し、Cache APIを使用しない。D1のスキーマ変更は不要。
+
+一時チャットの明示パーソナライズは、`privacy_contract:1`・`conversation_mode:"temporary"`に`temporary_personalization:true`と`personalization`を付ける。従来の一時要求では設定を破棄し、新画面は機能通知`temporary_personalization:true`を確認してから送る。`session.personalization_applied`で適用の一致も検査する。設定を適用しても会話・評価・音声の非保存経路は変わらず、選択自体は画面メモリだけに保持する。

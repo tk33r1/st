@@ -436,7 +436,8 @@ keytool -genkeypair -v -keystore magi-app/release.jks -alias magi \
 
 ## アプリ管理の設定とバグ報告
 
-Androidのアプリ管理では「位置情報サービス」と「通知」をトグルで操作する。
+Web・PWA・Android共通で、︙メニューの「アプリ管理」にパーソナライズをまとめる。オン／オフはトグルで操作し、呼び方・カスタム指示と一緒に「保存」で確定する。キャンセルや戻るでは変更せず、オフにしても入力済みの呼び方・指示を保持する。一時チャットは初期状態でパーソナライズなしとし、中央の選択ボタン（会話開始後は︙の「一時チャットの設定」）から、その会話だけの適用を選ぶ。選択は端末に保存せず、終了時に破棄する。
+Androidでは同じ画面に「位置情報サービス」と「通知」のトグル、ウィジェット・履歴の操作も表示する。
 Android 6.82以降の位置情報はGPSを優先する。設定を端末内に保存し、次の送信から検索への利用を切り替える（詳細は末尾の「Android GPS」）。
 通知設定はAndroidのSharedPreferencesに保存し、オフでは到着通知と自動の通知許可要求を止める。
 オンにすると必要に応じてOSの許可を求め、拒否済みの場合はAndroidの通知設定を開く。戻ったときに実際の許可状態を読み直す。
@@ -464,4 +465,4 @@ Web・PWA・Android共通のメニューに「バグを報告」を置く。最�
 
 ## Temporary chat and personalization (6.9)
 
-The dotted speech bubble starts an empty temporary conversation and restores the previous normal chat when turned off. Temporary chat bypasses history, original-image storage, ratings, sharing and native durable receipt; it keeps copy, retry and supported read-aloud playback. Personalization is off by default and stores the preferred name and custom instructions per device/origin for subsequent normal messages only. See [release verification](6.9公開評価20261025.md).
+The dotted speech bubble starts an empty temporary conversation and restores the previous normal chat when turned off. Temporary chat bypasses history, original-image storage, ratings, sharing and native durable receipt; it keeps copy, retry and supported read-aloud playback. Personalization is off by default and stores the preferred name and custom instructions per device/origin. Temporary chats start without personalization, but their own settings sheet can explicitly apply the saved name and instructions without changing normal-chat settings. The temporary choice stays in memory and resets when the chat ends. The empty-chat view contains a centered notice and a details modal; the dotted speech bubble gains a plus to return to normal chat. See [release verification](6.9公開評価20261025.md).

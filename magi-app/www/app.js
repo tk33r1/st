@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.9';
+var APP_VERSION = '7.0';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -982,7 +982,7 @@ var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
 // 言語を切り替えたら描き直すので、毎回組み立てる
 // AGENT_EPHEMERAL_BEGIN
 // トップとアプリで同じ契約を使う。会話の保存と設定の保存を分離する。
-var agentPrivacyState = { mode: 'normal', preparing: false, preflight: null, background: false, switching: false, attachmentJobs: 0, suspended: null, normalWrite: false, features: null };
+var agentPrivacyState = { mode: 'normal', temporaryPersonalization: false, preparing: false, preflight: null, background: false, switching: false, attachmentJobs: 0, suspended: null, normalWrite: false, features: null };
 function agentTemporary() { return !!agentPrivacyState && agentPrivacyState.mode === 'temporary'; }
 function cancelAgentPrivacyPreparation() { if (agentPrivacyState.preflight) agentPrivacyState.preflight.abort(); }
 function agentPrivateStorage(key) { return !!agentPrivacyState && (agentPrivacyState.renderOnly || agentTemporary() && !agentPrivacyState.normalWrite) && /^(magi_current_|magi_saved_sessions$)/.test(key); }
@@ -1018,17 +1018,24 @@ function saveAgentPersonalization(value) {
   // 容量不足時も履歴を削減しない。書き込み成功までは有効設定を変更しない。
   localStorage.setItem('magi_personalization_v1', JSON.stringify(next));
 }
-function showPersonalizationPanel() {
-  var current = refreshAgentPersonalization(); if (!current) return;
-  var panel = makeAgentPanel('agent-personalization-panel', tr('Personalization', 'パーソナライズ'),
-    '<form class="agent-personalization-form"><label><input id="personal-enabled" type="checkbox" role="switch"> ' + tr('Enable personalization', 'パーソナライズを有効にする') + '</label>'
+function showAgentSettings() {
+  var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
+    '<div class="agent-settings-content"><form class="agent-personalization-form"><div class="agent-setting"><span id="personal-enabled-label">' + tr('Personalization', 'パーソナライズ') + '</span><button id="personal-enabled" type="button" role="switch" aria-checked="false" aria-labelledby="personal-enabled-label" aria-describedby="personal-note"><span></span></button></div>'
     + '<label for="personal-name">' + tr('What should MAGI call you?', '何とお呼びすればよいですか？') + '</label><input id="personal-name" type="text" autocomplete="off"><small id="personal-name-count"></small>'
     + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '</label><textarea id="personal-instructions" rows="5" autocomplete="off"></textarea><small id="personal-instructions-count"></small>'
-    + '<p>' + tr('Saved on this device. Applied from your next normal message. Never used in temporary chats.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットには適用しません。') + '</p>'
-    + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form>');
+    + '<p id="personal-note">' + tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。') + '</p>'
+    + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form><div id="agent-native-settings"></div></div>');
   if (!panel) return;
+  if (typeof initNativeSettings === 'function') initNativeSettings(panel).catch(function () { announceAgent(tr('Could not open app settings.', 'アプリの設定を開けませんでした。')); });
   var form = panel.querySelector('form'), enabled = panel.querySelector('#personal-enabled'), name = panel.querySelector('#personal-name'), instructions = panel.querySelector('#personal-instructions'), status = panel.querySelector('#personal-status');
-  enabled.checked = current.enabled; name.value = current.preferred_name; instructions.value = current.custom_instructions;
+  var current = refreshAgentPersonalization();
+  if (!current) {
+    status.textContent = tr('Could not read personalization settings. Close this screen, check storage and try again.', 'パーソナライズ設定を読み込めませんでした。この画面を閉じて保存先を確認し、再試行してください。');
+    form.querySelectorAll('input, textarea, button:not([data-personal="cancel"])').forEach(function (control) { control.disabled = true; });
+    panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
+    return;
+  }
+  enabled.setAttribute('aria-checked', String(current.enabled)); name.value = current.preferred_name; instructions.value = current.custom_instructions;
   var loaded = JSON.stringify(current);
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
@@ -1039,19 +1046,82 @@ function showPersonalizationPanel() {
       // 別タブの更新を未確認のまま上書きしない。読込失敗も入力を残して知らせる。
       if (JSON.stringify(readAgentPersonalization()) !== loaded) { status.textContent = tr('Settings changed in another tab. Reopen this panel.', '別のタブで設定が変更されました。この画面を開き直してください。'); return; }
       var next = deleting ? { version: 1, enabled: false, preferred_name: '', custom_instructions: '' }
-        : { version: 1, enabled: enabled.checked, preferred_name: name.value, custom_instructions: instructions.value };
-      saveAgentPersonalization(next); closeAgentPanels();
+        : { version: 1, enabled: enabled.getAttribute('aria-checked') === 'true', preferred_name: name.value, custom_instructions: instructions.value };
+      saveAgentPersonalization(next); closeAgentPanels(); document.getElementById('btn-more-agent').focus();
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
+  enabled.addEventListener('click', function () { enabled.setAttribute('aria-checked', String(enabled.getAttribute('aria-checked') !== 'true')); });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
-  panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); });
+  panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
   panel.querySelector('[data-personal="delete"]').addEventListener('click', function () { save(true); });
-  enabled.focus();
+}
+function agentTemporaryPersonalizationLabel() {
+  return agentPrivacyState.temporaryPersonalization ? tr('Personalized', 'パーソナライズ') : tr('Without personalization', 'パーソナライズなし');
+}
+function agentTemporaryHintHTML() {
+  return '<div class="agent-splash agent-temporary-splash"><h2>' + tr('Temporary chat', '一時チャット') + '</h2>'
+    + '<p>' + tr('This chat is not saved in your history.', 'このチャットは履歴に保存されません。') + '</p>'
+    + '<button type="button" data-temporary-details>' + tr('Learn more', '詳細を見る') + '</button>'
+    + '<button type="button" data-temporary-personalization aria-haspopup="dialog">' + agentTemporaryPersonalizationLabel() + ' ⌄</button></div>';
+}
+function closeAgentPrivacyDialog() {
+  var dialog = document.getElementById('agent-privacy-dialog');
+  if (!dialog) return false;
+  dialog.close(); dialog.remove(); return true;
+}
+function makeAgentPrivacyDialog(title, content) {
+  closeAgentPrivacyDialog();
+  var opener = document.activeElement, dialog = document.createElement('dialog');
+  dialog.id = 'agent-privacy-dialog'; dialog.className = 'agent-privacy-dialog'; dialog.setAttribute('aria-labelledby', 'agent-privacy-dialog-title');
+  dialog.innerHTML = '<div class="agent-privacy-dialog-head"><h2 id="agent-privacy-dialog-title">' + title + '</h2>'
+    + '<button type="button" data-privacy-close aria-label="' + tr('Close', '閉じる') + '">✕</button></div>' + content;
+  dialog.querySelector('[data-privacy-close]').addEventListener('click', closeAgentPrivacyDialog);
+  dialog.addEventListener('click', function (event) { if (event.target === dialog) closeAgentPrivacyDialog(); });
+  dialog.addEventListener('close', function () {
+    dialog.remove();
+    if (document.getElementById('agent-privacy-dialog')) return;
+    var focus = opener && opener.isConnected && opener.getClientRects().length ? opener : document.getElementById('btn-temporary-agent');
+    if (focus) focus.focus({ preventScroll: true });
+  });
+  document.body.appendChild(dialog); dialog.showModal();
+  return dialog;
+}
+function showAgentTemporaryDetails() {
+  if (!agentTemporary()) return;
+  var dialog = makeAgentPrivacyDialog(tr('About temporary chats', '一時チャットについて'),
+    '<div class="agent-temporary-details"><h3>' + tr('Not saved in MAGI', 'MAGIには会話を保存しません') + '</h3><p>'
+    + tr('Messages and images stay only in this open chat. They are not saved to MAGI history, device files or its database. Ending the chat or reloading discards them. Daily usage counters remain.', 'メッセージと画像は、開いているチャットの中だけに保持します。MAGIの履歴・端末ファイル・データベースには保存せず、終了や再読み込みで破棄します。利用制限用の日ごとの回数などは記録します。') + '</p>'
+    + '<h3>' + tr('Model training and external providers', 'モデル学習と外部サービス') + '</h3><p>'
+    + tr('MAGI does not store these conversations for model training. Conversations still go to external AI providers under their own retention and training policies. MAGI cannot guarantee that all providers exclude training.', 'MAGIでは、この会話をモデル学習用に保存しません。ただし会話は外部AIへ送られ、各社の保存・学習方針が適用されます。すべての送信先で学習に使われないとは保証できません。') + '</p>'
+    + '<p>' + tr('Read aloud sends the reply to Fish Audio, whose terms permit training use. Temporary audio is not cached by MAGI. Copying leaves text on the clipboard. Ratings and sharing are unavailable.', '読み上げでは回答本文をFish Audioに送ります。同社の規約は学習利用を認めています。一時チャットの音声はMAGIでキャッシュしません。コピー先には内容が残ります。評価・共有は利用できません。') + '</p>'
+    + '<h3>' + tr('Your personalization choice', 'パーソナライズを選べます') + '</h3><p>'
+    + tr('Choose whether this chat uses the preferred name and custom instructions saved in App management. This choice lasts only for this temporary chat and does not change normal-chat settings. Changes apply to the next message; messages already sent are not recalled.', 'アプリ管理に保存した呼び方・カスタム指示を、このチャットで使うか選べます。この選択は一時チャットの間だけ有効で、通常チャットの設定は変えません。変更は次の送信から反映し、すでに送った内容は取り消しません。') + '</p></div>');
+  dialog.querySelector('[data-privacy-close]').focus();
+}
+function showAgentTemporarySettings() {
+  if (!agentTemporary() || agentBusy || agentPrivacyState.preparing || agentPrivacyState.switching) return;
+  var dialog = makeAgentPrivacyDialog(tr('Temporary chat settings', '一時チャットの設定'),
+    '<form id="agent-temporary-settings-form"><fieldset><legend>' + tr('Personalization for this chat', 'このチャットのパーソナライズ') + '</legend>'
+    + '<label><input type="radio" name="temporary-personalization" value="on"><span><strong>' + tr('Personalized', 'パーソナライズ') + '</strong><small>'
+    + tr('Use the preferred name and custom instructions saved in App management.', 'アプリ管理に保存した呼び方・カスタム指示を参照します。') + '</small></span></label>'
+    + '<label><input type="radio" name="temporary-personalization" value="off"><span><strong>' + tr('Without personalization', 'パーソナライズなし') + '</strong><small>'
+    + tr('Do not use the saved name or custom instructions in the next request.', '次の送信では保存した呼び方・カスタム指示を使用しません。') + '</small></span></label></fieldset>'
+    + '<p>' + tr('Only for this chat, from your next message. Normal-chat settings stay unchanged.', 'このチャットの次の送信から適用します。通常チャットの設定は変わりません。') + '</p>'
+    + '<button type="submit">' + tr('Done', '完了') + '</button></form>');
+  var selected = dialog.querySelector('input[value="' + (agentPrivacyState.temporaryPersonalization ? 'on' : 'off') + '"]');
+  selected.checked = true; selected.focus();
+  dialog.querySelector('form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!agentTemporary() || agentBusy || agentPrivacyState.preparing) return;
+    agentPrivacyState.temporaryPersonalization = dialog.querySelector('input:checked').value === 'on';
+    syncAgentPrivacyUI(); closeAgentPrivacyDialog(); announceAgent(agentTemporaryPersonalizationLabel());
+  });
 }
 async function agentPrivacyRequest() {
-  var temporary = agentTemporary(), settings = temporary ? null : readAgentPersonalization();
+  var temporary = agentTemporary(), useSettings = !temporary || agentPrivacyState.temporaryPersonalization;
+  var settings = useSettings ? readAgentPersonalization() : null;
   if (!temporary && !settings.enabled) return null;
   var ctrl = new AbortController(); agentPrivacyState.preflight = ctrl;
   var timer = setTimeout(function () { ctrl.abort(); }, 10000);
@@ -1061,9 +1131,11 @@ async function agentPrivacyRequest() {
     var features = (await response.json()).features;
     if (ctrl.signal.aborted) throw new Error('privacy_cancelled');
     if (!features || features.privacy_contract !== 1 || !(temporary ? features.temporary_chat : features.personalization)) throw new Error('privacy_unavailable');
+    if (temporary && agentPrivacyState.temporaryPersonalization && (!features.temporary_personalization || !features.personalization)) throw new Error('privacy_unavailable');
     agentPrivacyState.features = features;
     var body = { privacy_contract: 1, conversation_mode: temporary ? 'temporary' : 'normal' };
-    if (!temporary) body.personalization = { enabled: true, preferred_name: settings.preferred_name, custom_instructions: settings.custom_instructions };
+    if (temporary && agentPrivacyState.temporaryPersonalization) body.temporary_personalization = true;
+    if (!temporary || agentPrivacyState.temporaryPersonalization) body.personalization = { enabled: true, preferred_name: settings.preferred_name, custom_instructions: settings.custom_instructions };
     return body;
   } finally {
     clearTimeout(timer);
@@ -1113,7 +1185,8 @@ function agentEndTemporary() {
   agentLastSend = null; attachments = []; agentHistory = []; agentReplyLanguage = null; currentSessionId = null;
   agentInput.value = ''; agentBusy = false; agentDead = false; agentClosed = false;
   if (typeof agentShared !== 'undefined') { agentShared = null; renderSharedDocument(); }
-  agentLog.replaceChildren(); agentPrivacyState.mode = 'normal';
+  closeAgentPrivacyDialog();
+  agentLog.replaceChildren(); agentPrivacyState.mode = 'normal'; agentPrivacyState.temporaryPersonalization = false;
   if (typeof nativeHistory !== 'undefined' && nativeHistory) nativeHistory.resumeWrites();
   syncAgentPrivacyUI();
   // 通常へ戻す場合は呼び出し側が先に退避を受け取る。破棄は終了処理に集約する。
@@ -1160,7 +1233,7 @@ async function toggleAgentTemporary() {
         closed: agentClosed, dead: agentDead, draft: agentInput.value, attachments: attachments.slice(), lastSend: agentLastSend, persisted: !!row, revision: row ? JSON.stringify(row) : null,
         shared: typeof agentShared !== 'undefined' ? agentShared : null };
       dropAgentRequest(); if (agentSpeechPlayer) agentSpeechPlayer.stop();
-      agentPrivacyState.mode = 'temporary'; currentSessionId = 'temporary_' + Date.now();
+      agentPrivacyState.mode = 'temporary'; agentPrivacyState.temporaryPersonalization = false; currentSessionId = 'temporary_' + Date.now();
       agentHistory = []; attachments = []; agentReplyLanguage = null; agentBusy = false; agentDead = false; agentClosed = false; agentLastSend = null;
       if (typeof agentShared !== 'undefined') { agentShared = null; renderSharedDocument(); }
       agentInput.value = ''; agentLog.replaceChildren(); setAgentTitle(''); renderHistoryToLog([]);
@@ -1174,13 +1247,12 @@ function syncAgentPrivacyUI() {
   if (!agentPrivacyState) return;
   var temporary = agentTemporary(), button = document.getElementById('btn-temporary-agent');
   if (button) {
-    button.setAttribute('aria-pressed', String(temporary)); button.title = temporary ? tr('End temporary chat', '一時チャットを終了（内容を破棄）') : tr('Temporary chat', '一時チャット');
+    button.setAttribute('aria-pressed', String(temporary)); button.title = temporary ? tr('Return to normal chat', '通常チャットに戻る') : tr('Temporary chat', '一時チャット');
     button.setAttribute('aria-label', button.title); button.disabled = !!(agentBusy || agentPrivacyState.preparing || agentPrivacyState.switching || agentPrivacyState.attachmentJobs);
   }
   var host = agentLog.parentNode;
   host.classList.toggle('agent-temporary', temporary);
-  var notice = document.getElementById('agent-temporary-notice');
-  if (!notice) { notice = document.createElement('p'); notice.id = 'agent-temporary-notice'; notice.setAttribute('role', 'status'); agentLog.before(notice); }
+  if (temporary && !agentBusy && !agentLog.children.length) agentLog.innerHTML = agentTemporaryHintHTML();
   var recovery = document.getElementById('agent-normal-recovery');
   if (!recovery) {
     recovery = document.createElement('p'); recovery.id = 'agent-normal-recovery';
@@ -1194,8 +1266,14 @@ function syncAgentPrivacyUI() {
     recovery.appendChild(retry); agentLog.before(recovery);
   }
   recovery.hidden = temporary || !agentPrivacyState.recovery || agentPrivacyState.recovery.deleted;
-  notice.hidden = !temporary;
-  notice.textContent = tr('Temporary chat · Not saved · Personalization off. Reloading discards this chat. Copying leaves text on the clipboard; read aloud sends the reply to the voice service.', '一時チャット · 履歴に保存されません · パーソナライズ不適用。再読み込みで失われます。コピー先には内容が残り、読み上げ時は回答本文を音声サービスへ送ります。');
+  var settingsButton = document.getElementById('btn-temporary-settings-agent');
+  if (settingsButton) { settingsButton.hidden = !temporary; settingsButton.disabled = button && button.disabled; }
+  var choice = agentLog.querySelector('[data-temporary-personalization]');
+  if (choice) {
+    var label = agentTemporaryPersonalizationLabel() + ' ⌄';
+    if (choice.textContent !== label) choice.textContent = label;
+    choice.disabled = !!(button && button.disabled);
+  }
   ['btn-share-agent','btn-export-agent'].forEach(function (id) { var el = document.getElementById(id); if (el) el.hidden = temporary; });
   var voice = document.getElementById('agent-voice'); if (voice) { if (temporary) { if (!voice.hidden) voice.dataset.privacyAvailable = 'true'; voice.hidden = true; } else if (voice.dataset.privacyAvailable === 'true') voice.hidden = false; }
   var camera = document.querySelector('#agent-attach-menu [data-source="camera"]'); if (camera) camera.hidden = temporary || !(typeof nativeAndroid !== 'undefined' && nativeAndroid || matchMedia('(pointer: coarse)').matches);
@@ -1207,7 +1285,12 @@ function syncAgentPrivacyUI() {
 function initAgentPrivacy() {
   refreshAgentPersonalization();
   document.getElementById('btn-temporary-agent').addEventListener('click', function () { toggleAgentTemporary().catch(function () { announceAgent(tr('Could not switch chats safely.', '会話を安全に切り替えられませんでした。')); }); });
-  document.getElementById('btn-personalization-agent').addEventListener('click', showPersonalizationPanel);
+  document.getElementById('btn-settings-agent').addEventListener('click', showAgentSettings);
+  document.getElementById('btn-temporary-settings-agent').addEventListener('click', showAgentTemporarySettings);
+  agentLog.addEventListener('click', function (event) {
+    if (event.target.closest('[data-temporary-details]')) showAgentTemporaryDetails();
+    else if (event.target.closest('[data-temporary-personalization]')) showAgentTemporarySettings();
+  });
   window.addEventListener('storage', function (event) {
     if (event.key === 'magi_personalization_v1' || event.key === null) refreshAgentPersonalization();
     var saved = agentPrivacyState.suspended;
@@ -1242,7 +1325,7 @@ function initAgentPrivacy() {
 setTimeout(initAgentPrivacy, 0);
 // AGENT_EPHEMERAL_END
 
-function agentHintHTML() { return '<div class="agent-splash">'
+function agentHintHTML() { return agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
   // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
   + '<defs><g id="magi-emblem-frames"><polygon points="43,14 77,14 77,44 68,54 52,54 43,44"/><polygon points="18,58 40,58 52,68 52,98 18,98"/><polygon points="80,58 102,58 102,98 68,98 68,68"/></g><mask id="magi-emblem-links-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120"><rect width="120" height="120" fill="white"/><use href="#magi-emblem-frames" fill="black" stroke="black" stroke-width="2"/></mask></defs>'
@@ -1924,7 +2007,7 @@ async function agentSend(recovered, retry) {
         if (privacyGeneration !== agentGen) return;
         announceAgent(error && error.message === 'personalization_read_unavailable'
           ? tr('Could not read personalization settings, so nothing was sent. Your draft is kept. Check storage and try again.', 'パーソナライズ設定を読み込めないため送信しませんでした。入力は保持しています。保存先を確認して再試行してください。')
-          : tr('This feature is unavailable. Your draft and settings are kept. Retry, or turn personalization off for a normal chat.', 'この機能を確認できません。入力と設定は保持しています。再試行するか、通常チャットのパーソナライズを明示的にオフにしてください。'));
+          : tr('This feature is unavailable. Your draft and settings are kept. Retry, or check this chat’s personalization setting.', 'この機能を確認できません。入力と設定は保持しています。再試行するか、このチャットのパーソナライズ設定を確認してください。'));
         return;
       }
       finally { agentPrivacyState.preparing = false; syncAgentPrivacyUI(); }
@@ -2350,7 +2433,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-personalization-panel', 'agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;
@@ -2706,22 +2789,21 @@ async function locationForMessage(signal, turn) {
   }
   return value;
 }
-// アプリ管理はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
-async function showNativeSettings() {
+// 共通のアプリ管理にAndroid専用の設定と履歴操作を追加する。
+async function initNativeSettings(panel) {
   if (!nativeAndroid) return;
   var ja = isJa();
-  var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
+  panel.querySelector('#agent-native-settings').innerHTML =
     '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p>'
-    + '<div class="native-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
+    + '<div class="agent-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
     + '<p id="native-location-note">' + tr('Get your device location, preferring GPS, when sending a message. Android permission is required. Coordinates and city/region go to MAGI and the search provider for location-based searches. If unavailable, use your IP-estimated city/region and show a notice. Turning this off disables both. Changes apply to your next message.', '送信時にGPSを優先して端末の現在地を取得します。Androidの許可が必要です。場所に応じた検索のため、座標と市・地域をMAGIと検索する会社へ送ります。取得できなければIP由来の市・地域を使い、その旨を表示します。オフでは両方を使いません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
-    + '<div class="native-setting" id="native-notification-setting" hidden><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" hidden></p>'
+    + '<div class="agent-setting" id="native-notification-setting" hidden><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" hidden></p>'
     + '<div id="native-widget-settings" hidden>'
     + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
     + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
     + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
     + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
-    + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>');
-  if (!panel) return;
+    + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>';
   initNativeWidgetSettings(panel, ja);
   var locationToggle = panel.querySelector('#native-location-toggle');
   locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
@@ -3117,7 +3199,6 @@ function showBugReportPanel() {
 
 document.getElementById('btn-bug-report-agent').addEventListener('click', showBugReportPanel);
 document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
-document.getElementById('agent-app-actions-divider').hidden = !(nativeAndroid || WEB_INSTALL);
 var installBtn = document.getElementById('btn-install-agent');
 installBtn.hidden = !WEB_INSTALL;
 installBtn.addEventListener('click', showInstallPanel);
@@ -3412,8 +3493,6 @@ async function initHistoryStorage() {
     }
     historyLoading = false; appRoot.inert = false;
     announceAgent(migrated ? '' : tr('Could not move your history. Chats are opened from the previous storage. Check free storage and reopen the app.', '履歴を移し替えられませんでした。会話は元の保存先から開いています。空き容量を確かめ、アプリを開き直してください。'));
-    var settings = document.getElementById('btn-settings-agent');
-    if (settings) { settings.hidden = false; settings.addEventListener('click', showNativeSettings); }
     nativeInputReady = initNativeInputs().catch(function () { announceAgent('Could not initialize sharing or voice input. / 共有・音声入力を準備できませんでした。'); });
     if (window.MagiNativeWidget && nativeHistory.active) {
       nativeWidget = await window.MagiNativeWidget.create({ cap: window.Capacitor });
@@ -3442,6 +3521,7 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
   new MutationObserver(syncBars).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   syncBars();
   app.addListener('backButton', function (event) {
+    if (closeAgentPrivacyDialog()) return;
     // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
     if (closeAttachMenu()) return;
     if (backAgentPage()) return;

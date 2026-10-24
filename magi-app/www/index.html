@@ -464,24 +464,52 @@
     #agent-bug-form button:disabled { opacity: .45; cursor: default; }
     #agent-bug-form textarea:focus-visible, #agent-bug-form button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 
-    .native-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
-    .native-setting [role="switch"] { width: 48px; height: 28px; flex: 0 0 48px; padding: 3px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--secondary-color); cursor: pointer; }
-    .native-setting [role="switch"] span { display: block; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform .15s; }
-    .native-setting [role="switch"][aria-checked="true"] { background: var(--primary-color); }
-    .native-setting [role="switch"][aria-checked="true"] span { transform: translateX(20px); }
-    .native-setting [role="switch"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
-    .native-setting [role="switch"]:disabled { opacity: .45; }
   /* 一時会話とパーソナライズ。既存のパネル・テーマを使う。 */
 #btn-temporary-agent { min-width: 44px; min-height: 44px; color: inherit; background: transparent; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 #btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; border-radius: 8px; }
 #btn-temporary-agent:focus-visible { outline: 2px solid currentColor; }
 #btn-temporary-agent:disabled { opacity: .4; cursor: default; }
-#agent-temporary-notice { font-size: 11px; line-height: 1.6; padding: 8px 12px; margin: 0; border-bottom: 1px dashed currentColor; }
-#agent-temporary-notice[hidden], .agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
-.agent-personalization-form { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin: 0 auto; padding: 16px; font-size: 14px; }
+.agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
+.temporary-plus { display: none; stroke-dasharray: none; }
+#btn-temporary-agent[aria-pressed="true"] .temporary-plus { display: block; }
+.agent-temporary-splash h2 { margin: 0 0 8px; font: inherit; font-size: 22px; font-weight: 600; }
+.agent-temporary-splash p { margin: 0; font-size: 14px; line-height: 1.7; color: var(--secondary-color); }
+.agent-temporary-splash button { display: block; margin: 12px auto 0; min-height: 44px; padding: 6px 10px; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.agent-temporary-splash [data-temporary-details] { text-decoration: underline; color: var(--secondary-color); }
+.agent-temporary-splash [data-temporary-personalization] { margin-top: 18px; font-weight: 600; font-size: 15px; }
+.agent-temporary-splash button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.agent-privacy-dialog { box-sizing: border-box; width: min(520px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 48px); overflow-y: auto; margin: auto; padding: 24px; color: var(--text-color); background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 18px; font-family: inherit; font-size: 14px; line-height: 1.7; }
+.agent-privacy-dialog::backdrop { background: rgba(0,0,0,.6); }
+.agent-privacy-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.agent-privacy-dialog h2 { margin: 0; font: inherit; font-size: 20px; font-weight: 600; }
+.agent-privacy-dialog h3 { margin: 20px 0 6px; font: inherit; font-weight: 600; }
+.agent-privacy-dialog p { margin: 8px 0; }
+.agent-privacy-dialog button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 10px; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.agent-privacy-dialog [data-privacy-close] { flex: 0 0 44px; padding: 0; border: 0; }
+.agent-privacy-dialog fieldset { margin: 0; padding: 0; border: 0; }
+.agent-privacy-dialog legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.agent-privacy-dialog label { display: flex; align-items: center; gap: 16px; padding: 14px 0; cursor: pointer; }
+.agent-privacy-dialog input[type="radio"] { flex: 0 0 22px; width: 22px; height: 22px; margin: 0; accent-color: var(--primary-color); }
+.agent-privacy-dialog strong { display: block; font-size: 17px; }
+.agent-privacy-dialog small { display: block; margin-top: 4px; color: var(--secondary-color); line-height: 1.7; }
+.agent-privacy-dialog button[type="submit"] { width: 100%; margin-top: 20px; font-weight: 600; color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
+.agent-privacy-dialog :focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+@media (max-width: 600px) { .agent-privacy-dialog { width: 100%; max-height: calc(100dvh - 16px); margin: auto 0 0; border-radius: 22px 22px 0 0; padding-bottom: max(24px, env(safe-area-inset-bottom)); } }
+.agent-settings-content { min-height: 0; overflow-y: auto; padding: 4px; }
+.agent-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
+.agent-personalization-form .agent-setting { margin-top: 0; }
+.agent-setting [role="switch"] { position: relative; box-sizing: border-box; width: 52px; height: 44px; flex: 0 0 52px; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+.agent-setting [role="switch"]::before { content: ''; position: absolute; left: 2px; top: 8px; width: 48px; height: 28px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 20px; background: var(--secondary-color); }
+.agent-setting [role="switch"] span { position: absolute; left: 6px; top: 12px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform .15s; }
+.agent-setting [role="switch"][aria-checked="true"]::before { background: var(--primary-color); }
+.agent-setting [role="switch"][aria-checked="true"] span { transform: translateX(20px); }
+.agent-setting [role="switch"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.agent-setting [role="switch"]:disabled { opacity: .45; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .agent-setting [role="switch"] span { transition: none; } }
+.agent-personalization-form { display: flex; flex-direction: column; gap: 12px; margin: 0; font-size: 14px; }
 .agent-personalization-form input[type="text"], .agent-personalization-form textarea { box-sizing: border-box; width: 100%; padding: 10px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; font: inherit; }
 .agent-personalization-form .personal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.agent-personalization-form button { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
+.agent-personalization-form button:not([role="switch"]) { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -502,13 +530,12 @@
           </button>
           <div id="agent-usage-pop" class="header-pop hidden" role="dialog" aria-label="Today's usage" data-ja-aria="今日の利用"></div>
         </div>
-        <button id="btn-temporary-agent" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/></svg></button>
+        <button id="btn-temporary-agent" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path class="temporary-plus" d="M9 11h6m-3-3v6"/></svg></button>
 <div class="kebab-wrap">
           <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options" data-ja-title="その他の操作" data-ja-aria="その他の操作">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div id="agent-more-dropdown" class="header-pop hidden">
-<button id="btn-personalization-agent" type="button" class="dock-menu-item"><span class="menu-label" data-ja="パーソナライズ">Personalization</span></button>
 
             <button id="btn-share-agent" type="button" title="Share / copy conversation" data-ja-title="会話を共有・コピー" disabled>
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -527,17 +554,18 @@
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
               <span id="btn-lang-label" class="menu-label">Switch language</span>
             </button>
-            <hr id="agent-app-actions-divider" hidden />
+            <hr id="agent-app-actions-divider" />
             <button id="btn-install-agent" type="button" hidden>
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 15h6M12 12v6"/></svg>
               <span class="menu-label" data-ja="ホーム画面に追加">Add to Home Screen</span>
               <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
             </button>
-            <button id="btn-settings-agent" type="button" hidden>
+            <button id="btn-settings-agent" type="button">
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9m4 0h3M4 17h3m4 0h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
-              <span class="menu-label" data-ja="アプリ管理を開く">Open app management</span>
+              <span class="menu-label" data-ja="アプリ管理">App management</span>
               <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
             </button>
+<button id="btn-temporary-settings-agent" type="button" class="dock-menu-item" hidden><span class="menu-label" data-ja="一時チャットの設定">Temporary chat settings</span></button>
             <button id="btn-bug-report-agent" type="button" class="dock-menu-item">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 2 3m6-3-2 3M4 9h4m8 0h4M3 15h5m8 0h5M5 21l4-4m10 4-4-4"/><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M8 10h8m-4 0v10"/></svg>
                   <span class="menu-label" data-ja="バグを報告">Report a bug</span>
@@ -601,6 +629,6 @@
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
-  <script src="app.js?v=20261025_9"></script>
+  <script src="app.js?v=20261025_11"></script>
 </body>
 </html>

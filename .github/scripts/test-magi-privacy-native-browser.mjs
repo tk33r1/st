@@ -6,12 +6,12 @@ import { chromium } from 'playwright';
 import { nativeFilesystemFixture } from './magi-native-filesystem-fixture.mjs';
 
 const root = process.cwd(), disk = nativeFilesystemFixture(), normalRequests = [], temporaryRequests = [];
-const features = { privacy_contract: 1, temporary_chat: true, personalization: true, temporary_speech: false, speech: false };
+const features = { privacy_contract: 1, temporary_chat: true, personalization: true, temporary_personalization: true, temporary_speech: false, speech: false };
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 const classification = { version: 1, intent: 'research', mode: 'fact', fresh: 'no', votable: 'no', site_pages: 'no',
   magi_candidate: false, reply_language: { version: 1, code: 'ja', source: 'ui' } };
 function stream(body) {
-  return (body.privacy_contract ? event('session', { conversation_mode: body.conversation_mode, personalization_applied: false }) : '')
+  return (body.privacy_contract ? event('session', { conversation_mode: body.conversation_mode, personalization_applied: !!body.personalization }) : '')
     + event('classification', classification) + event('integrated', { delta: 'SYNTHETIC-ANSWER' }) + event('done', {});
 }
 const runs = new Map();
@@ -33,6 +33,7 @@ try {
     catch (error) { return { error: { message: error.message, code: error.code } }; }
   });
   await context.addInitScript(() => {
+    localStorage.setItem('magi_personalization_v1', JSON.stringify({ version: 1, enabled: false, preferred_name: 'NATIVE-NAME', custom_instructions: 'NATIVE-CUSTOM' }));
     localStorage.setItem('lang', 'ja'); sessionStorage.setItem('magi_transport', 'sse');
     window.privacyAppListeners = {}; window.privacyCapabilityAborts = 0;
     const call = async (method, args) => {
@@ -48,6 +49,7 @@ try {
     window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins: {
       Filesystem: Object.fromEntries(['stat', 'readFile', 'writeFile', 'rename', 'deleteFile', 'readdir', 'getUri'].map(name => [name, args => call('fs:' + name, args)])),
       MagiConversation: Object.fromEntries(['information', 'pending', 'notificationPreference', 'begin', 'read', 'cancel', 'acknowledge'].map(name => [name, args => call(name, args)])),
+      SystemBars: { setStyle: async () => {} },
       App: { addListener: async (name, callback) => { (window.privacyAppListeners[name] ||= []).push(callback); return { remove() {} }; }, getLaunchUrl: async () => null }
     } };
   });
@@ -105,6 +107,16 @@ try {
   assert.equal(temporaryRequests.length, 1);
   assert.equal(temporaryRequests[0].conversation_mode, 'temporary');
   assert.equal('shared' in temporaryRequests[0], false);
+  await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+  await page.evaluate(() => window.privacyAppListeners.backButton.forEach(callback => callback({ canGoBack: false })));
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  assert.equal(await page.locator('#btn-temporary-agent').getAttribute('aria-pressed'), 'true');
+  await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+  await page.locator('input[value="on"]').check(); await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+  await send('PERSONALIZED-TEMPORARY');
+  assert.equal(temporaryRequests.at(-1).temporary_personalization, true);
+  assert.equal(temporaryRequests.at(-1).personalization.preferred_name, 'NATIVE-NAME');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('magi_personalization_v1')).enabled), false);
   await page.evaluate(() => nativeHistory.flush());
   assert.equal(JSON.stringify([...disk.files]), beforeTemporary, '一時は端末ファイルを変更しない');
   await page.locator('#btn-temporary-agent').click();

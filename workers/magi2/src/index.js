@@ -1979,7 +1979,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   if (input.privacyContract) { const originalLog = log; log = stage => originalLog(stage); }
   const features = privacyFeatures(env);
   if (input.privacyContract && (input.conversationMode === 'temporary' && !features.temporary_chat
-    || input.personalization && !features.personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
+    || input.personalization && !features.personalization
+    || input.temporaryPersonalization && !features.temporary_personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
   place = input.locationEnabled ? input.devicePlace || place : null;
   const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;

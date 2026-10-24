@@ -38,10 +38,10 @@ try {
         removeAttribute() {}
       };
     });
-    const requests = [], speechRequests = [], pageErrors = []; let featureStatus = 200, badSession = false;
+    const requests = [], speechRequests = [], pageErrors = []; let featureStatus = 200, badSession = false, temporaryPersonalization = true;
     await context.route('**/*', async route => {
       const request = route.request(), url = new URL(request.url());
-      if (url.pathname === '/magi2/models') return route.fulfill({ status: featureStatus, json: { features: { privacy_contract: 1, temporary_chat: true, personalization: true, temporary_speech: true, speech: true } } });
+      if (url.pathname === '/magi2/models') return route.fulfill({ status: featureStatus, json: { features: { privacy_contract: 1, temporary_chat: true, personalization: true, temporary_personalization: temporaryPersonalization, temporary_speech: true, speech: true } } });
       if (url.pathname === '/magi2/speech') {
         speechRequests.push(JSON.parse(request.postData()));
         return route.fulfill({ contentType: 'audio/mpeg', headers: { 'X-Speech-Parts': '1', 'Cache-Control': 'no-store' }, body: Buffer.from([0]) });
@@ -67,14 +67,40 @@ try {
     await page.goto('https://tk.st/' + (mobile ? 'magi-app/www/' : ''));
     if (!mobile && await page.locator('#agentdock').evaluate(el => el.classList.contains('collapsed'))) await page.locator('[data-act="agent"]').click();
     await page.locator('#btn-temporary-agent').waitFor();
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-personalization-agent').click();
-    await page.locator('#personal-enabled').check(); await page.locator('#personal-name').fill('合成さん'); await page.locator('#personal-instructions').fill('SYNTHETIC-CUSTOM');
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    assert.equal(await page.locator('#btn-personalization-agent').count(), 0);
+    assert.equal(await page.locator('#agent-settings-panel h2').textContent(), mobile ? 'アプリ管理' : 'App management');
+    const toggle = page.getByRole('switch', { name: /^(Personalization|パーソナライズ)$/ });
+    assert.equal(await toggle.getAttribute('aria-checked'), 'false');
+    await toggle.focus(); await page.keyboard.press('Space');
+    assert.equal(await toggle.getAttribute('aria-checked'), 'true');
+    await page.keyboard.press('Enter');
+    assert.equal(await toggle.getAttribute('aria-checked'), 'false');
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-settings-off.png`), animations: 'disabled' });
+    await toggle.click();
+    assert.equal(await toggle.getAttribute('aria-checked'), 'true');
+    assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), null, '保存前は設定を変えない');
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-settings-on.png`), animations: 'disabled' });
+    await page.locator('#personal-name').fill('合成さん'); await page.locator('#personal-instructions').fill('SYNTHETIC-CUSTOM');
     await page.locator('.agent-personalization-form button[type="submit"]').click();
-    assert.equal(await page.locator('#agent-personalization-panel').count(), 0);
+    assert.equal(await page.locator('#agent-settings-panel').count(), 0);
     async function send(text) {
       await page.locator('#agent-input').fill(text); await page.locator('#agent-send').click();
       await page.waitForFunction(() => document.querySelector('#agent-log').textContent.includes('ANSWER') && !document.querySelector('#btn-temporary-agent').disabled);
     }
+    // スイッチも保存で確定する。取消では旧値を保ち、オフでも呼称・指示を保持する。
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    await toggle.click(); await page.locator('[data-personal="cancel"]').click();
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    assert.equal(await toggle.getAttribute('aria-checked'), 'true');
+    await toggle.click(); await page.locator('.agent-personalization-form button[type="submit"]').click();
+    await send('PERSONALIZATION-OFF');
+    assert.equal('personalization' in requests.at(-1), false);
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    assert.equal(await toggle.getAttribute('aria-checked'), 'false');
+    assert.equal(await page.locator('#personal-name').inputValue(), '合成さん');
+    assert.equal(await page.locator('#personal-instructions').inputValue(), 'SYNTHETIC-CUSTOM');
+    await toggle.click(); await page.locator('.agent-personalization-form button[type="submit"]').click();
     await send('NORMAL-QUESTION');
     assert.equal(requests.at(-1).personalization.preferred_name, '合成さん');
     const normalStorage = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter(k => /^magi_current_|magi_saved_sessions$/.test(k)).map(k => [k, localStorage.getItem(k)])));
@@ -83,6 +109,35 @@ try {
     await page.locator('#btn-temporary-agent').click();
     await page.waitForFunction(() => document.querySelector('#btn-temporary-agent').getAttribute('aria-pressed') === 'true');
     assert.equal(await page.locator('#agent-log').innerText().then(t => t.includes('NORMAL-A')), false);
+    assert.equal(await page.locator('#agent-temporary-notice').count(), 0);
+    assert.equal(await page.locator('#btn-temporary-agent .temporary-plus').evaluate(el => getComputedStyle(el).display), 'block');
+    const intro = page.locator('.agent-temporary-splash');
+    assert.equal(await intro.isVisible(), true);
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-temporary-intro.png`), animations: 'disabled' });
+    const previousTheme = await page.evaluate(() => ({ theme: document.documentElement.getAttribute('data-theme'), scheme: document.documentElement.style.colorScheme }));
+    await page.evaluate(() => { document.documentElement.setAttribute('data-theme', 'dark'); document.documentElement.style.colorScheme = 'dark'; });
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-temporary-intro-dark.png`), animations: 'disabled' });
+    await page.locator('[data-temporary-details]').click();
+    assert.equal(await page.getByRole('dialog').isVisible(), true);
+    assert.match(await page.getByRole('dialog').innerText(), /cannot guarantee|保証できません/);
+    assert.match(await page.getByRole('dialog').innerText(), /Fish Audio/);
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-temporary-details.png`), animations: 'disabled' });
+    await page.keyboard.press('Escape');
+    assert.equal(await page.getByRole('dialog').count(), 0);
+    assert.equal(await page.locator('[data-temporary-details]').evaluate(el => el === document.activeElement), true);
+    await page.locator('[data-temporary-personalization]').click();
+    await page.locator('input[name="temporary-personalization"][value="on"]').check();
+    await page.keyboard.press('Escape');
+    assert.match(await page.locator('[data-temporary-personalization]').innerText(), /なし|Without/);
+    if (mobile) {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.locator('[data-temporary-details]').click();
+      const layout = await page.getByRole('dialog').evaluate(el => ({ left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right, height: el.getBoundingClientRect().height, width: el.clientWidth, scroll: el.scrollWidth }));
+      assert.ok(layout.left >= 0 && layout.right <= 320 && layout.height <= 624 && layout.scroll <= layout.width);
+      await page.screenshot({ path: resolve(out, 'app-temporary-details-320.png'), animations: 'disabled' });
+      await page.keyboard.press('Escape');
+      await page.setViewportSize({ width: 390, height: 900 });
+    }
     await send('TEMPORARY-QUESTION');
     assert.equal(requests.at(-1).conversation_mode, 'temporary'); assert.equal('personalization' in requests.at(-1), false);
     assert.equal(JSON.stringify(requests.at(-1)).includes('NORMAL-'), false);
@@ -101,7 +156,33 @@ try {
     await page.waitForTimeout(250);
     assert.equal(requests.at(-1).conversation_mode, 'temporary'); assert.equal('personalization' in requests.at(-1), false);
     assert.deepEqual(await page.evaluate(() => window.privacyWrites.filter(([key]) => /^magi_current_|magi_saved_sessions$/.test(key))), []);
+    // 会話開始後もメニューから選択でき、通常の設定を書き換えない。
+    const savedPersonalization = await page.evaluate(() => localStorage.getItem('magi_personalization_v1'));
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+    await page.locator('input[name="temporary-personalization"][value="on"]').check();
+    await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-temporary-choice.png`), animations: 'disabled' });
+    await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+    temporaryPersonalization = false;
+    const beforeUnsupported = requests.length;
+    await page.locator('#agent-input').fill('KEEP-UNSUPPORTED-PERSONALIZATION'); await page.locator('#agent-send').click();
+    await page.waitForTimeout(100);
+    assert.equal(requests.length, beforeUnsupported);
+    assert.equal(await page.locator('#agent-input').inputValue(), 'KEEP-UNSUPPORTED-PERSONALIZATION');
+    temporaryPersonalization = true;
+    await send('TEMPORARY-PERSONALIZED');
+    assert.equal(requests.at(-1).conversation_mode, 'temporary'); assert.equal(requests.at(-1).temporary_personalization, true);
+    assert.equal(requests.at(-1).personalization.preferred_name, '合成さん');
+    assert.equal(JSON.stringify(requests.at(-1)).includes('NORMAL-'), false);
+    assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), savedPersonalization);
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+    await page.locator('input[name="temporary-personalization"][value="off"]').check();
+    await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+    await send('TEMPORARY-WITHOUT-PERSONALIZATION');
+    assert.equal('personalization' in requests.at(-1), false);
+    assert.equal(await page.locator('#agent-log [data-act="rate"], #agent-log [data-act="share"]').count(), 0);
+    assert.deepEqual(await page.evaluate(() => window.privacyWrites.filter(([key]) => /^magi_current_|magi_saved_sessions$|magi_personalization|temporary/.test(key))), []);
     await page.screenshot({ path: resolve(out, mobile ? 'app-temporary.png' : 'web-temporary.png') });
+    await page.evaluate(value => { if (value.theme) document.documentElement.setAttribute('data-theme', value.theme); else document.documentElement.removeAttribute('data-theme'); document.documentElement.style.colorScheme = value.scheme; }, previousTheme);
     await page.locator('#btn-temporary-agent').click();
     await page.waitForFunction(() => document.querySelector('#btn-temporary-agent').getAttribute('aria-pressed') === 'false');
     assert.equal(await page.locator('#agent-input').inputValue(), 'NORMAL-DRAFT');
@@ -125,7 +206,7 @@ try {
     // 設定の容量不足で既存履歴を減らさず、入力した設定も保持する。
     const beforeSettings = await page.evaluate(() => localStorage.getItem('magi_personalization_v1'));
     await page.evaluate(() => { window.failPersonalization = true; });
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-personalization-agent').click();
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
     await page.locator('#personal-name').fill('保存に失敗する呼称'); await page.locator('.agent-personalization-form button[type="submit"]').click();
     assert.equal(await page.locator('#personal-name').inputValue(), '保存に失敗する呼称');
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), beforeSettings);
@@ -138,12 +219,15 @@ try {
     await page.waitForFunction(() => /Could not read personalization|設定を読み込めないため送信しませんでした/.test(document.getElementById('agent-status').textContent));
     assert.equal(requests.length, beforeReadFailure);
     assert.equal(await page.locator('#agent-input').inputValue(), 'KEEP-READ-FAILURE');
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-personalization-agent').click();
-    assert.equal(await page.locator('#agent-personalization-panel').count(), 0);
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    assert.equal(await page.locator('#agent-settings-panel').count(), 1);
+    assert.equal(await page.locator('#personal-enabled').isDisabled(), true);
+    assert.match(await page.locator('#personal-status').innerText(), /Could not read|読み込めません/);
+    await page.locator('#agent-settings-panel .agent-page-back').click();
     await page.evaluate(() => { window.failPersonalizationRead = false; });
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), beforeSettings);
     // 編集途中に読み込み不能になってもフォームの入力と旧設定を残す。
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-personalization-agent').click();
+    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
     await page.locator('#personal-name').fill('READ-FAILURE-DRAFT');
     await page.evaluate(() => { window.failPersonalizationRead = true; });
     await page.locator('.agent-personalization-form button[type="submit"]').click();

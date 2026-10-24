@@ -53,7 +53,7 @@ async function page(){const p=await context.newPage();p.on('pageerror',e=>errors
 const results=[];
 try{
  let p=await page();
- await p.evaluate(()=>showNativeSettings());assert.equal(await p.locator('#widget-masked').count(),0);await p.locator('#widget-pin').waitFor();
+ await p.evaluate(()=>showAgentSettings());assert.equal(await p.locator('#widget-masked').count(),0);await p.locator('#widget-pin').waitFor();
  await p.locator('#widget-pin').click();await p.waitForFunction(()=>true);assert.deepEqual(calls.filter(x=>x[0]==='pin'),[['pin',undefined]]);results.push('settings only request pinning without widget contents');
  await p.evaluate(()=>closeAgentPanels());
  await p.evaluate(()=>widgetLink({url:'magi://open?id=old'}));await p.waitForFunction(()=>currentSessionId==='old');
@@ -62,7 +62,7 @@ try{
  await p.evaluate(()=>widgetLink({url:'magi://new'}));assert.equal(await p.evaluate(()=>agentHistory.length),0);assert.equal(calls.filter(x=>x[0]==='begin').length,0);
  await p.evaluate(()=>widgetLink({url:'magi://voice'}));await p.waitForFunction(()=>voiceStarts===1);
  await p.evaluate(()=>voiceEvents.partialResults({matches:['Confirmed voice'],final:true}));assert.equal(await p.locator('#agent-input').inputValue(),'Confirmed voice');assert.equal(calls.filter(x=>x[0]==='begin').length,0);
- await p.evaluate(()=>showNativeSettings());await p.evaluate(()=>widgetLink({url:'magi://open?id=old'}));await p.waitForFunction(()=>currentSessionId==='old');assert.equal(await p.locator('.agent-panel').count(),0);
+ await p.evaluate(()=>showAgentSettings());await p.evaluate(()=>widgetLink({url:'magi://open?id=old'}));await p.waitForFunction(()=>currentSessionId==='old');assert.equal(await p.locator('.agent-panel').count(),0);
  await p.evaluate(()=>widgetLink({url:'magi://open?id=old&send=true'}));assert.equal(await p.evaluate(()=>agentHistory.length),0);results.push('chat voice and existing links never send');
  await p.locator('#agent-input').fill('Synthetic B4 question');await p.locator('#agent-send').click();await p.waitForFunction(()=>!agentBusy&&agentHistory.length===2);
  assert.equal(calls.filter(x=>x[0]==='begin').length,1);assert.equal(calls.filter(x=>x[0]==='pin').length,1);results.push('completed answer does not update the widget');

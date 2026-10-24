@@ -170,8 +170,11 @@ try {
         nativeHistory = { active: true, usage: async () => 10 };
         let enabled = true;
         nativeConversation = { notificationState: async () => ({ enabled }), setNotifications: async value => { enabled = value; } };
-        await showNativeSettings();
+        await showAgentSettings();
       });
+      assert.equal(await page.locator('#agent-settings-panel').count(), 1);
+      assert.equal(await page.locator('#personal-enabled').isVisible(), true);
+      await page.screenshot({ path: resolve(out, `app-management-${width}.png`), animations: 'disabled' });
       const location = page.locator('#native-location-toggle'), notifications = page.locator('#native-notification-toggle');
       await page.waitForFunction(() => !document.querySelector('#native-notification-toggle').disabled);
       assert.equal(await location.getAttribute('aria-checked'), 'true');
@@ -182,7 +185,7 @@ try {
       await page.waitForTimeout(200);
       await page.screenshot({ path: resolve(out, 'app-settings.png') });
       await page.locator('#agent-settings-panel .agent-page-back').click();
-      await page.evaluate(() => showNativeSettings());
+      await page.evaluate(() => showAgentSettings());
       assert.equal(await location.getAttribute('aria-checked'), 'false');
     }
     await context.close();
