@@ -1,5 +1,307 @@
 [
   {
+    "date": "20261025",
+    "title": "2026年10月25日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは10月23日に神奈川県相模原市で「デコホーム ボーノ相模大野店」を開店し、地域密着型の店舗網を広げました。 「179円飯碗」や「999円フタ付きタンブラー」など、低価格で機能性や質感を備えた商品がSNSで高評価を集めています。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリは10月23日に神奈川県相模原市で「デコホーム ボーノ相模大野店」を開店し、地域密着型の店舗網を広げました。",
+      "「179円飯碗」や「999円フタ付きタンブラー」など、低価格で機能性や質感を備えた商品がSNSで高評価を集めています。",
+      "ニトリホールディングスは35期連続の増収増益を続けており、SPAモデルによる一貫した商品開発と価格戦略が成長を支えています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、相模原市に「デコホーム ボーノ相模大野店」を10月23日オープン",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "ニトリは10月23日、神奈川県相模原市に新店「デコホーム ボーノ相模大野店」をオープンした。同店はニトリの店舗ブランド「デコホーム」の一店舗として、家具やインテリア雑貨、収納用品などを地域の生活者に提案する役割を担う。郊外型の店舗網を広げることで、日常の買い回りの中で来店機会を増やす狙いがうかがえる。",
+        "why_it_matters": "新店の出店は、商品企画から製造、物流、販売までを一貫して手がけるニトリの強みを、地域ごとの生活動線に合わせて届ける取り組みだ。都市部の大型旗艦店とは別に、日常の買い回りに組み込まれる中規模店を積み重ねることで、来店頻度を高め、オンラインとの相互送客にもつながる。今後は新店周辺での売上推移や客層の変化に注目したい。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "デコホーム",
+          "相模原"
+        ],
+        "search_terms": [
+          "ニトリ 相模大野店 出店",
+          "Nitori Sagamihara store opening",
+          "デコホーム 新店オープン",
+          "Nitori store expansion Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5GT3lPWjR4VlRBQ3FJNW94TWp6a25CTnJJUV90X21pTlp2NnI5SlpRT01hVC10Ynp1VnVOVVZUMHl5Uzd0amVhakZvSW9acHgtYkZB?oc=5",
+        "source_pub_ts": 1792855354
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「179円飯碗」に「軽いのに高級感がある」と高評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ニトリの179円飯碗が、SNSで「本当に軽いし高級感がある」「毎日使っています」と高評価を集めている。低価格でありながら、軽さと質感の両立が生活者に評価されている点が特徴だ。複数個購入する声も上がっており、日常使いの食器として支持が広がっている様子がうかがえる。",
+        "why_it_matters": "179円という価格帯で「軽さ」と「高級感」を両立した点は、SPAが素材選定から設計・生産まで自社でコントロールできる強みを示している。食器は買い足しや買い替えが起きやすいカテゴリであり、複数購入の動きはリピート需要につながる。価格を抑えたまま使用感を磨く商品開発が、ブランドへの信頼を積み上げる鍵になる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "食器",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "ニトリ 飯碗 口コミ",
+          "Nitori rice bowl 179 yen",
+          "軽量食器 高評価",
+          "affordable lightweight tableware Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE5iOGMzc2RJR0lLTUZWYV9PZHJ0cEJ5Z1dDeFliRVV3dXJFT2lzc094aGtralpGbU5yY09yeW9LWUFJU3NEbkJSMmJFbGpqUkNvcVd1TnhSTG4zSFVldml4am9LUzQtUQ?oc=5",
+        "source_pub_ts": 1792829400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、2026年モデルのクリスマス商品を一部店舗とネットで発売　新色ツリーも",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-05",
+        "summary": "ニトリは2026年モデルのクリスマス商品を、一部店舗とネット通販で発売した。新色のツリーなどが含まれ、季節のインテリアとして部屋を彩る提案となっている。毎年のシーズン商品を新色やデザインで刷新することで、季節ごとの来店動機とリピート購入を生み出す狙いがうかがえる。",
+        "why_it_matters": "クリスマス関連は季節需要が明確なため、在庫計画と販売タイミングの精度が売上を大きく左右する。店舗とネットで同時に展開することで、来店客とEC利用者の双方を取り込める。新色の追加は既存ユーザーの買い増しを促すため、年ごとの刷新がブランドの鮮度を保つ手段になる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "クリスマス",
+          "季節商品"
+        ],
+        "search_terms": [
+          "ニトリ クリスマス 2026",
+          "Nitori Christmas 2026 collection",
+          "新色クリスマスツリー",
+          "seasonal holiday decor Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5FMUhWbVJiaklDODN4U1pCY2dUdlJxSUo4b2txSFJKQTU3NXVEd3dOVE1KSnJweVJCUkprN1RqUnZFSkhSWFE?oc=5",
+        "source_pub_ts": 1792823516
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "35期連続増収増益のニトリHD、躍進を支える要因とは",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-10",
+        "summary": "ニトリホールディングスが35期連続で増収増益を達成したことが報じられた。同社はSPAとして商品企画から製造、物流、販売までを一貫して手がけ、低価格と品質の両立を続けてきた。こうした積み重ねが、長期にわたる業績の安定につながっていると位置づけられている。",
+        "why_it_matters": "35期連続という実績は、特定の施策ではなく、自社開発と調達、物流の仕組みを継続的に磨いてきた結果と読める。価格競争が激しい小売業界で増益を続けるには、コスト構造の最適化と商品価値の維持を同時に進める必要がある。今後は為替や原材料の変動に対してどこまで価格を据え置けるかが、成長持続の焦点となる。",
+        "tags": [
+          "ニトリ",
+          "経営",
+          "SPA",
+          "業績"
+        ],
+        "search_terms": [
+          "ニトリ 増収増益 35期",
+          "Nitori Holdings consecutive profit growth",
+          "SPA 業績 小売",
+          "Nitori pricing strategy Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5VZkVDWTA0eVAxb0FYb0FCelg2ZF9ySXdrUTZRU0lfOWMyalVZYjNTM0xaTGR5WDh3MUVwUFBMWXBhTWtia21GM3ZrQl9ZZTFyQmNWcjJET1NKb2x3WU0wRkRTd2xPQ20yT1dYNkRB?oc=5",
+        "source_pub_ts": 1792767940
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「999円フタ付きタンブラー」、夫婦でペア買いする声も",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-08",
+        "summary": "ニトリの999円フタ付きタンブラーが、SNSで「飲み口がスライド式でラク」「冷温の持ちも良い」と高評価を集めている。夫婦でペア買いしたという投稿も見られ、日常使いの機能性と価格の手頃さが支持されている。",
+        "why_it_matters": "999円という価格で、スライド式の飲み口や保温・保冷の持ちといった実用性を備えた点が評価されている。ペア買いは1つの購買動機が複数個の販売につながることを示しており、色やサイズの展開がまとめ買いを後押しする可能性がある。機能を具体的に語る口コミは、商品説明やPOPの訴求軸としても参考になる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "タンブラー",
+          "口コミ"
+        ],
+        "search_terms": [
+          "ニトリ タンブラー 口コミ",
+          "Nitori tumbler review",
+          "フタ付きタンブラー ペア買い",
+          "insulated tumbler affordable Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBraXhzU3VvNzAya1p0d0RXTnFEQkdQN1JvZlRKNFhQbUFLN29HdUV4V1prN25jUGhhRVlkZ2hVU0FUc21ib1IwVWFmU0p0ek84eDdSSXhlTkhjV2R4blY0VzRfR25RTWxCXzZGOV9tcmZwc21kZ0E?oc=5",
+        "source_pub_ts": 1792795899
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ジメジメ季節に響く、ニトリの湿気対策提案がXで話題に",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "Xで「ニトリがジメジメ界隈によさげなものをいっぱい出していた」とする投稿が2,554いいねを集めた。梅雨や湿気の多い時期の住まいの悩みに応える商品を取り上げた内容で、季節課題と商品を結びつけた提案が共感を広げている。",
+        "why_it_matters": "湿気という不快感を起点に商品を紹介する投稿は、機能説明よりも共感を生みやすい。ニトリは品揃えの幅が広いため、季節の悩みごとに商品を束ねて提案する売場やネット特設ページが、購入動機を高める有効な手段になる。生活課題から商品を探せる導線設計が、次の反響を生む鍵となる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "季節課題",
+          "湿気対策"
+        ],
+        "search_terms": [
+          "ニトリ 湿気対策 話題",
+          "Nitori humidity solutions X",
+          "梅雨対策 収納 SNS",
+          "rainy season home products Japan"
+        ],
+        "_note": "",
+        "url": "https://x.com/osoote_/status/2113919134945943586",
+        "source_pub_ts": 1792839600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「部屋を一瞬でホテルライクに」、カーテン統一の提案が反響",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "「部屋を一瞬でホテルライクにする方法」として、リビングと寝室の両方をオーダーカーテンにする投稿が579いいねを集めた。投稿者はリビングに別ブランドの製品を、寝室にニトリを選んでおり、空間全体の統一感を作る提案として受け止められている。",
+        "why_it_matters": "カーテンは部屋の印象を大きく変えるアイテムであり、空間全体の雰囲気をそろえる提案が共感を生んでいる。ブランドを組み合わせて使う投稿は、ニトリ単体ではなく空間演出の一部として位置づけられていることを示す。採寸や選び方を含むコーディネート提案を強化することが、次の購買につながる一手となる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "インテリア",
+          "カーテン"
+        ],
+        "search_terms": [
+          "ホテルライク 部屋づくり",
+          "Nitori curtains hotel style",
+          "オーダーカーテン 統一感",
+          "room styling coordination Japan"
+        ],
+        "url": "https://x.com/_saya_523/status/2113790637573288195",
+        "source_pub_ts": 1792839600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリで見つけた雪の宿 洗い物する度に食べたくなる衝動に駆られる pic.x.com/rjZpOz521T",
+        "platform": "x",
+        "author": "@PeluchePanda",
+        "url": "https://x.com/PeluchePanda/status/2113789274826870848",
+        "likes": 13270,
+        "retweets": 281,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:26",
+        "captured_at": "",
+        "text": "ニトリで見つけた雪の宿 洗い物する度に食べたくなる衝動に駆られる pic.x.com/rjZpOz521T",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリがジメジメ界隈によさげなのいっぱい出してた pic.x.com/WiRrsrvPuP",
+        "platform": "x",
+        "author": "@osoote_",
+        "url": "https://x.com/osoote_/status/2113919134945943586",
+        "likes": 2554,
+        "retweets": 208,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:02",
+        "captured_at": "",
+        "text": "ニトリがジメジメ界隈によさげなのいっぱい出してた pic.x.com/WiRrsrvPuP",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "''部屋を一瞬でホテルライクにする方法'' リビングも寝室もオーダーカーテンにする🩶 リビング▶︎パーフェクトスペース 寝室▶︎ニトリ pi...",
+        "platform": "x",
+        "author": "@_saya_523",
+        "url": "https://x.com/_saya_523/status/2113790637573288195",
+        "likes": 579,
+        "retweets": 35,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:32",
+        "captured_at": "",
+        "text": "''部屋を一瞬でホテルライクにする方法'' リビングも寝室もオーダーカーテンにする🩶 リビング▶︎パーフェクトスペース 寝室▶︎ニトリ pic.x.com/1AELgGCoQQ x.com/_saya_523/stat…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "これ、ニトリ価格じゃん。 4万円台で、これが揃うってはっきりいってバグってる。 pic.x.com/jhuaFZrtrw x.com/yuk...",
+        "platform": "x",
+        "author": "@yukiyan33678",
+        "url": "https://x.com/yukiyan33678/status/2113922947996144063",
+        "likes": 163,
+        "retweets": 52,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:18",
+        "captured_at": "",
+        "text": "これ、ニトリ価格じゃん。 4万円台で、これが揃うってはっきりいってバグってる。 pic.x.com/jhuaFZrtrw x.com/yukiyan33678/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "静岡おでんって食べたことありますか？ 一度食べてみたいな！ 味噌でしたっけ？ 我が家のおでんと、ニトリで机買ったついでに買ったカゴで小籠包！...",
+        "platform": "x",
+        "author": "@kabunorida1110",
+        "url": "https://x.com/kabunorida1110/status/2113941478531830085",
+        "likes": 111,
+        "retweets": 13,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:31",
+        "captured_at": "",
+        "text": "静岡おでんって食べたことありますか？ 一度食べてみたいな！ 味噌でしたっけ？ 我が家のおでんと、ニトリで机買ったついでに買ったカゴで小籠包！ わいはちくわが大好きです😍 pic.x.com/YRGGUKXneB",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリ販売員が教えるクソ爆売れの神商品10選(6~10)#おすすめ #購入品 #ニトリ",
+        "platform": "tiktok",
+        "author": "@kknavi9977",
+        "url": "https://www.tiktok.com/@kknavi9977/video/7699738515088755989",
+        "likes": 493,
+        "retweets": 16,
+        "views": 47200,
+        "comments": 0,
+        "posted_on": "2026-10-23 14:58",
+        "captured_at": "2026-10-24T18:17:43.040899+09:00",
+        "text": "ニトリ販売員が教えるクソ爆売れの神商品10選(6~10)#おすすめ #購入品 #ニトリ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のSNS投稿では、ニトリの商品を湿気などの生活課題や「ニトリ価格」といった価格感と結びつけて語る傾向が目立った。Xでは商品写真を交えた共感投稿が多く伸び、TikTokでは販売員による商品紹介動画が再生数を集めている。媒体ごとに反応の質が異なる点も特徴である。",
+    "sns_why_it_matters": "投稿の多くは、季節の悩みや部屋の印象を変えたいという生活者の課題を起点にしている。商品単体の機能より「どんな暮らしが叶うか」が共感の源泉となっており、売場やアプリでも生活シーン別の提案を強めることが効果的だ。TikTokでは実使用や組み立て過程が伸びやすく、動画コンテンツの活用余地も大きい。"
+  },
+  {
     "date": "20261024",
     "title": "2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。",
