@@ -54,7 +54,7 @@ export function applyMutation(source,{id,before,after}) {
 }
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const git=(root,...args)=>execFileSync('git',['-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false',
-  '-c','commit.gpgsign=false','-c','user.name=MAGI seed fixture','-c','user.email=seed@example.invalid',...args],
+  '-c','core.autocrlf=false','-c','commit.gpgsign=false','-c','user.name=MAGI seed fixture','-c','user.email=seed@example.invalid',...args],
   {cwd:root,encoding:'utf8',maxBuffer:16*1024*1024,stdio:['ignore','pipe','pipe']}).trim();
 
 function exhaustVersion(read,write) {
