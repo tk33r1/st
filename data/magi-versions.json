@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "6.6",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "Webで確かめた回答の出典に、サイトのアイコンが出ることがさらに増えました。",
+          "「もう一度試す」が、送信に失敗した後や、送り直しの途中でアプリが閉じた後も正しく動くようにしました。",
+          "日付が変わると、回答の日時の「今日」「昨日」を書き直します。長い一文の回答も最後まで読み上げます。",
+          "Androidのアプリを、6.0からの変更（読み上げ・回答の下のボタンなど）を入れて更新しました。"
+        ],
+        "en": [
+          "Sources of web-checked replies show the site icon even more often.",
+          "Try again now works after a failed send and when the app closes while a reply is being retried.",
+          "Today and Yesterday in reply times update when the date changes, and long single-sentence replies are read aloud to the end.",
+          "The Android app is updated with the changes since 6.0, such as read-aloud and the buttons under replies."
+        ]
+      }
+    },
+    {
       "version": "6.5",
       "date": "2026-10-24",
       "changes": {
