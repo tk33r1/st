@@ -1,9 +1,9 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
-var CACHE = 'magi-shell-v122';
+var CACHE = 'magi-shell-v123';
 // Shell files, icons included (they are committed in www/).
 var CORE = [
-  './', './index.html', './app.js?v=20261025_12', './native-location.js?v=20261025_2', './native-widget.js?v=20261022_1', './native-background.js?v=20261025_4', './native-history.js?v=20261025_2', './native-input.js?v=20261022_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261022_1', './manifest.webmanifest',
+  './', './index.html', './app.js?v=20261025_13', './native-location.js?v=20261025_2', './native-widget.js?v=20261022_1', './native-background.js?v=20261025_4', './native-history.js?v=20261025_2', './native-input.js?v=20261022_1', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261022_1', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png'
 ];
 
@@ -35,5 +35,14 @@ self.addEventListener('fetch', function (e) {
       }
       return res;
     }).catch(function () { return hit; });
+  }));
+});
+
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clients) {
+    var page = new URL('./', self.location.href);
+    var client = clients.find(function (item) { var url = new URL(item.url); return url.origin === page.origin && url.pathname.startsWith(page.pathname); });
+    return client ? client.focus() : self.clients.openWindow(page.href);
   }));
 });

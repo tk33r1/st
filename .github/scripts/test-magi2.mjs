@@ -2208,7 +2208,8 @@ function client(src, isHome = false) {
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
-  if (!isHome) vm.runInContext(between(src, 'function locationServiceEnabled()', '// 共通のアプリ管理にAndroid専用'), ctx);
+  vm.runInContext(between(src, '// AGENT_MANAGEMENT_BEGIN', '// AGENT_MANAGEMENT_END'), ctx);
+  if (!isHome) vm.runInContext(between(src, 'async function locationForMessage(', '// 共通のアプリ管理にAndroid専用'), ctx);
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLARIFY_BEGIN', '// AGENT_CLARIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLOSED_BEGIN', '// AGENT_CLOSED_END'), ctx);
@@ -6572,4 +6573,18 @@ test('報告の画像: JPEG・WebPと容量境界を読み、利用者のファ�
   const large=make('image/png','89504e470d0a1a0a',5*1048576);
   assert.equal(parse([large,large]).length,2,'合計10MiBちょうどは許可する');
   assert.throws(()=>parse([large,large,jpg]),e=>e.envelope.code==='invalid_report_images');
+});
+
+
+test('Web管理: PWA通知のクリックは既存の同一アプリへ戻り、なければ固定したアプリURLを開く', async () => {
+  const handlers = {}, calls = []; let clients = [];
+  const self = { location: { href: 'https://tk.st/magi-app/www/sw.js' }, addEventListener: (name, fn) => { handlers[name] = fn; },
+    clients: { matchAll: async () => clients, openWindow: async url => { calls.push(['open', url]); } } };
+  vm.runInNewContext(read('magi-app/www/sw.js'), { self, URL });
+  let pending;
+  function click() { handlers.notificationclick({ notification: { data: { url: 'https://untrusted.invalid/' }, close() { calls.push(['close']); } }, waitUntil(promise) { pending = promise; } }); return pending; }
+  clients = [{ url: 'https://tk.st/', focus: async () => calls.push(['wrong']) }, { url: 'https://tk.st/magi-app/www/?x=1', focus: async () => calls.push(['focus']) }];
+  await click(); assert.deepEqual(calls, [['close'], ['focus']]); calls.length = 0;
+  clients = [{ url: 'https://other.invalid/magi-app/www/', focus: async () => calls.push(['wrong']) }];
+  await click(); assert.deepEqual(calls, [['close'], ['open', 'https://tk.st/magi-app/www/']]);
 });

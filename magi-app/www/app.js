@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.01';
+var APP_VERSION = '7.02';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -980,6 +980,144 @@ function showAgentSourcesSheet(btn, item) {
 var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
   && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
 // 言語を切り替えたら描き直すので、毎回組み立てる
+// AGENT_MANAGEMENT_BEGIN
+function locationServiceEnabled() {
+  try { return localStorage.getItem('magi_location_enabled') !== '0'; }
+  catch (_) { return false; }
+}
+function agentManagementNative() { return typeof nativeAndroid !== 'undefined' && nativeAndroid; }
+function agentWebNotificationsEnabled() {
+  try { return localStorage.getItem('magi_notifications_enabled') === '1'; } catch (_) { return false; }
+}
+async function agentWebNotificationSupport() {
+  if (!window.isSecureContext || !window.Notification || typeof window.Notification.requestPermission !== 'function') return { supported: false };
+  var registration = null;
+  try { if (navigator.serviceWorker) registration = await navigator.serviceWorker.getRegistration(); } catch (_) {}
+  var mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || /Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
+  return { supported: !!(registration && registration.active && registration.showNotification) || !mobile, registration: registration };
+}
+var agentWebNotice = null;
+async function agentNotifyWebReply() {
+  if (agentManagementNative() || agentTemporary() || !agentWebNotificationsEnabled()
+    || !document.hidden && (!document.hasFocus || document.hasFocus())) return;
+  try {
+    var support = await agentWebNotificationSupport();
+    if (!support.supported || !agentWebNotificationsEnabled() || agentTemporary() || window.Notification.permission !== 'granted'
+      || !document.hidden && (!document.hasFocus || document.hasFocus())) return;
+    var options = { body: tr('Your reply is ready.', '回答が届きました。'), tag: 'magi-reply' };
+    if (support.registration && support.registration.active) await support.registration.showNotification('MAGI', options);
+    else {
+      if (agentWebNotice) agentWebNotice.close();
+      agentWebNotice = new window.Notification('MAGI', options);
+      agentWebNotice.onclick = function () { this.close(); window.focus(); if (typeof openAgentDock === 'function') openAgentDock(); };
+    }
+  } catch (_) { announceAgent(tr('Could not show the notification. Check browser permissions.', '通知を表示できませんでした。ブラウザの許可を確認してください。')); }
+}
+function agentWebHistoryData() {
+  var saved = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+  var history = JSON.parse(localStorage.getItem('magi_current_history') || '[]');
+  if (!Array.isArray(saved) || !Array.isArray(history)) throw new Error('invalid_history');
+  var id = localStorage.getItem('magi_current_session_id');
+  var current = id && !id.startsWith('temporary_') ? { id: id, title: localStorage.getItem('magi_current_title') || '', history: history,
+    language: JSON.parse(localStorage.getItem('magi_current_language') || 'null'), shared: JSON.parse(localStorage.getItem('magi_current_shared') || 'null') } : null;
+  // サムネ・元画像の参照も除外し、通常会話の保存済みデータだけを書き出す。
+  function withoutImages(value) {
+    if (Array.isArray(value)) return value.map(withoutImages);
+    if (!value || typeof value !== 'object') return value;
+    if (value.type === 'image_url') return { type: 'text', text: '[Image omitted]' };
+    var result = Object.create(null);
+    Object.keys(value).forEach(function (key) { if (key !== 'file') result[key] = withoutImages(value[key]); });
+    return result;
+  }
+  return { version: 1, exportedAt: new Date().toISOString(), sessions: withoutImages(saved.filter(function (row) { return row && row.mode !== 'temporary' && !(typeof row.id === 'string' && row.id.startsWith('temporary_')); })), current: withoutImages(current) };
+}
+function agentClearWebHistory() {
+  var keys = ['magi_saved_sessions', 'magi_current_history', 'magi_current_session_id', 'magi_current_title', 'magi_current_language', 'magi_current_shared'];
+  var previous = keys.map(function (key) { return localStorage.getItem(key); });
+  try {
+    keys.forEach(function (key) { localStorage.removeItem(key); });
+    if (keys.some(function (key) { return localStorage.getItem(key) !== null; })) throw new Error('history_not_deleted');
+    localStorage.setItem('magi_history_cleared', String(Date.now()) + '_' + Math.random().toString(36).slice(2));
+  } catch (error) {
+    keys.forEach(function (key, i) { try { if (previous[i] !== null) localStorage.setItem(key, previous[i]); } catch (_) {} });
+    throw error;
+  }
+  agentInvalidateSuspended(null);
+  if (!agentTemporary()) resetAgent(true);
+  if (typeof renderSavedSessionsList === 'function') renderSavedSessionsList();
+}
+async function initAgentManagement(panel) {
+  if (agentManagementNative()) { await initNativeSettings(panel); return; }
+  panel.querySelector('#agent-native-settings').innerHTML =
+    '<div class="agent-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
+    + '<p id="native-location-note">' + tr('Use the city and region estimated from your IP address for location-based searches. This does not request GPS permission. Changes apply to your next message.', '場所に応じた検索に、IPアドレスから推定した市・地域を使います。GPSの許可は求めません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
+    + '<div class="agent-setting"><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" role="status"></p>'
+    + '<p>' + tr('Notify when a reply finishes while this page is open in the background. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、受信が完了した回答を通知します。画面を閉じた後の受信には対応しません。一時チャットは通知しません。') + '</p>'
+    + '<p id="history-storage-status" role="status"></p><p>' + tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。') + '</p>'
+    + '<div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '</button><button type="button" id="history-clear">' + tr('Delete all chats', '全会話を削除') + '</button></div>';
+  var status = panel.querySelector('#history-storage-status'), locationToggle = panel.querySelector('#native-location-toggle');
+  locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
+  locationToggle.addEventListener('click', function () {
+    try {
+      localStorage.setItem('magi_location_enabled', locationServiceEnabled() ? '0' : '1');
+      locationToggle.setAttribute('aria-checked', String(locationServiceEnabled())); panel.querySelector('#native-location-status').textContent = '';
+    } catch (_) { panel.querySelector('#native-location-status').textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
+  });
+  function refreshHistory() {
+    try {
+      var data = agentWebHistoryData(), count = data.sessions.length;
+      if (data.current && data.current.history.length && !data.sessions.some(function (row) { return row.id === data.current.id; })) count++;
+      status.textContent = tr('Saved chats: ', '保存された会話：') + count;
+    } catch (_) { status.textContent = tr('Could not read saved chats. Your existing data is kept.', '保存された会話を読み込めませんでした。既存のデータは保持しています。'); }
+  }
+  refreshHistory();
+  panel.querySelector('#history-export').addEventListener('click', function () {
+    if (agentBusy || agentPrivacyState.preparing) { status.textContent = tr('Export after the reply finishes.', '回答が終わってから書き出してください。'); return; }
+    var url;
+    try {
+      var payload = agentWebHistoryData();
+      url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+      var link = document.createElement('a'); link.href = url; link.download = 'magi-chats-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000); refreshHistory();
+    } catch (_) { if (url) URL.revokeObjectURL(url); status.textContent = tr('Could not export chats. Existing chats are kept.', '会話を書き出せませんでした。既存の会話は保持しています。'); }
+  });
+  panel.querySelector('#history-clear').addEventListener('click', function () {
+    if (agentBusy || agentPrivacyState.preparing) { status.textContent = tr('Stop the reply before deleting.', '回答を停止してから削除してください。'); return; }
+    if (!window.confirm(tr('Delete all chats saved in this browser? This cannot be undone. Temporary chats and settings are kept.', 'このブラウザに保存された全会話を削除しますか？ 元には戻せません。一時チャットと設定は保持します。'))) return;
+    try { agentClearWebHistory(); refreshHistory(); }
+    catch (_) { status.textContent = tr('Could not delete all chats. Check browser storage and try again.', '全会話を削除できませんでした。ブラウザの保存先を確認して再試行してください。'); }
+  });
+  var toggle = panel.querySelector('#native-notification-toggle'), note = panel.querySelector('#native-notification-status');
+  var support = await agentWebNotificationSupport(); if (!panel.isConnected) return;
+  function refreshNotifications() {
+    var supported = support.supported;
+    toggle.disabled = !supported;
+    toggle.setAttribute('aria-checked', String(supported && window.Notification.permission === 'granted' && agentWebNotificationsEnabled()));
+    note.textContent = !supported ? tr('This browser cannot show notifications here. On mobile, try the installed PWA.', 'このブラウザでは通知を使えません。モバイルではホーム画面に追加したPWAをお試しください。')
+      : window.Notification.permission === 'denied' ? tr('Notifications are blocked in browser settings. Allow them there before turning this on.', 'ブラウザの設定で通知がブロックされています。許可してからオンにしてください。')
+      : tr('Turn on to allow reply notifications. Browser permission is required.', 'オンにすると回答の到着を通知します。ブラウザ側の許可が必要です。');
+  }
+  refreshNotifications();
+  function onFocus() { if (panel.isConnected) refreshNotifications(); }
+  window.addEventListener('focus', onFocus);
+  panel.onAgentClose = function () { window.removeEventListener('focus', onFocus); };
+  toggle.addEventListener('click', async function () {
+    toggle.disabled = true;
+    try {
+      if (toggle.getAttribute('aria-checked') === 'true') {
+        localStorage.setItem('magi_notifications_enabled', '0');
+        if (agentWebNotice) { agentWebNotice.close(); agentWebNotice = null; }
+        if (support.registration && support.registration.getNotifications) (await support.registration.getNotifications({ tag: 'magi-reply' })).forEach(function (item) { item.close(); });
+      } else {
+        var permission = window.Notification.permission === 'default' ? await window.Notification.requestPermission() : window.Notification.permission;
+        if (permission === 'granted') localStorage.setItem('magi_notifications_enabled', '1');
+      }
+      if (panel.isConnected) refreshNotifications();
+    } catch (_) { if (panel.isConnected) { refreshNotifications(); note.textContent = tr('Could not change notification settings.', '通知の設定を変更できませんでした。'); } }
+  });
+}
+// AGENT_MANAGEMENT_END
+
 // AGENT_EPHEMERAL_BEGIN
 // トップとアプリで同じ契約を使う。会話の保存と設定の保存を分離する。
 var agentPrivacyState = { mode: 'normal', temporaryPersonalization: false, preparing: false, preflight: null, background: false, switching: false, attachmentJobs: 0, suspended: null, normalWrite: false, features: null };
@@ -1026,7 +1164,7 @@ function showAgentSettings() {
     + '<p id="personal-note">' + tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。') + '</p>'
     + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form><div id="agent-native-settings"></div></div>');
   if (!panel) return;
-  if (typeof initNativeSettings === 'function') initNativeSettings(panel).catch(function () { announceAgent(tr('Could not open app settings.', 'アプリの設定を開けませんでした。')); });
+  initAgentManagement(panel).catch(function () { announceAgent(tr('Could not open app settings.', 'アプリの設定を開けませんでした。')); });
   var form = panel.querySelector('form'), enabled = panel.querySelector('#personal-enabled'), name = panel.querySelector('#personal-name'), instructions = panel.querySelector('#personal-instructions'), status = panel.querySelector('#personal-status');
   var current = refreshAgentPersonalization();
   if (!current) {
@@ -1302,6 +1440,7 @@ function initAgentPrivacy() {
   });
   window.addEventListener('storage', function (event) {
     if (event.key === 'magi_personalization_v1' || event.key === null) refreshAgentPersonalization();
+    if (event.key === 'magi_history_cleared') { agentInvalidateSuspended(null); if (!agentTemporary()) resetAgent(true); }
     var saved = agentPrivacyState.suspended;
     if (saved && saved.persisted && (event.key === 'magi_saved_sessions' || event.key === null)) {
       try { if (!agentStoredSessions().some(function (s) { return s.id === saved.id; })) agentInvalidateSuspended(saved.id); } catch (_) {}
@@ -2260,6 +2399,7 @@ async function agentSend(recovered, retry) {
     syncCurrentToSaved();
     updateAgentActionButtons();
     setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
+    if (completed && !errored) agentNotifyWebReply();
   } else {
     turn.remove(); u.remove(); delete pendingReactions[mid];
     if (!retry && nativeHistory && nativeHistory.active && !agentInput.value) atts.forEach(function (a) { if (a.file) nativeHistory.retainImage(a.file); });
@@ -2726,9 +2866,9 @@ function showFAQPanel() {
     [tr('Can I trust the answers?', '回答は正しい？'), tr('AI can make mistakes, even when the answer sounds confident. Check sources and dates for important information. If your question is about a particular place or time, include those details.', 'AIは断定的に答えていても間違えることがあります。重要な情報は出典と日時を確認してください。特定の場所や時期について聞くときは、その条件も書くと伝わりやすくなります。')],
     [tr('What if a reply stops or never arrives?', '回答が止まった・届かないときは？'), tr('Check your connection and wait briefly. Use the stop button if needed, then try again. On Android, replies can continue arriving in the background; on the Web or PWA, return to the screen to check progress. Keep a copy of a long question before reopening the app.', '接続を確認し、少し待ってください。必要なら停止ボタンで止めてから、もう一度試してください。Androidは別のアプリを使っている間も受信を続けます。Web・PWAは画面に戻って進み具合を確認してください。開き直す場合は、長い質問を控えておくと安心です。')],
     [tr('Can I use MAGI offline?', 'オフラインでも使える？'), tr('You need an internet connection to send a question and receive an answer. Previously saved conversations may still be available on the same device.', '質問の送信と回答の受信にはインターネット接続が必要です。同じ端末に保存済みの会話は、オフラインでも確認できる場合があります。')],
-    [tr('Does history transfer to another device?', '別の端末でも履歴を使える？'), tr('History is saved on the device and does not sync automatically. Uninstalling the app or clearing browser data can erase it. Export important conversations before changing devices. Android can export all chats from App management; exports do not include images.', '履歴は端末ごとに保存され、自動同期されません。アプリの削除やブラウザのデータ消去で失われることがあります。機種変更の前に大切な会話を書き出してください。Androidは「アプリ管理」から全会話を書き出せます。書き出しには画像を含みません。')],
-    [tr('What does Location services do?', '位置情報サービスは何に使う？'), tr('Android can use your device location when you send a message, with permission. Web and PWA use a city or region estimated from your connection. The location may be inaccurate, so specify a place when needed. Android can turn both off in App management; changes apply to your next message.', 'Androidは許可を得て、送信時にGPSを優先して端末の現在地を使います。Web・PWAは通信元から推定した市・地域を使います。場所がずれることもあるので、必要なら地名を指定してください。Androidは「アプリ管理」で両方をオフにでき、次の送信から反映します。')],
-    [tr('How do I turn notifications on or off?', '通知をオン・オフにするには？'), tr('On Android, open App management in the more menu and use the Notifications toggle. Android may also ask for permission. Turning alerts off does not stop receiving replies. The ongoing background task indicator is managed by Android.', 'Androidは︙の「アプリ管理」にある「通知」で切り替えます。Android側の許可が必要な場合もあります。通知をオフにしても回答の受信は続きます。バックグラウンド受信中の表示はAndroidが管理します。')],
+    [tr('Does history transfer to another device?', '別の端末でも履歴を使える？'), tr('History is saved on the device and does not sync automatically. Uninstalling the app or clearing browser data can erase it. Export important conversations before changing devices. Web, PWA and Android can export all saved chats from App management; exports do not include images or temporary chats.', '履歴は端末ごとに保存され、自動同期されません。アプリの削除やブラウザのデータ消去で失われることがあります。機種変更の前に大切な会話を書き出してください。Web・PWA・Androidの「アプリ管理」から保存された全会話を書き出せます。画像と一時チャットは含みません。')],
+    [tr('What does Location services do?', '位置情報サービスは何に使う？'), tr('Android can use your device location when you send a message, with permission. Web and PWA use a city or region estimated from your connection. The location may be inaccurate, so specify a place when needed. Use App management to turn location use off. Web/PWA can also disable IP-based estimates there; changes apply to your next message.', 'Androidは許可を得て、送信時にGPSを優先して端末の現在地を使います。Web・PWAは通信元から推定した市・地域を使います。場所がずれることもあるので、必要なら地名を指定してください。Androidは「アプリ管理」で両方をオフにできます。Web・PWAも同じ画面でIP推定の利用を切り替えられ、次の送信から反映します。')],
+    [tr('How do I turn notifications on or off?', '通知をオン・オフにするには？'), tr('On Android, open App management in the more menu and use the Notifications toggle. Android may also ask for permission. Turning alerts off does not stop receiving replies. The ongoing background task indicator is managed by Android. Web/PWA also offer a notification toggle for replies received while the page stays open in the background, subject to browser support and permission.', 'Androidは︙の「アプリ管理」にある「通知」で切り替えます。Android側の許可が必要な場合もあります。通知をオフにしても回答の受信は続きます。バックグラウンド受信中の表示はAndroidが管理します。Web・PWAも対応ブラウザでは通知を切り替えられますが、画面を開いて受信している間に限ります。')],
     [tr('How do I report a problem?', '不具合を見つけたら？'), tr('Choose Report a bug in the more menu and describe what you did, what happened and what you expected, in up to 2,000 characters. You can attach up to three PNG, JPEG or WebP images (5 MB each, 10 MB total). Do not include passwords or other sensitive information.', '︙の「バグを報告」から、行った操作・起きたこと・期待していた動作を2000文字以内で教えてください。PNG・JPEG・WebPの画像を3枚まで（1枚5MB・合計10MB）添付できます。パスワードなどの機密情報は入力しないでください。')],
     [tr('Where can I check for updates?', '更新はどこで確認する？'), tr('Open “Version information” under “About MAGI”. Android checks for app updates there; the Web and PWA versions show the current version and release history.', '「MAGIについて」の「バージョン情報」を開いてください。Androidではアプリの更新を確認でき、Web・PWAでは現在の版と更新履歴を確認できます。')]
   ];
@@ -2780,10 +2920,6 @@ function initNativeWidgetSettings(panel, ja) {
 }
 
 // Androidは送信時だけ測位する。オフなら端末・IPのどちらも検索に使わない。
-function locationServiceEnabled() {
-  try { return localStorage.getItem('magi_location_enabled') !== '0'; }
-  catch (_) { return false; }
-}
 async function locationForMessage(signal, turn) {
   if (!nativeAndroid || !locationServiceEnabled() || !window.MagiNativeLocation) return null;
   var value = await window.MagiNativeLocation.current(signal);
