@@ -21,6 +21,7 @@ Jevを使う環境には `MAGI_TYPESAFE_API_KEY` をWrangler secretで設定す�
 | 継続改善 | [継続改善設計書](magi2継続改善設計書.md) | [継続改善検証計画](magi2継続改善検証計画.md) |
 | 読み上げ・WebSocket | [読み上げ設計書](magi2読み上げ設計書.md) | [読み上げ検証計画](magi2読み上げ検証計画.md) |
 | 一時チャット・パーソナライズ | [設計書](magi2一時チャット・パーソナライズ設計書.md) | [検証計画](magi2一時チャット・パーソナライズ検証計画.md) |
+| ログイン（Auth0・SSOなし、設計案・未実装） | [ログイン設計書](magi2ログイン設計書.md) | [ログイン検証計画](magi2ログイン検証計画.md) |
 
 Android固有の設計と公開評価は [`magi-app/`](../../magi-app/README.md)、404ページの設計は対象HTMLと同じルートの [`404-redesign.md`](../../404-redesign.md)・[`404-ai-search-design.md`](../../404-ai-search-design.md) に置く。
 
