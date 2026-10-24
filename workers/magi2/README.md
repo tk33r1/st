@@ -431,3 +431,16 @@ BALTHASARと、ダークの統合・タイトル・予測・議題化にMessages
 Anthropicのデータの扱いは [APIの保持期間](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) と [商用APIの学習への利用](https://privacy.claude.com/en/articles/7996885-how-do-you-use-personal-data-in-model-training) を確認した（2026-10-13）。入出力は既定で学習には利用されず、通常30日以内に削除される。安全管理・法令等の例外を説明文にも残す。
 
 - 票の補助AIは公開前の固定評価でBALTHASARの第1・2回の札30/30件が有効だったため撤去。札が読めない回は判定不能とし、前回の有効票があればコードで引き継ぐ。
+
+## バグ報告
+
+Webとアプリのメニュー「バグを報告」は `POST /magi2/bug-report` へ入力本文だけを送る。
+本文は空欄不可・Unicodeコードポイントで2000文字まで。会話履歴や画像は添えず、本文はDBやログに保存しない。
+既存のOrigin/APIキー認可を使い、D1の `rate_limit` でIPごと5通・全体100通/日（UTC）に制限する。
+Resendで固定宛先 `magi@tk.st` へ送り、`RESEND_API_KEY` と既存の `ALERT_FROM` を使う。`ALERT_TO` は使わない。
+いずれかのsecretやDBが無い・メール送信が失敗した場合は503を返し、画面は入力を保持する。
+メールの本番配送と受信確認はローカル検証に含めない。
+
+アプリ管理の「位置情報サービス」をオフにすると、次のチャットから `location_enabled:false` を送る。
+SSE/WebSocket共通でIPから推定した所在地を検索・照合に渡さない。GPSの権限は要求しない。
+既存画面の互換性のため、フラグ省略時は従来どおり推定所在地を使う。

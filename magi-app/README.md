@@ -433,3 +433,18 @@ keytool -genkeypair -v -keystore magi-app/release.jks -alias magi \
   are written as `English / 日本語` and `pickLang` shows one side. Switching
   redraws the splash and the conversation unless a reply is streaming. The
   chosen language also becomes `ui_language`, the fallback reply language.
+
+## アプリ管理の設定とバグ報告
+
+Androidのアプリ管理では「位置情報サービス」と「通知」をトグルで操作する。
+位置情報はGPSではなくIP由来の市・地域で、設定を端末内に保存し、次の送信から検索への利用を切り替える。
+通知設定はAndroidのSharedPreferencesに保存し、オフでは到着通知と自動の通知許可要求を止める。
+オンにすると必要に応じてOSの許可を求め、拒否済みの場合はAndroidの通知設定を開く。戻ったときに実際の許可状態を読み直す。
+バックグラウンド受信に必要なフォアグラウンドサービスの表示はAndroidが管理する。
+この通知操作には更新した `MagiConversation` プラグインを含むAPKが必要。
+
+Web・PWA・Android共通のメニューに「バグを報告」を置く。最大2000文字で、入力内容だけをResend経由で `magi@tk.st` に送る。
+送信失敗時は入力を残す。Workerの `/magi2/bug-report` を先に公開する。
+
+ローカル確認: `node --test .github/scripts/test-magi2.mjs` と `node .github/scripts/test-magi-settings-browser.mjs`。
+ブラウザ確認は模擬APIを使い、実メール・有料AI APIは呼ばない。

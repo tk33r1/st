@@ -1712,7 +1712,7 @@ async function agentSend(recovered, retry) {
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     var history = sendHistory();
     var outbound = prepareAgentMessages(history, sendContent);
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true }, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, location_enabled: locationServiceEnabled() }, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
     if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
@@ -1844,7 +1844,8 @@ async function agentSend(recovered, retry) {
     if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(function (el) { el.remove(); }); delete userItem.retry_of; }
     agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid: mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
-    agentLastSend = atts.length ? { mid: mid, atts: atts } : null;
+    // 受信復元のattsは保存用サムネイルなので、画像の再送には使わない。
+    agentLastSend = !recovered && atts.length ? { mid: mid, atts: atts } : null;
     setupReplyBar(turn, agentHistory[agentHistory.length - 1]);
     syncRetryButtons(); refreshReplyTimes();
     refreshSpeechFeature();
@@ -2032,7 +2033,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;
@@ -2042,7 +2043,7 @@ function removeAgentPanel(panel) {
 }
 function closeAgentPanels(keepPageStack) { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) removeAgentPanel(p); }); }
 // 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
-var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
+var AGENT_PAGE_IDS = ['agent-bug-report-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
 var agentPageStack = [];
 function prepareAgentPage(id) {
   if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
@@ -2071,14 +2072,29 @@ function bindAgentPage(panel, opener) {
   panel.agentReturnFocus = opener;
   panel.querySelector('.agent-page-back').addEventListener('click', backAgentPage);
   panel.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); }
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); return; }
+    if (event.key !== 'Tab') return;
+    // 無効・非表示の項目と、隠して保持している親画面はTabの対象にしない。
+    var items = Array.from(panel.querySelectorAll('button, a[href], input, textarea, select, summary, [tabindex]')).filter(function (el) {
+      return el.tabIndex >= 0 && !el.disabled && !el.closest('[hidden], [inert]') && el.getClientRects().length;
+    });
+    var first = items[0], last = items[items.length - 1];
+    if (!first) { event.preventDefault(); return; }
+    var target = event.shiftKey ? document.activeElement === first && last : document.activeElement === last && first;
+    if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
   });
   panel.querySelector('.agent-page-back').focus({ preventScroll: true });
 }
 
 function makeAgentPanel(id, title, bodyHTML) {
-  if (document.getElementById(id)) { if (AGENT_PAGE_IDS.indexOf(id) >= 0) { var existingPage = document.getElementById(id); if (existingPage.hidden) { while (existingPage.hidden && backAgentPage()) {} } else backAgentPage(); } else removeAgentPanel(document.getElementById(id)); return null; }
-  var isPage = AGENT_PAGE_IDS.indexOf(id) >= 0, opener = document.activeElement;
+  var existing = document.getElementById(id), isPage = AGENT_PAGE_IDS.indexOf(id) >= 0;
+  if (existing) {
+    if (!isPage) removeAgentPanel(existing);
+    else if (!existing.hidden) backAgentPage();
+    else { while (existing.hidden && backAgentPage()) {} }
+    return null;
+  }
+  var opener = document.activeElement;
   if (isPage) prepareAgentPage(id); else closeAgentPanels();
   var panel = document.createElement('div');
   panel.id = id; panel.className = 'agent-panel fade-in' + (isPage ? ' agent-info-page' : '');
@@ -2192,19 +2208,18 @@ function deleteSavedSession(id) {
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
 var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech'];
-var agentPrivacyNativeRows = [];
-function renderAgentPrivacy(list, lang, data) {
+function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
     ? '入力は回答のため、外部のAIのAPIに送られます。送り先の最新の説明を取得できませんでした。接続を確かめて開き直してください。最新の説明は https://tk.st/ のMAGIのFAQにもあります。'
     : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
   var rows = data && data.privacy && data.privacy[lang];
   rows = Array.isArray(rows) ? rows.filter(function (row) {
-    return row && !(row.id === 'history' && agentPrivacyNativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+    return row && !(row.id === 'history' && nativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
       || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
   }) : [];
   list.replaceChildren();
-  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(agentPrivacyNativeRows).forEach(function (row) {
+  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(nativeRows).forEach(function (row) {
     var li = document.createElement('li');
     if (typeof row.title === 'string' && row.title.trim()) {
       var title = document.createElement('strong'); title.textContent = row.title; li.appendChild(title);
@@ -2259,8 +2274,6 @@ function renderAgentVersions(list, lang, data) {
 function fillAgentVersionsPanel(panel, lang) {
   panel.dataset.lang = lang;
   panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
-  var close = panel.querySelector('.agent-panel-close');
-  if (close) close.textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
   var list = panel.querySelector('.agent-versions-list');
   renderAgentVersions(list, lang, agentVersionsCache || undefined);
   loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
@@ -2268,7 +2281,7 @@ function fillAgentVersionsPanel(panel, lang) {
 function showVersionsPanel() {
   var panel = makeAgentPanel('agent-versions-panel', '', '<div class="agent-versions-list"></div>');
   if (!panel) return;
-  var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
+  var title = panel.querySelector('.agent-page-title');
   title.classList.add('agent-versions-title');
   fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
 }
@@ -2323,14 +2336,14 @@ function showInfoPanel() {
   var panel = makeAgentPanel('agent-info-panel', tr('Privacy Policy', 'プライバシーポリシー'), '<ul class="agent-privacy-list"></ul>');
   if (!panel) return;
   var list = panel.querySelector('.agent-privacy-list'), lang = isJa() ? 'ja' : 'en';
-  agentPrivacyNativeRows = nativeAndroid ? [
+  var nativeRows = nativeAndroid ? [
     { title: tr("Android storage", "Androidの保存"), text: tr("Conversations and original images stay in this app. Automatic backup is disabled; history does not transfer to a new device. Export a copy without images from App management.", "会話と元の画像はアプリ内に保存します。自動バックアップは無効で、機種変更では引き継がれません。「アプリ管理」から画像を除く控えを書き出せます。") },
     { title: tr("URLs and voice input", "URLと音声入力"), text: tr("Your device fetches shared URLs without cookies. Voice input uses the device’s recognition service (often Google), which may receive audio if on-device recognition is unavailable. Audio is not sent to MAGI servers.", "共有URLは端末がCookieなしで読み込みます。音声入力は端末の認識サービス（多くはGoogle）を使い、端末内で認識できない場合は音声をそのサービスへ送ることがあります。音声はMAGIのサーバーに送りません。") },
     { title: tr("Replies and notifications", "受信と通知"), text: tr("Replies continue arriving while you use another app or turn off the display, and stay on your device until saved to the chat. If allowed, notifications show the chat title. Stop a request from its ongoing notification.", "別のアプリの使用中や画面消灯中も回答を受信し、会話へ保存するまで端末に残します。許可した通知には会話のタイトルが出ます。進行中の通知から送信を止められます。") },
     { title: tr("Widgets", "ウィジェット"), text: tr("Home widgets open MAGI. They show no chat contents and make no network requests themselves.", "ホーム画面からMAGIを開く入口です。会話の内容は表示せず、ウィジェット自体は通信しません。") }
   ] : [];
-  renderAgentPrivacy(list, lang, undefined);
-  loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
+  renderAgentPrivacy(list, lang, undefined, nativeRows);
+  loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data, nativeRows); });
 }
 
 // 設定パネルの「ホーム画面に追加」を受け持つ。ウィジェットは入口だけで、設定は持たない。
@@ -2347,12 +2360,20 @@ function initNativeWidgetSettings(panel, ja) {
   });
 }
 
+// 概略の所在地（IP由来）の利用設定。GPSの権限は要求しない。
+function locationServiceEnabled() {
+  try { return localStorage.getItem('magi_location_enabled') !== '0'; }
+  catch (_) { return false; }
+}
 // アプリ管理はAndroidだけ。ウィジェット・通知と履歴の操作をまとめる。
 async function showNativeSettings() {
   if (!nativeAndroid) return;
   var ja = isJa();
   var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
-    '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p><p id="native-notification-status" hidden></p>'
+    '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p>'
+    + '<div class="native-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
+    + '<p id="native-location-note">' + tr('Use the city and region estimated from your IP address for searches. GPS is not used. Changes apply to your next message.', 'IPアドレスから推定した市・地域を検索に使います。GPSは使いません。変更は次の送信から反映します。') + '</p>'
+    + '<div class="native-setting" id="native-notification-setting" hidden><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" hidden></p>'
     + '<div id="native-widget-settings" hidden>'
     + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
     + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
@@ -2361,18 +2382,46 @@ async function showNativeSettings() {
     + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>');
   if (!panel) return;
   initNativeWidgetSettings(panel, ja);
+  var locationToggle = panel.querySelector('#native-location-toggle');
+  locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
+  locationToggle.addEventListener('click', function () {
+    try {
+      localStorage.setItem('magi_location_enabled', locationServiceEnabled() ? '0' : '1');
+      locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
+    } catch (_) { announceAgent(tr('Could not save this setting.', '設定を保存できませんでした。')); }
+  });
   if (nativeConversation) {
     var notifications = panel.querySelector('#native-notification-status'); notifications.hidden = false;
-    nativeConversation.permission().then(function (value) {
-      if (!panel.isConnected) return;
-      notifications.textContent = value.display === 'granted' ? tr('Notifications are allowed.', '通知は許可されています。') : tr('Notifications are off; chat still works.', '通知は許可されていません。会話は引き続き使えます。');
-      var button = document.createElement('button'); button.type = 'button'; button.textContent = tr('Notification settings', '通知の設定');
-      button.addEventListener('click', function () { nativeConversation.settings().catch(function () { announceAgent(tr('Could not open notification settings.', '通知の設定を開けませんでした。')); }); });
-      notifications.appendChild(button);
-    }).catch(function () { notifications.textContent = tr('Could not check notifications.', '通知の状態を確認できませんでした。'); });
+    panel.querySelector('#native-notification-setting').hidden = false;
+    var notificationToggle = panel.querySelector('#native-notification-toggle');
+    async function refreshNotifications() {
+      try {
+        var value = await nativeConversation.notificationState();
+        if (!panel.isConnected) return;
+        notificationToggle.setAttribute('aria-checked', String(value.enabled));
+        notificationToggle.disabled = false;
+        notifications.textContent = tr('Reply arrival alerts. Android may require permission. The ongoing background task notification is managed by Android.', '回答の到着を通知します。Androidの許可が必要な場合があります。バックグラウンド受信中の表示はAndroidが管理します。');
+      } catch (_) { notificationToggle.disabled = true; notifications.textContent = tr('Could not check notifications.', '通知の状態を確認できませんでした。'); }
+    }
+    notificationToggle.addEventListener('click', async function () {
+      notificationToggle.disabled = true;
+      try { await nativeConversation.setNotifications(notificationToggle.getAttribute('aria-checked') !== 'true'); }
+      catch (_) { announceAgent(tr('Could not change notification settings.', '通知の設定を変更できませんでした。')); }
+      await refreshNotifications();
+    });
+    function onVisible() {
+      if (!document.hidden) refreshNotifications();
+    }
+    panel.onAgentClose = function () {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    refreshNotifications();
   }
   var status = panel.querySelector('#history-storage-status');
-  var buttons = panel.querySelectorAll('.agent-panel-body button');
+  var buttons = panel.querySelectorAll('.native-settings-actions button');
   if (!nativeHistory || !nativeHistory.active) {
     status.textContent = tr('Moving your history has not finished. Check free storage and reopen the app. Your existing chats are kept.', '履歴の移し替えは未完了です。空き容量を確かめ、アプリを開き直してください。既存の会話は残しています。');
     buttons.forEach(function (b) { b.disabled = true; }); return;
@@ -2583,6 +2632,49 @@ loadUsage();
 })();
 document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
 document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+function showBugReportPanel() {
+  var panel = makeAgentPanel('agent-bug-report-panel', tr('Report a bug', 'バグを報告'),
+    '<form id="agent-bug-form"><label for="agent-bug-message">' + tr('What problem did you experience?', 'どのような問題が発生しましたか？') + '</label>'
+    + '<textarea id="agent-bug-message" rows="7" maxlength="4000" required aria-describedby="agent-bug-count agent-bug-note"></textarea>'
+    + '<p id="agent-bug-count">0 / 2000</p><p id="agent-bug-note">' + tr('Your description will be emailed to magi@tk.st via Resend. Chat history and images are not attached. Please leave out passwords and other sensitive information.', '入力した内容をResend経由でmagi@tk.stへメール送信します。会話履歴・画像は添付しません。パスワードなどの機密情報は入力しないでください。') + '</p>'
+    + '<button type="submit" disabled>' + tr('Send', '送信') + '</button><p id="agent-bug-status" role="status"></p></form>');
+  if (!panel) return;
+  var form = panel.querySelector('form'), input = panel.querySelector('textarea');
+  var count = panel.querySelector('#agent-bug-count'), status = panel.querySelector('#agent-bug-status'), button = form.querySelector('button');
+  var pending = false;
+  function update(event) {
+    if (!event || !event.isComposing) input.value = Array.from(input.value).slice(0, 2000).join('');
+    var length = Array.from(input.value).length;
+    count.textContent = length + ' / 2000';
+    button.disabled = pending || !input.value.trim() || length > 2000;
+  }
+  input.addEventListener('input', update);
+  input.addEventListener('compositionend', update);
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    if (pending || !input.value.trim() || Array.from(input.value).length > 2000) return;
+    pending = true; input.readOnly = true; update();
+    status.textContent = tr('Sending…', '送信中…');
+    try {
+      var response = await fetch(AGENT_API.replace(/\/chat$/, '/bug-report'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input.value }), signal: AbortSignal.timeout(15000)
+      });
+      var result = await response.json();
+      if (!response.ok || result.ok !== true) {
+        status.textContent = response.status === 429 ? tr('Too many reports. Please try again later.', '送信の上限に達しました。時間を置いてお試しください。')
+          : tr('Could not send. Your text is kept; please try again later.', '送信できませんでした。入力内容は残っています。時間を置いて再試行してください。');
+        return;
+      }
+      input.value = '';
+      status.textContent = tr('Thank you. Your report has been sent.', '報告を送信しました。ありがとうございます。');
+    } catch (_) { status.textContent = tr('Could not send. Check your connection and try again.', '送信できませんでした。接続を確認して再試行してください。'); }
+    finally { pending = false; input.readOnly = false; update(); }
+  });
+  input.focus();
+}
+
+document.getElementById('btn-bug-report-agent').addEventListener('click', showBugReportPanel);
 document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
 document.getElementById('agent-app-actions-divider').hidden = !(nativeAndroid || WEB_INSTALL);
 var installBtn = document.getElementById('btn-install-agent');
@@ -2654,10 +2746,10 @@ function releaseVersion(tag) {
   var match = typeof tag === 'string' && /^v(\d{1,2})\.(\d)([1-9])?$/.exec(tag);
   return match ? [Number(match[1]), match[2] + (match[3] || '')] : null;
 }
+function releaseCode(parts) { return parts[0] * 100 + Number(parts[1].padEnd(2, '0')); }
 function newerRelease(parts, current) {
-  var installed = typeof current === 'string' && /^(\d{1,2})\.(\d)([1-9])?$/.exec(current);
-  return !!parts && !!installed && parts[0] * 100 + Number(parts[1].padEnd(2, '0'))
-    > Number(installed[1]) * 100 + Number(installed[2]) * 10 + Number(installed[3] || 0);
+  var installed = typeof current === 'string' ? releaseVersion('v' + current) : null;
+  return !!parts && !!installed && releaseCode(parts) > releaseCode(installed);
 }
 function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
 // 公開中の最新Releaseを5秒で諦めて取る。APKの添付にGitHubが記録したSHA-256があれば返し、ネイティブはそれと照合してから入れる。

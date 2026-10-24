@@ -70,6 +70,20 @@ public class MagiConversationPlugin extends Plugin {
         else requestPermissionForAlias("display", call, "permissionResult");
     }
     @PermissionCallback private void permissionResult(PluginCall call) { checkPermissions(call); }
+    @PluginMethod public void notificationPreference(PluginCall call) {
+        JSObject value = new JSObject();
+        value.put("enabled", getContext().getSharedPreferences("magi_settings", 0).getBoolean("notifications", true));
+        call.resolve(value);
+    }
+    @PluginMethod public void setNotificationPreference(PluginCall call) {
+        Boolean enabled = call.getBoolean("enabled");
+        if (enabled == null) { call.reject("invalid_preference"); return; }
+        if (!getContext().getSharedPreferences("magi_settings", 0).edit().putBoolean("notifications", enabled).commit()) {
+            call.reject("preference_save_failed"); return;
+        }
+        if (!enabled) getContext().getSystemService(NotificationManager.class).cancel(MagiConversationService.DONE_NOTIFICATION);
+        notificationPreference(call);
+    }
     @PluginMethod public void information(PluginCall call) {
         JSObject value = new JSObject(); value.put("test", testBuild()); call.resolve(value);
     }

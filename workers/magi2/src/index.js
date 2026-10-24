@@ -73,6 +73,38 @@ function inputError(err, requestId, cors) {
   }, requestId, cors);
 }
 
+// 報告本文はメールだけへ渡す。会話・画像を添付せず、ログやDBにも保存しない。
+async function handleBugReport(request, env, { requestId, cors }) {
+  cors = { ...cors, 'Cache-Control': 'no-store' };
+  let body;
+  try { body = await readJsonLimited(request, 24000); }
+  catch (error) { return inputError(error, requestId, cors); }
+  if (typeof body.message !== 'string' || !body.message.trim() || Array.from(body.message).length > 2000) {
+    return httpError(400, { stage: 'bad_request', code: 'invalid_report', message: '問題の内容を2000文字以内で入力してください', retryable: false }, requestId, cors);
+  }
+  if (!env.DB || !env.RESEND_API_KEY || !env.ALERT_FROM) {
+    return httpError(503, { stage: 'internal', code: 'report_unavailable', message: '現在報告を送信できません。時間を置いてお試しください', retryable: true }, requestId, cors);
+  }
+  try {
+    const day = utcDay();
+    // 匿名の入口なので、IPごと5通・全体100通/日に制限する。
+    if (await countUp(env.DB, `bug-report:${requestIP(request)}`, day, 5) == null
+      || await countUp(env.DB, 'bug-report:global', day, 100) == null) {
+      return httpError(429, { stage: 'rate_limit', code: 'report_limit', message: '送信の上限に達しました。時間を置いてお試しください', retryable: true }, requestId, cors);
+    }
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST', signal: AbortSignal.timeout(10000),
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: env.ALERT_FROM, to: ['magi@tk.st'], subject: '[MAGI] バグ報告',
+        text: `MAGIのバグ報告\n\n${body.message.trim()}` }),
+    });
+    if (!response.ok) throw new Error('mail_failed');
+    return jsonResponse({ ok: true }, cors);
+  } catch (_) {
+    return httpError(503, { stage: 'internal', code: 'report_failed', message: '送信できませんでした。時間を置いて再試行してください', retryable: true }, requestId, cors);
+  }
+}
+
 // Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
 // signal（省略できる）で止めたら、読み取り中の reader を止める（待つ Promise を打ち切るだけでは読み取りが残る）
 async function readJsonLimited(request, maxBytes, signal = null, metrics = null) {
@@ -1187,11 +1219,11 @@ function researchLocalDate(verifiedNow) {
 
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
 function researchRequestBody(cfg, messages, place = null) {
-  // 検索の会社にも推定所在地を渡し、地域の結果を優先させる（無ければ今までどおり日本・東京の時刻）
+  // 推定所在地が使えない・無効の場合は、検索の会社にも所在地を指定しない。
   const location = place ? { type: 'approximate', country: place.country, ...(place.city ? { city: place.city } : {}),
-    ...(place.region ? { region: place.region } : {}), timezone: place.timezone || RESEARCH.location.timezone } : RESEARCH.location;
+    ...(place.region ? { region: place.region } : {}), timezone: place.timezone || RESEARCH.location.timezone } : null;
   if (cfg.provider === 'anthropic') return { ...requestBody(cfg, { messages, stream: true }),
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, user_location: location },
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: RESEARCH.max_uses, ...(location ? { user_location: location } : {}) },
       { ...RESEARCH.fetch, name: 'web_fetch', allowed_callers: ['direct'], use_cache: false, citations: { enabled: true } }] };
   const instructions = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
   const input = messages.filter(m => m.role !== 'system').map(({ role, content }) => ({ role,
@@ -1200,7 +1232,7 @@ function researchRequestBody(cfg, messages, place = null) {
       : { type: 'input_image', image_url: part.image_url.url }) }));
   return { model: cfg.model, stream: true, store: false, instructions, input,
     reasoning: { effort: cfg.reasoning_effort }, max_output_tokens: cfg.max_tokens, max_tool_calls: RESEARCH.max_uses,
-    tools: [{ type: 'web_search', user_location: location }], tool_choice: 'required', include: ['web_search_call.action.sources'] };
+    tools: [{ type: 'web_search', ...(location ? { user_location: location } : {}) }], tool_choice: 'required', include: ['web_search_call.action.sources'] };
 }
 
 // pause_turnで送り返すassistantのcontentを、届いたブロックと差分からそのまま復元する。
@@ -1858,6 +1890,7 @@ async function readChatInput(request) {
   const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
   const searchText = contentText(messages.at(-1).content);
   return { messages: withShared(messages), plainMessages, discussMessages: withShared(plainMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
+    locationEnabled: body.location_enabled !== false,
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
 
@@ -2089,6 +2122,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
+  if (!input.locationEnabled) place = null;
   const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {
@@ -2619,13 +2653,14 @@ export default {
     // 存在する POST の入口だけを、chat / react 共通の条件で認可する。
     const isChat = request.method === 'POST' && url.pathname === '/magi2/chat';
     const isReaction = request.method === 'POST' && url.pathname === '/magi2/react';
+    const isBugReport = request.method === 'POST' && url.pathname === '/magi2/bug-report';
     const isSiteSearch = request.method === 'POST' && url.pathname === '/magi2/site-search';
     const isRankSearch=request.method==='POST' && url.pathname==='/search/api/rank';
     const isSearchClick = request.method === 'POST' && url.pathname === '/search/api/click';
     // 読み上げは SPEECH_ENABLED が "true" のときだけ開く（止めているときは入口ごと無い）
     const isSpeech = request.method === 'POST' && url.pathname === '/magi2/speech' && env.SPEECH_ENABLED === 'true';
     if (isSiteSearch || isRankSearch || isSearchClick) cors['Cache-Control'] = 'no-store';
-    if (!isChat && !isReaction && !isSiteSearch && !isRankSearch && !isSearchClick && !isSpeech) {
+    if (!isChat && !isReaction && !isBugReport && !isSiteSearch && !isRankSearch && !isSearchClick && !isSpeech) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }
     if (!authorized) {
@@ -2639,6 +2674,7 @@ export default {
       }, requestId, cors);
     }
     const context = { requestId, cors, log };
+    if (isBugReport) return handleBugReport(request, env, context);
     if (isSpeech) return handleSpeech(request, env, ctx, context);
     if (isSearchClick) return handleSearchClick(request, env, context);
     if (isSiteSearch || isRankSearch) return handleSiteSearch(request, env, ctx, context);

@@ -8,7 +8,9 @@ const source = readFileSync(new URL('../../magi-app/www/native-background.js', i
 function fixture({ native = true, permission = 'granted', status = 'complete', text = 'event: integrated\ndata: {"delta":"日本語"}\n\nevent: done\ndata: {}\n\n' } = {}) {
   const calls = [], storage = new Map(), bytes = Buffer.from(text), rows = [{ id: 'request_1', sessionId: 'session_1' }, { id: 'request_2', sessionId: 'session_2' }];
   const plugin = {
-    information: async () => ({ test: false }), checkPermissions: async () => ({ display: permission }),
+    information: async () => ({ test: false }),
+    notificationPreference: async () => ({ enabled: true }),
+    setNotificationPreference: async ({ enabled }) => { plugin.notificationPreference = async () => ({ enabled }); calls.push(['notifications', enabled]); }, checkPermissions: async () => ({ display: permission }),
     requestPermissions: async () => { calls.push(['permission']); return { display: 'denied' }; },
     begin: async o => { calls.push(['begin', o]); }, cancel: async o => { calls.push(['cancel', o.id]); },
     acknowledge: async o => { calls.push(['acknowledge', o.id]); }, pending: async () => ({ runs: rows }),
@@ -62,4 +64,15 @@ test('B3: 会話削除はその会話の列だけ、全削除はすべての列�
   const f = fixture(), n = await f.create(); await n.clear('session_2');
   assert.deepEqual(f.calls.filter(c => c[0] === 'acknowledge'), [['acknowledge', 'request_2']]);
   await n.clear(); assert.equal(f.calls.filter(c => c[0] === 'acknowledge').length, 3);
+});
+
+test('通知設定: オフでは許可を求めず、オンでOS許可を案内する', async () => {
+  const f = fixture({ permission: 'prompt' }), n = await f.create();
+  await n.setNotifications(false);
+  assert.equal((await n.notificationState()).enabled, false);
+  await new Response((await n.open('{}', request())).body).text();
+  assert.equal(f.calls.filter(c => c[0] === 'permission').length, 0);
+  await n.setNotifications(true);
+  assert.equal(f.calls.filter(c => c[0] === 'permission').length, 1);
+  assert.equal(f.calls.filter(c => c[0] === 'settings').length, 1);
 });

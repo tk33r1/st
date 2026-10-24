@@ -3290,6 +3290,14 @@
     .agent-page-back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--secondary-color); cursor: pointer; }
     .agent-page-back:hover { color: var(--primary-color); }
     .agent-page-back:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 50%; }
+
+    #agent-bug-form { display: grid; gap: 12px; }
+    #agent-bug-form label { font-size: 15px; line-height: 1.6; }
+    #agent-bug-form textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 150px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-color, inherit); font: inherit; font-size: 16px; }
+    #agent-bug-form p { margin: 0; font-size: 12px; line-height: 1.7; }
+    #agent-bug-form button { justify-self: start; padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 8px; }
+    #agent-bug-form button:disabled { opacity: .45; cursor: default; }
+    #agent-bug-form textarea:focus-visible, #agent-bug-form button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
   </style>
   <script type="application/ld+json">
     {
@@ -3299,7 +3307,7 @@
           "@type": "ProfilePage",
           "@id": "https://tk.st/#profile-page",
           "dateCreated": "2026-03-26T12:00:00+09:00",
-          "dateModified": "2026-10-24T21:50:44+09:00",
+          "dateModified": "2026-10-24T21:29:39+09:00",
           "mainEntity": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake",
@@ -3763,6 +3771,10 @@
                   <span class="menu-label" data-ja="Markdownで保存">Save as Markdown</span>
                 </button>
                 <hr />
+                <button id="btn-bug-report-agent" type="button" class="dock-menu-item">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 21h20L12 3zM12 9v5m0 3v1"/></svg>
+                  <span class="menu-label" data-ja="バグを報告">Report a bug</span>
+                </button>
                 <button id="btn-about-agent" type="button" class="dock-menu-item">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v1"/></svg>
                   <span class="menu-label" data-ja="MAGIについて">About MAGI</span>
@@ -9308,10 +9320,10 @@ async function parseSSE(body, handlers, onChunk) {
 
     // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
     // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
-    const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel'];
+    const AGENT_PANEL_IDS = ['agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel'];
     const closeAgentPanels = (keepPageStack) => { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) p.remove(); }); };
     // 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
-var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
+var AGENT_PAGE_IDS = ['agent-bug-report-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
 var agentPageStack = [];
 function prepareAgentPage(id) {
   if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
@@ -9340,14 +9352,29 @@ function bindAgentPage(panel, opener) {
   panel.agentReturnFocus = opener;
   panel.querySelector('.agent-page-back').addEventListener('click', backAgentPage);
   panel.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); }
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); return; }
+    if (event.key !== 'Tab') return;
+    // 無効・非表示の項目と、隠して保持している親画面はTabの対象にしない。
+    var items = Array.from(panel.querySelectorAll('button, a[href], input, textarea, select, summary, [tabindex]')).filter(function (el) {
+      return el.tabIndex >= 0 && !el.disabled && !el.closest('[hidden], [inert]') && el.getClientRects().length;
+    });
+    var first = items[0], last = items[items.length - 1];
+    if (!first) { event.preventDefault(); return; }
+    var target = event.shiftKey ? document.activeElement === first && last : document.activeElement === last && first;
+    if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
   });
   panel.querySelector('.agent-page-back').focus({ preventScroll: true });
 }
 
 function makeAgentPanel(id, title, bodyHTML) {
-      if (document.getElementById(id)) { if (AGENT_PAGE_IDS.indexOf(id) >= 0) { var existingPage = document.getElementById(id); if (existingPage.hidden) { while (existingPage.hidden && backAgentPage()) {} } else backAgentPage(); } else document.getElementById(id).remove(); return null; }
-      const isPage = AGENT_PAGE_IDS.indexOf(id) >= 0, opener = document.activeElement;
+      const existing = document.getElementById(id), isPage = AGENT_PAGE_IDS.indexOf(id) >= 0;
+      if (existing) {
+        if (!isPage) existing.remove();
+        else if (!existing.hidden) backAgentPage();
+        else { while (existing.hidden && backAgentPage()) {} }
+        return null;
+      }
+      const opener = document.activeElement;
       if (isPage) prepareAgentPage(id); else closeAgentPanels();
       const panel = document.createElement('div');
       panel.id = id;
@@ -9434,19 +9461,18 @@ function makeAgentPanel(id, title, bodyHTML) {
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
 var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech'];
-var agentPrivacyNativeRows = [];
-function renderAgentPrivacy(list, lang, data) {
+function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
     ? '入力は回答のため、外部のAIのAPIに送られます。送り先の最新の説明を取得できませんでした。接続を確かめて開き直してください。最新の説明は https://tk.st/ のMAGIのFAQにもあります。'
     : 'Inputs are sent to external AI APIs to answer you. Could not load the latest description of the recipients. Check your connection and reopen this panel. The latest description is also in the MAGI FAQ at https://tk.st/.';
   var rows = data && data.privacy && data.privacy[lang];
   rows = Array.isArray(rows) ? rows.filter(function (row) {
-    return row && !(row.id === 'history' && agentPrivacyNativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
+    return row && !(row.id === 'history' && nativeRows.length) && typeof row.text === 'string' && row.text.trim() && (row.requires === undefined
       || Array.isArray(row.requires) && row.requires.every(function (name) { return typeof name === 'string' && AGENT_PRIVACY_FEATURES.indexOf(name) >= 0; }));
   }) : [];
   list.replaceChildren();
-  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(agentPrivacyNativeRows).forEach(function (row) {
+  (data === undefined ? [{ text: lang === 'ja' ? '読み込み中…' : 'Loading…' }] : rows.length ? rows : [{ text: fallback }]).concat(nativeRows).forEach(function (row) {
     var li = document.createElement('li');
     if (typeof row.title === 'string' && row.title.trim()) {
       var title = document.createElement('strong'); title.textContent = row.title; li.appendChild(title);
@@ -9501,8 +9527,6 @@ function renderAgentVersions(list, lang, data) {
 function fillAgentVersionsPanel(panel, lang) {
   panel.dataset.lang = lang;
   panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
-  var close = panel.querySelector('.agent-panel-close');
-  if (close) close.textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
   var list = panel.querySelector('.agent-versions-list');
   renderAgentVersions(list, lang, agentVersionsCache || undefined);
   loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
@@ -9510,7 +9534,7 @@ function fillAgentVersionsPanel(panel, lang) {
 function showVersionsPanel() {
   var panel = makeAgentPanel('agent-versions-panel', '', '<div class="agent-versions-list"></div>');
   if (!panel) return;
-  var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
+  var title = panel.querySelector('.agent-page-title');
   title.classList.add('agent-versions-title');
   fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
 }
@@ -9571,7 +9595,50 @@ function showInfoPanel() {
     }
 
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
-    document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
+    function showBugReportPanel() {
+  var panel = makeAgentPanel('agent-bug-report-panel', tr('Report a bug', 'バグを報告'),
+    '<form id="agent-bug-form"><label for="agent-bug-message">' + tr('What problem did you experience?', 'どのような問題が発生しましたか？') + '</label>'
+    + '<textarea id="agent-bug-message" rows="7" maxlength="4000" required aria-describedby="agent-bug-count agent-bug-note"></textarea>'
+    + '<p id="agent-bug-count">0 / 2000</p><p id="agent-bug-note">' + tr('Your description will be emailed to magi@tk.st via Resend. Chat history and images are not attached. Please leave out passwords and other sensitive information.', '入力した内容をResend経由でmagi@tk.stへメール送信します。会話履歴・画像は添付しません。パスワードなどの機密情報は入力しないでください。') + '</p>'
+    + '<button type="submit" disabled>' + tr('Send', '送信') + '</button><p id="agent-bug-status" role="status"></p></form>');
+  if (!panel) return;
+  var form = panel.querySelector('form'), input = panel.querySelector('textarea');
+  var count = panel.querySelector('#agent-bug-count'), status = panel.querySelector('#agent-bug-status'), button = form.querySelector('button');
+  var pending = false;
+  function update(event) {
+    if (!event || !event.isComposing) input.value = Array.from(input.value).slice(0, 2000).join('');
+    var length = Array.from(input.value).length;
+    count.textContent = length + ' / 2000';
+    button.disabled = pending || !input.value.trim() || length > 2000;
+  }
+  input.addEventListener('input', update);
+  input.addEventListener('compositionend', update);
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    if (pending || !input.value.trim() || Array.from(input.value).length > 2000) return;
+    pending = true; input.readOnly = true; update();
+    status.textContent = tr('Sending…', '送信中…');
+    try {
+      var response = await fetch(AGENT_API.replace(/\/chat$/, '/bug-report'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input.value }), signal: AbortSignal.timeout(15000)
+      });
+      var result = await response.json();
+      if (!response.ok || result.ok !== true) {
+        status.textContent = response.status === 429 ? tr('Too many reports. Please try again later.', '送信の上限に達しました。時間を置いてお試しください。')
+          : tr('Could not send. Your text is kept; please try again later.', '送信できませんでした。入力内容は残っています。時間を置いて再試行してください。');
+        return;
+      }
+      input.value = '';
+      status.textContent = tr('Thank you. Your report has been sent.', '報告を送信しました。ありがとうございます。');
+    } catch (_) { status.textContent = tr('Could not send. Check your connection and try again.', '送信できませんでした。接続を確認して再試行してください。'); }
+    finally { pending = false; input.readOnly = false; update(); }
+  });
+  input.focus();
+}
+
+document.getElementById('btn-bug-report-agent').addEventListener('click', showBugReportPanel);
+document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
     document.getElementById('btn-close-agent').addEventListener('click', closeAgentDock);
 
     const moreBtn = document.getElementById('btn-more-agent');

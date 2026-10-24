@@ -98,7 +98,7 @@ public class MagiConversationService extends Service {
             new Intent(this, MagiConversationService.class).setAction("stop").setData(Uri.parse("magi-stop:" + run.id())).putExtra("id", run.id()),
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         return new NotificationCompat.Builder(this, ACTIVE_CHANNEL).setSmallIcon(R.drawable.ic_stat_magi)
-            .setContentTitle("MAGI が討議中…").setContentText("完了したらお知らせします")
+            .setContentTitle("MAGI が討議中…").setContentText("回答を受信しています")
             .setContentIntent(open(this, run)).setOngoing(true).setSilent(true).setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .addAction(0, "停止", stop).build();
     }
@@ -135,7 +135,8 @@ public class MagiConversationService extends Service {
     private static boolean notifyArrival(Context context, Run run, String status, String savedStatus) {
         // 停止の判定は要求時のstatus、通知の文面は保存後のsavedStatusで決める。
         boolean allowed = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-        if (foreground || status.equals("stopped") || !allowed) return false;
+        if (foreground || status.equals("stopped") || !allowed
+            || !context.getSharedPreferences("magi_settings", 0).getBoolean("notifications", true)) return false;
         channels(context);
         String title = savedStatus.equals("complete") ? "回答が届きました" : "回答を受け取れませんでした";
         Bundle extras = new Bundle(); extras.putString("magi_request_id", run.id());

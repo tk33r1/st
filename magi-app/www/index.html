@@ -442,6 +442,22 @@
     .agent-page-back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--secondary-color); cursor: pointer; }
     .agent-page-back:hover { color: var(--primary-color); }
     .agent-page-back:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 50%; }
+
+    #agent-bug-form { display: grid; gap: 12px; }
+    #agent-bug-form label { font-size: 15px; line-height: 1.6; }
+    #agent-bug-form textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 150px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-color, inherit); font: inherit; font-size: 16px; }
+    #agent-bug-form p { margin: 0; font-size: 12px; line-height: 1.7; }
+    #agent-bug-form button { justify-self: start; padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 8px; }
+    #agent-bug-form button:disabled { opacity: .45; cursor: default; }
+    #agent-bug-form textarea:focus-visible, #agent-bug-form button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+
+    .native-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
+    .native-setting [role="switch"] { width: 48px; height: 28px; flex: 0 0 48px; padding: 3px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--secondary-color); cursor: pointer; }
+    .native-setting [role="switch"] span { display: block; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform .15s; }
+    .native-setting [role="switch"][aria-checked="true"] { background: var(--primary-color); }
+    .native-setting [role="switch"][aria-checked="true"] span { transform: translateX(20px); }
+    .native-setting [role="switch"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
+    .native-setting [role="switch"]:disabled { opacity: .45; }
   </style>
 </head>
 <body>
@@ -495,7 +511,11 @@
               <span class="menu-label" data-ja="アプリ管理を開く">Open app management</span>
               <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
             </button>
-            <button id="btn-about-agent" type="button" >
+            <button id="btn-bug-report-agent" type="button" class="dock-menu-item">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 21h20L12 3zM12 9v5m0 3v1"/></svg>
+                  <span class="menu-label" data-ja="バグを報告">Report a bug</span>
+                </button>
+                <button id="btn-about-agent" type="button" >
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v1"/></svg>
                   <span class="menu-label" data-ja="MAGIについて">About MAGI</span>
                 <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
@@ -552,7 +572,7 @@
   <script src="vendor/Readability.js?v=0.6.0"></script>
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
-  <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261024_17"></script>
+  <script src="native-background.js?v=20261024_2"></script>
+  <script src="app.js?v=20261024_21"></script>
 </body>
 </html>

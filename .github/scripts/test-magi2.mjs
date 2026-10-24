@@ -115,7 +115,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
   const ctx = vm.createContext({
     aiModels: JSON.parse(read('config/ai-models.json')), bundledContext: cards,
     bundledVersions: JSON.parse(read('data/magi-versions.json')),
-    Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, URL,
+    Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, AbortSignal, URL,
     crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} }, btoa,
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
@@ -1999,6 +1999,7 @@ function client(src, isHome = false) {
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
+  if (!isHome) vm.runInContext(between(src, 'function locationServiceEnabled()', '// アプリ管理はAndroidだけ。'), ctx);
   vm.runInContext(between(src, '// AGENT_CLASSIFY_BEGIN', '// AGENT_CLASSIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLARIFY_BEGIN', '// AGENT_CLARIFY_END'), ctx);
   vm.runInContext(between(src, '// AGENT_CLOSED_BEGIN', '// AGENT_CLOSED_END'), ctx);
@@ -2071,6 +2072,37 @@ test('もう一度: 送り直しの最中にアプリが閉じても、受信の
       // 届かなければ前の往復を残し、見せ直す
       assert(c.ctx.agentHistory.includes(oldReply)); assert(els.every(el => el.hidden === false && !el.removed));
     }
+  }
+});
+
+test('もう一度: 受信復元後のサムネイルを再送せず、この画面で送った画像と文字の再送は保つ', async () => {
+  for (const recovered of [false, true]) for (const withFile of [false, true]) {
+    const c = client(mobile);
+    vm.runInContext(between(mobile, 'function contentText(', 'function downscaleImage('), c.ctx);
+    vm.runInContext(between(mobile, 'function agentRetryInput(', '// 以下は統合人格'), c.ctx);
+    const thumb = 'data:image/jpeg;base64,dGh1bWI=', original = 'data:image/jpeg;base64,b3JpZ2luYWw=';
+    const file = withFile ? { file: 'a'.repeat(64) + '.jpg' } : {};
+    const user = { role: 'user', native_request: 'native-request', content: [
+      { type: 'text', text: 'この画像を説明して' }, { type: 'image_url', image_url: { url: thumb }, ...file }
+    ] };
+    c.ctx.agentHistory = recovered ? [user] : [];
+    c.ctx.agentLog.lastElementChild = element();
+    c.ctx.agentInput.value = 'この画像を説明して';
+    c.ctx.attachments = [{ url: original, thumb, ...file }];
+    c.ctx.agentLastSend = { mid: 'previous', atts: c.ctx.attachments };
+    c.ctx.nativeHistory = { async flush() {} };
+    c.ctx.nativeConversation = {
+      id() { return 'native-request'; }, watch() { return { chunk() {}, end() {}, finish() {}, isBuffered() { return false; } }; },
+      async open() { return { ok: true, body: {} }; }, async acknowledge() {}
+    };
+    c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: '回答' }); h.done(); };
+    await c.ctx.agentSend(recovered ? { id: 'native-request', mid: 'mRECOVERED', startedAt: 0 } : undefined);
+    const mid = c.ctx.agentHistory.at(-1).mid;
+    const again = c.ctx.agentRetryInput(user, mid, c.ctx.agentLastSend);
+    if (recovered) { assert.equal(c.ctx.agentLastSend, null); assert.equal(again, null); }
+    else assert.equal(again.atts[0].url, original);
+    const textAgain = c.ctx.agentRetryInput({ role: 'user', content: '文字の質問' }, mid, c.ctx.agentLastSend);
+    assert.equal(textAgain.text, '文字の質問'); assert.equal(textAgain.atts.length, 0);
   }
 });
 
@@ -4031,13 +4063,14 @@ test('説明の文字描画は日英・両画面で一致し、機能の印は�
     // 取得中は失敗の案内を出さない
     ctx.renderAgentPrivacy(list,lang,undefined);assert.deepEqual(children.map(c=>c.textContent),[lang==='ja'?'読み込み中…':'Loading…']);
     // 見出しもHTMLにせず、Androidではブラウザの保存説明と重ねない。
-    ctx.agentPrivacyNativeRows=[{title:'Android',text:'device storage'}];
-    ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{id:'history',text:'browser storage'},{title:'<img>',text:'<script>'}]}});
+    const nativeRows=[{title:'Android',text:'device storage'}];
+    ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{id:'history',text:'browser storage'},{title:'<img>',text:'<script>'}]}},nativeRows);
     assert.equal(children.length,2);
     assert.deepEqual(children[0].children.map(c=>c.textContent),['<img>','<script>']);
     assert.deepEqual(children[1].children.map(c=>c.textContent),['Android','device storage']);
-    ctx.renderAgentPrivacy(list,lang,null);assert.equal(children.length,2);
-    ctx.agentPrivacyNativeRows=[];
+    ctx.renderAgentPrivacy(list,lang,null,nativeRows);assert.equal(children.length,2);
+    ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{id:'history',text:'browser storage'}]}});
+    assert.deepEqual(children.map(c=>c.textContent),['browser storage']);
     list.isConnected=false;ctx.renderAgentPrivacy(list,lang,{privacy:{[lang]:[{text:'late'}]}});assert.notEqual(children[0].textContent,'late');
   }
 });
@@ -6113,7 +6146,7 @@ test('推定所在地: Web で調べるとき、検索の所在地と指示・�
 test('推定所在地: 通信元が分からないときは今までどおりで、照合には null を渡す', async () => {
   const w = placeWorker(undefined);
   const reply = sseEvents(await (await placeRequest(w, a2Body('今日の天気は？'), null)).text()).filter(([n]) => n === 'integrated').map(([, d]) => d.delta).join('');
-  assert.deepEqual(JSON.parse(JSON.stringify(w.searches[0].tools[0].user_location)), JSON.parse(JSON.stringify(vm.runInContext('RESEARCH.location', w.ctx))));
+  assert.equal(w.searches[0].tools[0].user_location, undefined);
   assert.doesNotMatch(w.searches[0].instructions, /推定所在地/);
   const verify = w.inputs.find(c => c.body?.response_format?.json_schema?.name === 'research_verified_reply').body;
   assert.equal(JSON.parse(verify.messages.at(-1).content).estimated_place, null);
@@ -6145,4 +6178,38 @@ test('A2: 区画（main/article）の本文がごく短く、区画の外に本�
   const article = '<nav>メニュー</nav><article><p>' + '本文の段落。'.repeat(80) + '</p></article><aside>関連記事の一覧</aside>';
   const text2 = w.ctx.researchSourceBlocks(article, true).blocks.map(b => b.text).join('');
   assert.match(text2, /本文の段落/); assert.doesNotMatch(text2, /関連記事|メニュー/);
+});
+
+
+test('バグ報告: 2000文字を固定宛先へ送り、空欄・超過・未認証・上限・メール失敗を扱う', async () => {
+  const mails = [];
+  const w = worker(completion(), (url, options) => {
+    if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(options.body)); return Response.json({ id: 'test' }); }
+  });
+  Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'test', ALERT_FROM: 'MAGI <magi@tk.st>' });
+  for (const message of ['', '  ', 'あ'.repeat(2001), '😀'.repeat(2001)]) {
+    assert.equal((await w.request('/magi2/bug-report', { message })).status, 400);
+  }
+  assert.equal((await w.request('/magi2/bug-report', { message: '報告' }, undefined, { Origin: 'https://example.com' })).status, 401);
+  assert.equal(mails.length, 0);
+  const message = '😀'.repeat(2000);
+  assert.equal((await w.request('/magi2/bug-report', { message })).status, 200);
+  assert.deepEqual(mails[0].to, ['magi@tk.st']); assert.ok(mails[0].text.includes(message));
+  assert.equal(mails[0].html, undefined);
+  for (let i = 0; i < 4; i++) assert.equal((await w.request('/magi2/bug-report', { message: '報告' })).status, 200);
+  assert.equal((await w.request('/magi2/bug-report', { message: '報告' })).status, 429);
+  assert.equal(mails.length, 5);
+  w.ctx.fetch = async () => new Response('', { status: 500 });
+  assert.equal((await w.request('/magi2/bug-report', { message: '報告' }, '192.0.2.2')).status, 503);
+  delete w.env.RESEND_API_KEY;
+  assert.equal((await w.request('/magi2/bug-report', { message: '報告' }, '192.0.2.3')).status, 503);
+});
+
+test('位置情報サービス: オフならIPの所在地を検索と照合へ渡さない', async () => {
+  const w = placeWorker(undefined);
+  const body = { ...a2Body('今日の天気は？'), location_enabled: false };
+  await (await placeRequest(w, body, TOKYO)).text();
+  assert.equal(w.searches[0].tools[0].user_location, undefined);
+  assert.doesNotMatch(w.searches[0].instructions, /推定所在地/);
+  assert.equal(JSON.parse(verifyCall(w).body.messages.at(-1).content).estimated_place, null);
 });

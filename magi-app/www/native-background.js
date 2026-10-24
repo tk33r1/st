@@ -13,6 +13,7 @@
     var information = await plugin.information(), asked = false;
     var notice = options.notice || function () {};
     async function permission() {
+      if (!(await plugin.notificationPreference()).enabled) return;
       var state = await plugin.checkPermissions();
       var previous = false; try { previous = root.localStorage.getItem('magi_notifications_asked') === '1'; } catch (_) {}
       if (!asked && !previous && /^prompt/.test(state.display)) {
@@ -33,8 +34,19 @@
     return {
       id: function () { return 'request_' + Array.from(root.crypto.getRandomValues(new Uint8Array(16))).map(function (n) { return n.toString(16).padStart(2, '0'); }).join(''); },
       watch: watch,
-      permission: function () { return plugin.checkPermissions(); },
-      settings: function () { return plugin.openNotificationSettings(); },
+      notificationState: async function () {
+        var preference = await plugin.notificationPreference();
+        var state = await plugin.checkPermissions();
+        return { enabled: preference.enabled && state.display === 'granted' };
+      },
+      setNotifications: async function (enabled) {
+        await plugin.setNotificationPreference({ enabled: enabled });
+        if (enabled) {
+          var state = await plugin.checkPermissions();
+          if (/^prompt/.test(state.display)) state = await plugin.requestPermissions();
+          if (state.display !== 'granted') await plugin.openNotificationSettings();
+        }
+      },
       pending: async function () { var result = await plugin.pending(); return Array.isArray(result.runs) ? result.runs : []; },
       cancel: cancel,
       acknowledge: acknowledge,
