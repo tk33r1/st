@@ -1,3 +1,4 @@
+import {gameAiDb} from './fixtures/game-ai-db.mjs';
 // 前回合格5件は再利用。不合格2件の修正後Haikuと、同じ7入力のLunaを各1回だけ比較する。
 // 既定は無通信。--runも固定計画・共通累計予算・送信前の要求別予約が必要。
 import {readFileSync,writeFileSync,existsSync,mkdirSync,openSync,closeSync,unlinkSync} from 'node:fs';
@@ -27,7 +28,7 @@ assert.equal(old.requests.length,7);assert(saved.complete);
 const pick=(capture,game)=>capture.requests.find(r=>r.game===game&&(game!=='kabuki-craft'||r.body.maxTokens===260));
 const planned=[];
 let selected;
-const ctx=vm.createContext({aiModels:registry,Request,Response,Headers,URL,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
+const ctx=vm.createContext({crypto:globalThis.crypto,TextEncoder,AbortSignal,aiModels:registry,Request,Response,Headers,URL,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
  fetch:async(url,options)=>{
   const body=JSON.parse(options.body),provider=String(url).includes('anthropic.com')?'anthropic':'openai';
   assert.equal(String(url),provider==='anthropic'?'https://api.anthropic.com/v1/messages':'https://api.openai.com/v1/chat/completions');
@@ -47,7 +48,7 @@ for(const item of old.requests.filter(r=>!kabukiRepair||r.game==='kabuki-craft')
  for(const provider of repaired.includes(selected)?['anthropic','openai']:['openai']){
   const response=await ctx.worker.fetch(new Request('https://st-games-api.tk33r1.workers.dev'+sample.path,
    {method:'POST',headers:{Origin:'https://tk.st','Content-Type':'application/json'},body:JSON.stringify(sample.body)}),
-   {GAME_AI_PROVIDER:provider,GAME_OPENAI_API_KEY:'plan',GAME_ANTHROPIC_API_KEY:'plan'});
+   {DB:gameAiDb(),GAME_AI_PROVIDER:provider,GAME_OPENAI_API_KEY:'plan',GAME_ANTHROPIC_API_KEY:'plan'});
   assert.equal(response.status,200);
  }
  if(!repaired.includes(selected)){

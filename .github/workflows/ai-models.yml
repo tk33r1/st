@@ -32,3 +32,6 @@ jobs:
 
     - name: Check MAGI smoke request parity
       run: python .github/scripts/test-magi-smoke.py
+
+    - name: Check game AI limits without paid requests
+      run: node --test .github/scripts/test-game-ai-limits.mjs .github/scripts/test-auxiliary-ai.mjs

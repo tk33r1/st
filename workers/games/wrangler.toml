@@ -5,6 +5,11 @@ compatibility_date = "2025-01-01"
 [vars]
 # 2026-10-17：代表7場面の内容・形式・画面確認後、Haikuを採用。
 GAME_AI_PROVIDER = "anthropic"
+# 3つのAI入口で共有。回数を数えられない場合は上流を呼ばない。
+GAME_AI_ENABLED = "true"
+GAME_AI_MINUTE_LIMIT = "30"
+GAME_AI_DAILY_LIMIT = "500"
+GAME_AI_GLOBAL_DAILY_LIMIT = "2000"
 
 [[d1_databases]]
 binding       = "DB"
