@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.83';
+var APP_VERSION = '6.9';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -293,9 +293,20 @@ function cleanSpeechLang(value) { return typeof value === 'string' && /^[a-z]{2}
 function cleanAgentSpeechItem(item) {
   if (!item || item.role !== 'assistant' || !('speech_sig' in item || 'speech_lang' in item)) return item;
   var out = Object.assign({}, item), sig = cleanSpeechSig(item.speech_sig), lang = cleanSpeechLang(item.speech_lang);
-  delete out.speech_sig; delete out.speech_lang;
-  if (sig && item.closed !== true && !item.clarify) { out.speech_sig = sig; if (lang) out.speech_lang = lang; }
+  delete out.speech_sig; delete out.speech_lang; delete out.speech_version; delete out.speech_mode;
+  if (item.speech_version !== undefined && (item.speech_version !== 2 || !['normal', 'temporary'].includes(item.speech_mode))) return out;
+  if (sig && item.closed !== true && !item.clarify) {
+    out.speech_sig = sig; if (lang) out.speech_lang = lang;
+    if (item.speech_version === 2) { out.speech_version = 2; out.speech_mode = item.speech_mode; }
+  }
   return out;
+}
+// 新契約の音声はv2と宣言したモードが一致するときだけ使う。v1へ落としてキャッシュさせない。
+function cleanAgentSpeechEvent(data, expectedMode) {
+  if (!data || expectedMode && (data.sig_version !== 2 || data.conversation_mode !== expectedMode)) return {};
+  if (data.sig_version === undefined && data.conversation_mode !== undefined) return {};
+  return cleanAgentSpeechItem({ role: 'assistant', content: '', speech_sig: data.sig, speech_lang: data.lang,
+    ...(data.sig_version !== undefined ? { speech_version: data.sig_version, speech_mode: data.conversation_mode } : {}) });
 }
 // 回答の評価（Good / Bad）。Worker へは以前のいいね・絵文字のリアクションと同じ形で 👍・👎 を送る。
 // 保存した値は文字列（旧データ）か { em, id, delete_token }。ほかの絵文字（以前のリアクション）は評価として出さない
@@ -352,6 +363,7 @@ function closeRatePops(focus) {
 }
 // 評価のボタンの上に Good / Bad を開く。いまの評価に印を付け、同じものを選ぶと取り消す
 function openRatePop(btn, bar) {
+  if (agentTemporary()) return;
   var open = bar.querySelector('.rate-pop');
   closeRatePops(false);
   if (open) return;
@@ -370,6 +382,7 @@ function openRatePop(btn, bar) {
 }
 // 評価を付ける・付け替える・取り消す。付いているもの（以前の絵文字のリアクションを含む）は消せてから次を付ける
 async function rateReply(bar, value) {
+  if (agentTemporary()) return;
   if (bar.dataset.removing === 'true') return;
   var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target];
   if (current) {
@@ -488,7 +501,7 @@ function createAgentSpeech(api, hooks) {
   }
   function fetchPart(r, i) {
     return fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: r.ctrl.signal,
-      body: JSON.stringify(Object.assign({ text: r.text, sig: r.sig, part: i }, r.lang ? { lang: r.lang } : {})) })
+      body: JSON.stringify(Object.assign({ text: r.text, sig: r.sig, part: i }, r.lang ? { lang: r.lang } : {}, r.contract)) })
       .then(function (res) {
         if (!res.ok) return res.json().catch(function () { return null; }).then(function (j) {
           var err = new Error('speech_failed'); err.code = j && j.error && typeof j.error.code === 'string' ? j.error.code : 'http_' + res.status; throw err;
@@ -539,12 +552,12 @@ function createAgentSpeech(api, hooks) {
   }
   return {
     // 同じボタンをもう一度押すと止める。別の回答を押したら前を止めて、新しい回答を区切り 0 から読む
-    toggle: function (btn, text, sig, lang) {
+    toggle: function (btn, text, sig, lang, contract) {
       var same = run && run.btn === btn;
       stop();
       if (same) return;
       if (!audio) audio = new Audio();
-      var r = run = { btn: btn, text: text, sig: sig, lang: lang, ctrl: new AbortController(), urls: [], total: 1 };
+      var r = run = { btn: btn, text: text, sig: sig, lang: lang, contract: contract || {}, ctrl: new AbortController(), urls: [], total: 1 };
       var unlock = silence(); r.urls.push(unlock);
       audio.src = unlock;
       var p = audio.play(); if (p && p.catch) p.catch(function () {});
@@ -798,11 +811,14 @@ function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
 }
 function safeRemove(key) {
+  if (agentPrivateStorage(key)) return;
   if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) { nativeHistory.remove(key); return; }
   try { localStorage.removeItem(key); } catch (_) {}
 }
 // 画像サムネを持つ履歴は容量を食う。あふれたら古い保存セッションを捨てて1回だけ再試行する。
 function safeStore(key, val) {
+  if (agentPrivateStorage(key)) return;
+  if (key === 'magi_saved_sessions' && Array.isArray(val)) val = val.filter(function (session) { return session && session.mode !== 'temporary'; });
   var str = typeof val === 'string' ? val : JSON.stringify(val);
   if (nativeHistory && nativeHistory.active && nativeHistory.owns(key)) { nativeHistory.set(key, str); return; }
   try { localStorage.setItem(key, str); } catch (_) {
@@ -818,7 +834,8 @@ function safeStore(key, val) {
 }
 // Androidの履歴は会話を物のまま渡し、変わった会話だけを書き直させる（中の会話は書き換えず、新しい物で置き換える）。
 function readSavedSessions() {
-  return nativeHistory && nativeHistory.active ? nativeHistory.sessions() : safeParse(safeGet('magi_saved_sessions'), []);
+  var sessions = nativeHistory && nativeHistory.active ? nativeHistory.sessions() : safeParse(safeGet('magi_saved_sessions'), []);
+  return Array.isArray(sessions) ? sessions.filter(function (session) { return session && session.mode !== 'temporary'; }) : [];
 }
 function writeSavedSessions(sessions) {
   if (nativeHistory && nativeHistory.active) nativeHistory.setSessions(sessions); else safeStore('magi_saved_sessions', sessions);
@@ -917,6 +934,7 @@ function refreshSpeechFeature() {
 // PC（マウス・トラックパッド）には［共有］を出さない（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る。
 // コピーで足りる）。共有シートが開けなかったときはコピーする
 async function shareAgentReply(btn, bar, item) {
+  if (agentTemporary()) return;
   var text = agentShareText(item.content, item.sources, isJa()), title = agentTitle || 'MAGI';
   var native = nativeShare();
   try {
@@ -962,6 +980,268 @@ function showAgentSourcesSheet(btn, item) {
 var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
   && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
 // 言語を切り替えたら描き直すので、毎回組み立てる
+// AGENT_EPHEMERAL_BEGIN
+// トップとアプリで同じ契約を使う。会話の保存と設定の保存を分離する。
+var agentPrivacyState = { mode: 'normal', preparing: false, preflight: null, background: false, switching: false, attachmentJobs: 0, suspended: null, normalWrite: false, features: null };
+function agentTemporary() { return !!agentPrivacyState && agentPrivacyState.mode === 'temporary'; }
+function cancelAgentPrivacyPreparation() { if (agentPrivacyState.preflight) agentPrivacyState.preflight.abort(); }
+function agentPrivateStorage(key) { return !!agentPrivacyState && (agentPrivacyState.renderOnly || agentTemporary() && !agentPrivacyState.normalWrite) && /^(magi_current_|magi_saved_sessions$)/.test(key); }
+function agentNormalStorage(fn) {
+  agentPrivacyState.normalWrite = true;
+  var store = typeof nativeHistory !== 'undefined' && nativeHistory && agentTemporary() ? nativeHistory : null;
+  if (store) store.resumeWrites();
+  try { return fn(); } finally { agentPrivacyState.normalWrite = false; if (store) store.suspendWrites(); }
+}
+function cleanAgentPersonalization(value) {
+  if (!value || value.version !== 1 || typeof value.enabled !== 'boolean') throw new Error('invalid_personalization');
+  var name = value.preferred_name === undefined ? '' : value.preferred_name, instructions = value.custom_instructions;
+  if (typeof name !== 'string' || typeof instructions !== 'string'
+    || /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(name)
+    || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(instructions)
+    || Array.from(name.trim()).length > 50 || Array.from(instructions).length > 2000) throw new Error('invalid_personalization');
+  return { version: 1, enabled: value.enabled, preferred_name: name.trim(), custom_instructions: instructions };
+}
+function readAgentPersonalization() {
+  // 読めない場合は不正値と区別し、送信元に例外を返す。オンの設定を黙って外さない。
+  var raw;
+  try { raw = localStorage.getItem('magi_personalization_v1'); }
+  catch (_) { throw new Error('personalization_read_unavailable'); }
+  try { return cleanAgentPersonalization(JSON.parse(raw)); }
+  catch (_) { return { version: 1, enabled: false, preferred_name: '', custom_instructions: '' }; }
+}
+function refreshAgentPersonalization() {
+  try { return readAgentPersonalization(); }
+  catch (_) { announceAgent(tr('Could not read personalization settings. Check storage and try again.', 'パーソナライズ設定を読み込めませんでした。保存先を確認して再試行してください。')); return null; }
+}
+function saveAgentPersonalization(value) {
+  var next = cleanAgentPersonalization(value);
+  // 容量不足時も履歴を削減しない。書き込み成功までは有効設定を変更しない。
+  localStorage.setItem('magi_personalization_v1', JSON.stringify(next));
+}
+function showPersonalizationPanel() {
+  var current = refreshAgentPersonalization(); if (!current) return;
+  var panel = makeAgentPanel('agent-personalization-panel', tr('Personalization', 'パーソナライズ'),
+    '<form class="agent-personalization-form"><label><input id="personal-enabled" type="checkbox" role="switch"> ' + tr('Enable personalization', 'パーソナライズを有効にする') + '</label>'
+    + '<label for="personal-name">' + tr('What should MAGI call you?', '何とお呼びすればよいですか？') + '</label><input id="personal-name" type="text" autocomplete="off"><small id="personal-name-count"></small>'
+    + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '</label><textarea id="personal-instructions" rows="5" autocomplete="off"></textarea><small id="personal-instructions-count"></small>'
+    + '<p>' + tr('Saved on this device. Applied from your next normal message. Never used in temporary chats.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットには適用しません。') + '</p>'
+    + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form>');
+  if (!panel) return;
+  var form = panel.querySelector('form'), enabled = panel.querySelector('#personal-enabled'), name = panel.querySelector('#personal-name'), instructions = panel.querySelector('#personal-instructions'), status = panel.querySelector('#personal-status');
+  enabled.checked = current.enabled; name.value = current.preferred_name; instructions.value = current.custom_instructions;
+  var loaded = JSON.stringify(current);
+  function count() {
+    panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
+    panel.querySelector('#personal-instructions-count').textContent = Array.from(instructions.value).length + ' / 2000';
+  }
+  function save(deleting) {
+    try {
+      // 別タブの更新を未確認のまま上書きしない。読込失敗も入力を残して知らせる。
+      if (JSON.stringify(readAgentPersonalization()) !== loaded) { status.textContent = tr('Settings changed in another tab. Reopen this panel.', '別のタブで設定が変更されました。この画面を開き直してください。'); return; }
+      var next = deleting ? { version: 1, enabled: false, preferred_name: '', custom_instructions: '' }
+        : { version: 1, enabled: enabled.checked, preferred_name: name.value, custom_instructions: instructions.value };
+      saveAgentPersonalization(next); closeAgentPanels();
+      announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
+    } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
+  }
+  form.addEventListener('input', count); count();
+  form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
+  panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); });
+  panel.querySelector('[data-personal="delete"]').addEventListener('click', function () { save(true); });
+  enabled.focus();
+}
+async function agentPrivacyRequest() {
+  var temporary = agentTemporary(), settings = temporary ? null : readAgentPersonalization();
+  if (!temporary && !settings.enabled) return null;
+  var ctrl = new AbortController(); agentPrivacyState.preflight = ctrl;
+  var timer = setTimeout(function () { ctrl.abort(); }, 10000);
+  try {
+    var response = await fetch(AGENT_API.replace(/\/chat$/, '/models?capabilities=1'), { cache: 'no-store', signal: ctrl.signal });
+    if (!response.ok) throw new Error('privacy_unavailable');
+    var features = (await response.json()).features;
+    if (ctrl.signal.aborted) throw new Error('privacy_cancelled');
+    if (!features || features.privacy_contract !== 1 || !(temporary ? features.temporary_chat : features.personalization)) throw new Error('privacy_unavailable');
+    agentPrivacyState.features = features;
+    var body = { privacy_contract: 1, conversation_mode: temporary ? 'temporary' : 'normal' };
+    if (!temporary) body.personalization = { enabled: true, preferred_name: settings.preferred_name, custom_instructions: settings.custom_instructions };
+    return body;
+  } finally {
+    clearTimeout(timer);
+    if (agentPrivacyState.preflight === ctrl) agentPrivacyState.preflight = null;
+  }
+}
+function agentPrivacyExpected(body) {
+  return body ? { conversation_mode: body.conversation_mode,
+    personalization_applied: !!(body.personalization && (body.personalization.preferred_name.trim() || body.personalization.custom_instructions.trim())) } : null;
+}
+function agentStoredSessions() {
+  if (typeof nativeHistory !== 'undefined' && nativeHistory && nativeHistory.active) return nativeHistory.sessions();
+  var raw = localStorage.getItem('magi_saved_sessions');
+  var sessions = raw ? JSON.parse(raw) : [];
+  if (!Array.isArray(sessions)) throw new Error('invalid_history');
+  return sessions;
+}
+function agentInvalidateSuspended(id) {
+  [agentPrivacyState.suspended, agentPrivacyState.recovery].forEach(function (saved) {
+    if (!saved || id && saved.id !== id) return;
+    saved.deleted = true; saved.history = []; saved.attachments = []; saved.draft = ''; saved.shared = null; saved.lastSend = null;
+    // 一時中のcurrentSessionIdは別ID。保存先に残る通常会話の現在値も削除する。
+    if (saved.id && safeGet('magi_current_session_id') === saved.id) agentNormalStorage(function () {
+      ['magi_current_history','magi_current_title','magi_current_language','magi_current_session_id','magi_current_shared'].forEach(safeRemove);
+    });
+  });
+}
+// 一時中の通常履歴の明示削除。保存失敗を隠さず、容量回復用の履歴削減も使わない。
+async function agentDeleteSavedDuringTemporary(id) {
+  agentInvalidateSuspended(id);
+  try {
+    var list = agentStoredSessions().filter(function (session) { return session.id !== id && session.mode !== 'temporary'; });
+    agentNormalStorage(function () {
+      if (typeof nativeHistory !== 'undefined' && nativeHistory && nativeHistory.active) nativeHistory.setSessions(list);
+      else localStorage.setItem('magi_saved_sessions', JSON.stringify(list));
+    });
+    if (typeof nativeHistory !== 'undefined' && nativeHistory && nativeHistory.active) await nativeHistory.flush();
+    if (typeof nativeConversation !== 'undefined' && nativeConversation) await nativeConversation.clear(id);
+  } catch (_) { announceAgent(tr('Could not finish deleting the saved chat. Check storage and try again.', '保存した会話の削除が完了しませんでした。保存先を確認して再試行してください。')); }
+  renderSavedSessionsList();
+}
+function agentEndTemporary() {
+  if (!agentTemporary()) return;
+  cancelAgentPrivacyPreparation();
+  dropAgentRequest(); if (agentSpeechPlayer) agentSpeechPlayer.stop();
+  Object.keys(pendingReactions).forEach(function (key) { delete pendingReactions[key]; });
+  agentLastSend = null; attachments = []; agentHistory = []; agentReplyLanguage = null; currentSessionId = null;
+  agentInput.value = ''; agentBusy = false; agentDead = false; agentClosed = false;
+  if (typeof agentShared !== 'undefined') { agentShared = null; renderSharedDocument(); }
+  agentLog.replaceChildren(); agentPrivacyState.mode = 'normal';
+  if (typeof nativeHistory !== 'undefined' && nativeHistory) nativeHistory.resumeWrites();
+  syncAgentPrivacyUI();
+  // 通常へ戻す場合は呼び出し側が先に退避を受け取る。破棄は終了処理に集約する。
+  agentPrivacyState.suspended = null;
+}
+async function toggleAgentTemporary() {
+  if (agentBusy || agentPrivacyState.preparing || agentPrivacyState.switching || agentPrivacyState.attachmentJobs) return;
+  if (typeof historyLoading !== 'undefined' && historyLoading || typeof nativeAndroid !== 'undefined' && nativeAndroid && !(nativeHistory && nativeHistory.active)) return;
+  agentPrivacyState.switching = true;
+  try {
+    if (agentTemporary()) {
+      var saved = agentPrivacyState.suspended;
+      agentEndTemporary();
+      if (saved && !saved.deleted) {
+        try {
+          var latest = agentStoredSessions().find(function (session) { return session.id === saved.id; });
+          if (saved.persisted && !latest) saved.deleted = true;
+          else if (latest && JSON.stringify(latest) !== saved.revision) {
+            saved.history = latest.history; saved.title = latest.title; saved.language = latest.reply_language; saved.shared = latest.shared || null;
+          }
+        } catch (_) {
+          agentPrivacyState.recovery = saved; saved = null;
+          announceAgent(tr('Could not verify saved chats. Unsaved data remains in memory; reopen after storage is available.', '保存履歴を確認できません。未保存分はメモリに保持しています。保存先を確認後、通常会話を再開してください。'));
+        }
+      }
+      agentPrivacyState.renderOnly = true;
+      if (saved && !saved.deleted) {
+        agentHistory = cleanHistory(saved.history); currentSessionId = saved.id; agentReplyLanguage = saved.language;
+        agentClosed = saved.closed; agentDead = saved.dead; agentInput.value = saved.draft; attachments = saved.attachments; agentLastSend = saved.lastSend;
+        if (typeof agentShared !== 'undefined') { agentShared = saved.shared; renderSharedDocument(); }
+        setAgentTitle(saved.title); renderHistoryToLog(agentHistory);
+      } else { setAgentTitle(''); renderHistoryToLog([]); }
+      agentPrivacyState.renderOnly = false;
+    } else {
+      if (typeof nativeInput !== 'undefined' && nativeInput) await nativeInput.stopVoice();
+      var warning = false;
+      if (typeof nativeHistory !== 'undefined' && nativeHistory && nativeHistory.active) {
+        try { await nativeHistory.flush(); } catch (_) { warning = true; }
+        nativeHistory.suspendWrites();
+      }
+      var row = null;
+      try { row = agentStoredSessions().find(function (session) { return session.id === currentSessionId; }); } catch (_) { warning = true; }
+      agentPrivacyState.suspended = { id: currentSessionId, history: agentHistory.slice(), title: agentTitle, language: agentReplyLanguage,
+        closed: agentClosed, dead: agentDead, draft: agentInput.value, attachments: attachments.slice(), lastSend: agentLastSend, persisted: !!row, revision: row ? JSON.stringify(row) : null,
+        shared: typeof agentShared !== 'undefined' ? agentShared : null };
+      dropAgentRequest(); if (agentSpeechPlayer) agentSpeechPlayer.stop();
+      agentPrivacyState.mode = 'temporary'; currentSessionId = 'temporary_' + Date.now();
+      agentHistory = []; attachments = []; agentReplyLanguage = null; agentBusy = false; agentDead = false; agentClosed = false; agentLastSend = null;
+      if (typeof agentShared !== 'undefined') { agentShared = null; renderSharedDocument(); }
+      agentInput.value = ''; agentLog.replaceChildren(); setAgentTitle(''); renderHistoryToLog([]);
+      if (warning) announceAgent(tr('Normal chat has unsaved changes held in memory. Reloading will discard them.', '通常会話の未保存分はメモリに保持しています。再読み込みすると失われます。'));
+    }
+    agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
+    renderAttachTray(); fitAgentInput(); setAgentControlsEnabled(!agentClosed && !agentDead); updateAgentActionButtons();
+  } finally { agentPrivacyState.switching = false; syncAgentPrivacyUI(); }
+}
+function syncAgentPrivacyUI() {
+  if (!agentPrivacyState) return;
+  var temporary = agentTemporary(), button = document.getElementById('btn-temporary-agent');
+  if (button) {
+    button.setAttribute('aria-pressed', String(temporary)); button.title = temporary ? tr('End temporary chat', '一時チャットを終了（内容を破棄）') : tr('Temporary chat', '一時チャット');
+    button.setAttribute('aria-label', button.title); button.disabled = !!(agentBusy || agentPrivacyState.preparing || agentPrivacyState.switching || agentPrivacyState.attachmentJobs);
+  }
+  var host = agentLog.parentNode;
+  host.classList.toggle('agent-temporary', temporary);
+  var notice = document.getElementById('agent-temporary-notice');
+  if (!notice) { notice = document.createElement('p'); notice.id = 'agent-temporary-notice'; notice.setAttribute('role', 'status'); agentLog.before(notice); }
+  var recovery = document.getElementById('agent-normal-recovery');
+  if (!recovery) {
+    recovery = document.createElement('p'); recovery.id = 'agent-normal-recovery';
+    var retry = document.createElement('button'); retry.type = 'button';
+    retry.textContent = tr('Recheck unsaved chat', '未保存の通常会話の復元を再確認');
+    retry.addEventListener('click', function () {
+      if (agentBusy || agentPrivacyState.preparing || !agentPrivacyState.recovery) return;
+      agentPrivacyState.suspended = agentPrivacyState.recovery; agentPrivacyState.recovery = null;
+      agentPrivacyState.mode = 'temporary'; toggleAgentTemporary().catch(function () { announceAgent(tr('Could not restore the chat.', '会話を復元できませんでした。')); });
+    });
+    recovery.appendChild(retry); agentLog.before(recovery);
+  }
+  recovery.hidden = temporary || !agentPrivacyState.recovery || agentPrivacyState.recovery.deleted;
+  notice.hidden = !temporary;
+  notice.textContent = tr('Temporary chat · Not saved · Personalization off. Reloading discards this chat. Copying leaves text on the clipboard; read aloud sends the reply to the voice service.', '一時チャット · 履歴に保存されません · パーソナライズ不適用。再読み込みで失われます。コピー先には内容が残り、読み上げ時は回答本文を音声サービスへ送ります。');
+  ['btn-share-agent','btn-export-agent'].forEach(function (id) { var el = document.getElementById(id); if (el) el.hidden = temporary; });
+  var voice = document.getElementById('agent-voice'); if (voice) { if (temporary) { if (!voice.hidden) voice.dataset.privacyAvailable = 'true'; voice.hidden = true; } else if (voice.dataset.privacyAvailable === 'true') voice.hidden = false; }
+  var camera = document.querySelector('#agent-attach-menu [data-source="camera"]'); if (camera) camera.hidden = temporary || !(typeof nativeAndroid !== 'undefined' && nativeAndroid || matchMedia('(pointer: coarse)').matches);
+  if (temporary) {
+    agentLog.querySelectorAll('[data-act="rate"], [data-act="react"], [data-act="share"]').forEach(function (el) { el.remove(); });
+    agentLog.querySelectorAll('[data-act="speak"]').forEach(function (el) { el.hidden = !(agentPrivacyState.features && agentPrivacyState.features.temporary_speech && agentItemFor(el)?.speech_sig); });
+  }
+}
+function initAgentPrivacy() {
+  refreshAgentPersonalization();
+  document.getElementById('btn-temporary-agent').addEventListener('click', function () { toggleAgentTemporary().catch(function () { announceAgent(tr('Could not switch chats safely.', '会話を安全に切り替えられませんでした。')); }); });
+  document.getElementById('btn-personalization-agent').addEventListener('click', showPersonalizationPanel);
+  window.addEventListener('storage', function (event) {
+    if (event.key === 'magi_personalization_v1' || event.key === null) refreshAgentPersonalization();
+    var saved = agentPrivacyState.suspended;
+    if (saved && saved.persisted && (event.key === 'magi_saved_sessions' || event.key === null)) {
+      try { if (!agentStoredSessions().some(function (s) { return s.id === saved.id; })) agentInvalidateSuspended(saved.id); } catch (_) {}
+    }
+  });
+  window.addEventListener('pagehide', function () { if (agentTemporary()) { agentEndTemporary(); agentPrivacyState.recovery = null; } });
+  window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    if (typeof loadCurrentSessionMeta === 'function') loadCurrentSessionMeta();
+    else {
+      currentSessionId = safeGet('magi_current_session_id') || null;
+      var meta = safeParse(safeGet('magi_current_language'), {}) || {};
+      agentReplyLanguage = meta.id === currentSessionId ? cleanReplyLanguage(meta.reply_language) : null;
+    }
+    if (typeof initAgent === 'function') initAgent(); else agentInitialState(true);
+    syncAgentPrivacyUI();
+  });
+  if (typeof nativeAndroid !== 'undefined' && nativeAndroid && window.Capacitor.Plugins.App) {
+    window.Capacitor.Plugins.App.addListener('appStateChange', function (state) {
+      agentPrivacyState.background = !state.isActive;
+      if (!agentPrivacyState.background || !agentTemporary()) return;
+      if (agentPrivacyState.preparing) { cancelAgentPrivacyPreparation(); dropAgentRequest(); }
+      if (agentCtrl) { agentCtrl.userStopped = true; agentCtrl.abort(); }
+      if (agentSpeechPlayer) agentSpeechPlayer.stop();
+    });
+  }
+  new MutationObserver(syncAgentPrivacyUI).observe(agentLog, { childList: true, subtree: true });
+  syncAgentPrivacyUI();
+}
+setTimeout(initAgentPrivacy, 0);
+// AGENT_EPHEMERAL_END
+
 function agentHintHTML() { return '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
   // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -986,7 +1266,7 @@ function agentHintHTML() { return '<div class="agent-splash">'
 
 // ---- Title ------------------------------------------------------------------
 function setAgentTitle(text) {
-  agentTitle = (text || '').trim();
+  agentTitle = agentTemporary() ? tr('Temporary chat', '一時チャット') : (text || '').trim();
   barTitle.textContent = agentTitle || 'MAGI';
   barTitle.parentNode.title = agentTitle;
   if (agentTitle) safeStore('magi_current_title', agentTitle);
@@ -1032,6 +1312,7 @@ function archiveCurrentHistory() {
   safeRemove('magi_current_session_id');
 }
 function syncCurrentToSaved() {
+  if (agentTemporary()) return;
   if (!agentHistory || agentHistory.length === 0) return;
   var firstUserMsg = agentHistory.find(function (m) { return m.role === 'user'; });
   if (!firstUserMsg) return;
@@ -1166,6 +1447,7 @@ function cleanHistory(history) {
   }).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem) : [];
 }
 function initAgent() {
+  if (agentTemporary()) return;
   agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
   agentShared = cleanAgentShared(safeParse(safeGet('magi_current_shared'), null));
   renderSharedDocument();
@@ -1182,6 +1464,7 @@ function dropAgentRequest() {
   setAgentSuggestion('');
 }
 function resetAgent() {
+      agentEndTemporary();
   dropAgentRequest();
   if (agentSpeechPlayer) agentSpeechPlayer.stop();
   if (nativeInput) nativeInput.stopVoice();
@@ -1262,7 +1545,7 @@ var agentSendSequence = 0;
 async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader(), dec = new TextDecoder();
       let buf = '', skipLF = false, receivedEnd = false, playback = null, playbackError = null;
-      let timer = null, wake = null;
+      let timer = null, wake = null, privacySeen = false;
       const queue = [], settings = magiStreamSettings();
       const alive = () => !handlers.alive || handlers.alive();
       const classificationState = { started: false, classified: false, language: handlers.replyLanguage || null, panel: handlers.magiPanel === true };
@@ -1307,8 +1590,14 @@ async function parseSSE(body, handlers, onChunk) {
           if (line.startsWith('event:')) ev = line.slice(6).trim();
           else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
         });
-        if (!data || ['classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','clarify','sources','pages','suggest','speech','done'].indexOf(ev) < 0) return false;
+        if (!data || ['session','classification','title','error','motion','persona','ask','judge','verdict','integrated','integrated_end','closed','clarify','sources','pages','suggest','speech','done'].indexOf(ev) < 0) return false;
         const parsed = JSON.parse(data.replace(/\n$/, ''));
+        if (ev === 'session') {
+          if (handlers.privacy && (privacySeen || parsed.conversation_mode !== handlers.privacy.conversation_mode || parsed.personalization_applied !== handlers.privacy.personalization_applied)) throw new Error('privacy_contract_mismatch');
+          privacySeen = true; return false;
+        }
+        if (handlers.privacy && !privacySeen && ev !== 'error') throw new Error('privacy_contract_missing');
+
         // 契約の検査は受信時に行い、表示の遅延で終端や決議の検査を遅らせない。
         receiveClassification(classificationState, ev, parsed);
         const terminal = ev === 'done' || ev === 'error';
@@ -1348,6 +1637,7 @@ async function parseSSE(body, handlers, onChunk) {
           pump();
           if (receivedEnd) break;
         }
+        if (handlers.privacy && !privacySeen) throw new Error('privacy_contract_missing');
         if (!receivedEnd) flush(); // EOF でも受信済みの決議は残す（done の欠落は呼び出し側が扱う）。
         while (playback) await playback;
         check();
@@ -1460,6 +1750,12 @@ function noticeAttach(msg) {
   setTimeout(function () { attachNotice = ''; renderAttachTray(); }, 2500);
 }
 async function addAttachments(files) {
+  if (agentPrivacyState.switching || agentPrivacyState.preparing) return;
+  agentPrivacyState.attachmentJobs++; syncAgentPrivacyUI();
+  try { return await addAgentAttachments(files); }
+  finally { agentPrivacyState.attachmentJobs--; syncAgentPrivacyUI(); }
+}
+async function addAgentAttachments(files) {
   if (agentDead || agentClosed) return;
   var generation = agentGen;
   var list = Array.prototype.slice.call(files || []).filter(isImageFile);
@@ -1470,7 +1766,7 @@ async function addAttachments(files) {
     try {
       var img = await loadImageFile(list[i]);
       if (generation !== agentGen) return;
-      var original = nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
+      var original = !agentTemporary() && nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
       if (generation !== agentGen) { if (original) nativeHistory.releaseImage(original); return; }
       if (original) nativeHistory.retainImage(original);
       attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
@@ -1500,7 +1796,7 @@ function setAttachMenu(open) {
   attachBtn.setAttribute('aria-expanded', String(open));
   if (!open) return;
   // 撮影できない PC ではカメラを出さない
-  attachMenu.querySelector('[data-source="camera"]').hidden = !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
+  attachMenu.querySelector('[data-source="camera"]').hidden = agentTemporary() || !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
   attachMenu.querySelector('[data-source]:not([hidden])').focus();
 }
 // 開いていたら閉じて true を返す（Android の戻るボタンも使う）
@@ -1511,6 +1807,7 @@ function closeAttachMenu() {
 attachBtn.addEventListener('click', function () { setAttachMenu(attachMenu.hidden); });
 attachMenu.addEventListener('click', function (e) {
   var item = e.target.closest('[data-source]'); if (!item) return;
+  if (agentTemporary() && item.dataset.source === 'camera') return;
   var source = ATTACH_SOURCES[item.dataset.source];
   attachFile.accept = source.accept; attachFile.multiple = source.multiple;
   if (source.capture) attachFile.setAttribute('capture', source.capture); else attachFile.removeAttribute('capture');
@@ -1570,7 +1867,7 @@ function renderAgentPages(replyEl, data) {
 
 function prepareAgentMessages(history, lastContent) {
   // 考えた秒数・受信の印・読み上げの署名・回答の日時・送り直しの印は画面のためだけのもので、次の質問の API には送らない
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, at, retry_of, ...m }) => agentFactHistoryMessage(m));
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -1600,6 +1897,7 @@ function labelVoiceButton() {
   voice.title = voice.getAttribute('aria-pressed') === 'true' ? tr('Stop voice input', '音声入力を止める') : tr('Voice input', '音声入力');
 }
 function setAgentStopMode(on) {
+  if (agentPrivacyState) queueMicrotask(syncAgentPrivacyUI);
   agentSendBtn.innerHTML = on ? AGENT_STOP_ICON : AGENT_SEND_ICON;
   agentSendBtn.dataset.stop = on ? '1' : '';
   labelSendButton();
@@ -1617,6 +1915,21 @@ function agentStop() {
 // （途中で開き直す・会話を切り替えても、古い回答は保存した履歴に残る）。質問に retry_of を付けて保存するので、
 // 送り直しの最中にアプリが閉じても、受信の復元（recovered）で同じように置き換える
 async function agentSend(recovered, retry) {
+      if (agentPrivacyState.preparing || agentPrivacyState.switching || agentTemporary() && agentPrivacyState.background) return;
+      if (agentBusy || agentDead || agentClosed) return;
+      var requestPrivacy = null, privacyGeneration = agentGen;
+      agentPrivacyState.preparing = true; syncAgentPrivacyUI();
+      try { requestPrivacy = recovered ? null : await agentPrivacyRequest(); }
+      catch (error) {
+        if (privacyGeneration !== agentGen) return;
+        announceAgent(error && error.message === 'personalization_read_unavailable'
+          ? tr('Could not read personalization settings, so nothing was sent. Your draft is kept. Check storage and try again.', 'パーソナライズ設定を読み込めないため送信しませんでした。入力は保持しています。保存先を確認して再試行してください。')
+          : tr('This feature is unavailable. Your draft and settings are kept. Retry, or turn personalization off for a normal chat.', 'この機能を確認できません。入力と設定は保持しています。再試行するか、通常チャットのパーソナライズを明示的にオフにしてください。'));
+        return;
+      }
+      finally { agentPrivacyState.preparing = false; syncAgentPrivacyUI(); }
+      if (privacyGeneration !== agentGen) return;
+
   if (agentSpeechPlayer) agentSpeechPlayer.stop();
   if (historyLoading || sharedLoading || agentBusy || agentDead || agentClosed) return;
   // 音声入力中の送信は確定だけにする。保存列の復元は新規送信と区別する。
@@ -1653,7 +1966,7 @@ async function agentSend(recovered, retry) {
 
   var turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
   var mid = recovered ? recovered.mid : genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
-  var nativeRunId = recovered ? recovered.id : nativeConversation ? nativeConversation.id() : null;
+  var nativeRunId = recovered ? recovered.id : !agentTemporary() && nativeConversation ? nativeConversation.id() : null;
   turn.innerHTML = personaCardsHTML();
   var replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
   replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + replyBarHTML();
@@ -1672,7 +1985,7 @@ async function agentSend(recovered, retry) {
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
-      var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechSig = null, speechLang = null;
+      var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechSig = null, speechLang = null, speechVersion = null, speechMode = null;
       var sendId = ++agentSendSequence;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
@@ -1682,7 +1995,7 @@ async function agentSend(recovered, retry) {
   var gen = agentGen; agentCtrl = ctrl;
 
   var dropped = function () { return gen !== agentGen || conversationId !== currentSessionId || sendId !== agentSendSequence; };
-      const streamWatch = nativeConversation ? nativeConversation.watch() : createMagiStreamWatch(ctrl, startedAt, {
+      const streamWatch = nativeRunId && nativeConversation ? nativeConversation.watch() : createMagiStreamWatch(ctrl, startedAt, {
         alive: () => !dropped(), timeout: () => { timedOut = true; },
         notice: visible => magiStreamNotice(replyEl, visible, document.documentElement.lang === 'ja'),
         replaying: () => { agentSendBtn.title = agentSendBtn.ariaLabel = document.documentElement.lang === 'ja' ? 'すぐに全部表示' : 'Show all now'; },
@@ -1714,21 +2027,21 @@ async function agentSend(recovered, retry) {
     var outbound = prepareAgentMessages(history, sendContent);
     var deviceLocation = !recovered ? await locationForMessage(ctrl.signal, turn) : null;
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, location_enabled: locationServiceEnabled() }, locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}));
-    if (nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, location_enabled: locationServiceEnabled() }, locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}, requestPrivacy || {}));
+    if (nativeRunId && nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
-    var res = nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
+    var res = nativeRunId && nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
     if (dropped()) return;
     if (!res.ok || !res.body) {
       var raw = await res.text().catch(function () { return ''; });
       if (dropped()) return;
       var env = null; try { env = JSON.parse(raw).error; } catch (_) { }
       if (!env) env = { message: ('HTTP ' + res.status + ' ' + (res.statusText || '')).trim(), code: 'http_' + res.status };
-      console.error('[agent] request failed', AGENT_API, res.status, raw.slice(0, 800));
+      console.error('[agent] request failed', AGENT_API, res.status, requestPrivacy ? 'privacy_request' : raw.slice(0, 800));
       turn.remove(); renderAgentError(env); errored = true;
     } else {
       await parseSSE(res.body, {
-        replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
+        privacy: agentPrivacyExpected(requestPrivacy), replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
             // MAGI_EVENTS_BEGIN
             motion: function (d) {
               if (dropped()) return;
@@ -1795,7 +2108,7 @@ async function agentSend(recovered, retry) {
         pages: function (d) { if (!dropped()) sitePages = d; },
         sources: function (d) { if (!dropped()) replySources = d; },
         // 読み上げの署名（読み上げ設計§5.2）。Worker が書いた回答の本文に対するもので、履歴に保存する
-        speech: function (d) { if (!dropped()) { speechSig = cleanSpeechSig(d && d.sig); speechLang = cleanSpeechLang(d && d.lang); } },
+        speech: function (d) { if (!dropped()) { var audioMeta = cleanAgentSpeechEvent(d, requestPrivacy && requestPrivacy.conversation_mode); speechSig = audioMeta.speech_sig; speechLang = audioMeta.speech_lang; speechVersion = audioMeta.speech_version; speechMode = audioMeta.speech_mode; } },
         done: function () { completed = true; streamWatch.finish(); },
       });
           if (magiView && completed && !errored && !dropped()) await magiView.wait();
@@ -1813,7 +2126,7 @@ async function agentSend(recovered, retry) {
     if (!magiRetained && !ctrl.userStopped) {
       if (timedOut || err.name === 'AbortError') { renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
       else if (err.code === 'interrupted') { renderAgentError({ message: document.documentElement.lang === 'ja' ? '前の接続が終了し、回答を受け取れませんでした。質問を確認して再送してください。' : 'The previous connection ended before the reply was received. Review your question and send it again.', code: 'interrupted' }); }
-      else { console.error('[agent] fetch failed', AGENT_API, err); renderAgentError({ message: tr('Could not receive the reply. Check your connection and try again.', '返事を受け取れませんでした。接続を確認して、もう一度お試しください。'), code: 'network_error' }); }
+      else { console.error('[agent] fetch failed', AGENT_API, requestPrivacy ? 'privacy_request' : err); renderAgentError({ message: tr('Could not receive the reply. Check your connection and try again.', '返事を受け取れませんでした。接続を確認して、もう一度お試しください。'), code: 'network_error' }); }
     }
   } finally {
     if (nativeConversation && nativeRunId && (!completed || errored || dropped())) await nativeConversation.cancel(nativeRunId).catch(function () {});
@@ -1844,7 +2157,7 @@ async function agentSend(recovered, retry) {
     if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
     if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(function (el) { el.remove(); }); delete userItem.retry_of; }
-    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid: mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
+    agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechVersion === 2 ? { speech_version: 2, speech_mode: speechMode } : {}), ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid: mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     // 受信復元のattsは保存用サムネイルなので、画像の再送には使わない。
     agentLastSend = !recovered && atts.length ? { mid: mid, atts: atts } : null;
@@ -1918,6 +2231,7 @@ function getReactionContext(bar) {
   return { target: target, request: request, response: response };
 }
 async function sendReaction(target, reaction, request, response) {
+  if (agentTemporary()) return null;
   if (!response) return undefined;
   try {
     const res = await fetch(REACT_API, {
@@ -2011,13 +2325,14 @@ agentLog.addEventListener('click', function (e) {
   if (!btn) return;
   var bar2 = btn.closest('.reaction-bar');
   var act = btn.getAttribute('data-act');
+  if (agentTemporary() && ['rate','react','share'].includes(act)) return;
 
   if (act === 'rate') { openRatePop(btn, bar2); return; }
   if (act === 'retry') { var retry = agentRetryFor(btn); if (retry) agentSend(null, retry); return; }
   if (act === 'speak' || act === 'share' || act === 'sources') {
     var item = agentItemFor(bar2);
     if (!item) return;
-    if (act === 'speak') { if (item.speech_sig) agentSpeech().toggle(btn, item.content, item.speech_sig, item.speech_lang || null); }
+    if (act === 'speak') { if (item.speech_sig) agentSpeech().toggle(btn, item.content, item.speech_sig, item.speech_lang || null, item.speech_version === 2 ? { sig_version: 2, conversation_mode: item.speech_mode } : {}); }
     else if (act === 'share') shareAgentReply(btn, bar2, item);
     else showAgentSourcesSheet(btn, item);
     return;
@@ -2035,7 +2350,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-personalization-panel', 'agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;
@@ -2178,6 +2493,7 @@ function renderSavedSessionsList() {
   });
 }
 function loadSavedSession(id) {
+  agentEndTemporary();
   syncCurrentToSaved(); // keep the current conversation before switching
   var sessions = readSavedSessions();
   var session = sessions.find(function (s) { return s.id === id; });
@@ -2201,15 +2517,17 @@ function loadSavedSession(id) {
   if (nativeConversation) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
 }
 function deleteSavedSession(id) {
+  if (agentTemporary()) return agentDeleteSavedDuringTemporary(id);
+  agentInvalidateSuspended(id);
   if (currentSessionId === id) resetAgent();
-  writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; }));
+  agentNormalStorage(function () { writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== id; })); });
   if (nativeConversation) nativeConversation.clear(id).catch(function () { announceAgent(tr('Could not remove pending reply data.', '受信データを削除できませんでした。')); });
   renderSavedSessionsList();
 }
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization'];
 function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
@@ -2495,8 +2813,9 @@ async function showNativeSettings() {
       try { await window.Capacitor.Plugins.Filesystem.deleteFile({ directory: 'CACHE', path: 'magi-export.json' }); }
       catch (error) { if (error.code !== 'OS-PLUG-FILE-0008' && error.code !== 'ENOENT') throw error; }
       if (nativeConversation) await nativeConversation.clear();
+      agentInvalidateSuspended(null);
       await nativeHistory.clear();
-      resetAgent();
+      if (!agentTemporary()) resetAgent();
       await nativeHistory.flush();
     });
   });
@@ -2528,6 +2847,7 @@ function updateAgentActionButtons() {
   if (exportBtn) exportBtn.disabled = !hasHistory;
 }
 function getAgentChatMarkdown() {
+  if (agentTemporary()) return "";
   if (!agentHistory || agentHistory.length === 0) return '';
   var md = '# MAGI Chat Log\nGenerated on: ' + new Date().toLocaleString() + '\n\n---\n\n';
   cleanHistory(agentHistory).forEach(function (item) {
@@ -2998,7 +3318,7 @@ async function initNativeInputs() {
   var readingShared = tr('Reading shared data…', '共有された内容を読み込み中…');
   nativeInput = window.MagiNativeInput.create({ cap: cap,
     generation: function () { return agentGen; },
-    beginShare: function () { syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent(readingShared); },
+    beginShare: function () { agentEndTemporary(); syncCurrentToSaved(); resetAgent(); sharedLoading = true; announceAgent(readingShared); },
     endShare: function (token) {
       if (token !== agentGen) return;
       sharedLoading = false;
@@ -3019,7 +3339,7 @@ async function initNativeInputs() {
   if (cap.Plugins.SpeechRecognition && await nativeInput.voiceAvailable()) {
     voice.hidden = false;
     voice.addEventListener('click', function () {
-      if (!agentBusy && !agentDead && !agentClosed && !sharedLoading) nativeInput.startVoice();
+      if (!agentTemporary() && !agentBusy && !agentDead && !agentClosed && !sharedLoading) nativeInput.startVoice();
     });
   }
 }

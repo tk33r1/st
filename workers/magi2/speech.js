@@ -115,12 +115,18 @@ const hex = buf => Array.from(new Uint8Array(buf), b => b.toString(16).padStart(
 const hmacKey = (secret, usage) => crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [usage]);
 
 // 署名（設計§5.2）: HMAC-SHA256(SPEECH_SIGN_KEY, "v1\n" + 回答の本文) の16進
-export async function speechSign(secret, text) {
-  return hex(await crypto.subtle.sign('HMAC', await hmacKey(secret, 'sign'), new TextEncoder().encode('v1\n' + text)));
+function speechPayload(text, options) {
+  if (!options || options.version === 1) return 'v1\n' + text;
+  if (options.version !== 2 || !['normal', 'temporary'].includes(options.mode)) throw new Error('invalid_speech_contract');
+  return 'v2\n' + options.mode + '\n' + (speechLanguage(options.lang) || '') + '\n' + text;
+}
+export async function speechSign(secret, text, options) {
+  return hex(await crypto.subtle.sign('HMAC', await hmacKey(secret, 'sign'), new TextEncoder().encode(speechPayload(text, options))));
 }
 // 照合は subtle.verify に任せる（比較の時間で一致した長さを漏らさない）
-export async function speechVerify(secret, text, sig) {
+export async function speechVerify(secret, text, sig, options) {
   if (typeof sig !== 'string' || !/^[0-9a-f]{64}$/.test(sig)) return false;
   const bytes = new Uint8Array(sig.match(/../g).map(h => parseInt(h, 16)));
-  return crypto.subtle.verify('HMAC', await hmacKey(secret, 'verify'), bytes, new TextEncoder().encode('v1\n' + text));
+  try { return await crypto.subtle.verify('HMAC', await hmacKey(secret, 'verify'), bytes, new TextEncoder().encode(speechPayload(text, options))); }
+  catch (_) { return false; }
 }

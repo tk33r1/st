@@ -6,6 +6,18 @@ import { webcrypto } from 'node:crypto';
 import { nativeFilesystemFixture } from './magi-native-filesystem-fixture.mjs';
 
 const source = readFileSync(new URL('../../magi-app/www/native-history.js', import.meta.url), 'utf8');
+
+test('一時/設定: Android保存を停止中は会話・画像を書かず、明示削除後も旧会話を復活させない', async () => {
+  const f = fixture(); f.seed(); const store = f.create(); await store.init();
+  const before = JSON.stringify([...f.files]);
+  store.suspendWrites(); store.set('magi_current_history', JSON.stringify([{ role: 'user', content: 'TEMPORARY' }]));
+  store.setSessions([{ id: 'temporary_1', mode: 'temporary', history: [] }]);
+  await assert.rejects(store.storeImage(new Blob(['TEMPORARY'], { type: 'image/png' })));
+  await store.flush(); assert.equal(JSON.stringify([...f.files]), before);
+  await store.clear(); await store.flush(); store.resumeWrites();
+  const reopened = f.create(); await reopened.init(); assert.equal(reopened.sessions().length, 0);
+  assert.equal(reopened.get('magi_current_history'), '[]');
+});
 function fixture() {
   const disk = nativeFilesystemFixture(), values = new Map(), errors = [];
   const legacy = { getItem: key => values.get(key) ?? null, removeItem: key => values.delete(key) };

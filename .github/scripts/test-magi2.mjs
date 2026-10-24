@@ -16,6 +16,171 @@ import './test-magi-native-background.mjs';
 import './test-magi-native-widget.mjs';
 import './test-magi-native-location.mjs';
 
+test('一時/設定: 契約・文字数・旧設定を検査し、一時とオフの設定を破棄する', () => {
+  const w = worker(), parse = value => JSON.parse(JSON.stringify(w.ctx.chatPrivacy(value)));
+  assert.deepEqual(parse({}), { privacyContract: false, conversationMode: 'normal', personalization: null });
+  for (const body of [{ conversation_mode: 'temporary' }, { privacy_contract: 2, conversation_mode: 'normal' }, { privacy_contract: 1, conversation_mode: 'bad' }]) assert.throws(() => parse(body));
+  const normal = p => ({ privacy_contract: 1, conversation_mode: 'normal', personalization: p });
+  assert.equal(parse(normal({ enabled: true, preferred_name: '😀'.repeat(50), custom_instructions: 'x'.repeat(2000) })).personalization.preferred_name.length, 100);
+  for (const p of [{ enabled: true, preferred_name: '😀'.repeat(51) }, { enabled: true, custom_instructions: 'x'.repeat(2001) }, { enabled: true, preferred_name: 'a\nb' }, { enabled: true, preferred_name: 'a\u202eb' }]) assert.throws(() => parse(normal(p)));
+  assert.equal(parse(normal({ enabled: true, custom_instructions: 'old' })).personalization.preferred_name, '');
+  assert.equal(parse(normal({ enabled: false, preferred_name: { ignored: true } })).personalization, null);
+  assert.equal(parse({ privacy_contract: 1, conversation_mode: 'temporary', personalization: { enabled: true, preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-SETTINGS' } }).personalization, null);
+});
+
+test('一時/設定: 機能確認はキャッシュせず、停止中の要求をAI/D1より前に拒否する', async () => {
+  const w = worker(); w.env.DB = counts();
+  const res = await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models?capabilities=1', { headers: { Origin: 'https://tk.st' } }), w.env, { waitUntil() {} });
+  assert.equal(res.headers.get('Cache-Control'), 'no-store');
+  assert.equal((await res.json()).features.privacy_contract, 1);
+  for (const [key, mode, personalization] of [['TEMPORARY_CHAT_ENABLED', 'temporary', undefined], ['PERSONALIZATION_ENABLED', 'normal', { enabled: true, preferred_name: 'Synthetic' }]]) {
+    w.env[key] = 'false';
+    assert.equal((await w.request('/magi2/chat', { privacy_contract: 1, conversation_mode: mode, personalization, messages: [{ role: 'user', content: 'q' }] })).status, 409);
+    assert.equal(w.env.DB.rows.size, 0); assert.equal(w.calls.length, 0);
+  }
+});
+
+test('一時/設定: 一時の最初にsessionを返し、タイトルも設定入りの上流要求も作らない', async () => {
+  const w = worker();
+  const body = { privacy_contract: 1, conversation_mode: 'temporary', messages: [{ role: 'user', content: 'q' }],
+    personalization: { enabled: true, preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-INSTRUCTION' } };
+  const stream = sseEvents(await (await w.request('/magi2/chat', body)).text());
+  assert.equal(stream[0][0], 'session'); assert.equal(stream[0][1].personalization_applied, false);
+  assert.equal(stream.some(([name]) => name === 'title'), false);
+  assert.equal(stream.some(([name]) => name === 'done'), true);
+  assert.equal(JSON.stringify(w.calls).includes('PRIVATE-'), false);
+});
+
+test('一時/設定: 通常では人格と統合だけに呼び方・指示を加え、タイトル・分類・判定から分離する', async () => {
+  const w = worker();
+  const stream = sseEvents(await (await w.request('/magi2/chat', { privacy_contract: 1, conversation_mode: 'normal',
+    personalization: { enabled: true, preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-INSTRUCTION' }, messages: [{ role: 'user', content: 'q' }] })).text());
+  assert.equal(stream[0][1].personalization_applied, true);
+  const withSettings = w.calls.filter(call => JSON.stringify(call).includes('PRIVATE-INSTRUCTION'));
+  assert.ok(withSettings.length >= 4, '3人格の初回/再討議と統合');
+  assert.ok(w.calls.some(call => !JSON.stringify(call).includes('PRIVATE-')), 'タイトル等には設定を追加しない');
+  const judgement = w.calls.filter(call => call.response_format?.json_schema?.name === 'debate_judge');
+  assert.ok(judgement.every(call => !JSON.stringify(call).includes('PRIVATE-')));
+});
+
+test('一時/設定: 事実回答には設定を足すが照合の直接設定にはしない', () => {
+  const w = worker();
+  const messages = w.ctx.factAnswerMessages({ cards: {}, messages: [{ role: 'user', content: 'q' }], personalization: { preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-INSTRUCTION' } });
+  assert.ok(JSON.stringify(messages).includes('PRIVATE-INSTRUCTION'));
+  const last = messages.filter(m => m.role !== 'system');
+  assert.equal(JSON.stringify(last).includes('PRIVATE-'), false);
+});
+
+test('一時/設定: 一時評価は利用制限カウンターにも触れず拒否する', async () => {
+  const w = worker(); w.env.DB = counts();
+  const res = await w.request('/magi2/react', { conversation_mode: 'temporary', target: 'integrated', reaction: '👍', request: 'PRIVATE-INPUT', response: 'PRIVATE-REPLY' });
+  assert.equal(res.status, 403); assert.equal(w.env.DB.rows.size, 0); assert.equal(w.calls.length, 0);
+});
+
+test('一時/設定: 通常履歴の明示削除が保存先で失敗したら通知し、退避から復活させない', async () => {
+  for (const src of [home, mobile]) {
+    const notices = [], ctx = vm.createContext({ setTimeout() {},
+      localStorage: { setItem() { throw new Error('synthetic_storage_failure'); } },
+      safeGet() { return null; }, tr(en) { return en; }, announceAgent(text) { notices.push(text); }, renderSavedSessionsList() {}
+    });
+    vm.runInContext(between(src, '// AGENT_EPHEMERAL_BEGIN', '// AGENT_EPHEMERAL_END'), ctx);
+    ctx.agentPrivacyState.mode = 'temporary';
+    ctx.agentPrivacyState.suspended = { id: 'session_A', history: [{ content: 'normal' }], attachments: [], draft: 'draft' };
+    ctx.agentStoredSessions = () => [{ id: 'session_A' }, { id: 'session_B' }];
+    await ctx.agentDeleteSavedDuringTemporary('session_A');
+    assert.equal(ctx.agentPrivacyState.suspended.deleted, true);
+    assert.equal(ctx.agentPrivacyState.suspended.history.length, 0);
+    assert.match(notices[0], /Could not finish deleting/);
+    assert.equal(ctx.agentTemporary(), true);
+  }
+});
+
+test('一時/設定: 設定の読込障害と不正値を区別し、読めない通常設定を黙って外さない', async () => {
+  for (const source of [home, mobile]) {
+    let denied = false, raw = JSON.stringify({ version: 1, enabled: true, preferred_name: 'NAME', custom_instructions: 'CUSTOM' }), calls = 0;
+    const ctx = vm.createContext({ AbortController, setTimeout, clearTimeout,
+      localStorage: { getItem() { if (denied) throw new Error('synthetic_read_failure'); return raw; } },
+      tr(en) { return en; }, announceAgent() {}, AGENT_API: '/magi2/chat',
+      fetch: async () => { calls++; return Response.json({ features: { privacy_contract: 1, temporary_chat: true, personalization: true } }); }
+    });
+    // 起動タイマーだけを抑え、機能確認のタイムアウトは通常どおり扱う。
+    ctx.setTimeout = (fn, ms) => ms === 0 ? 0 : setTimeout(fn, ms);
+    vm.runInContext(between(source, '// AGENT_EPHEMERAL_BEGIN', '// AGENT_EPHEMERAL_END'), ctx);
+    assert.equal(ctx.refreshAgentPersonalization().preferred_name, 'NAME');
+    const saved = raw; denied = true;
+    await assert.rejects(ctx.agentPrivacyRequest(), /personalization_read_unavailable/);
+    assert.equal(calls, 0);
+    assert.equal(ctx.refreshAgentPersonalization(), null);
+    assert.equal(raw, saved, '読み込み障害で保存済み設定を変えない');
+    ctx.agentPrivacyState.mode = 'temporary';
+    assert.equal((await ctx.agentPrivacyRequest()).conversation_mode, 'temporary', '一時は設定を読む必要がない');
+    denied = false; ctx.agentPrivacyState.mode = 'normal';
+    assert.equal((await ctx.agentPrivacyRequest()).personalization.preferred_name, 'NAME');
+    for (const invalid of ['{', '{"version":99}', 'null']) { raw = invalid; assert.equal(ctx.readAgentPersonalization().enabled, false); }
+  }
+});
+
+test('一時/設定: 確認通信が中止後に応答しても送信契約を返さない', async () => {
+  for (const source of [home, mobile]) {
+    let respond;
+    const ctx = vm.createContext({ AbortController, clearTimeout,
+      setTimeout: (fn, ms) => ms === 0 ? 0 : setTimeout(fn, ms),
+      AGENT_API: '/magi2/chat', fetch: () => new Promise(resolve => { respond = resolve; }) });
+    vm.runInContext(between(source, '// AGENT_EPHEMERAL_BEGIN', '// AGENT_EPHEMERAL_END'), ctx);
+    ctx.agentPrivacyState.mode = 'temporary';
+    const pending = ctx.agentPrivacyRequest();
+    ctx.cancelAgentPrivacyPreparation();
+    respond(Response.json({ features: { privacy_contract: 1, temporary_chat: true } }));
+    await assert.rejects(pending, /privacy_cancelled/);
+    assert.equal(ctx.agentPrivacyState.preflight, null);
+    assert.equal(ctx.agentPrivacyState.features, null);
+  }
+});
+
+test('一時/設定: 新契約の上流エラーが本文を返してもログ・通知・D1カウンターへ転記しない', async () => {
+  for (const mode of ['normal', 'temporary']) {
+    const logs = [], mails = [];
+    const w = worker(completion(), (url, options) => {
+      if (url.includes('deepseek')) return Response.json({ error: { message: 'Insufficient Balance PRIVATE-ECHO' } }, { status: 402 });
+      if (url === 'https://api.resend.com/emails') { mails.push(JSON.parse(options.body)); return Response.json({ id: 'synthetic' }); }
+    });
+    w.ctx.console.log = (...values) => logs.push(values);
+    Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'synthetic', ALERT_TO: 'to@example.com', ALERT_FROM: 'from@example.com' });
+    const res = await w.request('/magi2/chat', { privacy_contract: 1, conversation_mode: mode,
+      messages: [{ role: 'user', content: 'PRIVATE-INPUT' }], personalization: { enabled: true, preferred_name: 'PRIVATE-NAME', custom_instructions: 'PRIVATE-INSTRUCTION' } });
+    const result = await res.text(); await Promise.all(w.waits);
+    assert.equal(mails.length, 1);
+    assert.ok(!JSON.stringify([result, logs, mails, Array.from(w.env.DB.rows)]).includes('PRIVATE-'));
+    assert.match(mails[0].subject, /402/);
+  }
+});
+
+test('一時/設定: v2音声署名はモードと言語を固定し、一時音声は既存キャッシュも使わない', async () => {
+  const w = speechWorker(), text = '同じ文の合成回答です。';
+  const v1 = await w.ctx.speechSign(SPEECH_KEY, text);
+  await (await w.speak({ text, sig: v1, part: 0, lang: 'ja' })).arrayBuffer(); await Promise.all(w.waits);
+  assert.equal(w.store.size, 1);
+  let matches = 0, puts = 0;
+  w.ctx.caches.default.match = async () => { matches++; throw new Error('must not match'); };
+  w.ctx.caches.default.put = async () => { puts++; throw new Error('must not put'); };
+  const sig = await w.ctx.speechSign(SPEECH_KEY, text, { version: 2, mode: 'temporary', lang: 'ja' });
+  const body = { text, sig, part: 0, lang: 'ja', sig_version: 2, conversation_mode: 'temporary' };
+  for (const changed of [{ ...body, conversation_mode: 'normal' }, { ...body, lang: 'en' }, { text, sig, part: 0, lang: 'ja' }, { ...body, sig_version: 1 }]) {
+    const res = await w.speak(changed); assert.ok(res.status >= 400); assert.equal(w.fishCalls.length, 1);
+  }
+  const res = await w.speak(body); assert.equal(res.status, 200); assert.equal(res.headers.get('Cache-Control'), 'no-store');
+  await res.arrayBuffer(); await Promise.all(w.waits);
+  assert.equal(w.fishCalls.length, 2); assert.equal(matches + puts, 0); assert.equal(w.store.size, 1);
+});
+
+test('一時/設定: 通常v2署名の読み上げと旧v1の互換を保つ', async () => {
+  const w = speechWorker(), text = '通常の合成回答です。';
+  const sig = await w.ctx.speechSign(SPEECH_KEY, text, { version: 2, mode: 'normal', lang: 'ja' });
+  const res = await w.speak({ text, sig, part: 0, lang: 'ja', sig_version: 2, conversation_mode: 'normal' });
+  assert.equal(res.status, 200); await res.arrayBuffer(); await Promise.all(w.waits); assert.equal(w.store.size, 1);
+  assert.equal(await w.ctx.speechVerify(SPEECH_KEY, text, sig), false);
+});
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => readFileSync(join(root, p), 'utf8');
 const mobile = read('magi-app/www/app.js');
@@ -160,6 +325,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     + strip(read('workers/magi2/search-scope.js')) + '\n'
     + strip(read('workers/magi2/site-rank.js')) + '\n'
     + strip(read('workers/magi2/speech.js')) + '\n'
+    + strip(read('workers/magi2/privacy.js')) + '\n'
     + strip(read('workers/magi2/src/index.js')).replace('export default {', 'globalThis.worker = {')
     + '\nglobalThis.defaults = DEFAULTS; globalThis.searchConfig = SITE_SEARCH; globalThis.searchCache = cache; globalThis.rankConfig = SITE_RANK; globalThis.dailyCache = dailySnapshots;', ctx);
   const env = { MAGI_OPENAI_API_KEY: 'test', MAGI_DEEPSEEK_API_KEY: 'test', MAGI_ANTHROPIC_API_KEY: 'test' };
@@ -1997,6 +2163,7 @@ function client(src, isHome = false) {
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
+    agentPrivacyState: { preparing: false, switching: false }, agentTemporary: () => false, agentPrivateStorage: () => false, agentPrivacyRequest: async () => null, agentPrivacyExpected: () => null, syncAgentPrivacyUI() {}, queueMicrotask,
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
@@ -2016,6 +2183,8 @@ function client(src, isHome = false) {
     vm.runInContext(between(src, 'function persistSharedDocument(', 'function setSharedDocument('), ctx);
     vm.runInContext(between(src, 'function cleanHistory(', 'function initAgent('), ctx);
   }
+  // 通常会話の独立検証でも、一時終了の入口（通常時は何もしない）を実際のコードから用意する。
+  vm.runInContext(between(src, 'function agentEndTemporary(', 'async function toggleAgentTemporary('), ctx);
   vm.runInContext(thinkingSource(src), ctx);
   vm.runInContext(between(src, 'async function parseSSE(', isHome ? '// --- マルチモーダル入力' : '// ---- 画像添付'), ctx);
   vm.runInContext(between(src, 'function prepareAgentMessages(', isHome ? 'agentSendBtn.addEventListener(' : '// ---- Reaction network'), ctx);
@@ -2042,6 +2211,24 @@ test('B3: ネイティブ受信の正常完了・通信失敗・停止で会話�
     assert.equal(c.ctx.agentBusy, false);
     assert.equal(c.ctx.agentHistory.length, outcome === 'done' ? 2 : 0);
   }
+});
+
+test('一時/設定: Androidの通常受信を復元してもv2音声のモードをイベントから保持する', async () => {
+  const c = client(mobile), sig = 'a'.repeat(64);
+  vm.runInContext(between(mobile, 'function contentText(', 'function downscaleImage('), c.ctx);
+  c.ctx.nativeHistory = { async flush() {} };
+  c.ctx.nativeConversation = {
+    watch() { return { chunk() {}, end() {}, finish() {}, isBuffered() { return false; } }; },
+    async open() { return { ok: true, body: {} }; }, async acknowledge() {}
+  };
+  c.ctx.agentHistory = [{ role: 'user', content: '合成質問', native_request: 'native-request' }];
+  c.ctx.agentLog.lastElementChild = element();
+  c.ctx.parseSSE = async (_, h) => { h.integrated({ delta: '合成回答' }); h.speech({ sig, lang: 'ja', sig_version: 2, conversation_mode: 'normal' }); h.done(); };
+  await c.ctx.agentSend({ id: 'native-request', mid: 'mRECOVERED', startedAt: 0 });
+  assert.equal(c.ctx.agentHistory.at(-1).speech_sig, sig);
+  assert.equal(c.ctx.agentHistory.at(-1).speech_version, 2);
+  assert.equal(c.ctx.agentHistory.at(-1).speech_mode, 'normal');
+  assert.equal(c.errors.length, 0);
 });
 
 test('もう一度: 送り直しの最中にアプリが閉じても、受信の復元で前の往復を外して送り、届いたら置き換える', async () => {
@@ -2234,7 +2421,7 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
     let release;
     const receipt = { id: 7, delete_token: 'a'.repeat(64) };
     let delayed = false, removeStatus = 200;
-    const ctx = vm.createContext({ REACT_API: 'mock', AbortController, setTimeout, clearTimeout, reactionStoreFor: () => store, persistReactions() {},
+    const ctx = vm.createContext({ agentTemporary: () => false, REACT_API: 'mock', AbortController, setTimeout, clearTimeout, reactionStoreFor: () => store, persistReactions() {},
       fetch: async (_, options) => {
         const body = JSON.parse(options.body); posts.push(body);
         if (body.op === 'remove') return Response.json({ ok: removeStatus === 200 }, { status: removeStatus });
@@ -2271,7 +2458,7 @@ test('両画面の評価: 付け替えは前の評価を消せてから付け、
       const store = { integrated: receipt }, posts = [], errors = [], timers = new Map(), shown = [];
       let failed = true;
       const bar = { dataset: { target: 'integrated' } };
-      const ctx = vm.createContext({ REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
+      const ctx = vm.createContext({ agentTemporary: () => false, REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
         renderAgentError(e) { errors.push(e); },
         getReactionContext: () => ({ target: 'integrated', request: 'q', response: 'a' }),
         setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
@@ -2745,7 +2932,7 @@ test('Jev の失敗・言語の無い発言・低い確信・キー未設定で�
   assert.equal(jev, 0, 'キーが無ければ呼ばない');
 });
 
-test('IP上限・全体上限・DB失敗で断るときは並行開始した分類を中止し、人格を呼ばない', async () => {
+test('IP上限・全体上限・DB失敗では分類APIも人格も呼ばない', async () => {
   for (const failure of ['ip', 'global', 'db']) {
     let aborted = 0, classificationCalls = 0;
     const w = worker(completion(), (url, options) => {
@@ -2762,12 +2949,12 @@ test('IP上限・全体上限・DB失敗で断るときは並行開始した分�
     const res = await w.chat([{ role: 'user', content: 'q' }]);
     assert.equal(res.status, failure === 'db' ? 500 : 429, failure);
     await tick();
-    assert.equal(classificationCalls, 1, failure); assert.equal(aborted, 1, failure);
+    assert.equal(classificationCalls, 0, failure); assert.equal(aborted, 0, failure);
     assert.equal(w.calls.length, 0, failure);
   }
 });
 
-test('分類はDBの確認中に進み、確認が済むまでSSEと人格の処理を始めない', async () => {
+test('分類はDBの確認成功後にだけ開始する', async () => {
   let classified = false, releaseDb, enteredDb;
   const entered = new Promise(resolve => { enteredDb = resolve; });
   const held = new Promise(resolve => { releaseDb = resolve; });
@@ -2784,14 +2971,14 @@ test('分類はDBの確認中に進み、確認が済むまでSSEと人格の処
   }; } };
   const pending = w.chat([{ role: 'user', content: 'Please help me.' }]);
   await entered; await tick();
-  assert.equal(classified, true); assert.equal(w.calls.length, 0);
+  assert.equal(classified, false); assert.equal(w.calls.length, 0);
   assert.equal(db.rows.size, 0);
   releaseDb();
   assert.match(await (await pending).text(), /event: done/);
   assert.ok(w.calls.length > 0);
 });
 
-test('DBの確認中の接続切断でも分類を中止し、後から人格を呼ばない', async () => {
+test('DBの確認中に接続切断したら分類も人格も呼ばない', async () => {
   let aborted = false, releaseDb, enteredDb;
   const entered = new Promise(resolve => { enteredDb = resolve; });
   const held = new Promise(resolve => { releaseDb = resolve; });
@@ -2812,7 +2999,7 @@ test('DBの確認中の接続切断でも分類を中止し、後から人格を
     body: JSON.stringify({ messages: [{ role: 'user', content: 'Please help me.' }] }), signal: controller.signal,
   }), w.env, { waitUntil(p) { w.waits.push(p); } });
   await entered;
-  controller.abort(); await tick(); assert.equal(aborted, true);
+  controller.abort(); await tick(); assert.equal(aborted, false);
   releaseDb();
   assert.equal(await (await pending).text(), '');
   assert.equal(w.calls.length, 0);
@@ -3105,7 +3292,7 @@ test('会話IDがない言語メタデータは新しい会話へ引き継がな
 test('アプリの保存言語の復元時には、言語コード一覧が初期化されている', () => {
   const end=mobile.indexOf('function ensureAgentConversation(');
   const prefix=mobile.slice(0,end);
-  const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout,clearTimeout,
+  const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout(){ return 0; },clearTimeout,
     ResizeObserver:class { observe(){} },
     window:{matchMedia:()=>({matches:false})},navigator:{},location:{protocol:'http:',hostname:'localhost',search:''},
     document:{getElementById:()=>({...element(),addEventListener(){}})},
@@ -5436,10 +5623,10 @@ test('読み上げ計画§1.3: 最初の音声が期限までに来なければ�
 
 test('読み上げ計画§1.5: /magi2/modelsのfeatures.speechは有効化とキー2つがそろったときだけtrue', async () => {
   const models = async env => (await (await worker().ctx.worker.fetch(new Request('https://workers.tk.st/magi2/models', { headers: { Origin: 'https://tk.st' } }), env, { waitUntil() {} })).json()).features;
-  assert.deepEqual(await models({}), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k' }), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'false', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: false });
-  assert.deepEqual(await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' }), { speech: true });
+  assert.equal((await models({})).speech, false);
+  assert.equal((await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k' })).speech, false);
+  assert.equal((await models({ SPEECH_ENABLED: 'false', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' })).speech, false);
+  assert.equal((await models({ SPEECH_ENABLED: 'true', MAGI_FISH_AUDIO_API_KEY: 'k', SPEECH_SIGN_KEY: 's' })).speech, true);
 });
 
 const PNG_ICON = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
@@ -5624,8 +5811,20 @@ test('読み上げ計画§1.6: 保存した署名は16進64文字だけを残し
   for (const bad of ['A'.repeat(64), 'a'.repeat(63), 5, null]) assert.deepEqual(clean({ role: 'assistant', content: 'x', speech_sig: bad }), { role: 'assistant', content: 'x' });
   assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, closed: true }).speech_sig, undefined);
   assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, clarify: { questions: [] } }).speech_sig, undefined);
+  assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, speech_version: 2, speech_mode: 'normal' }).speech_mode, 'normal');
+  assert.equal(clean({ role: 'assistant', content: 'x', speech_sig: sig, speech_version: 2, speech_mode: 'other' }).speech_sig, undefined);
   const user = { role: 'user', content: 'q', speech_sig: sig };
   assert.equal(ctx.cleanAgentSpeechItem(user), user);
+});
+
+test('一時/設定: 画面も一時音声のv1化とモード不一致を拒み、旧通常音声だけv1を許す', () => {
+  const ctx = speechCtx(), sig = 'a'.repeat(64);
+  const legacy = { sig, lang: 'ja' }, temporary = { ...legacy, sig_version: 2, conversation_mode: 'temporary' };
+  assert.equal(ctx.cleanAgentSpeechEvent(temporary, 'temporary').speech_sig, sig);
+  assert.equal(ctx.cleanAgentSpeechEvent(legacy, null).speech_sig, sig);
+  for (const value of [legacy, { ...temporary, sig_version: 1 }, { ...temporary, conversation_mode: 'normal' }]) {
+    assert.equal(ctx.cleanAgentSpeechEvent(value, 'temporary').speech_sig, undefined);
+  }
 });
 
 test('読み上げ計画§1.6・2.2: 頭文字の丸はドメインから同じ文字と色になり、共有の文は本文の[n]と出典だけ', () => {

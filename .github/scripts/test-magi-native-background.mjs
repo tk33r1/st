@@ -5,6 +5,12 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 const source = readFileSync(new URL('../../magi-app/www/native-background.js', import.meta.url), 'utf8');
+
+test('一時/設定: 一時要求は通知許可・ネイティブ受信・ファイル作成へ渡さない', async () => {
+  const f = fixture({ permission: 'prompt' }), n = await f.create();
+  await assert.rejects(n.open(JSON.stringify({ conversation_mode: 'temporary' }), request()), /temporary_native_receive_forbidden/);
+  assert.equal(f.calls.filter(c => ['begin','permission'].includes(c[0])).length, 0);
+});
 function fixture({ native = true, permission = 'granted', status = 'complete', text = 'event: integrated\ndata: {"delta":"日本語"}\n\nevent: done\ndata: {}\n\n' } = {}) {
   const calls = [], storage = new Map(), bytes = Buffer.from(text), rows = [{ id: 'request_1', sessionId: 'session_1' }, { id: 'request_2', sessionId: 'session_2' }];
   const plugin = {

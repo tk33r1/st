@@ -55,6 +55,7 @@
         for (var row of rows) if (!sessionId || row.sessionId === sessionId) await acknowledge(row.id);
       },
       open: async function (body, request) {
+        if (!request.resume && JSON.parse(body).conversation_mode === 'temporary') throw new Error('temporary_native_receive_forbidden');
         var signal = request.ctrl.signal, id = request.id, offset = 0, stopped = false, terminal = false;
         if (!validId.test(id) || signal.aborted) throw abortError();
         var abort = function () { stopped = true; cancel(id).catch(function () {}); };

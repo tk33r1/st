@@ -12,6 +12,7 @@ import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
 
 import { speechLanguage, speechParts, speechSign, speechVerify } from '../speech.js';
+import { chatPrivacy, privacyFeatures, personalizationNote } from '../privacy.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -462,12 +463,13 @@ async function alertUpstream(env, log, provider, res, ctx, signal) {
   // 複製のcancelは元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
   const body = await billingFailureBody(res, provider, 500, signal);
   if (body === null) return;
-  log('upstream_alert', provider, res.status, body.slice(0, 200));
+  const detail = env.privateChat ? '上流エラーの本文は非表示です。' : body;
+  log('upstream_alert', provider, res.status, detail.slice(0, 200));
   const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
     `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
     '',
     `HTTP ${res.status}`,
-    body,
+    detail,
     '',
     '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
     provider === 'typesafe'
@@ -1185,7 +1187,7 @@ function withoutCurrentPage(choice, page) {
 }
 
 // 事実回答の入力は、本番と保存済み出典の評価で同じ順序から作る。
-function factAnswerMessages({ cards, messages, langNote, theme = null, guide = null,
+function factAnswerMessages({ cards, messages, langNote, theme = null, guide = null, personalization = null,
   pageChoice = null, siteOnly = false, research = false }) {
   return [
     { role: 'system', content: withLangNote(withCard(research ? { ...SYNTHESIZER, system_prompt: RESEARCH.system_prompt } : SYNTHESIZER,
@@ -1193,7 +1195,7 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
     ...(theme && SYNTH_BIAS[theme] ? [{ role: 'system', content: SYNTH_BIAS[theme] }] : []),
     ...(guide ? [{ role: 'system', content: guide.synth }] : []),
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
-    { role: 'system', content: FACT_ANSWER.prompt },
+    { role: 'system', content: FACT_ANSWER.prompt + personalizationNote(personalization) },
     ...(siteOnly ? [{ role: 'system', content: FACT_ANSWER.site_prompt }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
     ...messages,
@@ -1202,12 +1204,12 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
 
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
-  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, replyLanguage = null, ip = null, place = null, signal, send, log }) {
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, personalization = null, replyLanguage = null, ip = null, place = null, signal, send, log }) {
   // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
   const pagesWait = pagesPromise ? awaitPageChoice(pagesPromise, pageChoice, signal) : null;
   if (pagesWait && !research) pageChoice = await pagesWait;
   if (signal?.aborted) throw searchFailure('cancelled');
-  const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly };
+  const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly, personalization };
   const input = factAnswerMessages({ ...options, research });
   const answer = research
     ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, place, signal, send, log })
@@ -1826,6 +1828,7 @@ async function handleReaction(request, env, { requestId, cors, log }) {
   catch (err) { return inputError(err, requestId, cors); }
 
   const op = body.op === 'remove' ? 'remove' : 'add';
+  if (body.conversation_mode === 'temporary') return httpError(403, { stage: 'bad_request', code: 'temporary_reaction_forbidden', message: '一時チャットは評価できません', retryable: false }, requestId, cors);
   const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
   if (![...PERSONAS.map(p => p.codename), 'integrated'].includes(target)) {
     return httpError(400, { stage: 'bad_request', code: 'invalid_target', message: 'リアクション対象が不正です', retryable: false }, requestId, cors);
@@ -1903,6 +1906,7 @@ function sharedNote(shared) { return SHARED.header + '\n' + JSON.stringify(share
 
 async function readChatInput(request) {
   const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
+  const privacy = chatPrivacy(body);
   let messages = body.messages;
   const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
   const wantSuggest = body.suggest === true;
@@ -1921,6 +1925,7 @@ async function readChatInput(request) {
   // content は文字列 or パート配列。本文と人格の過去の意見を正規化する
   const counters = { total: 0, imageBytes: 0, text: 0 };
   messages = messages.map(m => normaliseMessage(m, counters));
+  if (privacy.personalization) checkText(JSON.stringify(privacy.personalization), 10000, counters);
   if (messages[messages.length - 1].role !== 'user') {
     throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
   }
@@ -1950,7 +1955,7 @@ async function readChatInput(request) {
   const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
   const searchText = contentText(messages.at(-1).content);
   return { messages: withShared(messages), plainMessages, discussMessages: withShared(plainMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
-    locationEnabled: body.location_enabled !== false,
+    ...privacy, locationEnabled: body.location_enabled !== false,
     devicePlace: body.location_enabled === false ? null : devicePlace(body.device_location),
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
 }
@@ -2018,7 +2023,7 @@ function resolveVotes(opinions, round, send) {
 
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
-  pagesPromise = null, page = null, music = false, motion = null, clarification = null, signal, send, log }) {
+  pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, signal, send, log }) {
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
@@ -2037,7 +2042,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     return { ...base, system_prompt: withLangNote(base.system_prompt
       + (guide ? '\n\n' + guide.persona : '')
       + (music ? '\n\n' + MUSIC_CONSULT.system_note : '')
-      + personaPageNote, langNote) };
+      + personaPageNote + personalizationNote(personalization), langNote) };
   });
 
   // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
@@ -2164,7 +2169,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
     ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
-    { role: 'system', content: SYNTHESIZER.constraint_rules },
+    { role: 'system', content: SYNTHESIZER.constraint_rules + personalizationNote(personalization) },
     ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
     { role: 'user', content: withImages(noteLang(augmented), lastImages) },
   ];
@@ -2183,6 +2188,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   let input;
   try { input = await readChatInput(request); }
   catch (err) { return inputError(err, requestId, cors); }
+  if (input.privacyContract) { const originalLog = log; log = stage => originalLog(stage); }
+  const features = privacyFeatures(env);
+  if (input.privacyContract && (input.conversationMode === 'temporary' && !features.temporary_chat
+    || input.personalization && !features.personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
   place = input.locationEnabled ? input.devicePlace || place : null;
   const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
@@ -2192,7 +2201,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   }, { requestId, cors, log }, () => httpError(503, { stage: 'internal', code: 'evaluation_unavailable',
     message: '評価用の確認を行えませんでした', retryable: true }, requestId, cors));
   if (qa.response) return qa.response;
-  env = qa.env;
+  env = Object.assign(Object.create(qa.env), { privateChat: input.privacyContract });
 
   // 上流の呼び出しは、失敗を残高切れの通知に回す env で行う（bindings と secret は元の env から引き継ぐ）
   const upstream = Object.assign(Object.create(env), {
@@ -2202,16 +2211,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   const stopRequest = () => stop.abort();
   if (request.signal.aborted) stop.abort();
   else request.signal.addEventListener('abort', stopRequest, { once: true });
-  // カードと分類は利用回数の確認と並行する。拒否・切断時は分類も止める。
+  // 公開カードだけを並行取得し、分類APIは利用制限の確認後に開始する。
   const cardsPromise = getPersonaCards(ctx, log);
-  const previousClarify = plainMessages.at(-2)?.role === 'assistant' ? plainMessages.at(-2).clarify : null;
-  const originalQuestion = previousClarify && [...plainMessages.slice(0, -2)].reverse().find(m => m.role === 'user');
-  const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
-    profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
-    seed, replyLanguage, uiLanguage, fallback: langNote, factMode, sharedTitle: shared?.title,
-    clarification: originalQuestion ? { original_question: classifySlice(contentText(originalQuestion.content), INTENT_CLASSIFY.latest_max_chars),
-      questions: previousClarify.questions, prior: { intent: previousClarify.intent, fresh: previousClarify.fresh } } : null,
-  }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
   const refuse = res => {
     stop.abort();
     request.signal.removeEventListener('abort', stopRequest);
@@ -2256,6 +2257,15 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
     log('rate_limit', 'skipped (no DB binding)');
   }
 
+  const previousClarify = plainMessages.at(-2)?.role === 'assistant' ? plainMessages.at(-2).clarify : null;
+  const originalQuestion = previousClarify && [...plainMessages.slice(0, -2)].reverse().find(m => m.role === 'user');
+  const classifyPromise = withTimeout(INTENT_CLASSIFY.timeout_ms, signal => classifyQuery(upstream, {
+    profile: newContract ? entry : 'legacy', texts: plainMessages.filter(m => m.role === 'user').map(m => contentText(m.content)),
+    seed, replyLanguage, uiLanguage, fallback: langNote, factMode, sharedTitle: shared?.title,
+    clarification: originalQuestion ? { original_question: classifySlice(contentText(originalQuestion.content), INTENT_CLASSIFY.latest_max_chars),
+      questions: previousClarify.questions, prior: { intent: previousClarify.intent, fresh: previousClarify.fresh } } : null,
+  }, signal, log), stop.signal).then(value => ({ value }), error => ({ error }));
+
   // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
   const pageStop = new AbortController();
@@ -2290,6 +2300,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
       }
 
       ctx.waitUntil((async () => { try {
+        if (input.privacyContract) send('session', { conversation_mode: input.conversationMode, personalization_applied: !!input.personalization });
         // 出力の言語（3人格・統合・討議の判定・タイトル・予測の全部に同じものを付ける）
         const classificationResult = await classifyPromise;
         if (classificationResult.error) throw classificationResult.error;
@@ -2317,7 +2328,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
         // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
         let titlePromise = null;
-        if (!plainMessages.some(m => m.role === 'assistant')) {
+        if (input.conversationMode !== 'temporary' && !plainMessages.some(m => m.role === 'assistant')) {
           const titleTimeoutMs = contentImages(plainMessages.at(-1).content).length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
           titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, plainMessages.at(-1).content, langNote, signal, log), stop.signal)
             .then(t => { if (t) send('title', { text: t }); })
@@ -2369,10 +2380,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           pagesPromise = null;
         }
         const answer = factMode && classification.mode === 'fact'
-          ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page,
+          ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
               research: classification.intent === 'research' && classification.fresh === 'yes',
               replyLanguage: classification.reply_language, ip: requestIP(request), place, signal: stop.signal, send, log })
-          : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme,
+          : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme, personalization: input.personalization,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
@@ -2387,8 +2398,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         if (titlePromise) await titlePromise;
         // 読み上げの署名（読み上げ設計§5.2）。確認質問・DJ の相談・読み上げを止めているときは送らない
         if (speechReady(env) && entry !== 'dj-request' && !clarified && spoken.trim() && !stop.signal.aborted) {
-          send('speech', { sig: await speechSign(env.SPEECH_SIGN_KEY, spoken),
-            ...(speechLanguage(classification?.reply_language?.code) ? { lang: classification.reply_language.code } : {}) });
+          const lang = speechLanguage(classification?.reply_language?.code);
+          const options = input.privacyContract ? { version: 2, mode: input.conversationMode, lang } : undefined;
+          send('speech', { sig: await speechSign(env.SPEECH_SIGN_KEY, spoken, options),
+            ...(options ? { sig_version: 2, conversation_mode: input.conversationMode } : {}), ...(lang ? { lang } : {}) });
         }
         send('done', { request_id: requestId });
         close();
@@ -2402,6 +2415,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           send('error', toEnvelope(env2, requestId));
         } else {
           const e = toEnvelope(err, requestId);
+          if (input.privacyContract) { delete e.detail; e.message = '回答を受信できませんでした'; }
           log('error', e.stage, e.code, e.message);
           send('error', e);
         }
@@ -2506,16 +2520,21 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   if (typeof text !== 'string' || !text.trim() || typeof sig !== 'string' || !Number.isInteger(part) || body.lang != null && typeof body.lang !== 'string') {
     return fail(400, 'bad_request', 'invalid_speech_request', '読み上げの要求が不正です');
   }
-  if (!await speechVerify(env.SPEECH_SIGN_KEY, text, sig)) {
+  const speechOptions = body.sig_version === undefined && body.conversation_mode === undefined ? undefined
+    : { version: body.sig_version, mode: body.conversation_mode, lang: body.lang };
+  if (speechOptions && (speechOptions.version !== 2 || !['normal', 'temporary'].includes(speechOptions.mode))) return fail(400, 'bad_request', 'invalid_speech_contract', '読み上げの要求が不正です');
+  if (speechOptions?.mode === 'temporary' && !privacyFeatures(env).temporary_chat) return fail(409, 'bad_request', 'privacy_feature_unavailable', '一時チャットの読み上げは現在利用できません');
+  if (!await speechVerify(env.SPEECH_SIGN_KEY, text, sig, speechOptions)) {
     log('speech', 'unsigned');
     return fail(403, 'auth', 'speech_unsigned', 'この回答は読み上げできません');
   }
   const lang = speechLanguage(body.lang);
+  if (speechOptions) { env = Object.assign(Object.create(env), { privateChat: true }); const originalLog = log; log = stage => originalLog(stage); }
   const parts = speechParts(text, lang);
   if (part < 0 || part >= parts.length) return fail(400, 'bad_request', 'speech_part_out_of_range', '読み上げの区切りが範囲外です');
   headers['X-Speech-Parts'] = String(parts.length);
   const started = Date.now();
-  const cache = speechCache();
+  const cache = speechOptions?.mode === 'temporary' ? null : speechCache();
   const key = cache && new Request('https://workers.tk.st/magi2/speech-cache/'
     + await sha256([SPEECH.model, SPEECH.voice_id, SPEECH.params_version, lang || '', parts[part]].join('|')));
   if (cache) {
@@ -2685,9 +2704,9 @@ export default {
         themes: { light: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer), dark: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer_dark) },
         privacy: PRIVACY,
         // 画面はこれを見て読み上げのボタンを出す（読み上げ設計§7）。Worker の設定だけで全画面に出し入れできる
-        features: { speech: speechReady(env) },
+        features: { speech: speechReady(env), ...privacyFeatures(env), temporary_speech: speechReady(env) && privacyFeatures(env).temporary_speech },
       };
-      return jsonResponse(body, cors, 200, { 'Cache-Control': 'public, max-age=600' });
+      return jsonResponse(body, cors, 200, { 'Cache-Control': url.searchParams.get('capabilities') === '1' ? 'no-store' : 'public, max-age=600' });
     }
     // --- 今日の利用回数（IP×UTC日、通常チャットの上限）。アプリのヘッダーの円グラフが読む。数えずに読むだけ。
     // 全利用者の合計の上限に達した日は、IPの回数が残っていても送れないので global_full で知らせる ---

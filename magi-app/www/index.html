@@ -363,6 +363,7 @@
     .agent-imgs img.expanded { max-width: 100%; max-height: none; }
     .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
     #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); border-top: 1px solid var(--border-color); }
+    .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
 
     /* splash */
     @keyframes magiFlow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
@@ -470,7 +471,18 @@
     .native-setting [role="switch"][aria-checked="true"] span { transform: translateX(20px); }
     .native-setting [role="switch"]:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
     .native-setting [role="switch"]:disabled { opacity: .45; }
-  </style>
+  /* 一時会話とパーソナライズ。既存のパネル・テーマを使う。 */
+#btn-temporary-agent { min-width: 44px; min-height: 44px; color: inherit; background: transparent; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+#btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; border-radius: 8px; }
+#btn-temporary-agent:focus-visible { outline: 2px solid currentColor; }
+#btn-temporary-agent:disabled { opacity: .4; cursor: default; }
+#agent-temporary-notice { font-size: 11px; line-height: 1.6; padding: 8px 12px; margin: 0; border-bottom: 1px dashed currentColor; }
+#agent-temporary-notice[hidden], .agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
+.agent-personalization-form { display: flex; flex-direction: column; gap: 12px; max-width: 640px; margin: 0 auto; padding: 16px; font-size: 14px; }
+.agent-personalization-form input[type="text"], .agent-personalization-form textarea { box-sizing: border-box; width: 100%; padding: 10px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; font: inherit; }
+.agent-personalization-form .personal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.agent-personalization-form button { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
+</style>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -490,11 +502,14 @@
           </button>
           <div id="agent-usage-pop" class="header-pop hidden" role="dialog" aria-label="Today's usage" data-ja-aria="今日の利用"></div>
         </div>
-        <div class="kebab-wrap">
+        <button id="btn-temporary-agent" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/></svg></button>
+<div class="kebab-wrap">
           <button id="btn-more-agent" class="icon-btn" title="More options" aria-label="More options" data-ja-title="その他の操作" data-ja-aria="その他の操作">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div id="agent-more-dropdown" class="header-pop hidden">
+<button id="btn-personalization-agent" type="button" class="dock-menu-item"><span class="menu-label" data-ja="パーソナライズ">Personalization</span></button>
+
             <button id="btn-share-agent" type="button" title="Share / copy conversation" data-ja-title="会話を共有・コピー" disabled>
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               <span class="menu-label" data-ja="会話を共有">Share conversation</span>
@@ -580,12 +595,12 @@
     </div>
   </div>
 
-  <script src="native-history.js?v=20261021_1"></script>
+  <script src="native-history.js?v=20261025_2"></script>
   <script src="vendor/Readability.js?v=0.6.0"></script>
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
-  <script src="native-background.js?v=20261024_2"></script>
+  <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
-  <script src="app.js?v=20261025_3"></script>
+  <script src="app.js?v=20261025_9"></script>
 </body>
 </html>

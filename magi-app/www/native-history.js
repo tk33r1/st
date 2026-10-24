@@ -10,7 +10,8 @@
     // 保存した会話は物のまま持つ。画面は中身を書き換えず、変えた会話は新しい物で置き換える。
     // 会話ごとの保存用の文字列は物に紐付けて使い回し、変わった会話だけを作り直す。
     var state = {}, saved = [], entries = new WeakMap(), active = false, tail = Promise.resolve(), lastError = null;
-    var committed = {}, collected = null, pendingImages = new Set(), draftImages = new Set(), queued = false;
+    var committed = {}, collected = null, pendingImages = new Set(), draftImages = new Set(), queued = false, suspended = false;
+    function persistentSessions(list) { return list.filter(function (session) { return session && session.mode !== 'temporary'; }); }
     function owns(key) { return KEYS.indexOf(key) >= 0; }
     function clearLegacyHistory() { KEYS.forEach(function (key) { legacy.removeItem(key); }); }
     function args(path) { return { path: 'magi/' + path, directory: 'DATA' }; }
@@ -188,16 +189,20 @@
         return state[key] == null ? null : state[key];
       },
       set(key, value) {
-        if (key === 'magi_saved_sessions') saved = parse(value, []); else state[key] = value;
+        if (suspended) return;
+        if (key === 'magi_saved_sessions') saved = persistentSessions(parse(value, [])); else state[key] = value;
         enqueue();
       },
       remove(key) {
+        if (suspended) return;
         if (key === 'magi_saved_sessions') { if (!saved.length) return; saved = []; }
         else { if (state[key] == null) return; delete state[key]; }
         enqueue();
       },
       sessions() { return saved.slice(); },
-      setSessions(list) { saved = list.slice(); enqueue(); },
+      setSessions(list) { if (suspended) return; saved = persistentSessions(list); enqueue(); },
+      suspendWrites() { suspended = true; },
+      resumeWrites() { suspended = false; },
       // 再送待ちの画像は、古い保存バッチの参照整理から独立して保持する。
       retainImage(name) { if (imageName.test(name)) draftImages.add(name); },
       releaseImage(name) {
@@ -206,6 +211,7 @@
       },
       async flush() { await tail; if (lastError) throw lastError; },
       async storeImage(file) {
+        if (suspended) throw new Error('temporary_image_persistence_forbidden');
         var bytes = await file.arrayBuffer();
         var hash = Array.from(new Uint8Array(await root.crypto.subtle.digest('SHA-256', bytes))).map(function (n) { return n.toString(16).padStart(2, '0'); }).join('');
         var ext = ({ 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif', 'image/avif': 'avif' })[file.type] || 'jpg';

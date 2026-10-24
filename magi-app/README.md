@@ -461,3 +461,7 @@ Web・PWA・Android共通のメニューに「バグを報告」を置く。最�
 この機能は新しい `MagiLocation` を含むAPKが必要。Workerを先に公開し、APKを更新する。Web・PWA・旧APKは従来のIP推定を維持する。
 
 鮮度はAndroidの単調増加時計から求めた`age_ms`で検査する。GPSの衛星時刻・端末の時計・Workerの時計の差では判定しない。Workerは旧`timestamp`も互換のため受け付ける。
+
+## Temporary chat and personalization (6.9)
+
+The dotted speech bubble starts an empty temporary conversation and restores the previous normal chat when turned off. Temporary chat bypasses history, original-image storage, ratings, sharing and native durable receipt; it keeps copy, retry and supported read-aloud playback. Personalization is off by default and stores the preferred name and custom instructions per device/origin for subsequent normal messages only. See [release verification](6.9公開評価20261025.md).

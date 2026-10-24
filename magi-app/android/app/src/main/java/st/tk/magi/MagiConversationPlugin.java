@@ -28,7 +28,10 @@ public class MagiConversationPlugin extends Plugin {
             || body.getBytes(StandardCharsets.UTF_8).length > 12 * 1024 * 1024 || body.isEmpty() || call.getBoolean("test", false) != testBuild()) {
             call.reject("invalid_request"); return;
         }
-        try { new JSObject(body); } catch (Exception ignored) { call.reject("invalid_request"); return; }
+        try {
+            JSObject parsed = new JSObject(body);
+            if ("temporary".equals(parsed.optString("conversation_mode"))) { call.reject("temporary_native_receive_forbidden"); return; }
+        } catch (Exception ignored) { call.reject("invalid_request"); return; }
         JSObject meta = new JSObject(); meta.put("id", id); meta.put("sessionId", session); meta.put("mid", mid);
         meta.put("title", MagiStreamStore.cleanTitle(call.getString("title", "MAGI"))); meta.put("status", "receiving"); meta.put("startedAt", System.currentTimeMillis());
         MagiConversationService.begin(getContext(), meta, body, testBuild(), call);

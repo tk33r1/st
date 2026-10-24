@@ -481,3 +481,7 @@ AndroidのGPS対応APKは、OSの許可を得た送信時の `device_location`�
 座標は利用者の自己申告であり、認証や地域制限には使わない。Workerを先に公開し、新APKを配布する。
 
 鮮度はAndroidの単調増加時計から求めた`age_ms`で検査する。GPSの衛星時刻・端末の時計・Workerの時計の差では判定しない。Workerは旧`timestamp`も互換のため受け付ける。
+
+## 一時チャット・パーソナライズ（6.9）
+
+設計と検証は[設計書](magi2一時チャット・パーソナライズ設計書.md)・[検証計画](magi2一時チャット・パーソナライズ検証計画.md)、実装の確認範囲は[記録](一時チャット・パーソナライズ実装記録.md)を参照。`privacy.js`が要求の契約と設定の検査を担う。`TEMPORARY_CHAT_ENABLED=false`・`PERSONALIZATION_ENABLED=false`で個別停止でき、未設定時は有効。一時音声はv2署名でモード・言語・本文を固定し、Cache APIを使用しない。D1のスキーマ変更は不要。

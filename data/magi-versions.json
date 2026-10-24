@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.9",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "点線の吹き出しから一時チャットを開始できます。会話を履歴に保存せず、パーソナライズと評価・共有を無効にし、コピー・読み上げ・再試行を利用できます。",
+          "パーソナライズ設定を追加しました。オン／オフ、希望する呼び方、カスタム指示を端末ごとに保存し、通常チャットの次の送信から適用します。"
+        ],
+        "en": [
+          "Start a temporary chat with the dotted speech bubble. It does not save conversation history or apply personalization. Ratings and sharing are unavailable; copy, read aloud and retry remain available.",
+          "Added device-local personalization with an on/off switch, a preferred name and custom instructions. Saved preferences apply from the next normal message."
+        ]
+      }
+    },
+    {
       "version": "6.83",
       "date": "2026-10-25",
       "changes": {
