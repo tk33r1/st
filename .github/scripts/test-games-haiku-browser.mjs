@@ -1,3 +1,4 @@
+import {gameAiDb} from './fixtures/game-ai-db.mjs';
 // 7ゲームの既存画面→Worker→Messages変換→描画を確認。AI・ランキング・解析の外部送信は止める。
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
@@ -25,7 +26,7 @@ await new Promise(r=>server.listen(5500,'127.0.0.1',r));
 let browser;
 const results=[],requests=[];
 try{
- browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL||undefined,headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const allGames=['masala-tetris','omeme-tetris','masala-tetris-dx','masala-tetris-vindaloo','masala-tetris-tiffin','ascii-roguelike','kabuki-craft'];
  const gameArg=process.argv.find(a=>a.startsWith('--games='))?.slice('--games='.length);
  const games=gameArg?gameArg.split(','):allGames;
@@ -35,7 +36,7 @@ try{
   const expected=saved?(game==='kabuki-craft'?JSON.parse(saved.text).say:saved.text).replace(/\s+/g,'').slice(0,14):marker;
   const page=await browser.newPage({viewport:{width:1280,height:960}}),errors=[],upstream=[];
   page.on('pageerror',e=>errors.push(e.message));
-  const ctx=vm.createContext({aiModels:JSON.parse(read('config/ai-models.json')),Request,Response,URL,Headers,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
+  const ctx=vm.createContext({crypto:globalThis.crypto,TextEncoder,AbortSignal,aiModels:JSON.parse(read('config/ai-models.json')),Request,Response,URL,Headers,AbortController,DOMException,TextDecoder,setTimeout,clearTimeout,
    fetch:async(_url,options)=>{const body=JSON.parse(options.body);upstream.push(body);assert.ok(_url.includes('anthropic'));
     const text=game==='kabuki-craft'?JSON.stringify({ping:1,say:marker,act:'idle',trust:0,fear:0,yen:0,info:''}):marker;
     return Response.json(saved?.reply||{stop_reason:'end_turn',content:[{type:'text',text}]});}});
@@ -46,7 +47,7 @@ try{
    if(['/api/gpt','/api/deepseek','/api/gemini'].includes(u.pathname)){
     const body=request.postDataJSON();requests.push({game,path:u.pathname,body});
     const response=await ctx.worker.fetch(new Request(request.url(),{method:'POST',headers:{Origin:'http://127.0.0.1:5500','Content-Type':'application/json'},body:JSON.stringify(body)}),
-     {GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'fake-browser-only'});
+     {DB:gameAiDb(),GAME_AI_PROVIDER:'anthropic',GAME_ANTHROPIC_API_KEY:'fake-browser-only'});
     await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});return;
    }
    if(u.host==='127.0.0.1:5500'){await route.continue();return;}

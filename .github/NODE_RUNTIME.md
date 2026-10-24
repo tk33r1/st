@@ -23,7 +23,7 @@ Node.js は次で使う。
 今回の指定は 24.22.1（10月21日のセキュリティ更新）。ローカルにインストールされた
 Node 自体は、このリポジトリの変更だけでは入れ替わらない。
 Pages の管理画面に `NODE_VERSION` がある場合も、同じ版にそろえる必要がある。
-管理画面の現在値と本番ビルドへの反映は未確認。
+Pages の管理画面に Node の上書き指定がないことを確認済み。本番ビルドへの反映は公開時に確認する。
 
 - Node のリリース: https://nodejs.org/en/blog/vulnerability/october-2026-security-releases
 - Pages の指定方法: https://developers.cloudflare.com/pages/configuration/build-image/
@@ -41,7 +41,7 @@ Pages の管理画面に `NODE_VERSION` がある場合も、同じ版にそろ�
 - 外部 API を呼ばない MAGI 回帰テスト361件が Node 24.22.1 で成功。
 - workflow の YAML と manifest/lock の整合を確認。
 
-サイト全体の `build.sh`、GitHub Actions 上の実行、Android APK の再ビルドは未実施。
+公開対象の main ベースでサイト全体の `build.sh` が成功（公開ファイル737件）。`NODE_VERSION` の上書き指定がないことも確認済み。GitHub Actions 上の実行、Android APK の再ビルドは未実施。
 
 ## npm audit の残件
 

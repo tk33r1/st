@@ -142,3 +142,6 @@
 # 移動: 2026-10-02  日刊の号データ data/nitori-daily.json・data/retail-tech-daily.json を、年ごとの
 # data/nitori-daily/<年>.json・data/retail-tech-daily/<年>.json に分けた（1ファイルが毎日まるごと書き直されながら育つのを止めた）。
 # 生成と X 投稿のスクリプトだけが読む内部のデータで、1つの行き先に対応しないので 301 は張らない。
+
+/assets/vendor/svgo@3.2.0/svgo.browser.js /assets/vendor/svgo@3.3.5/svgo.browser.js 301
+/assets/vendor/svgo@3.2.0/LICENSE /assets/vendor/svgo@3.3.5/LICENSE 301

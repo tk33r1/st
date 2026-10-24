@@ -105,6 +105,15 @@ jobs:
           printf '%s' "$TYPESAFE_API_KEY" | npx wrangler secret put TYPESAFE_API_KEY --config dj-request/wrangler.toml
         fi
 
+    # AIの回数表を先に用意する。ランキングの既存データには触れない。
+    - name: Prepare game AI limits
+      if: ${{ inputs.worker == 'games' && !inputs.dry-run }}
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: npx wrangler d1 execute st-games-ranking-db --remote --config games/wrangler.toml --file games/migrations/0001_ai_rate_limits.sql
+
     # モデルの切り替え前にキーを同期する。Geminiを含む既存のsecretは消さない。
     - name: Prepare MAGI Anthropic
       if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
