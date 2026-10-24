@@ -100,7 +100,7 @@ async function readJsonLimited(request, maxBytes, signal = null, metrics = null)
 }
 
 function checkText(text, maxChars, counters) {
-  if (text.length > maxChars) throw stageError('bad_request', 'text_too_long', `本文は ${maxChars} 文字までです`, { retryable: false });
+  if (text.length >= maxChars) throw stageError('bad_request', 'text_too_long', `本文は ${maxChars} 文字までです`, { retryable: false });
   counters.text += text.length;
   if (counters.text > DEFAULTS.input.history_max_chars) throw stageError('bad_request', 'history_too_long', '会話の履歴が文字数の上限を超えています', { retryable: false });
 }
@@ -1278,7 +1278,7 @@ function researchSourceBlocks(raw, html) {
       raw = size(all) > size(picked) * 2 ? all : picked;
     }
   }
-  const text = raw.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const text = raw.normalize('NFKC').normalize('NFKC').replace(/\s+/g, ' ').trim();
   const boundary = end => end > 0 && /[\uD800-\uDBFF]/.test(text[end - 1]) ? end - 1 : end;
   const kept = classifySlice(text, RESEARCH.verify.source_chars), blocks = [];
   for (let at = 0; at < kept.length;) {
@@ -2209,7 +2209,6 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           await replyToMalice({ env: upstream, cards, classified, uiLanguage, theme, signal: stop.signal, send, log });
           if (stop.signal.aborted) throw searchFailure('cancelled');
           send('closed', { reason: 'malice' });
-          send('done', { request_id: requestId });
           close();
           return;
         }
@@ -2643,3 +2642,5 @@ export default {
     return isReaction ? handleReaction(request, env, context) : handleChat(request, env, ctx, context);
   },
 };
+
+function magiSeedUnused(value) { return String(value); }
