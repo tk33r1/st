@@ -39,7 +39,7 @@ try {
   await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click();
   assert.equal(await page.locator('[data-about]').count(),4);
   assert.equal(await page.locator('#btn-about-agent .menu-next').count(),1);
-  assert.equal(await page.locator('.agent-page .agent-panel-close').count(),0);
+  assert.equal(await page.locator('.agent-info-page .agent-panel-close').count(),0);
   await page.screenshot({path:resolve(out,label+'-about.png'),animations:'disabled'});
   for (const section of ['faq','terms','version']) {
     await page.locator('[data-about="'+section+'"]').click();

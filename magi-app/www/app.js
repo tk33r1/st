@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.75';
+var APP_VERSION = '6.76';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2046,12 +2046,12 @@ var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel
 var agentPageStack = [];
 function prepareAgentPage(id) {
   if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
-  var parent = document.querySelector('.agent-page:not([hidden])');
+  var parent = document.querySelector('.agent-info-page:not([hidden])');
   if (parent) { parent.hidden = true; parent.inert = true; agentPageStack.push(parent); }
   closeAgentPanels(true);
 }
 function backAgentPage() {
-  var panel = document.querySelector('.agent-page:not([hidden])');
+  var panel = document.querySelector('.agent-info-page:not([hidden])');
   if (!panel) return false;
   var returnFocus = panel.agentReturnFocus;
   closeAgentPanels(true);
@@ -2081,7 +2081,7 @@ function makeAgentPanel(id, title, bodyHTML) {
   var isPage = AGENT_PAGE_IDS.indexOf(id) >= 0, opener = document.activeElement;
   if (isPage) prepareAgentPage(id); else closeAgentPanels();
   var panel = document.createElement('div');
-  panel.id = id; panel.className = 'agent-panel fade-in' + (isPage ? ' agent-page' : '');
+  panel.id = id; panel.className = 'agent-panel fade-in' + (isPage ? ' agent-info-page' : '');
   panel.innerHTML = (isPage ? agentPageHeader(title) : '<div class="agent-panel-head"><span class="t">' + title + '</span>'
     + '<button type="button" class="agent-panel-close">' + tr('✕ CLOSE', '✕ 閉じる') + '</button></div>')
     + '<div class="agent-panel-body">' + bodyHTML + '</div>';

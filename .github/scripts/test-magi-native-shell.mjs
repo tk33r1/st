@@ -83,6 +83,18 @@ try {
         return { offset: Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2), size: parseFloat(getComputedStyle(title).fontSize) };
       });
       assert.ok(head.offset < 1); assert.equal(head.size, 18);
+      const layout = await page.locator('.agent-info-page:visible').evaluate(el => {
+        const style = getComputedStyle(el), back = el.querySelector('.agent-page-back').getBoundingClientRect();
+        const content = el.querySelector('.agent-about-content') || el.querySelector('.agent-panel-body');
+        const sample = content.querySelector('summary, p') || content;
+        return { leftBorder: style.borderLeftWidth, rightBorder: style.borderRightWidth, radius: style.borderRadius,
+          bodyColor: getComputedStyle(document.body).color, panelColor: style.color, contentColor: getComputedStyle(sample).color,
+          backTop: back.top, paddingTop: parseFloat(style.paddingTop), safeTop: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top')) || 0 };
+      });
+      assert.equal(layout.leftBorder, '0px'); assert.equal(layout.rightBorder, '0px'); assert.equal(layout.radius, '0px');
+      assert.equal(layout.panelColor, layout.bodyColor); assert.equal(layout.contentColor, layout.bodyColor);
+      if (native) { assert.ok(layout.backTop >= layout.safeTop + 12); assert.equal(layout.paddingTop, layout.safeTop + 12); }
+
       if (section === 'version') {
         await page.locator('.agent-open-versions:visible').click();
         if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
@@ -96,7 +108,7 @@ try {
     }
     if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
     else await page.locator('.agent-page-back:visible').click();
-    assert.equal(await page.locator('.agent-page').count(), 0);
+    assert.equal(await page.locator('.agent-info-page').count(), 0);
 
     await page.locator('#btn-history-agent').click();
     assert.match(await page.locator('#agent-history-panel').innerText(), /B0 saved chat/);
@@ -142,10 +154,10 @@ try {
       assert.equal(await page.locator('#agent-settings-panel h2').evaluate(el => getComputedStyle(el).fontSize), '18px');
       await page.screenshot({ path: resolve(out, 'android-management-header.png'), animations: 'disabled' });
       await page.locator('.agent-page-back:visible').click();
-      assert.equal(await page.locator('.agent-page').count(), 0);
+      assert.equal(await page.locator('.agent-info-page').count(), 0);
       await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
       await page.evaluate(() => window.nativeBack({ canGoBack: false }));
-      assert.equal(await page.locator('.agent-page').count(), 0);
+      assert.equal(await page.locator('.agent-info-page').count(), 0);
       await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
       await page.waitForFunction(() => document.querySelector('#history-storage-status').textContent.includes('MB'));
 

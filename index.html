@@ -3274,7 +3274,7 @@
     .agent-privacy-list li { font: inherit; font-size: 12px; line-height: 1.75; margin-bottom: 1rem; overflow-wrap: anywhere; }
     .agent-privacy-list strong { display: block; color: var(--text-color); font-size: inherit; margin-bottom: 0.2rem; }
 
-    .agent-about-content { flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.8; }
+    .agent-about-content { color: var(--text-color); flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.8; }
     .agent-about-content p { margin: 0 0 1rem; }
     .agent-about-links { display: flex; flex-direction: column; }
     .agent-about-links button, .agent-open-versions { font: inherit; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); cursor: pointer; padding: 10px 12px; }
@@ -3284,9 +3284,9 @@
     .agent-about-content summary { cursor: pointer; }
     .agent-about-content details p { margin: 10px 0 0; }
 
-    .agent-page[hidden] { display: none !important; }
-    .agent-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-    .agent-page .agent-page-title { margin: 0; padding: 0 4px; color: var(--primary-color); font: inherit; font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: normal; text-transform: none; text-align: center; overflow-wrap: anywhere; }
+    .agent-info-page[hidden] { display: none !important; }
+    .agent-info-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .agent-info-page .agent-page-title { margin: 0; padding: 0 4px; color: var(--primary-color); font: inherit; font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: normal; text-transform: none; text-align: center; overflow-wrap: anywhere; }
     .agent-page-back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--secondary-color); cursor: pointer; }
     .agent-page-back:hover { color: var(--primary-color); }
     .agent-page-back:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 50%; }
@@ -7617,7 +7617,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver 6.75</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver 6.76</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -9315,12 +9315,12 @@ var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel
 var agentPageStack = [];
 function prepareAgentPage(id) {
   if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
-  var parent = document.querySelector('.agent-page:not([hidden])');
+  var parent = document.querySelector('.agent-info-page:not([hidden])');
   if (parent) { parent.hidden = true; parent.inert = true; agentPageStack.push(parent); }
   closeAgentPanels(true);
 }
 function backAgentPage() {
-  var panel = document.querySelector('.agent-page:not([hidden])');
+  var panel = document.querySelector('.agent-info-page:not([hidden])');
   if (!panel) return false;
   var returnFocus = panel.agentReturnFocus;
   closeAgentPanels(true);
@@ -9351,7 +9351,7 @@ function makeAgentPanel(id, title, bodyHTML) {
       if (isPage) prepareAgentPage(id); else closeAgentPanels();
       const panel = document.createElement('div');
       panel.id = id;
-      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color' + (isPage ? ' agent-page' : '');
+      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color' + (isPage ? ' agent-info-page' : '');
       panel.style.cssText = 'position:absolute;top:35px;bottom:0;left:0;right:0;';
       panel.innerHTML = (isPage ? agentPageHeader(title) : `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
