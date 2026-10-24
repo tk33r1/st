@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.81",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "「バグを報告」のアイコンを昆虫に変更し、注記を「パスワードなどの機密情報は入力しないでください。」だけにしました。",
+          "スマホで報告入力欄が横にはみ出す問題を修正。ワイヤレスデバッグで実機の長文入力・キーボード表示・明暗テーマを確認しました。",
+          "FAQに回答の正確さ、応答停止時の対処、オフライン、履歴の引き継ぎ、位置情報、通知、不具合報告を追加し、Android版を6.81に更新しました。"
+        ],
+        "en": [
+          "Changed the Report a bug icon to an insect and simplified its note to a warning against entering passwords or other sensitive information.",
+          "Fixed the report field overflowing on phones. Verified long text, the on-screen keyboard and both themes on a device over wireless debugging.",
+          "Expanded the FAQ with accuracy, stalled replies, offline use, history transfer, location, notifications and bug reports. Updated Android to 6.81."
+        ]
+      }
+    },
+    {
       "version": "6.8",
       "date": "2026-10-24",
       "changes": {
