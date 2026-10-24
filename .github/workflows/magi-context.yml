@@ -38,6 +38,11 @@ jobs:
         # 生成結果を知らない古い JSON から始めると、同じ人格を二重に要約した末に rebase で衝突する
         ref: main
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .node-version
+
     - name: Generate persona cards
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -6,6 +6,7 @@ on:
     branches: [codex/search-phase4]
   pull_request:
     paths:
+      - '.node-version'
       - 'assets/*search*'
       - '.github/scripts/*search*'
       - '.github/scripts/test-phase4-*'
@@ -35,7 +36,7 @@ jobs:
           python-version: '3.13'
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: .node-version
       - name: Cold and warm dependencies, build and Python verification
         env:
           LC_ALL: C.UTF-8

@@ -53,7 +53,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version-file: .node-version
     # 手動選択肢を唯一の一覧として使う。workflow_callの任意文字列も同じ一覧で検査する。
     - name: Validate Worker against dispatch options
       env:

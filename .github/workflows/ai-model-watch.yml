@@ -37,7 +37,7 @@ jobs:
     - name: Set up Node for MAGI search schemas
       uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version-file: .node-version
 
     # エイリアスの中身は各社が黙って差し替えるので、更新候補の有無にかかわらず
     # 使っているモデルを毎週試す。

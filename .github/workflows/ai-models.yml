@@ -2,9 +2,9 @@ name: AI Model Registry Check
 
 on:
   push:
-    paths: ['config/**', '.github/**', 'workers/**']
+    paths: ['.node-version', 'config/**', '.github/**', 'workers/**']
   pull_request:
-    paths: ['config/**', '.github/**', 'workers/**']
+    paths: ['.node-version', 'config/**', '.github/**', 'workers/**']
   workflow_dispatch:
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
     - name: Set up Node for MAGI smoke configuration
       uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version-file: .node-version
 
     - name: Check MAGI smoke request parity
       run: python .github/scripts/test-magi-smoke.py
