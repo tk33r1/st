@@ -443,8 +443,8 @@ Androidのアプリ管理では「位置情報サービス」と「通知」を�
 バックグラウンド受信に必要なフォアグラウンドサービスの表示はAndroidが管理する。
 この通知操作には更新した `MagiConversation` プラグインを含むAPKが必要。
 
-Web・PWA・Android共通のメニューに「バグを報告」を置く。最大2000文字で、入力内容だけをResend経由で `magi@tk.st` に送る。
-送信失敗時は入力を残す。Workerの `/magi2/bug-report` を先に公開する。
+Web・PWA・Android共通のメニューに「バグを報告」を置く。最大2000文字の本文と、利用者が選んだPNG・JPEG・WebPの画像を `magi@tk.st` に送る。画像は3枚まで、1枚5MiB・合計10MiB。送信前のプレビューと削除に対応し、会話の画像を自動添付しない。
+送信失敗時は本文・画像を残す。同じ内容の再試行では報告IDを再利用する。画像の読み込み中・送信中は操作を制限し、画面を閉じると読み込み・通信を中止してプレビューURLを解放する。Workerの `/magi2/bug-report` を先に公開する。
 
 ローカル確認: `node --test .github/scripts/test-magi2.mjs` と `node .github/scripts/test-magi-settings-browser.mjs`。
 ブラウザ確認は模擬APIを使い、実メール・有料AI APIは呼ばない。

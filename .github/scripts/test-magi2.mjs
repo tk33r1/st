@@ -116,7 +116,7 @@ function worker(stream = completion(), upstream = null, rawUpstream = false) {
     aiModels: JSON.parse(read('config/ai-models.json')), bundledContext: cards,
     bundledVersions: JSON.parse(read('data/magi-versions.json')),
     Request, Response, ReadableStream, TextEncoder, TextDecoder, AbortController, AbortSignal, URL,
-    crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} }, btoa,
+    crypto: webcrypto, setTimeout, clearTimeout, setInterval, clearInterval, console: { log() {} }, btoa, atob,
     fetch: async (url, options) => {
       if (url === 'https://tk.st/data/magi-context.json') return Response.json(cards);
       // 既存の意味の回帰は会社に依存しないfixtureで行い、専用テストはwire形式をそのまま使う。
@@ -6212,4 +6212,48 @@ test('位置情報サービス: オフならIPの所在地を検索と照合へ�
   assert.equal(w.searches[0].tools[0].user_location, undefined);
   assert.doesNotMatch(w.searches[0].instructions, /推定所在地/);
   assert.equal(JSON.parse(verifyCall(w).body.messages.at(-1).content).estimated_place, null);
+});
+
+
+test('バグ報告の画像: 添付内容・形式・枚数・容量と再送IDを検査する', async () => {
+  const png = { type: 'image/png', content: Buffer.from('89504e470d0a1a0a00000000', 'hex').toString('base64') };
+  const mails = [];
+  const w = worker(completion(), (url, options) => {
+    if (url === 'https://api.resend.com/emails') { mails.push({ body: JSON.parse(options.body), headers: options.headers }); return Response.json({ id: 'test' }); }
+  });
+  Object.assign(w.env, { DB: counts(), RESEND_API_KEY: 'test', ALERT_FROM: 'MAGI <magi@tk.st>' });
+  const id = 'eaecf1cb-558a-4653-b94b-d437516ff34b';
+  const body = { message: '画像付きの報告', images: [png], report_id: id };
+  const response = await w.request('/magi2/bug-report', body);
+  assert.equal(response.status, 200); assert.equal((await response.json()).images, 1);
+  assert.deepEqual(mails[0].body.attachments, [{ filename: 'bug-report-1.png', content: png.content }]);
+  assert.equal(mails[0].headers['Idempotency-Key'], 'magi-bug:' + id);
+  for (const images of [null, {}, [png, png, png, png], [{...png, type: 'image/svg+xml'}],
+    [{...png, type: 'image/jpeg'}], [{...png, content:'https://example.test/image.png'}],
+    [{...png, content:'YQ==='}], [{...png, content:Buffer.from('not an image').toString('base64')}],
+    [{...png, content:Buffer.alloc(5*1048576+1).toString('base64')}],
+    Array.from({length:3},()=>({...png,content:Buffer.concat([Buffer.from(png.content,'base64'),Buffer.alloc(Math.floor(3.4*1048576)-12)]).toString('base64')}))]) {
+    assert.equal((await w.request('/magi2/bug-report', {message:'報告',images})).status,400);
+  }
+  assert.equal((await w.request('/magi2/bug-report', {...body,report_id:'bad\r\nheader'})).status,400);
+  assert.equal(mails.length,1,'不正な画像をメールへ渡さない');
+  const large = await w.request('/magi2/bug-report', 'x'.repeat(14*1048576+1));
+  assert.equal(large.status,413);
+});
+
+test('バグ報告: Webとアプリは同じ添付と後始末を実装する', () => {
+  const block = s => between(s, '// BUG_REPORT_BEGIN', '// BUG_REPORT_END');
+  assert.ok(block(mobile).length>1000); assert.equal(block(home),block(mobile));
+});
+
+
+test('報告の画像: JPEG・WebPと容量境界を読み、利用者のファイル名やURLを転送しない', () => {
+  const w=worker(), parse=images=>JSON.parse(JSON.stringify(w.ctx.bugReportImages(images)));
+  const make=(type,hex,size)=>({type,content:Buffer.concat([Buffer.from(hex,'hex'),Buffer.alloc(size-hex.length/2)]).toString('base64'),filename:'../secret.html',path:'https://private.test/image'});
+  const jpg=make('image/jpeg','ffd8ff',20),webp=make('image/webp','524946460000000057454250',20);
+  assert.deepEqual(parse([jpg,webp]).map(x=>x.filename),['bug-report-1.jpg','bug-report-2.webp']);
+  assert.deepEqual(Object.keys(parse([jpg])[0]).sort(),['content','filename']);
+  const large=make('image/png','89504e470d0a1a0a',5*1048576);
+  assert.equal(parse([large,large]).length,2,'合計10MiBちょうどは許可する');
+  assert.throws(()=>parse([large,large,jpg]),e=>e.envelope.code==='invalid_report_images');
 });

@@ -9,13 +9,22 @@ const browser = await chromium.launch({ headless: true });
 try {
   for (const [mobile, width] of [[true, 320], [true, 360], [true, 390], [false, 360], [false, 1600]]) {
     const context = await browser.newContext({ viewport: { width, height: 850 } });
-    await context.addInitScript(() => localStorage.setItem('lang', 'ja'));
-    let requests = [], status = 503;
+    await context.addInitScript(() => {
+      localStorage.setItem('lang', 'ja');
+      window.bugUrls = new Set();
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options) { if(String(url).includes('/bug-report')) window.bugSignal = options.signal; return originalFetch.apply(this,arguments); };
+      const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL);
+      URL.createObjectURL = value => { const url = create(value); bugUrls.add(url); return url; };
+      URL.revokeObjectURL = url => { bugUrls.delete(url); revoke(url); };
+    });
+    let requests = [], status = 503, omitImageAck = false, deferReply = false;
     await context.route('**/*', async route => {
       const req = route.request(), u = new URL(req.url());
       if (u.pathname === '/magi2/bug-report') {
-        requests.push(JSON.parse(req.postData()));
-        return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(status === 200 ? { ok: true } : { error: { code: 'report_failed' } }) });
+        const payload = JSON.parse(req.postData()); requests.push(payload);
+        if (deferReply) await new Promise(resolve=>setTimeout(resolve,250));
+        return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(status === 200 ? { ok: true, ...(omitImageAck ? {} : { images: payload.images?.length || 0 }) } : { error: { code: 'report_failed' } }) });
       }
       if (u.hostname === 'tk.st') {
         const name = u.pathname.endsWith('/') ? u.pathname + 'index.html' : u.pathname;
@@ -35,7 +44,7 @@ try {
     await page.screenshot({ path: resolve(out, mobile ? 'app-menu.png' : 'web-menu.png') });
     await page.locator('#btn-bug-report-agent').click();
     const input = page.locator('#agent-bug-message');
-    const send = page.locator('#agent-bug-form button');
+    const send = page.locator('#agent-bug-form [type="submit"]');
     const layout = await input.evaluate(e => {
       const r = e.getBoundingClientRect(), form = e.form.getBoundingClientRect();
       return { left: r.left, right: r.right, viewport: innerWidth, form: form.width, scroll: e.form.scrollWidth, client: e.form.clientWidth };
@@ -59,15 +68,60 @@ try {
     await send.click();
     await page.waitForFunction(() => document.querySelector('#agent-bug-message').value === '');
     assert.equal(requests.length, 2);
-    assert.deepEqual(Object.keys(requests[0]), ['message']);
+    assert.deepEqual(Object.keys(requests[0]), ['message', 'report_id']);
     assert.equal(requests[1].message, 'テストの報告です。');
+    const imageBytes = Buffer.from(await page.evaluate(() => {
+      const c=document.createElement('canvas');c.width=c.height=20;c.getContext('2d').fillRect(0,0,20,20);return c.toDataURL('image/png').split(',')[1];
+    }), 'base64');
+    const picker = page.locator('#agent-bug-files');
+    const image = name => ({ name, mimeType: 'image/png', buffer: imageBytes });
+    await picker.setInputFiles([image('画面の状態.png'), image('比較.png')]);
+    await page.waitForFunction(() => document.querySelectorAll('#agent-bug-images li').length === 2);
+    await page.locator('#agent-bug-images button').first().click();
+    assert.equal(await page.locator('#agent-bug-images li').count(), 1);
+    await picker.setInputFiles([image('追加1.png'),image('追加2.png'),image('追加3.png')]);
+    await page.waitForFunction(() => /Could not attach|添付できません/.test(document.querySelector('#agent-bug-status').textContent));
+    assert.equal(await page.locator('#agent-bug-images li').count(),1);
+    await picker.setInputFiles({ name:'fake.png',mimeType:'image/png',buffer:Buffer.from('<svg></svg>') });
+    await page.waitForFunction(() => !document.querySelector('#agent-bug-attach').disabled);
+    assert.equal(await page.locator('#agent-bug-images li').count(),1);
+    await picker.setInputFiles({ name:'broken.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a00000000','hex') });
+    await page.waitForFunction(() => !document.querySelector('#agent-bug-attach').disabled);
+    assert.equal(await page.evaluate(()=>bugUrls.size),1,'プレビュー失敗のURLを解放する');
+    await picker.setInputFiles({ name:'large.png',mimeType:'image/png',buffer:Buffer.alloc(5*1048576+1) });
+    await page.waitForFunction(() => !document.querySelector('#agent-bug-attach').disabled);
+    assert.equal(await page.locator('#agent-bug-images li').count(),1);
+    await input.fill('画像を添付した報告');status=503;
+    await send.click();
+    await page.waitForFunction(() => /Could not send|送信できません/.test(document.querySelector('#agent-bug-status').textContent));
+    assert.equal(await page.locator('#agent-bug-images li').count(),1);
+    const rowLayout=await page.locator('#agent-bug-images').evaluate(e=>({scroll:e.scrollWidth,client:e.clientWidth}));assert(rowLayout.scroll<=rowLayout.client+1);
+    await page.screenshot({path:resolve(out,`${mobile?'app':'web'}-images-${width}.png`)});
+    status=200; omitImageAck=true; await send.click();
+    await page.waitForFunction(() => /Could not send|送信できません/.test(document.querySelector('#agent-bug-status').textContent));
+    assert.equal(await page.locator('#agent-bug-images li').count(),1,'旧Workerの応答では添付済みと扱わない');
+    omitImageAck=false; await send.click();
+    await page.waitForFunction(() => document.querySelector('#agent-bug-message').value === '');
+    assert.equal(requests[2].images[0].content,imageBytes.toString('base64'));
+    assert.equal(requests[2].report_id,requests[3].report_id,'再試行で同じ報告IDを使う');
+    assert.equal(requests[2].report_id,requests[4].report_id);
+    assert.equal(await page.locator('#agent-bug-images li').count(),0);
+    assert.equal(await page.evaluate(()=>bugUrls.size),0);
     // 無効な送信ボタンを飛ばし、情報画面の先頭・末尾でTabを循環させる。
     await input.focus();
     await page.keyboard.press('Tab');
+    await assertFocused(page.locator('#agent-bug-attach'));
+    await page.keyboard.press('Tab');
     await assertFocused(page.locator('#agent-bug-report-panel .agent-page-back'));
     await page.keyboard.press('Shift+Tab');
-    await assertFocused(input);
+    await assertFocused(page.locator('#agent-bug-attach'));
+    await picker.setInputFiles(image('閉じる前.png'));
+    await page.waitForFunction(()=>document.querySelectorAll('#agent-bug-images li').length===1);
+    await input.fill('閉じる間の送信'); deferReply=true; await send.click();
+    await page.waitForFunction(()=>!!window.bugSignal);
     await page.locator('#agent-bug-report-panel .agent-page-back').click();
+    assert.equal(await page.evaluate(()=>bugSignal.aborted),true,'閉じると送信を中止する');
+    assert.equal(await page.evaluate(()=>bugUrls.size),0);
     assert.equal(await page.locator('#agent-bug-report-panel').count(), 0);
     await page.locator('#btn-more-agent').click();
     await page.locator('#btn-about-agent').click();

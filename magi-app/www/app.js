@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.81';
+var APP_VERSION = '6.82';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2317,7 +2317,7 @@ function showFAQPanel() {
     [tr('Does history transfer to another device?', '別の端末でも履歴を使える？'), tr('History is saved on the device and does not sync automatically. Uninstalling the app or clearing browser data can erase it. Export important conversations before changing devices. Android can export all chats from App management; exports do not include images.', '履歴は端末ごとに保存され、自動同期されません。アプリの削除やブラウザのデータ消去で失われることがあります。機種変更の前に大切な会話を書き出してください。Androidは「アプリ管理」から全会話を書き出せます。書き出しには画像を含みません。')],
     [tr('What does Location services do?', '位置情報サービスは何に使う？'), tr('It helps answer questions about nearby places using a city or region estimated from your connection. It does not use GPS and may be inaccurate, so specify a place when needed. Android can turn this off in App management; the change applies to your next message.', '通信元から推定した市・地域を、近くの場所についての質問などに使います。GPSは使わず、場所がずれることもあるので、必要なら地名を指定してください。Androidは「アプリ管理」でオフにでき、次の送信から反映します。')],
     [tr('How do I turn notifications on or off?', '通知をオン・オフにするには？'), tr('On Android, open App management in the more menu and use the Notifications toggle. Android may also ask for permission. Turning alerts off does not stop receiving replies. The ongoing background task indicator is managed by Android.', 'Androidは︙の「アプリ管理」にある「通知」で切り替えます。Android側の許可が必要な場合もあります。通知をオフにしても回答の受信は続きます。バックグラウンド受信中の表示はAndroidが管理します。')],
-    [tr('How do I report a problem?', '不具合を見つけたら？'), tr('Choose Report a bug in the more menu and describe what you did, what happened and what you expected, in up to 2,000 characters. Do not include passwords or other sensitive information.', '︙の「バグを報告」から、行った操作・起きたこと・期待していた動作を2000文字以内で教えてください。パスワードなどの機密情報は入力しないでください。')],
+    [tr('How do I report a problem?', '不具合を見つけたら？'), tr('Choose Report a bug in the more menu and describe what you did, what happened and what you expected, in up to 2,000 characters. You can attach up to three PNG, JPEG or WebP images (5 MB each, 10 MB total). Do not include passwords or other sensitive information.', '︙の「バグを報告」から、行った操作・起きたこと・期待していた動作を2000文字以内で教えてください。PNG・JPEG・WebPの画像を3枚まで（1枚5MB・合計10MB）添付できます。パスワードなどの機密情報は入力しないでください。')],
     [tr('Where can I check for updates?', '更新はどこで確認する？'), tr('Open “Version information” under “About MAGI”. Android checks for app updates there; the Web and PWA versions show the current version and release history.', '「MAGIについて」の「バージョン情報」を開いてください。Androidではアプリの更新を確認でき、Web・PWAでは現在の版と更新履歴を確認できます。')]
   ];
   var panel = makeAgentPanel('agent-faq-panel', 'FAQ', aboutBody(rows.map(function (row) {
@@ -2639,47 +2639,131 @@ loadUsage();
 })();
 document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
 document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+// BUG_REPORT_BEGIN
 function showBugReportPanel() {
   var panel = makeAgentPanel('agent-bug-report-panel', tr('Report a bug', 'バグを報告'),
     '<form id="agent-bug-form"><label for="agent-bug-message">' + tr('What problem did you experience?', 'どのような問題が発生しましたか？') + '</label>'
     + '<textarea id="agent-bug-message" rows="7" maxlength="4000" required aria-describedby="agent-bug-count agent-bug-note"></textarea>'
-    + '<p id="agent-bug-count">0 / 2000</p><p id="agent-bug-note">' + tr('Do not include passwords or other sensitive information.', 'パスワードなどの機密情報は入力しないでください。') + '</p>'
+    + '<p id="agent-bug-count">0 / 2000</p>'
+    + '<button type="button" id="agent-bug-attach">' + tr('Attach images', '画像を添付') + '</button>'
+    + '<input id="agent-bug-files" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>'
+    + '<p id="agent-bug-limits">' + tr('PNG, JPEG or WebP. Up to 3 images, 5 MB each, 10 MB total.', 'PNG・JPEG・WebP、3枚まで。1枚5MB・合計10MB以内。') + '</p>'
+    + '<ul id="agent-bug-images" aria-label="' + tr('Attached images', '添付画像') + '"></ul>'
+    + '<p id="agent-bug-note">' + tr('Do not include passwords or other sensitive information.', 'パスワードなどの機密情報は入力しないでください。') + '</p>'
     + '<button type="submit" disabled>' + tr('Send', '送信') + '</button><p id="agent-bug-status" role="status"></p></form>');
   if (!panel) return;
   var form = panel.querySelector('form'), input = panel.querySelector('textarea');
-  var count = panel.querySelector('#agent-bug-count'), status = panel.querySelector('#agent-bug-status'), button = form.querySelector('button');
-  var pending = false;
+  var count = panel.querySelector('#agent-bug-count'), status = panel.querySelector('#agent-bug-status');
+  var button = form.querySelector('[type="submit"]'), picker = panel.querySelector('#agent-bug-files');
+  var attach = panel.querySelector('#agent-bug-attach'), list = panel.querySelector('#agent-bug-images');
+  var pending = false, reading = false, closed = false, images = [], candidateImages = [], reader = null, request = null, retryId = null;
   function update(event) {
     if (!event || !event.isComposing) input.value = Array.from(input.value).slice(0, 2000).join('');
+    if (event) retryId = null;
     var length = Array.from(input.value).length;
     count.textContent = length + ' / 2000';
-    button.disabled = pending || !input.value.trim() || length > 2000;
+    button.disabled = pending || reading || !input.value.trim() || length > 2000;
+    attach.disabled = pending || reading || images.length >= 3;
+    picker.disabled = pending || reading;
+    input.readOnly = pending;
+    list.querySelectorAll('button').forEach(function (b) { b.disabled = pending || reading; });
   }
+  function renderImages() {
+    list.replaceChildren();
+    images.forEach(function (item) {
+      var row = document.createElement('li'), preview = document.createElement('img');
+      preview.src = item.url; preview.alt = tr('Attachment preview', '添付画像のプレビュー');
+      var name = document.createElement('span'); name.textContent = item.file.name;
+      var remove = document.createElement('button'); remove.type = 'button';
+      remove.textContent = tr('Remove', '削除'); remove.setAttribute('aria-label', tr('Remove ', '削除: ') + item.file.name);
+      remove.addEventListener('click', function () {
+        if (pending || reading) return;
+        images = images.filter(function (value) { return value !== item; });
+        URL.revokeObjectURL(item.url); retryId = null; renderImages(); update(); attach.focus();
+      });
+      row.append(preview, name, remove); list.appendChild(row);
+    });
+  }
+  var oldClose = panel.onAgentClose;
+  panel.onAgentClose = function (hadFocus) {
+    closed = true;
+    if (reader && reader.readyState === 1) reader.abort();
+    if (request) request.abort();
+    images.concat(candidateImages).forEach(function (item) { URL.revokeObjectURL(item.url); }); images = []; candidateImages = [];
+    if (oldClose) oldClose(hadFocus);
+  };
+  attach.addEventListener('click', function () { picker.click(); });
+  picker.addEventListener('change', async function () {
+    if (pending || reading || closed) return;
+    var files = Array.from(picker.files || []); picker.value = '';
+    if (!files.length) return;
+    var candidates = candidateImages = [], size = images.reduce(function (sum, item) { return sum + item.file.size; }, 0);
+    reading = true; update(); status.textContent = tr('Loading images…', '画像を読み込み中…');
+    try {
+      if (images.length + files.length > 3) throw new Error('limits');
+      for (var file of files) {
+        size += file.size;
+        if (!file.size || file.size > 5 * 1048576 || size > 10 * 1048576) throw new Error('limits');
+        var head = Array.from(new Uint8Array(await file.slice(0, 12).arrayBuffer())).map(function (v) { return String.fromCharCode(v); }).join('');
+        if (closed) return;
+        var type = head.startsWith('\x89PNG\r\n\x1a\n') ? 'image/png' : head.startsWith('\xff\xd8\xff') ? 'image/jpeg'
+          : head.startsWith('RIFF') && head.slice(8, 12) === 'WEBP' ? 'image/webp' : null;
+        if (!type || (file.type && file.type !== type)) throw new Error('format');
+        var item = { file: file, type: type, url: URL.createObjectURL(file) }; candidates.push(item);
+        var preview = new Image(); preview.src = item.url; await preview.decode();
+        if (closed) return;
+      }
+      images = images.concat(candidates); candidates = []; candidateImages = []; retryId = null;
+      renderImages(); status.textContent = '';
+    } catch (_) {
+      if (!closed) status.textContent = tr('Could not attach images. Choose readable PNG, JPEG or WebP files within the limits.', '画像を添付できませんでした。上限内の読み込めるPNG・JPEG・WebPを選んでください。');
+    } finally {
+      candidates.forEach(function (item) { URL.revokeObjectURL(item.url); });
+      candidateImages = []; reading = false; if (!closed) update();
+    }
+  });
   input.addEventListener('input', update);
   input.addEventListener('compositionend', update);
+  function readImage(item) {
+    return new Promise(function (resolve, reject) {
+      reader = new FileReader();
+      reader.onload = function () { resolve({ type: item.type, content: String(reader.result).split(',')[1] }); };
+      reader.onerror = reader.onabort = function () { reject(new Error('read_failed')); };
+      reader.readAsDataURL(item.file);
+    });
+  }
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
-    if (pending || !input.value.trim() || Array.from(input.value).length > 2000) return;
-    pending = true; input.readOnly = true; update();
-    status.textContent = tr('Sending…', '送信中…');
+    if (pending || reading || closed || !input.value.trim() || Array.from(input.value).length > 2000) return;
+    pending = true; update(); status.textContent = tr('Sending…', '送信中…');
+    var timer;
     try {
+      if (!retryId) retryId = crypto.randomUUID();
+      var payload = { message: input.value, report_id: retryId };
+      if (images.length) {
+        payload.images = [];
+        for (var item of images) { payload.images.push(await readImage(item)); if (closed) return; }
+      }
+      request = new AbortController(); timer = setTimeout(function () { request.abort(); }, 30000);
       var response = await fetch(AGENT_API.replace(/\/chat$/, '/bug-report'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input.value }), signal: AbortSignal.timeout(15000)
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: request.signal
       });
       var result = await response.json();
-      if (!response.ok || result.ok !== true) {
+      if (closed) return;
+      if (!response.ok || result.ok !== true || (images.length && result.images !== images.length)) {
         status.textContent = response.status === 429 ? tr('Too many reports. Please try again later.', '送信の上限に達しました。時間を置いてお試しください。')
-          : tr('Could not send. Your text is kept; please try again later.', '送信できませんでした。入力内容は残っています。時間を置いて再試行してください。');
+          : tr('Could not send. Your text and images are kept; please try again later.', '送信できませんでした。本文と画像は残っています。時間を置いて再試行してください。');
         return;
       }
-      input.value = '';
+      input.value = ''; retryId = null;
+      images.forEach(function (item) { URL.revokeObjectURL(item.url); }); images = []; renderImages();
       status.textContent = tr('Thank you. Your report has been sent.', '報告を送信しました。ありがとうございます。');
-    } catch (_) { status.textContent = tr('Could not send. Check your connection and try again.', '送信できませんでした。接続を確認して再試行してください。'); }
-    finally { pending = false; input.readOnly = false; update(); }
+    } catch (_) { if (!closed) status.textContent = tr('Could not send. Your text and images are kept; check your connection and try again.', '送信できませんでした。本文と画像は残っています。接続を確認して再試行してください。'); }
+    finally { clearTimeout(timer); request = null; pending = false; if (!closed) update(); }
   });
   input.focus();
 }
+// BUG_REPORT_END
 
 document.getElementById('btn-bug-report-agent').addEventListener('click', showBugReportPanel);
 document.getElementById('btn-about-agent').addEventListener('click', showAboutPanel);
