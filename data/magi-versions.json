@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.73",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "Androidの複製プロファイルで、許可済みに見えてもインストールの許可画面を繰り返す問題を修正しました。許可できない環境では、通常側から更新する方法を案内します。",
+          "許可が反映されずに設定から戻った場合も、同じ更新操作の繰り返しを促さず、ダウンロードページを表示します。Android版を6.73に更新しました。"
+        ],
+        "en": [
+          "Fixed repeated install-permission prompts in Android clone profiles. Profiles that cannot install updates now explain how to update from the main profile.",
+          "Returning from settings without install permission now offers the download page instead of the same install retry. The Android app is updated to 6.73."
+        ]
+      }
+    },
+    {
       "version": "6.72",
       "date": "2026-10-24",
       "changes": {
