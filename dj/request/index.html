@@ -340,6 +340,17 @@
       color: rgba(154, 154, 160, 0.62);
     }
 
+    .f .required-mark {
+      display: inline-block;
+      color: #ff6b6b;
+      font-family: var(--f-body);
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+      vertical-align: super;
+      letter-spacing: 0;
+    }
+
     .field { position: relative; }
 
     .field input,
@@ -1474,7 +1485,7 @@
           <div class="bar"><b id="bar"></b></div>
           <span class="lab" id="ptime">0:30</span>
         </div>
-        <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+        <label class="f"><span class="fh">ニックネーム <span class="required-mark" aria-hidden="true">*</span></span>
           <input class="txt" id="name" maxlength="20" required>
         </label>
         <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
@@ -1493,7 +1504,7 @@
           <textarea id="freeText" maxlength="140" placeholder="例: たしかCMで流れてた、女の人が歌うEDM"></textarea>
           <span class="count" id="freeCount">0 / 140</span>
         </label>
-        <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+        <label class="f"><span class="fh">ニックネーム <span class="required-mark" aria-hidden="true">*</span></span>
           <input class="txt" id="freeName" maxlength="20" required>
         </label>
         <div class="err" id="freeErr" hidden></div>
@@ -1628,7 +1639,7 @@
 
         <!-- 自分が送った投稿で、まだ DJ が触っていないときだけ開く -->
         <div id="songEdit" hidden>
-          <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+          <label class="f"><span class="fh">ニックネーム <span class="required-mark" aria-hidden="true">*</span></span>
             <input class="txt" id="mineName" maxlength="20" required>
           </label>
           <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
