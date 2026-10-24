@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.51",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "MAGIの採決をMarkdownで書き出したとき、議題の「<」がそのまま残る不具合を直しました。",
+          "上限ちょうどの長さの質問や、会話を終える短い返答のあとにエラーになることがある不具合を直しました。"
+        ],
+        "en": [
+          "When you export a MAGI vote as Markdown, a \"<\" in the motion is escaped again.",
+          "Fixed errors after a question exactly at the length limit, or after a short reply that ends the conversation."
+        ]
+      }
+    },
+    {
       "version": "6.5",
       "date": "2026-10-24",
       "changes": {
