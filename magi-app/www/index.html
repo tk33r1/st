@@ -495,6 +495,15 @@
 .agent-privacy-dialog button[type="submit"] { width: 100%; margin-top: 20px; font-weight: 600; color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
 .agent-privacy-dialog :focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 @media (max-width: 600px) { .agent-privacy-dialog { width: 100%; max-height: calc(100dvh - 16px); margin: auto 0 0; border-radius: 22px 22px 0 0; padding-bottom: max(24px, env(safe-area-inset-bottom)); } }
+.agent-temporary-settings-dialog { width: min(520px, 100%); max-height: calc(100dvh - 16px); margin: auto auto 0; border-radius: 22px 22px 0 0; animation: agent-settings-in 280ms cubic-bezier(.2,.8,.2,1) both; }
+.agent-temporary-settings-dialog::backdrop { animation: agent-settings-shade-in 280ms ease-out both; }
+.agent-temporary-settings-dialog.is-closing { pointer-events: none; animation: agent-settings-out 180ms cubic-bezier(.4,0,1,1) both; }
+.agent-temporary-settings-dialog.is-closing::backdrop { animation: agent-settings-shade-out 180ms ease-in both; }
+@keyframes agent-settings-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes agent-settings-out { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes agent-settings-shade-in { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,.6); } }
+@keyframes agent-settings-shade-out { from { background: rgba(0,0,0,.6); } to { background: rgba(0,0,0,0); } }
+@media (prefers-reduced-motion: reduce) { .agent-temporary-settings-dialog, .agent-temporary-settings-dialog::backdrop { animation: none !important; } }
 .agent-settings-content { min-height: 0; overflow-y: auto; padding: 4px; }
 .agent-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
 .agent-personalization-form .agent-setting { margin-top: 0; }
@@ -565,7 +574,6 @@
               <span class="menu-label" data-ja="アプリ管理">App management</span>
               <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
             </button>
-<button id="btn-temporary-settings-agent" type="button" class="dock-menu-item" hidden><span class="menu-label" data-ja="一時チャットの設定">Temporary chat settings</span></button>
             <button id="btn-bug-report-agent" type="button" class="dock-menu-item">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 2 3m6-3-2 3M4 9h4m8 0h4M3 15h5m8 0h5M5 21l4-4m10 4-4-4"/><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M8 10h8m-4 0v10"/></svg>
                   <span class="menu-label" data-ja="バグを報告">Report a bug</span>
@@ -629,6 +637,6 @@
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
-  <script src="app.js?v=20261025_11"></script>
+  <script src="app.js?v=20261025_12"></script>
 </body>
 </html>

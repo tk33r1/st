@@ -11,7 +11,7 @@ const language = { version: 1, code: 'ja', source: 'ui' };
 const browser = await chromium.launch({ headless: true });
 try {
   for (const mobile of [true, false]) {
-    const context = await browser.newContext({ viewport: { width: mobile ? 390 : 1600, height: 900 } });
+    const context = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: mobile ? 390 : 1600, height: 900 } });
     await context.addInitScript(() => {
       localStorage.setItem('lang', 'ja'); sessionStorage.setItem('magi_transport', 'sse');
       const history = [{ role: 'user', content: 'NORMAL-A' }, { role: 'assistant', content: 'NORMAL-REPLY', mode: 'fact' }];
@@ -125,9 +125,27 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await page.getByRole('dialog').count(), 0);
     assert.equal(await page.locator('[data-temporary-details]').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#btn-temporary-settings-agent').count(), 0);
     await page.locator('[data-temporary-personalization]').click();
+    const motion = await page.getByRole('dialog').evaluate(el => {
+      const animation = el.getAnimations().find(item => item.animationName === 'agent-settings-in');
+      if (!animation) return null;
+      animation.pause(); animation.currentTime = 0; const start = el.getBoundingClientRect().top;
+      animation.currentTime = 140; const middle = el.getBoundingClientRect().top;
+      animation.currentTime = 280; const end = el.getBoundingClientRect().top;
+      animation.finish(); return { start, middle, end, duration: animation.effect.getTiming().duration };
+    });
+    assert.ok(motion && motion.start > motion.middle && motion.middle > motion.end);
+    assert.equal(motion.duration, 280);
     await page.locator('input[name="temporary-personalization"][value="on"]').check();
     await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'detached' });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.locator('[data-temporary-personalization]').click();
+    assert.equal(await page.getByRole('dialog').evaluate(el => el.getAnimations().length), 0);
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'detached' });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     assert.match(await page.locator('[data-temporary-personalization]').innerText(), /なし|Without/);
     if (mobile) {
       await page.setViewportSize({ width: 320, height: 640 });
@@ -156,12 +174,13 @@ try {
     await page.waitForTimeout(250);
     assert.equal(requests.at(-1).conversation_mode, 'temporary'); assert.equal('personalization' in requests.at(-1), false);
     assert.deepEqual(await page.evaluate(() => window.privacyWrites.filter(([key]) => /^magi_current_|magi_saved_sessions$/.test(key))), []);
-    // 会話開始後もメニューから選択でき、通常の設定を書き換えない。
+    // 設定は会話開始前の中央から選ぶ。メニューには追加しない。
     const savedPersonalization = await page.evaluate(() => localStorage.getItem('magi_personalization_v1'));
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+    await page.locator('#btn-temporary-agent').click(); await page.locator('#btn-temporary-agent').click();
+    await page.locator('[data-temporary-personalization]').click();
     await page.locator('input[name="temporary-personalization"][value="on"]').check();
     await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-temporary-choice.png`), animations: 'disabled' });
-    await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+    await page.locator('#agent-temporary-settings-form button[type="submit"]').click(); await page.getByRole('dialog').waitFor({ state: 'detached' });
     temporaryPersonalization = false;
     const beforeUnsupported = requests.length;
     await page.locator('#agent-input').fill('KEEP-UNSUPPORTED-PERSONALIZATION'); await page.locator('#agent-send').click();
@@ -174,9 +193,10 @@ try {
     assert.equal(requests.at(-1).personalization.preferred_name, '合成さん');
     assert.equal(JSON.stringify(requests.at(-1)).includes('NORMAL-'), false);
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), savedPersonalization);
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+    await page.locator('#btn-temporary-agent').click(); await page.locator('#btn-temporary-agent').click();
+    await page.locator('[data-temporary-personalization]').click();
     await page.locator('input[name="temporary-personalization"][value="off"]').check();
-    await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+    await page.locator('#agent-temporary-settings-form button[type="submit"]').click(); await page.getByRole('dialog').waitFor({ state: 'detached' });
     await send('TEMPORARY-WITHOUT-PERSONALIZATION');
     assert.equal('personalization' in requests.at(-1), false);
     assert.equal(await page.locator('#agent-log [data-act="rate"], #agent-log [data-act="share"]').count(), 0);

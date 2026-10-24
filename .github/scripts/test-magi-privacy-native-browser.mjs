@@ -107,12 +107,13 @@ try {
   assert.equal(temporaryRequests.length, 1);
   assert.equal(temporaryRequests[0].conversation_mode, 'temporary');
   assert.equal('shared' in temporaryRequests[0], false);
-  await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
+  await page.locator('#btn-temporary-agent').click(); await page.locator('#btn-temporary-agent').click();
+  await page.locator('[data-temporary-personalization]').click();
   await page.evaluate(() => window.privacyAppListeners.backButton.forEach(callback => callback({ canGoBack: false })));
-  assert.equal(await page.getByRole('dialog').count(), 0);
+  await page.getByRole('dialog').waitFor({ state: 'detached' });
   assert.equal(await page.locator('#btn-temporary-agent').getAttribute('aria-pressed'), 'true');
-  await page.locator('#btn-more-agent').click(); await page.locator('#btn-temporary-settings-agent').click();
-  await page.locator('input[value="on"]').check(); await page.locator('#agent-temporary-settings-form button[type="submit"]').click();
+  await page.locator('[data-temporary-personalization]').click();
+  await page.locator('input[value="on"]').check(); await page.locator('#agent-temporary-settings-form button[type="submit"]').click(); await page.getByRole('dialog').waitFor({ state: 'detached' });
   await send('PERSONALIZED-TEMPORARY');
   assert.equal(temporaryRequests.at(-1).temporary_personalization, true);
   assert.equal(temporaryRequests.at(-1).personalization.preferred_name, 'NATIVE-NAME');
