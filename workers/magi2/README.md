@@ -455,16 +455,11 @@ Anthropicのデータの扱いは [APIの保持期間](https://privacy.claude.co
 
 ## バグ報告
 
-Webとアプリのメニュー「バグを報告」は `POST /magi2/bug-report` へ入力本文と明示的に選んだ添付画像だけを送る。
-本文は空欄不可・Unicodeコードポイントで2000文字まで。会話履歴や会話内の画像は自動では添えず、報告の本文と添付画像はDBやログに保存しない。
+Webとアプリのメニュー「バグを報告」は `POST /magi2/bug-report` へ入力本文だけを送る。
+本文は空欄不可・Unicodeコードポイントで2000文字まで。会話履歴や画像は添えず、本文はDBやログに保存しない。
 既存のOrigin/APIキー認可を使い、D1の `rate_limit` でIPごと5通・全体100通/日（UTC）に制限する。
 Resendで固定宛先 `magi@tk.st` へ送り、`RESEND_API_KEY` と既存の `ALERT_FROM` を使う。`ALERT_TO` は使わない。
 いずれかのsecretやDBが無い・メール送信が失敗した場合は503を返し、画面は入力を保持する。
-添付はPNG・JPEG・WebPを3枚まで、1枚5MiB・合計10MiB。JSON受信は14MiBまでに制限し、MIME・Base64・ファイル先頭の署名を検査する。SVG・外部URLは受け付けず、添付名はWorkerが `bug-report-<番号>.<拡張子>` に固定する。
-画像は`images:[{type,content}]`（contentはBase64）で受け、[Resendの添付API](https://resend.com/docs/dashboard/emails/attachments)へメモリ内で渡す。
-新画面は報告ごとにUUIDの`report_id`を作り、本文・画像を変えない再試行では再利用する。[Idempotency-Key](https://resend.com/docs/api-reference/emails/send-email#headers)で24時間内のメール重複を抑える。再試行も既存の回数制限には含める。
-応答の`images`は受け付けた添付数。添付を送った新画面は、この数が一致しなければ成功として本文や画像を消さない。旧画面の本文だけの送信（images/report_id省略）は引き続き受け付ける。
-公開はWorkerが先。画像対応前のWorkerは新画面の画像を処理しないため、画面だけを先に出さない。
 メールの本番配送と受信確認はローカル検証に含めない。
 
 アプリ管理の「位置情報サービス」をオフにすると、次のチャットから `location_enabled:false` を送る。

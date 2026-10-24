@@ -73,39 +73,11 @@ function inputError(err, requestId, cors) {
   }, requestId, cors);
 }
 
-// 報告と明示的に選んだ画像だけをメールへ渡す。本文・画像はログやDBに保存しない。
-function bugReportImages(images) {
-  const invalid = () => stageError('bad_request', 'invalid_report_images', '画像はPNG・JPEG・WebPを3枚まで、1枚5MB・合計10MB以内で添付してください', { retryable: false });
-  if (images === undefined) return [];
-  if (!Array.isArray(images) || images.length > 3) throw invalid();
-  let total = 0;
-  return images.map((image, index) => {
-    if (!image || typeof image.content !== 'string' || image.content.length > 6990508
-      || !['image/png', 'image/jpeg', 'image/webp'].includes(image.type)
-      || image.content.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.content)) throw invalid();
-    const bytes = b64Bytes(image.content);
-    if (!bytes || bytes > 5 * 1048576 || (total += bytes) > 10 * 1048576) throw invalid();
-    const head = atob(image.content.slice(0, 16));
-    const type = head.startsWith('\x89PNG\r\n\x1a\n') ? 'image/png'
-      : head.startsWith('\xff\xd8\xff') ? 'image/jpeg'
-      : head.startsWith('RIFF') && head.slice(8, 12) === 'WEBP' ? 'image/webp' : null;
-    if (type !== image.type) throw invalid();
-    const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[type];
-    return { filename: `bug-report-${index + 1}.${extension}`, content: image.content };
-  });
-}
+// 報告本文はメールだけへ渡す。会話・画像を添付せず、ログやDBにも保存しない。
 async function handleBugReport(request, env, { requestId, cors }) {
   cors = { ...cors, 'Cache-Control': 'no-store' };
   let body;
-  let attachments;
-  try {
-    body = await readJsonLimited(request, 14 * 1048576);
-    attachments = bugReportImages(body.images);
-    if (body.report_id !== undefined && (typeof body.report_id !== 'string'
-      || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(body.report_id))) {
-      throw stageError('bad_request', 'invalid_report_id', '報告の形式が不正です', { retryable: false });
-    }
-  }
+  try { body = await readJsonLimited(request, 24000); }
   catch (error) { return inputError(error, requestId, cors); }
   if (typeof body.message !== 'string' || !body.message.trim() || Array.from(body.message).length > 2000) {
     return httpError(400, { stage: 'bad_request', code: 'invalid_report', message: '問題の内容を2000文字以内で入力してください', retryable: false }, requestId, cors);
@@ -122,13 +94,12 @@ async function handleBugReport(request, env, { requestId, cors }) {
     }
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST', signal: AbortSignal.timeout(10000),
-      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json',
-        ...(body.report_id ? { 'Idempotency-Key': `magi-bug:${body.report_id}` } : {}) },
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: env.ALERT_FROM, to: ['magi@tk.st'], subject: '[MAGI] バグ報告',
-        text: `MAGIのバグ報告\n\n${body.message.trim()}`, ...(attachments.length ? { attachments } : {}) }),
+        text: `MAGIのバグ報告\n\n${body.message.trim()}` }),
     });
     if (!response.ok) throw new Error('mail_failed');
-    return jsonResponse({ ok: true, images: attachments.length }, cors);
+    return jsonResponse({ ok: true }, cors);
   } catch (_) {
     return httpError(503, { stage: 'internal', code: 'report_failed', message: '送信できませんでした。時間を置いて再試行してください', retryable: true }, requestId, cors);
   }
