@@ -44,6 +44,7 @@ function nativeShell(capacitor) {
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
+    backAgentPage() { if (!state.page) return false; state.page = false; calls.push('page'); return true; },
     closeAgentPanels() { state.panel = false; calls.push('panel'); },
     closeRatePops() { state.rate = false; calls.push('rate'); },
   });
@@ -59,8 +60,9 @@ test('B0: Web/PWA/iOSではAndroidのプラグインを登録しない', () => {
 
 test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メニュー・評価のメニューを閉じてから履歴または終了へ進む', () => {
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
-  state.attach = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
+  state.attach = true; state.page = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
+  state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'page');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'usage');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'menu');

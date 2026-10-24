@@ -18,6 +18,10 @@ const server=createServer((req,res)=>{
   res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.json':'application/json','.png':'image/png'})[extname(file)]||'application/octet-stream'});res.end(readFileSync(file));
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+async function closePanels(page) {
+  while (await page.locator('.agent-page-back:visible').count()) await page.locator('.agent-page-back:visible').click();
+  if (await page.locator('.agent-panel-close:visible').count()) await page.locator('.agent-panel-close:visible').click();
+}
 const browser=await chromium.launch({headless:true});const results=[];
 const model={provider:'future',provider_label:'Future Co <literal>',model:'test model',desc:{en:'description',ja:'説明'},context:{en:'context',ja:'素材'},theme:{en:'theme',ja:'テーマ'}};
 const paragraphs=[{text:'Shared text <strong>literal</strong>'},{text:'Site guidance',requires:['site_pages']},{text:'Web search',requires:['fact_mode']},{text:'Unknown hidden',requires:['future']},{text:'Partial hidden',requires:['site_pages','future']}];
@@ -65,12 +69,12 @@ async function scenario(name,path,{native=false,scheme='light',api='ok',stored={
     if(api==='ok'){
       await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();
       assert.equal(await list.locator('li').first().locator('strong').count(),0);assert.ok((await list.textContent()).includes('Site guidance'));assert.ok((await list.textContent()).includes('Web search'));assert.ok(!(await list.textContent()).includes('hidden'));
-      assert.equal(modelCalls.length,1);await page.locator('.agent-panel-close').click();await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await page.waitForTimeout(50);assert.equal(modelCalls.length,1);
+      assert.equal(modelCalls.length,1);await closePanels(page);await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await page.waitForTimeout(50);assert.equal(modelCalls.length,1);
     }else{
       await page.waitForTimeout(100);const text=await list.textContent();assert.match(text,/Could not load|取得できません/);assert.doesNotMatch(text,/OpenAI|DeepSeek|Google|Gemini|Future Co/);
-      if(api==='failure'){await page.locator('.agent-panel-close').click();modelMode='ok';await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();assert.equal(modelCalls.length,2);}
+      if(api==='failure'){await closePanels(page);modelMode='ok';await page.locator('#btn-more-agent').click();await page.locator('#btn-about-agent').click();await page.locator('[data-about="privacy"]').click();await list.getByText('Shared text <strong>literal</strong>',{exact:true}).waitFor();assert.equal(modelCalls.length,2);}
     }
-    await page.locator('.agent-panel-close').click();
+    await closePanels(page);
     await page.locator('.magi-node[data-codename="Shinya Takeda"]').click();const desc=page.locator('.magi-desc');await desc.waitFor();await page.waitForTimeout(100);
     if(api!=='legacy'){assert.match(await desc.textContent(),/Future Co <literal>/);assert.match(await desc.textContent(),/Dark Co/);assert.equal(await desc.locator('literal').count(),0);}
     if(native){await page.locator('#app-update').waitFor({state:'visible'});assert.equal(releases.length,1);assert.ok((await page.locator('#app-update').innerText()).includes(nextVersion));assert.equal(await page.locator('#app-update a').getAttribute('href'),'https://tk.st/magi-app/android/');assert.equal(await page.locator('#app-update a').getAttribute('target'),'_blank');

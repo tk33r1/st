@@ -3277,13 +3277,19 @@
     .agent-about-content { flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.8; }
     .agent-about-content p { margin: 0 0 1rem; }
     .agent-about-links { display: flex; flex-direction: column; }
-    .agent-about-links button, .agent-open-versions, .agent-about-back { font: inherit; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); cursor: pointer; padding: 10px 12px; }
+    .agent-about-links button, .agent-open-versions { font: inherit; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); cursor: pointer; padding: 10px 12px; }
     .agent-about-links button { display: flex; justify-content: space-between; align-items: center; min-height: 44px; text-align: left; margin-bottom: 8px; }
-    .agent-about-links button:hover, .agent-open-versions:hover, .agent-about-back:hover { color: var(--primary-color); }
-    .agent-about-back { padding: 6px; margin-right: auto; font-size: 11px; }
+    .agent-about-links button:hover, .agent-open-versions:hover { color: var(--primary-color); }
     .agent-about-content details { border-bottom: 1px solid var(--border-color); padding: 12px 0; }
     .agent-about-content summary { cursor: pointer; }
     .agent-about-content details p { margin: 10px 0 0; }
+
+    .agent-page[hidden] { display: none !important; }
+    .agent-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .agent-page .agent-page-title { margin: 0; padding: 0 4px; color: var(--primary-color); font: inherit; font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: normal; text-transform: none; text-align: center; overflow-wrap: anywhere; }
+    .agent-page-back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--secondary-color); cursor: pointer; }
+    .agent-page-back:hover { color: var(--primary-color); }
+    .agent-page-back:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 50%; }
   </style>
   <script type="application/ld+json">
     {
@@ -3760,6 +3766,7 @@
                 <button id="btn-about-agent" type="button" class="dock-menu-item">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v1"/></svg>
                   <span class="menu-label" data-ja="MAGIについて">About MAGI</span>
+                <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
                 </button>
                 <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer"
                   class="dock-menu-item" title="Legacy MAGI deliberation (v1)">
@@ -7610,7 +7617,7 @@
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver 6.74</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver 6.75</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -9302,22 +9309,58 @@ async function parseSSE(body, handlers, onChunk) {
     // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
     // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
     const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel'];
-    const closeAgentPanels = () => AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p) p.remove(); });
-    function makeAgentPanel(id, title, bodyHTML) {
-      if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
-      closeAgentPanels();
+    const closeAgentPanels = (keepPageStack) => { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) p.remove(); }); };
+    // 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
+var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
+var agentPageStack = [];
+function prepareAgentPage(id) {
+  if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
+  var parent = document.querySelector('.agent-page:not([hidden])');
+  if (parent) { parent.hidden = true; parent.inert = true; agentPageStack.push(parent); }
+  closeAgentPanels(true);
+}
+function backAgentPage() {
+  var panel = document.querySelector('.agent-page:not([hidden])');
+  if (!panel) return false;
+  var returnFocus = panel.agentReturnFocus;
+  closeAgentPanels(true);
+  var parent = agentPageStack.pop();
+  if (parent) { parent.hidden = false; parent.inert = false; }
+  var target = returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length ? returnFocus
+    : parent ? parent.querySelector('.agent-page-back') : document.getElementById('btn-more-agent');
+  if (target) target.focus({ preventScroll: true });
+  return true;
+}
+function agentPageHeader(title) {
+  return '<div class="agent-panel-head agent-page-head"><button type="button" class="agent-page-back" aria-label="' + tr('Back', '戻る') + '">'
+    + '<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m12 8-4 4 4 4m-4-4h9"/></svg></button>'
+    + '<h2 class="t agent-page-title">' + title + '</h2><span aria-hidden="true"></span></div>';
+}
+function bindAgentPage(panel, opener) {
+  panel.agentReturnFocus = opener;
+  panel.querySelector('.agent-page-back').addEventListener('click', backAgentPage);
+  panel.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); }
+  });
+  panel.querySelector('.agent-page-back').focus({ preventScroll: true });
+}
+
+function makeAgentPanel(id, title, bodyHTML) {
+      if (document.getElementById(id)) { if (AGENT_PAGE_IDS.indexOf(id) >= 0) { var existingPage = document.getElementById(id); if (existingPage.hidden) { while (existingPage.hidden && backAgentPage()) {} } else backAgentPage(); } else document.getElementById(id).remove(); return null; }
+      const isPage = AGENT_PAGE_IDS.indexOf(id) >= 0, opener = document.activeElement;
+      if (isPage) prepareAgentPage(id); else closeAgentPanels();
       const panel = document.createElement('div');
       panel.id = id;
-      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
+      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color' + (isPage ? ' agent-page' : '');
       panel.style.cssText = 'position:absolute;top:35px;bottom:0;left:0;right:0;';
-      panel.innerHTML = `
+      panel.innerHTML = (isPage ? agentPageHeader(title) : `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
           <span class="font-bold text-[10px] tracking-widest text-primary uppercase">${title}</span>
           <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer border-none bg-transparent">✕ ${tr('CLOSE', '閉じる')}</button>
-        </div>
-        ${bodyHTML}`;
+        </div>`) + bodyHTML;
       agentDockEl.appendChild(panel);
-      panel.querySelector('.agent-panel-close').addEventListener('click', () => panel.remove());
+      if (isPage) bindAgentPage(panel, opener);
+      else panel.querySelector('.agent-panel-close').addEventListener('click', () => panel.remove());
       return panel;
     }
 
@@ -9458,7 +9501,8 @@ function renderAgentVersions(list, lang, data) {
 function fillAgentVersionsPanel(panel, lang) {
   panel.dataset.lang = lang;
   panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
-  panel.querySelector('.agent-panel-close').textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
+  var close = panel.querySelector('.agent-panel-close');
+  if (close) close.textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
   var list = panel.querySelector('.agent-versions-list');
   renderAgentVersions(list, lang, agentVersionsCache || undefined);
   loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
@@ -9469,7 +9513,6 @@ function showVersionsPanel() {
   var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
   title.classList.add('agent-versions-title');
   fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
-  addAboutBack(panel);
 }
 // AGENT_VERSIONS_END
 
@@ -9477,15 +9520,6 @@ function showVersionsPanel() {
     // アプリ情報の導線。本文は文字で描き、Workerのプライバシー説明は従来どおり取得する。
 function aboutBody(html) {
   return '<div class="agent-about-content">' + html + '</div>';
-}
-function addAboutBack(panel) {
-  if (!panel) return;
-  var back = document.createElement('button');
-  back.type = 'button'; back.className = 'agent-about-back';
-  back.textContent = tr('‹ Back', '‹ 戻る');
-  back.title = tr('Back to About MAGI', 'MAGIについてに戻る');
-  back.addEventListener('click', showAboutPanel);
-  panel.querySelector('.agent-panel-close').parentNode.insertBefore(back, panel.querySelector('.agent-panel-close'));
 }
 function showAboutPanel() {
   var panel = makeAgentPanel('agent-about-panel', tr('About MAGI', 'MAGIについて'), aboutBody(
@@ -9511,7 +9545,6 @@ function showFAQPanel() {
   var panel = makeAgentPanel('agent-faq-panel', 'FAQ', aboutBody(rows.map(function (row) {
     return '<details><summary>' + row[0] + '</summary><p>' + row[1] + '</p></details>';
   }).join('')));
-  addAboutBack(panel);
 }
 function showTermsPanel() {
   var panel = makeAgentPanel('agent-terms-panel', tr('Terms of Use', '利用規約'), aboutBody(
@@ -9519,7 +9552,6 @@ function showTermsPanel() {
     + '<p>' + tr('AI answers may contain errors. Check important information yourself before using it.', 'AIの回答には誤りが含まれることがあります。重要な情報は、ご自身で確かめてから利用してください。') + '</p>'
     + '<p>' + tr('Do not enter confidential or personal information. Do not use the service for illegal activity, infringement of others’ rights, discrimination or violence.', '機密情報や個人情報を入力しないでください。違法行為、他者の権利の侵害、差別や暴力を助長する目的で利用しないでください。') + '</p>'
     + '<p>' + tr('Usage limits and reply restrictions apply. See the FAQ for usage and the Privacy Policy for recipients and data handling.', '利用回数や回答内容に制限があります。使い方はFAQ、入力の送信先やデータの扱いはプライバシーポリシーをご確認ください。') + '</p>'));
-  addAboutBack(panel);
 }
 function showVersionInfoPanel() {
 
@@ -9527,7 +9559,6 @@ function showVersionInfoPanel() {
     '<p>MAGI / ver ' + AGENT_SCREEN_VERSION + '</p><p>' + tr('The Web and PWA versions fetch updates automatically. If a new version does not appear, finish your conversation and reopen the page or app. Updates may take time to appear.', 'Web・PWA版は自動で更新を取得します。新しい版が表示されない場合は、会話を終えてからページやアプリを開き直してください。反映に時間がかかることがあります。') + '</p><button type="button" class="agent-open-versions">' + tr('Release History', '更新履歴') + '</button>'));
   if (!panel) return;
   panel.querySelector('.agent-open-versions').addEventListener('click', showVersionsPanel);
-  addAboutBack(panel);
 }
 
 function showInfoPanel() {
@@ -9537,7 +9568,6 @@ function showInfoPanel() {
       const list = panel.querySelector('.agent-privacy-list'), lang = currentLang === 'ja' ? 'ja' : 'en';
       renderAgentPrivacy(list, lang, undefined);
       loadAgentModels().then(data => renderAgentPrivacy(list, lang, data));
-  addAboutBack(panel);
     }
 
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);

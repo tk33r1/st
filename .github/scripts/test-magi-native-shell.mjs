@@ -10,6 +10,10 @@ import { nativeFilesystemFixture } from './magi-native-filesystem-fixture.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const out = resolve(root, 'workers/.wrangler/magi-b0-browser');
 mkdirSync(out, { recursive: true });
+async function closePanels(page) {
+  while (await page.locator('.agent-page-back:visible').count()) await page.locator('.agent-page-back:visible').click();
+  if (await page.locator('.agent-panel-close:visible').count()) await page.locator('.agent-panel-close:visible').click();
+}
 const browser = await chromium.launch({ headless: true });
 const report = [];
 try {
@@ -65,11 +69,40 @@ try {
       });
     }
     await page.locator('#agent-input').fill('Unsent draft');
+    // 情報画面はUIの戻るとAndroidの戻るが同じ階層をたどり、下書きを保持する。
+    await page.locator('#btn-more-agent').click();
+    assert.equal(await page.locator('#btn-about-agent .menu-next').count(), 1);
+    await page.locator('#btn-about-agent').click();
+    assert.equal(await page.locator('#agent-about-panel .agent-panel-close').count(), 0);
+    for (const section of ['faq', 'terms', 'privacy', 'version']) {
+      await page.locator('[data-about="' + section + '"]').click();
+      assert.equal(await page.locator('#agent-about-panel').isVisible(), false);
+      assert.equal(await page.locator('.agent-page-back:visible').count(), 1);
+      const head = await page.locator('.agent-page-head:visible').evaluate(el => {
+        const title = el.querySelector('h2'), a = el.getBoundingClientRect(), b = title.getBoundingClientRect();
+        return { offset: Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2), size: parseFloat(getComputedStyle(title).fontSize) };
+      });
+      assert.ok(head.offset < 1); assert.equal(head.size, 18);
+      if (section === 'version') {
+        await page.locator('.agent-open-versions:visible').click();
+        if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
+        else await page.locator('.agent-page-back:visible').click();
+        assert.equal(await page.locator(native ? '#agent-update-panel' : '#agent-version-info-panel').isVisible(), true);
+      }
+      if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
+      else if (section === 'faq') await page.keyboard.press('Escape');
+      else await page.locator('.agent-page-back:visible').click();
+      assert.equal(await page.locator('#agent-about-panel').isVisible(), true);
+    }
+    if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
+    else await page.locator('.agent-page-back:visible').click();
+    assert.equal(await page.locator('.agent-page').count(), 0);
+
     await page.locator('#btn-history-agent').click();
     assert.match(await page.locator('#agent-history-panel').innerText(), /B0 saved chat/);
     assert.equal(await page.locator('#agent-history-panel #btn-update-check').count(), 0);
     if (native) await page.evaluate(() => window.nativeBack({ canGoBack: false }));
-    else await page.locator('.agent-panel-close').click();
+    else await closePanels(page);
     assert.equal(await page.locator('.agent-panel').count(), 0);
     assert.equal(await page.locator('#agent-input').inputValue(), 'Unsent draft');
     await page.locator('#btn-history-agent').click();
@@ -104,6 +137,18 @@ try {
       await page.locator('#btn-more-agent').click();
       await page.locator('#btn-settings-agent').click();
       await page.waitForFunction(() => document.querySelector('#history-storage-status').textContent.includes('MB'));
+      assert.equal(await page.locator('#agent-settings-panel .agent-panel-close').count(), 0);
+      assert.equal(await page.locator('#agent-settings-panel h2').textContent(), 'App management');
+      assert.equal(await page.locator('#agent-settings-panel h2').evaluate(el => getComputedStyle(el).fontSize), '18px');
+      await page.screenshot({ path: resolve(out, 'android-management-header.png'), animations: 'disabled' });
+      await page.locator('.agent-page-back:visible').click();
+      assert.equal(await page.locator('.agent-page').count(), 0);
+      await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+      await page.evaluate(() => window.nativeBack({ canGoBack: false }));
+      assert.equal(await page.locator('.agent-page').count(), 0);
+      await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+      await page.waitForFunction(() => document.querySelector('#history-storage-status').textContent.includes('MB'));
+
       await page.locator('#history-export').click();
       await page.waitForFunction(() => !!window.sharedExport);
       assert.match(await page.evaluate(() => window.sharedExport.files[0]), /magi-export.json$/);
@@ -126,7 +171,7 @@ try {
       const sha256 = 'ab'.repeat(32);
       await page.route('**/releases/latest', route => route.fulfill({ json: { tag_name: 'v99.9', draft: false, prerelease: false,
         assets: [{ name: 'magi-android.apk', digest: 'sha256:' + sha256 }] } }));
-      await page.locator('.agent-panel-close').click();
+      await closePanels(page);
       await page.locator('#btn-more-agent').click();
       await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent === 'Version 99.9 is available.');
@@ -134,7 +179,7 @@ try {
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
       assert.deepEqual(await page.evaluate(() => window.updateInstall), { version: '99.9', sha256 });
       assert.equal(await page.locator('#app-update-page').isVisible(), false);
-      await page.locator('.agent-panel-close').click();
+      await closePanels(page);
       // 許可が反映されない場合に同じ設定画面へ誘導し続けない。
       for (const state of ['denied', 'profile']) {
         await page.evaluate(state => { window.updateResult = state; }, state);
@@ -143,7 +188,7 @@ try {
         await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
         assert.equal(await page.locator('#app-update-action').isVisible(), false);
         assert.match(await page.locator('#app-update-status').textContent(), /main profile/);
-        await page.locator('.agent-panel-close').click();
+        await closePanels(page);
       }
       // 複製側はパネルを開き直しても、取得・許可設定・インストーラーを呼ばない。
       await page.evaluate(() => { window.updateNeedsMainProfile = true; });
@@ -153,19 +198,19 @@ try {
         await page.waitForFunction(() => !document.querySelector('#app-update-page').hidden);
         assert.equal(await page.locator('#app-update-action').isVisible(), false);
         assert.equal(await page.evaluate(() => window.updateInstallCalls), installs);
-        await page.locator('.agent-panel-close').click();
+        await closePanels(page);
       }
       // 判定APIがない旧プラグインでも、通常の更新操作を維持する。
       await page.evaluate(() => { window.updateInfoFails = true; window.updateResult = 'installer'; });
       await page.locator('#btn-more-agent').click(); await page.locator('#btn-about-agent').click(); await page.locator('[data-about="version"]').click();
       await page.locator('#app-update-action').click();
       await page.waitForFunction(() => document.querySelector('#app-update-status').textContent.startsWith('The installer is open.'));
-      await page.locator('.agent-panel-close').click();
+      await closePanels(page);
     } else {
       assert.equal(await page.locator('#btn-settings-agent').isVisible(), false);
       await page.locator('#btn-history-agent').click();
       assert.equal(await page.locator('#btn-update-check').isVisible(), false);
-      await page.locator('.agent-panel-close').click();
+      await closePanels(page);
     }
     report.push({ nativeMock: native, savedChat: true, unsentDraft: true, insets: true, pageErrors: errors, aiPosts: posts.length });
     await context.close();

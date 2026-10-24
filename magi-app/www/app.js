@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '6.74';
+var APP_VERSION = '6.75';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2040,17 +2040,54 @@ function removeAgentPanel(panel) {
   panel.remove();
   if (panel.onAgentClose) panel.onAgentClose(hadFocus);
 }
-function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) removeAgentPanel(p); }); }
+function closeAgentPanels(keepPageStack) { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) removeAgentPanel(p); }); }
+// 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
+var AGENT_PAGE_IDS = ['agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
+var agentPageStack = [];
+function prepareAgentPage(id) {
+  if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
+  var parent = document.querySelector('.agent-page:not([hidden])');
+  if (parent) { parent.hidden = true; parent.inert = true; agentPageStack.push(parent); }
+  closeAgentPanels(true);
+}
+function backAgentPage() {
+  var panel = document.querySelector('.agent-page:not([hidden])');
+  if (!panel) return false;
+  var returnFocus = panel.agentReturnFocus;
+  closeAgentPanels(true);
+  var parent = agentPageStack.pop();
+  if (parent) { parent.hidden = false; parent.inert = false; }
+  var target = returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length ? returnFocus
+    : parent ? parent.querySelector('.agent-page-back') : document.getElementById('btn-more-agent');
+  if (target) target.focus({ preventScroll: true });
+  return true;
+}
+function agentPageHeader(title) {
+  return '<div class="agent-panel-head agent-page-head"><button type="button" class="agent-page-back" aria-label="' + tr('Back', '戻る') + '">'
+    + '<svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m12 8-4 4 4 4m-4-4h9"/></svg></button>'
+    + '<h2 class="t agent-page-title">' + title + '</h2><span aria-hidden="true"></span></div>';
+}
+function bindAgentPage(panel, opener) {
+  panel.agentReturnFocus = opener;
+  panel.querySelector('.agent-page-back').addEventListener('click', backAgentPage);
+  panel.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backAgentPage(); }
+  });
+  panel.querySelector('.agent-page-back').focus({ preventScroll: true });
+}
+
 function makeAgentPanel(id, title, bodyHTML) {
-  if (document.getElementById(id)) { removeAgentPanel(document.getElementById(id)); return null; }
-  closeAgentPanels();
+  if (document.getElementById(id)) { if (AGENT_PAGE_IDS.indexOf(id) >= 0) { var existingPage = document.getElementById(id); if (existingPage.hidden) { while (existingPage.hidden && backAgentPage()) {} } else backAgentPage(); } else removeAgentPanel(document.getElementById(id)); return null; }
+  var isPage = AGENT_PAGE_IDS.indexOf(id) >= 0, opener = document.activeElement;
+  if (isPage) prepareAgentPage(id); else closeAgentPanels();
   var panel = document.createElement('div');
-  panel.id = id; panel.className = 'agent-panel fade-in';
-  panel.innerHTML = '<div class="agent-panel-head"><span class="t">' + title + '</span>'
-    + '<button type="button" class="agent-panel-close">' + tr('✕ CLOSE', '✕ 閉じる') + '</button></div>'
+  panel.id = id; panel.className = 'agent-panel fade-in' + (isPage ? ' agent-page' : '');
+  panel.innerHTML = (isPage ? agentPageHeader(title) : '<div class="agent-panel-head"><span class="t">' + title + '</span>'
+    + '<button type="button" class="agent-panel-close">' + tr('✕ CLOSE', '✕ 閉じる') + '</button></div>')
     + '<div class="agent-panel-body">' + bodyHTML + '</div>';
   document.getElementById('app').appendChild(panel);
-  panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
+  if (isPage) bindAgentPage(panel, opener);
+  else panel.querySelector('.agent-panel-close').addEventListener('click', function () { removeAgentPanel(panel); });
   return panel;
 }
 // ☰ で左から出す。新しい会話と保存した会話の一覧を並べ、外側の暗幕・✕・Esc・戻るで閉じる。
@@ -2222,7 +2259,8 @@ function renderAgentVersions(list, lang, data) {
 function fillAgentVersionsPanel(panel, lang) {
   panel.dataset.lang = lang;
   panel.querySelector('.agent-versions-title').textContent = lang === 'ja' ? '更新履歴' : 'Release History';
-  panel.querySelector('.agent-panel-close').textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
+  var close = panel.querySelector('.agent-panel-close');
+  if (close) close.textContent = lang === 'ja' ? '✕ 閉じる' : '✕ CLOSE';
   var list = panel.querySelector('.agent-versions-list');
   renderAgentVersions(list, lang, agentVersionsCache || undefined);
   loadAgentVersions().then(function (data) { if (panel.isConnected) renderAgentVersions(list, panel.dataset.lang, data); });
@@ -2233,7 +2271,6 @@ function showVersionsPanel() {
   var title = panel.querySelector('.agent-panel-head .t') || panel.firstElementChild.querySelector('span');
   title.classList.add('agent-versions-title');
   fillAgentVersionsPanel(panel, document.documentElement.lang === 'ja' ? 'ja' : 'en');
-  addAboutBack(panel);
 }
 // AGENT_VERSIONS_END
 
@@ -2241,15 +2278,6 @@ function showVersionsPanel() {
 // アプリ情報の導線。本文は文字で描き、Workerのプライバシー説明は従来どおり取得する。
 function aboutBody(html) {
   return '<div class="agent-about-content">' + html + '</div>';
-}
-function addAboutBack(panel) {
-  if (!panel) return;
-  var back = document.createElement('button');
-  back.type = 'button'; back.className = 'agent-about-back';
-  back.textContent = tr('‹ Back', '‹ 戻る');
-  back.title = tr('Back to About MAGI', 'MAGIについてに戻る');
-  back.addEventListener('click', showAboutPanel);
-  panel.querySelector('.agent-panel-close').parentNode.insertBefore(back, panel.querySelector('.agent-panel-close'));
 }
 function showAboutPanel() {
   var panel = makeAgentPanel('agent-about-panel', tr('About MAGI', 'MAGIについて'), aboutBody(
@@ -2275,7 +2303,6 @@ function showFAQPanel() {
   var panel = makeAgentPanel('agent-faq-panel', 'FAQ', aboutBody(rows.map(function (row) {
     return '<details><summary>' + row[0] + '</summary><p>' + row[1] + '</p></details>';
   }).join('')));
-  addAboutBack(panel);
 }
 function showTermsPanel() {
   var panel = makeAgentPanel('agent-terms-panel', tr('Terms of Use', '利用規約'), aboutBody(
@@ -2283,7 +2310,6 @@ function showTermsPanel() {
     + '<p>' + tr('AI answers may contain errors. Check important information yourself before using it.', 'AIの回答には誤りが含まれることがあります。重要な情報は、ご自身で確かめてから利用してください。') + '</p>'
     + '<p>' + tr('Do not enter confidential or personal information. Do not use the service for illegal activity, infringement of others’ rights, discrimination or violence.', '機密情報や個人情報を入力しないでください。違法行為、他者の権利の侵害、差別や暴力を助長する目的で利用しないでください。') + '</p>'
     + '<p>' + tr('Usage limits and reply restrictions apply. See the FAQ for usage and the Privacy Policy for recipients and data handling.', '利用回数や回答内容に制限があります。使い方はFAQ、入力の送信先やデータの扱いはプライバシーポリシーをご確認ください。') + '</p>'));
-  addAboutBack(panel);
 }
 function showVersionInfoPanel() {
   if (nativeAndroid) { showAppUpdatePanel(); return; }
@@ -2291,7 +2317,6 @@ function showVersionInfoPanel() {
     '<p>MAGI / ver ' + APP_VERSION + '</p><p>' + tr('The Web and PWA versions fetch updates automatically. If a new version does not appear, finish your conversation and reopen the page or app. Updates may take time to appear.', 'Web・PWA版は自動で更新を取得します。新しい版が表示されない場合は、会話を終えてからページやアプリを開き直してください。反映に時間がかかることがあります。') + '</p><button type="button" class="agent-open-versions">' + tr('Release History', '更新履歴') + '</button>'));
   if (!panel) return;
   panel.querySelector('.agent-open-versions').addEventListener('click', showVersionsPanel);
-  addAboutBack(panel);
 }
 
 function showInfoPanel() {
@@ -2306,7 +2331,6 @@ function showInfoPanel() {
   ] : [];
   renderAgentPrivacy(list, lang, undefined);
   loadAgentModels().then(function (data) { renderAgentPrivacy(list, lang, data); });
-  addAboutBack(panel);
 }
 
 // 設定パネルの「ホーム画面に追加」を受け持つ。ウィジェットは入口だけで、設定は持たない。
@@ -2685,7 +2709,6 @@ function showAppUpdatePanel() {
     + '<div class="native-settings-actions"><button type="button" id="app-update-action" hidden></button>'
     + '<a id="app-update-page" href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" hidden>' + tr('Open the download page', 'ダウンロードページを開く') + '</a></div>');
   if (!panel) return;
-  addAboutBack(panel);
   var historyButton = document.createElement('button');
   historyButton.type = 'button'; historyButton.className = 'agent-open-versions';
   historyButton.textContent = tr('Release History', '更新履歴');
@@ -2743,7 +2766,7 @@ function showAppUpdatePanel() {
         : tr('Could not download or verify the update. Try again, or use the download page.', 'アップデートを取得・確認できませんでした。もう一度お試しいただくか、ダウンロードページから入手してください。'), tr('Try again', '再試行'), install, true);
     } finally { listener.remove(); }
   }
-  panel.querySelector('.agent-panel-close').focus();
+  panel.querySelector('.agent-page-back').focus();
   check();
 }
 function labelAppUpdate(banner) {
@@ -2888,6 +2911,7 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
   app.addListener('backButton', function (event) {
     // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
     if (closeAttachMenu()) return;
+    if (backAgentPage()) return;
     if (document.querySelector('.agent-panel')) { closeAgentPanels(); return; }
     if (closeUsagePop()) return;
     var menu = document.getElementById('agent-more-dropdown');

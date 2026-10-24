@@ -371,9 +371,9 @@
     .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
     .magi-emblem .hl-flow { stroke: var(--primary-color); stroke-width: 1.618; stroke-dasharray: 5 15; stroke-linecap: round; filter: drop-shadow(0 0 2px var(--primary-color)); animation: magiFlow calc(60s / var(--bpm)) linear infinite; will-change: stroke-dashoffset; }
     .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
-    .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem auto 0.2rem; width: fit-content; border-block: 3px double var(--secondary-color); padding: 0.1rem 0.35rem; }
-    .magi-sub { font-size: 11px; letter-spacing: 0.12em; color: var(--text-color); }
-    .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; display: inline-flex; align-items: center; justify-content: center; }
+    .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem auto 0.4rem; width: fit-content; border-block: 3px double var(--secondary-color); padding: 0.1rem 0.35rem; }
+    .magi-sub { font-size: 11px; line-height: 20px; letter-spacing: 0.12em; color: var(--text-color); }
+    .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.35rem; display: inline-flex; align-items: center; justify-content: center; }
 
     .magi-ver { background:transparent;border:1px solid var(--border-color);border-radius:2px;padding:0.2rem 0.45rem;font-family:inherit;cursor:pointer;gap:0.35rem; }
     .magi-ver::after { content:'▾'; }
@@ -429,13 +429,19 @@
     .agent-about-content { flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.8; }
     .agent-about-content p { margin: 0 0 1rem; }
     .agent-about-links { display: flex; flex-direction: column; }
-    .agent-about-links button, .agent-open-versions, .agent-about-back { font: inherit; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); cursor: pointer; padding: 10px 12px; }
+    .agent-about-links button, .agent-open-versions { font: inherit; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); cursor: pointer; padding: 10px 12px; }
     .agent-about-links button { display: flex; justify-content: space-between; align-items: center; min-height: 44px; text-align: left; margin-bottom: 8px; }
-    .agent-about-links button:hover, .agent-open-versions:hover, .agent-about-back:hover { color: var(--primary-color); }
-    .agent-about-back { padding: 6px; margin-right: auto; font-size: 11px; }
+    .agent-about-links button:hover, .agent-open-versions:hover { color: var(--primary-color); }
     .agent-about-content details { border-bottom: 1px solid var(--border-color); padding: 12px 0; }
     .agent-about-content summary { cursor: pointer; }
     .agent-about-content details p { margin: 10px 0 0; }
+
+    .agent-page[hidden] { display: none !important; }
+    .agent-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .agent-page .agent-page-title { margin: 0; padding: 0 4px; color: var(--primary-color); font: inherit; font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: normal; text-transform: none; text-align: center; overflow-wrap: anywhere; }
+    .agent-page-back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--secondary-color); cursor: pointer; }
+    .agent-page-back:hover { color: var(--primary-color); }
+    .agent-page-back:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 50%; }
   </style>
 </head>
 <body>
@@ -492,6 +498,7 @@
             <button id="btn-about-agent" type="button" >
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v1"/></svg>
                   <span class="menu-label" data-ja="MAGIについて">About MAGI</span>
+                <svg class="menu-next" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
                 </button>
             <hr />
             <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" title="Legacy MAGI deliberation (v1)" data-ja-title="旧MAGIの討議（v1）">
@@ -546,6 +553,6 @@
   <script src="native-input.js?v=20261022_1"></script>
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261021_1"></script>
-  <script src="app.js?v=20261024_13"></script>
+  <script src="app.js?v=20261024_15"></script>
 </body>
 </html>
