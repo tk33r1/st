@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.72",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "システムとプライバシーの説明を見出し付きの短い項目に整理し、重複を減らしました。送信先・保存・学習利用の説明は維持しています。",
+          "Android固有の説明を本文と同じ書式にそろえ、履歴保存の説明が二重に出ないようにしました。Android版も6.72に更新しました。"
+        ],
+        "en": [
+          "System & Privacy now uses shorter sections with headings and less repetition, while retaining recipient, storage and training disclosures.",
+          "Android-specific notes now share the same typography, without duplicate history-storage explanations. The Android app is updated to 6.72."
+        ]
+      }
+    },
+    {
       "version": "6.71",
       "date": "2026-10-24",
       "changes": {
