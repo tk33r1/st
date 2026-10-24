@@ -354,7 +354,7 @@ appear in their history. Add an `X.YZ` history entry only after both Worker and
 screens have been published. Bump `app.js?v=` and the `sw.js` cache for PWA
 updates; Android receives the changed shell with the next APK. Keep each used
 daily version number reserved even after a revert, and stop at `X.Y9`; see
-[the daily improvement design](../magi2継続改善設計書.md#24-版の上げ方2026-10-23-本人決定)
+[the daily improvement design](../workers/magi2/magi2継続改善設計書.md#24-版の上げ方2026-10-23-本人決定)
 for bump conditions, numbering, and history limits.
 
 Before uploading any APK, verify the actual packaged files against the Git

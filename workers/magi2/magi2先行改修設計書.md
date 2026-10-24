@@ -3,7 +3,7 @@
 設計中（2026-10-09）。実装と公開が済んだら、冒頭を「実装済み（日付）。正本はコード」に書き換え、以後は直さない。
 現状との照合・改訂: 2026-10-12。検索 Phase 4・UI 改修・トップページの Search を含む現行コード（`b361c210`）に合わせ、検索の維持条件と接続・検証だけを更新した。予定している先行・対話改修の内容は維持する。site-search は 1.6 の基準に従う。
 検証の筋書き・評価用入力・合格条件は [magi2先行改修検証計画](magi2先行改修検証計画.md) を正本とする（本書には書かない）。
-後に続く改修: [A 対話改修](magi2対話改修設計書.md)、[B ネイティブ機能](magi-app/ネイティブ機能設計書.md)、最後に Fish Audio の読み上げ（別に設計する）。
+後に続く改修: [A 対話改修](magi2対話改修設計書.md)、[B ネイティブ機能](../../magi-app/ネイティブ機能設計書.md)、最後に Fish Audio の読み上げ（別に設計する）。
 本書の 2章（版の上げ方）と 4.4（答え直しの規則）は、A・B でもそのまま使う正本。
 
 ## 1. 要件
@@ -21,15 +21,15 @@
 - **0**: 会社の PC では、Comet でも Chrome でも回答が最後に一度に届いた（本人の確認、2026-10-08）。会社のプロキシが通信を溜めている。
   画面は一定時間何も届かないと打ち切り、Worker は処理の合間に何も送らないので、全部が最後に届く環境では届く前に諦めてしまう。
 - **1**: BALTHASAR-2 は Gemini 3.5 Flash-Lite の無料枠で動いていて、入力が Google の学習に使われる。Claude Haiku 5.5 は 2026-10-07 に公開された軽量モデル。
-- **2**: 今の APK には更新を知らせる仕組みが無い。アイコン（[magi-app/resources/icon.svg](magi-app/resources/icon.svg)、2026-05 作成）は正六角形3つと番号 1・2・3 のままで、
-  トップページの紋章（角を切った形、番号は上 2・左 3・右 1。[index.html](index.html) の `agentHintHTML`）と食い違う。
+- **2**: 今の APK には更新を知らせる仕組みが無い。アイコン（[magi-app/resources/icon.svg](../../magi-app/resources/icon.svg)、2026-05 作成）は正六角形3つと番号 1・2・3 のままで、
+  トップページの紋章（角を切った形、番号は上 2・左 3・右 1。[index.html](../../index.html) の `agentHintHTML`）と食い違う。
   `magi-app/android/` は `.gitignore` で丸ごと外していて、Android のプロジェクトは本人の PC にだけある。
 
 ### 1.3 対象範囲
 
 - Worker: `workers/magi2`（SSE の送り方、Anthropic の呼び出し、統合のモデルの切り替えと答え直し、残高切れの判定、`/magi2/models`）。
-- 画面: トップページ（[index.html](index.html)）、MAGI アプリ（[magi-app/www/](magi-app/www/)）、曲リクエストの「AIに相談」（[dj/request/index.html](dj/request/index.html)）、404 ページの AI 検索の説明。
-- 週次のモデル監視: [ai_models.py](.github/scripts/ai_models.py)、[ai-model-watch.yml](.github/workflows/ai-model-watch.yml)、[config/ai-models.json](config/ai-models.json)。
+- 画面: トップページ（[index.html](../../index.html)）、MAGI アプリ（[magi-app/www/](../../magi-app/www)）、曲リクエストの「AIに相談」（[dj/request/index.html](../../dj/request/index.html)）、404 ページの AI 検索の説明。
+- 週次のモデル監視: [ai_models.py](../../.github/scripts/ai_models.py)、[ai-model-watch.yml](../../.github/workflows/ai-model-watch.yml)、[config/ai-models.json](../../config/ai-models.json)。
 - Android アプリ: Git の管理、アイコン、テーマアイコン、テーマの追従、更新通知、APK の版。
 
 ### 1.4 やらないこと
@@ -60,7 +60,7 @@
 
 ### 1.6 公開済みの site-search を維持する基準
 
-2026-10-12 の [Phase 4 公開評価](assets/site-search-phase4-release-evaluation.md) と現行コードを基準にする。404 の①・②・③、日刊2誌・tools・game の①・②を維持する。UI の操作・描画は [UI 改修設計](assets/site-search-ui-redesign.md) と `assets/search-ui.js`・各ページの adapter が正本。トップページの Search も `site` の①・②とコマンド検索を使う（別の scope は作らない）。
+2026-10-12 の [Phase 4 公開評価](../../assets/site-search-phase4-release-evaluation.md) と現行コードを基準にする。404 の①・②・③、日刊2誌・tools・game の①・②を維持する。UI の操作・描画は [UI 改修設計](../../assets/site-search-ui-redesign.md) と `assets/search-ui.js`・各ページの adapter が正本。トップページの Search も `site` の①・②とコマンド検索を使う（別の scope は作らない）。
 
 - 本番の `wrangler.toml` の `SITE_RANK_ENABLED="true"`、`SITE_RANK_SCOPES="site,nitori,retail,tools,game"`、`compatibility_flags=["enable_request_signal", "cache_no_cache_enabled"]`、`tk.st/search/api/*` の route を保つ。`SEARCH_CLICK_ENABLED="true"` と `/search/api/click` の契約、既存の `search_clicks`・集計・`SEARCH_CLICK_SALT` の扱いも維持する。評価用の一時設定 `SITE_RANK_EVAL_SCOPES` と `SITE_RANK_EVAL_KEY` は撤去済みで、復活させない。`env.eval` は専用の設定のまま扱い、本番の②を自動で有効にしない。
 - ②のモデル・scope ごとの問い・revision・閾値・期限・共有上限・世代とキャッシュ・切断時の中止は現行の `SITE_RANK`／`site-rank.js`／`search-scope.js` を維持する。4.14 の Haiku への変更は③とチャットのページ選びであり、②の Jev を替えるものではない。
@@ -102,7 +102,7 @@
 
 ### 3.2 Worker: 合図と見出し
 
-`handleChat` の SSE（[workers/magi2/src/index.js](workers/magi2/src/index.js) の `new ReadableStream`）に足す。値は `personas.js` に置く（例 `STREAM: { padding_bytes: 2048, ping_ms: 10000 }`）。
+`handleChat` の SSE（[workers/magi2/src/index.js](src/index.js) の `new ReadableStream`）に足す。値は `personas.js` に置く（例 `STREAM: { padding_bytes: 2048, ping_ms: 10000 }`）。
 
 - **最初の合図**: ストリームを開いたらすぐ、2KiB ほどの SSE のコメント（`:` で始まる行）を1つ送る。一定量まで溜める中継機器に最初の区切りを越えさせる。
 - **定期の合図**: 10秒ごとに `: ping` を送る。`close()` とストリームの `cancel()` で必ず止める。中継機器の無通信の打ち切りを避ける効果もある。
@@ -168,7 +168,7 @@
 
 ### 4.2 Anthropic の呼び出し
 
-- **正本**: [config/ai-models.json](config/ai-models.json) の `anthropic.haiku`（`claude-haiku-5-5`）は、日刊ブリーフの生成のために足してある（2026-10-10 時点）。magi2 もこれを読む。モデルIDはここにだけ書く（`ai_models.py check` が検出する）。
+- **正本**: [config/ai-models.json](../../config/ai-models.json) の `anthropic.haiku`（`claude-haiku-5-5`）は、日刊ブリーフの生成のために足してある（2026-10-10 時点）。magi2 もこれを読む。モデルIDはここにだけ書く（`ai_models.py check` が検出する）。
 - **呼び出し先**: `personas.js` の `PROVIDERS` に `anthropic: { endpoint: 'https://api.anthropic.com/v1/messages', key: 'MAGI_ANTHROPIC_API_KEY' }`。
   見出しは `x-api-key` と `anthropic-version: 2023-06-01`（今の `callModel` は全社 `Authorization: Bearer` なので、会社で分ける）。
 - **形式**: Anthropic の Messages API を、ほかの会社と同じく `fetch` で呼ぶ（OpenAI 互換の窓口は推論・effort・拒否の扱いが対応しないので使わない。SDK は Worker に依存を足さないため使わない）。
@@ -224,7 +224,7 @@
 
 ### 4.7 残高切れ・キーの失効の通知
 
-今の判定 `isBillingFailure`（[workers/magi2/site-search.js](workers/magi2/site-search.js)）は 401・402・403 と、残高不足を示す本文の 429 を拾う。Anthropic の形に合わせて広げる。
+今の判定 `isBillingFailure`（[workers/magi2/site-search.js](site-search.js)）は 401・402・403 と、残高不足を示す本文の 429 を拾う。Anthropic の形に合わせて広げる。
 
 | 状態 | Anthropic の応答（公式の errors） | 今の判定 |
 | --- | --- | --- |
@@ -241,11 +241,11 @@
 
 ### 4.8 週次の新モデルの検知と動作確認
 
-[ai_models.py](.github/scripts/ai_models.py) の `PROVIDERS` には、日刊ブリーフのために `anthropic` がすでにある（モデル一覧からの新しい Haiku の検知と、日刊の呼び出しの形の `smoke_anthropic`）。ここに magi2 と人格カードの呼び出しの形を足す。
+[ai_models.py](../../.github/scripts/ai_models.py) の `PROVIDERS` には、日刊ブリーフのために `anthropic` がすでにある（モデル一覧からの新しい Haiku の検知と、日刊の呼び出しの形の `smoke_anthropic`）。ここに magi2 と人格カードの呼び出しの形を足す。
 
 - **検知**: 今の仕組みのまま（チャネル `haiku`、表示名の作り方も今のまま）。候補は動作確認に通ったものだけを正本に書いて PR にする。
 - **動作確認**: `DEFAULTS` の値で、BALTHASAR（推論なし・画像なし／あり）とダークの統合（adaptive・ストリーミング、`message_stop` と `end_turn` まで）をなぞる。
-  本文は `magi-search-config.mjs` が `requestBody` から作る（4.2）。`config.discussion` に `synthesizer_dark` を足し、[test-magi-smoke.py](.github/scripts/test-magi-smoke.py) に Anthropic の本文の検査を足す。
+  本文は `magi-search-config.mjs` が `requestBody` から作る（4.2）。`config.discussion` に `synthesizer_dark` を足し、[test-magi-smoke.py](../../.github/scripts/test-magi-smoke.py) に Anthropic の本文の検査を足す。
 - **Secrets**: リポジトリ Secret `ANTHROPIC_API_KEY` は `ai-model-watch.yml` にすでに渡してある。
 
 ### 4.9 Gemini を外す
@@ -263,14 +263,14 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | --- | --- | --- |
 | Worker の送り先の説明（`personas.js` の `PRIVACY`。トップページとアプリの「System & Privacy」はここから出る。5.6） | 送り先を「OpenAI・DeepSeek・Anthropic」に。Gemini の無料枠の注意書きを消す。Anthropic のデータの扱いは公式の規約で確かめてから書く | 1 |
 | 画面に固定で残る説明（`dj/request/` の説明、トップページと `dj/request/` の FAQ の見える文と構造化データ）。取得に失敗したときの文（5.6）は会社名に触れないので直さない | 同上 | 1 |
-| [404.html](404.html) の③の説明（`ai-info-text`）とプライバシーポリシーへのリンク | 404 も3人格の討議を使うので、Google Gemini を Anthropic に替える。①②の共通ダイアログ・TypeSafe AI・クリック記録・アクセス解析の説明は維持する | 1 |
+| [404.html](../../404.html) の③の説明（`ai-info-text`）とプライバシーポリシーへのリンク | 404 も3人格の討議を使うので、Google Gemini を Anthropic に替える。①②の共通ダイアログ・TypeSafe AI・クリック記録・アクセス解析の説明は維持する | 1 |
 | トップページ・`app.js` の画像の送り先のコメント | 同上 | 1 |
 | アプリの「System & Privacy」 | 1日1回 GitHub に新しい版を問い合わせること（届くのは IP アドレスなどの通常の通信情報で、会話は送らない） | 2 |
-| [AGENTS.md](AGENTS.md) | magi2 の secret（`MAGI_GEMINI_API_KEY` → `MAGI_ANTHROPIC_API_KEY`）、人格の会社の割り当て、Gemini の注記、「入力は3社すべてに送られる」、`ai-models.yml`／`ai-model-watch.yml` の会社、`magi-app/` の `android/` の扱い | 1・2 |
-| [.github/AI_MODELS.md](.github/AI_MODELS.md) | Anthropic の追加と Google の削除、スモークテストの表（人格カードの要約を含む） | 1 |
-| [AGENTS.md](AGENTS.md) の「MAGI の人格カード」と「次の質問の予測」 | 要約のモデルが Haiku 5.5 であること、`magi-context.yml`・`magi-x-posts.yml` の鍵、予測が `openai.luna` から `anthropic.haiku` に変わること | 1 |
-| [workers/magi2/README.md](workers/magi2/README.md) | secret、モデル、SSE の合図 | 0・1 |
-| [magi-app/README.md](magi-app/README.md) | 更新通知、アイコンとテーマアイコンの作り方、`android/` を Git で管理すること、リリースの手順（タグ `vX.Y`） | 2 |
+| [AGENTS.md](../../AGENTS.md) | magi2 の secret（`MAGI_GEMINI_API_KEY` → `MAGI_ANTHROPIC_API_KEY`）、人格の会社の割り当て、Gemini の注記、「入力は3社すべてに送られる」、`ai-models.yml`／`ai-model-watch.yml` の会社、`magi-app/` の `android/` の扱い | 1・2 |
+| [.github/AI_MODELS.md](../../.github/AI_MODELS.md) | Anthropic の追加と Google の削除、スモークテストの表（人格カードの要約を含む） | 1 |
+| [AGENTS.md](../../AGENTS.md) の「MAGI の人格カード」と「次の質問の予測」 | 要約のモデルが Haiku 5.5 であること、`magi-context.yml`・`magi-x-posts.yml` の鍵、予測が `openai.luna` から `anthropic.haiku` に変わること | 1 |
+| [workers/magi2/README.md](README.md) | secret、モデル、SSE の合図 | 0・1 |
+| [magi-app/README.md](../../magi-app/README.md) | 更新通知、アイコンとテーマアイコンの作り方、`android/` を Git で管理すること、リリースの手順（タグ `vX.Y`） | 2 |
 
 ### 4.11 費用と回数の制限
 
@@ -294,7 +294,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 
 ### 4.13 人格カードを作るモデル
 
-人格カード（`data/magi-context.json`）を作る [magi-context.py](.github/scripts/magi-context.py) の要約を、GPT-6 Luna から Claude Haiku 5.5 に変える（本人の決定、2026-10-10）。
+人格カード（`data/magi-context.json`）を作る [magi-context.py](../../.github/scripts/magi-context.py) の要約を、GPT-6 Luna から Claude Haiku 5.5 に変える（本人の決定、2026-10-10）。
 
 - 呼び出し: 今の `call_openai`（Chat Completions・`reasoning_effort: 'none'`・`temperature: 0.2`・`max_completion_tokens: 4000`）を、Anthropic の Messages API の呼び出しに替える。
   Python の標準ライブラリ（`urllib`）で呼ぶ今の作りのまま（依存を足さない）。モデルIDは `ai_model_registry.py` から `anthropic.haiku` を読む。
@@ -304,7 +304,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 - 素材（サイトの本文・X の投稿・関心の要約）は公開している内容で、送り先が OpenAI から Anthropic に変わるだけ。
 - 週次の動作確認（`ai_models.py` の smoke）に、この呼び出しの形を足す（AGENTS.md の約束）。
 - 切り替えた最初の実行は `force` で全人格を作り直し、変更前のカードと並べて本人が読む（計画§3.2）。
-- [magi-x-posts.py](.github/scripts/magi-x-posts.py) の AI（画像の説明・返信や引用の相手の要約・いいねとフォローの要約）も Haiku 5.5 に替える（本人の決定、2026-10-10）。
+- [magi-x-posts.py](../../.github/scripts/magi-x-posts.py) の AI（画像の説明・返信や引用の相手の要約・いいねとフォローの要約）も Haiku 5.5 に替える（本人の決定、2026-10-10）。
   画像は今 OpenAI に URL のまま渡しているので、Anthropic の画像の指定（`source: { type: 'url', url }`）で渡す（X の画像の URL を Anthropic が取りに行けるかは計画§0 で確かめ、取れなければ取得してから base64 で渡す）。
   `magi-x-posts.yml` にも `ANTHROPIC_API_KEY` を渡す。
 - Anthropic の呼び出し（見出し・推論の切り方・応答の検査・再試行）は、日刊ブリーフの `daily_engine.call_anthropic_api` と人格カード・X の素材とで同じものを使えるよう、共通の部品にまとめる（同じ呼び出しを3か所に書かない）。
@@ -322,7 +322,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 | サイトのページ選び（`SITE_SEARCH.model`。404 とチャット） | Luna・推論なし・JSON の形の指定・`temperature` 0.4 | Haiku・推論なし・JSON の形の指定 | `temperature` を送れない |
 
 - **票の読み取りをやめる**: 票は、3人格の発言の頭の札（`[VOTE:…]`）をコード（`parseVote`）で読み、コード（`magiTally`）で集計している。AI の読み取りは、札が無い・壊れている発言のときだけ本文から読む補助。
-  公開時の評価（[第2公開評価](workers/magi2/第2公開評価.md)）では、第1・2回は各人格 58/58、第3回以降も 54/55 が読み取りの前に有効な札で、AI の読み取りで回復できた件は0件だった。
+  公開時の評価（[第2公開評価](第2公開評価.md)）では、第1・2回は各人格 58/58、第3回以降も 54/55 が読み取りの前に有効な札で、AI の読み取りで回復できた件は0件だった。
   そこで、計画§3.2 の BALTHASAR（Haiku）の札の有効率が 95%以上なら、読み取りの AI を呼ばず、札が読めない発言は今の「票を判定できない」扱い（前回の有効票があれば引き継ぐ）にする（本人の判断、2026-10-11）。
   95%を下回ったら、読み取りの AI を残すより、人格の指示の文を直して札を書かせる方を先に試す。やめるときは `vote_reader` の呼び出し・設定・週次の動作確認の分を消す。
 - **討議の判定は替えない**: 判定（`judge`。Luna・推論 low）は A3 で Jev に置き換わるので、先行では Luna のまま触らない（本人の判断、2026-10-11）。
@@ -376,7 +376,7 @@ Gemini は BALTHASAR-2 でしか使っていないので、1 の公開と同じ�
 
 ### 5.2 アイコン
 
-- [icon.svg](magi-app/resources/icon.svg) をトップページの紋章（`agentHintHTML` の SVG）の形に描き直す: 角を切った3つの枠、番号は上 2・左 3・右 1、枠をつなぐ3本の線。
+- [icon.svg](../../magi-app/resources/icon.svg) をトップページの紋章（`agentHintHTML` の SVG）の形に描き直す: 角を切った3つの枠、番号は上 2・左 3・右 1、枠をつなぐ3本の線。
   色はダークのテーマ（地 `#0c0c0c`、線と番号 `#4ade80`、枠の塗り `#4ade8026`）。線の流れる演出は入れない。
 - Android: `npm run icons`（`@capacitor/assets`）でアイコンとスプラッシュを作り直す。
 - PWA: `www/icon-192.png`・`icon-512.png`・`icon-maskable-512.png` を手で作り直し（手順は README）、`sw.js` のキャッシュの版を上げる。

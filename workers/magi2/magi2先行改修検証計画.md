@@ -166,7 +166,7 @@
 - 日刊の号で共通UIが取り付く前/後の確定、IME、30秒以内・同scope/語・一度きりの目印、通常の `#q=`・タグ・ウォッチ・404からの受け渡し（②なし）を確認する。準備前の確定の保留・準備失敗・復帰1回・②の自動再送なしも維持する。
 - トップSearchは開くまで共通資産を読まず、コマンドとページが出る。コマンドの実行で②・クリック記録を送らず、検索語をGAへ送らない。tk.st以外（開発loopbackを除く）と読み込み失敗時のインライン検索、言語/ライト/ダーク、SearchとMAGIの切り替え後の送信・受信・保存を確認する。共通資産の版と `SHARED_SEARCH_ASSETS` が一致する。
 - ②の共有処理・画面・問い・閾値を触ったときは、5 scopeの停止、利用回数、generation・キャッシュ、切断と中止、URL・参照元・計測への漏れ防止を追加回帰する。日刊の処理を触れば `node --test .github/scripts/test-daily-rank.mjs` と `python .github/scripts/test-daily-news.py`、索引を触れば `python .github/scripts/test-site-search-index.py`・`python .github/scripts/test-search-readings.py`・`node --test .github/scripts/test-phase4-search-data.mjs` も通す。Jevの問い・閾値・候補の作り方を変えた場合は `eval-site-rank.mjs`／`eval-daily-rank.mjs`／`eval-list-rank.mjs` の該当scopeの実API評価を行い、revisionも更新する。
-- **評価の区別**: ②の基準は [Phase 4 公開評価](assets/site-search-phase4-release-evaluation.md)・[tools/gameの評価](.github/site-search/phase4/rank/README.md)。既存3 scopeの精度基準は [site-search評価](assets/site-search-evaluation.md)・[Phase3公開前評価](assets/site-search-phase3-release-evaluation.md)も保持する。③は `eval-site-search.mjs` と [第1公開評価の404検索](workers/magi2/第1公開評価.md) を使う。②の精度・待ち時間を、Haikuへのページ選びの変更の合格記録として使わない。②を変えないモデル改修で、②の全件実API評価を再実施した扱いにもしない。
+- **評価の区別**: ②の基準は [Phase 4 公開評価](../../assets/site-search-phase4-release-evaluation.md)・[tools/gameの評価](../../.github/site-search/phase4/rank/README.md)。既存3 scopeの精度基準は [site-search評価](../../assets/site-search-evaluation.md)・[Phase3公開前評価](../../assets/site-search-phase3-release-evaluation.md)も保持する。③は `eval-site-search.mjs` と [第1公開評価の404検索](第1公開評価.md) を使う。②の精度・待ち時間を、Haikuへのページ選びの変更の合格記録として使わない。②を変えないモデル改修で、②の全件実API評価を再実施した扱いにもしない。
 - OSの日本語IME・読み上げ・Safari/iOS/Android、複数年の実データなどの未実施項目は、最新の公開評価と個別の検証記録で確認し、本改修の模擬検証で完了にしない。UI改修・トップSearchの本番公開版と実通信の確認も、コードの取り込みやPhase 4公開時の合格と区別して記録する。
 
 ## 2. 公開 0 の再現環境（溜めるネットワーク）
@@ -244,7 +244,7 @@
 - **画面**: 3画面で、スプラッシュの BALTHASAR と統合の説明・LLM 欄（統合は2行）、「System & Privacy」の送り先を日英で確かめる。
 
 - **汎用の役割（設計§4.14）**: 計画§3.1 の入力で、議題化・ページ選びの結果を変更前（Luna）と並べる。
-  議題を却下・採用した件の食い違い、選んだページの合否が、変更前より悪くならない（議題化は [magi2検証計画.md](magi2検証計画.md) 計画§3、ページ選びは `eval-site-search.mjs` と [第1公開評価の404検索](workers/magi2/第1公開評価.md)。計画§1.4の②の評価とは別）。票の読み取りをやめる判断は計画§3.2の有効率と計画§1.2の集計・保存の互換で行う。
+  議題を却下・採用した件の食い違い、選んだページの合否が、変更前より悪くならない（議題化は [magi2検証計画.md](magi2検証計画.md) 計画§3、ページ選びは `eval-site-search.mjs` と [第1公開評価の404検索](第1公開評価.md)。計画§1.4の②の評価とは別）。票の読み取りをやめる判断は計画§3.2の有効率と計画§1.2の集計・保存の互換で行う。
   予測とタイトルは本人が 10件ずつ読み、「変更前と同等以上」が 7件以上。
 - **人格カード（設計§4.13）**: 切り替えた後に `magi-context.yml` を `force` で1回走らせ、4枚のカードを変更前のカードと並べて本人が読む。
   - 4枚とも、今の文字数・形の検査を通り、拒否・切れ（`max_tokens`）で止まらない。

@@ -7,6 +7,27 @@
 人格の本文は120字の指示を維持し、指示を外した長い応答も `DEFAULTS.persona_response_max_chars`（4000字）で制限して討議の入力が膨らまないようにする。
 Jevを使う環境には `MAGI_TYPESAFE_API_KEY` をWrangler secretで設定する。手元の `.dev.vars` は本番へ自動反映されない。未設定でも回答は続くが、分類はフォールバックとなる。
 
+## 設計書・検証計画
+
+トップページ・PWA・Androidと共通のMAGI仕様は、このディレクトリにまとめる。公開済みの文書は当時の記録として保持し、現在の仕様はコードと本READMEで確認する。
+
+| 対象 | 設計 | 検証計画 |
+| --- | --- | --- |
+| 統合・分類・会話の言語 | [統合設計書](magi2統合設計書.md) | [検証計画](magi2検証計画.md) |
+| 受信・モデル・更新通知 | [先行改修設計書](magi2先行改修設計書.md) | [先行改修検証計画](magi2先行改修検証計画.md) |
+| 悪意判定・事実確認・聞き返し | [対話改修設計書](magi2対話改修設計書.md) | [対話改修検証計画](magi2対話改修検証計画.md) |
+| 継続改善 | [継続改善設計書](magi2継続改善設計書.md) | [継続改善検証計画](magi2継続改善検証計画.md) |
+| 読み上げ・WebSocket | [読み上げ設計書](magi2読み上げ設計書.md) | [読み上げ検証計画](magi2読み上げ検証計画.md) |
+| 一時チャット・パーソナライズ | [設計書](magi2一時チャット・パーソナライズ設計書.md) | [検証計画](magi2一時チャット・パーソナライズ検証計画.md) |
+
+Android固有の設計と公開評価は [`magi-app/`](../../magi-app/README.md)、404ページの設計は対象HTMLと同じルートの [`404-redesign.md`](../../404-redesign.md)・[`404-ai-search-design.md`](../../404-ai-search-design.md) に置く。
+
+## 検証用ファイルの扱い
+
+検証スクリプトはリポジトリのルートから実行し、生成物を `workers/.wrangler/` または `.github/scripts/.search-reading-env/work/` に保存する。スクリーンショットは再生成できるが、評価JSON・本人の採点・費用台帳は削除しない。
+
+`preview-magi47-materials.py` は手動の `magi-anthropic-probe.yml` が使う。`summarize-magi47.mjs` と `verify-magi47-dj.mjs` は、その評価データの新旧比較とDJ回答のカタログ照合に使う手動ツールとして保持する。名前に旧版が含まれていても、版番号だけで削除しない。
+
 ## 代表経路の費用を制限した本番確認
 
 2026-10-17に本人が追加$2の代表案を採用。共通台帳の過去の予約を維持し、累計総額$2.80、OpenAI・Anthropic各$1.20の範囲で実施する。全件評価の再開ではない。
@@ -205,7 +226,7 @@ IP を替えながら大量に呼ばれても費用に天井を作るため。�
 
 ## 読み上げ（C1・準備中）
 
-統合人格の回答を Fish Audio の無料版（`config/ai-models.json` の `fishaudio.tts`）と本人の声のモデルで読み上げる（[読み上げ設計書](../../magi2読み上げ設計書.md)、[実装前確認](読み上げ実装前確認.md)）。
+統合人格の回答を Fish Audio の無料版（`config/ai-models.json` の `fishaudio.tts`）と本人の声のモデルで読み上げる（[読み上げ設計書](magi2読み上げ設計書.md)、[実装前確認](読み上げ実装前確認.md)）。
 
 - **署名**: `SPEECH_ENABLED` が `"true"` で secret の `MAGI_FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` がそろうと、チャットは `done` の直前に `speech` イベント `{ sig, lang }` を送る。
   `sig` は画面へ実際に送った `integrated` の差分をつないだ本文の `HMAC-SHA256(SPEECH_SIGN_KEY, "v1\n" + 本文)`。確認質問・悪意への短い返答・DJ の相談・エラー・停止には付けない。
@@ -235,7 +256,7 @@ node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))
 
 ## WebSocket の入口（C2）
 
-会社のプロキシは SSE の応答を最後まで溜めて一度に流すが、WebSocket は素通しにする（[読み上げ設計書](../../magi2読み上げ設計書.md) 6.7 の測定）。
+会社のプロキシは SSE の応答を最後まで溜めて一度に流すが、WebSocket は素通しにする（[読み上げ設計書](magi2読み上げ設計書.md) 6.7 の測定）。
 そこでトップページと PWA は回答を WebSocket で受け、開けないときだけ SSE を使う。`dj/request/` と Android のアプリ（ネイティブ受信）は SSE のまま。
 
 - **入口** `GET /magi2/ws`（`Upgrade: websocket`）: `WS_ENABLED` が `"true"` でなければ 404、許可した Origin でなければ 403（`x-api-key` は使わない）、`Upgrade` が無ければ 426。

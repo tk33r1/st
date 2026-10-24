@@ -1,7 +1,7 @@
 # magi2 読み上げ設計書 — 回答の操作列・Fish Audio の読み上げ・WebSocket
 
 設計中（2026-10-22）。実装と公開が済んだら、冒頭を「実装済み（日付）。正本はコード」に書き換え、以後は直さない。
-前提: [magi2先行改修設計書](magi2先行改修設計書.md)（以下「先行」）、[A 対話改修](magi2対話改修設計書.md)、[B ネイティブ機能](magi-app/ネイティブ機能設計書.md) が公開済みであること（MAGI 5.9、2026-10-22）。
+前提: [magi2先行改修設計書](magi2先行改修設計書.md)（以下「先行」）、[A 対話改修](magi2対話改修設計書.md)、[B ネイティブ機能](../../magi-app/ネイティブ機能設計書.md) が公開済みであること（MAGI 5.9、2026-10-22）。
 版の上げ方は先行 2章、答え直しの規則は先行 4.4 に従う。検証の筋書き・評価用入力・合格条件は [magi2読み上げ検証計画](magi2読み上げ検証計画.md) を正本とする（本書には書かない）。
 先行 1.4 で「0 の効果を見てから検討する」とした WebSocket と、先行の冒頭で「最後に別に設計する」とした Fish Audio の読み上げを、ここで扱う。
 
@@ -17,11 +17,11 @@
 
 ### 1.2 背景
 
-- **操作列**: 今は人格のカードと統合人格の回答の下に、同じ［コピー］［いいね］［リアクション］がある（`reactionBarHTML`。[index.html](index.html) と [magi-app/www/app.js](magi-app/www/app.js)）。
+- **操作列**: 今は人格のカードと統合人格の回答の下に、同じ［コピー］［いいね］［リアクション］がある（`reactionBarHTML`。[index.html](../../index.html) と [magi-app/www/app.js](../../magi-app/www/app.js)）。
   Web で確かめた回答（A2 の `sources`）は、本文の `[n]` のリンクと、回答の下の「出典」の一覧で出している（`renderAgentSources`）。
 - **共有**: 回答を外へ出す手段はコピーだけ。トップページには会話全体を Markdown で共有する `shareAgentChat`（`navigator.share`、使えなければコピー）が別にある。Android の WebView は `navigator.share` を持たない。
 - **読み上げ**: 今は音声を出す機能が無い（B2 の音声入力は端末の認識で、MAGI のサーバーには音声を送らない）。
-- **WebSocket**: 先行の公開0（4.5）で、溜める環境でも打ち切らず、まとめて届いた中身を順に再生するようにした。会社の PC（Chrome・Comet）での本人の確認は、この設計を書いた時点で未実施（[先行改修進捗](workers/magi2/先行改修進捗.md)）。
+- **WebSocket**: 先行の公開0（4.5）で、溜める環境でも打ち切らず、まとめて届いた中身を順に再生するようにした。会社の PC（Chrome・Comet）での本人の確認は、この設計を書いた時点で未実施（[先行改修進捗](先行改修進捗.md)）。
   SSE は B3 でアプリのネイティブ受信（`MagiConversationService`・`MagiSseReader`）と端末内の受信列にも使っていて、置き換えの影響が大きい。
 
 ### 1.3 Fish Audio の現状（2026-10-22 に公式の文書のソースで確認）
@@ -43,9 +43,9 @@
 ### 1.4 対象範囲
 
 - Worker: `workers/magi2`（読み上げの入口と署名、出典のアイコン、`/magi2/models` の機能の通知、WebSocket の入口（C2））。
-- 画面: トップページの MAGI（[index.html](index.html)）、MAGI アプリ（[magi-app/www/](magi-app/www/)。PWA を含む）。
+- 画面: トップページの MAGI（[index.html](../../index.html)）、MAGI アプリ（[magi-app/www/](../../magi-app/www)。PWA を含む）。
 - Android: 共有の送り出し（`@capacitor/share`）。C2 ではネイティブ受信を変えない（6.6）。
-- 設定: [config/ai-models.json](config/ai-models.json) に Fish Audio のモデルを足す。
+- 設定: [config/ai-models.json](../../config/ai-models.json) に Fish Audio のモデルを足す。
 
 ### 1.5 やらないこと
 
@@ -64,7 +64,7 @@
 | 項目 | 決定 |
 | --- | --- |
 | 声 | 本人の声から作った声のモデル（統合人格＝本人の声）。モデルは作成済みで、ID は `c9eb5405fa784e61ae9b3b22621e9f6f`（公開情報。本人、2026-10-22）。`personas.js` の `SPEECH.voice_id` に書く（5.4）。tk.st が本人の声で任意の文を言わせる道具にならないよう、5.2 の署名を必須にする |
-| モデル | 無料版の `s2.1-pro-free`（本番も同じ）。TTFA と DPA の保証が無いことを `PRIVACY` に書く（8章）。有料の `s2.1-pro` へ自動では切り替えない（5.4）。利用規約は有料サービスの利用者でない限り「第三者のため」の利用を認めていないが、文書は無料版を小規模の事業向けとしている（[実装前確認](workers/magi2/読み上げ実装前確認.md) §0.1）。本人がこれを読んだうえで、**無料の枠内で来訪者向けに使う**と決めた（2026-10-23） |
+| モデル | 無料版の `s2.1-pro-free`（本番も同じ）。TTFA と DPA の保証が無いことを `PRIVACY` に書く（8章）。有料の `s2.1-pro` へ自動では切り替えない（5.4）。利用規約は有料サービスの利用者でない限り「第三者のため」の利用を認めていないが、文書は無料版を小規模の事業向けとしている（[実装前確認](読み上げ実装前確認.md) §0.1）。本人がこれを読んだうえで、**無料の枠内で来訪者向けに使う**と決めた（2026-10-23） |
 | 利用の上限 | 無料版の公正利用の範囲に収める。費用の上限ではなく、乱用と公正利用の超過で止められないための上限として、IP ごと・全体の1日の区切りの数を置く（5.5） |
 | ［︙］の中身 | 絵文字のリアクションだけを入れる。［いいね］は操作列に残す（4.1） |
 | WebSocket | 準備の測定（6.5）の結果を見てから決める。測定は AI を呼ばないので費用は 0 |
@@ -138,7 +138,7 @@
 ```
 
 - 🔊 を押すと、区切り 0 から順に要求する。区切り i を再生している間に i+1 を取りに行き、途切れずにつなぐ。
-- 画面は区切りを全部受け取ってから鳴らすので、押してから音が出るまでは最初の区切りの生成の時間になる。区切りは 40・80・160・180文字（以後 180）と倍々に伸ばす。生成は再生の約2倍の速さなので、前の区切りを鳴らしている間に次がそろい、1区切りの生成も 15秒に収まる（[実装前確認](workers/magi2/読み上げ実装前確認.md) §0.2 の実測で、当初の 120・300文字から変更。2026-10-23）。
+- 画面は区切りを全部受け取ってから鳴らすので、押してから音が出るまでは最初の区切りの生成の時間になる。区切りは 40・80・160・180文字（以後 180）と倍々に伸ばす。生成は再生の約2倍の速さなので、前の区切りを鳴らしている間に次がそろい、1区切りの生成も 15秒に収まる（[実装前確認](読み上げ実装前確認.md) §0.2 の実測で、当初の 120・300文字から変更。2026-10-23）。
 - Fish Audio の WebSocket は使わない。読み上げは回答が出そろった後に押すので、区切りごとの HTTP で足り、区切りごとにキャッシュできる（5.4）。
 
 ### 5.2 署名（本人の声を任意の文に使わせない）
@@ -216,7 +216,7 @@ Worker の `speechText(text)` が、回答の Markdown を読み上げ用の文�
 - WebSocket では、各イベントを `{ "event": <名前>, "data": <今と同じ> }` のテキストで送る。10秒ごとに `{ "event": "ping" }` を送る。`done`・`error` の後に 1000 で閉じる。
 - 利用回数の超過・入力の誤りなど、今は HTTP の 4xx で返しているものは、`{ "event": "error", "data": <今と同じ封筒。http_status を含む> }` を送ってから 1008 で閉じる。
 - 停止: 画面は `{ "type": "stop" }` を送ってから閉じる。Worker は `stop`・`close`・`error` のどれでも今の `stop.abort()` を呼ぶ（払うのは止めた時点までの分だけ、は今と同じ）。
-- 1メッセージの上限: チャットの要求は画像を含めて最大 12MiB（`DEFAULTS.input.max_request_bytes`）。Worker が受ける WebSocket のメッセージは 32MiB までなので、画像付きの要求もそのまま送れる（[実装前確認](workers/magi2/読み上げ実装前確認.md) §0.5）。
+- 1メッセージの上限: チャットの要求は画像を含めて最大 12MiB（`DEFAULTS.input.max_request_bytes`）。Worker が受ける WebSocket のメッセージは 32MiB までなので、画像付きの要求もそのまま送れる（[実装前確認](読み上げ実装前確認.md) §0.5）。
 - magi2 の `compatibility_date`（2025-01-01）では、相手の Close に Worker が自分で `close()` を返す。返さないと画面は 1006 で閉じたと見る。
 
 ### 6.3 画面
@@ -256,7 +256,7 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 | 会社・Comet | 開くまで 60.1秒、30件が一度に | 194ms で開き、間隔の最大 2.05秒 | WebSocket に効果あり |
 
 - 会社のプロキシは SSE の応答を見出しから最後まで溜めて一度に流し、WebSocket は素通しにする。会社の環境の全部の回で条件を満たしたので、**C2 を実装する**。
-- 測定の回数は本人の判断で減らした（Chrome・Comet 各1回。時間帯による違いは未確認）。記録の詳細は [実装前確認](workers/magi2/読み上げ実装前確認.md) §0.6。
+- 測定の回数は本人の判断で減らした（Chrome・Comet 各1回。時間帯による違いは未確認）。記録の詳細は [実装前確認](読み上げ実装前確認.md) §0.6。
 
 ## 7. Worker のそのほかの変更
 
@@ -270,11 +270,11 @@ AI を呼ばない一時の測定を Worker に置き、会社の PC で本人�
 | --- | --- | --- |
 | Worker の `PRIVACY`（`requires: ['speech']`） | 🔊 を押したときだけ、その回答の本文を Fish Audio に送って音声にすること。質問の本文・画像・履歴は送らないこと。音声は端末に保存しないこと。Cloudflare に区切りの音声を一時的にキャッシュすること。Fish Audio の保持・学習の扱い（規約の確認後に書く）。無料版を使っていて、Fish Audio の DPA（データ処理の取り決め）の保証が無いこと。1日の上限 | C1b |
 | トップページとアプリの「System & Privacy」 | 送り先の数・会社の名前を固定で書いている箇所があれば、Worker から配る段落に寄せる（先行 5.6・B 8章の約束） | C1 |
-| [AGENTS.md](AGENTS.md) | Workers 一覧の magi2 の secret に `MAGI_FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` を足す。「討議する入力は3社すべてに送られる」の段に、読み上げは押したときだけ Fish Audio へ送ることを足す。C2 を実装したら WebSocket の入口 | C1・C1b・C2 |
-| [workers/magi2/README.md](workers/magi2/README.md) | 読み上げの入口・署名・上限・止め方（`SPEECH_ENABLED` を false）。C2 の入口と止め方（`WS_ENABLED`） | C1・C2 |
-| [.github/AI_MODELS.md](.github/AI_MODELS.md)・[config/ai-models.json](config/ai-models.json) | Fish Audio のモデルと smoke | C1 |
+| [AGENTS.md](../../AGENTS.md) | Workers 一覧の magi2 の secret に `MAGI_FISH_AUDIO_API_KEY`・`SPEECH_SIGN_KEY` を足す。「討議する入力は3社すべてに送られる」の段に、読み上げは押したときだけ Fish Audio へ送ることを足す。C2 を実装したら WebSocket の入口 | C1・C1b・C2 |
+| [workers/magi2/README.md](README.md) | 読み上げの入口・署名・上限・止め方（`SPEECH_ENABLED` を false）。C2 の入口と止め方（`WS_ENABLED`） | C1・C2 |
+| [.github/AI_MODELS.md](../../.github/AI_MODELS.md)・[config/ai-models.json](../../config/ai-models.json) | Fish Audio のモデルと smoke | C1 |
 | `data/magi-versions.json` | 各公開の更新履歴（A 7.2） | C1・C1b・C2 |
-| [magi-app/README.md](magi-app/README.md) | `@capacitor/share` | C1 |
+| [magi-app/README.md](../../magi-app/README.md) | `@capacitor/share` | C1 |
 
 ## 9. 実装計画
 
