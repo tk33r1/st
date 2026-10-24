@@ -92,7 +92,7 @@
               "name": "曲をリクエストするにはどうすればよいですか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームとひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。"
+                "text": "「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームは必須、ひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。"
               }
             },
             {
@@ -1474,8 +1474,8 @@
           <div class="bar"><b id="bar"></b></div>
           <span class="lab" id="ptime">0:30</span>
         </div>
-        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
-          <input class="txt" id="name" maxlength="20">
+        <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+          <input class="txt" id="name" maxlength="20" required>
         </label>
         <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
           <textarea id="msg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
@@ -1493,8 +1493,8 @@
           <textarea id="freeText" maxlength="140" placeholder="例: たしかCMで流れてた、女の人が歌うEDM"></textarea>
           <span class="count" id="freeCount">0 / 140</span>
         </label>
-        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
-          <input class="txt" id="freeName" maxlength="20">
+        <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+          <input class="txt" id="freeName" maxlength="20" required>
         </label>
         <div class="err" id="freeErr" hidden></div>
         <button class="send" id="freeSend" disabled>この内容でリクエストする</button>
@@ -1628,8 +1628,8 @@
 
         <!-- 自分が送った投稿で、まだ DJ が触っていないときだけ開く -->
         <div id="songEdit" hidden>
-          <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
-            <input class="txt" id="mineName" maxlength="20">
+          <label class="f"><span class="fh">ニックネーム <span class="req">(必須)</span></span>
+            <input class="txt" id="mineName" maxlength="20" required>
           </label>
           <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
             <textarea id="mineMsg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
@@ -1713,7 +1713,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">曲をリクエストするにはどうすればよいですか？</summary>
           <div class="request-faq-answer">
-            <p>「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームとひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。</p>
+            <p>「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームは必須、ひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。</p>
           </div>
         </details>
         <details class="request-faq-item">
@@ -2149,6 +2149,14 @@
       box.hidden = false;
     }
 
+    function validateName(input, errBox) {
+      errBox.hidden = true;
+      if (input.value.trim()) return true;
+      showErr(errBox, { message: 'ニックネームを入力してください。' });
+      input.focus();
+      return false;
+    }
+
     /* 同じ曲を送り直したとき、書いたニックネーム・ひとことがどうなったか。
        Worker は DJ がまだ触っていなければ前の投稿に入れ（updated）、触ったあとなら入れない（locked） */
     function dupNoteOf(data) {
@@ -2180,6 +2188,7 @@
     }
 
     $('#send').addEventListener('click', async () => {
+      if (!validateName($('#name'), $('#sendErr'))) return;
       await withBusy($('#send'), async () => {
         // 英字名義を待つ間に選び直されても、送信を押した時点の内容を送る
         const track = { ...picked };
@@ -2196,6 +2205,7 @@
     });
 
     $('#freeSend').addEventListener('click', async () => {
+      if (!validateName($('#freeName'), $('#freeErr'))) return;
       const text = $('#freeText').value.trim();
       await withBusy($('#freeSend'), () => submit(
         { free: text, name: $('#freeName').value },
@@ -2895,6 +2905,7 @@
        別の曲を開けるので、応答後に detail を読むと別の曲の鍵を消したり、別の曲名で完了画面を
        出したりする。画面を動かすのは、まだ同じ曲を開いているときだけ */
     $('#mineSave').addEventListener('click', async () => {
+      if (!validateName($('#mineName'), $('#mineErr'))) return;
       const btn = $('#mineSave');
       const err = $('#mineErr');
       const opened = detail;
