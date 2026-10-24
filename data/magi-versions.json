@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "6.71",
+      "date": "2026-10-24",
+      "changes": {
+        "ja": [
+          "右上のメニューをアイコン付きの操作行にそろえ、アプリ管理とアップデート確認をまとめました。Androidの更新確認は左上のチャット一覧から移動しました。",
+          "起動画面の数字を結ぶ光る線が枠の中に透けて見える表示を修正し、入力欄を「Ask MAGI」（日本語は「MAGIに質問」）にしました。",
+          "Android版も6.71として更新しました。6.7からはダウンロードリンクで更新してください。この版から小数2桁のAPK更新にも対応します。"
+        ],
+        "en": [
+          "The top-right menu now uses consistent icon-and-action rows, with app management and update checks together. Android update checks moved out of the chat drawer.",
+          "Fixed glowing connections showing through the numbered frames on the start screen. The input now says Ask MAGI (MAGIに質問 in Japanese).",
+          "The Android app is updated to 6.71. Install it from the download link if you use 6.7. This version also recognizes APK releases with two decimal digits."
+        ]
+      }
+    },
+    {
       "version": "6.7",
       "date": "2026-10-24",
       "changes": {
