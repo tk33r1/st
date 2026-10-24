@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.01",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "︙メニューの「一時チャットの設定」を削除し、会話開始前の中央のパーソナライズボタンから開く形にしました。",
+          "一時チャットの設定が下から滑らかにせり上がり、閉じると下へ戻るようにしました。端末の「動きを減らす」にも対応します。"
+        ],
+        "en": [
+          "Removed Temporary chat settings from the more menu. Open it from the centered personalization button before starting a conversation.",
+          "Temporary chat settings now slide up smoothly and slide down when closed, respecting your reduced-motion preference."
+        ]
+      }
+    },
+    {
       "version": "7.0",
       "date": "2026-10-25",
       "changes": {
