@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.02",
+      "date": "2026-10-25",
+      "changes": {
+        "ja": [
+          "Webの「アプリ管理」をアプリと同じ「バグを報告」の直前に移動しました。",
+          "Web・PWAにも位置情報と通知の切り替え、全会話の書き出し・削除を追加しました。通知は画面を開いて受信している間に利用でき、書き出しには画像と一時チャットを含みません。"
+        ],
+        "en": [
+          "Moved App management on the Web to immediately before Report a bug, matching the app.",
+          "Added location and notification switches, chat export and deletion to Web/PWA. Notifications require an open, receiving page. Exports exclude images and temporary chats."
+        ]
+      }
+    },
+    {
       "version": "7.01",
       "date": "2026-10-25",
       "changes": {
