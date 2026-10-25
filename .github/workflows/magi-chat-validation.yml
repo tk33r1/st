@@ -48,6 +48,7 @@ jobs:
       - name: Require new answers on Web and PWA
         run: |
           node .github/scripts/test-magi-chat-matrix.mjs
+          node .github/scripts/test-magi-chat-review-browser.mjs
           node .github/scripts/test-magi-ws-browser.mjs
       - name: Privacy boundary regression
         run: |

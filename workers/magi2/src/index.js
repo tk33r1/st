@@ -221,8 +221,8 @@ function normaliseMessage(m, counters) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
   }
   if (typeof m.content === 'string') {
-    // fact回答は画面で全文を保存する。送り直すときの切り詰めを画面に頼らず、ここでも上限に収める。
-    if (m.role === 'assistant' && m.mode === 'fact') m = { ...m, content: classifySlice(m.content, DEFAULTS.input.assistant_max_chars) };
+    // 画面・旧APKが保存した長い回答でも会話を続けられるよう、送り直す本文はここでも上限に収める。
+    if (m.role === 'assistant') m = { ...m, content: classifySlice(m.content, DEFAULTS.input.assistant_max_chars) };
     checkText(m.content, m.role === 'user' ? DEFAULTS.input.user_max_chars : DEFAULTS.input.assistant_max_chars, counters);
     if (!m.content.trim()) throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
     const opinions = m.role === 'assistant' && m.mode !== 'fact' ? normaliseDebate(m.debate) : null;

@@ -210,9 +210,9 @@ function renderAgentClarify(turn, raw, interactive) {
 // AGENT_CLARIFY_END
 
 // AGENT_FACT_BEGIN
-// 保存・表示・引用位置は全文のまま、上流へ送り直す事実回答の履歴だけ上限に収める。
+// 保存・表示・引用位置は全文のまま、上流へ送り直すすべての回答の履歴を上限に収める。
 function agentFactHistoryMessage(item) {
-  if (item.role !== 'assistant' || item.mode !== 'fact' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
+  if (item.role !== 'assistant' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
   var text = item.content.slice(0, 4000);
   if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
   return Object.assign({}, item, {content:text});
@@ -384,12 +384,13 @@ function openRatePop(btn, bar) {
 async function rateReply(bar, value) {
   if (agentTemporary()) return;
   if (bar.dataset.removing === 'true') return;
-  var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target];
+  var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target], owner = reactionOwner(bar);
   if (current) {
     bar.dataset.removing = 'true';
     try {
       if (!await unregisterReaction(bar, ctx.target)) { renderAgentError({ message: tr('Could not change the rating. Please try again.', '評価を変更できませんでした。もう一度お試しください。'), code: 'reaction_remove_failed' }); return; }
     } finally { delete bar.dataset.removing; }
+    if (agentTemporary() || currentSessionId !== owner.sessionId || bar.isConnected === false) return;
     showRating(bar, null);
     if (agentRatingOf(current) === value) return;
   }
@@ -1396,6 +1397,7 @@ async function toggleAgentTemporary() {
 function syncAgentPrivacyUI() {
   if (!agentPrivacyState) return;
   var temporary = agentTemporary(), button = document.getElementById('btn-temporary-agent');
+  if (!agentBusy && !agentInput.disabled) agentSendBtn.disabled = agentPrivacyState.attachmentJobs > 0;
   if (button) {
     button.setAttribute('aria-pressed', String(temporary)); button.title = temporary ? tr('Return to normal chat', '通常チャットに戻る') : tr('Temporary chat', '一時チャット');
     button.setAttribute('aria-label', button.title); button.disabled = !!(agentBusy || agentPrivacyState.preparing || agentPrivacyState.switching || agentPrivacyState.attachmentJobs);
@@ -1999,6 +2001,11 @@ async function addAgentAttachments(files) {
       if (generation !== agentGen) return;
       var original = !agentTemporary() && nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
       if (generation !== agentGen) { if (original) nativeHistory.releaseImage(original); return; }
+      // 別の選択・貼り付けがawait中に完了していても4枚を超えない。
+      if (attachments.length >= ATTACH_MAX) {
+        if (original && !attachments.some(function (a) { return a.file === original; })) nativeHistory.releaseImage(original);
+        noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); break;
+      }
       if (original) nativeHistory.retainImage(original);
       attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
       renderAttachTray();
@@ -2147,6 +2154,7 @@ function agentStop() {
 // 送り直しの最中にアプリが閉じても、受信の復元（recovered）で同じように置き換える
 async function agentSend(recovered, retry) {
       if (agentPrivacyState.preparing || agentPrivacyState.switching || agentTemporary() && agentPrivacyState.background) return;
+      if (agentPrivacyState.attachmentJobs) return;
       if (agentBusy || agentDead || agentClosed) return;
       var requestPrivacy = null, privacyGeneration = agentGen;
       agentPrivacyState.preparing = true; syncAgentPrivacyUI();
@@ -2489,23 +2497,65 @@ async function deleteReaction(target, receipt) {
   } catch (_) { return false; }
   finally { clearTimeout(timer); }
 }
-// 登録中の取り消しは、削除トークンを受け取ってから処理する。通信中の状態は保存しない。
-const reactionRegistrations = new WeakMap();
+// 登録の識別子は保存し、通信中のPromiseだけをメモリに持つ。復元した同じ評価からも完了を待てる。
+const reactionRegistrations = new Map();
 const reactionRemovals = new WeakSet();
-function registerReaction(bar, target, em, ctx) {
-  const store = reactionStoreFor(bar);
-  const cell = { em };
-  if (store) { store[target] = cell; persistReactions(); }
-  const pending = sendReaction(target, em, ctx.request, ctx.response).then(receipt => {
-    if (!receipt) return;
-    if (store && store[target] === cell) {
-      cell.id = receipt.id; cell.delete_token = receipt.delete_token; persistReactions();
-    } else deleteReaction(target, receipt);
+function reactionOwner(bar) {
+  var turn = bar.closest('.agent-turn');
+  return { sessionId: currentSessionId, mid: turn && turn.dataset.mid };
+}
+function persistOwnedReaction(owner, target, cell, remove) {
+  if (!owner.sessionId || !owner.mid) return false;
+  var matched = false;
+  function same(value) {
+    return value && (value === cell || cell.registration_id && value.registration_id === cell.registration_id
+      || cell.id && value.id === cell.id && value.delete_token === cell.delete_token);
+  }
+  function update(item) {
+    if (item.role !== 'assistant' || item.mid !== owner.mid || !same(item.reactions && item.reactions[target])) return item;
+    matched = true;
+    var reactions = item.reactions;
+    if (remove) delete reactions[target]; else reactions[target] = cell;
+    return Object.assign({}, item, { reactions: reactions });
+  }
+  if (!agentTemporary() && currentSessionId === owner.sessionId) {
+    agentHistory = agentHistory.map(update);
+    var pending = pendingReactions[owner.mid];
+    if (!matched && pending && same(pending[target])) {
+      matched = true;
+      if (remove) delete pending[target]; else pending[target] = cell;
+    }
+    if (matched) persistReactions();
+    return matched;
+  }
+  // 別の会話や一時チャットを開いていても、元の会話だけを更新する。削除済みなら復活させない。
+  var sessions = agentStoredSessions().map(function (session) {
+    if (session.id !== owner.sessionId) return session;
+    var history = session.history.map(update);
+    return matched ? Object.assign({}, session, { history: history }) : session;
   });
-  reactionRegistrations.set(cell, pending);
+  if (matched) agentNormalStorage(function () {
+    if (typeof nativeHistory !== 'undefined' && nativeHistory && nativeHistory.active) nativeHistory.setSessions(sessions);
+    else safeStore('magi_saved_sessions', sessions);
+  });
+  return matched;
+}
+function registerReaction(bar, target, em, ctx) {
+  const store = reactionStoreFor(bar), owner = reactionOwner(bar);
+  const cell = { em, registration_id: genMid() };
+  if (store) { store[target] = cell; persistReactions(); }
+  const pending = sendReaction(target, em, ctx.request, ctx.response).then(async receipt => {
+    if (!receipt) return;
+    cell.id = receipt.id; cell.delete_token = receipt.delete_token;
+    var saved = false;
+    try { saved = persistOwnedReaction(owner, target, cell, false); } catch (_) {}
+    if (!saved) await deleteReaction(target, receipt);
+    return receipt;
+  }).finally(() => reactionRegistrations.delete(cell.registration_id));
+  reactionRegistrations.set(cell.registration_id, pending);
 }
 async function unregisterReaction(bar, target) {
-  const store = reactionStoreFor(bar);
+  const store = reactionStoreFor(bar), owner = reactionOwner(bar);
   const receipt = store && store[target];
   if (!receipt) return true;
   if (typeof receipt === 'object') {
@@ -2513,9 +2563,11 @@ async function unregisterReaction(bar, target) {
     reactionRemovals.add(receipt);
   }
   try {
-    await reactionRegistrations.get(receipt);
+    var registered = await reactionRegistrations.get(receipt.registration_id);
+    if (registered) { receipt.id = registered.id; receipt.delete_token = registered.delete_token; }
     if (!await deleteReaction(target, receipt)) return false;
-    if (store[target] === receipt) { delete store[target]; persistReactions(); }
+    persistOwnedReaction(owner, target, receipt, true);
+    if (store[target] === receipt) delete store[target];
     return true;
   } finally { if (typeof receipt === 'object') reactionRemovals.delete(receipt); }
 }
