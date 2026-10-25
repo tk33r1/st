@@ -214,7 +214,6 @@ function renderAgentClarify(turn, raw, interactive) {
 function agentFactHistoryMessage(item) {
   if (item.role !== 'assistant' || item.mode !== 'fact' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
   var text = item.content.slice(0, 4000);
-  if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
   return Object.assign({}, item, {content:text});
 }
 function cleanAgentSources(value, text) {
