@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.51",
+      "date": "2026-10-26",
+      "changes": {
+        "ja": [
+          "アプリで、Webで調べた長い回答のあとに続けて質問すると、エラーになることがある不具合を直しました。",
+          "この修正のあとも、長い回答の本文と出典は画面にすべて残ります。"
+        ],
+        "en": [
+          "In the app, fixed an error that could occur when you asked a follow-up after a long answer checked on the web.",
+          "Long answers still show their full text and sources on screen."
+        ]
+      }
+    },
+    {
       "version": "6.5",
       "date": "2026-10-24",
       "changes": {
