@@ -3,7 +3,7 @@ import { BIDI_CONTROL_CHARS, INTENT_CLASSIFY, REPLY_LANGUAGE, SHARED } from './p
 // 本番・実装前確認で同じ材料と問いを組み立てる。
 export function classifySlice(text, limit) {
   const out = String(text || '').slice(0, limit);
-  return /[\uD800-\uDBFF]$/.test(out) ? out.slice(0, -1) : out;
+  return out;
 }
 
 // 事実モードの一般会話だけ、同じ名前の問いをfact_questionsで差し替える。
