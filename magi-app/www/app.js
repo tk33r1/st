@@ -2721,5 +2721,3 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
   });
 })();
 // NATIVE_SHELL_END
-
-function magiSeedUnused(value) { return String(value); }
