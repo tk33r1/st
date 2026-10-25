@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月26日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261026/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月26日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261026/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261026.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年10月26日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261026.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-favicon.svg">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261026/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年10月26日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。",
+      "url": "https://tk.st/job/retailtechdaily/20261026/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261026.webp",
+      "datePublished": "2026-10-26T08:00:00+09:00",
+      "dateModified": "2026-10-26T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "サプライチェーン・店舗自動化",
+        "店舗DX・次世代決済",
+        "SNS話題・生活者のリアル"
+      ],
+      "keywords": [
+        "AI",
+        "POS",
+        "SNS話題・生活者のリアル",
+        "サプライチェーン・店舗自動化",
+        "セミセルフレジ",
+        "セルフレジ",
+        "レジ運用",
+        "中小店舗",
+        "免税対応",
+        "公共施設",
+        "利用マナー",
+        "在庫最適化",
+        "店員負担",
+        "店舗DX",
+        "店舗DX・次世代決済",
+        "店舗自動化",
+        "無人店舗",
+        "物流",
+        "生活者の声",
+        "補助金"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261026/#art-6"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261026/#newslist",
+      "name": "2026年10月26日号 掲載ニュース一覧",
+      "numberOfItems": 6,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-1",
+            "position": 1,
+            "headline": "岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ",
+            "description": "岡山市役所の新庁舎に無人コンビニが設けられることが報じられた。市街地を見渡せる展望テラスの隣に設置される計画で、庁舎を訪れる人や周辺の利用者が日用品などを購入できる環境が整う見通しだ。公共施設の中に無人店舗を組み込む動きは、日常的に人が集まる場所に生活利便機能を重ねる試みといえる。運営事業者や営業時間など詳細は、本記事の情報からは確認できない。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-1",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE0yTkJ6Z3I0UXhHNkVRLXJ0VGtjQWxOWDVUY2JlMHY0akhKZHJvREJxM2xnNDVTRGpUeDZqSmtBcWZTT0U0czl5eVBRSUVvVlhIMVE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "山陽新聞"
+              },
+              "datePublished": "2026-10-23T16:00:00+09:00"
+            },
+            "keywords": [
+              "無人店舗",
+              "公共施設",
+              "店舗自動化"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-2",
+            "position": 2,
+            "headline": "琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援",
+            "description": "琉球銀行とスマレジが業務提携し、沖縄県内の事業者を対象に店舗DXと免税対応を支援する取り組みを発表した。スマレジのPOSレジサービスと銀行の取引基盤を組み合わせ、中小事業者のデジタル化を後押しする狙いとみられる。観光需要の多い沖縄では、免税対応を含む店舗業務の効率化が課題となっており、地域金融機関とIT企業の連携による支援モデルとして注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-2",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5FWHRGcHhqQTB4MnhRNkxCV08wTU05c2tpdHdKbjJYdkQxNDlrbVdEQk1xam5jMFpaY0JaRkVBZ3lQQlNLcXVrSHhtVFl2SnVFamhiRG1NeGhLZDBJME90TXk3Mk5qMFlQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Dellows News"
+              },
+              "datePublished": "2026-10-24T08:06:31+09:00"
+            },
+            "keywords": [
+              "POS",
+              "免税対応",
+              "店舗DX"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-3",
+            "position": 3,
+            "headline": "UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証",
+            "description": "UnityStep AIとレンゴーは、出荷実績データを活用して製品の置場を最適化する実証を開始したと発表した。出荷データをもとに製品の配置を見直すことで、作業効率や在庫管理の改善を目指す。AIによる分析と現場の実データを組み合わせた取り組みで、製品の保管や配置を勘や慣習に頼らない運用への転換を探るものとなる。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-3",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5fX1pYQ2NjaUdCSGVqa1dobDdjWU5HcHpEbWlhUnloLWRuSGFNZGdkQmdhTkFvckVRcHltUVU4Z25LLURfYldvWW9VSVpyQV9FMVNqYg?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ニコニコニュース"
+              },
+              "datePublished": "2026-10-23T15:15:31+09:00"
+            },
+            "keywords": [
+              "AI",
+              "在庫最適化",
+              "物流"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-4",
+            "position": 4,
+            "headline": "シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％",
+            "description": "シスポのセミセルフレジ「OWEN」について、補助金申請サポートの採択率が97.1％に達したと発表された。セミセルフレジは店員と客が役割を分担する方式で、人手不足に悩む中小店舗のレジ省人化を支援するものとされる。補助金の申請を伴走して支援する仕組みが採択につながっている点が特徴で、導入時のコストの壁を下げる施策として注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-4",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1HSEhaalF0OE5XczBHZVNTXzZjMHBQQUNqMmVtclBadGVqc1IxR0tJdUlsNFFneUJZakJjYnhURlRTRGZ5VGc?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Dellows News"
+              },
+              "datePublished": "2026-10-23T13:40:40+09:00"
+            },
+            "keywords": [
+              "セミセルフレジ",
+              "補助金",
+              "中小店舗"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-5",
+            "position": 5,
+            "headline": "1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も",
+            "description": "1人で複数台のセルフレジを回す店員の姿に「共感しかない」との反響が集まったとウォーカープラスが伝えた。客から「有人レジも入れろ」という要望が寄せられる一方で、店員が複数台を見守り対応する負担が浮き彫りになっている。セルフレジが普及する中での、運用体制と客の期待のギャップを示す話題といえる。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-5",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9pVE1Sa0pFZExodkVjS0xveU1jeWtMY2pySkF0U0hWdjljeHd5Umkwc1oxeHR4QUozX1VESEJ5R0pocnBMNHJlaTB2OWVMOGJZZE1aT0hlWlZiRl9qWkl5VnRWQlhwN3FYMU5RakVn?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ウォーカープラス"
+              },
+              "datePublished": "2026-10-24T11:16:09+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "店員負担",
+              "生活者の声"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261026/#art-6",
+            "position": 6,
+            "headline": "セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出",
+            "description": "客がセルフレジに小銭を大量に投入する場面を描いた接客あるあるの漫画が、現場の苦労への共感を呼んでいる。店員の「セルフレジは両替機ではない」という訴えも紹介され、レジ処理の停滞や混雑を招く行為への問題意識が広がっている。作者への取材記事として伝えられ、利用者側のマナーがレジ運用に与える影響を考えさせる話題となった。",
+            "url": "https://tk.st/job/retailtechdaily/20261026/#art-6",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-26T08:00:00+09:00",
+            "dateModified": "2026-10-26T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261026/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5HY3RDWC1jTFM4WjBrQS02NnJCN0RXU0hPUFdYelN2QjVHb05JbHp0ZktMZ1NDQWNYWlpka3pSa3dhVWFHYXlJZlRiQURfSFpOcjVJeElkQi1PMGhxZ0Z2Xy1STi1SMzlZb0oxVjdn?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ウォーカープラス"
+              },
+              "datePublished": "2026-10-24T11:06:04+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "利用マナー",
+              "レジ運用"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261026/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月26日号",
+          "item": "https://tk.st/job/retailtechdaily/20261026/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月26日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月26日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月26日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約4分 / 2,265字
+          </span>
+          <span class="stat">全 6 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。</li><li>地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。</li><li>セルフレジをめぐる『1人で複数台を回す店員への共感』や『小銭の大量投入』といった話題が反響を呼び、利用者の期待と現場運用のギャップが可視化されている。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・生活者のリアル</span></span>
+              <span class="qi-title">1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・生活者のリアル</span></span>
+              <span class="qi-title">セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">6 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">6</strong> / 6</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">6</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">6</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="サプライチェーン・店舗自動化" aria-pressed="false">サプライチェーン・店舗自動化 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・生活者のリアル" aria-pressed="false">SNS話題・生活者のリアル <span class="chip-count">2</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ" data-share-takeaway="公共施設への無人コンビニ併設は、無人店舗の立地を住宅地や駅前から行政拠点へ広げる事例として注目される。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-1">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">山陽新聞</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T16:00:00+09:00" title="出典の公開日時">公開 2026.10.23 16:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE0yTkJ6Z3I0UXhHNkVRLXJ0VGtjQWxOWDVUY2JlMHY0akhKZHJvREJxM2xnNDVTRGpUeDZqSmtBcWZTT0U0czl5eVBRSUVvVlhIMVE?oc=5" target="_blank" rel="noopener noreferrer">岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>岡山市役所の新庁舎に無人コンビニが設けられることが報じられた。市街地を見渡せる展望テラスの隣に設置される計画で、庁舎を訪れる人や周辺の利用者が日用品などを購入できる環境が整う見通しだ。公共施設の中に<strong class="kw-scan">無人店舗</strong>を組み込む動きは、日常的に人が集まる場所に生活利便機能を重ねる試みといえる。運営事業者や営業時間など詳細は、本記事の情報からは確認できない。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">公共施設への無人コンビニ併設は、<strong class="kw-scan">無人店舗</strong>の立地を住宅地や駅前から行政拠点へ広げる事例として注目される。</p>
+              </div>
+              <p class="wim-detail">来庁者の滞在時間を生かした購買機会の創出や、夜間・休日の生活インフラ補完という点で、小売にとって新たな出店モデルを示唆している。自治体と<strong class="kw-scan">無人店舗</strong>の運営者が組む際の、施設運営と収益性の両立も今後の論点になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%84%A1%E4%BA%BA%E5%BA%97%E8%88%97">#無人店舗</a><button type="button" class="topic-watch-btn" data-watch-topic="無人店舗" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%85%AC%E5%85%B1%E6%96%BD%E8%A8%AD">#公共施設</a><button type="button" class="topic-watch-btn" data-watch-topic="公共施設" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E8%87%AA%E5%8B%95%E5%8C%96">#店舗自動化</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗自動化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE0yTkJ6Z3I0UXhHNkVRLXJ0VGtjQWxOWDVUY2JlMHY0akhKZHJvREJxM2xnNDVTRGpUeDZqSmtBcWZTT0U0czl5eVBRSUVvVlhIMVE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援" data-share-takeaway="地域金融機関がPOSベンダーと組むことで、導入・決済・資金面を一体で支援するモデルが広がる可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-2">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">Dellows News</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-24T08:06:31+09:00" title="出典の公開日時">公開 2026.10.24 08:06 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5FWHRGcHhqQTB4MnhRNkxCV08wTU05c2tpdHdKbjJYdkQxNDlrbVdEQk1xam5jMFpaY0JaRkVBZ3lQQlNLcXVrSHhtVFl2SnVFamhiRG1NeGhLZDBJME90TXk3Mk5qMFlQ?oc=5" target="_blank" rel="noopener noreferrer">琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>琉球銀行とスマレジが業務提携し、沖縄県内の事業者を対象に店舗DXと免税対応を支援する取り組みを発表した。スマレジの<strong class="kw-scan">POSレジ</strong>サービスと銀行の取引基盤を組み合わせ、中小事業者のデジタル化を後押しする狙いとみられる。観光需要の多い沖縄では、免税対応を含む店舗業務の効率化が課題となっており、地域金融機関とIT企業の連携による支援モデルとして注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">地域金融機関がPOSベンダーと組むことで、導入・決済・資金面を一体で支援するモデルが広がる可能性がある。</p>
+              </div>
+              <p class="wim-detail">特に免税対応は訪日客の多い地域小売にとって実務負担が大きく、標準機能として組み込まれるかが導入判断の分かれ目になる。ベンダーにとっては、地域金融機関の顧客網を通じた中小店舗へのリーチ拡大につながる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=POS">#POS</a><button type="button" class="topic-watch-btn" data-watch-topic="POS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%85%8D%E7%A8%8E%E5%AF%BE%E5%BF%9C">#免税対応</a><button type="button" class="topic-watch-btn" data-watch-topic="免税対応" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97DX">#店舗DX</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5FWHRGcHhqQTB4MnhRNkxCV08wTU05c2tpdHdKbjJYdkQxNDlrbVdEQk1xam5jMFpaY0JaRkVBZ3lQQlNLcXVrSHhtVFl2SnVFamhiRG1NeGhLZDBJME90TXk3Mk5qMFlQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証" data-share-takeaway="出荷という実データに基づいて置場を決める手法は、経験則に頼りがちな製品配置をAIで見直す試みであり、物流拠点や店舗バックヤードの生産性向上につながる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-3">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">ニコニコニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T15:15:31+09:00" title="出典の公開日時">公開 2026.10.23 15:15 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE5fX1pYQ2NjaUdCSGVqa1dobDdjWU5HcHpEbWlhUnloLWRuSGFNZGdkQmdhTkFvckVRcHltUVU4Z25LLURfYldvWW9VSVpyQV9FMVNqYg?oc=5" target="_blank" rel="noopener noreferrer">UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>UnityStep AIとレンゴーは、出荷実績データを活用して製品の置場を最適化する実証を開始したと発表した。出荷データをもとに製品の配置を見直すことで、作業効率や在庫管理の改善を目指す。AIによる分析と現場の実データを組み合わせた取り組みで、製品の保管や配置を勘や慣習に頼らない運用への転換を探るものとなる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">出荷という実データに基づいて置場を決める手法は、経験則に頼りがちな製品配置をAIで見直す試みであり、物流拠点や店舗バックヤードの生産性向上につながる。</p>
+              </div>
+              <p class="wim-detail">メーカーが保管・出荷の効率化を担うことで、小売の欠品や作業負荷の低減にも波及しうる。実証でどの指標により効果を測るかが、今後の注目点になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI">#AI</a><button type="button" class="topic-watch-btn" data-watch-topic="AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%9C%A8%E5%BA%AB%E6%9C%80%E9%81%A9%E5%8C%96">#在庫最適化</a><button type="button" class="topic-watch-btn" data-watch-topic="在庫最適化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%89%A9%E6%B5%81">#物流</a><button type="button" class="topic-watch-btn" data-watch-topic="物流" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE5fX1pYQ2NjaUdCSGVqa1dobDdjWU5HcHpEbWlhUnloLWRuSGFNZGdkQmdhTkFvckVRcHltUVU4Z25LLURfYldvWW9VSVpyQV9FMVNqYg?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％" data-share-takeaway="導入時の大きな障壁である初期投資を、補助金申請の伴走支援で解消する手法は、中小小売のセルフレジ普及を加速させる実務的なモデルといえる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-4">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">Dellows News</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-23T13:40:40+09:00" title="出典の公開日時">公開 2026.10.23 13:40 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1HSEhaalF0OE5XczBHZVNTXzZjMHBQQUNqMmVtclBadGVqc1IxR0tJdUlsNFFneUJZakJjYnhURlRTRGZ5VGc?oc=5" target="_blank" rel="noopener noreferrer">シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>シスポのセミ<strong class="kw-scan">セルフレジ</strong>「OWEN」について、補助金申請サポートの採択率が97.1％に達したと発表された。セミ<strong class="kw-scan">セルフレジ</strong>は店員と客が役割を分担する方式で、人手不足に悩む中小店舗のレジ<strong class="kw-scan">省人化</strong>を支援するものとされる。補助金の申請を伴走して支援する仕組みが採択につながっている点が特徴で、導入時のコストの壁を下げる施策として注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">導入時の大きな障壁である初期投資を、補助金申請の伴走支援で解消する手法は、中小小売の<strong class="kw-scan">セルフレジ</strong>普及を加速させる実務的なモデルといえる。</p>
+              </div>
+              <p class="wim-detail">採択率の高さは、申請書類の整備をベンダーが担うことへの需要の大きさを示している。ベンダー間の競争軸が機器性能から導入支援へ広がる可能性がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%9F%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セミセルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セミセルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%A3%9C%E5%8A%A9%E9%87%91">#補助金</a><button type="button" class="topic-watch-btn" data-watch-topic="補助金" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%B8%AD%E5%B0%8F%E5%BA%97%E8%88%97">#中小店舗</a><button type="button" class="topic-watch-btn" data-watch-topic="中小店舗" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1HSEhaalF0OE5XczBHZVNTXzZjMHBQQUNqMmVtclBadGVqc1IxR0tJdUlsNFFneUJZakJjYnhURlRTRGZ5VGc?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も" data-share-takeaway="セルフレジの省人化効果は、少人数での監視・サポート業務に依存している点が生活者に見えつつある。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-5">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・生活者のリアル" title="このカテゴリで絞り込み">SNS話題・生活者のリアル</button>
+              <span class="source-tag">ウォーカープラス</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-24T11:16:09+09:00" title="出典の公開日時">公開 2026.10.24 11:16 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE9pVE1Sa0pFZExodkVjS0xveU1jeWtMY2pySkF0U0hWdjljeHd5Umkwc1oxeHR4QUozX1VESEJ5R0pocnBMNHJlaTB2OWVMOGJZZE1aT0hlWlZiRl9qWkl5VnRWQlhwN3FYMU5RakVn?oc=5" target="_blank" rel="noopener noreferrer">1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>1人で複数台の<strong class="kw-scan">セルフレジ</strong>を回す店員の姿に「共感しかない」との反響が集まったとウォーカープラスが伝えた。客から「有人レジも入れろ」という要望が寄せられる一方で、店員が複数台を見守り対応する負担が浮き彫りになっている。<strong class="kw-scan">セルフレジ</strong>が普及する中での、運用体制と客の期待のギャップを示す話題といえる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>の<strong class="kw-scan">省人化</strong>効果は、少人数での監視・サポート業務に依存している点が生活者に見えつつある。</p>
+              </div>
+              <p class="wim-detail">客は有人対応の安心感を求め、店舗は1人で複数台を運用する効率を求めるという構図で、このギャップは導入計画の段階で埋めておく必要がある。サポート要員の配置やレジ台数の設計が、顧客満足と従業員負荷の両立の鍵になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E5%93%A1%E8%B2%A0%E6%8B%85">#店員負担</a><button type="button" class="topic-watch-btn" data-watch-topic="店員負担" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E5%A3%B0">#生活者の声</a><button type="button" class="topic-watch-btn" data-watch-topic="生活者の声" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMibkFVX3lxTE9pVE1Sa0pFZExodkVjS0xveU1jeWtMY2pySkF0U0hWdjljeHd5Umkwc1oxeHR4QUozX1VESEJ5R0pocnBMNHJlaTB2OWVMOGJZZE1aT0hlWlZiRl9qWkl5VnRWQlhwN3FYMU5RakVn?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出" data-share-takeaway="セルフレジの利用者が店舗運用の前提を理解していないと、レジ停止や待ち行列の発生といった現場の混乱につながる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-6">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・生活者のリアル" title="このカテゴリで絞り込み">SNS話題・生活者のリアル</button>
+              <span class="source-tag">ウォーカープラス</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-24T11:06:04+09:00" title="出典の公開日時">公開 2026.10.24 11:06 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE5HY3RDWC1jTFM4WjBrQS02NnJCN0RXU0hPUFdYelN2QjVHb05JbHp0ZktMZ1NDQWNYWlpka3pSa3dhVWFHYXlJZlRiQURfSFpOcjVJeElkQi1PMGhxZ0Z2Xy1STi1SMzlZb0oxVjdn?oc=5" target="_blank" rel="noopener noreferrer">セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>客が<strong class="kw-scan">セルフレジ</strong>に小銭を大量に投入する場面を描いた接客あるあるの漫画が、現場の苦労への共感を呼んでいる。店員の「<strong class="kw-scan">セルフレジ</strong>は両替機ではない」という訴えも紹介され、レジ処理の停滞や混雑を招く行為への問題意識が広がっている。作者への取材記事として伝えられ、利用者側のマナーがレジ運用に与える影響を考えさせる話題となった。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>の利用者が店舗運用の前提を理解していないと、レジ停止や待ち行列の発生といった現場の混乱につながる。</p>
+              </div>
+              <p class="wim-detail">小銭投入のような行為は機器仕様や表示で防げる部分も大きく、硬貨処理機能やUI上の案内設計が店舗側の課題になる。利用ルールを店内サイネージや機器画面で明確に伝える工夫が有効と考えられる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%88%A9%E7%94%A8%E3%83%9E%E3%83%8A%E3%83%BC">#利用マナー</a><button type="button" class="topic-watch-btn" data-watch-topic="利用マナー" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AC%E3%82%B8%E9%81%8B%E7%94%A8">#レジ運用</a><button type="button" class="topic-watch-btn" data-watch-topic="レジ運用" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMibkFVX3lxTE5HY3RDWC1jTFM4WjBrQS02NnJCN0RXU0hPUFdYelN2QjVHb05JbHp0ZktMZ1NDQWNYWlpka3pSa3dhVWFHYXlJZlRiQURfSFpOcjVJeElkQi1PMGhxZ0Z2Xy1STi1SMzlZb0oxVjdn?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8826%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261025/" class="nav-prev">&larr; 2026.10.25 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+</body>
+</html>

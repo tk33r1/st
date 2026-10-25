@@ -1,5 +1,161 @@
 [
   {
+    "date": "20261026",
+    "title": "2026年10月26日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。",
+      "地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。",
+      "セルフレジをめぐる『1人で複数台を回す店員への共感』や『小銭の大量投入』といった話題が反響を呼び、利用者の期待と現場運用のギャップが可視化されている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ",
+        "original_title": "",
+        "source": "山陽新聞",
+        "source_id": "JP-12",
+        "summary": "岡山市役所の新庁舎に無人コンビニが設けられることが報じられた。市街地を見渡せる展望テラスの隣に設置される計画で、庁舎を訪れる人や周辺の利用者が日用品などを購入できる環境が整う見通しだ。公共施設の中に無人店舗を組み込む動きは、日常的に人が集まる場所に生活利便機能を重ねる試みといえる。運営事業者や営業時間など詳細は、本記事の情報からは確認できない。",
+        "why_it_matters": "公共施設への無人コンビニ併設は、無人店舗の立地を住宅地や駅前から行政拠点へ広げる事例として注目される。来庁者の滞在時間を生かした購買機会の創出や、夜間・休日の生活インフラ補完という点で、小売にとって新たな出店モデルを示唆している。自治体と無人店舗の運営者が組む際の、施設運営と収益性の両立も今後の論点になる。",
+        "tags": [
+          "無人店舗",
+          "公共施設",
+          "店舗自動化"
+        ],
+        "search_terms": [
+          "無人コンビニ 公共施設",
+          "unmanned convenience store",
+          "無人店舗 自治体連携",
+          "unmanned store public facility"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE0yTkJ6Z3I0UXhHNkVRLXJ0VGtjQWxOWDVUY2JlMHY0akhKZHJvREJxM2xnNDVTRGpUeDZqSmtBcWZTT0U0czl5eVBRSUVvVlhIMVE?oc=5",
+        "source_pub_ts": 1792738800
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "琉球銀行とスマレジが業務提携し、沖縄県内の事業者を対象に店舗DXと免税対応を支援する取り組みを発表した。スマレジのPOSレジサービスと銀行の取引基盤を組み合わせ、中小事業者のデジタル化を後押しする狙いとみられる。観光需要の多い沖縄では、免税対応を含む店舗業務の効率化が課題となっており、地域金融機関とIT企業の連携による支援モデルとして注目される。",
+        "why_it_matters": "地域金融機関がPOSベンダーと組むことで、導入・決済・資金面を一体で支援するモデルが広がる可能性がある。特に免税対応は訪日客の多い地域小売にとって実務負担が大きく、標準機能として組み込まれるかが導入判断の分かれ目になる。ベンダーにとっては、地域金融機関の顧客網を通じた中小店舗へのリーチ拡大につながる。",
+        "tags": [
+          "POS",
+          "免税対応",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "POSレジ 業務提携",
+          "tax-free POS Okinawa",
+          "地域金融 店舗DX",
+          "retail POS bank partnership"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5FWHRGcHhqQTB4MnhRNkxCV08wTU05c2tpdHdKbjJYdkQxNDlrbVdEQk1xam5jMFpaY0JaRkVBZ3lQQlNLcXVrSHhtVFl2SnVFamhiRG1NeGhLZDBJME90TXk3Mk5qMFlQ?oc=5",
+        "source_pub_ts": 1792796791
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-15",
+        "summary": "UnityStep AIとレンゴーは、出荷実績データを活用して製品の置場を最適化する実証を開始したと発表した。出荷データをもとに製品の配置を見直すことで、作業効率や在庫管理の改善を目指す。AIによる分析と現場の実データを組み合わせた取り組みで、製品の保管や配置を勘や慣習に頼らない運用への転換を探るものとなる。",
+        "why_it_matters": "出荷という実データに基づいて置場を決める手法は、経験則に頼りがちな製品配置をAIで見直す試みであり、物流拠点や店舗バックヤードの生産性向上につながる。メーカーが保管・出荷の効率化を担うことで、小売の欠品や作業負荷の低減にも波及しうる。実証でどの指標により効果を測るかが、今後の注目点になる。",
+        "tags": [
+          "AI",
+          "在庫最適化",
+          "物流"
+        ],
+        "search_terms": [
+          "製品置場 最適化",
+          "warehouse slotting optimization",
+          "出荷実績データ AI",
+          "shipment data AI layout"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5fX1pYQ2NjaUdCSGVqa1dobDdjWU5HcHpEbWlhUnloLWRuSGFNZGdkQmdhTkFvckVRcHltUVU4Z25LLURfYldvWW9VSVpyQV9FMVNqYg?oc=5",
+        "source_pub_ts": 1792736131
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-17",
+        "summary": "シスポのセミセルフレジ「OWEN」について、補助金申請サポートの採択率が97.1％に達したと発表された。セミセルフレジは店員と客が役割を分担する方式で、人手不足に悩む中小店舗のレジ省人化を支援するものとされる。補助金の申請を伴走して支援する仕組みが採択につながっている点が特徴で、導入時のコストの壁を下げる施策として注目される。",
+        "why_it_matters": "導入時の大きな障壁である初期投資を、補助金申請の伴走支援で解消する手法は、中小小売のセルフレジ普及を加速させる実務的なモデルといえる。採択率の高さは、申請書類の整備をベンダーが担うことへの需要の大きさを示している。ベンダー間の競争軸が機器性能から導入支援へ広がる可能性がある。",
+        "tags": [
+          "セミセルフレジ",
+          "補助金",
+          "中小店舗"
+        ],
+        "search_terms": [
+          "セミセルフレジ 補助金",
+          "semi-self checkout subsidy",
+          "中小店舗 レジ省人化",
+          "SMB checkout subsidy support"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1HSEhaalF0OE5XczBHZVNTXzZjMHBQQUNqMmVtclBadGVqc1IxR0tJdUlsNFFneUJZakJjYnhURlRTRGZ5VGc?oc=5",
+        "source_pub_ts": 1792730440
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-06",
+        "summary": "1人で複数台のセルフレジを回す店員の姿に「共感しかない」との反響が集まったとウォーカープラスが伝えた。客から「有人レジも入れろ」という要望が寄せられる一方で、店員が複数台を見守り対応する負担が浮き彫りになっている。セルフレジが普及する中での、運用体制と客の期待のギャップを示す話題といえる。",
+        "why_it_matters": "セルフレジの省人化効果は、少人数での監視・サポート業務に依存している点が生活者に見えつつある。客は有人対応の安心感を求め、店舗は1人で複数台を運用する効率を求めるという構図で、このギャップは導入計画の段階で埋めておく必要がある。サポート要員の配置やレジ台数の設計が、顧客満足と従業員負荷の両立の鍵になる。",
+        "tags": [
+          "セルフレジ",
+          "店員負担",
+          "生活者の声"
+        ],
+        "search_terms": [
+          "セルフレジ 店員 負担",
+          "self-checkout staff workload",
+          "有人レジ 要望",
+          "self-checkout customer reaction"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9pVE1Sa0pFZExodkVjS0xveU1jeWtMY2pySkF0U0hWdjljeHd5Umkwc1oxeHR4QUozX1VESEJ5R0pocnBMNHJlaTB2OWVMOGJZZE1aT0hlWlZiRl9qWkl5VnRWQlhwN3FYMU5RakVn?oc=5",
+        "source_pub_ts": 1792808169
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-07",
+        "summary": "客がセルフレジに小銭を大量に投入する場面を描いた接客あるあるの漫画が、現場の苦労への共感を呼んでいる。店員の「セルフレジは両替機ではない」という訴えも紹介され、レジ処理の停滞や混雑を招く行為への問題意識が広がっている。作者への取材記事として伝えられ、利用者側のマナーがレジ運用に与える影響を考えさせる話題となった。",
+        "why_it_matters": "セルフレジの利用者が店舗運用の前提を理解していないと、レジ停止や待ち行列の発生といった現場の混乱につながる。小銭投入のような行為は機器仕様や表示で防げる部分も大きく、硬貨処理機能やUI上の案内設計が店舗側の課題になる。利用ルールを店内サイネージや機器画面で明確に伝える工夫が有効と考えられる。",
+        "tags": [
+          "セルフレジ",
+          "利用マナー",
+          "レジ運用"
+        ],
+        "search_terms": [
+          "セルフレジ 小銭 投入",
+          "self-checkout coin overload",
+          "セルフレジ 利用マナー",
+          "self-checkout etiquette"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5HY3RDWC1jTFM4WjBrQS02NnJCN0RXU0hPUFdYelN2QjVHb05JbHp0ZktMZ1NDQWNYWlpka3pSa3dhVWFHYXlJZlRiQURfSFpOcjVJeElkQi1PMGhxZ0Z2Xy1STi1SMzlZb0oxVjdn?oc=5",
+        "source_pub_ts": 1792807564
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261025",
     "title": "2026年10月25日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "10月24日は、大手流通チェーンによる次世代レジやカートの現場導入検証が活発化しました。 店頭サイネージと購買データを掛け合わせたリテールメディアの戦略が引き続き注目を集めています。",
