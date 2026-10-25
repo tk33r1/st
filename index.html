@@ -3310,8 +3310,8 @@
     #agent-bug-form button:disabled { opacity: .45; cursor: default; }
     #agent-bug-form textarea:focus-visible, #agent-bug-form button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
   /* 一時会話とパーソナライズ。既存のパネル・テーマを使う。 */
-#btn-temporary-agent { min-width: 44px; min-height: 44px; color: inherit; background: transparent; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-#btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; border-radius: 8px; }
+#btn-temporary-agent { background: transparent; border: 0; padding: 0; }
+#btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; outline-offset: 3px; border-radius: 4px; }
 #btn-temporary-agent:focus-visible { outline: 2px solid currentColor; }
 #btn-temporary-agent:disabled { opacity: .4; cursor: default; }
 .agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
@@ -3822,9 +3822,9 @@
               title="New Conversation" data-ja-title="新しい会話"><svg aria-hidden="true" width="14" height="14" stroke-width="1.8"><use href="#ic-new-chat" /></svg></button>
             <button id="btn-history-agent" class="dock-icon-btn"
               title="View conversation history" data-ja-title="会話履歴を表示"><svg aria-hidden="true" width="14" height="14" stroke-width="1.8"><use href="#ic-clock" /></svg></button>
+            <button id="btn-temporary-agent" class="dock-icon-btn" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path class="temporary-plus" d="M9 11h6m-3-3v6"/></svg></button>
             <!-- Kebab Menu (More Options) -->
-            <button id="btn-temporary-agent" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path class="temporary-plus" d="M9 11h6m-3-3v6"/></svg></button>
-<div class="relative flex items-center justify-center">
+            <div class="relative flex items-center justify-center">
               <button id="btn-more-agent" class="dock-icon-btn"
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" stroke-width="2"><use href="#ic-kebab" /></svg>
