@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.03",
+      "date": "2026-10-26",
+      "changes": {
+        "ja": [
+          "Androidでパーソナライズを有効にした通常チャットが送信エラーになる問題を修正しました。",
+          "長い討議回答の後も会話を続けられるようにし、画像の準備中は送信を待つようにしました。",
+          "会話を切り替えた後に登録された評価も、元の会話で正しく保存・取り消しできるようにしました。",
+          "Web・PWA・Androidの受信と保存復元を公開前に検査し、不足や失敗があれば公開を止める仕組みを追加しました。"
+        ],
+        "en": [
+          "Fixed Android send errors in normal chats with personalization enabled.",
+          "Chats can continue after long deliberation answers, and sending waits until attached images are ready.",
+          "Ratings completed after switching chats are saved to their original conversation and can be removed correctly.",
+          "Added publication gates for Web, PWA and Android reception and saved-chat recovery; missing or failed checks stop publication."
+        ]
+      }
+    },
+    {
       "version": "7.02",
       "date": "2026-10-25",
       "changes": {
