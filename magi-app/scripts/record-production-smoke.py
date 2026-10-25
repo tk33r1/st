@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import secrets
+import re
 import subprocess
 import time
 import xml.etree.ElementTree as ET
@@ -13,7 +14,10 @@ from production_smoke_state import SmokeObservation
 parser = argparse.ArgumentParser(description=__doc__)
 for name in ['adb', 'device', 'apk', 'report']:
     parser.add_argument('--' + name, required=True)
+parser.add_argument('--marker', help='未送信の費用ガード計画を再観測するときだけ、同じ固有語を指定する')
 args = parser.parse_args()
+if args.marker and not re.fullmatch(r'MAGI-QA-release-[a-f0-9]{24}', args.marker):
+    parser.error('--marker must be a release guard nonce')
 root = Path(__file__).resolve().parents[2]
 run = lambda *a: subprocess.check_output([args.adb, '-s', args.device, *a], timeout=30)
 utc = lambda: datetime.now(timezone.utc).isoformat()
@@ -21,7 +25,7 @@ stamp = json.loads(subprocess.check_output(['node', '.github/scripts/magi-chat-c
 report = {'schema': 1, 'kind': 'production', 'pass': False, 'started': utc(), **stamp}
 report['pass'] = False
 # 会社別D1ガードの固定合成入力として、送信前にこの文面を計画へ登録できる印。
-marker = 'MAGI-QA-release-' + secrets.token_hex(12)
+marker = args.marker or 'MAGI-QA-release-' + secrets.token_hex(12)
 question = 'Reply with exactly this word: ' + marker
 observation = SmokeObservation(marker)
 report['apkSha256'] = hashlib.sha256(Path(args.apk).read_bytes()).hexdigest()

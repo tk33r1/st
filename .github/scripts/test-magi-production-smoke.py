@@ -28,6 +28,14 @@ class ObservationTest(unittest.TestCase):
         result = subprocess.run([sys.executable, '-X', 'utf8', str(script), '--help'], capture_output=True, encoding='utf-8')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('--apk', result.stdout)
+        self.assertIn('--marker', result.stdout)
+
+    def test_invalid_guard_nonce_is_rejected_before_adb(self):
+        script = Path(__file__).resolve().parents[2] / 'magi-app/scripts/record-production-smoke.py'
+        result = subprocess.run([sys.executable, '-X', 'utf8', str(script), '--adb', 'unavailable', '--device', 'unused',
+                                 '--apk', 'unused', '--report', 'unused', '--marker', 'not-a-release-nonce'], capture_output=True, encoding='utf-8')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('--marker must be a release guard nonce', result.stderr)
 
     def ready(self):
         o = SmokeObservation('UNIQUE')
