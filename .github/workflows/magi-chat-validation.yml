@@ -1,0 +1,120 @@
+name: MAGI Chat Gate
+
+# skip-ciコミットはPagesも公開されない。公開されるpushでは同じSHAを必ず検査する。
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      sha:
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+# 純粋な検査だけを置換する。botの書き込みworkflowとはgroupを共有しない。
+concurrency:
+  group: magi-chat-validation-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.sha }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install browser verification tools
+        run: |
+          npm --prefix .github/scripts ci --no-audit --no-fund
+          .github/scripts/node_modules/.bin/playwright install --with-deps chromium
+      - name: Reject incompatible contracts and unverified releases
+        run: |
+          node --test .github/scripts/test-magi-chat-contract.mjs .github/scripts/test-magi-release-gate.mjs .github/scripts/test-magi-chat-publication.mjs
+          python .github/scripts/test-magi-production-smoke.py
+      - name: Existing regressions
+        run: node --test --test-force-exit .github/scripts/test-magi2.mjs
+      - name: Require new answers on Web and PWA
+        run: |
+          node .github/scripts/test-magi-chat-matrix.mjs
+          node .github/scripts/test-magi-ws-browser.mjs
+      - name: Privacy boundary regression
+        run: |
+          node .github/scripts/test-magi-privacy-native-browser.mjs
+          node .github/scripts/test-magi-privacy-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: magi-chat-browser-${{ inputs.sha || github.sha }}
+          path: workers/.wrangler/magi-chat-gate/
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build a separate app with the real native receiver
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.1.0'
+          npm --prefix magi-app ci --no-audit --no-fund
+          npm --prefix .github/scripts ci --no-audit --no-fund
+          (cd magi-app && npx cap sync android)
+          chmod +x magi-app/android/gradlew
+          magi-app/android/gradlew -p magi-app/android assembleDebug testDebugUnitTest -PmagiB3Probe=true --no-daemon --console=plain
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Require actual Java transport, persistence and process recovery
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb -s emulator-5554 install -r magi-app/android/app/build/outputs/apk/debug/app-debug.apk
+            node .github/scripts/test-magi-chat-matrix.mjs --android --adb=adb --device=emulator-5554 --apk=magi-app/android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: magi-chat-android-${{ inputs.sha || github.sha }}
+          path: |
+            workers/.wrangler/magi-chat-gate/
+            magi-app/android/app/build/reports/tests/testDebugUnitTest/
+
+  release-readiness:
+    if: always()
+    needs: [browser, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Missing or unsuccessful jobs block publication
+        env:
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          ANDROID_RESULT: ${{ needs.android.result }}
+        run: test "$BROWSER_RESULT" = success && test "$ANDROID_RESULT" = success

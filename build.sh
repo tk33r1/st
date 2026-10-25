@@ -12,6 +12,12 @@ cd "$(dirname "$0")"
 OUT=_site
 SEARCH_BUILD_PYTHON="${SEARCH_BUILD_PYTHON:-python3}"
 
+# 最重要の会話契約を先に検査し、Pagesでは同じSHAの実ブラウザ・Java検査も待つ。
+node .github/scripts/magi-chat-contract.mjs
+if [ "${CF_PAGES:-}" = "1" ]; then
+  node .github/scripts/wait-magi-chat-check.mjs
+fi
+
 # 公開しないもの。当たったファイルは _site/ に写さない。
 # 新しく足すものも、ここに当たらなければ公開される（ページを増やすたびに書き足さなくてよい）。
 private() {

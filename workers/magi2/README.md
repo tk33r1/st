@@ -404,6 +404,10 @@ node .github/scripts/magi2-daily-check.mjs --deployment-message
 
 ## ローカル検証のコマンド
 
+公開時は[会話の公開前検査](../../magi-app/公開前検査.md)も必須。
+`deploy-worker.yml`のmagi2公開は、対象SHAのWeb/PWA・実Java受信の合成検査が成功してからキー同期とデプロイへ進む。
+手元の低水準の`wrangler deploy`でこの検査を省略しない。
+
 ```sh
 node --test .github/scripts/test-magi2.mjs
 python -B .github/scripts/test-site-search-index.py

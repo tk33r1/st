@@ -11,7 +11,7 @@ const language = { version: 1, code: 'ja', source: 'ui' };
 const browser = await chromium.launch({ headless: true });
 try {
   for (const mobile of [true, false]) {
-    const context = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: mobile ? 390 : 1600, height: 900 } });
+    const context = await browser.newContext({ locale: 'ja-JP', reducedMotion: 'no-preference', viewport: { width: mobile ? 390 : 1600, height: 900 } });
     await context.addInitScript(() => {
       localStorage.setItem('lang', 'ja'); sessionStorage.setItem('magi_transport', 'sse');
       const history = [{ role: 'user', content: 'NORMAL-A' }, { role: 'assistant', content: 'NORMAL-REPLY', mode: 'fact' }];

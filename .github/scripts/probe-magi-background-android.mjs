@@ -16,6 +16,7 @@ const interrupt = arg('interrupt', 'off') === 'on', succeeds = scenario === 'suc
 assert(adb && /^\d+$/.test(transport)); assert(['home', 'browser', 'lock'].includes(mode)); assert.match(label, /^[a-z0-9-]+$/);
 assert(Number.isInteger(seconds) && seconds >= 20 && seconds <= 310); assert(['success', 'eof', 'error', 'invalid', 'http429', 'stall', 'stop'].includes(scenario));
 assert(['granted', 'denied'].includes(notifications)); assert(!notification || !restart && mode !== 'lock' && notifications === 'granted');
+const personalization = arg('personalization', 'off') === 'on';
 const pkg = 'st.tk.magi.b3probe', port = 18765, debugPort = 19223;
 const dir = fileURLToPath(new URL('../../workers/.wrangler/magi-b3-native-20261020/', import.meta.url)); mkdirSync(dir, { recursive: true });
 const run = (...args) => execFileSync(adb, ['-t', transport, ...args], { encoding: 'utf8', timeout: 20000 });
@@ -33,11 +34,13 @@ const server = createServer((req, res) => {
     requests++;
     let value; try { value = JSON.parse(body); } catch (_) { res.writeHead(400); res.end(); return; }
     if (requests !== 1 || req.method !== 'POST' || req.url !== '/magi2/chat' || value.messages.at(-1).content !== 'B3 synthetic background probe') { res.writeHead(400); res.end(); return; }
+    assert.equal(value.privacy_contract === 1, personalization);
     const start = Date.now(); streamStarted();
     function send(event, data) { events.push({ event, elapsed: Date.now() - start }); res.write('event: ' + event + '\ndata: ' + JSON.stringify(data) + '\n\n'); }
     function later(fraction, callback) { const timer = setTimeout(callback, Math.round(seconds * 1000 * fraction)); timers.add(timer); }
     if (scenario === 'http429') { later(0.5, () => { res.writeHead(429, { 'Content-Type': 'application/json' }); res.end('{"error":{"message":"Synthetic rate limit"}}'); }); return; }
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store' }); res.write(':' + ' '.repeat(2048) + '\n\n');
+    if (personalization) send('session', { conversation_mode: 'normal', personalization_applied: true });
     send('classification', { version: 1, intent: 'consult', mode: 'consult', fresh: 'no', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: { version: 1, code: 'en', source: 'ui' } });
     send('title', { text: 'B3 synthetic conversation' });
     const beat = setInterval(() => res.write(': ping\n\n'), 8000); timers.add(beat);
@@ -81,12 +84,17 @@ try {
     plugin.read = async options => { await held; return read(options); };
   });
   if (notifications === 'denied') await page.evaluate(() => localStorage.setItem('magi_notifications_asked', '1'));
-  await page.evaluate(() => {
-    window.fetch = () => Promise.reject(new Error('B3 native test blocks JS fetch'));
+  await page.evaluate(personalization => {
+    // 能力照会だけ合成応答とし、外部AI・その他のJS通信は引き続き止める。
+    window.fetch = url => String(url).endsWith('/magi2/models?capabilities=1')
+      ? Promise.resolve(new Response(JSON.stringify({ features: { privacy_contract: 1, personalization: true } }), { headers: { 'Content-Type': 'application/json' } }))
+      : Promise.reject(new Error('B3 native test blocks JS fetch'));
+    localStorage.setItem('magi_location_enabled', '0'); // 合成試験では位置権限・測位を求めない。
+    saveAgentPersonalization({ version: 1, enabled: personalization, preferred_name: 'SYNTHETIC-NAME', custom_instructions: '' });
     syncCurrentToSaved(); resetAgent(); agentInput.value = 'B3 synthetic background probe';
     const make = nativeConversation.id; nativeConversation.id = () => (window.nativeTestId = make());
     agentSend();
-  });
+  }, personalization);
   await Promise.race([started, sleep(20000).then(() => { throw Error('native_stream_not_started'); })]);
   ({ nativeId, sessionId } = await page.evaluate(() => ({ nativeId: window.nativeTestId, sessionId: currentSessionId })));
   assert.match(nativeId, /^request_/);
@@ -117,8 +125,9 @@ try {
   const data = run('shell', 'run-as', pkg, 'cat', 'files/magi/pending/' + nativeId + '/events.sse');
   const serviceStopped = !/isForeground=true/.test(run('shell', 'dumpsys', 'activity', 'services', pkg));
   const wakeReleased = !wakeHeld();
-  report = { label, mode, seconds, scenario, restart, notification, notifications, holdUi, keepForeground, interrupt, paid_ai_calls: 0, devtools_disconnected: true, meta, serviceStopped, wakeAcquired, wakeReleased, receivedDone: /event: done\r?\n/.test(data), events, requests };
+  report = { label, mode, seconds, scenario, restart, notification, notifications, holdUi, keepForeground, interrupt, paid_ai_calls: 0, personalization, devtools_disconnected: true, meta, serviceStopped, wakeAcquired, wakeReleased, receivedDone: /event: done\r?\n/.test(data), events, requests };
   writeFileSync(dir + label + '.json', JSON.stringify(report, null, 2) + '\n');
+  if (personalization && !interrupt && scenario !== 'http429') assert.match(data, /^event: session\r?\n/, 'sessionを受信順に耐久保存する');
   assert.equal(meta.status, interrupt ? 'receiving' : succeeds ? 'complete' : scenario === 'stop' ? 'stopped' : 'failed');
   assert(serviceStopped && wakeReleased);
   if (scenario === 'stall') assert.equal(meta.error, 'timeout');

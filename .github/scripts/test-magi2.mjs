@@ -15,6 +15,7 @@ import './test-magi-native-input.mjs';
 import './test-magi-native-background.mjs';
 import './test-magi-native-widget.mjs';
 import './test-magi-native-location.mjs';
+import './test-magi-chat-contract.mjs';
 
 test('一時/設定: 契約・文字数・旧設定を検査し、一時とオフの設定を破棄する', () => {
   const w = worker(), parse = value => JSON.parse(JSON.stringify(w.ctx.chatPrivacy(value)));
