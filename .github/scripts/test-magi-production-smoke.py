@@ -8,10 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'magi-app/scripts')
 from production_smoke_state import SmokeObservation
 
 
-def rows(*, text='', send='Send', reply='', temporary=False, checked=None):
+def rows(*, text='', send='Send', reply='', temporary=False, checked=None, label=None, checkable=True):
     root = ET.Element('hierarchy')
     if checked is not None:
-        ET.SubElement(root, 'node', {'resource-id': 'personal-enabled', 'checked': str(checked).lower()})
+        ET.SubElement(root, 'node', {'resource-id': 'personal-enabled', 'checked': str(checked).lower(), 'checkable': str(checkable).lower()})
+    if label is not None:
+        ET.SubElement(root, 'node', {'resource-id': 'personal-enabled-label', 'text': label})
     ET.SubElement(root, 'node', {'resource-id': 'btn-temporary-agent', 'checked': str(temporary).lower()})
     ET.SubElement(root, 'node', {'resource-id': 'agent-input', 'text': text})
     ET.SubElement(root, 'node', {'resource-id': 'agent-send', 'content-desc': send})
@@ -78,6 +80,24 @@ class ObservationTest(unittest.TestCase):
         o.observe(rows(text=o.question))
         o.observe(rows(send='Stop'))
         self.assertFalse(o.observe(rows(reply=o.marker)))
+
+    def test_webview_explicit_label_requires_saved_and_reopened_on(self):
+        for label in ['Personalization: on', 'パーソナライズ: オン']:
+            o = SmokeObservation('UNIQUE')
+            o.observe(rows(checked=False, checkable=False, label=label))
+            self.assertFalse(o.settings_on)
+            o.observe(rows())
+            o.observe(rows(checked=False, checkable=False, label=label))
+            self.assertTrue(o.settings_on)
+            o.observe(rows(text=o.question)); o.observe(rows(send='Stop'))
+            self.assertTrue(o.observe(rows(reply=o.marker)))
+
+    def test_off_missing_or_conflicting_labels_do_not_count(self):
+        for label, checkable in [('Personalization: off', False), ('パーソナライズ: オフ', False), (None, False), ('Personalization: on', True)]:
+            o = SmokeObservation('UNIQUE')
+            o.observe(rows(checked=False, checkable=checkable, label=label)); o.observe(rows())
+            o.observe(rows(checked=False, checkable=checkable, label=label))
+            self.assertFalse(o.settings_on)
 
 
 if __name__ == '__main__':
