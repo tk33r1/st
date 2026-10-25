@@ -106,6 +106,7 @@ function checkText(text, maxChars, counters) {
 }
 
 
+// 過去の日のrate_limit行は蓄積したまま。削除による整理の余地がある。
 // rate_limit の (key, period) の数を1つ進めて返す。limit に達していたら進めずに null を返す
 // （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
 // 回数制限（IP・全体・リアクション）と、通知メールの「今日はもう送った」印（limit = 1）に使う。
@@ -2284,6 +2285,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         if (wantSuggest && answer !== null) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,
             signal => fetchSuggestion(upstream, [...plainMessages, { role: 'assistant', content: answer }], context, langNote, signal, log), stop.signal);
+          // 予測質問を作れなかった場合、利用者への案内は出さない。
           if (text) send('suggest', { text });
         }
         // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
