@@ -1,0 +1,71 @@
+name: Dependency Security Watch
+
+on:
+  schedule:
+    # 毎日 09:17 JST（GitHub の混雑により遅れることがある）。
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/dependabot.yml'
+      - '.github/workflows/dependency-watch.yml'
+      - '.github/scripts/dependency-watch*'
+      - '.github/scripts/publish-dependency-watch.cjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-watch-${{ github.event.pull_request.number || 'scheduled' }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Test monitor without network
+        run: node --test .github/scripts/dependency-watch.test.mjs
+
+  watch:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Check releases and vulnerabilities
+        id: scan
+        env:
+          DEPENDENCY_REPORT: ${{ runner.temp }}/dependency-watch.json
+        run: node .github/scripts/dependency-watch.mjs
+      - name: Publish changed findings
+        if: ${{ !cancelled() && (steps.scan.outcome == 'success' || steps.scan.outcome == 'failure') }}
+        uses: actions/github-script@v9.0.0
+        env:
+          DEPENDENCY_REPORT: ${{ runner.temp }}/dependency-watch.json
+        with:
+          script: |
+            const publish = require('./.github/scripts/publish-dependency-watch.cjs');
+            await publish({ github, context, core });
+      - name: Save report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: dependency-watch
+          path: ${{ runner.temp }}/dependency-watch.json
+          if-no-files-found: warn
+          retention-days: 30

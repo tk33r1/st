@@ -1,0 +1,58 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /workers
+      - /magi-app
+      - /game/reverse-recaptcha
+      - /.github/scripts
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:40'
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ['*']
+    commit-message:
+      prefix: update
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:50'
+      timezone: Asia/Tokyo
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: update
+
+  - package-ecosystem: pip
+    directory: /.github/scripts
+    schedule:
+      interval: weekly
+      day: monday
+      time: '10:00'
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: update
+
+  - package-ecosystem: gradle
+    directory: /magi-app/android
+    schedule:
+      interval: weekly
+      day: monday
+      time: '10:10'
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: update

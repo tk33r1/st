@@ -193,6 +193,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
     `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
     `/models` APIから更新候補を検知する。スモークテストは毎週回し、候補が通ればレビュー用PRへ出し、
     失敗したらIssueで通知する。自動マージ・自動デプロイはしない。運用詳細は `.github/AI_MODELS.md`。
+  - `dependency-watch.yml`（毎日09:17 JST＋手動）: Node.jsの公式更新・サポート期限、npmのlockfileと同梱ライブラリ・固定Python依存の既知の脆弱性を点検し、変化があったときだけIssueを更新する。通信・解析エラーも通知し、検査失敗にする。`.github/dependabot.yml`はnpm・GitHub Actions・pip・Android Gradleの更新PRを毎週月曜に作る。自動適用はしない。範囲・GitHub設定・更新手順は`.github/DEPENDENCIES.md`。
   - **bot のコミットの決まり**:
     - main に push する workflow は、どれも `.github/scripts/push-with-retry.sh` で push する（取り込んでから push し、
       弾かれたら取り込みからやり直す）。workflow をまたぐ `concurrency.group` の共有はしない（待機中の実行が
