@@ -1109,8 +1109,9 @@
 
   <script src="../../dj/assets/dj-modal.js?v=20261001b"></script>
   <script src="../../dj/assets/dj-request-core.js?v=20261002"></script>
-  <script src="./audio-analysis.js?v=20261002"></script>
+  <script src="./audio-analysis.js?v=20261025_1"></script>
   <script type="module">
+    import { createAnalysisQueue, analysisNotice } from './analysis-queue.js?v=20261025_2';
     import { effBpm, bpmForMix, songCamelot, keyFit, bpmFit, likePoints, totalPoints, transitionSignature }
       from './transition-score.js?v=20261004_1';
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
@@ -1222,7 +1223,7 @@
         (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
           : s.explicitness === 'cleaned' ? '<span class="spec">CLEAN</span>' : '') +
         bpmChip(s) + keyChip +
-        (analyzing.has(s.id) ? '<span class="spec busy">プレビューを解析中…</span>' : '') +
+        analysisHTML(s) +
         '</div>';
       const info = '<div class="info">' + (s.isFree
         ? '<div class="flag">⚠ カタログ外 — 本人の自由入力</div>' +
@@ -1264,8 +1265,14 @@
        http(s) か確かめる（サーバでも確かめているが、href に入れる側でもう一度） */
     const INFO_KIND = { tieup: 'タイアップ', viral: 'SNS', chart: 'チャート', revival: 'リバイバル', other: '情報' };
     const infoBusy = new Set();   // 「作り直す」を押して応答を待っている曲
-    const analyzing = new Set();  // プレビューを解析している曲（下の「プレビューからの推定」）
-    const analyzed = new Set();   // この画面で一度解析を試した曲。失敗しても繰り返さない
+    const analysisPins = new Map(); // 保存より前に始まった一覧取得から推定値を守る
+
+    function analysisHTML(s) {
+      const notice = analysisNotice(s, analysisQueue.getState(s));
+      if (!notice) return '';
+      return chip(notice.text, notice.busy ? 'busy' : '') + (notice.retry
+        ? '<button type="button" class="spec" data-do="analysis">解析を再試行</button>' : '');
+    }
 
     function httpUrl(v) {
       try {
@@ -1448,6 +1455,11 @@
         if (req > pin.done) pins.delete(song.id);
         else song.status = pin.status;
       }
+      const analysisPin = analysisPins.get(song.id);
+      if (analysisPin) {
+        if (req > analysisPin.done) analysisPins.delete(song.id);
+        else Object.assign(song, analysisPin.values);
+      }
       // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）。
       // 推定が要るかはサーバの値で決めるので、差し替える前の値を残しておく
       song.serverBpm = song.bpm;
@@ -1476,7 +1488,7 @@
         online(true);
         render();
         announce(fresh, again);
-        analyzeQueue();
+        analysisQueue.pump();
       } catch {
         if (req > loadShown) online(false);
       }
@@ -1598,6 +1610,7 @@
       }
       if (what === 'prev') { preview.toggle(s.id, s.previewUrl); return; }
       if (what === 'info') { refreshInfo(s.id); return; }
+      if (what === 'analysis') { analysisQueue.retry(s.id); return; }
       const status = STATUS_META[what];
       if (status && status.done) setStatus(s.id, what, status.done);
     }
@@ -1767,53 +1780,25 @@
     }
 
     /* ── プレビューからの推定 ───────────────
-       GetSongBPM でも Deezer でも取れなかった曲は、このブラウザでプレビューを解析して
-       推定値をサーバへ入れる（空欄のときだけ入る。中身は同じディレクトリの audio-analysis.js）。
-       投稿直後は外部サービスの取得が裏で走っているので、少し待ってから手を付ける。
-       解析は主スレッドで数百 ms かかるので、1曲ずつ間を空けて流す。 */
-    const ANALYZE_AFTER = 20000;
-    let analyzeRunning = false;
-
-    const needsAnalysis = (s) => !s.isFree && !!s.previewUrl && !analyzed.has(s.id)
-      && (s.serverBpm == null || !(s.camelot || s.songKey))
-      && Date.now() - (asDate(s.createdAt) || 0) > ANALYZE_AFTER;
-
-    async function analyzeQueue() {
-      if (analyzeRunning || !window.DJAudioAnalysis) return;
-      analyzeRunning = true;
-      try {
-        for (;;) {
-          // 見ているタブの曲から先に
-          const next = visible().find(needsAnalysis) || songs.find(needsAnalysis);
-          if (!next) break;
-          const id = next.id;
-          analyzed.add(id);
-          analyzing.add(id);
-          render();
-          try {
-            // 止まった取得で解析の列ごと詰まらないよう、上限を付ける
-            const r = await DJAudioAnalysis.analyzeUrl(next.previewUrl, { signal: timeoutSignal(PREVIEW_TIMEOUT) });
-            if (r.bpm || r.camelot) {
-              const d = await apiJson('/admin/songs/' + id + '/analysis', {
-                method: 'PATCH', json: { bpm: r.bpm, camelot: r.camelot, songKey: r.songKey }, timeout: WRITE_TIMEOUT,
-              });
-              // 5秒ポーリングで songs は差し替わるので、曲は id で引き直す
-              const cur = songById(id);
-              if (cur) {
-                cur.serverBpm = d.bpm;
-                if (!cur.bpmTapped) cur.bpm = d.bpm;
-                Object.assign(cur, { bpmSrc: d.bpmSrc, songKey: d.songKey, camelot: d.camelot, keySrc: d.keySrc });
-              }
-            }
-          } catch { /* 読めないプレビューは諦めて次の曲へ */ }
-          analyzing.delete(id);
-          render();
-          await new Promise((ok) => setTimeout(ok, 800));
-        }
-      } finally {
-        analyzeRunning = false;
-      }
-    }
+       一覧に来た時点で開始する。保存は空欄だけを埋め、あとから外部サービスで
+       取れた値が優先されるので20秒待つ必要はない。取得・保存は2曲まで並べる。
+       FFTは主スレッドのまま。通信だけ再試行し、確信度不足では繰り返さない。 */
+    const analysisQueue = createAnalysisQueue({
+      getSongs: () => [...visible(), ...songs], // 見ているタブを先に
+      analyze: (url) => DJAudioAnalysis.analyzeUrl(url, { signal: timeoutSignal(PREVIEW_TIMEOUT) }),
+      async save(id, r, url) {
+        const d = await apiJson('/admin/songs/' + id + '/analysis', {
+          method: 'PATCH', json: { bpm: r.bpm, camelot: r.camelot, songKey: r.songKey }, timeout: WRITE_TIMEOUT,
+        });
+        const cur = songById(id);
+        if (!cur || cur.previewUrl !== url) return;
+        const values = { bpm: d.bpm, bpmSrc: d.bpmSrc, songKey: d.songKey, camelot: d.camelot, keySrc: d.keySrc };
+        analysisPins.set(id, { done: loadSeq, values });
+        cur.serverBpm = d.bpm;
+        Object.assign(cur, values, cur.bpmTapped ? { bpm: cur.bpm } : {});
+      },
+      onChange: () => render(),
+    });
 
     /* ── 繋ぎ候補 ─────────────────────────
        起点は最後に再生済にした曲。Jevの音楽評価70点＋いいね30点で3曲選ぶ。

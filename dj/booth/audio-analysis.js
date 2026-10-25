@@ -254,13 +254,25 @@
   }
 
   /* ── 入口 ── */
+  const audioError = (code, status) => Object.assign(new Error(code), { code, status });
+
   async function decode(url, signal) {
-    const res = await fetch(url, { signal, credentials: 'omit' });
-    if (!res.ok) throw new Error('preview ' + res.status);
-    const buf = await res.arrayBuffer();
+    let res, buf;
+    try {
+      res = await fetch(url, { signal, credentials: 'omit' });
+      if (res.ok) buf = await res.arrayBuffer();
+    } catch {
+      throw audioError('preview_network');
+    }
+    if (!res.ok) throw audioError('preview_http', res.status);
     const Ctx = global.OfflineAudioContext || global.webkitOfflineAudioContext;
-    if (!Ctx) throw new Error('no audio');
-    const audio = await new Ctx(1, 1, SR).decodeAudioData(buf);
+    if (!Ctx) throw audioError('audio_unsupported');
+    let audio;
+    try {
+      audio = await new Ctx(1, 1, SR).decodeAudioData(buf);
+    } catch {
+      throw audioError('audio_decode');
+    }
     const n = audio.length, ch = audio.numberOfChannels;
     const mono = new Float32Array(n);
     for (let c = 0; c < ch; c++) {
@@ -280,6 +292,8 @@
     const key = estimateKey(x);
     return {
       bpm: bpm && bpm.confidence >= MIN_BPM_CONF ? bpm.bpm : null,
+      bpmReason: bpm ? (bpm.confidence >= MIN_BPM_CONF ? '' : 'low_confidence')
+        : (x.length < SR * 8 + TEMPO_FRAME ? 'short_audio' : 'no_beats'),
       songKey: key ? key.songKey : '',
       camelot: key ? key.camelot : '',
       detail: { bpm, key },
