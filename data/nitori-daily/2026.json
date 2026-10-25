@@ -1,5 +1,325 @@
 [
   {
+    "date": "20261026",
+    "title": "2026年10月26日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "物流・店舗網：スマートロッカーを使った店舗受取の実証実験が始まり、ネット注文と店頭をつなぐ次の一手として注目される。 サステナビリティ：家具の再資源化に向けた新工場計画（年間1万トン規模）は、企画から回収までを自社で管理するSPAの強みを示す。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "物流・店舗網：スマートロッカーを使った店舗受取の実証実験が始まり、ネット注文と店頭をつなぐ次の一手として注目される。",
+      "サステナビリティ：家具の再資源化に向けた新工場計画（年間1万トン規模）は、企画から回収までを自社で管理するSPAの強みを示す。",
+      "商品・SNS：花型アロマディフューザーや猫が遊ぶクッションの投稿など、見た目や暮らしの場面が購買動機として反響を呼んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ、スマートロッカー活用の店舗受取を実証実験 利便性と業務効率を検証",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-09",
+        "summary": "ニトリがスマートロッカーを活用した店舗受取の実証実験を行い、サービスの利便性向上と業務効率化の両面から効果を検証している。オンラインで注文した商品を店頭のロッカーで受け取れる仕組みを通じて、顧客の受取行動と店舗オペレーションの変化を見極める狙いとみられる。ネット注文と店舗網を組み合わせる同社の戦略にとって重要な試行である。",
+        "why_it_matters": "大型家具の配送は負担が重い一方、店舗受取は在庫の店頭活用と配送コストの抑制を同時に狙える。ロッカーによる受け渡しは店員の接客時間を減らし、人手が限られる店舗で作業を平準化する効果が期待できる。検証結果次第では、オムニチャネルの受取導線として全国展開の判断材料になるだろう。受け取りの手軽さが再来店や追加購入につながるかも、今後の指標として注目したい。",
+        "tags": [
+          "ニトリ",
+          "物流",
+          "DX",
+          "店舗受取"
+        ],
+        "search_terms": [
+          "スマートロッカー 店舗受取",
+          "smart locker store pickup",
+          "Nitori click and collect logistics",
+          "ニトリ 実証実験 DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9FTWRNbldRbi1GdDNUSExGVGRRZ2lKWGZVYzZnaTBxSGZTRkRNeXlqUWF6cmxJNjg5UmZma3o4NmJabGU1eVBjeDBhVl9mMmtVcGdvQ2tPcU1sMUJULTlhNWJsRjVuNjFuaThYTDhhamVEU0RXZUl5ZXhKWC1fMWs?oc=5",
+        "source_pub_ts": 1792744263
+      },
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ、家具の再資源化へ新工場 年1万トンを燃料などにリサイクル",
+        "original_title": "",
+        "source": "朝日新聞",
+        "source_id": "JP-17",
+        "summary": "ニトリは家具の再資源化を進めるため新工場を設け、年間1万トンの廃家具を燃料などにリサイクルする計画を明らかにした。家具の廃棄物を資源として循環させる取り組みで、大量に商品を販売する同社にとって環境負荷の低減と廃棄コストの見直しにつながる動きだ。製造から販売、回収までを自社で管理するSPAならではの取り組みとして注目される。",
+        "why_it_matters": "SPAは企画から物流まで一気通貫で管理できるため、廃棄家具の回収と再資源化を自社の仕組みに組み込みやすい。環境配慮は消費者の購買判断でも重みを増しており、循環型のサービスは買い替え需要の喚起にもつながる。廃棄や回収の仕組みを商品設計の段階から見直せれば、コスト削減と差別化を両立できる。",
+        "tags": [
+          "ニトリ",
+          "サステナビリティ",
+          "物流",
+          "リサイクル"
+        ],
+        "search_terms": [
+          "家具リサイクル 再資源化",
+          "furniture recycling plant",
+          "Nitori sustainability waste reduction",
+          "廃家具 燃料化 循環型"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBDVHNoeGFMa3Zzc2d3eGtLRHZFMnpZUDREZlVobHFTWS1FQ2NrWC0zblFZODduUmpsbkk5TDZhcmdmOGt2SnhHTDZQMGROX2Q5U2NqUWd5alkyYzF0bGMtekN3eVprVnc?oc=5",
+        "source_pub_ts": 1792728000
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、充電式とスリム型の卓上加湿器2種を発売 全国店舗などで",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-21",
+        "summary": "ニトリが充電式とスリム型の卓上加湿器の2種類を発売し、全国の店舗などで取り扱うことを発表した。乾燥しやすい室内で手軽に使える小型製品を揃え、限られたスペースでも置きやすい構成となっている。季節性の高い家電を複数のタイプで提案する点が特徴であり、加湿ニーズの取り込みを狙った品ぞろえといえる。",
+        "why_it_matters": "加湿器は冬季に需要が集中しやすく、在庫リスクを抑えながら販売機会を広げる戦略が重要になる。充電式は置き場所を選ばず、スリム型は省スペース志向に合うため、暮らし方の多様化を取り込みやすい。湿気対策の提案と組み合わせれば、季節を通じて関連商品の購入導線を作ることもできるだろう。",
+        "tags": [
+          "ニトリ",
+          "加湿器",
+          "商品開発",
+          "季節家電"
+        ],
+        "search_terms": [
+          "卓上加湿器 充電式",
+          "desktop humidifier rechargeable slim",
+          "Nitori small appliance launch",
+          "スリム型加湿器 省スペース"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE9BTzlaUUwydERfRGRQdnZfMWhJVjM1VEtQN3hCWHlHZDhhaDJXaWlka1VtUXZ6dGphR05XX1VLVXRXNXgzMmc?oc=5",
+        "source_pub_ts": 1792702600
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリグループ、2026年度グッドデザイン賞を受賞",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-11",
+        "summary": "ニトリグループが2026年度グッドデザイン賞の受賞を発表した。デザインの優れた製品や取り組みを評価する国内の代表的な制度で、同社の商品企画力が第三者に認められた形となる。生活者が暮らしの中で使う家具や雑貨の品質とデザイン性を、外部の目で確かめられる材料にもなる。",
+        "why_it_matters": "自社企画を核とするSPAにとって、デザイン評価は価格以上に独自性を示すシグナルになる。受賞歴はブランドの信頼感を高め、価格競争に陥りやすい家具や雑貨でも選ばれる理由をつくる。受賞作品を店頭のPOPや展示で訴求すれば、デザインを重視する層の来店動機にもつながるだろう。",
+        "tags": [
+          "ニトリ",
+          "グッドデザイン賞",
+          "デザイン",
+          "受賞"
+        ],
+        "search_terms": [
+          "グッドデザイン賞 受賞",
+          "Good Design Award winner",
+          "Nitori design recognition",
+          "デザイン評価 ブランド"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5LNXVFQmpLSzlmbXQ1djlaYzAyanJQVWdLNlNjVkxzVE42X2p0TjdQMHdGNlYxaGJONnBfUXZuNjlIUWEtVGc?oc=5",
+        "source_pub_ts": 1792733384
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの花型フラワーアロマディフューザー、Xで「部屋に飾りたい」と話題",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-03",
+        "summary": "ニトリの花をモチーフにしたフラワーアロマディフューザーが、Xで「これアロマなの」と話題になっている。投稿では「部屋に飾りたくなる」「韓国っぽい」といった声が挙がり、香りの道具であると同時に、インテリアとして楽しめる点が評価されている。見た目のかわいさが、機能性を超えた購入動機になっていることがうかがえる。",
+        "why_it_matters": "アロマ用品は香りが主役と思われがちだが、今回は飾りとしての見た目が先に共感を集めた。インテリア小物として陳列すれば、雑貨売場やSNS映えを重視する客層に刺さりやすい。商品企画が生活空間の演出まで含めて設計されていることを示す事例であり、写真映えする陳列やコーディネート提案に活かせる。",
+        "tags": [
+          "ニトリ",
+          "アロマ",
+          "商品開発",
+          "SNS"
+        ],
+        "search_terms": [
+          "フラワーアロマディフューザー",
+          "flower aroma diffuser",
+          "Nitori home fragrance trend",
+          "インテリア小物 SNS話題"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBRSmUyVG9uU28yTDJLMlMzSW9uV0MxbDNKNlpVSkdZdVdmN2ZGYzVKTlhSV1Vhb3o0RUtfSmtpWlpoQ1g0VTFHNkc4U214cVpCdEs5NW9iaXkxd1NfOUdqOUNlM29tUzNSZllhdVJ0N29BVWJFcmE4SWhoLWc5Tjg?oc=5",
+        "source_pub_ts": 1792841464
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの肉まん型クッションを捏ねる猫の投稿、1.6万いいねの反響",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "ニトリで買った肉まん型のモチモチクッションを、飼い猫が前足で捏ねる様子を投稿したものが、1.6万超のいいねを集めた。投稿は写真付きで、クッションの弾力と猫の仕草が結びつき、生活の一コマとして共感を呼んだ形だ。リツイートも1,100件を超え、拡散力の高さがうかがえる。",
+        "why_it_matters": "商品の機能説明より、猫が夢中になる触りたくなる質感が共感の起点になっている。ぬいぐるみに近い形状と弾力は、ペットを飼う人にとって一緒に遊べる商品として映るため、ペット向けの訴求を検討する余地がある。ユーザー投稿を収集して売場やECで活用すれば、生活者の実使用シーンを低コストで広げられる。",
+        "tags": [
+          "SNS",
+          "ペット",
+          "クッション",
+          "UGC"
+        ],
+        "search_terms": [
+          "ペット 猫 クッション 投稿",
+          "viral cat pet cushion post",
+          "user generated content home goods",
+          "Nitori cushion pet lifestyle"
+        ],
+        "url": "https://x.com/sbsbman10kani/status/2114219605132788191",
+        "source_pub_ts": 1792926000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "組立済み家具がドアを通らないエピソードに231いいね 搬入寸法の確認が話題に",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-03",
+        "summary": "ニトリで組立済みの家具を買ったところ、部屋のドアを通らず入らなかったというエピソードを、笑いを交えて投稿したものが231いいねを集めた。語り口はネタ仕立てだが、大型家具の搬入可否をめぐる生活者の実体験として読まれ、共感を呼んだ。投稿者は注意を呼びかけており、家具選びで搬入経路を確認することの大切さが伝わる内容になっている。",
+        "why_it_matters": "組立済み家具は設置の手間を省く一方、搬入経路の寸法確認を怠ると購入後のトラブルにつながる。店頭やECで搬入寸法やドア幅の確認を促す導線を設ければ、返品や不満を減らせる。スマートフォンで部屋の寸法を測れるツールなどは、大型家具購入の不安を和らげる施策として有効だろう。",
+        "tags": [
+          "SNS",
+          "大型家具",
+          "搬入",
+          "生活者の声"
+        ],
+        "search_terms": [
+          "組立済み家具 搬入 ドア幅",
+          "furniture delivery door size",
+          "assembled furniture doorway trouble",
+          "大型家具 購入前 寸法確認"
+        ],
+        "url": "https://x.com/sakkurusan/status/2114168807942185120",
+        "source_pub_ts": 1792926000
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリで買った肉まんのモチモチクッションを捏ねるウチの猫見て pic.x.com/kDxcik0uVg",
+        "platform": "x",
+        "author": "@sbsbman10kani",
+        "url": "https://x.com/sbsbman10kani/status/2114219605132788191",
+        "likes": 16776,
+        "retweets": 1166,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:56",
+        "captured_at": "",
+        "text": "ニトリで買った肉まんのモチモチクッションを捏ねるウチの猫見て pic.x.com/kDxcik0uVg",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "(*´∇｀*)ｵﾂｶﾚｻﾏー 今日は、長男とニトリでソファーを買い ビバホームでセメントを買い アークスで猫ちゃんの餌を買い ご飯を食べて長...",
+        "platform": "x",
+        "author": "@miho87761665",
+        "url": "https://x.com/miho87761665/status/2114277982831628470",
+        "likes": 261,
+        "retweets": 25,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:48",
+        "captured_at": "",
+        "text": "(*´∇｀*)ｵﾂｶﾚｻﾏー 今日は、長男とニトリでソファーを買い ビバホームでセメントを買い アークスで猫ちゃんの餌を買い ご飯を食べて長男は帰りました！ #白いご飯に辛子明太子と一緒に食べます。 #乾杯 #感謝です✨🙏 pic.x.com/KtSEwpOKLy",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "若者「この前ニトリで組立済みの家具を買ったら部屋のドアが狭くて部屋に入らなかったんですよ〜」 おじ「ちょっwww、お前！荒井注のカラオケ屋じ...",
+        "platform": "x",
+        "author": "@sakkurusan",
+        "url": "https://x.com/sakkurusan/status/2114168807942185120",
+        "likes": 231,
+        "retweets": 25,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:34",
+        "captured_at": "",
+        "text": "若者「この前ニトリで組立済みの家具を買ったら部屋のドアが狭くて部屋に入らなかったんですよ〜」 おじ「ちょっwww、お前！荒井注のカラオケ屋じゃないんだから！！」 と言っても、いまの30代以下には伝わりません。注意しましょう。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "何か忙しい。昼ご飯用意して、母親を送迎して、ニトリで買い物（グッズ整頓＆防護用の棚が欲しかったので）して、セブンでノンアル片手に休憩中。寝す...",
+        "platform": "x",
+        "author": "@YSjFkAnqhc1ykjP",
+        "url": "https://x.com/YSjFkAnqhc1ykjP/status/2114247756663640554",
+        "likes": 142,
+        "retweets": 32,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 15:48",
+        "captured_at": "",
+        "text": "何か忙しい。昼ご飯用意して、母親を送迎して、ニトリで買い物（グッズ整頓＆防護用の棚が欲しかったので）して、セブンでノンアル片手に休憩中。寝すぎると案外命取りな日曜日。 pic.x.com/FV1oHkMkbz",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリのアクセサリーケース届きました！TinyFoxちゃんと比べてもこんなに大きい！ #TinyFox pic.x.com/qV2yAUtw2g",
+        "platform": "x",
+        "author": "@eatmeltylapin",
+        "url": "https://x.com/eatmeltylapin/status/2114216126691594554",
+        "likes": 81,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:42",
+        "captured_at": "",
+        "text": "ニトリのアクセサリーケース届きました！TinyFoxちゃんと比べてもこんなに大きい！ #TinyFox pic.x.com/qV2yAUtw2g",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリ販売員が教えるクソ爆売れの神商品10選 (6~10) 姿勢サポートチェア 💺 タオル地バスローブ 🛀 厚手箱入り大判ふきん 🍽️ ゴム...",
+        "platform": "tiktok",
+        "author": "@Hihi",
+        "url": "https://www.tiktok.com/@zama_shizuka/video/7700089066439609622",
+        "likes": 134,
+        "retweets": 4,
+        "views": 22500,
+        "comments": 0,
+        "posted_on": "2026-10-24 13:38",
+        "captured_at": "2026-10-25T18:34:31.170025+09:00",
+        "text": "ニトリ販売員が教えるクソ爆売れの神商品10選 (6~10) 姿勢サポートチェア 💺 タオル地バスローブ 🛀 厚手箱入り大判ふきん 🍽️ ゴムの力で汚れを落とすバスブラシ 🛁 LEDソーラーライト ☀️ #おすすめ #購入品 #ニトリ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "ニトリ販売員が教えるクソ爆売れの神商品10選 (1~5) 油はね防止ネット🍳 そのままレンジで使える滑りにくいトレー🍱 着るだけで暖かいオー...",
+        "platform": "tiktok",
+        "author": "@Hihi",
+        "url": "https://www.tiktok.com/@zama_shizuka/video/7699812639114808598",
+        "likes": 98,
+        "retweets": 2,
+        "views": 19400,
+        "comments": 5,
+        "posted_on": "2026-10-23 19:45",
+        "captured_at": "2026-10-25T18:34:31.170025+09:00",
+        "text": "ニトリ販売員が教えるクソ爆売れの神商品10選 (1~5) 油はね防止ネット🍳 そのままレンジで使える滑りにくいトレー🍱 着るだけで暖かいオーバーサイズブランケット🧸 衣類が乾きやすい伸縮ハンガー👕 プレート付きまな板🥩 #おすすめ #購入品 #ニトリ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "SNS上の生活者投稿では、ニトリ商品を猫や家族との暮らしの中で紹介する内容が中心で、Xでは最大1.6万超のいいねを集めた。Xでは写真付きの日常投稿や実体験のエピソードが共感を集め、TikTokでは販売員による爆売れ商品10選の動画が約2万回前後の再生を記録している。媒体ごとに反応の質が異なる傾向が見られる。",
+    "sns_why_it_matters": "生活者は商品説明よりも、猫との暮らしや搬入の失敗談など生活のリアルな場面に反応しており、ニトリ商品が生活空間の一部として語られている。Xでは共感とネタ性、TikTokでは実使用の紹介が伸びやすいことから、媒体に応じた訴求の設計が求められる。ユーザー投稿を店頭やECの素材として活用する仕組みは、低コストで購買の信頼を高める示唆となる。"
+  },
+  {
     "date": "20261025",
     "title": "2026年10月25日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリは10月23日に神奈川県相模原市で「デコホーム ボーノ相模大野店」を開店し、地域密着型の店舗網を広げました。 「179円飯碗」や「999円フタ付きタンブラー」など、低価格で機能性や質感を備えた商品がSNSで高評価を集めています。",
