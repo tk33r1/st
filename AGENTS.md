@@ -214,6 +214,15 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 - 再レビューは過去の指摘IDごとに `fixed / withdrawn / open` と対象headの根拠を結果表へ残す。表の欠落・記載漏れ・状態コメントのreadyを合格とみなさない。経路未設定は未設定のまま扱う。
 - 手動のmagi2公開もコミットを版に残す。`node .github/scripts/magi2-daily-check.mjs --deployment-message` の値を `wrangler deploy --message` に渡す。Workerの本番依存に未コミットの変更があれば `-dirty` になり、後に自動公開を接続してもその状態では出さない。Anthropicキーの同期は従来どおり先に行う。
 
+### MAGI の公開前必須検査
+
+- 正本は `magi-app/公開前検査.md`。バグ修正・見た目だけの変更も含め、検査の欠落・失敗を合格と扱わない。
+- `magi-chat-validation.yml` がWeb/PWAの通常・一時×パーソナライズ有効・無効×初回・継続、保存復元と、別ID Android APKの実Java受信・保存・再起動復元を合成応答で検査する。前の回答を今回の成功に数えない。
+- Pagesの `build.sh` は会話イベントの契約を検査し、Cloudflare上では同じSHAの上記workflow成功を待つ。通信エラー・未完了・取消・結果不在では公開しない。magi2のActions公開も同じ検査を先に通す。
+- Androidの一般配布は `.github/scripts/magi-release-gate.mjs --publish` を使う。コミット照合済みの最終署名APK、同じソースのWeb/Android検査、本番疎通の観測結果、同じSHAのCI成功がそろわなければ公開しない。`gh release create/edit/upload`を直接使ってこの検査を省略しない。
+- 本番疎通の観測器は送信を自動実行しない。本人の許可と既存の検証予算に従う。費用・予算が不明なら未実施のまま配布を止め、合成検査で代用したことにしない。
+- CloudflareやGitHubの管理者権限による直接操作まではこのコードで禁止できない。通常経路を迂回して公開済みと報告しない。
+
 ## コーディング規約
 
 - **言語**: コメント・ドキュメントは原則**日本語**（magi-app の README や tools-ui.js の一部など例外あり）。

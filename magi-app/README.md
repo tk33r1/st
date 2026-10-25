@@ -272,6 +272,10 @@ after its request already ended calls `startForeground` before stopping.
 
 ## Release (signed) APK
 
+一般配布は[公開前検査](公開前検査.md)を必須とする。以下の署名・同梱照合だけでは公開しない。
+`magi-release-gate.mjs --publish`が、会話の実動作・最終APKの本番疎通・対象SHAのCI成功を確認してからReleaseを公開する。
+本番疎通が未確認の場合は、合成応答の成功を代わりにせず配布を止める。
+
 Version 5.8 was published on 2026-10-21. See [release verification](B3B4追加公開評価20261021.md)
 for the source commit, APK digest, production checks and remaining device checks.
 The 5.7 record is [B4 release verification](B4公開評価20261021.md).

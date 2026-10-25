@@ -28,7 +28,15 @@ permissions:
   contents: read
 
 jobs:
+  magi-chat-check:
+    if: inputs.worker == 'magi2'
+    uses: ./.github/workflows/magi-chat-validation.yml
+    with:
+      sha: ${{ inputs.sha }}
+
   deploy:
+    needs: [magi-chat-check]
+    if: always() && (needs.magi-chat-check.result == 'success' || needs.magi-chat-check.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: Validate the pinned target
