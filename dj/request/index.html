@@ -3142,9 +3142,9 @@ function receiveClassification(state, ev, d) {
 // AGENT_CLASSIFY_END
 
 // AGENT_FACT_BEGIN
-// 保存・表示・引用位置は全文のまま、上流へ送り直す事実回答の履歴だけ上限に収める。
+// 保存・表示・引用位置は全文のまま、上流へ送り直すすべての回答の履歴を上限に収める。
 function agentFactHistoryMessage(item) {
-  if (item.role !== 'assistant' || item.mode !== 'fact' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
+  if (item.role !== 'assistant' || typeof item.content !== 'string' || item.content.length <= 4000) return item;
   var text = item.content.slice(0, 4000);
   if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
   return Object.assign({}, item, {content:text});

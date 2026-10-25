@@ -20,7 +20,8 @@ utc = lambda: datetime.now(timezone.utc).isoformat()
 stamp = json.loads(subprocess.check_output(['node', '.github/scripts/magi-chat-contract.mjs', '--fingerprint'], cwd=root))
 report = {'schema': 1, 'kind': 'production', 'pass': False, 'started': utc(), **stamp}
 report['pass'] = False
-marker = 'MAGI_RELEASE_' + secrets.token_hex(12)
+# 会社別D1ガードの固定合成入力として、送信前にこの文面を計画へ登録できる印。
+marker = 'MAGI-QA-release-' + secrets.token_hex(12)
 question = 'Reply with exactly this word: ' + marker
 observation = SmokeObservation(marker)
 report['apkSha256'] = hashlib.sha256(Path(args.apk).read_bytes()).hexdigest()

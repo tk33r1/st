@@ -155,6 +155,11 @@ use a local browser server and a loopback `?api=` / `window.MAGI_API_BASE` URL.
 
 ## B3 native reply transport (5.6)
 
+チャットの回帰検査は `.github/scripts/test-magi-chat-review-browser.mjs` でも行う。
+Web・PWA・Androidの模擬保存先で、長い討議回答後の継続と全文復元、画像準備中の送信禁止・会話切り替え・同時添付の上限、
+会話切り替え後の評価登録・再読み込み後の取り消し・登録待ちの取り消し・一時会話への退避・削除済み会話を復活させないことを確かめる。
+HTTP/WebSocketを合成応答へ閉じる検査であり、Android実Java受信の必須検査は別に `test-magi-chat-matrix.mjs --android` で行う。
+
 The [first prototype](B3試作評価20261020.md) showed that a foreground service alone
 did not keep the WebView processing events. Version 5.6 uses a native OkHttp
 connection owned by `MagiConversationService` (`dataSync`). It receives and saves

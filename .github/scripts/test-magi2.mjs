@@ -1824,7 +1824,7 @@ test('本文・分割テキスト・履歴・状況説明・生ボディの上�
     const res = await w.chat([{ role: 'user', content }]);
     assert.equal(res.status, 400); assert.equal((await res.json()).error.code, 'text_too_long');
   }
-  const res = await w.chat([{ role: 'assistant', content: 'x'.repeat(4001) }, { role: 'user', content: 'q' }]);
+  const res = await w.chat([{ role: 'assistant', content: {} }, { role: 'user', content: 'q' }]);
   assert.equal(res.status, 400);
   const history = Array.from({ length: 11 }, () => ({ role: 'assistant', content: 'x'.repeat(4000) })).concat({ role: 'user', content: 'q' });
   assert.equal((await w.chat(history)).status, 400);
@@ -1951,7 +1951,30 @@ test('A2: 長い保存済みWeb回答の表示と引用を保ち、次の質問�
     assert.match(await(await w.request('/magi2/chat',{...a2Body('続けて説明して'),messages})).text(),/event: done/);
     const pair={role:'assistant',mode:'fact',content:'x'.repeat(3999)+'😀tail'};
     assert.equal(ctx.agentFactHistoryMessage(pair).content,'x'.repeat(3999));assert.equal(pair.content.length,4005);
-    const ordinary={...pair,mode:undefined};assert.equal(ctx.agentFactHistoryMessage(ordinary),ordinary);
+    const ordinary={...pair,mode:undefined};assert.equal(ctx.agentFactHistoryMessage(ordinary).content,'x'.repeat(3999));
+  }
+});
+
+test('長い討議回答: 通常・MAGI・旧画面の履歴を切り詰め、保存本文・人格意見とUnicodeを保つ', async () => {
+  for (const mode of [undefined, 'magi', 'fact']) {
+    const long = { role: 'assistant', content: 'x'.repeat(3999) + '😀tail', ...(mode ? { mode } : {}), debate: { 'CASPER-3': { round1: 'opinion' } } };
+    for (const src of [home, mobile]) {
+      const ctx = vm.createContext({ URL, AGENT_MAX_HISTORY: 12 });
+      vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END') + '\n'
+        + between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
+      ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
+      vm.runInContext(between(src, 'function prepareAgentMessages(', 'async function agentSend('), ctx);
+      const history = [{ role: 'user', content: '相談' }, long, { role: 'user', content: '続き' }], before = JSON.stringify(history);
+      const messages = ctx.prepareAgentMessages(history, '続き');
+      assert.equal(messages[1].content, 'x'.repeat(3999)); assert.equal(JSON.stringify(history), before);
+      assert.match(await (await worker().chat(messages)).text(), /event: done/);
+    }
+    // 新しい画面の修正がまだ届かない旧APKも、共通のWorkerで受け止める。
+    const w = worker(), counters = { text: 0, total: 0, imageBytes: 0 };
+    const normalized = w.ctx.normaliseMessage(long, counters);
+    assert.equal(normalized.content, 'x'.repeat(3999)); assert.equal(long.content.length, 4005);
+    if (mode !== 'fact') assert.equal(normalized.opinions['CASPER-3'], 'opinion');
+    assert.match(await (await w.chat([{ role: 'user', content: '相談' }, long, { role: 'user', content: '続き' }])).text(), /event: done/);
   }
 });
 
@@ -2464,7 +2487,10 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
     let release;
     const receipt = { id: 7, delete_token: 'a'.repeat(64) };
     let delayed = false, removeStatus = 200;
-    const ctx = vm.createContext({ agentTemporary: () => false, REACT_API: 'mock', AbortController, setTimeout, clearTimeout, reactionStoreFor: () => store, persistReactions() {},
+    const bar = { closest: () => ({ dataset: { mid: 'm1' } }) };
+    let registration = 0;
+    const ctx = vm.createContext({ currentSessionId: 'session1', agentHistory: [{ role: 'assistant', mid: 'm1', reactions: store }], pendingReactions: {}, genMid: () => 'r' + ++registration,
+      agentTemporary: () => false, REACT_API: 'mock', AbortController, setTimeout, clearTimeout, reactionStoreFor: () => store, persistReactions() {},
       fetch: async (_, options) => {
         const body = JSON.parse(options.body); posts.push(body);
         if (body.op === 'remove') return Response.json({ ok: removeStatus === 200 }, { status: removeStatus });
@@ -2473,24 +2499,24 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
       },
     });
     vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
-    ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
+    ctx.registerReaction(bar, 'integrated', '👍', { request: 'q', response: 'a' });
     await tick(); assert.equal(store.integrated.delete_token, receipt.delete_token);
-    await ctx.unregisterReaction({}, 'integrated');
+    await ctx.unregisterReaction(bar, 'integrated');
     assert.equal(posts.at(-1).delete_token, receipt.delete_token);
     const count = posts.length;
     await ctx.deleteReaction('integrated', { id: 7 }); assert.equal(posts.length, count);
     delayed = true;
-    ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
-    const removing = ctx.unregisterReaction({}, 'integrated'); release(); await removing;
+    ctx.registerReaction(bar, 'integrated', '👍', { request: 'q', response: 'a' });
+    const removing = ctx.unregisterReaction(bar, 'integrated'); release(); await removing;
     assert.equal(posts.at(-1).op, 'remove'); assert.equal(posts.at(-1).delete_token, receipt.delete_token);
     assert.equal(store.integrated, undefined);
     // 登録中に押した取り消しが失敗しても、後から受け取ったトークンを残す。
     removeStatus = 429;
-    ctx.registerReaction({}, 'integrated', '👍', { request: 'q', response: 'a' });
-    const failedRemoval = ctx.unregisterReaction({}, 'integrated'); release();
+    ctx.registerReaction(bar, 'integrated', '👍', { request: 'q', response: 'a' });
+    const failedRemoval = ctx.unregisterReaction(bar, 'integrated'); release();
     assert.equal(await failedRemoval, false); assert.equal(store.integrated.delete_token, receipt.delete_token);
     removeStatus = 200;
-    assert.equal(await ctx.unregisterReaction({}, 'integrated'), true); assert.equal(store.integrated, undefined);
+    assert.equal(await ctx.unregisterReaction(bar, 'integrated'), true); assert.equal(store.integrated, undefined);
   }
 });
 
@@ -2500,8 +2526,10 @@ test('両画面の評価: 付け替えは前の評価を消せてから付け、
       const receipt = { em: '👍', id: 7, delete_token: 'a'.repeat(64) };
       const store = { integrated: receipt }, posts = [], errors = [], timers = new Map(), shown = [];
       let failed = true;
-      const bar = { dataset: { target: 'integrated' } };
-      const ctx = vm.createContext({ agentTemporary: () => false, REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
+      const bar = { dataset: { target: 'integrated' }, closest: () => ({ dataset: { mid: 'm1' } }) };
+      let registration = 0;
+      const ctx = vm.createContext({ currentSessionId: 'session1', agentHistory: [{ role: 'assistant', mid: 'm1', reactions: store }], pendingReactions: {}, genMid: () => 'r' + ++registration,
+        agentTemporary: () => false, REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {}, tr: s => s,
         renderAgentError(e) { errors.push(e); },
         getReactionContext: () => ({ target: 'integrated', request: 'q', response: 'a' }),
         setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
@@ -5211,11 +5239,12 @@ test('A2: HTMLの本文はmain/articleの区画をすべて読み、区画内の
   assert.match(text,/2026年10月1日更新/);assert.match(text,/一つ目/);assert.match(text,/二つ目/);assert.doesNotMatch(text,/サイト名|メニュー|前へ|著作権/);
 });
 
-test('A2: 4,000文字を超えるfact回答の履歴はWorkerでも切り詰め、通常の履歴は従来どおり拒否する',()=>{
+test('4,000文字を超える回答の履歴は種類に関係なくWorkerでも切り詰め、利用者の入力上限は維持する',()=>{
   const w=worker(),long='あ'.repeat(3999)+'😀'+'い'.repeat(10);
   const fact=w.ctx.normaliseMessage({role:'assistant',mode:'fact',content:long},{text:0});
   assert.equal(fact.content.length,3999);
-  assert.throws(()=>w.ctx.normaliseMessage({role:'assistant',content:long},{text:0}));
+  assert.equal(w.ctx.normaliseMessage({role:'assistant',content:long},{text:0}).content.length,3999);
+  assert.throws(()=>w.ctx.normaliseMessage({role:'user',content:'あ'.repeat(1001)},{text:0}));
 });
 
 test('A2: Webの回答はページ選びを待たずに始め、2秒以内に選んだページは回答の後に出す',async()=>{
