@@ -66,9 +66,18 @@ async function ready() {
     && (!native || nativeConversation && nativeHistory?.active), android, {timeout: 20000, polling: 100});
 }
 async function connect() {
-  const pid = run('shell', 'pidof', pkg); assert.match(pid, /^\d+$/);
-  debugPort = run('forward', 'tcp:0', 'localabstract:webview_devtools_remote_' + pid);
-  browser = await chromium.connectOverCDP('http://127.0.0.1:' + debugPort, {timeout: 15000});
+  const deadline = Date.now() + 20000;
+  while (!browser && Date.now() < deadline) {
+    try {
+      const pid = run('shell', 'pidof', pkg); assert.match(pid, /^\d+$/);
+      debugPort = run('forward', 'tcp:0', 'localabstract:webview_devtools_remote_' + pid);
+      browser = await chromium.connectOverCDP('http://127.0.0.1:' + debugPort, {timeout: 1000});
+    } catch {
+      if (debugPort) { try { run('forward', '--remove', 'tcp:' + debugPort); } catch {} debugPort = null; }
+      await sleep(300);
+    }
+  }
+  assert(browser, '検証用WebViewへ接続できない');
   context = browser.contexts()[0]; await routes(context);
   page = context.pages().find(p => p.url().startsWith('https://localhost')); assert(page);
   page.on('pageerror', e => errors.push(e.message)); await ready();
@@ -179,11 +188,16 @@ try {
     assert.equal(requests.length, count + 1, 'ネイティブ要求が開始していない');
     run('shell', 'input', 'keyevent', 'KEYCODE_HOME');
     await browser.close(); browser = null; run('forward', '--remove', 'tcp:' + debugPort); debugPort = null;
-    await sleep(3500);
-    const meta = JSON.parse(run('shell', 'run-as', pkg, 'cat', 'files/magi/pending/' + id + '/meta.json'));
+    const savedDeadline = Date.now() + 20000;
+    let meta, serviceStopped = false;
+    do {
+      await sleep(300);
+      meta = JSON.parse(run('shell', 'run-as', pkg, 'cat', 'files/magi/pending/' + id + '/meta.json'));
+      serviceStopped = !/isForeground=true/.test(run('shell', 'dumpsys', 'activity', 'services', pkg));
+    } while ((meta.status !== 'complete' || !serviceStopped) && Date.now() < savedDeadline);
     assert.equal(meta.status, 'complete');
     assert.match(run('shell', 'run-as', pkg, 'cat', 'files/magi/pending/' + id + '/events.sse'), /^event: session\r?\n/);
-    assert.doesNotMatch(run('shell', 'dumpsys', 'activity', 'services', pkg), /isForeground=true/);
+    assert(serviceStopped, '受信サービスが終了していない');
     run('shell', 'am', 'force-stop', pkg); run('shell', 'am', 'start', '-n', pkg + '/st.tk.magi.MainActivity');
     await sleep(1500); await connect();
     await page.waitForFunction(text => agentHistory.at(-1)?.content === text && !agentBusy, 'ANSWER-' + question, {polling: 100});
