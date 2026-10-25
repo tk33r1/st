@@ -70,7 +70,7 @@ try {
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
     assert.equal(await page.locator('#btn-personalization-agent').count(), 0);
     assert.equal(await page.locator('#agent-settings-panel h2').textContent(), mobile ? 'アプリ管理' : 'App management');
-    const toggle = page.getByRole('switch', { name: /^(Personalization|パーソナライズ)$/ });
+    const toggle = page.locator('#personal-enabled');
     assert.equal(await toggle.getAttribute('aria-checked'), 'false');
     await toggle.focus(); await page.keyboard.press('Space');
     assert.equal(await toggle.getAttribute('aria-checked'), 'true');

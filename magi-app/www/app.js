@@ -1174,7 +1174,11 @@ function showAgentSettings() {
     panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
     return;
   }
-  enabled.setAttribute('aria-checked', String(current.enabled)); name.value = current.preferred_name; instructions.value = current.custom_instructions;
+  function setEnabled(value) {
+    enabled.setAttribute('aria-checked', String(value));
+    panel.querySelector('#personal-enabled-label').textContent = value ? tr('Personalization: on', 'パーソナライズ: オン') : tr('Personalization: off', 'パーソナライズ: オフ');
+  }
+  setEnabled(current.enabled); name.value = current.preferred_name; instructions.value = current.custom_instructions;
   var loaded = JSON.stringify(current);
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
@@ -1190,7 +1194,7 @@ function showAgentSettings() {
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
-  enabled.addEventListener('click', function () { enabled.setAttribute('aria-checked', String(enabled.getAttribute('aria-checked') !== 'true')); });
+  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
   panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });

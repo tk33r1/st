@@ -15,7 +15,12 @@ class SmokeObservation:
     def observe(self, rows):
         toggle = find(rows, 'personal-enabled')
         if toggle is not None:
-            if toggle.get('checked') != 'true':
+            # WebViewがrole=switchをcheckable=falseで出す端末は、実際の状態を含む可視ラベルで照合する。
+            label = find(rows, 'personal-enabled-label')
+            state_text = label.get('text') if label is not None else toggle.get('content-desc')
+            on = toggle.get('checked') == 'true' or (toggle.get('checkable') == 'false'
+                    and state_text in ['Personalization: on', 'パーソナライズ: オン'])
+            if not on:
                 self.settings_on = self._saw_on = self._closed_after_on = False
             elif self._saw_on and self._closed_after_on:
                 self.settings_on = True
