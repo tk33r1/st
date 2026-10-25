@@ -106,7 +106,8 @@ function checkText(text, maxChars, counters) {
 }
 
 
-// 過去の日のrate_limit行は蓄積したまま。削除による整理の余地がある。
+// 過去の日の rate_limit 行も消さない。qa: の claim と予約は、同じ計画の再送の防止と費用の記録を兼ねる（qa-budget.js）。
+// 古い行を消すのは search-boost.yml の click: の行だけ。
 // rate_limit の (key, period) の数を1つ進めて返す。limit に達していたら進めずに null を返す
 // （上限後はカウンターを書き換えず、同時リクエストにも原子的に制限を掛ける）。
 // 回数制限（IP・全体・リアクション）と、通知メールの「今日はもう送った」印（limit = 1）に使う。
