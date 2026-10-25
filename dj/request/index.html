@@ -1274,7 +1274,9 @@
     .histopen:hover .t, .histdel:hover { color: var(--heart-secondary); }
 
     .composer { display: flex; gap: 8px; align-items: flex-end; }
-    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px 80px 13px 13px; }
+    /* 1行で 48px（行 24px＋余白 11px×2＋枠線）。✕・予測・↑ はこの高さの中央に合わせてある。
+       高さは JS が打った量に合わせるので、手で伸ばすつまみは出さない */
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; line-height: 1.5; padding: 11px 80px 11px 13px; resize: none; }
     /* 入力欄が伸びても ✕ は1行目の高さに留める。右端は送信の ↑ に譲る */
     .composer .cfield { position: relative; flex: 1; min-width: 0; display: flex; }
     .composer .clear { top: 7px; right: 42px; transform: none; }
