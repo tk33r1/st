@@ -1,15 +1,18 @@
 # SudachiPy 0.6系とV1移行前の辞書。公式PyPIのwheel SHA-256で固定する。
 # Linux x86_64 CPython 3.9〜3.14、Windows CPython 3.13、macOS CPython 3.11/3.13。
 # pip install --require-hashes --only-binary=:all: -r search-reading-requirements.txt
-SudachiPy==0.6.11 \
-    --hash=sha256:d6d54835ec097f25995b0259a33f3265edbcde1071688eb66204b48ecb5b133c \
-    --hash=sha256:2f266faf29125a9d2b26a62683ebf872b248ac5d3b24542a3c016f496fb7d5f2 \
-    --hash=sha256:b9142b1f255f075a5e6768e0dee32b7ded1f2c159653698b9ce931484fbca442 \
-    --hash=sha256:9d024efea4ff8b5bd0709f1afbb8e8f230ebd4ec83f9cd76f47b0542b7c22e91 \
-    --hash=sha256:cc86a6832448a56bcc6200b078a9bebd6059d925328214b96ee6b8830b8d34ab \
-    --hash=sha256:0dcdb872648fa0678880cc21c09c5fc9928eb997321a5ecc2916a51697be6fb4 \
-    --hash=sha256:c56d8308e799bff8f0edc0a9921f0bacf9b0b65c5c5df031022a048402f1d9ac \
-    --hash=sha256:347d208864c40e4879535768ca30093ccf9f578cb37613850a8eef8850e40a55 \
-    --hash=sha256:f38624fc01c2bb087c875a32750e3735b67b6b66487ac30a8e3f2d3599c4e3ea
+SudachiPy==0.7.0 \
+    --hash=sha256:0e60cefd3a7a9680206ae160bf86d266d0d60e434adac2384f8c7a6dfb0f3ba7 \
+    --hash=sha256:14a2505e7d086fe9da64c0048d8e2de13cdded3aac4f1e047929cef51dba338c \
+    --hash=sha256:1bf2254ee6357e0defa498630f188fefa8a543b82887077cfb1596bc3e8d4840 \
+    --hash=sha256:68be139f5d7f053eba16fd3f792e4ef0c6bfed81a1b63e68b4544c7159296034 \
+    --hash=sha256:6be34e856c99498e990904f7155e1a102f675cf5edfdaf7a396f26d71ce4b333 \
+    --hash=sha256:8d0429db2d02d408daa7dccd062a6d8c2984a07f8e448b49a3ea694377617658 \
+    --hash=sha256:907eadc1db305f9bc6e502a9acf9ff1ac871cd8d4ac3a2e0aaba3ddc60e93b2a \
+    --hash=sha256:9446eba17985b1d14926afc6312fb0367687ab1b5397fa65d7e2cdd1745451c9 \
+    --hash=sha256:c8306eab503d891e394fb21156e417c2f9f54cc39f56dddb8cf2b40620d470fa \
+    --hash=sha256:dfc90631aa2276d2165e1995bc94b56c9f5bc27b875f43fb7d67e4a3b7346d4f \
+    --hash=sha256:efd56375584dec9523fe9a26daa69da02a70ae2f2c22d25248e65a4998cae8e1 \
+    --hash=sha256:f1e24f71a71816dcbc6fb759a5819cca5d603a4d49b7ade63dd0fe49468ed22c
 SudachiDict-core==20260428 \
     --hash=sha256:9cbd237eac62cb6e3347aa3ccff9e78b18298d629c4fc4295ed46817ff9df193
