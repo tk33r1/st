@@ -72,9 +72,13 @@ try {
     async function ready() { await page.waitForFunction(native => typeof agentSend === 'function' && !agentBusy && (!native || nativeHistory?.active && nativeConversation && !historyLoading), native); }
     async function send(text) {
       const count = requests.length;
+      const answers = await page.evaluate(() => agentHistory.filter(m => m.role === 'assistant').length);
+      const expected = text === 'LONG-QUESTION' ? longReply : 'ANSWER-' + text;
       await page.locator('#agent-input').fill(text); await page.locator('#agent-send').click();
-      await page.waitForFunction(() => !agentBusy && !agentPrivacyState.preparing && agentHistory.at(-1)?.role === 'assistant');
+      await page.waitForFunction(({ answers, expected }) => !agentBusy && !agentPrivacyState.preparing
+        && agentHistory.filter(m => m.role === 'assistant').length === answers + 1 && agentHistory.at(-1)?.content === expected, { answers, expected });
       assert.equal(requests.length, count + 1);
+      assert.equal(await page.locator('.agent-reply-body').last().innerText(), expected);
       if (native) await page.evaluate(() => nativeHistory.flush());
     }
     async function reset() { await page.evaluate(() => { syncCurrentToSaved(); resetAgent(); }); }
