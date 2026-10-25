@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 25 Oct 2026 04:13:23 +0900</lastBuildDate>
+    <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 26 Oct 2026 04:26:12 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月26日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261026/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261026/</guid>
+      <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
+      <description>岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。</description>
+    </item>
     <item>
       <title>2026年10月25日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261025/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261012/</guid>
       <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
       <description>京急ストア浦賀店に無人決済店舗「KEIKYU PIT」がオープンし、既存スーパーの店舗網の中で無人決済を試す動きが出てきた。 店舗端末の管理や、データとAIを使った販促の高度化など、店舗DXを支える基盤づくりへの関心が高まっている。</description>
-    </item>
-    <item>
-      <title>2026年10月11日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261011/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261011/</guid>
-      <pubDate>Sun, 11 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ファミリーマートが新たなリテールメディアを開始し、コンビニの顧客接点を広告媒体として活用する動きが広がっています。 ローソンはマルチコピー機の設置を自治体施設へ拡大しており、店舗の外に生活インフラとしての接点を増やす取り組みが進んでいます。</description>
     </item>
   </channel>
 </rss>

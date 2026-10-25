@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 25 Oct 2026 04:20:28 +0900</lastBuildDate>
+    <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 26 Oct 2026 04:30:03 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月26日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261026/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261026/</guid>
+      <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
+      <description>物流・店舗網：スマートロッカーを使った店舗受取の実証実験が始まり、ネット注文と店頭をつなぐ次の一手として注目される。 サステナビリティ：家具の再資源化に向けた新工場計画（年間1万トン規模）は、企画から回収までを自社で管理するSPAの強みを示す。</description>
+    </item>
     <item>
       <title>2026年10月25日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261025/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261012/</guid>
       <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が明らかになり、2028年度の稼働を予定。製品の回収から資源循環までを見据えたSPAとしての体制強化が注目される。 シンガポールの「NITORI JURONG POINT店」が10月15日（木）にオープンすることが発表され、海外店舗網の拡大が具体的に進んでいる。</description>
-    </item>
-    <item>
-      <title>2026年10月11日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261011/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261011/</guid>
-      <pubDate>Sun, 11 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリの食品（300円レトルトカレー全6種）や食器（99円丸ボウル、599円ダブルウォールマグ、699円超軽量深皿）が、実際に使った生活者から「価格以上」「リピート購入」と評価され、低価格帯PBの品質評価が広がっている。 たい焼きデザインのビッグクッションなど、和菓子モチーフの遊び心ある商品がTikTokでも再生数を伸ばし、インテリア雑貨の話題化と購買動機づくりにつながっている。</description>
     </item>
   </channel>
 </rss>
