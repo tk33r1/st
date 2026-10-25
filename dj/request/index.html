@@ -431,8 +431,7 @@
       color: var(--bg);
     }
 
-    .send:disabled,
-    .composer > button:disabled {
+    .send:disabled {
       cursor: not-allowed;
       background: transparent;
       border-color: var(--border);
@@ -1275,15 +1274,15 @@
     .histopen:hover .t, .histdel:hover { color: var(--heart-secondary); }
 
     .composer { display: flex; gap: 8px; align-items: flex-end; }
-    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px 44px 13px 13px; }
-    /* 入力欄が伸びても ✕ は1行目の高さに留める */
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px 80px 13px 13px; }
+    /* 入力欄が伸びても ✕ は1行目の高さに留める。右端は送信の ↑ に譲る */
     .composer .cfield { position: relative; flex: 1; min-width: 0; display: flex; }
-    .composer .clear { top: 7px; transform: none; }
+    .composer .clear { top: 7px; right: 42px; transform: none; }
     .composer .cfield.filled .clear { display: flex; }
     /* 次の相談の予測：空の入力欄の1行目に薄く重ね、右の › で入れる。文字は入力欄の余白に揃える */
     .composer textarea.has-suggest::placeholder { color: transparent; }
     .csuggest {
-      position: absolute; left: 1px; right: 1px; top: 1px; height: 46px;
+      position: absolute; left: 1px; right: 42px; top: 1px; height: 46px;
       padding-left: 13px; display: flex; align-items: center; gap: 2px; pointer-events: none;
       font-size: 16px; font-family: var(--f-body);
     }
@@ -1298,22 +1297,21 @@
     }
     .csuggest .csgo:hover, .csuggest .csgo:focus-visible { color: var(--heart-secondary); }
 
-    /* 送信・停止はアイコン（紙飛行機・■）だけの正方形 */
-    .composer > button {
-      flex-shrink: 0; width: 48px; height: 48px; padding: 0;
+    /* 送信・停止はトップページの MAGI と同じく、枠の中の丸い ↑・■。入力欄が伸びても最終行の横に留める */
+    .composer .csend {
+      position: absolute; right: 10px; bottom: 10px;
+      width: 28px; height: 28px; padding: 0;
       display: flex; align-items: center; justify-content: center;
-      border: 1px solid var(--heart-primary);
-      border-radius: 0;
+      border: 0; border-radius: 50%;
       background: var(--heart-primary);
       color: var(--bg);
+      transition: opacity 0.15s;
     }
 
-    .composer > button svg { pointer-events: none; }
-
-    .composer > button:hover:not(:disabled) {
-      background: var(--fg);
-      border-color: var(--fg);
-    }
+    .composer .csend svg { pointer-events: none; }
+    .composer .csend:hover:not(:disabled) { opacity: 0.8; }
+    /* 送るものが無いときは薄くして、押せないことを見せる */
+    .composer .csend:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* ===== FAQ ===== */
     .request-faq {
@@ -1560,8 +1558,8 @@
                 class="csgo" id="chatSuggestUse" title="この相談を入れる"><svg aria-hidden="true" width="16" height="16"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                   stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
+            <button class="csend" id="chatSend" disabled title="送信" aria-label="送信" data-icon="send"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
           </div>
-          <button id="chatSend" disabled title="送信" aria-label="送信" data-icon="send"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" /></svg></button>
         </div>
         <p class="hint" id="chatHint">AI が挙げた曲は iTunes Search API で照合しています。照合できなかった曲は、検索して探してください。</p>
       </section>
@@ -3782,7 +3780,7 @@ async function parseSSE(body, handlers, onChunk) {
        送信・履歴・受付停止の各処理が個別に hidden / disabled を触ると、
        組み合わせによって戻し忘れが起きるため。 */
     // 送信ボタンの中身。回答を待つ間は ■（停止）に替える。どちらも固定の文字列で、来場者由来の値は入れない
-    const CHAT_SEND_ICON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13" /><path d="M22 2 15 22 11 13 2 9z" /></svg>';
+    const CHAT_SEND_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>';
     const CHAT_STOP_ICON = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" /></svg>';
 
     function renderConsultUI() {
