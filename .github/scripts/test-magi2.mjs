@@ -3760,6 +3760,7 @@ test('modelsはAnthropicとテーマ別の統合、日英の文字段落・機�
   for (const lang of ['ja','en']) {
     assert.ok(data.privacy[lang].length >= 10);
     assert.ok(data.privacy[lang].some(row => row.text.includes('Anthropic'))); assert.ok(data.privacy[lang].every(row=>!row.text.includes('Gemini')));
+    assert.ok(data.privacy[lang].some(row => row.text.includes('DeepSeek API') && row.text.includes('Anthropic API')));
     assert.ok(data.privacy[lang].some(row => row.requires?.includes('site_pages')));
     for (const row of data.privacy[lang]) {
       assert.equal(typeof row.text, 'string'); assert.ok(!/[<>]/.test(row.text));
