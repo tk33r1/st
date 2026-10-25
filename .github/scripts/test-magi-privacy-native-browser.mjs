@@ -14,11 +14,17 @@ function stream(body) {
   return (body.privacy_contract ? event('session', { conversation_mode: body.conversation_mode, personalization_applied: !!body.personalization }) : '')
     + event('classification', classification) + event('integrated', { delta: 'SYNTHETIC-ANSWER' }) + event('done', {});
 }
+// Java側で落としたイベントを模擬側だけ通すと、通常チャットの失敗を見逃す。
+const nativeService = readFileSync(resolve(root, 'magi-app/android/app/src/main/java/st/tk/magi/MagiConversationService.java'), 'utf8');
+const nativeEvents = new RegExp('^(?:' + nativeService.match(/event\.matches\("([^"]+)"\)/)[1] + ')$');
+function nativeStream(body) {
+  return stream(body).split('\n\n').filter(block => nativeEvents.test(block.match(/^event: (\w+)/)?.[1] || '')).join('\n\n') + '\n\n';
+}
 const runs = new Map();
 const methods = {
   information: async () => ({ test: false }), pending: async () => ({ runs: [] }),
   notificationPreference: async () => ({ enabled: false }),
-  begin: async args => { const body = JSON.parse(args.body); normalRequests.push(body); runs.set(args.id, stream(body)); },
+  begin: async args => { const body = JSON.parse(args.body); normalRequests.push(body); runs.set(args.id, nativeStream(body)); },
   read: async ({ id, offset }) => {
     const text = runs.get(id), bytes = Buffer.from(text).subarray(offset);
     return { status: 'complete', offset: offset + bytes.length, length: Buffer.byteLength(text), base64: bytes.toString('base64') };
@@ -82,11 +88,21 @@ try {
   assert.equal(await page.locator('#agent-shared-tray').isVisible(), true);
   assert.ok((await page.locator('#agent-shared-tray').innerText()).includes('SHARED-DOC'));
   async function send(text) {
+    const before = await page.evaluate(() => ({ sequence: agentSendSequence, answers: agentHistory.filter(m => m.role === 'assistant').length }));
     await page.locator('#agent-input').fill(text); await page.locator('#agent-send').click();
-    await page.waitForFunction(() => !agentPrivacyState.preparing && !agentBusy && agentHistory.at(-1)?.role === 'assistant');
+    await page.waitForFunction(before => agentSendSequence > before.sequence && !agentPrivacyState.preparing && !agentBusy, before, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => agentHistory.filter(m => m.role === 'assistant').length), before.answers + 1, '今回の送信への新しい回答が必要');
   }
   await send('NORMAL-WITH-DOCUMENT');
+  assert.equal(await page.locator('.agent-reply-body').last().innerText(), 'SYNTHETIC-ANSWER');
   assert.equal(normalRequests.at(-1).shared.title, 'SHARED-DOC');
+  // 通常パーソナライズはsession照合を必須とする。オフの通常送信だけでは欠落を検出できない。
+  await page.evaluate(() => { var value = readAgentPersonalization(); value.enabled = true; saveAgentPersonalization(value); });
+  await send('PERSONALIZED-NORMAL');
+  assert.equal(normalRequests.at(-1).privacy_contract, 1);
+  assert.equal(normalRequests.at(-1).personalization.preferred_name, 'NATIVE-NAME');
+  assert.equal(await page.locator('.agent-reply-body').last().innerText(), 'SYNTHETIC-ANSWER');
+  await page.evaluate(() => { var value = readAgentPersonalization(); value.enabled = false; saveAgentPersonalization(value); });
   await page.evaluate(() => nativeHistory.flush());
   const beforeTemporary = JSON.stringify([...disk.files]);
   await page.locator('#btn-temporary-agent').click(); holdFeatures = true;
