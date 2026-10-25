@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
 
+# 純粋な検査だけを置換する。botの書き込みworkflowとはgroupを共有しない。
+concurrency:
+  group: magi-chat-validation-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.sha }}
+  cancel-in-progress: true
+
 jobs:
   browser:
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ import {randomBytes} from 'node:crypto';
 import {createServer} from 'node:http';
 import {readFileSync, writeFileSync, mkdirSync, existsSync} from 'node:fs';
 import {resolve, dirname, extname, sep} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium, _android as playwrightAndroid} from 'playwright';
 import {matrix, root, git, sha256, sourceFingerprint, checkContract} from './magi-chat-contract.mjs';
 
 const arg = (name, fallback = '') => process.argv.find(v => v.startsWith('--' + name + '='))?.slice(name.length + 3) || fallback;
@@ -19,7 +19,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 const features = {privacy_contract: 1, personalization: true, temporary_chat: true, temporary_personalization: true, temporary_speech: false, speech: false};
 const requests = [], errors = [];
-let server, browser, context, page, debugPort, delayed = false;
+let server, browser, context, page, androidDevice, delayed = false;
 function reply(body, transport) {
   const question = body.messages.at(-1).content;
   assert.equal(typeof question, 'string'); assert(question.startsWith('MAGI-GATE-' + nonce + '-'));
@@ -66,20 +66,23 @@ async function ready() {
     && (!native || nativeConversation && nativeHistory?.active), android, {timeout: 20000, polling: 100});
 }
 async function connect() {
-  const deadline = Date.now() + 20000;
-  while (!browser && Date.now() < deadline) {
-    try {
-      const pid = run('shell', 'pidof', pkg); assert.match(pid, /^\d+$/);
-      debugPort = run('forward', 'tcp:0', 'localabstract:webview_devtools_remote_' + pid);
-      browser = await chromium.connectOverCDP('http://127.0.0.1:' + debugPort, {timeout: 1000});
-    } catch {
-      if (debugPort) { try { run('forward', '--remove', 'tcp:' + debugPort); } catch {} debugPort = null; }
-      await sleep(300);
-    }
+  if (!androidDevice) {
+    const devices = await playwrightAndroid.devices({host: '127.0.0.1', omitDriverInstall: true});
+    androidDevice = devices.find(d => d.serial() === device);
+    assert(androidDevice, '指定したADB端末が見つからない');
   }
-  assert(browser, '検証用WebViewへ接続できない');
-  context = browser.contexts()[0]; await routes(context);
-  page = context.pages().find(p => p.url().startsWith('https://localhost')); assert(page);
+  const deadline = Date.now() + 20000;
+  let view;
+  while (!view && Date.now() < deadline) {
+    const pid = Number(run('shell', 'pidof', pkg));
+    view = androidDevice.webViews().find(v => v.pkg() === pkg && v.pid() === pid);
+    if (!view) await sleep(300);
+  }
+  assert(view, '検証用WebViewへ接続できない');
+  // 通常Chrome用のCDP接続は、古いWebViewで未対応のBrowser管理命令を使う。
+  // PlaywrightのAndroid用接続を使い、ドライバーAPKの追加インストールも行わない。
+  page = await view.page(); context = page.context(); browser = {close: () => context.close()};
+  await routes(context);
   page.on('pageerror', e => errors.push(e.message)); await ready();
   assert.equal(await page.evaluate(() => Capacitor.Plugins.MagiConversation.information()).then(v => v.test), true);
 }
@@ -187,7 +190,7 @@ try {
     while (requests.length === count && Date.now() < deadline) await sleep(50);
     assert.equal(requests.length, count + 1, 'ネイティブ要求が開始していない');
     run('shell', 'input', 'keyevent', 'KEYCODE_HOME');
-    await browser.close(); browser = null; run('forward', '--remove', 'tcp:' + debugPort); debugPort = null;
+    await browser.close(); browser = null;
     const savedDeadline = Date.now() + 20000;
     let meta, serviceStopped = false;
     do {
@@ -217,8 +220,9 @@ try {
 finally {
   report.finished = new Date().toISOString(); mkdirSync(dirname(output), {recursive: true}); writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   await browser?.close();
+  await androidDevice?.close();
   if (android && adb && device) {
-    for (const args of [['shell', 'am', 'force-stop', pkg], ...(debugPort ? [['forward', '--remove', 'tcp:' + debugPort]] : []), ['reverse', '--remove', 'tcp:18765']]) try { run(...args); } catch {}
+    for (const args of [['shell', 'am', 'force-stop', pkg], ['reverse', '--remove', 'tcp:18765']]) try { run(...args); } catch {}
   }
   server?.closeAllConnections(); if (server) await new Promise(r => server.close(r));
 }
