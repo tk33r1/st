@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "6.51",
+      "date": "2026-10-26",
+      "changes": {
+        "ja": [
+          "Webで調べた長い回答のあとに続けて質問すると、絵文字の位置によっては送れないことがある問題を直しました。",
+          "長い文章が絵文字の途中で切れたときに、壊れた文字が残らないようにしました。"
+        ],
+        "en": [
+          "Fixed an issue where a follow-up question after a long web-checked reply could fail to send, depending on where an emoji fell.",
+          "Long text cut in the middle of an emoji no longer leaves a broken character behind."
+        ]
+      }
+    },
+    {
       "version": "6.5",
       "date": "2026-10-24",
       "changes": {
