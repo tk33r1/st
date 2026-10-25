@@ -161,7 +161,7 @@ export const DEFAULTS = {
   daily_limit: 60,  // IP×日次の上限（メッセージ数）
   global_daily_limit: 300, // 全利用者の合計の日次の上限。ふだんは多い日でも30回ほどなので、その10倍
   input: {
-    user_max_chars: 100,
+    user_max_chars: 1000,
     assistant_max_chars: 4000,
     history_max_chars: 40000, // 本文と人格の過去の意見の合計
     context_max_chars: 4000, // DJ 相談などの状況説明
