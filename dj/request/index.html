@@ -132,7 +132,7 @@
               "name": "送ったリクエストを変更・取り下げできますか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "送信したブラウザから「みんなのリクエスト」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。"
+                "text": "送信したブラウザから「みんなの曲」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。"
               }
             },
             {
@@ -148,7 +148,7 @@
               "name": "過去のイベントでかかった曲を確認することはできますか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "はい。「みんなのリクエスト」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。"
+                "text": "はい。「みんなの曲」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。"
               }
             }
           ]
@@ -1462,7 +1462,7 @@
       <nav class="tabs" role="tablist">
         <button role="tab" data-tab="search" aria-selected="true">リクエストする</button>
         <button role="tab" data-tab="consult" aria-selected="false">AIに相談</button>
-        <button role="tab" data-tab="board" aria-selected="false">みんなのリクエスト</button>
+        <button role="tab" data-tab="board" aria-selected="false">みんなの曲</button>
       </nav>
 
       <!-- 検索 -->
@@ -1613,7 +1613,7 @@
 
       <!-- 過去の回でかかった曲 -->
       <section class="pane" id="pane-past">
-        <button class="back" id="pastBack">← みんなのリクエストに戻る</button>
+        <button class="back" id="pastBack">← みんなの曲に戻る</button>
         <div class="pasthead">
           <h2 id="pastTitle"></h2>
           <span class="at" id="pastDate"></span>
@@ -1630,7 +1630,7 @@
 
       <!-- 曲の詳細 -->
       <section class="pane" id="pane-song">
-        <button class="back" id="songBack">← みんなのリクエストに戻る</button>
+        <button class="back" id="songBack">← みんなの曲に戻る</button>
         <div class="hero" id="songHero"></div>
         <div class="player" id="songPlayer">
           <button id="songPlay" aria-label="30秒プレビューを再生">▶</button>
@@ -1673,7 +1673,7 @@
         <div class="shutbox">
           <div style="font-size:34px">🎧</div>
           <div class="big">ただいまリクエストの受付時間外です</div>
-          <div style="font-size:13px">「みんなのリクエスト」から今回かかった曲を見られます。</div>
+          <div style="font-size:13px">「みんなの曲」から今回かかった曲を見られます。</div>
         </div>
       </section>
     </div>
@@ -1755,7 +1755,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">送ったリクエストを変更・取り下げできますか？</summary>
           <div class="request-faq-answer">
-            <p>送信したブラウザから「みんなのリクエスト」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。</p>
+            <p>送信したブラウザから「みんなの曲」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。</p>
           </div>
         </details>
         <details class="request-faq-item">
@@ -1767,7 +1767,7 @@
         <details class="request-faq-item">
           <summary class="request-faq-question">過去のイベントでかかった曲を確認することはできますか？</summary>
           <div class="request-faq-answer">
-            <p>はい。「みんなのリクエスト」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。</p>
+            <p>はい。「みんなの曲」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。</p>
           </div>
         </details>
       </div>
@@ -2307,7 +2307,7 @@
       }
     }
 
-    /* ── みんなのリクエスト ─────────────────── */
+    /* ── みんなの曲 ─────────────────── */
     let boardTimer = null, boardPollVersion = 0, lastFetch = 0;
 
     function stopBoardPolling() {
@@ -2576,7 +2576,7 @@
     });
 
     /* 共有リンク（?ev=）から来たとき。受付中のいまの回なら「リクエストする」のまま（呼ぶ側で振り分ける）。
-       受付を止めたいまの回ならみんなのリクエストを、それ以外（終わった回）ならその回でかかった曲を開く。
+       受付を止めたいまの回ならみんなの曲を、それ以外（終わった回）ならその回でかかった曲を開く。
        いまの回かどうかは /board の回と比べ、読んだ /board はそのまま描く */
     async function openShared(code, boardLoad) {
       try {
@@ -2783,7 +2783,7 @@
 
     /* 曲の詳細には一覧からも過去の回からも入る。戻り先を取り違えると、
        過去の回を見ていた人がいまの回に放り出されるので、入口を覚えておく。 */
-    let songFrom = '';   // '' = みんなのリクエスト / 回のコード = その過去の回
+    let songFrom = '';   // '' = みんなの曲 / 回のコード = その過去の回
 
     bindPlayer('#songPlay', '#songBar', '#songTime', () => detail && detail.song.previewUrl);
 
@@ -2862,7 +2862,7 @@
       const isLatest = songLatest();
       stopAudio();
       songFrom = from || '';
-      $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなのリクエストに戻る';
+      $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなの曲に戻る';
       detail = null;
       $('#songHero').innerHTML = loadingHTML('読み込んでいます');
       $('#songPlayer').style.display = 'none';
