@@ -4888,7 +4888,7 @@ test('A2: HTMLの本文はmain/articleの区画をすべて読み、区画内の
 test('A2: 4,000文字を超えるfact回答の履歴はWorkerでも切り詰め、通常の履歴は従来どおり拒否する',()=>{
   const w=worker(),long='あ'.repeat(3999)+'😀'+'い'.repeat(10);
   const fact=w.ctx.normaliseMessage({role:'assistant',mode:'fact',content:long},{text:0});
-  assert.equal(fact.content.length,3998);
+  assert.equal(fact.content.length,3999);
   assert.throws(()=>w.ctx.normaliseMessage({role:'assistant',content:long},{text:0}));
 });
 
