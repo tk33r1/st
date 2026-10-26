@@ -2300,6 +2300,26 @@
 
   const pct = v => Math.round(v * 100) + '%';
 
+  // 塗りの種類 → 出すパネル（pane-<名前>）。線形と放射は同じパネルを使う
+  const PAINT_PANE = {
+    white: 'white', black: 'black', none: 'none', bg: 'bg', auto: 'auto', brand: 'brand',
+    solid: 'solid', linear: 'grad', radial: 'grad', multi: 'multi', image: 'image'
+  };
+  const PAINT_PANE_NAMES = Array.from(new Set(Object.values(PAINT_PANE)));
+  // パネルごとの性質。書いていないパネルはどれも持たない
+  //   swatch … 色の一覧（スウォッチ）を使う
+  //   lazy   … 中身が重いので、その塗り方を選んだときに一度だけ組み立てる
+  //   fixed  … 色が指定そのもので決まり、透過を持たない（背景に追従するときは、透過も背景に従う）
+  const PANE_TRAITS = {
+    solid: { swatch: true },
+    grad: { swatch: true, lazy: true },
+    multi: { swatch: true, lazy: true },
+    white: { fixed: true },
+    black: { fixed: true },
+    none: { fixed: true },
+    bg: { fixed: true }
+  };
+
   // 色パネル1枚ぶんの表示を、その対象の塗りに合わせる
   function syncColorPanel(scope) {
     if (!colorPanel(scope)) return;
@@ -2328,35 +2348,17 @@
       p.type = p.type === 'none' ? 'auto' : 'solid';
     }
 
-    const isWhite = p.type === 'white';
-    const isBlack = p.type === 'black';
-    const isAuto = p.type === 'auto';
-    const isBgFollow = p.type === 'bg';
-    const isNone = p.type === 'none';
-    const isBrand = p.type === 'brand';
-    const isSolid = p.type === 'solid';
-    const isGrad = p.type === 'linear' || p.type === 'radial';
-    const isMulti = p.type === 'multi';
-    const isImage = p.type === 'image';
+    const pane = PAINT_PANE[p.type];
+    const traits = PANE_TRAITS[pane] || {};
 
     setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
+    PAINT_PANE_NAMES.forEach(name => showIf(cq(scope, 'pane-' + name), name === pane));
 
-    [['pane-white', isWhite], ['pane-black', isBlack], ['pane-auto', isAuto],
-     ['pane-bg', isBgFollow], ['pane-none', isNone], ['pane-brand', isBrand], ['pane-solid', isSolid],
-     ['pane-grad', isGrad], ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
-      showIf(cq(scope, pair[0]), pair[1]);
-    });
+    if (traits.lazy) ensurePanelPart(scope, pane);
+    if (traits.swatch) ensurePanelPart(scope, 'swatch');
+    showIf(cq(scope, 'swatch-host'), !!traits.swatch);
 
-    // 一覧の中身は重いので、その塗り方を選んだときに一度だけ組み立てる
-    if (isGrad) ensurePanelPart(scope, 'grad');
-    if (isMulti) ensurePanelPart(scope, 'multi');
-
-    const hideSwatch = isImage || isAuto || isBgFollow || isNone || isWhite || isBlack || isBrand;
-    if (!hideSwatch) ensurePanelPart(scope, 'swatch');
-    showIf(cq(scope, 'swatch-host'), !hideSwatch);
-
-    // 背景の色に追従するときは、透過も背景の指定に従う
-    showIf(cq(scope, 'transparency-row'), isPlate && !isNone && !isWhite && !isBlack && !isBgFollow);
+    showIf(cq(scope, 'transparency-row'), isPlate && !traits.fixed);
     const transVal = p.transparency !== undefined ? p.transparency : 0;
     setRange(cq(scope, 'transparency'), cq(scope, 'val-transparency'), transVal, transVal + '%');
 
@@ -2369,14 +2371,14 @@
     setRange(cq(scope, 'angle'), cq(scope, 'val-angle'), p.angle, p.angle + '°');
     showIf(cq(scope, 'angle-row'), p.type !== 'radial');
 
-    const hasImage = !!(isImage && p.src);
+    const hasImage = !!(p.type === 'image' && p.src);
     showIf(cq(scope, 'image-thumb'), hasImage);
     setImgSrc(cq(scope, 'image-thumb-img'), p.src);
     syncImageScaleRow(cq(scope, 'image-scale-row'), cq(scope, 'image-scale'),
       cq(scope, 'val-image-scale'), p, hasImage);
 
-    if (isMulti) buildMultiColorsList(scope);
-    else if (isGrad) buildGradColorsList(scope);
+    if (pane === 'multi') buildMultiColorsList(scope);
+    else if (pane === 'grad') buildGradColorsList(scope);
   }
 
   // 0.70 ではなく 0.7 と出す
@@ -2410,6 +2412,36 @@
     return Math.min(10, Math.round(cap * 2) / 2);
   }
 
+  // 余白が無いと角丸は付けられない。そのときはつまみを止めて「—」と出す
+  function fmtRadius(v) {
+    return maxRadiusOf(state.style.margin) === 0 ? '—' : String(v);
+  }
+
+  // スライダーの定義。操作の配線（bindRange）と表示の同期（syncControls）は
+  // どちらもこの表を引く。デザインは復元・テンプレート・undo で入れ替わるので、
+  // 持ち主は固定せず、そのつど owner() で引き直す。
+  //   after … 値を入れたあとに要る固有の処理
+  const RANGE_FIELDS = [
+    { id: 'opt-cellscale', label: 'val-cellscale', format: pct, owner: () => state.style, key: 'cellScale',
+      after: () => updateFrameGridPreviews() },
+    { id: 'opt-celljitter', label: 'val-celljitter', format: pct, owner: () => state.style, key: 'cellJitter' },
+    { id: 'opt-margin', label: 'val-margin', format: String, owner: () => state.style, key: 'margin',
+      after: v => {
+        // 角丸の上限は余白で決まる。余白を詰めたぶん、はみ出した丸みは先に削る
+        const cap = maxRadiusOf(v);
+        if (state.style.radius > cap) state.style.radius = cap;
+        syncControls();
+      } },
+    { id: 'opt-radius', label: 'val-radius', format: fmtRadius, owner: () => state.style, key: 'radius' },
+    { id: 'opt-minver', label: 'val-minver', format: fmtMinVersion, owner: () => state, key: 'minVersion' },
+    { id: 'logo-size', label: 'val-logosize', format: pct, owner: () => state.style.logo, key: 'size' },
+    { id: 'logo-pad', label: 'val-logopad', format: pct, owner: () => state.style.logo, key: 'pad' },
+    { id: 'frame-line-width', label: 'val-frame-line-width', format: fmtLineWidth, owner: () => state.style.frame, key: 'lineWidth' },
+    { id: 'frame-line-width2', label: 'val-frame-line-width2', format: fmtLineWidth, owner: () => state.style.frame, key: 'lineWidth2' },
+    { id: 'frame-content-size', label: 'val-frame-content-size', format: pct, owner: () => state.style.frame, key: 'contentSize' },
+    { id: 'frame-content-pad', label: 'val-frame-content-pad', format: pct, owner: () => state.style.frame, key: 'contentPad' }
+  ];
+
   function syncControls() {
     const s = state.style;
 
@@ -2430,17 +2462,17 @@
     setText('hint-marker', pairText(nameOf(A.MARKER_FRAMES, s.markerFrame), nameOf(A.MARKER_EYES, s.markerEye)));
     setText('hint-marker-color', pairText(paintLabel(s.markerFramePaint), paintLabel(s.markerEyePaint)));
 
-    setRange('opt-cellscale', 'val-cellscale', s.cellScale, pct(s.cellScale));
-    setRange('opt-celljitter', 'val-celljitter', s.cellJitter, pct(s.cellJitter));
-    setRange('opt-margin', 'val-margin', s.margin, s.margin);
     // 角丸の上限は余白しだい。はみ出したぶんを削るのは余白を動かした側の
     // 仕事で、ここは見せるだけ（syncControls が state を書き換えると、
-    // 履歴の取り方と噛み合わなくなる）
+    // 履歴の取り方と噛み合わなくなる）。値より先に上限を入れる（逆だと、
+    // 古い上限で値が切り詰められる）
     const maxRadius = maxRadiusOf(s.margin);
     $('opt-radius').max = maxRadius;
     $('opt-radius').disabled = maxRadius === 0;
-    setRange('opt-radius', 'val-radius', s.radius, maxRadius === 0 ? '—' : s.radius);
-    setRange('opt-minver', 'val-minver', state.minVersion, fmtMinVersion(state.minVersion));
+    RANGE_FIELDS.forEach(f => {
+      const v = f.owner()[f.key];
+      setRange(f.id, f.label, v, f.format(v));
+    });
 
     // ロゴ同期
     setSeg('logo-mode', s.logo.type, 'mode');
@@ -2453,8 +2485,6 @@
     setVal('logo-text', s.logo.text);
 
     // ロゴ共通
-    setRange('logo-size', 'val-logosize', s.logo.size, pct(s.logo.size));
-    setRange('logo-pad', 'val-logopad', s.logo.pad, pct(s.logo.pad));
     showIf('logo-thumb', s.logo.type === 'image' && s.logo.src);
     setImgSrc('logo-thumb-img', s.logo.src);
     setText('hint-logo', s.logo.type === 'none' ? 'なし'
@@ -2466,8 +2496,6 @@
     showIf('frame-label-opts', s.frame.type === 'label');
 
     const isDoubleLine = s.frame.line === 'double';
-    setRange('frame-line-width', 'val-frame-line-width', s.frame.lineWidth, fmtLineWidth(s.frame.lineWidth));
-    setRange('frame-line-width2', 'val-frame-line-width2', s.frame.lineWidth2, fmtLineWidth(s.frame.lineWidth2));
     showIf('frame-line-width2-row', isDoubleLine);
     setText('frame-line-width-label', isDoubleLine ? '外側の太さ' : '太さ');
     setText('frame-line-note', FRAME_LINE_NOTES[s.frame.line] || '');
@@ -2497,10 +2525,6 @@
     const curImgSrc = isTopPos ? (s.frame.topSrc || s.frame.src) : s.frame.src;
     showIf('frame-image-thumb', curImgSrc);
     setImgSrc('frame-image-thumb-img', curImgSrc);
-
-    // 中身の大きさ・余白
-    setRange('frame-content-size', 'val-frame-content-size', s.frame.contentSize, pct(s.frame.contentSize));
-    setRange('frame-content-pad', 'val-frame-content-pad', s.frame.contentPad, pct(s.frame.contentPad));
 
     updateCanvasChecker();
   }
@@ -3478,6 +3502,13 @@
     return new Promise(res => canvas.toBlob(res, mime, q));
   }
 
+  // SVG を横 px の画像にして焼く。書体は呼ぶ側で埋めておく。
+  // 焼けなかったとき（toBlob が null を返す）は null を返し、扱いは呼ぶ側が決める。
+  async function svgToBlob(svg, px, mime, opts) {
+    const canvas = await rasterize(svg, px, null);
+    return encodeCanvas(canvas, mime, opts);
+  }
+
   // 未対応の形式では toBlob が PNG を返す。単体・一括とも実体に合わせて名前を付ける。
   function rasterExtension(blob) {
     const ext = { 'image/png': 'png', 'image/webp': 'webp', 'image/avif': 'avif' }[blob.type];
@@ -3509,8 +3540,7 @@
 
     setStatus('rendering', '');
     try {
-      const canvas = await rasterize(await withExportFonts(snapshot.svg, snapshot.style), snapshot.px, null);
-      const blob = await encodeCanvas(canvas, mime, snapshot.encoding);
+      const blob = await svgToBlob(await withExportFonts(snapshot.svg, snapshot.style), snapshot.px, mime, snapshot.encoding);
       if (!blob) throw new Error('encode failed');
       // 対応していない形式を渡すと、黙って PNG が返ってくる。拡張子を偽らない
       const realExt = rasterExtension(blob);
@@ -3556,8 +3586,8 @@
     // Safari は「押されてすぐ」でないと書き込ませてくれない。描き終わってから
     // write を呼ぶと操作の有効期限が切れるので、中身は Promise のまま渡す。
     const png = (async () => {
-      const canvas = await rasterize(await withExportFonts(snapshot.svg, snapshot.style), Math.min(2048, snapshot.px), null);
-      const blob = await encodeCanvas(canvas, 'image/png', snapshot.encoding);
+      const blob = await svgToBlob(await withExportFonts(snapshot.svg, snapshot.style),
+        Math.min(2048, snapshot.px), 'image/png', snapshot.encoding);
       if (!blob) throw new Error('encode failed');
       return blob;
     })();
@@ -4134,8 +4164,7 @@
           // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
           bytes = new TextEncoder().encode(svgDocument(svg, printMm));
         } else {
-          const canvas = await rasterize(svg, px, null);
-          const blob = await encodeCanvas(canvas, fmt.mime, bulkEncoding);
+          const blob = await svgToBlob(svg, px, fmt.mime, bulkEncoding);
           if (!blob) { failed.push(lineNo); continue; }
           realExt = rasterExtension(blob);
           if (realExt !== fmt.ext) fallbacks++;
@@ -4617,31 +4646,11 @@
       }
     });
 
-    bindRange('opt-cellscale', 'val-cellscale', pct, v => {
-      state.style.cellScale = v;
-      updateFrameGridPreviews();
-    });
-    bindRange('opt-margin', 'val-margin', v => String(v), v => {
-      state.style.margin = v;
-      // 角丸の上限は余白で決まる。余白を詰めたぶん、はみ出した丸みは先に削る
-      const cap = maxRadiusOf(v);
-      if (state.style.radius > cap) state.style.radius = cap;
-      syncControls();
-    });
-    // 値を代入するだけの配線。デザインは復元・テンプレート・undo で入れ替わるので、
-    // 持ち主を配線時に固定せず、操作のたびに引き直す。
-    [
-      ['opt-celljitter', 'val-celljitter', pct, () => state.style, 'cellJitter'],
-      ['opt-radius', 'val-radius', String, () => state.style, 'radius'],
-      ['opt-minver', 'val-minver', fmtMinVersion, () => state, 'minVersion'],
-      ['logo-size', 'val-logosize', pct, () => state.style.logo, 'size'],
-      ['logo-pad', 'val-logopad', pct, () => state.style.logo, 'pad'],
-      ['frame-line-width', 'val-frame-line-width', fmtLineWidth, () => state.style.frame, 'lineWidth'],
-      ['frame-line-width2', 'val-frame-line-width2', fmtLineWidth, () => state.style.frame, 'lineWidth2'],
-      ['frame-content-size', 'val-frame-content-size', pct, () => state.style.frame, 'contentSize'],
-      ['frame-content-pad', 'val-frame-content-pad', pct, () => state.style.frame, 'contentPad']
-    ].forEach(([id, labelId, format, owner, key]) => {
-      bindRange(id, labelId, format, v => { owner()[key] = v; });
+    RANGE_FIELDS.forEach(f => {
+      bindRange(f.id, f.label, f.format, v => {
+        f.owner()[f.key] = v;
+        if (f.after) f.after(v);
+      });
     });
 
     $('logo-text').addEventListener('input', e => {

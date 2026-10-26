@@ -1646,6 +1646,9 @@ function renderHistoryToLog(history) {
   if (!agentDead) setAgentControlsEnabled(true);
   agentLog.innerHTML = '';
   agentClarifyPlaceholder(false);
+  // 旧データには mid を遅延付与する。cleanHistory は写しを返すので、写しではなく元の履歴（agentHistory）に付ける。
+  // 写しに付けると、［もう一度］・評価が agentItemFor で項目を見つけられない
+  if (Array.isArray(history)) history.forEach(function (it) { if (it && it.role === 'assistant' && !it.mid) it.mid = genMid(); });
   var cleanHistoryItems = cleanHistory(history), cleanHistoryLast = cleanHistoryItems.at(-1);
   cleanHistoryItems.forEach(function (item) {
     if (item.role === 'user') {
@@ -1654,7 +1657,6 @@ function renderHistoryToLog(history) {
       agentLog.appendChild(u);
     } else if (item.role === 'assistant') {
       var turn = document.createElement('div'); turn.className = 'agent-turn';
-      if (!item.mid) item.mid = genMid();
       turn.dataset.mid = item.mid;
       turn.innerHTML = turnHTML(item);
       agentLog.appendChild(turn);
@@ -2420,6 +2422,8 @@ async function agentSend(recovered, retry) {
     // ［もう一度］が届かなければ前の往復を見せ直す（質問は入力欄に戻さない）。最後の回答の［もう一度］も出し直す
     agentRetryEls(retryOf).forEach(function (el) { el.hidden = false; });
     syncRetryButtons();
+    // 初回の送信の失敗。分類などで仮保存した保存済みの会話も消す（syncCurrentToSaved は空の履歴を書かない）
+    if (!agentHistory.length && !agentTemporary() && currentSessionId) { writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== currentSessionId; })); renderSavedSessionsList(); }
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
     // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
     if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
