@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 26 Oct 2026 04:30:03 +0900</lastBuildDate>
+    <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 27 Oct 2026 06:31:15 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月27日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261027/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261027/</guid>
+      <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
+      <description>ニトリの「ステンレス味噌漉し」「点で支えるまくら」「1台10役スライサーセット」など、日常の小さな不便を低価格で解決する商品がSNSや記事で反響を広げている。 秋冬商材では「N+」の新作アパレルに吸湿発熱素材「Nウォーム」を初採用し、11月9日までの値下げで季節需要を取り込む動きが見られる。</description>
+    </item>
     <item>
       <title>2026年10月26日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261026/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261013/</guid>
       <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。 置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。</description>
-    </item>
-    <item>
-      <title>2026年10月12日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261012/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261012/</guid>
-      <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリが埼玉県に「リサイクルセンター（仮称）」を開設する計画が明らかになり、2028年度の稼働を予定。製品の回収から資源循環までを見据えたSPAとしての体制強化が注目される。 シンガポールの「NITORI JURONG POINT店」が10月15日（木）にオープンすることが発表され、海外店舗網の拡大が具体的に進んでいる。</description>
     </item>
   </channel>
 </rss>
