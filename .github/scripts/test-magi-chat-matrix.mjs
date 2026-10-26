@@ -14,8 +14,46 @@ const pkg = 'st.tk.magi.b3probe', nonce = randomBytes(10).toString('hex');
 const output = resolve(arg('report', 'workers/.wrangler/magi-chat-gate/' + (android ? 'android' : 'browser') + '.json'));
 const report = {schema: 1, kind: android ? 'android' : 'browser', pass: false, commit: git('rev-parse', 'HEAD'),
   fingerprint: sourceFingerprint(), started: new Date().toISOString(), cases: [], paidRequests: 0};
-const run = (...args) => execFileSync(adb, ['-s', device, ...args], {encoding: 'utf8', timeout: 30000, maxBuffer: 16 * 1024 * 1024}).trim();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pause = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+// エミュレーターは導入直後などに一時的にオフラインになる。通信の失敗だけを端末の復帰後にやり直し、
+// コマンドの結果や中身の照合はやり直さない（照合の失敗はそのまま検査の失敗にする）。
+const transport = error => /device offline|device '[^']*' not found|device not found|no devices|protocol fault|connection reset|closed|ETIMEDOUT/i
+  .test(String(error.stderr || '') + ' ' + error.message);
+const adbOnce = (args, options = {}) => execFileSync(adb, ['-s', device, ...args],
+  {stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000, maxBuffer: 16 * 1024 * 1024, ...options});
+function waitDevice() {
+  adbOnce(['wait-for-device'], {timeout: 120000});
+  const deadline = Date.now() + 120000;
+  for (;;) {
+    try {
+      if (adbOnce(['shell', 'getprop', 'sys.boot_completed'], {encoding: 'utf8'}).trim() === '1'
+        && adbOnce(['shell', 'pm', 'path', 'android'], {encoding: 'utf8'}).startsWith('package:')) return;
+    } catch (error) { if (!transport(error)) throw error; }
+    if (Date.now() > deadline) throw new Error('ADB端末が準備完了にならない');
+    pause(1000);
+  }
+}
+function run(...args) {
+  for (let attempt = 1; ; attempt++) {
+    try { return adbOnce(args, {encoding: 'utf8'}).trim(); }
+    catch (error) {
+      if (!transport(error) || attempt >= 3) throw error;
+      step('adb再接続: ' + args.join(' ')); waitDevice();
+    }
+  }
+}
+// 端末から読み戻したAPKが途中で切れたときだけ読み直す。hashの照合は呼び出し側でそのまま行う。
+function readInstalledApk(path, size) {
+  let bytes = Buffer.alloc(0);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try { bytes = adbOnce(['exec-out', 'cat', path], {timeout: 120000}); if (bytes.length === size) return bytes; }
+    catch (error) { if (!transport(error) || attempt >= 3) throw error; }
+    step('APKの読み戻しをやり直す（' + bytes.length + '/' + size + ' bytes）'); waitDevice();
+  }
+  return bytes;
+}
+function step(name) { report.step = name; console.error('[magi-chat-gate] ' + new Date().toISOString() + ' ' + name); }
 const event = (name, data) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 const features = {privacy_contract: 1, personalization: true, temporary_chat: true, temporary_personalization: true, temporary_speech: false, speech: false};
 const requests = [], errors = [];
@@ -62,20 +100,24 @@ async function routes(ctx) {
   });
 }
 async function ready() {
+  // エミュレーターの初回起動ではWebViewの準備に20秒を超えることがある。準備の条件は変えない。
   await page.waitForFunction(native => typeof agentBusy !== 'undefined' && !agentBusy && (typeof historyLoading === 'undefined' || !historyLoading)
-    && (!native || nativeConversation && nativeHistory?.active), android, {timeout: 20000, polling: 100});
+    && (!native || nativeConversation && nativeHistory?.active), android, {timeout: 60000, polling: 100});
 }
 async function connect() {
+  waitDevice();
   if (!androidDevice) {
     const devices = await playwrightAndroid.devices({host: '127.0.0.1', omitDriverInstall: true});
     androidDevice = devices.find(d => d.serial() === device);
     assert(androidDevice, '指定したADB端末が見つからない');
   }
-  const deadline = Date.now() + 20000;
+  const deadline = Date.now() + 60000;
   let view;
   while (!view && Date.now() < deadline) {
-    const pid = Number(run('shell', 'pidof', pkg));
-    view = androidDevice.webViews().find(v => v.pkg() === pkg && v.pid() === pid);
+    // 起動直後はプロセスがまだ無く、pidofが失敗する。その間は待つ。
+    let pid = 0;
+    try { pid = Number(run('shell', 'pidof', pkg)); } catch (error) { if (transport(error)) throw error; }
+    view = pid && androidDevice.webViews().find(v => v.pkg() === pkg && v.pid() === pid);
     if (!view) await sleep(300);
   }
   assert(view, '検証用WebViewへ接続できない');
@@ -110,15 +152,24 @@ async function send(question, background = false) {
   return body;
 }
 
+// 応答の無い待ちでジョブの上限（25分）まで止まらないよう、どの段階で止まったかを残して先に失敗させる。
+const watchdog = setTimeout(() => {
+  report.error = '時間切れ: ' + (report.step || '開始前'); report.finished = new Date().toISOString();
+  mkdirSync(dirname(output), {recursive: true}); writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
+  console.error('[magi-chat-gate] ' + report.error); process.exit(1);
+}, 10 * 60000);
+
 try {
-  checkContract();
+  step('契約の確認'); checkContract();
   if (android) {
     assert(adb && device && apk, '--androidでは--adb= --device= --apk=が必須');
+    step('端末の準備を待つ'); waitDevice();
     // 任意のアプリは操作しない。先にインストールした別IDのAPKだけを照合する。
     const installed = run('shell', 'pm', 'path', pkg).replace(/^package:/, '');
     assert.match(installed, /^\/data\/app\/[^\r\n]+\/base\.apk$/);
-    const bytes = execFileSync(adb, ['-s', device, 'exec-out', 'cat', installed], {maxBuffer: 16 * 1024 * 1024});
-    report.apkSha256 = sha256(readFileSync(apk)); assert.equal(sha256(bytes), report.apkSha256);
+    step('導入済みAPKの照合'); const expected = readFileSync(apk);
+    const bytes = readInstalledApk(installed, expected.length);
+    report.apkSha256 = sha256(expected); assert.equal(sha256(bytes), report.apkSha256);
     const bundled = JSON.parse(execFileSync('python', ['-c', 'import zipfile,json,hashlib,sys; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps({n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if n.startswith("assets/public/") and not n.endswith("/")}))', apk], {encoding: 'utf8'}));
     for (const file of git('ls-files', '--', 'magi-app/www/').split('\n')) assert.equal(bundled['assets/public/' + file.slice('magi-app/www/'.length)], sha256(readFileSync(resolve(root, file))), '検査APKの画面が対象ソースと一致: ' + file);
     report.packagedWwwVerified = true;
@@ -135,10 +186,11 @@ try {
     });
     await new Promise(r => server.listen(18765, '127.0.0.1', r));
     run('reverse', 'tcp:18765', 'tcp:18765'); run('shell', 'am', 'start', '-n', pkg + '/st.tk.magi.MainActivity');
-    await sleep(1500); await connect();
+    step('検証アプリへ接続'); await sleep(1500); await connect();
   } else browser = await chromium.launch({headless: true});
 
   for (const surface of android ? ['android'] : ['web', 'pwa']) {
+    step('画面: ' + surface);
     if (!android) {
       context = await browser.newContext({viewport: {width: surface === 'web' ? 1400 : 390, height: 900}, serviceWorkers: 'block', reducedMotion: 'reduce'});
       await context.addInitScript(() => { sessionStorage.setItem('magi_transport', 'sse'); localStorage.setItem('st-analytics', 'off'); });
@@ -149,6 +201,7 @@ try {
     }
     for (const id of matrix) {
       const temporary = id.startsWith('temporary'), personal = id.endsWith('-on');
+      step('条件: ' + surface + '/' + id);
       await page.evaluate(async ({temporary, personal, android}) => {
         if (agentTemporary()) await toggleAgentTemporary();
         resetAgent();
@@ -176,6 +229,7 @@ try {
   }
 
   if (android) {
+    step('バックグラウンド受信と再起動後の復元');
     await page.evaluate(async () => {
       if (agentTemporary()) await toggleAgentTemporary(); resetAgent();
       saveAgentPersonalization({version: 1, enabled: true, preferred_name: 'SYNTHETIC', custom_instructions: ''});
@@ -218,6 +272,7 @@ try {
   throw error;
 }
 finally {
+  clearTimeout(watchdog);
   report.finished = new Date().toISOString(); mkdirSync(dirname(output), {recursive: true}); writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   await browser?.close();
   await androidDevice?.close();
