@@ -174,6 +174,11 @@ test('メールは本文形式・固定送り先・同じイベントの同じ�
   assert.equal(calls[0].url,'https://api.resend.com/emails');assert.equal(calls[0].options.headers['Idempotency-Key'],calls[1].options.headers['Idempotency-Key']);
   assert.equal(JSON.parse(calls[0].options.body).html,undefined);
   await assert.rejects(()=>notifyDaily('message',['B',7],{env:{}}),/not_configured/);
+  // Workerと同じ書き方（カンマ区切りの複数宛先、末尾の改行）をそのまま受け付ける。
+  const multi=[];await notifyDaily('message',['B',8],{env:{...env,ALERT_TO:'a@example.test, b@example.test\n',ALERT_FROM:'MAGI <sender@example.test>\n'},
+    fetcher:async(url,options)=>{multi.push(JSON.parse(options.body));return Response.json({id:'synthetic'});}});
+  assert.deepEqual(multi[0].to,['a@example.test','b@example.test']);assert.equal(multi[0].from,'MAGI <sender@example.test>');
+  await assert.rejects(()=>notifyDaily('message',['B',9],{env:{...env,ALERT_TO:' , '}}),/not_configured/);
 });
 test('workflowはmainから起動し、PRコードのジョブにsecret・書き込み権限・採用する出力が無い',()=>{
   const source=readFileSync('.github/workflows/magi2-daily-merge.yml','utf8');
