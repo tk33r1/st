@@ -62,7 +62,7 @@ node .github/scripts/magi2-daily-check.mjs --worker
 
 - 次の番号は`--next-version`の結果だけを使う。mainのbaseまでの全履歴を読み、戻した番号も使わない。PR自身の未マージの番号を使用済みに数えない。履歴が浅いcheckoutでは採番しない。
 - X.Y9の次、履歴60件・64KiBを超えるものはB。自律で次の本人の版へ繰り上げない。
-- APP_VERSION・トップ・npm版・Android versionName・履歴をそろえる。npmはX.Y.Z、表示はX.YZ。package-lockもそろえ、versionCodeは変えない。
+- APP_VERSION・トップのAGENT_SCREEN_VERSION・npm版・Android versionName・履歴をそろえる。npmはX.Y.Z、表示はX.YZ。package-lockもそろえ、versionCodeは変えない。
 - 更新履歴は日英2件ずつ、利用体験の変化を短く書く。モデル名・内部の仕組みを書かない。
 - 最後に`bump version [magi2-daily]`のコミットを1つだけ置く。同じ未マージPRでは件数を増やさず直し、PWAのキャッシュもbaseより1つ上がった値を保つ。
 - APK・Release・タグを作らない。改修したWorkerと画面の公開が済むまでX.YZの履歴を本番へ入れない。

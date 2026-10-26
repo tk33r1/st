@@ -3378,7 +3378,7 @@
           "@type": "ProfilePage",
           "@id": "https://tk.st/#profile-page",
           "dateCreated": "2026-03-26T12:00:00+09:00",
-          "dateModified": "2026-10-26T07:36:05+09:00",
+          "dateModified": "2026-10-26T11:14:55+09:00",
           "mainEntity": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake",
@@ -4615,7 +4615,11 @@
       const color = iconColor(cmd);
       const desc = cdesc(cmd);
       const pending = extPending.has(cmd);
-      const busyLabel = `<span class="ext-spinner"></span> ${isInstalled ? tr('Uninstalling', 'アンインストール中') : tr('Installing', 'インストール中')}`;
+      // The install and uninstall buttons differ only in class, label and title.
+      const act = isInstalled
+        ? { kind: 'uninstall', label: tr('Uninstall', 'アンインストール'), busy: tr('Uninstalling', 'アンインストール中'),
+          title: ` title="${tr(`Uninstall ${esc(cmd)}`, `${esc(cmd)} をアンインストール`)}"` }
+        : { kind: 'install', label: tr('Install', 'インストール'), busy: tr('Installing', 'インストール中'), title: '' };
       return `
         <div class="ext-card p-2 border border-color rounded bg-surface-alt">
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
@@ -4627,9 +4631,7 @@
             <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
           </div>
           <div class="ext-author text-[10px] text-secondary truncate">ST</div>
-          ${isInstalled
-          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" ${pending ? 'disabled' : ''} title="${tr(`Uninstall ${esc(cmd)}`, `${esc(cmd)} をアンインストール`)}">${pending ? busyLabel : tr('Uninstall', 'アンインストール')}</button>`
-          : `<button class="ext-install-btn ext-btn ext-btn-block ext-btn-install" data-ext="${cmd}" ${pending ? 'disabled' : ''}>${pending ? busyLabel : tr('Install', 'インストール')}</button>`}
+          <button class="ext-${act.kind}-btn ext-btn ext-btn-block ext-btn-${act.kind}" data-ext="${cmd}" ${pending ? 'disabled' : ''}${act.title}>${pending ? `<span class="ext-spinner"></span> ${act.busy}` : act.label}</button>
         </div>
       `;
     }
@@ -8188,6 +8190,8 @@ function initAgentPrivacy() {
 setTimeout(initAgentPrivacy, 0);
 // AGENT_EPHEMERAL_END
 
+    // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
+    const AGENT_SCREEN_VERSION = '7.03';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -8203,7 +8207,7 @@ setTimeout(initAgentPrivacy, 0);
       + '</svg>'
       + '<div class="magi-title">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver 7.03</button>'
+      + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver ' + AGENT_SCREEN_VERSION + '</button>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('')
       + `<button type="button" class="magi-node" data-codename="${AGENT_SYNTH.codename}">✦ ${AGENT_SYNTH.codename.toUpperCase()}</button>` + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
@@ -8225,8 +8229,6 @@ setTimeout(initAgentPrivacy, 0);
       + '</a>'
       + '</div>'
       + '</div>';
-    // 版番号の正本はスプラッシュ。版更新時にアプリ情報だけ古く残さない。
-    const AGENT_SCREEN_VERSION = agentHintHTML().match(/>ver ([0-9.]+)</)[1];
     const agentDockEl = document.getElementById('agentdock');
     const agentLog = document.getElementById('agent-log');
     const agentInput = document.getElementById('agent-input');
@@ -9450,6 +9452,25 @@ async function addAgentAttachments(files) {
     // retry: ［もう一度］のときの { text, atts, mid（置き換える回答） }。入力欄には触れない。
     // 古い往復は隠して、送る履歴からだけ外す。新しい回答が届いたら履歴からも消し、届かなければ見せ直す
     // （途中で開き直す・会話を切り替えても、古い回答は保存した履歴に残る）
+    // 回答1件の履歴項目を作る。保存形式（キーとその順）は従来どおり。
+    // 短い返しは討議を持たず、事実回答は出典を、ほかは討議を持つ。採決は mode を 'magi' に上書きする。
+    // 読み上げの署名は、最後まで届いた通常の回答（短い返し・確認質問を除く）にだけ付ける。
+    function agentReplyItem(r) {
+      const item = { role: 'assistant', content: r.reply, thinkingSeconds: r.thinkingSeconds };
+      if (r.closed) item.closed = true;
+      else if (r.fact) { item.mode = 'fact'; item.sources = cleanAgentSources(r.sources, r.reply); }
+      else item.debate = r.debate;
+      if (r.magi) { item.mode = 'magi'; item.magi = r.magi; }
+      if (r.clarify) item.clarify = r.clarify;
+      const speech = r.speech;
+      if (speech.speech_sig && !r.closed && !r.clarify && r.completed) {
+        item.speech_sig = speech.speech_sig;
+        if (speech.speech_version === 2) { item.speech_version = 2; item.speech_mode = speech.speech_mode; }
+        if (speech.speech_lang) item.speech_lang = speech.speech_lang;
+      }
+      item.mid = r.mid; item.at = Date.now(); item.reactions = r.reactions;
+      return item;
+    }
     async function agentSend(retry) {
       if (agentPrivacyState.preparing || agentPrivacyState.switching || agentTemporary() && agentPrivacyState.background) return;
       if (agentPrivacyState.attachmentJobs) return;
@@ -9507,7 +9528,7 @@ async function addAgentAttachments(files) {
       agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false;
       let magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
-      var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechSig = null, speechLang = null, speechVersion = null, speechMode = null;
+      var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechMeta = {};
       const sendId = ++agentSendSequence;
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…', followups: [] }]));
 
@@ -9624,7 +9645,7 @@ async function addAgentAttachments(files) {
             pages: (d) => { if (!dropped()) sitePages = d; },
             sources: (d) => { if (!dropped()) replySources = d; },
             // 読み上げの署名（読み上げ設計§5.2）。Worker が書いた回答の本文に対するもので、履歴に保存する
-            speech: (d) => { if (!dropped()) { var audioMeta = cleanAgentSpeechEvent(d, requestPrivacy && requestPrivacy.conversation_mode); speechSig = audioMeta.speech_sig; speechLang = audioMeta.speech_lang; speechVersion = audioMeta.speech_version; speechMode = audioMeta.speech_mode; } },
+            speech: (d) => { if (!dropped()) speechMeta = cleanAgentSpeechEvent(d, requestPrivacy && requestPrivacy.conversation_mode); },
             done: () => { completed = true; streamWatch.finish(); },
           });
           if (magiView && completed && !errored && !dropped()) await magiView.wait();
@@ -9672,7 +9693,10 @@ async function addAgentAttachments(files) {
         if (closedReply) closeAgentConversation(turn);
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
         if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(el => el.remove()); }
-        agentHistory.push({ role: 'assistant', content: reply, thinkingSeconds: thinking.finish(), ...(closedReply ? { closed: true } : factReply ? { mode: "fact", sources: cleanAgentSources(replySources, reply) } : { debate: debateData }), ...(magiMeta ? { mode: 'magi', magi: magiMeta } : {}), ...(clarifyReply ? { clarify: clarifyReply } : {}), ...(speechSig && !closedReply && !clarifyReply && completed ? { speech_sig: speechSig, ...(speechVersion === 2 ? { speech_version: 2, speech_mode: speechMode } : {}), ...(speechLang ? { speech_lang: speechLang } : {}) } : {}), mid, at: Date.now(), reactions: pendingReactions[mid] || {} });
+        agentHistory.push(agentReplyItem({
+          reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, sources: replySources, debate: debateData,
+          magi: magiMeta, clarify: clarifyReply, speech: speechMeta, completed, mid, reactions: pendingReactions[mid] || {},
+        }));
         delete pendingReactions[mid];
         agentLastSend = atts.length ? { mid, atts } : null;
         setupReplyBar(turn, agentHistory[agentHistory.length - 1]);

@@ -74,7 +74,7 @@ function checkVersion(commit,expected,errors) {
     for(const {path,before,after} of commit.files) {
       if(before===null||after===null)throw new Error('version_file_missing');
       if(path==='index.html') {
-        if(after!==replaceOne(before,/>ver \d{1,2}\.\d[1-9]?</,'>ver '+expected+'<'))throw new Error('version_home_only');
+        if(after!==replaceOne(before,/const AGENT_SCREEN_VERSION = '\d{1,2}\.\d[1-9]?';/,"const AGENT_SCREEN_VERSION = '"+expected+"';"))throw new Error('version_home_only');
       } else if(path==='magi-app/www/app.js') {
         if(after!==replaceOne(before,/var APP_VERSION = '[^']+';/,"var APP_VERSION = '"+expected+"';"))throw new Error('version_app_only');
       } else if(path==='magi-app/android/app/build.gradle') {

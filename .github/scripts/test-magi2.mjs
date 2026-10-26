@@ -4062,10 +4062,13 @@ test('404 の③のリンクの検査はサイト内のパスだけを通す（�
 
 
 test('MAGI の版はトップ・アプリの定数・package・Androidで一致し、同梱画面も同じ定数を使う', () => {
-  const shown = src => [...src.matchAll(/class="magi-ver"[^>]*>ver (\d+\.\d+)</g)].map(m => m[1]);
-  const home = shown(read('index.html')), app = mobile.match(/var APP_VERSION = '(\d+\.\d+)'/);
+  const page = read('index.html');
+  const home = [...page.matchAll(/const AGENT_SCREEN_VERSION = '(\d+\.\d+)';/g)].map(m => m[1]), app = mobile.match(/var APP_VERSION = '(\d+\.\d+)'/);
   const pkg = magiDisplayVersion(JSON.parse(read('magi-app/package.json')).version);
   assert.equal(home.length, 1); assert.ok(app);
+  // トップのスプラッシュとアプリ情報は定数を表示し、版番号を直書きしない
+  assert.ok(page.includes(">ver ' + AGENT_SCREEN_VERSION + '</button>'"));
+  assert.doesNotMatch(page, />ver \d/);
   assert.equal(home[0], pkg); assert.equal(app[1], pkg);
   assert.ok(mobile.includes('>ver \' + APP_VERSION + \'</button>'));
   assert.equal(JSON.parse(read('data/magi-versions.json')).versions[0].version, pkg);
