@@ -215,12 +215,9 @@ export function checkPlan(mode,paths=[]) {
   const node=process.execPath,python=process.env.PYTHON||'python',commands=[
     [node,'--test','--test-force-exit','.github/scripts/test-magi2.mjs'],
     [python,'-B','.github/scripts/test-magi-smoke.py'],
-    [node,'--test','.github/scripts/test-magi-qa-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi-eval-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-check.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-review.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-control.mjs'],
+    ...['qa-budget','eval-budget'].map(name=>[node,'--test','.github/scripts/test-magi-'+name+'.mjs']),
+    ...['check','review','budget','control','stage1','deploy','deploy-worker','publication','cloudflare','publication-run','automation','seed-trial']
+      .map(name=>[node,'--test','.github/scripts/test-magi2-daily-'+name+'.mjs']),
     [python,'-B','.github/scripts/ai_models.py','check'],
   ];
   if(mode==='full'&&(paths.some(isScreen)||paths.some(p=>p.startsWith('data/'))))commands.push(['bash','build.sh']);

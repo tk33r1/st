@@ -14,6 +14,15 @@ on:
       sha:
         required: true
         type: string
+      expected-version-id:
+        description: 'magi2の公開前に照合する本番版ID。日次の呼び出し側が記録した値'
+        required: false
+        type: string
+        default: ''
+    outputs:
+      version-id:
+        description: 'magi2を実際に公開した版ID。dry-runと他Workerでは空'
+        value: ${{ jobs.deploy.outputs.version-id }}
     secrets:
       CLOUDFLARE_API_TOKEN:
         required: false
@@ -38,14 +47,20 @@ jobs:
     needs: [magi-chat-check]
     if: always() && (needs.magi-chat-check.result == 'success' || needs.magi-chat-check.result == 'skipped')
     runs-on: ubuntu-latest
+    outputs:
+      version-id: ${{ steps.published.outputs.version-id }}
     steps:
     - name: Validate the pinned target
       env:
         DEPLOY_SHA: ${{ inputs.sha }}
         WORKER: ${{ inputs.worker }}
+        EXPECTED_VERSION_ID: ${{ inputs.expected-version-id }}
       run: |
         [[ "$DEPLOY_SHA" =~ ^[a-f0-9]{40}$ ]] || { echo '::error::A full commit SHA is required'; exit 1; }
         [[ "$WORKER" =~ ^[a-z][a-z0-9-]*$ ]] || { echo '::error::Invalid Worker name'; exit 1; }
+        if [ -n "$EXPECTED_VERSION_ID" ]; then
+          [[ "$WORKER" == magi2 && "$EXPECTED_VERSION_ID" =~ ^[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$ ]] || { echo '::error::Invalid expected MAGI version ID'; exit 1; }
+        fi
     - uses: actions/checkout@v4
       with:
         ref: ${{ inputs.sha }}
@@ -56,7 +71,12 @@ jobs:
       with:
         ref: ${{ github.sha }}
         path: .deploy-caller
-        sparse-checkout: .github/workflows/deploy-worker.yml
+        sparse-checkout: |
+          .github/workflows/deploy-worker.yml
+          .github/scripts/magi2-daily-cloudflare.mjs
+          .github/scripts/magi2-daily-deploy-worker.mjs
+          .github/scripts/magi2-daily-http.mjs
+          workers/magi2/wrangler.toml
         sparse-checkout-cone-mode: false
         persist-credentials: false
     - uses: actions/setup-node@v4
@@ -122,21 +142,6 @@ jobs:
         CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       run: npx wrangler d1 execute st-games-ranking-db --remote --config games/wrangler.toml --file games/migrations/0001_ai_rate_limits.sql
 
-    # モデルの切り替え前にキーを同期する。Geminiを含む既存のsecretは消さない。
-    - name: Prepare MAGI Anthropic
-      if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
-      working-directory: workers
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      run: |
-        if [ -z "$ANTHROPIC_API_KEY" ]; then
-          echo "::error::リポジトリ Secret ANTHROPIC_API_KEY が未設定です。MAGIのモデル切り替えを止めます"
-          exit 1
-        fi
-        printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put MAGI_ANTHROPIC_API_KEY --config magi2/wrangler.toml
-
     # 条件付き移行の採用後だけ同期する。評価前のopenai設定では既存のキーを触らない。
     - name: Prepare auxiliary Anthropic
       if: ${{ (inputs.worker == 'games' || inputs.worker == 'dj-request') && !inputs.dry-run }}
@@ -164,9 +169,21 @@ jobs:
         WORKER: ${{ inputs.worker }}
         DRY_RUN: ${{ inputs.dry-run }}
         DEPLOY_SHA: ${{ inputs.sha }}
+        EXPECTED_VERSION_ID: ${{ inputs.expected-version-id }}
+        ANTHROPIC_API_KEY: ${{ inputs.worker == 'magi2' && secrets.ANTHROPIC_API_KEY || '' }}
+        WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/worker-deployment.jsonl
       run: |
         if [ "$DRY_RUN" = "true" ]; then
           npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/bundle" --config "$WORKER/wrangler.toml"
           exit 0
         fi
-        npx wrangler deploy --config "$WORKER/wrangler.toml" --message "$DEPLOY_SHA"
+        if [ "$WORKER" = magi2 ]; then
+          node ../.deploy-caller/.github/scripts/magi2-daily-deploy-worker.mjs
+        else
+          npx wrangler deploy --config "$WORKER/wrangler.toml" --message "$DEPLOY_SHA"
+        fi
+
+    - name: Capture the published MAGI version from structured Wrangler output
+      id: published
+      if: ${{ inputs.worker == 'magi2' && !inputs.dry-run }}
+      run: node .deploy-caller/.github/scripts/magi2-daily-cloudflare.mjs --published --file "$RUNNER_TEMP/worker-deployment.jsonl"

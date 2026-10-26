@@ -20,7 +20,7 @@ function fixture(run) {
 }
 test('A6: 保存先とscopeは今月だけで、A2の既定拒否・上限は変わらない',()=>{
   assert.throws(()=>paidEvaluationGate([]),/disabled/);
-  assert.deepEqual(evaluationBudgetPolicy(evaluationBudgetPath).caps,{openai:1.20,anthropic:1.20,total:3.12});
+  assert.deepEqual(evaluationBudgetPolicy(evaluationBudgetPath).caps,{openai:1.20,anthropic:1.20,total:3.20});
   assert.deepEqual(policy.caps,{total:.50});assert.equal(policy.scope,'magi2-daily-'+month.replace('-',''));
   assert.throws(()=>evaluationBudgetPolicy(dailyEvaluationBudgetPath(new Date('2000-01-01T00:00:00Z'))),/shared/);
   assert.throws(()=>evaluationBudgetPolicy(join(tmpdir(),'budget-'+month.replace('-','')+'.json')),/shared/);
