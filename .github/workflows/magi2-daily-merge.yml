@@ -110,6 +110,8 @@ jobs:
           MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
           MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
           MAGI2_DAILY_STAGE: ${{ vars.MAGI2_DAILY_STAGE }}
+          MAGI2_DAILY_REVIEW_APP: ${{ vars.MAGI2_DAILY_REVIEW_APP }}
+          MAGI2_DAILY_REVIEW_TRIAL: ${{ vars.MAGI2_DAILY_REVIEW_TRIAL }}
           DAILY_SNAPSHOT: ${{ needs.discover.outputs.snapshot }}
           DAILY_VALIDATION: ${{ needs.validate.result }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -144,6 +146,10 @@ jobs:
         id: merge
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
+          MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+          MAGI2_DAILY_REVIEW_APP: ${{ vars.MAGI2_DAILY_REVIEW_APP }}
+          MAGI2_DAILY_REVIEW_TRIAL: ${{ vars.MAGI2_DAILY_REVIEW_TRIAL }}
           DAILY_SNAPSHOT: ${{ needs.discover.outputs.snapshot }}
           DAILY_VALIDATION: ${{ needs.validate.result }}
         run: node .github/scripts/magi2-daily-merge.mjs

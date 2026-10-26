@@ -1,8 +1,8 @@
 # MAGI 継続改善の実行手順
 
-2026-10-24、準備中。Claude側の段0は、04:00の実際の定時起動を除いて実測と本人の判断が済んだ（[段0確認記録](../../workers/magi2/継続改善段0確認記録.md)）。ChatGPTの正式レビュー経路は未設定で、定期運用は始めていない。[設計](../../workers/magi2/magi2継続改善設計書.md)と[検証計画](../../workers/magi2/magi2継続改善検証計画.md)が仕様の正本。
+2026-10-27、準備中。Claude側の段0は、04:00の実際の定時起動を除いて実測と本人の判断が済んだ（[段0確認記録](../../workers/magi2/継続改善段0確認記録.md)）。ChatGPTの正式レビュー経路は自宅PCの`codex exec`に決まったが、Appの導入と実地試験の前なので未設定として扱い、定期運用は始めていない。残りは[残作業](残作業.md)。[設計](../../workers/magi2/magi2継続改善設計書.md)と[検証計画](../../workers/magi2/magi2継続改善検証計画.md)が仕様の正本。
 
-`magi2-daily-merge.yml`にはマージ→公開前検査→共通デプロイ→公開確認→復旧・停止・通知まで接続した。**現在は段階1で、正式レビューの取得経路も未設定**。変数を2へ替えたり、PRにreadyと書いたりするだけではマージしない。依頼・ラウンド・24時間期限も開始しない。実装と未実施事項は[自動処理接続記録](../../workers/magi2/継続改善自動処理接続記録.md)。
+`magi2-daily-merge.yml`にはマージ→公開前検査→共通デプロイ→公開確認→復旧・停止・通知まで接続した。**現在は段階1で、正式レビューの取得経路も未設定（Appの変数と実地試験の合格が無い）**。変数を2へ替えたり、PRにreadyと書いたりするだけではマージしない。依頼・ラウンド・24時間期限も開始しない。実装と未実施事項は[自動処理接続記録](../../workers/magi2/継続改善自動処理接続記録.md)。
 
 固定Issueは[#14](https://github.com/tk33r1/st/issues/14)。6ラベルと`MAGI2_DAILY_ISSUE=14`・`MAGI2_DAILY_STAGE=1`は段2で準備済み。レビュー省略の変数は設定していない。2026-10-23、mainの`cad22a9f`に準備版workflowが入ったことを確認した。実際のActions実行・通知の成功は未確認。
 
@@ -75,7 +75,19 @@ node .github/scripts/magi2-daily-check.mjs --worker
 
 ## レビューと休止の記録
 
-正式サービスの取得口は`magi2-daily-review-source.mjs`。現時点の実装は未設定の結果を返す。報告とマージの両方がこの取得口から状態を再計算し、PR本文・状態コメント・環境変数のreadyを使わない。正式サービスを選び、その取得処理と実試行が成立するまでは`unconfigured`。以下の判定関数の模擬合格を、実レビューの完了には使わない。
+正式な経路（2026-10-27本人決定）は、本人の自宅PCのタスクスケジューラが毎時`magi2-daily-codex-review.mjs`を動かし、`codex exec`（Sol・high・読み取り専用、ユーザー設定とMCPを読まない）の結果を専用GitHub Appの名前でPRへ書くもの。ChatGPTの認証とAppの鍵はPCの外へ出さない。導入は`codex-review/install.ps1`。PCが止まっている間は依頼が進まず、24時間で本人確認になる。
+
+報告とマージは取得口`magi2-daily-review-source.mjs`で状態を再計算する。Appの名前はリポジトリ変数`MAGI2_DAILY_REVIEW_APP`、実地試験の合格は`MAGI2_DAILY_REVIEW_TRIAL=passed`（本人が設定）。どちらかが無ければ`unconfigured`。コメントの先頭行の目印だけを読み、投稿元で信頼を分ける。
+
+| 目印 | 書くのは | 中身 |
+| --- | --- | --- |
+| `<!-- magi2-review:request {...} -->` | 点検（`MAGI2_DAILY_ACTOR`） | `v:1`・`id`・`head`・`base`（完全SHA）・`round`（1〜3）。書き換えた依頼は不正として止まる |
+| `<!-- magi2-review:claude {...} -->` | 点検 | `v:1`・`head`・`model_alias:"opus"`・`effort:"high"`。自己申告として扱う |
+| `<!-- magi2-review:selection {...} -->` | App（固定Issue） | 使うモデルとhigh。依頼より前の最新の選定だけを依頼に結び付ける |
+| `<!-- magi2-review:accept {...} -->` | App | 受理と実行ID。依頼1件に1回 |
+| `<!-- magi2-review:result {...} -->` | App | `completed`は指摘・結果表とCodexのセッション記録（モデル・推論・サンドボックス・sha256）、`failed`は理由。失敗もラウンドを使う |
+
+Codexの`--json`出力にはモデル名が出ないので、CLIがローカルに書くセッション記録の`turn_context`でモデル・high・read-onlyを照合し、違えば失敗として投稿する。投稿前にトークン・鍵らしい文字列を調べ、混ざれば本文を出さない。点検は依頼を書いた後、結果が来るまで同じPRへ新しい依頼を重ねない。以下の判定関数の模擬合格を実レビューの完了には使わない。
 
 `magi2-daily-review.mjs`は、依頼・サービスの正式な実行記録・完了結果から状態を再計算する。入力のroute/recordsは信頼する実行サービスのアダプター専用で、PR本文やClaudeが転載したJSONを入れない。登録した投稿元、依頼ID、実行ID、head/base、依頼時に選んだSolの具体名とhighを照合する。Claudeのopus・highは別の自己申告として残す。
 
