@@ -9,7 +9,7 @@ import {cleanVersionHistory} from '../../workers/magi2/version-history.js';
 
 const row=version=>({version,date:'2026-10-23',changes:{ja:['表示を改善しました','操作を改善しました'],en:['Improved display','Improved controls']}});
 const baseFiles={
-  'index.html':'<button class="magi-ver">ver 6.0</button>\n',
+  'index.html':"const AGENT_SCREEN_VERSION = '6.0';\n",
   'magi-app/www/app.js':"var APP_VERSION = '6.0';\nvar unused = 1;\n",
   'magi-app/package.json':JSON.stringify({version:'6.0.0',private:true}),
   'magi-app/package-lock.json':JSON.stringify({version:'6.0.0',packages:{'':{version:'6.0.0'}}}),

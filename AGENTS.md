@@ -47,7 +47,7 @@
 | `anniversary/` | 記念日ページ |
 | `workers/` | Cloudflare Workers（下表）。`workers/package.json` は全 Worker 共通の wrangler |
 | `config/` | AI モデル設定の正本 `ai-models.json`（後述「AIモデル設定」） |
-| `magi-app/` | MAGI モバイルアプリ。`www/` が出荷物。画面の版の表示（`www/app.js` とトップページの `ver X.Y`）・`package.json` の version・Android の versionName は常に同じ値にする（`magi-app/README.md`「Release」） |
+| `magi-app/` | MAGI モバイルアプリ。`www/` が出荷物。画面の版の表示（`www/app.js` の `APP_VERSION` とトップページの `AGENT_SCREEN_VERSION`）・`package.json` の version・Android の versionName は常に同じ値にする（`magi-app/README.md`「Release」） |
 | `build.sh` | Cloudflare Pages のビルド（後述「公開範囲」「デプロイ」） |
 
 ### ファイルの置き場所
@@ -204,7 +204,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 ### MAGI の版番号
 
 - 本人の公開は `X.Y`（例: 6.0）、継続改善の自律公開は小数第2位を上げた `X.YZ`（Zは1〜9。例: 6.01）を使う。`6.00`・`5.90`・`5.100` は使わない。
-- `APP_VERSION`・トップページの表示・Android の versionName・`data/magi-versions.json` の先頭は同じ表示にする。package.json と package-lock.json の version は `X.Y.0` / `X.Y.Z`（例: 6.01 → 6.0.1）でそろえる。
+- `APP_VERSION`・トップページの `AGENT_SCREEN_VERSION`・Android の versionName・`data/magi-versions.json` の先頭は同じ表示にする。package.json と package-lock.json の version は `X.Y.0` / `X.Y.Z`（例: 6.01 → 6.0.1）でそろえる。
 - 自律更新では versionCode を変えない。次に APK を作るときから、整数×100＋2桁の小数部（5.9 → 590、5.91 → 591、6.0 → 600）にする。実物との照合は `magi-app/scripts/verify-apk.py` で行う。
 - 更新履歴は新画面が `/magi2/versions?format=2` で取得する。`format=2` の無い旧 APK には X.YZ を除いて返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。
 - 自律更新で版を上げる条件・番号の再利用禁止・上限は [継続改善設計§2.4](workers/magi2/magi2継続改善設計書.md) に従う。
