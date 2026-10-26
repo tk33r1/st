@@ -10,6 +10,8 @@ import {inspectChanges} from './magi2-daily-check.mjs';
 export const seedBranch='automation/magi2-daily-seeded-base';
 const apk59Fixture='.github/scripts/fixtures/magi-versions-apk59.js';
 const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
+// 自前の理由コード（例: daily_mail_403）だけをログへ出す。秘密や本文を含みうる他の文は伏せる。
+const safeCode=error=>/^[\w:,.()-]{1,200}$/.test(error?.message||'')?error.message:'error';
 export function eligibleSeedPR(pr,actor='tk33r1',label='magi2-daily-A') {
   return pr?.base?.ref===seedBranch&&eligibleDailyPR({...pr,base:{...pr.base,ref:'main'}},{actor,label});
 }
@@ -90,7 +92,7 @@ export async function reportSeedTrial({client,snapshot,validation,issue,actor='t
         await client.request('/issues/'+snapshot.number+'/comments',{method:'POST',body:{body:marker+'\n通知送信済み。'}});
       }
       if(classification==='B')await client.request('/issues/'+snapshot.number+'/labels',{method:'POST',body:{labels:['magi2-daily-notified']}});
-    }catch{failed.push('mail');}
+    }catch(error){failed.push('mail('+safeCode(error)+')');}
   }
   if(failed.length)throw new Error('seed_trial_report_failed:'+failed.join(','));
   return {reported:true,status,merge_enabled:false};
@@ -117,4 +119,4 @@ async function main(args) {
   throw new Error('seed_trial_mode');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
-  main(process.argv.slice(2)).catch(()=>{console.error('seed_trial_failed');process.exitCode=1;});
+  main(process.argv.slice(2)).catch(error=>{console.error('seed_trial_failed: '+safeCode(error));process.exitCode=1;});
