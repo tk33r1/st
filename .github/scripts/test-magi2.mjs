@@ -1693,7 +1693,9 @@ test('page を送った画面だけにサイト案内を足し、3人格には�
     if (listed) assert.ok(synth.indexOf('- TOOLS_TITLE') < synth.indexOf('- TOP_TITLE') && synth.indexOf('- TOP_TITLE') < synth.indexOf('- PDF Studio'));
     assert.ok(!synth.includes('ISSUE_TITLE'));
   }
-  assert.ok(!between(dj, 'body: JSON.stringify({ messages: messagesForMagi', 'signal').includes('page'));
+  // 目印が見つからないと空文字を調べて常に通るので、送信本文を切り出せたことも確かめる
+  const djBody = between(dj, 'JSON.stringify(Object.assign({ messages: messagesForMagi', 'signal');
+  assert.ok(djBody.includes('messagesForMagi(') && !djBody.includes('page'));
 });
 
 test('統合人格に渡すページ一覧は上限の字数で打ち切る', () => {
