@@ -53,6 +53,10 @@ test('機械的条件: 保護ファイル・範囲外・完了済み文書・印
 });
 test('機械的条件: 両本体・61行・5ファイル・改行変換を落とす',()=>{
   assert.ok(has(inspect([file('workers/magi2/src/index.js'),file('magi-app/www/app.js')]),'worker_and_screen'));
+  // コミットを分けても、同じ枝で両方の本体に触れれば片方だけが公開されうる。
+  const split=inspectChanges({commits:[commit([file('workers/magi2/research.js')]),commit([file('magi-app/www/app.js')])],baseFiles});
+  assert.ok(has(split,'worker_and_screen'));
+  assert.equal(inspectChanges({commits:[commit([file('workers/magi2/research.js')]),commit([file('workers/magi2/README.md')])],baseFiles}).ok,true);
   assert.ok(has(inspect([file('workers/magi2/research.js',null,Array(61).fill('line').join('\n'))]),'diff_size'));
   assert.ok(has(inspect(Array.from({length:5},(_,i)=>file('magi-app/www/a'+i+'.js'))),'diff_size'));
   assert.ok(has(inspect([file('workers/magi2/research.js','old\r\n','new\n')]),'line_endings'));

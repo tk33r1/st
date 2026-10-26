@@ -81,6 +81,7 @@
 | 既存のテストの `assert` を1つ消す、`skip` を足す | 外れ |
 | `[magi2-daily]` の無いコミットを混ぜる | 外れ |
 | 1コミットで Worker の `src/index.js` と `magi-app/www/app.js` に触れる | 外れ |
+| Worker の `research.js` と `magi-app/www/app.js` を別のコミットで変える | 外れ（枝全体で見る） |
 | 1コミットで Worker の `src/index.js` とテストに触れる | 通る |
 | 1コミットで版の5か所と `sw.js` に触れる（版のコミット） | 通る |
 | トップページに外部の `<script src="https://…">` を足す | 外れ |
