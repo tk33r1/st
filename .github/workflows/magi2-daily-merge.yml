@@ -1,7 +1,7 @@
-name: MAGI Daily Validation
+name: MAGI Daily Automation
 
-# 段階1の準備版。main側で判定し、PRコードのジョブにはsecretを渡さない。
-# 自動マージ・デプロイは段0と実経路でのレビュー・公開試行が成立した後に別途実装する。
+# main側で判定し、PRコードの検証ジョブにはsecretを渡さない。
+# 段階2でも正式なレビュー取得経路が未設定ならマージしない。
 on:
   schedule:
     - cron: '7 * * * *'
@@ -116,3 +116,167 @@ jobs:
           ALERT_TO: ${{ secrets.ALERT_TO }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
         run: node .github/scripts/magi2-daily-control.mjs --report
+
+  merge:
+    needs: [discover, validate, report]
+    if: vars.MAGI2_DAILY_STAGE == '2' && needs.validate.result == 'success' && needs.report.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      actions: read
+    outputs:
+      merge: ${{ steps.merge.outputs.merge }}
+      merged: ${{ steps.merge.outputs.merged }}
+      attempted: ${{ steps.merge.outputs.attempted }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recompute review and recheck live settings, halt, head and base
+        id: merge
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DAILY_SNAPSHOT: ${{ needs.discover.outputs.snapshot }}
+          DAILY_VALIDATION: ${{ needs.validate.result }}
+        run: node .github/scripts/magi2-daily-merge.mjs
+
+  prepare:
+    needs: merge
+    if: needs.merge.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      action: ${{ steps.plan.outputs.action }}
+      target: ${{ steps.plan.outputs.target }}
+      previous-id: ${{ steps.plan.outputs.previous-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read production version and prepare exact merged target without executing it
+        id: plan
+        env:
+          DAILY_MERGE: ${{ needs.merge.outputs.merge }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node .github/scripts/magi2-daily-release-run.mjs --prepare
+
+  worker:
+    needs: prepare
+    if: needs.prepare.outputs.action == 'deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.target }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install verification dependencies
+        working-directory: candidate
+        run: npm --prefix workers ci --no-audit --no-fund
+      - name: Verify the pinned merged Worker without credentials
+        working-directory: candidate
+        run: node ../trusted/.github/scripts/magi2-daily-check.mjs --worker --root "$PWD"
+
+  deploy:
+    needs: [prepare, worker]
+    if: needs.prepare.outputs.action == 'deploy' && needs.worker.result == 'success'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-worker-core.yml
+    with:
+      worker: magi2
+      sha: ${{ needs.prepare.outputs.target }}
+      expected-version-id: ${{ needs.prepare.outputs.previous-id }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  publication:
+    needs: [prepare, deploy]
+    if: needs.deploy.result == 'success' && needs.deploy.outputs.version-id != ''
+    permissions:
+      contents: read
+    uses: ./.github/workflows/magi2-daily-publication.yml
+    with:
+      target-sha: ${{ needs.prepare.outputs.target }}
+      version-id: ${{ needs.deploy.outputs.version-id }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  finish:
+    needs: [merge, prepare, worker, deploy, publication]
+    if: always() && needs.merge.outputs.attempted == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install trusted recovery tooling
+        if: needs.deploy.outputs.version-id != '' && needs.publication.result != 'success'
+        run: npm --prefix workers ci --no-audit --no-fund
+      - name: Finish, recover if necessary, keep halt and notify
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+          DAILY_MERGE: ${{ needs.merge.outputs.merge }}
+          DAILY_RELEASE: ${{ needs.prepare.outputs.release }}
+          DAILY_RESULTS: ${{ toJSON(needs) }}
+          DAILY_REPORT: ${{ runner.temp }}/magi2-daily-release.json
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
+        run: node .github/scripts/magi2-daily-release-run.mjs --finish
+      - name: Preserve status-only recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: magi2-daily-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/magi2-daily-release.json
+          if-no-files-found: ignore
+          retention-days: 7

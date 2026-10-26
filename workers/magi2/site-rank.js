@@ -1,6 +1,6 @@
 // 404 のサイト内検索の②：索引の各ページに Jev（TypeSafe AI）で「この検索の目的を果たせる確率」を付け、閾値以上を並べる。
 // 設計は assets/site-search-design.md 3章。設定の正本は personas.js の SITE_RANK。
-// site・日刊2誌・tools/game。同じ判定器を使い、新scopeは評価が済むまで公開設定で停止する。
+// site・日刊2誌・tools/game。同じ判定器を使い、scopeごとの有効・停止は wrangler.toml の SITE_RANK_SCOPES で決める。
 // test-magi2.mjs は magi2 のファイルを1つにつないで動かすので、トップレベルの名前には rank を付けて重ならないようにする。
 import { SITE_RANK } from './personas.js';
 import { RANK_FIELDS, dailyIssue, isBillingFailure, readLimited, scoreItems, searchDeadline, searchFailure, searchSlice, sha256, snapshotHash } from './site-search.js';

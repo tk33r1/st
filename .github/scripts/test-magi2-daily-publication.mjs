@@ -1,0 +1,86 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {publicationRequests,verifyDailyPublication} from './magi2-daily-publication.mjs';
+import {limitedJSON} from './magi2-daily-http.mjs';
+
+const history=JSON.parse(readFileSync('data/magi-versions.json','utf8'));
+const expected={id:'deployed-version',sha:'a'.repeat(40),version:history.versions[0].version};
+const body={desc:{ja:'説明',en:'description'},context:{ja:'素材',en:'context'},theme:{ja:'テーマ',en:'theme'}};
+const catalog={personas:Object.fromEntries(['MELCHIOR-1','BALTHASAR-2','CASPER-3'].map(k=>[k,body])),synthesizer:body,privacy:{ja:[{text:'説明'}],en:[{text:'Description'}]}};
+const version=()=>({id:expected.id,message:expected.sha});
+test('制限付きJSON読込は分割されたUTF-8を読み、文字数ではなくバイト数で上限を守る',async()=>{
+  const bytes=new TextEncoder().encode('"あ"');
+  const response=new Response(new ReadableStream({start(controller){
+    controller.enqueue(bytes.slice(0,2));controller.enqueue(bytes.slice(2));controller.close();
+  }}));
+  assert.equal(await limitedJSON(response,bytes.length),'あ');
+  assert.equal(response.body.locked,false);
+  await assert.rejects(limitedJSON(new Response(bytes),bytes.length-1),/response_too_large/);
+});
+test('上限超過・不正UTF-8では残りの受信を中断し、空や壊れたJSONも拒否する',async()=>{
+  for(const [bytes,limit] of [[new Uint8Array([32,32]),1],[new Uint8Array([255]),10]]) {
+    let cancelled=false;
+    const stream=new ReadableStream({start(controller){controller.enqueue(bytes);},cancel(){cancelled=true;}});
+    await assert.rejects(limitedJSON(new Response(stream),limit));
+    assert.equal(cancelled,true);assert.equal(stream.locked,false);
+  }
+  for(const response of [new Response(null),new Response('{'),new Response(new Uint8Array([34,227,129]))])
+    await assert.rejects(limitedJSON(response,100));
+});
+function transport(patch=()=>null) {
+  return async(url,options)=>{
+    assert.equal(options.redirect,'error');
+    const override=patch(url,options);if(override)return override;
+    if(url.endsWith('/models'))return Response.json(catalog);
+    const probe=publicationRequests().find(p=>p.url===url&&p.options.body===options.body
+      &&p.options.headers.Origin===options.headers.Origin);assert.ok(probe,'only fixed endpoints');
+    assert.equal(options.method,probe.options.method);assert.equal(options.body,probe.options.body);
+    const value=probe.name==='versions'?history:probe.name==='legacy_versions'
+      ?{versions:history.versions.filter(r=>r.version==='earlier'||/^\d{1,2}\.\d$/.test(r.version))}
+      :probe.name==='old_generation_rejected'?{status:'failed',complete:false,reason:probe.code,results:[]}
+      :{error:{code:probe.code}};
+    return Response.json(value,{status:probe.status});
+  };
+}
+test('固定の拒否要求と新旧の履歴を検査し、結果に入力本文やカタログ本文を残さない',async()=>{
+  const report=await verifyDailyPublication({fetcher:transport(),readDeployment:version,expected});
+  assert.equal(report.ok,true);assert.equal(report.cases.length,10);
+  assert.doesNotMatch(JSON.stringify(report),/x{30}|description|素材|MELCHIOR/);
+});
+test('版IDとSHAが異なれば最初に止まり、確認中の割り込みも不合格になる',async()=>{
+  let calls=0;
+  const before=await verifyDailyPublication({fetcher:async()=>{calls++;},readDeployment:()=>({id:'other',message:expected.sha}),expected});
+  assert.equal(before.ok,false);assert.equal(calls,0);
+  let reads=0;
+  const after=await verifyDailyPublication({fetcher:transport(),readDeployment:()=>++reads===1?version():{id:'human',message:'b'.repeat(40)},expected});
+  assert.equal(after.ok,false);assert.equal(after.cases.at(-1).name,'deployment_after');
+});
+test('200だけでは通さず、旧版へのX.YZ混入・欠けた新版本文・正常検索応答を拒否する',async()=>{
+  for(const patch of [
+    url=>url.endsWith('/models')?Response.json({}):null,
+    url=>url.endsWith('format=2')?Response.json({versions:[]}):null,
+    url=>url.endsWith('/versions')?Response.json({versions:[{...history.versions[0],version:'6.01'}]}):null,
+    url=>url.endsWith('/rank')?Response.json({status:'results',complete:true,results:[]}):null,
+    url=>url.endsWith('/chat')?Response.json({error:{code:'other'}},{status:400}):null,
+  ])assert.equal((await verifyDailyPublication({fetcher:transport(patch),readDeployment:version,expected})).ok,false);
+});
+test('プライバシー説明の壊れた行と200以外のカタログは公開成功にしない',async()=>{
+  for(const rows of [[null],[{}],[{text:''}],[{text:'   '}],[{text:'説明',requires:'share'}],
+    [{text:'説明',requires:[null]}],[{text:'説明'},null]]) {
+    const invalid={...catalog,privacy:{ja:rows,en:catalog.privacy.en}};
+    const report=await verifyDailyPublication({fetcher:transport(url=>url.endsWith('/models')?Response.json(invalid):null),readDeployment:version,expected});
+    assert.equal(report.ok,false);assert.equal(report.cases.find(row=>row.name==='catalog').ok,false);
+  }
+  for(const status of [201,206]) {
+    const report=await verifyDailyPublication({fetcher:transport(url=>url.endsWith('/models')?Response.json(catalog,{status}):null),readDeployment:version,expected});
+    assert.equal(report.ok,false);assert.equal(report.cases.find(row=>row.name==='catalog').status,status);
+  }
+});
+test('通信障害・巨大な履歴を不合格にし、通信関数の省略では本番fetchを使わない',async()=>{
+  const failed=await verifyDailyPublication({fetcher:async()=>{throw new Error('PRIVATE_CREDENTIAL');},readDeployment:version,expected});
+  assert.equal(failed.ok,false);assert.doesNotMatch(JSON.stringify(failed),/PRIVATE/);
+  const large=transport(url=>url.endsWith('format=2')?new Response(' '.repeat(65537)):null);
+  assert.equal((await verifyDailyPublication({fetcher:large,readDeployment:version,expected})).ok,false);
+  await assert.rejects(()=>verifyDailyPublication({readDeployment:version,expected}),/publication_inputs/);
+});

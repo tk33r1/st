@@ -1,0 +1,135 @@
+name: MAGI Daily Seed Trial
+
+# main上の手動起動だけ。仕込みPRをmainへ変更せず、検査・報告を試す。マージ・公開はしない。
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: '仕込みbase宛のPR番号'
+        required: true
+        type: string
+      base:
+        description: '仕込みbaseの完全SHA'
+        required: true
+        type: string
+      head:
+        description: '試行するPR headの完全SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: magi2-daily-seed-trial-${{ inputs.pr }}
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    if: github.ref == 'refs/heads/main' && vars.MAGI2_DAILY_ISSUE != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      snapshot: ${{ steps.snapshot.outputs.snapshot }}
+      validate: ${{ steps.snapshot.outputs.validate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect the pinned seeded PR using main code
+        id: snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
+          TRIAL_PR: ${{ inputs.pr }}
+          TRIAL_BASE: ${{ inputs.base }}
+          TRIAL_HEAD: ${{ inputs.head }}
+        run: node .github/scripts/magi2-daily-seed-trial.mjs --discover
+
+  validate:
+    needs: discover
+    if: needs.discover.outputs.validate == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Integrate the recorded seed base without hooks
+        working-directory: candidate
+        env:
+          TRIAL_BASE: ${{ fromJSON(needs.discover.outputs.snapshot).base }}
+        run: git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c user.name=validation -c user.email=validation@example.invalid merge --no-commit --no-ff "$TRIAL_BASE"
+      - name: Install trusted operational harness for an older seed base
+        run: node trusted/.github/scripts/magi2-daily-seed-trial.mjs --harness --trusted trusted --candidate candidate --output "$RUNNER_TEMP/seed-harness.json"
+      - name: Install verification dependencies
+        working-directory: candidate
+        run: |
+          npm --prefix workers ci --no-audit --no-fund
+          npm --prefix .github/scripts ci --no-audit --no-fund
+          .github/scripts/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run trusted full checker with the pinned base and head
+        working-directory: candidate
+        env:
+          TRIAL_BASE: ${{ fromJSON(needs.discover.outputs.snapshot).base }}
+          TRIAL_HEAD: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
+        run: node ../trusted/.github/scripts/magi2-daily-check.mjs --full --root "$PWD" --base "$TRIAL_BASE" --head "$TRIAL_HEAD"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: magi2-seed-harness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/seed-harness.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  report:
+    needs: [discover, validate]
+    if: always() && needs.discover.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recheck the PR and report only the validation job result
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          MAGI2_DAILY_ACTOR: ${{ vars.MAGI2_DAILY_ACTOR }}
+          MAGI2_DAILY_ISSUE: ${{ vars.MAGI2_DAILY_ISSUE }}
+          TRIAL_SNAPSHOT: ${{ needs.discover.outputs.snapshot }}
+          TRIAL_VALIDATION: ${{ needs.validate.result }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
+        run: node .github/scripts/magi2-daily-seed-trial.mjs --report

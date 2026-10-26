@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import vm from 'node:vm';
 import test from 'node:test';
 import { magiDisplayVersion } from './magi-version.mjs';
+import { verifyDailyPublication } from './magi2-daily-publication.mjs';
 import './test-magi-native-history.mjs';
 import './test-magi-native-input.mjs';
 import './test-magi-native-background.mjs';
@@ -1497,6 +1498,21 @@ test('古い完全な一覧を丸ごと使い、更新失敗では置き換え�
   assert.equal((await searchRequest(w)).status, 503); assert.equal(w.ctx.searchCache.pages, old);
 });
 
+test('取得に失敗した直後の更新は古い本文を新しい一覧と数えず、元の取得時刻から24時間で断る', async () => {
+  const w = enableSearch(worker());
+  assert.equal((await searchRequest(w)).status, 200);
+  const old = w.ctx.searchCache.pages, url = 'https://tk.st/data/site-search.json';
+  // 23時間前に取った本文のまま、直前の取得が失敗して再取得の間隔に入っている状態にする
+  vm.runInContext(`{const s=searchSources.get('${url}');s.at=Date.now()-23*3600000;s.retryAt=Date.now()+60000;}`, w.ctx);
+  w.ctx.searchCache.fetchedAt = Date.now() - 11 * 60000;
+  assert.equal((await searchRequest(w)).status, 200); await Promise.all(w.waits);
+  assert.equal(w.ctx.searchCache.pages, old);
+  assert.ok(Date.now() - w.ctx.searchCache.fetchedAt >= 23 * 3600000 - 1000);
+  vm.runInContext(`searchSources.get('${url}').at=Date.now()-25*3600000;`, w.ctx);
+  w.ctx.searchCache.fetchedAt = Date.now() - 25 * 3600000;
+  assert.equal((await searchRequest(w)).status, 503);
+});
+
 test('検索エラーに入力が含まれても公開エラー・ログ・通知に流さず、会社単位の通知抑制を使う', async () => {
   const secret = 'PRIVATE_SEARCH_TEXT', logs = [], mails = [];
   const w = enableSearch(worker(undefined, (url, o) => {
@@ -1692,7 +1708,9 @@ test('page を送った画面だけにサイト案内を足し、3人格には�
     if (listed) assert.ok(synth.indexOf('- TOOLS_TITLE') < synth.indexOf('- TOP_TITLE') && synth.indexOf('- TOP_TITLE') < synth.indexOf('- PDF Studio'));
     assert.ok(!synth.includes('ISSUE_TITLE'));
   }
-  assert.ok(!between(dj, 'body: JSON.stringify({ messages: messagesForMagi', 'signal').includes('page'));
+  // 目印が見つからないと空文字を調べて常に通るので、送信本文を切り出せたことも確かめる
+  const djBody = between(dj, 'JSON.stringify(Object.assign({ messages: messagesForMagi', 'signal');
+  assert.ok(djBody.includes('messagesForMagi(') && !djBody.includes('page'));
 });
 
 test('統合人格に渡すページ一覧は上限の字数で打ち切る', () => {
@@ -6664,4 +6682,21 @@ test('Web管理: PWA通知のクリックは既存の同一アプリへ戻り、
   await click(); assert.deepEqual(calls, [['close'], ['focus']]); calls.length = 0;
   clients = [{ url: 'https://other.invalid/magi-app/www/', focus: async () => calls.push(['wrong']) }];
   await click(); assert.deepEqual(calls, [['close'], ['open', 'https://tk.st/magi-app/www/']]);
+});
+
+test('A6: 公開後確認の全要求は実WorkerでAI・D1・メールへ到達せず、新旧の履歴と拒否を検証する',async()=>{
+  const w=worker(),db=[],upstream=[];
+  w.env.DB={prepare(sql){db.push(sql);throw new Error('DB must not be touched');}};
+  w.env.SITE_SEARCH_ENABLED='true';w.env.SITE_RANK_ENABLED='true';w.env.SITE_RANK_SCOPES='site';w.env.MAGI_TYPESAFE_API_KEY='synthetic';
+  w.ctx.fetch=async url=>{
+    const path=String(url).replace('https://tk.st/','');
+    if(/^data\/(magi-versions|site-search|tools|game|glitch)\.json$/.test(path))return Response.json(JSON.parse(read(path)));
+    upstream.push(String(url));throw new Error('upstream must not be called');
+  };
+  const expected={id:'synthetic-deployment',sha:'a'.repeat(40),version:JSON.parse(read('data/magi-versions.json')).versions[0].version};
+  const report=await verifyDailyPublication({expected,readDeployment:()=>({id:expected.id,message:expected.sha}),
+    fetcher:(url,options)=>w.ctx.worker.fetch(new Request(url,options),w.env,{waitUntil(p){w.waits.push(p);}})});
+  await Promise.all(w.waits);
+  assert.deepEqual(db,[]);assert.deepEqual(upstream,[]);assert.deepEqual(w.calls,[]);
+  assert.equal(report.ok,true,JSON.stringify(report.cases));assert.equal(report.cases.length,10);
 });

@@ -393,15 +393,17 @@ IP は secret の `SEARCH_CLICK_SALT` を混ぜたハッシュの先頭16桁（`
 
 ## 継続改善の準備と手動公開
 
-手順の正本は[継続改善の実行手順](../../.github/magi2-daily/README.md)。本人の指示で段0を保留して準備を先行している。現在の毎時workflowは検証・報告だけを行い、自動マージ・公開はしない。レビュー経路も未設定で、模擬結果は実レビューの完了に数えない。
+手順の正本は[継続改善の実行手順](../../.github/magi2-daily/README.md)。段0の環境確認を再開し、段3・段4の準備を先行している（[段4準備記録](継続改善段4準備記録.md)）。毎時workflowにはマージ・公開・確認・復旧・停止・通知まで接続した（[自動処理接続記録](継続改善自動処理接続記録.md)）。現在は段階1かつ正式レビュー未設定で、マージ・公開へ進まない。模擬結果は実レビューや本番試行の完了に数えない。
 
-手動のActions公開は`deploy-worker-core.yml`で対象SHAを固定し、Anthropicキーの同期後に`--message <SHA>`を付ける。手元から出す場合も、リポジトリのルートで次を実行して得た値を`wrangler deploy --message`に渡す。
+手動のActions公開は`deploy-worker-core.yml`で対象SHAを固定し、`--message <SHA>`を付ける。Anthropicキーは権限0600の一時JSONを`--secrets-file`へ渡し、コードと同時に反映する。既存のほかのsecretは維持し、一時JSONは終了時に削除する。手元から出す場合も、リポジトリのルートで次を実行して得た値を`wrangler deploy --message`に渡す。
 
 ```sh
 node .github/scripts/magi2-daily-check.mjs --deployment-message
 ```
 
 本番依存に未コミットの変更があれば`-dirty`が付く。出した内容とgitの履歴が違うことを表すため、後に自動公開を接続したときは停止対象になる。コミットして出し直すまで印を外さない。手元からも従来どおりAnthropicキーの同期を先に行い、secretの値はコミットや公開ログに出さない。
+
+共通公開はmagi2の実公開時にWranglerの構造化出力から`version-id`を返す。任意の`expected-version-id`を指定した場合は公開開始直前に本番版を照合し、独立したキー同期を間に挟まない。照合と公開APIの間の競合は完全には排除できない。毎時処理も同じ共通公開と`magi2-daily-publication.yml`を使う。Cloudflare本番やActionsでの実試行は未完了。
 
 ## ローカル検証のコマンド
 

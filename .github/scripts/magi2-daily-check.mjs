@@ -117,7 +117,6 @@ export function inspectChanges({commits,baseFiles={},usedVersions=[]}) {
     if(!Array.isArray(files)||!files.length){fail(commit,'empty_commit');continue;}
     if(version){versionCommits++;if(i!==commits.length-1)fail(commit,'version_last');checkVersion(commit,expected,errors);}
     else fixes++;
-    if(!version&&files.some(f=>isWorkerInput(f.path))&&files.some(f=>isScreen(f.path)))fail(commit,'worker_and_screen');
     const body=files.filter(f=>!isTest(f.path)&&!f.path.endsWith('.md'));
     if(!version&&(body.length>4||body.reduce((n,f)=>n+f.added.length+f.removed.length,0)>60))fail(commit,'diff_size');
     for(const file of files) {
@@ -142,6 +141,9 @@ export function inspectChanges({commits,baseFiles={},usedVersions=[]}) {
   if(versionCommits&&!commits.some(c=>!/^bump version /.test(c.message)&&c.files.some(f=>f.path==='index.html'
     ||f.path.startsWith('magi-app/www/')&&!['magi-app/www/sw.js','magi-app/www/index.html'].includes(f.path))))errors.push({code:'version_without_screen_fix'});
   const paths=commits.flatMap(c=>c.files.map(f=>f.path));
+  // コミットを分けても同じ枝なら一緒に公開されるので、版のコミットを除いた枝全体で見る。
+  const fixPaths=commits.filter(c=>!/^bump version /.test(c.message)).flatMap(c=>c.files.map(f=>f.path));
+  if(fixPaths.some(isWorkerInput)&&fixPaths.some(isScreen))errors.push({code:'worker_and_screen'});
   if(paths.some(p=>p.startsWith('magi-app/www/'))) {
     const old=cacheNumber(baseFiles['magi-app/www/sw.js']),current=cacheNumber(state['magi-app/www/sw.js']);
     if(!Number.isSafeInteger(old)||current!==old+1)errors.push({code:'pwa_cache'});
@@ -213,12 +215,9 @@ export function checkPlan(mode,paths=[]) {
   const node=process.execPath,python=process.env.PYTHON||'python',commands=[
     [node,'--test','--test-force-exit','.github/scripts/test-magi2.mjs'],
     [python,'-B','.github/scripts/test-magi-smoke.py'],
-    [node,'--test','.github/scripts/test-magi-qa-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi-eval-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-check.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-review.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-budget.mjs'],
-    [node,'--test','.github/scripts/test-magi2-daily-control.mjs'],
+    ...['qa-budget','eval-budget'].map(name=>[node,'--test','.github/scripts/test-magi-'+name+'.mjs']),
+    ...['check','review','budget','control','stage1','deploy','deploy-worker','publication','cloudflare','publication-run','automation','seed-trial']
+      .map(name=>[node,'--test','.github/scripts/test-magi2-daily-'+name+'.mjs']),
     [python,'-B','.github/scripts/ai_models.py','check'],
   ];
   if(mode==='full'&&(paths.some(isScreen)||paths.some(p=>p.startsWith('data/'))))commands.push(['bash','build.sh']);

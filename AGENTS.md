@@ -213,7 +213,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 
 - 点検とレビューの手順は [`.github/magi2-daily/README.md`](.github/magi2-daily/README.md)。区分Aの条件・互換性・利用体験への影響を確認し、変更の意味が曖昧ならBにする。現在は準備中で自動マージしない。
 - 再レビューは過去の指摘IDごとに `fixed / withdrawn / open` と対象headの根拠を結果表へ残す。表の欠落・記載漏れ・状態コメントのreadyを合格とみなさない。経路未設定は未設定のまま扱う。
-- 手動のmagi2公開もコミットを版に残す。`node .github/scripts/magi2-daily-check.mjs --deployment-message` の値を `wrangler deploy --message` に渡す。Workerの本番依存に未コミットの変更があれば `-dirty` になり、後に自動公開を接続してもその状態では出さない。Anthropicキーの同期は従来どおり先に行う。
+- 手動のmagi2公開もコミットを版に残す。`node .github/scripts/magi2-daily-check.mjs --deployment-message` の値を `wrangler deploy --message` に渡す。Workerの本番依存に未コミットの変更があれば `-dirty` になり、後に自動公開を接続してもその状態では出さない。手元のAnthropicキー同期は従来どおり先に行う。Actionsは`--secrets-file`でキーをコードと同時に反映し、版の照合と公開の間に独立した`secret put`を挟まない。
 
 ### MAGI の公開前必須検査
 
@@ -409,8 +409,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - ブースの背景カード（LLM の出力と、Web 検索で拾った出典 URL）も来場者由来と同じ扱いにする。文字列は `esc` を通し、
     出典 URL は Worker（`linkUrl`）とブース（`httpUrl`）の両方で http(s) か確かめてから `href` に入れる。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
-  許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。例外は、magi2 が Capacitor アプリの
-  `https://localhost` オリジンも正規表現で許可していることと、games が手元確認用に `http://127.0.0.1:5500` を許可していること。
+  許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。例外は、magi2 が Capacitor アプリと手元の確認用に
+  `localhost` のオリジン（`https`・`http`・`capacitor`・`ionic` の各スキーム、任意のポート。`src/index.js` の `APP_ORIGIN_RE`）も許可していることと、games が手元確認用に `http://127.0.0.1:5500` を許可していること。
 
 - dj-requestの開発用Originは `DJ_LOCAL_DEV="true"`・WorkerのURLがHTTP(S)ループバック・ページのOriginがHTTP(S)localhostの3条件がそろう場合だけ追加許可する。本番設定はfalse。ローカル起動はrouteによるhost書換えを避けるため `--local-upstream localhost:8788` を付ける。
 

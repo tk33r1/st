@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {githubClient,dailyIssueNumber,commentOnce,eligibleDailyPR} from './magi2-daily-github.mjs';
+import {limitedJSON} from './magi2-daily-http.mjs';
 
 const kinds=['global','search:global','research:global'];
 const validDay=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value))
@@ -38,11 +39,15 @@ export function cleanObservation(value,period=observationPeriod()) {
 export async function catalogObservation(fetcher=fetch) {
   const start=Date.now();
   try {
-    const response=await fetcher('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'},signal:AbortSignal.timeout(10000)});
-    const data=response.ok?await response.json():null;
-    const described=row=>row&&['desc','context','theme'].every(field=>['ja','en'].every(lang=>typeof row[field]?.[lang]==='string'));
-    return {ok:response.ok&&['MELCHIOR-1','BALTHASAR-2','CASPER-3'].every(k=>described(data?.personas?.[k]))
-      &&!!described(data?.synthesizer)&&['ja','en'].every(k=>Array.isArray(data?.privacy?.[k])&&data.privacy[k].length>0),
+    const response=await fetcher('https://workers.tk.st/magi2/models',{headers:{Origin:'https://tk.st'},redirect:'error',signal:AbortSignal.timeout(10000)});
+    if(response.status!==200){await response.body?.cancel().catch(()=>{});return {ok:false,status:response.status,elapsed_ms:Date.now()-start};}
+    const data=await limitedJSON(response,1048576);
+    const text=value=>typeof value==='string'&&!!value.trim();
+    const described=row=>row&&['desc','context','theme'].every(field=>['ja','en'].every(lang=>text(row[field]?.[lang])));
+    const privacy=rows=>Array.isArray(rows)&&rows.length>0&&rows.every(row=>row&&text(row.text)
+      &&(row.requires===undefined||Array.isArray(row.requires)&&row.requires.every(text)));
+    return {ok:['MELCHIOR-1','BALTHASAR-2','CASPER-3'].every(k=>described(data?.personas?.[k]))
+      &&!!described(data?.synthesizer)&&['ja','en'].every(k=>privacy(data?.privacy?.[k])),
       status:response.status,elapsed_ms:Date.now()-start};
   } catch{return {ok:false,status:null,elapsed_ms:Date.now()-start};}
 }
