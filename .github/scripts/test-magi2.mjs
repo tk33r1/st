@@ -1498,6 +1498,21 @@ test('古い完全な一覧を丸ごと使い、更新失敗では置き換え�
   assert.equal((await searchRequest(w)).status, 503); assert.equal(w.ctx.searchCache.pages, old);
 });
 
+test('取得に失敗した直後の更新は古い本文を新しい一覧と数えず、元の取得時刻から24時間で断る', async () => {
+  const w = enableSearch(worker());
+  assert.equal((await searchRequest(w)).status, 200);
+  const old = w.ctx.searchCache.pages, url = 'https://tk.st/data/site-search.json';
+  // 23時間前に取った本文のまま、直前の取得が失敗して再取得の間隔に入っている状態にする
+  vm.runInContext(`{const s=searchSources.get('${url}');s.at=Date.now()-23*3600000;s.retryAt=Date.now()+60000;}`, w.ctx);
+  w.ctx.searchCache.fetchedAt = Date.now() - 11 * 60000;
+  assert.equal((await searchRequest(w)).status, 200); await Promise.all(w.waits);
+  assert.equal(w.ctx.searchCache.pages, old);
+  assert.ok(Date.now() - w.ctx.searchCache.fetchedAt >= 23 * 3600000 - 1000);
+  vm.runInContext(`searchSources.get('${url}').at=Date.now()-25*3600000;`, w.ctx);
+  w.ctx.searchCache.fetchedAt = Date.now() - 25 * 3600000;
+  assert.equal((await searchRequest(w)).status, 503);
+});
+
 test('検索エラーに入力が含まれても公開エラー・ログ・通知に流さず、会社単位の通知抑制を使う', async () => {
   const secret = 'PRIVATE_SEARCH_TEXT', logs = [], mails = [];
   const w = enableSearch(worker(undefined, (url, o) => {

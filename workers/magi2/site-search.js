@@ -9,6 +9,8 @@ const cache = { pages: null, fetchedAt: 0, retryAt: 0, refreshing: null };
 // 固定索引の取得をソース単位で共有する。要求の切断は共有fetchを中断しない。
 // 開始時から更新間隔を設け、偽のgenerationでも毎回上流を取得しない。
 const searchSources = new Map();
+// 手元の本文を実際に取得した時刻。再取得の間隔中は古い本文が返るので、呼び出し側は返した時刻ではなくこれを使う。
+export const searchSourceAt = url => searchSources.get(url)?.at || 0;
 export async function fetchSearchSource(url, {signal, refresh = false, cooldown = true, maxBytes = 8 * 1024 * 1024} = {}) {
   if(signal?.aborted) throw searchFailure('cancelled');
   if (!/^https:\/\/tk\.st\/(data\/(site-search|tools|game)\.json|job\/(nitoridaily|retailtechdaily)\/search-index(?:-[1-9]\d{3})?\.json)$/.test(url)) throw searchFailure('invalid_request');
@@ -234,13 +236,19 @@ export function shortlistSitePages(pages, query, preferred = [], context = '') {
 async function fetchSiteLists(signal, refresh = false) {
   if (cache.refreshing) {const pending=cache.refreshing;return searchDeadline(SITE_SEARCH.list_timeout_ms, ()=>pending, signal);}
   cache.refreshing=(async()=>{
-  const text = await fetchSearchSource('https://tk.st/data/site-search.json', {refresh:true, cooldown:refresh, maxBytes:2*1024*1024});
+  const url = 'https://tk.st/data/site-search.json';
+  const text = await fetchSearchSource(url, {refresh:true, cooldown:refresh, maxBytes:2*1024*1024}), at = searchSourceAt(url);
+  // 同じ本文なら作り直さない。取得時刻は本文の時刻のままにし、古ければ次の再取得まで更新を待つ。
+  if (cache.pages && cache.pages.text === text) {
+    cache.fetchedAt = at; cache.retryAt = Date.now() - at > SITE_SEARCH.list_ttl_ms ? Date.now() + SITE_SEARCH.list_retry_ms : 0;
+    return cache.pages;
+  }
   let index;
   try { index = JSON.parse(text); } catch (_) { throw searchFailure('invalid_list'); }
   const pages = makeSitePages(index); // 一覧全体を検証してから差し替える。
   const snapshot = { ja: localizeSitePages(pages, 'ja'), en: localizeSitePages(pages, 'en'), raw: pages,
     text, rankReady: rankReadyOf(index, pages) };
-  cache.pages = snapshot; cache.fetchedAt = Date.now(); cache.retryAt = 0;
+  cache.pages = snapshot; cache.fetchedAt = at; cache.retryAt = 0;
   return snapshot;
   })().finally(()=>{cache.refreshing=null;});
   cache.refreshing.catch(()=>{});

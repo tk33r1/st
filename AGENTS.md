@@ -409,8 +409,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
   - ブースの背景カード（LLM の出力と、Web 検索で拾った出典 URL）も来場者由来と同じ扱いにする。文字列は `esc` を通し、
     出典 URL は Worker（`linkUrl`）とブース（`httpUrl`）の両方で http(s) か確かめてから `href` に入れる。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
-  許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。例外は、magi2 が Capacitor アプリの
-  `https://localhost` オリジンも正規表現で許可していることと、games が手元確認用に `http://127.0.0.1:5500` を許可していること。
+  許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。例外は、magi2 が Capacitor アプリと手元の確認用に
+  `localhost` のオリジン（`https`・`http`・`capacitor`・`ionic` の各スキーム、任意のポート。`src/index.js` の `APP_ORIGIN_RE`）も許可していることと、games が手元確認用に `http://127.0.0.1:5500` を許可していること。
 
 - dj-requestの開発用Originは `DJ_LOCAL_DEV="true"`・WorkerのURLがHTTP(S)ループバック・ページのOriginがHTTP(S)localhostの3条件がそろう場合だけ追加許可する。本番設定はfalse。ローカル起動はrouteによるhost書換えを避けるため `--local-upstream localhost:8788` を付ける。
 
