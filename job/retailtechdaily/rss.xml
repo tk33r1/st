@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 26 Oct 2026 04:26:12 +0900</lastBuildDate>
+    <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 27 Oct 2026 06:18:36 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月27日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261027/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261027/</guid>
+      <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
+      <description>AI CROSSがEC市場の販売動向を需要予測に取り込むオプションを提供開始し、需要予測は自社データ中心から市場データ連携へと広がりつつある リテールメディアの効果測定をエッジAIと人流データで補う手法や、店舗在庫をGoogle検索などに表示する取り組みが進み、オフラインの成果を可視化する動きが強まっている</description>
+    </item>
     <item>
       <title>2026年10月26日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261026/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261013/</guid>
       <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
       <description>コープデリ連合会がUnityStep AIとAI・データ活用プロジェクトを始め、宅配サービスの利用促進に取り組む方針が示された。 セルフレジを見守る店員の業務量が想像以上に多いことが、生活者の間で反響を呼んでいる。</description>
-    </item>
-    <item>
-      <title>2026年10月12日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261012/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261012/</guid>
-      <pubDate>Mon, 12 Oct 2026 08:00:00 +0900</pubDate>
-      <description>京急ストア浦賀店に無人決済店舗「KEIKYU PIT」がオープンし、既存スーパーの店舗網の中で無人決済を試す動きが出てきた。 店舗端末の管理や、データとAIを使った販促の高度化など、店舗DXを支える基盤づくりへの関心が高まっている。</description>
     </item>
   </channel>
 </rss>
