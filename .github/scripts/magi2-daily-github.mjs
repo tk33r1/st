@@ -50,9 +50,11 @@ export async function stateComment(client,number,value) {
     {method:previous?'PATCH':'POST',body:{body}});return true;
 }
 export async function notifyDaily(text,key,{env=process.env,fetcher=fetch}={}) {
-  if(!env.RESEND_API_KEY||!env.ALERT_TO||!env.ALERT_FROM)throw new Error('daily_mail_not_configured');
+  // Worker側と同じく宛先はカンマ区切りで複数書ける。1つの文字列のまま渡すとResendが422で拒否する。
+  const to=String(env.ALERT_TO||'').split(',').map(v=>v.trim()).filter(Boolean),from=String(env.ALERT_FROM||'').trim();
+  if(!env.RESEND_API_KEY||!to.length||!from)throw new Error('daily_mail_not_configured');
   const response=await fetcher('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+env.RESEND_API_KEY,
     'Content-Type':'application/json','Idempotency-Key':'magi2-daily-'+digest(key)},
-    body:JSON.stringify({from:env.ALERT_FROM,to:[env.ALERT_TO],subject:'MAGI 継続改善の確認',text}),signal:AbortSignal.timeout(15000)});
+    body:JSON.stringify({from,to,subject:'MAGI 継続改善の確認',text}),signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new Error('daily_mail_'+response.status);
 }
