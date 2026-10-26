@@ -104,13 +104,22 @@ async function ready() {
   await page.waitForFunction(native => typeof agentBusy !== 'undefined' && !agentBusy && (typeof historyLoading === 'undefined' || !historyLoading)
     && (!native || nativeConversation && nativeHistory?.active), android, {timeout: 60000, polling: 100});
 }
-async function connect() {
+// 時間制限の無い待ちに上限を付ける。attachの印が付いたものだけを、アプリを起動し直して1回だけやり直す。
+class AttachTimeout extends Error {}
+function limit(promise, ms, label, Kind = Error) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Kind('時間切れ: ' + label)), ms); })])
+    .finally(() => clearTimeout(timer));
+}
+async function attach() {
   waitDevice();
   if (!androidDevice) {
-    const devices = await playwrightAndroid.devices({host: '127.0.0.1', omitDriverInstall: true});
+    step('接続: Playwrightの端末取得');
+    const devices = await limit(playwrightAndroid.devices({host: '127.0.0.1', omitDriverInstall: true}), 60000, '端末取得', AttachTimeout);
     androidDevice = devices.find(d => d.serial() === device);
     assert(androidDevice, '指定したADB端末が見つからない');
   }
+  step('接続: WebViewの検出');
   const deadline = Date.now() + 60000;
   let view;
   while (!view && Date.now() < deadline) {
@@ -120,13 +129,28 @@ async function connect() {
     view = pid && androidDevice.webViews().find(v => v.pkg() === pkg && v.pid() === pid);
     if (!view) await sleep(300);
   }
-  assert(view, '検証用WebViewへ接続できない');
+  if (!view) throw new AttachTimeout('検証用WebViewへ接続できない');
   // 通常Chrome用のCDP接続は、古いWebViewで未対応のBrowser管理命令を使う。
   // PlaywrightのAndroid用接続を使い、ドライバーAPKの追加インストールも行わない。
-  page = await view.page(); context = page.context(); browser = {close: () => context.close()};
+  step('接続: WebViewのページ取得');
+  page = await limit(view.page(), 60000, 'WebViewのページ取得', AttachTimeout); context = page.context(); browser = {close: () => context.close()};
   await routes(context);
+  step('接続: 画面の準備完了待ち');
   page.on('pageerror', e => errors.push(e.message)); await ready();
-  assert.equal(await page.evaluate(() => Capacitor.Plugins.MagiConversation.information()).then(v => v.test), true);
+  step('接続: ネイティブプラグインの確認');
+  assert.equal(await limit(page.evaluate(() => Capacitor.Plugins.MagiConversation.information()), 60000, 'ネイティブプラグインの応答').then(v => v.test), true);
+}
+async function connect() {
+  try { await attach(); }
+  catch (error) {
+    if (!(error instanceof AttachTimeout)) throw error;
+    // WebViewへのデバッグ接続が応答しないことがある。端末側の接続を作り直し、アプリを起動し直して1回だけ試す。
+    step('接続をやり直す（' + error.message + '）');
+    const stale = androidDevice; androidDevice = null; page = null;
+    await limit(Promise.resolve(stale?.close()), 10000, '古い接続の終了').catch(() => {});
+    run('shell', 'am', 'force-stop', pkg); run('shell', 'am', 'start', '-n', pkg + '/st.tk.magi.MainActivity');
+    await sleep(1500); await attach();
+  }
 }
 async function send(question, background = false) {
   const before = await page.evaluate(() => ({sequence: agentSendSequence, answers: agentHistory.filter(m => m.role === 'assistant').length}));
