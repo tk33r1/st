@@ -9718,7 +9718,11 @@ async function addAgentAttachments(files) {
         agentRetryEls(retryOf).forEach(el => { el.hidden = false; });
         syncRetryButtons();
         if (agentHistory.length) saveCurrentHistory();
-        else safeRemove('magi_current_history');
+        else {
+          // 初回の送信の失敗。分類などで仮保存した保存済みの会話も消す（syncCurrentToSaved は空の履歴を書かない）
+          safeRemove('magi_current_history');
+          if (!agentTemporary() && currentSessionId) { safeStore('magi_saved_sessions', loadSavedSessions().filter(s => s.id !== currentSessionId)); renderSavedSessionsList(); }
+        }
         syncCurrentToSaved(); updateAgentActionButtons();
         // 中断・通信失敗でも、質問と画像を戻す。待つ間に打ち始めた文があればそちらを残す。
         if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
@@ -9938,10 +9942,12 @@ async function unregisterReaction(bar, target) {
       if (!agentDead) setAgentInputEnabled(true);
       agentLog.innerHTML = '';
   agentClarifyPlaceholder(false);
+      // 旧データには mid を遅延付与する。cleanHistory は写しを返すので、写しではなく元の履歴（agentHistory）に付ける。
+      // 写しに付けると、［もう一度］・評価が agentItemFor で項目を見つけられない
+      if (Array.isArray(history)) history.forEach(it => { if (it && it.role === 'assistant' && !it.mid) it.mid = genMid(); });
       var cleanHistoryItems = cleanHistory(history), cleanHistoryLast = cleanHistoryItems.at(-1);
   cleanHistoryItems.forEach(item => {
         if (item.role === 'user') { agentLog.appendChild(userBubbleEl(item.content)); return; }
-        if (!item.mid) item.mid = genMid(); // 旧データには mid を遅延付与
         const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false, item.thinkingSeconds);
         renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, document.documentElement.lang === "ja", false);
         setupReplyBar(turn, item);
@@ -10156,8 +10162,9 @@ function makeAgentPanel(id, title, bodyHTML) {
     function deleteSavedSession(id) {
   if (agentTemporary()) return agentDeleteSavedDuringTemporary(id);
   agentInvalidateSuspended(id);
-      // 削除対象が現在のセッションなら追跡を解除
-      if (currentSessionId === id) archiveCurrentHistory();
+      // 削除対象が現在の会話なら、新しい会話に切り替える（アプリと同じ）。追跡の解除だけでは本文が
+      // magi_current_history に残って再読み込みで戻り、回答待ちの送信も入力欄を無効にしたまま終わる
+      if (currentSessionId === id) resetAgent(true);
       agentNormalStorage(function () { safeStore('magi_saved_sessions', loadSavedSessions().filter(s => s.id !== id)); });
       renderSavedSessionsList();
     }

@@ -1731,6 +1731,48 @@ test('ページ選びに今のページの題名を渡し、今のページそ�
   assert.ok(notes.length && notes.every(c => c.includes('"status":"no_results"')), '空の一覧を results のまま渡した');
 });
 
+test('トップ: 初回の送信が失敗したら仮保存した保存済みの会話も消し、続きの失敗では残す', async () => {
+  for (const first of [true, false]) for (const mode of ['eof', 'error']) {
+    const c = client(home, true), pair = [{ role: 'user', content: 'before' }, { role: 'assistant', content: 'answer', mid: 'm0' }];
+    let saved = [{ id: 'test-session', history: first ? [{ role: 'user', content: 'q' }] : pair }, { id: 'other', history: [] }];
+    c.ctx.loadSavedSessions = () => saved; c.ctx.renderSavedSessionsList = () => {};
+    c.ctx.safeStore = (key, value) => { if (key === 'magi_saved_sessions') saved = value; };
+    if (!first) c.ctx.agentHistory = pair.slice();
+    c.ctx.fetch = async () => ({ ok: true, body: {} });
+    c.ctx.parseSSE = async (_, h) => { if (mode === 'error') h.error({ code: 'failed' }); };
+    await c.ctx.agentSend();
+    assert.equal(c.ctx.agentHistory.length, first ? 0 : 2);
+    assert.deepEqual(saved.map(s => s.id), first ? ['other'] : ['test-session', 'other']);
+    assert.equal(c.ctx.agentInput.value, 'q'); assert.equal(c.ctx.agentInput.disabled, false);
+  }
+});
+
+test('トップ: 旧形式の回答に付けたmidは元の履歴に入り、［もう一度］・評価が項目を見つけられる', () => {
+  const c = client(home, true), bars = [];
+  Object.assign(c.ctx, { agentClarifyPlaceholder() {}, renderAgentSources() {}, applyReactionsToTurn() {}, closeAgentConversation() {}, magiReplay() {} });
+  c.ctx.setupReplyBar = (_, item) => bars.push(item);
+  let n = 0; c.ctx.genMid = () => 'legacy' + ++n;
+  vm.runInContext(between(home, 'function renderHistoryToLog(', '// 現在のセッションの一意ID'), c.ctx);
+  c.ctx.agentHistory = [{ role: 'user', content: 'q' }, { role: 'assistant', content: 'a' }, { role: 'assistant', content: 'b', mid: 'kept' }];
+  c.ctx.renderHistoryToLog(c.ctx.agentHistory);
+  assert.deepEqual(c.ctx.agentHistory.map(it => it.mid), [undefined, 'legacy1', 'kept']);
+  assert.deepEqual(bars.map(it => it.mid), ['legacy1', 'kept']);
+  for (const item of bars) assert.equal(c.ctx.agentHistory.find(it => it.mid === item.mid && it.role === 'assistant').content, item.content);
+});
+
+test('トップ: 表示中の会話を削除すると新しい会話に切り替え、ほかの会話の削除では切り替えない', () => {
+  for (const current of [true, false]) {
+    const c = client(home, true), resets = [];
+    let saved = [{ id: 'test-session' }, { id: 'other' }];
+    Object.assign(c.ctx, { agentInvalidateSuspended() {}, agentNormalStorage: fn => fn(), renderSavedSessionsList() {}, loadSavedSessions: () => saved, resetAgent: keepOpen => resets.push(keepOpen) });
+    c.ctx.safeStore = (key, value) => { if (key === 'magi_saved_sessions') saved = value; };
+    vm.runInContext(between(home, 'function deleteSavedSession(', '// AGENT_PRIVACY_BEGIN'), c.ctx);
+    c.ctx.deleteSavedSession(current ? 'test-session' : 'other');
+    assert.deepEqual(resets, current ? [true] : []);
+    assert.deepEqual(saved.map(s => s.id), [current ? 'other' : 'test-session']);
+  }
+});
+
 test('両画面はpagesをdoneまで仮保持し、失敗・会話切り替えなら捨て、履歴へ保存しない', async () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
     for (const mode of ['success', 'eof', 'error', 'switch']) {
@@ -2225,7 +2267,7 @@ function client(src, isHome = false) {
     document: { createElement: element, documentElement: { lang: 'en', getAttribute: () => 'light' } },
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(), agentTitle: '',
     agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeConversation: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
-    localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
+    localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []), loadSavedSessions: () => [], renderSavedSessionsList() {}, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
     userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     agentPrivacyState: { preparing: false, switching: false }, agentTemporary: () => false, agentPrivateStorage: () => false, agentPrivacyRequest: async () => null, agentPrivacyExpected: () => null, syncAgentPrivacyUI() {}, queueMicrotask,
