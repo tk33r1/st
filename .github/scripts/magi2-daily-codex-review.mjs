@@ -32,14 +32,14 @@ export function appJwt({appId,key,now=Date.now()}) {
   const seconds=Math.floor(now/1000),body=part({alg:'RS256',typ:'JWT'})+'.'+part({iat:seconds-60,exp:seconds+540,iss:String(appId)});
   return body+'.'+createSign('RSA-SHA256').update(body).sign(key).toString('base64url');
 }
-// このリポジトリだけ・必要な権限だけのトークンを毎回発行する（1時間で失効）。
+// このリポジトリだけ・必要な権限だけのトークンを毎回発行する（1時間で失効）。PRへのコメントはIssuesの書き込みだけでは403になる。
 export async function installationToken({appId,key,fetcher=fetch}) {
   const headers={Authorization:'Bearer '+appJwt({appId,key}),Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
   const get=await fetcher('https://api.github.com/repos/'+dailyRepository+'/installation',{headers,signal:AbortSignal.timeout(20000)});
   if(!get.ok)throw new Error('app_installation_'+get.status);
   const installation=(await get.json()).id;
   const post=await fetcher('https://api.github.com/app/installations/'+installation+'/access_tokens',{method:'POST',headers:{...headers,'Content-Type':'application/json'},
-    body:JSON.stringify({repositories:[dailyRepository.split('/')[1]],permissions:{issues:'write',pull_requests:'read',metadata:'read'}}),signal:AbortSignal.timeout(20000)});
+    body:JSON.stringify({repositories:[dailyRepository.split('/')[1]],permissions:{issues:'write',pull_requests:'write',metadata:'read'}}),signal:AbortSignal.timeout(20000)});
   if(!post.ok)throw new Error('app_token_'+post.status);
   return (await post.json()).token;
 }
@@ -224,7 +224,7 @@ async function main(args) {
   if(existsSync(lock)&&Date.now()-statSync(lock).mtimeMs>2*hour)rmSync(lock,{force:true});
   let handle;try{handle=openSync(lock,'wx');}catch{log({event:'skip',reason:'locked'});return;}
   try{await runOnce(config,{log});}
-  catch(error){log({event:'error',reason:/^[\w:.-]{1,120}$/.test(error?.message||'')?error.message:'error'});throw error;}
+  catch(error){log({event:'error',reason:/^[\w:./-]{1,160}$/.test(error?.message||'')?error.message:'error'});throw error;}
   finally{closeSync(handle);rmSync(lock,{force:true});}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
