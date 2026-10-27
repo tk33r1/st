@@ -888,10 +888,12 @@
         $('monthLabel').textContent = eventLabel(month);
         var count = isLoaded() ? data.dates.length : 0;
         $('monthSub').textContent = fmtMonth(month) + (count ? ' / 日曜 ' + count + '回' : '');
-        $('prevMonth').textContent = '← ' + eventLabel(shiftMonth(month, -1));
-        $('nextMonth').textContent = eventLabel(shiftMonth(month, 1)) + ' →';
-        $('prevMonth').disabled = !isMonth(shiftMonth(month, -1));
-        $('nextMonth').disabled = !isMonth(shiftMonth(month, 1));
+        var prev = shiftMonth(month, -1);
+        var next = shiftMonth(month, 1);
+        $('prevMonth').textContent = '← ' + eventLabel(prev);
+        $('nextMonth').textContent = eventLabel(next) + ' →';
+        $('prevMonth').disabled = !isMonth(prev);
+        $('nextMonth').disabled = !isMonth(next);
       }
 
       // ===== 集計表 =====
@@ -948,19 +950,22 @@
         return data.responses.find(function (r) { return r.name === name; });
       }
 
+      // 集計表の要素を作る。文字は textContent で入れる（回答やひとことはメンバーの入力なので HTML にしない）
+      function cell(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+
       function renderTable(summary) {
         var table = $('grid');
         table.textContent = '';
 
         var thead = document.createElement('thead');
         var hr = document.createElement('tr');
-        var thDate = document.createElement('th');
-        thDate.className = 'date-cell';
-        thDate.textContent = '日曜日';
-        hr.appendChild(thDate);
-        var thTally = document.createElement('th');
-        thTally.textContent = '○ / △ / ×';
-        hr.appendChild(thTally);
+        hr.appendChild(cell('th', 'date-cell', '日曜日'));
+        hr.appendChild(cell('th', '', '○ / △ / ×'));
         var names = summary.names;
         var byName = summary.byName;
         names.forEach(function (name) {
@@ -988,29 +993,19 @@
           else if (isBlocked(iso)) tr.className = 'blocked';
           else if (best.indexOf(iso) !== -1) tr.className = 'best';
 
-          var dateTd = document.createElement('td');
-          dateTd.className = 'date-cell';
-          dateTd.textContent = fmtDate(iso);
-          tr.appendChild(dateTd);
+          tr.appendChild(cell('td', 'date-cell', fmtDate(iso)));
 
           var t = summary.tallies[iso];
-          var tallyTd = document.createElement('td');
-          tallyTd.className = 'tally';
+          var tallyTd = cell('td', 'tally');
           [['o', t.o], ['t', t.t], ['x', t.x]].forEach(function (pair, i) {
             if (i > 0) tallyTd.appendChild(document.createTextNode(' / '));
-            var span = document.createElement('span');
-            span.className = 'mark-' + pair[0];
-            span.textContent = MARKS[pair[0]] + pair[1];
-            tallyTd.appendChild(span);
+            tallyTd.appendChild(cell('span', 'mark-' + pair[0], MARKS[pair[0]] + pair[1]));
           });
           tr.appendChild(tallyTd);
 
           names.forEach(function (name) {
-            var td = document.createElement('td');
             var v = answerOf(byName[name], iso);
-            td.className = v ? 'mark-' + v : 'mark-none';
-            td.textContent = v ? MARKS[v] : '－';
-            tr.appendChild(td);
+            tr.appendChild(cell('td', v ? 'mark-' + v : 'mark-none', v ? MARKS[v] : '－'));
           });
 
           tbody.appendChild(tr);
@@ -1020,16 +1015,10 @@
         if (data.responses.length) {
           var tfoot = document.createElement('tfoot');
           var fr = document.createElement('tr');
-          var label = document.createElement('td');
-          label.className = 'date-cell';
-          label.textContent = 'ひとこと';
-          fr.appendChild(label);
-          fr.appendChild(document.createElement('td'));
+          fr.appendChild(cell('td', 'date-cell', 'ひとこと'));
+          fr.appendChild(cell('td'));
           names.forEach(function (name) {
-            var td = document.createElement('td');
-            td.className = 'comment-cell';
-            td.textContent = (byName[name] && byName[name].comment) || '－';
-            fr.appendChild(td);
+            fr.appendChild(cell('td', 'comment-cell', (byName[name] && byName[name].comment) || '－'));
           });
           tfoot.appendChild(fr);
           table.appendChild(tfoot);

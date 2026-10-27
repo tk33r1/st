@@ -1360,7 +1360,7 @@
     const visible = () => {
       const list = songs.filter((s) => s.status === filter);
       const cmp = SORTS[sort];
-      return cmp ? list.slice().sort(cmp) : list;
+      return cmp ? list.sort(cmp) : list;   // list は filter が作った新しい配列なので、そのまま並べてよい
     };
 
     /* render() は5秒ポーリングのたびに走る。中身が同じなら DOM に触らない。
@@ -1827,8 +1827,8 @@
 
     const nextScores = new Map();
     let nextScope = '', nextInFlight = false, nextRetryAt = 0, nextError = '';
-    function ensureNextScores(base, candidates) {
-      const wanted = new Map(candidates.map((s) => [s.id, transitionSignature(base, s)]));
+    // wanted は候補の曲 id → 繋ぎの署名（renderNext が一度だけ作って渡す）
+    function ensureNextScores(base, wanted) {
       const scope = JSON.stringify([tapCode, base.id, [...wanted]]);
       if (scope !== nextScope) {
         nextScope = scope; nextRetryAt = 0; nextError = '';
@@ -1836,7 +1836,7 @@
       if (nextInFlight || Date.now() < nextRetryAt || [...wanted.values()].every((key) => nextScores.has(key))) return;
       nextInFlight = true;
       nextRetryAt = Date.now() + 3000;
-      const ids = new Set([base.id, ...candidates.map((s) => s.id)]);
+      const ids = new Set([base.id, ...wanted.keys()]);
       const tapBpms = Object.fromEntries([...tapMap].filter(([id]) => ids.has(id)));
       apiJson('/admin/next', { method: 'POST', timeout: 30000, json: { eventCode: tapCode, baseId: base.id, tapBpms } })
         .then((data) => {
@@ -1880,16 +1880,17 @@
         paintNext(baseHTML, '<li class="blank">候補になる曲（新着・採用済）がありません</li>');
         return;
       }
-      ensureNextScores(base, candidates);
+      const wanted = new Map(candidates.map((s) => [s.id, transitionSignature(base, s)]));
+      ensureNextScores(base, wanted);
       // 新着の評価待ちや一部の失敗があっても、取得済みの候補は使えるようにする。
-      const evaluated = candidates.filter((s) => nextScores.has(transitionSignature(base, s)));
+      const evaluated = candidates.filter((s) => nextScores.has(wanted.get(s.id)));
       const remaining = candidates.length - evaluated.length;
       const notice = remaining ? '<li class="blank">' + esc('評価済み ' + evaluated.length + ' / ' + candidates.length +
         '曲 · 未評価 ' + remaining + '曲。' + (nextError || '相性を評価中')) + '</li>' : '';
       const picks = evaluated
         .map((s) => {
           const bf = bpmFit(base, s), kf = keyFit(base, s);
-          const musical = nextScores.get(transitionSignature(base, s));
+          const musical = nextScores.get(wanted.get(s.id));
           return { s, bf, kf, musical, score: totalPoints(musical, s.likes || 0) };
         })
         .sort((a, b) => b.score - a.score)

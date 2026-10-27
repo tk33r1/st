@@ -40,7 +40,7 @@
 | `images/` | `contents/`（ページ内の画像。区画ごとに分ける: `dj/`、`glitch/<記事番号>/`、`motovlog/`）、`favicons/`（ファビコンと apple-touch-icon。iOS は SVG を使えないので、SVG とは別に 180px の PNG を置く）、`ogp/`（各ページの OGP 画像、2400×1260。ツールなどの分は手元で `.github/scripts/ogp/` のスクリプトを叩いて作る（同 `README.md`）。手で描き直さない。日刊の号別カードは日刊の workflow が `images/ogp/<media_id>/<YYYYMMDD>.webp` に作る） |
 | `game/` | ゲーム群。ランキングは `workers/games` |
 | `glitch/` | 技術ブログ。記事メタは `data/glitch.json` にだけ持ち、`glitch/assets/glitch.js` が描く（記事を足すときは HTML ではなく JSON を編集する）。コメントは `workers/comments` |
-| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト。`catalog.js` は iTunes 検索と AI 推薦曲の照合）、`booth/`（ブースコンソール。`audio-analysis.js` は30秒プレビューから BPM とキーをブラウザ内で推定する。音声はどこにも送らない）。共通部品は `dj/assets/`: `dj-modal.js`+`.css`（モーダル）、`dj-request-core.js`（`request/` と `booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・プレビューの再生・日時の整形・`escapeHTML`・`appleHref`） |
+| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト。`catalog.js` は iTunes 検索と AI 推薦曲の照合、`event-qr.js` は回の QR 画像（QR Palette の部品を借りる））、`booth/`（ブースコンソール。`audio-analysis.js` は30秒プレビューから BPM とキーをブラウザ内で推定する。音声はどこにも送らない）。共通部品は `dj/assets/`: `dj-modal.js`+`.css`（モーダル）、`dj-request-core.js`（`request/` と `booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・プレビューの再生・日時の整形・`escapeHTML`・`appleHref`） |
 | `job/` | 職務ページと日刊ブリーフ（`nitoridaily/`・`retailtechdaily/`。号ページは GitHub Actions が生成する。横断検索の索引は年ごとに分け、`search-index.json` に最新の年の記事と年の一覧、それより前の年は `search-index-<年>.json`）。日刊の共通部品は `job/assets/` |
 | `magi/`, `contact/`, `thought/` | 個別ページ（`magi/` は旧 MAGI で、`workers/magi` を呼ぶ） |
 | `motovlog/` | ハーレーのモトブログ（LIBERTY MOTOVLOG）。OGP は `.github/scripts/ogp/generate-motovlog.js` |
