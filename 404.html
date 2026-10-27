@@ -168,8 +168,14 @@
     @media (max-width: 679px) { .sitemap-ready { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel-group:only-child > ul { grid-template-columns: minmax(0, 1fr); } .panel-group:only-child > ul > li:nth-child(2) { border-top: 1px solid var(--border); } }
     @media (max-width: 559px) { body { padding: 32px 16px; } .result-link { column-gap: 8px; padding: 12px; } .tile { min-height: 120px; padding: 14px; } .panel { padding: 6px 16px 12px; } }
     @media (max-width: 359px) { .sitemap-ready { grid-template-columns: minmax(0, 1fr); } }
-    .st-search-input-row{border:1px solid var(--border);border-radius:10px;overflow:hidden}
-    .st-search-input{border:0}.st-search-submit{border:0;border-left:1px solid var(--border)}
+    /* 外周だけを囲み、入力欄と検索ボタンをひと続きにする。共通CSSより優先して内側の枠を外す。 */
+    #common-search .st-search-input-row{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+    #common-search .st-search-input-row:focus-within{outline:none}
+    #common-search .st-search-input{appearance:none;width:auto;min-height:52px;border:0;border-radius:0;background:transparent;box-shadow:none}
+    #common-search .st-search-submit{width:52px;min-width:52px;flex-basis:52px;border:0;border-radius:0;background:var(--accent);color:var(--bg)}
+    #common-search .st-search-submit:hover{filter:brightness(.92)}
+    #common-search .st-search-submit:focus-visible{outline-color:currentColor}
+    #common-search .st-search-clear{right:52px}
     .st-search-suggestions,.st-search-privacy-details{background:var(--surface);border-radius:10px;box-shadow:0 12px 30px #0003}
     .st-search-local>.result-list>.st-search-result{border:0}
     /* 「404」がミニゲームの入口。点滅するカーソルで、押せることをそっと知らせる */
