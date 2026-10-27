@@ -3,7 +3,7 @@
 人格・呼び出し設定は `personas.js`、モデル ID と表示名は `config/ai-models.json` が正本。
 人格カードの生成と更新はルートの `AGENTS.md` を参照。
 
-チャット・APIの進行制御は `src/index.js`、Web検索のストリーム解析と出典本文・アイコンの取得は `research.js` が受け持つ。討議用入力の組立てとPOST入口を整理した記録は [simplify確認（2026-10-25）](simplify確認20261025.md) を参照。
+チャット・APIの進行制御は `src/index.js`、Web検索のストリーム解析と出典本文・アイコンの取得、Web回答の指示・照合の組立てと照合結果の検査は `research.js` が受け持つ。`.github/scripts` の検証・smoke は `magi-worker-vm.mjs` で本番のモジュールを丸ごと読み、`src/index.js` の一部を文字列で切り出さない。討議用入力の組立てとPOST入口を整理した記録は [simplify確認（2026-10-25）](simplify確認20261025.md) を参照。
 
 2026-10-17の残課題修正は[修正・限定評価・実時間観測](残課題修正と観測20261017.md)を参照。選択ページに添えるPDF/QRの操作手順は`personas.js`の`SITE_SEARCH.usage`。対象ツールの操作を変えたら同時に照合する。検算・経験の推測・人格間の発言参照の規則も同ファイルが正本。
 人格の本文は120字の指示を維持し、指示を外した長い応答も `DEFAULTS.persona_response_max_chars`（4000字）で制限して討議の入力が膨らまないようにする。

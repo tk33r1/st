@@ -1,5 +1,9 @@
 import { BIDI_CONTROL_CHARS, INTENT_CLASSIFY, REPLY_LANGUAGE, SHARED } from './personas.js';
 
+// AI の JSON 出力が、決めたキーをちょうど持つ object か。
+export const exactKeys = (value, keys) => value && !Array.isArray(value) && typeof value === 'object'
+  && Object.keys(value).length === keys.length && keys.every(k => Object.hasOwn(value, k));
+
 // 本番・実装前確認で同じ材料と問いを組み立てる。
 export function classifySlice(text, limit) {
   const out = String(text || '').slice(0, limit);
