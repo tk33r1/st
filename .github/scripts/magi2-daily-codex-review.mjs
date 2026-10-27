@@ -152,7 +152,8 @@ export function runCodex({config,repo,request,prompt,work}) {
       ||output.findings.some(f=>!Number.isInteger(f.priority)||f.priority<0||f.priority>3))return {ok:false,reason:'output_shape'};
     return {ok:true,output,record};
   } finally {
-    try{git(repo,'worktree','remove','--force',tree);}catch{rmSync(tree,{recursive:true,force:true});try{git(repo,'worktree','prune');}catch{}}
+    // 片付けの失敗（Windowsでのファイルの一時的なロックなど）で、レビューの結果を捨てない。
+    try{git(repo,'worktree','remove','--force',tree);}catch{try{rmSync(tree,{recursive:true,force:true,maxRetries:5});git(repo,'worktree','prune');}catch{}}
   }
 }
 
@@ -207,10 +208,20 @@ async function runOnce(config,{log}) {
       const diff=git(repo,'diff','--no-color',request.base,request.head);
       outcome=runCodex({config,repo,request,work:work_dir,prompt:reviewPrompt({request,pr,known:work.known,notes:work.notes,diff})});
     } catch {outcome={ok:false,reason:'runner_error'};}
-    finally {rmSync(work_dir,{recursive:true,force:true});}
+    finally {try{rmSync(work_dir,{recursive:true,force:true,maxRetries:5});}catch{}}
     let body=outcome.ok?resultComment({request,runId,output:outcome.output,record:outcome.record}):null;
     if(body&&(body.length>60000||leaks(body,secrets)))body=null,outcome={ok:false,reason:'result_rejected'};
-    await post(pr.number,body||failedComment({request_id:request.id,run_id:runId,head:request.head,reason:outcome.reason}));
+    // Codexの実行中に受理のときの接続が切れ、結果の送信が通信エラーになることがある（2026-10-28の実地試験）。
+    // 届いていないことをコメントで確かめてから1回だけ送り直し、同じ実行の結果を2件にしない。
+    const final=body||failedComment({request_id:request.id,run_id:runId,head:request.head,reason:outcome.reason});
+    try{await post(pr.number,final);}
+    catch(error) {
+      if(!(error instanceof TypeError))throw error;
+      const posted=(await client.pages('/issues/'+pr.number+'/comments')).map(parseReviewComment)
+        .some(r=>r?.kind==='result'&&r.actor===bot&&r.data.run_id===runId);
+      if(!posted)await post(pr.number,final);
+      log({event:'result_retry',number:pr.number,run_id:runId,already_posted:posted});
+    }
     log({event:'result',number:pr.number,run_id:runId,ok:outcome.ok,reason:outcome.reason||null});
   }
 }
@@ -224,7 +235,8 @@ async function main(args) {
   if(existsSync(lock)&&Date.now()-statSync(lock).mtimeMs>2*hour)rmSync(lock,{force:true});
   let handle;try{handle=openSync(lock,'wx');}catch{log({event:'skip',reason:'locked'});return;}
   try{await runOnce(config,{log});}
-  catch(error){log({event:'error',reason:/^[\w:./-]{1,160}$/.test(error?.message||'')?error.message:'error'});throw error;}
+  // このログはPCの中だけに残り、GitHubへは出さない。原因が分かるよう、例外の種類と位置も残す。
+  catch(error){log({event:'error',reason:String(error?.message||'error').slice(0,300),cause:String(error?.cause?.code||error?.cause?.message||''),stack:String(error?.stack||'').split(/\r?\n/).slice(1,4).join(' | ')});throw error;}
   finally{closeSync(handle);rmSync(lock,{force:true});}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
