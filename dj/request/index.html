@@ -2236,17 +2236,25 @@
 
     /* ── いいね ─────────────────────────────
        押した直後の数を覚えておく。一覧は15秒ごとに読み直すので、書き込みが
-       届く前の応答が返ると数がいったん戻って見える。サーバ側が自分の操作を
-       反映したら控えを捨て、他の人のいいねが載るようにする。 */
-    const likeFresh = new Map();   // id -> 自分の操作を反映した数
+       届く前の応答が返ると数がいったん戻って見える。書き込みが終わったあとに始めた読み込みが
+       返ったら控えを捨て、他の人のいいね・取り消しが載るようにする。
+       数の大小では新旧を決められない（他の人が取り消すと、自分の操作の後でも数が減る）ので、
+       読み込みを始めた順の番号で決める。数を含む読み込みは likeRead を通す */
+    const likeFresh = new Map();   // id -> { n: 自分の操作を反映した数, after: 書き込みが終わった時点の likeReadSeq }
     const likeBusy = new Set();
+    let likeReadSeq = 0;
+
+    function likeRead(path, options) {
+      const seq = ++likeReadSeq;
+      return apiJson(path, options).then((d) => {
+        likeFresh.forEach((f, id) => { if (seq > f.after) likeFresh.delete(id); });
+        return d;
+      });
+    }
 
     function likeCount(s) {
-      const n = likeFresh.get(s.id);
-      const server = s.likes || 0;
-      if (n === undefined) return server;
-      if (liked(s.id) ? server >= n : server <= n) { likeFresh.delete(s.id); return server; }
-      return n;
+      const f = likeFresh.get(s.id);
+      return f ? f.n : s.likes || 0;
     }
 
     /* 終わった回（past）のいいねは押せない（サーバも受け付けない）ので、ボタンではなく
@@ -2288,13 +2296,13 @@
 
       likeBusy.add(id);
       setLiked(id, on);
-      likeFresh.set(id, next);
+      likeFresh.set(id, { n: next, after: Infinity });   // 書き込みの間に返った読み込みでは捨てない
       paintLike(id, on, next);
 
       try {
         const d = await apiJson('/songs/' + id + '/like', { method: on ? 'POST' : 'DELETE', json: { device: deviceKey } });
         setLiked(id, !!d.liked);
-        likeFresh.set(id, d.likes);
+        likeFresh.set(id, { n: d.likes, after: likeReadSeq });
         paintLike(id, !!d.liked, d.likes);
       } catch (e) {
         // 押す前に戻す。数が合わないままにするより、押し直せるほうがよい。
@@ -2369,7 +2377,7 @@
       const isLatest = boardLatest();
       try {
         // 次の更新は応答を待ってから予約するので、止まった通信で更新ごと止まらないよう上限を付ける
-        const d = await apiJson(boardPath(), { timeout: BOARD_TIMEOUT });
+        const d = await likeRead(boardPath(), { timeout: BOARD_TIMEOUT });
         if (d && Number.isInteger(d.mineMax) && d.mineMax > 0) boardMineMax = d.mineMax;
         if (isLatest()) renderBoard(d);
       } catch {
@@ -2482,7 +2490,7 @@
       $('#pastRows').innerHTML = loadingHTML('読み込んでいます');
       show('past');
       try {
-        const d = await apiJson('/events/' + encodeURIComponent(code));
+        const d = await likeRead('/events/' + encodeURIComponent(code));
         if (!isLatest()) return;
         const ids = new Set(mine());
         pastEvent = { ...d.event, code };
@@ -2581,7 +2589,7 @@
        いまの回かどうかは /board の回と比べ、読んだ /board はそのまま描く */
     async function openShared(code, boardLoad) {
       try {
-        const d = await (boardLoad || apiJson(boardPath()));
+        const d = await (boardLoad || likeRead(boardPath()));
         if (d.event && d.event.code === code) {
           show('board');
           renderBoard(d);
@@ -2771,7 +2779,7 @@
       $('#songNote').hidden = true;
       show('song');
       try {
-        const d = await apiJson('/songs/' + id, { headers: bearer(tokenOf(id)) });
+        const d = await likeRead('/songs/' + id, { headers: bearer(tokenOf(id)) });
         if (!isLatest()) return;
         detail = d;
         renderSong();
@@ -3988,7 +3996,7 @@ async function parseSSE(body, handlers, onChunk) {
           closeRequests(SHUT_BADGE, SHUT_WHY);
           // /event は受付外だと回を返さない。ヘッダーの共有と QR のために、終わった直後の回を /board から引く
           // （先に一覧が読めていれば、そちらの回のほうが新しいので上書きしない）
-          boardLoad = apiJson(boardPath());
+          boardLoad = likeRead(boardPath());
           boardLoad.then((d) => { if (!currentEvent) setCurrentEvent(d.event); }).catch(() => { });
         }
       } catch {

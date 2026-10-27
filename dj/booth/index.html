@@ -1500,7 +1500,19 @@
       $('#connTxt').textContent = ok ? '接続中' : '切断';
     }
 
-    const patch = (id, status) => apiJson('/admin/songs/' + id, { method: 'PATCH', json: { status }, timeout: WRITE_TIMEOUT });
+    /* 同じ曲への書き込みは、前の書き込みが終わってから送る。並べて送ると、「採用」→「再生済」を
+       続けて押したときに後の書き込みが先に届き、DB に「採用」が残ることがある（seq と pins が守るのは
+       画面の側だけ）。前が失敗しても次は送る。時間切れで捨てた書き込みがあとから届くことまでは防げない */
+    const songWrites = new Map();   // id -> その曲の最後の書き込みの Promise
+    function patch(id, status) {
+      const prev = songWrites.get(id) || Promise.resolve();
+      const run = prev.catch(() => { }).then(() =>
+        apiJson('/admin/songs/' + id, { method: 'PATCH', json: { status }, timeout: WRITE_TIMEOUT }));
+      songWrites.set(id, run);
+      const forget = () => { if (songWrites.get(id) === run) songWrites.delete(id); };
+      run.then(forget, forget);
+      return run;
+    }
 
     /* ── 操作 ─────────────────────────────── */
     function toast(text, undo) {

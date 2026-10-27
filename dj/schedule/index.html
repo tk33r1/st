@@ -825,12 +825,14 @@
       }
 
       // 同じ月への書き込み結果を反映する。開催日が新しく決まった瞬間の検出はここ1箇所だけ。
-      // 応答を待つ間に別の月へ移っていたら、その月の表示を上書きしないよう捨てる
-      function applyData(payload, resetForm) {
+      // 応答を待つ間に別の月へ移っていたら、その月の表示を上書きしないよう捨てる。
+      // 月を A→B→A と行き来したあと（gen が読み込みの番号と違う）は、戻った先で入力を始めているかもしれないので
+      // フォームは作り直さない
+      function applyData(payload, resetForm, gen) {
         if (payload.month !== month) return;
         var prevDecided = data ? data.decided : null;
         data = payload;
-        if (resetForm) prepareForm();
+        if (resetForm && gen === loadSeq) prepareForm();
         renderAll();
         if (data.decided && data.decided !== prevDecided && window.djCelebrate) window.djCelebrate();
       }
@@ -850,7 +852,11 @@
         });
       }
 
+      // 読み込みの番号。月を A→B→A と移ると最初の A の応答も月の照合を通るので、最後の読み込みかを番号で見る
+      var loadSeq = 0;
+
       async function load(ym) {
+        var seq = ++loadSeq;
         month = ym;
         syncLock();
         notice('');
@@ -858,14 +864,14 @@
         renderMonthBar();
         try {
           var payload = await api('/months/' + ym);
-          // 月を続けて切り替えると応答の順番が入れ替わることがある。表示中の月の分だけ使う
-          if (ym !== month) return;
+          // 月を続けて切り替えると応答の順番が入れ替わることがある。最後の読み込みの分だけ使う
+          if (seq !== loadSeq) return;
           // ここは月の切り替え。前の月の開催日と比べても意味がないので applyData は通さない
           data = payload;
           prepareForm();
           renderAll();
         } catch (err) {
-          if (ym !== month) return;
+          if (seq !== loadSeq) return;
           // 読み込めなかった月は操作できないままなので、その場で読み直せるようにする
           notice(err.message);
           $('retryLoad').hidden = false;
@@ -1313,6 +1319,7 @@
 
         var btn = this;
         var ym = month; // 保存を待つ間に月を移っても、通知は保存した月の名前で出す
+        var gen = loadSeq;
         btn.disabled = true;
         try {
           var payload = await api('/months/' + ym + '/responses', {
@@ -1320,7 +1327,7 @@
             body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
           });
           try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
-          applyData(payload, true);
+          applyData(payload, true, gen);
           notice(eventLabel(ym) + ' の ' + name + ' の回答を保存しました', false);
         } catch (err) {
           notice(err.message);
@@ -1343,10 +1350,11 @@
           danger: true,
         })) return;
         var btn = this;
+        var gen = loadSeq;
         btn.disabled = true;
         try {
           var payload = await api('/months/' + month + '/responses/' + editingId, { method: 'DELETE' });
-          applyData(payload, true);
+          applyData(payload, true, gen);
           notice('回答を削除しました', false);
         } catch (err) {
           notice(err.message);

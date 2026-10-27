@@ -229,10 +229,12 @@ function newEventCode() {
     作った順ではなく締めた順で見るのは、ブースで過去の回に戻したあと受付を止めても、
     あとから作った回（戻す前に使っていた回）へ切り替わらないようにするため。
     新しい回を作ると前の回は同じ時刻に締まるので、同着は作った順で新しいほうを採る。 */
+// いまの回の決め方。過去の回の削除も同じ順で判定するので、1か所に置く
+const CURRENT_EVENT_ORDER = `(status = 'open') DESC, COALESCE(closed_at, created_at) DESC, created_at DESC`;
+
 async function currentEvent(env) {
   return env.DB.prepare(
-    `SELECT code, title, status, created_at FROM events
-      ORDER BY (status = 'open') DESC, COALESCE(closed_at, created_at) DESC, created_at DESC LIMIT 1`
+    `SELECT code, title, status, created_at FROM events ORDER BY ${CURRENT_EVENT_ORDER} LIMIT 1`
   ).first();
 }
 
@@ -1245,28 +1247,36 @@ async function adminDeleteEvent(code, env, cors) {
   ).bind(code).first();
   if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
 
+  const currentError = () => json({
+    error: 'current',
+    message: 'いまの回は削除できません。新しい回を開始してから消してください',
+  }, 409, cors);
   const cur = await currentEvent(env);
-  if (cur && cur.code === code) {
-    return json({
-      error: 'current',
-      message: 'いまの回は削除できません。新しい回を開始してから消してください',
-    }, 409, cors);
+  if (cur && cur.code === code) return currentError();
+
+  /* 上の確かめと削除の間に、別のブースがこの回を再開することがある。batch は1つのトランザクションで
+     流れるので、各文にも「いまの回ではない」を条件に付け、その時点でいまの回なら何も消さない。
+     件数も同じトランザクションで数える（消した件数は取り消しの代わりにならないが、何が落ちたかは伝える）。
+     likes → requests → songs → events の順。曲の行より先に子を落とす */
+  const notCurrent = `?1 IS NOT (SELECT code FROM events ORDER BY ${CURRENT_EVENT_ORDER} LIMIT 1)`;
+  const [counts, , , , deleted] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT (SELECT COUNT(*) FROM songs    WHERE event_code = ?1) AS songs,
+              (SELECT COUNT(*) FROM requests WHERE event_code = ?1) AS requests`
+    ).bind(code),
+    env.DB.prepare(`DELETE FROM likes    WHERE event_code = ?1 AND ${notCurrent}`).bind(code),
+    env.DB.prepare(`DELETE FROM requests WHERE event_code = ?1 AND ${notCurrent}`).bind(code),
+    env.DB.prepare(`DELETE FROM songs    WHERE event_code = ?1 AND ${notCurrent}`).bind(code),
+    env.DB.prepare(`DELETE FROM events   WHERE code = ?1 AND ${notCurrent}`).bind(code),
+  ]);
+  if (!deleted.meta.changes) {
+    // 再開されていまの回になったか、別のブースが先に消した
+    const still = await env.DB.prepare(`SELECT 1 FROM events WHERE code = ?`).bind(code).first();
+    if (still) return currentError();
+    return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
   }
 
-  // 消した件数は取り消しの代わりにならないが、何が落ちたかは伝える
-  const n = await env.DB.prepare(
-    `SELECT (SELECT COUNT(*) FROM songs    WHERE event_code = ?) AS songs,
-            (SELECT COUNT(*) FROM requests WHERE event_code = ?) AS requests`
-  ).bind(code, code).first();
-
-  // likes → requests → songs → events の順。曲の行より先に子を落とす
-  await env.DB.batch([
-    env.DB.prepare(`DELETE FROM likes    WHERE event_code = ?`).bind(code),
-    env.DB.prepare(`DELETE FROM requests WHERE event_code = ?`).bind(code),
-    env.DB.prepare(`DELETE FROM songs    WHERE event_code = ?`).bind(code),
-    env.DB.prepare(`DELETE FROM events   WHERE code = ?`).bind(code),
-  ]);
-
+  const n = counts.results[0];
   return json({
     ok: true, code, title: ev.title,
     songs: n ? n.songs : 0, requests: n ? n.requests : 0,
