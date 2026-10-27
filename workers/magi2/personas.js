@@ -921,17 +921,17 @@ export const RESEARCH = {
     ja: 'Web確認日時: ', en: 'Web checked at: ', zh: '网络确认时间：', ko: '웹 확인 시각: ', es: 'Verificado en la web: ',
     fr: 'Vérifié sur le Web : ', de: 'Im Web geprüft: ', pt: 'Verificado na web: ', it: 'Verificato sul web: ',
   },
-  // 未確認の項目にモデルが候補値を書いても、その本文は表示しない。
+  // 未確認の項目にモデルが候補値を書いても、その本文と項目名は表示せず、回答の末尾にこの1行だけを出す（項目がいくつでも1行）。
   unverified_note: {
-    ja: 'この出典では未確認です。',
-    en: 'This item could not be verified from the cited source.',
-    zh: '无法从引用的来源确认此项。',
-    ko: '인용한 출처에서 이 항목을 확인할 수 없었습니다.',
-    es: 'No se pudo verificar este dato en la fuente citada.',
-    fr: 'Ce point n’a pas pu être vérifié dans la source citée.',
-    de: 'Dieser Punkt konnte anhand der zitierten Quelle nicht bestätigt werden.',
-    pt: 'Não foi possível verificar este item na fonte citada.',
-    it: 'Non è stato possibile verificare questo dato nella fonte citata.',
+    ja: 'この出典では未確認の項目があります。',
+    en: 'One or more requested items could not be verified from the cited sources.',
+    zh: '有所询问的项目无法从引用的来源确认。',
+    ko: '요청한 항목 중 인용한 출처에서 확인할 수 없는 항목이 있습니다.',
+    es: 'Uno o más de los datos solicitados no se pudieron verificar en las fuentes citadas.',
+    fr: 'Un ou plusieurs points demandés n’ont pas pu être vérifiés dans les sources citées.',
+    de: 'Mindestens ein erfragter Punkt konnte anhand der zitierten Quellen nicht bestätigt werden.',
+    pt: 'Um ou mais itens solicitados não puderam ser verificados nas fontes citadas.',
+    it: 'Non è stato possibile verificare uno o più dati richiesti nelle fonti citate.',
   },
 };
 // 読み上げ（読み上げ設計書 5章）。モデルIDは config/ai-models.json（fishaudio.tts）、キーは secret の MAGI_FISH_AUDIO_API_KEY、

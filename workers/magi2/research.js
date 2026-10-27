@@ -419,27 +419,35 @@ export function verifiedResearchResult(value, evidence, replyLanguage) {
   const fail = () => {throw verificationInvalid();};
   if (!(exactKeys(value,['parts']) || exactKeys(value,['parts','place_used']) && typeof value.place_used === 'boolean')
     || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
-  let text = ''; const items = [], marks = [], numbers = new Map();
+  let text = ''; const items = [], marks = [], numbers = new Map(), unverified = [];
+  let anyUnverified = false;
+  // 1行を足し、その末尾に引用の印を付ける。出典は回答全体で連番にする
+  const line = (body, citations, verified) => {
+    text += (text ? '\n\n' : '') + '- ' + body;
+    const used = new Set();
+    for (const c of citations) {
+      const source = evidence.find(e => e.n === c?.n);
+      if (!exactKeys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
+        || !Array.isArray(c.blocks) || c.blocks.length > 20
+        || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
+        || verified && (!source.readable || !c.blocks.length)) fail();
+      if (used.has(c.n)) continue; used.add(c.n);
+      if (!numbers.has(c.n)) {numbers.set(c.n,items.length + 1);items.push({n:items.length + 1,title:source.title,url:source.url});}
+      marks.push({at:text.length, n:numbers.get(c.n)});
+    }
+  };
   for (const p of value.parts) {
     if (!exactKeys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
       || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
       || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
       || !Array.isArray(p.citations) || p.status === 'verified' && !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
-    const body = p.status === 'unverified'
-      ? RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en : p.text.trim();
-    text += (text ? '\n\n' : '') + '- ' + p.label.trim() + ': ' + body;
-    const used = new Set();
-    for (const c of p.citations) {
-      const source = evidence.find(e => e.n === c?.n);
-      if (!exactKeys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
-        || !Array.isArray(c.blocks) || c.blocks.length > 20
-        || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
-        || p.status === 'verified' && (!source.readable || !c.blocks.length)) fail();
-      if (used.has(c.n)) continue; used.add(c.n);
-      if (!numbers.has(c.n)) {numbers.set(c.n,items.length + 1);items.push({n:items.length + 1,title:source.title,url:source.url});}
-      marks.push({at:text.length, n:numbers.get(c.n)});
-    }
+    if (p.status === 'verified') line(p.label.trim() + ': ' + p.text.trim(), p.citations, true);
+    else { anyUnverified = true; unverified.push(...p.citations); }
   }
+  // 未確認の項目は、モデルが書いた本文も項目名も表示しない（項目名に候補値を書かれても残らないように）。
+  // 末尾の1行の固定文にまとめ、確かめた出典の印だけを付ける
+  if (anyUnverified)
+    line(RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en, unverified, false);
   return {text, sources:{items,marks}, placeUsed:value.place_used === true};
 }
 

@@ -814,10 +814,13 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
     const choice = (await res.json()).choices?.[0] || {};
     const text = classifySlice(stripOwnHeader(stripCharCount((choice.message?.content || '').trim()), p), DEFAULTS.persona_response_max_chars);
     log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
-    if (text) return p.magi && choice.finish_reason === 'length' ? text + '…' : text;
-    // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない
+    // 採用するのは最後まで書いた（stop）か上限で切れた（length）本文だけ。安全フィルター（content_filter）や
+    // 上流の資源不足などで打ち切られた途中の本文は、票の印を含んでいても意見・票にしない（欠席にする）
+    const complete = choice.finish_reason === 'stop' || choice.finish_reason === 'length';
+    if (text && complete) return p.magi && choice.finish_reason === 'length' ? text + '…' : text;
+    // 空応答・途中の打ち切りは1回だけ再試行。安全フィルターで止められたなら同じ結果になるので試さない
     if (attempt < 2 && choice.finish_reason !== 'content_filter') continue;
-    throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
+    throw stageError('persona_call', text ? 'incomplete_persona_output' : 'empty_persona_output', `${p.codename} が${text ? '途中で打ち切られた' : '空の'}応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
   }
   // ループは attempt=2 で必ず return/throw に到達するためここには来ない（防御的）
   throw stageError('persona_call', 'unreachable', `${p.codename} の応答取得に失敗しました`, { persona: p.codename, round, retryable: true });
@@ -1843,6 +1846,8 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     }
     // 答えるときも判定が済んだことを送る（画面の無通信の見張りは、何か届くたびに延びる。判定の待ちを統合の待ちに上乗せしない）
     if (!judgement || judgement.next_step !== 'ask_personas') { send('judge', { round: round - 1, action: 'answer' }); break; }
+    // 判定を待つ間に予算を過ぎたら、聞き返さずに統合へ進む（予算の確認が判定の前だけだと、もう1回分の人格の呼び出しが走る）
+    if (Date.now() - debateStarted > DEBATE.budget_ms) { log('debate', `r${round}`, 'over budget after judge'); send('judge', { round: round - 1, action: 'answer' }); break; }
     // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
     const asked = judgement.persona_questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
     send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });

@@ -2997,6 +2997,22 @@ test('判定が答える・失敗するときは聞き返さずに統合し、ju
   }
 });
 
+test('判定を待つ間に討議の予算を過ぎたら、聞き返さずに統合する', async () => {
+  let judged = 0, w;
+  w = worker(completion(), (url, options) => {
+    if (!isJudge(options)) return;
+    judged++; w.ctx.clockSkew = w.ctx.DEBATE_BUDGET + 1;
+    return judgeReply({ assessment: 'メモ', next_step: 'ask_personas', questions: [], persona_questions: [{ target: 'CASPER-3', question: '問い' }] });
+  });
+  vm.runInContext('globalThis.clockSkew = 0; globalThis.DEBATE_BUDGET = DEBATE.budget_ms; { const now = Date.now; Date.now = () => now() + globalThis.clockSkew; }', w.ctx);
+  const events = sseEvents(await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'q' }], adaptive_debate: true })).text());
+  assert.equal(judged, 1);
+  assert.equal(events.some(([e]) => e === 'ask'), false);
+  assert.equal(events.some(([e, d]) => e === 'persona' && d.round >= 3), false);
+  assert.deepEqual(events.find(([e]) => e === 'judge')[1], { round: 2, action: 'answer' });
+  assert.equal(events.at(-1)[0], 'done');
+});
+
 test('履歴の followups はいちばん新しい意見を人格の過去の発言に使い、欠席の印は飛ばす', async () => {
   const w = worker();
   await (await w.request('/magi2/chat', { adaptive_debate: true, messages: [
@@ -3469,7 +3485,7 @@ function magiWorker(settings = {}) {
     const codename=['MELCHIOR-1','BALTHASAR-2','CASPER-3'].find(k => b.messages[0]?.content.includes('面の1つ「'+({ 'MELCHIOR-1':'Enthusiast', 'BALTHASAR-2':'Humanist', 'CASPER-3':'Strategist' }[k])+'」（'+k+'）'));
     if(codename){const round=rounds[codename]=(rounds[codename]||0)+1;
       if(settings.absent?.(codename,round))return new Response('unavailable',{status:429});
-      return Response.json({choices:[{message:{content:settings.raw ? settings.raw(codename,round) : '[VOTE:APPROVE]\n理由'},finish_reason:'stop'}]});}
+      return Response.json({choices:[{message:{content:settings.raw ? settings.raw(codename,round) : '[VOTE:APPROVE]\n理由'},finish_reason:settings.finish?.(codename,round) || 'stop'}]});}
   });
   Object.assign(w.env,{MAGI_TYPESAFE_API_KEY:'test',MAGI_MODE_ENABLED:'true'});
   w.run = (extra={})=>w.request('/magi2/chat',{classification_state:true,magi_panel:true,adaptive_debate:true,ui_language:'ja',
@@ -3527,6 +3543,18 @@ test('MAGI採決: 第2回の札が壊れても第1回の有効票を保持し、
  const events=await w.run(),verdict=events.find(e=>e.name==='verdict').data;
  assert.equal(verdict.result,'approve');assert.equal(verdict.votes['MELCHIOR-1'].state,'carried');assert.equal(verdict.votes['MELCHIOR-1'].round,1);
  assert.equal(verdict.votes['MELCHIOR-1'].vote,'approve');assert.ok(!w.api.some(b=>b.response_format?.json_schema?.name==='magi_votes'));
+});
+
+test('MAGI採決: 安全フィルターや資源不足で打ち切られた途中の応答は、票の印があっても欠席にする', async () => {
+  for (const [finish, calls] of [['content_filter', 1], ['insufficient_system_resource', 2]]) {
+    const w=magiWorker({finish:k=>k==='MELCHIOR-1'?finish:'stop',raw:k=>k==='MELCHIOR-1'?'[VOTE:APPROVE]\n途中まで':'[VOTE:REJECT]\n費用が大きい'});
+    const ev=await w.run(),v=ev.find(e=>e.name==='verdict').data;
+    const mel=ev.filter(e=>e.name==='persona'&&e.data.codename==='MELCHIOR-1');
+    assert.ok(mel.length&&mel.every(e=>e.data.absent===true&&e.data.vote===null));
+    assert.doesNotMatch(JSON.stringify(mel),/途中まで/);
+    assert.equal(v.tally.approve,0);assert.equal(v.result,'reject');
+    assert.equal(w.rounds['MELCHIOR-1'],calls,'content_filter は再試行せず、それ以外の打ち切りは1回だけ再試行する');
+  }
 });
 
 test('MAGI採決: タグのみでも応答に数え、単独応答は1回で保留、全欠席はエラー', async () => {
@@ -5183,14 +5211,21 @@ test('A2: 引用は取得済みの本文番号に結び直し、使った出典�
   assert.equal(value.sources.marks[1].at,value.text.length);
 });
 
-test('A2: 未確認の項目はモデルの候補値・日時を表示せず、固定言語の文と出典だけを返す',()=>{
+test('A2: 未確認の項目はモデルの候補値・日時を本文からも項目名からも表示せず、固定言語の文と出典だけを返す',()=>{
   const w=worker(),notes=vm.runInContext('RESEARCH.unverified_note',w.ctx);
   for(const code of Object.keys(notes)){
-    const value={parts:[{label:'項目',text:'2030年5月1日に99kg、次回は6月1日です。',status:'unverified',citations:[{n:1,blocks:[]}]}]};
+    const value={parts:[{label:'発売日：2030年5月1日',text:'2030年5月1日に99kg、次回は6月1日です。',status:'unverified',citations:[{n:1,blocks:[]}]}]};
     const result=w.ctx.verifiedResearchResult(value,proofEvidence(),{code});
-    assert.equal(result.text,'- 項目: '+notes[code]);assert.doesNotMatch(result.text,/2030|99kg|次回/);
+    assert.equal(result.text,'- '+notes[code]);assert.doesNotMatch(result.text,/2030|99kg|次回|発売日/);
     assert.equal(result.sources.marks[0].at,result.text.length);assert.equal(result.sources.items[0].url,'https://official.example/');
   }
+  // 確認済みの項目は順に残し、未確認の項目はいくつあっても末尾の1行にまとめて、その出典の印を付ける
+  const mixed=w.ctx.verifiedResearchResult({parts:[
+    {label:'価格: 999円',text:'未確認',status:'unverified',citations:[{n:1,blocks:[]}]},
+    {label:'項目',text:'確認した値',status:'verified',citations:[{n:3,blocks:[0]}]},
+    {label:'発売日 2030年',text:'未確認',status:'unverified',citations:[{n:1,blocks:[]},{n:3,blocks:[]}]}]},proofEvidence(),{code:'ja'});
+  assert.equal(mixed.text,'- 項目: 確認した値\n\n- '+notes.ja);assert.doesNotMatch(mixed.text,/999|2030/);
+  assert.deepEqual(JSON.parse(JSON.stringify(mixed.sources.marks)),[{at:'- 項目: 確認した値'.length,n:1},{at:mixed.text.length,n:2},{at:mixed.text.length,n:1}]);
 });
 
 test('A2: 架空の出典・本文番号・未読本文の確認済み・余分なキー・長過ぎる本文を拒否する',()=>{
