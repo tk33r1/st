@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 27 Oct 2026 06:31:15 +0900</lastBuildDate>
+    <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 28 Oct 2026 06:10:29 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月28日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261028/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261028/</guid>
+      <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
+      <description>大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した</description>
+    </item>
     <item>
       <title>2026年10月27日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261027/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261014/</guid>
       <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
       <description>「寝られる座椅子」がソファ代わりとして支持を集め、寝る・座るを一台でこなす複合機能の需要が見えてきました。 インドで2店舗目となる「NITORI Sky City Mall Mumbai店」が出店し、海外の店舗網拡大が続いています。</description>
-    </item>
-    <item>
-      <title>2026年10月13日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261013/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261013/</guid>
-      <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリはSPAの強みを背景に、スマートホームや物流・店舗DXの提案と、新店舗の展開を同時に進めています。 置くだけ充電ランプや電気ざぶとんなど、暮らしの不便を解消する商品と、490万個を売り上げた定番クッションが支持を集めています。</description>
     </item>
   </channel>
 </rss>

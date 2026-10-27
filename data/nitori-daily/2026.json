@@ -1,5 +1,337 @@
 [
   {
+    "date": "20261028",
+    "title": "2026年10月28日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった",
+      "ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した",
+      "SNSでは寝具・収納・趣味の場面で手頃なニトリ商品を取り入れる投稿が反響を集め、購入報告が自発的な口コミとして広がっている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日オープン",
+        "original_title": "",
+        "source": "MarkeZine（マーケジン）",
+        "source_id": "JP-06",
+        "summary": "ニトリは、大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」を10月30日にオープンする。都心の集客力の高いエリアに大型店を構えることで、家具やインテリアを実際に見て選ぶ体験を強化する狙いがうかがえる。売り場の広さを生かした商品提案の幅も注目される大型出店である。",
+        "why_it_matters": "大型旗艦店は、ECでは伝わりにくい家具の質感や寸法感を体感させる場となる。都市型立地での出店は、店舗受け取りや在庫連携などOMOの強化と組み合わせることで、購買動線の再設計につながる。関西圏の都市顧客に向けた存在感を高める一手として、今後の出店戦略を読む指標になるだろう。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "旗艦店",
+          "大阪"
+        ],
+        "search_terms": [
+          "ニトリ 梅田茶屋町店 オープン",
+          "Nitori Umeda Chayamachi flagship store",
+          "Japan furniture flagship store opening"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE8zSFFHazRCdTlveEtLNjh6eTk3VEFyRFFqem9zT2ZKLTdRbXN3R3k4U01TY2huUHg0Zk40d0RGZ2tscGJ5LUtjV2VNd1AteFk?oc=5",
+        "source_pub_ts": 1793057400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリから「ペット空気清浄機」登場、猫じゃらし・爪とぎ・ブラシを一台に搭載",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-01",
+        "summary": "ニトリから、ペットとの暮らしを想定した「ペット空気清浄機」が登場した。猫じゃらし、爪とぎ、ブラシといった機能を一台に搭載しているのが特徴で、空気清浄機にペット向けの遊びやケア機能を組み合わせた製品となる。ペットのいる家庭のリビングを整える提案として注目される。",
+        "why_it_matters": "空気清浄機という家電に、ペットの遊び・爪とぎ・手入れの機能を集約したことで、リビングに置いても違和感のない「ペット用品の家具化」を実現している。SPAとして企画から設計まで手掛ける強みを生かせば、生活者の悩みを起点にした複合型商品を開発できる。限られた住空間でも複数用途を一台で満たせる点は、購入理由になりやすい。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ペット",
+          "空気清浄機"
+        ],
+        "search_terms": [
+          "ニトリ ペット空気清浄機",
+          "Nitori pet air purifier",
+          "pet air purifier with cat toy scratcher"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBrUVJzT3VwRktHbFZLSzlOR21jby1RaTJqclpja3B1UFZHclNyWXZpOGo2STRJNldXNWxLZHRQZjIwU2k1QlhFYUNTQWJZSWpjRlgzYWNucHN3aC1ydmN4U1kzYWd2UHRoaG9ndG4xbEQ4Q1Z3Tnc?oc=5",
+        "source_pub_ts": 1793095229
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "進化する「ニトリアプリ」と、入社時年収1300万円の賃金体系を聞いた",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-10",
+        "summary": "ウォーカープラスの記事では、機能が進化を続けるニトリアプリの現状と、話題となった「入社時の年収1300万円」という賃金体系について取り上げている。デジタルの顧客接点と人材処遇の両面から、ニトリグループの現在地を伝える内容となっている。アプリの使われ方と社員の働き方を結びつけて読める記事である。",
+        "why_it_matters": "アプリは会員接点と購買データを一元化するDX基盤であり、来店・EC・店舗受け取りを横断する顧客体験の要となる。一方で高い処遇は、企画や物流を内製するSPAの強みを支える人材確保戦略と連動している。アプリとの連動が、ブランド体験と採用力の双方にどう効くかが今後の注目点になる。",
+        "tags": [
+          "ニトリ",
+          "アプリ",
+          "DX",
+          "人材"
+        ],
+        "search_terms": [
+          "ニトリアプリ 進化",
+          "Nitori app digital transformation",
+          "retail app member engagement Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1FU3ZDMWtZWFloN1pFTV9MRFlsSkJFZ0FHWXhab0xPWGdlcjRwWlVPVWllOE16TGZPNFMxSDc0Q3VOVGNjR0lpWU1Ncm9xbExRcjhGOS0wU3gwVHdGZVc5TlNSWWoycU5uVG9nN3ZB?oc=5",
+        "source_pub_ts": 1793086276
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリとissin、スマートバスマットの新色「ライムグリーン」を発売へ",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "ニトリとissinが協業するスマートバスマットに、新色のライムグリーンが加わると報じられた。発売日は10月22日とされている。バスルームという身近な空間の商品に新しい色の選択肢を加える展開で、色で選ぶ楽しさを広げる狙いがうかがえる。",
+        "why_it_matters": "他社との協業は、ニトリ単独では届きにくい層へのリーチや話題化に寄与する。色展開は低単価の生活雑貨でも「選ぶ楽しみ」を生み出す。一方で色数を増やすほどSPAの在庫管理や欠品防止は難しくなるため、需要に合わせた色の絞り込みと物流面での両立が課題となる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "コラボ",
+          "バスマット"
+        ],
+        "search_terms": [
+          "ニトリ issin スマートバスマット",
+          "Nitori issin smart bath mat",
+          "lime green bath mat collaboration"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1TX1BoeUhhUVZzeEFrYVFsanIyZ1o3b2FuQ0cxc293aFFMV2oyMW9vR2ZBLVNkSlZoaWhTTlBLZ0o1RFFJNE5ueVlYaEJDYWpEclVSY3owYlloZktDZVpfZ1pSYkhuWWxJ?oc=5",
+        "source_pub_ts": 1793030126
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの洗面用品ランキング1位、「買い足して20個使っている」との声",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ねとらぼリサーチによるニトリの洗面用品ランキングで1位となった商品について、利用者から「買い足して20個使っている」との声が寄せられた。「長さを調整できて便利」「収納が解決できた」といったコメントが紹介されており、使う場所や用途に合わせて使い分けやすい点が評価されている。",
+        "why_it_matters": "同じ商品を買い足して複数使うという行動は、低単価で機能性の高い収納・生活用品が反復購買を生むことを示す。長さ調整や収納の悩み解消といった具体的な答えが、口コミでの評価と順位に結びついている。SPAとして素早く改良や色・サイズ展開を行えば、リピート需要をさらに取り込める。",
+        "tags": [
+          "ニトリ",
+          "洗面",
+          "ランキング",
+          "リピート"
+        ],
+        "search_terms": [
+          "ニトリ 洗面用品 ランキング",
+          "Nitori bathroom accessories ranking",
+          "bathroom storage repeat purchase"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE4yRHgtVW03ZXVDby1jVkUwR2c3S2tBS1EtaTdUZXVqVUV5ODliOTkxMGlFdzlWcHI0MzdZWlVwZEFUT1FzRWw1QjBILVcxMkpOOFp5bzlkRHBDRm5vc2FHbFV4WHI2ODVwVEQ0?oc=5",
+        "source_pub_ts": 1793075400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「どら焼きクッション」をゲットした日、寝るたびお腹が空きそう",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-07",
+        "summary": "TikTokでは、ニトリの「どら焼きクッション」を購入した様子を紹介する動画が3.4万回再生、1,894いいねを集めた。「寝るたびお腹減りそう」といった軽快なコメントとともに、寝室や部屋作りの中で楽しめる遊び心のあるアイテムとして投稿されている。「ニトリ購入品」「お部屋作り」などのハッシュタグで購入報告の輪が広がった。",
+        "why_it_matters": "動画は見た目の面白さを起点に、寝具やクッションが部屋の気分を変えるアイテムとして受け止められていることを示す。利用者が自ら「ニトリ購入品」「買ってよかったもの」とタグ付けする口コミの循環は、広告に頼らないPRの力になる。食べ物モチーフなど遊び心のある企画は、短尺動画で拡散されやすい点を商品開発に生かしたい。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "クッション",
+          "TikTok"
+        ],
+        "search_terms": [
+          "ニトリ どら焼きクッション",
+          "Nitori dorayaki cushion TikTok",
+          "dorayaki shaped cushion room decor"
+        ],
+        "url": "https://www.tiktok.com/@1addicters/video/7700898581674216722",
+        "source_pub_ts": 1793005180.0
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "プラモの棚が足りず、ニトリの1490円ディスプレイケースを2個追加",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-04",
+        "summary": "Xでは、プラモデルの棚が13個で足りなくなったため、ニトリの1490円のディスプレイケースを2個追加したという投稿が112いいねを集めた。奥行きは浅く横一列での設置に限られるものの、高さがあるため大型キットも収まると紹介されている。趣味の収納を手頃な価格で増やす実例として、ガンプラ愛好家を中心に共感を呼んだ。",
+        "why_it_matters": "趣味のコレクションを専用品ではなく汎用的な1490円のケースで受け止める使い方は、ニトリ商品の用途の再発見を示す。奥行きという制約を寸法情報で正しく伝えることが、購入後の満足度と口コミの質を左右する。趣味層に刺さる収納のラインアップを広げることは、ニッチだが熱量の高いファン獲得につながる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "収納",
+          "趣味"
+        ],
+        "search_terms": [
+          "ニトリ ディスプレイケース プラモ",
+          "Nitori display case model kit storage",
+          "hobby shelf collection display"
+        ],
+        "url": "https://x.com/gunpla_kilili/status/2115011901252071482",
+        "source_pub_ts": 1793098800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "パジャマ（無印）、枕（ニトリ）、下着（ユニクロ）、タオル（タオル研究所）のおすすめ！！どれもそこまで高くないから買い替えられるし、肌触り良く...",
+        "platform": "x",
+        "author": "@Nana5nanana",
+        "url": "https://x.com/Nana5nanana/status/2114952230814286119",
+        "likes": 309,
+        "retweets": 14,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:28",
+        "captured_at": "",
+        "text": "パジャマ（無印）、枕（ニトリ）、下着（ユニクロ）、タオル（タオル研究所）のおすすめ！！どれもそこまで高くないから買い替えられるし、肌触り良くて色々買ったけどこれに行き着いた🎶 pic.x.com/Wn9LpgjVkJ x.com/uru_cominka/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "頭カキカキ 11回したよ🐻✨ ＼ニトリの極暖Nウォーム最高にゃ／ pic.x.com/kce6ew6RpO",
+        "platform": "x",
+        "author": "@chibi__marin",
+        "url": "https://x.com/chibi__marin/status/2114914445155803535",
+        "likes": 292,
+        "retweets": 41,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:57",
+        "captured_at": "",
+        "text": "頭カキカキ 11回したよ🐻✨ ＼ニトリの極暖Nウォーム最高にゃ／ pic.x.com/kce6ew6RpO",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "こんばんぱぴこは〜🌙✨ 仕事帰りに…🚗ニトリへ 敷布団マット、掛け布団、枕、買いました ☺️今夜から✨ぐっすり寝れそう ぱぴ布団💕 ぱぴこ枕...",
+        "platform": "x",
+        "author": "@hiro4800",
+        "url": "https://x.com/hiro4800/status/2115010195747373204",
+        "likes": 141,
+        "retweets": 18,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:18",
+        "captured_at": "",
+        "text": "こんばんぱぴこは〜🌙✨ 仕事帰りに…🚗ニトリへ 敷布団マット、掛け布団、枕、買いました ☺️今夜から✨ぐっすり寝れそう ぱぴ布団💕 ぱぴこ枕💕ぱぴ掛け布団💕 @UtaGe_papico #ぱぴこくらぶ pic.x.com/Z9UnAwSSGk",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "プラモの棚が13個で足りなくなってきたので、ニトリの1490円のディスプレイケースを2個追加。 奥行きがないので横一列のみですが、高さがある...",
+        "platform": "x",
+        "author": "@gunpla_kilili",
+        "url": "https://x.com/gunpla_kilili/status/2115011901252071482",
+        "likes": 112,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:25",
+        "captured_at": "",
+        "text": "プラモの棚が13個で足りなくなってきたので、ニトリの1490円のディスプレイケースを2個追加。 奥行きがないので横一列のみですが、高さがあるねでメッサー辺りはギリ入ります #ガンプラ #プラモデルライフ pic.x.com/9q3hIjnwwo",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "天神川を入れるんやったら、葛野大路四条を入れて欲しかったなぁ。 京都ファミリーで何でも揃うし、ニトリも近所にあるし、スタバにマクドに、くら寿...",
+        "platform": "x",
+        "author": "@kasei_azurea",
+        "url": "https://x.com/kasei_azurea/status/2115036354581291153",
+        "likes": 50,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:02",
+        "captured_at": "",
+        "text": "天神川を入れるんやったら、葛野大路四条を入れて欲しかったなぁ。 京都ファミリーで何でも揃うし、ニトリも近所にあるし、スタバにマクドに、くら寿司に。 自転車でちょっと行けば南広町にライフ、阪急オアシス、サンディがある。 x.com/jiro_money_/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "#ikeatok #homedecor",
+        "platform": "tiktok",
+        "author": "@home & happy things  🏡 🇧🇪✨",
+        "url": "https://www.tiktok.com/@with.laris/video/7698783230677372193",
+        "likes": 3869,
+        "retweets": 1133,
+        "views": 206000,
+        "comments": 10,
+        "posted_on": "2026-10-21 01:10",
+        "captured_at": "2026-10-27T19:12:17.142057+09:00",
+        "text": "#ikeatok #homedecor",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "どら焼きクッションをゲットした日🛌😋★ 美味しそうすぎて寝るたびお腹減りそう💦 #ニトリ #ニトリ購入品 #お部屋作り #どら焼きクッション...",
+        "platform": "tiktok",
+        "author": "@1addicters",
+        "url": "https://www.tiktok.com/@1addicters/video/7700898581674216722",
+        "likes": 1894,
+        "retweets": 21,
+        "views": 34400,
+        "comments": 4,
+        "posted_on": "2026-10-26 17:59",
+        "captured_at": "2026-10-27T19:12:17.142057+09:00",
+        "text": "どら焼きクッションをゲットした日🛌😋★ 美味しそうすぎて寝るたびお腹減りそう💦 #ニトリ #ニトリ購入品 #お部屋作り #どら焼きクッション #買ってよかったもの",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-08",
+        "title": "ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻",
+        "platform": "tiktok",
+        "author": "@KC/ケーシの家族",
+        "url": "https://www.tiktok.com/@kc.familys/video/7700792735992745217",
+        "likes": 368,
+        "retweets": 1,
+        "views": 12000,
+        "comments": 4,
+        "posted_on": "2026-10-26 17:30",
+        "captured_at": "2026-10-27T19:12:17.142057+09:00",
+        "text": "ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "SNS投稿では、ニトリ商品を寝具・収納・趣味など生活の具体的な場面に当てはめて紹介する声が目立つ。Xではいいねやリツイートで寝具や防寒アイテムの組み合わせ紹介が共感を集め、TikTokでは再生数で購入報告や部屋作りの動画が反響を広げた。価格の手頃さと組み合わせの自由さが共通の評価軸となっている。",
+    "sns_why_it_matters": "短尺動画では見た目の面白さや購入直後の高揚感が再生を伸ばし、Xでは価格と用途を具体的に語る投稿が共感を集める。媒体ごとに反応の質が異なるため、動画では体験シーン、Xでは寸法や価格の情報を組み合わせた発信が有効だ。生活者が自発的に「ニトリ購入品」として紹介する文脈を商品企画の段階から想定することが、UX向上とPRの両立につながる。"
+  },
+  {
     "date": "20261027",
     "title": "2026年10月27日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリの「ステンレス味噌漉し」「点で支えるまくら」「1台10役スライサーセット」など、日常の小さな不便を低価格で解決する商品がSNSや記事で反響を広げている。 秋冬商材では「N+」の新作アパレルに吸湿発熱素材「Nウォーム」を初採用し、11月9日までの値下げで季節需要を取り込む動きが見られる。",
