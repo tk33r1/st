@@ -31,10 +31,11 @@ const click=(extra={})=>({scope:'tools',query:'pdf',href:'/tools/pdf-studio/',li
 test('正しい記録は204で1行書き、IPは塩を混ぜたハッシュだけを残す',async()=>{
   const w=worker();
   for(const body of [click(),click({scope:'site',href:'/thought/',list:'local',position:3}),
-    click({scope:'nitori',href:'/job/nitoridaily/20261012/#art-2',list:'semantic'}),click({scope:'game',href:'/game/masala-tetris-tiffin/'})]) {
+    click({scope:'nitori',href:'/job/nitoridaily/20261012/#art-2',list:'semantic'}),click({scope:'game',href:'/game/masala-tetris-tiffin/'}),
+    click({scope:'retail',href:'/job/retailtechdaily/20261012/#art-1'})]) {
     assert.equal((await w.request(body)).status,204,JSON.stringify(body));
   }
-  assert.equal(w.rows.length,4);
+  assert.equal(w.rows.length,5);
   const [day,at,scope,query,href,list,position,visitor]=w.rows[0];
   assert.match(day,/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);assert.ok(Number.isSafeInteger(at));
   assert.deepEqual([scope,query,href,list,position],['tools','pdf','/tools/pdf-studio/','suggest',1]);
@@ -52,7 +53,7 @@ test('塩が無ければ記録しない（逆算できるハッシュを作ら�
 
 test('形・画面の種類に合わないものは400で、回数もD1も使わない',async()=>{
   const w=worker();
-  for(const body of [click({scope:'bad'}),click({href:'/game/x/'}),click({href:'https://evil.example/'}),click({href:'//evil.example/'}),
+  for(const body of [click({scope:'bad'}),click({scope:'__proto__'}),click({scope:'constructor',href:'/constructor/'}),click({href:'/game/x/'}),click({href:'https://evil.example/'}),click({href:'//evil.example/'}),
     click({href:'/tools/a/?q=1'}),click({href:'/tools/%2e%2e/'}),click({scope:'nitori',href:'/job/retailtechdaily/20261012/#art-1'}),
     click({scope:'nitori',href:'/job/nitoridaily/2026101/#art-1'}),click({list:'other'}),click({position:0}),click({position:1.5}),
     click({query:''}),click({query:' pdf'}),click({query:'a'.repeat(201)}),click({query:'a'+String.fromCharCode(0)}),{...click(),extra:1}]) {

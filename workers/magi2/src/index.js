@@ -2,9 +2,9 @@ import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_M
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
-import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration } from '../search-scope.js';
-import { classifyQuery, cleanReplyLanguage, classifySlice, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
-import { researchReader, researchSourceUrl, researchSourceBlocks, readResearchSource, startSourceIcons } from '../research.js';
+import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration, searchScope } from '../search-scope.js';
+import { classifyQuery, cleanReplyLanguage, classifySlice, exactKeys, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
+import { researchMessages, researchPlaceLabel, researchReader, researchSourceBlocks, readResearchSource, researchVerificationRequest, startSourceIcons, verifiedResearchResult } from '../research.js';
 import { qaBudgetEnv } from '../qa-budget.js';
 // デプロイ時点の人格カード。wrangler がデプロイ時にバンドルへ取り込む（config/ai-models.json と同じ）。
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
@@ -412,25 +412,27 @@ function anthropicSchema(value) {
     .map(([key, child]) => [key, anthropicSchema(child)]));
 }
 
-// replyLimitは非streamのAnthropicを読み替える前の本文にも上限を掛ける（{ bytes, ms }）。
-async function callModel({ env, messages, cfg, stream, signal, temperature, response_format, replyLimit = null }) {
-  const provider = PROVIDERS[cfg.provider];
-  const body = requestBody(cfg, { messages, stream, temperature, response_format });
-  if (typeof env.evalObserve === 'function' && stream && cfg.provider !== 'anthropic') body.stream_options = { include_usage: true };
-  const key = env[provider.key];
-  if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
+// 上流へのPOSTは通常の呼び出しとWeb検索で共通にする（認証・予算の予約・使用量の観測・課金障害の通知）。
+// 再試行と応答の解析は用途ごとに呼び出し側が持つ。キーが無いときは missingKey() の例外を投げる。
+async function postUpstream(env, cfg, { body, endpoint = PROVIDERS[cfg.provider].endpoint, stream, signal, missingKey }) {
+  const key = env[PROVIDERS[cfg.provider].key];
+  if (!key) throw missingKey();
   if (env.qaReserve) await env.qaReserve(cfg.provider, body);
-  const res = await fetch(provider.endpoint, {
-    method: 'POST',
-    headers: requestHeaders(cfg.provider, key),
-    body: JSON.stringify(body),
-    signal,
-  });
+  const res = await fetch(endpoint, { method: 'POST', headers: requestHeaders(cfg.provider, key), body: JSON.stringify(body), signal });
   if (typeof env.evalObserve === 'function') env.evalObserve(cfg.provider, cfg.model, res.clone(), !!stream);
   // 失敗は残高切れ・キーの失効でないかを見る（本文は呼び出し側も読むので複製を渡す）
   // 本文の分類を待つ。先に戻ると呼び出し側がabortし、複製した本文も読めなくなる。
   // メールの送信はフック内のwaitUntilで行うので、ここでは待たない。
   if (!res.ok && env.onUpstreamError) await env.onUpstreamError(cfg.provider, res.clone(), { signal });
+  return res;
+}
+
+// replyLimitは非streamのAnthropicを読み替える前の本文にも上限を掛ける（{ bytes, ms }）。
+async function callModel({ env, messages, cfg, stream, signal, temperature, response_format, replyLimit = null }) {
+  const body = requestBody(cfg, { messages, stream, temperature, response_format });
+  if (typeof env.evalObserve === 'function' && stream && cfg.provider !== 'anthropic') body.stream_options = { include_usage: true };
+  const res = await postUpstream(env, cfg, { body, stream, signal,
+    missingKey: () => stageError('internal', 'missing_api_key', `${PROVIDERS[cfg.provider].key} が未設定です`, { retryable: false }) });
   // 非ストリームは既存の読み取りへ正規化し、thinkingは一度も履歴へ入れない。
   // 観測には正規化前の応答を渡すので、評価用の使用量は元の形で残る。
   if (res.ok && cfg.provider === 'anthropic' && !stream) {
@@ -759,11 +761,11 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
 
 // 共通検索の候補クリックを記録する（設定は personas.js の SEARCH_CLICK）。画面は sendBeacon で送り、応答を読まない。
 // 押したページが今も公開されているかは集計（search-boost.py）で確かめる。ここでは形と画面の種類に合うかだけを見る。
+// 対象と日刊の媒体のディレクトリは search-scope.js の SEARCH_SCOPES を正本にする。
 const CLICK_LISTS = ['suggest', 'local', 'semantic'];
-const CLICK_DAILY = { nitori: 'nitoridaily', retail: 'retailtechdaily' };
 function clickHref(scope, value) {
-  if (typeof value !== 'string' || Array.from(value).length > SEARCH_CLICK.href_max_chars) return null;
-  if (CLICK_DAILY[scope]) return new RegExp(`^/job/${CLICK_DAILY[scope]}/[1-9][0-9]{7}/#art-[1-9][0-9]*$`).test(value) ? value : null;
+  if (!isSearchScope(scope) || typeof value !== 'string' || Array.from(value).length > SEARCH_CLICK.href_max_chars) return null;
+  if (isDailyScope(scope)) return new RegExp(`^/job/${searchScope(scope).media}/[1-9][0-9]{7}/#art-[1-9][0-9]*$`).test(value) ? value : null;
   const path = rankSiteUrl(value);
   if (path !== value || /%(?:2e|2f|5c)/i.test(value)) return null;
   return scope === 'site' || path.startsWith(`/${scope}/`) ? path : null;
@@ -778,7 +780,7 @@ async function handleSearchClick(request, env, { requestId, cors, log }) {
   const { scope, query, list, position } = body || {};
   const href = clickHref(scope, body?.href);
   if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).sort().join() !== 'href,list,position,query,scope'
-    || !['site', 'tools', 'game', 'nitori', 'retail'].includes(scope) || !href || !CLICK_LISTS.includes(list)
+    || !href || !CLICK_LISTS.includes(list)
     || !Number.isSafeInteger(position) || position < 1 || position > SEARCH_CLICK.position_max
     || typeof query !== 'string' || query !== query.trim() || !query || Array.from(query).length > SEARCH_CLICK.query_max_chars
     || /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(query)) return fail(400, 'invalid_click');
@@ -934,8 +936,6 @@ function judgeInput(plainMessages, context, opinions, langNote) {
   ].join('\n');
 }
 
-const exactKeys = (value, keys) => value && !Array.isArray(value) && typeof value === 'object'
-  && Object.keys(value).length === keys.length && keys.every(k => Object.hasOwn(value, k));
 const questionText = (text, max) => typeof text === 'string' && !!text.trim() && text.length <= max && !TEXT_CONTROL_RE.test(text);
 
 function cleanUserQuestions(value) {
@@ -1220,14 +1220,6 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
   return answer;
 }
 
-// 日付・項目・出典の指示は実経路と週次smokeで同じ形から作る。
-function researchMessages(messages, verifiedNow, place = null) {
-  const localDate = researchLocalDate(verifiedNow);
-  const firstUser = messages.findIndex(m => m.role !== 'system');
-  return [...messages.slice(0, firstUser),
-    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${researchPlaceNote(place)}${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
-}
-
 // 利用者の推定所在地（Cloudflare が通信元の IP から推定した市・地域・国）。精度は市や県の単位で、外れることがある。
 // Web で調べるときだけ、場所の指定が無い質問（天気・近くの店など）の前提に使う。GPS は使わない
 function requestPlace(request) {
@@ -1238,7 +1230,6 @@ function requestPlace(request) {
   const timezone = typeof cf.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(cf.timezone) ? cf.timezone : null;
   return country && (city || region) ? { country, ...(city ? { city } : {}), ...(region ? { region } : {}), ...(timezone ? { timezone } : {}) } : null;
 }
-const placeName = place => [place.city, place.region !== place.city ? place.region : null, place.country].filter(Boolean).join(', ');
 
 // 座標は検索用の構造化データに限定する。表示名に混ぜず、通常会話・保存用の履歴にも足さない。
 function devicePlace(value, now = Date.now()) {
@@ -1257,25 +1248,6 @@ function devicePlace(value, now = Date.now()) {
   if (typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country)) place.country = value.country;
   if (typeof value.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(value.timezone)) place.timezone = value.timezone;
   return place;
-}
-function researchPlaceNote(place) {
-  if (!place) return '';
-  if (place.source !== 'device') return RESEARCH.place_prompt + placeName(place) + '。' + RESEARCH.place_rules + '\n';
-  return RESEARCH.device_place_prompt + JSON.stringify({ place: placeName(place) || null, coordinates: place.coordinates })
-    + '。' + RESEARCH.place_rules + '\n';
-}
-function researchPlaceLabel(place, lang) {
-  if (place.source !== 'device') return (RESEARCH.place_label[lang] || RESEARCH.place_label.en).replace('{place}', placeName(place));
-  return (RESEARCH.device_place_label[lang] || RESEARCH.device_place_label.en)
-    .replace('{place}', placeName(place) || (lang === 'ja' ? '現在地' : 'current location')).replace('{accuracy}', place.coordinates.accuracy);
-}
-
-// 検索と照合で、同じ「日本の現在日付」を使う。
-function researchLocalDate(verifiedNow) {
-  const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
-    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' }).formatToParts(verifiedNow);
-  const localPart = type => localParts.find(p => p.type === type).value;
-  return `${localPart('year')}-${localPart('month')}-${localPart('day')} (${localPart('weekday')})`;
 }
 
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
@@ -1334,57 +1306,6 @@ async function readResearchResponse(body, reader, provider, signal) {
     if (buffer.trim()) { buffer += '\n\n'; drain(); }
     return [...blocks.entries()].sort((a, b) => a[0] - b[0]).map(([, block]) => block);
   } finally { signal.removeEventListener('abort', cancel); input.cancel().catch(() => {}); input.releaseLock(); }
-}
-
-function researchVerificationFormat(evidence) {
-  return {type:'json_schema', json_schema:{name:'research_verified_reply', strict:true, schema:{type:'object', additionalProperties:false,
-    properties:{parts:{type:'array', items:{type:'object', additionalProperties:false, properties:{label:{type:'string'}, text:{type:'string'},
-      status:{type:'string', enum:['verified','unverified']}, citations:{type:'array', items:{type:'object', additionalProperties:false,
-        properties:{n:{type:'integer', enum:evidence.map(e => e.n)}, blocks:{type:'array', items:{type:'integer'}}}, required:['n','blocks']}}},
-      required:['label','text','status','citations']}}, place_used:{type:'boolean'}}, required:['parts','place_used']}}};
-}
-
-// place_used は、場所の指定が無い質問に推定所在地を使ったか（使ったら画面に前提を出す）。保存済みの評価の値（parts だけ）も読む
-function verifiedResearchResult(value, evidence, replyLanguage) {
-  const fail = () => {throw stageError('upstream', 'research_verification_invalid', 'Web回答の根拠を確認できませんでした', {retryable:true});};
-  if (!(exactKeys(value,['parts']) || exactKeys(value,['parts','place_used']) && typeof value.place_used === 'boolean')
-    || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
-  let text = ''; const items = [], marks = [], numbers = new Map();
-  for (const p of value.parts) {
-    if (!exactKeys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
-      || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
-      || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
-      || !Array.isArray(p.citations) || p.status === 'verified' && !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
-    const body = p.status === 'unverified'
-      ? RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en : p.text.trim();
-    text += (text ? '\n\n' : '') + '- ' + p.label.trim() + ': ' + body;
-    const used = new Set();
-    for (const c of p.citations) {
-      const source = evidence.find(e => e.n === c?.n);
-      if (!exactKeys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
-        || !Array.isArray(c.blocks) || c.blocks.length > 20
-        || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
-        || p.status === 'verified' && (!source.readable || !c.blocks.length)) fail();
-      if (used.has(c.n)) continue; used.add(c.n);
-      if (!numbers.has(c.n)) {numbers.set(c.n,items.length + 1);items.push({n:items.length + 1,title:source.title,url:source.url});}
-      marks.push({at:text.length, n:numbers.get(c.n)});
-    }
-  }
-  return {text, sources:{items,marks}, placeUsed:value.place_used === true};
-}
-
-// callModelへ渡す設定・会話・出力形式。本番と保存済み出典の評価で同じものを使う。
-// 照合にはカード・検索の指示・画像を送り直さない。前の会話は、質問が何を指すかを読むための文字だけを渡す。
-function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage,place = null) {
-  const text = content => typeof content === 'string' ? content : (content || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
-  const turns = messages.filter(m => m.role !== 'system'), latest = turns.findLastIndex(m => m.role === 'user');
-  const conversation = turns.slice(0, latest).map(m => ({role:m.role, text:text(m.content)})).filter(m => m.text.trim());
-  const input = [{role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')
-      + `\nChecked at: ${verifiedNow.toISOString()} (UTC). Current date in Japan: ${researchLocalDate(verifiedNow)} (${RESEARCH.location.timezone}).`},
-    {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence,
-      estimated_place:place ? placeName(place) : null,
-      ...(place?.source === 'device' ? { device_coordinates: place.coordinates } : {})})}];
-  return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }
 
 // 本文を JavaScript で描くページ（気象庁の台風・天気など）は HTML に本文が無い。取れた本文がごく少ない HTML の出典を
@@ -1489,15 +1410,10 @@ async function researchAnswer({ upstream, messages, fallbackMessages = messages,
         let body = researchRequestBody(cfg, input, place);
         for (let paused = 0; ; paused++) {
           if (stop.aborted) throw searchFailure('cancelled');
-          const key = upstream[PROVIDERS[cfg.provider].key];
-          if (!key) throw stageError('upstream', 'missing_api_key', 'Web検索のキーが未設定です', { retryable: false });
-          if (upstream.qaReserve) await upstream.qaReserve(cfg.provider, body);
-          const res = await fetch(cfg.provider === 'openai' ? RESEARCH.openai_endpoint : PROVIDERS.anthropic.endpoint, {
-            method: 'POST', headers: requestHeaders(cfg.provider, key), body: JSON.stringify(body), signal: stop,
-          });
-          if (typeof upstream.evalObserve === 'function') upstream.evalObserve(cfg.provider, cfg.model, res.clone(), true);
+          const res = await postUpstream(upstream, cfg, { body, stream: true, signal: stop,
+            endpoint: cfg.provider === 'openai' ? RESEARCH.openai_endpoint : PROVIDERS.anthropic.endpoint,
+            missingKey: () => stageError('upstream', 'missing_api_key', 'Web検索のキーが未設定です', { retryable: false }) });
           if (!res.ok) {
-            if (upstream.onUpstreamError) await upstream.onUpstreamError(cfg.provider, res.clone(), { signal: stop });
             res.body?.cancel().catch(() => {});
             throw stageError('upstream', 'research_http_' + res.status, 'Web検索に失敗しました', { retryable: true });
           }
@@ -1969,6 +1885,50 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   return answer;
 }
 
+// チャットのサイト案内とページ選び。人格カード（cardsPromise）も待って一緒に返す。
+// サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
+// 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
+// signal は会話全体の停止、pageSignal はページ選びの停止（会話の終わりでも止める）。
+async function chatSitePages({ env, ctx, log, cardsPromise, classification, motion, newContract, entry, page, wantSitePages, searchText, signal, pageSignal }) {
+  const searchOn = env.SITE_SEARCH_ENABLED === 'true';
+  const allowPages = !motion && (!newContract || (entry !== 'dj-request' && classification.intent !== 'music' && classification.site_pages !== 'no' && wantSitePages));
+  const wantPages = allowPages && wantSitePages && searchOn && env.DB && searchText.trim();
+  const indexPromise = searchOn && (!newContract || env.DB) && ((allowPages && page) || wantPages) ? getSitePages(ctx, 'ja', pageSignal).catch(() => null) : null;
+  const cards = await cardsPromise;
+  // サイト案内（画面が page を送ったときだけ）。3人格を長く待たせないよう、索引は短い期限で待つ。
+  // 取れなければ一覧なしで、場面の説明だけを足す
+  let guide = null;
+  if (!motion && page && (!newContract || classification.intent !== 'music')) {
+    let pages = null;
+    try { pages = await searchDeadline(SITE_GUIDE.wait_ms, () => indexPromise, signal); } catch (_) {}
+    if (signal.aborted) throw searchFailure('cancelled');
+    guide = siteGuide(page, pages);
+    log('site_guide', page, guide.current ? 'known' : 'unknown', pages ? 'listed' : 'unlisted');
+  }
+  // ページ選びもこの分岐で始める。人格の討議は検索の取得待ちにしない。
+  let pagesPromise = null;
+  if (wantPages) {
+    const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
+    pagesPromise = (async () => {
+      const locale = newContract ? classification.reply_language.code === 'ja' ? 'ja' : 'en'
+        : /[\u3040-\u30ff\u3400-\u9fff]/.test(searchText) ? 'ja' : 'en';
+      // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
+      if (!await indexPromise) throw searchFailure('list_fetch');
+      const pages = await getSitePages(ctx, locale, pageSignal);
+      return selectSitePages({ query: searchSlice(searchText, SITE_SEARCH.chat_query_max_chars), locale, pages, current: guide && guide.current,
+        purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
+        signal: pageSignal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
+    })().catch(() => { log('site_search', 'omitted'); return null; });
+  }
+  // サイトを尋ねた質問だけは、選んだページを待ってから答える。
+  let pageChoice = null;
+  if (!motion && newContract && classification.intent === 'site' && pagesPromise) {
+    pageChoice = await pagesPromise || { status: 'failed', results: [] };
+    pagesPromise = null;
+  }
+  return { cards, guide, pageChoice, pagesPromise };
+}
+
 // transport（省略できる）を渡すと、SSE の代わりにその受け口へ同じイベントを送る（WebSocket の入口。読み上げ設計§6.2）。
 // 受け口は { event(名前, data), comment(文字), end() }。入力の誤り・回数の超過は今と同じ HTTP の応答を返し、
 // 受け口へ流し始めたら null を返す
@@ -2130,44 +2090,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         const motion = motionEvent?.votable ? motionEvent.text : null;
         const shortDebate = !motion && newContract && !factMode && ['site', 'music'].includes(classification.intent);
 
-        // サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
-        // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
-        const searchOn = env.SITE_SEARCH_ENABLED === 'true';
-        const allowPages = !motion && (!newContract || (entry !== 'dj-request' && classification.intent !== 'music' && classification.site_pages !== 'no' && wantSitePages));
-        const wantPages = allowPages && wantSitePages && searchOn && env.DB && searchText.trim();
-        const indexPromise = searchOn && (!newContract || env.DB) && ((allowPages && page) || wantPages) ? getSitePages(ctx, 'ja', pageStop.signal).catch(() => null) : null;
-        const cards = await cardsPromise;
-        // サイト案内（画面が page を送ったときだけ）。3人格を長く待たせないよう、索引は短い期限で待つ。
-        // 取れなければ一覧なしで、場面の説明だけを足す
-        let guide = null;
-        if (!motion && page && (!newContract || classification.intent !== 'music')) {
-          let pages = null;
-          try { pages = await searchDeadline(SITE_GUIDE.wait_ms, () => indexPromise, stop.signal); } catch (_) {}
-          if (stop.signal.aborted) throw searchFailure('cancelled');
-          guide = siteGuide(page, pages);
-          log('site_guide', page, guide.current ? 'known' : 'unknown', pages ? 'listed' : 'unlisted');
-        }
-        // ページ選びもこの分岐で始める。人格の討議は検索の取得待ちにしない。
-        let pagesPromise = null;
-        if (wantPages) {
-          const searchEnv = searchUpstream(env, ctx, log, 'チャットのページ選び');
-          pagesPromise = (async () => {
-            const locale = newContract ? classification.reply_language.code === 'ja' ? 'ja' : 'en'
-              : /[\u3040-\u30ff\u3400-\u9fff]/.test(searchText) ? 'ja' : 'en';
-            // 索引は日英の名前でキャッシュしてある。取得は上の1回で済んでいるので、ここは言語を選ぶだけ
-            if (!await indexPromise) throw searchFailure('list_fetch');
-            const pages = await getSitePages(ctx, locale, pageStop.signal);
-            return selectSitePages({ query: searchSlice(searchText, SITE_SEARCH.chat_query_max_chars), locale, pages, current: guide && guide.current,
-              purpose: newContract && classification.intent === 'site' ? 'requested' : 'auxiliary',
-              signal: pageStop.signal, log, call: opts => callModel({ ...opts, env: searchEnv }) });
-          })().catch(() => { log('site_search', 'omitted'); return null; });
-        }
-
-        let pageChoice = null;
-        if (!motion && newContract && classification.intent === 'site' && pagesPromise) {
-          pageChoice = await pagesPromise || { status: 'failed', results: [] };
-          pagesPromise = null;
-        }
+        const { cards, guide, pageChoice, pagesPromise } = await chatSitePages({ env, ctx, log, cardsPromise, classification, motion, newContract,
+          entry, page, wantSitePages, searchText, signal: stop.signal, pageSignal: pageStop.signal });
         const answer = factMode && classification.mode === 'fact'
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
               research: classification.intent === 'research' && classification.fresh === 'yes',

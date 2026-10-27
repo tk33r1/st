@@ -1,6 +1,6 @@
-// Web検索のストリーム解析と、公開出典の本文・アイコン取得。AI呼び出しと照合は入口側で制御する。
+// Web検索のストリーム解析、公開出典の本文・アイコン取得、照合の入出力の組立て。AI呼び出しと照合の制御は入口側で行う。
 import { RESEARCH, SOURCE_ICON } from './personas.js';
-import { classifySlice } from './classification.js';
+import { classifySlice, exactKeys } from './classification.js';
 import { searchDeadline, searchFailure } from './site-search.js';
 
 // 両社のWeb検索SSEを本文・出典・引用位置へ読む。通信・上限は呼出側が制御する。
@@ -370,4 +370,89 @@ export function startSourceIcons(evidence, signal) {
     byHost.get(host).then(icon => { if (icon) got.set(e.url, icon); });
   }
   return url => got.get(url);
+}
+
+// --- Web回答の指示・照合の組立てと照合結果の検査。本番と保存済み出典の評価（.github/scripts）で同じものを使う ---
+// 照合の応答が契約に合わないときは、入口の stageError と同じ封筒で返す（このファイルは入口を import しない）。
+const verificationInvalid = () => Object.assign(new Error('Web回答の根拠を確認できませんでした'), {envelope:{stage:'upstream',
+  code:'research_verification_invalid', message:'Web回答の根拠を確認できませんでした', retryable:true}});
+
+const placeName = place => [place.city, place.region !== place.city ? place.region : null, place.country].filter(Boolean).join(', ');
+function researchPlaceNote(place) {
+  if (!place) return '';
+  if (place.source !== 'device') return RESEARCH.place_prompt + placeName(place) + '。' + RESEARCH.place_rules + '\n';
+  return RESEARCH.device_place_prompt + JSON.stringify({ place: placeName(place) || null, coordinates: place.coordinates })
+    + '。' + RESEARCH.place_rules + '\n';
+}
+export function researchPlaceLabel(place, lang) {
+  if (place.source !== 'device') return (RESEARCH.place_label[lang] || RESEARCH.place_label.en).replace('{place}', placeName(place));
+  return (RESEARCH.device_place_label[lang] || RESEARCH.device_place_label.en)
+    .replace('{place}', placeName(place) || (lang === 'ja' ? '現在地' : 'current location')).replace('{accuracy}', place.coordinates.accuracy);
+}
+
+// 検索と照合で、同じ「日本の現在日付」を使う。
+function researchLocalDate(verifiedNow) {
+  const localParts = new Intl.DateTimeFormat('en', { timeZone: RESEARCH.location.timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'long' }).formatToParts(verifiedNow);
+  const localPart = type => localParts.find(p => p.type === type).value;
+  return `${localPart('year')}-${localPart('month')}-${localPart('day')} (${localPart('weekday')})`;
+}
+
+// 日付・項目・出典の指示は実経路と週次smokeで同じ形から作る。
+export function researchMessages(messages, verifiedNow, place = null) {
+  const localDate = researchLocalDate(verifiedNow);
+  const firstUser = messages.findIndex(m => m.role !== 'system');
+  return [...messages.slice(0, firstUser),
+    { role: 'system', content: `${RESEARCH.prompt}\nこちらの確認日時: ${verifiedNow.toISOString()}（UTC）。日本の現在日付: ${localDate}（${RESEARCH.location.timezone}）。「今日」「現在」の対象日をUTCの日付や検索記事の日付で置き換えない。\n${researchPlaceNote(place)}${RESEARCH.answer_rules}` }, ...messages.slice(firstUser)];
+}
+
+function researchVerificationFormat(evidence) {
+  return {type:'json_schema', json_schema:{name:'research_verified_reply', strict:true, schema:{type:'object', additionalProperties:false,
+    properties:{parts:{type:'array', items:{type:'object', additionalProperties:false, properties:{label:{type:'string'}, text:{type:'string'},
+      status:{type:'string', enum:['verified','unverified']}, citations:{type:'array', items:{type:'object', additionalProperties:false,
+        properties:{n:{type:'integer', enum:evidence.map(e => e.n)}, blocks:{type:'array', items:{type:'integer'}}}, required:['n','blocks']}}},
+      required:['label','text','status','citations']}}, place_used:{type:'boolean'}}, required:['parts','place_used']}}};
+}
+
+// place_used は、場所の指定が無い質問に推定所在地を使ったか（使ったら画面に前提を出す）。保存済みの評価の値（parts だけ）も読む
+export function verifiedResearchResult(value, evidence, replyLanguage) {
+  const fail = () => {throw verificationInvalid();};
+  if (!(exactKeys(value,['parts']) || exactKeys(value,['parts','place_used']) && typeof value.place_used === 'boolean')
+    || !Array.isArray(value.parts) || !value.parts.length || value.parts.length > RESEARCH.verify.max_parts) fail();
+  let text = ''; const items = [], marks = [], numbers = new Map();
+  for (const p of value.parts) {
+    if (!exactKeys(p,['label','text','status','citations']) || !['verified','unverified'].includes(p.status)
+      || typeof p.label !== 'string' || !p.label.trim() || p.label.length > RESEARCH.verify.label_chars
+      || typeof p.text !== 'string' || !p.text.trim() || p.text.length > RESEARCH.verify.text_chars
+      || !Array.isArray(p.citations) || p.status === 'verified' && !p.citations.length || p.citations.length > RESEARCH.sources_max) fail();
+    const body = p.status === 'unverified'
+      ? RESEARCH.unverified_note[replyLanguage?.code] || RESEARCH.unverified_note.en : p.text.trim();
+    text += (text ? '\n\n' : '') + '- ' + p.label.trim() + ': ' + body;
+    const used = new Set();
+    for (const c of p.citations) {
+      const source = evidence.find(e => e.n === c?.n);
+      if (!exactKeys(c,['n','blocks']) || !Number.isInteger(c.n) || !source?.allowed || !researchSourceUrl(source.url)
+        || !Array.isArray(c.blocks) || c.blocks.length > 20
+        || c.blocks.some(id => !Number.isInteger(id) || id < 0 || !source.blocks.some(b => b.id === id))
+        || p.status === 'verified' && (!source.readable || !c.blocks.length)) fail();
+      if (used.has(c.n)) continue; used.add(c.n);
+      if (!numbers.has(c.n)) {numbers.set(c.n,items.length + 1);items.push({n:items.length + 1,title:source.title,url:source.url});}
+      marks.push({at:text.length, n:numbers.get(c.n)});
+    }
+  }
+  return {text, sources:{items,marks}, placeUsed:value.place_used === true};
+}
+
+// callModelへ渡す設定・会話・出力形式。本番と保存済み出典の評価で同じものを使う。
+// 照合にはカード・検索の指示・画像を送り直さない。前の会話は、質問が何を指すかを読むための文字だけを渡す。
+export function researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage,place = null) {
+  const text = content => typeof content === 'string' ? content : (content || []).filter(p => p.type === 'text').map(p => p.text).join('\n');
+  const turns = messages.filter(m => m.role !== 'system'), latest = turns.findLastIndex(m => m.role === 'user');
+  const conversation = turns.slice(0, latest).map(m => ({role:m.role, text:text(m.content)})).filter(m => m.text.trim());
+  const input = [{role:'system', content:RESEARCH.verify_prompt + '\nEstablished reply language: ' + (replyLanguage?.code || 'en')
+      + `\nChecked at: ${verifiedNow.toISOString()} (UTC). Current date in Japan: ${researchLocalDate(verifiedNow)} (${RESEARCH.location.timezone}).`},
+    {role:'user', content:JSON.stringify({conversation,question:text(turns[latest]?.content),draft:result.text,evidence,
+      estimated_place:place ? placeName(place) : null,
+      ...(place?.source === 'device' ? { device_coordinates: place.coordinates } : {})})}];
+  return {cfg:{...cfg,max_tokens:RESEARCH.verify.max_tokens}, messages:input, response_format:researchVerificationFormat(evidence)};
 }

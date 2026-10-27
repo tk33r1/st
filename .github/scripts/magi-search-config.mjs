@@ -2,13 +2,11 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import {researchReader} from './magi-a2-research-stream.mjs';
+import {loadMagiWorker} from './magi-worker-vm.mjs';
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
-const ctx = vm.createContext({ aiModels: JSON.parse(read('config/ai-models.json')), URL, Response, AbortController, setTimeout, clearTimeout });
-const strip = s => s.replace(/^import .*;\r?\n/gm, '').replace(/export const /g, 'const ').replace(/export (?=(?:async )?function)/g, '');
-vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('workers/magi2/personas.js'))
-  + '\n' + strip(read('workers/magi2/classification.js'))
-  + '\n' + strip(read('workers/magi2/site-search.js'))
-  + '\nglobalThis.config = { model: SITE_SEARCH.model, temperature: SITE_SEARCH.temperature, top_p: DEFAULTS.top_p, chat_max_tokens: SITE_SEARCH.chat_max_tokens, formats: SITE_SEARCH.formats,'
+// 会社ごとのパラメーター名・推論時のsampling除外・Web回答と照合の組立ても本番のコードを丸ごと読んで使う。
+const ctx = loadMagiWorker();
+vm.runInContext('globalThis.config = { model: SITE_SEARCH.model, temperature: SITE_SEARCH.temperature, top_p: DEFAULTS.top_p, chat_max_tokens: SITE_SEARCH.chat_max_tokens, formats: SITE_SEARCH.formats,'
   + ' judge: { model: DEFAULTS.models.judge, format: DEBATE.format }, judge_fallback: { model: DEFAULTS.models.judge_fallback, format: DEBATE.format },'
   + ' magi: { motion: { model: DEFAULTS.models.motion, format: MAGI_MODE.motion_format, prompt: MAGI_MODE.motion_prompt } },'
   + ' classify: INTENT_CLASSIFY, classify_smoke: ['
@@ -25,24 +23,12 @@ vm.runInContext(strip(read('workers/magi2/languages.js')) + '\n' + strip(read('w
   + ' { input: { factMode: true, hasLanguage: true, texts: ["今日の東京の天気を確認して。"] }, expected: { intent: "research", fresh: "yes" } },'
   + ' { input: { factMode: true, hasLanguage: true, texts: ["作業用に聴く曲を3曲すすめて。"] }, expected: { intent: "music", fresh: "no" } }'
   + ' ].map(test => { const payload = classificationPayload(test.input); return { payload, expected: { ...(payload.questions.malice ? { malice: "none" } : {}), ...test.expected } }; }) };', ctx);
-// 会社ごとのパラメーター名・推論時のsampling除外も本番の組立てを使う。
-vm.runInContext(strip(read('workers/magi2/research.js')), ctx);
-const worker = read('workers/magi2/src/index.js');
-const start = worker.indexOf('function requestBody('), end = worker.indexOf('\nasync function callModel(', start);
-if (start < 0 || end < 0) throw new Error('requestBody block not found');
-vm.runInContext(worker.slice(start, end), ctx);
 vm.runInContext(`for (const name of ['judge', 'judge_fallback']) {
   const cfg = config[name];
   cfg.expected = {next_step:'ask_personas', assessment:'既知の条件を検算する', persona_questions:[{target:'CASPER-3', question:'与えられた時間で処理できる人数は？'}], questions:[]};
   cfg.body = requestBody(cfg.model, {stream:false, response_format:cfg.format,
     messages:[{role:'user', content:'Return exactly this JSON: ' + JSON.stringify(cfg.expected)}]});
 }`, ctx);
-vm.runInContext(worker.slice(worker.indexOf('function researchMessages('),worker.indexOf('// pause_turnで送り返す')),ctx);
-// 出典検査が共用するキー検査も、本番と同じ定義を読む。
-vm.runInContext(worker.slice(worker.indexOf('const exactKeys ='),worker.indexOf('const questionText =')),ctx);
-vm.runInContext(worker.slice(worker.indexOf('function researchVerificationFormat('),worker.indexOf('async function verifyResearchAnswer(')),ctx);
-vm.runInContext('function stageError(_kind, code) {return new Error(code);}',ctx);
-vm.runInContext(worker.match(/^const withLangNote = .*$/m)[0], ctx);
 // 議題化の答え直し（callAuxModel）は同じ中身を aux_fallback へ、上限は元の役割の値で送る。
 vm.runInContext(`{
   const cfg = config.magi.motion;
