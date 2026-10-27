@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 27 Oct 2026 06:18:36 +0900</lastBuildDate>
+    <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 28 Oct 2026 06:06:09 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月28日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261028/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261028/</guid>
+      <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
+      <description>トランスコスモスが「trans-scManager」を拡充し、AIとBPOを組み合わせて需要予測から在庫配置・出荷指示までを一貫支援する動きが国内で広がっている。 商品データ整備や売場づくりなど、AIの活用領域が店舗・EC現場の日常業務へ入り込み始めた。</description>
+    </item>
     <item>
       <title>2026年10月27日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261027/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261014/</guid>
       <pubDate>Wed, 14 Oct 2026 08:00:00 +0900</pubDate>
       <description>AI需要予測が在庫管理や人員配置といった店舗運営の実務に広がり、「ゴンチャ」全店への導入やカラーズの新サービスのように実装段階の動きが具体化している ゼンショーの独自QRコード・バーコード決済スキームや、リテールメディアにおけるAIクリエイティブの活用が示すように、店舗決済とデータ活用の両面で取り組みが進んでいる</description>
-    </item>
-    <item>
-      <title>2026年10月13日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261013/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261013/</guid>
-      <pubDate>Tue, 13 Oct 2026 08:00:00 +0900</pubDate>
-      <description>コープデリ連合会がUnityStep AIとAI・データ活用プロジェクトを始め、宅配サービスの利用促進に取り組む方針が示された。 セルフレジを見守る店員の業務量が想像以上に多いことが、生活者の間で反響を呼んでいる。</description>
     </item>
   </channel>
 </rss>
