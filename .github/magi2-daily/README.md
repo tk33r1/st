@@ -1,8 +1,8 @@
 # MAGI 継続改善の実行手順
 
-2026-10-27、準備中。Claude側の段0は、04:00の実際の定時起動を除いて実測と本人の判断が済んだ（[段0確認記録](../../workers/magi2/継続改善段0確認記録.md)）。ChatGPTの正式レビュー経路は自宅PCの`codex exec`に決まったが、Appの導入と実地試験の前なので未設定として扱い、定期運用は始めていない。残りは[残作業](残作業.md)。[設計](../../workers/magi2/magi2継続改善設計書.md)と[検証計画](../../workers/magi2/magi2継続改善検証計画.md)が仕様の正本。
+2026-10-29、段階1の定期運用中。Claude側の段0は実測と本人の判断が済み（[段0確認記録](../../workers/magi2/継続改善段0確認記録.md)）、04:00の定時起動も2026-10-29の初回で確かめた。ChatGPTの正式レビュー経路は自宅PCの`codex exec`で、Appの導入と実地試験（2026-10-28）が済んだ。残りは[残作業](残作業.md)。[設計](../../workers/magi2/magi2継続改善設計書.md)と[検証計画](../../workers/magi2/magi2継続改善検証計画.md)が仕様の正本。
 
-`magi2-daily-merge.yml`にはマージ→公開前検査→共通デプロイ→公開確認→復旧・停止・通知まで接続した。**現在は段階1で、正式レビューの取得経路も未設定（Appの変数と実地試験の合格が無い）**。変数を2へ替えたり、PRにreadyと書いたりするだけではマージしない。依頼・ラウンド・24時間期限も開始しない。実装と未実施事項は[自動処理接続記録](../../workers/magi2/継続改善自動処理接続記録.md)。
+`magi2-daily-merge.yml`にはマージ→公開前検査→共通デプロイ→公開確認→復旧・停止・通知まで接続した。**現在は段階1で、マージしない**。変数を2へ替えたり、PRにreadyと書いたりするだけではマージしない。実装と未実施事項は[自動処理接続記録](../../workers/magi2/継続改善自動処理接続記録.md)。
 
 固定Issueは[#14](https://github.com/tk33r1/st/issues/14)。6ラベルと`MAGI2_DAILY_ISSUE=14`・`MAGI2_DAILY_STAGE=1`は段2で準備済み。レビュー省略の変数は設定していない。2026-10-23、mainの`cad22a9f`に準備版workflowが入ったことを確認した。実際のActions実行・通知の成功は未確認。
 
@@ -77,7 +77,7 @@ node .github/scripts/magi2-daily-check.mjs --worker
 
 正式な経路（2026-10-27本人決定）は、本人の自宅PCのタスクスケジューラが毎時`magi2-daily-codex-review.mjs`を動かし、`codex exec`（Sol・high・読み取り専用、ユーザー設定とMCPを読まない）の結果を専用GitHub Appの名前でPRへ書くもの。ChatGPTの認証とAppの鍵はPCの外へ出さない。導入は`codex-review/install.ps1`。PCが止まっている間は依頼が進まず、24時間で本人確認になる。
 
-報告とマージは取得口`magi2-daily-review-source.mjs`で状態を再計算する。Appの名前はリポジトリ変数`MAGI2_DAILY_REVIEW_APP`、実地試験の合格は`MAGI2_DAILY_REVIEW_TRIAL=passed`（本人が設定）。どちらかが無ければ`unconfigured`。コメントの先頭行の目印だけを読み、投稿元で信頼を分ける。
+報告とマージは取得口`magi2-daily-review-source.mjs`で状態を再計算する。Appの名前はリポジトリ変数`MAGI2_DAILY_REVIEW_APP`、実地試験の合格は`MAGI2_DAILY_REVIEW_TRIAL=passed`（本人が設定）。どちらかが無ければ`unconfigured`。コメントの先頭行の目印だけを読み、投稿元で信頼を分ける。点検の環境はリポジトリ変数を読めない（プロキシが403）ので、点検は固定Issueに`tk-st-magi2-review[bot]`の`selection`があれば経路を設定済みとして依頼を書く。依頼を書いても、変数が無ければActions側で`unconfigured`のまま止まる。
 
 | 目印 | 書くのは | 中身 |
 | --- | --- | --- |
