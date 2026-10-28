@@ -80,8 +80,6 @@
     label { display: block; font-weight: 600; margin-bottom: 8px; }
     input { width: 100%; min-height: 52px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; }
     input::placeholder { color: var(--muted); }
-    .results { margin-top: 20px; }
-    .results h2 { font-size: 16px; margin-bottom: 8px; }
     .status { font-size: 14px; }
     ul { list-style: none; padding: 0; margin: 0; }
     .result-list { display: grid; gap: 8px; }
@@ -91,7 +89,6 @@
     .description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 14px; line-height: 1.5; margin-top: 4px; }
     .kind { font-size: 12px; padding-top: 2px; white-space: nowrap; }
     .status:not(:empty) { margin-top: 8px; }
-    .results[hidden] + .status:not(:empty) { margin-top: 20px; }
     .daily-search { margin-top: 16px; font-size: 14px; }
     .daily-search a { display: inline-flex; align-items: center; min-height: 44px; margin-right: 4px; }
     .daily-query { overflow-wrap: anywhere; }
@@ -170,7 +167,6 @@
     @media (max-width: 359px) { .sitemap-ready { grid-template-columns: minmax(0, 1fr); } }
     /* 外周だけを囲み、入力欄と検索ボタンをひと続きにする。共通CSSより優先して内側の枠を外す。 */
     #common-search .st-search-input-row{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
-    #common-search .st-search-input-row:focus-within{outline:none}
     #common-search .st-search-input{appearance:none;width:auto;min-height:52px;border:0;border-radius:0;background:transparent;box-shadow:none}
     #common-search .st-search-submit{width:52px;min-width:52px;flex-basis:52px;border:0;border-radius:0;background:var(--accent);color:var(--bg)}
     #common-search .st-search-submit:hover{filter:brightness(.92)}
@@ -521,12 +517,13 @@
       if (arrivalTile && byId('sitemap').classList.contains('sitemap-ready')) arrivalTile.click();
 
       function tie(a,b) { return (b.section===arrivedSection?1:0)-(a.section===arrivedSection?1:0) || a.order-b.order; }
+      // 来たURLの語（区画名と数字を除く）。ページ内で変わらないので一度だけ作る
+      var sectionWords = new Set(entries.flatMap(function (entry) { return entry.parts; }));
+      var words = Array.from(new Set(incoming.flatMap(function (part) { return part.split(' '); }).filter(function (word) { return word.length >= 2 && !/^\d+$/.test(word) && !sectionWords.has(word); })));
       function suggestions(items, issue) {
         var candidates = [];
         function add(item, rank, distance, words) { candidates.push({ item: item, rank: rank, distance: distance || 0, words: words || 0 }); }
         if (issue) add(issue, 0);
-        var sectionWords = new Set(entries.flatMap(function (entry) { return entry.parts; }));
-        var words = Array.from(new Set(incoming.flatMap(function (part) { return part.split(' '); }).filter(function (word) { return word.length >= 2 && !/^\d+$/.test(word) && !sectionWords.has(word); })));
         items.concat(entries).forEach(function (item) {
           if (pathKey(item.parts) === incomingKey) add(item, 0);
           if (item.kind !== 'entry') {
@@ -578,7 +575,6 @@ function cleanReplyLanguage(v) {
 }
 
       var followupComposing = false;
-      var composing = false;
       function send(event, values) { if (window.ST404Analytics) window.ST404Analytics(event, values); }
       function currentQuery() { return searchState.query || ''; }
       function searched(query) { return searchState.submitted && searchState.query===query; }
@@ -649,7 +645,7 @@ function cleanReplyLanguage(v) {
       }
       function syncAI(query, total) {
         if (ai.query && ai.query !== query) resetAI();
-        var eligible = AI_SEARCH_ENABLED && searched(query) && !composing && aiAllowed(total);
+        var eligible = AI_SEARCH_ENABLED && searched(query) && !searchState.composing && aiAllowed(total);
         // IMEや同条件の再描画では、進行中・完了済みの会話を壊さない。
         if (!eligible && (ai.controller || ai.turns.length)) return;
         ai.query = query; ai.eligible = eligible; byId('ai-search').hidden = !eligible;
@@ -682,7 +678,7 @@ function cleanReplyLanguage(v) {
       }
       byId('ai-request').href = '/contact/?subject=' + encodeURIComponent(lang === 'ja' ? '[AI検索] ご要望' : '[AI search] Request');
       async function askAI(query, followup) {
-        if (!ai.eligible || ai.controller || composing || followupComposing || ai.closed || ai.limited || currentQuery() !== ai.query) return;
+        if (!ai.eligible || ai.controller || searchState.composing || followupComposing || ai.closed || ai.limited || currentQuery() !== ai.query) return;
         var followupDraft = byId('ai-followup-input').value;
         query = query.replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '').trim(); if (!query || Array.from(query).length > 200) return;
         // 押した時点の②の状態（設計書 6.5）。②を止める前に取る
@@ -749,7 +745,11 @@ function cleanReplyLanguage(v) {
           clearTimeout(timer);
           if (!answered) thinking.cancel();
           if (ai.thinking === thinking) ai.thinking = null;
-          if (generation === ai.generation) { ai.controller = null; byId('ai-cancel').hidden = true; byId('ai-followup-send').disabled = ai.closed || ai.limited; byId('ai-run').disabled = ai.limited; }
+          if (generation === ai.generation) {
+            ai.controller = null; byId('ai-cancel').hidden = true; byId('ai-followup-send').disabled = ai.closed || ai.limited; byId('ai-run').disabled = ai.limited;
+            // 最初の回答の前に失敗したら、キャンセルと同じく②を引き渡し（handoff）から外し、同じ語のまま②をやり直せるようにする
+            if (!answered && !ai.turns.length && searchUI) searchUI.cancel();
+          }
         }
       }
       byId('ai-run').addEventListener('click', function () { askAI(ai.query, false); });
@@ -791,7 +791,7 @@ function cleanReplyLanguage(v) {
           });
           syncAI(condition.query,searchState.total);
         },
-        onState:function(value) { searchState=value;composing=value.composing;syncAI(value.query,value.total); },
+        onState:function(value) { searchState=value;syncAI(value.query,value.total); },
         onData:function(rows) {
           var items=rows.map(function(row,order) {var parts=pathParts(safeDecode(row.href));return {key:row.id,kind:row.kind,title:lang==='en'?(row.title_en || row.title):row.title,description:row.description,href:row.href,parts:parts,section:parts[0] || '',order:order,words:new Set(normalize(row.title).split(/[^\p{L}\p{N}]+/u).filter(Boolean))};});
           pathRows=items;renderPathSuggestions();
