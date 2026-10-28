@@ -1,5 +1,238 @@
 [
   {
+    "date": "20261029",
+    "title": "2026年10月29日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "PB・新商品の販売が好調で、N+の「あったかダウンパンツ」は累計10万本（※注記付き）を突破し、ノンオイルフライヤー4.0Lも先行予約販売が始まった。 店舗面では、ニトリ東金店の駐車場を2027年3月に230台から61台へ縮小する届出が公表され、既存店の立地・店舗運営を見直す動きがうかがえる。",
+    "count": 5,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "PB・新商品の販売が好調で、N+の「あったかダウンパンツ」は累計10万本（※注記付き）を突破し、ノンオイルフライヤー4.0Lも先行予約販売が始まった。",
+      "店舗面では、ニトリ東金店の駐車場を2027年3月に230台から61台へ縮小する届出が公表され、既存店の立地・店舗運営を見直す動きがうかがえる。",
+      "SNSでは大型家具の組み立て負担を巡る投稿が2万5,000件超のいいねを集め、購入後の手間が生活者の関心事になっていることが示された。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ「2026年冬限定コレクション」6選　399円のクリスマス食器から3ステップのツリーまで",
+        "original_title": "",
+        "source": "えんウチ",
+        "source_id": "JP-02",
+        "summary": "えんウチが、ニトリの2026年冬限定コレクション6選を紹介した。価格帯は399円のクリスマス食器から、3ステップで飾り付けできるツリーまで幅広い。季節ごとに限定品を投入し、食卓や室内を手軽に華やかにできる品ぞろえを、生活者目線でわかりやすく伝えている。",
+        "why_it_matters": "季節限定品は来店動機と購入頻度を同時に高める仕組みであり、ニトリの「安くて見映えする」という価値提案と相性がよい。399円の食器からツリーまで価格帯を分散させることで、初めての購入者も入りやすい導線をつくっている。SPAとして企画から生産までを一貫して回せる体制が、短期間で入れ替わるシーズン商品の展開を支えている。一方で限定品は在庫の売り切りリスクも伴うため、需要予測の精度が今後の鍵になる。",
+        "tags": [
+          "ニトリ",
+          "冬限定",
+          "クリスマス",
+          "商品開発"
+        ],
+        "search_terms": [
+          "ニトリ 冬限定コレクション",
+          "クリスマス 食器 ツリー",
+          "Nitori winter limited collection",
+          "Christmas tableware seasonal home decor"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE16QkVjT3BrcEROanhIaFg4ZmZZQlFBUzRTZ3M0UVdBOU9oTTFlNjgyWC1fRjB0ekkzLUxZdGJHWXMzNzlHWi00OUVFanBBVGNPLU9oR1dkMjNwNjVXQ0VjTUwtMTIxM01N0gFoQVVfeXFMTXpCRWNPcGtwRE5qeEhoWDhmZllCUUFTNFNnczRRV0E5T2hNMWU2ODJYLV9GMHR6STMtTFl0YkdZczM3OUdaLTQ5RUVqcEFUY08tT2hHV2QyM3A2NVdDRWNNTC0xMjEzTU0?oc=5",
+        "source_pub_ts": 1793183400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "N+「あったかダウンパンツ」シリーズ累計10万本突破　3,990円から全3型",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-05",
+        "summary": "ニトリのアパレルブランド「N+（エヌプラス）」の「あったかダウンパンツ」シリーズが、累計10万本（※注記あり）を突破した。価格は3,990円からで、全3型をそろえる。冬場の防寒需要に応える定番商品として支持を広げており、アパレル事業の柱になりつつある様子がうかがえる。",
+        "why_it_matters": "アパレルは家具や雑貨に比べて需要の波が大きいが、ダウンパンツのように機能性と低価格を両立した定番は、シーズンをまたいで売れ続ける強い商品になりうる。N+の拡大は、ニトリの企画開発力を衣料分野へ広げる試金石といえる。3,990円という価格は既存の機能衣料と比較されるため、コストパフォーマンス訴求がどこまで通用するかを示す指標にもなる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "アパレル",
+          "PB",
+          "ダウンパンツ"
+        ],
+        "search_terms": [
+          "N+ ダウンパンツ 累計販売",
+          "ニトリ アパレル ヒット商品",
+          "Nitori N+ down pants apparel"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBmTVFVZ0RzOFlDOGlUdmhSZWpYeDFkTkVoaDZZNHg4VE5weE1DcnRHaUpGdXM3RGREcHNwZDhhdzNZbGNwalhXaDNzeGFvR1NFREhXR3pHcXBFZk5SQ2ZoeWdLNW51ak9vV0FxQ2VHbk9sdw?oc=5",
+        "source_pub_ts": 1793166341
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、ドライフルーツも作れる「ノンオイルフライヤー4.0L」を先行予約販売",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "ニトリが、容量4.0Lのノンオイルフライヤーを先行予約販売で発売する。ドライフルーツの製造にも対応する点が特徴だ。流通スーパーニュースでは、マイコン制御により低温調理に対応する製品としても報じられている。油を使わないノンオイル調理家電で、料理以外の用途まで取り込み、家庭での調理バリエーションを広げる狙いがうかがえる。",
+        "why_it_matters": "ノンオイル調理家電は健康志向と時短需要の交点にあり、ドライフルーツや低温調理といった用途の拡張が買い替えの動機になる。SPAとして企画と調達を一貫して行えるニトリは、機能を加えつつ価格を抑えた提案をしやすい。先行予約という形式は需要を事前に測る手段でもあり、初期の反応が次期製品の機能設計に反映される可能性がある。",
+        "tags": [
+          "ニトリ",
+          "家電",
+          "ノンオイルフライヤー",
+          "新商品"
+        ],
+        "search_terms": [
+          "ノンオイルフライヤー 4.0L 先行予約",
+          "ノンオイル 調理家電 低温調理",
+          "Nitori non-oil fryer preorder",
+          "air fryer dried fruit low-temperature cooking"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5NRmgwaEZXQWdQakRja1pTTTZ0c3dVTDQ5bFByUVd0djY5UHBRd1FjMzNGdmJGcVVjM0hCd0JhRWNlZk5qRVZEcEZETDJINEQzMHBuOUVIbld3Q3dLdG1MZFpodFM?oc=5",
+        "source_pub_ts": 1793158845
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ東金店、2027年3月に駐車場を230台から61台へ　県への届出で判明",
+        "original_title": "",
+        "source": "ジモはる",
+        "source_id": "JP-12",
+        "summary": "千葉県東金市のニトリ東金店について、2027年3月2日から駐車場を230台から61台に変更する内容が県への届出で示された。駐車台数の大幅な縮小は、店舗の規模や機能の見直しを伴う可能性がある。記事からは詳しい背景までは確認できないが、店舗運営の変化は地域の買い物動線に影響するため、周辺住民の関心を集めそうだ。",
+        "why_it_matters": "駐車場を大幅に減らす変更は、来店の主役が車から徒歩や公共交通へ移る動きや、店舗の業態・売場面積を再設計する動きの表れとみることもできる。ニトリは郊外の大型店を軸に成長してきたが、都市型店舗や小型店の展開が進むなか、既存店の立地と駐車場の最適化は収益性を左右する論点になる。届出の背景を確認しつつ、同社の店舗ポートフォリオ戦略を見極める必要がある。",
+        "tags": [
+          "ニトリ",
+          "東金店",
+          "店舗",
+          "駐車場"
+        ],
+        "search_terms": [
+          "ニトリ 東金店 駐車場 変更",
+          "店舗 駐車場 削減 届出",
+          "Nitori store parking reduction Chiba"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPVlRlMVBKS2ZXOFdnLVFmUVZTX0lpMHcxSTdPcXZCMG1IVy1xdzE2N0hlWHdlZFZxMlVhNVdNUmZLR1cycTNhWnAzQm9UTlVmalBYWm9PUDNTYktuckpvcXp5TTd3VkRSNG1XNmhKRExDTHlxSzhwUW9nai1XeTQ1emljd2ZIY2s1?oc=5",
+        "source_pub_ts": 1793179800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "大型家具の組み立て負担を巡る投稿が2.5万いいねの反響　「購入後の手間」に共感集まる",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "ベッドなど大型家具の組み立てを中学生が一人で担う状況に疑問を投げかける投稿が、Xで2万5,000件を超えるいいねを集めた。投稿では、IKEAに限らずニトリの大型家具でも一人での組み立ては難しいとの見方が示され、親が手伝う必要性に共感が広がった。家具購入後に生じる組み立ての負担が、生活者の関心事として広く共有されたことがうかがえる。",
+        "why_it_matters": "反響の中心は家具の品質ではなく、購入後の手間に対する共感である。フラットパック家具の低価格は魅力だが、組み立てがネックになると満足度や口コミを下げかねない。ニトリにとっては、組み立て動画や説明の充実、2人作業を前提とした梱包・設計の改善などが、生活者UXの差別化につながる余地がある。",
+        "tags": [
+          "SNS",
+          "家具",
+          "組み立て",
+          "ワンオペ",
+          "IKEA比較"
+        ],
+        "search_terms": [
+          "家具 組み立て 負担 SNS",
+          "大型家具 購入後 手間",
+          "flat-pack furniture assembly burden social media"
+        ],
+        "url": "https://x.com/ikujidays/status/2115292637301448918",
+        "source_pub_ts": 1793185200
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "IKEAの家具なんて中2女子が1人で組み立てられる訳ないし、IKEAじゃなくてニトリだとしてもベッドなんて1人じゃ無理だよ。 ワンオペ歴21...",
+        "platform": "x",
+        "author": "@ikujidays",
+        "url": "https://x.com/ikujidays/status/2115292637301448918",
+        "likes": 25146,
+        "retweets": 967,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:00",
+        "captured_at": "",
+        "text": "IKEAの家具なんて中2女子が1人で組み立てられる訳ないし、IKEAじゃなくてニトリだとしてもベッドなんて1人じゃ無理だよ。 ワンオペ歴21年のBBAなら1人で出来るけど、中学生にこれは酷すぎる。 「お父さんが手伝うから今日組み立てよう」って言ってあげればいいだけなのになぁ x.com/mahiro183672/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリは！ いらんだろって思う人！🙋‍♀️！ ニトリ会長！ 我々は中国がなければ！生きて行けない！ pic.x.com/liOeAsgsSU",
+        "platform": "x",
+        "author": "@Tanakaseiji14",
+        "url": "https://x.com/Tanakaseiji14/status/2115248231710122060",
+        "likes": 1515,
+        "retweets": 244,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:04",
+        "captured_at": "",
+        "text": "ニトリは！ いらんだろって思う人！🙋‍♀️！ ニトリ会長！ 我々は中国がなければ！生きて行けない！ pic.x.com/liOeAsgsSU",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "返信先:@ikujidaysそもそもIKEAでもニトリでも大型家具は危ないから2人で組み立てろって書いてありますよ！ 怪我したら取り返しつか...",
+        "platform": "x",
+        "author": "@sayonara3031",
+        "url": "https://x.com/sayonara3031/status/2115333349955014722",
+        "likes": 878,
+        "retweets": 25,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 15:42",
+        "captured_at": "",
+        "text": "返信先:@ikujidaysそもそもIKEAでもニトリでも大型家具は危ないから2人で組み立てろって書いてありますよ！ 怪我したら取り返しつかないから、最初から手伝ってあげて欲しい。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "昨日ニトリ寄ったらさ！ 韓国スキンケアが進出してておどろきだった！最近Toridenはどこ行っても見かけるなー🫨 pic.x.com/qAJ...",
+        "platform": "x",
+        "author": "@hoyhoykohohoy",
+        "url": "https://x.com/hoyhoykohohoy/status/2115263888505888817",
+        "likes": 128,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:06",
+        "captured_at": "",
+        "text": "昨日ニトリ寄ったらさ！ 韓国スキンケアが進出してておどろきだった！最近Toridenはどこ行っても見かけるなー🫨 pic.x.com/qAJkMReqjB",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "こちらもニトリのものですが「コレクションファイル」を買ってみました！ 以前学マス公式がマルチポーチと言うものを出してて良いなぁって思ったんで...",
+        "platform": "x",
+        "author": "@Happy_gakumasu9",
+        "url": "https://x.com/Happy_gakumasu9/status/2115407448261705911",
+        "likes": 90,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:36",
+        "captured_at": "",
+        "text": "こちらもニトリのものですが「コレクションファイル」を買ってみました！ 以前学マス公式がマルチポーチと言うものを出してて良いなぁって思ったんですが今は入手困難なので代わりになるかもと思って購入✨️ 公式のよりは一回り大きいけどクリアファイルもちょうど入るスペースもあってオシャレ！👍 pic.x.com/N5ZjABRyXz",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "本日のSNS投稿では、大型家具の組み立てを一人で担う負担を巡る話題が最も反響を集めた（約2.5万いいね）。ほかにも、ニトリ店頭で韓国系スキンケアを見かけたという驚きの声や、ファイルなど文具の小物を購入した投稿が見られ、店頭での発見や身近な雑貨の使い方に関する話題が続いている。",
+    "sns_why_it_matters": "生活者の関心は、商品単体の価格や見た目より「購入後の使いやすさと手間」に移りつつある。組み立ての負担のような体験課題は低価格ブランドの満足度を左右するため、説明書や組み立て動画、2人作業を前提とした梱包設計などで解消できる余地が大きい。また店頭での新たな発見は、売場の提案力がSNS拡散の起点になることを示している。"
+  },
+  {
     "date": "20261028",
     "title": "2026年10月28日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した",
