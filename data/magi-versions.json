@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.04",
+      "date": "2026-10-29",
+      "changes": {
+        "ja": [
+          "アプリのチャット一覧から保存した会話を開いた後、キーボードの位置が☰のボタンに戻るようにしました。",
+          "アプリのチャット一覧で会話を削除した後も、キーボードの位置が一覧の中に残り、Escで閉じられるようにしました。"
+        ],
+        "en": [
+          "After opening a saved chat from the app's chat list, keyboard focus returns to the ☰ button.",
+          "After deleting a chat in the app's chat list, keyboard focus stays in the list and Esc still closes it."
+        ]
+      }
+    },
+    {
       "version": "7.03",
       "date": "2026-10-26",
       "changes": {
