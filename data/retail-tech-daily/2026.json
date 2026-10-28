@@ -1,5 +1,161 @@
 [
   {
+    "date": "20261029",
+    "title": "2026年10月29日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "需要予測AIが検証段階から本番運用へ進む動きが出ています。DATAFLUCTとアース製薬の事例は返品・廃棄ロス削減が狙いで、Woowa Brothersも注文発生前の需要予測を披露しました。 リテールメディアは、広告の視聴から来店・購買までをつなぐ計測の高度化が焦点になっています。データ・ワンとTVer、NTTドコモの連携はその具体例です。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "需要予測AIが検証段階から本番運用へ進む動きが出ています。DATAFLUCTとアース製薬の事例は返品・廃棄ロス削減が狙いで、Woowa Brothersも注文発生前の需要予測を披露しました。",
+      "リテールメディアは、広告の視聴から来店・購買までをつなぐ計測の高度化が焦点になっています。データ・ワンとTVer、NTTドコモの連携はその具体例です。",
+      "セルフレジの現場負担が生活者の間で共有され、話題を呼んでいます。無人化を進めるうえでは、機械の設計だけでなく利用者教育と運用体制の設計が課題になります。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "DATAFLUCT、アース製薬でAI需要予測の本番運用を開始 返品・廃棄ロス削減へ",
+        "original_title": "",
+        "source": "Biz/Zine",
+        "source_id": "JP-09",
+        "summary": "AIによる需要予測を手がけるDATAFLUCTが、日用品メーカーのアース製薬でAI需要予測の本番運用を開始したと報じられた。目的は返品や廃棄ロスの削減で、需要予測を検証段階から実業務へ移す動きとなる。メーカー側の在庫管理や生産計画にAIを組み込む取り組みとして、業界の注目を集めそうだ。",
+        "why_it_matters": "需要予測は検証止まりに終わるケースが多い中、本番運用に入った事例は導入効果を測るうえで参考になる。返品や廃棄の削減はメーカーの収益改善に直結するため、小売との在庫データ連携の設計が鍵になる。予測精度だけでなく、現場の発注や出荷業務にどう組み込むかが成否を分けると考えられる。",
+        "tags": [
+          "AI需要予測",
+          "廃棄ロス削減",
+          "メーカーDX"
+        ],
+        "search_terms": [
+          "AI需要予測 本番運用",
+          "需要予測 AI demand forecasting",
+          "廃棄ロス削減 food waste reduction",
+          "アース製薬 DATAFLUCT"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBDMHJHOFRyd1p2YkpGRmJKWEREVVBwQWFiLUM4VmJ3bFVlbGNiTXpGSWFXUW05cXhCUjBMcFF4MmV0RWdQdnNYX3VvUno?oc=5",
+        "source_pub_ts": 1793160900
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "データ・ワン、TVer・NTTドコモとデータ連携で共創 広告視聴から来店・購買まで横断分析へ",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-14",
+        "summary": "データ・ワンがTVerおよびNTTドコモとデータ連携による共創を進めると発表した。テレビ広告の視聴から店舗への来店、購買までを横断して分析することを目指す。オンラインとオフラインをまたぐ効果測定の精度向上につながる取り組みとして注目される。",
+        "why_it_matters": "テレビ広告の効果を購買まで追跡できるかは、広告主の投資判断における大きな論点となっている。プラットフォームの視聴データと、異なる事業者が持つデータを掛け合わせる構図は、リテールメディアの計測手法の進化を示す。広告枠の販売だけでなく、計測の信頼性で差別化する流れが強まりそうだ。",
+        "tags": [
+          "リテールメディア",
+          "効果測定",
+          "クロスメディア"
+        ],
+        "search_terms": [
+          "広告効果測定 ad attribution",
+          "テレビ広告 来店計測",
+          "リテールメディア 計測 retail media measurement",
+          "TVer NTTドコモ データ連携"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1fa2pYYVBobXJOM0VCV202bFNuTmxHRUtrcG45a01TZUNGMy15U05fdm5uakdJQzNweEpMa1VMc0ZPa1JGZTllM0o5TjEtVFFFd2s4?oc=5",
+        "source_pub_ts": 1793151136
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "Woowa Brothers、WoowaConでAI活用を披露 注文発生前の需要予測も",
+        "original_title": "",
+        "source": "디지털투데이",
+        "source_id": "JP-08",
+        "summary": "韓国のフードデリバリー大手Woowa Brothersが、カンファレンス「WoowaCon」でAI活用の取り組みを披露した。注文が発生する前の段階で需要を予測する仕組みも紹介されたという。配達や店舗側の準備をあらかじめ最適化する動きとして、デリバリー領域におけるAI活用の方向性を示すものだ。",
+        "why_it_matters": "注文前の需要予測は、食材の仕込みや配達員の配置を先回りして最適化できる点で、店舗運営の効率化に直結する。国内でもデリバリーやテイクアウトは需要変動が大きく、同様の予測モデルの適用余地は大きい。予測の前提となるデータの収集範囲とプライバシーへの配慮も、検討すべき課題になる。",
+        "tags": [
+          "AI需要予測",
+          "デリバリー",
+          "店舗運営"
+        ],
+        "search_terms": [
+          "注文前 需要予測 demand prediction",
+          "デリバリー AI delivery AI",
+          "Woowa Brothers WoowaCon",
+          "AI需要予測 food delivery"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxONlV4Xzc4eGktektxSG1RcWJkYzg0Sl9BcGt0VUpfa0VqS01Oa3EzcDBHSDBoV09oalJKTkQ4TnB2T2JZYy1mdUd0enBGekNnWURhck80Nmh2YURqeEhpTkxPUWQxcHBrS0Qyc2tPeHNXdkp0MkxrN0t2ZVhaYzlMQVBEUTdreGxOaExpSDdvcTIybmdoN2Y4RlF2eC1UVTZoSTFhbjJDTGpQdlIxNjhMbVhROEdKSlBjc1ZoNHpYbw?oc=5",
+        "source_pub_ts": 1793162796
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「エラー吐いてありえん爆音鳴りはじめる」セルフレジ監視中の人が思っていることのリストから『セルフレジで最もしてはいけない行為』が見えてくる",
+        "original_title": "",
+        "source": "Togetter",
+        "source_id": "JP-03",
+        "summary": "Togetterでは、セルフレジを監視する店員が日常的に感じていることを集めたリストが話題になっている。「エラーを吐いて爆音が鳴り始める」といった声から、利用者が避けるべき行為が浮かび上がるという内容だ。セルフレジ運用の現場の負担が、生活者の間で共有されている様子がうかがえる。",
+        "why_it_matters": "セルフレジは省人化の切り札だが、利用者の操作ミスが現場の監視負荷を増やしている。店員側の視点が可視化されたことで、操作ガイドやエラー表示、警告音の設計を見直すヒントになる。無人化を進める事業者は、利用者への案内と機器の設計を両面から考える必要がある。",
+        "tags": [
+          "セルフレジ",
+          "店員の本音",
+          "UX"
+        ],
+        "search_terms": [
+          "セルフレジ 店員 本音",
+          "セルフレジ エラー 操作ミス self-checkout",
+          "無人レジ 利用者 マナー",
+          "セルフレジ 監視 SNS反応"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5iU1pGQnpvX3RGU19GU3doMll2WXVEYWZFNHhaNlVJVnpwVjBseHoyYVJKQUhhOS1LaXliOTg1ME5JZXVkUUE?oc=5",
+        "source_pub_ts": 1793181308
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "すごいベンチャー【81】喪服レスキュー／無人店舗でいつでも喪服レンタル",
+        "original_title": "",
+        "source": "東洋経済オンライン",
+        "source_id": "JP-12",
+        "summary": "東洋経済オンラインの連載「すごいベンチャー」第81回では、喪服レスキューが無人店舗で喪服をレンタルする取り組みを紹介している。喪服が必要になった際に、いつでも借りられる仕組みが特徴だ。人手を介さない店舗形態を、急なニーズに応えるサービスと結びつけた事例と言える。",
+        "why_it_matters": "無人店舗は省人化だけでなく、営業時間や立地の制約を受けにくいことが強みになる。急な需要に応える業態は、既存の小売では取りこぼしていた購買機会を拾える可能性がある。在庫の管理や返却の処理を無人でどう回すかが、事業の継続性を左右するだろう。",
+        "tags": [
+          "無人店舗",
+          "レンタル",
+          "省人化"
+        ],
+        "search_terms": [
+          "無人店舗 unmanned store",
+          "喪服レンタル 無人 rental",
+          "無人店舗 レンタル事業",
+          "省人化 小売 unmanned retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBrRk1hTVhXZXFVeUdkSzZVWG9ybWRtcUJnN0p3Ymd2UGZVVmhjQmp5ZmJ2Y1R2VjlPN2tMT0RWOUViOG9GOFB3Q3ktYnQzUjJiVnkzQ1pQSDdBX3EwUk9J?oc=5",
+        "source_pub_ts": 1793154600
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ビートレンド、80店舗展開するホームセンター『ダイユーエイト』LINEミニアプリの開発を支援",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-04",
+        "summary": "ビートレンドが、80店舗を展開するホームセンター「ダイユーエイト」のLINEミニアプリ開発を支援したと発表した。店舗の顧客接点をLINE上に集約し、来店や購買につなげる狙いとみられる。地域密着型の小売がデジタルの会員基盤を整える動きの一例となる。",
+        "why_it_matters": "LINEのミニアプリは、地方チェーンでも導入しやすいダイレクトな顧客接点として存在感を増している。アプリ単体の提供にとどまらず、来店促進や販促データの蓄積まで設計できるかが成果を分ける。既存顧客のデジタル化を図る中堅小売にとって、参考になる事例だ。",
+        "tags": [
+          "LINE",
+          "ミニアプリ",
+          "顧客接点"
+        ],
+        "search_terms": [
+          "LINEミニアプリ LINE mini app",
+          "ホームセンター DX home center digital",
+          "顧客接点 デジタル会員 customer engagement",
+          "ダイユーエイト ビートレンド"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1jd2NvUGRYSmYwR3dLbDZxU1JxQ2VFdGFQakRKZGhLRkpycEJsa0ZsS3dwLXpFZUxwREE0bTlVSURsdk1IcU9GY2lOTXZ1dGRuczg5ZXJBX2l2MW1ldTFzeE9fdmNfeXg5?oc=5",
+        "source_pub_ts": 1793177122
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261028",
     "title": "2026年10月28日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "トランスコスモスが「trans-scManager」を拡充し、AIとBPOを組み合わせて需要予測から在庫配置・出荷指示までを一貫支援する動きが国内で広がっている。 商品データ整備や売場づくりなど、AIの活用領域が店舗・EC現場の日常業務へ入り込み始めた。",
