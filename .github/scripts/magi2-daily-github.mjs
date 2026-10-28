@@ -49,6 +49,13 @@ export async function stateComment(client,number,value) {
   await client.request(previous?'/issues/comments/'+previous.id:'/issues/'+number+'/comments',
     {method:previous?'PATCH':'POST',body:{body}});return true;
 }
+// 内部の状態値は変えず、通知で読む部分だけ日本語にする。未知の値を成功扱いしない。
+export function dailyStatusText(status) {
+  const text={success:'成功',failure:'失敗',cancelled:'取消',skipped:'省略',not_run:'未実施',
+    validate:'検証対象',mechanical_failed:'機械的な条件の検査に失敗',
+    duplicate_or_missing_A:'区分Aの候補を1件に絞れません',B_proposal:'区分Bの提案（本人確認が必要）'};
+  return Object.hasOwn(text,status)?text[status]:'不明（実行記録を確認してください）';
+}
 export async function notifyDaily(text,key,{env=process.env,fetcher=fetch}={}) {
   // Worker側と同じく宛先はカンマ区切りで複数書ける。1つの文字列のまま渡すとResendが422で拒否する。
   const to=String(env.ALERT_TO||'').split(',').map(v=>v.trim()).filter(Boolean),from=String(env.ALERT_FROM||'').trim();

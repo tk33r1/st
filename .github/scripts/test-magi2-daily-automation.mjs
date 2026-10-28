@@ -145,7 +145,7 @@ function notificationFixture() {
 test('メール失敗でも停止Issueと記録を残し、成功後だけ通知済みを記録して二重送信しない',async()=>{
   const f=notificationFixture(),report=await finishRelease(finishFixture().options);
   await assert.rejects(announceRelease({...f,issue:14,report}),/notification_failed/);
-  assert.equal(f.issues.length,1);assert.ok(f.issues[0].body.includes('rollback: success'));
+  assert.equal(f.issues.length,1);assert.ok(f.issues[0].body.includes('前の版への復元: 成功'));
   assert.ok(!f.comments.some(c=>c.body.includes('magi2-daily:mail:')));
   f.recoverMail();await announceRelease({...f,issue:14,report});await announceRelease({...f,issue:14,report});
   assert.equal(f.mails,2);assert.equal(f.issues.length,1);

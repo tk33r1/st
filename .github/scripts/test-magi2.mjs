@@ -2665,7 +2665,7 @@ test('残高切れ・キーの失効は、会社と状態ごとに1日1通だけ
       await Promise.all(w.waits);
     }
     assert.equal(mails.length, 1);
-    assert.match(mails[0].subject, /deepseek.*402/);
+    assert.match(mails[0].subject, /DeepSeek.*402/);
     assert.deepEqual(mails[0].to, ['to@example.com', 'second@example.com']);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

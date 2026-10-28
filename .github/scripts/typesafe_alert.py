@@ -49,7 +49,7 @@ def notify_http_error(error):
         )
         payload = {
             'from': sender, 'to': recipients,
-            'subject': f'[MAGI / Actions] TypeSafe API が HTTP {status} で失敗しています',
+            'subject': f'[MAGI / 自動処理] TypeSafe API が HTTP {status} で失敗しています',
             'text': '\n'.join([
                 'GitHub ActionsでTYPESAFE_API_KEYを使うTypeSafe AI（Jev）の呼び出しが失敗しています。',
                 f'HTTP {status}',

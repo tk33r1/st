@@ -3,7 +3,7 @@ import {appendFileSync,readFileSync,writeFileSync,readdirSync,mkdirSync,realpath
 import {createHash} from 'node:crypto';
 import {join,dirname,resolve,relative,isAbsolute,sep} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {githubClient,dailyRepository,dailyIssueNumber,eligibleDailyPR,commentOnce,notifyDaily} from './magi2-daily-github.mjs';
+import {githubClient,dailyRepository,dailyIssueNumber,eligibleDailyPR,commentOnce,notifyDaily,dailyStatusText} from './magi2-daily-github.mjs';
 import {candidateChanges} from './magi2-daily-merge.mjs';
 import {inspectChanges} from './magi2-daily-check.mjs';
 
@@ -65,6 +65,19 @@ export function installSeedHarness({trustedRoot,candidateRoot}) {
   }
   return {files,limitation:'検査用の運用基盤だけをtrusted側から補充。点検入力や合否の証明へ流用しない。'};
 }
+function checkReasonText(code) {
+  const reasons={commit_marker:'コミットの所定の目印がありません',empty_commit:'変更を含まないコミットです',
+    version_last:'版番号の更新が最後のコミットではありません',diff_size:'変更のファイル数または行数が上限を超えています',
+    protected_path:'自動更新では変更できないファイルが含まれています',binary_or_rename:'バイナリファイルの変更またはファイル名の変更が含まれています',
+    frozen_document:'実装済みの記録文書を変更しています',line_endings:'改行形式を変更しています',
+    test_removal:'既存の検査を削除しています',test_bypass:'検査を省略する処理が含まれています',
+    production_endpoint:'本番APIへの接続先を追加しています',home_size:'トップページの容量を増やしています',
+    external_asset:'外部の画像・スクリプトなどを追加しています',full_history_required:'判定に必要なGitの全履歴がありません',
+    daily_merge_commit:'判定対象にマージコミットが含まれています'};
+  const reason=Object.hasOwn(reasons,code)?reasons[code]:String(code).startsWith('version_')
+    ?'版番号・更新履歴・関連ファイルの整合性に問題があります':'検査に失敗しました。詳細は実行記録を確認してください';
+  return reason+'（識別子: '+code+'）';
+}
 export async function reportSeedTrial({client,snapshot,validation,issue,actor='tk33r1',runUrl,mail=notifyDaily}) {
   if(!snapshot.selected)return {reported:false,reason:'ineligible'};
   const pr=await client.request('/pulls/'+snapshot.number),branch=await client.request('/branches/'+encodeURIComponent(seedBranch));
@@ -75,8 +88,8 @@ export async function reportSeedTrial({client,snapshot,validation,issue,actor='t
   if(typeof runUrl!=='string'||!/^https:\/\/github\.com\/tk33r1\/st\/actions\/runs\/[1-9]\d*$/.test(runUrl))throw new Error('seed_trial_run_url');
   const codes=snapshot.mechanical?.errors?.map(row=>row.code)||[];
   const status=snapshot.validate?validation:snapshot.reason;
-  const text='段3のActions試行: '+status+'\nPR: https://github.com/'+dailyRepository+'/pull/'+snapshot.number
-    +'\nbase: '+snapshot.base+'\nhead: '+snapshot.head+'\n実行: '+runUrl+'\n機械的な理由: '+codes.join(', ')
+  const text='段3の自動処理の試行: '+dailyStatusText(status)+'\nPR: https://github.com/'+dailyRepository+'/pull/'+snapshot.number
+    +'\n基準のコミット: '+snapshot.base+'\n提案元のコミット: '+snapshot.head+'\n実行: '+runUrl+'\n機械的な検査の理由: '+(codes.map(checkReasonText).join('、')||'なし')
     +'\nmainへのマージ・公開は行いません。Claudeの検出成績・正式レビューの合格には数えません。';
   const key=['seed_trial',snapshot.number,snapshot.base,snapshot.head,status];
   // 片方のGitHub書き込みが失敗しても、他の記録と必要なメールを試す。

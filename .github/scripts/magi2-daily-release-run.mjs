@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {appendFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {githubClient,dailyRepository,dailyIssueNumber,commentOnce,notifyDaily,digest} from './magi2-daily-github.mjs';
+import {githubClient,dailyRepository,dailyIssueNumber,commentOnce,notifyDaily,digest,dailyStatusText} from './magi2-daily-github.mjs';
 import {cloudflareVersionReader} from './magi2-daily-cloudflare.mjs';
 import {candidateChanges} from './magi2-daily-merge.mjs';
 import {prepareRelease,finishRelease} from './magi2-daily-release.mjs';
@@ -11,21 +11,28 @@ import {gitRecovery} from './magi2-daily-recovery.mjs';
 import {cleanVersionHistory} from '../../workers/magi2/version-history.js';
 
 const reasonText={published:'公開と公開後確認が完了しました',no_worker_changes:'Workerの変更が無いため公開を省略しました',
-  recovered:'公開後確認に失敗し、前の版へ戻してdailyコミットをrevert・pushしました',
-  deployment_interrupted:'本人の公開による版の変更を検出しました。rollback・revertは行いません',
+  recovered:'公開後確認に失敗し、前の版へ戻して自動更新のコミットを取り消し、リモートへ反映しました',
+  deployment_interrupted:'本人の公開による版の変更を検出しました。版の復元・コミットの取り消しは行いません',
   published_version_unknown:'公開した版IDを確定できません。推測で戻さず本人確認が必要です',
-  rollback_failed:'rollbackに失敗したため、revertは行っていません',revert_conflict:'revertが完了していません',
+  rollback_failed:'前の版への復元に失敗したため、コミットの取り消しは行っていません',revert_conflict:'コミットの取り消しが完了していません',
   notification_failed:'通知が完了しなかったため、本人確認まで公開を停止します',
-  push_failed:'revertのpushが完了していません',worker_validation_failed:'公開前のWorker検査に失敗しました',
-  merge_unverified:'マージ結果を確定できません。本人確認が必要です'};
+  push_failed:'取り消したコミットのリモートへの反映が完了していません',worker_validation_failed:'公開前のWorker検査に失敗しました',
+  merge_unverified:'マージ結果を確定できません。本人確認が必要です',
+  release_incomplete:'公開処理が完了していません',preparation_failed:'公開の準備に失敗しました',
+  production_version_unavailable:'本番の版を取得できません。本人確認が必要です',
+  rollback_target_unknown:'復元先の版を確定できません。本人確認が必要です',publication_failed:'公開後の確認に失敗しました',
+  merge_base_not_ancestor:'マージ元のコミットが公開対象の履歴に含まれていません',
+  previous_version_untracked_or_dirty:'本番の版に記録されたコミットが不明か、未コミットの変更が含まれています',
+  previous_commit_missing:'本番の版のコミットがローカルの履歴にありません',previous_not_ancestor:'本番の版のコミットが公開対象の履歴に含まれていません',
+  unpublished_model_configuration:'未公開のAIモデル設定が含まれています',unpublished_manual_worker_change:'本人による未公開のWorker変更が含まれています'};
 export function releaseText(report) {
-  return 'MAGI継続改善: '+(reasonText[report.reason]||'公開を停止しました（'+report.reason+'）')+'。\n'
+  return 'MAGI継続改善: '+(reasonText[report.reason]||'公開を停止しました。理由は実行記録を確認してください')+'。\n'
     +'PR: '+(report.number?'https://github.com/'+dailyRepository+'/pull/'+report.number:'未確認')+'\n'
-    +'対象SHA: '+(report.target||'未確認')+' / head: '+(report.head||'未確認')+' / base: '+(report.base||'未確認')+'\n'
+    +'公開対象のコミット: '+(report.target||'未確認')+' / 提案元のコミット: '+(report.head||'未確認')+' / 基準のコミット: '+(report.base||'未確認')+'\n'
     +'出した版: '+(report.deployed_id||'未確認')+' / 戻す先の版: '+(report.previous_id||'未確認')+'\n'
-    +'表示版: '+(report.version||'未確認')+' / Worker検査: '+report.checks.worker+' / 公開: '+report.checks.deploy+' / 公開確認: '+report.checks.publication+'\n'
-    +'rollback: '+report.rollback+' / revert: '+report.revert+' / push: '+report.push+'\n'
-    +'戻すdailyコミット（新しい順）: '+(report.rollback_commits||[]).join(', ')+'\n'
+    +'表示版: '+(report.version||'未確認')+' / Worker検査: '+dailyStatusText(report.checks.worker)+' / 公開: '+dailyStatusText(report.checks.deploy)+' / 公開確認: '+dailyStatusText(report.checks.publication)+'\n'
+    +'前の版への復元: '+dailyStatusText(report.rollback)+' / コミットの取り消し: '+dailyStatusText(report.revert)+' / リモートへの反映: '+dailyStatusText(report.push)+'\n'
+    +'取り消す自動更新のコミット（新しい順）: '+((report.rollback_commits||[]).join(', ')||'なし')+'\n'
     +(report.halt_required?'停止を維持します。未完了の操作と原因を本人が確認してから停止Issueを閉じてください。':'');
 }
 export async function haltRelease(client,report) {

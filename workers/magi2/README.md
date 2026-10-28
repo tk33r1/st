@@ -214,6 +214,9 @@ python -B .github/scripts/preview-magi-mode.py
 （ただの回数制限の 429 は送らない）。同じ会社・同じ HTTP ステータスは UTC の1日に1通で、送った印は
 `rate_limit` に `alert:<会社>:<ステータス>` の行として残す。送れなかったら印を消し、次の失敗でまた試す。
 
+通知の件名・本文は日本語。APIの英語の応答本文はメールへ載せず、HTTP状態と日本語の原因説明を載せる。
+判別できた残高・課金エラーは、調査用のエラー識別子も残す。一時会話など本文を伏せる通知では識別子も省く。
+
 OpenAI ResponsesのHTTP200内の失敗イベントも、`insufficient_quota`・`credit_balance_exhausted`・`billing_hard_limit_reached`を通知する。判定へ渡すのはエラーのcode/typeだけで、回答・推論・エラーmessageは渡さない。通常の回数制限やサーバーエラーは通知せず、Webの本文前の答え直しは維持する（[A2修正公開評価](A2修正公開評価.md)）。
 
 ```sh

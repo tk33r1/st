@@ -453,13 +453,27 @@ async function callModel({ env, messages, cfg, stream, signal, temperature, resp
 // 401・402・403 と、残高や枠の不足を示す 429 を拾う（ただの回数制限の 429 は拾わない）。
 // 同じ会社・同じ状態は UTC の1日に1通（rate_limit の行を「送った」印に使う）。
 // 宛先と送り元は secret（RESEND_API_KEY・ALERT_TO・ALERT_FROM）。どれかが無ければログに出すだけ。ALERT_TO はカンマ区切りで複数書ける。
+const PROVIDER_NAMES = { openai: 'OpenAI', deepseek: 'DeepSeek', anthropic: 'Anthropic', typesafe: 'TypeSafe AI', fishaudio: 'Fish Audio' };
 const PROVIDER_ROLES = {
   openai: 'OpenAI（CASPER-3・ライトの統合・討議判定の答え直し・ページ選び。統合と補助の役割の答え直しにも使用）',
   deepseek: 'DeepSeek（MELCHIOR-1）',
   anthropic: 'Anthropic（BALTHASAR-2・ダークの統合・両テーマの討議判定・タイトル・次の質問の予測・議題化。統合は本文の表示前に限りOpenAIで一度答え直す）',
-  typesafe: 'TypeSafe AI（Jev。発言の言語の判定）',
+  typesafe: 'TypeSafe AI（Jev。発言の分類・初回の言語判定・サイト内検索）',
   fishaudio: 'Fish Audio（統合人格の回答の読み上げ）',
 };
+// 外部APIの英語の本文をメールへ流さず、日本語の説明と調査用の識別子だけを載せる。
+function upstreamFailureText(status, body = '') {
+  const reasons = {
+    credit_balance_exhausted: '利用残高を使い切りました。',
+    insufficient_quota: '利用枠または残高が不足しています。',
+    billing_hard_limit_reached: '課金額の上限に達しました。',
+  };
+  const code = Object.keys(reasons).find(value => body.includes(value));
+  const states = { 200: '応答内のエラー', 401: '認証失敗', 402: '支払い・残高の問題', 403: 'アクセス拒否', 429: '利用枠・残高の不足' };
+  return [`HTTP ${status}（${states[status] || '外部サービスのエラー'}）`,
+    code ? `原因: ${reasons[code]}\nエラー識別子: ${code}` : '残高・利用枠、APIキーの有効期限と権限を確認してください。',
+  ].join('\n');
+}
 async function alertUpstream(env, log, provider, res, ctx, signal) {
   // 判定に使う先頭500バイト（エラー本文はASCIIのJSONなので500文字）だけを最大2秒で読む（届いた部分とHTTPコードだけで判定する）。
   // 複製のcancelは元の本文が閉じるまで終わらないことがあるので、その完了は待たない。
@@ -467,19 +481,18 @@ async function alertUpstream(env, log, provider, res, ctx, signal) {
   if (body === null) return;
   const detail = env.privateChat ? '上流エラーの本文は非表示です。' : body;
   log('upstream_alert', provider, res.status, detail.slice(0, 200));
-  const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
+  const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${PROVIDER_NAMES[provider] || provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
     `MAGI（magi2）で、${PROVIDER_ROLES[provider] || provider} の API の呼び出しが失敗しています。`,
     '',
-    `HTTP ${res.status}`,
-    detail,
+    upstreamFailureText(res.status, env.privateChat ? '' : body),
     '',
     '残高の不足（チャージ切れ）か、キーの失効・権限の問題の可能性があります。',
     provider === 'typesafe'
       ? '言語の判定は手元の規則に切り替えて、会話は続けます（英字の混ざった日本語に、他の言語で答えることがあります）。'
       : provider === 'fishaudio'
         ? '読み上げは画面に「読み上げできませんでした」と返します。有料のモデルへは切り替えません（無料版の公正利用の超過もこの形で届くことがあります）。'
-        : 'この会社の人格は [NO RESPONSE] のまま、残りの人格で答え続けます。',
-    '同じ会社・同じ状態のメールは UTC の1日に1通です。',
+        : 'この会社の人格は「応答なし」として、残りの人格で答え続けます。',
+    '同じ会社・同じ状態のメールは、世界協定時（UTC）の1日に1通です。',
   ]);
   // 本文の判定は呼び出し側が待ち、メールの送信だけを裏で続ける。
   ctx.waitUntil(task.catch(e => log('upstream_alert', 'failed', e && e.message)));
@@ -533,8 +546,8 @@ function searchUpstream(env, ctx, log, purpose, signal = null) {
     onUpstreamError: async (provider, res, { billingFailure = false } = {}) => {
       if (!billingFailure && await billingFailureBody(res, provider, SITE_RANK.error_body_max_bytes, null) === null) return;
       log('site_search', 'upstream_alert', provider, res.status);
-      const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${provider} HTTP ${res.status}`, [
-        `用途: ${purpose}`, `会社: ${provider}`, `HTTP: ${res.status}`,
+      const task = sendAlert(env, log, `alert:${provider}:${res.status}`, `[MAGI] ${PROVIDER_NAMES[provider] || provider} の呼び出しが HTTP ${res.status} で失敗しています`, [
+        `用途: ${purpose}`, `会社: ${PROVIDER_NAMES[provider] || provider}`, upstreamFailureText(res.status),
       ], true, signal).catch(() => log('site_search', 'alert_failed'));
       if (signal) return task;
       ctx.waitUntil(task);
@@ -2321,7 +2334,7 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
     else if (res.status === 400 && /reference not found/i.test(await readLimited(res.clone(), 500, stop.signal, 2000))) {
       log('speech', 'voice_missing');
       ctx.waitUntil(sendAlert(env, log, 'alert:fishaudio:voice', '[MAGI] 読み上げの声のモデルが見つかりません', [
-        `MAGI（magi2）の読み上げで、Fish Audio が声のモデル（${SPEECH.voice_id}）を見つけられませんでした（HTTP 400 Reference not found）。`,
+        `MAGI（magi2）の読み上げで、Fish Audio が声のモデル（${SPEECH.voice_id}）を見つけられませんでした（HTTP 400：参照先が見つかりません）。`,
         '声のモデルが消えたか、非公開になった可能性があります。読み上げは画面に「読み上げできませんでした」と返しています。',
         '声のモデルを作り直したら workers/magi2/personas.js の SPEECH.voice_id を直して出してください。止めるときは SPEECH_ENABLED を "false" にします。',
         '同じ通知は UTC の1日に1通です。',

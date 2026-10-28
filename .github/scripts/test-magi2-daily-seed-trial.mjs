@@ -79,8 +79,8 @@ test('draftのBと発見後にdraftへ戻したBも記録・通知し、再実�
     assert.equal(snapshot.selected,true);assert.equal(snapshot.classification,'B');assert.equal(snapshot.validate,false);
     f.pr.draft=true;
     const result=await f.report(snapshot);assert.equal(result.reported,true);assert.equal(result.merge_enabled,false);
-    assert.ok(f.comments.get('/issues/7/comments').some(row=>row.body.includes('B_proposal')));
-    assert.ok(f.comments.get('/issues/14/comments').some(row=>row.body.includes('B_proposal')));
+    assert.ok(f.comments.get('/issues/7/comments').some(row=>row.body.includes('区分Bの提案（本人確認が必要）')));
+    assert.ok(f.comments.get('/issues/14/comments').some(row=>row.body.includes('区分Bの提案（本人確認が必要）')));
     assert.ok(f.pr.labels.some(row=>row.name==='magi2-daily-notified'));assert.equal(f.pr.draft,true);
     const writes=f.calls.length;await f.report(snapshot);assert.equal(f.mails,1);assert.equal(f.calls.length,writes);
     assert.ok(f.calls.every(call=>call.path.endsWith('/comments')||call.path.endsWith('/labels')));
