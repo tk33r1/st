@@ -250,7 +250,8 @@ export async function readResearchSource(item, signal) {
         const {raw,truncated} = await readResearchSourceBody(res,stop,/text\/html/i.test(type),charset);
         if (stop.aborted) throw searchFailure('cancelled');
         const content = researchSourceBlocks(raw, /text\/html/i.test(type));
-        return {...item, allowed:true, readable:content.blocks.length > 0, ...content, html:/text\/html/i.test(type),
+        // url は引用のまま（表示と照合の鍵）。転送を確かめた先は finalUrl に持ち、描画の取り直しとアイコンに使う
+        return {...item, finalUrl:url, allowed:true, readable:content.blocks.length > 0, ...content, html:/text\/html/i.test(type),
           textChars:content.blocks.reduce((n, b) => n + b.text.length, 0),
           truncated:content.truncated || truncated, icons:sourceIconHrefs(/text\/html/i.test(type) ? raw : '', url)};
       }
@@ -365,7 +366,7 @@ export function startSourceIcons(evidence, signal) {
   const got = new Map(), byHost = new Map();
   for (const e of evidence) {
     if (!e.icons?.length) continue;
-    const host = new URL(e.url).hostname;
+    const host = new URL(e.finalUrl || e.url).hostname;
     if (!byHost.has(host)) byHost.set(host, fetchSourceIcon(e.icons, signal));
     byHost.get(host).then(icon => { if (icon) got.set(e.url, icon); });
   }

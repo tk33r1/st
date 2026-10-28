@@ -161,7 +161,7 @@ function rankCacheSet(key, value) {
 export async function rankSearch({ env, snapshot, query, locale, signal, onBilling, progress = {}, scope = 'site', filters = null }) {
   const daily = isDailyScope(scope), scoped=scope!=='site', config = rankScopeConfig(scope);
   if (scoped) filters = normalizeScopeFilters(scope, filters === null ? undefined : filters);
-  const targets = scoped ? filterRankItems(snapshot,scope,filters) : rankTargets(snapshot);
+  const targets = filterRankItems(snapshot,scope,filters);
   const total = targets.length;
   const searched = (candidates, judged) => ({ total, candidates, judged, ...(daily ? { generation: snapshot.generation } : {}) });
   const noResults = (candidates = 0, judged = 0) => ({ status: 'no_results', complete: true, reason: null,

@@ -1,8 +1,8 @@
 import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
-import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl, rankTargets } from '../site-rank.js';
-import { filterDailyItems, filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration, searchScope } from '../search-scope.js';
+import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl } from '../site-rank.js';
+import { filterRankItems, getDailySnapshot, getRankSnapshot, isDailyScope, isSearchScope, normalizeScopeFilters, rankScopeConfig, rankScopeEnabled, scopeGeneration, searchScope } from '../search-scope.js';
 import { classifyQuery, cleanReplyLanguage, classifySlice, exactKeys, languageNote, isLanguageLetter, isKanaLetter, isJapaneseLetter } from '../classification.js';
 import { researchMessages, researchPlaceLabel, researchReader, researchSourceBlocks, readResearchSource, researchVerificationRequest, startSourceIcons, verifiedResearchResult } from '../research.js';
 import { qaBudgetEnv } from '../qa-budget.js';
@@ -137,8 +137,17 @@ async function handleBugReport(request, env, { requestId, cors }) {
 
 // Content-Length が無い場合も、JSON を展開する前に読み取り量を制限する。
 // signal（省略できる）で止めたら、読み取り中の reader を止める（待つ Promise を打ち切るだけでは読み取りが残る）
+const tooLarge = () => stageError('bad_request', 'request_too_large', 'リクエストサイズが上限を超えています', { http_status: 413, retryable: false });
+// 文字列の UTF-8 でのバイト数。複製を作らずに数える（不正なサロゲートは数え方が少しずれるが、上限の判定には足りる）
+function utf8Length(text) {
+  let bytes = text.length;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c > 0x7f) bytes += c > 0x7ff && (c < 0xd800 || c > 0xdfff) ? 2 : 1;
+  }
+  return bytes;
+}
 async function readJsonLimited(request, maxBytes, signal = null, metrics = null) {
-  const tooLarge = () => stageError('bad_request', 'request_too_large', 'リクエストサイズが上限を超えています', { http_status: 413, retryable: false });
   if (Number(request.headers.get('Content-Length')) > maxBytes) throw tooLarge();
   if (!request.body) throw stageError('bad_request', 'invalid_json', 'リクエストボディがありません', { retryable: false });
   const reader = request.body.getReader();
@@ -734,7 +743,7 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       try {
         if(contract) {
           const checked=await getRankSnapshot(scope,{ctx,generation,signal:s});snapshot=checked.snapshot;
-          if(snapshot) {info.total=(scope==='site'?rankTargets(snapshot):filterRankItems(snapshot,scope,filters)).length;info.generation=checked.generation;}
+          if(snapshot) {info.total=filterRankItems(snapshot,scope,filters).length;info.generation=checked.generation;}
           if(checked.updating || !snapshot) return fail('index_updating');
           if(daily && ((filters.category && !snapshot.categories.has(filters.category)) || (filters.month && !snapshot.months.has(filters.month)))) return fail('invalid_request',400);
           if(!daily && scope!=='site' && Object.keys(filters).length && info.total===0) return fail('invalid_request',400);
@@ -749,7 +758,8 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
       [info.indexHash, info.candidateHash] = await Promise.all([snapshotHash(snapshot), rankCandidateHash(snapshot)]);
       stopped();
       if (!daily && !snapshot.rankReady) return fail('index_unavailable');
-      if (daily) { info.total = filterDailyItems(snapshot, filters).length; info.generation = snapshot.generation; }
+      // 新契約は版の照合の時点で数えてある
+      if (daily && !contract) { info.total = filterRankItems(snapshot, scope, filters).length; info.generation = snapshot.generation; }
       // 回数は IP → 全体の順。IP で断った要求は全体を進めない。キャッシュから返すときも数える（キャッシュで上限を避けられない）
       const day = utcDay(), ip = requestIP(request);
       if (await countUp(env.DB, 'rank:' + ip, day, SITE_RANK.daily_limit) == null) return fail('rate_limited', 429);
@@ -761,7 +771,7 @@ async function handleSiteRank(request, env, ctx, { requestId, cors, log }, body,
         return fail('rate_limited', 429);
       }
       stopped();
-      if (!daily && !contract) info.total = rankTargets(snapshot).length;
+      if (!daily && !contract) info.total = filterRankItems(snapshot, scope, filters).length;
       // 課金障害と確かめた失敗だけ通知する。通知は要求の切断とは別の期限で終え、検索の結果と速さに響かせない
       const onBilling = status => alertWithDeadline(ctx, log, SITE_RANK.alert_timeout_ms,
         sig => searchUpstream(env, ctx, log, 'サイト内検索', sig).onUpstreamError('typesafe', { status }, { billingFailure: true }));
@@ -1157,10 +1167,7 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: false });
     try {
       return await withTimeout(DEFAULTS.timeouts.synthesizer_ms, async parent => {
-        const ac = new AbortController();
-        const cancel = () => ac.abort();
-        parent.addEventListener('abort', cancel, { once: true });
-        if (parent.aborted) ac.abort();
+        const { ac, detach } = linkAbort(parent);
         let noText = false;
         let first = setTimeout(() => { noText = true; ac.abort(); }, DEFAULTS.timeouts.synthesis_first_text_ms);
         const push = (event, value) => {
@@ -1181,7 +1188,7 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
         } catch (error) {
           if (noText) throw stageError('synthesizer_call', 'first_text_timeout', '統合応答の本文が始まりませんでした', { retryable: true });
           throw error;
-        } finally { clearTimeout(first); parent.removeEventListener('abort', cancel); ac.abort(); }
+        } finally { clearTimeout(first); detach(); ac.abort(); }
       }, signal);
     } catch (error) {
       if (attempt || emitted || signal?.aborted) throw error;
@@ -1239,12 +1246,19 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
 // 利用者の推定所在地（Cloudflare が通信元の IP から推定した市・地域・国）。精度は市や県の単位で、外れることがある。
 // Web で調べるときだけ、場所の指定が無い質問（天気・近くの店など）の前提に使う。GPS は使わない
 function requestPlace(request) {
-  const cf = request && request.cf || {};
-  const name = v => typeof v === 'string' && /^[\p{L}\p{M}0-9 .'’-]{1,60}$/u.test(v.trim()) ? v.trim() : null;
-  const country = typeof cf.country === 'string' && /^[A-Z]{2}$/.test(cf.country) ? cf.country : null;
-  const city = name(cf.city), region = name(cf.region);
-  const timezone = typeof cf.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(cf.timezone) ? cf.timezone : null;
-  return country && (city || region) ? { country, ...(city ? { city } : {}), ...(region ? { region } : {}), ...(timezone ? { timezone } : {}) } : null;
+  const place = placeFields(request && request.cf || {});
+  return place.country && (place.city || place.region) ? place : null;
+}
+
+// 市・地域・国・タイムゾーンのうち、形の正しいものだけを返す（推定所在地と端末の所在地で共通）
+function placeFields(value) {
+  const place = {};
+  for (const key of ['city', 'region']) {
+    if (typeof value[key] === 'string' && /^[\p{L}\p{M}0-9 .'’-]{1,60}$/u.test(value[key].trim())) place[key] = value[key].trim();
+  }
+  if (typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country)) place.country = value.country;
+  if (typeof value.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(value.timezone)) place.timezone = value.timezone;
+  return place;
 }
 
 // 座標は検索用の構造化データに限定する。表示名に混ぜず、通常会話・保存用の履歴にも足さない。
@@ -1256,14 +1270,8 @@ function devicePlace(value, now = Date.now()) {
     || !Number.isFinite(value.longitude) || Math.abs(value.longitude) > 180
     || !Number.isFinite(value.accuracy) || value.accuracy < 0 || value.accuracy > 10000
     || !fresh) return null;
-  const place = { source: 'device', coordinates: { latitude: Math.round(value.latitude * 10000) / 10000,
-    longitude: Math.round(value.longitude * 10000) / 10000, accuracy: Math.ceil(value.accuracy) } };
-  for (const key of ['city', 'region']) {
-    if (typeof value[key] === 'string' && /^[\p{L}\p{M}0-9 .'’-]{1,60}$/u.test(value[key].trim())) place[key] = value[key].trim();
-  }
-  if (typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country)) place.country = value.country;
-  if (typeof value.timezone === 'string' && /^[A-Za-z_]+(?:\/[A-Za-z_+-]+){1,2}$/.test(value.timezone)) place.timezone = value.timezone;
-  return place;
+  return { source: 'device', coordinates: { latitude: Math.round(value.latitude * 10000) / 10000,
+    longitude: Math.round(value.longitude * 10000) / 10000, accuracy: Math.ceil(value.accuracy) }, ...placeFields(value) };
 }
 
 // Web検索の本文には通常統合と同じ会話・画像を渡す。印や出典の履歴はrequestBodyで落とす。
@@ -1338,7 +1346,7 @@ async function renderThinSource(env, evidence, signal, log) {
     const markdown = await searchDeadline(cfg.timeout_ms, async stop => {
       const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.BROWSER_RUN_ACCOUNT_ID}/browser-run/markdown`, {
         method: 'POST', signal: stop, headers: { Authorization: `Bearer ${env.BROWSER_RUN_API_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: thin.url, gotoOptions: { waitUntil: 'networkidle2', timeout: cfg.page_ms }, rejectRequestPattern: cfg.reject_patterns }),
+        body: JSON.stringify({ url: thin.finalUrl || thin.url, gotoOptions: { waitUntil: 'networkidle2', timeout: cfg.page_ms }, rejectRequestPattern: cfg.reject_patterns }),
       });
       if (!res.ok) { res.body?.cancel().catch(() => {}); throw new Error('render_http_' + res.status); }
       const data = JSON.parse(await readLimited(res, cfg.max_bytes, stop, cfg.timeout_ms));
@@ -1364,11 +1372,10 @@ async function verifyResearchAnswer({upstream, messages, verifiedNow, result, cf
   if (!evidence.length) throw stageError('upstream','research_no_public_source','公開された根拠を確認できませんでした',{retryable:true});
   await renderThinSource(upstream, evidence, signal, log);
   // アイコンは照合と並行して取り、照合が終わった時点で取れている分だけ付ける。取り残しは照合の終わりで止める
-  const iconStop = new AbortController(), stopIcons = () => iconStop.abort();
-  signal.addEventListener('abort', stopIcons, { once: true });
+  const { ac: iconStop, detach: detachIcons } = linkAbort(signal);
   const iconFor = startSourceIcons(evidence, iconStop.signal);
   try { return withSourceIcons(await checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, place, signal, evidence}), iconFor); }
-  finally { iconStop.abort(); signal.removeEventListener('abort', stopIcons); }
+  finally { iconStop.abort(); detachIcons(); }
 }
 
 function withSourceIcons(verified, iconFor) {
@@ -1378,7 +1385,7 @@ function withSourceIcons(verified, iconFor) {
 
 async function checkResearchEvidence({upstream, messages, verifiedNow, result, cfg, replyLanguage, place = null, signal, evidence}) {
   // 照合の材料からアイコンの候補と内部の印を外す（モデルへ送るのは出典の番号・題名・URL・本文の区画だけ）
-  evidence = evidence.map(({icons, html, textChars, rendered, ...e}) => e);
+  evidence = evidence.map(({icons, html, textChars, rendered, finalUrl, ...e}) => e);
   const limit = {bytes:RESEARCH.verify.reply_bytes, ms:RESEARCH.timeout_ms};
   const res = await callModel({env:upstream, ...researchVerificationRequest(cfg,messages,verifiedNow,result,evidence,replyLanguage,place),
     stream:false, signal, replyLimit:limit});
@@ -1496,9 +1503,7 @@ async function callAuxModel(options, log, purpose) {
   if (options.cfg.provider === fallback.provider) return callModel(options);
   // 複製したエラー本文が止まっても、元のHTTP接続を切ってから答え直す。
   // 非streamの成功はcallModel内で読み終わっているので、ここで接続を片付けられる。
-  const ac = new AbortController(), cancel = () => ac.abort();
-  if (options.signal?.aborted) ac.abort();
-  else options.signal?.addEventListener('abort', cancel, { once: true });
+  const { ac, detach } = linkAbort(options.signal);
   let failure;
   try {
     const res = await callModel({ ...options, signal: ac.signal });
@@ -1510,7 +1515,7 @@ async function callAuxModel(options, log, purpose) {
     // 解析の失敗は200の本文が壊れていたもの（callModel が Anthropic の応答を読み替えるとき）
     if (options.signal?.aborted || error.name === 'SyntaxError') throw error;
     failure = error.envelope?.code || error.name || 'failed';
-  } finally { options.signal?.removeEventListener('abort', cancel); ac.abort(); }
+  } finally { detach(); ac.abort(); }
   log('fallback', purpose, options.cfg.provider, failure);
   return callModel({ ...options, cfg: { ...fallback, max_tokens: options.cfg.max_tokens } });
 }
@@ -1519,12 +1524,17 @@ async function callAuxModel(options, log, purpose) {
 // ストリームは fetch の完了だけでなく、本文を読み終わるまでこの中で扱う。
 // stop（利用者が止めた・接続が切れた）を渡すと、時間切れの前でもそこで止める。
 async function withTimeout(ms, run, stop) {
-  const ac = new AbortController();
+  const { ac, detach } = linkAbort(stop);
   const id = setTimeout(() => ac.abort(), ms);
-  const onStop = () => ac.abort();
-  if (stop) { if (stop.aborted) ac.abort(); else stop.addEventListener('abort', onStop); }
   try { return await run(ac.signal); }
-  finally { clearTimeout(id); if (stop) stop.removeEventListener('abort', onStop); }
+  finally { clearTimeout(id); detach(); }
+}
+
+// 親の signal（省略できる）が止まったら一緒に止まる AbortController。detach は親への登録だけを外し、子は止めない
+function linkAbort(parent) {
+  const ac = new AbortController(), abort = () => ac.abort();
+  if (parent?.aborted) ac.abort(); else parent?.addEventListener('abort', abort, { once: true });
+  return { ac, detach: () => parent?.removeEventListener('abort', abort) };
 }
 
 // リアクションの登録・取り消し。認可は入口で共通に確認する。
@@ -1610,8 +1620,9 @@ function cleanShared(value) {
 }
 function sharedNote(shared) { return SHARED.header + '\n' + JSON.stringify(shared) + '\n【今回の質問】\n'; }
 
-async function readChatInput(request) {
-  const body = await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
+// parsed（省略できる）は WebSocket の入口で読んだ本文。上限はそちらで確かめてある
+async function readChatInput(request, parsed = null) {
+  const body = parsed || await readJsonLimited(request, DEFAULTS.input.max_request_bytes);
   const privacy = chatPrivacy(body);
   let messages = body.messages;
   const theme = (body.theme === 'light' || body.theme === 'dark') ? body.theme : null;
@@ -1784,13 +1795,12 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   const absent = (p, round, reason) => {
     log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
     const v = { round, text: PERSONA_ABSENT, absent: true, ...(motion ? { vote: null, vote_state: 'final' } : {}) };
-    if (motion) { (records[p.codename] ||= []).push(v); if (p.views) p.views.push(v); }
+    // 初回に欠けた人格は views を持たない（採決では票なしの欠席になる）
+    if (motion) p.views?.push(v);
     send('persona', { ...v, codename: p.codename, name: p.name });
   };
-  const records = {};
   const respond = (p, round, raw, ask) => {
     const v = { round, text: raw, ...(motion ? parseVote(raw) : {}), ...(ask ? { ask } : {}) };
-    if (motion) (records[p.codename] ||= []).push(v);
     send('persona', { round, codename: p.codename, name: p.name, text: v.text,
       ...(motion ? { vote: v.vote, vote_state: v.vote_state } : {}) });
     return v;
@@ -1810,7 +1820,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
       return { ...p, views: [v] };
     })), signal);
   const opinions = [];
-  // pの他の人格の意見（第2回は初回、第3回以降はいまの考え）
+  // pの他の人格の意見（第2回は初回、第3回以降はいまの考え。採決で欠けた回は、集計と同じく前の回の意見を引き継ぐ）
   const othersText = (p, view) => opinions.filter(o => o.codename !== p.codename)
     .map(o => `- ${o.name}（${o.codename}）: ${votedText(view(o))}`).join('\n');
   r1.forEach((r, i) => {
@@ -1825,19 +1835,26 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
 
   // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
   // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
+  // 第2回以降の1回分。指定した人格に並列で聞き、失敗した人格はその回だけ欠ける。text が空なら呼ばない
+  const runRound = async (round, asked, text) => {
+    await withTimeout(personaTimeoutMs, signal =>
+      Promise.all(asked.map(async ({ p, ask }) => {
+        const msg = text(p, ask);
+        if (!msg) return;
+        try {
+          const raw = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(msg), lastImages)), signal, log, round, personaTemp);
+          p.views.push(respond(p, round, raw, ask));
+        } catch (e) { absent(p, round, e); }
+      })), signal);
+    if (motion) resolveVotes(opinions, round, send);
+  };
   log('persona_call', 'round2 start');
-  await withTimeout(personaTimeoutMs, signal =>
-    Promise.all(opinions.map(async (p) => {
-      const others = othersText(p, o => o.views[0]);
-      if (!others) { if (!newContract) absent(p, 2); return; }
-      const dmsg = rebuttalText(lastUser, motion, votedText(p.views[0]), others);
-      try {
-        const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(dmsg), lastImages)), signal, log, 2, personaTemp);
-        p.views.push(respond(p, 2, text));
-      } catch (e) { absent(p, 2, e); }
-    })), signal);
+  await runRound(2, opinions.map(p => ({ p })), p => {
+    const others = othersText(p, o => o.views[0]);
+    if (!others) { if (!newContract) absent(p, 2); return null; }
+    return rebuttalText(lastUser, motion, votedText(p.views[0]), others);
+  });
   log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.views.length > 1).length}`);
-  if (motion) resolveVotes(opinions, 2, send);
 
   // --- 第3回以降: 統合人格が回ごとの基準で判定し、掘る論点に答えられる人格にだけ聞き返す ---
   // 対応を宣言した画面だけ（DEBATE）。判定は第2〜4回の後で、第5回の後は判定せずに統合する。
@@ -1864,20 +1881,12 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
     // 問いを先に画面へ出す（聞かれた人格のカードを「考え中」に戻す）
     const asked = judgement.persona_questions.map(q => ({ p: opinions.find(o => o.codename === q.target), ask: q.question }));
     send('ask', { round, max_rounds: maxRounds, questions: asked.map(({ p, ask }) => ({ codename: p.codename, name: p.name, text: ask })) });
-    await withTimeout(personaTimeoutMs, signal =>
-      Promise.all(asked.map(async ({ p, ask }) => {
-        const own = p.views.map(v => `${viewLabel(v)}: ${votedText(v)}`).join('\n');
-        const qmsg = followupText(lastUser, motion, round, own, othersText(p, o => o.views.at(-1)), ask);
-        try {
-          const text = await fetchPersonaText(upstream, p, personaThread(p.codename, history, withImages(noteLang(qmsg), lastImages)), signal, log, round, personaTemp);
-          p.views.push(respond(p, round, text, ask));
-        } catch (e) { absent(p, round, e); }
-      })), signal);
+    await runRound(round, asked, (p, ask) => followupText(lastUser, motion, round,
+      p.views.map(v => `${viewLabel(v)}: ${votedText(v)}`).join('\n'), othersText(p, o => o.views.findLast(v => !v.absent) || o.views.at(-1)), ask));
     lastRound = round;
-    if (motion) resolveVotes(opinions, round, send);
   }
 
-  const magiVerdict = motion ? magiTally(records, lastRound) : null;
+  const magiVerdict = motion ? magiTally(Object.fromEntries(opinions.map(o => [o.codename, o.views])), lastRound) : null;
   log('discussion', 'complete', lastRound);
   if (magiVerdict) send('verdict', magiVerdict);
 
@@ -1947,14 +1956,20 @@ async function chatSitePages({ env, ctx, log, cardsPromise, classification, moti
   return { cards, guide, pageChoice, pagesPromise };
 }
 
+// 新契約のチャットと v2 の読み上げのログ。段階と、数値・コード・状態の短い語（HTTP 状態・所要時間・人格・会社など）は残し、
+// 本文が混ざりうる値（上流のエラー本文・例外の文。引用符・括弧・日本語・長い文を含む）は伏せる（一時チャット設計 §4.3）
+const PRIVATE_LOG_TOKEN = /^[A-Za-z0-9_.:=/ -]{1,64}$/;
+const privateLog = log => (stage, ...args) => log(stage, ...args.map(v => v == null || typeof v === 'number' || typeof v === 'boolean'
+  || typeof v === 'string' && PRIVATE_LOG_TOKEN.test(v) ? v : '[redacted]'));
+
 // transport（省略できる）を渡すと、SSE の代わりにその受け口へ同じイベントを送る（WebSocket の入口。読み上げ設計§6.2）。
 // 受け口は { event(名前, data), comment(文字), end() }。入力の誤り・回数の超過は今と同じ HTTP の応答を返し、
 // 受け口へ流し始めたら null を返す
-async function handleChat(request, env, ctx, { requestId, cors, log, place = requestPlace(request) }, transport = null) {
+async function handleChat(request, env, ctx, { requestId, cors, log, place = requestPlace(request), body = null }, transport = null) {
   let input;
-  try { input = await readChatInput(request); }
+  try { input = await readChatInput(request, body); }
   catch (err) { return inputError(err, requestId, cors); }
-  if (input.privacyContract) { const originalLog = log; log = stage => originalLog(stage); }
+  if (input.privacyContract) log = privateLog(log);
   const features = privacyFeatures(env);
   if (input.privacyContract && (input.conversationMode === 'temporary' && !features.temporary_chat
     || input.personalization && !features.personalization
@@ -1974,15 +1989,12 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   const upstream = Object.assign(Object.create(env), {
     onUpstreamError: (provider, res, { signal } = {}) => alertUpstream(env, log, provider, res, ctx, signal).catch(e => log('upstream_alert', 'failed', e && e.message)),
   });
-  const stop = new AbortController();
-  const stopRequest = () => stop.abort();
-  if (request.signal.aborted) stop.abort();
-  else request.signal.addEventListener('abort', stopRequest, { once: true });
+  const { ac: stop, detach: detachRequest } = linkAbort(request.signal);
   // 公開カードだけを並行取得し、分類APIは利用制限の確認後に開始する。
   const cardsPromise = getPersonaCards(ctx, log);
   const refuse = res => {
     stop.abort();
-    request.signal.removeEventListener('abort', stopRequest);
+    detachRequest();
     return res;
   };
 
@@ -2035,9 +2047,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
 
   // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
   // 利用者が止めた（画面の停止ボタン・タブを閉じた）ら、続きの呼び出しをまとめて止める。払うのは止めた時点までの分だけ
-  const pageStop = new AbortController();
-  const stopPages = () => pageStop.abort();
-  stop.signal.addEventListener('abort', stopPages, { once: true });
+  const { ac: pageStop, detach: detachPages } = linkAbort(stop.signal);
   // 送り方（SSE か WebSocket）に関わらない本体。sink は { event, comment, end }
   const run = sink => {
       let closed = false, clarified = false;
@@ -2125,8 +2135,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
             signal => fetchSuggestion(upstream, [...plainMessages, { role: 'assistant', content: answer }], context, langNote, signal, log), stop.signal);
           if (text) send('suggest', { text });
         }
-        // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
-        if (titlePromise) await titlePromise;
+        // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）。確認質問で終えた回はタイトルを捨てるので待たない
+        if (titlePromise && !clarified) await titlePromise;
         // 読み上げの署名（読み上げ設計§5.2）。確認質問・DJ の相談・読み上げを止めているときは送らない
         if (speechReady(env) && entry !== 'dj-request' && !clarified && spoken.trim() && !stop.signal.aborted) {
           const lang = speechLanguage(classification?.reply_language?.code);
@@ -2153,8 +2163,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         close();
       } finally {
         pageStop.abort();
-        stop.signal.removeEventListener('abort', stopPages);
-        request.signal.removeEventListener('abort', stopRequest);
+        detachPages();
+        detachRequest();
       } })());
   };
   if (transport) { run(transport); return null; }
@@ -2204,8 +2214,15 @@ function handleChatSocket(request, env, ctx, { requestId, cors, log }) {
   server.addEventListener('close', () => { if (!closed) log('client', 'closed (ws)'); close(1000, 'closed'); });
   server.addEventListener('error', () => close(1011, 'error'));
   server.addEventListener('message', event => {
+    // 画像付きの要求は数MBになるので、parse の前に POST と同じ上限で断る（文字数はバイト数以下なので、文字数で超えれば必ず超える）
+    const data = typeof event.data === 'string' ? event.data : null, max = DEFAULTS.input.max_request_bytes;
+    if (data && (data.length > max || data.length * 3 > max && utf8Length(data) > max)) {
+      log('ws', 'too_large');
+      fail(tooLarge().envelope, 413);
+      return;
+    }
     let message = null;
-    try { message = typeof event.data === 'string' ? JSON.parse(event.data) : null; } catch (_) {}
+    try { message = data === null ? null : JSON.parse(data); } catch (_) {}
     if (message && message.type === 'stop') { log('client', 'stopped (ws)'); close(1000, 'stopped'); return; }
     if (started || !message || message.type !== 'chat' || message.v !== 1 || !message.body || typeof message.body !== 'object' || Array.isArray(message.body)) {
       log('ws', started ? 'duplicate_request' : 'invalid_message');
@@ -2213,12 +2230,12 @@ function handleChatSocket(request, env, ctx, { requestId, cors, log }) {
       return;
     }
     started = true; clearTimeout(firstTimer);
-    // 入力の検査・上限・回数は POST と同じ処理に任せる（本文は今の POST と同じ JSON）
-    const headers = { 'Content-Type': 'application/json', Origin: request.headers.get('Origin') || '' };
+    // 入力の検査・回数は POST と同じ処理に任せる（本文は今の POST と同じ JSON。読み直さないよう parse 済みのまま渡す）
+    const headers = { Origin: request.headers.get('Origin') || '' };
     if (request.headers.get('CF-Connecting-IP')) headers['CF-Connecting-IP'] = request.headers.get('CF-Connecting-IP');
-    const chat = new Request(new URL('/magi2/chat', request.url), { method: 'POST', headers, body: JSON.stringify(message.body), signal: ac.signal });
+    const chat = new Request(new URL('/magi2/chat', request.url), { method: 'POST', headers, signal: ac.signal });
     // 作り直した要求には通信元の情報（cf）が無いので、開いたときの要求から推定所在地を渡す
-    ctx.waitUntil(handleChat(chat, env, ctx, { requestId, cors, log, place: requestPlace(request) }, {
+    ctx.waitUntil(handleChat(chat, env, ctx, { requestId, cors, log, place: requestPlace(request), body: message.body }, {
       event: (name, data) => sendJSON({ event: name, data }),
       comment: text => { if (text.trim() === 'ping') sendJSON({ event: 'ping' }); },
       end: () => close(1000, 'done'),
@@ -2260,7 +2277,7 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
     return fail(403, 'auth', 'speech_unsigned', 'この回答は読み上げできません');
   }
   const lang = speechLanguage(body.lang);
-  if (speechOptions) { env = Object.assign(Object.create(env), { privateChat: true }); const originalLog = log; log = stage => originalLog(stage); }
+  if (speechOptions) { env = Object.assign(Object.create(env), { privateChat: true }); log = privateLog(log); }
   const parts = speechParts(text, lang);
   if (part < 0 || part >= parts.length) return fail(400, 'bad_request', 'speech_part_out_of_range', '読み上げの区切りが範囲外です');
   headers['X-Speech-Parts'] = String(parts.length);
@@ -2301,12 +2318,10 @@ async function handleSpeech(request, env, ctx, { requestId, cors, log }) {
   }
 
   // 最初の音声まで first_byte_ms・全体で total_ms。利用者が切ったら上流も止める
-  const stop = new AbortController();
-  const onClient = () => stop.abort();
-  if (request.signal.aborted) stop.abort(); else request.signal.addEventListener('abort', onClient, { once: true });
+  const { ac: stop, detach: detachClient } = linkAbort(request.signal);
   const totalTimer = setTimeout(() => stop.abort(), SPEECH.total_ms);
   let firstTimer = setTimeout(() => stop.abort(), SPEECH.first_byte_ms);
-  const cleanup = () => { clearTimeout(totalTimer); clearTimeout(firstTimer); request.signal.removeEventListener('abort', onClient); };
+  const cleanup = () => { clearTimeout(totalTimer); clearTimeout(firstTimer); detachClient(); };
   const upstreamFailed = (status, code) => { cleanup(); log('speech', 'failed', code, Date.now() - started); return fail(status, 'upstream', code, '読み上げできませんでした', true); };
   const call = () => fetch(SPEECH.endpoint, {
     method: 'POST', signal: stop.signal,

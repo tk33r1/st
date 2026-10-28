@@ -25,26 +25,38 @@ export async function fetchSearchSource(url, {signal, refresh = false, cooldown 
     state.retryAt = now + SITE_SEARCH.list_retry_ms;
     state.pending = searchDeadline(SITE_SEARCH.list_timeout_ms, async s => {
       const response = await fetch(url, {signal:s, headers:{'Cache-Control':'no-cache'}, cache:'no-cache'});
-      if (!response.ok || !response.body) throw searchFailure('index_unavailable');
-      const reader=response.body.getReader(), chunks=[];let bytes=0;
-      const stop=()=>{reader.cancel().catch(()=>{});};s.addEventListener('abort',stop,{once:true});
-      try {
-        for (;;) {
-          const {done,value}=await reader.read();
-          if (s.aborted) throw searchFailure('cancelled');
-          if (done) break;
-          bytes+=value.byteLength;if(bytes>maxBytes) throw searchFailure('index_unavailable');chunks.push(value);
-        }
-        const decoder=new TextDecoder('utf-8',{fatal:true});
-        const text=chunks.map(chunk=>decoder.decode(chunk,{stream:true})).join('')+decoder.decode();
-        if(s.aborted) throw searchFailure('cancelled');
-        state.text=text;state.at=Date.now();return text;
-      } finally {stop();s.removeEventListener('abort',stop);reader.releaseLock();}
+      const text = await readSearchText(response, s, maxBytes);
+      if(s.aborted) throw searchFailure('cancelled');
+      state.text=text;state.at=Date.now();return text;
     }).finally(()=>{state.pending=null;});
     state.pending.catch(()=>{}); // 全要求が中断しても共有取得の失敗を未処理にしない。
   }
   const pending=state.pending;
   return searchDeadline(SITE_SEARCH.list_timeout_ms, ()=>pending, signal);
+}
+
+// 公開JSONの本文を上限付きで読み、UTF-8として厳密に解く。budget を渡すと複数ファイルの合計を上限で数える。
+// 失敗はindex_unavailable、signalで止まったらcancelled。止まった時点で上流の本文も閉じる。
+export async function readSearchText(response, signal, maxBytes, budget = { bytes: 0 }) {
+  if (!response.ok || !response.body) throw searchFailure('index_unavailable');
+  const reader = response.body.getReader(), chunks = [];
+  const cancel = () => { reader.cancel().catch(() => {}); };
+  signal.addEventListener('abort', cancel, { once: true });
+  try {
+    for (;;) {
+      if (signal.aborted) throw searchFailure('cancelled');
+      const { value, done } = await reader.read();
+      if (signal.aborted) throw searchFailure('cancelled');
+      if (done) break;
+      budget.bytes += value.byteLength;
+      if (budget.bytes > maxBytes) throw searchFailure('index_unavailable');
+      chunks.push(value);
+    }
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    return chunks.map(chunk => decoder.decode(chunk, { stream: true })).join('') + decoder.decode();
+  } finally {
+    cancel(); signal.removeEventListener('abort', cancel); reader.releaseLock();
+  }
 }
 
 export const sha256 = async (text) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))), b => b.toString(16).padStart(2, '0')).join('');

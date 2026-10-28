@@ -193,6 +193,8 @@ test('一時/設定: 新契約の上流エラーが本文を返してもログ�
     assert.equal(mails.length, 1);
     assert.ok(!JSON.stringify([result, logs, mails, Array.from(w.env.DB.rows)]).includes('PRIVATE-'));
     assert.match(mails[0].subject, /402/);
+    // 本文を伏せても、障害調査に要る人格・会社・HTTP状態はログに残す
+    assert.ok(logs.some(l => l[1] === 'persona_call' && l.includes('deepseek') && l.includes('HTTP 402') && l.includes('[redacted]')));
   }
 });
 
@@ -6226,6 +6228,16 @@ test('読み上げ計画§1.7: chatが来ない・解釈できない・2回目�
     const [name, envelope] = wsEvents(w.sockets[0])[0];
     assert.equal(name, 'error'); assert.equal(envelope.code, 'ws_invalid_message'); assert.equal(envelope.http_status, 400);
     assert.equal(w.sockets[0].closed.code, 1008); assert.equal(w.calls.length, 0);
+  }
+  // 上限を超える要求は parse の前に POST と同じ封筒（413）で断る。文字数が上限内でも UTF-8 で超えれば断る
+  const max = worker().ctx.defaults.input.max_request_bytes;
+  for (const content of ['a'.repeat(max), 'あ'.repeat(Math.ceil(max / 3))]) {
+    const big = wsWorker(); await big.open();
+    big.sockets[0].emit('message', { data: JSON.stringify({ type: 'chat', v: 1, body: { messages: [{ role: 'user', content }] } }) });
+    await big.settle(big.sockets[0]);
+    const [name, envelope] = wsEvents(big.sockets[0])[0];
+    assert.equal(name, 'error'); assert.equal(envelope.code, 'request_too_large'); assert.equal(envelope.http_status, 413);
+    assert.equal(big.sockets[0].closed.code, 1008); assert.equal(big.calls.length, 0);
   }
   const twice = wsWorker(); await twice.open();
   const body = { messages: [{ role: 'user', content: '週末の過ごし方は？' }] };

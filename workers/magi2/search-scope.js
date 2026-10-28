@@ -1,6 +1,6 @@
 import { SITE_RANK, SITE_SEARCH } from './personas.js';
-import { fetchSearchSource, getSiteSnapshot, searchDeadline, searchFailure, sha256, snapshotHash } from './site-search.js';
-import { toRankCandidate } from './site-rank.js';
+import { fetchSearchSource, getSiteSnapshot, readSearchText, searchDeadline, searchFailure, sha256, snapshotHash } from './site-search.js';
+import { rankTargets, toRankCandidate } from './site-rank.js';
 
 // 入力から URL を作らない。scope と媒体のディレクトリの対応はここだけに持つ。
 const SEARCH_SCOPES = Object.freeze({
@@ -157,25 +157,7 @@ export function filterDailyItems(snapshot, filters) {
 
 async function dailyText(url, signal, budget) {
   const response = await fetch(url, { signal, headers: { 'Cache-Control': 'no-cache' } });
-  if (!response.ok || !response.body) throw searchFailure('index_unavailable');
-  const reader = response.body.getReader(), chunks = [];
-  const cancel = () => { reader.cancel().catch(() => {}); };
-  signal.addEventListener('abort', cancel, { once: true });
-  try {
-    for (;;) {
-      if (signal.aborted) throw searchFailure('cancelled');
-      const { value, done } = await reader.read();
-      if (signal.aborted) throw searchFailure('cancelled');
-      if (done) break;
-      budget.bytes += value.byteLength;
-      if (budget.bytes > SITE_RANK.daily_index_max_bytes) throw searchFailure('index_unavailable');
-      chunks.push(value);
-    }
-    const decoder = new TextDecoder('utf-8', { fatal: true });
-    return chunks.map(chunk => decoder.decode(chunk, { stream: true })).join('') + decoder.decode();
-  } finally {
-    cancel(); signal.removeEventListener('abort', cancel); reader.releaseLock();
-  }
+  return readSearchText(response, signal, SITE_RANK.daily_index_max_bytes, budget);
 }
 
 async function fetchDailySnapshot(scope, signal, shared = false, lease = null) {
@@ -282,7 +264,9 @@ export function makeListSnapshot(scope,text,publication) {
   }
   return {scope,raw,ja:raw,en:raw,rankReady:true,text,publicationText:publication.text};
 }
+// ②の対象。サイト全体は判定できる種類のページだけ、ほかは媒体・一覧の絞り込みを掛けた行。
 export function filterRankItems(snapshot,scope,filters={}) {
+  if(scope==='site') return rankTargets(snapshot);
   if(isDailyScope(scope)) return filterDailyItems(snapshot,filters);
   const key=searchScope(scope).filter;
   return key && filters[key]?snapshot.raw.filter(p=>p[key]===filters[key]):snapshot.raw;
