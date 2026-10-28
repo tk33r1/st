@@ -1019,8 +1019,9 @@ function agentWebHistoryData() {
   var history = JSON.parse(localStorage.getItem('magi_current_history') || '[]');
   if (!Array.isArray(saved) || !Array.isArray(history)) throw new Error('invalid_history');
   var id = localStorage.getItem('magi_current_session_id');
+  // 言語と共有文書は付随の情報なので、壊れていても件数表示・書き出しを止めずに捨てる（会話を開くときと同じ扱い）
   var current = id && !id.startsWith('temporary_') ? { id: id, title: localStorage.getItem('magi_current_title') || '', history: history,
-    language: JSON.parse(localStorage.getItem('magi_current_language') || 'null'), shared: JSON.parse(localStorage.getItem('magi_current_shared') || 'null') } : null;
+    language: safeParse(localStorage.getItem('magi_current_language'), null), shared: safeParse(localStorage.getItem('magi_current_shared'), null) } : null;
   // サムネ・元画像の参照も除外し、通常会話の保存済みデータだけを書き出す。
   function withoutImages(value) {
     if (Array.isArray(value)) return value.map(withoutImages);
@@ -1683,7 +1684,13 @@ function cleanHistory(history) {
       && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
         return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
       })));
-  }).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem) : [];
+  }).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem).map(cleanReactionsItem) : [];
+}
+// 評価（reactions）は target → 値のオブジェクトだけを残す。文字列などのままだと、押した評価が黙って保存されない
+function cleanReactionsItem(item) {
+  var r = item.reactions;
+  if (r == null || typeof r === 'object' && !Array.isArray(r)) return item;
+  var out = Object.assign({}, item); delete out.reactions; return out;
 }
 function initAgent() {
   if (agentTemporary()) return;

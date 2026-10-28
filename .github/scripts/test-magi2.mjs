@@ -4109,7 +4109,7 @@ test('MAGI採決: 両画面は決議後の停止・切断で完了した説明�
     const body=element(),bar=element(),replyEl=element(),turn=element(),who=element();
     replyEl.querySelector=s=>s==='.agent-reply-body'?body:s==='.reaction-bar'?bar:who;
     turn.querySelector=s=>s==='.agent-reply'?replyEl:s==='.agent-reply-body'?body:s==='.agent-reply .reaction-bar'?bar:element();
-    c.ctx.agentTurnEl=()=>turn;c.ctx.document.documentElement.lang=ja?'ja':'en';
+    c.ctx.agentTurnEl=()=>turn;c.ctx.currentLang=c.ctx.document.documentElement.lang=ja?'ja':'en';
     if(!isHome){const nodes=[element(),turn,replyEl];c.ctx.document.createElement=()=>nodes.shift()||element();}
     c.ctx.document.hidden=false;
     c.ctx.createMagiView=(_turn,options)=>(present=options.explain,{push(){},start(){},ready:()=>ready,

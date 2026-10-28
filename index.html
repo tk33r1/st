@@ -269,7 +269,6 @@
     .overflow-hidden { overflow: hidden }
     .overflow-y-auto { overflow-y: auto }
     .no-underline { text-decoration: none }
-    .inline-flex { display: inline-flex }
     .min-w-0 { min-width: 0 }
     .flex-shrink-0 { flex-shrink: 0 }
     .z-40 { z-index: 40 }
@@ -278,11 +277,9 @@
     .bg-transparent { background-color: transparent }
     .text-\[9px\] { font-size: 9px }
     .text-\[11px\] { font-size: 11px }
-    .align-middle { vertical-align: middle }
     .font-semibold { font-weight: 600 }
     .uppercase { text-transform: uppercase }
     .tracking-widest { letter-spacing: 0.1em }
-    .list-disc { list-style-type: disc }
     .opacity-60 { opacity: 0.6 }
     .opacity-80 { opacity: 0.8 }
     .ml-1 { margin-left: 0.25rem }
@@ -290,7 +287,6 @@
     .pt-3 { padding-top: 0.8125rem }
     .pb-1 { padding-bottom: 0.25rem }
     .pb-4 { padding-bottom: 1rem }
-    .pl-4 { padding-left: 1rem }
     .pr-1 { padding-right: 0.25rem }
     .pr-2 { padding-right: 0.5rem }
     .p-1\.5 { padding: 0.375rem }
@@ -321,7 +317,6 @@
     }
 
     .space-y-1\.5> :not([hidden])~ :not([hidden]) { margin-top: 0.375rem }
-    .space-y-2\.5> :not([hidden])~ :not([hidden]) { margin-top: 0.625rem }
     .hover\:bg-surface-alt:hover { background-color: var(--surface-alt) }
     .hover\:opacity-100:hover { opacity: 1 }
     .hover\:text-red-500:hover { color: #ef4444 }
@@ -1521,12 +1516,10 @@
     #search-shared .st-search-heading { font-size: 10px; letter-spacing: .05em; color: var(--dim-color); margin: .5rem 0 .25rem; }
     #search-shared .st-search-command-button:hover, #search-shared .st-search-link:hover { background: var(--surface-hover); }
     #search-shared .st-search-local > .st-search-list > .st-search-result > .st-search-link { padding: .45rem .25rem; }
-    #search-shared .st-search-title { color: var(--primary-color); }
+    #search-shared .st-search-title { color: var(--primary-color); font-size: 12px; }
     #search-shared .st-search-description { color: var(--dim-color); font-size: 11px; }
-    #search-shared .st-search-kind { color: var(--dim-color); }
+    #search-shared .st-search-kind { color: var(--dim-color); font-size: 10px; }
     #search-shared .st-search-filters:empty { display: none; }
-    #search-shared .st-search-title { font-size: 12px; }
-    #search-shared .st-search-kind { font-size: 10px; }
     #search-form #search-input.st-search-input { padding-right: 44px; }
     #search-shared .st-search-button { font-size: 11px; border-radius: 4px; }
     /* Desktop keeps the side bar's density; on touch-sized screens the 44px targets of the shared design stay. */
@@ -2233,23 +2226,20 @@
       box-shadow: 0 0 0 2px var(--primary-bg);
     }
 
+    /* 1行で始め、打った量に合わせて JS（fitAgentInput）が高さを伸ばす。7行を超えたら中でスクロール */
     #agent-input {
       background: transparent;
       border: 1px solid transparent;
       padding: 0.4rem 0.3rem;
       color: var(--text-color);
       outline: none;
-    }
-
-    #agent-input:disabled { opacity: 0.5 }
-
-    /* 1行で始め、打った量に合わせて JS（fitAgentInput）が高さを伸ばす。7行を超えたら中でスクロール */
-    #agent-input {
       display: block;
       resize: none;
       overflow-y: hidden;
       max-height: calc(1.25rem * 7 + 0.8rem + 2px);
     }
+
+    #agent-input:disabled { opacity: 0.5 }
 
     /* 次の質問の予測：空の入力欄に薄く重ね、右の › で入れる。文字は入力欄と同じ位置・大きさに揃える */
     #agent-input-wrap { position: relative; min-width: 0; display: flex }
@@ -2257,6 +2247,8 @@
     /* 案内文は狭い画面でも折り返さず省略し、1行の高さを保つ */
     #agent-input::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
     #agent-input.has-suggest::placeholder { color: transparent }
+    /* 保存されたチャットの行はキーボードで選べるようボタンにしてある。見た目は行のまま */
+    .btn-load-session { border: 0; text-align: left; font-size: inherit; line-height: inherit }
     #agent-suggest {
       position: absolute;
       inset: 1px 1px 1px calc(0.3rem + 1px);
@@ -2464,6 +2456,9 @@
       font-size: 10px;
       letter-spacing: 0.12em;
       color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .magi-ver {
@@ -2474,13 +2469,17 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.45rem;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      font-family: inherit;
+      cursor: pointer;
     }
 
-
-    .magi-ver { background:transparent;border:1px solid var(--border-color);border-radius:2px;padding:0.2rem 0.45rem;font-family:inherit;cursor:pointer;gap:0.35rem; }
     .magi-ver::after { content:'▾'; }
     .magi-ver:hover,.magi-ver:focus-visible { color:var(--primary-color);border-color:var(--primary-color); }
-    .magi-sub { display:flex;align-items:center;justify-content:center; }
     .agent-versions-list { flex:1;min-height:0;overflow-y:auto;text-align:left;overflow-wrap:anywhere; }
     .agent-versions-list section { padding:0.65rem 0;border-bottom:1px solid var(--border-color); }
     .agent-versions-list h3 { margin:0 0 0.15rem;font-size:12px;color:var(--primary-color); }
@@ -4120,7 +4119,14 @@
     const isHistoryItem = it => !!it && typeof it === 'object' && (it.role === 'assistant'
       ? typeof it.content === 'string'
       : it.role === 'user' && (typeof it.content === 'string' || (Array.isArray(it.content) && it.content.every(isContentPart))));
-    const cleanHistory = h => (Array.isArray(h) ? h.filter(isHistoryItem).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem) : []);
+    // 評価（reactions）は target → 値のオブジェクトだけを残す。文字列などのままだと、押した評価が黙って保存されない
+    const cleanReactionsItem = it => {
+      const r = it.reactions;
+      if (r == null || (typeof r === 'object' && !Array.isArray(r))) return it;
+      const { reactions, ...rest } = it;
+      return rest;
+    };
+    const cleanHistory = h => (Array.isArray(h) ? h.filter(isHistoryItem).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem).map(cleanReactionsItem) : []);
     const loadSavedSessions = () => {
       const s = safeParse(safeGet('magi_saved_sessions'), []);
       return Array.isArray(s) ? s.filter(x => !!x && typeof x === 'object' && x.mode !== 'temporary') : [];
@@ -4251,7 +4257,8 @@
     }
 
     // --- OUTPUT panel (system event log, channel-filtered) ---
-    const systemLog = [{ t: new Date(), channel: 'System', msg: tr('boot sequence complete', '起動シーケンス完了') }];
+    // 起動時は必ず英語なので、最初の行だけは両方の文言を持たせて描くときの言語で出す（以降の行は記録した時の言語のまま）
+    const systemLog = [{ t: new Date(), channel: 'System', msg: 'boot sequence complete', msg_ja: '起動シーケンス完了' }];
     let outputChannel = 'All';
     function renderOutput() {
       const pane = DOM.panelOutput;
@@ -4263,7 +4270,7 @@
         `<div class="flex items-center gap-2 mb-2"><span class="text-secondary">${tr('Channel:', 'チャンネル:')}</span>
           <select id="output-channel">${channels.map(c => `<option value="${c}" ${c === outputChannel ? 'selected' : ''}>${channelLabel(c)}</option>`).join('')}</select></div>` +
         (rows.length
-          ? rows.map(e => `<div class="out-line"><span class="out-ts">[${fmt(e.t)}]</span><span class="text-normal">${esc(e.msg)}</span></div>`).join('')
+          ? rows.map(e => `<div class="out-line"><span class="out-ts">[${fmt(e.t)}]</span><span class="text-normal">${esc(pick(e, 'msg'))}</span></div>`).join('')
           : `<div class="text-dim">${tr('No output for this channel yet.', 'このチャンネルの出力はまだありません。')}</div>`);
     }
 
@@ -4277,13 +4284,14 @@
       { port: 8888, svc: 'coursera / takeda', proto: 'jupyter', state: 'Running', url: 'https://www.coursera.org/learner/takeda' },
       { port: 4040, svc: 'ko-fi / shinyatakeda', proto: 'http', state: 'Running', url: 'https://ko-fi.com/shinyatakeda' }
     ];
+    const PORT_STATE_JA = { Running: '稼働中', Streaming: '配信中' };
     function renderPorts() {
       DOM.panelPorts.innerHTML =
         `<div class="port-row text-secondary" style="border-bottom-width:2px"><span class="port-num">${tr('PORT', 'ポート')}</span><span class="flex-1">${tr('SERVICE', 'サービス')}</span><span class="whitespace-nowrap">${tr('STATE', '状態')}</span><span style="width:3.2rem"></span></div>` +
         PORTS.map(p => `<a class="port-row port-link no-underline" href="${p.url}" target="_blank" rel="noopener noreferrer" title="${tr(`Open ${esc(p.svc)} in a new tab`, `${esc(p.svc)} を新しいタブで開く`)}">
           <span class="port-num">${p.port}</span>
           <span class="flex-1 text-normal truncate">${esc(p.svc)} <span class="text-secondary">(${p.proto})</span></span>
-          <span class="whitespace-nowrap text-secondary"><span class="port-dot">●</span> ${tr(p.state, '稼働中')}</span>
+          <span class="whitespace-nowrap text-secondary"><span class="port-dot">●</span> ${tr(p.state, PORT_STATE_JA[p.state])}</span>
           <span class="port-open">${tr('open ↗', '開く ↗')}</span>
         </a>`).join('');
     }
@@ -4771,7 +4779,7 @@
         e.preventDefault();
         const url = identifyBtn.getAttribute('href');
         if (url) { try { window.history.replaceState({}, '', url); } catch (err) { } } // see clearCmdParam
-        await executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
+        executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
       }
 
       // help.md's inline commands run as if typed; like the Explorer, drop ?cmd= first.
@@ -5058,7 +5066,7 @@
       `, 'faq-wrap');
     };
 
-    const executeIdentifyVersion = async (version, targetId) => {
+    const executeIdentifyVersion = (version, targetId) => {
       const data = PROFILE_DATA[version] || PROFILE_DATA['1.0'];
       const titleColor = version === '2.0' ? 'var(--primary-color)' : 'var(--secondary-color)';
       const rows = createMBTIRows(data.traits, titleColor);
@@ -5209,15 +5217,12 @@
       },
       about() {
         const bioLines = tr(ABOUT_DATA.bio.en, ABOUT_DATA.bio.ja);
-        const rows = ABOUT_DATA.rows.map(r => [
-          tr(r.label[0], r.label[1]),
-          tr(r.val[0], r.val[1])
-        ]);
+        const rows = ABOUT_DATA.rows.map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${tr(r.label[0], r.label[1])}</span><span class="text-normal">${esc(tr(r.val[0], r.val[1]))}</span></div>`).join('');
         return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(displayName())}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
-            <div class="space-y-1 pt-2 border-t border-color">${rows.map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
+            <div class="space-y-1 pt-2 border-t border-color">${rows}</div>
           `, 'p-4 border rounded border-color bg-surface');
       },
       pages: () => wrapCmd(`
@@ -7002,7 +7007,7 @@
           const v = urlParams.get('v');
           if (v && ['1.0', '2.0'].includes(v)) {
             const targetBtn = Array.from(document.querySelectorAll('[data-action="identify"]')).reverse().find(btn => btn.dataset.version === v);
-            if (targetBtn) await executeIdentifyVersion(v, targetBtn.dataset.id);
+            if (targetBtn) executeIdentifyVersion(v, targetBtn.dataset.id);
           }
         } else if (hasCmd(targetCmd)) {
           await handleCommand(targetCmd);
@@ -7544,7 +7549,6 @@
         + `</div>`;
     }
     let agentSpeechOn = false, agentSpeechPlayer = null;
-    const isJaPage = () => document.documentElement.lang === 'ja';
     const agentSpeech = () => agentSpeechPlayer || (agentSpeechPlayer = createAgentSpeech(SPEECH_API, {
       state(btn, s) {
         btn.dataset.state = s; btn.setAttribute('aria-pressed', String(s !== 'idle'));
@@ -7569,7 +7573,7 @@
       const bar = turn.querySelector('.agent-reply .reply-bar');
       if (!bar || !item) return;
       const speak = bar.querySelector('[data-act="speak"]'); if (speak) speak.hidden = !(agentSpeechOn && item.speech_sig);
-      const src = bar.querySelector('[data-act="sources"]'); if (src) renderAgentSourceButton(src, item.content, item.sources, isJaPage());
+      const src = bar.querySelector('[data-act="sources"]'); if (src) renderAgentSourceButton(src, item.content, item.sources, currentLang === 'ja');
       const time = bar.querySelector('.reply-time'), at = agentReplyAt(item, AGENT_OPENED_AT);
       if (time && at) { time.hidden = false; time.dateTime = new Date(at).toISOString(); writeReplyTime(time, at); }
     }
@@ -7586,7 +7590,7 @@
     // コピーで足りる）。共有シートが開けなかったときはコピーする
     async function shareAgentReply(btn, bar, item) {
   if (agentTemporary()) return;
-      const text = agentShareText(item.content, item.sources, isJaPage()), title = agentTitle || 'MAGI';
+      const text = agentShareText(item.content, item.sources, currentLang === 'ja'), title = agentTitle || 'MAGI';
       if (agentCanShare()) {
         try { await navigator.share({ title, text }); return; }
         catch (err) { if (err && err.name === 'AbortError') return; }
@@ -7730,8 +7734,9 @@ function agentWebHistoryData() {
   var history = JSON.parse(localStorage.getItem('magi_current_history') || '[]');
   if (!Array.isArray(saved) || !Array.isArray(history)) throw new Error('invalid_history');
   var id = localStorage.getItem('magi_current_session_id');
+  // 言語と共有文書は付随の情報なので、壊れていても件数表示・書き出しを止めずに捨てる（会話を開くときと同じ扱い）
   var current = id && !id.startsWith('temporary_') ? { id: id, title: localStorage.getItem('magi_current_title') || '', history: history,
-    language: JSON.parse(localStorage.getItem('magi_current_language') || 'null'), shared: JSON.parse(localStorage.getItem('magi_current_shared') || 'null') } : null;
+    language: safeParse(localStorage.getItem('magi_current_language'), null), shared: safeParse(localStorage.getItem('magi_current_shared'), null) } : null;
   // サムネ・元画像の参照も除外し、通常会話の保存済みデータだけを書き出す。
   function withoutImages(value) {
     if (Array.isArray(value)) return value.map(withoutImages);
@@ -9492,7 +9497,7 @@ async function addAgentAttachments(files) {
       if (agentSpeechPlayer) agentSpeechPlayer.stop();
       var draftText = retry ? retry.text : agentInput.value;
       var text = retry ? retry.text : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
-  if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
+  if (text === null) { announceAgent(tr('Keep the full answer within 1,000 characters and Other within 100.', '回答全体を1000文字以内、その他を100文字以内にしてください。')); return; }
       const atts = retry ? retry.atts : attachments.slice();
       if (!text && !atts.length) return;
       const retryOf = retry ? retry.mid : null;
@@ -9540,8 +9545,8 @@ async function addAgentAttachments(files) {
       const dropped = () => gen !== agentGen || conversationId !== currentSessionId || sendId !== agentSendSequence;
       const streamWatch = createMagiStreamWatch(ctrl, startedAt, {
         alive: () => !dropped(), timeout: () => { timedOut = true; },
-        notice: visible => magiStreamNotice(replyEl, visible, document.documentElement.lang === 'ja'),
-        replaying: () => { agentSendBtn.title = agentSendBtn.ariaLabel = document.documentElement.lang === 'ja' ? 'すぐに全部表示' : 'Show all now'; },
+        notice: visible => magiStreamNotice(replyEl, visible, currentLang === 'ja'),
+        replaying: () => { agentSendBtn.title = agentSendBtn.ariaLabel = tr('Show all now', 'すぐに全部表示'); },
       });
       // MAGI_SEND_BEGIN
       function isMagiJa() { return document.documentElement.lang === 'ja'; }
@@ -9685,7 +9690,7 @@ async function addAgentAttachments(files) {
       if (dropped()) return; // 予約したリアクションは finally で消してある
       if (completed && reply.trim() && !errored || magiRetained) {
         renderAgentPages(replyEl, sitePages);
-        renderAgentSources(replyBody, replyEl, reply, replySources, document.documentElement.lang === "ja", false);
+        renderAgentSources(replyBody, replyEl, reply, replySources, currentLang === 'ja', false);
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         if (!magiView) announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         // debateData is this call's own object and the stream is over, so it is stored as is.
@@ -9949,10 +9954,10 @@ async function unregisterReaction(bar, target) {
   cleanHistoryItems.forEach(item => {
         if (item.role === 'user') { agentLog.appendChild(userBubbleEl(item.content)); return; }
         const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false, item.thinkingSeconds);
-        renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, document.documentElement.lang === "ja", false);
+        renderAgentSources(turn.querySelector(".agent-reply-body"), turn.querySelector(".agent-reply"), item.content, item.sources, currentLang === 'ja', false);
         setupReplyBar(turn, item);
         if (item.clarify) { renderAgentClarify(turn, item.clarify, item === cleanHistoryLast); turn.querySelector('.agent-reply .reaction-bar')?.remove(); }
-      if (item.magi) magiReplay(turn, item, { ja: document.documentElement.lang === 'ja', id: item.mid, log: agentLog });
+      if (item.magi) magiReplay(turn, item, { ja: currentLang === 'ja', id: item.mid, log: agentLog });
         applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
         agentLog.appendChild(turn);
         if (item.closed === true) closeAgentConversation(turn);
@@ -10022,7 +10027,6 @@ async function unregisterReaction(bar, target) {
 
     // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
     // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
-    const AGENT_PANEL_IDS = ['agent-settings-panel', 'agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel'];
     function removeAgentPanel(panel) {
       if (!panel.isConnected) return;
       const hadFocus = panel.contains(document.activeElement);
@@ -10032,6 +10036,7 @@ async function unregisterReaction(bar, target) {
     const closeAgentPanels = (keepPageStack) => { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) removeAgentPanel(p); }); };
     // 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
 var AGENT_PAGE_IDS = ['agent-bug-report-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel'];
+    const AGENT_PANEL_IDS = ['agent-history-panel', ...AGENT_PAGE_IDS];
 var agentPageStack = [];
 function prepareAgentPage(id) {
   if (id === 'agent-about-panel' || id === 'agent-settings-panel') { closeAgentPanels(); return; }
@@ -10095,7 +10100,14 @@ function makeAgentPanel(id, title, bodyHTML) {
         </div>`) + bodyHTML;
       agentDockEl.appendChild(panel);
       if (isPage) bindAgentPage(panel, opener);
-      else panel.querySelector('.agent-panel-close').addEventListener('click', () => panel.remove());
+      else {
+        // 情報画面と同じく、Esc でも閉じ、閉じたら開いたボタンへフォーカスを戻す
+        const close = panel.querySelector('.agent-panel-close');
+        panel.onAgentClose = hadFocus => { if (hadFocus && opener && opener !== document.body && opener.isConnected) opener.focus({ preventScroll: true }); };
+        close.addEventListener('click', () => removeAgentPanel(panel));
+        panel.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); removeAgentPanel(panel); } });
+        close.focus({ preventScroll: true });
+      }
       return panel;
     }
 
@@ -10106,9 +10118,15 @@ function makeAgentPanel(id, title, bodyHTML) {
       // One listener for the panel's lifetime: the list re-renders underneath it.
       panel.querySelector('#agent-history-list').addEventListener('click', (e) => {
         const del = e.target.closest('.btn-delete-session');
-        if (del) { deleteSavedSession(del.dataset.id); return; }
+        if (del) {
+          deleteSavedSession(del.dataset.id);
+          // 押したボタンは描き直しで消えるので、キーボードの位置をパネルの中に残す
+          if (panel.isConnected && !panel.contains(document.activeElement)) (panel.querySelector('.btn-load-session') || panel.querySelector('.agent-panel-close')).focus({ preventScroll: true });
+          return;
+        }
         const load = e.target.closest('.btn-load-session');
-        if (load) { loadSavedSession(load.dataset.id); panel.remove(); }
+        // 読み込むと一覧が描き直されて押したボタンが消え、フォーカスを戻す先が分からなくなるので、先に閉じる
+        if (load) { removeAgentPanel(panel); loadSavedSession(load.dataset.id); }
       });
       renderSavedSessionsList();
     }
@@ -10127,11 +10145,11 @@ function makeAgentPanel(id, title, bodyHTML) {
 
       listContainer.innerHTML = sessions.map(session => `
         <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer w-full overflow-hidden" data-id="${esc(session.id)}">
-          <div class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${esc(session.id)}">
-            <div class="truncate text-xs font-semibold text-normal group-hover:text-primary transition-colors">${esc(session.title)}</div>
-            <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
-          </div>
-          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${esc(session.id)}" title="${tr('Delete chat', 'チャットを削除')}">
+          <button type="button" class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${esc(session.id)}">
+            <span class="block truncate text-xs font-semibold text-normal group-hover:text-primary transition-colors">${esc(session.title)}</span>
+            <span class="block text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</span>
+          </button>
+          <button type="button" class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${esc(session.id)}" title="${tr('Delete chat', 'チャットを削除')}">
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -10793,7 +10811,7 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
       paletteInput.value = initial || '';
       renderPalette();
       paletteInput.focus();
-      const v = paletteInput.value; paletteInput.value = ''; paletteInput.value = v;
+      paletteInput.setSelectionRange(paletteInput.value.length, paletteInput.value.length);
     }
     function closePalette() { paletteEl.classList.add('hidden'); paletteInput.value = ''; }
     function movePalette(dir) { if (!paletteFiltered.length) return; paletteSel = wrapIndex(paletteSel, dir, paletteFiltered.length); renderPalette(); }
