@@ -13,7 +13,7 @@ const answer=event('classification',{version:1,intent:'consult',mode:'consult',f
 const methods={
  'widget:information':async()=>({canPin:true}),
  'widget:pin':async args=>{calls.push(['pin',args]);return{requested:true}},
- 'conversation:information':async()=>({test:false}), 'conversation:checkPermissions':async()=>({display:'denied'}),
+ 'conversation:information':async()=>({test:false}), 'conversation:checkPermissions':async()=>({display:'denied'}), 'conversation:notificationPreference':async()=>({enabled:true}),
  'conversation:begin':async value=>{calls.push(['begin']);runs.set(value.id,{...value,status:'complete',data:answer,startedAt:Date.now()});},
  'conversation:read':async({id,offset})=>{const run=runs.get(id),bytes=Buffer.from(run.data).subarray(offset);return{status:run.status,base64:bytes.toString('base64'),offset:offset+bytes.length,length:Buffer.byteLength(run.data)};},
  'conversation:pending':async()=>({runs:[...runs.values()].map(({data,body,...r})=>r)}),
@@ -29,7 +29,7 @@ await context.addInitScript(()=>{
  window.Capacitor={isNativePlatform:()=>true,getPlatform:()=>'android',Plugins:{
   Filesystem:plugin('fs',['stat','readFile','writeFile','rename','deleteFile','readdir','rmdir','getUri']),
   MagiWidget:plugin('widget',['information','pin']),
-  MagiConversation:plugin('conversation',['information','checkPermissions','begin','read','pending','cancel','acknowledge','openNotificationSettings']),
+  MagiConversation:plugin('conversation',['information','checkPermissions','notificationPreference','begin','read','pending','cancel','acknowledge','openNotificationSettings']),
   App:{addListener:async(_,fn)=>{window.widgetLink=fn},getLaunchUrl:()=>call('launch')},
   SpeechRecognition:{available:async()=>({available:true}),checkPermissions:async()=>({speechRecognition:'granted'}),
    getSupportedLanguages:async()=>({languages:['en-US']}),start:async options=>{window.voiceStarts++;window.voiceId=options.sessionId},stop:async()=>{},

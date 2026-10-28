@@ -13,7 +13,7 @@ const event = (name, data) => 'event: ' + name + '\ndata: ' + JSON.stringify(dat
 const prefix = event('classification', { version: 1, intent: 'consult', mode: 'consult', fresh: 'no', votable: 'no', site_pages: 'no', magi_candidate: false, reply_language: { version: 1, code: 'en', source: 'ui' } });
 const answer = prefix + event('integrated', { delta: 'Durably received answer.' }) + event('done', {});
 const methods = {
-  information: async () => ({ test: false }), checkPermissions: async () => ({ display: 'denied' }),
+  information: async () => ({ test: false }), checkPermissions: async () => ({ display: 'denied' }), notificationPreference: async () => ({ enabled: true }), setNotificationPreference: async () => ({ enabled: true }),
   requestPermissions: async () => { throw Error('permission denied'); }, openNotificationSettings: async () => { calls.push(['settings']); },
   begin: async options => {
     calls.push(['begin', options]);
@@ -35,7 +35,7 @@ await context.addInitScript(() => {
   window.magiOpenLink = null;
   window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins: {
     Filesystem: Object.fromEntries(['stat', 'readFile', 'writeFile', 'rename', 'deleteFile', 'readdir', 'rmdir', 'getUri'].map(name => [name, args => call('fs:' + name, args)])),
-    MagiConversation: Object.fromEntries(['information', 'checkPermissions', 'requestPermissions', 'openNotificationSettings', 'begin', 'read', 'pending', 'cancel', 'acknowledge'].map(name => [name, args => call(name, args)])),
+    MagiConversation: Object.fromEntries(['information', 'checkPermissions', 'notificationPreference', 'setNotificationPreference', 'requestPermissions', 'openNotificationSettings', 'begin', 'read', 'pending', 'cancel', 'acknowledge'].map(name => [name, args => call(name, args)])),
     App: { addListener: async (name, callback) => { if (name === 'appUrlOpen') window.magiOpenLink = callback; return { remove() {} }; }, getLaunchUrl: () => call('launch') }
   } };
 });
@@ -117,8 +117,11 @@ try {
   assert.deepEqual(restoredImage, { count: 1, file: originalName, jpeg: true });
   assert(storage.files.has('DATA:magi/images/' + originalName)); results.push('interrupted image restores the original for a full-size retry');
   // 受信列を全削除の対象に含め、通知拒否の状態を画面へ出す。
-  await p.evaluate(() => showAgentSettings()); assert.match(await p.locator('#native-notification-status').innerText(), /Notifications are off/);
-  await p.locator('#native-notification-status button').click(); assert.ok(calls.some(c => c[0] === 'settings'));
+  // 通知は切り替えスイッチ（1b51035a以降）。許可が無ければオフと表示し、オンにすると端末の通知設定を開く
+  await p.evaluate(() => showAgentSettings()); await p.waitForFunction(() => !document.querySelector('#native-notification-toggle').disabled);
+  assert.equal(await p.locator('#native-notification-toggle').getAttribute('aria-checked'), 'false');
+  await p.locator('#native-notification-toggle').click(); await p.waitForFunction(() => !document.querySelector('#native-notification-toggle').disabled);
+  assert.ok(calls.some(c => c[0] === 'settings'));
   p.on('dialog', dialog => dialog.accept()); await p.locator('#history-clear').click(); await p.waitForFunction(() => agentHistory.length === 0);
   assert.equal(runs.size, 0); results.push('notification settings and deletion of pending streams');
   assert.equal(jsChatPosts, 0); assert.deepEqual(errors, []);

@@ -87,7 +87,9 @@ try {
    const restoredSessions = await page.evaluate(() => JSON.parse(safeGet('magi_saved_sessions')));
    for (const savedId of ['old', id]) {
     const before = originalSessions.find(s => s.id === savedId), after = restoredSessions.find(s => s.id === savedId);
-    assert.deepEqual(after.history, before.history); assert.deepEqual(after.shared, before.shared);
+    // 旧データの回答には、開いたときに mid が付く（［もう一度］・評価のため）。それ以外は変えない
+    const unmarked = after.history.map((item, i) => { if (before.history[i] && !before.history[i].mid && item.role === 'assistant') { assert.match(item.mid, /^\w+$/); const { mid, ...rest } = item; return rest; } return item; });
+    assert.deepEqual(unmarked, before.history); assert.deepEqual(after.shared, before.shared);
    }
    await page.evaluate(() => { syncCurrentToSaved(); resetAgent(); });
    await page.evaluate(id => loadSavedSession(id), id);
