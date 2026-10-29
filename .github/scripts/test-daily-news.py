@@ -419,8 +419,9 @@ class SearchGenerationTests(unittest.TestCase):
                     issue = engine.load_history(config['data_dir'])[0]
                     self.assertEqual(issue['count'], int(keep_valid))
                     self.assertEqual(issue['executive_summary'], ['有効な要点'])
-                    self.assertEqual(issue['sns_summary'], '')
-                    self.assertEqual(issue['sns_why_it_matters'], '')
+                    # 使わなくなった SNS 総括は、AI が返しても号に残さない
+                    self.assertNotIn('sns_summary', issue)
+                    self.assertNotIn('sns_why_it_matters', issue)
                     self.assertEqual(issue['sns_buzz'], [])
                     index = json.loads(Path(config['job_dir'], 'search-index.json').read_text(encoding='utf-8'))
                     self.assertEqual(len(index['records']), int(keep_valid))

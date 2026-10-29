@@ -145,3 +145,8 @@
 
 /assets/vendor/svgo@3.2.0/svgo.browser.js /assets/vendor/svgo@3.3.5/svgo.browser.js 301
 /assets/vendor/svgo@3.2.0/LICENSE /assets/vendor/svgo@3.3.5/LICENSE 301
+
+# 統合: 2026-10-30  日刊の媒体別テーマ CSS を daily-base.css へ（色は <body data-daily-media> で決まる）
+# ブラウザなどにキャッシュされた古い号の HTML が読みに来ても崩れないように。
+/job/assets/nitori-daily.css        /job/assets/daily-base.css  301
+/job/assets/retail-tech-daily.css   /job/assets/daily-base.css  301

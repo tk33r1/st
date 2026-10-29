@@ -80,10 +80,14 @@ def noise_blacklist(config, key, defaults):
     return defaults + list(config.get(key) or [])
 
 
-# 全媒体で文面が同一の FAQ。UI 側（共有ボタン・ウォッチ機能）の仕様を変えたときに
+# 全媒体で文面が同一の FAQ。UI 側（購読・共有ボタン・ウォッチ機能）の仕様を変えたときに
 # 媒体ごとの CONFIG が片方だけ古くなるのを防ぐため、ここで一元管理する。
-# CONFIG の faq_items（媒体固有の説明）の後ろに連結される。
+# CONFIG の faq_items（媒体固有の説明）の後ろに連結される。{x_handle} は CONFIG の値に置き換える。
 SHARED_FAQ_ITEMS = [
+    {
+        "q": "最新ニュースの通知や購読はできますか？",
+        "a": "本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{x_handle}\" target=\"_blank\" rel=\"noopener noreferrer\">@{x_handle}</a> もあわせてご利用ください。"
+    },
     {
         "q": "社内チャット（Slack/Teams）やSNSへの引用・共有は可能ですか？",
         "a": "はい、ご自由に共有いただけます。各ニュースカードの「📋 コピー」ボタンを押すと、見出し・要点・リンクをまとめた社内ツール貼り付け用のテキストがクリップボードにコピーされます。隣の「共有」ボタンは、対応環境では端末の共有メニューを開き、非対応の環境では同じテキストをコピーします。"
@@ -97,7 +101,8 @@ SHARED_FAQ_ITEMS = [
 
 def faq_items(config):
     """媒体固有 FAQ に共通 FAQ を連結して返す。"""
-    return list(config['faq_items']) + SHARED_FAQ_ITEMS
+    shared = [{**item, 'a': item['a'].replace('{x_handle}', config['x_handle'])} for item in SHARED_FAQ_ITEMS]
+    return list(config['faq_items']) + shared
 
 # SNS バズカードのプラットフォーム別メタ情報。
 # 過去号の JSON には platform キーが無いため、未設定は 'x' にフォールバックする。
@@ -224,7 +229,7 @@ def render_site_header(config, brand_href, search_action, menu_links, sibling_pr
       <a href="{esc(brand_href)}" class="brand">
         <span class="brand-mark">{config['brand_logo_svg']}</span>
         <span class="brand-text">
-          <span class="brand-name">{config['brand_title']}</span>
+          <span class="brand-name">{config['media_name']}</span>
           <span class="brand-tag">{config['brand_subtitle']}</span>
         </span>
       </a>
@@ -294,12 +299,12 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261029_1'
+DAILY_UI_VERSION = '20261030_1'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
 SEARCH_RUNTIME_VERSION = '20261012_16'
 SEARCH_UI_SCRIPT_VERSION = '20261015_1'
-DAILY_CSS_VERSION = '20261029_1'
+DAILY_CSS_VERSION = '20261030_1'
 # 共通検索の資産（読む順）。ポータルのタグと、号のページの遅延読み込み（ヘッダーの data-search-assets）の両方をここから作る。
 SEARCH_ASSETS = [
     f'search-ui.css?v={SEARCH_RUNTIME_VERSION}',
@@ -350,7 +355,8 @@ DAILY_HANDOFF_SCRIPT = r"""<script>
 
 
 
-# 検索の本体が取得中でも確定を取りこぼさず、URLのクエリにも残さない。
+# ヘッダー検索の IME と確定はここだけで扱う（daily-ui.js に同じ処理を書かない）。検索の本体が取得中でも確定を取りこぼさず、
+# URLのクエリにも残さない。ポータルでは daily-ui.js が置く _stSearchFor へ渡し、まだ無ければ STDailyPendingSearch に預ける。
 # 告知をまだ表示していないので、ここで受ける確定は②の許可を持たない。
 DAILY_EARLY_SEARCH_SCRIPT = r"""
 (function(w,d) {
@@ -363,14 +369,14 @@ DAILY_EARLY_SEARCH_SCRIPT = r"""
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -425,7 +431,7 @@ def render_head(config, rel, title, social_title, description, canonical,
   <script type="application/ld+json">
 {jsonld_str}
   </script>
-  <link rel="stylesheet" href="{rel}job/assets/{config['css_file']}?v={DAILY_CSS_VERSION}">"""
+  <link rel="stylesheet" href="{rel}job/assets/daily-base.css?v={DAILY_CSS_VERSION}">"""
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -824,7 +830,6 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
 
     extra_items = candidates.get('EXTRA', [])
     sns_section = ""
-    sns_output_fields = ""
     if extra_items:
         sns_sample = [{
             'id': source.get('id', ''),
@@ -842,9 +847,7 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
             if label not in sns_platform_labels:
                 sns_platform_labels.append(label)
         sns_platform_names = " / ".join(sns_platform_labels)
-        # 反響の主指標は媒体ごとに違う。ここを静的な媒体名で書くと、実際には
-        # 収録していない媒体の話をAIが sns_summary に書いてしまうため、
-        # 実際に候補として渡した媒体だけに言及する。
+        # 反響の主指標は媒体ごとに違う。実際に候補として渡した媒体だけに言及する。
         video_labels = [label for label in sns_platform_labels if label != 'X']
         metric_parts = []
         if 'X' in sns_platform_labels:
@@ -852,25 +855,18 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
         if video_labels:
             metric_parts.append(f'動画系（{" / ".join(video_labels)}）は views（再生数）')
         metric_note = f'{"、".join(metric_parts)}が反響の主指標です。'
-        # 「媒体ごとの違い」は2媒体以上を収録した号でしか成り立たない
-        if len(sns_platform_labels) > 1:
-            metric_note += '媒体ごとの反応の質の違い（例: 短尺動画では実際の使用シーンや組み立て過程が伸びる等）にも触れてください。'
         sns_section = f"""
 【SNS生活者バズ投稿一覧（{sns_platform_names}／本日の「SNSリアル反響」セクション用）】:
 以下は生活者が実際に投稿し話題になっている生の声です。重要な投稿は記事として選定して構いません。
-その場合は一覧の "id"（SNS-xx）を記事の "source_id" に必ずそのまま設定してください。また、一覧全体を俯瞰して
-共通する傾向・トレンドを分析し、後述の "sns_summary" / "sns_why_it_matters" を作成してください。
+その場合は一覧の "id"（SNS-xx）を記事の "source_id" に必ずそのまま設定してください。
 各投稿の "platform" は投稿先（{sns_platform_names}）を示します。{metric_note}
 {json.dumps(sns_sample, ensure_ascii=False, indent=2)}
 """
-        sns_output_fields = """,
-  "sns_summary": "上記のSNS投稿一覧全体の傾向を媒体横断で要約した客観的な説明文（120〜200文字）",
-  "sns_why_it_matters": "上記のSNS投稿一覧全体を踏まえた、プロの視点による生活者UX・ビジネスへの示唆（120〜200文字）\""""
 
     prompt = f"""あなたは日本最高峰の{config['editor_title']}です。
 本日の発行日: {target_date_str}（まとめ対象: {yesterday_str}の最新動向）
 
-以下の【国内ニュース候補】および【海外ニュース候補】を精査し、{config['brand_title']}の読者に届ける重要ニュースを厳選してください。
+以下の【国内ニュース候補】および【海外ニュース候補】を精査し、{config['media_name']}の読者に届ける重要ニュースを厳選してください。
 {recent_section}
 【厳格な選別ルール】
 {config['prompt_selection_rules']}
@@ -921,7 +917,7 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
       "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)},
       "search_terms": ["内容に即した日本語の言い換え", "English synonym", "English topic"]
     }}
-  ]{sns_output_fields}
+  ]
 }}"""
     return prompt, candidate_index
 
@@ -1103,9 +1099,6 @@ def prepare_article_fields(config, result):
     if 'executive_summary' in result:
         summary = result['executive_summary']
         result['executive_summary'] = [text for text in summary if isinstance(text, str)] if isinstance(summary, list) else []
-    for field in ('sns_summary', 'sns_why_it_matters'):
-        if field in result and not isinstance(result[field], str):
-            result[field] = ''
     return result
 
 
@@ -1411,7 +1404,7 @@ def build_search_index(config, articles_history):
 def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
     articles = issue_data.get('articles', [])
     exec_summary = issue_data.get('executive_summary', [])
-    dynamic_desc = " ".join(exec_summary[:2]) if exec_summary else f"{formatted_date}の{config['brand_title']}まとめ。"
+    dynamic_desc = " ".join(exec_summary[:2]) if exec_summary else f"{formatted_date}の{config['media_name']}まとめ。"
     if len(dynamic_desc) > 280:
         dynamic_desc = dynamic_desc[:277] + "..."
 
@@ -1501,7 +1494,7 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
             "itemListElement": [
                 { "@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/" },
                 { "@type": "ListItem", "position": 2, "name": "Job", "item": "https://tk.st/job/" },
-                { "@type": "ListItem", "position": 3, "name": config['brand_title'], "item": base_url },
+                { "@type": "ListItem", "position": 3, "name": config['media_name'], "item": base_url },
                 { "@type": "ListItem", "position": 4, "name": f"{formatted_date}号", "item": f"{base_url}{date_key}/" }
             ]
         },
@@ -1521,7 +1514,7 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
     }
 
 
-def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=None):
+def render_sns_buzz_section(sns_buzz, config, featured_urls=None):
     if not sns_buzz:
         return ""
 
@@ -1577,34 +1570,6 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=Non
           <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>{meta['link_text']}</span>{ICON_EXTERNAL_SVG}</a>
         </article>""")
 
-    # セクション全体の要約・示唆まとめブロック（AIが生成した場合のみ表示）。
-    # AIが sns_summary/sns_why_it_matters を返さなかった場合（項目省略やルールベース
-    # フォールバック時）、その日の実際の投稿内容と無関係な固定文言をでっち上げて
-    # 「AIの分析」であるかのように出すのは不誠実なため、ボックス自体を省略する。
-    issue = issue_data or {}
-    raw_summary = issue.get('sns_summary', '')
-    raw_wim = issue.get('sns_why_it_matters', '')
-
-    summary_box_html = ""
-    if (raw_summary or raw_wim) and not featured_urls:
-        bold_summary = bold_scan_text(esc(raw_summary), kw_regex)
-        takeaway, detail_wim = split_takeaway(raw_wim)
-        bold_takeaway = bold_scan_text(esc(takeaway), kw_regex)
-        bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
-
-        summary_box_html = f"""
-      <div class="panel panel-sns">
-        <div class="card-summary"><p>{bold_summary}</p></div>
-        <div class="why-it-matters">
-          <div class="wim-header">{ICON_WIM_SVG}<strong>Why it matters（生活者UX・生活空間への示唆）</strong></div>
-          <div class="wim-takeaway">
-            <span class="takeaway-badge">KEY TAKEAWAY</span>
-            <p class="takeaway-text">{bold_takeaway}</p>
-          </div>
-          {f'<p class="wim-detail">{bold_detail}</p>' if bold_detail else ''}
-        </div>
-      </div>"""
-
     # 収録されたプラットフォームだけをバッジ・見出しに出す（X のみの過去号は従来表示のまま）
     platform_counts = {}
     for item in ordered_buzz:
@@ -1651,7 +1616,6 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=Non
         <div class="sns-badges">{badges_html}</div>
         <p class="sns-sub">{sub_text}</p>
       </div>
-      {summary_box_html}
       <div class="sns-grid">
 {"".join(cards_html)}
       </div>
@@ -1673,7 +1637,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     } if config.get('dedupe_featured_sns') else set())
     remaining_sns = [item for item in sns_buzz if item.get('url') not in featured_urls]
     sns_buzz_html = render_sns_buzz_section(
-        sns_buzz, config, issue_data=issue_data,
+        sns_buzz, config,
         featured_urls=featured_urls or None
     )
     social_metrics_html = render_social_metrics(issue_data, prev_issue) if config.get('show_social_metrics') else ''
@@ -1769,10 +1733,9 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             title_inner = esc(raw_title)
             source_link_html = '<span class="source-link is-missing" title="出典URLを特定できませんでした">出典リンクなし</span>'
 
-        share_url = f"https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}"
         source_time = source_time_html(art)
         source_meta_html = f'<div class="source-details"><span class="source-kind">{source_kind(art, config)}</span>{source_time}</div>'
-        correction_subject = urllib.parse.quote(f"{config['brand_title']} {formatted_date}号 記事{idx}の訂正・出典について")
+        correction_subject = urllib.parse.quote(f"{config['media_name']} {formatted_date}号 記事{idx}の訂正・出典について")
         correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
         tags_html = ''.join(topic_tag_html(tag, '../') for tag in (art.get('tags', []) or []) if str(tag).strip())
@@ -1793,7 +1756,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             category_control = f'<button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>'
 
         card_html = f"""
-        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}">
+        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}">
           <div class="card-index" aria-hidden="true">{idx:02d}</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1940,7 +1903,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     <nav class="breadcrumbs" aria-label="パンくずリスト">
       <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
       <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
-      <a href="../">{config['brand_title']}</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">{config['media_name']}</a><span class="sep" aria-hidden="true">/</span>
       <strong>{formatted_date}号</strong>
     </nav>
 
@@ -2019,11 +1982,11 @@ def build_meta_pills_html(config, latest):
     pills = []
     for cat in seen:
         label = config['category_pill_labels'].get(cat, cat)
-        query = 'category:' + urllib.parse.quote(cat, safe='')
-        pills.append(f'<a href="{esc(date_key)}/?filter={query}" class="meta-pill-item">{esc(label)}</a>')
+        query = urllib.parse.urlencode({'category': cat})
+        pills.append(f'<a href="{esc(date_key)}/?{esc(query)}" class="meta-pill-item">{esc(label)}</a>')
 
     if any(art.get('region') == 'GLOBAL' for art in articles):
-        pills.append(f'<a href="{esc(date_key)}/?filter=region:GLOBAL" class="meta-pill-item">🌍 海外ニュースすべて</a>')
+        pills.append(f'<a href="{esc(date_key)}/?region=GLOBAL" class="meta-pill-item">🌍 海外ニュースすべて</a>')
 
     return "\n        ".join(pills)
 
@@ -2031,7 +1994,7 @@ def build_meta_pills_html(config, latest):
 def render_top_index_html(config, articles_history):
     base_url = f"https://tk.st/job/{config['media_id']}/"
     portal_title = config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"
-    portal_desc = config.get('portal_seo_desc') or config['brand_desc']
+    portal_desc = config['hero_desc']
     latest = articles_history[0] if articles_history else None
     latest_date_formatted = f"{latest['date'][:4]}年{int(latest['date'][4:6])}月{int(latest['date'][6:8])}日" if latest else ""
     highlight_limit = 1 if latest and int(latest.get('count', len(latest.get('articles', [])))) <= 3 else 3
@@ -2178,7 +2141,7 @@ def render_top_index_html(config, articles_history):
             "itemListElement": [
                 { "@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/" },
                 { "@type": "ListItem", "position": 2, "name": "Job", "item": "https://tk.st/job/" },
-                { "@type": "ListItem", "position": 3, "name": config['brand_title'], "item": base_url }
+                { "@type": "ListItem", "position": 3, "name": config['media_name'], "item": base_url }
             ]
         },
         {
@@ -2282,14 +2245,14 @@ def render_top_index_html(config, articles_history):
     <nav class="breadcrumbs" aria-label="パンくずリスト">
       <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
       <a href="../">Job</a><span class="sep" aria-hidden="true">/</span>
-      <strong>{config['brand_title']}</strong>
+      <strong>{config['media_name']}</strong>
     </nav>
 
     <section class="masthead">
       <div class="masthead-inner">
         <h1 class="masthead-title">{config['media_name']}</h1>
         <div class="masthead-rule" aria-hidden="true"></div>
-        <p class="masthead-desc">{config['portal_hero_desc']}</p>
+        <p class="masthead-desc">{config['hero_desc'].replace('。', '。<br>', 1)}</p>
         <div class="meta-pills">
 {meta_pills_html}
         </div>
@@ -2373,7 +2336,7 @@ def generate_rss_xml(config, articles_history):
   <channel>
     <title>{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']}"}</title>
     <link>{base_url}</link>
-    <description>{config.get('portal_seo_desc') or config['brand_desc']}</description>
+    <description>{config['hero_desc']}</description>
     <language>ja</language>
 {channel_dates}    <lastBuildDate>{last_build_date}</lastBuildDate>
     <ttl>720</ttl>
@@ -2646,8 +2609,6 @@ def run_daily_pipeline(config):
         "executive_summary": exec_summary,
         "articles": ai_result.get('articles', []),
         "sns_buzz": ai_result.get('sns_buzz', []),
-        "sns_summary": ai_result.get('sns_summary', ''),
-        "sns_why_it_matters": ai_result.get('sns_why_it_matters', ''),
         # 作り直しても投稿記録は消さない（消すと次の Post to X が再投稿する。再投稿は post-to-x.py の --force だけ）。
         **x_post_record(previous_issue),
     }

@@ -5,9 +5,9 @@
    Design: "Editorial Wire"
    毎朝3〜5分で読み切る業界ブリーフのための、罫線主体のエディトリアル・システム。
    影ではなくヘアライン、色ではなく余白と階層で情報を切り分ける。
-   見出しは明朝（Noto Serif JP）、本文はゴシック、メタ情報は等幅の三層構成。
+   見出しは明朝、本文はゴシック、メタ情報は等幅の三層構成。Web フォントは読まず、端末のフォントで組む。
 
-   テーマ色は各メディアの CSS が --primary 系トークンだけを上書きする。
+   テーマ色は <body data-daily-media> ごとに --primary 系トークンだけを上書きする（1-2）。
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -30,13 +30,13 @@
   --ink-3: #6a7079;
   --ink-4: #8b9099;
 
-  /* 各メディア CSS が上書きする既定値（Retail Tech のコバルト） */
+  /* テーマ色の既定値（Retail Tech のコバルト）。Nitori の値は 1-2。
+     明るいテーマ色を小さな文字に使うと AA を割るため、文字用に暗い派生色 --primary-ink を持つ */
   --primary: #1a47d4;
-  /* 明るいテーマ色を小さな文字に使うと AA を割るため、文字用に暗い派生色を持つ */
   --primary-ink: #1a47d4;
   --primary-subtle: rgba(26, 71, 212, 0.06);
-  --primary-border: rgba(26, 71, 212, 0.22);
-  --primary-shadow: rgba(26, 71, 212, 0.18);
+  --primary-border: rgba(26, 71, 212, 0.24);
+  --primary-shadow: rgba(26, 71, 212, 0.38);
 
   /* 地域バッジはテーマ色と競合しないよう中立色＋暖色の対比で組む。
      多数派の「国内」を無彩色に、少数派の「海外」を暖色にして視線を拾わせる */
@@ -53,18 +53,33 @@
 
   --shadow-md: 0 10px 30px -18px rgba(22, 24, 28, 0.35);
 
-  --font-sans: "Zen Kaku Gothic New", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
   --font-display: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
-  --font-latin: "Outfit", var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   --gutter: 24px;
   --measure: 1080px;
 }
 
+/* 1-2. 媒体ごとのテーマ色。Retail Tech（シグナル・コバルト。白地で約 8:1 出るので文字色もブランド色のまま）は
+   :root の既定値を使い、Nitori だけ上書きする */
+[data-daily-media="nitoridaily"] {
+  /* ニトリグリーン R0 G158 B150。白地の小さな文字でも AA（4.5:1）を満たすよう、文字色は暗いティール */
+  --primary: #009e96;
+  --primary-ink: #00736d;
+  --primary-subtle: rgba(0, 158, 150, 0.07);
+  --primary-border: rgba(0, 158, 150, 0.28);
+  --primary-shadow: rgba(0, 158, 150, 0.4);
+}
+
 /* --------------------------------------------------------------------------
    2. リセットと土台
    -------------------------------------------------------------------------- */
+/* display を指定した要素も hidden 属性で隠す（個々の要素に [hidden] を書かない） */
+[hidden] {
+  display: none !important;
+}
+
 *,
 *::before,
 *::after {
@@ -190,7 +205,7 @@ a {
 }
 
 .brand-name {
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -305,10 +320,6 @@ a {
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-md);
-}
-
-.header-menu-panel[hidden] {
-  display: none;
 }
 
 .header-menu-panel a {
@@ -891,6 +902,10 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
   cursor: pointer;
   user-select: none;
   font-size: 11.5px;
@@ -1004,11 +1019,6 @@ a {
   color: var(--primary-ink);
 }
 
-/* display 指定を持つ要素は hidden 属性だけでは隠れないので明示的に打ち消す */
-.filter-chip[hidden] {
-  display: none;
-}
-
 .watch-banner {
   display: flex;
   align-items: center;
@@ -1022,10 +1032,6 @@ a {
   background: var(--primary-subtle);
   color: var(--primary-ink);
   font-size: 12px;
-}
-
-.watch-banner[hidden] {
-  display: none;
 }
 
 .watch-banner button {
@@ -1185,7 +1191,7 @@ a {
 
 .original-title {
   margin-top: 7px;
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 12.5px;
   font-style: italic;
   line-height: 1.6;
@@ -1453,21 +1459,6 @@ a {
   color: var(--ink-3);
 }
 
-.panel-sns {
-  border-left: 2px solid var(--primary);
-  border-radius: var(--radius-xs) var(--radius-md) var(--radius-md) var(--radius-xs);
-  margin-bottom: 20px;
-}
-
-.panel-sns .card-summary {
-  margin-top: 0;
-}
-
-.panel-sns .why-it-matters {
-  border-left-width: 0;
-  border-radius: var(--radius-sm);
-}
-
 .sns-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1662,7 +1653,7 @@ a {
 }
 
 .masthead-title {
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: clamp(34px, 6.4vw, 58px);
   font-weight: 800;
   line-height: 1.1;
@@ -1873,7 +1864,7 @@ a {
 }
 
 .archive-day {
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 25px;
   font-weight: 700;
   line-height: 1;
@@ -1977,7 +1968,7 @@ a {
   border: 1px solid var(--primary-border);
   background: var(--primary-subtle);
   color: var(--primary-ink);
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 700;
 }
@@ -2066,14 +2057,14 @@ a {
   border-radius: var(--radius-sm);
   background: var(--ink);
   color: #fff;
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .curator-info h2 {
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -2471,17 +2462,6 @@ a {
 /* --------------------------------------------------------------------------
    追加機能：出典、共有、横断検索、テーマウォッチ
    -------------------------------------------------------------------------- */
-[hidden] {
-  display: none !important;
-}
-
-.view-mode-toggle {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-family: var(--font-sans);
-}
-
 .source-details {
   display: flex;
   flex-wrap: wrap;
@@ -2682,7 +2662,7 @@ a {
   display: inline-block;
   margin: 7px 5px 0 0;
   color: var(--ink);
-  font-family: var(--font-latin);
+  font-family: var(--font-sans);
   font-size: 24px;
 }
 
@@ -2787,16 +2767,6 @@ a {
   color: var(--ink);
 }
 
-.trend-list > li > a > span,
-.trend-list > li > a > strong {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 .trend-list strong {
   color: var(--primary-ink);
   font-family: var(--font-mono);
@@ -2832,10 +2802,6 @@ a {
   border-top: 1px solid var(--rule);
 }
 
-.watch-feed[hidden] {
-  display: none;
-}
-
 .watch-feed-head {
   display: flex;
   align-items: center;
@@ -2866,10 +2832,6 @@ a {
 .watch-feed-seen:hover {
   border-color: var(--primary-border);
   color: var(--primary-ink);
-}
-
-.watch-feed-seen[hidden] {
-  display: none;
 }
 
 .watch-feed-list {
@@ -2914,7 +2876,6 @@ a {
   font-size: 10px;
 }
 
-.archive-search [hidden] { display: none !important; }
 .archive-info-button {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 44px; min-height: 44px; border: 0; border-radius: var(--radius-sm);

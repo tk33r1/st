@@ -219,9 +219,6 @@ CATEGORY_PILL_LABELS = {
     "グローバル先端トレンド": "🌐 グローバル先端トレンド",
 }
 
-# FAQ の本文と CONFIG の両方から参照する。二重管理にするとハンドルの変更時に片方が残る。
-X_HANDLE = 'dailynitori'
-
 FAQ_ITEMS = [
     {
         "q": "「Nitori Daily」とはどのようなメディアですか？",
@@ -233,11 +230,7 @@ FAQ_ITEMS = [
     },
     {
         "q": "ニュースやSNS話題の選定・分析はどのように行われていますか？",
-        "a": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは前日投稿分を再生数順で収集しているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。マルチAI（DeepSeek / OpenAI GPT）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
-    },
-    {
-        "q": "最新ニュースの通知や購読はできますか？",
-        "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
+        "a": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは直近1週間で再生数を伸ばした動画を集めているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
     }
 ]
 
@@ -300,17 +293,12 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'nitoridaily',
     'media_name': 'Nitori Daily',
-    'x_handle': X_HANDLE,
+    'x_handle': 'dailynitori',  # 購読の FAQ（daily_engine.py の SHARED_FAQ_ITEMS）もこれを使う
     'x_hashtags': ['#ニトリ', '#リテールDX'],
-    'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',
-    'brand_desc': '毎朝8:00更新。昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響（ヒット商品、使い勝手、店舗体験、物流DX、SPA戦略）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊ニュースメディア。',
     'hero_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
-    'portal_hero_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。<br>ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
     'portal_seo_title': '日刊ニトリ／速報ニュース・SNSの話題まとめ | Nitori Daily',
-    'portal_seo_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
-    'css_file': 'nitori-daily.css',
     'favicon_file': 'nitori-favicon.svg',
     'ogp_target': 'nitori',
     'portal_ogp_image': 'https://tk.st/images/ogp/nitori-ogp.webp',

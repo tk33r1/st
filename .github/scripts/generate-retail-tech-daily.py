@@ -42,9 +42,6 @@ CATEGORY_PILL_LABELS = {
     "グローバル先端トレンド": "🌐 グローバル先端トレンド",
 }
 
-# FAQ の本文と CONFIG の両方から参照する。二重管理にするとハンドルの変更時に片方が残る。
-X_HANDLE = 'retailtechdaily'
-
 FAQ_ITEMS = [
     {
         "q": "「Retail Tech Daily」とはどのようなメディアですか？",
@@ -56,11 +53,7 @@ FAQ_ITEMS = [
     },
     {
         "q": "記事の選定・要約はどのように行われていますか？",
-        "a": "国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。マルチAI（DeepSeek / OpenAI GPT）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。"
-    },
-    {
-        "q": "最新ニュースの通知や購読はできますか？",
-        "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
+        "a": "国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。"
     }
 ]
 
@@ -122,17 +115,12 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'retailtechdaily',
     'media_name': 'Retail Tech Daily',
-    'x_handle': X_HANDLE,
+    'x_handle': 'retailtechdaily',  # 購読の FAQ（daily_engine.py の SHARED_FAQ_ITEMS）もこれを使う
     'x_hashtags': ['#リテールテック', '#流通DX'],
-    'brand_title': 'Retail Tech Daily',
     'brand_title_short': 'リテールテック＆流通DX',
     'brand_subtitle': '毎朝8時の流通DX・リテールテック日刊速報',
-    'brand_desc': '毎朝8:00更新。昨日の国内外リテールテック・流通DX動向（スマートカート、無人決済、リテールメディア、RFIDロボティクス、AI需要予測）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊速報。',
     'hero_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
-    'portal_hero_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。<br>スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
     'portal_seo_title': '日刊リテールテック／流通DXの速報ニュース | Retail Tech Daily',
-    'portal_seo_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
-    'css_file': 'retail-tech-daily.css',
     'favicon_file': 'retail-tech-favicon.svg',
     'ogp_target': 'retail-tech',
     'portal_ogp_image': 'https://tk.st/images/ogp/retail-tech-ogp.webp',

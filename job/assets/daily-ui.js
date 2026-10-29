@@ -160,7 +160,7 @@
     const watchChip = document.getElementById('watchFilterChip');
     const banner = document.getElementById('watchBanner');
     const bannerCount = document.getElementById('watchBannerCount');
-    const state = { region: '', category: '', lane: '', watch: '' };
+    const state = { region: '', category: '', watch: '' };
     const topicsByCard = new Map();
     cards.forEach(function(card) { topicsByCard.set(card, cardTopics(card)); });
     let scrollActiveChipIntoView = false;
@@ -197,7 +197,6 @@
       if (type === 'all') {
         state.region = '';
         state.category = '';
-        state.lane = '';
         state.watch = '';
       } else if (Object.prototype.hasOwnProperty.call(state, type)) {
         state[type] = state[type] === value ? '' : value;
@@ -208,7 +207,7 @@
       chips.forEach(function(chip) {
         const chipType = chip.dataset.filterType;
         const active = chipType === 'all'
-          ? !state.region && !state.category && !state.lane && !state.watch
+          ? !state.region && !state.category && !state.watch
           : state[chipType] === chip.dataset.filterVal;
         chip.classList.toggle('active', active);
         chip.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -220,7 +219,6 @@
       cards.forEach(function(card) {
         const matches = (!state.region || card.dataset.region === state.region) &&
           (!state.category || card.dataset.category === state.category) &&
-          (!state.lane || card.dataset.lane === state.lane) &&
           (!state.watch || watch.matches(topicsByCard.get(card)));
         card.classList.toggle('is-hidden', !matches);
         if (matches) visible += 1;
@@ -229,7 +227,7 @@
       refreshWatchUi();
 
       if (countEl) countEl.textContent = String(visible);
-      if (resetBtn) resetBtn.style.display = visible === cards.length && !state.region && !state.category && !state.lane && !state.watch ? 'none' : 'inline-flex';
+      if (resetBtn) resetBtn.style.display = visible === cards.length && !state.region && !state.category && !state.watch ? 'none' : 'inline-flex';
       if (noResultsEl) noResultsEl.style.display = visible === 0 ? 'block' : 'none';
 
       try {
@@ -269,6 +267,7 @@
 
     try {
       const params = new URLSearchParams(window.location.search);
+      // ?filter=種類:値 は以前の形（配布済みのリンクのために読む。いまは ?category= などを作る）
       const legacy = params.get('filter');
       if (legacy && legacy.indexOf(':') > 0) {
         const parts = legacy.split(':');
@@ -280,14 +279,20 @@
     scrollActiveChipIntoView = true;
   }
 
+  // 見出し・要点はカードの中身から、URL は canonical とカードの id から組み立てる（同じ値を属性に重ねて持たない）
   function shareDataForButton(btn) {
     const card = btn.closest('.news-card');
-    const data = card ? card.dataset : btn.dataset;
+    const text = function(selector) {
+      const el = card && card.querySelector(selector);
+      return el ? el.textContent.trim() : '';
+    };
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const page = (canonical ? canonical.href : window.location.href).split('#')[0];
     return {
       prefix: document.body.dataset.sharePrefix || '',
-      title: data.shareTitle || document.title,
-      takeaway: data.shareTakeaway || '',
-      url: data.shareUrl || window.location.href
+      title: text('.card-title') || document.title,
+      takeaway: text('.takeaway-text'),
+      url: card ? page + '#' + card.id : page
     };
   }
 
@@ -327,7 +332,7 @@
     });
   }
 
-  const media = location.pathname.split('/')[2];
+  const media = document.body.dataset.dailyMedia;
   function searchArticleDate(record) {
     return record.date.slice(0,4)+'-'+record.date.slice(4,6)+'-'+record.date.slice(6,8);
   }
@@ -367,8 +372,6 @@
         window.dataLayer.push(Object.assign({ event: 'daily_' + event }, values));
       }
     }));
-    // 古いHTMLのダイアログも、新しい共通説明へ接続する。
-    document.getElementById('archiveSearchInfo')?.remove();
     const info=document.getElementById('archiveSearchInfoOpen');
     info?.addEventListener('click',()=>search.openPrivacy(info));
     document.getElementById('archiveSearchHint')?.addEventListener('click',()=>search.focus());
@@ -443,40 +446,21 @@
   }
 
   // URL の q は head の同期処理（daily_engine.py）だけが扱い、確かめた検索語を window.STDailyHandoff に置く。
-  // ヘッダー検索とタグは、ポータルならその場で検索し、号のページならポータルの #q= へ移る（?q= を作らない）
+  // ヘッダー検索の IME と確定（号のページならポータルの #q= へ移る。?q= を作らない）は head の DAILY_EARLY_SEARCH_SCRIPT が受け持つ。
+  // ポータルでは、そこで確定した語をここで受け取って検索する。タグも同じ。
   function initSearchHandoff(searchFor) {
     const header = document.querySelector('.header-search');
     if (header) {
-      let composing=false,imeEnterHeld=false;
-      const input=header.querySelector('input[type="search"]');
-      input.addEventListener('compositionstart',()=>{composing=true;header._stComposing=true;});
-      input.addEventListener('compositionend',()=>{composing=false;header._stComposing=false;});
-      header.addEventListener('keydown',e=>{
-        if(e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter') return;
-        if(composing || e.isComposing || e.keyCode===229) {imeEnterHeld=true;header._stImeEnterHeld=true;return;}
-        if(imeEnterHeld || e.repeat) e.preventDefault();
-      },true);
-      document.addEventListener('keyup',e=>{if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {imeEnterHeld=false;header._stImeEnterHeld=false;}});
-      window.addEventListener('blur',()=>{imeEnterHeld=false;header._stImeEnterHeld=false;});
-      header.addEventListener('submit', function(e) {
-        if(header.dataset.stSearchOwned) return;
-        e.preventDefault();
-        if(composing || imeEnterHeld) return;
-        const input = header.querySelector('input[type="search"]');
-        const text = cleanQuery(input && input.value);
-        if (searchFor) {
+      if (searchFor) {
+        header._stSearchFor = function(text) {
           if (text) searchFor(text);
           else document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
-          return;
+        };
+        if (typeof window.STDailyPendingSearch === 'string') {
+          header._stSearchFor(window.STDailyPendingSearch); delete window.STDailyPendingSearch;
         }
-        try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-        goToPortal(header,text);
-      });
-      initIssueSearch(header);
-      header.dataset.stFallbackReady='1';
-      if(searchFor && typeof window.STDailyPendingSearch==='string') {
-        searchFor(window.STDailyPendingSearch);delete window.STDailyPendingSearch;
       }
+      initIssueSearch(header);
     }
     if (!searchFor) return;
     document.querySelectorAll('a.topic-tag[href^="#q="]').forEach(function(link) {
