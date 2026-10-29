@@ -1,5 +1,184 @@
 [
   {
+    "date": "20261030",
+    "title": "2026年10月30日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "アドインテが「結 -Yui」でAIエージェント機能を実装し、リテールメディア向けサイネージの運用負荷低減が進む方向性が示された イオンの次世代物流センター「川口東XD」がロボットによる仕分けから混載までを自動化し、サプライチェーンの省人化が具体化した",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "アドインテが「結 -Yui」でAIエージェント機能を実装し、リテールメディア向けサイネージの運用負荷低減が進む方向性が示された",
+      "イオンの次世代物流センター「川口東XD」がロボットによる仕分けから混載までを自動化し、サプライチェーンの省人化が具体化した",
+      "セルフレジの操作負担やダイナミックプライシングへの不安など、生活者の体験品質が店舗DXの課題として浮上している"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アドインテ、リテールメディア向けサイネージCMS「結 -Yui」を提供開始　AIエージェント機能を実装",
+        "original_title": "",
+        "source": "AGARA 紀伊民報",
+        "source_id": "JP-09",
+        "summary": "アドインテは、リテールメディア向けに独自開発しているサイネージCMSを大幅にアップデートし、サービス名を「結 -Yui」として提供開始した。新たにAIエージェント機能を実装しており、店内の広告配信に関わる運用の効率化を狙う。店頭メディアの配信管理を簡素化できれば、広告枠の拡大や小規模店舗への展開にもつながる可能性がある。",
+        "why_it_matters": "リテールメディアは広告枠の販売と配信運用の両面で人手がボトルネックになりやすい。AIエージェントがCMS操作を補助すれば、中小の小売事業者でも店内広告を手軽に運用できる可能性がある。今後は配信データと購買データをどう接続し、広告効果を可視化できるかが差別化の鍵になる。",
+        "tags": [
+          "リテールメディア",
+          "サイネージ",
+          "AIエージェント"
+        ],
+        "search_terms": [
+          "リテールメディア 配信CMS",
+          "retail media signage CMS",
+          "AIエージェント 店内広告",
+          "Yui アドインテ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBYYjNMQThNTGZtOGJkYzNnSUZGSVM3WFktbnN0eFJIX1NyZmxGUllwS0VEeWRweXh1LVp4MEkwdF9xQTNfOGdBVUJxaGlta3c?oc=5",
+        "source_pub_ts": 1793228400
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "イオン、次世代物流センター「川口東XD」が稼働　仕分けから混載までロボットで自動化",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-07",
+        "summary": "イオンの次世代型物流センター「川口東XD」が稼働した。仕分けから混載までの工程をロボットで自動化し、店舗向けの物流効率を高めることを目指す。人手不足が続く物流現場にとって、大規模拠点での自動化は省人化の具体的なモデルとして注目される。店舗への商品供給の正確性向上も期待される。",
+        "why_it_matters": "物流の自動化は店舗の欠品や在庫精度に直結するため、店舗DXの土台とも言える。仕分けや混載をロボットに任せることで、需要予測と連動した補充計画を組みやすくなる。小売各社は物流の自動化を競争力の源泉と位置づけており、今後はロボット導入後のデータ活用が差を生むだろう。",
+        "tags": [
+          "物流自動化",
+          "ロボティクス",
+          "サプライチェーン"
+        ],
+        "search_terms": [
+          "物流センター 自動化ロボット",
+          "warehouse robotics retail",
+          "混載 仕分け 省人化",
+          "イオン 川口東XD"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5FWllaX3FsVGZQU0pKbXA4WUpMcmVfNUJTTERFV3AyRjVOdDI3ODd4Vmp3RDFEcFk1cHRGczhiSFctT0ZDVElPdEhhMXFucWNiYVlkOFFpNm4?oc=5",
+        "source_pub_ts": 1793239200
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "グランベリーパーク、AI画像解析を活用した「駐車場出庫時間表示サービス」を導入",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-05",
+        "summary": "商業施設のグランベリーパークは、AI画像解析を活用した「駐車場出庫時間表示サービス」を導入した。駐車場の状況をAIで把握し、出庫までの時間を来館者に示す仕組みとみられる。来館者の待ち時間の見通しを立てやすくすることで、施設内での滞在体験の向上につなげる狙いがうかがえる。",
+        "why_it_matters": "来館者の体験価値は店内だけでなく、駐車場など施設入口での待ち時間からも左右される。画像解析を施設運営の情報提供に使う事例は、顧客接点の広げ方の一つの方向性を示す。店舗内の人流データや売場分析と組み合わせれば、来店から購買までの導線改善にもつながる。",
+        "tags": [
+          "AI画像解析",
+          "施設運営",
+          "来店体験"
+        ],
+        "search_terms": [
+          "AI画像解析 駐車場",
+          "parking AI image recognition",
+          "来館者 待ち時間 表示",
+          "グランベリーパーク 出庫時間"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5qaTdwSDZKXzhCZU0zWDdqVGxzRW9wTVBMUjVEOU1iYklEcU00VzBGRVFiLW9BQXlrX3ZDZjJXYTNpQUZfelVOMVVPQm9nUVlP?oc=5",
+        "source_pub_ts": 1793250720
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "セブンイレブン、環境配慮型サーマルラベルを千葉の約300店舗で実験",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-06",
+        "summary": "セブンイレブンは、環境に配慮したサーマルラベルの実証実験を千葉県の約300店舗で始めた。店舗で大量に消費されるラベル用紙を環境配慮型に切り替える検証とみられる。環境負荷の低減と店舗オペレーションの両立を探る取り組みであり、結果次第では今後の展開が検討される可能性がある。",
+        "why_it_matters": "電子棚札や値札の運用は、紙ラベルの環境負荷と店舗作業の手間の双方に関わる。環境配慮型素材の検証は、ラベル発行を含む店内オペレーションの見直しにもつながる。デジタル化と資材の最適化を並行して進める視点で、コスト・環境・運用の三点から実験結果を追う価値がある。",
+        "tags": [
+          "サーマルラベル",
+          "環境配慮",
+          "店舗運用"
+        ],
+        "search_terms": [
+          "環境配慮型 サーマルラベル",
+          "thermal label eco store",
+          "電子棚札 代替 紙ラベル",
+          "セブンイレブン 実証実験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFB3QTlOekFBc2xuM1d4ODBUVFdCdmtYZDktdzg0X3VyeDdqZ2tsQWllVVRLMXNBYXY5U3l0ZEVQNVBwZk5CcENORjlCb0NUeHhLTkxjbV8xZWI?oc=5",
+        "source_pub_ts": 1793241300
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "書店のセルフレジで店員の勧めに戸惑う客、操作の手間とタイムロスへの不満を描いた漫画",
+        "original_title": "",
+        "source": "まいどなニュース",
+        "source_id": "JP-02",
+        "summary": "書店で店員から「セルフレジへどうぞ」と笑顔で繰り返し案内された客が、操作に手間取りイライラする様子を描いた漫画がまいどなニュースで紹介された。タイムロスへの悔しさという生活者のリアルな感情が描かれている。セルフレジの使いやすさが、店舗体験全体の評価を左右する点を示す事例となっている。",
+        "why_it_matters": "セルフレジは省人化の切り札として広がる一方、慣れない客には操作負担が新たなストレスになる。店員の誘導が押しつけ感を与えると、不満は店舗全体の印象に波及しやすい。UIの改善や有人対応との併用、初回利用時のガイドといった運用設計が導入効果を左右する。",
+        "tags": [
+          "セルフレジ",
+          "生活者の声",
+          "店舗体験"
+        ],
+        "search_terms": [
+          "セルフレジ 操作 不満",
+          "self-checkout customer frustration",
+          "書店 セルフレジ 漫画",
+          "無人レジ 使いにくさ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBkdVg5TDk4ZkdsblIzZWI0QTQxWWFBQ3hJX3IyeUxKSkxEaWN4Q29BdVVsVkRrdDc4ejBIUXF3RmRfMGpiUHV0X1NFLXhWNFZK?oc=5",
+        "source_pub_ts": 1793262600
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "多くの消費者はまだ商品探索にAIを使っていない",
+        "original_title": "Most consumers aren’t using AI for product discovery, yet",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "Retail Diveの記事は、商品探索にAIを活用している消費者はまだ多数派ではないと指摘する。AIによる買い物支援が注目を集める一方、実際の利用は限定的であることが示されている。AIエージェント型の購買体験を準備する小売各社にとって、消費者の実態とのギャップを見極める必要があることを伝える内容だ。",
+        "why_it_matters": "AIによる商品検索や推奨は小売のデジタル接点を変える可能性があるが、利用実態はまだ限定的だ。購買の入口がAIに移る前提で動くと、需要の読み違いや投資の先走りを招きかねない。自社サイトや店舗で、商品情報や検索の品質を高める取り組みが当面の現実的な一手になる。",
+        "tags": [
+          "AI",
+          "商品探索",
+          "AIエージェント"
+        ],
+        "search_terms": [
+          "AI 商品探索 消費者",
+          "AI product discovery consumers",
+          "agentic commerce 購買行動",
+          "生成AI 買い物支援"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPakJRRzdKS25RSFpjTWVoV3IxTk9Ud0FnWTlCTVNFTFBLeHhVNDAxU1hrLVExSVRUUnJWRFlkNHJNWkk4bUI5d0drazBBNXJ3WmRnTE5TTG1KUkhqN1JORFdtV0RILXVuUnk1bHFoOUlUcTJRTy1HaktWS1JSbEVIdTdrZGZIWmpRYno0S0VacVRMZVVaN2U1QTZSNA?oc=5",
+        "source_pub_ts": 1793293205
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ダイナミックプライシングと不安を抱える消費者",
+        "original_title": "The Backroom: Dynamic pricing and the anxious consumer",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "Retail Diveのコラム「The Backroom」は、ダイナミックプライシングと不安を抱える消費者の関係を取り上げている。価格が状況に応じて変動することへの生活者の受け止め方が、小売の価格戦略に影響を与える点が論じられている。価格の柔軟化を進める企業にとって、透明性と納得感の確保が課題になっていることを伝える内容だ。",
+        "why_it_matters": "電子棚札やAIによる価格最適化は、ダイナミックプライシングの実装を現実的にしている。しかし価格変動が頻繁になるほど、消費者は不公平感や不安を抱きやすい。値上げへの反応が敏感になる中、価格変更の理由を説明できる仕組みや一貫性のある価格設計が信頼維持の要となる。",
+        "tags": [
+          "ダイナミックプライシング",
+          "価格戦略",
+          "消費者心理"
+        ],
+        "search_terms": [
+          "ダイナミックプライシング 消費者不安",
+          "dynamic pricing consumer trust",
+          "電子棚札 価格変動",
+          "価格 透明性 小売"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPazc5bS1tQm1YMHVyUC0tSnRXc0s1YU16aF8xLWxhTnBjYzA5b1g1TFhzWnZCdkhOM044bzlCSHl6bVV4elkyNE85RDNPUnVSLWVoLWhwcjkyVV9saW1kdFpMaWpRd3BCTEhjbHNaUUZCaTQ1Rmpud1RIU24xalFsSDItdWxkMHN5aEczX1NzWVJyMHZjcXRpT3R3RGJmZWExcWxackpQMU5XYVZtZzVod0ZR?oc=5",
+        "source_pub_ts": 1793289081
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261029",
     "title": "2026年10月29日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "需要予測AIが検証段階から本番運用へ進む動きが出ています。DATAFLUCTとアース製薬の事例は返品・廃棄ロス削減が狙いで、Woowa Brothersも注文発生前の需要予測を披露しました。 リテールメディアは、広告の視聴から来店・購買までをつなぐ計測の高度化が焦点になっています。データ・ワンとTVer、NTTドコモの連携はその具体例です。",
