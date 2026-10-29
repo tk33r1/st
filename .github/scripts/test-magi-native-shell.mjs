@@ -44,7 +44,7 @@ try {
         Plugins: {
           Filesystem: window.makeNativeFilesystemFixture().fs,
           Share: { share: async options => { window.sharedExport = options; } },
-          App: { addListener(name, callback) { window.nativeBack = callback; return { remove: async () => {} }; }, exitApp: async () => { window.shellCalls.push('exit'); } },
+          App: { addListener(name, callback) { if (name === 'backButton') window.nativeBack = callback; return { remove: async () => {} }; }, exitApp: async () => { window.shellCalls.push('exit'); } },
           SystemBars: { setStyle: async options => { window.shellCalls.push(options.style); } },
           // アップデートの確認: 実機のダウンロード・照合・インストーラーの代わりに、進み具合を1回送って開いたことにする。
           MagiUpdate: {
@@ -221,7 +221,8 @@ try {
     } else {
       await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
       assert.equal(await page.locator('#personal-enabled').isVisible(), true);
-      assert.equal(await page.locator('#native-location-toggle').count(), 0);
+      // 7.02からPWAにもIP推定の位置情報の設定がある（GPSは求めない。詳細はtest-magi-web-management-browser）
+      assert.match(await page.locator('#native-location-note').innerText(), /IP address/);
       await closePanels(page);
       await page.locator('#btn-history-agent').click();
       assert.equal(await page.locator('#btn-update-check').isVisible(), false);
