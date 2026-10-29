@@ -198,6 +198,26 @@ test('一時/設定: 新契約の上流エラーが本文を返してもログ�
   }
 });
 
+test('一時/設定: 上流が入力を短いプレーンテキストで返しても、新契約のログへ転記しない', async () => {
+  for (const mode of ['normal', 'temporary']) {
+    const logs = [];
+    const w = worker(completion(), (url) => {
+      if (url.includes('deepseek')) return new Response('bad request PRIVATE-ECHO', { status: 400, headers: { 'Content-Type': 'text/plain' } });
+      if (url.includes('openai')) throw new Error('PRIVATE-THROWN');
+    });
+    w.ctx.console.log = (...values) => logs.push(values);
+    w.env.DB = counts();
+    const res = await w.request('/magi2/chat', { privacy_contract: 1, conversation_mode: mode, messages: [{ role: 'user', content: 'PRIVATE-INPUT' }] });
+    await res.text(); await Promise.all(w.waits);
+    assert.ok(!JSON.stringify(logs).includes('PRIVATE-'), JSON.stringify(logs.filter(l => JSON.stringify(l).includes('PRIVATE-'))));
+    // 障害調査に要る人格・会社・HTTP状態・エラーコード・例外の種類・分類の結果は残す
+    assert.ok(logs.some(l => l[1] === 'persona_call' && l.includes('deepseek') && l.includes('HTTP 400') && l.includes('[redacted]')));
+    assert.ok(logs.some(l => l[1] === 'persona_call' && l.includes('dropped') && l.includes('deepseek_http_400')));
+    assert.ok(logs.some(l => l[1] === 'persona_call' && l.includes('CASPER-3') && l.includes('dropped') && l.includes('Error')));
+    assert.ok(logs.some(l => l[1] === 'classify' && l.includes('language') && l.includes('fallback')));
+  }
+});
+
 test('一時/設定: v2音声署名はモードと言語を固定し、一時音声は既存キャッシュも使わない', async () => {
   const w = speechWorker(), text = '同じ文の合成回答です。';
   const v1 = await w.ctx.speechSign(SPEECH_KEY, text);

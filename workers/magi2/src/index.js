@@ -35,7 +35,10 @@ function corsHeaders(origin) {
 
 // --- 統一エラー設計: stage 付きエンベロープ + request_id ---
 // stage は auth / bad_request / rate_limit / persona_call / synthesizer_call / upstream / internal
+// 作った段階とコードは、新契約のログに出してよい語として覚える（privateLog）。どちらもコードが決めた値で、本文を含まない
+const STAGE_LOG_WORDS = new Set();
 function stageError(stage, code, message, extra = {}) {
+  STAGE_LOG_WORDS.add(stage).add(code);
   const e = new Error(message);
   e.envelope = { stage, code, message, ...extra };
   return e;
@@ -830,7 +833,8 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
     });
     if (!res.ok) {
       const detail = (await res.text().catch(() => '')).slice(0, 200);
-      log('persona_call', p.codename, cfg.provider, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`, detail);
+      // 上流のエラー本文は入力を映しうるので、新契約のチャットではログへ渡さない
+      log('persona_call', p.codename, cfg.provider, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`, env.privateChat ? '[redacted]' : detail);
       if (res.status >= 500 && attempt < 2) continue; // 一時的なサーバ起因のみ再試行
       throw stageError('persona_call', `${cfg.provider}_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
@@ -1959,11 +1963,29 @@ async function chatSitePages({ env, ctx, log, cardsPromise, classification, moti
   return { cards, guide, pageChoice, pagesPromise };
 }
 
-// 新契約のチャットと v2 の読み上げのログ。段階と、数値・コード・状態の短い語（HTTP 状態・所要時間・人格・会社など）は残し、
-// 本文が混ざりうる値（上流のエラー本文・例外の文。引用符・括弧・日本語・長い文を含む）は伏せる（一時チャット設計 §4.3）
-const PRIVATE_LOG_TOKEN = /^[A-Za-z0-9_.:=/ -]{1,64}$/;
-const privateLog = log => (stage, ...args) => log(stage, ...args.map(v => v == null || typeof v === 'number' || typeof v === 'boolean'
-  || typeof v === 'string' && PRIVATE_LOG_TOKEN.test(v) ? v : '[redacted]'));
+// 新契約のチャットと v2 の読み上げのログ（一時チャット設計 §4.3）。段階のほかは、出してよいと決めた項目だけを残す：
+// 数値・真偽、ログに書く固定の語、設定の名前（会社・人格・テーマ・分類の問いと選択肢）、stageError のコード、
+// 数値だけを差し込む定形（HTTP 状態・回・件数など）。それ以外の文字列は、短い英数字でも伏せる
+// （上流のエラー本文・例外の文・要求由来の値は入力を映しうる）。新しい語をログに足したら、残すならここにも足す
+const PRIVATE_LOG_WORDS = new Set([
+  'start', 'ok', 'failed', 'fallback', 'complete', 'unavailable', 'timeout', 'upstream', 'incomplete', 'missing', 'omitted', 'HTTP', 'tokens', 'elapsed_ms',
+  'round1 start', 'round1 ok', 'round2 start', 'round2 ok', 'dropped', 'temperature', 'bias', 'synthesizer', 'title', 'suggest', 'motion',
+  'judge', 'judge failed', 'over budget', 'over budget after judge', 'answer', 'ask_personas', 'ask_user',
+  'known', 'unknown', 'listed', 'unlisted', 'results', 'no_results', 'alert_failed',
+  'render_limit', 'rendered', 'render_failed', 'ip_limit', 'global_limit', 'both_failed',
+  'limit', 'global', 'db_error', 'skipped (no DB binding)', 'mail failed', 'mail skipped (secret missing)',
+  'stopped', 'cancelled', 'closed (ws)', 'stopped (ws)', 'no_request', 'too_large', 'duplicate_request', 'invalid_message',
+  'unsigned', 'cache_hit', 'voice_missing', 'cache_failed',
+  'light', 'dark', ...Object.keys(PROVIDERS), ...Object.keys(PROVIDER_NAMES), ...PERSONAS.map(p => p.codename), SYNTHESIZER.codename,
+  ...Object.keys(INTENT_CLASSIFY.profiles), ...[INTENT_CLASSIFY.questions, INTENT_CLASSIFY.fact_questions]
+    .flatMap(questions => Object.entries(questions).flatMap(([name, q]) => [name, ...Object.keys(q.criteria || {})])),
+  // 例外は種類だけ（文は伏せる）
+  'Error', 'TypeError', 'SyntaxError', 'RangeError', 'AbortError', 'TimeoutError',
+]);
+const PRIVATE_LOG_FORMS = /^(?:HTTP \d{3}|(?:after )?r\d{1,2}|http_\d{3}|(?:attempt|len|personas|cards|images)=\d+|finish_reason=(?:stop|length|content_filter|tool_calls|null|undefined)|\d{4}-\d{2}-\d{2})$/;
+const privateLogValue = v => v == null || typeof v === 'number' || typeof v === 'boolean'
+  || typeof v === 'string' && (PRIVATE_LOG_WORDS.has(v) || STAGE_LOG_WORDS.has(v) || PRIVATE_LOG_FORMS.test(v)) ? v : '[redacted]';
+const privateLog = log => (stage, ...args) => log(stage, ...args.map(privateLogValue));
 
 // transport（省略できる）を渡すと、SSE の代わりにその受け口へ同じイベントを送る（WebSocket の入口。読み上げ設計§6.2）。
 // 受け口は { event(名前, data), comment(文字), end() }。入力の誤り・回数の超過は今と同じ HTTP の応答を返し、
