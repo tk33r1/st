@@ -480,6 +480,10 @@ def load_snapshot(path, target_date=None, max_age_hours=36):
 
     now = (target_date or datetime.now(JST)).astimezone(JST)
     age_hours = (now - captured_at.astimezone(JST)).total_seconds() / 3600
+    if age_hours < 0:
+        # 過去の号を作り直すとき、対象日より後に取ったスナップショットを混ぜない。
+        print(f"[INFO] TikTok スナップショットが対象日時より後の取得のため採用しません（{captured_at.astimezone(JST):%m/%d %H:%M} JST 時点）")
+        return []
     if age_hours > max_age_hours:
         _warn(
             f"TikTok スナップショットが古すぎます（{age_hours:.1f} 時間前 / "

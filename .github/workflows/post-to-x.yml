@@ -90,6 +90,6 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
         git add data/nitori-daily/ data/retail-tech-daily/
+        # 投稿 ID は二重投稿の抑止を兼ねるので、弾かれても取り込み直して push する
         git commit -m "Record X post [skip ci]" || exit 0
-        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
-        git push origin HEAD:main
+        bash .github/scripts/push-with-retry.sh

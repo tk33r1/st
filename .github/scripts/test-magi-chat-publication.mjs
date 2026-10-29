@@ -8,6 +8,7 @@ const sha = 'a'.repeat(40);
 const run = (overrides = {}) => ({id: 1, head_sha: sha, path: '.github/workflows/magi-chat-validation.yml', event: 'push',
   repository: {full_name: 'tk33r1/st'}, status: 'completed', conclusion: 'success', ...overrides});
 test('Pages: 同じSHAの成功だけを受け付ける', () => assert.equal(checkRun({workflow_runs: [run()]}, sha), true));
+test('Pages: botのpushで起動した同じSHAの検査も受け付ける', () => assert.equal(checkRun({workflow_runs: [run({event: 'workflow_dispatch'})]}, sha), true));
 for (const overrides of [{head_sha: 'b'.repeat(40)}, {path: '.github/workflows/ai-models.yml'}, {event: 'pull_request'}, {status: 'queued'}, {repository: {full_name: 'fork/st'}}]) {
   test('Pages: 別の結果や未完了を合格にしない ' + JSON.stringify(overrides), () => assert.equal(checkRun({workflow_runs: [run(overrides)]}, sha), false));
 }

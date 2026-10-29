@@ -120,9 +120,23 @@ class CollectionTests(unittest.TestCase):
             self.assertTrue(any('テレビ台' in x['raw_text'] for x in candidates))
             return candidates[1:]
         with patch.object(daily.urllib.request, 'urlopen', return_value=io.BytesIO(content.encode())), patch.object(daily, 'filter_consumer_posts', side_effect=select):
-            result = daily.fetch_yahoo_realtime_nitori_buzz(datetime(2026, 10, 4, tzinfo=daily.JST))
+            result = daily.fetch_yahoo_realtime_nitori_buzz(datetime.now(daily.JST))
         self.assertEqual(len(result), 5)
         self.assertEqual([x['link'].rsplit('/', 1)[-1] for x in result], ['1', '2', '3', '4', '5'])
+
+    def test_past_issue_does_not_read_yahoo_yesterday_or_later_tiktok_snapshot(self):
+        # Yahoo の「昨日」は取得時点から見た昨日なので、過去の号では読まない。
+        past = datetime.now(daily.JST) - timedelta(days=2)
+        with patch.object(daily.urllib.request, 'urlopen') as urlopen:
+            self.assertEqual(daily.fetch_yahoo_realtime_nitori_buzz(past), [])
+        urlopen.assert_not_called()
+        # 対象日時より後に取ったスナップショットは、古すぎなくても採用しない。
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'snapshot.json'
+            path.write_text(json.dumps({'captured_at': (past + timedelta(hours=1)).isoformat(), 'items': [item()]}), encoding='utf-8')
+            with patch.object(gate, 'classify') as classify:
+                self.assertEqual(social.load_snapshot(path, past), [])
+            classify.assert_not_called()
 
     def test_tiktok_filters_window_views_duplicates_then_content_before_limit(self):
         now = datetime(2026, 10, 4, 12, tzinfo=social.JST)

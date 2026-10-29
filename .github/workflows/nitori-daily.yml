@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # MAGI Chat Gate の起動（push-with-retry.sh。Pages の公開条件）
 
 concurrency:
   group: nitori-daily

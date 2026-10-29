@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # MAGI Chat Gate の起動（push-with-retry.sh。Pages の公開条件）
 
 concurrency:
   group: search-boost
@@ -71,6 +72,8 @@ jobs:
 
     # サイトにすぐ出したい生成物なので [skip ci] を付けない（Pages のビルドも止まるため）
     - name: Commit and Push
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"

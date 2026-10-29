@@ -46,6 +46,10 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
     """Yahoo! リアルタイム検索（話題順 md=h）から昨日のニトリバズ投稿をスクレイピング"""
     if target_date is None:
         target_date = datetime.now(JST)
+    # 「昨日」は取得した時点から見た昨日。過去の号では対象日の投稿にならないので読まない。
+    if target_date.astimezone(JST).date() != datetime.now(JST).date():
+        print("[INFO] 過去の号のため X（Yahoo!リアルタイム）の取得をスキップ")
+        return []
 
     url = "https://search.yahoo.co.jp/realtime/search?ei=UTF-8&p=%E3%83%8B%E3%83%88%E3%83%AA&md=h"
     headers = {

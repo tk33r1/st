@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # MAGI Chat Gate の起動（push-with-retry.sh。Pages の公開条件）
 
 jobs:
   oil-price:
@@ -21,6 +22,8 @@ jobs:
       run: python .github/scripts/fetch-oil-price.py
 
     - name: Commit and Push
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"

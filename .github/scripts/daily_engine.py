@@ -630,7 +630,16 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
         target_date = datetime.now(JST)
 
     pub_history = load_recent_published_history(config['data_dir'], exclude_date_key=exclude_date_key, days_limit=7)
-    when_clause = "when:3d" if target_date.weekday() == 0 else "when:2d"
+    # 対象期間は「月曜は3日前、ほかは前日の0時」から発行日時（target_date）まで。
+    cutoff_days = 3 if target_date.weekday() == 0 else 1
+    cutoff_dt = (target_date - timedelta(days=cutoff_days)).replace(hour=0, minute=0, second=0, microsecond=0)
+    past_issue = target_date.astimezone(JST).date() < datetime.now(JST).date()
+    if past_issue:
+        # 過去の号は、実行時点からの when: では対象期間を外れるので、絶対日付で引く。
+        # after:/before: は日単位で境界が緩いので1日ずつ広げ、時刻は取得後に足切りする。
+        when_clause = f"after:{cutoff_dt - timedelta(days=1):%Y-%m-%d} before:{target_date + timedelta(days=1):%Y-%m-%d}"
+    else:
+        when_clause = "when:3d" if target_date.weekday() == 0 else "when:2d"
     jp_blacklist = noise_blacklist(config, 'jp_noise_blacklist', DEFAULT_JP_NOISE_BLACKLIST)
     global_blacklist = noise_blacklist(config, 'global_noise_blacklist', DEFAULT_GLOBAL_NOISE_BLACKLIST)
     news_filter_fn = config.get('news_filter_fn')
@@ -682,15 +691,17 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     # Google News の "when:Nd" はヒット件数が少ない狭いクエリ（特に海外の個社名検索）だと
     # 無視され、条件に合う新着が足りない分を古い記事で埋めて返してくることがある。
     # クエリ文字列側の指定は当てにならないため、実際の pub_ts で確実に足切りする。
-    cutoff_days = 3 if target_date.weekday() == 0 else 1
-    cutoff_ts = (target_date - timedelta(days=cutoff_days)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    # 過去の号では、発行日時より後の記事も落とす。
+    cutoff_ts = cutoff_dt.timestamp()
+    until_ts = target_date.timestamp() if past_issue else float('inf')
 
     def apply_recency_cutoff(items, label):
-        fresh = [it for it in items if is_fresh(it, cutoff_ts)]
+        fresh = [it for it in items if is_fresh(it, cutoff_ts) and it.get('pub_ts', 0) <= until_ts]
         stale = len(items) - len(fresh)
         if stale:
             cutoff_str = datetime.fromtimestamp(cutoff_ts, JST).strftime('%Y-%m-%d %H:%M JST')
-            print(f" -> [{label}] Google Newsのwhen:フィルタが効かず混入した古い記事を除外: {stale} 件 ({cutoff_str} 以降のみ採用)")
+            until_str = datetime.fromtimestamp(until_ts, JST).strftime('%Y-%m-%d %H:%M JST') if past_issue else ''
+            print(f" -> [{label}] 対象期間外の記事を除外: {stale} 件 ({cutoff_str} 〜 {until_str} のみ採用)")
         return fresh
 
     jp_items = apply_recency_cutoff(jp_items, '国内')
@@ -2535,6 +2546,15 @@ def write_collection_outputs(config, articles_history, *, search_files=None):
     return written
 
 
+# X の投稿記録（post-to-x.py が書く）。二重投稿の抑止を兼ねる。
+X_POST_FIELDS = ('x_post_id', 'x_posted_at')
+
+
+def x_post_record(issue):
+    """号から X の投稿記録だけを取り出す。同じ号を作り直しても引き継ぐために使う。"""
+    return {key: issue[key] for key in X_POST_FIELDS if issue and issue.get(key)}
+
+
 def run_daily_pipeline(config):
     parser = argparse.ArgumentParser(description=f"{config['media_name']} Pipeline")
     parser.add_argument('--date', type=str, default='', help='Target issue date in YYYYMMDD format')
@@ -2610,7 +2630,7 @@ def run_daily_pipeline(config):
     ai_result = analyze_news_with_fallback(config, candidates, target_date_formatted, yesterday_str)
 
     articles_history = load_history(data_dir)
-
+    previous_issue = next((a for a in articles_history if a.get('date') == target_date_key), None)
     articles_history = [a for a in articles_history if a.get('date') != target_date_key]
 
     exec_summary = ai_result.get('executive_summary', [])
@@ -2627,7 +2647,9 @@ def run_daily_pipeline(config):
         "articles": ai_result.get('articles', []),
         "sns_buzz": ai_result.get('sns_buzz', []),
         "sns_summary": ai_result.get('sns_summary', ''),
-        "sns_why_it_matters": ai_result.get('sns_why_it_matters', '')
+        "sns_why_it_matters": ai_result.get('sns_why_it_matters', ''),
+        # 作り直しても投稿記録は消さない（消すと次の Post to X が再投稿する。再投稿は post-to-x.py の --force だけ）。
+        **x_post_record(previous_issue),
     }
     articles_history.append(new_issue)
     articles_history.sort(key=lambda x: x['date'], reverse=True)

@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # MAGI Chat Gate の起動（push-with-retry.sh。Pages の公開条件）
 
 # 連続 push で同時に走ると、同じ JSON を奪い合って push が弾かれる
 concurrency:
@@ -53,6 +54,8 @@ jobs:
       # （しないと料金を払って作ったカードが捨てられ、次の push で同じ要約をやり直すことになる）。
       # 生成の工程が失敗していれば、この工程が成功しても job 全体は失敗として通知される
       if: ${{ !cancelled() }}
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
@@ -60,5 +63,6 @@ jobs:
         # CI を止める印はコミットメッセージに入れない。Cloudflare Pages はその印（メッセージの
         # どこにあっても）のコミットをビルドせず、JSON が次の push まで公開されなくなる。
         # GITHUB_TOKEN の push はほかの workflow を起動しないので、付けなくてもループはしない
+        # （push-with-retry.sh が起動する MAGI Chat Gate は検査だけで、コミットしない）
         git commit -m "Auto-generated MAGI persona context" || exit 0
         bash .github/scripts/push-with-retry.sh

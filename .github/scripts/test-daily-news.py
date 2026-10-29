@@ -52,6 +52,37 @@ class NewsFilterTests(unittest.TestCase):
                 self.assertEqual(selected[0]['title'], accepted['title'])
                 self.assertIn(accepted, index.values())
 
+    def test_past_issue_searches_absolute_dates_and_drops_later_articles(self):
+        config = dict(daily.CONFIG, news_filter_fn=None, is_relevant_fn=None, relevance_sort_key_fn=None, extra_candidates_fn=None)
+        target = datetime(2026, 9, 15, tzinfo=engine.JST)   # --date 20260915（火曜）
+        inside, later, earlier = item('対象期間の記事'), item('発行後の記事'), item('前々日の記事')
+        inside['pub_ts'] = (target - timedelta(hours=12)).timestamp()
+        later['pub_ts'] = datetime(2026, 10, 29, 9, tzinfo=engine.JST).timestamp()
+        earlier['pub_ts'] = (target - timedelta(days=2)).timestamp()
+        queries = []
+        def fetch(query, **kwargs):
+            queries.append(query)
+            return [inside, later, earlier] if kwargs['lang'] == 'ja' else []
+        with patch.object(engine, 'fetch_google_news_rss', side_effect=fetch), patch.object(engine, 'load_recent_published_history', return_value={}):
+            candidates = engine.gather_all_candidate_news(config, target)
+        self.assertEqual(candidates['JP'], [inside])
+        self.assertTrue(all(q.endswith(' after:2026-09-13 before:2026-09-16') for q in queries), queries)
+        # 当日の号は従来どおり when: で引き、上限で落とさない（取得までの時間差で直近の記事を失わない）。
+        now = datetime.now(engine.JST)
+        fresh = item('直近の記事')
+        fresh['pub_ts'] = (now + timedelta(minutes=1)).timestamp()
+        queries.clear()
+        with patch.object(engine, 'fetch_google_news_rss', side_effect=lambda q, **kw: queries.append(q) or ([fresh] if kw['lang'] == 'ja' else [])), patch.object(engine, 'load_recent_published_history', return_value={}):
+            candidates = engine.gather_all_candidate_news(config, now)
+        self.assertEqual(candidates['JP'], [fresh])
+        self.assertTrue(all(' when:' in q for q in queries), queries)
+
+    def test_regenerated_issue_keeps_x_post_record(self):
+        posted = {'date': '20260915', 'x_post_id': '123', 'x_posted_at': '2026-09-15T08:05:00+09:00', 'title': '旧'}
+        self.assertEqual(engine.x_post_record(posted), {'x_post_id': '123', 'x_posted_at': '2026-09-15T08:05:00+09:00'})
+        self.assertEqual(engine.x_post_record({'date': '20260915'}), {})
+        self.assertEqual(engine.x_post_record(None), {})
+
     def test_nitori_rejudging_after_api_failure_clears_old_rescue_status(self):
         candidate = item('ニトリの新商品')
         for mode in ('missing_key', 'invalid_model', 'request_failed'):
