@@ -150,3 +150,9 @@
 # ブラウザなどにキャッシュされた古い号の HTML が読みに来ても崩れないように。
 /job/assets/nitori-daily.css        /job/assets/daily-base.css  301
 /job/assets/retail-tech-daily.css   /job/assets/daily-base.css  301
+
+# 削除: 2026-10-30  記事0本のまま定型の要約だけで出ていた Retail Tech Daily の号（X に投稿済み）。いまは記事の無い号を出さない。
+/job/retailtechdaily/20261004/   /job/retailtechdaily/  301
+/job/retailtechdaily/20261004    /job/retailtechdaily/  301
+/job/retailtechdaily/20261025/   /job/retailtechdaily/  301
+/job/retailtechdaily/20261025    /job/retailtechdaily/  301

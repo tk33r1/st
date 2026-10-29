@@ -34,7 +34,9 @@
     btn.dataset.originalHtml = originalHtml;
     btn.classList.toggle('copied', ok);
     btn.innerHTML = (ok ? CHECK_ICON : '') + '<span>' + message + '</span>';
-    window.setTimeout(function() {
+    // 2秒以内に押し直したら、前の表示を戻すタイマーは捨てて、最後の操作から2秒数える
+    window.clearTimeout(btn._flashTimer);
+    btn._flashTimer = window.setTimeout(function() {
       btn.classList.remove('copied');
       btn.innerHTML = originalHtml;
     }, 2000);
@@ -237,7 +239,7 @@
           if (state[key]) url.searchParams.set(key, state[key]);
           else url.searchParams.delete(key);
         });
-        window.history.replaceState({}, '', url);
+        if (url.href !== window.location.href) window.history.replaceState({}, '', url);
       } catch (e) {}
     }
 
@@ -256,7 +258,10 @@
 
     const bannerApply = document.getElementById('watchBannerApply');
     if (bannerApply) {
+      // バナーは「ウォッチ中の記事を見る」入口なので、地域・カテゴリの絞り込みは外してから絞る
       bannerApply.addEventListener('click', function() {
+        state.region = '';
+        state.category = '';
         applyFilter('watch', 'on');
         const target = document.getElementById('articlesSection');
         if (target) target.scrollIntoView({ behavior: 'smooth' });

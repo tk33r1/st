@@ -300,6 +300,7 @@ CONFIG = {
     'hero_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
     'portal_seo_title': '日刊ニトリ／速報ニュース・SNSの話題まとめ | Nitori Daily',
     'favicon_file': 'nitori-favicon.svg',
+    'apple_touch_icon_file': 'nitori-apple-touch-icon.png',  # iOS は SVG を使えないので 180px の PNG
     'ogp_target': 'nitori',
     'portal_ogp_image': 'https://tk.st/images/ogp/nitori-ogp.webp',
     'theme_color': '#009e96',

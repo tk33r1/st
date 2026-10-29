@@ -122,6 +122,7 @@ CONFIG = {
     'hero_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
     'portal_seo_title': '日刊リテールテック／流通DXの速報ニュース | Retail Tech Daily',
     'favicon_file': 'retail-tech-favicon.svg',
+    'apple_touch_icon_file': 'retail-tech-apple-touch-icon.png',  # iOS は SVG を使えないので 180px の PNG
     'ogp_target': 'retail-tech',
     'portal_ogp_image': 'https://tk.st/images/ogp/retail-tech-ogp.webp',
     'theme_color': '#1a47d4',

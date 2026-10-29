@@ -395,6 +395,10 @@ def main():
     if issue.get('x_post_id') and not args.force:
         log(f" -> ポスト済みのためスキップします (post_id={issue['x_post_id']})")
         return
+    # 記事の無い号は生成器が出さないが、古い履歴に残っていても定型文だけのポストはしない（--force でも）
+    if not issue.get('articles'):
+        warn(f"{date_key}号は記事が0件のためポストしません")
+        return
 
     text = build_post_text(config, issue, url)
     log(f"--- 本文 ({weighted_length(text)} / {TWEET_WEIGHT_LIMIT}) ---")

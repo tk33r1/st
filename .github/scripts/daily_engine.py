@@ -299,7 +299,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261030_1'
+DAILY_UI_VERSION = '20261030_2'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
 SEARCH_RUNTIME_VERSION = '20261012_16'
@@ -392,6 +392,7 @@ def render_head(config, rel, title, social_title, description, canonical,
     食い違うのを防ぐためここに集約する。rel はサイトルートまでの相対パス
     （号ページは '../../../'、ポータルは '../../'）。
     social_title は <title> と違い " | tk.st" の有無が媒体・ページで異なるため別引数。
+    title・social_title・description は呼び出し側で esc() した値を渡す（そのまま埋め込む）。
     extra_links は canonical 直後に差し込む <link> タグ（ポータルの RSS alternate 等）。
     handoff はポータルだけ True（検索語の受け渡し。号のページは ?q= も #q= も受け取らない）。
     """
@@ -427,7 +428,7 @@ def render_head(config, rel, title, social_title, description, canonical,
   <meta name="twitter:image" content="{og_image}">
 
   <link rel="icon" href="{rel}images/favicons/{config['favicon_file']}" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="{rel}images/favicons/{config['favicon_file']}">
+  <link rel="apple-touch-icon" href="{rel}images/favicons/{config['apple_touch_icon_file']}">
   <script type="application/ld+json">
 {jsonld_str}
   </script>
@@ -1337,7 +1338,9 @@ def render_social_metrics(issue, previous_issue=None):
           <strong>{current_value:,}</strong><span>{primary_label}合計</span>{delta}
         </div>''')
     captured = next((item.get('captured_at') for item in issue.get('sns_buzz', []) if item.get('captured_at')), '')
-    captured_html = f'<p class="buzz-captured">取得時点: {esc(captured)}</p>' if captured else '<p class="buzz-captured">各号発行時点のスナップショット。反応数は取得後に変動します。</p>'
+    # 件数は号に収録した全件。主要トピックスに載せた投稿は下の SNS 欄から外れるので、欄の件数より多くなりうる
+    scope_note = '件数と合計は、主要トピックスに載せた投稿も含む収録分。'
+    captured_html = f'<p class="buzz-captured">{scope_note}取得時点: {esc(captured)}</p>' if captured else f'<p class="buzz-captured">{scope_note}各号発行時点のスナップショット。反応数は取得後に変動します。</p>'
     return f'''<section class="buzz-metrics" aria-labelledby="buzzMetricsTitle">
       <div class="section-head"><h2 class="section-title" id="buzzMetricsTitle">SNSバズ推移</h2><span class="section-rule" aria-hidden="true"></span></div>
       <div class="buzz-metrics-grid">{"".join(cards)}</div>{captured_html}
@@ -1623,6 +1626,16 @@ def render_sns_buzz_section(sns_buzz, config, featured_urls=None):
     """
 
 
+def lane_order(config, articles):
+    """情報レーン（content_lanes）の順に並べた記事の位置（0始まり）。レーン内は元の順を保つ。レーンの無い媒体は元の順。"""
+    lane_fn = config.get('content_lane_fn')
+    keys = [key for key, _ in config.get('content_lanes', ())]
+    if not lane_fn or not keys:
+        return list(range(len(articles)))
+    rank = {key: i for i, key in enumerate(keys)}
+    return sorted(range(len(articles)), key=lambda i: rank.get(lane_fn(articles[i]), len(keys)))
+
+
 def render_article_html(config, issue_data, date_key, formatted_date, prev_issue=None, next_issue=None):
     articles = issue_data.get('articles', [])
     sns_buzz = issue_data.get('sns_buzz', [])
@@ -1687,15 +1700,18 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         cat_chips.append(f'<button type="button" class="filter-chip" data-filter-type="category" data-filter-val="{esc(c)}" aria-pressed="false">{esc(c)} <span class="chip-count">{cnt}</span></button>')
     cat_chips_html = "".join(cat_chips)
 
+    # 目次・カードの番号は画面の上からの順（レーン順）。アンカー #art-N は保存順の位置のままにして、
+    # 共有済みのリンクを変えない（新しい号はレーン順で保存するので両者が一致する。run_daily_pipeline）。
+    display_order = [(number, pos + 1, articles[pos]) for number, pos in enumerate(lane_order(config, articles), 1)]
     quick_index_items = []
-    for idx, art in enumerate(articles, 1):
+    for number, idx, art in display_order:
         is_global = art.get('region') == 'GLOBAL'
         b_class = 'badge-global' if is_global else 'badge-jp'
         b_txt = '海外' if is_global else '国内'
         cat_name = art.get('category', config['sample_category'])
         quick_index_items.append(f"""        <li class="qi-item">
           <a href="#art-{idx}" class="qi-link">
-            <span class="qi-num">{idx:02d}</span>
+            <span class="qi-num">{number:02d}</span>
             <span class="qi-body">
               <span class="qi-tags"><span class="qi-badge {b_class}">{b_txt}</span><span class="qi-cat">{esc(cat_name)}</span></span>
               <span class="qi-title">{esc(art.get('title', ''))}</span>
@@ -1707,7 +1723,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
     kw_regex = config['keyword_regex']
     article_entries = []
-    for idx, art in enumerate(articles, 1):
+    for number, idx, art in display_order:
         is_global = art.get('region') == 'GLOBAL'
         region_code = 'GLOBAL' if is_global else 'JP'
         badge_class = 'badge-global' if is_global else 'badge-jp'
@@ -1735,7 +1751,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         source_time = source_time_html(art)
         source_meta_html = f'<div class="source-details"><span class="source-kind">{source_kind(art, config)}</span>{source_time}</div>'
-        correction_subject = urllib.parse.quote(f"{config['media_name']} {formatted_date}号 記事{idx}の訂正・出典について")
+        correction_subject = urllib.parse.quote(f"{config['media_name']} {formatted_date}号 記事{number}の訂正・出典について")
         correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
         tags_html = ''.join(topic_tag_html(tag, '../') for tag in (art.get('tags', []) or []) if str(tag).strip())
@@ -1757,7 +1773,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         card_html = f"""
         <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}">
-          <div class="card-index" aria-hidden="true">{idx:02d}</div>
+          <div class="card-index" aria-hidden="true">{number:02d}</div>
           <div class="card-main">
             <div class="card-meta">
               {region_control}
@@ -2201,9 +2217,9 @@ def render_top_index_html(config, articles_history):
 
     portal_head_html = render_head(
         config, '../../',
-        title=portal_title,
-        social_title=portal_title,
-        description=portal_desc,
+        title=esc(portal_title),
+        social_title=esc(portal_title),
+        description=esc(portal_desc),
         canonical=base_url,
         og_type='website',
         og_image=config['portal_ogp_image'],
@@ -2334,13 +2350,13 @@ def generate_rss_xml(config, articles_history):
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']}"}</title>
+    <title>{esc(config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']}")}</title>
     <link>{base_url}</link>
-    <description>{config['hero_desc']}</description>
+    <description>{esc(config['hero_desc'])}</description>
     <language>ja</language>
 {channel_dates}    <lastBuildDate>{last_build_date}</lastBuildDate>
     <ttl>720</ttl>
-    <generator>{config['media_name']} generator</generator>
+    <generator>{esc(config['media_name'])} generator</generator>
     <atom:link href="{base_url}rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="{WEBSUB_HUB}" rel="hub"/>
 {items_joined}
@@ -2591,6 +2607,13 @@ def run_daily_pipeline(config):
         return
 
     ai_result = analyze_news_with_fallback(config, candidates, target_date_formatted, yesterday_str)
+    raw_articles = ai_result.get('articles', [])
+    if not raw_articles:
+        # 記事の無い号は出さない（ルールベースの定型の要約だけが載った号が公開・X 投稿されていた）。
+        # 履歴・ページ・RSS・OGP のどれも書かないので、続く X 投稿の step も新しい号を見つけずに終わる。
+        print(f"::warning::{config['media_name']} {target_date_key}号: 掲載できる記事が0件のため発行しない（{ai_result.get('generated_by', '')}）")
+        return
+    articles = [raw_articles[i] for i in lane_order(config, raw_articles)]
 
     articles_history = load_history(data_dir)
     previous_issue = next((a for a in articles_history if a.get('date') == target_date_key), None)
@@ -2603,11 +2626,11 @@ def run_daily_pipeline(config):
         "date": target_date_key,
         "title": f"{target_date_formatted}号：昨日の{config['brand_title_short']}まとめ",
         "summary": issue_summary,
-        "count": len(ai_result.get('articles', [])),
+        "count": len(articles),
         "generated_by": ai_result.get('generated_by', 'DeepSeek AI'),
         "engine_type": ai_result.get('engine_type', 'deepseek'),
         "executive_summary": exec_summary,
-        "articles": ai_result.get('articles', []),
+        "articles": articles,
         "sns_buzz": ai_result.get('sns_buzz', []),
         # 作り直しても投稿記録は消さない（消すと次の Post to X が再投稿する。再投稿は post-to-x.py の --force だけ）。
         **x_post_record(previous_issue),

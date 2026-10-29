@@ -83,6 +83,20 @@ class NewsFilterTests(unittest.TestCase):
         self.assertEqual(engine.x_post_record({'date': '20260915'}), {})
         self.assertEqual(engine.x_post_record(None), {})
 
+    def test_issue_numbers_follow_lane_order_and_anchors_keep_saved_positions(self):
+        import re
+        articles = [{'title': f'記事{i}', 'category': category, 'region': 'JP', 'url': f'https://example.com/{i}'}
+                    for i, category in enumerate(('商品開発・ヒット商品', '経営・価格戦略・PB', 'SNS話題・リアル反響', '店舗展開・海外戦略'), 1)]
+        self.assertEqual(engine.lane_order(nitori.CONFIG, articles), [1, 0, 3, 2])
+        self.assertEqual(engine.lane_order(daily.CONFIG, articles), [0, 1, 2, 3])
+        issue = {'date': '20261030', 'articles': articles, 'executive_summary': ['a', 'b', 'c'], 'sns_buzz': []}
+        page = engine.render_article_html(nitori.CONFIG, issue, '20261030', '2026年10月30日')
+        # 上から 01, 02, … と並び、アンカーは保存順の位置（共有済みのリンクを変えない）
+        self.assertEqual(re.findall(r'class="card-index" aria-hidden="true">(\d+)', page), ['01', '02', '03', '04'])
+        self.assertEqual(re.findall(r'<article class="news-card" id="art-(\d+)"', page), ['2', '1', '4', '3'])
+        self.assertEqual(re.findall(r'<a href="#art-(\d+)" class="qi-link">\s*<span class="qi-num">(\d+)', page),
+                         [('2', '01'), ('1', '02'), ('4', '03'), ('3', '04')])
+
     def test_nitori_rejudging_after_api_failure_clears_old_rescue_status(self):
         candidate = item('ニトリの新商品')
         for mode in ('missing_key', 'invalid_model', 'request_failed'):
@@ -392,7 +406,7 @@ class DailyGenerationTests(unittest.TestCase):
 
 
 class SearchGenerationTests(unittest.TestCase):
-    def test_invalid_titles_are_dropped_before_sources_and_terms_and_issue_still_publishes(self):
+    def test_invalid_titles_are_dropped_before_sources_and_terms_and_only_issues_with_articles_publish(self):
         import copy
         import tempfile
         candidates = dict(JP=[item('店舗の収納', pub_date='2026-10-08')], GLOBAL=[], recent_published_titles=[])
@@ -414,26 +428,29 @@ class SearchGenerationTests(unittest.TestCase):
                             patch.object(engine, 'call_llm_api') as second, \
                             patch.object(engine, 'trigger_daily_ogp_generation') as ogp, redirect_stderr(warnings):
                         engine.run_daily_pipeline(config)
-                    first.assert_called_once(); second.assert_not_called(); ogp.assert_called_once()
+                    first.assert_called_once(); second.assert_not_called()
                     self.assertEqual(warnings.getvalue().count('題名が不正なため除外'), len(bad))
+                    if not keep_valid:
+                        # 記事が残らなければ、定型の要約だけの号は出さない（履歴・ページ・索引・RSS・OGP のどれも書かない）
+                        ogp.assert_not_called()
+                        self.assertEqual(engine.load_history(config['data_dir']), [])
+                        self.assertEqual(list(Path(config['job_dir']).iterdir()), [])
+                        continue
+                    ogp.assert_called_once()
                     issue = engine.load_history(config['data_dir'])[0]
-                    self.assertEqual(issue['count'], int(keep_valid))
+                    self.assertEqual(issue['count'], 1)
                     self.assertEqual(issue['executive_summary'], ['有効な要点'])
                     # 使わなくなった SNS 総括は、AI が返しても号に残さない
                     self.assertNotIn('sns_summary', issue)
                     self.assertNotIn('sns_why_it_matters', issue)
                     self.assertEqual(issue['sns_buzz'], [])
                     index = json.loads(Path(config['job_dir'], 'search-index.json').read_text(encoding='utf-8'))
-                    self.assertEqual(len(index['records']), int(keep_valid))
+                    self.assertEqual(len(index['records']), 1)
                     page = Path(config['job_dir'], '20261009', 'index.html').read_text(encoding='utf-8')
-                    if keep_valid:
-                        self.assertEqual(issue['articles'][0]['why_it_matters'], '')
-                        self.assertEqual(index['records'][0]['url'], '20261009/#art-1')
-                        self.assertIn('id="art-1"', page)
-                        self.assertNotIn('id="art-2"', page)
-                    else:
-                        self.assertEqual(issue['articles'], [])
-                        self.assertNotIn('id="art-1"', page)
+                    self.assertEqual(issue['articles'][0]['why_it_matters'], '')
+                    self.assertEqual(index['records'][0]['url'], '20261009/#art-1')
+                    self.assertIn('id="art-1"', page)
+                    self.assertNotIn('id="art-2"', page)
                     for name in ('index.html', 'rss.xml'):
                         self.assertTrue(Path(config['job_dir'], name).is_file())
 
