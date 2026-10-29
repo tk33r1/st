@@ -849,27 +849,36 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
   throw stageError('persona_call', 'unreachable', `${p.codename} の応答取得に失敗しました`, { persona: p.codename, round, retryable: true });
 }
 
-// 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
-async function fetchTitle(env, lastContent, langNote, signal, log) {
+// 題と次の質問の予測の補助モデル呼び出し（非クリティカル：失敗しても null）。
+// request() が呼び出しの中身（cfg・messages・temperature）を、shape(raw) が整形した本文を返す。
+// 文の組み立ても try の中で行い、どこで失敗しても `${purpose}_call` のログを残して null にする
+async function fetchAuxLine(env, purpose, request, shape, signal, log) {
   try {
+    const res = await callAuxModel({ env, stream: false, signal, ...request() }, log, purpose);
+    if (!res.ok) { log(`${purpose}_call`, `HTTP ${res.status}`); return null; }
+    const text = shape(((await res.json()).choices?.[0]?.message?.content || '').trim());
+    log(`${purpose}_call`, `len=${text.length}`);
+    return text || null;
+  } catch (e) {
+    log(`${purpose}_call`, 'failed', e && e.message);
+    return null;
+  }
+}
+
+// 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
+function fetchTitle(env, lastContent, langNote, signal, log) {
+  return fetchAuxLine(env, 'title', () => {
     // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる。
     // 発言は見出しを付けて引用する（そのまま渡すと、モデルが題ではなく答えを書く）
     const quoted = `${TITLER.input_header}
 ${contentText(lastContent).trim() || '（文字なし。画像だけ）'}`;
-    const res = await callAuxModel({
-      env, cfg: DEFAULTS.models.titler, stream: false, signal,
+    return {
+      cfg: DEFAULTS.models.titler,
       messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: withImages(quoted, contentImages(lastContent)) }],
-    }, log, 'title');
-    if (!res.ok) { log('title_call', `HTTP ${res.status}`); return null; }
-    const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
-    // タイトルは1行・記号類を除去し、保険として長さを制限（英語の4語が収まる長さ）
-    const clean = raw.replace(/[\r\n"'`「」『』]/g, '').trim().slice(0, 40);
-    log('title_call', `len=${clean.length}`);
-    return clean || null;
-  } catch (e) {
-    log('title_call', 'failed', e && e.message);
-    return null;
-  }
+    };
+  },
+  // タイトルは1行・記号類を除去し、保険として長さを制限（英語の4語が収まる長さ）
+  raw => raw.replace(/[\r\n"'`「」『』]/g, '').trim().slice(0, 40), signal, log);
 }
 
 // 出力の言語の指定（personas.js の REPLY_LANGUAGE）。言語の名前はコードで決めず、ユーザーの言葉を引用して
@@ -905,8 +914,8 @@ const withLangNote = (prompt, langNote) => langNote ? `${prompt}\n\n${langNote}`
 const tail = (t, max) => t.length > max ? '…' + t.slice(-max) : t;
 const head = (t, max) => t.length > max ? t.slice(0, max) + '…' : t;
 
-async function fetchSuggestion(env, convo, context, langNote, signal, log) {
-  try {
+function fetchSuggestion(env, convo, context, langNote, signal, log) {
+  return fetchAuxLine(env, 'suggest', () => {
     const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
       const imgs = contentImages(m.content).length;
       const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '');
@@ -916,25 +925,19 @@ async function fetchSuggestion(env, convo, context, langNote, signal, log) {
       ...(context ? [SUGGESTER.context_header, head(context.trim(), SUGGESTER.context_max_chars), ''] : []),
       '【会話】', transcript, ...(langNote ? ['', langNote] : []),
     ].join('\n');
-    const res = await callAuxModel({
-      env, cfg: DEFAULTS.models.suggester, stream: false, signal, temperature: SUGGESTER.temperature,
+    return {
+      cfg: DEFAULTS.models.suggester, temperature: SUGGESTER.temperature,
       messages: [{ role: 'system', content: SUGGESTER.system_prompt }, { role: 'user', content: input }],
-    }, log, 'suggest');
-    if (!res.ok) { log('suggest_call', `HTTP ${res.status}`); return null; }
-    const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
+    };
+  }, (raw) => {
     // 1行目だけを使い、話者の名乗りと、文全体を囲む引用符を落とす。
     // 囲みは対で1組だけ外す（「曲名」——説明 の頭の「 だけを剥がすと、閉じの 」 が残って崩れる）
     let line = (raw.split(/\r?\n/).find(l => l.trim()) || '')
       .replace(/^\s*(?:ユーザー|user)\s*[:：]\s*/i, '').trim();
     const close = { '「': '」', '『': '』', '"': '"', '“': '”', "'": "'" }[line[0]];
     if (close && line.length > 1 && line.endsWith(close) && !line.slice(1, -1).includes(close)) line = line.slice(1, -1).trim();
-    line = line.slice(0, SUGGESTER.max_chars);
-    log('suggest_call', `len=${line.length}`);
-    return line || null;
-  } catch (e) {
-    log('suggest_call', 'failed', e && e.message);
-    return null;
-  }
+    return line.slice(0, SUGGESTER.max_chars);
+  }, signal, log);
 }
 
 // --- 討議の判定（personas.js の DEBATE）---
@@ -2456,13 +2459,15 @@ export default {
       // 配布済みの画面も model を表示するので、ここで表示名を返す。API 呼び出しは cfg.model のまま。
       // 実際に指定しているモデルIDも model_id として返し、エイリアスとの対応を確認できるようにする。
       const describe = (codename, cfg) => ({ provider: cfg.provider, provider_label: PROVIDERS[cfg.provider].label, model: cfg.display_name, model_id: cfg.model, ...PERSONA_GUIDE[codename] });
+      const speech = speechReady(env), privacy = privacyFeatures(env);
       const body = {
         personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, describe(codename, cfg)])),
         synthesizer: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer),
         themes: { light: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer), dark: describe(SYNTHESIZER.codename, DEFAULTS.models.synthesizer_dark) },
         privacy: PRIVACY,
         // 画面はこれを見て読み上げのボタンを出す（読み上げ設計§7）。Worker の設定だけで全画面に出し入れできる
-        features: { speech: speechReady(env), ...privacyFeatures(env), temporary_speech: speechReady(env) && privacyFeatures(env).temporary_speech },
+        // 一時会話の読み上げは、読み上げと一時会話の両方が使えるときだけ
+        features: { speech, ...privacy, temporary_speech: speech && privacy.temporary_speech },
       };
       return jsonResponse(body, cors, 200, { 'Cache-Control': url.searchParams.get('capabilities') === '1' ? 'no-store' : 'public, max-age=600' });
     }
