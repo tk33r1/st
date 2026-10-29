@@ -1,6 +1,6 @@
 # tk.st / MAGI ログイン設計書
 
-設計案（2026-10-25、2026-10-26 改訂）。未実装・未公開。本人指定は Auth0 採用・アプリ間 SSO なし（2026-10-25）、対象を magi2 に限りSAFE TOOLS にログインを設けないこと・管理画面 `account.tk.st` を最初から設けること（2026-10-26）。主目的は便利さ、商用化は副目標（同日）。任意ログイン、利用枠、同期範囲、保持期間、期間の値は本書の提案。
+設計案（2026-10-25、2026-10-26・2026-10-30 改訂）。未実装・未公開。本人指定は Auth0 採用・アプリ間 SSO なし（2026-10-25）、対象を magi2 に限りSAFE TOOLS にログインを設けないこと・管理画面 `account.tk.st` を最初から設けること（2026-10-26）。主目的は便利さ、商用化は副目標（同日）。初回公開に添付なしの履歴同期（L3）を含めること（2026-10-30）。任意ログイン、利用枠、同期範囲、保持期間、期間の値は本書の提案。
 実装・公開後は冒頭を「実装済み（日付）。正本はコード」に変更し、以後は更新しない。
 
 対象はトップページの MAGI、Web/PWA、Android、magi2 Worker と新設アカウント基盤（`account.tk.st` を含む）。[検証計画書](magi2ログイン検証計画.md) と、一時チャット・パーソナライズの既存仕様を併用する。
@@ -54,11 +54,11 @@ SAFE TOOLS にログインを設けない理由: 「中身を送らない」が�
 | L0.5 | 端末内の保存の強化（9.1）。ログイン不要・サーバー送信なし | 端末内だけ |
 | L1 | 任意ログイン、パスキーでのログイン、利用枠、利用者別端末保存、ログアウト、`account.tk.st`（書き出し・退会・Web セッションの一括終了・規約同意） | 内部 ID・認証セッション・利用枠・規約同意版・削除ジョブ。通常本文は端末だけ |
 | L1.5 | パスキーの一覧・取消（5.5） | L1 と同じ |
-| L2 | 任意の設定同期・設定書き出し | 同意した呼び方・カスタム指示・同期を選んだ端末設定。初回公開を L1+L2 とする提案 |
-| L3 | 任意の通常履歴同期、明示取込み、競合・削除の伝播 | 同意した会話。添付対応までは添付付き会話の同期を提供しない |
+| L2 | 任意の設定同期・設定書き出し | 同意した呼び方・カスタム指示・同期を選んだ端末設定 |
+| L3 | 任意の通常履歴同期（添付なし）、明示取込み、競合・削除の伝播 | 同意した会話。添付対応までは添付付き会話の同期を提供しない |
 | L4 | 画像・共有資料を含む同期 | 私有 R2 オブジェクトと所有者付きメタデータ |
 
-L0.5 はログインと独立に公開できる。L1.5 は L1 の公開を待たせない。端末を紛失した場合、L1.5 までの間はメール認証での復旧と、退会または Auth0 側でのユーザー削除で対応する。L3/L4 は後続段階とし、公開条件を L1/L2 と分ける。L3 は便利さへの寄与が最も大きいので、L2 の公開後に優先して着手する。UI は公開済みの機能だけを案内する。
+初回公開は L1+L2+L3 とし、3つの合格がそろってから同時に有効にする（本人指定 2026-10-30）。L1 だけを先に出すと、ログインで得られるのが利用枠だけになり、ログインした途端に guest の会話が一覧から外れ、ログアウトのたびに未同期の会話の破棄を迫ることになって、主目的の便利さを下げるため。L0.5 はログインと独立に公開できる。L1.5 は初回公開を待たせない。端末を紛失した場合、L1.5 までの間はメール認証での復旧と、退会または Auth0 側でのユーザー削除で対応する。L4 は後続段階とし、公開条件を初回公開と分ける。UI は公開済みの機能だけを案内する。
 
 ## 4. 構成・責務
 
@@ -114,11 +114,11 @@ flowchart TD
 
 ## 5. Auth0 設定と SSO を使わない契約
 
-1. Free テナント、独自ドメイン `auth.tk.st`、`tk.st` 用と `account.tk.st` 用の Regular Web Application を各1つ、Android 用 Native Application、MAGI 用 API audience を用意する。名称は予定値。評価設定は本番から隔離し、Free のテナント制限を確認する。
+1. Free テナント、独自ドメイン `auth.tk.st`、`tk.st` 用と `account.tk.st` 用の Regular Web Application を各1つ、Android 用 Native Application、MAGI 用 API audience を用意する。名称は予定値。評価設定は本番から隔離し、Free のテナント制限を確認する。テナントの地域は作成後に変えられないため、作成前に Free で選べる地域を確かめて決め、プライバシーポリシーの外国にある第三者の記載（第13章）と合わせる。
 2. 1つの Database Connection に email OTP と passkey を設定し、Identifier First / New Universal Login を使う。別の legacy passwordless connection やソーシャルログインは初期導入しない。Account Linking への依存を作らない。
-3. Resend をメールプロバイダーに設定し、認証用途の送信権限・到達・再送制限を確認する。鍵は Auth0 側に設定する。
+3. Resend をメールプロバイダーに設定し、認証用途の送信権限・到達・再送制限を確認する。鍵は Auth0 側に設定する。認証用の送信は、既存の dj-offer（出演オファーの転送）と magi2 の障害通知が使う Resend のアカウント・送信枠と分ける。確認コードを大量に送られても、ほかの用途のメールが止まらないようにするため。
 4. パスキー RP ID は原則 `auth.tk.st`。Web/Android とも初期は同じ Universal Login 上で登録・認証する。直接 tk.st の DOM で WebAuthn を呼ぶ方式や Android の Native Passkey API は初期対象外。パスキーは Auth0 の外へ持ち出せない前提とし、IdP を乗り換える場合はメール確認コードで再登録してもらう。
-5. 3つのクライアントは別 client ID・redirect URI・セッション・refresh token を使う。対話ログインで `prompt=login` と `max_age=0` を指定し、`auth_time` と開始時刻（許容ずれ込み）を照合する。iframe silent SSO・Native-to-Web transfer は使わず、各アプリ自身の refresh token 更新は継続する。`tk.st` と `account.tk.st` の間でもセッションを受け渡さない。
+5. 3つのクライアントは別 client ID・redirect URI・セッションを使う（refresh token を持つのは Android だけ）。対話ログインで `prompt=login` と `max_age=0` を指定し、`auth_time` と開始時刻（許容ずれ込み）を照合する。iframe silent SSO・Native-to-Web transfer は使わない。Android は自身の refresh token で継続し、Web の2つは accounts 自前のセッションで継続する（Auth0 の refresh token を受け取らない。5.1）。`tk.st` と `account.tk.st` の間でもセッションを受け渡さない。
 
 Web/PWA は同じ Web アプリの入口とするが、ブラウザ・standalone PWA ごとの Cookie 分離を考慮する。iPhone は PWA で配布しているため、ホーム画面の PWA からスコープ外の `auth.tk.st` へ移って callback で戻る往復を L0 で実機確認する。成立しない場合は、ログインを Safari で行うと案内するなどの代替を決めるまで iOS の PWA にログインを出さない。パスキーが同期されても、別端末の初回認証は必要。
 
@@ -127,9 +127,9 @@ Web/PWA は同じ Web アプリの入口とするが、ブラウザ・standalone
 - `/user/api/login` は CSRF 対策した POST。許可済みの戻り先パスと OIDC transaction を作り、認証先 URL を返す。
 - accounts が `state / nonce / code_verifier / started_at / return_path` を5分だけ保持。ブラウザには照合用の短期 HttpOnly Cookie を渡し、state とブラウザの両方に結び付ける。複数タブは transaction ごとに区別する。
 - callback は accounts Worker の `/user/api/callback`。code・state を一度だけ受け、PKCE、署名、issuer、`tk.st` 用 client の audience、nonce、時刻、認証方式/メール確認を検査する。失敗時はセッションを作らない。
-- 成功時は新しいランダムなセッションを作り、`__Host-st_session`（Secure、HttpOnly、SameSite=Lax、Path=/、Domain なし）を `tk.st` に設定。固定化を防ぎ旧 ID は廃棄する。この Cookie は tk.st の静的ページ（SAFE TOOLS を含む）への要求にも付くが、HttpOnly のためページのスクリプトからは読めず、SAFE TOOLS の通信・送信内容は変わらない。
+- 成功時は新しいランダムなセッションを作り、`__Host-st_session`（Secure、HttpOnly、SameSite=Lax、Path=/、Domain なし、Max-Age は絶対期限の90日）を `tk.st` に設定。Max-Age を付けるのは、ブラウザ・PWA を閉じたときに Cookie が消えて5.3の期間が成り立たなくなるのを防ぐため。固定化を防ぎ旧 ID は廃棄する。この Cookie は tk.st の静的ページ（SAFE TOOLS を含む）への要求にも付くが、HttpOnly のためページのスクリプトからは読めず、SAFE TOOLS の通信・送信内容は変わらない。
 - 初めてのログインで内部 ID を作るときは、利用規約・プライバシーポリシーの版を示して同意を記録する（8.1 の terms_acceptances）。版が上がった既存利用者の扱いは5.6に従い、終了するための操作には再同意を要求しない。
-- Auth0 トークンはサーバー側に置き、refresh token は Wrangler secret の鍵で暗号化。D1 にはセッション秘密のハッシュだけを保存。暗号鍵には版を持たせる。
+- Web の2つの client（`tk.st`・`account.tk.st`）は `offline_access` を求めず、Auth0 の refresh token を受け取らない。ID token は callback の検証に使った後に捨て、Auth0 のトークンを保存しない。accounts は自前のセッションで継続し、チャットごとに Auth0 へ照会せず、Auth0 だけで止めたユーザーの即時失効も扱わない（5.3）ため、保存しても使い道がない。D1 にはセッション秘密のハッシュだけを保存する。
 - callback は本文・外部アセットを出さず、クエリのない許可済みパスへ303。計測・キャッシュ制御は第13章に従う。
 - Web の JS/localStorage/IndexedDB に長期認証トークンを置かない。Cookie 付きの更新・削除・同期・チャット送信に厳密な Origin と CSRF トークンを要求する。Cookie なしの悪意あるサイトからログイン transaction を作成させない。
 
@@ -157,7 +157,7 @@ Web/PWA は同じ Web アプリの入口とするが、ブラウザ・standalone
 
 通常のセッションを長くし、毎日のチャットでメールのコードを求めない。漏れたときの被害が大きい操作は `account.tk.st` に集め、短いセッションと再認証で守る。Free で設定できる範囲を L0 で検証し、設定できない値は G02 で採用値を決め直す。画面の活動だけでトークンを頻繁に更新しない。
 
-Web ログアウトはローカルの受信・キューを停止し、サーバーセッションを失効、Cookie とサーバーの refresh token を破棄/失効する。`tk.st` のログアウトは `account.tk.st` のセッションに影響しない（逆も同じ）。Android は送信・同期を停止し、Keystore 内の資格情報を破棄、refresh token の失効を試みる。ネット切断中も画面は即座にログアウトし、サーバー側処理の未完了は再接続後に扱う。
+Web ログアウトはローカルの受信・キューを停止し、サーバーセッションを失効させ、Cookie を破棄する。`tk.st` のログアウトは `account.tk.st` のセッションに影響しない（逆も同じ）。Android は送信・同期を停止し、Keystore 内の資格情報を破棄、refresh token の失効を試みる。ネット切断中も画面は即座にログアウトし、サーバー側処理の未完了は再接続後に扱う。
 
 オフラインでは Web の HttpOnly Cookie を消せないため、秘密を含まない「ログアウト処理待ち」フラグを端末に保存する。再起動・別タブでも logout API の成功までアカウント復元・通信・guest送信を止める。Native の遠隔失効通信が失敗した場合も、ローカル token 消去と遠隔失効の結果を区別する。
 
@@ -169,7 +169,7 @@ Android の流出済み access token はログアウト後も最大5分＋検証
 
 - 配信: accounts Worker のカスタムドメインとして `account.tk.st` を設定し、`workers/accounts/public/` を静的アセットとして配る。tk.st の Pages・`build.sh`・Service Worker とは独立する。
 - ページ: 解析タグ（GTM・Ahrefs・Cloudflare Web Analytics）、CDN、外部フォントを置かない。HTTP ヘッダーで `Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self' https://auth.tk.st; base-uri 'none'; object-src 'none'` 相当と、`Referrer-Policy: same-origin`、`Cross-Origin-Opener-Policy: same-origin`、`X-Robots-Tag: noindex`、`Cache-Control: no-store` を返す。インラインのスクリプトを使わない。Referrer-Policy を `no-referrer` にしないのは、フォーム POST や `mode: 'same-origin'` の fetch で同一オリジンの Origin が `null` になり、下表の更新 API の Origin 照合が成り立たなくなるため。`same-origin` でも `auth.tk.st` など外部へは Referer を送らない。更新 API は既定モードの fetch で呼び、フォーム POST は使わない。
-- ログイン: `account.tk.st` 用 client で、毎回の対話認証（`prompt=login`、`max_age=0`）。callback は `account.tk.st/api/callback`。成功時は `__Host-st_account`（Secure、HttpOnly、SameSite=Strict、Path=/、Domain なし）を設定する。初めての内部 ID 作成もここから行える（規約同意は5.1と同じ）。
+- ログイン: `account.tk.st` 用 client で、毎回の対話認証（`prompt=login`、`max_age=0`）。callback は `account.tk.st/api/callback`。成功時は `__Host-st_account`（Secure、HttpOnly、SameSite=Strict、Path=/、Domain なし、Max-Age は絶対期限の12時間）を設定する。初めての内部 ID 作成もここから行える（規約同意は5.1と同じ）。
 - 要求元の検査は下表で分ける。通常の同一オリジン GET は Origin が省略されるため、Origin 完全一致を全 GET に要求しない。CORS はどのオリジンにも許可しない。通常 API の `Sec-Fetch-Site` 欠落・`same-site`・`cross-site`・`none` は拒否する。静的ページの表示と OIDC callback は別の契約とする。
 
 | 要求 | 検証と初期化 |
@@ -207,7 +207,7 @@ Android の流出済み access token はログアウト後も最大5分＋検証
 
 内部 user ID はランダム UUID、Auth0 との対応は正規化した issuer と sub の一意制約で保持する。メール一致で統合しない。メールは Auth0 で管理し、D1 に重複保存しない。登録時の email_verified は信頼する issuer の情報で確認する。内部 ID を Auth0 の ID と分けておくことで、IdP を乗り換えても会話・設定・プランを引き継げる。
 
-Native の初期登録は `/user/api/native/bootstrap` に有効な API access token を送り、issuer の `/userinfo` で sub と確認済みメールを照合した後だけ内部 ID を作る。この token の audience/scope で `/userinfo` が成立することを L0 の必須条件とする。Web callback/Native bootstrap は、新しい内部 ID の write_epoch・規約同意の記録まで確認して登録を完了する。途中失敗は冪等に再開する。以後の API に user 自動作成の副作用を持たせない。内部 ID の新規作成は、IP（第8章の HMAC）ごとの日次上限を設ける（提案値 10件/日）。
+Native の初期登録は `/user/api/native/bootstrap` に有効な API access token を送り、issuer の `/userinfo` で sub と確認済みメールを照合した後だけ内部 ID を作る。この token の audience/scope で `/userinfo` が成立することを L0 の必須条件とする。Web callback/Native bootstrap は、新しい内部 ID の write_epoch・規約同意の記録まで確認して登録を完了する。途中失敗は冪等に再開する。以後の API に user 自動作成の副作用を持たせない。内部 ID の新規作成は、IP（8.2 のまとめ方と HMAC）ごとの日次上限を設ける（提案値 10件/日）。
 
 この上限は MAGI 内部 ID の作成にだけ効く。Auth0 のユーザー作成・認証・token 発行・メール配信を止めるものではない。認証基盤側の保護は7.1に従う。
 
@@ -215,7 +215,7 @@ Native access token は固定 issuer、API audience、許可アルゴリズム�
 
 | 入口 | 認証・扱い |
 | --- | --- |
-| `tk.st/user/api/*` | accounts Worker。Webのsession初期化/login/callbackは5.4と同じ要求種別で検証し、通常操作はtk.stのCookieとCSRF、Nativeは許可Bearerを使う。設定・同期・同意のオン/オフ・stream ticket。専用の一括書き出し・一括削除・退会は置かない |
+| `tk.st/user/api/*` | accounts Worker。Webのsession初期化/login/callbackは5.4と同じ要求種別で検証し、通常操作はtk.stのCookieとCSRF、Nativeは許可Bearerを使う。設定・同期・同意のオン/オフ・stream ticket。専用の一括書き出し・一括削除・退会は置かない。Android は WebView（Capacitor のオリジン）から fetch で呼ぶため、magi2 の `APP_ORIGIN_RE` と同じオリジンにだけ、Bearer を付けた要求の CORS を許す。そのオリジンには `Access-Control-Allow-Credentials` を返さず、Cookie の要求とみなさない |
 | `tk.st/user/native/callback` | accounts Worker の専用 route。App Link 不成立時の安全な中止案内だけ |
 | `account.tk.st/*` | accounts Worker。管理画面と `/api/*`。`account.tk.st` の Cookie だけ。5.4 の要求元の検査 |
 | `tk.st/magi2/*` | 新 Web/PWA 用。同一オリジン Cookie。magi2 が accounts で所有者を解決 |
@@ -247,7 +247,7 @@ WS は Origin を厳密照合し、account モードの ticket 欠落/不正は�
 | --- | --- |
 | 通常チャット | L1 ではゲストの現行 IP 枠を維持。ログインは user 単位で現行 `DEFAULTS.daily_limit` と同じ値を初期値にする |
 | Web 検索・音声 | user ごとの上限を既存 IP 上限から開始。feature 別の回数・サイト全体上限を維持 |
-| IP の安全弁 | 同じ IP からの guest と全アカウントの合計に日次上限を掛ける（提案値は `daily_limit` の5倍。負荷試験で確定）。共有回線の通常利用は圧迫せず、アカウントの量産で枠を増やせないようにする |
+| IP の安全弁 | 同じ IP（IPv6 は8.2のとおり /64 にまとめる）からの guest と全アカウントの合計に日次上限を掛ける（提案値は `daily_limit` の5倍。負荷試験で確定）。共有回線の通常利用は圧迫せず、アカウントの量産で枠を増やせないようにする。ゲストの現行 IP 枠はアドレス単位のまま変えないが、IPv6 のアドレスを替えて超えた分もこの安全弁で止まる |
 | アカウントの新規作成 | 第6章の IP ごとの日次上限。Auth0 側の登録前の制限（Actions・ボット対策）が Free で使えるかは G01 |
 | 旧画面・旧 APK | ゲスト枠。ログインの枠へ加算しない |
 | 集計日 | 現行どおり UTC。画面には現地時刻でリセット日時を表示 |
@@ -274,7 +274,7 @@ WS は Origin を厳密照合し、account モードの ticket 欠落/不正は�
 
 AI の枠・内部 ID の作成枠と、Auth0 MAU・登録件数・Resend の送信数は別の計数とする。特に Native は bootstrap より先に token が発行されるため、内部 ID の拒否だけでは MAU の増加を止められない。Auth0 側で当月に利用した user を後から消しても、その月の MAU が戻るとは扱わない。
 
-L0 で3つの client の直接の認可・登録・コード送信経路を列挙し、Auth0 側の登録前制限/ボット対策・送信制限について Free での利用権、効く段階、回避経路、採用値を記録する。Web の login 開始にも IP の制限を設けるが、公開 client ID を使った直接経路の代替対策とはしない。MAU・メール・M2M の観測と通知、急増時の新規登録停止の手順も用意する。
+L0 で3つの client の直接の認可・登録・コード送信経路を列挙し、Auth0 側の登録前制限/ボット対策・送信制限について Free での利用権、効く段階、回避経路、採用値を記録する。Resend の送信枠を使い切られても、第5章の3のとおり認証以外のメール（出演オファー・障害通知）は止まらないことを確かめる。Web の login 開始にも IP の制限を設けるが、公開 client ID を使った直接経路の代替対策とはしない。MAU・メール・M2M の観測と通知、急増時の新規登録停止の手順も用意する。
 
 停止手順はアプリのログインボタンや内部 bootstrap の停止だけでなく、Auth0 側の登録設定など、直接経路にも作用することを合成アカウントで確かめる。既存利用者の再認証・書き出し・退会を維持できるかも記録する。使えない対策をアプリ側 IP 上限で代用済みとはせず、残る消費と有効な代替策を G01 で確定する。未確定のまま認証基盤の費用上限を保証したり、新規登録を公開したりしない。
 
@@ -287,15 +287,15 @@ L0 で3つの client の直接の認可・登録・コード送信経路を列�
 | users | id、status（active/blocked/deleting/deleted）、plan（L1 は `free` のみ）、write_epoch、created_at、deleted_at。メールを主キーにしない |
 | identities | issuer、sub、user_id。issuer+sub が一意。退会中の再作成防止も担当 |
 | terms_acceptances | user_id、文書（terms/privacy）、版、同意日時 |
-| web_sessions | host（`tk.st`/`account.tk.st`）、secret_hash、user_id、期限、最終利用、暗号化 refresh token、鍵版、失効日時、`account.tk.st` は auth_time。更新の直列化用 lease/version |
+| web_sessions | host（`tk.st`/`account.tk.st`）、secret_hash、user_id、期限、最終利用、失効日時、`account.tk.st` は auth_time。Auth0 のトークンは持たない（5.1） |
 | login_transactions | host、transaction_hash、nonce/verifier の保護値、ブラウザ結び付け、期限、消費状態 |
-| account_creations | IP の HMAC、日付、件数。内部 ID の新規作成の日次上限（8日で掃除） |
+| account_creations | IP の HMAC（まとめ方は8.2）、日付、件数。内部 ID の新規作成の日次上限（8日で掃除） |
 | stream_tickets | ticket_hash、session/user、用途、要求 nonce、期限、消費日時 |
 | preferences / sync_consents | user_id、app（L2 は `magi` のみ）、revision、設定本文、種別ごとの同意・同意版・日時。`app` 列は将来ほかのサービスを足すときの作り直しを避けるため |
 | sync_states（L2以降） | user_id+app+scope（設定/履歴・添付）、data_epoch、state（active/purging）。通常のデータ削除後も世代を保持し、旧キューを拒否する。本文は持たない |
 | deletion_jobs | user_id、対象と進捗、再試行回数、次回日時。メール/本文/生トークンを記録しない |
 | write_leases（L4） | user_id、write_epoch、scope/data_epoch、操作ID、対象object_key、期限、終了状態。DB外への書込みの追跡 |
-| conversations（L3） | user_id+id、revision、title、本文 JSON、mode、削除状態、更新順 cursor |
+| conversations（L3、初回公開） | user_id+id、revision、title、本文 JSON、mode、削除状態、更新順 cursor |
 | attachments（L4） | user_id、会話 ID、私有 object_key、サイズ、種別、削除状態 |
 
 MAGI DB 側には user/guest の quota と nonce 予約だけを追加する（本文・タイトル・設定を持たない）。全体枠は第7章の既存行を使う。既存の評価・不具合報告・音声キャッシュには user ID を付けない。migration は実装時の次番号を使う。
@@ -304,9 +304,9 @@ MAGI DB 側には user/guest の quota と nonce 予約だけを追加する（�
 
 ### 8.2 保持・削除
 
-- login transaction/ticket は第5章・6.1の期限で失効後、24時間以内に掃除する。セッションの秘密・暗号化 token は失効処理で除去する。
-- 新設の利用枠・要求 nonce・アカウント作成の件数は8日以内で掃除する。IP は用途・日付・secret の salt を使った HMAC を用い、認証ログに実 IP を増やさない。既存検索クリックの90日運用は今回の対象外。
-- 同期設定・会話は有効なアカウントの間保持し、容量枠を設ける。提案初期値は設定1件、本文会話100件・合計10MiB/人。超過で既存データを自動削除せず書込みを拒否する。L3 前に D1 全体容量と費用も確認する。
+- login transaction/ticket は第5章・6.1の期限で失効後、24時間以内に掃除する。セッションの秘密は失効処理で除去する。
+- 新設の利用枠・要求 nonce・アカウント作成の件数は8日以内で掃除する。IP は用途・日付・secret の salt を使った HMAC を用い、認証ログに実 IP を増やさない。HMAC にかける前に、IPv4 はアドレスのまま、IPv6 は /64 にまとめる（利用者は自分の /64 の中でアドレスをいくらでも替えられるため。既存の magi2 は `CF-Connecting-IP` をそのまま使っている）。既存検索クリックの90日運用は今回の対象外。
+- 同期設定・会話は有効なアカウントの間保持し、容量枠を設ける。提案初期値は設定1件、本文会話100件・合計10MiB/人。超過で既存データを自動削除せず書込みを拒否する。初回公開（L3 を含む）の前に D1 全体容量と費用も確認する。
 - 明示削除した本文・R2 実体は24時間以内に現行ストアから除去する。同期用 tombstone は30日保持し、それより古い cursor は全再同期を要求して古い端末からの復活を防ぐ。
 - 退会後も MAGI D1 に残る利用枠と nonce の行（本文なし）は、退会ジョブで消すか、最長8日で掃除される。保存説明にこの扱いを書く。
 - D1 Time Travel/バックアップ、Auth0/Resend の保持期間は別途確認し、第12章の再削除手順とともに説明する。24時間の削除期限はバックアップに適用しない。
@@ -315,9 +315,11 @@ MAGI DB 側には user/guest の quota と nonce 予約だけを追加する（�
 
 保存空間は `guest` と内部 user ID ごとに分離する。既存の `magi_saved_sessions`、現在履歴、個人設定、Android `magi/` は guest として保全し、ログインだけで所有者を変えない。
 
+ログイン中の一覧に guest の会話は混ぜない。代わりに、ログイン直後と履歴の一覧に、この端末の guest の会話の件数と、アカウントへの取込み（第11章の明示取込み）の案内を出す。ログインしただけで過去の会話が消えたように見せないため。案内を閉じても、履歴の一覧からいつでも取り込める。
+
 各処理は開始時の `owner / auth_generation / conversation_id / revision` を描画・保存・同期・通知・保留回収の直前に再照合する。切替は世代更新 → AI受信・再生・添付・同期の停止 → 画面ロック → 次領域を開く順。ログイン前の未送信文は guest に保持し、callback に載せない。
 
-ログアウトで当該アカウントの端末キャッシュと pending を消すのを初期方針とする。未同期の会話がある場合は、破棄・書き出し・操作中止を選べる。書き出し先に内容が残ることを示す。ログイン切れでは即削除せず、対象領域をロックし同じアカウントの再認証で回復する。guest の既存履歴はどちらの場合も消さない。
+ログアウトで当該アカウントの端末キャッシュと pending を消すのを初期方針とする。履歴同期で同期済みの会話はサーバーに残るので、同じアカウントで再ログインすれば（別の端末でも）戻る。未同期の会話（履歴同期がオフ、添付付き、同期待ち・失敗）がある場合だけ、その件数を示して破棄・書き出し・操作中止を選べる。書き出し先に内容が残ることを示す。ログイン切れでは即削除せず、対象領域をロックし同じアカウントの再認証で回復する。guest の既存履歴はどちらの場合も消さない。
 
 アカウント別領域は偶発的な混入を防ぐもので、同一端末の管理者や XSS からの暗号学的な隔離ではない。端末・OS のロックとデータ書き出し時の注意も説明する。
 
@@ -353,9 +355,9 @@ L1 以後は、この保存領域を guest と user ID で分ける（本章の�
 
 「同期を停止」はアカウント全体の consent revision を進め、古い端末の同期要求を拒否する。保存済み設定を消す操作は別に用意する。同期停止で本来端末だけに保持する設定まで勝手に公開・削除しない。
 
-## 11. 履歴・添付同期（L3/L4、後続）
+## 11. 履歴同期（L3、初回公開）・添付同期（L4、後続）
 
-- 同意は設定同期と別。新しい通常会話から対象にし、既存会話は一覧・件数・対象を示す明示取込み。guest データは取込み成功の読み戻し前に削除しない。
+- 同意は設定同期と別。初回ログインの後に、設定同期と履歴同期を別々の選択として案内する（既定はどちらもオフのまま）。新しい通常会話から対象にし、既存会話は一覧・件数・対象を示す明示取込み（第9章の guest の会話の案内もここへつなぐ）。guest データは取込み成功の読み戻し前に削除しない。
 - 会話オブジェクトの `mode` を保存入口と API の両方で検査し、temporary はタイトル・画像・本文ハッシュを含め永続化しない。クライアント自己申告の限界は既存設計と同じで、偽装 normal まで検出できるとは言わない。
 - L3 は添付のない会話だけ。画像/共有資料/途中受信の付いた会話は黙って欠落させず、未対応として一覧に示す。L4 は添付を含む完全復元を検証してから開く。
 - 会話単位の revision と server cursor を使い、並行更新は409。削除済み ID への遅延更新は拒否し、オフライン端末が削除済み会話を復活させない。
@@ -431,7 +433,7 @@ Auth0 user の削除も同じジョブで行う。Management API は最小権限
 
 `System & Privacy`、アプリの保存説明、`account.tk.st` を公開段階に合わせる。L2/L3 の同意は別とし、ログインだけで通常本文をサーバー保存しない。メール等は認証で Auth0、配信で Resend に渡り、同期データは Cloudflare に保存する。会話・内部 user ID を AI や検索計測へ追加送信しない。一時チャットにも user/day カウンターが残ることを説明する。
 
-L1 の公開前に利用規約とプライバシーポリシーを公開する。プライバシーポリシーには、取得する情報、利用目的、保持期間、Auth0（米国）・Cloudflare・Resend など外国にある第三者への提供と、その国の名称・制度・相手の措置に関する情報（個人情報保護法の求める範囲）を書く。公開場所は tk.st の静的ページとし、`account.tk.st` からリンクする。有料化するときは、特定商取引法に基づく表記と未成年の扱いを追加する（今回は対象外）。
+初回公開の前に利用規約とプライバシーポリシーを公開する。プライバシーポリシーには、取得する情報、利用目的、保持期間、Auth0（第5章の1で決めたテナントの地域）・Cloudflare・Resend など外国にある第三者への提供と、その国の名称・制度・相手の措置に関する情報（個人情報保護法の求める範囲）を書く。公開場所は tk.st の静的ページとし、`account.tk.st` からリンクする。有料化するときは、特定商取引法に基づく表記と未成年の扱いを追加する（今回は対象外）。
 
 `account.tk.st` と Web/Native callback は解析タグなし。Referrer-Policy は callback が `no-referrer`、`account.tk.st` の画面が `same-origin`（5.4）。code/state を含む callback クエリはアプリ解析へ送らず、エッジログの扱いも確認する。全 API と認証ページ・書き出しは `Cache-Control: no-store`。PWA は `/user/` と個人化した `/magi2/*` を Network Only とし、CDN/Cache API/SW で個人応答を共有しない。`account.tk.st` は Service Worker を使わない。
 
@@ -448,7 +450,7 @@ SW に制御されない通常ページはこの待機を要しない。キャ�
 
 本文・指示・メール・token・code・生の認証 URL は診断ログ/通知に出さず、GTM user_id にも設定しない。診断用 user 識別は別 salt の短期仮名にする。私有データを公開リポジトリの `data/` に置かない。
 
-`www.tk.st` はログイン開始前に正規の `tk.st` へ移す。host-only Cookie を全サブドメインへ広げない。トップの tk.st 以外で動く版は account API を読まず、既存ゲスト表示を維持する。SAFE TOOLS の CSP・通信先・解析設定を拡張しない。
+`www.tk.st` はログイン開始前に正規の `tk.st` へ移す。host-only Cookie を全サブドメインへ広げない。`__Host-` の決まりで Path=/ にするため、`__Host-st_session` は tk.st 上のほかの Worker（comments、dj-*、`/search/api/*`）への要求にも付く。どの Worker も Cookie ヘッダーを記録・転送・エラー出力に載せない。トップの tk.st 以外で動く版は account API を読まず、既存ゲスト表示を維持する。SAFE TOOLS の CSP・通信先・解析設定を拡張しない。
 
 ### 13.2 tk.st 上のスクリプトに対する残存リスク（受け入れる範囲）
 
@@ -471,9 +473,9 @@ tk.st には GTM で配信するタグ、Ahrefs、CDN のライブラリ、ゲ�
 4. magi2 の新認証・利用枠を機能フラグ off で公開し、認証対応 SW を先行配信する。旧クライアント・guest・検索・DJ の回帰と13.1の移行を確かめる。既存の Anthropic 鍵同期と deployment message 手順を維持する。
 5. 利用規約・プライバシーポリシーを公開する。
 6. Web/PWA と Android を順に公開する。版は既存規則に従い、APP_VERSION/表示/package/Android/履歴をそろえる。
-7. L1 合格後にログイン機能、L1.5 合格後にパスキー管理、L2 合格後に設定同期を有効化。L3/L4 は別の合格表と保存説明の公開後にだけ有効化する。
+7. L1・L2・L3 の合格と保存説明の公開がそろってから、ログイン・設定同期・履歴同期を同時に有効化する。ログインだけを先に有効にしない。L1.5 合格後にパスキー管理を有効化する。L4 は別の合格表と保存説明の公開後にだけ有効化する。
 
-新規ログイン、accountチャット、設定同期、履歴同期の停止フラグを分ける。停止中も `account.tk.st` の logout/export/delete と必要な認証更新を維持し、guest利用は明示ログアウト後に限る。認証失敗は第6章、オフラインの扱いは5.3に従う。ロールバックでデータや migration を自動削除しない。
+新規ログイン、accountチャット、設定同期、履歴同期の停止フラグを分ける（公開は同時でも、止めるときは履歴同期だけを止められる）。停止中も `account.tk.st` の logout/export/delete と必要な認証更新を維持し、guest利用は明示ログアウト後に限る。認証失敗は第6章、オフラインの扱いは5.3に従う。ロールバックでデータや migration を自動削除しない。
 
 監視は成功/拒否/期限切れ/更新失敗/利用枠拒否/競合/削除滞留の件数と遅延、`account.tk.st` の要求元検査での拒否件数、アカウント新規作成の上限到達。費用は Auth0 MAU/M2M、Workers/D1/R2、Resend を分けて観測し、Auth0 Free の MAU 上限に近づいたら知らせる。
 
@@ -481,12 +483,12 @@ tk.st には GTM で配信するタグ、Ahrefs、CDN のライブラリ、ゲ�
 
 | ID | 未確定・確認事項 | 関連段階 |
 | --- | --- | --- |
-| G01 | trial 終了後の Free で同一 DB の email OTP、progressive passkey enrollment、独自ドメイン、再認証設定、クライアント3つ、MAU 上限と超過時の扱い・次のプランの費用、7.1の直接経路への登録/メール対策と停止手順が成立するか。内部 ID 上限との違いと残存リスクを記録。L1.5 は My Account APIの本人キー一覧/取消 | L0→L1 必須（My Account API は L1.5） |
-| G02 | Free の期限設定（5.3 の採用値）、Native audience/userinfo、refresh rotation、Android の refresh token の遠隔一括失効、Web の更新 lease と障害復旧 | L0→L1 必須 |
+| G01 | trial 終了後の Free で同一 DB の email OTP、progressive passkey enrollment、独自ドメイン、再認証設定、クライアント3つ、MAU 上限と超過時の扱い・次のプランの費用、7.1の直接経路への登録/メール対策と停止手順が成立するか。内部 ID 上限との違いと残存リスクを記録。テナントの地域（作成前に確定）、認証用メールの Resend の分離。L1.5 は My Account APIの本人キー一覧/取消 | L0→L1 必須（My Account API は L1.5） |
+| G02 | Free の期限設定（5.3 の採用値）、Native audience/userinfo、refresh rotation、Android の refresh token の遠隔一括失効、Android の refresh 更新の直列化と障害復旧 | L0→L1 必須 |
 | G03 | Android 署名済み App Links、採用 SDK/ライブラリと Capacitor 8 互換、複数 callback/復帰。iOS ホーム画面 PWA の Universal Login 往復と Cookie の受け渡し | L0→Android・iOS PWA 公開必須 |
-| G04 | 認証・データ鍵の保存/更新、Private DBとバックアップの保持、退会と12.2の通常データ削除の停止/最終照合、M2M無料枠、新旧全体枠の共通予約、旧SW移行、管理画面の静的アセット配信・HTTP ヘッダー・5.4の初期化/callbackとFetch Metadata、5.6の未同意時の許可操作 | L1 必須（通常データ削除はL2以降の対象scope公開前） |
-| G05 | 任意ログイン、初期枠・IP の安全弁・アカウント作成上限・期限・キャッシュ破棄、同期同意と保持値、テーマ・言語の同期の採否、利用規約・プライバシーポリシーの文面の最終採用 | L1/L2 の公開前 |
-| G06 | 添付・競合・容量・tombstone・バックアップ再削除、R2の書込みleaseと結果不明I/Oの終了確認、公開文言 | L3/L4 の公開前 |
+| G04 | 認証・データ鍵の保存/更新、Private DBとバックアップの保持、退会と12.2の通常データ削除の停止/最終照合、M2M無料枠、新旧全体枠の共通予約、旧SW移行、管理画面の静的アセット配信・HTTP ヘッダー・5.4の初期化/callbackとFetch Metadata、5.6の未同意時の許可操作 | 初回公開前に必須（添付 scope の通常データ削除は L4 の公開前） |
+| G05 | 任意ログイン、初期枠・IP の安全弁（IPv6 のまとめ方を含む）・アカウント作成上限・期限・キャッシュ破棄、同期同意と保持値、テーマ・言語の同期の採否、利用規約・プライバシーポリシーの文面の最終採用 | 初回公開前 |
+| G06 | 競合・容量・tombstone・バックアップ再削除・guest の会話の取込み案内・公開文言（L3）、添付・R2の書込みleaseと結果不明I/Oの終了確認（L4） | L3 部分は初回公開前、L4 部分は L4 の公開前 |
 | G07 | L0.5 の IndexedDB 移行・9.2の旧タブ共存/原本保持/容量不足・書き出し形式（Android と共通の schema）・`persist()` の各ブラウザの挙動 | L0.5 の公開前 |
 
 未達項目がある段階は公開しない。
@@ -533,6 +535,23 @@ tk.st には GTM で配信するタグ、Ahrefs、CDN のライブラリ、ゲ�
 | LOGIN-20：個別削除した会話が互換原本に残る | fixed | 9.2。個別削除で互換原本からも取り除き、tombstone で復活を防ぐ | E-08 |
 | LOGIN-21：旧タブの全体書き戻しを毎回競合として拾う | fixed | 9.2。取り込み済みハッシュを会話1件ごとに記録 | E-07 |
 | LOGIN-22：通常データ削除が対象外 scope の書込みを巻き込む | fixed | 12.2。data_epoch だけを増やし、write_epoch は退会専用 | D-09 |
+
+### 15.4 追加レビュー指摘への対応（2026-10-30）
+
+対象は今回更新した設計書と検証計画の作業ツリー。LOGIN-23 は本人が「初回公開に添付なしの L3 を含める」案を選んだ。fixed は文書上の対応であり、実装試験は全件未実施。
+
+| 指摘ID | 状態 | 設計の根拠 | 追加・変更する検証 |
+| --- | --- | --- | --- |
+| LOGIN-23：L1 だけの公開では、ログインで guest の会話が見えなくなり、ログアウトのたびに未同期の会話を失う | fixed | 第3章・第9章・第11章・第14章。初回公開を L1+L2+L3 にし、同時に有効化。guest の会話の件数と取込みの案内、同期済みの会話は再ログインで戻る | H-11、検証計画10.1 |
+| LOGIN-24：IP ごとの上限が IPv6 のアドレス替えで効かない | fixed | 第6章・第7章・8.1・8.2。IPv6 は /64 にまとめてから HMAC | Q-09 |
+| LOGIN-25：認証用メールが出演オファー・障害通知と Resend の送信枠を共用する | fixed | 第5章の3・7.1・G01。認証用のアカウント・送信枠を分ける | F-12 |
+| LOGIN-26：Web で Auth0 の refresh token を保存する理由がない | fixed | 第5章の5・5.1・5.3・8.1・8.2・G02。Web は `offline_access` を求めず Auth0 のトークンを保存しない | A-11、A-22 |
+| LOGIN-27：Auth0 のテナントの地域は作成後に変えられない | fixed | 第5章の1・第13章・G01 | F-01、V-06 |
+| LOGIN-28：Android から `tk.st/user/api/*` を呼ぶときの CORS が未定義 | fixed | 第6章。Capacitor のオリジンに Bearer の要求だけを許し、credentials は許さない | A-21 |
+| LOGIN-29：`__Host-st_session` が tk.st 上のほかの Worker にも届く | fixed | 第13章。どの Worker も Cookie ヘッダーを記録・転送しない | V-01 |
+| LOGIN-30：Cookie の Max-Age が未定義で、ブラウザ・PWA を閉じると消えうる | fixed | 5.1・5.4。Max-Age を絶対期限に合わせる | F-04、A-10 |
+| LOGIN-31：L0.5 の公開条件に L1 の項目と Android が混ざる | fixed | 検証計画の E-06・E-08・10.1。Web/PWA と Android を経路ごとに判定し、logout は S-05 へ | E-06、E-08、S-05 |
+| LOGIN-32：Safari の保存の問題を WebKit で試す環境がない | fixed | 検証計画第2章。Playwright の WebKit で E を先に回す（iOS 実機の代わりにはしない） | E-01〜E-08 |
 
 ## 16. 参照（2026-10-25 確認。2026-10-26 追加分は実装時に再確認）
 
