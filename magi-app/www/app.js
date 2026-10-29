@@ -1152,7 +1152,7 @@ function readAgentPersonalization() {
 function refreshAgentPersonalization() {
   try { return readAgentPersonalization(); }
   // 履歴のロック中は「アプリを開き直して」の案内を残す（ロックした画面では再試行できない）
-  catch (_) { if (!historyLoading) announceAgent(tr('Could not read personalization settings. Check storage and try again.', 'パーソナライズ設定を読み込めませんでした。保存先を確認して再試行してください。')); return null; }
+  catch (_) { if (typeof historyLoading === 'undefined' || !historyLoading) announceAgent(tr('Could not read personalization settings. Check storage and try again.', 'パーソナライズ設定を読み込めませんでした。保存先を確認して再試行してください。')); return null; }
 }
 function saveAgentPersonalization(value) {
   var next = cleanAgentPersonalization(value);
