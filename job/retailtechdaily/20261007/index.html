@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -463,7 +463,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -662,7 +662,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="店舗DX「絆TIME」、導入5,000店舗を突破　運営事例を発信する「絆TIMES」開設" data-share-takeaway="導入店舗数の拡大は、サービスの普及度を示す一つの指標となる。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -694,7 +694,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="JR東日本、新コード決済「teppay」を10月20日に開始" data-share-takeaway="鉄道事業者による決済サービスは、移動と日常の購買をつなぐ顧客接点になり得る。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -726,7 +726,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="DearOneとインテージ、リテールメディア広告の「事前分析パッケージ」を提供" data-share-takeaway="配信前の分析は、実施後の効果測定だけでは難しい予算配分や媒体選定の判断を支える。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -758,7 +758,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="イオンモール、公式アプリを刷新　AIエージェントが店舗や商品を提案" data-share-takeaway="施設案内を検索・一覧表示にとどめず、AIが店舗や商品との出会いを支援する設計は、回遊や購買の導線を変える可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -790,7 +790,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="顧客が商品を発見するあらゆる接点へ、リテーラーのメディア事業をどう広げるか" data-share-takeaway="リテールメディアの競争軸は、自社サイトや店舗内の広告枠だけでなく、顧客の発見行動に沿った接点の広さへ移りつつある。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-5">
+        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -822,7 +822,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="Targetのデジタル版ホリデーカタログ、玩具を特集　手書きの願いリストも取り込み可能に" data-share-takeaway="紙に書く習慣をデジタルの商品閲覧へつなぐ工夫は、家族や贈り物を選ぶ顧客の参加を促し、カタログを単なる商品一覧から購買導線へ変える可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -854,7 +854,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="小売の繁忙期を支えるには　ピーク時の運営と接点維持を考える" data-share-takeaway="繁忙期は、店舗や小売を支えるシステムの処理能力と運用設計が顧客体験に直結する。" data-share-url="https://tk.st/job/retailtechdaily/20261007/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -926,6 +926,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

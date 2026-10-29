@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -373,7 +373,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -544,7 +544,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="デコホームにスヌーピー商品6アイテム、旅行で使えるスパバッグなどを紹介" data-share-takeaway="キャラクター商品は、ファンの愛着を購買動機にできる一方、日常や旅行で使う具体的な場面が見えるほど選ぶ理由が強くなる。" data-share-url="https://tk.st/job/nitoridaily/20261005/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -576,7 +576,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="「探す手間を省く」ニトリのゴミ袋、1枚約7円からの使い勝手をレビュー" data-share-takeaway="消耗品は価格比較が起きやすいが、保管や取り出しの不便を減らす設計は、多少の単価差を超える選択理由になり得る。" data-share-url="https://tk.st/job/nitoridaily/20261005/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -608,7 +608,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="洗えて清潔に使える、ニトリのふた付きラタン風バスケット" data-share-takeaway="収納用品では、しまう機能に加えて、生活感を隠すことや清潔を保つ手軽さが購入の決め手になる。" data-share-url="https://tk.st/job/nitoridaily/20261005/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -640,7 +640,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="中身が見えるニトリの透明収納ケース、ぬいぐるみの整理にも支持" data-share-takeaway="収納の価値は収容量だけでなく、探す時間やしまった物を忘れるストレスを減らすことにもある。" data-share-url="https://tk.st/job/nitoridaily/20261005/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -672,7 +672,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="秋冬展示会の新商品紹介がTikTokで17.8万回再生、収納・洗濯用品に関心" data-share-takeaway="展示会動画は、商品名や仕様だけでは伝わりにくいサイズ感や使い道を短時間で示し、発売前から生活場面を想像させる。" data-share-url="https://tk.st/job/nitoridaily/20261005/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -732,7 +732,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -809,6 +808,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -469,7 +469,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -660,7 +660,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="島忠、「爆安挑戦セール」第9弾を開始　物価高のなか価格訴求を継続" data-share-takeaway="継続的な価格企画は、値ごろ感を求める顧客の来店動機をつくり、島忠の価格イメージを強化しうる。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -692,7 +692,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="物流・サプライチェーン" data-lane="corporate" data-share-title="ニトリの家電購入時に旧製品を1対1回収　他社製品も対象に" data-share-takeaway="回収を購入時の体験に組み込めば、買い替え時の心理的・実務的な障壁を下げ、販売機会を後押しできる。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="物流・サプライチェーン">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -724,7 +724,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="ニトリなど3社が札幌・北海道GXファンドに出資　参加は17社、総額61億円に" data-share-takeaway="地域のGX投資への参加は、環境対応を個社の取り組みにとどめず、地域企業や事業者との連携につなげる可能性がある。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="経営・価格戦略・PB">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -756,7 +756,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="ニトリ、マレーシア15店舗目を発表　Pavilion Damansara Heightsに出店" data-share-takeaway="海外店舗の拡大は、商品を売る場の増加にとどまらず、現地顧客の嗜好や購買データを蓄積する接点づくりでもある。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗展開・海外戦略">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -788,7 +788,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ×ハローキティ、初のアパレルコレクション　全4型を展開" data-share-takeaway="知名度の高いキャラクターと日常着を組み合わせることで、既存の家具・生活用品とは異なる来店動機を生み出せる。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -820,7 +820,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="「今も現役で助かる」ニトリのソファベッド、長期使用と寝心地への実感が反響" data-share-takeaway="長期間使えて寝心地にも満足しているという実体験は、価格だけでなく耐久性や使用価値が購入後の信頼を生むことを示す。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -852,7 +852,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="ニトリベビーの秋冬出産準備動画が7.8万再生　Nウォームに注目" data-share-takeaway="短尺動画では、商品名や機能の説明に加えて、誰がいつ使うのかを具体的に示すことで検討初期の不安を減らせる。" data-share-url="https://tk.st/job/nitoridaily/20261001/#art-7">
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -912,7 +912,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -981,6 +980,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

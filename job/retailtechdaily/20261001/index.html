@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -324,7 +324,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -493,7 +493,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="トライアルとスギ薬局、企業横断のリテールメディア研究会を設立　共通指標を策定へ" data-share-takeaway="リテールメディアの拡大には、広告主が媒体をまたいで成果を比較できる環境が欠かせない。" data-share-url="https://tk.st/job/retailtechdaily/20261001/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -525,7 +525,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="品川駅にレジ待ち・商品スキャン不要の無人決済ストア　6日間限定で展開" data-share-takeaway="駅ナカは短時間で買い物を済ませたい利用者が多く、会計の省力化が体験価値に直結しやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261001/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -557,7 +557,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="スイッチメディア、クロスメディア分析をリテールメディアに拡張　ファミマTVに対応" data-share-takeaway="広告主にとって、テレビと店舗内メディアを別々に評価する状態が続けば、予算配分や施策比較が難しい。" data-share-url="https://tk.st/job/retailtechdaily/20261001/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -589,7 +589,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="スマレジ、SB C&amp;Sとの連携で全国の店舗DX支援を加速" data-share-takeaway="店舗DXは製品の機能だけでなく、導入先の開拓、設置、運用支援まで含めた実行力が普及を左右する。" data-share-url="https://tk.st/job/retailtechdaily/20261001/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -661,6 +661,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

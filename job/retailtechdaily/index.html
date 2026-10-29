@@ -45,14 +45,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -488,7 +488,7 @@
           "name": "記事の選定・要約はどのように行われていますか？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。マルチAI（DeepSeek / OpenAI GPT）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。"
+            "text": "国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。"
           }
         },
         {
@@ -496,7 +496,7 @@
           "name": "最新ニュースの通知や購読はできますか？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "本ページでの閲覧に加え、 RSSフィード (rss.xml) による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント @retailtechdaily もあわせてご利用ください。"
+            "text": "本ページでの閲覧に加え、 RSSフィード (rss.xml) による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント @retailtechdaily もあわせてご利用ください。"
           }
         },
         {
@@ -539,7 +539,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../job/assets/retail-tech-daily.css?v=20261029_1">
+  <link rel="stylesheet" href="../../job/assets/daily-base.css?v=20261030_1">
   <link rel="stylesheet" href="../../assets/search-ui.css?v=20261012_16">
 </head>
 <body id="top" data-daily-media="retailtechdaily">
@@ -608,12 +608,12 @@
         <div class="masthead-rule" aria-hidden="true"></div>
         <p class="masthead-desc">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。<br>スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
         <div class="meta-pills">
-<a href="20261030/?filter=category:%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2%E3%83%BB%E5%BA%83%E5%91%8A" class="meta-pill-item">📺 リテールメディア・広告</a>
-        <a href="20261030/?filter=category:%E3%82%B5%E3%83%97%E3%83%A9%E3%82%A4%E3%83%81%E3%82%A7%E3%83%BC%E3%83%B3%E3%83%BB%E5%BA%97%E8%88%97%E8%87%AA%E5%8B%95%E5%8C%96" class="meta-pill-item">📦 物流・需要予測・RFID</a>
-        <a href="20261030/?filter=category:%E6%B5%81%E9%80%9ADX%E4%B8%80%E8%88%AC" class="meta-pill-item">🏢 流通DX一般</a>
-        <a href="20261030/?filter=category:SNS%E8%A9%B1%E9%A1%8C%E3%83%BB%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E3%83%AA%E3%82%A2%E3%83%AB" class="meta-pill-item">💬 SNS話題・生活者のリアル</a>
-        <a href="20261030/?filter=category:%E3%82%B0%E3%83%AD%E3%83%BC%E3%83%90%E3%83%AB%E5%85%88%E7%AB%AF%E3%83%88%E3%83%AC%E3%83%B3%E3%83%89" class="meta-pill-item">🌐 グローバル先端トレンド</a>
-        <a href="20261030/?filter=region:GLOBAL" class="meta-pill-item">🌍 海外ニュースすべて</a>
+<a href="20261030/?category=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2%E3%83%BB%E5%BA%83%E5%91%8A" class="meta-pill-item">📺 リテールメディア・広告</a>
+        <a href="20261030/?category=%E3%82%B5%E3%83%97%E3%83%A9%E3%82%A4%E3%83%81%E3%82%A7%E3%83%BC%E3%83%B3%E3%83%BB%E5%BA%97%E8%88%97%E8%87%AA%E5%8B%95%E5%8C%96" class="meta-pill-item">📦 物流・需要予測・RFID</a>
+        <a href="20261030/?category=%E6%B5%81%E9%80%9ADX%E4%B8%80%E8%88%AC" class="meta-pill-item">🏢 流通DX一般</a>
+        <a href="20261030/?category=SNS%E8%A9%B1%E9%A1%8C%E3%83%BB%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E3%83%AA%E3%82%A2%E3%83%AB" class="meta-pill-item">💬 SNS話題・生活者のリアル</a>
+        <a href="20261030/?category=%E3%82%B0%E3%83%AD%E3%83%BC%E3%83%90%E3%83%AB%E5%85%88%E7%AB%AF%E3%83%88%E3%83%AC%E3%83%B3%E3%83%89" class="meta-pill-item">🌐 グローバル先端トレンド</a>
+        <a href="20261030/?region=GLOBAL" class="meta-pill-item">🌍 海外ニュースすべて</a>
         </div>
       </div>
     </section>
@@ -1376,7 +1376,7 @@
             <span class="faq-toggle-icon" aria-hidden="true"></span>
           </summary>
           <div class="faq-answer">
-            <p>国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。マルチAI（DeepSeek / OpenAI GPT）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。</p>
+            <p>国内外の流通専門メディア、IR速報、テック系ニュースサイトから記事候補を自動収集。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が重複排除とノイズ除去を行い、「事業インパクト」「UXへの影響度」「日本市場への示唆」を多角的に分析して厳選・要約しています。</p>
           </div>
         </details>
         <details class="faq-item">
@@ -1386,7 +1386,7 @@
             <span class="faq-toggle-icon" aria-hidden="true"></span>
           </summary>
           <div class="faq-answer">
-            <p>本ページでの閲覧に加え、<a href="rss.xml">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">@retailtechdaily</a> もあわせてご利用ください。</p>
+            <p>本ページでの閲覧に加え、<a href="rss.xml">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">@retailtechdaily</a> もあわせてご利用ください。</p>
           </div>
         </details>
         <details class="faq-item">
@@ -1448,6 +1448,6 @@
   <script src="../../assets/site-search.js?v=20261011_1"></script>
   <script src="../../assets/search-ui.js?v=20261015_1"></script>
   <script src="../../assets/search-data.js?v=20261012_16"></script>
-  <script src="../../job/assets/daily-ui.js?v=20261029_1"></script>
+  <script src="../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -567,7 +567,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -786,7 +786,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="セブン-イレブン、撤去設備を再活用する「リマニキュービクル」を運用開始" data-share-takeaway="設備のリユースは単なる経費削減にとどまらず、店舗のライフサイクル全体を最適化する供給網改革だ。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -818,7 +818,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="日本NCRのキャッシュレジスター史に見る、店舗決済インフラの変遷" data-share-takeaway="レジは長らく店舗の唯一のデータ接点であり、その進化がPOS・在庫・CRMの起点だった。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -850,7 +850,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="カインズ、都市部でリフォーム専門の小型店展開を加速 町田駅前に新店" data-share-takeaway="ホームセンターの成長余地が都市部へ移る中、小型・専門特化型の出店は「売り場の効率」より「接点の密度」を重く見る発想の転換だ。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -882,7 +882,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="アルビス、福岡駅前店を北陸初の『ZEB』店舗としてリニューアル" data-share-takeaway="食品スーパーは電力多消費型の業態で、光熱費高騰が利益を直撃する。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -914,7 +914,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジに小銭を大量投入——現場の悲鳴を描いた漫画がSNSで共感拡大" data-share-takeaway="セルフレジ普及の陰で、硬貨投入や釣り銭対応など現金特有の摩擦が現場に残る。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -946,7 +946,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ウェグマンズ、サプライチェーン強化に1.1億ドルを投資" data-share-takeaway="食品小売の競争軸は売り場から供給網の強さへ移っている。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -978,7 +978,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="コストコ、ウーバーとドアダッシュで全米配送を開始" data-share-takeaway="低コストの倉庫型モデルを守りつつ外部配送網を使う戦略は、固定費を抑えてEC対応する現実解だ。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1010,7 +1010,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="「クリックから冷蔵まで」——食品EC高速化が求める柔軟な物流インフラ" data-share-takeaway="食品ECは「速さ」と「品質（コールドチェーン）」の両立が難しく、常温物流の延長では対応できない。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1042,7 +1042,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="J.C.ペニー、売上減少続く中でマーケットプレイスを開設" data-share-takeaway="在庫リスクを負わずに品揃えを広げるマーケットプレイスは、縮小する百貨店が選び得る現実的な打ち手だ。" data-share-url="https://tk.st/job/retailtechdaily/20260922/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1114,6 +1114,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

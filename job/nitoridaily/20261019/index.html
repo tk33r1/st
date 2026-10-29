@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -465,7 +465,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -656,7 +656,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-3" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="島忠「爆安挑戦セール」第10弾、新米・日用品・秋冬商品など22品を特別価格で" data-share-takeaway="物価高局面では、食品・日用品など頻度の高い買い物での価格納得感が来店頻度を左右する。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="経営・価格戦略・PB">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -688,7 +688,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ、幅60cm・450Lのスリム大型冷蔵庫を99,900円で発売へ 予約受付を開始" data-share-takeaway="大型冷蔵庫は設置場所の制約が購入判断の壁になりやすい。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -720,7 +720,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="戸田駅前にニトリが新規オープン 川口の店舗でも協賛セールを実施" data-share-takeaway="駅前立地の出店は、車を使わない層や通勤途中の買い物需要を取り込む有効な手段である。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗展開・海外戦略">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -752,7 +752,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリの1,990円パラソル型物干しに高評価 「洗濯物が偏っても倒れない」の声" data-share-takeaway="低価格の生活雑貨でも、使用時の安定性や一度に干せる量といった機能の実感値が口コミで広がる。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -784,7 +784,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="N+「リブニットシリーズ」新登場、おうちで手洗いできる2,990円（税込）" data-share-takeaway="アパレル領域でのN+は、SPAとして企画から販売までを内製化し、価格と機能性で勝負する象徴的なブランドだ。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -816,7 +816,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="IKEAのラックとニトリの吸音パネルを組み合わせたDIYが6,382いいねの反響" data-share-takeaway="ニトリの吸音パネルは本来、音や反響対策の機能部材だが、生活者はそれを壁面インテリアの素材として読み替えている。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -848,7 +848,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="カフェの取り皿が家と同じニトリの皿だった 日常の愛用品に出会う体験が共感を呼ぶ" data-share-takeaway="ニトリの食器は価格とデザインの両立により、飲食店でも違和感なく使われるほど生活に溶け込んでいる。" data-share-url="https://tk.st/job/nitoridaily/20261019/#art-7">
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -905,7 +905,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -966,6 +965,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

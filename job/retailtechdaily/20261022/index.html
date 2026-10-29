@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -280,7 +280,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
 
@@ -382,7 +382,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ニトリ、スマートロッカー「Quist」で店舗受け取りの実験を開始" data-share-takeaway="ロッカー型の受け取りは、店舗在庫を受け取り拠点として活かしつつ、顧客の来店動線を整理し再配達を減らす施策として注目される。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -414,7 +414,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="Target、ホリデー販促で価格訴求・限定商品と並びAIアシスタントを前面に" data-share-takeaway="小売大手がホリデー販促の中核にAIアシスタントを位置づけたことは、生成AIが商品探索や提案を通じて購買を支える段階に入りつつあることを示す。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-2">
+        <article class="news-card" id="art-2" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -446,7 +446,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="Kroger、刷新した3つの新店舗フォーマットを発表" data-share-takeaway="店舗フォーマットの再設計は、デジタルとリアルの役割分担を見直す動きの一つとして捉えられる。" data-share-url="https://tk.st/job/retailtechdaily/20261022/#art-3">
+        <article class="news-card" id="art-3" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -518,6 +518,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -428,7 +428,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -617,7 +617,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="インタセクト、ユーシーカードと連携し無人店舗でクレジットカードのタッチ決済に対応" data-share-takeaway="無人店舗の普及にはアプリ登録の手間を減らすことが鍵になる。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -649,7 +649,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="True Data、住関連データを拡張し需要予測を強化" data-share-takeaway="需要予測は販売実績だけでは説明しきれない地域差を、外部データで補うフェーズに入っている。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -681,7 +681,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="AI市場が2035年に413億ドル規模へ、ECの購買体験を生成AIと需要予測が高度化" data-share-takeaway="市場予測の数字そのものより、生成AIと需要予測、パーソナライズが同時に進む構図が注目点だ。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -713,7 +713,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="100均のセルフレジが大行列、幼児に教える親へのイライラが拡散" data-share-takeaway="セルフレジは効率化の手段である一方、操作に慣れない利用者が混雑を生むと体験の質を大きく損なう。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -745,7 +745,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="AIがウォルマートを変革中、その先頭をAIアシスタント「Sparky」が担う" data-share-takeaway="大手小売がAIを中核に据えると、商品探索や接客、在庫管理の標準が書き換わる。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-5">
+        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -777,7 +777,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ウォルマート、ホリデー商戦に向け1時間で受け取れるエクスプレス受取サービスを開始" data-share-takeaway="受取時間の短縮は、店舗在庫をデジタル注文の出荷拠点として活用する流れを加速させる。" data-share-url="https://tk.st/job/retailtechdaily/20261009/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -849,6 +849,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

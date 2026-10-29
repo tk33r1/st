@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -433,7 +433,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -614,7 +614,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="ニトリ「秋の感謝祭」9月18日から11日間、家具・大型家電など約600アイテムを期間限定価格で" data-share-takeaway="引き取りサービスを販促に組み込むのは、単なる値引きではなく「捨てる手間」という購買障壁を外す設計。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -646,7 +646,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="物流・サプライチェーン" data-lane="corporate" data-share-title="ニトリ、小型家電の無料リサイクル回収を実施する店舗を拡大" data-share-takeaway="回収拠点を増やすことは、処分に困る生活者に来店理由を作り、売り場の滞在時間と購買機会を増やす。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="物流・サプライチェーン">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -678,7 +678,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="島忠ホームズ葛西にニトリ系アパレル「N＋」、江戸川区内へ初出店" data-share-takeaway="住まい周りのワンストップ化はニトリの基本戦略だが、アパレルは来店頻度と客単価を同時に引き上げる武器になる。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗展開・海外戦略">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -710,7 +710,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="引っかき傷・汚れに強い「ストレッチソファカバー」発売、ペット世帯の悩みに応える" data-share-takeaway="本体を売った後も「消耗品」を継続購入させるモデルは、顧客接点とリピート収益を増やす。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -742,7 +742,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="「7kgの洗濯機満タンでも余裕で干せる」ニトリのX型物干しに共感の声" data-share-takeaway="物干しという地味なカテゴリーで「時間と手間の削減」を訴求できるのは、生活動線を起点に商品を定義するニトリの強み。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -774,7 +774,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="40・50代の毎日服、ニトリ「N＋」の着回しやすい新作パンツ" data-share-takeaway="アパレルは家具に比べ購買頻度が高く、継続的な来店動機を生む。" data-share-url="https://tk.st/job/nitoridaily/20260912/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -831,7 +831,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -908,6 +907,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

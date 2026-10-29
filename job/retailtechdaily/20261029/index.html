@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -418,7 +418,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261029_1">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -607,7 +607,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="DATAFLUCT、アース製薬でAI需要予測の本番運用を開始 返品・廃棄ロス削減へ" data-share-takeaway="需要予測は検証止まりに終わるケースが多い中、本番運用に入った事例は導入効果を測るうえで参考になる。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -639,7 +639,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="データ・ワン、TVer・NTTドコモとデータ連携で共創 広告視聴から来店・購買まで横断分析へ" data-share-takeaway="テレビ広告の効果を購買まで追跡できるかは、広告主の投資判断における大きな論点となっている。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -671,7 +671,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="Woowa Brothers、WoowaConでAI活用を披露 注文発生前の需要予測も" data-share-takeaway="注文前の需要予測は、食材の仕込みや配達員の配置を先回りして最適化できる点で、店舗運営の効率化に直結する。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -703,7 +703,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="「エラー吐いてありえん爆音鳴りはじめる」セルフレジ監視中の人が思っていることのリストから『セルフレジで最もしてはいけない行為』が見えてくる" data-share-takeaway="セルフレジは省人化の切り札だが、利用者の操作ミスが現場の監視負荷を増やしている。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -735,7 +735,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="すごいベンチャー【81】喪服レスキュー／無人店舗でいつでも喪服レンタル" data-share-takeaway="無人店舗は省人化だけでなく、営業時間や立地の制約を受けにくいことが強みになる。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -767,7 +767,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="ビートレンド、80店舗展開するホームセンター『ダイユーエイト』LINEミニアプリの開発を支援" data-share-takeaway="LINEのミニアプリは、地方チェーンでも導入しやすいダイレクトな顧客接点として存在感を増している。" data-share-url="https://tk.st/job/retailtechdaily/20261029/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -839,6 +839,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261029_1"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

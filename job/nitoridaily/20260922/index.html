@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -516,7 +516,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -717,7 +717,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="デジタル・EC・アプリ" data-lane="corporate" data-share-title="ニトリ、「ニトリネットマーケットプレイス」を本格始動——自社ECを開放し品揃え拡張へ" data-share-takeaway="自前の製造・物流・店舗網に加え、EC上で外部在庫を取り込む「アセットライトな品揃え拡張」は、欠品による離脱を防ぎLTVを高める。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="デジタル・EC・アプリ">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -749,7 +749,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB" data-lane="corporate" data-share-title="ニトリ「秋の感謝祭」、5,000円お得の期間限定価格——9月28日まで" data-share-takeaway="調達・物流・店舗を内製化するSPAは値下げ原資を構造的に確保しやすい。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="経営・価格戦略・PB">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -781,7 +781,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="デコホーム「as you are」から「香り繋がるシリーズ」——ボディケアとルームフレグランスを同一香りで" data-share-takeaway="単品ではなく「香り」という一貫した体験でカテゴリーを横断し、まとめ買いとリピートを促す手法は、低価格帯PBのコモディティ化を避ける有効策。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -813,7 +813,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ新作「ソファカバー」、撥水・防汚加工でペット家庭の味方に" data-share-takeaway="家具の「買い替え」ではなく「カバーで更新」を選ばせると、客単価は下がっても購入頻度と接触回数が増える。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -845,7 +845,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="島忠ホームズ茅ヶ崎店に100円ショップ「Seria」が9月30日オープン——ダイソー跡地の新テナント" data-share-takeaway="ホームセンターの集客は「目的買い」に偏りがちだが、100円ショップ併設は日常的な来店動機を補完し、回遊と滞在時間を伸ばす。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗展開・海外戦略">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -877,7 +877,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリのアパレル「N+」、仕事も休日も使える大人の新作パンツ" data-share-takeaway="住空間のブランドがアパレルへ横展開するのは、顧客のライフスタイル全体を囲い込む「トータル生活提案」への布石。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -909,7 +909,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="【Xで219いいね】ニトリのマガジンラックを“絵本ラック”に——子育て世帯の用途転用が支持" data-share-takeaway="顧客が商品を別用途に転用し、その口コミが購買を後押しする現象は、レビューと検索が接続するEC時代の典型的な勝ち筋。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-7">
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -941,7 +941,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="【Xで78いいね】ニトリのディスプレイケースに“推し”のアクスタを——推し活需要を捉える収納" data-share-takeaway="コレクションや推し活の「見せる収納」需要は、高単価で反復購買が見込める成長領域。" data-share-url="https://tk.st/job/nitoridaily/20260922/#art-8">
+        <article class="news-card" id="art-8" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -998,7 +998,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -1059,6 +1058,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

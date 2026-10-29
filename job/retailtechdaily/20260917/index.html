@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -551,7 +551,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -770,7 +770,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="USEN MEDIA PROMOTIONとDearOneが提携、サイネージ×アプリ購買データで次世代リテールメディア" data-share-takeaway="店頭サイネージとアプリ購買データの統合は、リテールメディア最大の課題である効果測定に切り込む動きだ。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -802,7 +802,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="レジなしコンビニ、顔認証改札——ウォークスルー決済が示す現金なき未来" data-share-takeaway="ウォークスルー決済はレジ待ち解消という体験価値と、認証精度・プライバシー・設備投資という導入障壁が表裏一体だ。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -834,7 +834,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="100均のセルフレジに大行列、幼児に操作を教える姿にSNSで賛否" data-share-takeaway="セルフレジの普及は効率化の一方で、混雑や利用マナーをめぐる新たなストレスを生んでいる。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -866,7 +866,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="告知から物語へ、消費者の次の行動を読むリテールメディアの進化" data-share-takeaway="購買データ起点の予測配信は、リテールメディアを「広告枠の販売」から「行動変容の設計」へと進化させる。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -898,7 +898,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="セブンイレブン、高圧受電設備を再利用——パナソニックらと連携" data-share-takeaway="店舗インフラの再利用は、出店コストと環境負荷の同時削減という小売の構造課題に応える。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -930,7 +930,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="ロケット、ドラッグストア店頭リテールメディアに立体缶ダミー装飾を初導入" data-share-takeaway="購買直前の「最後の一米」を狙う創意工夫は、リテールメディアの価値を「枠」から「体験」へ広げる。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -962,7 +962,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="ウォルマート、インサイト基盤「Scintilla」にマーケットプレイスデータとAI機能を追加" data-share-takeaway="購買データとマーケットプレイス情報を統合したAIインサイトは、リテールメディアを「広告枠」から「意思決定支援サービス」へ押し上げる。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -994,7 +994,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="TikTok Shop米国の高級リセール取引、ほぼ全てがライブ配信経由に" data-share-takeaway="ライブコマースが高級リセールの主戦場になった事実は、動画と対話が信頼と購買を同時に生み出すことを示す。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1026,7 +1026,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="AIがデジタル集客を揺さぶる中、ブランドが実店舗回帰へ" data-share-takeaway="AIによる集客の不確実性が高まるほど、実店舗は自社で制御できる顧客接点として価値を増す。" data-share-url="https://tk.st/job/retailtechdaily/20260917/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1098,6 +1098,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -551,7 +551,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -770,7 +770,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="ローソン、生成AIが発案した商品3品を発売——企画の上流にAIを組み込む" data-share-takeaway="商品開発の上流にAIを組み込めば、企画のスピードと選択肢は大きく広がる。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -802,7 +802,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="商社・卸のAI活用を支えるERP基盤——販売・在庫・会計データをつなぐ" data-share-takeaway="AI需要予測や在庫最適化は、原データが統合されていなければ機能しない。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -834,7 +834,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="ベイシアと三心の共創1号店「ベイシアフーズパーク岐南店」の売場をレポート" data-share-takeaway="単独での出店が難しくなる中、アライアンスによるフォーマット共創は差別化とコスト効率を両立する選択肢だ。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -866,7 +866,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="ライフ、12月2日に都市型小型店「ビオラル淀屋橋ゲートタワー店」をオープン" data-share-takeaway="都心回帰と働き方の変化を受け、小型・高頻度型店舗の競争が激化している。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -898,7 +898,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="パルグループHD、3COINS台湾1号店「誠品生活武昌店」を9月12日オープン" data-share-takeaway="国内市場の成熟を受け、低価格雑貨チェーンの海外展開が加速している。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -930,7 +930,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="「AIレコメンドに裏切られた買い物客」——精度不足が小売への信頼を損なう" data-share-takeaway="レコメンド精度は売上に直結する一方、失敗は顧客離れとなって跳ね返る。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -962,7 +962,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="クローガー、AI戦略の軸は「柔軟性と制御」——デジタル責任者が明かす" data-share-takeaway="AI導入は「何を入れるか」より「どう制御するか」が競争力を決める段階に入った。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -994,7 +994,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="シュナックス、AI買い物アシスタントをどう実装したか" data-share-takeaway="AIアシスタントはリテールメディアや会員アプリと結びつくことで、売上と顧客接点の双方を強化する武器になる。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1026,7 +1026,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="低所得世帯の半数が「経済的に脆弱」——節約志向が小売の売上構造を変える" data-share-takeaway="所得層ごとの消費行動の分極化は、価格戦略とPB戦略の巧拙が業績を分ける要因になる。" data-share-url="https://tk.st/job/retailtechdaily/20260924/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1098,6 +1098,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

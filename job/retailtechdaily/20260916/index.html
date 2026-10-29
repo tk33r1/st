@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -571,7 +571,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -790,7 +790,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ニトリHD、基幹システムをOCIへ移行——需要予測処理は4分の1、日次バッチは始業前に完了" data-share-takeaway="基幹刷新の主眼はコスト削減よりも「データの鮮度」にある。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -822,7 +822,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="アークランズ、リテールメディア基盤「ARUTANA」に参画——ホームセンターの購買データを広告資産化" data-share-takeaway="リテールメディアの競争軸はリーチ数から購買文脈の解像度へ移りつつある。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -854,7 +854,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="カインズ、資源回収の無人受付を実証——AI判定と遠隔カメラで店舗負荷を削減" data-share-takeaway="小売の省人化はレジや接客だけでなく、資源回収・返品・品出しなど「見えにくい付帯業務」へ広がっている。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -886,7 +886,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="セブンイレブン、「7NOW」に予約機能——受け取り時間を選べる購買体験へ" data-share-takeaway="即時配送の競争が一巡した今、焦点は「いつ買うか」を顧客が設計できるかにある。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -918,7 +918,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="パルコ、池袋・渋谷店に「落とし物クラウドfind」——施設横断検索で問い合わせ対応を効率化" data-share-takeaway="落とし物対応は売上に直結しないが、顧客満足とスタッフ工数を大きく左右する「静かなコスト」だ。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -950,7 +950,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="「セルフレジを見守る店員は暇そう」に反論続出——現場の実態がSNSで話題" data-share-takeaway="セルフレジは「人を減らす装置」ではなく、監視や例外処理という新たな負荷を生む装置でもある。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -982,7 +982,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="AI疲れでカスタマーサービスの電話窓口が見直しへ——ブランドが人的チャネルを再評価" data-share-takeaway="顧客体験の自動化は「コスト削減」と「解決率」のトレードオフが本質だ。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1014,7 +1014,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="食品小売の数量減がカテゴリーマネジメント改革を促す——単価上昇の裏で買い上げ点数が低下" data-share-takeaway="単価上昇で売上が維持されていても、数量減は来店頻度と買い上げ点数の低下を意味し、中長期の収益基盤を蝕む。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1046,7 +1046,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="ベストバイ、過去最速でホリデーギフト特設を開設——商戦前倒しでEC接点を争奪" data-share-takeaway="商戦の前倒しは在庫と物流の山を平準化し、値引き圧力を下げる効果がある。" data-share-url="https://tk.st/job/retailtechdaily/20260916/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1118,6 +1118,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

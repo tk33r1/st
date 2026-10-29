@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -372,7 +372,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -551,7 +551,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="アイスマイリー、需要予測AIのカオスマップを公開　84製品を分類" data-share-takeaway="需要予測AIは在庫最適化や発注自動化の中核であり、売上予測・在庫・物流まで領域を横断して製品を俯瞰できる点が有用だ。" data-share-url="https://tk.st/job/retailtechdaily/20261021/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -583,7 +583,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="TTGなど3社、JR品川駅に花・鉄道グッズの無人決済店舗を10月オープンへ" data-share-takeaway="駅ナカは時間価値の高い買い物需要があり、無人決済は人件費を抑えつつ購買機会を広げる有効な手段だ。" data-share-url="https://tk.st/job/retailtechdaily/20261021/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -615,7 +615,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="近鉄百貨店、公式アプリを11月10日にリニューアル　会員向けサービス強化" data-share-takeaway="百貨店にとって公式アプリは、会員の購買データを蓄積しパーソナライズされた販促につなげる重要な基盤だ。" data-share-url="https://tk.st/job/retailtechdaily/20261021/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -647,7 +647,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="リテールメディアサミット2026、ADKマーケティング・ソリューションズが協賛に決定" data-share-takeaway="リテールメディアは購買データと広告を融合させる新たな収益源であり、小売・メーカー・広告会社の連携が不可欠になりつつある。" data-share-url="https://tk.st/job/retailtechdaily/20261021/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -679,7 +679,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ウォルマート、西海岸の配送力強化へ次世代型カリフォルニア拠点を開設" data-share-takeaway="大手小売の物流拠点刷新は、ネット注文の迅速な配送を支える中核投資であり、地域ごとの需要に合わせた配置が重要になる。" data-share-url="https://tk.st/job/retailtechdaily/20261021/#art-5">
+        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -751,6 +751,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

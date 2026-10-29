@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -510,7 +510,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -719,7 +719,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="MEGAドン・キホーテ三郷店、地下食品売り場でフルセルフレジを大幅増設　有人レジは終了" data-share-takeaway="食品売り場で有人レジを廃止する判断は、人手不足を背景とした省人化を本格的に進める動きとして示唆が大きい。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -751,7 +751,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="100均のセルフレジで親子が独占し長蛇の列に　「ピッてしようね」に周囲から限界の声" data-share-takeaway="セルフレジは効率化の象徴である一方、利用者の習熟度や使い方によって待ち時間の不公平感を生みやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -783,7 +783,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="イオン、東京・八王子にネットスーパー専用物流施設をオープン" data-share-takeaway="ネットスーパーで店舗の売場や作業を兼用すると、店舗業務と配送効率が競合しやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -815,7 +815,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="イオン、リテールメディアの「両輪戦略」　ネットワーク型と独自完結型を併進" data-share-takeaway="リテールメディアは、購買データを持つ小売が広告主に価値を提供する収益源として注目されている。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -847,7 +847,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="グリーンビーンズ、商品選びから注文までAIとの会話で完結する仕組みの構築へ" data-share-takeaway="AIが商品探索から注文までを担う流れは、検索や一覧閲覧を前提とした従来のEC導線を変える可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -879,7 +879,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="ウォルマート、外部AIエージェントの受け入れを表明　ただし一定のガードレールを設ける" data-share-takeaway="買い物を代行するAIエージェントが普及すると、小売は自社サイトでの回遊より、外部AIに商品情報や価格をどう提供するかが競争力を左右するようになる。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -911,7 +911,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="顧客がAIチャットボットにうんざりする理由" data-share-takeaway="AI接客は省人化の切り札として期待される一方、顧客が「人に代わってほしい」と感じた瞬間に不満が蓄積する。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -943,7 +943,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="AIで商品発見は進むが、購入を決めるのは依然としてレビュー　新たな調査" data-share-takeaway="AIによる商品提案は認知や比較の入口を広げるが、購入の最後の一押しはレビューなど第三者の評価が担う。" data-share-url="https://tk.st/job/retailtechdaily/20261023/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1015,6 +1015,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

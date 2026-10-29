@@ -45,14 +45,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -488,7 +488,7 @@
           "name": "ニュースやSNS話題の選定・分析はどのように行われていますか？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは前日投稿分を再生数順で収集しているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。マルチAI（DeepSeek / OpenAI GPT）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
+            "text": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは直近1週間で再生数を伸ばした動画を集めているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
           }
         },
         {
@@ -539,7 +539,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../job/assets/nitori-daily.css?v=20261029_1">
+  <link rel="stylesheet" href="../../job/assets/daily-base.css?v=20261030_1">
   <link rel="stylesheet" href="../../assets/search-ui.css?v=20261012_16">
 </head>
 <body id="top" data-daily-media="nitoridaily">
@@ -600,10 +600,10 @@
         <div class="masthead-rule" aria-hidden="true"></div>
         <p class="masthead-desc">ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。<br>ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</p>
         <div class="meta-pills">
-<a href="20261030/?filter=category:%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA%E3%83%BB%E3%83%92%E3%83%83%E3%83%88%E5%95%86%E5%93%81" class="meta-pill-item">🛋️ 商品開発・ヒット商品</a>
-        <a href="20261030/?filter=category:%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B%E3%83%BB%E6%B5%B7%E5%A4%96%E6%88%A6%E7%95%A5" class="meta-pill-item">🏬 店舗展開・海外戦略</a>
-        <a href="20261030/?filter=category:%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%83%BBEC%E3%83%BB%E3%82%A2%E3%83%97%E3%83%AA" class="meta-pill-item">📱 デジタル・アプリ・EC</a>
-        <a href="20261030/?filter=category:SNS%E8%A9%B1%E9%A1%8C%E3%83%BB%E3%83%AA%E3%82%A2%E3%83%AB%E5%8F%8D%E9%9F%BF" class="meta-pill-item">💬 SNS話題・リアル反響</a>
+<a href="20261030/?category=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA%E3%83%BB%E3%83%92%E3%83%83%E3%83%88%E5%95%86%E5%93%81" class="meta-pill-item">🛋️ 商品開発・ヒット商品</a>
+        <a href="20261030/?category=%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B%E3%83%BB%E6%B5%B7%E5%A4%96%E6%88%A6%E7%95%A5" class="meta-pill-item">🏬 店舗展開・海外戦略</a>
+        <a href="20261030/?category=%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%83%BBEC%E3%83%BB%E3%82%A2%E3%83%97%E3%83%AA" class="meta-pill-item">📱 デジタル・アプリ・EC</a>
+        <a href="20261030/?category=SNS%E8%A9%B1%E9%A1%8C%E3%83%BB%E3%83%AA%E3%82%A2%E3%83%AB%E5%8F%8D%E9%9F%BF" class="meta-pill-item">💬 SNS話題・リアル反響</a>
         </div>
       </div>
     </section>
@@ -1352,7 +1352,7 @@
             <span class="faq-toggle-icon" aria-hidden="true"></span>
           </summary>
           <div class="faq-answer">
-            <p>流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは前日投稿分を再生数順で収集しているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。マルチAI（DeepSeek / OpenAI GPT）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。</p>
+            <p>流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは直近1週間で再生数を伸ばした動画を集めているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。AI（Anthropic Claude、障害時は OpenAI・DeepSeek）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。</p>
           </div>
         </details>
         <details class="faq-item">
@@ -1424,6 +1424,6 @@
   <script src="../../assets/site-search.js?v=20261011_1"></script>
   <script src="../../assets/search-ui.js?v=20261015_1"></script>
   <script src="../../assets/search-data.js?v=20261012_16"></script>
-  <script src="../../job/assets/daily-ui.js?v=20261029_1"></script>
+  <script src="../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

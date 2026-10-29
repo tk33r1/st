@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -430,7 +430,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -619,7 +619,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="トランスコスモス、AIとBPOで在庫・需要予測を一貫支援する「trans-scManager」を機能拡充" data-share-takeaway="需要予測から在庫配置までをAIで一体化する動きは、欠品と過剰在庫の同時解消を狙う小売・EC事業者にとって実務的な選択肢になる。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -651,7 +651,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="Lazuli、商品データ整備をAIとの対話で行う「PDP Chat Agent」を11月に提供開始" data-share-takeaway="商品詳細情報の品質はECでの検索表示や販売転換に直結するが、データ整備は人手と時間がかかる領域だ。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -683,7 +683,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="「アットコスメ」が京都で新戦略、AIを活用した最新の売場づくりに挑戦" data-share-takeaway="化粧品はデジタル口コミが購買を左右するカテゴリーで、オンラインの知見をリアル売場にどう戻すかが課題になっている。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -715,7 +715,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="下北沢発の無人古着屋「NOTIME」、11月21日に大分市光吉でオープン" data-share-takeaway="無人古着店は、人件費を抑えつつ24時間営業を実現できるため、地方都市での小規模出店モデルとして注目される。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -747,7 +747,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジで女性店員を怒鳴る男性、会計画面の二行を指し示した別の買い物客" data-share-takeaway="セルフレジの金額トラブルは、画面表示の分かりやすさと店員への責任転嫁が重なると摩擦が大きくなる。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -779,7 +779,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="スマートカート" data-lane="all" data-share-title="米Instacart、スマートカートの提供を取りやめへ" data-share-takeaway="大手小売・デリバリー事業者がスマートカートから撤退する動きは、導入コストや運用負担に対する投資判断の厳しさを示す。" data-share-url="https://tk.st/job/retailtechdaily/20261028/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="スマートカート">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -851,6 +851,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

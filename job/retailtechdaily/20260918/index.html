@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -551,7 +551,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -770,7 +770,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="フォーティエンス、消費財向けAI需要予測「FDEサービス」提供開始" data-share-takeaway="需要予測は小売・消費財の在庫コストと欠品率を直接左右する経営指標だ。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -802,7 +802,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="イシダの電子棚札が急成長、人手不足と消費減税が追い風" data-share-takeaway="電子棚札は単なる省人化ツールではなく、価格をリアルタイム制御できる店頭インフラだ。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -834,7 +834,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="betrend、顧客接点データを統合する分析基盤「betrend アナリティクス」提供開始" data-share-takeaway="リテールメディアや店舗DXの投資対効果は、接点データを統合し施策と購買を結び付けられるかにかかる。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -866,7 +866,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="郵便局のセルフレジで料金支払い、11月2日から「有効期限付き証紙」" data-share-takeaway="郵便局は全国に約2万局を構える巨大な対面ネットワークで、その決済セルフ化は小売以上に社会的影響が大きい。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -898,7 +898,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="「えっ、もう終わり？」ユニクロのセルフレジが一瞬で会計できる理由と潜むリスク" data-share-takeaway="一括会計の体験は来店客の満足度を大きく高めるが、裏側ではRFIDタグの精度と運用コスト、不正対策の設計が問われる。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -930,7 +930,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="ZOZO、コーデアプリ「WEAR」に新機能——診断から試着まで一連の体験を提供" data-share-takeaway="アプリを「見る場所」から「買う場所」へ転換する動きは、ECの獲得競争がコンテンツ起点に移ったことを示す。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -962,7 +962,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="ターゲット傘下の配送アプリShipt、AI機能を強化——インスタカートを追う" data-share-takeaway="食品・日用品の配送競争は、価格や配送速度からパーソナライズと運用効率の勝負へ移りつつある。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -994,7 +994,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="Pinterest、Visual Search Adsなど新広告ツール群を発表——ブランド獲得へ攻勢" data-share-takeaway="検索・発見の起点がテキストから画像・動画へ移るなか、視覚検索広告はリテールメディアとSNS広告の中間領域を切り開く。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1026,7 +1026,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="アマゾン、最低開始時給を20ドルへ引き上げ——物流人材獲得競争が激化" data-share-takeaway="物流・倉庫人材の賃金上昇は、小売・EC各社のコスト構造を直撃する。" data-share-url="https://tk.st/job/retailtechdaily/20260918/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1098,6 +1098,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

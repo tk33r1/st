@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -414,7 +414,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -603,7 +603,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="岡山市役所新庁舎に無人コンビニ、展望テラス隣に設置へ" data-share-takeaway="公共施設への無人コンビニ併設は、無人店舗の立地を住宅地や駅前から行政拠点へ広げる事例として注目される。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -635,7 +635,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="琉球銀行とスマレジが業務提携、沖縄の店舗DXと免税対応を支援" data-share-takeaway="地域金融機関がPOSベンダーと組むことで、導入・決済・資金面を一体で支援するモデルが広がる可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -667,7 +667,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="UnityStep AIとレンゴー、出荷実績データで製品置場の最適化を実証" data-share-takeaway="出荷という実データに基づいて置場を決める手法は、経験則に頼りがちな製品配置をAIで見直す試みであり、物流拠点や店舗バックヤードの生産性向上につながる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -699,7 +699,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="シスポのセミセルフレジ「OWEN」、補助金申請サポートの採択率97.1％" data-share-takeaway="導入時の大きな障壁である初期投資を、補助金申請の伴走支援で解消する手法は、中小小売のセルフレジ普及を加速させる実務的なモデルといえる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -731,7 +731,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="1人で複数台のセルフレジを回す店員に共感の声、「有人レジも入れろ」の客も" data-share-takeaway="セルフレジの省人化効果は、少人数での監視・サポート業務に依存している点が生活者に見えつつある。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -763,7 +763,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジに小銭を大量投入する客、現場の悲鳴を描いた漫画に共感続出" data-share-takeaway="セルフレジの利用者が店舗運用の前提を理解していないと、レジ停止や待ち行列の発生といった現場の混乱につながる。" data-share-url="https://tk.st/job/retailtechdaily/20261026/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -835,6 +835,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

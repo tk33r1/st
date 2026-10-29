@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -594,7 +594,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -823,7 +823,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="コンビニ3陣営が競うリテールメディア、提携・新会社で成長の柱へ" data-share-takeaway="コンビニは全国店舗網と購買データを持ち、リテールメディアの主戦場になりつつある。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -855,7 +855,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="HOUSEIの無人店舗ソリューション、三洋堂書店40店舗がスマート無人営業化" data-share-takeaway="書店は棚管理や接客の負荷が高く、地方では人材確保が難しい。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -887,7 +887,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="SM物流研究会、首都圏の共同配送で積載率13〜38%向上" data-share-takeaway="積載率の改善は配送コストとCO2を同時に削減し、物流費上昇局面での価格競争力を左右する。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -919,7 +919,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="郵便局のセルフレジで料金支払い、11月2日から「有効期限付き証紙」運用" data-share-takeaway="郵便局網は全国に約2万局あり、セルフ化の波及効果は大きい。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -951,7 +951,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="10月1日カスハラ対策義務化、店舗スタッフを守る店舗DXソリューションが集結" data-share-takeaway="カスハラ対策は法令対応であると同時に、人手不足下での離職防止や採用競争力に直結する。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -983,7 +983,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="「セルフレジで人件費減なら価格に反映を」三崎優太氏の投稿にSNSで賛否" data-share-takeaway="セルフレジは導入コストやメンテ費用も大きく、単純な人件費削減にはならない。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1015,7 +1015,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="タペストリー、グーグルのGeminiアプリとAIモード経由で商品販売へ" data-share-takeaway="検索・発見の主導権がAIエージェントへ移ると、小売の流入構造と広告モデルは根本から変わる。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1047,7 +1047,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ロウズ、WingとDoorDashとドローン配送の実証を開始" data-share-takeaway="重量物や大型商品が多いホームセンターでドローンが使える範囲は限られるが、緊急需要や小型商材では配送体験を大きく変える。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1079,7 +1079,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="ベストバイ、リテールメディアの軸にコネクテッドTVを据える" data-share-takeaway="CTVは購買に近いリテールメディアとブランド広告の橋渡し役として伸びており、家電量販の購買データとの相性は良い。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-9">
+        <article class="news-card" id="art-9" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">09</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1111,7 +1111,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-10" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="消費者はAIの「助言」は信じても「購入代行」は認めず" data-share-takeaway="AIエージェントによる自動購買は効率化の象徴だが、消費者の同意設計を誤れば反発を招く。" data-share-url="https://tk.st/job/retailtechdaily/20260925/#art-10">
+        <article class="news-card" id="art-10" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">10</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1183,6 +1183,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

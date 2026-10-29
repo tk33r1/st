@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -471,7 +471,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/nitori-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="nitoridaily" data-share-prefix="【ニトリ日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -662,7 +662,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-3" data-region="JP" data-category="デジタル・EC・アプリ" data-lane="corporate" data-share-title="ニトリ、ライブコマースは「売ること」より「顧客の声」を活用" data-share-takeaway="ライブコマースを即時の販売手段ではなく、顧客接点と声の収集装置として位置づけている点が特徴的だ。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="デジタル・EC・アプリ">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -694,7 +694,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ会長が語る「AI家具」開発の加速、接客ロボットは数年内に" data-share-takeaway="SPAは企画・調達・販売のデータを一元的に持つため、AIとの親和性が高い構造的強みである。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -726,7 +726,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="ニトリ、シンガポールに7店舗目「NITORI JURONG POINT店」を出店" data-share-takeaway="海外店の拡大は、SPAとしての国際展開の再現性を測る重要な指標になる。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗展開・海外戦略">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -758,7 +758,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="1台で10役をこなす「マルチポット 2.2L」、ニトリが9月中旬から販売" data-share-takeaway="多機能調理家電は専業メーカーとの競合が激しいカテゴリだが、ニトリは生活空間の提案力を強みに差別化を図れる。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -790,7 +790,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="1990円の防臭ゴミ箱に「何も匂わない」と高評価、ペダルの快適さも支持" data-share-takeaway="ゴミ箱は単価が低くても毎日触れる製品であり、防臭やペダル操作といった日常の不満解消が口コミを生みやすい。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -822,7 +822,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="クッションマットの縁を噛んで遊ぶ愛犬の姿に514いいね、生活雑貨が遊び道具に" data-share-takeaway="ペットと暮らす世帯では、家具や雑貨を『ペットに壊されにくいか』『噛まれても安全か』という視点で選ぶ傾向が強まっている。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -854,7 +854,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="「ホテルスタイル枕かと思った」、手頃なニトリ枕に上質な寝室像を重ねる声" data-share-takeaway="寝具は『高級感』と『手頃さ』の両立が購買の鍵になる領域で、ホテルライクという言葉は生活者が理想とする寝室像を端的に表している。" data-share-url="https://tk.st/job/nitoridaily/20261009/#art-7">
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -911,7 +911,6 @@
         <div class="sns-badges"><span class="sns-badge-x"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Xリアル反響</span></div>
         <p class="sns-sub">X は昨日の投稿。生活者が注目した神アイテム・使い勝手や比較の生の声</p>
       </div>
-
       <div class="sns-grid">
 
         <article class="sns-card" id="sns-buzz-1" data-platform="x">
@@ -972,6 +971,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

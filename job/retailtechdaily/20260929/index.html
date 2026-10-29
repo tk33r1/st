@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -462,7 +462,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -661,7 +661,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="中部薬品、岐阜県恵那市と買い物支援の実証事業を開始" data-share-takeaway="地域の買い物支援は、店舗網だけではカバーしにくい住民ニーズに小売が関与する機会となる。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -693,7 +693,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="アイシン、トレッサ横浜で駐車場管理支援システムの実験を開始" data-share-takeaway="駐車場は来店前後の顧客体験と施設運営の双方に関わる接点だ。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -725,7 +725,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="リテールメディア市場、2035年に5200億ドル規模との予測" data-share-takeaway="市場規模の予測は成長期待を示す一方、個社の収益化を保証するものではない。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -757,7 +757,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="AI学習用か、Amazonで古書の大量自動発注が発生か" data-share-takeaway="注文の自動化は取引を効率化する一方、短期間の大量発注が在庫や出品者の業務に影響する可能性もある。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -789,7 +789,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="Instacart、食品小売とメーカーに全店舗の状況をリアルタイムで可視化" data-share-takeaway="小売とメーカーが店舗状況を共通の視点で把握できれば、店頭の課題発見や連携判断を速める可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-5">
+        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -821,7 +821,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="Hy-Vee、オンライン購買の大幅なスピードアップを目指す" data-share-takeaway="オンライン購買の速さは顧客体験を左右するが、単なる処理時間の短縮ではなく、店舗のピッキングや受け渡しを含む全体最適が必要だ。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -853,7 +853,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="ウォルマートCEO、個人データを使った個別価格設定は「行わない」と表明" data-share-takeaway="価格を柔軟に変える技術の導入可否だけでなく、顧客ごとに不公平な価格を提示するのではという不信への対応が問われている。" data-share-url="https://tk.st/job/retailtechdaily/20260929/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -925,6 +925,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

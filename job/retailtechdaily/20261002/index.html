@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -508,7 +508,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -717,7 +717,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="NTTロジスコ、需要予測を倉庫の作業量見積もりに活用" data-share-takeaway="需要予測の価値は、売上や在庫の予測精度だけでなく、現場の人員・作業計画に連動させて初めて広がります。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -749,7 +749,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="SENSYと両備システムズ、AI需要予測でアパレルの発注・在庫運営を最適化" data-share-takeaway="アパレルはシーズン性や商品ごとの販売差が大きく、初回発注の判断が在庫過多・欠品を左右します。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -781,7 +781,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="岡山市役所新庁舎に無人決済コンビニ、センサーとはかりで商品を認識" data-share-takeaway="無人決済は、駅や商業施設だけでなく、職員・来庁者の利用が見込まれる公共施設にも展開し得ることを示す事例です。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -813,7 +813,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="アダストリア、AI共創の新ブランドで商品撮影・登録業務を3人から1人に" data-share-takeaway="商品情報の作成は、ECの品ぞろえ拡大に伴って工数が膨らみやすい領域です。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -845,7 +845,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="NTTデータ、エディオンにモバイル決済端末2,000台を提供" data-share-takeaway="決済端末のモバイル化は、会計場所の柔軟化や接客中の決済など、店頭オペレーションの設計に影響します。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -877,7 +877,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="Kroger、リテールメディア広告とデジタル売上の連動を前進" data-share-takeaway="リテールメディアの成長には、広告表示回数だけでなく購買への寄与を説明できる計測が欠かせません。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -909,7 +909,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="Ahold Delhaize、AIを活用してリテールメディアを高度化" data-share-takeaway="リテールメディアでは、購買データを広告配信や効果分析に生かすことが差別化の鍵です。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -941,7 +941,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="DoorDash、新たな小売パートナーとテキスト型買い物アシスタントを追加" data-share-takeaway="買い物アシスタントをテキスト経由で提供することで、専用アプリ内の検索に限らない注文導線を作れる可能性があります。" data-share-url="https://tk.st/job/retailtechdaily/20261002/#art-8">
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">08</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1013,6 +1013,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

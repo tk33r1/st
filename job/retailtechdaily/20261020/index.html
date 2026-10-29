@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -464,7 +464,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -663,7 +663,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="JCペニーが物流センターにヒト型ロボットを本格導入、投資が加速" data-share-takeaway="ヒト型ロボットは従来の専用自動化機器と異なり、既存の作業スペースや人の作業工程をそのまま活かせる点が強みとされる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -695,7 +695,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="コメダ珈琲店、DXモデル店舗「板橋仲宿店」オープン　レジで注文式に" data-share-takeaway="喫茶店業態でもレジ注文式とデジタル活用を組み合わせることで、接客の役割を注文受付から提供・おもてなしへシフトできる可能性がある。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -727,7 +727,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="クローガーが処方薬の配送網を拡充、アマゾンはドローン配送を強化" data-share-takeaway="処方薬や日用品の即日配送は、店舗網を持つ小売にとって来店外の新たな顧客接点になる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -759,7 +759,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="セルフレジ導入で万引き増加、「スキャン飛ばし」「重ね打ち」の手口が話題に" data-share-takeaway="セルフレジは人件費削減や待ち時間短縮の効果がある一方、スキャン漏れや不正が損失として表れやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -791,7 +791,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済" data-lane="all" data-share-title="ビックカメラ、JR東日本のコード決済「teppay」を全店舗で導入" data-share-takeaway="鉄道会社発のコード決済が家電量販店の全店で使えるようになると、駅利用客との接点を店舗決済で補完する効果が期待できる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -823,7 +823,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="ライブセッション：NewAgeはAIを顧客体験全体でどう活用しているか" data-share-takeaway="AIの活用は需要予測や広告運用など部分最適に留まりがちだが、顧客の購買旅程全体で一貫して使うことで体験価値が高まる。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -855,7 +855,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="NBCユニバーサルのショッパブルTV事業、『Traitors』『Love Island USA』効果で伸長" data-share-takeaway="人気番組の放映に連動して購買につながる仕組みは、コンテンツの熱量を売上に変換するリテールメディアの一形態だ。" data-share-url="https://tk.st/job/retailtechdaily/20261020/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -927,6 +927,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

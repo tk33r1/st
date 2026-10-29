@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -460,7 +460,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261012_14">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -659,7 +659,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="ローソン、3～8月増収増益　AI発注とファストフーズ好調で平均日販が過去最高の60.8万円に" data-share-takeaway="店舗の発注業務をAIに任せる取り組みが、日販という基本指標の改善に結び付いたことは、発注自動化への投資判断を後押しする材料になる。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -691,7 +691,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="リテールメディアネットワーク市場、2035年に5,200億米ドルへ　購買データと広告の融合が新たな収益基盤に" data-share-takeaway="市場規模の数字は魅力的だが、リテールメディアの成長は購買データの質と広告主への計測可能性に依存する。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -723,7 +723,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="大丸松坂屋百貨店、接客データ×AIの新サービスを開始" data-share-takeaway="対面接客の情報は従来、個々の販売員の経験に閉じがちだったが、データとして蓄積しAIで読み解く仕組みは、百貨店の強みである人的接客を広げる取り組みといえる。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -755,7 +755,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="ダイナミックプライシングに顧客データ利用疑惑　パーソナライズが招く炎上リスク" data-share-takeaway="価格のパーソナライズは収益向上の手段として注目される一方、顧客に不公平と受け取られると一気にブランド毀損につながる。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -787,7 +787,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="ドン・キホーテにセルフレジが並ぶ光景　駐車サービス機も設置" data-share-takeaway="セルフレジの台数が増えると、利用者がどこまで自分で操作できるかが店舗体験を左右する。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -819,7 +819,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="リテールメディア・広告" data-lane="all" data-share-title="アルバートソンズのリテールメディア部門、元ウォルマート幹部を起用" data-share-takeaway="リテールメディアの成否は、広告主が求める計測や商品提案を組み立てられる人材に左右される。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -851,7 +851,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="流通DX一般" data-lane="all" data-share-title="米百貨店Beallsがモバイルアプリを導入へ" data-share-takeaway="自社アプリを持つことは、会員情報、購買履歴、来店促進を一元的に管理する入口になる。" data-share-url="https://tk.st/job/retailtechdaily/20261016/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -923,6 +923,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261012_14"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>

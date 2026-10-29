@@ -14,14 +14,14 @@
     if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
     if(held || e.repeat) e.preventDefault();
   },true);
-  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=header(e);if(f) f._stImeEnterHeld=false;}},true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
   w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
   d.addEventListener('submit',function(e) {
-    var f=header(e);if(!f || f.dataset.stSearchOwned || f.dataset.stFallbackReady) return;
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
     e.preventDefault();if(f._stComposing || held) return;
     var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
     try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
-    if(portal) {w.STDailyPendingSearch=q;return;}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
     var target=new URL(f.getAttribute('action') || './',location.href);
     location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
   },true);
@@ -463,7 +463,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="../../../job/assets/retail-tech-daily.css?v=20261029_1">
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
 </head>
 <body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
@@ -662,7 +662,7 @@
 
         <div class="articles-list detail-view" id="articlesList">
 
-        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告" data-lane="all" data-share-title="アドインテ、リテールメディア向けサイネージCMS「結 -Yui」を提供開始　AIエージェント機能を実装" data-share-takeaway="リテールメディアは広告枠の販売と配信運用の両面で人手がボトルネックになりやすい。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="リテールメディア・広告">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -694,7 +694,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="イオン、次世代物流センター「川口東XD」が稼働　仕分けから混載までロボットで自動化" data-share-takeaway="物流の自動化は店舗の欠品や在庫精度に直結するため、店舗DXの土台とも言える。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -726,7 +726,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般" data-lane="all" data-share-title="グランベリーパーク、AI画像解析を活用した「駐車場出庫時間表示サービス」を導入" data-share-takeaway="来館者の体験価値は店内だけでなく、駐車場など施設入口での待ち時間からも左右される。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -758,7 +758,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化" data-lane="all" data-share-title="セブンイレブン、環境配慮型サーマルラベルを千葉の約300店舗で実験" data-share-takeaway="電子棚札や値札の運用は、紙ラベルの環境負荷と店舗作業の手間の双方に関わる。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="サプライチェーン・店舗自動化">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -790,7 +790,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル" data-lane="all" data-share-title="書店のセルフレジで店員の勧めに戸惑う客、操作の手間とタイムロスへの不満を描いた漫画" data-share-takeaway="セルフレジは省人化の切り札として広がる一方、慣れない客には操作負担が新たなストレスになる。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="SNS話題・生活者のリアル">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -822,7 +822,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="多くの消費者はまだ商品探索にAIを使っていない" data-share-takeaway="AIによる商品検索や推奨は小売のデジタル接点を変える可能性があるが、利用実態はまだ限定的だ。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-6">
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -854,7 +854,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド" data-lane="all" data-share-title="ダイナミックプライシングと不安を抱える消費者" data-share-takeaway="電子棚札やAIによる価格最適化は、ダイナミックプライシングの実装を現実的にしている。" data-share-url="https://tk.st/job/retailtechdaily/20261030/#art-7">
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -926,6 +926,6 @@
   </a>
 
   <script src="../../../assets/buy-me-oil.js"></script>
-  <script src="../../../job/assets/daily-ui.js?v=20261029_1"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_1"></script>
 </body>
 </html>
