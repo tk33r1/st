@@ -294,12 +294,12 @@ def render_page_footer(config, media_href, faq_href, rss_href):
 
 
 # 日刊の共通 JS。中身を変えたら上げて --rebuild で全ページに入れる（古い JS と新しい HTML の組み合わせを避ける）
-DAILY_UI_VERSION = '20261012_14'
+DAILY_UI_VERSION = '20261029_1'
 SEARCH_ANALYTICS_VERSION = '20261009_1'
 SITE_SEARCH_VERSION = '20261011_1'
 SEARCH_RUNTIME_VERSION = '20261012_16'
 SEARCH_UI_SCRIPT_VERSION = '20261015_1'
-DAILY_CSS_VERSION = '20261012_14'
+DAILY_CSS_VERSION = '20261029_1'
 # 共通検索の資産（読む順）。ポータルのタグと、号のページの遅延読み込み（ヘッダーの data-search-assets）の両方をここから作る。
 SEARCH_ASSETS = [
     f'search-ui.css?v={SEARCH_RUNTIME_VERSION}',
@@ -1289,6 +1289,15 @@ def source_time_html(art):
     return f'<time datetime="{dt.isoformat()}" title="出典の公開日時">公開 {dt:%Y.%m.%d %H:%M} JST</time>'
 
 
+def topic_tag_html(tag, prefix, count=None):
+    """記事タグと注目テーマのピル。ポータルの横断検索へのリンク（prefix はポータルへの相対パス）と、
+    ウォッチの ☆（initTopicWatch が .topic-watch-btn を全件まとめて拾う）。count があれば件数を添える。"""
+    tag = str(tag)
+    count_html = f'<strong>{count}件</strong>' if count is not None else ''
+    return (f'<span class="topic-tag-wrap"><a class="topic-tag" href="{prefix}#q={urllib.parse.quote(tag, safe='')}">#{esc(tag)}{count_html}</a>'
+            f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button></span>')
+
+
 def social_platform_totals(issue):
     totals = defaultdict(lambda: {'count': 0, 'likes': 0, 'views': 0, 'comments': 0})
     for item in issue.get('sns_buzz', []) or []:
@@ -1336,7 +1345,7 @@ def build_search_index(config, articles_history):
 
     号が増えても1ファイルが育ち続けないよう年ごとに分ける。search-index.json には最新の年の
     記事と年の一覧（years、新しい順）を入れ、それより前の年は search-index-<年>.json に置く。
-    ポータルを開くたびに読むのは search-index.json だけ（job/assets/daily-ui.js）。
+    ポータルでは横断検索が全年度を読み、ウォッチ新着もその結果を使う（job/assets/daily-ui.js）。
     全年度の内容から1回だけ generation を作り、すべてのファイルに同じ値を付ける。
     """
     records_by_year = defaultdict(list)
@@ -1755,11 +1764,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         correction_subject = urllib.parse.quote(f"{config['brand_title']} {formatted_date}号 記事{idx}の訂正・出典について")
         correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
-        tags_html = ''.join(
-            f'<span class="topic-tag-wrap"><a class="topic-tag" href="../#q={urllib.parse.quote(str(tag), safe='')}">#{esc(tag)}</a>'
-            f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button></span>'
-            for tag in (art.get('tags', []) or []) if str(tag).strip()
-        )
+        tags_html = ''.join(topic_tag_html(tag, '../') for tag in (art.get('tags', []) or []) if str(tag).strip())
         tags_block = f'<div class="card-tags" aria-label="記事タグ">{tags_html}</div>' if tags_html else ''
 
         product_link = ''
@@ -2074,15 +2079,8 @@ def render_top_index_html(config, articles_history):
             for tag in tags:
                 if tag not in generic_tags:
                     trend_counts[tag] += 1
-    # 記事タグと同じ .topic-tag-wrap をそのまま使う。見た目が揃い、
-    # initTopicWatch が .topic-watch-btn を全件まとめて拾うので JS 側の追加も要らない。
-    trend_items = ''.join(
-        f'<li><span class="topic-tag-wrap">'
-        f'<a class="topic-tag" href="#q={urllib.parse.quote(tag, safe='')}">#{esc(tag)}<strong>{count}件</strong></a>'
-        f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button>'
-        f'</span></li>'
-        for tag, count in trend_counts.most_common(8)
-    )
+    # 記事タグと同じピルをそのまま使う。見た目が揃い、ウォッチの JS も追加が要らない。
+    trend_items = ''.join(f'<li>{topic_tag_html(tag, "", count)}</li>' for tag, count in trend_counts.most_common(8))
     trend_section_html = f'''<section class="trend-section" aria-labelledby="trendTitle">
       <div class="section-head"><h2 class="section-title" id="trendTitle">直近{len(recent_issues)}号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
       <ul class="trend-list">{trend_items}</ul>

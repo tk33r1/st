@@ -328,53 +328,12 @@
   }
 
   const media = location.pathname.split('/')[2];
-  async function fetchIndexFile(name) {
-    const response = await fetch(name, { cache: 'no-cache' });
-    if (!response.ok) throw new Error('Index HTTP ' + response.status);
-    const payload = await response.json();
-    if (!payload || payload.media !== media || !Array.isArray(payload.records) || typeof payload.generation !== 'string' ||
-        !/^[a-f0-9]{1,32}$/i.test(payload.generation)) throw new Error('Invalid index');
-    return payload;
-  }
-
-  // ウォッチ新着用。最新の年だけを読み、1月は前の年も足す（年が明けた直後に一覧が空にならないように）。
-  // 読めなければ null。
-  async function loadWatchRecords() {
-    try {
-      const head = await fetchIndexFile('search-index.json');
-      const years = head.years;
-      if (!Array.isArray(years) || years.length > 100 ||
-          years.some(function(year, i) { return typeof year !== 'string' || !/^[0-9]{4}$/.test(year) || Number(year) < 1 || (i && years[i - 1] <= year); }) ||
-          (!years.length && head.records.length)) throw new Error('Invalid years');
-      const latest = head.records.reduce(function(max, record) { return String(record.date || '') > max ? String(record.date) : max; }, '');
-      const parts = [head];
-      if (latest.slice(4, 6) === '01' && years[1]) parts.push(await fetchIndexFile('search-index-' + years[1] + '.json'));
-      if (parts.some(function(part) { return part.generation !== head.generation; })) throw new Error('Mixed index');
-      const hrefs = new Set();
-      return parts.flatMap(function(part, i) {
-        return part.records.map(function(record) {
-          // その年の実在する日付・媒体・記事アンカーだけを使う。
-          const match = record && typeof record.url === 'string' && /^([0-9]{8})\/#art-([1-9][0-9]*)$/.exec(record.url);
-          if (!match || typeof record.title !== 'string' || match[1] !== record.date ||
-              record.date.slice(0, 4) !== years[i] || !Number.isSafeInteger(Number(match[2])) || hrefs.has(record.url) ||
-              !Array.isArray(record.tags) || record.tags.some(function(tag) { return typeof tag !== 'string'; })) throw new Error('Invalid record');
-          const date = record.date.slice(0, 4) + '-' + record.date.slice(4, 6) + '-' + record.date.slice(6);
-          const parsed = new Date(date + 'T00:00:00Z');
-          if (isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) throw new Error('Invalid date');
-          hrefs.add(record.url);
-          return record;
-        });
-      });
-    } catch (_) {
-      return null;
-    }
-  }
-
   function searchArticleDate(record) {
     return record.date.slice(0,4)+'-'+record.date.slice(4,6)+'-'+record.date.slice(6,8);
   }
 
-  function initArchiveSearch() {
+  // watchIndex は initWatchFeed の受け口。ウォッチ新着は横断検索が読んだ索引をそのまま使う（別に取りに行かない）。
+  function initArchiveSearch(watchIndex) {
     const container = document.getElementById('archiveCommonSearch');
     if (!container || !window.STSearchUI || !window.STSearchData) return null;
     const locale = () => document.documentElement.lang === 'en' ? 'en' : 'ja';
@@ -385,6 +344,7 @@
       placeholder:{ja:'記事を検索',en:'Search articles'},filtersBeforeSearch:['month'],analyticsNotice:true,
       renderSuggestion:searchArticleDate,
       renderItem:renderSearchArticle,
+      onData(records) { if (watchIndex) watchIndex.load(records); },
       onResults({open}) {
         const hint=document.getElementById('archiveSearchHint');if(hint) hint.hidden=open;
       },
@@ -413,6 +373,7 @@
     info?.addEventListener('click',()=>search.openPrivacy(info));
     document.getElementById('archiveSearchHint')?.addEventListener('click',()=>search.focus());
     document.querySelector('.header-search')._stSearch=search;
+    if (watchIndex) search.ready.then(function() { if (search.state.base === 'failed') watchIndex.fail(); });
     new MutationObserver(() => search.setLocale(locale())).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
     // 号のページからの確定だけ、同じタブの一度きりの目印で明示操作として受け取る（書くのは initIssueSearch の onSubmit）。
     function explicitMarker(query) {
@@ -591,7 +552,7 @@
     const statusEl = document.getElementById('watchFeedStatus');
     const listEl = document.getElementById('watchFeedList');
     const seenBtn = document.getElementById('watchFeedSeen');
-    if (!container || !statusEl || !listEl) return;
+    if (!container || !statusEl || !listEl) return null;
     const MAX_ROWS = 8;
     let records = null;
     let latestDate = '';
@@ -613,7 +574,7 @@
         item.appendChild(badge);
       }
       const link = document.createElement('a');
-      link.href = record.url;
+      link.href = record.href;
       link.textContent = record.title;
       const meta = document.createElement('p');
       meta.className = 'watch-feed-meta';
@@ -652,26 +613,27 @@
       });
     }
     watch.onChange(render);
-    loadWatchRecords().then(function(loaded) {
+
+    return {
+      // 横断検索の全年の記事から、最新の年だけを使い、1月は前の年も足す（年が明けた直後に一覧が空にならないように）。
+      load: function(all) {
+        latestDate = all.reduce(function(max, record) { return record.date > max ? record.date : max; }, '');
+        const years = Array.from(new Set(all.map(function(record) { return record.date.slice(0, 4); }))).sort().reverse();
+        const keep = years.slice(0, latestDate.slice(4, 6) === '01' ? 2 : 1);
+        records = all.filter(function(record) { return keep.indexOf(record.date.slice(0, 4)) !== -1; });
+        // 初回は基準日を黙って記録する。登録直後の過去記事まで NEW 扱いにしないため。
+        if (!watch.seen() && latestDate) watch.markSeen(latestDate);
+        render();
+      },
       // 読めなかったときは「新着なし」と見せない（次にページを開いたときに読み直す）
-      if (!loaded) {
-        if (watch.size()) {
-          container.hidden = false;
-          statusEl.textContent = 'ウォッチ中のテーマの新着を読み込めませんでした。';
-          listEl.replaceChildren();
-          if (seenBtn) seenBtn.hidden = true;
-        }
-        return;
+      fail: function() {
+        if (records || !watch.size()) return;
+        container.hidden = false;
+        statusEl.textContent = 'ウォッチ中のテーマの新着を読み込めませんでした。';
+        listEl.replaceChildren();
+        if (seenBtn) seenBtn.hidden = true;
       }
-      records = loaded;
-      latestDate = records.reduce(function(max, record) {
-        const date = String(record.date || '');
-        return date > max ? date : max;
-      }, '');
-      // 初回は基準日を黙って記録する。登録直後の過去記事まで NEW 扱いにしないため。
-      if (!watch.seen() && latestDate) watch.markSeen(latestDate);
-      render();
-    });
+    };
   }
 
   function initRssCopy() {
@@ -697,10 +659,11 @@
     initViewMode();
     initIssueFilters(watch);
     initSharing();
-    const searchFor = initArchiveSearch();
+    const watchIndex = initWatchFeed(watch);
+    const searchFor = initArchiveSearch(watchIndex);
+    if (!searchFor && watchIndex) watchIndex.fail();
     initSearchHandoff(searchFor);
     initTopicWatch(watch, searchFor);
-    initWatchFeed(watch);
     initRssCopy();
     initBackToTop();
     if (typeof DonationWidget !== 'undefined') {
