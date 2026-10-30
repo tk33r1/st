@@ -80,8 +80,10 @@ function buildHtml(card) {
 }
 
 /* The card's category must be the one data/tools.json already records, or the
- * card would advertise a colour the tool page does not use. */
-function checkCategories() {
+ * card would advertise a colour the tool page does not use. Cards about to be
+ * regenerated skip the imageUrl check: updateShelfImageVersions rewrites it
+ * afterwards, and their image may not exist yet when `out` has changed. */
+function checkCategories(regenerating = new Set()) {
   const tools = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tools.json'), 'utf8'));
   const problems = checkToolRecords(tools);
   if (problems.length) return problems;
@@ -95,6 +97,7 @@ function checkCategories() {
     if (tool.category !== card.cat) {
       problems.push(card.slug + ': card says "' + card.cat + '", tools.json says "' + tool.category + '"');
     }
+    if (regenerating.has(card.slug)) continue;
     const want = versionedImageUrl(card);
     if (tool.imageUrl !== want) {
       problems.push(card.slug + ': tools.json imageUrl is ' + tool.imageUrl + ', current image requires ' + want);
@@ -194,7 +197,13 @@ function updateShelfImageVersions(cards) {
   const checkOnly = args.includes('--check');
   const only = args.filter((a) => !a.startsWith('--'));
 
-  const problems = checkCategories();
+  const targets = only.length ? CARDS.filter((c) => only.includes(c.slug)) : CARDS;
+  if (!targets.length) {
+    console.error('No card matches ' + only.join(', ') + '. Known: ' + CARDS.map((c) => c.slug).join(', '));
+    process.exit(1);
+  }
+
+  const problems = checkCategories(checkOnly ? undefined : new Set(targets.map((c) => c.slug)));
   if (problems.length) {
     console.error('Card definitions disagree with data/tools.json:');
     for (const p of problems) console.error('  - ' + p);
@@ -202,12 +211,6 @@ function updateShelfImageVersions(cards) {
   }
   console.log('categories, image paths and the tools/index.html ItemList agree with data/tools.json');
   if (checkOnly) return;
-
-  const targets = only.length ? CARDS.filter((c) => only.includes(c.slug)) : CARDS;
-  if (!targets.length) {
-    console.error('No card matches ' + only.join(', ') + '. Known: ' + CARDS.map((c) => c.slug).join(', '));
-    process.exit(1);
-  }
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ogp-'));
   const chrome = await launch(PORT);

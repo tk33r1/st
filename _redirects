@@ -4,7 +4,7 @@
 /tools/qr-atelier      /tools/qr-palette/  301
 /tools/qr-atelier/     /tools/qr-palette/  301
 /tools/qr-atelier/*    /tools/qr-palette/:splat  301
-/images/ogp/qr-atelier-ogp.png   /images/ogp/qr-palette-ogp.png  301
+/images/ogp/qr-atelier-ogp.png   /images/ogp/qr-palette-ogp.webp  301
 
 # 移動: 2026-09-02  tk.st/matsumura40/ → tk.st/anniversary/matsumura40/
 /matsumura40      /anniversary/matsumura40/  301
@@ -17,7 +17,7 @@
 /tools/csv-json      /tools/csv-json-bridge/  301
 /tools/csv-json/     /tools/csv-json-bridge/  301
 /tools/csv-json/*    /tools/csv-json-bridge/:splat  301
-/images/ogp/csv-json-ogp.png   /images/ogp/csv-json-bridge-ogp.png  301
+/images/ogp/csv-json-ogp.png   /images/ogp/csv-json-bridge-ogp.webp  301
 
 # 改名: 2026-09-04  CSV文字コード一括変換ツール → CSV Charset Converter
 # 途中の charset-converter は同日内の短命で外部に出ていないので、
@@ -25,7 +25,7 @@
 /tools/csv-encoding      /tools/csv-charset-converter/  301
 /tools/csv-encoding/     /tools/csv-charset-converter/  301
 /tools/csv-encoding/*    /tools/csv-charset-converter/:splat  301
-/images/ogp/csv-encoding-ogp.png   /images/ogp/csv-charset-converter-ogp.png  301
+/images/ogp/csv-encoding-ogp.png   /images/ogp/csv-charset-converter-ogp.webp  301
 
 # 統合/改名: 2026-09-05  PDF to Image → PDF Studio
 # 旧ツールを PDF Studio に統合。HTML スタブから _redirects による 301 に切り替え。
@@ -33,8 +33,8 @@
 /tools/pdf-to-image/       /tools/pdf-studio/  301
 /tools/pdf-to-image/*      /tools/pdf-studio/:splat  301
 /tools/pdf-to-image.html   /tools/pdf-studio/  301
-/images/ogp/pdf-to-image-ogp.webp   /images/ogp/pdf-studio-ogp.png  301
-/images/ogp/pdf-to-image-ogp.png    /images/ogp/pdf-studio-ogp.png  301
+/images/ogp/pdf-to-image-ogp.webp   /images/ogp/pdf-studio-ogp.webp  301
+/images/ogp/pdf-to-image-ogp.png    /images/ogp/pdf-studio-ogp.webp  301
 
 # 移動: 2026-09-17  日刊の号別 OGP を images/ogp 直下からメディア別ディレクトリへ
 # 既にXやSNSへ出ている号のカード画像が 404 にならないように 301 を張る。
@@ -156,3 +156,12 @@
 /job/retailtechdaily/20261004    /job/retailtechdaily/  301
 /job/retailtechdaily/20261025/   /job/retailtechdaily/  301
 /job/retailtechdaily/20261025    /job/retailtechdaily/  301
+
+# 置き換え: 2026-10-30  スクリプトで作る OGP 画像も PNG／JPEG から WebP に。共有済みのカードが崩れないように 301 を張る。
+/images/ogp/csv-charset-converter-ogp.png  /images/ogp/csv-charset-converter-ogp.webp  301
+/images/ogp/csv-json-bridge-ogp.png  /images/ogp/csv-json-bridge-ogp.webp  301
+/images/ogp/nextgen-image-ogp.png  /images/ogp/nextgen-image-ogp.webp  301
+/images/ogp/pdf-studio-ogp.png  /images/ogp/pdf-studio-ogp.webp  301
+/images/ogp/text-diff-ogp.png  /images/ogp/text-diff-ogp.webp  301
+/images/ogp/qr-palette-ogp.png  /images/ogp/qr-palette-ogp.webp  301
+/images/ogp/motovlog-ogp.jpg  /images/ogp/motovlog-ogp.webp  301

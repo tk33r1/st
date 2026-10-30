@@ -15,7 +15,7 @@ const os = require('os');
 const { launch, connect, newPage, evalJs } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
-const CARD = path.join(ROOT, 'images/ogp/qr-palette-ogp.png');
+const CARD = path.join(ROOT, 'images/ogp/qr-palette-ogp.webp');
 const EXPECT = 'https://tk.st/tools/qr-palette/';
 const PORT = 9334;
 
@@ -41,7 +41,7 @@ const BOXES = [[1330, 300, 700, 700], [1900, 250, 420, 420], [1900, 620, 420, 42
     const b64 = fs.readFileSync(CARD).toString('base64');
     const results = await evalJs(s, `(async () => {
       const img = new Image();
-      img.src = 'data:image/png;base64,${b64}';
+      img.src = 'data:image/webp;base64,${b64}';
       await img.decode();
       const c = document.createElement('canvas');
       c.width = img.width; c.height = img.height;

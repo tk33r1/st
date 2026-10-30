@@ -75,7 +75,7 @@ const SHELL_CSS = `
 
 const CARDS = [
   {
-    slug: 'csv-charset-converter', out: 'images/ogp/csv-charset-converter-ogp.png', cat: 'converter',
+    slug: 'csv-charset-converter', out: 'images/ogp/csv-charset-converter-ogp.webp', cat: 'converter',
     h1: 'CSV Charset<br>Converter',
     sub: 'CSVが今なにで保存されているか、<br>ひと目で。まとめて直せる。',
     chips: ['自動判別', 'BOM 付け外し', '変換不可文字を検出'],
@@ -104,7 +104,7 @@ const CARDS = [
   },
 
   {
-    slug: 'csv-json-bridge', out: 'images/ogp/csv-json-bridge-ogp.png', cat: 'converter', chipMono: true,
+    slug: 'csv-json-bridge', out: 'images/ogp/csv-json-bridge-ogp.webp', cat: 'converter', chipMono: true,
     h1: 'CSV JSON<br>Bridge',
     sub: 'Excel からの貼り付けにも対応。<br>エラーは行番号で教えます。',
     chips: ['UTF-8 / BOM', 'Shift-JIS', 'ヘッダー指定'],
@@ -139,7 +139,7 @@ const CARDS = [
   },
 
   {
-    slug: 'nextgen-image', out: 'images/ogp/nextgen-image-ogp.png', cat: 'converter', chipMono: true,
+    slug: 'nextgen-image', out: 'images/ogp/nextgen-image-ogp.webp', cat: 'converter', chipMono: true,
     h1: 'NextGen<br>Image',
     sub: '画像を WEBP / AVIF に一発変換。<br>次世代フォーマットで、美しいまま軽く。',
     chips: ['WEBP', '可逆 WEBP', 'AVIF', 'HEIC 対応'],
@@ -272,7 +272,7 @@ const CARDS = [
   },
 
   {
-    slug: 'pdf-studio', out: 'images/ogp/pdf-studio-ogp.png', cat: 'editor',
+    slug: 'pdf-studio', out: 'images/ogp/pdf-studio-ogp.webp', cat: 'editor',
     h1: 'PDF<br>Studio',
     sub: '回転・結合・分割・面付け・墨消しを<br>1画面で。サーバー保存なし。',
     chips: ['交互結合', '中綴じ面付け', '墨消し', '圧縮'],
@@ -298,7 +298,7 @@ const CARDS = [
   },
 
   {
-    slug: 'text-diff', out: 'images/ogp/text-diff-ogp.png', cat: 'editor',
+    slug: 'text-diff', out: 'images/ogp/text-diff-ogp.webp', cat: 'editor',
     h1: 'Diff<br>Studio',
     sub: '2つの文章の違いを<br>1文字単位で色分け。',
     chips: ['表記ゆれを無視', '採用／却下', '文字数カウント'],
@@ -339,7 +339,7 @@ const CARDS = [
   },
 
   {
-    slug: 'qr-palette', out: 'images/ogp/qr-palette-ogp.png', cat: 'generator',
+    slug: 'qr-palette', out: 'images/ogp/qr-palette-ogp.webp', cat: 'generator',
     h1: 'QR<br>Palette',
     sub: 'セル・マーカー・色・ロゴまで。<br>おしゃれなQRコードを、無料で。',
     chips: ['デザイン28種', 'セル16種', 'グラデーション', 'SVG書き出し'],

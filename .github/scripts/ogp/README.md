@@ -1,6 +1,6 @@
 # OGP カード生成
 
-`images/ogp/*-ogp.{png,webp}` を作り直すスクリプト。ヘッドレス Chrome に
+`images/ogp/*-ogp.webp` を作り直すスクリプト。ヘッドレス Chrome に
 1200×630 の HTML を描かせて dsf 2 で撮り、2400×1260 の画像として書き出す。
 
 依存パッケージなし（Node 組み込みの `WebSocket` で CDP を直接叩く）。Node 18 以上。

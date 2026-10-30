@@ -2,8 +2,6 @@ name: Search Phase 4 validation
 
 # Linuxの出荷検査。AI呼び出し・Worker/Pages公開・bot更新は行わない。
 on:
-  push:
-    branches: [codex/search-phase4]
   pull_request:
     paths:
       - '.node-version'

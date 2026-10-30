@@ -3,7 +3,7 @@
     "id": 1,
     "title": "CSV JSON Bridge - CSV ↔ JSON 相互変換ツール",
     "url": "https://tk.st/tools/csv-json-bridge/",
-    "imageUrl": "https://tk.st/images/ogp/csv-json-bridge-ogp.png?v=979545b2929e",
+    "imageUrl": "https://tk.st/images/ogp/csv-json-bridge-ogp.webp?v=bf379aed9e40",
     "category": "converter",
     "description": "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
     "tags": [
@@ -47,7 +47,7 @@
     "id": 5,
     "title": "NextGen Image - 次世代画像変換ツール",
     "url": "https://tk.st/tools/nextgen-image/",
-    "imageUrl": "https://tk.st/images/ogp/nextgen-image-ogp.png?v=2b21eb948518",
+    "imageUrl": "https://tk.st/images/ogp/nextgen-image-ogp.webp?v=e3c2ae77b107",
     "category": "converter",
     "description": "日本初。ロスレスWebP変換対応。HEIC対応、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。",
     "tags": [
@@ -79,7 +79,7 @@
     "id": 7,
     "title": "PDF Studio - サーバーレスPDF編集ツール",
     "url": "https://tk.st/tools/pdf-studio/",
-    "imageUrl": "https://tk.st/images/ogp/pdf-studio-ogp.png?v=ac6927a86d97",
+    "imageUrl": "https://tk.st/images/ogp/pdf-studio-ogp.webp?v=128aefe52c5a",
     "category": "editor",
     "description": "サーバーに保存せず、回転・結合・分割・並べ替えを1画面で完結。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、下のテキストごと消える墨消し、ローカル圧縮に対応。PDFをPNG・WEBP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。",
     "tags": [
@@ -101,7 +101,7 @@
     "id": 8,
     "title": "CSV Charset Converter - CSV文字コード一括変換ツール",
     "url": "https://tk.st/tools/csv-charset-converter/",
-    "imageUrl": "https://tk.st/images/ogp/csv-charset-converter-ogp.png?v=d36a4e10cc72",
+    "imageUrl": "https://tk.st/images/ogp/csv-charset-converter-ogp.webp?v=a869abc211b6",
     "category": "converter",
     "description": "アップロードしたCSVが今なんの文字コードで保存されているかを自動判別して表示し、UTF-8やShift_JISへまとめて変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックにも対応しています。",
     "tags": [
@@ -120,7 +120,7 @@
     "id": 9,
     "title": "Diff Studio - テキスト差分比較・文字数カウントツール",
     "url": "https://tk.st/tools/text-diff/",
-    "imageUrl": "https://tk.st/images/ogp/text-diff-ogp.png?v=1cd08fd58c68",
+    "imageUrl": "https://tk.st/images/ogp/text-diff-ogp.webp?v=1819398c9558",
     "category": "editor",
     "description": "2つの文章の違いを1文字単位で色分け。送り仮名や全角半角などの表記ゆれを無視した比較ができ、変更は1箇所ずつ採用／却下できます。文字数カウントと媒体別の文字数制限チェックつき。",
     "tags": [
@@ -136,7 +136,7 @@
     "id": 10,
     "title": "QR Palette - おしゃれなQRコード作成ツール",
     "url": "https://tk.st/tools/qr-palette/",
-    "imageUrl": "https://tk.st/images/ogp/qr-palette-ogp.png?v=c3ccf85babe6",
+    "imageUrl": "https://tk.st/images/ogp/qr-palette-ogp.webp?v=08cca13551cf",
     "category": "generator",
     "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。短縮URLを挟まないので広告も有効期限もなく、書き出す絵をその場でデコードして読み取りを確認します。PNGとSVGで保存できます。",
     "tags": [

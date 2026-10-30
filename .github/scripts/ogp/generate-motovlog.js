@@ -4,7 +4,7 @@
  *   node .github/scripts/ogp/generate-motovlog.js
  *
  * 書き出すもの:
- *   images/ogp/motovlog-ogp.jpg   2400x1260
+ *   images/ogp/motovlog-ogp.webp  2400x1260
  *
  * カードの色・書体・グラデーションは motovlog/index.html のヒーローと同じ値で、
  * 左肩のマークもページのナビと同じ motovlog-logo.webp。ページ側を触ったら
@@ -18,14 +18,13 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
+const { launch, connect, newPage, evalJs, sleep, WEBP_QUALITY } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const PORT = 9335;
 const WIDTH = 1200;
 const HEIGHT = 630;
 const SCALE = 2;              // 1200x630 を dsf 2 で撮って 2400x1260
-const JPEG_QUALITY = 90;
 
 const SHOT = 'images/contents/motovlog/motovlog-liberty-canyon.jpg';
 const MARK = 'images/contents/motovlog/motovlog-logo.webp';
@@ -169,14 +168,14 @@ function fileUrl(p) {
     await sleep(800);
 
     const shot = await s('Page.captureScreenshot', {
-      format: 'jpeg',
-      quality: JPEG_QUALITY,
+      format: 'webp',
+      quality: WEBP_QUALITY,
       clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
       captureBeyondViewport: true,
     });
-    const dest = path.join(ROOT, 'images', 'ogp', 'motovlog-ogp.jpg');
+    const dest = path.join(ROOT, 'images', 'ogp', 'motovlog-ogp.webp');
     fs.writeFileSync(dest, Buffer.from(shot.data, 'base64'));
-    console.log('images/ogp/motovlog-ogp.jpg  ' +
+    console.log('images/ogp/motovlog-ogp.webp  ' +
       (fs.statSync(dest).size / 1024).toFixed(0) + ' KB, 2400x1260');
 
     cdp.ws.close();
