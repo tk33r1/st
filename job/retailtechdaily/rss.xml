@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 30 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 30 Oct 2026 08:02:49 +0900</lastBuildDate>
+    <pubDate>Sat, 31 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 31 Oct 2026 06:20:16 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月31日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261031/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261031/</guid>
+      <pubDate>Sat, 31 Oct 2026 08:00:00 +0900</pubDate>
+      <description>AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。</description>
+    </item>
     <item>
       <title>2026年10月30日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261030/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261016/</guid>
       <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
       <description>ローソンの3～8月期決算は増収増益となり、AI発注とファストフーズの好調により平均日販が過去最高の60.8万円に達した。店舗オペレーションのAI活用が売上指標の改善に結び付いたことが示された。 リテールメディアネットワーク市場は2035年に5,200億米ドル規模へ拡大するとの予測が示された。米国では大手小売の広告事業を率いる人材の獲得競争も進んでおり、購買データを軸にした広告ビジネスの本格化がうかがえる。</description>
-    </item>
-    <item>
-      <title>2026年10月15日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261015/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261015/</guid>
-      <pubDate>Thu, 15 Oct 2026 08:00:00 +0900</pubDate>
-      <description>無人店舗の決済は、クレジットカードのタッチだけで入店・購入できる方式へと広がり始めており、専用アプリや会員登録を前提としない利用体験が現実味を帯びてきた。 リテールメディアは、店内サイネージの料金改定や新媒体の追加、広告会社の媒体選定への組み込みなど、広告主の出稿判断に入る段階へ進んでいる。</description>
     </item>
   </channel>
 </rss>

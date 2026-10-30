@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年10月31日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261031/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年10月31日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261031/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261031.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年10月31日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261031.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261031/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年10月31日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。",
+      "url": "https://tk.st/job/retailtechdaily/20261031/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261031.webp",
+      "datePublished": "2026-10-31T08:00:00+09:00",
+      "dateModified": "2026-10-31T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "店舗DX・次世代決済",
+        "サプライチェーン・店舗自動化",
+        "SNS話題・生活者のリアル",
+        "リテールメディア・広告",
+        "グローバル先端トレンド"
+      ],
+      "keywords": [
+        "AIショッピング",
+        "AI需要予測",
+        "EC",
+        "POS連動",
+        "SNS話題・生活者のリアル",
+        "アパレル",
+        "グローバル先端トレンド",
+        "サプライチェーン・店舗自動化",
+        "セルフレジ",
+        "ホームセンター",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "代理店契約",
+        "価格表示",
+        "商品券",
+        "商品提案",
+        "在庫管理",
+        "店舗DX・次世代決済",
+        "店頭体験",
+        "欠品対策",
+        "消費者の声",
+        "生成AI",
+        "限定商品",
+        "音声AI"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-6"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261031/#art-7"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261031/#newslist",
+      "name": "2026年10月31日号 掲載ニュース一覧",
+      "numberOfItems": 7,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-1",
+            "position": 1,
+            "headline": "東芝テック、セルフレジで商品券を使えるPOS連動システムを発売",
+            "description": "東芝テックは、商品券読取装置をPOSシステムに連動させる「商品券連動サブシステム」を発売した。セルフレジで商品券を利用できるようにする仕組みで、会計時の決済手段の選択肢を広げる狙いがある。商品券の読み取りからPOS処理までを連携させ、会計データの一貫性を保つ構成である。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-1",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBIOWJlNkRfU3lNYk0yRnE0a2dLSThpNDFyeEl1RnJhWTY4Rm81VkVaRTlSNEtBSG0ydFpRVXNJNFFsMXNQR08ybFZaZ3hzZkhoSXQydjRnUmU1TFFLZVg1VXRRRnM?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Impress Watch"
+              },
+              "datePublished": "2026-10-30T16:29:58+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "商品券",
+              "POS連動"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-2",
+            "position": 2,
+            "headline": "カインズ、AlphaEvolveで需要予測の誤差を19%改善",
+            "description": "カインズは、Google CloudのAlphaEvolveを活用して需要予測の精度改善に取り組み、予測誤差を19%低減したと発表した。AIが予測モデルを自ら改良していく仕組みを用い、人手によるモデル調整に依存しない進化型の予測を目指している。ホームセンターの在庫や欠品対策に直結する領域で、AIが予測手法そのものを改善する事例として注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-2",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQMnNIYnA1SWRpdFhaZmVQTVpzUGh5eWR5MjBzZ1pfbVVVcGNCTlRXWDhiQUp1WENUSzF4MC13WE9jX1BNSjVkdV9tbm53cjIwLXg2OVh2LXJxdlVJZkltYXJLT1Z5ZHBCdG1wMUJMYXB5anAwMTFvNFVkTWU0SjIzUzZrMk1PUm1qT1RYRFFXaXNMQjhRQmhDam5mVVhSVzlBOVF1Q2c1REl6RmQzaEE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Google Cloud"
+              },
+              "datePublished": "2026-10-30T09:41:17+09:00"
+            },
+            "keywords": [
+              "AI需要予測",
+              "欠品対策",
+              "ホームセンター"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-3",
+            "position": 3,
+            "headline": "AI CROSSとエコー電子工業、需要予測AI「Deep Predictor」の販売代理店契約を締結",
+            "description": "AI CROSSとエコー電子工業は、需要予測AI「Deep Predictor」の販売代理店契約を締結した。エコー電子工業が販売代理店として需要予測AIの提供を担い、導入企業の拡大を図る。需要予測を業務に組み込みたい企業に対して、販売と導入の窓口を広げる狙いがある。AI CROSSは同日、EC市場の販売動向を用いた別の需要予測オプションも提供しており、予測領域での製品展開を強めている。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-3",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5hdDBLaUVuVWg4b2VFbFBIdVFGR3piam1jWlM5andYSF9zM3hXWEdYbDVuaHJiN2VWVmgwdmVfcDNueF9DMFlPeklwWDByaEtmVU13NjZVaXphSjQtODhnbzM0aUM0VGk1WFE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "PR TIMES"
+              },
+              "datePublished": "2026-10-30T15:30:02+09:00"
+            },
+            "keywords": [
+              "AI需要予測",
+              "代理店契約",
+              "在庫管理"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-4",
+            "position": 4,
+            "headline": "セルフレジの半額シール商品、定価で会計された場合の返金はどうなるのか",
+            "description": "スーパーのセルフレジで半額シールが貼られた500円の商品を購入したものの、帰宅後のレシートで定価が記録されていたという疑問が取り上げられた。店を出た後でも差額の返金を受けられるのかという、消費者の素朴な不安を扱う記事である。セルフレジでは値引き表示と会計の食い違いが起きやすく、店員を介さず確認しにくい点が不安を生みやすい。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-4",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQRkNKaldjZkNUQm5PODItc2pOUGtrNVR6eTU2V2YtencxbXlha2gzbk5laGd5bDA4M2FDamxEb1VBZ1drT1hQZkhfT0N2dWlKOXhqRWlFWHRGVk9YQ24xRkVLNFdSeWNGMWNobVItOFZRVHZLNDVDaG5vMExVdTJFb3VZbEV2bm1TOGZHU1lR?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yahoo!ニュース"
+              },
+              "datePublished": "2026-10-30T13:10:02+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "価格表示",
+              "消費者の声"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-5",
+            "position": 5,
+            "headline": "リテールメディアの真価は店頭体験にある、博報堂とpHmediaが仕掛けたロート製薬・ドンキ限定商品のヒットの裏側",
+            "description": "博報堂とpHmediaが、ロート製薬とドン・キホーテの限定商品のヒットを手がけた裏側を紹介する記事である。リテールメディアの効果は広告の露出だけでなく、店頭での商品体験によって生まれるという考え方を示している。店頭メディアと商品体験を組み合わせ、購買行動まで結びつける取り組みが取り上げられている。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-5",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9QdG9keGo2RU5ubWFONDBlN0xSMWJ1czEySVFZZnpoZER1MjhWZVB1MnNGbk1VeVgxZHV5NFlQc2t2R1E3VDQ0MU52WVE2NHEtNnRoZjFlbi1QOGZqYy1z?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "AdverTimes.（アドタイ） by 宣伝会議"
+              },
+              "datePublished": "2026-10-30T12:31:48+09:00"
+            },
+            "keywords": [
+              "リテールメディア",
+              "店頭体験",
+              "限定商品"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-6",
+            "position": 6,
+            "headline": "Amazon、過去12カ月で4億人超の顧客がAlexaのショッピング機能を利用",
+            "description": "Amazonは、過去12カ月で4億人を超える顧客がAlexa for Shoppingを利用したと明らかにした。音声AIを通じた買い物体験が、一部の先進層を超えて広く使われている実態を示す数字である。商品探索や購入の入口が検索画面から対話型AIへ移る流れを裏付ける材料になる。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-6",
+            "articleSection": "グローバル先端トレンド",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOQk9fTjY0ay0yOFN6LVFXSWNLTDFDU09uVWdfd0hqbDhWblFPTTVrWGNOTm5FZm9TSkJuT3owWE5NU3FFWFM4OFhqRFFzeGlvZTdqUF9DYTBkZHRRa1h1VEZaN0RGYVpFSmZQb2hqUF9laExyc0pNV282bG1qeHp4ejZnZTlGalFMZHZPRHdKMFVDU1AyeG04ZGtTUFNHMzVpR05ndXdYUF9tY0RyZmlNSEU0TXYzVlVRS0lfZHdDVHV6UFZuMlE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Modern Retail"
+              },
+              "datePublished": "2026-10-30T07:31:20+09:00"
+            },
+            "keywords": [
+              "音声AI",
+              "AIショッピング",
+              "EC"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261031/#art-7",
+            "position": 7,
+            "headline": "Fanatics、OpenAIと組みアウトフィット提案ツールを刷新",
+            "description": "スポーツ関連商品を扱うFanaticsは、OpenAIの技術を活用してアウトフィットの提案ツールを刷新したと報じられた。顧客の好みに合わせて商品を組み合わせて提示し、購買につなげる狙いがある。生成AIを商品提案の体験に組み込む事例として、ファン層の多いカテゴリでの活用が示された。",
+            "url": "https://tk.st/job/retailtechdaily/20261031/#art-7",
+            "articleSection": "グローバル先端トレンド",
+            "inLanguage": "ja",
+            "datePublished": "2026-10-31T08:00:00+09:00",
+            "dateModified": "2026-10-31T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261031/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNaVIzRTh0aG9fOFdHLU1JUUVOY285OThMem45VzliU1A3T2RaUXFXa1ZjejJEdWlhd0xPTmJmY0tHWC1uRkFzQ2E1ZjQ4d05Fc2pNcTRUOWd0bkdZREtQeGt6VDJhVlRnTXFqX2xtN2haUUtpZ2dYU2RibW1iUmozQ3hR?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Retail Dive"
+              },
+              "datePublished": "2026-10-30T02:01:21+09:00"
+            },
+            "keywords": [
+              "生成AI",
+              "商品提案",
+              "アパレル"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261031/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年10月31日号",
+          "item": "https://tk.st/job/retailtechdaily/20261031/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年10月31日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年10月31日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年10月31日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約5分 / 2,576字
+          </span>
+          <span class="stat">全 7 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。</li><li>セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。</li><li>リテールメディアは露出から店頭体験へと評価軸が移っている。博報堂とpHmediaの事例は、広告効果を購買体験まで含めて設計する重要性を示している。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">東芝テック、セルフレジで商品券を使えるPOS連動システムを発売</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">カインズ、AlphaEvolveで需要予測の誤差を19%改善</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">AI CROSSとエコー電子工業、需要予測AI「Deep Predictor」の販売代理店契約を締結</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・生活者のリアル</span></span>
+              <span class="qi-title">セルフレジの半額シール商品、定価で会計された場合の返金はどうなるのか</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">リテールメディアの真価は店頭体験にある、博報堂とpHmediaが仕掛けたロート製薬・ドンキ限定商品のヒットの裏側</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">グローバル先端トレンド</span></span>
+              <span class="qi-title">Amazon、過去12カ月で4億人超の顧客がAlexaのショッピング機能を利用</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-7" class="qi-link">
+            <span class="qi-num">07</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">グローバル先端トレンド</span></span>
+              <span class="qi-title">Fanatics、OpenAIと組みアウトフィット提案ツールを刷新</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">7 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">7</strong> / 7</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">7</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">5</span></button><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">2</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="サプライチェーン・店舗自動化" aria-pressed="false">サプライチェーン・店舗自動化 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・生活者のリアル" aria-pressed="false">SNS話題・生活者のリアル <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="リテールメディア・広告" aria-pressed="false">リテールメディア・広告 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="グローバル先端トレンド" aria-pressed="false">グローバル先端トレンド <span class="chip-count">2</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">Impress Watch</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-30T16:29:58+09:00" title="出典の公開日時">公開 2026.10.30 16:29 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTFBIOWJlNkRfU3lNYk0yRnE0a2dLSThpNDFyeEl1RnJhWTY4Rm81VkVaRTlSNEtBSG0ydFpRVXNJNFFsMXNQR08ybFZaZ3hzZkhoSXQydjRnUmU1TFFLZVg1VXRRRnM?oc=5" target="_blank" rel="noopener noreferrer">東芝テック、セルフレジで商品券を使えるPOS連動システムを発売<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>東芝テックは、商品券読取装置をPOSシステムに連動させる「商品券連動サブシステム」を発売した。<strong class="kw-scan">セルフレジ</strong>で商品券を利用できるようにする仕組みで、会計時の決済手段の選択肢を広げる狙いがある。商品券の読み取りからPOS処理までを連携させ、会計データの一貫性を保つ構成である。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">商品券はギフト需要や地域振興で根強く使われるが、<strong class="kw-scan">セルフレジ</strong>では対応が後回しにされがちだった。</p>
+              </div>
+              <p class="wim-detail">レジ側で完結させることで、セルフ化を進める小売が取りこぼしていた客層を取り込める可能性がある。一方で、券面確認や不正利用対策をどこまで機械化できるかが導入の鍵になる。自社のギフト券・商品券の扱いを見直す好機でもある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E5%88%B8">#商品券</a><button type="button" class="topic-watch-btn" data-watch-topic="商品券" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=POS%E9%80%A3%E5%8B%95">#POS連動</a><button type="button" class="topic-watch-btn" data-watch-topic="POS連動" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiZEFVX3lxTFBIOWJlNkRfU3lNYk0yRnE0a2dLSThpNDFyeEl1RnJhWTY4Rm81VkVaRTlSNEtBSG0ydFpRVXNJNFFsMXNQR08ybFZaZ3hzZkhoSXQydjRnUmU1TFFLZVg1VXRRRnM?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">Google Cloud</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-30T09:41:17+09:00" title="出典の公開日時">公開 2026.10.30 09:41 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxQMnNIYnA1SWRpdFhaZmVQTVpzUGh5eWR5MjBzZ1pfbVVVcGNCTlRXWDhiQUp1WENUSzF4MC13WE9jX1BNSjVkdV9tbm53cjIwLXg2OVh2LXJxdlVJZkltYXJLT1Z5ZHBCdG1wMUJMYXB5anAwMTFvNFVkTWU0SjIzUzZrMk1PUm1qT1RYRFFXaXNMQjhRQmhDam5mVVhSVzlBOVF1Q2c1REl6RmQzaEE?oc=5" target="_blank" rel="noopener noreferrer">カインズ、AlphaEvolveで需要予測の誤差を19%改善<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>カインズは、<strong class="kw-scan">Google</strong> CloudのAlphaEvolveを活用して<strong class="kw-scan">需要予測</strong>の精度改善に取り組み、予測誤差を19%低減したと発表した。AIが予測モデルを自ら改良していく仕組みを用い、人手によるモデル調整に依存しない進化型の予測を目指している。ホームセンターの在庫や欠品対策に直結する領域で、AIが予測手法そのものを改善する事例として注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">需要予測</strong>は精度の数字だけでなく、欠品と過剰在庫のどちらを減らせたかで価値が決まる。</p>
+              </div>
+              <p class="wim-detail">誤差19%の改善が店舗の在庫や発注にどう反映されたかが、他社の導入判断の材料になる。モデル自体をAIが更新する発想は、季節商品や店舗ごとの差が大きいホームセンター業態と相性が良い。予測結果を現場で運用する体制づくりも並行して必要になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E9%9C%80%E8%A6%81%E4%BA%88%E6%B8%AC">#AI需要予測</a><button type="button" class="topic-watch-btn" data-watch-topic="AI需要予測" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%AC%A0%E5%93%81%E5%AF%BE%E7%AD%96">#欠品対策</a><button type="button" class="topic-watch-btn" data-watch-topic="欠品対策" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%9B%E3%83%BC%E3%83%A0%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC">#ホームセンター</a><button type="button" class="topic-watch-btn" data-watch-topic="ホームセンター" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMirgFBVV95cUxQMnNIYnA1SWRpdFhaZmVQTVpzUGh5eWR5MjBzZ1pfbVVVcGNCTlRXWDhiQUp1WENUSzF4MC13WE9jX1BNSjVkdV9tbm53cjIwLXg2OVh2LXJxdlVJZkltYXJLT1Z5ZHBCdG1wMUJMYXB5anAwMTFvNFVkTWU0SjIzUzZrMk1PUm1qT1RYRFFXaXNMQjhRQmhDam5mVVhSVzlBOVF1Q2c1REl6RmQzaEE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">PR TIMES</span>
+            </div>
+            <div class="source-details"><span class="source-kind">プレスリリース</span><time datetime="2026-10-30T15:30:02+09:00" title="出典の公開日時">公開 2026.10.30 15:30 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE5hdDBLaUVuVWg4b2VFbFBIdVFGR3piam1jWlM5andYSF9zM3hXWEdYbDVuaHJiN2VWVmgwdmVfcDNueF9DMFlPeklwWDByaEtmVU13NjZVaXphSjQtODhnbzM0aUM0VGk1WFE?oc=5" target="_blank" rel="noopener noreferrer">AI CROSSとエコー電子工業、需要予測AI「Deep Predictor」の販売代理店契約を締結<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>AI CROSSとエコー電子工業は、<strong class="kw-scan">需要予測AI</strong>「Deep Predictor」の販売代理店契約を締結した。エコー電子工業が販売代理店として<strong class="kw-scan">需要予測AI</strong>の提供を担い、導入企業の拡大を図る。<strong class="kw-scan">需要予測</strong>を業務に組み込みたい企業に対して、販売と導入の窓口を広げる狙いがある。AI CROSSは同日、EC市場の販売動向を用いた別の<strong class="kw-scan">需要予測</strong>オプションも提供しており、予測領域での製品展開を強めている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">需要予測AI</strong>は開発力だけでなく、導入支援と運用定着を担う販売網が普及の成否を分ける。</p>
+              </div>
+              <p class="wim-detail">代理店契約は、中堅・中小の小売や卸にとって導入のハードルを下げる動きになり得る。自社の在庫データをどこまで活用できるか、既存の販売チャネルとの役割分担をあらかじめ確認しておきたい。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E9%9C%80%E8%A6%81%E4%BA%88%E6%B8%AC">#AI需要予測</a><button type="button" class="topic-watch-btn" data-watch-topic="AI需要予測" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%BB%A3%E7%90%86%E5%BA%97%E5%A5%91%E7%B4%84">#代理店契約</a><button type="button" class="topic-watch-btn" data-watch-topic="代理店契約" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%9C%A8%E5%BA%AB%E7%AE%A1%E7%90%86">#在庫管理</a><button type="button" class="topic-watch-btn" data-watch-topic="在庫管理" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiakFVX3lxTE5hdDBLaUVuVWg4b2VFbFBIdVFGR3piam1jWlM5andYSF9zM3hXWEdYbDVuaHJiN2VWVmgwdmVfcDNueF9DMFlPeklwWDByaEtmVU13NjZVaXphSjQtODhnbzM0aUM0VGk1WFE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="SNS話題・生活者のリアル">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・生活者のリアル" title="このカテゴリで絞り込み">SNS話題・生活者のリアル</button>
+              <span class="source-tag">Yahoo!ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-10-30T13:10:02+09:00" title="出典の公開日時">公開 2026.10.30 13:10 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQRkNKaldjZkNUQm5PODItc2pOUGtrNVR6eTU2V2YtencxbXlha2gzbk5laGd5bDA4M2FDamxEb1VBZ1drT1hQZkhfT0N2dWlKOXhqRWlFWHRGVk9YQ24xRkVLNFdSeWNGMWNobVItOFZRVHZLNDVDaG5vMExVdTJFb3VZbEV2bm1TOGZHU1lR?oc=5" target="_blank" rel="noopener noreferrer">セルフレジの半額シール商品、定価で会計された場合の返金はどうなるのか<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>スーパーの<strong class="kw-scan">セルフレジ</strong>で半額シールが貼られた500円の商品を購入したものの、帰宅後のレシートで定価が記録されていたという疑問が取り上げられた。店を出た後でも差額の返金を受けられるのかという、消費者の素朴な不安を扱う記事である。<strong class="kw-scan">セルフレジ</strong>では値引き表示と会計の食い違いが起きやすく、店員を介さず確認しにくい点が不安を生みやすい。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>での価格の食い違いは、客側の確認負担とトラブル時の対応ルールが曖昧なことで不満につながりやすい。</p>
+              </div>
+              <p class="wim-detail">レシート確認の導線や、値引き表示と会計データの整合性を見直すことは、店舗の信頼維持に直結する。現場では、誤表示時の返金対応を社内でどう定めているかを説明できる体制も求められるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%BE%A1%E6%A0%BC%E8%A1%A8%E7%A4%BA">#価格表示</a><button type="button" class="topic-watch-btn" data-watch-topic="価格表示" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%B6%88%E8%B2%BB%E8%80%85%E3%81%AE%E5%A3%B0">#消費者の声</a><button type="button" class="topic-watch-btn" data-watch-topic="消費者の声" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQRkNKaldjZkNUQm5PODItc2pOUGtrNVR6eTU2V2YtencxbXlha2gzbk5laGd5bDA4M2FDamxEb1VBZ1drT1hQZkhfT0N2dWlKOXhqRWlFWHRGVk9YQ24xRkVLNFdSeWNGMWNobVItOFZRVHZLNDVDaG5vMExVdTJFb3VZbEV2bm1TOGZHU1lR?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">AdverTimes.（アドタイ） by 宣伝会議</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-30T12:31:48+09:00" title="出典の公開日時">公開 2026.10.30 12:31 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE9QdG9keGo2RU5ubWFONDBlN0xSMWJ1czEySVFZZnpoZER1MjhWZVB1MnNGbk1VeVgxZHV5NFlQc2t2R1E3VDQ0MU52WVE2NHEtNnRoZjFlbi1QOGZqYy1z?oc=5" target="_blank" rel="noopener noreferrer">リテールメディアの真価は店頭体験にある、博報堂とpHmediaが仕掛けたロート製薬・ドンキ限定商品のヒットの裏側<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>博報堂とpHmediaが、ロート製薬とドン・キホーテの限定商品のヒットを手がけた裏側を紹介する記事である。<strong class="kw-scan">リテールメディア</strong>の効果は広告の露出だけでなく、店頭での商品体験によって生まれるという考え方を示している。店頭メディアと商品体験を組み合わせ、購買行動まで結びつける取り組みが取り上げられている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">リテールメディア</strong>は媒体枠の販売から、店頭での体験設計へと評価軸が移りつつある。</p>
+              </div>
+              <p class="wim-detail">限定商品を核にした施策は、広告主にとって購買データで効果を示しやすい利点がある。小売側は自社の売場をどう広告価値に変えるかが問われ、メーカーとの共同企画力が差になる。自社の店頭データと広告の接続点を整理しておきたい。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E9%A0%AD%E4%BD%93%E9%A8%93">#店頭体験</a><button type="button" class="topic-watch-btn" data-watch-topic="店頭体験" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%99%90%E5%AE%9A%E5%95%86%E5%93%81">#限定商品</a><button type="button" class="topic-watch-btn" data-watch-topic="限定商品" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE9QdG9keGo2RU5ubWFONDBlN0xSMWJ1czEySVFZZnpoZER1MjhWZVB1MnNGbk1VeVgxZHV5NFlQc2t2R1E3VDQ0MU52WVE2NHEtNnRoZjFlbi1QOGZqYy1z?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="グローバル先端トレンド">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="グローバル先端トレンド" title="このカテゴリで絞り込み">グローバル先端トレンド</button>
+              <span class="source-tag">Modern Retail</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-30T07:31:20+09:00" title="出典の公開日時">公開 2026.10.30 07:31 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxOQk9fTjY0ay0yOFN6LVFXSWNLTDFDU09uVWdfd0hqbDhWblFPTTVrWGNOTm5FZm9TSkJuT3owWE5NU3FFWFM4OFhqRFFzeGlvZTdqUF9DYTBkZHRRa1h1VEZaN0RGYVpFSmZQb2hqUF9laExyc0pNV282bG1qeHp4ejZnZTlGalFMZHZPRHdKMFVDU1AyeG04ZGtTUFNHMzVpR05ndXdYUF9tY0RyZmlNSEU0TXYzVlVRS0lfZHdDVHV6UFZuMlE?oc=5" target="_blank" rel="noopener noreferrer">Amazon、過去12カ月で4億人超の顧客がAlexaのショッピング機能を利用<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Amazon says more than 400M customers have used Alexa for Shopping in the last 12 months</p>
+            <div class="card-summary"><p><strong class="kw-scan">Amazon</strong>は、過去12カ月で4億人を超える顧客がAlexa for Shoppingを利用したと明らかにした。音声AIを通じた買い物体験が、一部の先進層を超えて広く使われている実態を示す数字である。商品探索や購入の入口が検索画面から対話型AIへ移る流れを裏付ける材料になる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">生活者が商品を探す起点が、ECの検索から音声や対話型のアシスタントへ広がりつつあることを示す。</p>
+              </div>
+              <p class="wim-detail">小売やブランドにとっては、商品情報の構造化と在庫・価格データの正確さが、AIに選ばれる条件になる。自社商品がAI経由の提案にどう表示されるかを確認する時期に来ている。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%9F%B3%E5%A3%B0AI">#音声AI</a><button type="button" class="topic-watch-btn" data-watch-topic="音声AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E3%82%B7%E3%83%A7%E3%83%83%E3%83%94%E3%83%B3%E3%82%B0">#AIショッピング</a><button type="button" class="topic-watch-btn" data-watch-topic="AIショッピング" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=EC">#EC</a><button type="button" class="topic-watch-btn" data-watch-topic="EC" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMixgFBVV95cUxOQk9fTjY0ay0yOFN6LVFXSWNLTDFDU09uVWdfd0hqbDhWblFPTTVrWGNOTm5FZm9TSkJuT3owWE5NU3FFWFM4OFhqRFFzeGlvZTdqUF9DYTBkZHRRa1h1VEZaN0RGYVpFSmZQb2hqUF9laExyc0pNV282bG1qeHp4ejZnZTlGalFMZHZPRHdKMFVDU1AyeG04ZGtTUFNHMzVpR05ndXdYUF9tY0RyZmlNSEU0TXYzVlVRS0lfZHdDVHV6UFZuMlE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="グローバル先端トレンド">
+          <div class="card-index" aria-hidden="true">07</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="グローバル先端トレンド" title="このカテゴリで絞り込み">グローバル先端トレンド</button>
+              <span class="source-tag">Retail Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-10-30T02:01:21+09:00" title="出典の公開日時">公開 2026.10.30 02:01 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxNaVIzRTh0aG9fOFdHLU1JUUVOY285OThMem45VzliU1A3T2RaUXFXa1ZjejJEdWlhd0xPTmJmY0tHWC1uRkFzQ2E1ZjQ4d05Fc2pNcTRUOWd0bkdZREtQeGt6VDJhVlRnTXFqX2xtN2haUUtpZ2dYU2RibW1iUmozQ3hR?oc=5" target="_blank" rel="noopener noreferrer">Fanatics、OpenAIと組みアウトフィット提案ツールを刷新<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Fanatics revamps outfit curation tool with OpenAI</p>
+            <div class="card-summary"><p>スポーツ関連商品を扱うFanaticsは、OpenAIの技術を活用してアウトフィットの提案ツールを刷新したと報じられた。顧客の好みに合わせて商品を組み合わせて提示し、購買につなげる狙いがある。<strong class="kw-scan">生成AI</strong>を商品提案の体験に組み込む事例として、ファン層の多いカテゴリでの活用が示された。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">生成AI</strong>による提案は、商品点数が多い領域で顧客の迷いを減らし、客単価や回遊を高める可能性がある。</p>
+              </div>
+              <p class="wim-detail">ただし、提案の精度とブランドらしさをどう担保するかが課題になる。自社の商品属性データを整備し、AIが組み合わせを提案できる状態を作ることが次の一手になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%88%90AI">#生成AI</a><button type="button" class="topic-watch-btn" data-watch-topic="生成AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E6%8F%90%E6%A1%88">#商品提案</a><button type="button" class="topic-watch-btn" data-watch-topic="商品提案" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%A2%E3%83%91%E3%83%AC%E3%83%AB">#アパレル</a><button type="button" class="topic-watch-btn" data-watch-topic="アパレル" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiggFBVV95cUxNaVIzRTh0aG9fOFdHLU1JUUVOY285OThMem45VzliU1A3T2RaUXFXa1ZjejJEdWlhd0xPTmJmY0tHWC1uRkFzQ2E1ZjQ4d05Fc2pNcTRUOWd0bkdZREtQeGt6VDJhVlRnTXFqX2xtN2haUUtpZ2dYU2RibW1iUmozQ3hR?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B410%E6%9C%8831%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261030/" class="nav-prev">&larr; 2026.10.30 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>
