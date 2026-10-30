@@ -47,6 +47,7 @@ jobs:
         run: node --test --test-force-exit .github/scripts/test-magi2.mjs
       - name: Require new answers on Web and PWA
         run: |
+          node .github/scripts/test-magi-camera-browser.mjs
           node .github/scripts/test-magi-chat-matrix.mjs
           node .github/scripts/test-magi-chat-review-browser.mjs
           node .github/scripts/test-magi-ws-browser.mjs

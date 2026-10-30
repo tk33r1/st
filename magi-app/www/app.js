@@ -1432,7 +1432,7 @@ function syncAgentPrivacyUI() {
   }
   ['btn-share-agent','btn-export-agent'].forEach(function (id) { var el = document.getElementById(id); if (el) el.hidden = temporary; });
   var voice = document.getElementById('agent-voice'); if (voice) { if (temporary) { if (!voice.hidden) voice.dataset.privacyAvailable = 'true'; voice.hidden = true; } else if (voice.dataset.privacyAvailable === 'true') voice.hidden = false; }
-  var camera = document.querySelector('#agent-attach-menu [data-source="camera"]'); if (camera) camera.hidden = temporary || !(typeof nativeAndroid !== 'undefined' && nativeAndroid || matchMedia('(pointer: coarse)').matches);
+  var camera = document.querySelector('#agent-attach-menu [data-source="camera"]'); if (camera) camera.hidden = temporary || !(typeof nativeAndroid !== 'undefined' && nativeAndroid || agentCameraAvailable());
   if (temporary) {
     agentLog.querySelectorAll('[data-act="rate"], [data-act="react"], [data-act="share"]').forEach(function (el) { el.remove(); });
     agentLog.querySelectorAll('[data-act="speak"]').forEach(function (el) { el.hidden = !(agentPrivacyState.features && agentPrivacyState.features.temporary_speech && agentItemFor(el)?.speech_sig); });
@@ -2035,7 +2035,127 @@ function userContentHTML(content) {
   return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + esc(contentText(content));
 }
 
-// ＋ から添付元を選ぶ。カメラは capture で撮影アプリを開く（Android は Capacitor が開き、カメラの権限は持たない）。
+// CAMERA_BEGIN
+// capture属性をファイル選択として扱うブラウザでも、Webの撮影は同じ画面で行う。
+// トップページは外部資産を読めないので、PWAにもこの処理を内包する。
+function agentCameraAvailable() {
+  return !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+    || matchMedia('(pointer: coarse)').matches;
+}
+function showAgentCamera() {
+  if (agentTemporary() || agentDead || agentClosed || attachBtn.disabled) return;
+  if (attachments.length >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は最大' + ATTACH_MAX + '枚までです')); return; }
+  var panel = makeAgentPanel('agent-camera-panel', tr('Camera', 'カメラ'),
+    '<div class="agent-camera-body"><video autoplay muted playsinline aria-label="' + tr('Camera preview', 'カメラの映像') + '"></video>'
+    + '<p class="agent-camera-status" role="status" aria-live="polite"></p>'
+    + '<div class="agent-camera-actions"><button type="button" data-camera="shoot" disabled>' + tr('Take photo', '撮影する') + '</button>'
+    + '<button type="button" data-camera="switch" disabled>' + tr('Switch camera', 'カメラを切り替える') + '</button>'
+    + '<button type="button" data-camera="retry" hidden>' + tr('Try again', '再試行') + '</button>'
+    + '<button type="button" data-camera="photo">' + tr('Choose a photo', '写真を選ぶ') + '</button></div></div>');
+  if (!panel) return;
+  panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', tr('Camera', 'カメラ'));
+  var video = panel.querySelector('video'), status = panel.querySelector('.agent-camera-status');
+  var shoot = panel.querySelector('[data-camera="shoot"]'), flip = panel.querySelector('[data-camera="switch"]');
+  var retry = panel.querySelector('[data-camera="retry"]'), photos = panel.querySelector('[data-camera="photo"]');
+  var generation = agentGen, session = currentSessionId, stream = null, request = 0, timer = null, closed = false, facing = 'environment', taking = false;
+  var originalClose = panel.onAgentClose;
+  function valid() {
+    return !closed && panel.isConnected && generation === agentGen && session === currentSessionId
+      && !agentTemporary() && !agentPrivacyState.switching && !agentPrivacyState.preparing && !agentDead && !agentClosed;
+  }
+  function stop() {
+    request++; clearTimeout(timer); timer = null;
+    if (stream) stream.getTracks().forEach(function (track) { track.stop(); });
+    stream = null; video.pause(); video.srcObject = null; shoot.disabled = flip.disabled = true;
+  }
+  function close() { if (panel.isConnected) removeAgentPanel(panel); }
+  function hidden() { if (document.hidden) close(); }
+  panel.onAgentClose = function (hadFocus) {
+    closed = true; stop();
+    document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', close);
+    if (originalClose) originalClose(hadFocus);
+    if (hadFocus && attachBtn.isConnected && !attachBtn.disabled) attachBtn.focus({ preventScroll: true });
+  };
+  document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', close);
+  // どの画面でもEscとTabを撮影パネルの中で扱う。PWAの戻るも通常のパネルの後始末を通る。
+  panel.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return; }
+    if (event.key !== 'Tab') return;
+    var items = Array.from(panel.querySelectorAll('button:not(:disabled):not([hidden])')).filter(function (item) { return item.getClientRects().length; });
+    var first = items[0], last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  function failed(error) {
+    stop(); if (!valid()) { close(); return; }
+    retry.hidden = false; retry.disabled = false;
+    var name = error && error.name;
+    status.textContent = name === 'NotAllowedError' || name === 'SecurityError'
+      ? tr('Allow camera access in this browser’s site settings, then try again. You can also choose a photo.', 'ブラウザのサイト設定でカメラを許可し、再試行してください。写真を選んで添付することもできます。')
+      : name === 'NotFoundError' || name === 'OverconstrainedError'
+        ? tr('No available camera was found. You can choose a photo instead.', '利用できるカメラが見つかりません。写真を選んで添付できます。')
+        : tr('Could not start the camera. Close other apps using it and try again, or choose a photo.', 'カメラを起動できませんでした。使用中の別のアプリを閉じて再試行するか、写真を選んでください。');
+  }
+  function ready() {
+    if (!valid() || !stream || taking || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+    clearTimeout(timer); timer = null; shoot.disabled = flip.disabled = false;
+    status.textContent = tr('Take a photo to attach it. It will be sent when you send your message.', '撮影すると画像を添付します。メッセージを送信すると画像も送られます。');
+  }
+  video.addEventListener('loadeddata', ready); video.addEventListener('playing', ready);
+  async function start() {
+    stop(); taking = false; retry.hidden = true;
+    if (!valid()) { close(); return; }
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status.textContent = tr('This browser cannot open the camera here. Open this page over HTTPS in a supported browser, or choose a photo.', 'このブラウザではカメラを開けません。対応ブラウザでHTTPSのページを開くか、写真を選んでください。'); return;
+    }
+    status.textContent = tr('Starting camera… Allow access if your browser asks.', 'カメラを起動しています。確認が出たらカメラの利用を許可してください。');
+    var ticket = request;
+    try {
+      var acquired = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+      // 許可待ちの間に閉じたり会話を替えたりした場合も、遅れて届いたカメラを確実に解放する。
+      if (ticket !== request || !valid()) { acquired.getTracks().forEach(function (track) { track.stop(); }); return; }
+      stream = acquired;
+      var track = stream.getVideoTracks()[0];
+      if (!track || track.readyState !== 'live') throw new Error('camera-ended');
+      facing = track.getSettings && track.getSettings().facingMode || facing;
+      track.addEventListener('ended', function () { if (stream === acquired && valid()) failed(new Error('camera-ended')); });
+      video.muted = true; video.srcObject = stream;
+      timer = setTimeout(function () { if (ticket === request && valid()) failed(new Error('camera-frame-timeout')); }, 15000);
+      await video.play();
+      if (ticket === request) ready();
+    } catch (error) { if (ticket === request) failed(error); }
+  }
+  shoot.addEventListener('click', function () {
+    if (!valid() || !stream || shoot.disabled || taking) return;
+    taking = true; shoot.disabled = flip.disabled = true;
+    var canvas = document.createElement('canvas'), scale = Math.min(1, ATTACH_SEND_DIM / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale)); canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    try {
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      stop(); status.textContent = tr('Attaching photo…', '画像を添付しています…');
+      canvas.toBlob(async function (blob) {
+        canvas.width = canvas.height = 0;
+        if (!valid()) return;
+        if (!blob || !blob.size) { taking = false; failed(new Error('camera-image-empty')); return; }
+        try {
+          await addAttachments([new File([blob], 'camera-' + Date.now() + '.jpg', { type: 'image/jpeg' })]);
+          close();
+        } catch (error) { taking = false; failed(error); }
+      }, 'image/jpeg', 0.9);
+    } catch (error) { canvas.width = canvas.height = 0; taking = false; failed(error); }
+  });
+  flip.addEventListener('click', function () { facing = facing === 'environment' ? 'user' : 'environment'; start(); });
+  retry.addEventListener('click', start);
+  photos.addEventListener('click', function () {
+    if (!valid()) { close(); return; }
+    close(); attachFile.accept = 'image/*'; attachFile.multiple = true; attachFile.removeAttribute('capture'); attachFile.click();
+  });
+  panel.querySelector('.agent-panel-close').focus({ preventScroll: true });
+  start();
+}
+// CAMERA_END
+
+// ＋ から添付元を選ぶ。Web/PWAはページ内で撮影し、Androidは従来どおりCapacitorが撮影アプリを開く。
 // 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。どれも addAttachments が画像だけを受け付ける。
 var attachMenu = document.getElementById('agent-attach-menu');
 var ATTACH_SOURCES = {
@@ -2048,7 +2168,7 @@ function setAttachMenu(open) {
   attachBtn.setAttribute('aria-expanded', String(open));
   if (!open) return;
   // 撮影できない PC ではカメラを出さない
-  attachMenu.querySelector('[data-source="camera"]').hidden = agentTemporary() || !nativeAndroid && !matchMedia('(pointer: coarse)').matches;
+  attachMenu.querySelector('[data-source="camera"]').hidden = agentTemporary() || !nativeAndroid && !agentCameraAvailable();
   attachMenu.querySelector('[data-source]:not([hidden])').focus();
 }
 // 開いていたら閉じて true を返す（Android の戻るボタンも使う）
@@ -2060,6 +2180,7 @@ attachBtn.addEventListener('click', function () { setAttachMenu(attachMenu.hidde
 attachMenu.addEventListener('click', function (e) {
   var item = e.target.closest('[data-source]'); if (!item) return;
   if (agentTemporary() && item.dataset.source === 'camera') return;
+      if (item.dataset.source === 'camera' && !nativeAndroid) { setAttachMenu(false); showAgentCamera(); return; }
   var source = ATTACH_SOURCES[item.dataset.source];
   attachFile.accept = source.accept; attachFile.multiple = source.multiple;
   if (source.capture) attachFile.setAttribute('capture', source.capture); else attachFile.removeAttribute('capture');
@@ -2650,7 +2771,7 @@ agentLog.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ag
 document.addEventListener('visibilitychange', function () { if (document.hidden) { if (agentSpeechPlayer) agentSpeechPlayer.stop(); } else refreshReplyTimes(); });
 
 // ---- Overlay panels (saved chats / info) -----------------------------------
-var AGENT_PANEL_IDS = ['agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
+var AGENT_PANEL_IDS = ['agent-camera-panel', 'agent-bug-report-panel', 'agent-history-panel', 'agent-versions-panel', 'agent-info-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-version-info-panel', 'agent-install-panel', 'agent-settings-panel', 'agent-update-panel','agent-image-panel', 'agent-shared-panel', 'agent-sources-panel'];
 // パネルはどの閉じ方（✕・暗幕・Esc・戻る・別のパネル）でもここを通す。後始末は panel.onAgentClose が受け持つ。
 function removeAgentPanel(panel) {
   if (!panel.isConnected) return;

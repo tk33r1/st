@@ -519,6 +519,16 @@
 .agent-personalization-form input[type="text"], .agent-personalization-form textarea { box-sizing: border-box; width: 100%; padding: 10px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; font: inherit; }
 .agent-personalization-form .personal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .agent-personalization-form button:not([role="switch"]) { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
+    /* 撮影プレビュー。トップページとPWAで同じ表示・操作にする。 */
+    #agent-camera-panel .agent-panel-body { display: flex; flex: 1; min-height: 0; }
+    #agent-camera-panel .agent-camera-body { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 10px; overflow-y: auto; }
+    #agent-camera-panel video { display: block; width: 100%; flex: 1; min-height: 80px; max-height: 55dvh; object-fit: contain; background: #111; }
+    #agent-camera-panel .agent-camera-status { margin: 0; font-size: 13px; line-height: 1.6; }
+    #agent-camera-panel .agent-camera-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    #agent-camera-panel .agent-camera-actions button { min-height: 44px; padding: 8px 12px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 4px; font: inherit; cursor: pointer; }
+    #agent-camera-panel .agent-camera-actions button:disabled { opacity: .4; cursor: default; }
+    #agent-camera-panel .agent-camera-actions button[hidden] { display: none; }
+
 </style>
 </head>
 <body>
@@ -637,6 +647,6 @@
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
-  <script src="app.js?v=20261029_2"></script>
+  <script src="app.js?v=20261030_1"></script>
 </body>
 </html>
