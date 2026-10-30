@@ -1426,12 +1426,14 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
 
     list_items = []
     has_part_list = []
-    for idx, art in enumerate(articles, 1):
-        art_id = f"{base_url}{date_key}/#art-{idx}"
+    # 画面と同じレーン順・番号で並べる。@id のアンカーは保存位置のまま（公開済みの #art-N を変えない）
+    for number, pos in enumerate(lane_order(config, articles), 1):
+        art = articles[pos]
+        art_id = f"{base_url}{date_key}/#art-{pos + 1}"
         art_schema = {
             "@type": "NewsArticle",
             "@id": art_id,
-            "position": idx,
+            "position": number,
             "headline": art.get('title', ''),
             "description": art.get('summary', ''),
             "url": art_id,
@@ -1458,7 +1460,7 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
         has_part_list.append({"@id": art_id})
         list_items.append({
             "@type": "ListItem",
-            "position": idx,
+            "position": number,
             "item": art_schema
         })
 
@@ -2610,7 +2612,7 @@ def run_daily_pipeline(config):
     raw_articles = ai_result.get('articles', [])
     if not raw_articles:
         # 記事の無い号は出さない（ルールベースの定型の要約だけが載った号が公開・X 投稿されていた）。
-        # 履歴・ページ・RSS・OGP のどれも書かないので、続く X 投稿の step も新しい号を見つけずに終わる。
+        # 履歴・ページ・RSS・OGP のどれも書かず、published も出さないので、workflow の WebSub 通知と X 投稿の step も走らない。
         print(f"::warning::{config['media_name']} {target_date_key}号: 掲載できる記事が0件のため発行しない（{ai_result.get('generated_by', '')}）")
         return
     articles = [raw_articles[i] for i in lane_order(config, raw_articles)]
@@ -2660,4 +2662,9 @@ def run_daily_pipeline(config):
     write_collection_outputs(config, articles_history, search_files=search_files)
 
     trigger_daily_ogp_generation(config, target_date_key)
+    # workflow の後続（WebSub 通知・X 投稿）は、号を書いたときだけ走らせる
+    github_output = os.environ.get('GITHUB_OUTPUT')
+    if github_output:
+        with open(github_output, 'a', encoding='utf-8') as f:
+            f.write("published=true\n")
     print(f"=== 完了: {config['media_name']} ({target_date_key}号 / Engine: {ai_result.get('generated_by')}) ===")

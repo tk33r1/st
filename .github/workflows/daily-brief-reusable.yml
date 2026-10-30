@@ -52,7 +52,9 @@ jobs:
         sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
         fc-cache -f > /dev/null
 
+    # 号を書いたときだけ published=true を出す（記事0件で発行しない日は出さず、WebSub 通知と X 投稿を飛ばす）
     - name: Generate daily brief
+      id: generate
       env:
         MEDIA: ${{ inputs.media }}
         TARGET_DATE: ${{ inputs.target-date }}
@@ -124,6 +126,7 @@ jobs:
     # RSS の更新を WebSub の hub へ知らせる（Google に新しい号を取りに来てもらう）。
     # 公開反映を待つので、後ろの X ポストはここで待たずに済む。失敗しても止めない。
     - name: Notify WebSub hub
+      if: steps.generate.outputs.published == 'true'
       env:
         MEDIA: ${{ inputs.media }}
       run: python .github/scripts/websub-ping.py --media "$MEDIA"
@@ -132,6 +135,7 @@ jobs:
     # 公開は同じ SHA の MAGI Chat Gate（5〜12分）と Pages のビルドを待つので、長めに待つ（反映を確かめられなくてもポストは続ける）。
     # 投稿 ID は二重投稿の抑止を兼ねるので、push はほかの bot と同じく push-with-retry.sh で弾かれても取り込み直す。
     - name: Post to X
+      if: steps.generate.outputs.published == 'true'
       env:
         MEDIA: ${{ inputs.media }}
         TARGET_DATE: ${{ inputs.target-date }}

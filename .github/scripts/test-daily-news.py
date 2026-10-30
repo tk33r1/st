@@ -96,6 +96,11 @@ class NewsFilterTests(unittest.TestCase):
         self.assertEqual(re.findall(r'<article class="news-card" id="art-(\d+)"', page), ['2', '1', '4', '3'])
         self.assertEqual(re.findall(r'<a href="#art-(\d+)" class="qi-link">\s*<span class="qi-num">(\d+)', page),
                          [('2', '01'), ('1', '02'), ('4', '03'), ('3', '04')])
+        # 構造化データの ItemList も画面と同じ順・番号（過去号は保存順のままなので、描画側で並べ直す）
+        jsonld = engine.build_dynamic_jsonld(nitori.CONFIG, issue, '20261030', '2026年10月30日')
+        item_list = next(node for node in jsonld['@graph'] if node.get('@type') == 'ItemList')
+        self.assertEqual([(entry['position'], entry['item']['@id'].rsplit('-', 1)[1]) for entry in item_list['itemListElement']],
+                         [(1, '2'), (2, '1'), (3, '4'), (4, '3')])
 
     def test_nitori_rejudging_after_api_failure_clears_old_rescue_status(self):
         candidate = item('ニトリの新商品')
@@ -421,8 +426,10 @@ class SearchGenerationTests(unittest.TestCase):
                     result = {'articles': copy.deepcopy(bad) + ([copy.deepcopy(valid)] if keep_valid else []),
                               'executive_summary': [None, 123, '有効な要点'], 'sns_buzz': None, 'sns_summary': None, 'sns_why_it_matters': 123}
                     warnings = io.StringIO()
+                    github_output = Path(directory, 'github-output')
+                    github_output.touch()
                     with patch('sys.argv', ['daily', '--date', '20261009']), \
-                            patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test', 'ANTHROPIC_MODEL': ''}), \
+                            patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test', 'ANTHROPIC_MODEL': '', 'GITHUB_OUTPUT': str(github_output)}), \
                             patch.object(engine, 'gather_all_candidate_news', return_value=candidates), \
                             patch.object(engine, 'call_anthropic_api', return_value=result) as first, \
                             patch.object(engine, 'call_llm_api') as second, \
@@ -430,6 +437,8 @@ class SearchGenerationTests(unittest.TestCase):
                         engine.run_daily_pipeline(config)
                     first.assert_called_once(); second.assert_not_called()
                     self.assertEqual(warnings.getvalue().count('題名が不正なため除外'), len(bad))
+                    # workflow の WebSub 通知と X 投稿は、号を書いたときだけ走る
+                    self.assertEqual(github_output.read_text(encoding='utf-8'), 'published=true\n' if keep_valid else '')
                     if not keep_valid:
                         # 記事が残らなければ、定型の要約だけの号は出さない（履歴・ページ・索引・RSS・OGP のどれも書かない）
                         ogp.assert_not_called()
