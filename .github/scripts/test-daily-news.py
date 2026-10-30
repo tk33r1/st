@@ -535,18 +535,20 @@ class SearchGenerationTests(unittest.TestCase):
                 {'date': '20260801', 'count': 0},
                 {'date': '20260701', 'count': 1, 'articles': [{'title': '昔の店舗', 'category': '店舗'}]},
             ]
+            def indexed_months(issues):
+                # 月の絞り込みの候補は、共通検索（assets/search-data.js）が索引の記事の日付から作る
+                return sorted({record['date'][:6] for payload in engine.build_search_index(config, issues).values()
+                               for record in payload['records']}, reverse=True)
             for issues, expected in ((history, ['202609', '202607']), (history[:2], []), ([], [])):
                 with self.subTest(media=config['media_id'], months=expected):
+                    self.assertEqual(indexed_months(issues), expected)
+                    # 記事0件の号もバックナンバーに残し、月の行の印を付ける（当日号は「Latest Issue」に出るので除く）
                     page = engine.render_top_index_html(config, issues)
-                    select = re.search(r'<select id="archiveMonthFilter"[^>]*>(.*?)</select>', page).group(1)
-                    months = re.findall(r'<option value="(\d{6})">', select)
-                    indexed = {record['date'][:6] for payload in engine.build_search_index(config, issues).values() for record in payload['records']}
-                    self.assertEqual(months, expected)
-                    self.assertEqual(set(months), indexed)
+                    self.assertEqual(re.findall(r'data-archive-month="(\d{6})"', page), [issue['date'][:6] for issue in issues[1:]])
             self.assertIn('href="20260930/"', engine.render_top_index_html(config, history))
             history[0]['articles'] = [{'title': '今月の店舗', 'category': '店舗'}]
             history[0]['count'] = 1
-            self.assertIn('<option value="202610">', engine.render_top_index_html(config, history))
+            self.assertEqual(indexed_months(history), ['202610', '202609', '202607'])
 
     def test_search_terms_validation_matches_worker_limits(self):
         from daily_search_terms import valid_search_terms
