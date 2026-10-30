@@ -33,14 +33,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         # 起動したコミットではなく main の最新を取る。順番待ちしていた実行が、前の実行の
         # 生成結果を知らない古い JSON から始めると、同じ人格を二重に要約した末に rebase で衝突する
         ref: main
 
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version-file: .node-version
 

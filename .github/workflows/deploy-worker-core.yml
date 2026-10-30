@@ -61,13 +61,13 @@ jobs:
         if [ -n "$EXPECTED_VERSION_ID" ]; then
           [[ "$WORKER" == magi2 && "$EXPECTED_VERSION_ID" =~ ^[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$ ]] || { echo '::error::Invalid expected MAGI version ID'; exit 1; }
         fi
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         ref: ${{ inputs.sha }}
         persist-credentials: false
     # 許可する一覧は呼び出し側のコミット（手動なら選んだコミット、自動公開ならmain）から読む。
     # 公開対象のコミットが自分で一覧を広げられないよう、対象のcheckoutとは分ける。
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         ref: ${{ github.sha }}
         path: .deploy-caller
@@ -79,7 +79,7 @@ jobs:
           workers/magi2/wrangler.toml
         sparse-checkout-cone-mode: false
         persist-credentials: false
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version-file: .node-version
     # 手動選択肢を唯一の一覧として使う。workflow_callの任意文字列も同じ一覧で検査する。
