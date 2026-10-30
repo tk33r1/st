@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.03';
+var APP_VERSION = '7.04';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2983,10 +2983,18 @@ function renderSavedSessionsList() {
       + '</div>';
   }).join('');
   list.querySelectorAll('.session-load').forEach(function (el) {
-    el.addEventListener('click', function () { loadSavedSession(el.dataset.id); closeAgentPanels(); });
+    // 読み込むと一覧が描き直されて押したボタンが消え、☰へフォーカスを戻せなくなるので、先に閉じる（トップページと同じ）
+    el.addEventListener('click', function () { closeAgentPanels(); loadSavedSession(el.dataset.id); });
   });
   list.querySelectorAll('.session-del').forEach(function (el) {
-    el.addEventListener('click', function (e) { e.stopPropagation(); deleteSavedSession(el.dataset.id); });
+    el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      // 押したボタンは描き直しで消えるので、キーボードの位置をシートの中に残す（Esc・Tab の折り返しはシートの中でだけ効く）
+      Promise.resolve(deleteSavedSession(el.dataset.id)).then(function () {
+        var panel = document.getElementById('agent-history-panel');
+        if (panel && !panel.contains(document.activeElement)) (panel.querySelector('.session-load') || panel.querySelector('#btn-reset')).focus({ preventScroll: true });
+      });
+    });
   });
 }
 function loadSavedSession(id) {

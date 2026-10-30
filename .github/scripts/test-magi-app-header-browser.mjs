@@ -127,6 +127,16 @@ try {
     await page.locator('.session-load').first().focus(); await page.keyboard.press('Enter');
     assert.equal(await page.locator('#bar-title').textContent(), '旅行の持ち物リスト');
     assert.equal(await page.locator('#agent-history-panel').count(), 0);
+    // 開いた後は ☰ にフォーカスが戻る（一覧の描き直しで押したボタンが消えても見失わない）
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'btn-history-agent');
+    // キーボードで削除しても位置はシートの中に残り、Esc で閉じて ☰ に戻る
+    await page.locator('#btn-history-agent').click();
+    await page.locator('.session-del').last().focus(); await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.session-load').count(), 1);
+    assert.ok(await page.evaluate(() => !!document.activeElement.closest('#agent-history-panel')));
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#agent-history-panel').count(), 0);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'btn-history-agent');
     // 新しい会話
     await page.locator('#btn-history-agent').click(); await page.locator('#btn-reset').click();
     assert.equal(await page.locator('#bar-title').textContent(), 'MAGI');
