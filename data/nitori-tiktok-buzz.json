@@ -1,12 +1,66 @@
 {
-  "captured_at": "2026-10-30T20:11:02.246365+09:00",
-  "captured_date": "20261030",
+  "captured_at": "2026-10-31T19:43:28.930689+09:00",
+  "captured_date": "20261031",
   "window_days": 7,
   "min_views": 10000,
   "items": [
     {
-      "title": "【TikTokで1.8万回再生】ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻",
-      "description": "TikTokで再生数17,700回を集めた動画（いいね519 / コメント5）：\n「ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻」",
+      "title": "【TikTokで6万回再生】ニトリで見つけた、あったか猫ちゃんアイテムをご紹介します🐈‍⬛✨ 猫ちゃんと一緒に冬支度しよう❣️ 気になるアイテムは保存してチェックしてね...",
+      "description": "TikTokで再生数59,700回を集めた動画（いいね1,390 / コメント3）：\n「ニトリで見つけた、あったか猫ちゃんアイテムをご紹介します🐈‍⬛✨ 猫ちゃんと一緒に冬支度しよう❣️ 気になるアイテムは保存してチェックしてね🐱🐾🍂 #ニャイフハック #ニトリ #猫グッズ」",
+      "source": "TikTok (@flaffy.mew)",
+      "link": "https://www.tiktok.com/@flaffy.mew/video/7702418448634301717",
+      "pub_date": "2026-10-30 20:17",
+      "pub_ts": 1793359049.0,
+      "is_sns_raw": true,
+      "platform": "tiktok",
+      "author": "@flaffy.mew",
+      "author_handle": "@flaffy.mew",
+      "hashtags": [
+        "ニャイフハック",
+        "ニトリ",
+        "猫グッズ"
+      ],
+      "likes": 1390,
+      "retweets": 297,
+      "views": 59700,
+      "comments": 3,
+      "raw_text": "ニトリで見つけた、あったか猫ちゃんアイテムをご紹介します🐈‍⬛✨ 猫ちゃんと一緒に冬支度しよう❣️ 気になるアイテムは保存してチェックしてね🐱🐾🍂 #ニャイフハック #ニトリ #猫グッズ",
+      "consumer_filter": {
+        "signature": "1d9bcb59250cf771e6b66f288c2b62523eb3482e8f26de60145b19a6fbbf113d",
+        "probability": 0.8
+      }
+    },
+    {
+      "title": "【TikTokで4.5万回再生】どら焼きクッションをゲットした日🛌😋★ 美味しそうすぎて寝るたびお腹減りそう💦 #ニトリ #ニトリ購入品 #お部屋作り #どら焼きクッション...",
+      "description": "TikTokで再生数44,700回を集めた動画（いいね2,510 / コメント7）：\n「どら焼きクッションをゲットした日🛌😋★ 美味しそうすぎて寝るたびお腹減りそう💦 #ニトリ #ニトリ購入品 #お部屋作り #どら焼きクッション #買ってよかったもの」",
+      "source": "TikTok (@1addicters)",
+      "link": "https://www.tiktok.com/@1addicters/video/7700898581674216722",
+      "pub_date": "2026-10-26 17:59",
+      "pub_ts": 1793005180.0,
+      "is_sns_raw": true,
+      "platform": "tiktok",
+      "author": "@1addicters",
+      "author_handle": "@1addicters",
+      "hashtags": [
+        "ニトリ",
+        "ニトリ購入品",
+        "お部屋作り",
+        "どら焼きクッション",
+        "買ってよかったもの"
+      ],
+      "likes": 2510,
+      "retweets": 26,
+      "views": 44700,
+      "comments": 7,
+      "raw_text": "どら焼きクッションをゲットした日🛌😋★ 美味しそうすぎて寝るたびお腹減りそう💦 #ニトリ #ニトリ購入品 #お部屋作り #どら焼きクッション #買ってよかったもの",
+      "consumer_filter": {
+        "signature": "73cda1626186a0b946349f2bc607c87a8560340ce1e0317d1d7c0a7f6926ef6a",
+        "probability": 0.97
+      }
+    },
+    {
+      "title": "【TikTokで1.9万回再生】ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻",
+      "description": "TikTokで再生数18,900回を集めた動画（いいね544 / コメント6）：\n「ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻」",
       "source": "TikTok (@KC/ケーシの家族)",
       "link": "https://www.tiktok.com/@kc.familys/video/7700792735992745217",
       "pub_date": "2026-10-26 17:30",
@@ -20,14 +74,42 @@
         "家族",
         "妻"
       ],
-      "likes": 519,
+      "likes": 544,
       "retweets": 3,
-      "views": 17700,
-      "comments": 5,
+      "views": 18900,
+      "comments": 6,
       "raw_text": "ケーシの家族ニトリ商品紹介コーナー！！ #可愛い #家族 #妻",
       "consumer_filter": {
         "signature": "8eeed93763989bd37d10184c25a926ac3c61e71a6d1c9885d408771cf7e71053",
-        "probability": 0.79
+        "probability": 0.74
+      }
+    },
+    {
+      "title": "【TikTokで1.1万回再生】絶対に買うべき！カップボード🫧 #キッチン #インテリア #収納 #キッチン収納 #ニトリ",
+      "description": "TikTokで再生数10,800回を集めた動画（いいね320 / コメント3）：\n「絶対に買うべき！カップボード🫧 #キッチン #インテリア #収納 #キッチン収納 #ニトリ」",
+      "source": "TikTok (@mai room🌼 | ホテルライクな暮らし)",
+      "link": "https://www.tiktok.com/@mai_room03/video/7701707461719379220",
+      "pub_date": "2026-10-28 22:18",
+      "pub_ts": 1793193510.0,
+      "is_sns_raw": true,
+      "platform": "tiktok",
+      "author": "@mai room🌼 | ホテルライクな暮らし",
+      "author_handle": "@mai_room03",
+      "hashtags": [
+        "キッチン",
+        "インテリア",
+        "収納",
+        "キッチン収納",
+        "ニトリ"
+      ],
+      "likes": 320,
+      "retweets": 12,
+      "views": 10800,
+      "comments": 3,
+      "raw_text": "絶対に買うべき！カップボード🫧 #キッチン #インテリア #収納 #キッチン収納 #ニトリ",
+      "consumer_filter": {
+        "signature": "dbbb829607d7331a56d82de197cb4a6e31b634fa39e80211a929ddd769d0cf84",
+        "probability": 0.89
       }
     }
   ]
