@@ -295,6 +295,19 @@ Readability 0.6.0 (`scripts/vendor-readability.cjs`, recorded SHA-256 and licens
 in `www/vendor/`). Shared document text stays with the conversation and is sent
 with subsequent questions; only its title is sent to the classifier.
 
+File attachments (text, code and PDF) are read on the device and only the extracted
+text is sent, up to 10,000 characters per request including earlier attachments.
+PDFs also attach their first pages as ordinary images (1024px JPEG, using the free slots of the
+four images per message), so tables, figures and scanned pages reach the models too.
+PDFs are read with the site's bundled pdf.js 6.4.299 (legacy build, ES module; the same copy
+`tools/pdf-studio` uses). It brings CMaps (Japanese PDFs
+without embedded fonts; only the tables a file uses are loaded), standard fonts, and the wasm decoders
+for JPEG 2000 / JBIG2 scans. Fonts inside a PDF are never handed to the browser's font engine
+(`disableFontFace`); pdf.js draws the glyph outlines itself, so non-embedded CJK fonts are missing from
+the page images (their text is still sent). Everything is copied into `www/vendor/pdfjs/` by
+`scripts/vendor-pdfjs.cjs` (checks the SHA-256 recorded in `assets/vendor/SOURCES.json`).
+Run it again after updating pdf.js in `assets/vendor/`.
+
 `MagiSharePlugin` copies up to four incoming content-URI images to app cache and
 queues incoming intents until the screen is ready. The native article reader
 uses OkHttp 4.12.0 with no cookie jar, manually checked redirects (at most three),

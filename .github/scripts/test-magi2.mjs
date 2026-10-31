@@ -2003,6 +2003,105 @@ test('連続画像添付では送信分だけ直近8枚を残し、保存履歴�
   }
 });
 
+test('添付ファイルの共通区画は両画面で一致し、送信時は新しい順に合計1万字まで本文を残す', async () => {
+  const block = src => between(src, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END');
+  for (const src of [home, mobile]) assert.equal(src.split('// AGENT_ATTACH_BEGIN').length, 2);
+  assert.equal(block(home), block(mobile));
+  const file = (name, size, extra = {}) => ({ type: 'attachment', name, text: 'x'.repeat(size), ...extra });
+  const history = [
+    { role: 'user', content: [{ type: 'text', text: '古い質問' }, file('old.txt', 3000)] }, { role: 'assistant', content: 'a' },
+    { role: 'user', content: [{ type: 'text', text: '前の質問' }, file(' mid.md ', 4000, { truncated: true, extra: 1 })] }, { role: 'assistant', content: 'b' },
+    { role: 'user', content: [{ type: 'text', text: '今回' }, file('new.py', 5000)] },
+  ];
+  const original = JSON.stringify(history);
+  for (const src of [home, mobile]) {
+    const ctx = vm.createContext({ AGENT_MAX_HISTORY: 12 });
+    vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
+    vm.runInContext(between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
+    ctx.cleanHistory = h => h.map(ctx.magiCleanItem);
+    vm.runInContext(between(src, 'function prepareAgentMessages(', 'async function agentSend('), ctx);
+    const messages = JSON.parse(JSON.stringify(ctx.prepareAgentMessages(history, history.at(-1).content)));
+    const parts = messages.flatMap(m => Array.isArray(m.content) ? m.content.filter(p => p.type === 'attachment') : []);
+    assert.deepEqual(parts.map(p => [p.name, p.text.length, !!p.omitted, !!p.truncated]), [['old.txt', 0, true, false], ['mid.md', 4000, false, true], ['new.py', 5000, false, false]]);
+    assert.ok(parts.every(p => !('extra' in p)), 'Worker が受け付けるキーだけを送る');
+    assert.equal(JSON.stringify(history), original);
+    assert.match(await (await worker().chat(messages)).text(), /event: done/);
+  }
+  const ctx = vm.createContext({});
+  vm.runInContext(between(home, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END'), ctx);
+  vm.runInContext(between(home, 'function agentRetryInput(', '// 以下は統合人格'), ctx);
+  const again = JSON.parse(JSON.stringify(ctx.agentRetryInput({ role: 'user', content: [file('a.csv', 3, { truncated: true })] }, 'm1', null)));
+  assert.deepEqual(again, { text: '', atts: [{ kind: 'attachment', name: 'a.csv', text: 'xxx', truncated: true }] });
+});
+
+test('添付ファイルは形式・文字コード・件数・合計1万字を端末で確かめてから下書きに足す', async () => {
+  const ctx = vm.createContext({ TextDecoder, ATTACH_MAX: 4, AGENT_PDFJS_BASE: null, tr: (en, ja) => ja, esc: s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';') });
+  vm.runInContext(between(home, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END'), ctx);
+  const fake = (name, bytes, type = '') => ({ name, type, size: bytes.length, arrayBuffer: async () => Uint8Array.from(bytes).buffer });
+  const utf8 = text => [...new TextEncoder().encode(text)];
+  assert.deepEqual(['a.png', 'b.PDF', 'c.ts', 'Dockerfile', 'd.zip', 'e.docx'].map((name, i) => ctx.agentAttachKind({ name, type: i === 0 ? 'image/png' : i === 2 ? 'video/mp2t' : '' })),
+    ['image', 'pdf', 'text', 'text', null, null]);
+  const list = [], stale = () => false;
+  assert.equal(await ctx.agentAttachFile(list, fake('メモ.txt', utf8('こんにちは\r\n世界')), 'text', stale), '');
+  assert.equal(await ctx.agentAttachFile(list, fake('sjis.csv', [0x93, 0xfa, 0x96, 0x7b, 0x2c, 0x31]), 'text', stale), '');
+  assert.match(await ctx.agentAttachFile(list, fake('nul.txt', [0x41, 0, 0x42]), 'text', stale), /文字のファイルとして読めません/);
+  assert.match(await ctx.agentAttachFile(list, fake('a.pdf', [0x25]), 'pdf', stale), /PDFを読めません/);
+  assert.match(await ctx.agentAttachFile(list, fake('a.zip', [1]), null, stale), /添付できません/);
+  assert.match(await ctx.agentAttachFile(list, fake('big.md', utf8('y'.repeat(12000))), 'text', stale), /先頭の9,988字だけ/);
+  assert.deepEqual(list.map(a => [a.name, a.text.length, a.truncated]), [['メモ.txt', 8, false], ['sjis.csv', 4, false], ['big.md', 9988, true]]);
+  assert.equal(list[0].text, 'こんにちは\n世界'); assert.equal(list[1].text, '日本,1');
+  assert.match(await ctx.agentAttachFile(list, fake('more.txt', utf8('z')), 'text', stale), /合計1万字/);
+  const fresh = [];
+  assert.equal(await ctx.agentAttachFile(fresh, fake('late.txt', utf8('z')), 'text', () => true), ''); assert.equal(fresh.length, 0, '会話が替わったら足さない');
+  assert.match(ctx.agentAttachDocHTML({ name: '<b>.py', text: 'abc', truncated: true }), /&#60;b&#62;\.py[\s\S]*先頭3字/);
+  // UTF-16 は BOM があれば読み、BOM の無い NUL 入りは断る
+  const utf16 = (bom, text, le) => [...bom, ...[...text].flatMap(ch => { const c = ch.charCodeAt(0); return le ? [c & 255, c >> 8] : [c >> 8, c & 255]; })];
+  assert.equal(ctx.agentDecodeText(Uint8Array.from(utf16([0xff, 0xfe], 'ログ,1', true))), 'ログ,1');
+  assert.equal(ctx.agentDecodeText(Uint8Array.from(utf16([0xfe, 0xff], 'ログ,1', false))), 'ログ,1');
+  assert.throws(() => ctx.agentDecodeText(Uint8Array.from(utf16([], 'ab', true))), /attach_binary/);
+  assert.doesNotMatch(ctx.agentAttachChipsHTML([{ type: 'attachment', name: '"><img src=x onerror=alert(1)>', text: 'x' }]), /<img/);
+});
+
+test('PDF は文字と先頭ページの画像を、写真と同じ4枚の枠の空き分だけ下書きに足す', async () => {
+  const ctx = vm.createContext({ ATTACH_MAX: 4, AGENT_PDFJS_BASE: null, tr: (en, ja) => ja });
+  vm.runInContext(between(home, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END'), ctx);
+  const asked = [], page = n => ({ url: 'data:image/jpeg;base64,P' + n, thumb: 'data:image/jpeg;base64,T' + n });
+  // pdf.js の読み取りは実ブラウザの試験で確かめるので、ここでは読んだ結果を差し替えて配分だけを見る
+  const read = (text, pages) => async (file, kind, budget, slots) => {
+    asked.push(slots);
+    return { text, images: Array.from({ length: Math.min(pages, slots) }, (_, i) => page(i + 1)) };
+  };
+  const photo = { url: 'data:image/jpeg;base64,X', thumb: 'data:image/jpeg;base64,Y' }, stale = () => false;
+  const plain = v => JSON.parse(JSON.stringify(v)), items = v => plain(v).map(({ pdf, ...a }) => a);
+  const list = [photo, photo];
+  ctx.agentReadAttachment = read('本文', 5);
+  assert.equal(await ctx.agentAttachFile(list, { name: 'a.pdf' }, 'pdf', stale), '');
+  assert.deepEqual(asked, [2], '空いている2枚だけを描く');
+  assert.deepEqual(items(list.slice(2)), [{ kind: 'attachment', name: 'a.pdf', text: '本文', truncated: false }, page(1), page(2)]);
+  ctx.agentReadAttachment = read('', 3);
+  assert.match(await ctx.agentAttachFile(list, { name: 'scan.pdf' }, 'pdf', stale), /scan\.pdfから文字を取り出せず、画像の枠（4枚）も埋まっています/);
+  const scan = [];
+  assert.match(await ctx.agentAttachFile(scan, { name: 'scan.pdf' }, 'pdf', stale), /scan\.pdfはページの画像だけを添付しました/);
+  assert.deepEqual(items(scan), [page(1), page(2), page(3)], '文字の無い PDF はファイルの札を作らず画像だけ');
+  // 文字が合計1万字に達していても、画像の枠が空いていれば画像だけを足す。テキストのファイルは画像を求めない
+  const fullText = [{ kind: 'attachment', name: 'big.md', text: 'y'.repeat(10000), truncated: false }];
+  ctx.agentReadAttachment = read('本文', 1);
+  assert.match(await ctx.agentAttachFile(fullText, { name: 'b.pdf' }, 'pdf', stale), /b\.pdfはページの画像だけを添付しました/);
+  assert.deepEqual(items(fullText.slice(1)), [page(1)]);
+  asked.length = 0;
+  assert.match(await ctx.agentAttachFile([], { name: 'c.txt' }, 'text', stale), /^$/);
+  assert.deepEqual(asked, [0]);
+  // × で PDF の札を外すとページ画像も外れる。ページ画像だけ・写真だけを外しても、ほかは残る
+  const tray = [photo];
+  ctx.agentReadAttachment = read('本文', 2); await ctx.agentAttachFile(tray, { name: 'd.pdf' }, 'pdf', stale);
+  ctx.agentReadAttachment = read('別', 1); await ctx.agentAttachFile(tray, { name: 'e.pdf' }, 'pdf', stale);
+  assert.equal(tray.length, 6);
+  assert.equal(ctx.agentAttachRemove(tray, 2).length, 1, 'ページ画像だけを外す');
+  assert.deepEqual(plain(ctx.agentAttachRemove(tray, 1).map(a => a.name || a.url)), ['d.pdf', 'data:image/jpeg;base64,P2']);
+  assert.deepEqual(plain(tray).map(a => a.name || a.url), ['data:image/jpeg;base64,X', 'e.pdf', 'data:image/jpeg;base64,P1']);
+  assert.ok(tray.every(a => !('pdf' in ctx.agentAttachPart(a.kind === 'attachment' ? a : { name: 'x', text: 'y' }))), '番号は送らない');
+});
+
 test('B1: 送信履歴にはサムネだけを残し、端末画像のファイル名を送らない', () => {
   const ctx = vm.createContext({ AGENT_MAX_HISTORY: 12 });
   vm.runInContext(between(mobile, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END'), ctx);
@@ -3086,6 +3185,61 @@ test('Jev で決めた出力の言語を全員に渡し、状況説明と AI の
     for (const call of w.calls) assert.ok(call.messages.some(m => typeof m.content === 'string' && m.content.includes(note)), `${choice}: 全員に同じ指定`);
     assert.ok(!w.calls.some(c => JSON.stringify(c).includes('main language of the user')), '汎用の指示は使わない');
   }
+});
+
+test('添付ファイルは見出し付きで人格・統合へ送り、Jev・予測には名前も本文も送らない', async () => {
+  const RLO = String.fromCodePoint(0x202e);
+  const messages = [
+    { role: 'user', content: [{ type: 'attachment', name: 'old-notes.txt', text: '', omitted: true }, { type: 'text', text: '前の質問' }] },
+    { role: 'assistant', content: '前の答え' },
+    { role: 'user', content: [{ type: 'text', text: 'このコードを見て' }, { type: 'attachment', name: 'main.py', text: 'ATTACHMENT-BODY\nprint(1)' + RLO, truncated: true }] },
+  ];
+  const { w, sent, text } = await chatWithJev(() => jevReply('ja'), messages, { suggest: true });
+  assert.match(text, /event: done/);
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].state, { earlier_messages: ['前の質問'], latest_message: 'このコードを見て' });
+  const header = vm.runInContext('ATTACHMENTS.header', w.ctx);
+  const withBody = w.calls.filter(c => JSON.stringify(c).includes('ATTACHMENT-BODY'));
+  assert.ok(withBody.length >= 7, 'R1・R2の3人格と統合'); // 予測だけが本文を持たない
+  for (const call of withBody) {
+    const sentText = JSON.stringify(call);
+    assert.ok(sentText.includes(header) && sentText.includes('main.py') && sentText.includes('truncated'));
+    assert.ok(!sentText.includes(RLO), '双方向の制御文字は落とす');
+  }
+  assert.ok(w.calls.some(c => JSON.stringify(c).includes('old-notes.txt') && JSON.stringify(c).includes('omitted')));
+  const suggest = w.calls.filter(c => JSON.stringify(c).includes('[添付1件]'));
+  assert.equal(suggest.length, 1);
+  assert.ok(!JSON.stringify(suggest[0]).includes('ATTACHMENT-BODY'));
+});
+
+test('添付ファイルは本文の上限と別に、履歴を含めて合計1万字まで受け付ける', async () => {
+  const turn = (name, size, extra = {}) => ({ role: 'user', content: [{ type: 'text', text: 'あ'.repeat(1000) }, { type: 'attachment', name, text: 'x'.repeat(size), ...extra }] });
+  const ok = await worker().chat([turn('a.txt', 5000), { role: 'assistant', content: '答え' }, turn('b.txt', 5000)]);
+  assert.match(await ok.text(), /event: done/);
+  const over = await worker().chat([turn('a.txt', 5000), { role: 'assistant', content: '答え' }, turn('b.txt', 5001)]);
+  assert.equal(over.status, 400); assert.equal((await over.json()).error.code, 'attachments_too_large');
+  const only = await worker().chat([{ role: 'user', content: [{ type: 'attachment', name: 'a.md', text: '# 見出し' }] }]);
+  assert.match(await only.text(), /event: done/, '添付だけの発言も送れる');
+  const file = { type: 'attachment', name: 'a.txt', text: 'x' };
+  for (const part of [{ ...file, extra: 1 }, { ...file, name: '' }, { ...file, name: 'n'.repeat(201) }, { ...file, text: ' \n' },
+    { ...file, omitted: true }, { ...file, truncated: 'yes' }, { ...file, text: 1 }]) {
+    const res = await worker().chat([{ role: 'user', content: [{ type: 'text', text: 'q' }, part] }]);
+    assert.equal(res.status, 400, JSON.stringify(part)); assert.equal((await res.json()).error.code, 'invalid_attachment');
+  }
+  const many = await worker().chat([{ role: 'user', content: Array.from({ length: 5 }, (_, i) => ({ ...file, name: i + '.txt' })) }]);
+  assert.equal(many.status, 400); assert.equal((await many.json()).error.code, 'too_many_attachments');
+  const assistant = await worker().chat([{ role: 'assistant', content: [file] }, { role: 'user', content: 'q' }]);
+  assert.equal(assistant.status, 400);
+  // 本文1つ＋添付4件＋画像4枚（PDF のページ画像を含む）の9パートは受け付け、それより多ければ断る
+  const image = { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,dGh1bWI=' } };
+  const full = [{ type: 'text', text: 'q' }, ...Array.from({ length: 4 }, (_, i) => ({ ...file, name: i + '.txt' })), image, image, image, image];
+  assert.match(await (await worker().chat([{ role: 'user', content: full }])).text(), /event: done/);
+  const ten = await worker().chat([{ role: 'user', content: [...full, { type: 'text', text: 'r' }] }]);
+  assert.equal(ten.status, 400); assert.equal((await ten.json()).error.code, 'invalid_message_shape');
+  // 制御文字だけの本文・名前は 400 にせず、本文を省いた添付・'file' として通す（履歴に残っても以後の会話を止めない）
+  const RLM = String.fromCodePoint(0x200f), w = worker();
+  assert.match(await (await w.chat([{ role: 'user', content: [{ type: 'text', text: 'q' }, { type: 'attachment', name: RLM, text: RLM + RLM }] }])).text(), /event: done/);
+  assert.ok(w.calls.some(c => JSON.stringify(c).split(String.fromCharCode(92)).join('').includes('"name":"file","text":"","omitted":true')));
 });
 
 test('Jev の失敗・言語の無い発言・低い確信・キー未設定では手元の規則に戻す', async () => {
@@ -5972,6 +6126,7 @@ function speechCtx(extra = {}) {
   }
   const ctx = vm.createContext({ URL: FakeURL, Blob, AbortController, setTimeout, clearTimeout, ...extra });
   vm.runInContext(between(home, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END') + '\n' + between(home, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END'), ctx);
+  vm.runInContext(between(home, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END'), ctx);
   return Object.assign(ctx, { urls });
 }
 

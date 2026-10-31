@@ -18,18 +18,21 @@
   // worker にはページ先頭の Content-Security-Policy（meta）が効かず、worker を返したときの
   // HTTP ヘッダーの CSP が使われる（このサイトは付けていない）ので、通信先の制限の外で動く。
   // blob: で起動した worker はページの CSP を引き継ぐ。FFmpeg・heic2any の worker と同じ扱い。
-  const PDF_WORKER_URL = '../../assets/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
+  // pdf.js（6.4.299 の互換版）は ES モジュールなので、本体も最初の PDF のときに import() で読む（MAGI の添付と同じ版）。
+  // worker（blob:）の中から cmaps などを読むので、置き場所は絶対 URL にして渡す
+  const PDFJS_BASE = new URL('../../assets/vendor/pdfjs-dist@6.4.299/', location.href).href;
   let pdfWorkerReady = null;
   function ensurePdfWorker() {
     if (!pdfWorkerReady) {
-      pdfWorkerReady = fetch(PDF_WORKER_URL)
-        .then(res => {
-          if (!res.ok) throw new Error('HTTP ' + res.status + ' pdf.worker.min.js');
-          return res.blob();
-        })
-        .then(blob => {
-          pdfjsLib.GlobalWorkerOptions.workerSrc =
+      const worker = fetch(PDFJS_BASE + 'pdf.worker.min.js').then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' pdf.worker.min.js');
+        return res.blob();
+      });
+      pdfWorkerReady = Promise.all([import(PDFJS_BASE + 'pdf.min.js'), worker])
+        .then(([lib, blob]) => {
+          lib.GlobalWorkerOptions.workerSrc =
             URL.createObjectURL(new Blob([blob], { type: 'text/javascript' }));
+          return lib;
         })
         .catch(err => {
           pdfWorkerReady = null; // 次のファイルでもう一度取りに行く
@@ -328,8 +331,11 @@
     // place to detect them — pdf.js would only fail later, mid-render.
     const pdflib = await PDFDocument.load(bytes.slice(), { throwOnInvalidObject: false });
     // pdf.js takes ownership of whatever buffer it is handed, so give it a copy.
-    await workerReady;
-    const pdfjs = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+    // cmaps・standard_fonts は埋め込みの無い日本語・標準フォントの表示に、wasm はスキャンに多い JPEG2000・JBIG2 に要る。
+    // 書き出し（墨消しの画像化など）にも同じ描画を使うので、フォントは既定どおりブラウザで描く（disableFontFace は付けない）
+    const pdfjsLib = await workerReady;
+    const pdfjs = await pdfjsLib.getDocument({ data: bytes.slice(), cMapUrl: PDFJS_BASE + 'cmaps/',
+      standardFontDataUrl: PDFJS_BASE + 'standard_fonts/', wasmUrl: PDFJS_BASE + 'wasm/', iccUrl: PDFJS_BASE + 'iccs/' }).promise;
 
     const id = ++docSeq;
     // `bytes` itself is not kept: pdf.js and pdf-lib each own a copy already,

@@ -31,6 +31,35 @@ const JSD = 'https://cdn.jsdelivr.net/npm/';
 // @ffmpeg の3パッケージは同じリポジトリ（ffmpegwasm/ffmpeg.wasm、MIT）。npm には LICENSE が入っていない
 const FFMPEG_WASM_LICENSE = 'https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE';
 
+// pdf.js の文字コード対応表（CMap）。フォントを埋め込まない日本語・中国語・韓国語の PDF から文字を取り出すのに要る
+// （MAGI の添付。pdf.js は使う表だけを読む）。名前は pdfjs-dist@6.4.299 の cmaps/ の .bcmap すべて
+const PDFJS_CMAPS = [
+  '78-EUC-H', '78-EUC-V', '78-H', '78-RKSJ-H', '78-RKSJ-V', '78-V', '78ms-RKSJ-H', '78ms-RKSJ-V',
+  '83pv-RKSJ-H', '90ms-RKSJ-H', '90ms-RKSJ-V', '90msp-RKSJ-H', '90msp-RKSJ-V', '90pv-RKSJ-H', '90pv-RKSJ-V',
+  'Add-H', 'Add-RKSJ-H', 'Add-RKSJ-V', 'Add-V', 'Adobe-CNS1-0', 'Adobe-CNS1-1', 'Adobe-CNS1-2', 'Adobe-CNS1-3',
+  'Adobe-CNS1-4', 'Adobe-CNS1-5', 'Adobe-CNS1-6', 'Adobe-CNS1-UCS2', 'Adobe-GB1-0', 'Adobe-GB1-1',
+  'Adobe-GB1-2', 'Adobe-GB1-3', 'Adobe-GB1-4', 'Adobe-GB1-5', 'Adobe-GB1-UCS2', 'Adobe-Japan1-0',
+  'Adobe-Japan1-1', 'Adobe-Japan1-2', 'Adobe-Japan1-3', 'Adobe-Japan1-4', 'Adobe-Japan1-5', 'Adobe-Japan1-6',
+  'Adobe-Japan1-UCS2', 'Adobe-Korea1-0', 'Adobe-Korea1-1', 'Adobe-Korea1-2', 'Adobe-Korea1-UCS2', 'B5-H',
+  'B5-V', 'B5pc-H', 'B5pc-V', 'CNS-EUC-H', 'CNS-EUC-V', 'CNS1-H', 'CNS1-V', 'CNS2-H', 'CNS2-V', 'ETen-B5-H',
+  'ETen-B5-V', 'ETenms-B5-H', 'ETenms-B5-V', 'ETHK-B5-H', 'ETHK-B5-V', 'EUC-H', 'EUC-V', 'Ext-H', 'Ext-RKSJ-H',
+  'Ext-RKSJ-V', 'Ext-V', 'GB-EUC-H', 'GB-EUC-V', 'GB-H', 'GB-V', 'GBK-EUC-H', 'GBK-EUC-V', 'GBK2K-H',
+  'GBK2K-V', 'GBKp-EUC-H', 'GBKp-EUC-V', 'GBpc-EUC-H', 'GBpc-EUC-V', 'GBT-EUC-H', 'GBT-EUC-V', 'GBT-H',
+  'GBT-V', 'GBTpc-EUC-H', 'GBTpc-EUC-V', 'H', 'Hankaku', 'Hiragana', 'HKdla-B5-H', 'HKdla-B5-V', 'HKdlb-B5-H',
+  'HKdlb-B5-V', 'HKgccs-B5-H', 'HKgccs-B5-V', 'HKm314-B5-H', 'HKm314-B5-V', 'HKm471-B5-H', 'HKm471-B5-V',
+  'HKscs-B5-H', 'HKscs-B5-V', 'Katakana', 'KSC-EUC-H', 'KSC-EUC-V', 'KSC-H', 'KSC-Johab-H', 'KSC-Johab-V',
+  'KSC-V', 'KSCms-UHC-H', 'KSCms-UHC-HW-H', 'KSCms-UHC-HW-V', 'KSCms-UHC-V', 'KSCpc-EUC-H', 'KSCpc-EUC-V',
+  'NWP-H', 'NWP-V', 'RKSJ-H', 'RKSJ-V', 'Roman', 'UniCNS-UCS2-H', 'UniCNS-UCS2-V', 'UniCNS-UTF8-H',
+  'UniCNS-UTF8-V', 'UniCNS-UTF16-H', 'UniCNS-UTF16-V', 'UniCNS-UTF32-H', 'UniCNS-UTF32-V', 'UniGB-UCS2-H',
+  'UniGB-UCS2-V', 'UniGB-UTF8-H', 'UniGB-UTF8-V', 'UniGB-UTF16-H', 'UniGB-UTF16-V', 'UniGB-UTF32-H',
+  'UniGB-UTF32-V', 'UniJIS-UCS2-H', 'UniJIS-UCS2-HW-H', 'UniJIS-UCS2-HW-V', 'UniJIS-UCS2-V', 'UniJIS-UTF8-H',
+  'UniJIS-UTF8-V', 'UniJIS-UTF16-H', 'UniJIS-UTF16-V', 'UniJIS-UTF32-H', 'UniJIS-UTF32-V', 'UniJIS2004-UTF8-H',
+  'UniJIS2004-UTF8-V', 'UniJIS2004-UTF16-H', 'UniJIS2004-UTF16-V', 'UniJIS2004-UTF32-H', 'UniJIS2004-UTF32-V',
+  'UniJISPro-UCS2-HW-V', 'UniJISPro-UCS2-V', 'UniJISPro-UTF8-V', 'UniJISX0213-UTF32-H', 'UniJISX0213-UTF32-V',
+  'UniJISX02132004-UTF32-H', 'UniJISX02132004-UTF32-V', 'UniKS-UCS2-H', 'UniKS-UCS2-V', 'UniKS-UTF8-H',
+  'UniKS-UTF8-V', 'UniKS-UTF16-H', 'UniKS-UTF16-V', 'UniKS-UTF32-H', 'UniKS-UTF32-V', 'V', 'WP-Symbol'
+];
+
 //   dir   … assets/vendor/ の下の置き場所（パッケージ名@版）
 //   files … [取得元, 置く名前]。置く名前は dir からの相対
 //   license … ライセンス文の取得元（dir/LICENSE に置く）。取れる場所が無いときは { text } で書く
@@ -50,9 +79,22 @@ const LIBS = [
     files: [[JSD + 'imagetracerjs@1.2.6/imagetracer_v1.2.6.js', 'imagetracer_v1.2.6.js']] },
   { dir: 'svgo@3.3.5', license: JSD + 'svgo@3.3.5/LICENSE',
     files: [[JSD + 'svgo@3.3.5/dist/svgo.browser.js', 'svgo.browser.js']] },
-  { dir: 'pdfjs-dist@3.11.174', license: JSD + 'pdfjs-dist@3.11.174/LICENSE',
-    files: [[JSD + 'pdfjs-dist@3.11.174/build/pdf.min.js', 'pdf.min.js'],
-            [JSD + 'pdfjs-dist@3.11.174/build/pdf.worker.min.js', 'pdf.worker.min.js']] },
+  // pdf-studio と MAGI の添付（トップページと magi-app）。CVE-2024-4367 を直した 4.2.67 以降を使う（6.4.299 は文字列からコードを作らない）。
+  // 古い iPhone・Android の WebView でも動く互換版（legacy）。ES モジュールだが、Capacitor が .mjs の種類を返さない
+  // おそれがあるので .js の名前で置く。cmaps は文字コード対応表、standard_fonts は埋め込まれていない標準フォントの代わり
+  // （フォントをブラウザへ渡さない disableFontFace でも描ける）、wasm は JPEG2000・JBIG2（スキャンに多い）と色の変換、iccs は色の変換の既定
+  { dir: 'pdfjs-dist@6.4.299', license: JSD + 'pdfjs-dist@6.4.299/LICENSE',
+    files: [[JSD + 'pdfjs-dist@6.4.299/legacy/build/pdf.min.mjs', 'pdf.min.js'],
+            [JSD + 'pdfjs-dist@6.4.299/legacy/build/pdf.worker.min.mjs', 'pdf.worker.min.js'],
+            ...['cmaps/LICENSE', ...PDFJS_CMAPS.map(name => 'cmaps/' + name + '.bcmap'),
+              ...['FoxitDingbats.pfb', 'FoxitFixed.pfb', 'FoxitFixedBold.pfb', 'FoxitFixedBoldItalic.pfb', 'FoxitFixedItalic.pfb',
+                'FoxitSerif.pfb', 'FoxitSerifBold.pfb', 'FoxitSerifBoldItalic.pfb', 'FoxitSerifItalic.pfb', 'FoxitSymbol.pfb',
+                'LiberationSans-Bold.ttf', 'LiberationSans-BoldItalic.ttf', 'LiberationSans-Italic.ttf', 'LiberationSans-Regular.ttf',
+                'LICENSE_FOXIT', 'LICENSE_LIBERATION'].map(name => 'standard_fonts/' + name),
+              ...['jbig2.wasm', 'openjpeg.wasm', 'qcms_bg.wasm', 'LICENSE_JBIG2', 'LICENSE_OPENJPEG', 'LICENSE_PDFJS_JBIG2',
+                'LICENSE_PDFJS_OPENJPEG', 'LICENSE_PDFJS_QCMS', 'LICENSE_QCMS'].map(name => 'wasm/' + name),
+              'iccs/CGATS001Compat-v2-micro.icc', 'iccs/LICENSE']
+              .map(name => [JSD + 'pdfjs-dist@6.4.299/' + name, name])] },
   { dir: 'pdf-lib@1.17.1', license: JSD + 'pdf-lib@1.17.1/LICENSE.md',
     files: [[JSD + 'pdf-lib@1.17.1/dist/pdf-lib.min.js', 'pdf-lib.min.js']] },
   // リポジトリにもライセンス文のファイルが無い。package.json の license 欄（MIT）を書き残す
@@ -104,9 +146,7 @@ const { PATCHES, DYNAMIC_CODE, applyPatches } = require('./patches');
 // 通らない経路なので実害がない。件数が変わったら（版を上げたときなど）中身を見て判断し直す
 const DYNAMIC_OK = {
   'assets/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js': [1, 'globalThis が無い古い環境向けの予備（いまのブラウザでは通らない）'],
-  'assets/vendor/jszip@3.10.1/jszip.min.js': [1, 'setImmediate に関数以外が渡されたときの予備（使われない）'],
-  'assets/vendor/pdfjs-dist@3.11.174/pdf.min.js': [3, 'eval が使えるかを試してから使う（CSP の下では使わない）。eval("require") は Node.js 向けの分岐'],
-  'assets/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js': [2, 'eval が使えるかを試してから使う（CSP の下では使わない）']
+  'assets/vendor/jszip@3.10.1/jszip.min.js': [1, 'setImmediate に関数以外が渡されたときの予備（使われない）']
 };
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');

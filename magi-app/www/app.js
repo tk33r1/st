@@ -334,13 +334,15 @@ function agentReplyTimeText(at, ja, now) {
   if (d.getFullYear() !== n.getFullYear()) return ja ? d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm : month + ', ' + d.getFullYear() + ', ' + hm;
   return ja ? (d.getMonth() + 1) + '/' + d.getDate() + '(' + '日月火水木金土'.charAt(d.getDay()) + ') ' + hm : month + ', ' + hm;
 }
-// ［もう一度］で送り直す質問（{ text, atts }）。文字だけの質問は保存した本文から作る。画像付きの質問は保存したのが縮小版なので、
+// ［もう一度］で送り直す質問（{ text, atts }）。文字と添付ファイルだけの質問は保存した本文から作る。画像付きの質問は保存したのが縮小版なので、
 // この画面で送った原寸（lastSend = { mid, atts }。その回答の mid のときだけ）があるときに限る。送れなければ null
 function agentRetryInput(user, mid, lastSend) {
   if (!user || user.role !== 'user') return null;
   var c = user.content, parts = typeof c === 'string' ? [{ type: 'text', text: c }] : Array.isArray(c) ? c : [];
   var text = parts.filter(function (p) { return p && p.type === 'text'; }).map(function (p) { return p.text; }).join('\n');
-  if (!parts.some(function (p) { return p && p.type === 'image_url'; })) return text.trim() ? { text: text, atts: [] } : null;
+  // 添付ファイルは保存した文字から作り直す（送信時に本文を省いた古い添付は保存側に無い）
+  var files = agentAttachDraftItems(parts);
+  if (!parts.some(function (p) { return p && p.type === 'image_url'; })) return text.trim() || files.length ? { text: text, atts: files } : null;
   return lastSend && lastSend.mid === mid && lastSend.atts.length ? { text: text, atts: lastSend.atts.slice() } : null;
 }
 // 以下は統合人格の回答の操作列（評価のメニュー・［もう一度］・日時）。画面の agentLog・agentHistory・ICON_*・agentItemFor・
@@ -1683,7 +1685,9 @@ function cleanHistory(history) {
   return Array.isArray(history) ? history.filter(function (m) {
     return m && (m.role === 'assistant' ? typeof m.content === 'string' : m.role === 'user'
       && (typeof m.content === 'string' || Array.isArray(m.content) && m.content.every(function (p) {
-        return p && (p.type === 'text' ? typeof p.text === 'string' : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
+        return p && (p.type === 'text' ? typeof p.text === 'string'
+          : p.type === 'attachment' ? typeof p.name === 'string' && typeof p.text === 'string'
+          : p.type === 'image_url' && p.image_url && typeof p.image_url.url === 'string');
       })));
   }).map(magiCleanItem).map(cleanAgentClarifyItem).map(cleanAgentSpeechItem).map(cleanReactionsItem) : [];
 }
@@ -1941,14 +1945,15 @@ async function parseSSE(body, handlers, onChunk) {
 var ATTACH_MAX = 4;
 var ATTACH_SEND_DIM = 1024;
 var ATTACH_THUMB_DIM = 320;
+// 添付の PDF を読む pdf.js は出荷物に同梱する（magi-app/scripts/vendor-pdfjs.cjs）。Web 版も同じ相対パスで読む
+var AGENT_PDFJS_BASE = 'vendor/pdfjs/';
 // 受け入れは MIME で絞らず「ブラウザがデコードできる画像か」で判断する。
 // どの形式でも送信前に JPEG へ再エンコードするので、iOS の HEIC も WebView が
 // 読めればそのまま通る（読めなければ addAttachments の catch で弾かれる）。
-function isImageFile(f) { return !!f && /^image\//.test(f.type || ''); }
 var attachTray = document.getElementById('agent-attach-tray');
 var attachBtn = document.getElementById('agent-attach');
 var attachFile = document.getElementById('agent-file');
-var attachments = [];
+var attachments = []; // 画像 { url, thumb, file }、ファイル { kind: 'attachment', name, text, truncated }
 var attachNotice = '';
 
 // content（文字列 or パート配列）からテキスト / 画像を取り出す
@@ -1960,9 +1965,11 @@ function contentImages(c) {
   return typeof c === 'string' ? [] : c.filter(function (p) { return p.type === 'image_url'; });
 }
 function downscaleImage(img, max, quality) {
-  var scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-  var w = Math.max(1, Math.round(img.naturalWidth * scale));
-  var h = Math.max(1, Math.round(img.naturalHeight * scale));
+  // img は画像のほか、PDF のページを描いた canvas も受ける
+  var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  var scale = Math.min(1, max / Math.max(iw, ih));
+  var w = Math.max(1, Math.round(iw * scale));
+  var h = Math.max(1, Math.round(ih * scale));
   var cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   var cx = cv.getContext('2d');
@@ -1988,7 +1995,7 @@ function renderAttachTray() {
   if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
   attachTray.classList.remove('hidden');
   attachTray.innerHTML = attachments.map(function (a, i) {
-    return '<span class="attach-chip"><img src="' + a.thumb + '" alt="">'
+    return '<span class="attach-chip">' + (a.kind === 'attachment' ? agentAttachDocHTML(a) : '<img src="' + esc(a.thumb) + '" alt="">')
       + '<button type="button" class="attach-x" data-i="' + i + '" aria-label="Remove attachment"><span aria-hidden="true">×</span></button></span>';
   }).join('') + (attachNotice ? '<span class="attach-note">' + esc(attachNotice) + '</span>' : '');
 }
@@ -2005,20 +2012,27 @@ async function addAttachments(files) {
 async function addAgentAttachments(files) {
   if (agentDead || agentClosed) return;
   var generation = agentGen;
-  var list = Array.prototype.slice.call(files || []).filter(isImageFile);
-  // ファイルの一覧では画像以外も選べるので、黙って捨てずに知らせる
-  if (!list.length) { if (files && files.length) noticeAttach(tr('Only images can be attached', '画像だけを添付できます')); return; }
+  var list = Array.prototype.slice.call(files || []);
+  var stale = function () { return generation !== agentGen; };
+  // 画像は縮小して、テキスト・コード・PDF は文字を取り出して添付する（AGENT_ATTACH）。ほかの形式は黙って捨てずに知らせる
   for (var i = 0; i < list.length; i++) {
-    if (attachments.length >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); break; }
+    var kind = agentAttachKind(list[i]);
+    if (kind !== 'image') {
+      var notice = await agentAttachFile(attachments, list[i], kind, stale);
+      if (stale()) return;
+      renderAttachTray(); if (notice) noticeAttach(notice);
+      continue;
+    }
+    if (agentAttachCount(attachments, 'image') >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); continue; }
     try {
       var img = await loadImageFile(list[i]);
       if (generation !== agentGen) return;
       var original = !agentTemporary() && nativeHistory && nativeHistory.active ? await nativeHistory.storeImage(list[i]) : null;
       if (generation !== agentGen) { if (original) nativeHistory.releaseImage(original); return; }
       // 別の選択・貼り付けがawait中に完了していても4枚を超えない。
-      if (attachments.length >= ATTACH_MAX) {
+      if (agentAttachCount(attachments, 'image') >= ATTACH_MAX) {
         if (original && !attachments.some(function (a) { return a.file === original; })) nativeHistory.releaseImage(original);
-        noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); break;
+        noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は' + ATTACH_MAX + '枚までです')); continue;
       }
       if (original) nativeHistory.retainImage(original);
       attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7), file: original });
@@ -2032,7 +2046,7 @@ function userContentHTML(content) {
   var imgs = contentImages(content).map(function (p) {
     return '<img src="' + esc(p.image_url.url) + '"' + (nativeAndroid && p.file ? ' data-original="' + esc(p.file) + '" role="button" tabindex="0" aria-label="Open original image"' : '') + ' alt="Attached image" loading="lazy">';
   }).join('');
-  return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + esc(contentText(content));
+  return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + agentAttachChipsHTML(content) + esc(contentText(content));
 }
 
 // CAMERA_BEGIN
@@ -2073,7 +2087,7 @@ function flyToTray(frozen, from) {
 }
 function showAgentCamera() {
   if (agentTemporary() || agentDead || agentClosed || attachBtn.disabled) return;
-  if (attachments.length >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は最大' + ATTACH_MAX + '枚までです')); return; }
+  if (agentAttachCount(attachments, 'image') >= ATTACH_MAX) { noticeAttach(tr('Up to ' + ATTACH_MAX + ' images', '画像は最大' + ATTACH_MAX + '枚までです')); return; }
   // 映像を主役にし、操作はカメラアプリと同じ形で見せる。文言はaria-labelと読み上げ用の状態に置き、画面に文を出すのはエラーのときだけ。
   var icon = function (body) { return '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>'; };
   var panel = makeAgentPanel('agent-camera-panel', tr('Camera', 'カメラ'),
@@ -2232,7 +2246,7 @@ function showAgentCamera() {
 // CAMERA_END
 
 // ＋ から添付元を選ぶ。Web/PWAはページ内で撮影し、Androidは従来どおりCapacitorが撮影アプリを開く。
-// 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。どれも addAttachments が画像だけを受け付ける。
+// 写真は画像の選択画面、ファイルは端末のファイル一覧から選ぶ。addAttachments が画像・テキスト・コード・PDF だけを受け付ける。
 var attachMenu = document.getElementById('agent-attach-menu');
 var ATTACH_SOURCES = {
   camera: { accept: 'image/*', capture: 'environment', multiple: false },
@@ -2275,8 +2289,9 @@ document.addEventListener('pointerdown', function (e) {
 attachFile.addEventListener('change', function () { addAttachments(attachFile.files); attachFile.value = ''; });
 attachTray.addEventListener('click', function (e) {
   var x = e.target.closest('.attach-x'); if (!x) return;
-  var removed = attachments.splice(Number(x.dataset.i), 1)[0];
-  if (removed && removed.file && nativeHistory && nativeHistory.active && !attachments.some(function (a) { return a.file === removed.file; })) nativeHistory.releaseImage(removed.file);
+  agentAttachRemove(attachments, Number(x.dataset.i)).forEach(function (removed) {
+    if (removed.file && nativeHistory && nativeHistory.active && !attachments.some(function (a) { return a.file === removed.file; })) nativeHistory.releaseImage(removed.file);
+  });
   renderAttachTray();
 });
 // 画像はクリップボードからの貼り付けでも添付できる
@@ -2331,8 +2346,220 @@ function prepareAgentMessages(history, lastContent) {
     // 画像だけだった古い質問も、会話上の位置は残す。
     m.content = kept.length ? kept : '[Earlier images omitted]';
   }
+  return agentTrimAttachments(messages);
+}
+
+// AGENT_ATTACH_BEGIN
+// テキスト・コード・PDF の添付。端末で文字だけを取り出し、{type:'attachment'} のパートで送る。PDF は先頭のページの画像も添える。トップページとアプリで同じ中身にする
+// （テストで一致を確かめる）。画面ごとに違うのは pdf.js の置き場所 AGENT_PDFJS_BASE（読めない環境は null）だけ。
+// 文字は1回の送信（履歴に残った添付を含む）で合計 AGENT_ATTACH_TEXT_MAX まで。件数・名前の長さと合わせて Worker の ATTACHMENTS と同じ値にする。
+var AGENT_ATTACH_TEXT_MAX = 10000;
+var AGENT_ATTACH_FILE_MAX = 4;
+var AGENT_ATTACH_NAME_MAX = 200;
+var AGENT_ATTACH_TEXT_BYTES = 2 * 1024 * 1024;
+var AGENT_ATTACH_PDF_BYTES = 30 * 1024 * 1024;
+// PDF は文字と一緒に、先頭のページを画像でも添付する（表・図・段組み・スキャンを読ませるため）。画像は写真と同じ枠
+// （画面の ATTACH_MAX）の空いている枚数だけ、写真と同じ downscaleImage・寸法で描き、写真と同じ項目 { url, thumb } にする
+// 先頭からこのページ数に文字が無ければ（スキャン）、残りのページの文字は探さない
+var AGENT_ATTACH_BLANK_PAGES = 10;
+// PDF の札とそのページ画像を結ぶ番号（× で札を外したら画像も外す）
+var agentAttachPdfSeq = 0;
+var AGENT_ATTACH_TEXT_EXT = /\.(?:txt|text|md|markdown|rst|log|csv|tsv|json|jsonl|ndjson|xml|ya?ml|toml|ini|cfg|conf|properties|html?|css|scss|sass|less|[mc]?js|jsx|[mc]?ts|tsx|vue|svelte|astro|py|rb|php|java|kts?|swift|go|rs|c|h|cc|cpp|cxx|hpp|hh|cs|dart|lua|r|pl|pm|scala|sh|bash|zsh|fish|ps1|bat|cmd|sql|graphql|gql|gradle|tex|srt|vtt|diff|patch)$/i;
+var AGENT_ATTACH_TEXT_NAMES = /^(?:dockerfile|makefile|readme|license|\.gitignore|\.editorconfig|\.env\.example)$/i;
+// 画像は従来の縮小処理へ、PDF と文字のファイルはこの区画で読む。どれでもなければ null（添付しない）。
+// 拡張子を先に見る（.ts を動画の MIME にする端末がある）。中身が文字かどうかは読むときに確かめる
+function agentAttachKind(file) {
+  var type = file && file.type || '', name = file && file.name || '';
+  if (/^image\//.test(type)) return 'image';
+  if (type === 'application/pdf' || /\.pdf$/i.test(name)) return 'pdf';
+  if (AGENT_ATTACH_TEXT_EXT.test(name) || AGENT_ATTACH_TEXT_NAMES.test(name) || /^text\//.test(type)
+    || /^application\/(?:json|xml|javascript|x-sh|sql|x-yaml|yaml|toml)\b/.test(type)) return 'text';
+  return null;
+}
+// 文字列を UTF-16 の長さで切る。サロゲートペアの片割れを残さない
+function agentAttachCut(text, max) {
+  var out = text.slice(0, max), last = out.charCodeAt(out.length - 1);
+  return last >= 0xd800 && last <= 0xdbff ? out.slice(0, -1) : out;
+}
+function agentAttachName(file) {
+  var name = String(file && file.name || '').trim() || 'file';
+  return name.length > AGENT_ATTACH_NAME_MAX ? agentAttachCut(name, AGENT_ATTACH_NAME_MAX - 1) + '…' : name;
+}
+function agentAttachExt(name) {
+  var m = /\.([a-z0-9]{1,5})$/i.exec(name);
+  return m ? m[1].toUpperCase() : 'TXT';
+}
+// UTF-8 → Shift_JIS → EUC-JP の順に、壊れずに読めたものを使う。NUL を含むものはバイナリとして断る。
+// UTF-16 は BOM があるときだけ読む（Windows PowerShell の出力やメモ帳の「Unicode」で保存したもの）
+function agentDecodeText(bytes) {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe || bytes[0] === 0xfe && bytes[1] === 0xff) {
+    var wide;
+    try { wide = new TextDecoder(bytes[0] === 0xff ? 'utf-16le' : 'utf-16be', { fatal: true }).decode(bytes); } catch (_) { throw new Error('attach_encoding'); }
+    if (wide.indexOf(String.fromCharCode(0)) >= 0) throw new Error('attach_binary');
+    return wide;
+  }
+  if (bytes.indexOf(0) >= 0) throw new Error('attach_binary');
+  var encodings = ['utf-8', 'shift_jis', 'euc-jp'];
+  for (var i = 0; i < encodings.length; i++) {
+    try { return new TextDecoder(encodings[i], { fatal: true }).decode(bytes); } catch (_) {}
+  }
+  throw new Error('attach_encoding');
+}
+// pdf.js（ES モジュール）は PDF を初めて添付したときにだけ読む。失敗したら次の PDF でもう一度読みに行く。
+// pdf.js は Worker の中からも cmaps などを読むので、置き場所は絶対 URL にして渡す（import() も相対の名前を受けない）
+var agentPdfjs = null;
+function agentPdfjsUrl(name) { return new URL(AGENT_PDFJS_BASE + name, location.href).href; }
+function agentLoadPdfjs() {
+  if (!AGENT_PDFJS_BASE) return Promise.reject(new Error('attach_pdf_unavailable'));
+  if (!agentPdfjs) {
+    agentPdfjs = import(agentPdfjsUrl('pdf.min.js')).then(function (lib) {
+      lib.GlobalWorkerOptions.workerSrc = agentPdfjsUrl('pdf.worker.min.js');
+      return lib;
+    }, function () { agentPdfjs = null; throw new Error('attach_pdf_unavailable'); });
+  }
+  return agentPdfjs;
+}
+// ページ1枚を写真と同じ送信用とサムネの JPEG にする
+async function agentRenderPdfPage(page) {
+  var base = page.getViewport({ scale: 1 });
+  var viewport = page.getViewport({ scale: ATTACH_SEND_DIM / Math.max(base.width, base.height) });
+  var canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(viewport.width)); canvas.height = Math.max(1, Math.round(viewport.height));
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+  var image = { url: downscaleImage(canvas, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(canvas, ATTACH_THUMB_DIM, 0.7) };
+  canvas.width = canvas.height = 0;
+  return image;
+}
+// PDF はページ順に文字を取り出し、budget を超えたところか、先頭 AGENT_ATTACH_BLANK_PAGES ページに文字が無かったところで止める。
+// 先頭の pages ページは画像にも描く（どちらも済めば残りのページは読まない）。開けなかったときも pdf.js の Worker を片付ける。
+// フォントを埋め込まない日本語などの PDF は文字コードの対応表（cmaps/）を使い、pdf.js が要る表だけを読む。
+// 文字の層の無い PDF（スキャン）は文字が空になり、画像だけが残る。PDF の中のフォントはブラウザのフォント処理へ渡さず
+// （disableFontFace）、pdf.js が自分で輪郭を描く。埋め込まれていない標準フォントは standard_fonts で描くが、
+// 埋め込まれていない日本語などのフォントはページ画像に出ない（文字は本文で送る）。スキャンに多い JPEG2000・JBIG2 は wasm で読む
+async function agentReadPdf(file, budget, pages) {
+  var lib = await agentLoadPdfjs();
+  var task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), disableFontFace: true,
+    cMapUrl: agentPdfjsUrl('cmaps/'), standardFontDataUrl: agentPdfjsUrl('standard_fonts/'),
+    wasmUrl: agentPdfjsUrl('wasm/'), iccUrl: agentPdfjsUrl('iccs/') });
+  try {
+    var doc = await task.promise, out = '', images = [];
+    var wanted = function (n) { return budget > 0 && out.length <= budget && (out || n <= AGENT_ATTACH_BLANK_PAGES); };
+    for (var n = 1; n <= doc.numPages && (n <= pages || wanted(n)); n++) {
+      var page = await doc.getPage(n);
+      if (wanted(n)) {
+        var content = await page.getTextContent();
+        var text = content.items.map(function (item) { return (item.str || '') + (item.hasEOL ? '\n' : ''); }).join('').trim();
+        if (text) out += (out ? '\n\n' : '') + text;
+      }
+      if (n <= pages) images.push(await agentRenderPdfPage(page));
+      page.cleanup();
+    }
+    return { text: out, images: images };
+  } finally { task.destroy(); }
+}
+// ファイル1件を読み、文字 text と PDF のページ画像 images を返す（文字が空でも画像があれば返す）。
+// budget は PDF の文字をどこまで読むか、pages は描くページ数（PDF だけ）。切り詰めは agentAttachFile が行う
+async function agentReadAttachment(file, kind, budget, pages) {
+  if (file.size > (kind === 'pdf' ? AGENT_ATTACH_PDF_BYTES : AGENT_ATTACH_TEXT_BYTES)) throw new Error('attach_too_large');
+  var read = kind === 'pdf' ? await agentReadPdf(file, budget, pages || 0)
+    : { text: agentDecodeText(new Uint8Array(await file.arrayBuffer())).replace(/\r\n?/g, '\n'), images: [] };
+  if (!read.text.trim() && !read.images.length) throw new Error(kind === 'pdf' ? 'attach_pdf_empty' : 'attach_empty');
+  return read;
+}
+function agentAttachError(error, name) {
+  var code = error && error.name === 'PasswordException' ? 'attach_pdf_password' : error && error.message;
+  if (code === 'attach_too_large') return tr(name + ' is too large (text files up to 2MB, PDF up to 30MB)', name + 'は大きすぎます（文字のファイルは2MB、PDFは30MBまで）');
+  if (code === 'attach_pdf_unavailable') return tr('PDF files cannot be read here', 'この環境ではPDFを読めません');
+  if (code === 'attach_pdf_empty') return tr('No text found in ' + name + ', and all ' + ATTACH_MAX + ' image slots are in use', name + 'から文字を取り出せず、画像の枠（' + ATTACH_MAX + '枚）も埋まっています');
+  if (code === 'attach_pdf_password') return tr(name + ' is password-protected', name + 'はパスワード付きのため読めません');
+  if (code === 'attach_empty') return tr(name + ' is empty', name + 'は空です');
+  return tr('Could not read ' + name + ' as text', name + 'を文字のファイルとして読めませんでした');
+}
+function agentAttachCount(list, kind) {
+  return list.filter(function (a) { return (a.kind === 'attachment') === (kind === 'attachment'); }).length;
+}
+function agentAttachUsed(list) {
+  return list.reduce(function (n, a) { return n + (a.kind === 'attachment' ? a.text.length : 0); }, 0);
+}
+// 下書きの添付 list にファイル1件を読んで足す（PDF はページ画像も写真と同じ項目で足す）。足せなかった・一部だけ足したときは知らせる文を返す。
+// stale() が真なら（読んでいる間に会話が替わった）何もしない
+async function agentAttachFile(list, file, kind, stale) {
+  var name = String(file && file.name || '') || tr('This file', 'このファイル');
+  var slots = function () { return kind === 'pdf' ? Math.max(0, ATTACH_MAX - agentAttachCount(list, 'image')) : 0; };
+  var full = function () {
+    if (agentAttachCount(list, 'attachment') >= AGENT_ATTACH_FILE_MAX) return tr('Up to ' + AGENT_ATTACH_FILE_MAX + ' files', 'ファイルは' + AGENT_ATTACH_FILE_MAX + '件までです');
+    return agentAttachUsed(list) >= AGENT_ATTACH_TEXT_MAX && !slots() ? tr('Attachments are limited to 10,000 characters in total', '添付の文字は合計1万字までです') : '';
+  };
+  if (!kind) return tr(name + ' cannot be attached (images, text, code and PDF only)', name + 'は添付できません（画像・テキスト・コード・PDFのみ）');
+  var notice = full();
+  if (notice) return notice;
+  try {
+    var read = await agentReadAttachment(file, kind, AGENT_ATTACH_TEXT_MAX - agentAttachUsed(list), slots());
+    // 読んでいる間にほかの添付が増えていても、件数・合計の文字数・画像の枚数の上限を超えない
+    if (stale()) return '';
+    if ((notice = full())) return notice;
+    var images = read.images.slice(0, slots()), left = AGENT_ATTACH_TEXT_MAX - agentAttachUsed(list);
+    var text = !!read.text.trim() && left > 0, pdf = images.length ? ++agentAttachPdfSeq : 0, item = null;
+    if (!text && !images.length) return agentAttachError(new Error('attach_pdf_empty'), name);
+    if (text) {
+      var truncated = read.text.length > left;
+      list.push(item = { kind: 'attachment', name: agentAttachName(file), text: truncated ? agentAttachCut(read.text, left) : read.text, truncated: truncated, pdf: pdf });
+    }
+    images.forEach(function (image) { list.push({ url: image.url, thumb: image.thumb, pdf: pdf }); });
+    if (!item) return tr(agentAttachName(file) + ' is attached as page images only', agentAttachName(file) + 'はページの画像だけを添付しました');
+    return item.truncated ? tr('Only the first ' + item.text.length.toLocaleString('en') + ' characters of ' + item.name + ' are attached', item.name + 'は先頭の' + item.text.length.toLocaleString('ja') + '字だけを添付しました') : '';
+  } catch (error) { return stale() ? '' : agentAttachError(error, name); }
+}
+// トレイの × で list[i] を外し、外した項目を返す。PDF の札を外したら、そのページの画像も一緒に外す（画像だけを外すのは自由）
+function agentAttachRemove(list, i) {
+  var target = list[i], removed = [];
+  for (var j = list.length - 1; j >= 0; j--) {
+    if (j === i || target && target.kind === 'attachment' && target.pdf && list[j].pdf === target.pdf) removed.unshift(list.splice(j, 1)[0]);
+  }
+  return removed;
+}
+// 保存した発言の添付パートを下書きの項目に戻す（もう一度送るとき。本文を省いた古い添付は戻さない）
+function agentAttachDraftItems(content) {
+  return (Array.isArray(content) ? content : []).filter(function (p) {
+    return p && p.type === 'attachment' && typeof p.name === 'string' && typeof p.text === 'string' && p.text.trim();
+  }).map(function (p) { return { kind: 'attachment', name: p.name, text: p.text, truncated: p.truncated === true }; });
+}
+// 送信・保存するパート（下書きの項目から作る。キーは Worker が受け付けるものだけ）
+function agentAttachPart(a) {
+  var part = { type: 'attachment', name: a.name, text: a.text };
+  if (a.truncated) part.truncated = true;
+  return part;
+}
+// 送る会話の添付を新しい順に合計 AGENT_ATTACH_TEXT_MAX まで残し、超えた古い添付は名前だけ（omitted）にする
+function agentTrimAttachments(messages) {
+  var used = 0;
+  for (var i = messages.length - 1; i >= 0; i--) {
+    if (!Array.isArray(messages[i].content)) continue;
+    messages[i].content = messages[i].content.map(function (p) {
+      if (p.type !== 'attachment') return p;
+      var name = agentAttachCut(p.name.trim(), AGENT_ATTACH_NAME_MAX) || 'file';
+      if (p.text.trim() && used + p.text.length <= AGENT_ATTACH_TEXT_MAX) {
+        used += p.text.length;
+        return agentAttachPart({ name: name, text: p.text, truncated: p.truncated === true });
+      }
+      return { type: 'attachment', name: name, text: '', omitted: true };
+    });
+  }
   return messages;
 }
+// 吹き出しの添付（名前だけ）と、下書きのトレイの札
+function agentAttachChipsHTML(content) {
+  var files = Array.isArray(content) ? content.filter(function (p) { return p && p.type === 'attachment'; }) : [];
+  return files.length ? '<span class="agent-files">' + files.map(function (p) {
+    return '<span class="agent-file" title="' + esc(p.name) + '"><b>' + esc(agentAttachExt(p.name)) + '</b><span>' + esc(p.name) + '</span></span>';
+  }).join('') + '</span>' : '';
+}
+function agentAttachDocHTML(a) {
+  var size = a.text.length.toLocaleString(tr('en', 'ja'));
+  return '<span class="attach-doc" title="' + esc(a.name) + '"><b>' + esc(agentAttachExt(a.name)) + '</b><span>' + esc(a.name) + '</span><small>'
+    + esc(a.truncated ? tr(size + ' chars (start)', '先頭' + size + '字') : tr(size + ' chars', size + '字')) + '</small></span>';
+}
+// AGENT_ATTACH_END
 
 // While a reply is being generated the send button becomes a stop button (■). Pressing it drops the
 // connection, and the Worker stops its remaining upstream calls too.
@@ -2389,7 +2616,8 @@ async function agentSend(recovered, retry) {
   var draftText = recovered ? contentText(savedUser.content) : retry ? retry.text : agentInput.value;
   var text = recovered || retry ? draftText : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
-  var atts = recovered ? contentImages(savedUser.content).map(function (p) { return { url: p.image_url.url, thumb: p.image_url.url, file: p.file }; }) : retry ? retry.atts : attachments.slice();
+  var atts = recovered ? contentImages(savedUser.content).map(function (p) { return { url: p.image_url.url, thumb: p.image_url.url, file: p.file }; })
+    .concat(agentAttachDraftItems(savedUser.content)) : retry ? retry.atts : attachments.slice();
   if (!text && !atts.length) return;
   var retryOf = retry ? retry.mid : recovered && typeof savedUser.retry_of === 'string' ? savedUser.retry_of : null;
   agentRetryEls(retryOf).forEach(function (el) { el.hidden = true; });
@@ -2398,9 +2626,10 @@ async function agentSend(recovered, retry) {
   var startedAt = recovered ? recovered.startedAt : Date.now();
   setAgentSuggestion('');
   if (!retry) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
-  // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）
+  // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）。添付ファイルの文字はどちらも同じ
   var partsOf = function (key) {
     return (text ? [{ type: 'text', text: text }] : []).concat(atts.map(function (a) {
+      if (a.kind === 'attachment') return agentAttachPart(a);
       var part = { type: 'image_url', image_url: { url: a[key] } };
       if (key === 'thumb' && a.file) part.file = a.file;
       return part;
@@ -3024,7 +3253,7 @@ function deleteSavedSession(id) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization', 'attachments'];
 function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'

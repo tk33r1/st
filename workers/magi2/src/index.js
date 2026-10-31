@@ -1,4 +1,4 @@
-import { DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { ATTACHMENTS, DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl } from '../site-rank.js';
@@ -224,6 +224,24 @@ function normaliseImagePart(part, counters) {
   return { type: 'image_url', image_url: { url } };
 }
 
+// 添付ファイルのパート {type:'attachment', name, text, truncated?, omitted?}。本文は画面がファイルから取り出した文字で、
+// 本文の上限とは別に、履歴を含めた1リクエストの合計を ATTACHMENTS.max_chars に収める。omitted は本文を省いた古い添付
+function normaliseAttachmentPart(part, counters) {
+  const invalid = () => { throw stageError('bad_request', 'invalid_attachment', '添付ファイルの形式が不正です', { retryable: false }); };
+  if (Object.keys(part).some(k => !['type', 'name', 'text', 'truncated', 'omitted'].includes(k))) invalid();
+  if (typeof part.name !== 'string' || part.name.length > ATTACHMENTS.name_max_chars || typeof part.text !== 'string'
+    || (part.truncated !== undefined && typeof part.truncated !== 'boolean') || (part.omitted !== undefined && typeof part.omitted !== 'boolean')) invalid();
+  if (!part.name.trim() || (part.omitted ? part.text : !part.text.trim())) invalid();
+  // 制御文字を落として名前や本文が空になったものは、履歴に残っても以後の会話を止めないよう、名前を 'file'・本文を省いた扱いにする
+  const name = part.name.replace(queryControls, '').trim() || 'file', clean = part.text.replace(replyControls, '');
+  const omitted = part.omitted || !clean.trim(), text = omitted ? '' : clean;
+  counters.attachment += text.length;
+  if (counters.attachment > ATTACHMENTS.max_chars) {
+    throw stageError('bad_request', 'attachments_too_large', `添付ファイルの文字は合計 ${ATTACHMENTS.max_chars} 文字までです`, { retryable: false });
+  }
+  return { type: 'attachment', name, text, ...(part.truncated && !omitted ? { truncated: true } : {}), ...(omitted ? { omitted: true } : {}) };
+}
+
 // 1メッセージを検証し {role, content} に正規化する。
 // クライアントは表示用の付加キー（mid / debate / reactions）を持つ履歴をそのまま送ってくる。
 // assistantのdebateはopinionsとして人格ごとの履歴に使い、clarifyは直後の回答の分類にだけ使う。
@@ -243,11 +261,12 @@ function normaliseMessage(m, counters) {
     const clarify = m.role === 'assistant' && m.mode !== 'magi' && m.mode !== 'fact' ? cleanClarification(m.clarify) : null;
     return { role: m.role, content: m.content, ...(opinions ? { opinions } : {}), ...(magi ? { magi } : {}), ...(clarify ? { clarify } : {}) };
   }
-  // 画像を含められるのは user メッセージのみ
-  if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0 || m.content.length > 8) {
+  // 画像・添付を含められるのは user メッセージのみ。パートは本文1つ＋画像と添付のそれぞれの上限まで
+  if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0
+    || m.content.length > 1 + DEFAULTS.vision.max_images_per_message + ATTACHMENTS.max_per_message) {
     throw stageError('bad_request', 'invalid_message_shape', '各 message の content は文字列、または user のパート配列が必要です', { retryable: false });
   }
-  let images = 0;
+  let images = 0, attachments = 0;
   const parts = m.content.map((part) => {
     if (part && part.type === 'text' && typeof part.text === 'string') return { type: 'text', text: part.text };
     if (part && part.type === 'image_url') {
@@ -256,10 +275,16 @@ function normaliseMessage(m, counters) {
       }
       return normaliseImagePart(part, counters);
     }
-    throw stageError('bad_request', 'invalid_part', 'content のパートは {type:"text"} か {type:"image_url"} のみです', { retryable: false });
+    if (part && part.type === 'attachment') {
+      if (++attachments > ATTACHMENTS.max_per_message) {
+        throw stageError('bad_request', 'too_many_attachments', `添付ファイルは1メッセージあたり ${ATTACHMENTS.max_per_message} 件までです`, { retryable: false });
+      }
+      return normaliseAttachmentPart(part, counters);
+    }
+    throw stageError('bad_request', 'invalid_part', 'content のパートは {type:"text"}・{type:"image_url"}・{type:"attachment"} のみです', { retryable: false });
   });
   checkText(parts.filter(p => p.type === 'text').map(p => p.text).join('\n'), DEFAULTS.input.user_max_chars, counters);
-  if (!images && !parts.some(p => p.type === 'text' && p.text.trim())) {
+  if (!images && !attachments && !parts.some(p => p.type === 'text' && p.text.trim())) {
     throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
   }
   return { role: m.role, content: parts };
@@ -270,6 +295,19 @@ const contentText = (c) => typeof c === 'string' ? c : c.filter(p => p.type === 
 const contentImages = (c) => typeof c === 'string' ? [] : c.filter(p => p.type === 'image_url');
 // 画像があれば「画像＋テキスト」のパート配列を、無ければ素の文字列を返す
 const withImages = (text, images) => images.length ? [...images, { type: 'text', text }] : text;
+// 添付は上流へ送る会話では見出し付きの文字に開き（共有資料と同じく JSON に入れて、本文から区切りを偽れないようにする）、
+// 分類・検索語・予測に使う会話からは外して件数だけを持つ。どちらも添付の無い発言はそのまま返す
+const contentAttachments = (c) => typeof c === 'string' ? [] : c.filter(p => p.type === 'attachment');
+function expandAttachments(m) {
+  const files = contentAttachments(m.content);
+  if (!files.length) return m;
+  return { ...m, content: prependText(dataNote(ATTACHMENTS.header, files.map(({ type, ...file }) => file)), withImages(contentText(m.content), contentImages(m.content))) };
+}
+function withoutAttachments(m) {
+  const files = contentAttachments(m.content);
+  if (!files.length) return m;
+  return { ...m, content: withImages(contentText(m.content), contentImages(m.content)), attachments: files.map(file => file.name) };
+}
 
 // 人格が答えられなかった回に、画面のカードへ出す印（persona イベントの absent:true と一緒に送る）
 const PERSONA_ABSENT = '[NO RESPONSE]';
@@ -870,12 +908,14 @@ async function fetchAuxLine(env, purpose, request, shape, signal, log) {
 }
 
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
-function fetchTitle(env, lastContent, langNote, signal, log) {
+function fetchTitle(env, lastContent, langNote, signal, log, attachments = null) {
   return fetchAuxLine(env, 'title', () => {
     // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる。
+    // 添付（attachments は名前の配列）は本文を渡さず名前だけを足す（題には足りる）。
     // 発言は見出しを付けて引用する（そのまま渡すと、モデルが題ではなく答えを書く）
+    const names = attachments ? `[添付: ${attachments.join(', ')}]` : '';
     const quoted = `${TITLER.input_header}
-${contentText(lastContent).trim() || '（文字なし。画像だけ）'}`;
+${[contentText(lastContent).trim(), names].filter(Boolean).join('\n') || '（文字なし。画像だけ）'}`;
     return {
       cfg: DEFAULTS.models.titler,
       messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: withImages(quoted, contentImages(lastContent)) }],
@@ -922,7 +962,7 @@ function fetchSuggestion(env, convo, context, langNote, signal, log) {
   return fetchAuxLine(env, 'suggest', () => {
     const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
       const imgs = contentImages(m.content).length;
-      const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '');
+      const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '') + (m.attachments ? ` [添付${m.attachments.length}件]` : '');
       return `${m.role === 'user' ? 'ユーザー' : 'AI'}: ${text}`;
     }).join('\n');
     const input = [
@@ -1625,7 +1665,9 @@ function cleanShared(value) {
   }
   return out;
 }
-function sharedNote(shared) { return SHARED.header + '\n' + JSON.stringify(shared) + '\n【今回の質問】\n'; }
+// 共有資料・添付を、見出しと JSON（本文から区切りを偽れない）で今回の質問の前に置く
+function dataNote(header, data) { return header + '\n' + JSON.stringify(data) + '\n【今回の質問】\n'; }
+function sharedNote(shared) { return dataNote(SHARED.header, shared); }
 
 // parsed（省略できる）は WebSocket の入口で読んだ本文。上限はそちらで確かめてある
 async function readChatInput(request, parsed = null) {
@@ -1647,7 +1689,7 @@ async function readChatInput(request, parsed = null) {
   // 検証の前に trim する（画像枚数の上限は実際に上流へ送るぶんに対して数える）
   if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
   // content は文字列 or パート配列。本文と人格の過去の意見を正規化する
-  const counters = { total: 0, imageBytes: 0, text: 0 };
+  const counters = { total: 0, imageBytes: 0, text: 0, attachment: 0 };
   messages = messages.map(m => normaliseMessage(m, counters));
   if (privacy.personalization) checkText(JSON.stringify(privacy.personalization), 10000, counters);
   if (messages[messages.length - 1].role !== 'user') {
@@ -1656,7 +1698,9 @@ async function readChatInput(request, parsed = null) {
   // DJ の状況説明は本文に紛れ込ませず、専用の上限で検証してから先頭の質問へ添える。
   // 予測には添える前の会話と状況説明を別に渡す（ユーザーの発言に混ぜると、状況説明の回答ルールを予測がなぞる）
   // 出力の言語は状況説明を足す前の会話で決める（状況説明は日本語なので、足した後だと日本語に見える）
-  const plainMessages = messages;
+  // 添付は上流へ送る会話（fullMessages）でだけ文字に開く。分類・言語・検索語・予測に使う plainMessages からは外す
+  const plainMessages = messages.map(withoutAttachments), fullMessages = messages.map(expandAttachments);
+  messages = fullMessages;
   const shared = cleanShared(body.shared);
   const newContract = body.classification_state === true;
   const factMode = newContract && body.fact_mode === true;
@@ -1666,9 +1710,10 @@ async function readChatInput(request, parsed = null) {
     if (typeof body.context !== 'string') throw stageError('bad_request', 'invalid_context', 'context は文字列である必要があります', { retryable: false });
     checkText(body.context, DEFAULTS.input.context_max_chars, counters);
     context = body.context;
-    const first = messages.findIndex(m => m.role === 'user');
-    messages = messages.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
   }
+  const first = messages.findIndex(m => m.role === 'user');
+  const withContext = list => context === null ? list : list.map((m, i) => i === first ? { ...m, content: prependText(context + '\n', m.content) } : m);
+  messages = withContext(messages);
   const entry = body.entry === 'dj-request' ? 'dj-request' : 'chat';
   const replyLanguage = newContract ? cleanReplyLanguage(body.reply_language) : null;
   const seed = newContract && !replyLanguage
@@ -1677,8 +1722,8 @@ async function readChatInput(request, parsed = null) {
   if (seed !== null) checkText(seed, INTENT_CLASSIFY.language_seed_max_chars, counters);
   // 共有資料は最後の発言の頭に添える。討議・議題は状況説明なしの会話に添え、サイト検索の語には含めない。
   const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
-  const searchText = contentText(messages.at(-1).content);
-  return { messages: withShared(messages), plainMessages, discussMessages: withShared(plainMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
+  const searchText = contentText(withContext(plainMessages).at(-1).content);
+  return { messages: withShared(messages), plainMessages, fullMessages, discussMessages: withShared(fullMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
     ...privacy, locationEnabled: body.location_enabled !== false,
     devicePlace: body.location_enabled === false ? null : devicePlace(body.device_location),
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
@@ -2000,10 +2045,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
     || input.personalization && !features.personalization
     || input.temporaryPersonalization && !features.temporary_personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
   place = input.locationEnabled ? input.devicePlace || place : null;
-  const { messages, plainMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {
-    const last = plainMessages.at(-1).content;
+    const last = fullMessages.at(-1).content;
     return { kind: 'chat', text: contentText(last), images: contentImages(last).map(p => p.image_url.url), historyMessages: plainMessages.length - 1 };
   }, { requestId, cors, log }, () => httpError(503, { stage: 'internal', code: 'evaluation_unavailable',
     message: '評価用の確認を行えませんでした', retryable: true }, requestId, cors));
@@ -2132,7 +2177,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         let titlePromise = null;
         if (input.conversationMode !== 'temporary' && !plainMessages.some(m => m.role === 'assistant')) {
           const titleTimeoutMs = contentImages(plainMessages.at(-1).content).length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
-          titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, plainMessages.at(-1).content, langNote, signal, log), stop.signal)
+          titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, plainMessages.at(-1).content, langNote, signal, log, plainMessages.at(-1).attachments), stop.signal)
             .then(t => { if (t) send('title', { text: t }); })
             .catch(() => {});
         }

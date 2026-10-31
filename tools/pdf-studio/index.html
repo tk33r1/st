@@ -135,8 +135,7 @@
   <script type="importmap">{"imports":{"wasm-feature-detect":"../../assets/vendor/wasm-feature-detect@1.9.0/index.js"}}</script>
   <script src="../../assets/vendor/lucide@0.263.0/lucide.min.js"></script>
 
-  <!-- PDF.js (render) / pdf-lib (write) / JSZip (bundle) -->
-  <script src="../../assets/vendor/pdfjs-dist@3.11.174/pdf.min.js"></script>
+  <!-- pdf-lib (write) / JSZip (bundle)。PDF.js (render) は ES モジュールなので app.js が最初の PDF のときに読む -->
   <script src="../../assets/vendor/pdf-lib@1.17.1/pdf-lib.min.js"></script>
   <script src="../../assets/vendor/jszip@3.10.1/jszip.min.js"></script>
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（assets/fonts/）。
@@ -1229,6 +1228,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=20261003_1"></script>
+  <script src="./app.js?v=20261031_1"></script>
 </body>
 </html>
