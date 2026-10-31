@@ -183,6 +183,12 @@ test('メールは本文形式・固定送り先・同じイベントの同じ�
 test('workflowはmainから起動し、PRコードのジョブにsecret・書き込み権限・採用する出力が無い',()=>{
   const source=readFileSync('.github/workflows/magi2-daily-merge.yml','utf8');
   assert.doesNotMatch(source,/^\s+pull_request(?:_target)?:/m);assert.match(source,/cancel-in-progress: false/);
+  // コメントの起動は本人とレビューのAppだけ。対象外の実行はgroupを分け、待機中の実行を取り消させない
+  const commenter="github.event_name != 'issue_comment' || ((github.event.comment.user.login == (vars.MAGI2_DAILY_ACTOR || 'tk33r1') || github.event.comment.user.login == format('{0}[bot]', vars.MAGI2_DAILY_REVIEW_APP)) && (github.event.issue.pull_request || github.event.issue.number == vars.MAGI2_DAILY_ISSUE))";
+  assert.match(source,/^ {2}issue_comment:\n {4}types: \[created, edited\]$/m);
+  const discover=source.slice(source.indexOf('  discover:'),source.indexOf('    runs-on:'));
+  assert.ok(discover.includes(commenter));
+  assert.ok(source.slice(source.indexOf('concurrency:'),source.indexOf('jobs:')).includes("("+commenter+") && 'magi2-daily-merge' || format('magi2-daily-ignored-{0}', github.run_id)"));
   const validation=source.slice(source.indexOf('  validate:'),source.indexOf('  report:'));
   assert.doesNotMatch(validation,/secrets\.|contents: write|pull-requests: write|outputs:/);
   assert.match(validation,/persist-credentials: false/);assert.match(validation,/\.\.\/trusted\/\.github\/scripts\/magi2-daily-check\.mjs/);

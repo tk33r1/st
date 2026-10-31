@@ -2,21 +2,29 @@ name: MAGI Daily Automation
 
 # main側で判定し、PRコードの検証ジョブにはsecretを渡さない。
 # 段階2でも正式なレビュー取得経路が未設定ならマージしない。
+# 主な起動はコメント。依頼・レビュー結果・本人の印が付いたらすぐ判定する。
+# issue_commentもmain側のファイルで動き、コメントの文面は読まない（状態はAPIから読み直す）。
+# 定時は取りこぼしとmainの変化・期限の保険。報告ジョブのコメント（GITHUB_TOKEN）は起動しない。
 on:
   schedule:
-    - cron: '7 * * * *'
+    - cron: '43 */4 * * *'
+  issue_comment:
+    types: [created, edited]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# 対象外のコメントの実行は別のgroupに置く（待機中の本来の実行を取り消させない）。条件はdiscoverのifと同じ。
 concurrency:
-  group: magi2-daily-merge
+  group: ${{ (github.event_name != 'issue_comment' || ((github.event.comment.user.login == (vars.MAGI2_DAILY_ACTOR || 'tk33r1') || github.event.comment.user.login == format('{0}[bot]', vars.MAGI2_DAILY_REVIEW_APP)) && (github.event.issue.pull_request || github.event.issue.number == vars.MAGI2_DAILY_ISSUE))) && 'magi2-daily-merge' || format('magi2-daily-ignored-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
   discover:
-    if: github.ref == 'refs/heads/main' && vars.MAGI2_DAILY_ISSUE != ''
+    if: >-
+      github.ref == 'refs/heads/main' && vars.MAGI2_DAILY_ISSUE != '' &&
+      (github.event_name != 'issue_comment' || ((github.event.comment.user.login == (vars.MAGI2_DAILY_ACTOR || 'tk33r1') || github.event.comment.user.login == format('{0}[bot]', vars.MAGI2_DAILY_REVIEW_APP)) && (github.event.issue.pull_request || github.event.issue.number == vars.MAGI2_DAILY_ISSUE)))
     runs-on: ubuntu-latest
     permissions:
       contents: read
