@@ -1,5 +1,347 @@
 [
   {
+    "date": "20261101",
+    "title": "2026年11月1日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "梅田茶屋町の旧梅田ロフト跡地に「世界最大のニトリ」がオープンし、大阪エリアでの大型店舗展開が本格化した。 基幹システムのオンプレミス環境からの脱却が報じられ、ニトリのDXとインフラ刷新が具体的な段階に入っていることが分かった。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "梅田茶屋町の旧梅田ロフト跡地に「世界最大のニトリ」がオープンし、大阪エリアでの大型店舗展開が本格化した。",
+      "基幹システムのオンプレミス環境からの脱却が報じられ、ニトリのDXとインフラ刷新が具体的な段階に入っていることが分かった。",
+      "699円の水筒や1990円の押入れケースなど低価格の生活雑貨がSNSで好評を集め、家族向けの収納・日用品の反響が続いている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリがオンプレミス基盤から脱却　AIと自動化で業務インフラを刷新",
+        "original_title": "",
+        "source": "ITmedia",
+        "source_id": "JP-07",
+        "summary": "ITメディアの記事では、ニトリがオンプレミス環境から脱却する取り組みが取り上げられている。インフラを刷新し、AIや自動化を活用する方向性が示された。記事では他社の販売計画自動化事例とあわせて、業務のデジタル化の実態が紹介されている。小売業の基幹システム更新に関する具体的な動きとして注目される。",
+        "why_it_matters": "オンプレミスからの移行は、需要予測や在庫配分などの精度向上に直結する基盤投資である。SPAとして商品企画から店頭までを一貫管理するニトリにとって、データ基盤の強化は競争力の源泉になる。AIによる自動化の成果が、物流や店舗運営にどう波及するかが今後の焦点となる。",
+        "tags": [
+          "ニトリ",
+          "DX",
+          "物流",
+          "AI"
+        ],
+        "search_terms": [
+          "オンプレ脱却 DX",
+          "Nitori cloud migration",
+          "小売 AI 自動化",
+          "retail infrastructure modernization"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE9oeFB6b3U4TndLdFhSbmVfTllNazN4MGFQZzBxMGVfTnA3dGpNM2xMT1I2bHhxazliZGpBckdSVUIwRTg5Umg1bTlPUnZQZmdBYVdFWmV3TndnNWUyQXdlal9YRTZScDZkbUZ1bEc1YzB4Zw?oc=5",
+        "source_pub_ts": 1793401200
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "世界最大のニトリが梅田茶屋町に誕生　旧梅田ロフト跡地を全面活用",
+        "original_title": "",
+        "source": "山陽新聞",
+        "source_id": "JP-01",
+        "summary": "大阪・梅田茶屋町に、ニトリとして世界最大規模をうたう店舗がオープンした。旧梅田ロフトの建物を活用し、建物全体をニトリの売り場として構成する。オープン記念セールも実施される。前段で話題となった跡地の変貌が、開業という具体的な動きに進んだ点が注目される。",
+        "why_it_matters": "大型都市店舗は、ショールーム機能と商品体験の場として集客力が高い。旧商業施設の跡地を活用する出店は、既存の都市立地を生かした効率的な展開モデルとなる。来店客の回遊と購買がどの程度広がるかが、今後の大型店戦略の評価指標になるとみられる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "大阪",
+          "梅田"
+        ],
+        "search_terms": [
+          "大型店舗 出店",
+          "Nitori Umeda store opening",
+          "世界最大店舗 梅田",
+          "Osaka flagship store"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5ZMVE2ZW1kLWdnRzdmNVM3YVI3QkdDY3FLY0JlMHdpcXBMeTZfZlFjVkRIWU1uRXBTSHB0TnpMS3FjRlZvWVRfQ21DNEFRRkRzWUNKR0JFYXY?oc=5",
+        "source_pub_ts": 1793463874
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "699円のミニ水筒が家族に好評　ポケットに入るサイズと保温性が支持",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-02",
+        "summary": "ニトリの699円のミニ水筒が、SNSなどで好評を集めている。家族全員分をまとめて購入する人や、孫のために買い足す人の投稿が見られる。ポケットに入るコンパクトさや、保温効果の良さを評価する声が中心となっている。低価格ながら機能面で満足度が高い点が、リピート購入につながっている。",
+        "why_it_matters": "700円前後の価格帯で、携帯性と保温性を両立させた点は、日用品カテゴリーの強い訴求になる。家族単位で複数購入される傾向は、色違いや用途別の展開余地を示す。口コミ起点で拡散する商品は、広告に頼らず販売を伸ばせるため、PB開発の参考事例になりやすい。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ヒット商品",
+          "日用品"
+        ],
+        "search_terms": [
+          "ミニ水筒 保温",
+          "Mini water bottle",
+          "低価格 水筒 ヒット",
+          "portable insulated bottle"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBub0Y1VFE0eldyNEFLXy0tRFJiMVhRUldFSEM2UmQ1V0I0OUtBU0VLcTZGeDRfMEYwZ0tUX3JBQjhkdEN5OS1KcmRYSzBIbzdzQWRRVkI5RFZ0d2ZfbGdGeFB6bDZ1ZGFGUHBnWTF3aG1RVVhGNFE?oc=5",
+        "source_pub_ts": 1793454163
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "1990円の押入れケースが大好評　奥行きを生かした収納で衣替えが楽に",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-08",
+        "summary": "ニトリの1990円の押入れケースが、利用者の間で高い評価を得ている。家庭では複数個をそろえて使う例も見られ、「家に12個ある」といった投稿も話題になった。奥行きを生かして収納できる点や、衣替えの作業が楽になった点が特に支持されている。",
+        "why_it_matters": "押入れの奥行きを活用する設計は、日本の住宅事情に合った収納提案として説得力が高い。複数個を購入するまとめ買いの動きは、収納家具のシリーズ化や拡張性の重要性を示す。実使用での納得感が口コミで広がる点は、商品の訴求ポイントとして活用できる。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "商品開発",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "押入れ収納ケース",
+          "closet storage case",
+          "衣替え 収納 ヒット",
+          "Japanese closet organizer"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1JVGFaaWRkVHplX0c0a1RoQ1prXzJBU3cySWVsZ1F2SHZiSms3ZjhoVkRIaTJBc0xrY3g2NFU2N25BdWZwdlJyaVNfMzdYNlhRVzRzRGhUUlFMZGJSaHd0VWhOd1lBQTB2WUM4dmN4NVR1b21pSEE?oc=5",
+        "source_pub_ts": 1793400152
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "猫と遊べるペット空気清浄機が登場　毛とニオイ対策から遊びまで1台で対応",
+        "original_title": "",
+        "source": "Ameba News [アメーバニュース]",
+        "source_id": "JP-06",
+        "summary": "ニトリの新作として、猫と遊べるペット用空気清浄機が紹介された。毛やニオイへの対策に加え、遊び要素も備えた1台で対応できる点が特徴とされる。ペットを飼う生活者の悩みに応える新商品として注目を集めている。",
+        "why_it_matters": "ペット関連は、生活家電と雑貨の境界を越えて支持が広がる領域である。機能と遊びを一体化させた企画は、ペットと暮らす世帯に具体的な価値を示す。SPAとして企画から開発まで担えるため、ニッチなニーズを素早く商品化できる強みを示す事例になる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ペット",
+          "家電"
+        ],
+        "search_terms": [
+          "ペット空気清浄機",
+          "pet air purifier",
+          "猫 遊べる 家電",
+          "cat toy air purifier"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBRRE13cTlqR1owSTNkZVc2d0VmMVlxWDBVLXVEVV9UUHNXamNxRTJVSU5UdnZZYWY1bDdPT1NnZDVpMnBWOGlzMVNycGdBbGUtdmJIU0JnZHZpQQ?oc=5",
+        "source_pub_ts": 1793417154
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリがインドで2店舗目を開設　ムンバイでの店舗網拡大が進む",
+        "original_title": "Nitori stock: Second India store extends Mumbai expansion",
+        "source": "ad-hoc-news.de",
+        "source_id": "GL-01",
+        "summary": "海外報道として、ニトリのインドでの2店舗目の出店が伝えられている。ムンバイでの店舗展開がさらに広がる形となる。株式関連メディアによる記事であり、店舗の規模や売上などの詳細な数値は、本候補の情報からは確認できない。海外での店舗網拡大の具体的な進展として注目される。",
+        "why_it_matters": "インドは人口増加と住宅需要の拡大が見込まれる市場であり、ニトリの海外展開の重要な拠点になり得る。2店舗目の開設は、単独店の成功を確かめつつ、都市部で店舗網を広げる段階に入ったことを示す。現地の嗜好に合わせた商品構成と物流体制の構築が、今後の成否を左右する。",
+        "tags": [
+          "ニトリ",
+          "海外展開",
+          "インド",
+          "ムンバイ"
+        ],
+        "search_terms": [
+          "インド 出店 拡大",
+          "Nitori India expansion",
+          "ムンバイ 店舗",
+          "India furniture retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQN3l1c3cxWjNZTnd5b1RONzJKYXdGbG5xRWdGc2xpUGVFUEF3ajJzVE9uUnhyOFV4LTJLWXVuM3ZlNlFjNnNQMF9HYUx1SHA1QUtTYkZyR2dmeVV4MmNsalczbWlOdTVOTC16UmRETURmYU8yYm14Q2wxaGcyLUI3cnNjRnh1NkExS1JfcFRuY0ZZN1dmVVlPWk42Wlh4b1ppS3dqVTdCbTFkQU9uaVJfQnplQl84QQ?oc=5",
+        "source_pub_ts": 1793403511
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "寝室はダブルとシングルをローベッドで並べ、除湿シートとごろ寝マットで快適に",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "X上で1,821いいねを集めた投稿では、ダブルベッドとシングルベッドをローベッドにして寝室を組む使い方が紹介されている。娘の布団には、ニトリの除湿シートの上にごろ寝マットと子ども用シーツを重ねている。壁の保護には別ブランドの商品を組み合わせている。ニトリ製品を家族の生活動線に合わせて組み合わせる実例として反響を呼んだ。",
+        "why_it_matters": "寝室の床まわりを複数のアイテムで段階的に整える使い方は、単品購入ではなく空間全体を提案する価値を示す。除湿シートやマットといった地味な商品が、家族の快適さを支える要素として評価されている点が重要である。ローベッドなど家具の組み合わせ提案は、ベッドと寝具の同時購入を促す訴求にも応用できる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "寝室",
+          "生活提案"
+        ],
+        "search_terms": [
+          "寝室 ローベッド 組み合わせ",
+          "bedroom setup Nitori",
+          "除湿シート ごろ寝マット",
+          "family bedroom layout"
+        ],
+        "url": "https://x.com/8mej3td/status/2116291567124353104",
+        "source_pub_ts": 1793444400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "あったか猫アイテムの紹介動画が6万回再生　猫との冬支度提案が共感を呼ぶ",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokでは、ニトリで見つけたあったか猫アイテムを紹介する投稿が約6万回再生された。猫と一緒に冬支度をする暮らしを提案し、気になる商品を保存してチェックするよう呼びかけている。ハッシュタグでは猫グッズとしての関心の高さがうかがえる。ペットとの暮らしを楽しむ視点が、生活者の共感を集めた。",
+        "why_it_matters": "ペットとの暮らしを軸にした提案は、季節商品の需要を喚起する有効な切り口である。冬物の暖かい雑貨を猫の生活シーンと結びつけることで、購買意欲を高める効果がある。保存や共有を促す動画の特性を生かし、季節企画と連動させる展開が期待できる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "猫",
+          "冬物"
+        ],
+        "search_terms": [
+          "猫グッズ 冬 あったか",
+          "cat winter goods Nitori",
+          "TikTok 猫 インテリア",
+          "winter pet lifestyle"
+        ],
+        "url": "https://www.tiktok.com/@flaffy.mew/video/7702418448634301717",
+        "source_pub_ts": 1793359049.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "寝室は、大人側はダブルベッド+シングルベッドをローベッドにして寝てます！ 娘の布団は、ニトリの除湿シートの上にニトリのごろ寝マット（厚め硬め...",
+        "platform": "x",
+        "author": "@8mej3td",
+        "url": "https://x.com/8mej3td/status/2116291567124353104",
+        "likes": 1821,
+        "retweets": 79,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 7:10",
+        "captured_at": "",
+        "text": "寝室は、大人側はダブルベッド+シングルベッドをローベッドにして寝てます！ 娘の布団は、ニトリの除湿シートの上にニトリのごろ寝マット（厚め硬め）、ニトリのベビー用シーツ 壁に貼ってるのは楽天で買ったこれ！ 【楽天連続1位】コーナーガード item.rakuten.co.jp/kaigen703/enco… pic.x.com/5NYhGd761K x.com/8mej3td/status…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリのしっとりとろけるようなあったかシリーズ、気持ち良すぎて布団から出られなくなるの注意 pic.x.com/4uvMA4etZT",
+        "platform": "x",
+        "author": "@012_shiro",
+        "url": "https://x.com/012_shiro/status/2116322312794566730",
+        "likes": 550,
+        "retweets": 35,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:12",
+        "captured_at": "",
+        "text": "ニトリのしっとりとろけるようなあったかシリーズ、気持ち良すぎて布団から出られなくなるの注意 pic.x.com/4uvMA4etZT",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "【匂わせ…ですか？】 🎠え？枕のオススメある？ 🦉🎻俺ニトリのホテル枕みたいなの… 🧢🪽俺も全く同じやつかもしれないです。 🎠え？待って匂わ...",
+        "platform": "x",
+        "author": "@SilverDeer000",
+        "url": "https://x.com/SilverDeer000/status/2116289078819996025",
+        "likes": 480,
+        "retweets": 35,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 7:00",
+        "captured_at": "",
+        "text": "【匂わせ…ですか？】 🎠え？枕のオススメある？ 🦉🎻俺ニトリのホテル枕みたいなの… 🧢🪽俺も全く同じやつかもしれないです。 🎠え？待って匂わせじゃない？ 🦉🎻ごつばのシャンプーで俺寝てる 古より伝わりし、カップルTwitterのそれやんけwww #ルスタリオンエア #セラフィルム #放籠配信 pic.x.com/W8VHx14OTf",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "#くら寿司コラボ 行ってきました！ ポンはスマホ注文&課金もしつつで6〜7回、当たりは3回でした🍣 見ての通り🌩️🦒推しで、最後に缶バッジ来...",
+        "platform": "x",
+        "author": "@kapimaro",
+        "url": "https://x.com/kapimaro/status/2116409616854872137",
+        "likes": 108,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:59",
+        "captured_at": "",
+        "text": "#くら寿司コラボ 行ってきました！ ポンはスマホ注文&課金もしつつで6〜7回、当たりは3回でした🍣 見ての通り🌩️🦒推しで、最後に缶バッジ来てくれた！ あとクリアポスター貰えるのかなり嬉しい✨ ニトリの1190円のA3額縁がぴったりなのでこれで保護して飾れる〜😆 プルプルもしてきた((👻)) pic.x.com/De4XJsug9E",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリもまたツルツルペラペラバカマスク店員だらけ 本当気持ち悪い",
+        "platform": "x",
+        "author": "@12nXWzz7L3A0zaz",
+        "url": "https://x.com/12nXWzz7L3A0zaz/status/2116355435397779740",
+        "likes": 59,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:23",
+        "captured_at": "",
+        "text": "ニトリもまたツルツルペラペラバカマスク店員だらけ 本当気持ち悪い",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリで見つけた、あったか猫ちゃんアイテムをご紹介します🐈‍⬛✨ 猫ちゃんと一緒に冬支度しよう❣️ 気になるアイテムは保存してチェックしてね...",
+        "platform": "tiktok",
+        "author": "@flaffy.mew",
+        "url": "https://www.tiktok.com/@flaffy.mew/video/7702418448634301717",
+        "likes": 1390,
+        "retweets": 297,
+        "views": 59700,
+        "comments": 3,
+        "posted_on": "2026-10-30 20:17",
+        "captured_at": "2026-10-31T19:43:28.930689+09:00",
+        "text": "ニトリで見つけた、あったか猫ちゃんアイテムをご紹介します🐈‍⬛✨ 猫ちゃんと一緒に冬支度しよう❣️ 気になるアイテムは保存してチェックしてね🐱🐾🍂 #ニャイフハック #ニトリ #猫グッズ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "絶対に買うべき！カップボード🫧 #キッチン #インテリア #収納 #キッチン収納 #ニトリ",
+        "platform": "tiktok",
+        "author": "@mai room🌼 | ホテルライクな暮らし",
+        "url": "https://www.tiktok.com/@mai_room03/video/7701707461719379220",
+        "likes": 320,
+        "retweets": 12,
+        "views": 10800,
+        "comments": 3,
+        "posted_on": "2026-10-28 22:18",
+        "captured_at": "2026-10-31T19:43:28.930689+09:00",
+        "text": "絶対に買うべき！カップボード🫧 #キッチン #インテリア #収納 #キッチン収納 #ニトリ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261031",
     "title": "2026年10月31日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "梅田茶屋町の旗艦店オープンを起点に、新オーディオブランド「life+audio」とガジェットブランド「life+one」の先行販売が始まり、家具・インテリア以外の生活提案へ領域を広げている。 ニトリ初のブラックフライデー、冬物・調理用品の10%値引き、11月の月替わりセールなど価格施策が重なり、年末商戦に向けた販売強化が鮮明になっている。",
