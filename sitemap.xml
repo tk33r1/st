@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://tk.st/</loc>
-<lastmod>2026-10-31T13:50:47+09:00</lastmod>
+<lastmod>2026-10-31T04:51:23Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/dj/</loc>
@@ -106,7 +106,7 @@
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/</loc>
-<lastmod>2026-10-30T21:20:23Z</lastmod>
+<lastmod>2026-10-31T20:23:58Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/magi-app/www/</loc>
@@ -534,6 +534,10 @@
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/20261031/</loc>
-<lastmod>2026-10-30T21:20:19Z</lastmod>
+<lastmod>2026-10-31T20:23:58Z</lastmod>
+</url>
+<url>
+<loc>https://tk.st/job/retailtechdaily/20261101/</loc>
+<lastmod>2026-10-31T20:23:58Z</lastmod>
 </url>
 </urlset>
