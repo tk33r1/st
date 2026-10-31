@@ -35,12 +35,12 @@ jobs:
       snapshot: ${{ steps.snapshot.outputs.snapshot }}
       validate: ${{ steps.snapshot.outputs.validate }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Inspect the pinned seeded PR using main code
@@ -61,21 +61,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           path: trusted
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
           path: candidate
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Integrate the recorded seed base without hooks
@@ -97,7 +97,7 @@ jobs:
           TRIAL_BASE: ${{ fromJSON(needs.discover.outputs.snapshot).base }}
           TRIAL_HEAD: ${{ fromJSON(needs.discover.outputs.snapshot).head }}
         run: node ../trusted/.github/scripts/magi2-daily-check.mjs --full --root "$PWD" --base "$TRIAL_BASE" --head "$TRIAL_HEAD"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: magi2-seed-harness-${{ github.run_id }}-${{ github.run_attempt }}
@@ -114,11 +114,11 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Recheck the PR and report only the validation job result

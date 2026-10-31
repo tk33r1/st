@@ -39,13 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # title評価の旧版を git show で読む
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version-file: .node-version
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       with:
         python-version: '3.12'
     - name: Probe the API
@@ -82,7 +82,7 @@ jobs:
         node .github/scripts/eval-magi-models.mjs --cases=c1-light,c2-light --label=fault-openai --fault-provider=openai
     - name: Restore completed synthetic cases for the site comparison
       if: inputs.evaluation == 'site' && inputs.resume-run != ''
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: magi47-quality
         path: workers/.wrangler/magi47-quality/
@@ -175,7 +175,7 @@ jobs:
         PY
     - name: Keep metadata only
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: anthropic-probe
         path: workers/.wrangler/anthropic-probe.json
@@ -183,7 +183,7 @@ jobs:
         if-no-files-found: ignore
     - name: Keep synthetic evaluation answers for review
       if: always() && hashFiles('.github/scripts/eval-magi-models.mjs') != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: magi47-quality
         path: workers/.wrangler/magi47-quality/
@@ -191,7 +191,7 @@ jobs:
         if-no-files-found: ignore
     - name: Keep title evaluation outputs for review
       if: always() && inputs.evaluation == 'title'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: magi-title
         path: workers/.wrangler/magi-title/
@@ -199,7 +199,7 @@ jobs:
         if-no-files-found: ignore
     - name: Keep persona evaluation outputs for review
       if: always() && inputs.evaluation == 'persona'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: magi-persona
         path: workers/.wrangler/magi-persona/

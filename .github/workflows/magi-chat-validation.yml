@@ -25,14 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install browser verification tools
@@ -55,7 +55,7 @@ jobs:
         run: |
           node .github/scripts/test-magi-privacy-native-browser.mjs
           node .github/scripts/test-magi-privacy-browser.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: magi-chat-browser-${{ inputs.sha || github.sha }}
@@ -65,19 +65,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Build a separate app with the real native receiver
@@ -102,7 +102,7 @@ jobs:
           script: |
             adb -s emulator-5554 install -r magi-app/android/app/build/outputs/apk/debug/app-debug.apk
             node .github/scripts/test-magi-chat-matrix.mjs --android --adb=adb --device=emulator-5554 --apk=magi-app/android/app/build/outputs/apk/debug/app-debug.apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: magi-chat-android-${{ inputs.sha || github.sha }}
