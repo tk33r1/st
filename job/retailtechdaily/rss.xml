@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 31 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 31 Oct 2026 06:20:16 +0900</lastBuildDate>
+    <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 01 Nov 2026 05:23:48 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月1日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261101/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261101/</guid>
+      <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジの小銭大量投入が店舗の“レジ崩壊”リスクにつながるという現場の声が、生活者の関心を集めています。 1人で複数台のセルフレジを監視する店員の負担が可視化され、有人レジを求める客の声とのギャップが浮き彫りになりました。</description>
+    </item>
     <item>
       <title>2026年10月31日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261031/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261017/</guid>
       <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
       <description>カインズがRELEXのシステムを導入し、需要予測と補充業務の高度化を進める。AI需要予測は在庫最適化の実務テーマとして国内小売に広がっている。 リテールメディアサミット2026へのブース出展など、購買データを活用した広告事業への関心が業界で高まっている。</description>
-    </item>
-    <item>
-      <title>2026年10月16日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261016/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261016/</guid>
-      <pubDate>Fri, 16 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ローソンの3～8月期決算は増収増益となり、AI発注とファストフーズの好調により平均日販が過去最高の60.8万円に達した。店舗オペレーションのAI活用が売上指標の改善に結び付いたことが示された。 リテールメディアネットワーク市場は2035年に5,200億米ドル規模へ拡大するとの予測が示された。米国では大手小売の広告事業を率いる人材の獲得競争も進んでおり、購買データを軸にした広告ビジネスの本格化がうかがえる。</description>
     </item>
   </channel>
 </rss>

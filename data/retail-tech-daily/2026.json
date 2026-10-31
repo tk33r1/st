@@ -1,5 +1,90 @@
 [
   {
+    "date": "20261101",
+    "title": "2026年11月1日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジの小銭大量投入が店舗の“レジ崩壊”リスクにつながるという現場の声が、生活者の関心を集めています。 1人で複数台のセルフレジを監視する店員の負担が可視化され、有人レジを求める客の声とのギャップが浮き彫りになりました。",
+    "count": 3,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジの小銭大量投入が店舗の“レジ崩壊”リスクにつながるという現場の声が、生活者の関心を集めています。",
+      "1人で複数台のセルフレジを監視する店員の負担が可視化され、有人レジを求める客の声とのギャップが浮き彫りになりました。",
+      "セルフレジ化が進む一方で、操作トラブル時のカスハラや接客摩擦が依然として課題であり、運用設計の重要性が増しています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジは両替機ではない」小銭の大量投入がレジ崩壊を招く",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-04",
+        "summary": "セルフレジに小銭を大量投入する客の行動が、店側の“レジ崩壊”リスクにつながるとして、店員の訴えを漫画仕立てで紹介した記事。セルフレジは両替機ではなく、大量の硬貨投入は機械の処理時間を延ばし、後続客の待ち時間や店員の対応負担を増やすと指摘している。作者への取材を通じ、現場の本音も伝えている。",
+        "why_it_matters": "セルフレジの運用では、硬貨処理の遅延が後続客の体験悪化に直結する。硬貨投入量の上限表示や両替機の併設、キャッシュレス決済への誘導など、機器設計と案内導線の見直しが有効な示唆となる。店員の負担を可視化し、利用ルールの周知を店舗DXの一部として設計することが重要だ。",
+        "tags": [
+          "セルフレジ",
+          "店内UX",
+          "現場オペレーション"
+        ],
+        "search_terms": [
+          "セルフレジ 小銭 投入",
+          "self-checkout coin overload",
+          "self-checkout cash handling",
+          "レジ混雑 対策"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9ydlNvbHdXS3I3SUxFQ19qNmhQS3ZEeS11akNxZGFZWkYycl80azQ5TFRYYzU5X1RISTZHV1YwWHdtd05qV2JvS1dlZ1pibUxrVU1haERVUXNmbWpLWmttQXhtamJlaDJERXZLVjFR?oc=5",
+        "source_pub_ts": 1793389137
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "1人で複数台を回すセルフレジ店員の負担と、有人レジを求める客の声",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-05",
+        "summary": "セルフレジを1人の店員が複数台まとめて監視・対応する現場の負担を描き、「有人レジも入れてほしい」という客の声とのギャップを取り上げた漫画記事。機械による省人化が進む一方、トラブル時の対応は依然として人が担っている実態を示している。共感を呼ぶ生活者のリアルな視点を伝える内容となっている。",
+        "why_it_matters": "省人化の裏側では、複数台のセルフレジを監視する店員の負荷が見えにくい。有人レジの残し方や監視人員の配置を見直す必要性を示している。顧客の要望と現場の実態のギャップを埋めるには、遠隔監視やアラート設計など、運用を支える仕組みの整備が今後の焦点になる。",
+        "tags": [
+          "セルフレジ",
+          "省人化",
+          "店員負担"
+        ],
+        "search_terms": [
+          "セルフレジ 複数台 監視",
+          "self-checkout staff workload",
+          "有人レジ 要望",
+          "unmanned checkout monitoring"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE11aGtqam1pakJLYVIybzh0WV9mekNkczNOVFU3Ykl6ejZJUlIteWF2NUgzaldERmh3TnV4Yy1hX1ZSZ042LTVyUzRZUkNEeHpKYTVRanNYZTlfbzVPTzA0Z1BJb085X01rcW9HT0h3?oc=5",
+        "source_pub_ts": 1793382401
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジのトラブルで飛び出す「いいからさっさとやれ」発言とカスハラ問題",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-02",
+        "summary": "セルフレジでの操作トラブルの際に、客が店員へ横柄な態度を取る場面を描いた漫画を紹介した記事。「店員がやってくれる魔法の言葉だと思ってます？」という店員側の言葉から、セルフレジ導入後も残るカスハラの問題を浮き彫りにしている。作者への取材を通じ、接客現場の難しさも伝えている。",
+        "why_it_matters": "セルフレジ化は店員の役割を減らす一方で、操作補助や困りごとへの対応は残り、そこで顧客との摩擦が生じやすい。ヘルプ機能の分かりやすさや、呼び出しボタンの設計、スタッフ向けの対応マニュアル整備が求められる。カスハラ対策を含めた運用設計が、セルフレジ普及の鍵になる。",
+        "tags": [
+          "セルフレジ",
+          "カスハラ",
+          "接客"
+        ],
+        "search_terms": [
+          "セルフレジ カスハラ",
+          "self-checkout customer harassment",
+          "セルフレジ 操作トラブル",
+          "self-checkout help design"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5OYWRSbWlEeWVtOVJjNjAzRHVFN0lDYmQ0MG1ueTBmcWZWS2hCWVZSUHF4MzExS1JkeWpMeExSNVdPdmtnX2lWdW1qc1RzMmRkTUw0MGR4WVdDYVM2bVpNenVEYmR1bk12S25vN0t3?oc=5",
+        "source_pub_ts": 1793411279
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261031",
     "title": "2026年10月31日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。",
