@@ -1437,7 +1437,11 @@ function openPromptMenu(el, anchor, how, point) {
 // AGENT_MSG_MENU_END
 (function () {
   var plugin = nativeAndroid && window.Capacitor.Plugins && window.Capacitor.Plugins.MagiScreenshot;
-  if (plugin && plugin.addListener) plugin.addListener('screenshot', showShotCard).catch(function () {});
+  // ネイティブのプラグインの addListener は Promise を返さない（戻り値に .catch が無い）。Promise.resolve で包み、
+  // 登録の失敗で以降の初期化（履歴・ネイティブ受信の準備）を止めない
+  if (plugin && plugin.addListener) {
+    try { Promise.resolve(plugin.addListener('screenshot', showShotCard)).catch(function () {}); } catch (_) {}
+  }
 })();
 // ［ソース］の一覧は下からのシート。アイコンは Worker が付けたものだけで、画面から出典のサイトへ取りに行かない
 function showAgentSourcesSheet(btn, item) {

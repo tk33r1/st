@@ -1446,6 +1446,16 @@ test('会話の期限切れ削除は利用の無い日と新規保存の停止�
   await assert.rejects(failed[0],/synthetic DB failure/);
 });
 
+test('スクショ検知の登録は、ネイティブの addListener が Promise を返さなくても初期化を止めない', () => {
+  // 7.1 の候補で .catch を直接つなぎ、Android で起動直後に TypeError になって履歴とネイティブ受信の準備が止まった
+  const src = between(mobile, "var plugin = nativeAndroid && window.Capacitor.Plugins && window.Capacitor.Plugins.MagiScreenshot;", '})();');
+  const ctx = vm.createContext({ nativeAndroid: true, showShotCard() {}, Promise,
+    window: { Capacitor: { Plugins: { MagiScreenshot: { addListener: () => ({ remove() {} }) } } } } });
+  assert.doesNotThrow(() => vm.runInContext('(function () {' + src + '})();', ctx));
+  ctx.window.Capacitor.Plugins.MagiScreenshot.addListener = () => { throw new Error('not available'); };
+  assert.doesNotThrow(() => vm.runInContext('(function () {' + src + '})();', ctx));
+});
+
 test('プロンプトへの絵文字は prompt_reaction を送った画面だけで選び、一覧の絵文字だけを送る', async () => {
   for (const [flag, reply, expected] of [[true, '😂', '😂'], [true, '- 付けない', null], [true, '🐟', null], [false, '😂', null]]) {
     const reactorCalls = [];
