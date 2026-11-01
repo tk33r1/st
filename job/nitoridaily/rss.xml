@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 01 Nov 2026 05:25:37 +0900</lastBuildDate>
+    <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 02 Nov 2026 06:01:41 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月2日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261102/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261102/</guid>
+      <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
+      <description>梅田の旗艦店開業を起点に、ニトリは家具・家電に加えアパレルやガジェットへと生活提案の領域を広げている。 799円のフローリングワイパーや899円のバスクリーナーなど、低価格で満足度の高い日用品がレビューやSNSで反響を集めている。</description>
+    </item>
     <item>
       <title>2026年11月1日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261101/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261019/</guid>
       <pubDate>Mon, 19 Oct 2026 08:00:00 +0900</pubDate>
       <description>99,900円の幅60cm・450Lスリム大型冷蔵庫の予約開始や島忠「爆安挑戦セール」第10弾など、高単価家電から日常の価格訴求まで商品・価格戦略の幅が広がっています。 戸田駅前への新店オープンが報じられ、国内店舗網の拡充が続いています。海外では昨日新たに報じられた独自の動向が乏しく、インド関連は既報の範囲にとどまりました。</description>
-    </item>
-    <item>
-      <title>2026年10月18日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261018/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261018/</guid>
-      <pubDate>Sun, 18 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリホールディングスの会長が、数年以内にロボット接客を導入する考えを示し、店舗DXの方向性が経営トップの発言として示されました。 インド・ムンバイのSky City Mallで2号店が開店したと報じられ、海外での店舗網拡大が都市部で進んでいることが確認できます。</description>
     </item>
   </channel>
 </rss>
