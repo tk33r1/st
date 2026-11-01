@@ -1,3 +1,4 @@
+import {COMMIT_SHA_RE,VERSION_ID_RE} from './magi2-daily-contract.mjs';
 // キーの反映と公開を1回のdeployで行い、版照合の後に独立したsecret putを挟まない。
 import {spawnSync} from 'node:child_process';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
@@ -7,8 +8,8 @@ import {pathToFileURL} from 'node:url';
 import {cloudflareVersionReader} from './magi2-daily-cloudflare.mjs';
 
 export async function deployMagiWorker({target,expectedId='',anthropicKey,readDeployment,run}={}) {
-  if(!/^[a-f0-9]{40}$/.test(target||'')||typeof expectedId!=='string'
-    ||expectedId!==''&&!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(expectedId)
+  if(!COMMIT_SHA_RE.test(target||'')||typeof expectedId!=='string'
+    ||expectedId!==''&&!VERSION_ID_RE.test(expectedId)
     ||typeof anthropicKey!=='string'||!anthropicKey.trim()||typeof run!=='function'
     ||expectedId!==''&&typeof readDeployment!=='function')throw new Error('magi_deploy_configuration');
   const directory=mkdtempSync(join(tmpdir(),'magi2-deploy-secrets-'));

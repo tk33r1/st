@@ -1,9 +1,9 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // 交互レビューの正式な経路（2026-10-27本人決定）: 本人の自宅PCが定時にcodex execを動かし、専用GitHub Appの名前で結果を投稿する。
 // 投稿元の名前（App）だけを信頼の根拠にする。PR本文・状態コメント・Claudeが転載したJSON・環境変数のreadyは使わない。
 // 依頼とClaudeのモデルの自己申告は点検の作成者、受理・選定・結果はAppのコメントから読む。時刻はGitHubの記録を使う。
 export const reviewRouteName='codex-exec-home';
 const marker=/^<!-- magi2-review:(request|claude|selection|accept|result) (\{.{2,8000}\}) -->\r?\n?/;
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 const id=value=>typeof value==='string'&&/^[\w:-]{1,200}$/.test(value);
 
 // 先頭行の目印だけを読む。JSONが壊れていれば無かったものとして扱う（判定側で未受理・期限切れになる）。

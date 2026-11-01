@@ -92,7 +92,7 @@ try {
     }
     async function beginRating() {
       heldRating = null;
-      await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="good"]').click();
+      await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="👍"]').click();
       const deadline = Date.now() + 5000;
       while (!heldRating && Date.now() < deadline) await new Promise(r => setTimeout(r, 10));
       assert(heldRating, '評価登録が始まっていない');
@@ -166,13 +166,13 @@ try {
     await page.evaluate(id => loadSavedSession(id), owner);
     await page.reload(); await ready();
     assert.equal(await page.evaluate(() => agentHistory.at(-1).reactions.integrated.delete_token), firstReceipt.token);
-    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="good"]').click();
+    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="👍"]').click();
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, firstReceipt.token); assert.equal(reactions.at(-1).op, 'remove');
     results.push(surface + '/late-rating-stays-with-owner-and-removes-after-reload');
 
     await beginRating(); await reset(); await page.evaluate(id => loadSavedSession(id), owner);
-    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="good"]').click();
+    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="👍"]').click();
     const secondReceipt = await finishRating();
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, secondReceipt.token);
@@ -184,13 +184,13 @@ try {
     assert.equal(await page.evaluate(() => agentHistory.length), 0);
     await page.evaluate(() => toggleAgentTemporary());
     assert.equal(await page.evaluate(() => agentHistory.at(-1).reactions.integrated.delete_token), temporaryReceipt.token);
-    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="good"]').click();
+    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="👍"]').click();
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, temporaryReceipt.token);
     results.push(surface + '/temporary-chat-keeps-normal-rating-owner');
 
     await beginRating();
-    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="bad"]').click();
+    await page.locator('.agent-reply [data-act="rate"]').last().click(); await page.locator('.rate-pop [data-rate="😢"]').click();
     const beforeReplacement = reactions.length;
     await reset(); await send('LEAVE-WHILE-CHANGING-RATING');
     const replacedReceipt = await finishRating();

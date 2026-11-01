@@ -1,4 +1,4 @@
-import { ATTACHMENTS, DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { ATTACHMENTS, CONVERSATION_STORE, DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROMPT_REACTION, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl } from '../site-rank.js';
@@ -984,6 +984,48 @@ function fetchSuggestion(env, convo, context, langNote, signal, log) {
   }, signal, log);
 }
 
+// 保存する文から、制御文字（改行・タブは残す）と < > を落とす（AGENTS.md の XSS 対策。表示側も textContent で描く）
+const storedText = text => String(text).replace(replyControls, '').replace(/[<>]/g, '');
+// 会話の1往復を D1 に保存する（非クリティカル：DB が無い・失敗しても会話は続ける。本文はログに書かない）。
+// プロンプトは文字だけ（画像は枚数、添付は名前）。期限切れの削除は保存受付と独立した scheduled で行う
+async function storeConversationTurn(env, row, log) {
+  if (!env.DB || env.CONVERSATION_STORE_ENABLED === 'false') return;
+  const { content, attachments } = row.message;
+  const imgs = contentImages(content).length;
+  const request = storedText([contentText(content).trim(), imgs ? `[画像${imgs}枚]` : '', attachments?.length ? `[添付: ${attachments.join(', ')}]` : '']
+    .filter(Boolean).join('\n')).slice(0, CONVERSATION_STORE.request_max_chars);
+  const response = storedText(String(row.answer || '')).slice(0, CONVERSATION_STORE.response_max_chars);
+  if (!request || !response.trim()) return;
+  try {
+    await env.DB.prepare(`INSERT INTO conversations (created_at, ip, conversation_id, theme, intent, mode, request, response)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`).bind(new Date().toISOString(), row.ip, row.conversationId, row.theme, row.intent, row.mode, request, response).run();
+    log('conversation_store', 'ok');
+  } catch (err) {
+    log('conversation_store', 'db_error', err.message);
+  }
+}
+
+// 毎日、次の定期処理までに期限を迎える行も先に消す（最長365日。新規保存を止めた後も削除を続ける）。
+async function cleanupConversationTurns(env, now) {
+  if (!env.DB) return;
+  const cutoff = new Date(now - (CONVERSATION_STORE.retention_days - 1) * 864e5).toISOString();
+  await env.DB.prepare('DELETE FROM conversations WHERE created_at <= ?1').bind(cutoff).run();
+}
+
+// 統合人格がプロンプトに付ける絵文字（非クリティカル：失敗・時間切れ・一覧に無い出力なら null）。
+// 今回の発言だけを見出しで引用して渡す（チャットの形のまま渡すと、モデルが答えを書く）。画像・添付は件数だけ
+function fetchPromptReaction(env, lastContent, attachments, signal, log) {
+  return fetchAuxLine(env, 'reaction', () => {
+    const imgs = contentImages(lastContent).length;
+    const quoted = [PROMPT_REACTION.input_header, head(contentText(lastContent).trim(), PROMPT_REACTION.message_max_chars) || '（文字なし）',
+      ...(imgs ? [`[画像${imgs}枚]`] : []), ...(attachments ? [`[添付${attachments.length}件]`] : [])].join('\n');
+    return {
+      cfg: DEFAULTS.models.reactor,
+      messages: [{ role: 'system', content: PROMPT_REACTION.system_prompt + '\n一覧: ' + PROMPT_REACTION.emojis.join(' ') }, { role: 'user', content: quoted }],
+    };
+  }, raw => PROMPT_REACTION.emojis.find(e => raw.trim().startsWith(e)) || '', signal, log);
+}
+
 // --- 討議の判定（personas.js の DEBATE）---
 // 討議の記録。人格ごとに、これまでの回の意見を順に並べる（判定と統合で同じものを使う）。
 // views は [{ round, text, ask }]。ask は統合人格がその人格に向けた問い（第3回以降）
@@ -1258,7 +1300,7 @@ function withoutCurrentPage(choice, page) {
 
 // 事実回答の入力は、本番と保存済み出典の評価で同じ順序から作る。
 function factAnswerMessages({ cards, messages, langNote, theme = null, guide = null, personalization = null,
-  pageChoice = null, siteOnly = false, research = false }) {
+  pageChoice = null, siteOnly = false, research = false, rich = false }) {
   return [
     { role: 'system', content: withLangNote(withCard(research ? { ...SYNTHESIZER, system_prompt: RESEARCH.system_prompt } : SYNTHESIZER,
       cards, PERSONA_CONTEXT.synth_header).system_prompt, langNote) },
@@ -1268,18 +1310,20 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
     { role: 'system', content: FACT_ANSWER.prompt + personalizationNote(personalization) },
     ...(siteOnly ? [{ role: 'system', content: FACT_ANSWER.site_prompt }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
+    // Webの回答は出典の照合の契約（RESEARCH.answer_rules）を優先し、書式の指示を足さない
+    ...(rich && !research ? [{ role: 'system', content: SYNTHESIZER.rich_rules }] : []),
     ...messages,
   ];
 }
 
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
-  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, personalization = null, replyLanguage = null, ip = null, place = null, signal, send, log }) {
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, rich = false, personalization = null, replyLanguage = null, ip = null, place = null, signal, send, log }) {
   // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
   const pagesWait = pagesPromise ? awaitPageChoice(pagesPromise, pageChoice, signal) : null;
   if (pagesWait && !research) pageChoice = await pagesWait;
   if (signal?.aborted) throw searchFailure('cancelled');
-  const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly, personalization };
+  const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly, personalization, rich };
   const input = factAnswerMessages({ ...options, research });
   const answer = research
     ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, place, signal, send, log })
@@ -1679,6 +1723,14 @@ async function readChatInput(request, parsed = null) {
   const wantSitePages = body.site_pages === true;
   // 討議の回数を判定で増やすか（DEBATE）。付けない画面は2回で止める
   const adaptive = body.adaptive_debate === true;
+  // 統合人格の答えを Markdown（段落・太字・見出し・箇条書き・表）で書かせるか（SYNTHESIZER.rich_rules）。
+  // 描ける画面（トップページ・アプリ）だけが送る。付けない画面（配布済みの古いアプリ・DJ・404）は従来の短い平文のまま
+  const richReply = body.rich_reply === true;
+  // 統合人格がプロンプトに絵文字で反応するか（PROMPT_REACTION）。描ける画面（トップページ・アプリ）だけが送る
+  const wantReaction = body.prompt_reaction === true;
+  // 会話を D1 に保存するか（CONVERSATION_STORE）。設定でオフにしていない新しい画面だけが送る。一時チャットでは保存しない
+  const storeConversation = body.conversation_storage === true;
+  const conversationId = typeof body.conversation_id === 'string' && CONVERSATION_STORE.conversation_id_re.test(body.conversation_id) ? body.conversation_id : null;
   // いま開いているページ（トップページは '/'、アプリは 'app'）。送った画面だけにサイト案内を足す。
   // 値はサイトの索引を引くのに使うだけで、プロンプトには入れない。形が違えば送らなかったものとして扱う
   const page = typeof body.page === 'string' && body.page.length <= SITE_GUIDE.page_max_chars
@@ -1723,7 +1775,7 @@ async function readChatInput(request, parsed = null) {
   // 共有資料は最後の発言の頭に添える。討議・議題は状況説明なしの会話に添え、サイト検索の語には含めない。
   const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
   const searchText = contentText(withContext(plainMessages).at(-1).content);
-  return { messages: withShared(messages), plainMessages, fullMessages, discussMessages: withShared(fullMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, page,
+  return { messages: withShared(messages), plainMessages, fullMessages, discussMessages: withShared(fullMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, storeConversation, conversationId, page,
     ...privacy, locationEnabled: body.location_enabled !== false,
     devicePlace: body.location_enabled === false ? null : devicePlace(body.device_location),
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
@@ -1810,7 +1862,7 @@ function discussionSynthesisText({ lastUser, lastRound, opinions, assessment, ma
     + (longDebate && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
 }
 
-function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, content }) {
+function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, content, rich = false }) {
   return [
     // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
     { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + SYNTHESIZER.role[motion ? 'magi' : 'chat'] }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
@@ -1819,6 +1871,8 @@ function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, m
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
     ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
+    // 採決の説明（MAGI）は従来の短い説明のまま
+    ...(rich && !motion ? [{ role: 'system', content: SYNTHESIZER.rich_rules }] : []),
     { role: 'system', content: SYNTHESIZER.constraint_rules + personalizationNote(personalization) },
     ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
     { role: 'user', content },
@@ -1827,7 +1881,7 @@ function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, m
 
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
-  pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, signal, send, log }) {
+  pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, rich = false, signal, send, log }) {
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
@@ -1954,7 +2008,7 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   }
   pageChoice = withoutCurrentPage(pageChoice, page);
   const hasPages = pageChoice && pageChoice.results.length;
-  const synthMessages = discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history,
+  const synthMessages = discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, rich,
     content: withImages(noteLang(augmented), lastImages) });
 
   const answer = await synthesize({ env: upstream, messages: synthMessages, theme, signal, send, log });
@@ -2045,7 +2099,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
     || input.personalization && !features.personalization
     || input.temporaryPersonalization && !features.temporary_personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
   place = input.locationEnabled ? input.devicePlace || place : null;
-  const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, storeConversation, conversationId, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   const qa = await qaGuard(env, () => {
     const last = fullMessages.at(-1).content;
@@ -2182,6 +2236,13 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
             .catch(() => {});
         }
 
+        // --- プロンプトへの絵文字：本流と並列に1回。届き次第送り、done の前に待つ（DJ の相談では付けない）---
+        const reactionPromise = wantReaction && entry === 'chat'
+          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, plainMessages.at(-1).content, plainMessages.at(-1).attachments, signal, log), stop.signal)
+            .then(emoji => { if (emoji && !stop.signal.aborted) send('prompt_reaction', { emoji }); })
+            .catch(() => {})
+          : null;
+
         const motionEvent = motionPromise ? await motionPromise : null;
         if (stop.signal.aborted) throw searchFailure('cancelled');
         if (motionEvent) send('motion', motionEvent);
@@ -2192,10 +2253,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           entry, page, wantSitePages, searchText, signal: stop.signal, pageSignal: pageStop.signal });
         const answer = factMode && classification.mode === 'fact'
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
-              research: classification.intent === 'research' && classification.fresh === 'yes',
+              research: classification.intent === 'research' && classification.fresh === 'yes', rich: richReply,
               replyLanguage: classification.reply_language, ip: requestIP(request), place, signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme, personalization: input.personalization,
-              adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music',
+              adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music', rich: richReply,
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
               signal: stop.signal, send, log });
@@ -2207,6 +2268,12 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         }
         // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）。確認質問で終えた回はタイトルを捨てるので待たない
         if (titlePromise && !clarified) await titlePromise;
+        if (reactionPromise) await reactionPromise;
+        // 会話の保存。切断されても書き終えるよう waitUntil に渡す（応答の完了は待たせない）
+        if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim() && !stop.signal.aborted) {
+          ctx.waitUntil(storeConversationTurn(env, { message: plainMessages.at(-1), answer, ip: requestIP(request), conversationId, theme,
+            intent: classification?.intent || null, mode: motion ? 'magi' : classification?.mode || null }, log));
+        }
         // 読み上げの署名（読み上げ設計§5.2）。確認質問・DJ の相談・読み上げを止めているときは送らない
         if (speechReady(env) && entry !== 'dj-request' && !clarified && spoken.trim() && !stop.signal.aborted) {
           const lang = speechLanguage(classification?.reply_language?.code);
@@ -2481,6 +2548,9 @@ const POST_ROUTES = new Map([
 ]);
 
 export default {
+  scheduled(event, env, ctx) {
+    ctx.waitUntil(cleanupConversationTurns(env, event.scheduledTime));
+  },
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin);

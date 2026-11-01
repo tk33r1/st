@@ -76,6 +76,7 @@ jobs:
           .github/scripts/magi2-daily-cloudflare.mjs
           .github/scripts/magi2-daily-deploy-worker.mjs
           .github/scripts/magi2-daily-http.mjs
+          .github/scripts/magi2-daily-contract.mjs
           workers/magi2/wrangler.toml
         sparse-checkout-cone-mode: false
         persist-credentials: false

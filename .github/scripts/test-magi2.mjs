@@ -273,6 +273,7 @@ function nativeShell(capacitor) {
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
     closeAgentPrivacyDialog() { if (!state.dialog) return false; state.dialog = false; calls.push('dialog'); return true; },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
+    closePromptMenu() { return false; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
     backAgentPage() { if (!state.page) return false; state.page = false; calls.push('page'); return true; },
     closeAgentPanels() { state.panel = false; calls.push('panel'); },
@@ -1384,6 +1385,86 @@ test('言語の種は新契約の未確定時だけ採用・検査し、初回�
   }
 });
 
+test('会話の保存は conversation_storage を送った通常チャットだけで、プロンプトの文字と答えを1行書く', async () => {
+  const cases = [
+    [{ conversation_storage: true, conversation_id: 'session_1_abc' }, 'session_1_abc'],
+    [{ conversation_storage: true, conversation_id: '<bad id>' }, null],
+    [{}, undefined],
+    [{ conversation_storage: true, privacy_contract: 1, conversation_mode: 'temporary' }, undefined],
+  ];
+  for (const [extra, expected] of cases) {
+    const w = worker(), db = counts(), writes = [];
+    w.env.DB = { ...db, prepare(sql) { const st = db.prepare(sql); if (/conversations/.test(sql)) { const bind = st.bind; st.bind = (...args) => { writes.push({ sql, args }); return bind.apply(st, args); }; } return st; } };
+    const text = await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: '週末の<b>過ごし方</b>を相談したい' + String.fromCharCode(7) }], theme: 'dark', ...extra })).text();
+    assert.match(text, /event: done/);
+    await Promise.all(w.waits);
+    const inserts = writes.filter(x => x.sql.startsWith('INSERT INTO conversations'));
+    if (expected === undefined) { assert.equal(inserts.length, 0, JSON.stringify(extra)); continue; }
+    assert.equal(inserts.length, 1);
+    const [at, ip, id, theme, , , request, response] = inserts[0].args;
+    assert.ok(Date.parse(at)); assert.equal(ip, '192.0.2.1'); assert.equal(id, expected); assert.equal(theme, 'dark');
+    // 保存時に < > と制御文字を落とす（AGENTS.md の XSS 対策）
+    assert.equal(request, '週末のb過ごし方/bを相談したい'); assert.ok(response.length > 0); assert.ok(!/[<>]/.test(response));
+    // 止めるときは Worker の設定で書かない
+    const off = worker(); off.env.DB = w.env.DB; off.env.CONVERSATION_STORE_ENABLED = 'false';
+    await (await off.request('/magi2/chat', { messages: [{ role: 'user', content: '次の相談' }], ...extra })).text();
+    await Promise.all(off.waits);
+    assert.equal(writes.filter(x => x.sql.startsWith('INSERT INTO conversations')).length, 1, '止めた後は書かない');
+  }
+  // 移行の SQL と INSERT 文は本物の SQLite で通る
+  const dir = mkdtempSync(join(tmpdir(), 'magi2-conv-')), file = join(dir, 'db.sqlite');
+  try {
+    sqlite(file, read('workers/magi2/migrations/0003_conversations.sql'));
+    const src = read('workers/magi2/src/index.js'), insert = src.slice(src.indexOf('INSERT INTO conversations'), src.indexOf('`)', src.indexOf('INSERT INTO conversations')));
+    const res = sqlite(file, insert.replace(/\?\d/g, '?'), ['2026-11-02T00:00:00.000Z', '192.0.2.1', 'session_1', 'light', 'consult', null, '質問', '答え']);
+    assert.equal(res.changes, 1);
+    assert.equal(sqlite(file, 'SELECT COUNT(*) AS n FROM conversations', []).row.n, 1);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('会話の期限切れ削除は利用の無い日と新規保存の停止中も実行し、次回までの期限も守る', async () => {
+  const w=worker(), waits=[],calls=[],now=Date.parse('2026-11-02T15:17:00Z');
+  w.env.CONVERSATION_STORE_ENABLED='false';
+  w.env.DB={prepare(sql){return {bind(cutoff){return {async run(){calls.push({sql,cutoff});}};}};}};
+  w.ctx.worker.scheduled({scheduledTime:now},w.env,{waitUntil:p=>waits.push(p)});
+  await Promise.all(waits);
+  assert.equal(calls.length,1);assert.match(calls[0].sql,/^DELETE FROM conversations/);
+  assert.equal(Date.parse(calls[0].cutoff),now-364*864e5);
+  assert.match(read('workers/magi2/wrangler.toml'),/\[triggers\]\s+crons = \["17 15 \* \* \*"\]/);
+  const dir=mkdtempSync(join(tmpdir(),'magi2-expiry-')),file=join(dir,'db.sqlite');
+  try {
+    sqlite(file,read('workers/magi2/migrations/0003_conversations.sql'));
+    for(const [days,name] of [[366,'expired'],[364,'next-run-expiry'],[363,'fresh']])
+      sqlite(file,'INSERT INTO conversations (created_at,request,response) VALUES (?,?,?)',[new Date(now-days*864e5).toISOString(),name,'synthetic']);
+    sqlite(file,calls[0].sql,[calls[0].cutoff]);
+    assert.equal(sqlite(file,'SELECT request FROM conversations',[]).row.request,'fresh');
+    assert.equal(sqlite(file,'SELECT COUNT(*) AS n FROM conversations',[]).row.n,1);
+  } finally {rmSync(dir,{recursive:true,force:true});}
+  const failed=[];
+  w.env.DB={prepare(){throw new Error('synthetic DB failure');}};
+  w.ctx.worker.scheduled({scheduledTime:now},w.env,{waitUntil:p=>failed.push(p)});
+  await assert.rejects(failed[0],/synthetic DB failure/);
+});
+
+test('プロンプトへの絵文字は prompt_reaction を送った画面だけで選び、一覧の絵文字だけを送る', async () => {
+  for (const [flag, reply, expected] of [[true, '😂', '😂'], [true, '- 付けない', null], [true, '🐟', null], [false, '😂', null]]) {
+    const reactorCalls = [];
+    const w = worker(undefined, (_url, options) => {
+      const body = options?.body && JSON.parse(options.body);
+      if (!body?.messages?.some(m => typeof m.content === 'string' && m.content.includes('絵文字のリアクションを1つだけ付ける'))) return null;
+      reactorCalls.push(body);
+      return Response.json({ choices: [{ message: { content: reply }, finish_reason: 'stop' }] });
+    });
+    const text = await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: '昇進が決まりました！' }], ...(flag ? { prompt_reaction: true } : {}) })).text();
+    assert.match(text, /event: done/);
+    assert.equal(reactorCalls.length, flag ? 1 : 0);
+    if (flag) assert.ok(reactorCalls[0].messages.at(-1).content.includes('昇進が決まりました！'));
+    const ev = text.match(/event: prompt_reaction\ndata: (.*)/);
+    assert.deepEqual(ev ? JSON.parse(ev[1]) : null, expected ? { emoji: expected } : null);
+    if (ev) assert.ok(text.indexOf('event: prompt_reaction') < text.indexOf('event: done'));
+  }
+});
+
 test('全人格・統合・タイトル・予測へ同じ言語指定を渡し、日本語の状況説明で上書きしない', async () => {
   for (const text of ['What do you think of サカナクション?', 'この曲はどうですか？']) {
     const w = worker();
@@ -1445,6 +1526,31 @@ test('A2: 引用の受信は本文の再生を待ち、旧Workerの通知は従�
       const invalid=streamClient(src);invalid.push(seq);invalid.close();await assert.rejects(invalid.parse(),/invalid_sources/);
     }
   }
+});
+
+test('回答のMarkdown表示と共有画像は、トップページとアプリで同じ中身を使う', () => {
+  const rich=[home,mobile].map(s=>between(s,'// AGENT_RICH_BEGIN','// AGENT_RICH_END').replaceAll('\r\n','\n'));
+  assert.ok(rich[0].length>1000);assert.equal(rich[0],rich[1]);
+  // 吹き出しの操作メニュー（プロンプトとAIの回答の長押し）も同じ中身。ラベルは短い「コピー」「選択」「共有」
+  const menu=[home,mobile].map(s=>between(s,'// AGENT_MSG_MENU_BEGIN','// AGENT_MSG_MENU_END').replaceAll('\r\n','\n'));
+  assert.ok(menu[0].length>1000);assert.equal(menu[0],menu[1]);
+  for(const word of ["'コピー'","'選択'","'共有'"]) assert.ok(menu[0].includes(word),word);
+  // スクロールに移って取り消された長押し（pointercancel）でも、次のタップを捨てる印を戻す
+  assert.ok(menu[0].includes("['pointerup', 'pointercancel'].forEach"));
+  // 共有画像の取り置き：押した扱いが切れたら画像を取っておき、同じ文でもう一度押したときだけ1回使う
+  const share=vm.createContext({});vm.runInContext(rich[1],share);
+  const err=share.agentShareLater('文','画像');assert.equal(err.name,'ShareNeedsTap');assert.equal(share.agentShareNeedsTap(err),true);
+  assert.equal(share.agentShareReadyFile('別の文'),null);assert.equal(share.agentShareReadyFile('文'),'画像');assert.equal(share.agentShareReadyFile('文'),null);
+  assert.ok(!menu[0].includes('テキストを選択')&&!menu[0].includes('プロンプトを共有'));
+  const image=between(home,'// MAGI_SHARE_IMAGE_BEGIN','// MAGI_SHARE_IMAGE_END').replaceAll('\r\n','\n');
+  assert.equal(image.slice(image.indexOf('\n')+1).trimEnd(),read('magi-app/www/share-image.js').replaceAll('\r\n','\n').trimEnd());
+  // 描画は DOM で組み立て、innerHTML へ本文を入れない。平文（共有画像・通知）は記号を外し、表は「｜」で区切る
+  assert.ok(!/innerHTML/.test(rich[0]));
+  const ctx=vm.createContext({});vm.runInContext(rich[1],ctx);
+  assert.equal(ctx.agentRichPlain('## 見出し\n\n**太字**と`code`\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n- 項目\n---'),'見出し\n\n太字とcode\n\nA ｜ B\n1 ｜ 2\n\n・項目');
+  // 描ける画面だけが rich_reply を送り、Worker はそのときだけ書式の指示を足す
+  for(const src of [home,mobile]) assert.match(src,/adaptive_debate: true, rich_reply: true/);
+  assert.ok(!/rich_reply/.test(dj));
 });
 
 test('A2: 引用は安全な文字描画・範囲だけを保存し、Markdownに同じ番号を残す', () => {
@@ -1790,7 +1896,7 @@ test('両画面: 初回の送信が失敗したら仮保存した保存済みの
 test('両画面: 旧形式の回答に付けたmidは元の履歴に入り、［もう一度］・評価が項目を見つけられる', () => {
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
     const c = client(src, isHome), bars = [];
-    Object.assign(c.ctx, { agentClarifyPlaceholder() {}, renderAgentSources() {}, applyReactionsToTurn() {}, closeAgentConversation() {}, magiReplay() {}, setAgentControlsEnabled() {}, turnHTML: () => '' });
+    Object.assign(c.ctx, { agentClarifyPlaceholder() {}, applyReactionsToTurn() {}, closeAgentConversation() {}, magiReplay() {}, setAgentControlsEnabled() {}, turnHTML: () => '' });
     c.ctx.setupReplyBar = (_, item) => bars.push(item);
     let n = 0; c.ctx.genMid = () => 'legacy' + ++n;
     vm.runInContext(between(src, 'function renderHistoryToLog(', isHome ? '// 現在のセッションの一意ID' : '// ---- Lifecycle'), c.ctx);
@@ -2060,6 +2166,20 @@ test('添付ファイルは形式・文字コード・件数・合計1万字を�
   assert.equal(ctx.agentDecodeText(Uint8Array.from(utf16([0xfe, 0xff], 'ログ,1', false))), 'ログ,1');
   assert.throws(() => ctx.agentDecodeText(Uint8Array.from(utf16([], 'ab', true))), /attach_binary/);
   assert.doesNotMatch(ctx.agentAttachChipsHTML([{ type: 'attachment', name: '"><img src=x onerror=alert(1)>', text: 'x' }]), /<img/);
+});
+
+test('添付の読取中に別の添付が増えたら、最新の文字数・画像枚数へ収める',async()=>{
+  const ctx=vm.createContext({ATTACH_MAX:4,tr:(en,ja)=>ja});
+  vm.runInContext(between(home,'// AGENT_ATTACH_BEGIN','// AGENT_ATTACH_END'),ctx);
+  let complete;
+  ctx.agentReadAttachment=()=>new Promise(resolve=>{complete=resolve;});
+  const list=[],pending=ctx.agentAttachFile(list,{name:'late.pdf'},'pdf',()=>false);
+  list.push({kind:'attachment',name:'other.txt',text:'x'.repeat(9999)},...Array.from({length:3},()=>({url:'image',thumb:'image'})));
+  complete({text:'ab',images:Array.from({length:4},()=>({url:'page',thumb:'page'}))});
+  assert.match(await pending,/先頭の1字だけ/);
+  assert.equal(list.filter(a=>a.kind==='attachment').reduce((n,a)=>n+a.text.length,0),10000);
+  assert.equal(list.filter(a=>a.kind!=='attachment').length,4);
+  assert.equal(list.find(a=>a.name==='late.pdf').text,'a');
 });
 
 test('PDF は文字と先頭ページの画像を、写真と同じ4枚の枠の空き分だけ下書きに足す', async () => {
@@ -2409,7 +2529,7 @@ function client(src, isHome = false) {
     agentLog: { ...element(), children: [] }, agentInput: { ...element(), value: 'q' }, agentSendBtn: element(), attachBtn: element(), agentDegraded: element(), agentTitle: '',
     agentHistory: [], agentBusy: false, agentDead: false, agentClosed: false, agentGen: 0, agentCtrl: null, attachments: [], attachNotice: '', pendingReactions: {}, historyLoading: false, nativeHistory: null, nativeInput: null, nativeConversation: null, nativeAndroid: false, sharedLoading: false, agentShared: null, cleanAgentShared: () => null, renderSharedDocument() {},
     localStorage: { removeItem() {} }, safeGet(key) { return ctx.localStorage.getItem?.(key) ?? null; }, readSavedSessions: () => ctx.safeParse ? ctx.safeParse(ctx.safeGet('magi_saved_sessions'), []) : [], loadSavedSessions: () => [], writeSavedSessions() {}, renderSavedSessionsList() {}, genMid: () => 'm1', setAgentSuggestion() {}, fitAgentInput() {}, renderAttachTray() {}, userContentHTML: () => '',
-    userBubbleEl: element, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
+    userBubbleEl: element, agentUserEl() { return ctx.document.createElement('div'); }, markAgentStarted() {}, agentPromptAt: () => null, renderAgentRich(body, text) { if (body) body.textContent = text; }, renderAgentRichSoon(body, text) { if (body) body.textContent = text; }, agentRichPlain: s => s, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     agentPrivacyState: { preparing: false, switching: false }, agentTemporary: () => false, agentPrivateStorage: () => false, agentPrivacyRequest: async () => null, agentPrivacyExpected: () => null, syncAgentPrivacyUI() {}, queueMicrotask,
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
@@ -2742,14 +2862,14 @@ test('両画面の評価: 付け替えは前の評価を消せてから付け、
       assert.equal(errors.at(-1).code, 'reaction_remove_failed'); assert.equal(bar.dataset.removing, undefined); assert.equal(timers.size, 0);
       failed = false;
       await ctx.rateReply(bar, 'bad'); await tick();
-      assert.deepEqual(shown, [null, 'bad']);
+      assert.deepEqual(shown, [null, '👎']);
       assert.equal(posts.at(-2).op, 'remove'); assert.equal(posts.at(-2).delete_token, receipt.delete_token);
       assert.equal(posts.at(-1).reaction, '👎'); assert.equal(store.integrated.em, '👎'); assert.equal(store.integrated.id, 8);
       // 同じ Bad を選ぶと取り消すだけで、付け直さない
       const count = posts.length;
       await ctx.rateReply(bar, 'bad');
       assert.equal(posts.length, count + 1); assert.equal(posts.at(-1).op, 'remove'); assert.equal(store.integrated, undefined);
-      assert.deepEqual(shown, [null, 'bad', null]);
+      assert.deepEqual(shown, [null, '👎', null]);
     }
   }
 });
@@ -3619,8 +3739,8 @@ test('アプリの保存言語の復元時には、言語コード一覧が初�
   const prefix=mobile.slice(0,end);
   const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout(){ return 0; },clearTimeout,
     ResizeObserver:class { observe(){} },
-    window:{matchMedia:()=>({matches:false})},navigator:{},location:{protocol:'http:',hostname:'localhost',search:''},
-    document:{getElementById:()=>({...element(),addEventListener(){}})},
+    window:{matchMedia:()=>({matches:false}),addEventListener(){}},navigator:{},location:{protocol:'http:',hostname:'localhost',search:''},
+    document:{getElementById:()=>({...element(),addEventListener(){}}),addEventListener(){}},
     localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
       ?JSON.stringify({id:'saved',reply_language:{version:1,code:'en',source:'ui'}}):null;}}
   });
@@ -6133,8 +6253,8 @@ function speechCtx(extra = {}) {
 test('読み上げ計画§1.6: 操作列の共通区画はトップページとアプリで同じで、受信はspeechを通す', () => {
   assert.equal(speechBlock(home), speechBlock(mobile));
   assert(speechBlock(home).includes('function createAgentSpeech('));
-  for (const src of [home, mobile]) assert(src.includes("'suggest','speech','done'].indexOf(ev) < 0"));
-  assert(read('magi-app/android/app/src/main/java/st/tk/magi/MagiConversationService.java').includes('|suggest|speech|error|done'));
+  for (const src of [home, mobile]) assert(src.includes("'suggest','prompt_reaction','speech','done'].indexOf(ev) < 0"));
+  assert(read('magi-app/android/app/src/main/java/st/tk/magi/MagiConversationService.java').includes('|suggest|prompt_reaction|speech|error|done'));
   // DJ の画面は読み上げを使わない（Worker も dj-request には署名を付けない）
   assert(!dj.includes('AGENT_SPEECH_BEGIN'));
 });
@@ -6188,12 +6308,18 @@ test('読み上げ計画§1.6・2.2: 頭文字の丸はドメインから同じ�
   assert.equal(ctx.agentShareText('答えだけ', null, false), '答えだけ');
 });
 
-test('回答の評価: 保存した 👍・👎（文字列と登録の記録）だけを Good / Bad として読み、以前の絵文字は出さない', () => {
+test('回答のリアクション: 一覧の絵文字（文字列と登録の記録）だけを読み、以前の 👍・👎 も出す。一覧に無いものは出さない', () => {
   const ctx = speechCtx();
-  assert.equal(ctx.agentRatingOf('\u{1F44D}'), 'good');
-  assert.equal(ctx.agentRatingOf({ em: '\u{1F44E}', id: 3, delete_token: 'a'.repeat(64) }), 'bad');
-  for (const other of ['\u{1F525}', { em: '\u{2764}\u{FE0F}' }, '', null, undefined, 5]) assert.equal(ctx.agentRatingOf(other), null);
+  assert.equal(ctx.agentRatingOf('\u{1F44D}'), '\u{1F44D}');
+  assert.equal(ctx.agentRatingOf({ em: '\u{1F44E}', id: 3, delete_token: 'a'.repeat(64) }), '\u{1F44E}');
+  assert.equal(ctx.agentRatingOf({ em: '\u{2764}\u{FE0F}' }), '\u{2764}\u{FE0F}'); assert.equal(ctx.agentRatingOf('\u{1F525}'), '\u{1F525}');
+  for (const other of ['\u{1F4A9}', '<b>', 'good', '', null, undefined, 5]) assert.equal(ctx.agentRatingOf(other), null);
   assert.equal(ctx.AGENT_RATINGS.good, '\u{1F44D}'); assert.equal(ctx.AGENT_RATINGS.bad, '\u{1F44E}');
+  assert.deepEqual([...ctx.AGENT_REACTIONS_QUICK], ['\u{1F44D}', '\u{2764}\u{FE0F}', '\u{1F602}', '\u{1F62E}', '\u{1F622}', '\u{1F64F}']);
+  // 統合人格がプロンプトに付ける絵文字は、画面が読める一覧の中から選ぶ
+  const worker = read('workers/magi2/personas.js'), list = worker.slice(worker.indexOf('export const PROMPT_REACTION'));
+  const emojis = JSON.parse(list.slice(list.indexOf('emojis: [') + 8, list.indexOf(']', list.indexOf('emojis: [')) + 1).replaceAll("'", '"'));
+  for (const em of emojis) assert.ok(ctx.AGENT_REACTIONS.includes(em), em);
 });
 
 test('回答の日時: 保存した at を使い、無ければ送ったときの mid から読む。画面を開いた後に付けた mid は使わない', () => {

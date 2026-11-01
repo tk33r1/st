@@ -68,4 +68,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- ☰の「アップデートの確認…」で、照合済みの自分の新しい版だけをインストーラーへ渡す（MagiUpdatePlugin）。 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 14以降で、スクリーンショットを撮ったことだけを受け取る（MagiScreenshotPlugin）。画像は読まない。インストール時に付く通常の権限。 -->
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
+    <!-- 絵文字のリアクション・長押しのメニューで軽く振動させる（画面の navigator.vibrate）。インストール時に付く通常の権限。 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

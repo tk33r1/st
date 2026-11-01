@@ -7,6 +7,19 @@ import {tmpdir} from 'node:os';
 import {deployMagiWorker} from './magi2-daily-deploy-worker.mjs';
 
 const target='a'.repeat(40),id='11111111-1111-1111-1111-111111111111',key='SYNTHETIC_SECRET';
+
+test('公開用の疎なcheckoutにも、実行スクリプトのすべてのローカル依存を含める',()=>{
+  const workflow=readFileSync('.github/workflows/deploy-worker-core.yml','utf8').replaceAll('\r\n','\n');
+  const paths=workflow.match(/sparse-checkout: \|\n([\s\S]*?)sparse-checkout-cone-mode:/)[1].trim().split('\n').map(s=>resolve(s.trim()));
+  const listed=new Set(paths),visited=new Set();
+  function visit(file) {
+    if(visited.has(file))return;visited.add(file);
+    assert.ok(listed.has(file),'sparse checkout missing: '+file);
+    const source=readFileSync(file,'utf8');
+    for(const match of source.matchAll(/from '(\.\/[^']+)'/g))visit(resolve(dirname(file),match[1]));
+  }
+  visit(resolve('.github/scripts/magi2-daily-deploy-worker.mjs'));
+});
 test('キーを先に公開せず、版照合の直後に同じdeployで反映し、一時ファイルを消す',async()=>{
   const events=[];let secretFile;
   await deployMagiWorker({target,expectedId:id,anthropicKey:key,readDeployment:async()=>{events.push('read');return {id};},run:args=>{

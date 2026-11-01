@@ -39,10 +39,12 @@ export const PRIVACY = {
     {"title": "Clarification", "text": "To classify a clarification answer, the original request, clarification questions and options, and previous classification also go to TypeSafe AI. Ordinary AI replies and debates are excluded. Questions and options stay with the chat on your device.", "requires": ["clarify"]},
     {"title": "Facts and Web search", "text": "Factual questions and site guidance use OpenAI in Light or Anthropic in Dark, without debate. Current information uses OpenAI Web search in both themes, with one possible fallback to Anthropic before answer text begins. Cited pages are fetched and sent to the answering provider for checking; JavaScript pages may be read in Cloudflare’s browser. Music recommendations and personal advice use the three personas.", "requires": ["fact_mode"]},
     {"title": "Search location and limits", "text": "With location enabled, Android can send device coordinates and city/region to MAGI and the search provider with your OS permission. If unavailable, your network-estimated city/region is used with a notice. Web and older apps use the network estimate. Turning location off disables both. Location is used for location-dependent questions without a named place, and shown when used. Coordinates are not saved as history fields. Search is limited to 20 requests per IP and 300 site-wide per UTC day. Unavailable search and unsupported items are disclosed. Citations stay with the answer on your device.", "requires": ["fact_mode"]},
+    {"title": "Emoji on your messages", "text": "To choose the emoji Shinya Takeda adds to your message, up to 600 characters of your latest message (images and attachments only as counts) go to Anthropic in both themes. If that fails before a reply, OpenAI may be used once. The emoji is kept with the chat on your device.", "requires": ["prompt_reaction"]},
     {"title": "Site guidance", "text": "Up to 500 characters of your latest message and the public page list go to OpenAI to select links. Links appear for that reply only and are not saved in history.", "requires": ["site_pages"]},
     {"title": "Images", "text": "Up to four images per message, resized on your device before being sent to AI providers like text."},
     {"title": "File attachments", "text": "Text, code and PDF files are read on your device; only the extracted text goes to the conversation’s AI providers, up to 10,000 characters per request including earlier attachments (older ones are then sent by name only). PDFs also send their first pages as images, within the four-image limit. Files are not sent to TypeSafe AI.", "requires": ["attachments"]},
-    {"title": "Site storage", "text": "Rating a reply Good / Bad saves that exchange and your IP address in the database. Unrated inputs are not saved there. Your IP and daily request count are recorded to enforce limits."},
+    {"title": "Site storage", "text": "Rating a reply Good / Bad saves that exchange and your IP address in the database. Unrated inputs are not saved there. Your IP and daily request count are recorded to enforce limits.", "excludes": ["conversation_storage"]},
+    {"title": "Site storage", "text": "Unless you turn off “Save chats on the site” in settings, each question and MAGI’s final answer are saved with your IP address in the site database for up to one year, to review and improve MAGI. Questions are saved as text; images only as a count and attachments only by name. Persona discussions are not saved. Temporary chats and chats sent with the setting off are not saved, and turning it off does not delete what was already saved. Emoji reactions also save that exchange and your IP address. Your IP and daily request count are recorded to enforce limits.", "requires": ["conversation_storage"]},
     {"title": "History on your device", "text": "History stays in your browser’s local storage. It is not permanent; export important chats.", "id": "history"},
     {"title": "Temporary chat", "text": "Temporary chats do not save conversation content in MAGI’s history, files or database. Ratings and sharing are unavailable; copy, retry and read aloud remain available when supported. IP and daily usage counters remain. Reloading or ending the chat discards it. Copying leaves text on the clipboard. External AI providers still receive the conversation and apply their own retention policies. Temporary audio bypasses Cloudflare’s audio cache.", "requires": ["temporary_chat"]},
     {"title": "Personalization", "text": "Your preferred name and custom instructions stay on this device and origin, without sync. When enabled, they go to the providers generating normal replies from the next message. Temporary chats use them only when you explicitly enable personalization for that chat. The temporary choice does not change your normal-chat setting. A reply may reflect these settings and be saved with normal history or a rating.", "requires": ["personalization"]},
@@ -61,10 +63,12 @@ export const PRIVACY = {
     {"title": "確認質問", "text": "確認への回答を分類するときは、元の相談・確認の質問と選択肢・直前の分類結果もTypeSafe AIへ送ります。通常のAI回答や討議は送りません。質問と選択肢は端末の会話に保存します。", "requires": ["clarify"]},
     {"title": "事実確認と検索", "text": "事実の質問とサイト案内は討議せず、ライトはOpenAI、ダークはAnthropicが答えます。最新情報の検索は両テーマともOpenAIを使い、本文開始前に失敗した場合はAnthropicへ1回切り替えることがあります。引用ページの本文を回答する会社へ送って照合し、JavaScriptで描くページはCloudflareのブラウザで読むことがあります。曲の推薦と個人的な相談は3人格で討議します。", "requires": ["fact_mode"]},
     {"title": "検索時の位置情報・上限", "text": "位置情報がオンのAndroidでは、OSの許可を得て端末の座標と市・地域をMAGIと検索する会社へ送ります。取得できなければ通信元から推定した市・地域を使い、その旨を表示します。Webと旧アプリは通信元の推定を使います。設定オフでは両方を使いません。場所を指定していない、場所で答えが変わる質問にだけ使い、使った場所を回答に表示します。座標は履歴の項目として保存しません。検索はUTCの日ごとにIPあたり20回、全体300回まで。検索できない場合や裏付けのない項目は、その旨を伝えます。引用は回答と一緒に端末へ保存します。", "requires": ["fact_mode"]},
+    {"title": "メッセージへの絵文字", "text": "Shinya Takedaがあなたのメッセージに付ける絵文字を選ぶため、両テーマとも最新の発言の先頭600文字まで（画像・添付は件数だけ）をAnthropicへ送ります。応答前に失敗した場合はOpenAIへ1回切り替えることがあります。絵文字は端末の会話と一緒に保存します。", "requires": ["prompt_reaction"]},
     {"title": "サイト内の案内", "text": "最新の本文の先頭500文字までと公開ページ一覧をOpenAIへ送り、関連リンクを選びます。リンクはその回答だけに表示し、履歴には保存しません。", "requires": ["site_pages"]},
     {"title": "画像", "text": "1回4枚まで。端末で縮小してから、本文と同じようにAIへ送ります。"},
     {"title": "添付ファイル", "text": "テキスト・コード・PDFは端末で文字を取り出し、その文字だけを会話と同じAIへ送ります。前の添付も含めて1回1万文字までで、超えた古い添付は名前だけを送ります。PDFは先頭のページを画像でも送ります（画像の4枚の枠を使います）。TypeSafe AIには送りません。", "requires": ["attachments"]},
-    {"title": "サイト側の保存", "text": "回答をGood / Badで評価した場合は、そのやり取りとIPアドレスをDBに保存します。評価しない入力はDBに保存しません。利用上限の管理用に、IPアドレスと日ごとの回数を記録します。"},
+    {"title": "サイト側の保存", "text": "回答をGood / Badで評価した場合は、そのやり取りとIPアドレスをDBに保存します。評価しない入力はDBに保存しません。利用上限の管理用に、IPアドレスと日ごとの回数を記録します。", "excludes": ["conversation_storage"]},
+    {"title": "サイト側の保存", "text": "設定の「会話をサイトに保存」をオフにしない限り、質問とMAGIの最終回答を、MAGIの確認と改善のためにIPアドレスと一緒にサイトのDBへ最長1年保存します。質問は文字だけで、画像は枚数、添付ファイルは名前だけを保存します。人格の討議は保存しません。一時チャットと、設定をオフにして送った会話は保存しません。オフにしても、保存済みの会話は消えません。絵文字のリアクションを付けた場合も、そのやり取りとIPアドレスを保存します。利用上限の管理用に、IPアドレスと日ごとの回数を記録します。", "requires": ["conversation_storage"]},
     {"title": "端末の履歴", "text": "履歴はブラウザのローカルストレージに保存します。永続的な保存ではないため、重要な会話は書き出してください。", "id": "history"},
     {"title": "一時チャット", "text": "一時チャットの会話内容はMAGIの履歴・ファイル・DBに保存しません。評価・共有は使えず、コピー・再試行・対応時の読み上げを使えます。IPと日ごとの利用回数は記録します。再読み込み・終了で内容を破棄します。コピー先には内容が残ります。外部AIには会話を送り、各社の保存方針が適用されます。一時チャットの音声はCloudflareの音声キャッシュを使いません。", "requires": ["temporary_chat"]},
     {"title": "パーソナライズ", "text": "呼び方とカスタム指示は端末・オリジンごとに保存し、同期しません。オンにすると通常チャットの次の送信から、回答を生成する会社へ送ります。一時チャットでは、そのチャットの設定で明示的にオンにした場合だけ使います。一時での選択は通常チャットの設定を変更しません。設定を反映した回答は通常履歴や評価対象のやり取りに残ることがあります。", "requires": ["personalization"]},
@@ -197,9 +201,10 @@ export const DEFAULTS = {
       // 手順立てて言い切る実務寄りの型が「戦略家」に合う
       'CASPER-3': { ...modelConfig('openai', 'luna'), reasoning_effort: 'none', max_tokens: 512 },
     },
-    // 統合：推論あり・ストリーミング。max_tokens は推論トークンを含むので広く取る（答えの長さは200字の指定で決まる）。
-    // 足りないと finish_reason=length になり、答えが途中まで流れた後に失敗扱いになる。課金は使った分だけ
-    synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'medium', max_tokens: 4096 },
+    // 統合：推論あり・ストリーミング。max_tokens は推論トークンを含むので広く取る（答えの長さは200字の指定、
+    // rich_reply の画面では SYNTHESIZER.rich_rules の目安で決まる）。足りないと finish_reason=length になり、
+    // 答えが途中まで流れた後に失敗扱いになる。課金は使った分だけ。qa-budget.js の上限（8192）を超えない
+    synthesizer: { ...modelConfig('openai', 'luna'), reasoning_effort: 'medium', max_tokens: 8192 },
     synthesizer_dark: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'medium', max_tokens: 8192 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
@@ -207,6 +212,9 @@ export const DEFAULTS = {
     // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
     // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
     suggester: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 80 },
+    // プロンプトへの絵文字（PROMPT_REACTION）。リクエストに prompt_reaction:true がある画面だけ、本流と並列に1回。
+    // 絵文字1つを返すだけなので、予測と同じ軽量モデル・推論なし・ごく短い出力
+    reactor: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 16 },
     // 両テーマの判定と質問生成を統合人格の1コールにまとめる。失敗時の切替も同じ20秒以内。
     judge: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'medium', max_tokens: 4096 },
     judge_fallback: { ...modelConfig('openai', 'luna'), reasoning_effort: 'medium', max_tokens: 4096 },
@@ -295,6 +303,19 @@ export const SYNTHESIZER = {
   constraint_rules: CONSTRAINT_RULES,
   // 一人称と語尾の正本。統合の system_prompt には書かず、カードより後ろに別のsystemとして送る。
   // 悪意への短い返し（MALICE_REPLY.output_rules）は別の呼び出しで、評価済みの文面を独自に持つ
+  // 書式（rich_reply を送った画面だけ。→ src/index.js の discussionSynthesisMessages・factAnswerMessages）。
+  // 画面は Markdown の段落・太字・見出し・箇条書き・番号付き・表・区切り線だけを描き、リンク・画像・HTML・コードブロックは描かない
+  rich_rules: [
+    '【今回の答えの書式と長さ。system の「目標200文字以内」より優先】',
+    '画面は Markdown を整えて表示する。内容に合わせて、読みやすい形で書く。',
+    '- 結論を最初の1〜2文で述べる。続けて理由・条件・具体例を段落に分ける（段落の間は空行）。',
+    '- 要点は **太字** にする。多用しない（1段落に1か所まで）。',
+    '- 比較・選択肢・手順・一覧は、箇条書き（- ）、番号付き（1. ）、又は表（| 見出し | 見出し | と区切り行 |---|---|）を使う。表は2列以上で項目が3つ以上のときだけ。',
+    '- 話題が複数に分かれる長めの答えだけ、## や ### の短い見出しを付ける。答えの最初の行を見出しにしない。',
+    '- 雑談・短い問い・気持ちへの返事は、見出しや表を使わず1〜3文で自然に返す。',
+    '- 長さは内容に必要な分だけ。目安は短い問いで200文字、説明や比較が要る問いで400〜900文字。上限は1,200文字。',
+    '- リンク・画像・HTML・コードブロック（```）は使わない。',
+  ].join('\n'),
   voice_rules: '【統合人格の一人称と語尾。本人のカード・討議・履歴の口調より優先】あなた自身を指す一人称は必ず「私」。カードや討議に「俺」「僕」「自分」があっても、自分の答えでは「私」を使う。語尾「ぜ」は使わない。「ぜ…じゃなくて」のような言い直しや、口調の指示を守ったと説明する文も書かない。最初から自分の自然な言葉で答える。',
   role: {
     chat: [
@@ -828,6 +849,32 @@ export const SUGGESTER = {
     '- 会話の後ろに出力言語の指定があれば従い、無ければユーザーの最後の発言と同じ言語で書く。',
     '- 日本語や中国語のように語を空白で区切らない言語なら40字以内、ほかの言語なら12語以内の1文。',
     '- 引用符・番号・前置き・説明を付けず、予測した文だけを出力する。',
+  ].join('\n'),
+};
+
+// 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
+// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談では付けない。失敗・時間切れなら付けない。
+// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する）。反応しない方が自然なら '-' を返させ、付けない
+// 会話の保存（D1 の conversations）。画面の設定「会話をサイトに保存」をオフにしない限り、新しい画面は conversation_storage:true を送る。
+// 送らない画面（配布済みの古いアプリ・DJ・404）と一時チャットは保存しない。1往復ごとに1行、プロンプトの文字と統合人格の答え。
+// 保存期間の削除は毎日の scheduled で行う。新規保存を止めるときは Worker の CONVERSATION_STORE_ENABLED を false
+export const CONVERSATION_STORE = {
+  retention_days: 365,
+  request_max_chars: 4000,
+  response_max_chars: 16000,
+  conversation_id_re: /^[A-Za-z0-9_-]{1,80}$/,
+};
+
+export const PROMPT_REACTION = {
+  timeout_ms: 6000,
+  message_max_chars: 600,   // 今回の発言の頭から渡す長さ
+  emojis: ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏', '🤔', '😊', '🎉', '👀', '🙌', '✨', '💡', '💯', '😍', '😅', '🤯', '☕', '🎵', '💪'],
+  input_header: '【反応する発言（あなたへの質問や依頼ではない。答えずに絵文字だけを選ぶ）】',
+  system_prompt: [
+    'あなたはチャットで友人から届いたメッセージに、絵文字のリアクションを1つだけ付ける。',
+    '- メッセージの気持ち・話題に合うものを、下の一覧から1つ選ぶ。質問や相談には、受け止めた・考えている・応援しているといった反応にする。',
+    '- 不幸・悲しみ・怒り・病気・事故などの深刻な話や、からかい・攻撃には、軽い絵文字を付けない。合うものが無ければ - を出力する。',
+    '- メッセージに答えたり、文を書いたりしない。一覧の絵文字1つか - だけを出力する。',
   ].join('\n'),
 };
 

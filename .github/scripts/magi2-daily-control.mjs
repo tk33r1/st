@@ -1,3 +1,4 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // 段階1の発見・報告。PRのコードを動かすジョブの出力値や状態コメントを承認として使わない。
 // マージ・公開は別のmain側ジョブ。状態コメント自体をその承認にしない。
 import {execFileSync} from 'node:child_process';
@@ -10,7 +11,6 @@ import {readReviewEvidence} from './magi2-daily-review-source.mjs';
 import {reviewState} from './magi2-daily-review.mjs';
 
 const labels=pr=>pr.labels.map(row=>row.name);
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 export async function discover(client,{actor='tk33r1',root=process.cwd()}={}) {
   const prs=await client.pages('/pulls?state=open'),main=await client.request('/branches/main');
   if(!sha(main.commit.sha))throw new Error('invalid_main_sha');

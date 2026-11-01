@@ -1,3 +1,4 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // 公開と戻しの事前判定。Gitを読むだけで、merge/deploy/rollback/revert/pushは実行しない。
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
@@ -5,7 +6,6 @@ import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {workerInputs} from './magi2-daily-check.mjs';
 
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 const git=(root,...args)=>execFileSync('git',['-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false',...args],
   {cwd:root,encoding:'utf8',maxBuffer:16*1024*1024,stdio:['ignore','pipe','pipe']}).trim();
 const paths=(root,base,head)=>git(root,'diff','--name-only','-z',base,head).split('\0').filter(Boolean);

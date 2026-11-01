@@ -39,6 +39,10 @@ binding       = "DB"
 database_name = "tk-st-magi2-db"
 database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 
+# 会話の保存期限を毎日00:17 JSTに整理する。新規保存の停止中も実行する。
+[triggers]
+crons = ["17 15 * * *"]
+
 # セットアップ手順:
 #   1) wrangler d1 create tk-st-magi2-db                 # 出力の database_id を上に貼る
 #   2) wrangler d1 execute tk-st-magi2-db --file workers/magi2/schema.sql --remote
@@ -64,6 +68,10 @@ workers_dev = false
 preview_urls = false
 routes = [{ pattern = "magi2-eval.tk.st/magi2*", zone_name = "tk.st" }]
 compatibility_flags = ["enable_request_signal", "cache_no_cache_enabled"]
+
+# 本番の会話の期限切れ削除（[triggers]）は継承しない。src/eval.js には scheduled が無い
+[env.eval.triggers]
+crons = []
 
 [env.eval.vars]
 SITE_SEARCH_ENABLED = "true"

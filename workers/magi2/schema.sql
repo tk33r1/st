@@ -34,3 +34,16 @@ CREATE TABLE IF NOT EXISTS search_clicks (
   position INTEGER NOT NULL,
   visitor  TEXT    NOT NULL
 );
+
+-- 会話の保存（migrations/0003_conversations.sql と同じ）
+CREATE TABLE IF NOT EXISTS conversations (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at      TEXT    NOT NULL,
+  ip              TEXT,
+  conversation_id TEXT,
+  theme           TEXT,
+  intent          TEXT,
+  mode            TEXT,
+  request         TEXT    NOT NULL,
+  response        TEXT    NOT NULL
+);

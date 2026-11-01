@@ -1,3 +1,4 @@
+import {COMMIT_SHA_RE} from './magi2-daily-contract.mjs';
 // A6の公開後確認。呼び出し側が渡した通信・版取得だけを使い、生成成功経路へは送らない。
 // このモジュールのimportや単体の実行では、本番へ通信しない。
 import {readFileSync} from 'node:fs';
@@ -27,7 +28,7 @@ export function publicationRequests() {
 
 export async function verifyDailyPublication({fetcher,readDeployment,expected}={}) {
   if(typeof fetcher!=='function'||typeof readDeployment!=='function'||!expected||typeof expected.id!=='string'||!expected.id
-    ||!/^[a-f0-9]{40}$/.test(expected.sha||'')||versionOrder(expected.version)===null)throw new Error('publication_inputs');
+    ||!COMMIT_SHA_RE.test(expected.sha||'')||versionOrder(expected.version)===null)throw new Error('publication_inputs');
   const cases=[],version=async name=>{
     try {
       const current=await readDeployment();

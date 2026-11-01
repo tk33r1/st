@@ -3082,35 +3082,17 @@ function cleanAgentSources(value, text) {
   marks.sort(function (a, b) { return a.at - b.at || a.n - b.n; });
   return items.length && marks.length ? { items: items, marks: marks } : null;
 }
-function renderAgentSources(body, replyEl, text, raw, ja, panel) {
-  var data = cleanAgentSources(raw, text);
-  if (!data || !body || !replyEl) return;
-  body.replaceChildren();
-  var last = 0;
-  data.marks.forEach(function (mark) {
-    body.appendChild(document.createTextNode(text.slice(last, mark.at))); last = mark.at;
-    var item = data.items.find(function (row) { return row.n === mark.n; });
-    var a = document.createElement('a'); a.textContent = '[' + mark.n + ']'; a.href = item.url;
-    a.target = '_blank'; a.rel = 'noopener noreferrer'; a.style.cssText = 'margin-inline:2px;text-decoration:underline';
-    a.setAttribute('aria-label', (ja ? '出典 ' : 'Source ') + mark.n + ': ' + item.title); body.appendChild(a);
-  });
-  body.appendChild(document.createTextNode(text.slice(last)));
-  var previous = replyEl.querySelector('.agent-sources'); if (previous) previous.remove();
-  // 操作列の［ソース］から一覧を開く画面（トップページ・アプリ）は、回答の下に一覧を置かない
-  if (panel === false) return;
-  var panel = document.createElement('div'); panel.className = 'agent-sources';
-  panel.style.cssText = 'display:grid;gap:6px;margin-top:12px;font-size:12px;line-height:1.6;overflow-wrap:anywhere';
-  var label = document.createElement('strong'); label.textContent = ja ? '出典' : 'Sources'; panel.appendChild(label);
-  data.items.forEach(function (item) {
-    var a = document.createElement('a'); a.textContent = '[' + item.n + '] ' + item.title; a.href = item.url;
-    a.target = '_blank'; a.rel = 'noopener noreferrer'; panel.appendChild(a);
-  });
-  replyEl.appendChild(panel);
+// 本文の出典番号 [n] のリンク。URL は cleanAgentSources で http(s) と確かめたものだけ
+function agentCiteLink(item, n, ja) {
+  var a = document.createElement('a'); a.textContent = '[' + n + ']';
+  if (item) { a.href = item.url; a.setAttribute('aria-label', (ja ? '出典 ' : 'Source ') + n + ': ' + item.title); }
+  a.target = '_blank'; a.rel = 'noopener noreferrer'; a.style.cssText = 'margin-inline:2px;text-decoration:underline';
+  return a;
 }
-// 検査済みの引用位置に出典番号を挿入する（Markdown 書き出し・共有の本文で共用）。
-function agentCitedText(text, marks) {
+// 検査済みの引用位置に出典番号を挿入する（Markdown 書き出し・共有の本文・回答の表示で共用）。mark(n) で差し込む文字を変えられる
+function agentCitedText(text, marks, mark) {
   var out = '', last = 0;
-  marks.forEach(function (m) { out += text.slice(last, m.at) + '[' + m.n + ']'; last = m.at; });
+  marks.forEach(function (m) { out += text.slice(last, m.at) + (mark ? mark(m.n) : '[' + m.n + ']'); last = m.at; });
   return out + text.slice(last);
 }
 function agentFactMarkdown(text, raw) {

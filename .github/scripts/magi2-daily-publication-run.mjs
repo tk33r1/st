@@ -1,3 +1,4 @@
+import {COMMIT_SHA_RE,VERSION_ID_RE} from './magi2-daily-contract.mjs';
 // main側のActionsが使う、A6公開後確認の実行入口。マージ・公開・戻しは行わない。
 import {execFileSync} from 'node:child_process';
 import {writeFileSync,appendFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {verifyDailyPublication} from './magi2-daily-publication.mjs';
 import {cleanVersionHistory} from '../../workers/magi2/version-history.js';
 
 export function expectedPublication({root,target,id}) {
-  if(!/^[a-f0-9]{40}$/.test(target||'')||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id||''))throw new Error('publication_target_invalid');
+  if(!COMMIT_SHA_RE.test(target||'')||!VERSION_ID_RE.test(id||''))throw new Error('publication_target_invalid');
   const text=execFileSync('git',['-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false','show',target+':data/magi-versions.json'],
     {cwd:root,encoding:'utf8',maxBuffer:65536,stdio:['ignore','pipe','pipe']});
   const history=cleanVersionHistory(JSON.parse(text));if(!history||history.versions[0].version==='earlier')throw new Error('publication_target_history');

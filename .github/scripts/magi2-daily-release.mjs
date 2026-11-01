@@ -1,7 +1,7 @@
+import {isVersionId as uuid,COMMIT_SHA_RE} from './magi2-daily-contract.mjs';
 // 公開後は成否と版だけで判断する。通知や復旧のI/Oはmain側の実行入口が渡す。
 import {deploymentPlan} from './magi2-daily-deploy.mjs';
 
-const uuid=value=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
 const status=value=>['success','failure','cancelled','skipped'].includes(value)?value:'not_run';
 export async function prepareRelease({merge,root,readDeployment,plan=deploymentPlan}) {
   if(merge?.state!=='merged')throw new Error('release_merge_required');
@@ -18,7 +18,7 @@ export async function finishRelease({release,results,readDeployment,rollback,rev
   const report={target:release?.merge?.target||null,head:release?.merge?.head||null,base:release?.merge?.base||null,
     version:release?.version||null,checks:{worker:status(results?.worker),deploy:status(results?.deploy),publication:status(results?.publication)},
     number:release?.merge?.number||null,previous_id:release?.previous?.id||null,deployed_id:uuid(results?.versionId)?results.versionId:null,
-    rollback_commits:(release?.plan?.rollback_commits||[]).filter(value=>/^[a-f0-9]{40}$/.test(value)),
+    rollback_commits:(release?.plan?.rollback_commits||[]).filter(value=>COMMIT_SHA_RE.test(value)),
     outcome:'halt',reason:'release_incomplete',rollback:'not_run',revert:'not_run',push:'not_run',halt_required:true};
   const persist=()=>save({...report});
   const done=async()=>{await persist();await announce({...report});return report;};

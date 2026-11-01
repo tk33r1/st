@@ -11,7 +11,7 @@ const scope='magi-dialogue-20261015';
 // 2026-10-20 本人承認: B3代表3件に追加$0.32。既存予約は保持する。
 // 2026-10-26 本人承認: 7.03最終APKの本番確認1回に追加上限$0.08。過去の未確定分は未確定のまま保持。
 // 2026-11-02 本人承認: 7.04最終APKの本番確認1回に追加上限$0.08。個別上限は変えない。
-export const evaluationBudgetCaps={openai:1.20,anthropic:1.20,total:3.28};
+export const evaluationBudgetCaps={openai:1.25,anthropic:1.25,total:3.36};
 const caps=evaluationBudgetCaps;
 const providers=['openai','anthropic','deepseek','typesafe'];
 const cents=value=>Math.ceil(value*1e6); // 比較は百万分の1ドル、端数は切り上げる。

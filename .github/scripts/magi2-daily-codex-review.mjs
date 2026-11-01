@@ -1,3 +1,4 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // 交互レビューのChatGPT側（2026-10-27本人決定）。本人の自宅PCのタスクスケジューラが1時間ごとに起動する。
 // mainの最新を写した専用のcloneから実行し、ChatGPTの認証（~/.codex）とAppの鍵はこのPCの外へ出さない。
 // 点検（Claude）が書いた依頼だけを受理し、codex execを読み取り専用で1回動かし、専用GitHub Appの名前で結果を書く。
@@ -12,7 +13,6 @@ import {githubClient,dailyRepository,eligibleDailyPR} from './magi2-daily-github
 import {parseReviewComment,reviewRouteName} from './magi2-daily-review-source.mjs';
 import {findingTable} from './magi2-daily-review.mjs';
 
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 const hour=3600000;
 export const reviewSchema={type:'object',additionalProperties:false,required:['findings','statuses','summary'],properties:{
   findings:{type:'array',maxItems:20,items:{type:'object',additionalProperties:false,required:['priority','title','detail','path','line'],properties:{

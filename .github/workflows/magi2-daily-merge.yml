@@ -136,7 +136,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: read
-      actions: read
+      actions: write
     outputs:
       merge: ${{ steps.merge.outputs.merge }}
       merged: ${{ steps.merge.outputs.merged }}

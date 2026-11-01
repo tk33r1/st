@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {join,dirname,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
 import {mergeCandidate,dailySettings} from './magi2-daily-merge.mjs';
 import {prepareRelease,finishRelease} from './magi2-daily-release.mjs';
 import {announceRelease} from './magi2-daily-release-run.mjs';
@@ -32,7 +33,7 @@ function mergeFixture() {
     base:{ref:'main',repo:{full_name:'tk33r1/st'}},head:{ref:'automation/magi2-daily-20261023',sha:head,repo:{full_name:'tk33r1/st'}}};
   const f={pr,main:base,stage:'2',halts:[],writes:[],reads:0,events:[]};
   f.client={pages:async path=>path.startsWith('/pulls')?[f.pr]:f.halts,request:async(path,options)=>{
-    if(options?.method){f.writes.push({path,...options});f.events.push('merge');return {merged:true,sha:target};}
+    if(options?.method){f.writes.push({path,...options});f.events.push(path.endsWith('/dispatches')?'dispatch':'merge');return {merged:true,sha:target};}
     if(path==='/branches/main')return {commit:{sha:f.main}};
     if(path==='/pulls/7')return f.pr;throw new Error(path);
   }};
@@ -44,8 +45,17 @@ function mergeFixture() {
 test('最終headの正式記録と検証がそろった時だけ、headを指定してrebase mergeする',async()=>{
   const f=mergeFixture(),result=await mergeCandidate(f.options);
   assert.equal(result.state,'merged');assert.equal(result.target,target);
-  assert.deepEqual(f.writes,[{path:'/pulls/7/merge',method:'PUT',body:{sha:head,merge_method:'rebase'}}]);
-  assert.deepEqual(f.events,['attempt','merge']);
+  assert.deepEqual(f.writes,[{path:'/pulls/7/merge',method:'PUT',body:{sha:head,merge_method:'rebase'}},
+    {path:'/actions/workflows/magi-chat-validation.yml/dispatches',method:'POST',body:{ref:'main',inputs:{sha:target}}}]);
+  assert.deepEqual(f.events,['attempt','merge','dispatch']);
+});
+
+test('マージ後の検査起動に失敗したら、公開へ進まず本人確認にする',async()=>{
+  const f=mergeFixture(),request=f.client.request;
+  f.client.request=async(path,options)=>{if(path.endsWith('/dispatches'))throw new Error('dispatch unavailable');return request(path,options);};
+  const result=await mergeCandidate(f.options);
+  assert.equal(result.target,target);assert.equal(result.state,'merge_invalid');assert.equal(result.reason,'chat_validation_dispatch_failed');
+  assert.equal(f.writes.length,1);
 });
 test('段階1・停止・更新head/base・draft・区分変更・検証失敗はマージしない',async()=>{
   for(const patch of [f=>f.stage='1',f=>f.halts=[{}],f=>f.main='d'.repeat(40),f=>f.pr.head.sha='d'.repeat(40),
@@ -271,7 +281,7 @@ save();
         DAILY_MERGE:JSON.stringify(r.merge),DAILY_RELEASE:JSON.stringify(r),DAILY_REPORT:report,
         DAILY_RESULTS:JSON.stringify({worker:{result:'success'},deploy:{result:'success',outputs:{'version-id':deployedId}},publication:{result:'success'}}),
         SYNTHETIC_STATE:state,SYNTHETIC_MAIL_FAIL:String(mode==='mail_failure')};delete env.NODE_TEST_CONTEXT;
-      const run=()=>execFileSync(process.execPath,['--import',preload,resolve('.github/scripts/magi2-daily-release-run.mjs'),'--finish'],
+      const run=()=>execFileSync(process.execPath,['--import',pathToFileURL(preload).href,resolve('.github/scripts/magi2-daily-release-run.mjs'),'--finish'],
         {cwd:directory,env,stdio:['ignore','pipe','pipe']});
       if(mode==='success')run();else assert.throws(run);
       const saved=JSON.parse(readFileSync(report,'utf8')),calls=JSON.parse(readFileSync(state,'utf8'));

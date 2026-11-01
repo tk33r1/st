@@ -6,9 +6,18 @@ import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+// dispatch の head_sha は起動時の main。名前に固定SHAがあればそれを使い、未知の形式は拒否する。
+function checkedSha(run) {
+  if (run.event !== 'workflow_dispatch') return run.head_sha;
+  const title = run.display_title || '';
+  if (!title.startsWith('MAGI Chat Gate ')) return run.head_sha; // SHA指定の無い旧形式
+  const match = /^MAGI Chat Gate ([a-f0-9]{40})$/.exec(title);
+  return match ? match[1] : null;
+}
+
 export function checkRun(data, sha) {
   assert(Array.isArray(data.workflow_runs), 'GitHub応答の形式が不正');
-  const run = data.workflow_runs.filter(r => r.head_sha === sha && r.path === '.github/workflows/magi-chat-validation.yml'
+  const run = data.workflow_runs.filter(r => checkedSha(r) === sha && r.path === '.github/workflows/magi-chat-validation.yml'
     && EVENTS.includes(r.event) && r.repository?.full_name === 'tk33r1/st').sort((a, b) => b.id - a.id)[0];
   if (!run || run.status !== 'completed') return false;
   assert.equal(run.conclusion, 'success', 'チャット検査が不成功: ' + run.conclusion);
@@ -20,7 +29,7 @@ export async function waitForCheck(sha, {fetcher = fetch, pause = ms => new Prom
   do {
     const headers = {Accept: 'application/vnd.github+json', 'User-Agent': 'tk-st-magi-chat-gate'};
     if (process.env.MAGI_CHECK_GITHUB_TOKEN) headers.Authorization = 'Bearer ' + process.env.MAGI_CHECK_GITHUB_TOKEN;
-    const response = await fetcher('https://api.github.com/repos/tk33r1/st/actions/workflows/magi-chat-validation.yml/runs?head_sha=' + sha + '&per_page=10', {headers, signal: AbortSignal.timeout(15000)});
+    const response = await fetcher('https://api.github.com/repos/tk33r1/st/actions/workflows/magi-chat-validation.yml/runs?per_page=100', {headers, signal: AbortSignal.timeout(15000)});
     assert.equal(response.status, 200, 'GitHubの検査結果を取得できない');
     if (checkRun(await response.json(), sha)) return;
     if (Date.now() >= deadline) break;

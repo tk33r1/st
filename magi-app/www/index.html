@@ -128,11 +128,11 @@
     .agent-drawer .agent-panel-head .t { font-size: 0.95rem; letter-spacing: 0.08em; text-transform: none; font-weight: 400; }
     .drawer-new {
       flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0.5rem 0.75rem;
-      font: inherit; font-size: 12px; color: var(--primary-color); background: var(--primary-bg);
+      font: inherit; font-size: 15px; color: var(--primary-color); background: var(--primary-bg);
       border: 1px solid var(--primary-color); border-radius: 6px; cursor: pointer;
     }
     .drawer-new:active { background: var(--primary-bg-hover); }
-    .drawer-label { flex-shrink: 0; margin: 1rem 0 0.4rem; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--secondary-color); }
+    .drawer-label { flex-shrink: 0; margin: 1rem 0 0.4rem; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--secondary-color); }
     #agent-history-list { flex: 1;min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.4rem; }
 
     /* overlay panels (saved chats / info) */
@@ -163,16 +163,16 @@
     #agent-voice[aria-pressed="true"] { color: var(--primary-color); }
     #agent-voice-interim { padding: 0 12px; font-size: 12px; color: var(--secondary-color); opacity: .7; }
     #agent-voice-interim:empty { display: none; }
-    .session-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: background-color var(--duration-fast); }
+    .session-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 52px; padding: 0.55rem 0.7rem; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: background-color var(--duration-fast); }
     .session-item:hover, .session-item:active { background: var(--surface-alt); }
     .session-load { flex: 1; min-width: 0; padding: 0; font: inherit; text-align: left; color: inherit; background: none; border: none; cursor: pointer; }
     .session-load:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-    .session-title { display: block; font-size: 12px; font-weight: 600; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-title { display: block; font-size: 15px; font-weight: 600; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .session-item:hover .session-title { color: var(--primary-color); }
-    .session-time { display: block; font-size: 9px; color: var(--secondary-color); margin-top: 0.15rem; }
+    .session-time { display: block; font-size: 12px; color: var(--secondary-color); margin-top: 0.15rem; }
     .session-del { flex-shrink: 0; display: inline-flex; padding: 0.35rem; background: transparent; border: none; color: var(--secondary-color); cursor: pointer; opacity: 0.6; }
     .session-del:hover, .session-del:active { color: #ef4444; opacity: 1; }
-    .agent-panel-empty { text-align: center; color: var(--secondary-color); padding: 2rem 0; font-size: 11px; }
+    .agent-panel-empty { text-align: center; color: var(--secondary-color); padding: 2rem 0; font-size: 14px; }
     .agent-panel-body ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .agent-panel-body li { font-size: 11px; line-height: 1.6; color: var(--secondary-color); }
     .agent-panel-body li strong { color: var(--text-color); }
@@ -215,38 +215,86 @@
       flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       display: flex; flex-direction: column; gap: 0.5rem;
-      padding: 0.75rem; font-size: 0.8rem; scroll-behavior: smooth;
+      padding: 0.75rem; font-size: 17px; scroll-behavior: smooth;
     }
     /* 横向きのIMEで極端に低くなると、ログの余白だけでも入力欄を押し出す。 */
     @media (max-height: 240px) {
       #agent-log { padding-top: 0; padding-bottom: 0; }
     }
     .agent-user { display: flex; justify-content: flex-end; }
-    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.4rem 0.7rem; border-radius: 2px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
+    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.5rem 0.8rem; border-radius: 2px; line-height: 1.6; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
+    /* 自分のプロンプトの操作（app.js の openPromptMenu）。PC はマウスオーバーで ⋯ を出し、指の端末は吹き出しの長押しで開く */
+    .agent-user { align-items: center; gap: 4px; }
+    .prompt-more { display: none; flex-shrink: 0; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); cursor: pointer; opacity: 0; transition: opacity var(--duration-fast), background-color var(--duration-fast); }
+    @media (hover: hover) and (pointer: fine) {
+      .prompt-more { display: inline-flex; }
+      .agent-user:hover .prompt-more, .prompt-more:focus-visible, .prompt-more[aria-expanded="true"] { opacity: 1; }
+      .prompt-more:hover, .prompt-more[aria-expanded="true"] { color: var(--text-color); background: var(--surface-hover); }
+    }
+    .prompt-more:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
+    @media (pointer: coarse) {
+      .agent-user > span { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: transform 0.15s ease, filter 0.15s ease; }
+      .agent-user > span.is-pressed { transform: scale(0.98); filter: brightness(1.2); }
+      .agent-started { display: none; }
+      /* 通常は長押し。操作列は支援技術とTab移動に残し、フォーカス時には画面にも表示する。 */
+      .agent-reply > .reply-bar:not(:focus-within), .persona-card .reaction-bar:not(:focus-within) { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .agent-reply, .persona-card { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: opacity 0.15s ease; }
+      .agent-reply.is-pressed, .persona-card.is-pressed { opacity: 0.78; }
+    }
+    /* 会話を始めた時刻（最初のプロンプトを送った時刻）。PC だけ会話の最上部に出す */
+    .agent-started { text-align: center; font-size: 13px; color: var(--secondary-color); margin: 0.25rem 0 0.5rem; font-variant-numeric: tabular-nums; }
+    .prompt-menu { position: fixed; z-index: 80; min-width: 240px; max-width: calc(100vw - 16px); padding: 6px; background: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: fadeIn var(--duration-fast) ease both; }
+    .prompt-menu-time { padding: 10px 14px 6px; font-size: 14px; color: var(--secondary-color); font-variant-numeric: tabular-nums; }
+    .prompt-menu button { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+    .prompt-menu button:hover, .prompt-menu button:focus-visible, .prompt-menu button:active { background: var(--surface-hover); outline: none; }
+    .prompt-menu button svg { flex-shrink: 0; }
+    .prompt-select-text { overflow-y: auto; padding: 4px 2px 12px; font-size: 17px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+    .agent-toast { position: absolute; z-index: 90; left: 50%; bottom: calc(96px + var(--magi-safe-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 999px; background: var(--text-color); color: var(--surface-color); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: fadeIn var(--duration-fast) ease both; pointer-events: none; }
     .agent-personas { display: grid; gap: 0.4rem; }
-    .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.5rem 0.6rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.7rem 0.8rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
     .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite; }
     .persona-card.thinking .persona-text { color: var(--secondary-color); }
     @keyframes thinkingPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
     .persona-head { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.2rem; }
     .persona-hex { color: var(--primary-color); }
-    .persona-code { font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); }
-    .persona-name { font-size: 10px; letter-spacing: 0.08em; color: var(--secondary-color); }
-    .persona-text { font-size: 12px; color: var(--text-color); line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
-    .persona-round { margin-top: 0.25rem; }
-    .persona-round:not([data-round="1"]) { border-top: 1px dashed var(--border-color); padding-top: 0.25rem; }
+    .persona-code { font-size: 12px; letter-spacing: 0.08em; color: var(--primary-color); }
+    .persona-name { font-size: 12px; letter-spacing: 0.08em; color: var(--secondary-color); }
+    .persona-text { font-size: 16px; color: var(--text-color); line-height: 1.7; word-break: break-word; white-space: pre-wrap; }
+    .persona-round { margin-top: 0.4rem; }
+    .persona-round:not([data-round="1"]) { border-top: 1px dashed var(--border-color); padding-top: 0.4rem; }
     /* 第3回以降：統合人格（本人）からこの人格への問い */
-    .persona-ask { font-size: 11px; line-height: 1.5; color: var(--primary-color); opacity: 0.85; margin-bottom: 0.1rem; word-break: break-word; }
-    .persona-round-label { display: block; font-size: 9px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
-    .agent-reply { margin-top: 0.4rem; padding: 0.6rem 0.7rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
-    .agent-reply .agent-who { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
-    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .persona-ask { font-size: 14px; line-height: 1.6; color: var(--primary-color); opacity: 0.85; margin-bottom: 0.1rem; word-break: break-word; }
+    .persona-round-label { display: block; font-size: 12px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
+    .agent-reply { margin-top: 0.4rem; padding: 0.75rem 0.85rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: 1.7; word-break: break-word; white-space: pre-wrap; }
+    /* 統合人格の答えの Markdown（app.js の renderAgentRich）。トップページと同じ見た目 */
+    .agent-reply-body.md { display: block; white-space: normal; }
+    .md > :first-child { margin-top: 0; }
+    .md > :last-child { margin-bottom: 0; }
+    .md .md-p { margin: 0 0 0.85em; }
+    .md .md-h { margin: 1.1em 0 0.45em; font-weight: 700; line-height: 1.45; color: var(--text-color); }
+    .md h3.md-h { font-size: 1.18em; }
+    .md h4.md-h { font-size: 1.05em; }
+    .md strong { font-weight: 700; color: var(--text-color); }
+    .md code { padding: 0.1em 0.35em; border-radius: 4px; background: var(--surface-hover); font-size: 0.92em; }
+    .md .md-list { margin: 0 0 0.85em; padding-left: 1.8em; }
+    .md .md-list li { margin: 0.25em 0; }
+    .md .md-list li::marker { color: var(--primary-color); }
+    .md .md-hr { margin: 1em 0; border: 0; border-top: 1px solid var(--border-color); }
+    .md .md-quote { margin: 0 0 0.85em; padding: 0.1em 0 0.1em 0.8em; border-left: 3px solid var(--border-color); color: var(--secondary-color); }
+    .md .md-table { margin: 0.2em 0 0.95em; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .md table { width: 100%; border-collapse: collapse; font-size: 0.94em; line-height: 1.55; }
+    .md th, .md td { padding: 0.5em 0.65em; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: top; }
+    .md th { font-weight: 700; white-space: nowrap; }
+    .md .md-cite { margin-inline: 2px; text-decoration: underline; color: var(--primary-color); }
+    .agent-reply.streaming .agent-reply-body.md::after { display: inline-block; }
+    .agent-reply .agent-who { display: block; font-size: 12px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+    .magi-thinking { display: inline-block; margin-inline-start: 8px; font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--secondary-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
     /* 書いている途中のカーソルは本文の末尾に付ける（操作列の下に出さない） */
     .agent-reply.streaming .agent-reply-body::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
     .agent-pages { display: grid; gap: 8px; margin-top: 12px; white-space: normal; }
     .agent-page { display: flex; flex-direction: column; min-height: 44px; padding: 10px; border: 1px solid var(--primary-color); border-radius: 8px; color: var(--primary-color); text-decoration: none; overflow-wrap: anywhere; }
-    .agent-page span { font-size: 11px; opacity: .8; }
-    .agent-closed { margin-top: 12px; padding: 12px; border: 1px solid var(--primary-color); font-size: 12px; }
+    .agent-page span { font-size: 13px; opacity: .8; }
+    .agent-closed { margin-top: 12px; padding: 12px; border: 1px solid var(--primary-color); font-size: 15px; }
     .agent-closed button { margin-top: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--primary-color); background: transparent; color: var(--primary-color); cursor: pointer; }
 
     /* reactions */
@@ -264,6 +312,36 @@
     .rate-pop button:active, .rate-pop button:focus-visible { background: var(--primary-bg); outline: none; }
     @media (hover: hover) { .rate-pop button:hover { background: var(--primary-bg); } }
     .rate-pop button[aria-checked="true"] { color: var(--primary-color); }
+
+    /* 絵文字のリアクション（agentReactionPicker・agentReactionBadge）。トップページとアプリで同じ見た目 */
+    .react-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; }
+    .react-picker > button, .react-more > button { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); font-size: 24px; line-height: 1; cursor: pointer; transition: transform 0.12s ease, background-color 0.12s ease; }
+    .react-picker > button[data-more] { font-size: 22px; font-weight: 300; }
+    .react-picker > button:hover, .react-more > button:hover, .react-picker > button:focus-visible, .react-more > button:focus-visible { transform: scale(1.18); background: var(--surface-hover); outline: none; }
+    .react-picker > button:active, .react-more > button:active { transform: scale(1.3); }
+    .react-picker button[aria-checked="true"] { background: var(--primary-bg); box-shadow: inset 0 0 0 1.5px var(--primary-color); }
+    .react-more { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, 42px); gap: 2px; justify-content: center; padding-top: 4px; border-top: 1px solid var(--border-color); }
+    .react-more[hidden] { display: none; }
+    .rate-pop.react-picker { flex-wrap: wrap; width: max-content; max-width: min(320px, calc(100vw - 32px)); padding: 4px; border-radius: 26px; }
+    .rate-pop.react-picker > button, .rate-pop .react-more > button { min-height: 0; padding: 0; gap: 0; }
+    .prompt-menu .prompt-menu-rate { margin: -2px -2px 6px; padding: 2px 2px 6px; border-bottom: 1px solid var(--border-color); border-top: 0; justify-content: space-between; }
+    .prompt-menu .prompt-menu-rate > button, .prompt-menu .prompt-menu-rate .react-more > button { width: 40px; height: 40px; min-height: 0; padding: 0; justify-content: center; font-size: 24px; }
+    .prompt-menu .prompt-menu-rate button[aria-checked="true"] { color: inherit; }
+    /* 札。絵文字は CSS で出す（本文の textContent に混ぜない） */
+    .agent-user, .agent-reply { position: relative; }
+    .msg-reaction, .prompt-reaction { position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 5px; border-radius: 999px; background: var(--surface-color); border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.25); font-size: 17px; font-style: normal; line-height: 1; pointer-events: none; }
+    .msg-reaction::before, .prompt-reaction::before { content: attr(data-emoji); }
+    .agent-reply > .msg-reaction { right: 10px; bottom: -15px; }
+    .agent-reply.has-reaction { margin-bottom: 18px; }
+    .persona-card > .msg-reaction { right: 14px; bottom: 8px; }
+    .agent-user > .prompt-reaction { right: 2px; bottom: -15px; }
+    .agent-user.has-reaction { margin-bottom: 16px; }
+    /* 付けた・付けられた瞬間だけ、弾んで周りに粒が散る */
+    @keyframes reactPop { 0% { transform: scale(0) rotate(-25deg); opacity: 0; } 45% { transform: scale(1.4) rotate(10deg); opacity: 1; } 70% { transform: scale(0.88) rotate(-4deg); } 100% { transform: scale(1) rotate(0); } }
+    @keyframes reactBurst { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    .msg-reaction.pop, .prompt-reaction.pop { animation: reactPop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+    .msg-reaction.pop::after, .prompt-reaction.pop::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; box-shadow: 0 -18px 0 #f59e0b, 13px -13px 0 #ec4899, 18px 0 0 #22c55e, 13px 13px 0 #3b82f6, 0 18px 0 #f59e0b, -13px 13px 0 #ec4899, -18px 0 0 #22c55e, -13px -13px 0 #3b82f6; animation: reactBurst 0.6s ease-out 0.08s both; pointer-events: none; }
+    @media (prefers-reduced-motion: reduce) { .msg-reaction.pop, .prompt-reaction.pop, .msg-reaction.pop::after, .prompt-reaction.pop::after { animation: none; } .msg-reaction.pop::after, .prompt-reaction.pop::after { display: none; } }
     .react-btn .rate-icon { width: 19px; height: 19px; }
     /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる高さは 44px（ボタン 34px と上下 5px）。
        横は隣のボタンに重ねない。［ソース］まで1行に収まるよう、間は詰める */
@@ -273,7 +351,7 @@
     .reply-bar .react-btn svg { width: 18px; height: 18px; }
     .reply-bar .react-btn .rate-icon { width: 21px; height: 21px; }
     .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.5rem; }
-    .reply-time { padding: 0 0.2rem; font-size: 11px; color: var(--secondary-color); white-space: nowrap; }
+    .reply-time { padding: 0 0.2rem; font-size: 13px; color: var(--secondary-color); white-space: nowrap; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
     .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); }
     .speak-wait { animation: speak-spin 0.9s linear infinite; }
@@ -283,7 +361,7 @@
     .src-icons .src-icon + .src-icon { margin-left: -5px; }
     .src-icon { width: 16px; height: 16px; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-color); box-shadow: 0 0 0 1.5px var(--bg-color); }
     .src-letter { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-weight: 700; line-height: 1; }
-    .reply-note { margin-top: 0.35rem; font-size: 11px; color: var(--secondary-color); }
+    .reply-note { margin-top: 0.35rem; font-size: 13px; color: var(--secondary-color); }
     /* ［ソース］の一覧。下から出るシートと、外側の暗幕（押すと閉じる） */
     .agent-panel.agent-sheet { padding: 0; justify-content: flex-end; background: rgba(0,0,0,0.45); }
     .agent-sheet-body {
@@ -303,7 +381,24 @@
     .src-text { display: grid; min-width: 0; }
     .src-title { color: var(--primary-color); overflow-wrap: anywhere; }
     .src-domain { font-size: 11px; color: var(--secondary-color); overflow-wrap: anywhere; }
-    .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 11px; word-break: break-word; border-radius: 4px; }
+    /* スクリーンショットの後に上から出す共有の提案（app.js の showShotCard）。ヘッダーに重ね、8秒で消える */
+    .shot-share {
+      position: absolute; z-index: 70; left: 12px; right: 12px; top: calc(var(--magi-safe-top) + 8px);
+      display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 18px;
+      background: var(--surface-hover); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35); animation: shotIn var(--duration-normal) ease both;
+    }
+    .shot-share.is-leaving { animation: shotOut 0.2s ease both; }
+    @keyframes shotIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+    @keyframes shotOut { to { opacity: 0; transform: translateY(-16px); } }
+    @media (prefers-reduced-motion: reduce) { .shot-share, .shot-share.is-leaving { animation: none; } }
+    .shot-share-text { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 0; font: inherit; text-align: left; color: inherit; background: none; border: 0; cursor: pointer; }
+    .shot-share-text strong { font-size: 16px; line-height: 1.4; }
+    .shot-share-text span { font-size: 13px; line-height: 1.5; color: var(--secondary-color); }
+    .shot-share-go { flex-shrink: 0; display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%; background: var(--text-color); color: var(--surface-color); cursor: pointer; }
+    .shot-share-go svg { width: 22px; height: 22px; }
+    .shot-share-go:focus-visible, .shot-share-text:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.5rem 0.6rem; font-size: 14px; word-break: break-word; border-radius: 4px; }
     .agent-err .agent-rid { color: var(--secondary-color); }
 
     /* input */
@@ -362,8 +457,8 @@
     .attach-doc b { font-size: 13px; color: var(--primary-color); }
     .attach-doc span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; color: var(--text-color); }
     .agent-files { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.3rem; }
-    .agent-file { display: inline-flex; align-items: center; gap: 0.35rem; max-width: 100%; padding: 0.15rem 0.45rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; white-space: nowrap; }
-    .agent-file b { font-size: 10px; color: var(--primary-color); }
+    .agent-file { display: inline-flex; align-items: center; gap: 0.35rem; max-width: 100%; padding: 0.2rem 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; white-space: nowrap; }
+    .agent-file b { font-size: 12px; color: var(--primary-color); }
     .agent-file span { overflow: hidden; text-overflow: ellipsis; }
     .attach-note { font-size: 11px; color: var(--secondary-color); }
     .agent-imgs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.3rem; }
@@ -681,6 +776,7 @@
   <script src="native-widget.js?v=20261022_1"></script>
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
-  <script src="app.js?v=20261102_1"></script>
+  <script src="share-image.js?v=20261102_2"></script>
+  <script src="app.js?v=20261102_4"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // main側だけで再取得・再判定し、GitHubのrebase mergeへ検証したheadを指定する。
 import {execFileSync} from 'node:child_process';
 import {appendFileSync} from 'node:fs';
@@ -8,7 +9,6 @@ import {readChanges,inspectChanges} from './magi2-daily-check.mjs';
 import {reviewState,mayMerge,claudeModelEvidence} from './magi2-daily-review.mjs';
 import {readReviewEvidence} from './magi2-daily-review-source.mjs';
 
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 export async function dailySettings(client) {
   const value=async(name,fallback)=>{
     try{return (await client.request('/actions/variables/'+name)).value;}
@@ -65,6 +65,11 @@ export async function mergeCandidate({client,snapshot,validation,readSettings=()
     if(!inspectChanges(actual).ok||JSON.stringify(contents(actual))!==JSON.stringify(contents(original)))
       return {...result,state:'merge_invalid',reason:'merged_range_changed'};
   } catch{return {...result,state:'merge_invalid',reason:'merged_range_unverified'};}
+  // GITHUB_TOKEN のマージは push の検査を起動しない。取得時点の main が進んでも、対象 SHA を固定して検査する。
+  try {
+    await client.request('/actions/workflows/magi-chat-validation.yml/dispatches',
+      {method:'POST',body:{ref:'main',inputs:{sha:result.target}}});
+  } catch {return {...result,state:'merge_invalid',reason:'chat_validation_dispatch_failed'};}
   return result;
 }
 function output(value) {

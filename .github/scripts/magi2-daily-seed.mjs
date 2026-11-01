@@ -1,3 +1,4 @@
+import {COMMIT_SHA_RE} from './magi2-daily-contract.mjs';
 // 段3の仕込みを独立したGitへ作る。push・PR・モデル呼び出しは行わない。
 import {execFileSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync,realpathSync} from 'node:fs';
@@ -76,7 +77,7 @@ function exhaustVersion(read,write) {
 export function prepareSeed({source=repo,base,caseId,output}) {
   const selected=seedCases().find(row=>row.id===caseId);
   if(!selected)throw new Error('unknown_seed_case');
-  if(!/^[a-f0-9]{40}$/.test(base||''))throw new Error('full_base_sha_required');
+  if(!COMMIT_SHA_RE.test(base||''))throw new Error('full_base_sha_required');
   source=realpathSync(resolve(source));output=resolve(output);
   output=join(realpathSync(dirname(output)),basename(output));
   const within=relative(source,output);

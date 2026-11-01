@@ -9,6 +9,34 @@ const run = (overrides = {}) => ({id: 1, head_sha: sha, path: '.github/workflows
   repository: {full_name: 'tk33r1/st'}, status: 'completed', conclusion: 'success', ...overrides});
 test('Pages: 同じSHAの成功だけを受け付ける', () => assert.equal(checkRun({workflow_runs: [run()]}, sha), true));
 test('Pages: botのpushで起動した同じSHAの検査も受け付ける', () => assert.equal(checkRun({workflow_runs: [run({event: 'workflow_dispatch'})]}, sha), true));
+
+test('Pages: SHAを名前に含めない旧dispatchとpushはhead_shaを使い、不正な固定SHAを旧形式へ戻さない',()=>{
+  assert.equal(checkRun({workflow_runs:[run({event:'workflow_dispatch',display_title:'MAGI Chat Gate'})]},sha),true);
+  assert.equal(checkRun({workflow_runs:[run({display_title:'MAGI Chat Gate '+'b'.repeat(40)})]},sha),true);
+  for(const title of ['main',sha.slice(1),sha+'a',sha.toUpperCase(),sha+' suffix'])
+    assert.equal(checkRun({workflow_runs:[run({event:'workflow_dispatch',display_title:'MAGI Chat Gate '+title})]},sha),false);
+});
+
+test('Pages: mainが進んだ後のdispatchも、実際の検査SHAだけに適用する', () => {
+  const other='b'.repeat(40), dispatched=run({event:'workflow_dispatch',head_sha:other,display_title:'MAGI Chat Gate '+sha});
+  assert.equal(checkRun({workflow_runs:[dispatched]},sha),true);
+  assert.equal(checkRun({workflow_runs:[dispatched]},other),false);
+  assert.equal(checkRun({workflow_runs:[run({event:'issue_comment',display_title:'MAGI Chat Gate '+sha})]},sha),false);
+  assert.equal(checkRun({workflow_runs:[run({event:'workflow_dispatch',display_title:'MAGI Chat Gate main'})]},sha),false);
+});
+
+test('Pages: dispatchの起動SHAで絞らず、固定した検査SHAの結果を読む', async () => {
+  await waitForCheck(sha,{fetcher:async url=>{
+    assert.equal(new URL(url).searchParams.has('head_sha'),false);
+    return {status:200,json:async()=>({workflow_runs:[run({event:'workflow_dispatch',head_sha:'b'.repeat(40),display_title:'MAGI Chat Gate '+sha})]})};
+  }});
+  const workflow=readFileSync(resolve(root,'.github/workflows/magi-chat-validation.yml'),'utf8');
+  assert.match(workflow,/run-name: MAGI Chat Gate \$\{\{ inputs.sha \|\| github.sha \}\}/);
+  assert.match(workflow,/workflow_dispatch:\n    inputs:\n      sha:/);
+  assert.match(workflow,/CHECK_SHA: \$\{\{ inputs.sha \}\}/);
+  assert.match(workflow,/\^\[a-f0-9\]\{40\}\$/);
+  for(const job of ['browser','android'])assert.ok(workflow.includes(job+':\n    needs: target'));
+});
 for (const overrides of [{head_sha: 'b'.repeat(40)}, {path: '.github/workflows/ai-models.yml'}, {event: 'pull_request'}, {status: 'queued'}, {repository: {full_name: 'fork/st'}}]) {
   test('Pages: 別の結果や未完了を合格にしない ' + JSON.stringify(overrides), () => assert.equal(checkRun({workflow_runs: [run(overrides)]}, sha), false));
 }

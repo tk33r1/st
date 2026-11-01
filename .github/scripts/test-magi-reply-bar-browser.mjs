@@ -4,7 +4,7 @@
 // AI・Fish Audio・計測は呼ばない。node .github/scripts/test-magi-reply-bar-browser.mjs [リポジトリのパス] [--screenshots]
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -65,9 +65,9 @@ try {
     await until(async () => (await page.locator('.agent-reply.streaming').count()) === 0 && (await bar.count()) === 1, 'reply done');
     await page.waitForTimeout(300);
     assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'retry', 'rate'], name);
-    // ボタンは枠で囲わない。日時は操作列に出す
+    // ボタンは枠で囲わない。日時は操作列に出さない（プロンプトを送った時刻を、PC は会話の最上部、スマホは長押しのメニューに出す）
     for (const border of await bar.locator('button:visible').evaluateAll(list => list.map(b => getComputedStyle(b).borderTopColor))) assert.equal(border, 'rgba(0, 0, 0, 0)', name + ' border');
-    assert.match(await bar.locator('time.reply-time:visible').textContent(), /^(今日|Today) \d{2}:\d{2}$/, name + ' time');
+    assert.equal(await bar.locator('time.reply-time').count(), 0, name + ' no reply time');
     const cursor = await page.evaluate(() => {
       const reply = [...document.querySelectorAll('.agent-reply')].at(-1), body = reply.querySelector('.agent-reply-body');
       reply.classList.add('streaming');
@@ -81,13 +81,13 @@ try {
     await context.close();
     checked++;
   }
-  for (const [name, path, width, lang] of [['home-light', '/', 1280, 'ja-JP'], ['home-dark', '/', 1280, 'en-US'], ['app', '/magi-app/www/', 390, 'ja-JP'], ['app-320', '/magi-app/www/', 320, 'en-US']]) {
+  for (const [name, path, width, lang] of [['home-light', '/', 1280, 'ja-JP'], ['home-dark', '/', 1280, 'en-US'], ['home-touch', '/', 390, 'en-US'], ['app', '/magi-app/www/', 390, 'ja-JP'], ['app-320', '/magi-app/www/', 320, 'en-US']]) {
     // アプリの画面はスマホ相当（指で操作する端末）。共有シートはこのときだけ使い、PC ではコピーする
-    const touch = !name.startsWith('home');
+    const touch = name === 'home-touch' || !name.startsWith('home');
     const context = await browser.newContext({ viewport: { width, height: 900 }, locale: lang, serviceWorkers: 'block', isMobile: touch, hasTouch: touch });
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
     const page = await context.newPage(), errors = [], external = [], speech = [], chats = [], reacts = [];
-    let chatFails = false;
+    let chatFails = false, speechDelay = 0;
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(() => {
       (localStorage.setItem('st-analytics', 'off'),sessionStorage.setItem('magi_transport','sse'));
@@ -113,6 +113,7 @@ try {
       }
       if (url.pathname === '/magi2/speech') {
         const body = JSON.parse(request.postData()); speech.push(body);
+        if (speechDelay) await new Promise(r => setTimeout(r, speechDelay));
         await route.fulfill({ status: 200, body: wav(), headers: { 'Content-Type': 'audio/mpeg', 'X-Speech-Parts': '2', 'Access-Control-Allow-Origin': origin, 'Access-Control-Expose-Headers': 'X-Speech-Parts' } });
         return;
       }
@@ -127,19 +128,57 @@ try {
     const sentAt = external.length;
     await page.locator('#agent-send').click();
     const bar = page.locator('.agent-reply .reply-bar').last();
-    await until(async () => (await bar.locator('[data-act="sources"]:visible').count()) === 1, 'sources button');
+    await until(async () => (await bar.locator('[data-act="sources"]:not([hidden])').count()) === 1, 'sources button');
+    // スマホ（指の端末）は操作列を隠し、回答の長押しのメニューから同じ操作をする。PC は操作列のボタンを押す
+    const cdp = touch ? await context.newCDPSession(page) : null;
+    const longPress = async locator => {
+      await locator.scrollIntoViewIfNeeded();
+      const box = await locator.boundingBox(), x = box.x + Math.min(40, box.width / 2), y = box.y + Math.min(20, box.height / 2);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      await page.waitForTimeout(600);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(450);
+    };
+    const replyMenu = async () => { await longPress(page.locator('.agent-reply').last().locator('.agent-reply-body')); await until(async () => (await page.locator('.prompt-menu').count()) === 1, 'reply menu'); };
+    const act = async a => {
+      if (!touch) { await page.locator('.agent-reply .reply-bar').last().locator(`[data-act="${a}"]`).click(); return; }
+      await replyMenu(); await page.locator(`.prompt-menu [data-menu="${a}"]`).click();
+    };
 
-    // §2.1 並び: ［コピー］［共有］（指で操作する端末だけ）［🔊］［もう一度］［評価］と日時、右寄せの［ソース］。押せる大きさ
-    await until(async () => (await bar.locator('[data-act="speak"]:visible').count()) === 1, 'speak button');
-    const acts = await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act));
-    assert.deepEqual(acts, [...(touch ? ['copy', 'share'] : ['copy']), 'speak', 'retry', 'rate', 'sources'], name);
-    assert.equal(await bar.locator('time.reply-time:visible').count(), 1, name + ' time');
-    // 390px 以上は［ソース］まで1行に収める（それより狭い端末では［ソース］だけ2行目の右端へ回る）
-    if (width >= 390) {
-      const [copyTop, srcTop] = await Promise.all(['copy', 'sources'].map(act => bar.locator(`[data-act="${act}"]`).evaluate(b => b.getBoundingClientRect().top)));
-      assert(Math.abs(copyTop - srcTop) < 2, name + ' one line ' + copyTop + ' ' + srcTop);
+    // §2.1 並び: ［コピー］［🔊］［もう一度］［評価］と右寄せの［ソース］（PC）。スマホは操作列を出さず長押しのメニュー
+    await until(async () => (await bar.locator('[data-act="speak"]:not([hidden])').count()) === 1, 'speak button');
+    assert.equal(await bar.locator('time.reply-time').count(), 0, name + ' time');
+    if (touch) {
+      // スマホは「コピー」「選択」「共有」と回答の操作、評価の行を出す
+      assert.equal(await bar.evaluate(b => b.getBoundingClientRect().width), 1, name + ' bar visually hidden');
+      assert.notEqual(await bar.evaluate(b => getComputedStyle(b).display), 'none', name + ' bar remains accessible');
+      // 出典の次のTabで操作列へ進め、フォーカス中は実際に見える。支援技術にもボタンを残す。
+      await page.locator('.agent-reply-body a').last().focus();
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement.dataset.act),'copy',name + ' keyboard entry');
+      assert.ok(await bar.evaluate(b => b.getBoundingClientRect().width > 1),name + ' focused bar visible');
+      await page.keyboard.press('Enter');
+      assert.match(await page.evaluate(() => navigator.clipboard.readText()),/\[1\]/);
+      await page.locator('#agent-input').focus();
+      assert.equal(await bar.evaluate(b => b.getBoundingClientRect().width),1,name + ' bar hides after blur');
+      await replyMenu();
+      assert.deepEqual(await page.locator('.prompt-menu [data-menu]').evaluateAll(list => list.map(b => b.dataset.menu)), ['copy', 'select', 'share', 'speak', 'retry', 'sources'], name);
+      const srcLabel = await bar.locator('[data-act="sources"]').getAttribute('aria-label');
+      assert.deepEqual(await page.locator('.prompt-menu [data-menu]').allTextContents(), lang === 'ja-JP' ? ['コピー', '選択', '共有', '読み上げ', 'もう一度', srcLabel] : ['Copy', 'Select', 'Share', 'Read aloud', 'Try again', srcLabel]);
+      assert.deepEqual(await page.locator('.prompt-menu-rate > button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
+      if (process.argv.includes('--screenshots')) { mkdirSync(captures, { recursive: true }); await page.screenshot({ path: resolve(captures, name + '-menu.png'), animations: 'disabled' }); }
+      await page.keyboard.press('Escape');
+      await until(async () => (await page.locator('.prompt-menu').count()) === 0, 'menu closed');
+    } else {
+      const acts = await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act));
+      assert.deepEqual(acts, ['copy', 'speak', 'retry', 'rate', 'sources'], name);
+      // 390px 以上は［ソース］まで1行に収める（それより狭い端末では［ソース］だけ2行目の右端へ回る）
+      if (width >= 390) {
+        const [copyTop, srcTop] = await Promise.all(['copy', 'sources'].map(act => bar.locator(`[data-act="${act}"]`).evaluate(b => b.getBoundingClientRect().top)));
+        assert(Math.abs(copyTop - srcTop) < 2, name + ' one line ' + copyTop + ' ' + srcTop);
+      }
+      for (const box of await bar.locator('button:visible').evaluateAll(list => list.map(b => b.getBoundingClientRect().height))) assert(Math.round(box) >= 32, name + ' button height ' + box);
     }
-    for (const box of await bar.locator('button:visible').evaluateAll(list => list.map(b => b.getBoundingClientRect().height))) assert(box >= 32, name + ' button height ' + box);
     const src = bar.locator('[data-act="sources"]');
     assert.equal(await src.locator('img.src-icon').count(), 1); assert.equal(await src.locator('.src-letter').count(), 1);
     assert.equal(await page.locator('.agent-reply .agent-sources').count(), 0, '回答の下に旧い一覧を出さない');
@@ -149,12 +188,13 @@ try {
     if (process.argv.includes('--screenshots')) { mkdirSync(captures, { recursive: true }); await page.screenshot({ path: resolve(captures, name + '-bar.png'), animations: 'disabled' }); }
 
     // §2.2 ソースの一覧。Esc で閉じて［ソース］へ戻る。画面から出典のサイトへ取りに行かない
-    await src.click();
+    await act('sources');
     const rows = page.locator(home ? '.src-list .src-row' : '#agent-sources-panel .src-row');
     await until(async () => (await rows.count()) === 2, 'source rows');
     assert.equal(await src.getAttribute('aria-expanded'), 'true');
     assert.deepEqual(await rows.evaluateAll(list => list.map(a => [a.target, a.rel, a.querySelector('.src-domain').textContent])),
       [['_blank', 'noopener noreferrer', 'example.com'], ['_blank', 'noopener noreferrer', 'news.example.org']]);
+    if(home)assert(await rows.first().evaluate(a=>a===document.activeElement),'ソースを開いたら先頭の出典へフォーカスする');
     if (!home) {
       const close = page.locator('#agent-sources-panel .agent-panel-close');
       assert(await close.evaluate(btn => btn === document.activeElement), 'ソースのモーダルは閉じるボタンへフォーカスする');
@@ -169,7 +209,7 @@ try {
     await page.keyboard.press('Escape');
     await until(async () => (await rows.count()) === 0, 'close sources');
     assert.equal(await src.getAttribute('aria-expanded'), 'false');
-    assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.dataset.act), 'sources');
+    if (!touch) assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.dataset.act), 'sources');
     assert.deepEqual(external.slice(sentAt), [], name + ' external requests');
 
     // §2.2 共有: 題名と本文（[n]と出典の一覧）を渡し、URL は渡さない。PC と、共有が無い環境ではコピーして知らせる
@@ -177,13 +217,51 @@ try {
     const copied = async () => (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
     let sharedText;
     if (touch) {
-      await bar.locator('[data-act="share"]').click();
+      await page.evaluate(() => {
+        Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});
+        window.__images=[];
+        const render=window.MagiShareImage.render;
+        window.MagiShareImage.render=opts=>{window.__images.push(opts);return render(opts);};
+      });
+      await act('share');
+      await until(async () => (await page.evaluate(() => window.__shared.length)) === 1,'image share');
+      const image=await page.evaluate(()=>({type:window.__shared[0].files[0].type,size:window.__shared[0].files[0].size,options:window.__images[0]}));
+      assert.equal(image.type,'image/png');assert.ok(image.size>0);
+      assert.equal(image.options.truncate,false);
+      assert.match(image.options.text,/\[1\]/);assert.match(image.options.text,/\[2\]/);
+      for(const item of sources.items)assert.ok(image.options.text.includes(item.title)&&image.options.text.includes(item.url));
+      if(process.argv.includes('--screenshots')) {
+        mkdirSync(captures,{recursive:true});
+        writeFileSync(resolve(captures,name+'-shared.png'),Buffer.from(await page.evaluate(async()=>Array.from(new Uint8Array(await window.__shared[0].files[0].arrayBuffer())))));
+      }
+      // 利用者のキャンセルはテキスト共有やコピーへ進めない。アプリはnative由来のcancel文も受ける。
+      for(const error of [{name:'AbortError',message:'aborted'},...(!home?[{name:'Error',message:'Share cancelled'}]:[])]) {
+        await page.evaluate(async error=>{
+          window.__shareOriginal=navigator.share;window.__shareAttempts=0;
+          await navigator.clipboard.writeText('unchanged after cancel');
+          Object.defineProperty(navigator,'share',{configurable:true,value:()=>{
+            window.__shareAttempts++;return Promise.reject(Object.assign(new Error(error.message),{name:error.name}));
+          }});
+        },error);
+        await act('share');
+        await until(async()=>await page.evaluate(()=>window.__shareAttempts)>0,'share cancellation');
+        assert.equal(await page.evaluate(()=>window.__shareAttempts),1);
+        assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),'unchanged after cancel');
+        await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:window.__shareOriginal}));
+      }
+      // 長い回答・出典は画像から切り落とさず、全文のテキスト共有へ戻す。
+      assert.equal(await page.evaluate(async()=>{
+        try{await window.MagiShareImage.render({text:'long synthetic line\n'.repeat(1000),truncate:false});return false;}
+        catch(e){return e.message==='share_image_too_long';}
+      }),true);
+      await page.evaluate(()=>{window.__shared=[];Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>false});});
+      await act('share');
       await until(async () => (await page.evaluate(() => window.__shared.length)) === 1, 'share');
       const shared = await page.evaluate(() => window.__shared[0]);
       assert.deepEqual(Object.keys(shared).sort(), ['text', 'title']);
       sharedText = shared.text;
       await page.evaluate(() => { delete navigator.share; Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); });
-      await bar.locator('[data-act="share"]').click();
+      await act('share');
       await until(async () => (await page.locator('.reply-note').count()) === 1, 'copied note');
       assert.equal(await copied(), sharedText);
       assert.match(sharedText, /\[1\]/); assert.match(sharedText, /https:\/\/www\.example\.com\/hours/);
@@ -191,25 +269,33 @@ try {
 
     // §2.3 読み上げ: 押すと区切り0と1を取り、鳴らし終えたら元に戻る。もう一度押すとすぐ止まる
     const speak = bar.locator('[data-act="speak"]');
-    await speak.click();
+    await act('speak');
     assert.equal(await speak.getAttribute('aria-pressed'), 'true');
     await until(async () => speech.length === 2, 'two parts');
     assert.deepEqual(speech.map(b => b.part), [0, 1]); assert.equal(speech[0].sig, SIG); assert.equal(speech[0].lang, 'ja'); assert.equal(speech[0].text, answer);
     await until(async () => (await speak.getAttribute('data-state')) === 'idle', 'played to the end');
     assert.equal(await speak.getAttribute('aria-pressed'), 'false');
-    await speak.click(); await speak.click();
+    if (touch) {
+      // スマホは読み込み中に長押しのメニューを開くと「読み上げを止める」になり、押すとすぐ止まる（音声の応答を遅らせて確かめる）
+      speechDelay = 3000;
+      await act('speak');
+      await replyMenu();
+      assert.equal(await page.locator('.prompt-menu [data-menu="speak"]').textContent(), lang === 'ja-JP' ? '読み上げを止める' : 'Stop reading');
+      await page.locator('.prompt-menu [data-menu="speak"]').click();
+      speechDelay = 0;
+    } else { await act('speak'); await act('speak'); }
     assert.equal(await speak.getAttribute('data-state'), 'idle');
     assert.equal(await page.locator('audio').count(), 0, '<audio> は文書に挿さない');
 
     // ［もう一度］: 同じ質問だけを送り直し（前の回答は送らない）、新しい回答と入れ替える
-    await bar.locator('[data-act="retry"]').click();
+    await act('retry');
     await until(async () => chats.length === 2 && (await page.locator('.agent-reply.streaming').count()) === 0
       && (await page.locator('.agent-reply-body').last().textContent()).includes('9時半'), 'retried');
     assert.deepEqual(chats[1].messages.map(m => [m.role, m.content]), [['user', '開館時間を確認して']]);
     assert.equal(await page.locator('.agent-user').count(), 1); assert.equal(await page.locator('.agent-turn').count(), 1);
     // 届かなければ前の往復を見せ直し、入力欄には戻さない
     chatFails = true;
-    await page.locator('.agent-reply .reply-bar').last().locator('[data-act="retry"]').click();
+    await act('retry');
     await until(async () => chats.length === 3 && (await page.locator('.agent-err').count()) === 1, 'retry failed');
     await until(async () => (await page.locator('.agent-turn:visible').count()) === 1, 'old reply back');
     assert.equal(await page.locator('.agent-user:visible').count(), 1);
@@ -219,36 +305,45 @@ try {
     await page.locator('#agent-input').fill('休館日は？');
     await page.locator('#agent-send').click();
     await until(async () => chats.length === 4 && (await page.locator('#agent-input').inputValue()) === '休館日は？', 'send failed');
-    await until(async () => (await page.locator('.agent-reply .reply-bar').last().locator('[data-act="retry"]:visible').count()) === 1, 'retry back');
+    await until(async () => (await page.locator('.agent-reply .reply-bar').last().locator('[data-act="retry"]:not([hidden])').count()) === 1, 'retry back');
     await page.locator('#agent-input').fill('');
     chatFails = false;
 
     // 評価: Good / Bad の2択。付け替えは前の評価を消してから付ける
+    // スマホは長押しのメニューの評価の行、PC は操作列の評価のメニュー
     const latest = page.locator('.agent-reply .reply-bar').last(), rate = latest.locator('[data-act="rate"]');
-    await rate.click();
-    assert.deepEqual(await page.locator('.rate-pop button').allTextContents(), ['Good', 'Bad']);
+    const pop = touch ? '.prompt-menu-rate' : '.rate-pop', openRate = async () => { if (touch) await replyMenu(); else await rate.click(); };
+    await openRate();
+    // よく使う6つと ＋。＋ でほかの絵文字を開く
+    assert.deepEqual(await page.locator(pop + ' > button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
+    assert.equal(await page.locator(pop + ' .react-more').isHidden(), true);
+    await page.locator(pop + ' [data-more]').click();
+    assert.equal(await page.locator(pop + ' .react-more').isVisible(), true);
+    assert.ok((await page.locator(pop + ' .react-more button').count()) >= 16);
     if (process.argv.includes('--screenshots')) await page.screenshot({ path: resolve(captures, name + '-rate.png'), animations: 'disabled' });
-    await page.locator('.rate-pop [data-rate="good"]').click();
+    await page.locator(pop + ' [data-rate="👍"]').click();
     await until(async () => reacts.length === 1, 'rated good');
     assert.equal(reacts[0].reaction, '\u{1F44D}'); assert.equal(reacts[0].target, 'integrated');
-    assert.equal(await page.locator('.rate-pop').count(), 0); assert.match(await rate.getAttribute('class'), /rated/);
-    await rate.click();
-    assert.equal(await page.locator('.rate-pop [data-rate="good"]').getAttribute('aria-checked'), 'true');
-    await page.locator('.rate-pop [data-rate="bad"]').click();
+    assert.equal(await page.locator(pop).count(), 0); assert.match(await rate.getAttribute('class'), /rated/);
+    await openRate();
+    assert.equal(await page.locator(pop + ' [data-rate="👍"]').getAttribute('aria-checked'), 'true');
+    // 付けた絵文字は回答の角に札で出る（付けた瞬間は弾むアニメーション）
+    assert.equal(await page.locator('.agent-reply').last().locator('.msg-reaction').getAttribute('data-emoji'), '👍');
+    await page.locator(pop + ' [data-rate="😂"]').click();
     await until(async () => reacts.length === 3, 'rated bad');
-    assert.deepEqual(reacts.slice(1).map(r => r.op || r.reaction), ['remove', '\u{1F44E}']);
-    await rate.click(); await page.keyboard.press('Escape');
-    assert.equal(await page.locator('.rate-pop').count(), 0);
+    assert.deepEqual(reacts.slice(1).map(r => r.op || r.reaction), ['remove', '\u{1F602}']);
+    await openRate(); await page.keyboard.press('Escape');
+    assert.equal(await page.locator(pop).count(), 0);
 
     // 履歴から開き直しても、保存した署名で 🔊 と［ソース］が出る
     await page.reload({ waitUntil: 'domcontentloaded' });
     if (home && !(await page.locator('#agentdock:not(.collapsed)').count())) await page.locator('#activitybar [data-act="agent"]').click();
     const restored = page.locator('.agent-reply .reply-bar').last();
-    await until(async () => (await restored.locator('[data-act="speak"]:visible').count()) === 1, 'restored speak');
-    assert.equal(await restored.locator('[data-act="sources"]:visible').count(), 1);
+    await until(async () => (await restored.locator('[data-act="speak"]:not([hidden])').count()) === 1, 'restored speak');
+    assert.equal(await restored.locator('[data-act="sources"]:not([hidden])').count(), 1);
     assert.match(await restored.locator('[data-act="rate"]').getAttribute('class'), /rated/, '評価を復元する');
-    assert.equal(await restored.locator('[data-act="retry"]:visible').count(), 1, '開き直しても文字の質問は送り直せる');
-    assert.equal(await restored.locator('time.reply-time:visible').count(), 1);
+    assert.equal(await restored.locator('[data-act="retry"]:not([hidden])').count(), 1, '開き直しても文字の質問は送り直せる');
+    assert.equal(await restored.locator('time.reply-time:visible').count(), 0);
     assert.deepEqual(errors, [], name + ' page errors');
     await context.close();
     checked++;

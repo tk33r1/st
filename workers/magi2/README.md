@@ -27,6 +27,10 @@ Android固有の設計と公開評価は [`magi-app/`](../../magi-app/README.md)
 
 ## 検証用ファイルの扱い
 
+通常チャットのサイト保存を使う前に、既存DBへ `migrations/0003_conversations.sql` を適用する。新規DBは `schema.sql` を使う。
+会話は最長365日。毎日00:17 JSTのCronで、次の定期処理までに期限を迎える行も削除する。
+`CONVERSATION_STORE_ENABLED=false` は新規保存だけを止め、期限切れの削除は続ける。Cronの失敗は再実行・調査の対象とし、削除成功と扱わない。
+
 検証スクリプトはリポジトリのルートから実行し、生成物を `workers/.wrangler/` または `.github/scripts/.search-reading-env/work/` に保存する。スクリーンショットは再生成できるが、評価JSON・本人の採点・費用台帳は削除しない。
 
 `preview-magi47-materials.py` は手動の `magi-anthropic-probe.yml` が使う。`summarize-magi47.mjs` と `verify-magi47-dj.mjs` は、その評価データの新旧比較とDJ回答のカタログ照合に使う手動ツールとして保持する。名前に旧版が含まれていても、版番号だけで削除しない。

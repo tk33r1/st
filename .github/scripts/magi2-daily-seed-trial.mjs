@@ -1,3 +1,4 @@
+import {isCommitSha as sha} from './magi2-daily-contract.mjs';
 // 段3専用。仕込みbase宛のPRだけを検査・報告する。mainへのマージ・公開・復旧は行わない。
 import {appendFileSync,readFileSync,writeFileSync,readdirSync,mkdirSync,realpathSync,lstatSync,existsSync,copyFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -9,7 +10,6 @@ import {inspectChanges} from './magi2-daily-check.mjs';
 
 export const seedBranch='automation/magi2-daily-seeded-base';
 const apk59Fixture='.github/scripts/fixtures/magi-versions-apk59.js';
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 // 自前の理由コード（例: daily_mail_403）だけをログへ出す。秘密や本文を含みうる他の文は伏せる。
 const safeCode=error=>/^[\w:,.()-]{1,200}$/.test(error?.message||'')?error.message:'error';
 export function eligibleSeedPR(pr,actor='tk33r1',label='magi2-daily-A') {

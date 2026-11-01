@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.1",
+      "date": "2026-11-02",
+      "changes": {
+        "ja": [
+          "回答を見出し・太字・箇条書き・表で読みやすく表示し、スマホでは文字を大きくしました。",
+          "回答への評価を絵文字のリアクションに変え、Shinya Takedaもあなたのメッセージに絵文字で反応するようにしました。",
+          "スマホでは長押しでコピー・選択・共有を出し、回答や質問を画像で共有できるようにしました。Androidではスクリーンショットの後に共有を提案します。",
+          "設定でオフにしない限り、会話をMAGIの改善のためにサイトへ最長1年保存するようにしました。"
+        ],
+        "en": [
+          "Replies now use headings, bold text, lists and tables, with larger text on phones.",
+          "Ratings are now emoji reactions, and Shinya Takeda reacts to your messages with an emoji.",
+          "On phones, long-press a message to copy, select or share it, and share replies or questions as images. Android suggests sharing after a screenshot.",
+          "Unless you turn it off in settings, chats are saved on the site for up to one year to improve MAGI."
+        ]
+      }
+    },
+    {
       "version": "7.04",
       "date": "2026-11-02",
       "changes": {

@@ -1,3 +1,4 @@
+import {COMMIT_SHA_RE} from './magi2-daily-contract.mjs';
 // 段階1の本人採点のローカル集計。GitHubへ書かず、段階を変更しない。
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -16,7 +17,7 @@ export function stage1Report(ledger,now=new Date()) {
   const seen=new Set(),rows=ledger.candidates;
   for(const row of rows) {
     if(!row||typeof row.id!=='string'||!/^[\w:-]{1,100}$/.test(row.id)||seen.has(row.id)
-      ||!/^https:\/\/github\.com\/tk33r1\/st\/pull\/[1-9]\d*$/.test(row.pr||'')||!/^[a-f0-9]{40}$/.test(row.head||'')
+      ||!/^https:\/\/github\.com\/tk33r1\/st\/pull\/[1-9]\d*$/.test(row.pr||'')||!COMMIT_SHA_RE.test(row.head||'')
       ||!['A','B'].includes(row.classification)||!timestamp(row.detected_at)
       ||start===null||Date.parse(row.detected_at)<start||Date.parse(row.detected_at)>=start+14*day||Date.parse(row.detected_at)>+now
       ||![null,'correct','wrong_category','false_positive'].includes(row.grade)

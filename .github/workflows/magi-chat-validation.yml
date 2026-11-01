@@ -1,10 +1,17 @@
 name: MAGI Chat Gate
+run-name: MAGI Chat Gate ${{ inputs.sha || github.sha }}
 
 # skip-ciコミットはPagesも公開されない。公開されるpushでは同じSHAを必ず検査する。
 on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      sha:
+        description: '検査する完全なコミットSHA（省略時は選択したref）'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     inputs:
       sha:
@@ -16,12 +23,25 @@ permissions:
   contents: read
 
 # 純粋な検査だけを置換する。botの書き込みworkflowとはgroupを共有しない。
+# 対象のSHAごとに分ける（botのpush後の起動は inputs.sha が空なので github.sha。別のSHAの検査を取り消さない）。
 concurrency:
-  group: magi-chat-validation-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.sha }}
+  group: magi-chat-validation-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
+  target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a full commit SHA when pinning the target
+        env:
+          CHECK_SHA: ${{ inputs.sha }}
+        run: |
+          if [ -n "$CHECK_SHA" ]; then
+            [[ "$CHECK_SHA" =~ ^[a-f0-9]{40}$ ]] || { echo '::error::A full commit SHA is required'; exit 1; }
+          fi
+
   browser:
+    needs: target
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -51,6 +71,7 @@ jobs:
           node .github/scripts/test-magi-attach-browser.mjs
           node .github/scripts/test-magi-chat-matrix.mjs
           node .github/scripts/test-magi-chat-review-browser.mjs
+          node .github/scripts/test-magi-reply-bar-browser.mjs
           node .github/scripts/test-magi-ws-browser.mjs
       - name: Privacy boundary regression
         run: |
@@ -63,6 +84,7 @@ jobs:
           path: workers/.wrangler/magi-chat-gate/
 
   android:
+    needs: target
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

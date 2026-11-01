@@ -1,11 +1,10 @@
+import {isCommitSha as sha,isVersionId as uuid} from './magi2-daily-contract.mjs';
 // 本番版の読み取りとWranglerの構造化出力。生成API・Cloudflareへの書き込みは行わない。
 import {readFileSync,writeFileSync,appendFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {limitedJSON} from './magi2-daily-http.mjs';
 
-const uuid=value=>typeof value==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
-const sha=value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value);
 export function magiWorkerName() {
   const name=readFileSync(new URL('../../workers/magi2/wrangler.toml',import.meta.url),'utf8').match(/^name\s*=\s*"([a-z][a-z0-9-]*)"/m)?.[1];
   if(!name)throw new Error('cloudflare_worker_configuration');return name;
