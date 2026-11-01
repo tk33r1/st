@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.1';
+var APP_VERSION = '7.11';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -1989,6 +1989,7 @@ function initAgentPrivacy() {
   });
   if (typeof nativeAndroid !== 'undefined' && nativeAndroid && window.Capacitor.Plugins.App) {
     window.Capacitor.Plugins.App.addListener('appStateChange', function (state) {
+      magiAcronymSetActive(state.isActive);
       agentPrivacyState.background = !state.isActive;
       if (!agentPrivacyState.background || !agentTemporary()) return;
       if (agentPrivacyState.preparing) { cancelAgentPrivacyPreparation(); dropAgentRequest(); }
@@ -2002,6 +2003,200 @@ function initAgentPrivacy() {
 setTimeout(initAgentPrivacy, 0);
 // AGENT_EPHEMERAL_END
 
+// MAGI_ACRONYM_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
+// スプラッシュの MAGI の下で、同じ頭字語の二つの読み（A: SYSTEM、B: ART）を切り替える。設計は magi-app/magi-dual-acronym-prd.md。
+// 見出しの MAGI と中央の Generating は動かさず、前後の語句の組だけを opacity で入れ替える（両面の語句は同じセルに重ねて幅を確保する）。
+// スプラッシュは同時に一つしかないので、制御器もページに一つだけ置く。HTML の生成（magiAcronymHTML）ではタイマーもイベントも登録しない。
+var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fade: 700 };
+var magiAcronymCtl = null;
+// 停止の選択はページの滞在中だけ保つ（言語変更・新規会話でスプラッシュを描き直しても解除しない。端末には保存しない）
+var magiAcronymPaused = false;
+var magiAcronymAppActive = true;
+function magiAcronymPhrase(face) {
+  var words = MAGI_ACRONYM.faces[face];
+  return words[0] + ' ' + MAGI_ACRONYM.pivot + ' ' + words[1];
+}
+// 二つの読みの説明。FAQ の「MAGIとは？」と、スプラッシュのボタンの説明（aria-describedby）に同じ文を使う
+function magiAcronymAbout() {
+  var a = '<span lang="en">' + magiAcronymPhrase('a') + '</span>', b = '<span lang="en">' + magiAcronymPhrase('b') + '</span>';
+  return tr('MAGI has two readings. ' + a + ': a system in which multiple agents generate intelligence. And ' + b + ': an attempt, as art, to bring forth human interiority, contradictions and conflicts included. Both describe the same MAGI.',
+    'MAGIには、二つの読みがあります。複数のエージェントが知性を生成する仕組みとしての「' + a + '」。そして、矛盾や葛藤を含む人間の内面を、芸術として立ち上げようとする「' + b + '」。どちらも、同じMAGIを表しています。');
+}
+function magiAcronymHTML() {
+  var lang = tr('en', 'ja');
+  var slot = function (i) {
+    return '<span class="magi-acr-slot magi-acr-' + (i ? 'suf' : 'pre') + '"><span class="magi-acr-a">' + MAGI_ACRONYM.faces.a[i] + '</span><span class="magi-acr-b">' + MAGI_ACRONYM.faces.b[i] + '</span></span>';
+  };
+  return '<div class="magi-sub magi-acronym" data-face="a">'
+    + '<button type="button" class="magi-acr-phrase" aria-labelledby="magi-acr-name magi-acr-act" aria-describedby="magi-acr-desc">'
+    + '<span class="magi-acr-line" aria-hidden="true">' + slot(0) + '<span class="magi-acr-pivot">' + MAGI_ACRONYM.pivot + '</span>' + slot(1) + '</span></button>'
+    + '<span class="magi-acr-ctl"><span class="magi-acr-state" aria-hidden="true"><span data-acr-state="a">SYSTEM</span> / <span data-acr-state="b">ART</span></span>'
+    + '<button type="button" class="magi-acr-auto" data-state="on" aria-describedby="magi-acr-motion" aria-label="' + tr('Pause automatic switching', '自動切替を停止') + '">'
+    + '<svg class="magi-acr-pause" aria-hidden="true" viewBox="0 0 10 10"><rect x="1.5" y="1" width="2.4" height="8" fill="currentColor"/><rect x="6.1" y="1" width="2.4" height="8" fill="currentColor"/></svg>'
+    + '<svg class="magi-acr-play" aria-hidden="true" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button></span>'
+    + '<span class="magi-acr-sr" id="magi-acr-name" lang="en">' + magiAcronymPhrase('a') + '</span>'
+    + '<span class="magi-acr-sr" id="magi-acr-act" lang="' + lang + '">' + tr('(switch to the other meaning)', '（もう一つの意味へ切り替える）') + '</span>'
+    + '<span class="magi-acr-sr" id="magi-acr-desc" lang="' + lang + '">' + magiAcronymAbout() + '</span>'
+    + '<span class="magi-acr-sr" id="magi-acr-motion" lang="' + lang + '"></span>'
+    + '</div>';
+}
+// スプラッシュを DOM に入れた後に呼ぶ。前のスプラッシュの制御器は必ず捨てる。失敗しても A 面の完成フレーズが残る
+function mountMagiAcronym(root) {
+  if (magiAcronymCtl) magiAcronymCtl.dispose();
+  magiAcronymCtl = null;
+  var el = root && root.querySelector('.magi-acronym');
+  if (!el) return null;
+  try { magiAcronymCtl = magiAcronymController(el); } catch (e) { el.setAttribute('data-face', 'a'); }
+  return magiAcronymCtl;
+}
+// Android のアプリ状態（バックグラウンドでは切り替えない）
+function magiAcronymSetActive(active) {
+  magiAcronymAppActive = !!active;
+  if (magiAcronymCtl) magiAcronymCtl.sync();
+}
+function magiAcronymController(el) {
+  var phrase = el.querySelector('.magi-acr-phrase'), auto = el.querySelector('.magi-acr-auto');
+  var name = el.querySelector('#magi-acr-name'), motionNote = el.querySelector('#magi-acr-motion');
+  var media = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var face = 'a', hold = null, fading = null, hover = false, seen = true, dead = false, io = null;
+  var ctl = { el: el, dispose: dispose, sync: sync };
+  // 動きを減らす設定の間は自動で切り替えない。設定が戻っても勝手に再開しない
+  if (media.matches) magiAcronymPaused = true;
+  function reduced() { return !!media.matches; }
+  function alive() {
+    if (!dead && !el.isConnected) dispose();
+    return !dead;
+  }
+  function running() { return !magiAcronymPaused && !reduced() && !hover && seen && magiAcronymAppActive && !document.hidden; }
+  function label() {
+    var on = !magiAcronymPaused && !reduced();
+    var text = on ? tr('Pause automatic switching', '自動切替を停止') : tr('Resume automatic switching', '自動切替を再開');
+    auto.setAttribute('data-state', on ? 'on' : 'off');
+    auto.setAttribute('aria-label', text);
+    if (reduced()) {
+      auto.setAttribute('aria-disabled', 'true');
+      motionNote.textContent = tr('Automatic switching is off because your device is set to reduce motion.', '端末で動きを減らす設定がオンのため、自動切替は使えません。');
+      auto.title = motionNote.textContent;
+    } else {
+      auto.removeAttribute('aria-disabled');
+      motionNote.textContent = '';
+      auto.title = text;
+    }
+  }
+  // 面を替える。animate が偽なら遷移を省いて完成形を即時に出す
+  function show(next, animate) {
+    face = next;
+    if (!animate) el.classList.add('is-instant');
+    el.setAttribute('data-face', face);
+    if (!animate) {
+      void el.offsetWidth;
+      el.classList.remove('is-instant');
+    }
+  }
+  // 読み上げの名前は完成面の確定時だけ替える（遷移の途中では替えない）
+  function done() {
+    fading = null;
+    name.textContent = magiAcronymPhrase(face);
+    schedule();
+  }
+  function flip(animate) {
+    if (fading) return false;
+    show(face === 'a' ? 'b' : 'a', animate);
+    if (animate) fading = setTimeout(function () { if (alive()) done(); }, MAGI_ACRONYM.fade);
+    else done();
+    return true;
+  }
+  // 遷移中なら遷移先の完成形で止める
+  function settle() {
+    if (!fading) return;
+    clearTimeout(fading);
+    fading = null;
+    show(face, false);
+    name.textContent = magiAcronymPhrase(face);
+  }
+  function halt() {
+    clearTimeout(hold);
+    hold = null;
+  }
+  // 現在面を hold の間見せてから次へ。経過した分をまとめて進めることはしない
+  function schedule() {
+    halt();
+    if (!dead && !fading && running()) hold = setTimeout(function () { hold = null; if (alive() && running()) flip(true); }, MAGI_ACRONYM.hold);
+  }
+  function stop() {
+    magiAcronymPaused = true;
+    settle();
+    halt();
+    label();
+  }
+  // 見えなくなった・止まったら待機をやめ、戻ったら現在面の静止時間から数え直す
+  function sync() {
+    if (!alive()) return;
+    if (!running()) {
+      halt();
+      if (!seen || document.hidden || !magiAcronymAppActive || reduced()) settle();
+    } else if (!hold && !fading) schedule();
+  }
+  function onPhrase() {
+    if (!alive() || fading) return;
+    magiAcronymPaused = true;
+    halt();
+    flip(!reduced());
+    label();
+  }
+  function onAuto() {
+    if (!alive() || reduced()) return;
+    if (!magiAcronymPaused) { stop(); return; }
+    magiAcronymPaused = false;
+    label();
+    schedule();
+  }
+  // キーボードのフォーカスが入ったら止める（離れただけでは再開しない）。マウスで押したときのフォーカスは数えない
+  function onFocus(e) {
+    var keyboard = false;
+    try { keyboard = e.target.matches(':focus-visible'); } catch (x) { keyboard = false; }
+    if (keyboard && !magiAcronymPaused) stop();
+  }
+  // マウスを乗せている間だけ一時停止する
+  function onEnter(e) { if (e.pointerType === 'mouse') { hover = true; sync(); } }
+  function onLeave(e) { if (e.pointerType === 'mouse') { hover = false; sync(); } }
+  function onMotion() {
+    if (!alive()) return;
+    if (reduced()) stop();
+    else label();
+  }
+  function dispose() {
+    if (dead) return;
+    dead = true;
+    halt();
+    clearTimeout(fading);
+    fading = null;
+    document.removeEventListener('visibilitychange', sync);
+    if (typeof media.removeEventListener === 'function') media.removeEventListener('change', onMotion);
+    if (io) io.disconnect();
+    if (magiAcronymCtl === ctl) magiAcronymCtl = null;
+  }
+  phrase.addEventListener('click', onPhrase);
+  auto.addEventListener('click', onAuto);
+  el.addEventListener('focusin', onFocus);
+  el.addEventListener('pointerenter', onEnter);
+  el.addEventListener('pointerleave', onLeave);
+  document.addEventListener('visibilitychange', sync);
+  if (typeof media.addEventListener === 'function') media.addEventListener('change', onMotion);
+  // 閉じたドック（幅0・画面外）やスクロールの外では切り替えない
+  if (typeof IntersectionObserver === 'function') {
+    io = new IntersectionObserver(function (entries) {
+      seen = entries[entries.length - 1].isIntersecting;
+      sync();
+    });
+    io.observe(el);
+  }
+  label();
+  el.classList.add('is-ready');
+  schedule();
+  return ctl;
+}
+// MAGI_ACRONYM_END
 function agentHintHTML() { return agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
   // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -2016,7 +2211,7 @@ function agentHintHTML() { return agentTemporary() ? agentTemporaryHintHTML() : 
   + '<text class="hn" x="85" y="83" text-anchor="middle">1</text>'
   + '</svg>'
   + '<div class="magi-title">MAGI</div>'
-  + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
+  + magiAcronymHTML()
       + '<button type="button" id="btn-versions-agent" class="magi-ver" title="' + tr('Version information', 'バージョン情報') + '">ver ' + APP_VERSION + '</button>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('')
   + '<button type="button" class="magi-node" data-codename="' + AGENT_SYNTH.codename + '">✦ ' + AGENT_SYNTH.codename.toUpperCase() + '</button>' + '</div>'
@@ -2199,8 +2394,13 @@ function renderHistoryToLog(history) {
 }
 
 // ---- Lifecycle --------------------------------------------------------------
+// スプラッシュを描き直す唯一の入口。描いた後に二つの読みの切り替え（MAGI_ACRONYM）を付ける
+function renderAgentSplash() {
+  agentLog.innerHTML = agentHintHTML();
+  mountMagiAcronym(agentLog);
+}
 function showSplashIfEmpty() {
-  if (!agentLog.children.length && !agentDead) agentLog.innerHTML = agentHintHTML();
+  if (!agentLog.children.length && !agentDead) renderAgentSplash();
 }
 function cleanHistory(history) {
   return Array.isArray(history) ? history.filter(function (m) {
@@ -3890,7 +4090,7 @@ function showAboutPanel() {
 }
 function showFAQPanel() {
   var rows = [
-    [tr('What is MAGI?', 'MAGIとは？'), tr('An experimental parody inspired by Evangelion’s MAGI. Three personas draw on Shinya Takeda’s personality and tk.st to discuss questions and produce a final answer.', '「新世紀エヴァンゲリオン」のMAGIに着想を得た実験的なパロディです。武田伸也の人格とtk.stをもとにした3人格が討議し、回答をまとめます。')],
+    [tr('What is MAGI?', 'MAGIとは？'), tr('An experimental parody inspired by Evangelion’s MAGI. Three personas draw on Shinya Takeda’s personality and tk.st to discuss questions and produce a final answer.', '「新世紀エヴァンゲリオン」のMAGIに着想を得た実験的なパロディです。武田伸也の人格とtk.stをもとにした3人格が討議し、回答をまとめます。') + '</p><p>' + magiAcronymAbout()],
     [tr('Does every question start a debate?', 'どの質問でも討議する？'), tr('Factual questions and site guidance can be answered without debate. Eligible yes/no questions trigger a vote; add “without taking a vote” for an explanation only.', '事実の質問やサイト内の案内は、討議せず答えることがあります。賛否を問う質問では採決します。説明だけがほしいときは「採決なしで」と添えてください。')],
     [tr('What are the limits?', '利用上限は？'), tr('Up to 1,000 characters and four images per message, and 60 requests a day. Replies use the last 12 messages (about six exchanges). Additional search and voice limits are described in the Privacy Policy.', '入力は1回1,000文字・画像4枚まで、1日60回までです。回答には直近12メッセージ（約6往復）を使います。検索や読み上げの追加上限はプライバシーポリシーで確認できます。')],
     [tr('How do I save a conversation?', '会話を残すには？'), tr('Use “Save as Markdown” in the more menu. History is stored on your device; keep a separate copy of important chats.', '︙の「Markdownで保存」から書き出せます。履歴は端末に保存されるため、重要な会話は別途控えを残してください。')],
@@ -4414,7 +4614,7 @@ function applyLanguage() {
   if (!agentBusy) {
     closeAgentPanels(); closeAttachMenu(); closeRatePops(false);
     if (agentHistory.length) renderHistoryToLog(agentHistory);
-    else if (agentLog.querySelector('.agent-splash')) agentLog.innerHTML = agentHintHTML();
+    else if (agentLog.querySelector('.agent-splash')) renderAgentSplash();
   }
 }
 document.getElementById('btn-lang').addEventListener('click', function () {

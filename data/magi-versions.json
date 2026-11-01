@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.11",
+      "date": "2026-11-02",
+      "changes": {
+        "ja": [
+          "MAGIの名前の下で、二つの読み「Multiple Agents Generating Intelligence」（工学）と「Modern Art Generating Interiority」（芸術）がゆっくり切り替わるようにしました。",
+          "フレーズを押すと切り替わり、自動の切り替えは止められます。「MAGIについて」のFAQで二つの読みを説明しています。"
+        ],
+        "en": [
+          "MAGI’s two readings, “Multiple Agents Generating Intelligence” (engineering) and “Modern Art Generating Interiority” (art), now slowly alternate below its name.",
+          "Tap the phrase to switch it, or pause the automatic switching. The FAQ under “About MAGI” explains both readings."
+        ]
+      }
+    },
+    {
       "version": "7.1",
       "date": "2026-11-02",
       "changes": {
