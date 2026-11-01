@@ -4,7 +4,7 @@
   "private": true,
   "description": "全 Worker 共通の wrangler。cd workers && npm ci のあと npx wrangler deploy --config <name>/wrangler.toml",
   "devDependencies": {
-    "wrangler": "^4.152.0"
+    "wrangler": "^4.156.0"
   },
   "engines": {
     "node": ">=24.22.1"
