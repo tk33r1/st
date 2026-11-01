@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 01 Nov 2026 05:23:48 +0900</lastBuildDate>
+    <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 02 Nov 2026 05:56:14 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月2日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261102/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261102/</guid>
+      <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
+      <description>本日のセルフレジ関連ニュースは既報と重複するものが多く、新規性の高い国内の動きは限定的でした。 薬局のセルフレジから出たレシートがSNSで「不気味」と話題になり、無人化された決済体験への生活者の違和感が表れました。</description>
+    </item>
     <item>
       <title>2026年11月1日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261101/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261018/</guid>
       <pubDate>Sun, 18 Oct 2026 08:00:00 +0900</pubDate>
       <description>セルフレジを1人で複数台回す店員の姿に「共感しかない」と反響が広がり、無人化と有人対応のバランスが生活者の関心事になっている。 人件費や物価高騰を背景に病院食堂の廃止・時短が相次ぐなか、無人セルフレジ売店が代替手段として注目されている。</description>
-    </item>
-    <item>
-      <title>2026年10月17日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261017/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261017/</guid>
-      <pubDate>Sat, 17 Oct 2026 08:00:00 +0900</pubDate>
-      <description>カインズがRELEXのシステムを導入し、需要予測と補充業務の高度化を進める。AI需要予測は在庫最適化の実務テーマとして国内小売に広がっている。 リテールメディアサミット2026へのブース出展など、購買データを活用した広告事業への関心が業界で高まっている。</description>
     </item>
   </channel>
 </rss>
