@@ -153,7 +153,7 @@
     .native-settings-actions button { min-height: 44px; padding: 10px 14px; font: inherit; font-size: 12px; text-align: left; color: var(--text-color); background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
     .native-settings-actions button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
     .native-settings-actions button:disabled { opacity: .5; cursor: wait; }
-    #agent-shared-tray { display: flex; gap: 6px; padding: 6px 12px; border-top: 1px solid var(--border-color); }
+    #agent-shared-tray { display: flex; gap: 6px; padding: 6px 12px; }
     #agent-shared-tray[hidden], #agent-voice[hidden] { display: none; }
     #agent-shared-tray button { font: inherit; font-size: 11px; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; cursor: pointer; }
     #agent-shared-tray button:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
@@ -216,10 +216,13 @@
       -webkit-overflow-scrolling: touch;
       display: flex; flex-direction: column; gap: 0.5rem;
       padding: 0.75rem; font-size: 17px; scroll-behavior: smooth;
+      scroll-padding-bottom: calc(var(--agent-compose-height, 5rem) + 4.25rem);
     }
+    /* 下端の余白もスクロール内容にする。IMEで画面が低くなってもログの高さを押し広げない。 */
+    #agent-log::after { content: ''; flex: 0 0 calc(var(--agent-compose-height, 5rem) + 3.5rem); }
     /* 横向きのIMEで極端に低くなると、ログの余白だけでも入力欄を押し出す。 */
     @media (max-height: 240px) {
-      #agent-log { padding-top: 0; padding-bottom: 0; }
+      #agent-log { padding-top: 0; }
     }
     .agent-user { display: flex; justify-content: flex-end; }
     .agent-user > span { display: inline-block; max-width: 85%; padding: 0.5rem 0.8rem; border-radius: 2px; line-height: 1.6; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
@@ -402,20 +405,43 @@
     .agent-err .agent-rid { color: var(--secondary-color); }
 
     /* input */
-    #agent-inputline {
+    /* 会話の上に入力欄を浮かせ、周囲はテーマの背景色へ滑らかに溶かす。 */
+    #agent-compose-area {
+      position: absolute; bottom: 0; left: var(--magi-safe-left); right: var(--magi-safe-right); z-index: 3;
+      isolation: isolate; pointer-events: none;
+    }
+    #agent-compose-area::before {
+      content: ''; position: absolute; inset: -3.5rem 0 0; z-index: -1;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg-color) 65%, transparent) 2.5rem, var(--bg-color) 5rem);
+      pointer-events: none;
+    }
+    #agent-compose-area > * { pointer-events: auto; }
+    #agent-scroll-bottom {
+      position: absolute; bottom: calc(100% + 0.65rem); left: 50%; transform: translateX(-50%);
+      display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+      border: 1px solid var(--border-color); border-radius: 50%;
+      background: color-mix(in srgb, var(--bg-color) 92%, transparent); color: var(--secondary-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    #agent-scroll-bottom[hidden] { display: none; }
+    #agent-scroll-bottom::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; }
+    #agent-scroll-bottom:hover { color: var(--text-color); background: var(--surface-hover); }
+    #agent-scroll-bottom:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
+    #agent-compose-area > #agent-inputline {
       flex-shrink: 0; padding: 0.5rem 0.75rem;
       padding-bottom: calc(0.5rem + var(--magi-safe-bottom));
-      border-top: 1px solid var(--border-color); background: var(--surface-alt);
+      background: transparent; pointer-events: none;
     }
     /* 添付・音声・送信は枠の中に置き、入力欄の幅を取らない。ボタンは1行の入力欄と同じ高さ（--composer-button）。
        入力欄が伸びても、ボタンは最終行の横に留める（align-items） */
     #agent-composer {
       --composer-button: calc(16px * 1.4 + 1.2rem + 2px);
-      position: relative; display: flex; align-items: flex-end; gap: 0.15rem; padding: 0.2rem;
-      background: var(--surface-color); border: 1px solid var(--border-color); border-radius: calc(var(--composer-button) / 2 + 0.2rem);
-      transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+      position: relative; display: flex; align-items: flex-end; gap: 0.15rem; padding: calc(0.2rem + 1px);
+      background: var(--surface-color); border: none; border-radius: calc(var(--composer-button) / 2 + 0.2rem);
+      pointer-events: auto;
+      transition: background-color var(--duration-fast);
     }
-    #agent-composer:focus-within { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-bg); }
+    #agent-composer:focus-within { background: var(--surface-hover); }
     #agent-input { flex: 1; font-family: inherit; font-size: 16px; background: transparent; border: 1px solid transparent; padding: 0.6rem 0.35rem; color: var(--text-color); outline: none; }
     #agent-input:disabled { opacity: 0.5; }
     /* 1行で始め、打った量に合わせて JS（fitAgentInput）が高さを伸ばす。6行を超えたら中でスクロール */
@@ -446,7 +472,7 @@
     #agent-attach-menu button { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 44px; padding: 0 0.75rem; border: none; border-radius: 8px; background: transparent; color: var(--text-color); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
     #agent-attach-menu button svg { flex-shrink: 0; color: var(--secondary-color); }
     #agent-attach-menu button:active, #agent-attach-menu button:focus-visible { background: var(--surface-hover); outline: none; }
-    #agent-attach-tray { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem 0; background: var(--surface-alt); border-top: 1px solid var(--border-color); }
+    #agent-attach-tray { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem 0; }
     #agent-attach-tray.hidden { display: none; }
     .attach-chip { position: relative; width: 80px; height: 80px; flex: 0 0 80px; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--surface-color); }
     .attach-chip img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -465,7 +491,7 @@
     .agent-imgs img { max-width: 140px; max-height: 140px; border-radius: 6px; display: block; }
     .agent-imgs img.expanded { max-width: 100%; max-height: none; }
     .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
-    #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); border-top: 1px solid var(--border-color); }
+    #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); }
     .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
 
     /* splash */
@@ -512,7 +538,7 @@
 .magi-panel [data-magi-verdict] rect{stroke:var(--magi-orange)}
 .magi-motion{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;margin:7px 0;font-size:12px;line-height:1.5}.magi-motion>span:first-child{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .magi-motion.expanded>span:first-child{display:block}.magi-motion button{color:inherit;background:none;border:1px solid currentColor;padding:0 4px;cursor:pointer;font-size:11px}.magi-round{flex-basis:100%;font-size:11px}
-.magi-record{margin-top:8px;min-width:0}.magi-record summary{cursor:pointer;font-size:11px;margin-bottom:6px}.magi-record .agent-personas{margin-top:6px}.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
+.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
 /* MAGI_PANEL_CSS_END */
 
 
@@ -622,6 +648,50 @@
 .agent-personalization-form input[type="text"], .agent-personalization-form textarea { box-sizing: border-box; width: 100%; padding: 10px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; font: inherit; }
 .agent-personalization-form .personal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .agent-personalization-form button:not([role="switch"]) { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
+    /* アプリ管理：短い説明と操作をカードに集め、詳細と編集欄は必要なときだけ開く。 */
+    #agent-settings-panel { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #agent-settings-panel .agent-panel-body { display: block; }
+    #agent-settings-panel > .agent-settings-content { flex: 1; min-height: 0; overflow-y: auto; }
+    #agent-settings-panel [hidden] { display: none !important; }
+    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    #agent-settings-panel .agent-settings-section { margin-top: 26px; }
+    #agent-settings-panel .agent-settings-content > .agent-settings-section:first-child { margin-top: 0; }
+    #agent-settings-panel h3 { margin: 0 0 12px; color: var(--text-color); font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+    #agent-settings-panel .agent-settings-card { margin-top: 10px; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 16px; background: transparent; }
+    #agent-settings-panel .agent-setting { gap: 16px; margin: 0; }
+    #agent-settings-panel .agent-setting-copy { flex: 1; min-width: 0; }
+    #agent-settings-panel .agent-setting-title { display: block; color: var(--text-color); font-size: 14px; line-height: 1.5; font-weight: 600; }
+    #agent-settings-panel p { margin: 5px 0 0; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+    #agent-settings-panel [role="status"]:empty { display: none; }
+    #agent-settings-panel [role="status"]:not(:empty) { margin-top: 10px; }
+    #agent-settings-panel .agent-setting-details { margin-top: 4px; }
+    #agent-settings-panel summary { cursor: pointer; list-style: none; }
+    #agent-settings-panel summary::-webkit-details-marker { display: none; }
+    #agent-settings-panel summary:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; border-radius: 4px; }
+    #agent-settings-panel .agent-setting-details > summary { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; color: var(--primary-color); font-size: 12px; }
+    #agent-settings-panel .agent-setting-details > summary::after { content: '⌄'; }
+    #agent-settings-panel .agent-setting-details[open] > summary::after { transform: rotate(180deg); }
+    #agent-settings-panel .agent-setting-details > p { margin: 0 0 4px; }
+    #agent-settings-panel .agent-personalization-form { display: block; font-size: 14px; }
+    #agent-settings-panel .agent-settings-editor { margin-top: 6px; border-top: 1px solid var(--border-color); }
+    #agent-settings-panel .agent-settings-editor > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-top: 4px; font-size: 13px; }
+    #agent-settings-panel .agent-settings-editor > summary span { flex-shrink: 0; color: var(--secondary-color); }
+    #agent-settings-panel .agent-settings-fields { display: grid; gap: 10px; padding-top: 6px; }
+    #agent-settings-panel .agent-settings-fields > label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; }
+    #agent-settings-panel .agent-settings-fields small { color: var(--secondary-color); font-size: 10px; font-weight: 400; }
+    #agent-settings-panel .agent-personalization-form input[type="text"], #agent-settings-panel .agent-personalization-form textarea { min-width: 0; padding: 10px 12px; border-color: var(--border-color); border-radius: 10px; font-size: 16px; line-height: 1.5; }
+    #agent-settings-panel .personal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    #agent-settings-panel .personal-actions button, #agent-settings-panel .agent-setting-action { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
+    #agent-settings-panel .personal-actions button[type="submit"] { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
+    #agent-settings-panel [data-personal="delete"] { justify-self: start; min-height: 36px; padding: 4px 0; border: 0; color: #e5484d; font-size: 12px; }
+    #agent-settings-panel .native-settings-actions { gap: 0; margin: 0; }
+    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font-size: 14px; font-weight: 550; }
+    #agent-settings-panel .native-settings-actions button + button { border-top: 1px solid var(--border-color); }
+    #agent-settings-panel .native-settings-actions button::after { content: '›'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--secondary-color); font-size: 22px; font-weight: 400; }
+    #agent-settings-panel .native-settings-actions small { color: var(--secondary-color); font-size: 12px; font-weight: 400; }
+    #agent-settings-panel .native-settings-actions .agent-setting-danger { color: #e5484d; }
+    #agent-settings-panel .agent-settings-meta { color: var(--secondary-color); font-size: 11px; }
+
     /* 撮影プレビュー。トップページとPWAで同じ表示・操作にする。映像をパネルいっぱいに出し、操作はカメラアプリと同じ形で重ねる。 */
     #agent-camera-panel { padding: 0; background: #000; color: #fff; border-top-width: 0; }
     #agent-camera-panel .agent-panel-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
@@ -738,34 +808,39 @@
     <div id="app-update" class="app-update" hidden role="status"><span class="app-update-text"></span><a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer">Download</a><button type="button" aria-label="Dismiss this version">×</button></div>
     <div id="agent-log"></div>
     <div id="agent-status" class="sr-only" aria-live="polite"></div>
-    <div id="agent-degraded" class="hidden"></div>
+    <div id="agent-compose-area">
+      <button id="agent-scroll-bottom" type="button" hidden aria-label="Jump to latest message" data-ja-aria="最新のメッセージへ移動" title="Jump to latest message" data-ja-title="最新のメッセージへ移動" aria-controls="agent-log">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m-6-6 6 6 6-6" /></svg>
+      </button>
+      <div id="agent-degraded" class="hidden"></div>
 
-    <div id="agent-attach-tray" class="hidden"></div>
-    <div id="agent-shared-tray" hidden></div>
-    <div id="agent-voice-interim" aria-live="polite"></div>
-    <div id="agent-inputline">
-      <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
-      <div id="agent-composer">
-        <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
-          <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-ja="カメラ">Camera</span></button>
-          <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span data-ja="写真">Photos</span></button>
-          <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span data-ja="ファイル">Files</span></button>
+      <div id="agent-attach-tray" class="hidden"></div>
+      <div id="agent-shared-tray" hidden></div>
+      <div id="agent-voice-interim" aria-live="polite"></div>
+      <div id="agent-inputline">
+        <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
+        <div id="agent-composer">
+          <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
+            <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-ja="カメラ">Camera</span></button>
+            <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span data-ja="写真">Photos</span></button>
+            <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span data-ja="ファイル">Files</span></button>
+          </div>
+          <button id="agent-attach" title="Add an image" aria-label="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加" aria-haspopup="menu" aria-expanded="false">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <div id="agent-input-wrap">
+            <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行 -->
+            <textarea id="agent-input" rows="1" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask MAGI" aria-label="Message MAGI" data-ja-aria="MAGIへのメッセージ"></textarea>
+            <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
+            <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use" title="Use this question" data-ja-title="この質問を使う"
+                aria-label="Use the suggested question"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
+          </div>
+          <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" data-ja-aria="音声入力" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
+          <button id="agent-send" class="is-empty" title="Send" aria-label="Send">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
         </div>
-        <button id="agent-attach" title="Add an image" aria-label="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加" aria-haspopup="menu" aria-expanded="false">
-          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <div id="agent-input-wrap">
-          <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行 -->
-          <textarea id="agent-input" rows="1" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask MAGI" aria-label="Message MAGI" data-ja-aria="MAGIへのメッセージ"></textarea>
-          <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
-          <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use" title="Use this question" data-ja-title="この質問を使う"
-              aria-label="Use the suggested question"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
-        </div>
-        <button id="agent-voice" type="button" title="Voice input" aria-label="Voice input" data-ja-aria="音声入力" aria-pressed="false" hidden><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
-        <button id="agent-send" class="is-empty" title="Send" aria-label="Send">
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        </button>
       </div>
     </div>
   </div>
@@ -777,6 +852,6 @@
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
   <script src="share-image.js?v=20261102_2"></script>
-  <script src="app.js?v=20261102_4"></script>
+  <script src="app.js?v=20261103_7"></script>
 </body>
 </html>

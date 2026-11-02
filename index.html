@@ -1952,6 +1952,7 @@
 
     #agent-log {
       background:var(--bg-color);color:var(--text-color);
+      scroll-padding-bottom: calc(var(--agent-compose-height, 4rem) + 4.25rem);
       scroll-behavior: smooth;
       display: flex;
       flex-direction: column;
@@ -1959,6 +1960,9 @@
       overflow-y: auto;
       overscroll-behavior: contain;
     }
+
+    /* 下端の余白もスクロール内容にする。IMEで画面が低くなってもログの高さを押し広げない。 */
+    #agent-log::after { content: ''; flex: 0 0 calc(var(--agent-compose-height, 4rem) + 3.5rem) }
 
     .agent-user {
       display: flex;
@@ -2287,7 +2291,29 @@
     .agent-clarify input { width:100%; box-sizing:border-box }
     .agent-clarify input[hidden] { display:none }
 
-    #agent-inputline { padding: 0.6rem }
+    /* 会話の上に入力欄を浮かせ、周囲はテーマの背景色へ滑らかに溶かす。 */
+    #agent-compose-area {
+      position: absolute; inset: auto 0 0; z-index: 3;
+      isolation: isolate; pointer-events: none;
+    }
+    #agent-compose-area::before {
+      content: ''; position: absolute; inset: -3.5rem 0 0; z-index: -1;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg-color) 65%, transparent) 2.5rem, var(--bg-color) 5rem);
+      pointer-events: none;
+    }
+    #agent-compose-area > * { pointer-events: auto }
+    #agent-scroll-bottom {
+      position: absolute; bottom: calc(100% + 0.65rem); left: 50%; transform: translateX(-50%);
+      display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+      border: 1px solid var(--border-color); border-radius: 50%;
+      background: color-mix(in srgb, var(--bg-color) 92%, transparent); color: var(--secondary-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    #agent-scroll-bottom[hidden] { display: none }
+    #agent-scroll-bottom::after { content: ''; position: absolute; inset: -4px; border-radius: 50% }
+    #agent-scroll-bottom:hover { color: var(--text-color); background: var(--surface-hover) }
+    #agent-scroll-bottom:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px }
+    #agent-compose-area > #agent-inputline { padding: 0.6rem; background: transparent; pointer-events: none }
 
     /* 添付と送信は枠の中に置き、入力欄の幅を取らない。ボタンは1行の入力欄と同じ高さ（--composer-button）。
        入力欄が伸びても、ボタンは最終行の横に留める（align-items） */
@@ -2299,16 +2325,16 @@
       display: flex;
       align-items: flex-end;
       gap: 0.15rem;
-      padding: 0.2rem;
+      padding: calc(0.2rem + 1px);
       background: var(--surface-alt);
-      border: 1px solid var(--border-color);
+      border: none;
+      pointer-events: auto;
       border-radius: calc(var(--composer-button) / 2 + 0.2rem);
-      transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+      transition: background-color var(--duration-fast);
     }
 
     #agent-composer:focus-within {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px var(--primary-bg);
+      background: var(--surface-hover);
     }
 
     /* 1行で始め、打った量に合わせて JS（fitAgentInput）が高さを伸ばす。7行を超えたら中でスクロール */
@@ -3371,7 +3397,7 @@
 .magi-panel [data-magi-verdict] rect{stroke:var(--magi-orange)}
 .magi-motion{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;margin:7px 0;font-size:12px;line-height:1.5}.magi-motion>span:first-child{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .magi-motion.expanded>span:first-child{display:block}.magi-motion button{color:inherit;background:none;border:1px solid currentColor;padding:0 4px;cursor:pointer;font-size:11px}.magi-round{flex-basis:100%;font-size:11px}
-.magi-record{margin-top:8px;min-width:0}.magi-record summary{cursor:pointer;font-size:11px;margin-bottom:6px}.magi-record .agent-personas{margin-top:6px}.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
+.magi-vote-badge{display:block;font:bold 10px monospace;margin-top:4px}.magi-dismiss{font-size:11px;margin-bottom:8px}
 /* MAGI_PANEL_CSS_END */
 
 
@@ -3474,6 +3500,50 @@
 .agent-personalization-form input[type="text"], .agent-personalization-form textarea { box-sizing: border-box; width: 100%; padding: 10px; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: 6px; font: inherit; }
 .agent-personalization-form .personal-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .agent-personalization-form button:not([role="switch"]) { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
+    /* アプリ管理：短い説明と操作をカードに集め、詳細と編集欄は必要なときだけ開く。 */
+    #agent-settings-panel { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #agent-settings-panel .agent-panel-body { display: block; }
+    #agent-settings-panel > .agent-settings-content { flex: 1; min-height: 0; overflow-y: auto; }
+    #agent-settings-panel [hidden] { display: none !important; }
+    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    #agent-settings-panel .agent-settings-section { margin-top: 26px; }
+    #agent-settings-panel .agent-settings-content > .agent-settings-section:first-child { margin-top: 0; }
+    #agent-settings-panel h3 { margin: 0 0 12px; color: var(--text-color); font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+    #agent-settings-panel .agent-settings-card { margin-top: 10px; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 16px; background: transparent; }
+    #agent-settings-panel .agent-setting { gap: 16px; margin: 0; }
+    #agent-settings-panel .agent-setting-copy { flex: 1; min-width: 0; }
+    #agent-settings-panel .agent-setting-title { display: block; color: var(--text-color); font-size: 14px; line-height: 1.5; font-weight: 600; }
+    #agent-settings-panel p { margin: 5px 0 0; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+    #agent-settings-panel [role="status"]:empty { display: none; }
+    #agent-settings-panel [role="status"]:not(:empty) { margin-top: 10px; }
+    #agent-settings-panel .agent-setting-details { margin-top: 4px; }
+    #agent-settings-panel summary { cursor: pointer; list-style: none; }
+    #agent-settings-panel summary::-webkit-details-marker { display: none; }
+    #agent-settings-panel summary:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; border-radius: 4px; }
+    #agent-settings-panel .agent-setting-details > summary { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; color: var(--primary-color); font-size: 12px; }
+    #agent-settings-panel .agent-setting-details > summary::after { content: '⌄'; }
+    #agent-settings-panel .agent-setting-details[open] > summary::after { transform: rotate(180deg); }
+    #agent-settings-panel .agent-setting-details > p { margin: 0 0 4px; }
+    #agent-settings-panel .agent-personalization-form { display: block; font-size: 14px; }
+    #agent-settings-panel .agent-settings-editor { margin-top: 6px; border-top: 1px solid var(--border-color); }
+    #agent-settings-panel .agent-settings-editor > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding-top: 4px; font-size: 13px; }
+    #agent-settings-panel .agent-settings-editor > summary span { flex-shrink: 0; color: var(--secondary-color); }
+    #agent-settings-panel .agent-settings-fields { display: grid; gap: 10px; padding-top: 6px; }
+    #agent-settings-panel .agent-settings-fields > label { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; }
+    #agent-settings-panel .agent-settings-fields small { color: var(--secondary-color); font-size: 10px; font-weight: 400; }
+    #agent-settings-panel .agent-personalization-form input[type="text"], #agent-settings-panel .agent-personalization-form textarea { min-width: 0; padding: 10px 12px; border-color: var(--border-color); border-radius: 10px; font-size: 16px; line-height: 1.5; }
+    #agent-settings-panel .personal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    #agent-settings-panel .personal-actions button, #agent-settings-panel .agent-setting-action { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
+    #agent-settings-panel .personal-actions button[type="submit"] { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
+    #agent-settings-panel [data-personal="delete"] { justify-self: start; min-height: 36px; padding: 4px 0; border: 0; color: #e5484d; font-size: 12px; }
+    #agent-settings-panel .native-settings-actions { gap: 0; margin: 0; }
+    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font-size: 14px; font-weight: 550; }
+    #agent-settings-panel .native-settings-actions button + button { border-top: 1px solid var(--border-color); }
+    #agent-settings-panel .native-settings-actions button::after { content: '›'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--secondary-color); font-size: 22px; font-weight: 400; }
+    #agent-settings-panel .native-settings-actions small { color: var(--secondary-color); font-size: 12px; font-weight: 400; }
+    #agent-settings-panel .native-settings-actions .agent-setting-danger { color: #e5484d; }
+    #agent-settings-panel .agent-settings-meta { color: var(--secondary-color); font-size: 11px; }
+
     /* 撮影プレビュー。トップページとPWAで同じ表示・操作にする。映像をパネルいっぱいに出し、操作はカメラアプリと同じ形で重ねる。 */
     #agent-camera-panel { padding: 0; background: #000; color: #fff; border-top-width: 0; }
     #agent-camera-panel .agent-panel-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
@@ -4013,38 +4083,43 @@
              the same split as #editor-status against the editor pane. -->
         <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs"></div>
         <div id="agent-status" class="sr-only" aria-live="polite"></div>
-        <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
-        <div id="agent-attach-tray" class="hidden border-t border-color"></div>
-        <div id="agent-inputline" class="flex border-t border-color">
-          <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
-            tabindex="-1">
-          <div id="agent-composer">
-            <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
-              <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg><span
-                  data-ja="カメラ">Camera</span></button>
-              <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg><span
-                  data-ja="写真">Photos</span></button>
-              <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg><span
-                  data-ja="ファイル">Files</span></button>
+        <div id="agent-compose-area">
+          <button id="agent-scroll-bottom" type="button" hidden aria-label="Jump to latest message" data-ja-aria="最新のメッセージへ移動" title="Jump to latest message" data-ja-title="最新のメッセージへ移動" aria-controls="agent-log">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m-6-6 6 6 6-6" /></svg>
+          </button>
+          <div id="agent-degraded" class="hidden p-3 text-xs text-secondary"></div>
+          <div id="agent-attach-tray" class="hidden"></div>
+          <div id="agent-inputline" class="flex">
+            <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
+              tabindex="-1">
+            <div id="agent-composer">
+              <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
+                <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg><span
+                    data-ja="カメラ">Camera</span></button>
+                <button type="button" role="menuitem" data-source="photo"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg><span
+                    data-ja="写真">Photos</span></button>
+                <button type="button" role="menuitem" data-source="file"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg><span
+                    data-ja="ファイル">Files</span></button>
+              </div>
+              <button id="agent-attach" title="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加"
+                aria-label="Add an image" aria-haspopup="menu" aria-expanded="false"><svg aria-hidden="true" width="18" height="18" stroke-width="2"><use href="#ic-plus" /></svg></button>
+              <div id="agent-input-wrap" class="flex-1">
+                <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
+                <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
+                  maxlength="1000" placeholder="Ask MAGI" data-ja-ph="MAGIに質問" data-ja-aria="MAGIにメッセージ"
+                  aria-label="Message MAGI"></textarea>
+                <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
+                <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
+                    title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                      stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
+              </div>
+              <button id="agent-send" class="is-empty" title="Send" data-ja-title="送信"
+                data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg></button>
             </div>
-            <button id="agent-attach" title="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加"
-              aria-label="Add an image" aria-haspopup="menu" aria-expanded="false"><svg aria-hidden="true" width="18" height="18" stroke-width="2"><use href="#ic-plus" /></svg></button>
-            <div id="agent-input-wrap" class="flex-1">
-              <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
-              <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
-                maxlength="1000" placeholder="Ask MAGI" data-ja-ph="MAGIに質問" data-ja-aria="MAGIにメッセージ"
-                aria-label="Message MAGI"></textarea>
-              <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
-              <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
-                  title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                    stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
-            </div>
-            <button id="agent-send" class="is-empty" title="Send" data-ja-title="送信"
-              data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg></button>
           </div>
         </div>
       </aside>
@@ -7846,6 +7921,51 @@
     }).join('')}</div>`;
     const AGENT_MAX_HISTORY = 12;
 // AGENT_MANAGEMENT_BEGIN
+function agentSettingsSection(title, content) {
+  return '<section class="agent-settings-section"><h3>' + title + '</h3>' + content + '</section>';
+}
+function agentSettingDetails(text) {
+  return '<details class="agent-setting-details"><summary>' + tr('Learn more', '詳細を見る') + '</summary><p>' + text + '</p></details>';
+}
+function agentSettingCard(id, title, hint, detail, options) {
+  options = options || {};
+  return '<div class="agent-settings-card"' + (options.id ? ' id="' + options.id + '"' : '') + (options.hidden ? ' hidden' : '') + '>'
+    + '<div class="agent-setting"><div class="agent-setting-copy"><span class="agent-setting-title" id="' + id + '-label">' + title + '</span><p id="' + id + '-note">' + hint + '</p></div>'
+    + '<button type="button" role="switch" id="' + id + '-toggle" aria-labelledby="' + id + '-label" aria-describedby="' + id + '-note" aria-checked="false"' + (options.disabled ? ' disabled' : '') + '><span></span></button></div>'
+    + agentSettingDetails(detail) + '<p id="' + id + '-status" role="status"></p></div>';
+}
+function agentPersonalizationFormHTML() {
+  return '<form class="agent-personalization-form agent-settings-card"><div class="agent-setting"><div class="agent-setting-copy"><span class="agent-setting-title" id="personal-enabled-label">' + tr('Personalization', 'パーソナライズ') + '</span><p id="personal-note">' + tr('Use your name and reply preferences.', '呼び方や好みを回答に反映') + '</p></div><button id="personal-enabled" type="button" role="switch" aria-checked="false" aria-labelledby="personal-enabled-label" aria-describedby="personal-note"><span></span></button></div>'
+    + agentSettingDetails(tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。'))
+    + '<details id="personal-editor" class="agent-settings-editor"><summary>' + tr('Name & custom instructions', '呼び方・カスタム指示') + '<span>' + tr('Edit', '編集') + '</span></summary><div class="agent-settings-fields">'
+    + '<label for="personal-name">' + tr('Name', '呼び方') + '<small id="personal-name-count"></small></label><input id="personal-name" type="text" autocomplete="off" placeholder="' + tr('What should MAGI call you?', '例：たけださん') + '">'
+    + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '<small id="personal-instructions-count"></small></label><textarea id="personal-instructions" rows="3" autocomplete="off" placeholder="' + tr('How would you like MAGI to respond?', '例：簡潔に、結論から回答') + '"></textarea>'
+    + '<button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div></details>'
+    + '<div class="personal-actions" hidden><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button></div><p id="personal-status" role="status"></p></form>';
+}
+function agentHistorySettingHTML(native) {
+  return '<div class="agent-settings-card"><p id="history-storage-status" class="agent-settings-meta" role="status"></p><div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '<small>' + tr('JSON · without images', 'JSON形式・画像を除く') + '</small></button><button type="button" id="history-clear" class="agent-setting-danger">' + tr('Delete all chats', '全会話を削除') + '<small>' + tr('Clear history on this device', 'この端末の履歴を削除') + '</small></button></div>'
+    + agentSettingDetails(native ? tr('History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.', '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。') : tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。')) + '</div>';
+}
+// MAGIモードは明示的にオンにした端末だけで許可する。設定を読めなければオフ。
+function magiModeEnabled() {
+  try { return localStorage.getItem('magi_mode_enabled') === '1'; }
+  catch (_) { return false; }
+}
+function magiModeSettingHTML() {
+  return agentSettingCard('magi-mode', tr('MAGI mode', 'MAGIモード'), tr('Let three personas vote on a decision.', '3人格で相談を採決'),
+    tr('Allow three-persona voting when a question is judged suitable. Off by default. Saved on this device and applied from the next message, including temporary chats.', '相談内容に応じて、3人格による採決を使います。初期設定はオフです。この端末に保存し、通常・一時チャットとも次の送信から反映します。'));
+}
+function bindMagiModeSetting(panel) {
+  var toggle = panel.querySelector('#magi-mode-toggle'), status = panel.querySelector('#magi-mode-status');
+  toggle.setAttribute('aria-checked', String(magiModeEnabled()));
+  toggle.addEventListener('click', function () {
+    try {
+      localStorage.setItem('magi_mode_enabled', magiModeEnabled() ? '0' : '1');
+      toggle.setAttribute('aria-checked', String(magiModeEnabled())); status.textContent = '';
+    } catch (_) { status.textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
+  });
+}
 function locationServiceEnabled() {
   try { return localStorage.getItem('magi_location_enabled') !== '0'; }
   catch (_) { return false; }
@@ -7860,8 +7980,8 @@ function conversationStorageFields(conversationId) {
   return conversationStorageEnabled() && !agentTemporary() ? { conversation_storage: true, conversation_id: conversationId } : {};
 }
 function conversationStorageSettingHTML() {
-  return '<div class="agent-setting"><span id="conversation-storage-label">' + tr('Save chats on the site', '会話をサイトに保存') + '</span><button type="button" role="switch" id="conversation-storage-toggle" aria-labelledby="conversation-storage-label" aria-describedby="conversation-storage-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="conversation-storage-note">' + tr('Save your questions and MAGI’s final answers with your IP address in the site database for up to one year, to review and improve MAGI. Images are saved only as a count and attachments by name. Temporary chats are never saved. Turning this off stops saving from your next message; chats already saved are not deleted.', '質問とMAGIの最終回答を、MAGIの確認と改善のため、IPアドレスと一緒にサイトのDBへ最長1年保存します。画像は枚数、添付ファイルは名前だけを保存します。一時チャットは保存しません。オフにすると次の送信から保存しません。保存済みの会話は消えません。') + '</p><p id="conversation-storage-status" role="status"></p>';
+  return agentSettingCard('conversation-storage', tr('Save chats on the site', '会話をサイトに保存'), tr('Questions, replies and IP · up to one year', '質問・回答・IPを最長1年保存'),
+    tr('Save your questions and MAGI’s final answers with your IP address in the site database for up to one year, to review and improve MAGI. Images are saved only as a count and attachments by name. Temporary chats are never saved. Turning this off stops saving from your next message; chats already saved are not deleted.', '質問とMAGIの最終回答を、MAGIの確認と改善のため、IPアドレスと一緒にサイトのDBへ最長1年保存します。画像は枚数、添付ファイルは名前だけを保存します。一時チャットは保存しません。オフにすると次の送信から保存しません。保存済みの会話は消えません。'));
 }
 function bindConversationStorageSetting(panel) {
   var toggle = panel.querySelector('#conversation-storage-toggle'), status = panel.querySelector('#conversation-storage-status');
@@ -7938,13 +8058,12 @@ function agentClearWebHistory() {
 }
 async function initAgentManagement(panel) {
   if (agentManagementNative()) { await initNativeSettings(panel); return; }
-  panel.querySelector('#agent-native-settings').innerHTML = conversationStorageSettingHTML()
-    + '<div class="agent-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="native-location-note">' + tr('Use the city and region estimated from your IP address for location-based searches. This does not request GPS permission. Changes apply to your next message.', '場所に応じた検索に、IPアドレスから推定した市・地域を使います。GPSの許可は求めません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
-    + '<div class="agent-setting"><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" role="status"></p>'
-    + '<p>' + tr('Notify when a reply finishes while this page is open in the background. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、受信が完了した回答を通知します。画面を閉じた後の受信には対応しません。一時チャットは通知しません。') + '</p>'
-    + '<p id="history-storage-status" role="status"></p><p>' + tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。') + '</p>'
-    + '<div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '</button><button type="button" id="history-clear">' + tr('Delete all chats', '全会話を削除') + '</button></div>';
+  panel.querySelector('#agent-native-settings').innerHTML = agentSettingsSection(tr('Device', '端末'),
+    agentSettingCard('native-location', tr('Location services', '位置情報サービス'), tr('Find places near your IP address.', 'IPアドレスから近くの場所を検索'),
+      tr('Use the city and region estimated from your IP address for location-based searches. This does not request GPS permission. Changes apply to your next message.', '場所に応じた検索に、IPアドレスから推定した市・地域を使います。GPSの許可は求めません。変更は次の送信から反映します。'))
+    + agentSettingCard('native-notification', tr('Notifications', '通知'), tr('Notify when a reply is ready.', '回答の完了をお知らせ'),
+      tr('Notify when a reply finishes while this page is open in the background. Browser permission is required. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、回答の完了を通知します。ブラウザの許可が必要です。画面を閉じた後の受信には対応しません。一時チャットは通知しません。'), { disabled: true }))
+    + agentSettingsSection(tr('Data', 'データ'), conversationStorageSettingHTML() + agentHistorySettingHTML(false));
   bindConversationStorageSetting(panel);
   var status = panel.querySelector('#history-storage-status'), locationToggle = panel.querySelector('#native-location-toggle');
   locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
@@ -7984,9 +8103,9 @@ async function initAgentManagement(panel) {
     var supported = support.supported;
     toggle.disabled = !supported;
     toggle.setAttribute('aria-checked', String(supported && window.Notification.permission === 'granted' && agentWebNotificationsEnabled()));
-    note.textContent = !supported ? tr('This browser cannot show notifications here. On mobile, try the installed PWA.', 'このブラウザでは通知を使えません。モバイルではホーム画面に追加したPWAをお試しください。')
-      : window.Notification.permission === 'denied' ? tr('Notifications are blocked in browser settings. Allow them there before turning this on.', 'ブラウザの設定で通知がブロックされています。許可してからオンにしてください。')
-      : tr('Turn on to allow reply notifications. Browser permission is required.', 'オンにすると回答の到着を通知します。ブラウザ側の許可が必要です。');
+    note.textContent = !supported ? tr('This browser cannot show notifications. Try the installed PWA.', 'このブラウザでは通知を使えません。PWAをご利用ください。')
+      : window.Notification.permission === 'denied' ? tr('Notifications are blocked in browser settings.', 'ブラウザの設定で通知がブロックされています。')
+      : '';
   }
   refreshNotifications();
   function onFocus() { if (panel.isConnected) refreshNotifications(); }
@@ -8049,16 +8168,14 @@ function saveAgentPersonalization(value) {
 }
 function showAgentSettings() {
   var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
-    '<div class="agent-settings-content"><form class="agent-personalization-form"><div class="agent-setting"><span id="personal-enabled-label">' + tr('Personalization', 'パーソナライズ') + '</span><button id="personal-enabled" type="button" role="switch" aria-checked="false" aria-labelledby="personal-enabled-label" aria-describedby="personal-note"><span></span></button></div>'
-    + '<label for="personal-name">' + tr('What should MAGI call you?', '何とお呼びすればよいですか？') + '</label><input id="personal-name" type="text" autocomplete="off"><small id="personal-name-count"></small>'
-    + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '</label><textarea id="personal-instructions" rows="5" autocomplete="off"></textarea><small id="personal-instructions-count"></small>'
-    + '<p id="personal-note">' + tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。') + '</p>'
-    + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form><div id="agent-native-settings"></div></div>');
+    '<div class="agent-settings-content">' + agentSettingsSection(tr('Replies', '回答'), magiModeSettingHTML() + agentPersonalizationFormHTML()) + '<div id="agent-native-settings"></div></div>');
   if (!panel) return;
+  bindMagiModeSetting(panel);
   initAgentManagement(panel).catch(function () { announceAgent(tr('Could not open app settings.', 'アプリの設定を開けませんでした。')); });
   var form = panel.querySelector('form'), enabled = panel.querySelector('#personal-enabled'), name = panel.querySelector('#personal-name'), instructions = panel.querySelector('#personal-instructions'), status = panel.querySelector('#personal-status');
   var current = refreshAgentPersonalization();
   if (!current) {
+    panel.querySelector('.personal-actions').hidden = false;
     status.textContent = tr('Could not read personalization settings. Close this screen, check storage and try again.', 'パーソナライズ設定を読み込めませんでした。この画面を閉じて保存先を確認し、再試行してください。');
     form.querySelectorAll('input, textarea, button:not([data-personal="cancel"])').forEach(function (control) { control.disabled = true; });
     panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
@@ -8073,6 +8190,7 @@ function showAgentSettings() {
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
     panel.querySelector('#personal-instructions-count').textContent = Array.from(instructions.value).length + ' / 2000';
+    panel.querySelector('.personal-actions').hidden = enabled.getAttribute('aria-checked') === String(current.enabled) && name.value === current.preferred_name && instructions.value === current.custom_instructions;
   }
   function save(deleting) {
     try {
@@ -8084,7 +8202,7 @@ function showAgentSettings() {
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
-  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); });
+  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); count(); });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
   panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
@@ -8413,6 +8531,29 @@ setTimeout(initAgentPrivacy, 0);
     const agentInput = document.getElementById('agent-input');
     const agentSendBtn = document.getElementById('agent-send');
     const agentDegraded = document.getElementById('agent-degraded');
+    // 末尾から十分離れたときだけ案内を出す。表示/非表示の閾値を分け、境目でちらつかせない。
+    const agentScrollBottom = document.getElementById('agent-scroll-bottom');
+    let agentScrollBottomFrame = 0;
+    function queueAgentScrollBottom() {
+      if (agentScrollBottomFrame) return;
+      agentScrollBottomFrame = requestAnimationFrame(() => {
+        agentScrollBottomFrame = 0;
+        const gap = agentLog.scrollHeight - agentLog.clientHeight - agentLog.scrollTop;
+        agentScrollBottom.hidden = gap <= (agentScrollBottom.hidden ? 160 : 48);
+      });
+    }
+    agentScrollBottom.addEventListener('click', () => {
+      agentLog.scrollTo({ top: agentLog.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    });
+    agentLog.addEventListener('scroll', queueAgentScrollBottom, { passive: true });
+    agentLog.addEventListener('load', queueAgentScrollBottom, true);
+    new ResizeObserver(queueAgentScrollBottom).observe(agentLog);
+    new MutationObserver(queueAgentScrollBottom).observe(agentLog, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] });
+    // 複数行・添付で高さが変わっても、最後の回答を入力欄の上までスクロールできるよう余白を確保する。
+    new ResizeObserver(([entry]) => {
+      agentLog.style.setProperty('--agent-compose-height', entry.target.offsetHeight + 'px');
+      queueAgentScrollBottom();
+    }).observe(document.getElementById('agent-compose-area'));
     const agentActBtn = document.querySelector('#activitybar [data-act="agent"]');
     const agentTitleEl = document.getElementById('agentdock-title');
     let agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
@@ -8596,7 +8737,16 @@ function magiStep(previous,input,now,visible,reduced){var s=previous?JSON.parse(
 
 // MAGI_VIEW_BEGIN
 
-function createMagiView(turn,options){options=Object.assign({},options,{id:String(options.id||"panel").replace(/[^a-z0-9_-]/gi,"")||"panel"});var ja=!!options.ja,alive=options.alive||function(){return!0},status=options.announce||function(){},log=options.log,box=document.createElement("section");box.className="magi-panel";var shapes=["M43 258H190L290 342V439H43Z","M226 50H440V250L374 303H291L226 250Z","M475 258H623V439H375V342Z"],centers=[[167,367],[333,222],[499,367]],order=["CASPER-3","BALTHASAR-2","MELCHIOR-1"],svg='<svg viewBox="0 0 700 470" role="img" xmlns="http://www.w3.org/2000/svg"><title></title><defs><pattern id="magi-hatch-'+options.id+'" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="var(--magi-gray)"/><path d="M-3 3L3-3M0 12L12 0M9 15L15 9" stroke="var(--magi-hatch)" stroke-width="4"/></pattern></defs><path class="magi-rule" d="M24 50H224V59H24ZM24 54.5H224M24 124H224V133H24ZM24 128.5H224M443 50H643V59H443ZM443 54.5H643M443 124H643V133H443ZM443 128.5H643"/><g class="magi-mincho"><text x="40" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">提訴</text><text x="456" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">決議</text></g><g class="magi-meta"><text x="40" y="163" font-size="30" textLength="146" lengthAdjust="spacingAndGlyphs">CODE : '+("000"+Math.floor(Math.random()*1e3)).slice(-3)+'</text><text x="68" y="187">FILE:MAGI_SYS</text><text x="68" y="203">EXTENTION:6008</text><text x="68" y="219">EX_MODE:OFF</text><text x="68" y="235">PRIORITY:AAA</text></g><path class="magi-link" d="M263 280L238 302M404 280L427 302M290 370H375"/><text class="magi-mincho" x="333" y="336" text-anchor="middle" font-size="34">MAGI</text>';order.forEach(function(k,i){var c=centers[i];svg+='<g data-magi-node="'+k+'"><path class="magi-node" d="'+shapes[i]+'"/><g text-anchor="middle"><text class="magi-code" textLength="'+[174,201,218][i]+'" lengthAdjust="spacingAndGlyphs" x="'+c[0]+'" y="'+c[1]+'">'+k.replace("-","·")+"</text></g></g>"}),svg+='<g data-magi-verdict=""><rect x="496" y="182" width="125" height="54"/><rect x="500" y="186" width="117" height="46"/><text class="magi-mincho" x="558.5" y="223" font-size="36" text-anchor="middle"></text></g></svg>',box.innerHTML=svg,Object.keys(MAGI_COLORS).forEach(function(k){box.style.setProperty("--magi-"+k,MAGI_COLORS[k])});var motionBox=document.createElement("div");motionBox.className="magi-motion";var motionText=document.createElement("span");motionBox.appendChild(motionText);var full=document.createElement("button");full.type="button",full.textContent=ja?"全文":"Full text",full.setAttribute("aria-expanded","false"),motionBox.appendChild(full),full.addEventListener("click",function(){var on=full.getAttribute("aria-expanded")!=="true";full.setAttribute("aria-expanded",String(on)),motionBox.classList.toggle("expanded",on)});var roundEl=document.createElement("span");roundEl.className="magi-round",motionBox.appendChild(roundEl);var details=document.createElement("details");details.className="magi-record";var summary=document.createElement("summary");details.appendChild(summary);var cards=turn.querySelector(".agent-personas");cards&&details.appendChild(cards);var reply=turn.querySelector(".agent-reply");turn.insertBefore(box,reply),turn.insertBefore(motionBox,reply),turn.appendChild(details);var state=null,timer=null,motion="",latestFrame=null,announced=!1,closed=!1,waiters=[],tracking=!0,programScroll=null,media=window.matchMedia("(prefers-reduced-motion: reduce)");function now(){return performance.now()}function scroll(){if(!(!log||!tracking||document.hidden)){var r=reply.getBoundingClientRect(),v=log.getBoundingClientRect();r.bottom>v.bottom&&(log.scrollTop+=Math.min(r.bottom-v.bottom,Math.max(0,r.top-v.top)),programScroll=log.scrollTop)}}function pin(){if(log&&tracking&&!document.hidden){log.scrollTop+=box.getBoundingClientRect().top-log.getBoundingClientRect().top;programScroll=log.scrollTop}}function onScroll(){programScroll!==log.scrollTop&&(tracking=log.scrollHeight-log.scrollTop-log.clientHeight<24);programScroll=null}function onToggle(){details.open&&(tracking=!1)}function resize(){var viewport=window.visualViewport?window.visualViewport.height:window.innerHeight;box.style.maxHeight="min(60vh,"+Math.max(0,Math.min(viewport,log?log.clientHeight:viewport)*.6)+"px)",state&&!latestFrame.explanation&&pin()}function note(n){return n.issue==="no_response"?ja?"応答なし":"No response":n.issue==="unreadable"?ja?"票を判定できない":"Unreadable vote":""}function label(n){return n.state==="debating"?n.pending?ja?"票を確認中":"Checking vote":n.vote?(n.round===1?ja?"初回: ":"Initial: ":ja?"第"+n.round+"回の票: ":"Round "+n.round+": ")+magiWord(n.vote,ja):ja?"審議中":"Deliberating":n.state==="absent"?"NO RESPONSE":n.state==="unreadable"?ja?"票を判定できない":"Unreadable vote":magiWord(n.vote,ja)+(n.state==="carried"?ja?"（第"+n.round+"回の票）":" (round "+n.round+")":"")}function render(frame){latestFrame=frame,motionText.textContent=motion.slice(0,full.getAttribute("aria-expanded")==="true"?motion.length:frame.motionChars),MAGI_IDS.forEach(function(k){var el=box.querySelector('[data-magi-node="'+k+'"]'),n=frame.nodes[k];el.querySelector(".magi-node").style.fill=n.state==="unreadable"?"url(#magi-hatch-"+options.id+")":n.color,el.style.color=n.ink,el.querySelector(".magi-node").style.strokeWidth=frame.emphasis===k?"4":"1.2"});var v=frame.result,r=v?v.result:null,ver=box.querySelector("[data-magi-verdict]"),fill=r==="hold"?MAGI_COLORS.orange:r?MAGI_COLORS[r]:MAGI_COLORS.ground;ver.style.color=r?MAGI_COLORS.ink:MAGI_COLORS.orange,ver.querySelectorAll("rect").forEach(function(el){el.style.fill=fill,el.style.strokeWidth=frame.emphasis==="verdict"?"3":"1.2"});var word=r==="approve"?"承認":r==="reject"?"否決":r==="hold"?"保留":"審議中";ver.querySelector(".magi-mincho").textContent=word;var desc=motion+" / "+(r?magiWord(r,ja):ja?word:"Deliberating")+" / "+MAGI_IDS.map(function(k){var n=frame.nodes[k],issue=note(n);return k+": "+label(n)+(issue&&n.state==="carried"?", "+issue:"")}).join(", ");box.querySelector("svg").setAttribute("aria-label",desc),box.querySelector("title").textContent=desc,roundEl.textContent=frame.round>=3?ja?"第"+frame.round+"回審議 "+frame.round+"/5":"Round "+frame.round+"/5":"",summary.textContent=ja?"審議記録（3人格・第"+frame.round+"回まで）":"Deliberation record (3 personas, "+frame.round+" round"+(frame.round>1?"s":"")+")",v&&!announced&&(announced=!0,status((ja?"MAGI の":"MAGI ")+magiSummary(v,ja))),frame.explanation&&options.explain&&(options.explain(),scroll())}function settle(){latestFrame&&latestFrame.explanation&&waiters.splice(0).forEach(function(resolve){resolve()})}function advance(input){if(closed||!alive()){dispose();return}clearTimeout(timer);var t=now(),out=magiStep(state,input,t,!document.hidden,media.matches);state=out.state,render(out.frame),out.frame.ack&&(out=magiStep(state,{event:"applied"},now(),!document.hidden,media.matches),state=out.state,render(out.frame)),settle(),out.next!==null&&(timer=setTimeout(function(){advance(null)},Math.max(1,out.next-now())))}function dispose(){closed||(closed=!0,clearTimeout(timer),document.removeEventListener("visibilitychange",changed),media.removeEventListener("change",changed),window.removeEventListener("resize",resize),window.visualViewport&&window.visualViewport.removeEventListener("resize",resize),log&&log.removeEventListener("scroll",onScroll),details.removeEventListener("toggle",onToggle),waiters.splice(0).forEach(function(resolve){resolve()}))}function changed(){advance(null)}return document.addEventListener("visibilitychange",changed),media.addEventListener("change",changed),window.addEventListener("resize",resize),window.visualViewport&&window.visualViewport.addEventListener("resize",resize),log&&log.addEventListener("scroll",onScroll,{passive:!0}),details.addEventListener("toggle",onToggle),resize(),{push:function(ev,d){ev==="motion"&&(motion=d.text,motionText.textContent=motion),advance({event:ev,data:d})},wait:function(){return latestFrame&&latestFrame.explanation?Promise.resolve():new Promise(function(resolve){waiters.push(resolve)})},finish:function(){advance({event:"finish"})},dispose,ready:function(){return!!(latestFrame&&latestFrame.explanation)},explanationChanged:scroll,start:pin}}
+// 入力欄とフェードを除く範囲。CSSのscroll-padding-bottomを表示境界の正本にする。
+function magiLogViewport(log) {
+  var rect = log.getBoundingClientRect();
+  var inset = typeof getComputedStyle === "function" ? parseFloat(getComputedStyle(log).scrollPaddingBottom) || 0 : 0;
+  return { top: rect.top, bottom: Math.max(rect.top, rect.bottom - inset) };
+}
+
+// 自動移動は即時に確定し、smoothスクロールの途中を手動操作と誤認しない。
+// 人格の更新後は検討内容の末尾と回答を追い、手動の読み戻しで停止、下矢印で再開する。
+function createMagiView(turn,options){options=Object.assign({},options,{id:String(options.id||"panel").replace(/[^a-z0-9_-]/gi,"")||"panel"});var ja=!!options.ja,alive=options.alive||function(){return!0},status=options.announce||function(){},log=options.log,box=document.createElement("section");box.className="magi-panel";var shapes=["M43 258H190L290 342V439H43Z","M226 50H440V250L374 303H291L226 250Z","M475 258H623V439H375V342Z"],centers=[[167,367],[333,222],[499,367]],order=["CASPER-3","BALTHASAR-2","MELCHIOR-1"],svg='<svg viewBox="0 0 700 470" role="img" xmlns="http://www.w3.org/2000/svg"><title></title><defs><pattern id="magi-hatch-'+options.id+'" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="var(--magi-gray)"/><path d="M-3 3L3-3M0 12L12 0M9 15L15 9" stroke="var(--magi-hatch)" stroke-width="4"/></pattern></defs><path class="magi-rule" d="M24 50H224V59H24ZM24 54.5H224M24 124H224V133H24ZM24 128.5H224M443 50H643V59H443ZM443 54.5H643M443 124H643V133H443ZM443 128.5H643"/><g class="magi-mincho"><text x="40" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">提訴</text><text x="456" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">決議</text></g><g class="magi-meta"><text x="40" y="163" font-size="30" textLength="146" lengthAdjust="spacingAndGlyphs">CODE : '+("000"+Math.floor(Math.random()*1e3)).slice(-3)+'</text><text x="68" y="187">FILE:MAGI_SYS</text><text x="68" y="203">EXTENTION:6008</text><text x="68" y="219">EX_MODE:OFF</text><text x="68" y="235">PRIORITY:AAA</text></g><path class="magi-link" d="M263 280L238 302M404 280L427 302M290 370H375"/><text class="magi-mincho" x="333" y="336" text-anchor="middle" font-size="34">MAGI</text>';order.forEach(function(k,i){var c=centers[i];svg+='<g data-magi-node="'+k+'"><path class="magi-node" d="'+shapes[i]+'"/><g text-anchor="middle"><text class="magi-code" textLength="'+[174,201,218][i]+'" lengthAdjust="spacingAndGlyphs" x="'+c[0]+'" y="'+c[1]+'">'+k.replace("-","·")+"</text></g></g>"}),svg+='<g data-magi-verdict=""><rect x="496" y="182" width="125" height="54"/><rect x="500" y="186" width="117" height="46"/><text class="magi-mincho" x="558.5" y="223" font-size="36" text-anchor="middle"></text></g></svg>',box.innerHTML=svg,Object.keys(MAGI_COLORS).forEach(function(k){box.style.setProperty("--magi-"+k,MAGI_COLORS[k])});var motionBox=document.createElement("div");motionBox.className="magi-motion";var motionText=document.createElement("span");motionBox.appendChild(motionText);var full=document.createElement("button");full.type="button",full.textContent=ja?"全文":"Full text",full.setAttribute("aria-expanded","false"),motionBox.appendChild(full),full.addEventListener("click",function(){var on=full.getAttribute("aria-expanded")!=="true";full.setAttribute("aria-expanded",String(on)),motionBox.classList.toggle("expanded",on)});var roundEl=document.createElement("span");roundEl.className="magi-round",motionBox.appendChild(roundEl);var cards=turn.querySelector(".agent-personas"),reply=turn.querySelector(".agent-reply"),anchor=cards||reply;turn.insertBefore(box,anchor),turn.insertBefore(motionBox,anchor);var state=null,timer=null,motion="",latestFrame=null,announced=!1,closed=!1,waiters=[],tracking=!0,followingPanel=!0,lastScroll=log?log.scrollTop:0,jump=log&&log.parentElement&&log.parentElement.querySelector("#agent-scroll-bottom"),media=window.matchMedia("(prefers-reduced-motion: reduce)");function now(){return performance.now()}function move(delta){log.scrollTo({top:log.scrollTop+delta,behavior:"instant"});lastScroll=log.scrollTop}function scroll(){followingPanel=!1;if(!(!log||!tracking||document.hidden)){var r=reply.getBoundingClientRect(),v=magiLogViewport(log);r.bottom>v.bottom&&move(Math.min(r.bottom-v.bottom,Math.max(0,r.top-v.top)))}}function pin(){if(log&&tracking&&!document.hidden)move(box.getBoundingClientRect().top-log.getBoundingClientRect().top)}function onScroll(){log.scrollTop!==lastScroll&&(tracking=log.scrollHeight-log.scrollTop-log.clientHeight<24);lastScroll=log.scrollTop}function resume(){tracking=!0;followingPanel=!1;log&&!document.hidden&&move(log.scrollHeight-log.clientHeight-log.scrollTop)}function resize(){var viewport=window.visualViewport?window.visualViewport.height:window.innerHeight,bounds=log&&magiLogViewport(log);box.style.maxHeight="min(60vh,"+Math.max(0,Math.min(viewport,bounds?bounds.bottom-bounds.top:viewport)*.6)+"px)",state&&!latestFrame.explanation&&(followingPanel?pin():scroll())}function note(n){return n.issue==="no_response"?ja?"応答なし":"No response":n.issue==="unreadable"?ja?"票を判定できない":"Unreadable vote":""}function label(n){return n.state==="debating"?n.pending?ja?"票を確認中":"Checking vote":n.vote?(n.round===1?ja?"初回: ":"Initial: ":ja?"第"+n.round+"回の票: ":"Round "+n.round+": ")+magiWord(n.vote,ja):ja?"審議中":"Deliberating":n.state==="absent"?"NO RESPONSE":n.state==="unreadable"?ja?"票を判定できない":"Unreadable vote":magiWord(n.vote,ja)+(n.state==="carried"?ja?"（第"+n.round+"回の票）":" (round "+n.round+")":"")}function render(frame){latestFrame=frame,motionText.textContent=motion.slice(0,full.getAttribute("aria-expanded")==="true"?motion.length:frame.motionChars),MAGI_IDS.forEach(function(k){var el=box.querySelector('[data-magi-node="'+k+'"]'),n=frame.nodes[k];el.querySelector(".magi-node").style.fill=n.state==="unreadable"?"url(#magi-hatch-"+options.id+")":n.color,el.style.color=n.ink,el.querySelector(".magi-node").style.strokeWidth=frame.emphasis===k?"4":"1.2"});var v=frame.result,r=v?v.result:null,ver=box.querySelector("[data-magi-verdict]"),fill=r==="hold"?MAGI_COLORS.orange:r?MAGI_COLORS[r]:MAGI_COLORS.ground;ver.style.color=r?MAGI_COLORS.ink:MAGI_COLORS.orange,ver.querySelectorAll("rect").forEach(function(el){el.style.fill=fill,el.style.strokeWidth=frame.emphasis==="verdict"?"3":"1.2"});var word=r==="approve"?"承認":r==="reject"?"否決":r==="hold"?"保留":"審議中";ver.querySelector(".magi-mincho").textContent=word;var desc=motion+" / "+(r?magiWord(r,ja):ja?word:"Deliberating")+" / "+MAGI_IDS.map(function(k){var n=frame.nodes[k],issue=note(n);return k+": "+label(n)+(issue&&n.state==="carried"?", "+issue:"")}).join(", ");box.querySelector("svg").setAttribute("aria-label",desc),box.querySelector("title").textContent=desc,roundEl.textContent=frame.round>=3?ja?"第"+frame.round+"回審議 "+frame.round+"/5":"Round "+frame.round+"/5":"",v&&!announced&&(announced=!0,status((ja?"MAGI の":"MAGI ")+magiSummary(v,ja))),frame.explanation&&options.explain&&(options.explain(),scroll())}function settle(){latestFrame&&latestFrame.explanation&&waiters.splice(0).forEach(function(resolve){resolve()})}function advance(input){if(closed||!alive()){dispose();return}clearTimeout(timer);var t=now(),out=magiStep(state,input,t,!document.hidden,media.matches);state=out.state,render(out.frame),out.frame.ack&&(out=magiStep(state,{event:"applied"},now(),!document.hidden,media.matches),state=out.state,render(out.frame)),settle(),out.next!==null&&(timer=setTimeout(function(){advance(null)},Math.max(1,out.next-now())))}function dispose(){closed||(closed=!0,clearTimeout(timer),document.removeEventListener("visibilitychange",changed),media.removeEventListener("change",changed),window.removeEventListener("resize",resize),window.visualViewport&&window.visualViewport.removeEventListener("resize",resize),log&&log.removeEventListener("scroll",onScroll),jump&&jump.removeEventListener("click",resume),waiters.splice(0).forEach(function(resolve){resolve()}))}function changed(){advance(null)}return document.addEventListener("visibilitychange",changed),media.addEventListener("change",changed),window.addEventListener("resize",resize),window.visualViewport&&window.visualViewport.addEventListener("resize",resize),log&&log.addEventListener("scroll",onScroll,{passive:!0}),jump&&jump.addEventListener("click",resume),resize(),{push:function(ev,d){ev==="motion"&&(motion=d.text,motionText.textContent=motion),advance({event:ev,data:d}),(ev==="persona"||ev==="ask")&&scroll()},wait:function(){return latestFrame&&latestFrame.explanation?Promise.resolve():new Promise(function(resolve){waiters.push(resolve)})},finish:function(){advance({event:"finish"})},dispose,ready:function(){return!!(latestFrame&&latestFrame.explanation)},explanationChanged:scroll,start:pin}}
 function magiDismiss(turn,reason,ja){var row=document.createElement("div");row.className="magi-dismiss",row.textContent=reason==="failed"?ja?"議題を整えられませんでした — 通常の回答に切り替えます":"Could not prepare the motion — answering normally":ja?"提訴却下 — 通常の回答に切り替えます":"Motion dismissed — answering normally",turn.insertBefore(row,turn.firstChild)}
 function magiBadge(turn,d,ja){var card=turn.querySelector('.persona-card[data-codename="'+d.codename+'"]'),slot=card&&card.querySelector('.persona-round[data-round="'+d.round+'"]');if(!slot)return;var prev="",round=0;card.querySelectorAll(".persona-round").forEach(function(x){var r=+x.dataset.round;if(r<d.round&&r>round&&x.dataset.magiVote){prev=x.dataset.magiVote;round=r}});slot.dataset.magiVote=d.vote_state==="final"?d.vote||"":"";var b=slot.querySelector(".magi-vote-badge");b||(b=document.createElement("span"),b.className="magi-vote-badge",slot.appendChild(b));b.textContent=d.vote_state==="pending"?"…":d.vote?(prev&&prev!==d.vote?magiWord(prev,ja)+"→":"")+magiWord(d.vote,ja):d.absent?"NO RESPONSE":ja?"票なし":"NO VOTE"}
 function magiWord(v,ja){return(ja?{approve:"承認",reject:"否決",hold:"保留"}:{approve:"APPROVED",reject:"REJECTED",hold:"HOLD"})[v]}
@@ -10637,6 +10787,7 @@ function agentAttachDocHTML(a) {
       const sendHistory = () => { const pair = agentRetryPair(retryOf); return pair.length ? agentHistory.filter(it => !pair.includes(it)) : agentHistory; };
   var clarifyDraft = retry ? null : freezeAgentClarify();
       const startedAt = Date.now();
+      const requestMagiPanel = magiModeEnabled();
       setAgentSuggestion('');
       if (!retry) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
       // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
@@ -10707,7 +10858,7 @@ function agentAttachDocHTML(a) {
         const history = sendHistory();
         const outbound = prepareAgentMessages(history, sendContent);
         // WebSocket で受け、開けなければ SSE（openAgentChat。読み上げ設計§6.3）
-        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), classificationFields(history, agentReplyLanguage, currentLang, 'chat', true), requestPrivacy || {})), ctrl.signal);
+        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), classificationFields(history, agentReplyLanguage, currentLang, 'chat', requestMagiPanel), requestPrivacy || {})), ctrl.signal);
         if (dropped()) return;
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
@@ -10718,7 +10869,7 @@ function agentAttachDocHTML(a) {
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
-            privacy: agentPrivacyExpected(requestPrivacy), replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
+            privacy: agentPrivacyExpected(requestPrivacy), replyLanguage: agentReplyLanguage, magiPanel: requestMagiPanel, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
             // MAGI_EVENTS_BEGIN
             motion: function (d) {
               if (dropped()) return;

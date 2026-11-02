@@ -81,6 +81,7 @@ try {
     assert.equal(await toggle.getAttribute('aria-checked'), 'true');
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), null, '保存前は設定を変えない');
     await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-settings-on.png`), animations: 'disabled' });
+    await page.locator('#personal-editor > summary').click();
     await page.locator('#personal-name').fill('合成さん'); await page.locator('#personal-instructions').fill('SYNTHETIC-CUSTOM');
     await page.locator('.agent-personalization-form button[type="submit"]').click();
     assert.equal(await page.locator('#agent-settings-panel').count(), 0);
@@ -227,6 +228,7 @@ try {
     const beforeSettings = await page.evaluate(() => localStorage.getItem('magi_personalization_v1'));
     await page.evaluate(() => { window.failPersonalization = true; });
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    await page.locator('#personal-editor > summary').click();
     await page.locator('#personal-name').fill('保存に失敗する呼称'); await page.locator('.agent-personalization-form button[type="submit"]').click();
     assert.equal(await page.locator('#personal-name').inputValue(), '保存に失敗する呼称');
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), beforeSettings);
@@ -248,6 +250,7 @@ try {
     assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), beforeSettings);
     // 編集途中に読み込み不能になってもフォームの入力と旧設定を残す。
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    await page.locator('#personal-editor > summary').click();
     await page.locator('#personal-name').fill('READ-FAILURE-DRAFT');
     await page.evaluate(() => { window.failPersonalizationRead = true; });
     await page.locator('.agent-personalization-form button[type="submit"]').click();

@@ -35,13 +35,17 @@ try {
       page.on('pageerror', e => errors.push(e.message));
       let release, posted = false; const requests = [];
       const gate = new Promise(r => { release = r; });
-      await page.addInitScript(() => (localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
+      await page.addInitScript(magi => {
+        localStorage.setItem('st-analytics','off');sessionStorage.setItem('magi_transport','sse');
+        if (magi) localStorage.setItem('magi_mode_enabled','1');
+      }, mode.startsWith('magi'));
       await page.route('**/*', async route => {
         const request = route.request(), url = new URL(request.url());
         if (url.pathname === '/magi2/chat') {
           const sent=JSON.parse(request.postData());requests.push(sent);if(fact)assert.equal(sent.fact_mode,true);
           posted = true; if (buffered) await gate;
           const dj = name === 'dj', magi = mode.startsWith('magi');
+          if (!dj) assert.equal(sent.magi_panel,magi);
           const classification = { version:1, intent:dj?'music':'consult', votable:magi?'yes':'no', site_pages:'no', magi_candidate:magi, reply_language:{version:1,code:'ja',source:'ui'} };
           if(fact)Object.assign(classification,{intent:'research',mode:'fact',fresh:'yes'});
           await route.fulfill({ contentType:'text/event-stream', headers:{'Access-Control-Allow-Origin':origin}, body:': padding\n\n' + event('classification',classification)
@@ -84,6 +88,25 @@ try {
         assert.equal(await body.textContent(), fact ? answer.slice(0,18)+'[1]'+answer.slice(18) : answer); assert.equal(await page.locator(input).inputValue(), '');
         const saved = await page.evaluate(dj => localStorage.getItem(dj ? 'tkdj.consults' : 'magi_current_history'), name === 'dj');
         assert.ok(saved?.includes(answer), name + ': 保存された回答'); assert.equal(errors.length,0,errors.join('\n'));
+        if (mode.startsWith('magi')) {
+          async function assertOpenPersonas() {
+            const turn=page.locator('.agent-turn').last(), cards=turn.locator(':scope > .agent-personas');
+            assert.equal(await cards.count(),1);
+            assert.equal(await cards.locator('.persona-card').count(),3);
+            for(const card of await cards.locator('.persona-card').all()) {
+              assert.equal(await card.isVisible(),true);
+              assert.match(await card.innerText(),/固定意見1/);assert.match(await card.innerText(),/固定意見2/);
+            }
+            assert.equal(await turn.locator('details').count(),0);
+            assert.deepEqual(await turn.evaluate(el=>[...el.children].map(child=>child.className)),['magi-panel','magi-motion','agent-personas','agent-reply']);
+          }
+          await assertOpenPersonas();
+          if(mode==='magi-full') {
+            await page.reload({waitUntil:'domcontentloaded'});await page.clock.runFor(1000);
+            await until(async()=>await page.locator('.agent-turn > .agent-personas .persona-card').count()===3);
+            await assertOpenPersonas();assert.equal(errors.length,0,errors.join('\n'));
+          }
+        }
         if(fact) {
           assert.equal(await page.locator('.agent-personas').count(),0);
           assert.equal(await body.locator('a').count(),1);assert.equal(await body.locator('a').getAttribute('href'),'https://example.com/source');

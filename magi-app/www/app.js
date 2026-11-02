@@ -927,6 +927,29 @@ function fitAgentInput() {
   agentInput.style.overflowY = want > max ? 'auto' : 'hidden';
 }
 agentInput.addEventListener('input', fitAgentInput);
+// 末尾から十分離れたときだけ案内を出す。表示/非表示の閾値を分け、境目でちらつかせない。
+var agentScrollBottom = document.getElementById('agent-scroll-bottom');
+var agentScrollBottomFrame = 0;
+function queueAgentScrollBottom() {
+  if (agentScrollBottomFrame) return;
+  agentScrollBottomFrame = requestAnimationFrame(function () {
+    agentScrollBottomFrame = 0;
+    var gap = agentLog.scrollHeight - agentLog.clientHeight - agentLog.scrollTop;
+    agentScrollBottom.hidden = gap <= (agentScrollBottom.hidden ? 160 : 48);
+  });
+}
+agentScrollBottom.addEventListener('click', function () {
+  agentLog.scrollTo({ top: agentLog.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+});
+agentLog.addEventListener('scroll', queueAgentScrollBottom, { passive: true });
+agentLog.addEventListener('load', queueAgentScrollBottom, true);
+new ResizeObserver(queueAgentScrollBottom).observe(agentLog);
+new MutationObserver(queueAgentScrollBottom).observe(agentLog, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] });
+// 複数行・添付・セーフエリアの高さに合わせ、最後の回答を入力欄の上までスクロールできる余白を確保する。
+new ResizeObserver(function (entries) {
+  agentLog.style.setProperty('--agent-compose-height', entries[0].target.offsetHeight + 'px');
+  queueAgentScrollBottom();
+}).observe(document.getElementById('agent-compose-area'));
 // 幅が変わると折り返しも変わる（画面の回転など）。高さの変化では呼ばないよう幅だけを見る
 var agentInputWidth = 0;
 new ResizeObserver(function (entries) {
@@ -1478,6 +1501,51 @@ var WEB_INSTALL = !(window.Capacitor && window.Capacitor.isNativePlatform())
   && !navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
 // 言語を切り替えたら描き直すので、毎回組み立てる
 // AGENT_MANAGEMENT_BEGIN
+function agentSettingsSection(title, content) {
+  return '<section class="agent-settings-section"><h3>' + title + '</h3>' + content + '</section>';
+}
+function agentSettingDetails(text) {
+  return '<details class="agent-setting-details"><summary>' + tr('Learn more', '詳細を見る') + '</summary><p>' + text + '</p></details>';
+}
+function agentSettingCard(id, title, hint, detail, options) {
+  options = options || {};
+  return '<div class="agent-settings-card"' + (options.id ? ' id="' + options.id + '"' : '') + (options.hidden ? ' hidden' : '') + '>'
+    + '<div class="agent-setting"><div class="agent-setting-copy"><span class="agent-setting-title" id="' + id + '-label">' + title + '</span><p id="' + id + '-note">' + hint + '</p></div>'
+    + '<button type="button" role="switch" id="' + id + '-toggle" aria-labelledby="' + id + '-label" aria-describedby="' + id + '-note" aria-checked="false"' + (options.disabled ? ' disabled' : '') + '><span></span></button></div>'
+    + agentSettingDetails(detail) + '<p id="' + id + '-status" role="status"></p></div>';
+}
+function agentPersonalizationFormHTML() {
+  return '<form class="agent-personalization-form agent-settings-card"><div class="agent-setting"><div class="agent-setting-copy"><span class="agent-setting-title" id="personal-enabled-label">' + tr('Personalization', 'パーソナライズ') + '</span><p id="personal-note">' + tr('Use your name and reply preferences.', '呼び方や好みを回答に反映') + '</p></div><button id="personal-enabled" type="button" role="switch" aria-checked="false" aria-labelledby="personal-enabled-label" aria-describedby="personal-note"><span></span></button></div>'
+    + agentSettingDetails(tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。'))
+    + '<details id="personal-editor" class="agent-settings-editor"><summary>' + tr('Name & custom instructions', '呼び方・カスタム指示') + '<span>' + tr('Edit', '編集') + '</span></summary><div class="agent-settings-fields">'
+    + '<label for="personal-name">' + tr('Name', '呼び方') + '<small id="personal-name-count"></small></label><input id="personal-name" type="text" autocomplete="off" placeholder="' + tr('What should MAGI call you?', '例：たけださん') + '">'
+    + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '<small id="personal-instructions-count"></small></label><textarea id="personal-instructions" rows="3" autocomplete="off" placeholder="' + tr('How would you like MAGI to respond?', '例：簡潔に、結論から回答') + '"></textarea>'
+    + '<button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div></details>'
+    + '<div class="personal-actions" hidden><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button></div><p id="personal-status" role="status"></p></form>';
+}
+function agentHistorySettingHTML(native) {
+  return '<div class="agent-settings-card"><p id="history-storage-status" class="agent-settings-meta" role="status"></p><div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '<small>' + tr('JSON · without images', 'JSON形式・画像を除く') + '</small></button><button type="button" id="history-clear" class="agent-setting-danger">' + tr('Delete all chats', '全会話を削除') + '<small>' + tr('Clear history on this device', 'この端末の履歴を削除') + '</small></button></div>'
+    + agentSettingDetails(native ? tr('History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.', '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。') : tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。')) + '</div>';
+}
+// MAGIモードは明示的にオンにした端末だけで許可する。設定を読めなければオフ。
+function magiModeEnabled() {
+  try { return localStorage.getItem('magi_mode_enabled') === '1'; }
+  catch (_) { return false; }
+}
+function magiModeSettingHTML() {
+  return agentSettingCard('magi-mode', tr('MAGI mode', 'MAGIモード'), tr('Let three personas vote on a decision.', '3人格で相談を採決'),
+    tr('Allow three-persona voting when a question is judged suitable. Off by default. Saved on this device and applied from the next message, including temporary chats.', '相談内容に応じて、3人格による採決を使います。初期設定はオフです。この端末に保存し、通常・一時チャットとも次の送信から反映します。'));
+}
+function bindMagiModeSetting(panel) {
+  var toggle = panel.querySelector('#magi-mode-toggle'), status = panel.querySelector('#magi-mode-status');
+  toggle.setAttribute('aria-checked', String(magiModeEnabled()));
+  toggle.addEventListener('click', function () {
+    try {
+      localStorage.setItem('magi_mode_enabled', magiModeEnabled() ? '0' : '1');
+      toggle.setAttribute('aria-checked', String(magiModeEnabled())); status.textContent = '';
+    } catch (_) { status.textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
+  });
+}
 function locationServiceEnabled() {
   try { return localStorage.getItem('magi_location_enabled') !== '0'; }
   catch (_) { return false; }
@@ -1492,8 +1560,8 @@ function conversationStorageFields(conversationId) {
   return conversationStorageEnabled() && !agentTemporary() ? { conversation_storage: true, conversation_id: conversationId } : {};
 }
 function conversationStorageSettingHTML() {
-  return '<div class="agent-setting"><span id="conversation-storage-label">' + tr('Save chats on the site', '会話をサイトに保存') + '</span><button type="button" role="switch" id="conversation-storage-toggle" aria-labelledby="conversation-storage-label" aria-describedby="conversation-storage-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="conversation-storage-note">' + tr('Save your questions and MAGI’s final answers with your IP address in the site database for up to one year, to review and improve MAGI. Images are saved only as a count and attachments by name. Temporary chats are never saved. Turning this off stops saving from your next message; chats already saved are not deleted.', '質問とMAGIの最終回答を、MAGIの確認と改善のため、IPアドレスと一緒にサイトのDBへ最長1年保存します。画像は枚数、添付ファイルは名前だけを保存します。一時チャットは保存しません。オフにすると次の送信から保存しません。保存済みの会話は消えません。') + '</p><p id="conversation-storage-status" role="status"></p>';
+  return agentSettingCard('conversation-storage', tr('Save chats on the site', '会話をサイトに保存'), tr('Questions, replies and IP · up to one year', '質問・回答・IPを最長1年保存'),
+    tr('Save your questions and MAGI’s final answers with your IP address in the site database for up to one year, to review and improve MAGI. Images are saved only as a count and attachments by name. Temporary chats are never saved. Turning this off stops saving from your next message; chats already saved are not deleted.', '質問とMAGIの最終回答を、MAGIの確認と改善のため、IPアドレスと一緒にサイトのDBへ最長1年保存します。画像は枚数、添付ファイルは名前だけを保存します。一時チャットは保存しません。オフにすると次の送信から保存しません。保存済みの会話は消えません。'));
 }
 function bindConversationStorageSetting(panel) {
   var toggle = panel.querySelector('#conversation-storage-toggle'), status = panel.querySelector('#conversation-storage-status');
@@ -1570,13 +1638,12 @@ function agentClearWebHistory() {
 }
 async function initAgentManagement(panel) {
   if (agentManagementNative()) { await initNativeSettings(panel); return; }
-  panel.querySelector('#agent-native-settings').innerHTML = conversationStorageSettingHTML()
-    + '<div class="agent-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="native-location-note">' + tr('Use the city and region estimated from your IP address for location-based searches. This does not request GPS permission. Changes apply to your next message.', '場所に応じた検索に、IPアドレスから推定した市・地域を使います。GPSの許可は求めません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
-    + '<div class="agent-setting"><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" role="status"></p>'
-    + '<p>' + tr('Notify when a reply finishes while this page is open in the background. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、受信が完了した回答を通知します。画面を閉じた後の受信には対応しません。一時チャットは通知しません。') + '</p>'
-    + '<p id="history-storage-status" role="status"></p><p>' + tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。') + '</p>'
-    + '<div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '</button><button type="button" id="history-clear">' + tr('Delete all chats', '全会話を削除') + '</button></div>';
+  panel.querySelector('#agent-native-settings').innerHTML = agentSettingsSection(tr('Device', '端末'),
+    agentSettingCard('native-location', tr('Location services', '位置情報サービス'), tr('Find places near your IP address.', 'IPアドレスから近くの場所を検索'),
+      tr('Use the city and region estimated from your IP address for location-based searches. This does not request GPS permission. Changes apply to your next message.', '場所に応じた検索に、IPアドレスから推定した市・地域を使います。GPSの許可は求めません。変更は次の送信から反映します。'))
+    + agentSettingCard('native-notification', tr('Notifications', '通知'), tr('Notify when a reply is ready.', '回答の完了をお知らせ'),
+      tr('Notify when a reply finishes while this page is open in the background. Browser permission is required. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、回答の完了を通知します。ブラウザの許可が必要です。画面を閉じた後の受信には対応しません。一時チャットは通知しません。'), { disabled: true }))
+    + agentSettingsSection(tr('Data', 'データ'), conversationStorageSettingHTML() + agentHistorySettingHTML(false));
   bindConversationStorageSetting(panel);
   var status = panel.querySelector('#history-storage-status'), locationToggle = panel.querySelector('#native-location-toggle');
   locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
@@ -1616,9 +1683,9 @@ async function initAgentManagement(panel) {
     var supported = support.supported;
     toggle.disabled = !supported;
     toggle.setAttribute('aria-checked', String(supported && window.Notification.permission === 'granted' && agentWebNotificationsEnabled()));
-    note.textContent = !supported ? tr('This browser cannot show notifications here. On mobile, try the installed PWA.', 'このブラウザでは通知を使えません。モバイルではホーム画面に追加したPWAをお試しください。')
-      : window.Notification.permission === 'denied' ? tr('Notifications are blocked in browser settings. Allow them there before turning this on.', 'ブラウザの設定で通知がブロックされています。許可してからオンにしてください。')
-      : tr('Turn on to allow reply notifications. Browser permission is required.', 'オンにすると回答の到着を通知します。ブラウザ側の許可が必要です。');
+    note.textContent = !supported ? tr('This browser cannot show notifications. Try the installed PWA.', 'このブラウザでは通知を使えません。PWAをご利用ください。')
+      : window.Notification.permission === 'denied' ? tr('Notifications are blocked in browser settings.', 'ブラウザの設定で通知がブロックされています。')
+      : '';
   }
   refreshNotifications();
   function onFocus() { if (panel.isConnected) refreshNotifications(); }
@@ -1682,16 +1749,14 @@ function saveAgentPersonalization(value) {
 }
 function showAgentSettings() {
   var panel = makeAgentPanel('agent-settings-panel', tr('App management', 'アプリ管理'),
-    '<div class="agent-settings-content"><form class="agent-personalization-form"><div class="agent-setting"><span id="personal-enabled-label">' + tr('Personalization', 'パーソナライズ') + '</span><button id="personal-enabled" type="button" role="switch" aria-checked="false" aria-labelledby="personal-enabled-label" aria-describedby="personal-note"><span></span></button></div>'
-    + '<label for="personal-name">' + tr('What should MAGI call you?', '何とお呼びすればよいですか？') + '</label><input id="personal-name" type="text" autocomplete="off"><small id="personal-name-count"></small>'
-    + '<label for="personal-instructions">' + tr('Custom instructions', 'カスタム指示') + '</label><textarea id="personal-instructions" rows="5" autocomplete="off"></textarea><small id="personal-instructions-count"></small>'
-    + '<p id="personal-note">' + tr('Saved on this device. Applied from your next normal message. Temporary chats have their own personalization choice.', 'この端末に保存し、通常チャットの次の送信から適用します。一時チャットでは、そのチャットの設定で切り替えます。') + '</p>'
-    + '<div class="personal-actions"><button type="submit">' + tr('Save', '保存') + '</button><button type="button" data-personal="cancel">' + tr('Cancel', 'キャンセル') + '</button><button type="button" data-personal="delete">' + tr('Delete settings', '設定を削除') + '</button></div><p id="personal-status" role="status"></p></form><div id="agent-native-settings"></div></div>');
+    '<div class="agent-settings-content">' + agentSettingsSection(tr('Replies', '回答'), magiModeSettingHTML() + agentPersonalizationFormHTML()) + '<div id="agent-native-settings"></div></div>');
   if (!panel) return;
+  bindMagiModeSetting(panel);
   initAgentManagement(panel).catch(function () { announceAgent(tr('Could not open app settings.', 'アプリの設定を開けませんでした。')); });
   var form = panel.querySelector('form'), enabled = panel.querySelector('#personal-enabled'), name = panel.querySelector('#personal-name'), instructions = panel.querySelector('#personal-instructions'), status = panel.querySelector('#personal-status');
   var current = refreshAgentPersonalization();
   if (!current) {
+    panel.querySelector('.personal-actions').hidden = false;
     status.textContent = tr('Could not read personalization settings. Close this screen, check storage and try again.', 'パーソナライズ設定を読み込めませんでした。この画面を閉じて保存先を確認し、再試行してください。');
     form.querySelectorAll('input, textarea, button:not([data-personal="cancel"])').forEach(function (control) { control.disabled = true; });
     panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
@@ -1706,6 +1771,7 @@ function showAgentSettings() {
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
     panel.querySelector('#personal-instructions-count').textContent = Array.from(instructions.value).length + ' / 2000';
+    panel.querySelector('.personal-actions').hidden = enabled.getAttribute('aria-checked') === String(current.enabled) && name.value === current.preferred_name && instructions.value === current.custom_instructions;
   }
   function save(deleting) {
     try {
@@ -1717,7 +1783,7 @@ function showAgentSettings() {
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
-  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); });
+  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); count(); });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
   panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
@@ -2303,7 +2369,16 @@ function magiStep(previous,input,now,visible,reduced){var s=previous?JSON.parse(
 
 // MAGI_VIEW_BEGIN
 
-function createMagiView(turn,options){options=Object.assign({},options,{id:String(options.id||"panel").replace(/[^a-z0-9_-]/gi,"")||"panel"});var ja=!!options.ja,alive=options.alive||function(){return!0},status=options.announce||function(){},log=options.log,box=document.createElement("section");box.className="magi-panel";var shapes=["M43 258H190L290 342V439H43Z","M226 50H440V250L374 303H291L226 250Z","M475 258H623V439H375V342Z"],centers=[[167,367],[333,222],[499,367]],order=["CASPER-3","BALTHASAR-2","MELCHIOR-1"],svg='<svg viewBox="0 0 700 470" role="img" xmlns="http://www.w3.org/2000/svg"><title></title><defs><pattern id="magi-hatch-'+options.id+'" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="var(--magi-gray)"/><path d="M-3 3L3-3M0 12L12 0M9 15L15 9" stroke="var(--magi-hatch)" stroke-width="4"/></pattern></defs><path class="magi-rule" d="M24 50H224V59H24ZM24 54.5H224M24 124H224V133H24ZM24 128.5H224M443 50H643V59H443ZM443 54.5H643M443 124H643V133H443ZM443 128.5H643"/><g class="magi-mincho"><text x="40" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">提訴</text><text x="456" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">決議</text></g><g class="magi-meta"><text x="40" y="163" font-size="30" textLength="146" lengthAdjust="spacingAndGlyphs">CODE : '+("000"+Math.floor(Math.random()*1e3)).slice(-3)+'</text><text x="68" y="187">FILE:MAGI_SYS</text><text x="68" y="203">EXTENTION:6008</text><text x="68" y="219">EX_MODE:OFF</text><text x="68" y="235">PRIORITY:AAA</text></g><path class="magi-link" d="M263 280L238 302M404 280L427 302M290 370H375"/><text class="magi-mincho" x="333" y="336" text-anchor="middle" font-size="34">MAGI</text>';order.forEach(function(k,i){var c=centers[i];svg+='<g data-magi-node="'+k+'"><path class="magi-node" d="'+shapes[i]+'"/><g text-anchor="middle"><text class="magi-code" textLength="'+[174,201,218][i]+'" lengthAdjust="spacingAndGlyphs" x="'+c[0]+'" y="'+c[1]+'">'+k.replace("-","·")+"</text></g></g>"}),svg+='<g data-magi-verdict=""><rect x="496" y="182" width="125" height="54"/><rect x="500" y="186" width="117" height="46"/><text class="magi-mincho" x="558.5" y="223" font-size="36" text-anchor="middle"></text></g></svg>',box.innerHTML=svg,Object.keys(MAGI_COLORS).forEach(function(k){box.style.setProperty("--magi-"+k,MAGI_COLORS[k])});var motionBox=document.createElement("div");motionBox.className="magi-motion";var motionText=document.createElement("span");motionBox.appendChild(motionText);var full=document.createElement("button");full.type="button",full.textContent=ja?"全文":"Full text",full.setAttribute("aria-expanded","false"),motionBox.appendChild(full),full.addEventListener("click",function(){var on=full.getAttribute("aria-expanded")!=="true";full.setAttribute("aria-expanded",String(on)),motionBox.classList.toggle("expanded",on)});var roundEl=document.createElement("span");roundEl.className="magi-round",motionBox.appendChild(roundEl);var details=document.createElement("details");details.className="magi-record";var summary=document.createElement("summary");details.appendChild(summary);var cards=turn.querySelector(".agent-personas");cards&&details.appendChild(cards);var reply=turn.querySelector(".agent-reply");turn.insertBefore(box,reply),turn.insertBefore(motionBox,reply),turn.appendChild(details);var state=null,timer=null,motion="",latestFrame=null,announced=!1,closed=!1,waiters=[],tracking=!0,programScroll=null,media=window.matchMedia("(prefers-reduced-motion: reduce)");function now(){return performance.now()}function scroll(){if(!(!log||!tracking||document.hidden)){var r=reply.getBoundingClientRect(),v=log.getBoundingClientRect();r.bottom>v.bottom&&(log.scrollTop+=Math.min(r.bottom-v.bottom,Math.max(0,r.top-v.top)),programScroll=log.scrollTop)}}function pin(){if(log&&tracking&&!document.hidden){log.scrollTop+=box.getBoundingClientRect().top-log.getBoundingClientRect().top;programScroll=log.scrollTop}}function onScroll(){programScroll!==log.scrollTop&&(tracking=log.scrollHeight-log.scrollTop-log.clientHeight<24);programScroll=null}function onToggle(){details.open&&(tracking=!1)}function resize(){var viewport=window.visualViewport?window.visualViewport.height:window.innerHeight;box.style.maxHeight="min(60vh,"+Math.max(0,Math.min(viewport,log?log.clientHeight:viewport)*.6)+"px)",state&&!latestFrame.explanation&&pin()}function note(n){return n.issue==="no_response"?ja?"応答なし":"No response":n.issue==="unreadable"?ja?"票を判定できない":"Unreadable vote":""}function label(n){return n.state==="debating"?n.pending?ja?"票を確認中":"Checking vote":n.vote?(n.round===1?ja?"初回: ":"Initial: ":ja?"第"+n.round+"回の票: ":"Round "+n.round+": ")+magiWord(n.vote,ja):ja?"審議中":"Deliberating":n.state==="absent"?"NO RESPONSE":n.state==="unreadable"?ja?"票を判定できない":"Unreadable vote":magiWord(n.vote,ja)+(n.state==="carried"?ja?"（第"+n.round+"回の票）":" (round "+n.round+")":"")}function render(frame){latestFrame=frame,motionText.textContent=motion.slice(0,full.getAttribute("aria-expanded")==="true"?motion.length:frame.motionChars),MAGI_IDS.forEach(function(k){var el=box.querySelector('[data-magi-node="'+k+'"]'),n=frame.nodes[k];el.querySelector(".magi-node").style.fill=n.state==="unreadable"?"url(#magi-hatch-"+options.id+")":n.color,el.style.color=n.ink,el.querySelector(".magi-node").style.strokeWidth=frame.emphasis===k?"4":"1.2"});var v=frame.result,r=v?v.result:null,ver=box.querySelector("[data-magi-verdict]"),fill=r==="hold"?MAGI_COLORS.orange:r?MAGI_COLORS[r]:MAGI_COLORS.ground;ver.style.color=r?MAGI_COLORS.ink:MAGI_COLORS.orange,ver.querySelectorAll("rect").forEach(function(el){el.style.fill=fill,el.style.strokeWidth=frame.emphasis==="verdict"?"3":"1.2"});var word=r==="approve"?"承認":r==="reject"?"否決":r==="hold"?"保留":"審議中";ver.querySelector(".magi-mincho").textContent=word;var desc=motion+" / "+(r?magiWord(r,ja):ja?word:"Deliberating")+" / "+MAGI_IDS.map(function(k){var n=frame.nodes[k],issue=note(n);return k+": "+label(n)+(issue&&n.state==="carried"?", "+issue:"")}).join(", ");box.querySelector("svg").setAttribute("aria-label",desc),box.querySelector("title").textContent=desc,roundEl.textContent=frame.round>=3?ja?"第"+frame.round+"回審議 "+frame.round+"/5":"Round "+frame.round+"/5":"",summary.textContent=ja?"審議記録（3人格・第"+frame.round+"回まで）":"Deliberation record (3 personas, "+frame.round+" round"+(frame.round>1?"s":"")+")",v&&!announced&&(announced=!0,status((ja?"MAGI の":"MAGI ")+magiSummary(v,ja))),frame.explanation&&options.explain&&(options.explain(),scroll())}function settle(){latestFrame&&latestFrame.explanation&&waiters.splice(0).forEach(function(resolve){resolve()})}function advance(input){if(closed||!alive()){dispose();return}clearTimeout(timer);var t=now(),out=magiStep(state,input,t,!document.hidden,media.matches);state=out.state,render(out.frame),out.frame.ack&&(out=magiStep(state,{event:"applied"},now(),!document.hidden,media.matches),state=out.state,render(out.frame)),settle(),out.next!==null&&(timer=setTimeout(function(){advance(null)},Math.max(1,out.next-now())))}function dispose(){closed||(closed=!0,clearTimeout(timer),document.removeEventListener("visibilitychange",changed),media.removeEventListener("change",changed),window.removeEventListener("resize",resize),window.visualViewport&&window.visualViewport.removeEventListener("resize",resize),log&&log.removeEventListener("scroll",onScroll),details.removeEventListener("toggle",onToggle),waiters.splice(0).forEach(function(resolve){resolve()}))}function changed(){advance(null)}return document.addEventListener("visibilitychange",changed),media.addEventListener("change",changed),window.addEventListener("resize",resize),window.visualViewport&&window.visualViewport.addEventListener("resize",resize),log&&log.addEventListener("scroll",onScroll,{passive:!0}),details.addEventListener("toggle",onToggle),resize(),{push:function(ev,d){ev==="motion"&&(motion=d.text,motionText.textContent=motion),advance({event:ev,data:d})},wait:function(){return latestFrame&&latestFrame.explanation?Promise.resolve():new Promise(function(resolve){waiters.push(resolve)})},finish:function(){advance({event:"finish"})},dispose,ready:function(){return!!(latestFrame&&latestFrame.explanation)},explanationChanged:scroll,start:pin}}
+// 入力欄とフェードを除く範囲。CSSのscroll-padding-bottomを表示境界の正本にする。
+function magiLogViewport(log) {
+  var rect = log.getBoundingClientRect();
+  var inset = typeof getComputedStyle === "function" ? parseFloat(getComputedStyle(log).scrollPaddingBottom) || 0 : 0;
+  return { top: rect.top, bottom: Math.max(rect.top, rect.bottom - inset) };
+}
+
+// 自動移動は即時に確定し、smoothスクロールの途中を手動操作と誤認しない。
+// 人格の更新後は検討内容の末尾と回答を追い、手動の読み戻しで停止、下矢印で再開する。
+function createMagiView(turn,options){options=Object.assign({},options,{id:String(options.id||"panel").replace(/[^a-z0-9_-]/gi,"")||"panel"});var ja=!!options.ja,alive=options.alive||function(){return!0},status=options.announce||function(){},log=options.log,box=document.createElement("section");box.className="magi-panel";var shapes=["M43 258H190L290 342V439H43Z","M226 50H440V250L374 303H291L226 250Z","M475 258H623V439H375V342Z"],centers=[[167,367],[333,222],[499,367]],order=["CASPER-3","BALTHASAR-2","MELCHIOR-1"],svg='<svg viewBox="0 0 700 470" role="img" xmlns="http://www.w3.org/2000/svg"><title></title><defs><pattern id="magi-hatch-'+options.id+'" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="var(--magi-gray)"/><path d="M-3 3L3-3M0 12L12 0M9 15L15 9" stroke="var(--magi-hatch)" stroke-width="4"/></pattern></defs><path class="magi-rule" d="M24 50H224V59H24ZM24 54.5H224M24 124H224V133H24ZM24 128.5H224M443 50H643V59H443ZM443 54.5H643M443 124H643V133H443ZM443 128.5H643"/><g class="magi-mincho"><text x="40" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">提訴</text><text x="456" y="112" font-size="62" textLength="174" lengthAdjust="spacingAndGlyphs">決議</text></g><g class="magi-meta"><text x="40" y="163" font-size="30" textLength="146" lengthAdjust="spacingAndGlyphs">CODE : '+("000"+Math.floor(Math.random()*1e3)).slice(-3)+'</text><text x="68" y="187">FILE:MAGI_SYS</text><text x="68" y="203">EXTENTION:6008</text><text x="68" y="219">EX_MODE:OFF</text><text x="68" y="235">PRIORITY:AAA</text></g><path class="magi-link" d="M263 280L238 302M404 280L427 302M290 370H375"/><text class="magi-mincho" x="333" y="336" text-anchor="middle" font-size="34">MAGI</text>';order.forEach(function(k,i){var c=centers[i];svg+='<g data-magi-node="'+k+'"><path class="magi-node" d="'+shapes[i]+'"/><g text-anchor="middle"><text class="magi-code" textLength="'+[174,201,218][i]+'" lengthAdjust="spacingAndGlyphs" x="'+c[0]+'" y="'+c[1]+'">'+k.replace("-","·")+"</text></g></g>"}),svg+='<g data-magi-verdict=""><rect x="496" y="182" width="125" height="54"/><rect x="500" y="186" width="117" height="46"/><text class="magi-mincho" x="558.5" y="223" font-size="36" text-anchor="middle"></text></g></svg>',box.innerHTML=svg,Object.keys(MAGI_COLORS).forEach(function(k){box.style.setProperty("--magi-"+k,MAGI_COLORS[k])});var motionBox=document.createElement("div");motionBox.className="magi-motion";var motionText=document.createElement("span");motionBox.appendChild(motionText);var full=document.createElement("button");full.type="button",full.textContent=ja?"全文":"Full text",full.setAttribute("aria-expanded","false"),motionBox.appendChild(full),full.addEventListener("click",function(){var on=full.getAttribute("aria-expanded")!=="true";full.setAttribute("aria-expanded",String(on)),motionBox.classList.toggle("expanded",on)});var roundEl=document.createElement("span");roundEl.className="magi-round",motionBox.appendChild(roundEl);var cards=turn.querySelector(".agent-personas"),reply=turn.querySelector(".agent-reply"),anchor=cards||reply;turn.insertBefore(box,anchor),turn.insertBefore(motionBox,anchor);var state=null,timer=null,motion="",latestFrame=null,announced=!1,closed=!1,waiters=[],tracking=!0,followingPanel=!0,lastScroll=log?log.scrollTop:0,jump=log&&log.parentElement&&log.parentElement.querySelector("#agent-scroll-bottom"),media=window.matchMedia("(prefers-reduced-motion: reduce)");function now(){return performance.now()}function move(delta){log.scrollTo({top:log.scrollTop+delta,behavior:"instant"});lastScroll=log.scrollTop}function scroll(){followingPanel=!1;if(!(!log||!tracking||document.hidden)){var r=reply.getBoundingClientRect(),v=magiLogViewport(log);r.bottom>v.bottom&&move(Math.min(r.bottom-v.bottom,Math.max(0,r.top-v.top)))}}function pin(){if(log&&tracking&&!document.hidden)move(box.getBoundingClientRect().top-log.getBoundingClientRect().top)}function onScroll(){log.scrollTop!==lastScroll&&(tracking=log.scrollHeight-log.scrollTop-log.clientHeight<24);lastScroll=log.scrollTop}function resume(){tracking=!0;followingPanel=!1;log&&!document.hidden&&move(log.scrollHeight-log.clientHeight-log.scrollTop)}function resize(){var viewport=window.visualViewport?window.visualViewport.height:window.innerHeight,bounds=log&&magiLogViewport(log);box.style.maxHeight="min(60vh,"+Math.max(0,Math.min(viewport,bounds?bounds.bottom-bounds.top:viewport)*.6)+"px)",state&&!latestFrame.explanation&&(followingPanel?pin():scroll())}function note(n){return n.issue==="no_response"?ja?"応答なし":"No response":n.issue==="unreadable"?ja?"票を判定できない":"Unreadable vote":""}function label(n){return n.state==="debating"?n.pending?ja?"票を確認中":"Checking vote":n.vote?(n.round===1?ja?"初回: ":"Initial: ":ja?"第"+n.round+"回の票: ":"Round "+n.round+": ")+magiWord(n.vote,ja):ja?"審議中":"Deliberating":n.state==="absent"?"NO RESPONSE":n.state==="unreadable"?ja?"票を判定できない":"Unreadable vote":magiWord(n.vote,ja)+(n.state==="carried"?ja?"（第"+n.round+"回の票）":" (round "+n.round+")":"")}function render(frame){latestFrame=frame,motionText.textContent=motion.slice(0,full.getAttribute("aria-expanded")==="true"?motion.length:frame.motionChars),MAGI_IDS.forEach(function(k){var el=box.querySelector('[data-magi-node="'+k+'"]'),n=frame.nodes[k];el.querySelector(".magi-node").style.fill=n.state==="unreadable"?"url(#magi-hatch-"+options.id+")":n.color,el.style.color=n.ink,el.querySelector(".magi-node").style.strokeWidth=frame.emphasis===k?"4":"1.2"});var v=frame.result,r=v?v.result:null,ver=box.querySelector("[data-magi-verdict]"),fill=r==="hold"?MAGI_COLORS.orange:r?MAGI_COLORS[r]:MAGI_COLORS.ground;ver.style.color=r?MAGI_COLORS.ink:MAGI_COLORS.orange,ver.querySelectorAll("rect").forEach(function(el){el.style.fill=fill,el.style.strokeWidth=frame.emphasis==="verdict"?"3":"1.2"});var word=r==="approve"?"承認":r==="reject"?"否決":r==="hold"?"保留":"審議中";ver.querySelector(".magi-mincho").textContent=word;var desc=motion+" / "+(r?magiWord(r,ja):ja?word:"Deliberating")+" / "+MAGI_IDS.map(function(k){var n=frame.nodes[k],issue=note(n);return k+": "+label(n)+(issue&&n.state==="carried"?", "+issue:"")}).join(", ");box.querySelector("svg").setAttribute("aria-label",desc),box.querySelector("title").textContent=desc,roundEl.textContent=frame.round>=3?ja?"第"+frame.round+"回審議 "+frame.round+"/5":"Round "+frame.round+"/5":"",v&&!announced&&(announced=!0,status((ja?"MAGI の":"MAGI ")+magiSummary(v,ja))),frame.explanation&&options.explain&&(options.explain(),scroll())}function settle(){latestFrame&&latestFrame.explanation&&waiters.splice(0).forEach(function(resolve){resolve()})}function advance(input){if(closed||!alive()){dispose();return}clearTimeout(timer);var t=now(),out=magiStep(state,input,t,!document.hidden,media.matches);state=out.state,render(out.frame),out.frame.ack&&(out=magiStep(state,{event:"applied"},now(),!document.hidden,media.matches),state=out.state,render(out.frame)),settle(),out.next!==null&&(timer=setTimeout(function(){advance(null)},Math.max(1,out.next-now())))}function dispose(){closed||(closed=!0,clearTimeout(timer),document.removeEventListener("visibilitychange",changed),media.removeEventListener("change",changed),window.removeEventListener("resize",resize),window.visualViewport&&window.visualViewport.removeEventListener("resize",resize),log&&log.removeEventListener("scroll",onScroll),jump&&jump.removeEventListener("click",resume),waiters.splice(0).forEach(function(resolve){resolve()}))}function changed(){advance(null)}return document.addEventListener("visibilitychange",changed),media.addEventListener("change",changed),window.addEventListener("resize",resize),window.visualViewport&&window.visualViewport.addEventListener("resize",resize),log&&log.addEventListener("scroll",onScroll,{passive:!0}),jump&&jump.addEventListener("click",resume),resize(),{push:function(ev,d){ev==="motion"&&(motion=d.text,motionText.textContent=motion),advance({event:ev,data:d}),(ev==="persona"||ev==="ask")&&scroll()},wait:function(){return latestFrame&&latestFrame.explanation?Promise.resolve():new Promise(function(resolve){waiters.push(resolve)})},finish:function(){advance({event:"finish"})},dispose,ready:function(){return!!(latestFrame&&latestFrame.explanation)},explanationChanged:scroll,start:pin}}
 function magiDismiss(turn,reason,ja){var row=document.createElement("div");row.className="magi-dismiss",row.textContent=reason==="failed"?ja?"議題を整えられませんでした — 通常の回答に切り替えます":"Could not prepare the motion — answering normally":ja?"提訴却下 — 通常の回答に切り替えます":"Motion dismissed — answering normally",turn.insertBefore(row,turn.firstChild)}
 function magiBadge(turn,d,ja){var card=turn.querySelector('.persona-card[data-codename="'+d.codename+'"]'),slot=card&&card.querySelector('.persona-round[data-round="'+d.round+'"]');if(!slot)return;var prev="",round=0;card.querySelectorAll(".persona-round").forEach(function(x){var r=+x.dataset.round;if(r<d.round&&r>round&&x.dataset.magiVote){prev=x.dataset.magiVote;round=r}});slot.dataset.magiVote=d.vote_state==="final"?d.vote||"":"";var b=slot.querySelector(".magi-vote-badge");b||(b=document.createElement("span"),b.className="magi-vote-badge",slot.appendChild(b));b.textContent=d.vote_state==="pending"?"…":d.vote?(prev&&prev!==d.vote?magiWord(prev,ja)+"→":"")+magiWord(d.vote,ja):d.absent?"NO RESPONSE":ja?"票なし":"NO VOTE"}
 function magiWord(v,ja){return(ja?{approve:"承認",reject:"否決",hold:"保留"}:{approve:"APPROVED",reject:"REJECTED",hold:"HOLD"})[v]}
@@ -2852,7 +2927,7 @@ function renderAgentPages(replyEl, data) {
 
 function prepareAgentMessages(history, lastContent) {
   // 考えた秒数・受信の印・読み上げの署名・回答の日時・送り直しの印は画面のためだけのもので、次の質問の API には送らない
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, ...m }) => agentFactHistoryMessage(m));
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, magi_panel, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -3137,6 +3212,8 @@ async function agentSend(recovered, retry) {
   if (!recovered && !retry && nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
   var savedUser = recovered ? agentHistory.at(-1) : null;
   if (recovered && (!nativeConversation || !savedUser || savedUser.role !== 'user' || savedUser.native_request !== recovered.id)) return;
+  // 復元は送信済みの許可を維持する。印のない旧アプリの受信は従来どおりMAGI対応として読む。
+  var requestMagiPanel = recovered ? savedUser.magi_panel !== false : magiModeEnabled();
   var draftText = recovered ? contentText(savedUser.content) : retry ? retry.text : agentInput.value;
   var text = recovered || retry ? draftText : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
@@ -3179,7 +3256,7 @@ async function agentSend(recovered, retry) {
   var replyBody = replyEl.querySelector('.agent-reply-body');
   var thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
-  var userItem = recovered ? savedUser : { role: 'user', content: storeContent, at: sentAt, ...(nativeRunId ? { native_request: nativeRunId } : {}), ...(retryOf ? { retry_of: retryOf } : {}) };
+  var userItem = recovered ? savedUser : { role: 'user', content: storeContent, at: sentAt, ...(nativeRunId ? { native_request: nativeRunId, magi_panel: requestMagiPanel } : {}), ...(retryOf ? { retry_of: retryOf } : {}) };
   if (!recovered) agentHistory.push(userItem);
   safeStore('magi_current_history', agentHistory);
   syncRetryButtons();
@@ -3231,7 +3308,7 @@ async function agentSend(recovered, retry) {
     var outbound = prepareAgentMessages(history, sendContent);
     var deviceLocation = !recovered ? await locationForMessage(ctrl.signal, turn) : null;
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', true), nativeAndroid && agentShared ? { shared: agentShared } : {}, requestPrivacy || {}));
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', requestMagiPanel), nativeAndroid && agentShared ? { shared: agentShared } : {}, requestPrivacy || {}));
     if (nativeRunId && nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeRunId && nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
@@ -3245,7 +3322,7 @@ async function agentSend(recovered, retry) {
       turn.remove(); renderAgentError(env); errored = true;
     } else {
       await parseSSE(res.body, {
-        privacy: agentPrivacyExpected(requestPrivacy), replyLanguage: agentReplyLanguage, magiPanel: true, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
+        privacy: agentPrivacyExpected(requestPrivacy), replyLanguage: agentReplyLanguage, magiPanel: requestMagiPanel, signal: ctrl.signal, streamWatch, alive: () => !dropped(),
             // MAGI_EVENTS_BEGIN
             motion: function (d) {
               if (dropped()) return;
@@ -3969,17 +4046,15 @@ async function locationForMessage(signal, turn) {
 async function initNativeSettings(panel) {
   if (!nativeAndroid) return;
   var ja = isJa();
-  panel.querySelector('#agent-native-settings').innerHTML =
-    '<p id="history-storage-status" role="status">' + (ja ? '読み込み中…' : 'Loading…') + '</p>' + conversationStorageSettingHTML()
-    + '<div class="agent-setting"><span id="native-location-label">' + tr('Location services', '位置情報サービス') + '</span><button type="button" role="switch" id="native-location-toggle" aria-labelledby="native-location-label" aria-describedby="native-location-note" aria-checked="false"><span></span></button></div>'
-    + '<p id="native-location-note">' + tr('Get your device location, preferring GPS, when sending a message. Android permission is required. Coordinates and city/region go to MAGI and the search provider for location-based searches. If unavailable, use your IP-estimated city/region and show a notice. Turning this off disables both. Changes apply to your next message.', '送信時にGPSを優先して端末の現在地を取得します。Androidの許可が必要です。場所に応じた検索のため、座標と市・地域をMAGIと検索する会社へ送ります。取得できなければIP由来の市・地域を使い、その旨を表示します。オフでは両方を使いません。変更は次の送信から反映します。') + '</p><p id="native-location-status" role="status"></p>'
-    + '<div class="agent-setting" id="native-notification-setting" hidden><span id="native-notification-label">' + tr('Notifications', '通知') + '</span><button type="button" role="switch" id="native-notification-toggle" aria-labelledby="native-notification-label" aria-describedby="native-notification-status" aria-checked="false" disabled><span></span></button></div><p id="native-notification-status" hidden></p>'
-    + '<div id="native-widget-settings" hidden>'
-    + '<p>' + (ja ? 'ホーム画面のウィジェット一覧から「MAGI に聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。' : 'Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.') + '</p>'
-    + '<button type="button" id="widget-pin" hidden>' + (ja ? 'ホーム画面に追加' : 'Add to home screen') + '</button><p id="widget-status" role="status"></p></div>'
-    + '<p>' + (ja ? '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。' : 'History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.') + '</p>'
-    + '<div class="native-settings-actions"><button type="button" id="history-export">' + (ja ? '全会話を書き出す' : 'Export all chats') + '</button>'
-    + '<button type="button" id="history-clear">' + (ja ? '全会話を削除' : 'Delete all chats') + '</button></div>';
+  panel.querySelector('#agent-native-settings').innerHTML = agentSettingsSection(tr('Device', '端末'),
+    agentSettingCard('native-location', tr('Location services', '位置情報サービス'), tr('Search near your current location.', '現在地の近くを検索'),
+      tr('Get your device location, preferring GPS, when sending a message. Android permission is required. Coordinates and city/region go to MAGI and the search provider for location-based searches. If unavailable, use your IP-estimated city/region and show a notice. Turning this off disables both. Changes apply to your next message.', '送信時にGPSを優先して端末の現在地を取得します。Androidの許可が必要です。場所に応じた検索のため、座標と市・地域をMAGIと検索する会社へ送ります。取得できなければIP由来の市・地域を使い、その旨を表示します。オフでは両方を使いません。変更は次の送信から反映します。'))
+    + agentSettingCard('native-notification', tr('Notifications', '通知'), tr('Notify when a reply is ready.', '回答の完了をお知らせ'),
+      tr('Reply arrival alerts may require Android permission. The ongoing background task notification is managed by Android.', '回答の到着通知にはAndroidの許可が必要な場合があります。バックグラウンド受信中の表示はAndroidが管理します。'), { id: 'native-notification-setting', hidden: true, disabled: true })
+    + '<div id="native-widget-settings" class="agent-settings-card" hidden><div class="agent-setting"><div class="agent-setting-copy"><span class="agent-setting-title">' + tr('Home screen widget', 'ホーム画面ウィジェット') + '</span><p>' + tr('Open chat, camera or voice input.', 'チャットやカメラをすぐに起動') + '</p></div><button type="button" id="widget-pin" class="agent-setting-action" hidden>' + tr('Add', '追加') + '</button></div>'
+    + agentSettingDetails(tr('Add “Ask MAGI” from your home screen’s widget picker to open chat, the camera, your album or voice input.', 'ホーム画面のウィジェット一覧から「MAGIに聞く」を追加できます。チャット・カメラ・アルバム・音声入力をすぐ開けます。')) + '<p id="widget-status" role="status"></p></div>')
+    + agentSettingsSection(tr('Data', 'データ'), conversationStorageSettingHTML() + agentHistorySettingHTML(true));
+  bindConversationStorageSetting(panel);
   initNativeWidgetSettings(panel, ja);
   var locationToggle = panel.querySelector('#native-location-toggle');
   locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
@@ -4013,7 +4088,7 @@ async function initNativeSettings(panel) {
         if (!panel.isConnected) return;
         notificationToggle.setAttribute('aria-checked', String(value.enabled));
         notificationToggle.disabled = false;
-        notifications.textContent = tr('Reply arrival alerts. Android may require permission. The ongoing background task notification is managed by Android.', '回答の到着を通知します。Androidの許可が必要な場合があります。バックグラウンド受信中の表示はAndroidが管理します。');
+        notifications.textContent = '';
       } catch (_) { notificationToggle.disabled = true; notifications.textContent = tr('Could not check notifications.', '通知の状態を確認できませんでした。'); }
     }
     notificationToggle.addEventListener('click', async function () {

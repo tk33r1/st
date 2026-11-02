@@ -128,6 +128,14 @@ try {
       await page.evaluate(() => window.nativeBack({ canGoBack: false }));
       assert.match(await page.locator('#agent-more-dropdown').getAttribute('class'), /hidden/);
     }
+    await page.locator('#btn-more-agent').click();await page.locator('#btn-settings-agent').click();
+    const magiMode=page.locator('#magi-mode-toggle');
+    assert.equal(await magiMode.getAttribute('aria-checked'),'false');await magiMode.click();
+    assert.equal(await magiMode.getAttribute('aria-checked'),'true');
+    await page.locator('#agent-settings-panel .agent-page-back').click();
+    await page.locator('#btn-more-agent').click();await page.locator('#btn-settings-agent').click();
+    assert.equal(await magiMode.getAttribute('aria-checked'),'true');await magiMode.click();
+    await page.locator('#agent-settings-panel .agent-page-back').click();
     for (const { width, height, bottom } of [{ width: 390, height: 844, bottom: 24 }, { width: 390, height: 430, bottom: 24 },
       ...(native ? [{ width: 780, height: 136, bottom: 0 }] : [])]) {
       if (native) await page.evaluate(bottom => document.documentElement.style.setProperty('--safe-area-inset-bottom', bottom + 'px'), bottom);

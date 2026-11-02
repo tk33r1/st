@@ -3642,6 +3642,63 @@ test('画面の共通分類処理は3画面で一致し、順序違反を拒否�
 });
 
 
+test('MAGIモード設定: 初期・不正値・読取失敗はオフ、明示的なオンだけ許可する', () => {
+  for (const [src, isHome] of [[home, true], [mobile, false]]) {
+    const c = client(src, isHome);
+    for (const value of [null, '0', 'true', '', 'unexpected', '1']) {
+      c.ctx.localStorage.getItem = () => value;
+      assert.equal(c.ctx.magiModeEnabled(), value === '1');
+    }
+    c.ctx.localStorage.getItem = () => { throw new Error('blocked'); };
+    assert.equal(c.ctx.magiModeEnabled(), false);
+  }
+});
+
+test('MAGIモード設定: 通常・一時の送信と受信は送信時の許可を使い、途中の変更を混ぜない', async () => {
+  for (const [src, isHome] of [[home, true], [mobile, false]]) for (const enabled of [false, true]) for (const temporary of [false, true]) {
+    const c = client(src, isHome), bodies = [];
+    let preference = enabled ? '1' : '0';
+    c.ctx.localStorage.getItem = key => key === 'magi_mode_enabled' ? preference : null;
+    c.ctx.agentTemporary = () => temporary;
+    c.ctx.fetch = async (_, options) => {
+      bodies.push(JSON.parse(options.body)); preference = enabled ? '0' : '1';
+      return { ok: true, body: {} };
+    };
+    c.ctx.parseSSE = async (_, h) => {
+      assert.equal(h.magiPanel, enabled);
+      h.integrated({ delta: 'answer' }); h.done();
+    };
+    await c.ctx.agentSend();
+    assert.deepEqual(c.errors, []);
+    assert.equal(bodies.length, 1);
+    assert.equal(bodies[0].magi_panel, enabled);
+  }
+});
+
+test('MAGIモード設定: Androidの受信復元は保存した許可を使い、印のない旧受信を壊さない', async () => {
+  for (const saved of [false, true, undefined]) {
+    const c = client(mobile), expected = saved !== false;
+    vm.runInContext(between(mobile, 'function contentText(', 'function downscaleImage('), c.ctx);
+    c.ctx.localStorage.getItem = key => key === 'magi_mode_enabled' ? (expected ? '0' : '1') : null;
+    c.ctx.agentHistory = [{ role: 'user', content: 'question', native_request: 'native-request', ...(saved === undefined ? {} : { magi_panel: saved }) }];
+    c.ctx.agentLog.lastElementChild = element();
+    c.ctx.nativeHistory = { async flush() {} };
+    c.ctx.nativeConversation = {
+      watch() { return { chunk() {}, end() {}, finish() {}, isBuffered() { return false; } }; },
+      async open(body, options) {
+        assert.equal(options.resume, true);
+        assert.equal(JSON.parse(body).magi_panel, expected);
+        assert(!Object.hasOwn(JSON.parse(body).messages[0], 'magi_panel'));
+        return { ok: true, body: {} };
+      }, async acknowledge() {}
+    };
+    c.ctx.parseSSE = async (_, h) => { assert.equal(h.magiPanel, expected); h.integrated({ delta: 'answer' }); h.done(); };
+    await c.ctx.agentSend({ id: 'native-request', mid: 'mRECOVERED', startedAt: 0 });
+    assert.deepEqual(c.errors, []);
+    assert.equal(c.ctx.agentHistory.at(-1).role, 'assistant');
+  }
+});
+
 test('回答が失敗しても受信済みの会話言語を保存し、次の送信で判定し直さない', async () => {
   const language = { version: 1, code: 'en', source: 'jev' };
   for (const [src, isHome] of [[mobile, false], [home, true]]) {
@@ -3748,7 +3805,7 @@ test('アプリの保存言語の復元時には、言語コード一覧が初�
   const end=mobile.indexOf('function ensureAgentConversation(');
   const prefix=mobile.slice(0,end);
   const c=vm.createContext({URL,URLSearchParams,AbortController,setTimeout(){ return 0; },clearTimeout,
-    ResizeObserver:class { observe(){} },
+    ResizeObserver:class { observe(){} },MutationObserver:class { observe(){} },
     window:{matchMedia:()=>({matches:false}),addEventListener(){}},navigator:{},location:{protocol:'http:',hostname:'localhost',search:''},
     document:{getElementById:()=>({...element(),addEventListener(){}}),addEventListener(){}},
     localStorage:{getItem(key){return key==='magi_current_session_id'?'saved':key==='magi_current_language'
@@ -3932,14 +3989,18 @@ function viewClient(src, options = {}) {
       setAttribute(key, value) { attributes.set(key, value); }, getAttribute: key => attributes.get(key),
       querySelector(selector) { if (!queries.has(selector)) queries.set(selector, node()); return queries.get(selector); },
       querySelectorAll() { return [this.querySelector('rect:first-child'), this.querySelector('rect:last-child')]; },
-      insertBefore(el) { this.children.push(el); },
+      insertBefore(el, before) {
+        const old = this.children.indexOf(el); if (old >= 0) this.children.splice(old, 1);
+        const index = this.children.indexOf(before); this.children.splice(index < 0 ? this.children.length : index, 0, el);
+      },
       addEventListener(type, handler) { listeners.set(type, handler); }, removeEventListener(type) { listeners.delete(type); },
       fire(type) { listeners.get(type)?.(); },
       getBoundingClientRect() { return { top: this.layoutTop - log.scrollTop + 10, bottom: this.layoutTop - log.scrollTop + 110 }; },
     };
   }
   const log = node();
-  Object.assign(log, { scrollTop: 200, scrollHeight: 1600, clientHeight: 400, getBoundingClientRect: () => ({ top: 10, bottom: 10 + log.clientHeight }) });
+  Object.assign(log, { scrollTop: 200, scrollHeight: 1600, clientHeight: 400, scrollTo({ top, behavior }) { assert.equal(behavior, 'instant'); this.scrollTop = top; }, getBoundingClientRect: () => ({ top: 10, bottom: 10 + log.clientHeight }) });
+  const jump = node(); log.parentElement = { querySelector: () => jump };
   const viewport = Object.assign(node(), { height: 800 }), window = node(), media = Object.assign(node(), { matches: false });
   Object.assign(window, { visualViewport: viewport, innerHeight: 800, matchMedia: () => media });
   Object.assign(c, {
@@ -3947,10 +4008,12 @@ function viewClient(src, options = {}) {
     performance: { now: () => time }, setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
   });
   vm.runInContext(between(src, '// MAGI_VIEW_BEGIN', '// MAGI_VIEW_END'), c);
-  const turn = node(), view = c.createMagiView(turn, { ja: true, id: 'layout-test', log, ...options });
-  const box = turn.children.find(el => el.className === 'magi-panel'), details = turn.children.find(el => el.className === 'magi-record');
+  const turn = node(), cards = turn.querySelector('.agent-personas'), reply = turn.querySelector('.agent-reply');
+  cards.className = 'agent-personas'; reply.className = 'agent-reply'; turn.children.push(cards, reply);
+  const view = c.createMagiView(turn, { ja: true, id: 'layout-test', log, ...options });
+  const box = turn.children.find(el => el.className === 'magi-panel');
   box.layoutTop = 600;
-  return { c, view, box, details, log, viewport, media, timers, setTime(value) { time = value; } };
+  return { c, view, turn, box, cards, reply, log, jump, viewport, media, timers, setTime(value) { time = value; } };
 }
 const finalMagi = (result='approve') => ({ motion:'予算 < 3万円なら実行',result,tally:result==='hold'?{approve:1,reject:1,none:1}:result==='approve'?{approve:2,reject:1,none:0}:{approve:1,reject:2,none:0},rounds:2,reason_missing:false,
   votes:Object.fromEntries(['MELCHIOR-1','BALTHASAR-2','CASPER-3'].map((k,i)=>[k,{vote:result==='hold'&&i===2?null:result==='reject'?(i===0?'approve':'reject'):(i===1?'reject':'approve'),round:result==='hold'&&i===2?null:2,state:result==='hold'&&i===2?'absent':'voted'}])) });
@@ -4181,9 +4244,21 @@ test('MAGI採決: 英語画面の審議記録と読み上げは賛否を英語�
   }
 });
 
-test('MAGI採決: 回転とキーボードでパネル上端を保ち、手動・記録閲覧・非表示・説明後には動かさない', () => {
+test('MAGI採決: 3人格の検討内容を採決パネルと回答の間に常設し、採決後も移動しない', () => {
   for (const src of [home, mobile]) {
-    const { c, view, box, details, log, viewport, timers } = viewClient(src);
+    const { view, turn, box, cards, reply } = viewClient(src);
+    assert.deepEqual(turn.children.map(el => el.className), ['magi-panel', 'magi-motion', 'agent-personas', 'agent-reply']);
+    assert.equal(turn.children[0], box); assert.equal(turn.children[2], cards); assert.equal(turn.children[3], reply);
+    view.push('motion', { text: '実行' }); view.push('verdict', finalMagi()); view.finish();
+    assert.deepEqual(turn.children.map(el => el.className), ['magi-panel', 'magi-motion', 'agent-personas', 'agent-reply']);
+    assert.equal(turn.children[2], cards);
+    view.dispose();
+  }
+});
+
+test('MAGI採決: 回転とキーボードでパネル上端を保ち、手動閲覧・非表示・説明後には動かさない', () => {
+  for (const src of [home, mobile]) {
+    const { c, view, box, log, viewport, timers } = viewClient(src);
     view.push('motion', { text: '実行' }); view.start();
     assert.equal(log.scrollTop, 600);
     // 自動スクロールの通知は後から届く。末尾以外でも手動操作と誤認しない。
@@ -4197,12 +4272,71 @@ test('MAGI採決: 回転とキーボードでパネル上端を保ち、手動�
     assert.equal(log.scrollTop, 100);
     log.scrollTop = log.scrollHeight - log.clientHeight; log.fire('scroll'); viewport.fire('resize');
     assert.equal(log.scrollTop, 700); log.fire('scroll');
-    details.open = true; details.fire('toggle'); box.layoutTop = 720; viewport.fire('resize'); assert.equal(log.scrollTop, 700);
+    log.scrollTop = 680; log.fire('scroll'); box.layoutTop = 720; viewport.fire('resize'); assert.equal(log.scrollTop, 680);
     log.scrollTop = log.scrollHeight - log.clientHeight; log.fire('scroll');
     c.document.hidden = true; viewport.fire('resize'); assert.equal(log.scrollTop, 1500);
     c.document.hidden = false; view.push('verdict', finalMagi()); view.finish();
     viewport.fire('resize'); assert.equal(log.scrollTop, 1500);
     view.dispose(); assert.equal(timers.size, 0); assert.equal(viewport.listeners.has('resize'), false);
+  }
+});
+
+test('MAGI採決: 入力欄とフェードに隠れる説明を表示範囲へ戻し、手動スクロールは保つ', () => {
+  for (const src of [home, mobile]) {
+    const { c, view, reply, log, box, viewport } = viewClient(src);
+    let inset = 136;
+    c.getComputedStyle = () => ({ scrollPaddingBottom: inset + 'px' });
+    reply.layoutTop = 460;
+    // 本文はログ全体の下端410pxより上だが、実際に読める下端274pxより下。
+    view.explanationChanged();
+    assert.equal(log.scrollTop, 296);
+    assert.equal(reply.getBoundingClientRect().bottom, 274);
+    log.fire('scroll');
+    // 複数行入力や添付で下部が伸びた場合も、同じ境界を使う。
+    inset = 200;
+    view.explanationChanged();
+    assert.equal(log.scrollTop, 360);
+    assert.equal(reply.getBoundingClientRect().bottom, 210);
+    log.fire('scroll');
+    viewport.fire('resize');
+    assert.equal(box.style.maxHeight, 'min(60vh,120px)');
+    log.scrollTop = 0; log.fire('scroll');
+    view.explanationChanged();
+    assert.equal(log.scrollTop, 0);
+    view.dispose();
+  }
+});
+
+test('MAGI採決: 自動移動の重複通知で追従を止めず、人格更新・回転・統合回答へ追従する', () => {
+  for (const src of [home, mobile]) {
+    const { view, reply, log, jump, viewport } = viewClient(src);
+    view.push('motion', { text: '実行' }); view.start();
+    log.fire('scroll'); log.fire('scroll');
+    reply.layoutTop = 1100;
+    view.push('persona', { codename: 'MELCHIOR-1', round: 1, text: '長い意見', vote: 'approve', vote_state: 'final' });
+    assert.equal(log.scrollTop, 800);
+    log.fire('scroll'); log.fire('scroll');
+    reply.layoutTop = 1300;
+    view.push('ask', { round: 3, questions: [{ codename: 'MELCHIOR-1' }] });
+    assert.equal(log.scrollTop, 1000);
+    log.fire('scroll'); log.fire('scroll');
+    log.clientHeight = 200; viewport.fire('resize');
+    assert.equal(log.scrollTop, 1200);
+    log.fire('scroll'); log.fire('scroll');
+    reply.layoutTop = 1450; view.explanationChanged();
+    assert.equal(log.scrollTop, 1350);
+    log.fire('scroll');
+    log.scrollTop = 100; log.fire('scroll');
+    view.push('persona', { codename: 'MELCHIOR-1', round: 3, text: '追加意見', vote: 'reject', vote_state: 'final' });
+    view.explanationChanged();
+    assert.equal(log.scrollTop, 100);
+    // 下矢印直後のscroll通知より先に次の意見が届いても、追従を再開する。
+    jump.fire('click'); assert.equal(log.scrollTop, 1400);
+    log.scrollHeight = 2000; reply.layoutTop = 1600;
+    view.push('persona', { codename: 'MELCHIOR-1', round: 3, text: '追加意見', vote: 'reject', vote_state: 'final' });
+    assert.equal(log.scrollTop, 1500);
+    view.dispose();
+    assert.equal(jump.listeners.has('click'), false);
   }
 });
 
