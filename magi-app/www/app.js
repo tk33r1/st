@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.11';
+var APP_VERSION = '7.12';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2004,13 +2004,12 @@ setTimeout(initAgentPrivacy, 0);
 // AGENT_EPHEMERAL_END
 
 // MAGI_ACRONYM_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
-// スプラッシュの MAGI の下で、同じ頭字語の二つの読み（A: SYSTEM、B: ART）を切り替える。設計は magi-app/magi-dual-acronym-prd.md。
+// スプラッシュの MAGI の下で、同じ頭字語の二つの読み（工学と芸術）を切り替える。設計は magi-app/magi-dual-acronym-prd.md。
 // 見出しの MAGI と中央の Generating は動かさず、前後の語句の組だけを opacity で入れ替える（両面の語句は同じセルに重ねて幅を確保する）。
+// 操作部は持たない（7.12 で状態表示と停止ボタンを外した）。フレーズを押すと切り替わり、自動の切り替えはそこから数え直す。
 // スプラッシュは同時に一つしかないので、制御器もページに一つだけ置く。HTML の生成（magiAcronymHTML）ではタイマーもイベントも登録しない。
 var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fade: 700 };
 var magiAcronymCtl = null;
-// 停止の選択はページの滞在中だけ保つ（言語変更・新規会話でスプラッシュを描き直しても解除しない。端末には保存しない）
-var magiAcronymPaused = false;
 var magiAcronymAppActive = true;
 function magiAcronymPhrase(face) {
   var words = MAGI_ACRONYM.faces[face];
@@ -2030,14 +2029,9 @@ function magiAcronymHTML() {
   return '<div class="magi-sub magi-acronym" data-face="a">'
     + '<button type="button" class="magi-acr-phrase" aria-labelledby="magi-acr-name magi-acr-act" aria-describedby="magi-acr-desc">'
     + '<span class="magi-acr-line" aria-hidden="true">' + slot(0) + '<span class="magi-acr-pivot">' + MAGI_ACRONYM.pivot + '</span>' + slot(1) + '</span></button>'
-    + '<span class="magi-acr-ctl"><span class="magi-acr-state" aria-hidden="true"><span data-acr-state="a">SYSTEM</span> / <span data-acr-state="b">ART</span></span>'
-    + '<button type="button" class="magi-acr-auto" data-state="on" aria-describedby="magi-acr-motion" aria-label="' + tr('Pause automatic switching', '自動切替を停止') + '">'
-    + '<svg class="magi-acr-pause" aria-hidden="true" viewBox="0 0 10 10"><rect x="1.5" y="1" width="2.4" height="8" fill="currentColor"/><rect x="6.1" y="1" width="2.4" height="8" fill="currentColor"/></svg>'
-    + '<svg class="magi-acr-play" aria-hidden="true" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button></span>'
     + '<span class="magi-acr-sr" id="magi-acr-name" lang="en">' + magiAcronymPhrase('a') + '</span>'
     + '<span class="magi-acr-sr" id="magi-acr-act" lang="' + lang + '">' + tr('(switch to the other meaning)', '（もう一つの意味へ切り替える）') + '</span>'
     + '<span class="magi-acr-sr" id="magi-acr-desc" lang="' + lang + '">' + magiAcronymAbout() + '</span>'
-    + '<span class="magi-acr-sr" id="magi-acr-motion" lang="' + lang + '"></span>'
     + '</div>';
 }
 // スプラッシュを DOM に入れた後に呼ぶ。前のスプラッシュの制御器は必ず捨てる。失敗しても A 面の完成フレーズが残る
@@ -2055,34 +2049,17 @@ function magiAcronymSetActive(active) {
   if (magiAcronymCtl) magiAcronymCtl.sync();
 }
 function magiAcronymController(el) {
-  var phrase = el.querySelector('.magi-acr-phrase'), auto = el.querySelector('.magi-acr-auto');
-  var name = el.querySelector('#magi-acr-name'), motionNote = el.querySelector('#magi-acr-motion');
+  var phrase = el.querySelector('.magi-acr-phrase'), name = el.querySelector('#magi-acr-name');
   var media = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   var face = 'a', hold = null, fading = null, hover = false, seen = true, dead = false, io = null;
   var ctl = { el: el, dispose: dispose, sync: sync };
-  // 動きを減らす設定の間は自動で切り替えない。設定が戻っても勝手に再開しない
-  if (media.matches) magiAcronymPaused = true;
+  // 動きを減らす設定の間は自動で切り替えず、押したときも遷移を省く
   function reduced() { return !!media.matches; }
   function alive() {
     if (!dead && !el.isConnected) dispose();
     return !dead;
   }
-  function running() { return !magiAcronymPaused && !reduced() && !hover && seen && magiAcronymAppActive && !document.hidden; }
-  function label() {
-    var on = !magiAcronymPaused && !reduced();
-    var text = on ? tr('Pause automatic switching', '自動切替を停止') : tr('Resume automatic switching', '自動切替を再開');
-    auto.setAttribute('data-state', on ? 'on' : 'off');
-    auto.setAttribute('aria-label', text);
-    if (reduced()) {
-      auto.setAttribute('aria-disabled', 'true');
-      motionNote.textContent = tr('Automatic switching is off because your device is set to reduce motion.', '端末で動きを減らす設定がオンのため、自動切替は使えません。');
-      auto.title = motionNote.textContent;
-    } else {
-      auto.removeAttribute('aria-disabled');
-      motionNote.textContent = '';
-      auto.title = text;
-    }
-  }
+  function running() { return !reduced() && !hover && seen && magiAcronymAppActive && !document.hidden; }
   // 面を替える。animate が偽なら遷移を省いて完成形を即時に出す
   function show(next, animate) {
     face = next;
@@ -2123,13 +2100,7 @@ function magiAcronymController(el) {
     halt();
     if (!dead && !fading && running()) hold = setTimeout(function () { hold = null; if (alive() && running()) flip(true); }, MAGI_ACRONYM.hold);
   }
-  function stop() {
-    magiAcronymPaused = true;
-    settle();
-    halt();
-    label();
-  }
-  // 見えなくなった・止まったら待機をやめ、戻ったら現在面の静止時間から数え直す
+  // 見えなくなったら待機をやめ、戻ったら現在面の静止時間から数え直す
   function sync() {
     if (!alive()) return;
     if (!running()) {
@@ -2137,34 +2108,15 @@ function magiAcronymController(el) {
       if (!seen || document.hidden || !magiAcronymAppActive || reduced()) settle();
     } else if (!hold && !fading) schedule();
   }
+  // 押すと反対の面へ。遷移中の入力は受け付けず、予約もしない
   function onPhrase() {
     if (!alive() || fading) return;
-    magiAcronymPaused = true;
     halt();
     flip(!reduced());
-    label();
-  }
-  function onAuto() {
-    if (!alive() || reduced()) return;
-    if (!magiAcronymPaused) { stop(); return; }
-    magiAcronymPaused = false;
-    label();
-    schedule();
-  }
-  // キーボードのフォーカスが入ったら止める（離れただけでは再開しない）。マウスで押したときのフォーカスは数えない
-  function onFocus(e) {
-    var keyboard = false;
-    try { keyboard = e.target.matches(':focus-visible'); } catch (x) { keyboard = false; }
-    if (keyboard && !magiAcronymPaused) stop();
   }
   // マウスを乗せている間だけ一時停止する
   function onEnter(e) { if (e.pointerType === 'mouse') { hover = true; sync(); } }
   function onLeave(e) { if (e.pointerType === 'mouse') { hover = false; sync(); } }
-  function onMotion() {
-    if (!alive()) return;
-    if (reduced()) stop();
-    else label();
-  }
   function dispose() {
     if (dead) return;
     dead = true;
@@ -2172,17 +2124,15 @@ function magiAcronymController(el) {
     clearTimeout(fading);
     fading = null;
     document.removeEventListener('visibilitychange', sync);
-    if (typeof media.removeEventListener === 'function') media.removeEventListener('change', onMotion);
+    if (typeof media.removeEventListener === 'function') media.removeEventListener('change', sync);
     if (io) io.disconnect();
     if (magiAcronymCtl === ctl) magiAcronymCtl = null;
   }
   phrase.addEventListener('click', onPhrase);
-  auto.addEventListener('click', onAuto);
-  el.addEventListener('focusin', onFocus);
   el.addEventListener('pointerenter', onEnter);
   el.addEventListener('pointerleave', onLeave);
   document.addEventListener('visibilitychange', sync);
-  if (typeof media.addEventListener === 'function') media.addEventListener('change', onMotion);
+  if (typeof media.addEventListener === 'function') media.addEventListener('change', sync);
   // 閉じたドック（幅0・画面外）やスクロールの外では切り替えない
   if (typeof IntersectionObserver === 'function') {
     io = new IntersectionObserver(function (entries) {
@@ -2191,7 +2141,6 @@ function magiAcronymController(el) {
     });
     io.observe(el);
   }
-  label();
   el.classList.add('is-ready');
   schedule();
   return ctl;

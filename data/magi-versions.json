@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.12",
+      "date": "2026-11-03",
+      "changes": {
+        "ja": [
+          "MAGIの名前の下の、SYSTEM / ART の表示と、自動の切り替えを止めるボタンをなくしました。",
+          "二つの読みは6秒ごとに自動で切り替わり、フレーズを押すとすぐに切り替わります。"
+        ],
+        "en": [
+          "Removed the SYSTEM / ART label and the pause button below the MAGI name.",
+          "The two readings switch automatically every six seconds, and tapping the phrase switches them right away."
+        ]
+      }
+    },
+    {
       "version": "7.11",
       "date": "2026-11-02",
       "changes": {

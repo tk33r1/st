@@ -7059,7 +7059,7 @@ test('A6: 公開後確認の全要求は実WorkerでAI・D1・メールへ到達
   assert.equal(report.ok,true,JSON.stringify(report.cases));assert.equal(report.cases.length,10);
 });
 
-// スプラッシュの二つの読み（MAGI_ACRONYM）。偽の時計と最小の DOM で、切り替え・停止・破棄の契約を確かめる
+// スプラッシュの二つの読み（MAGI_ACRONYM）。偽の時計と最小の DOM で、切り替え・一時停止・破棄の契約を確かめる
 function magiAcronymHarness({ reduce = false } = {}) {
   let now = 0, seq = 0;
   const timers = new Map();
@@ -7137,20 +7137,15 @@ test('MAGIの二つの読み: 6秒見せて0.7秒で替わり、名前は完成�
   assert.equal(h.observers.filter(o => o.live).length, 1);
 });
 
-test('MAGIの二つの読み: 手動の切り替え・停止・キーボードのフォーカスで止め、明示の再開でだけ戻る', () => {
+test('MAGIの二つの読み: 操作部は持たず、押すと反対の面へ替わって自動の切り替えはそこから数え直す', () => {
   const h = magiAcronymHarness(), s = h.mount();
-  s.phrase.fire('click'); assert.equal(s.face(), 'b'); h.advance(700);
-  assert.equal(s.auto.attrs['data-state'], 'off'); assert.equal(s.auto.attrs['aria-label'], 'Resume automatic switching');
-  h.advance(60000); assert.equal(s.face(), 'b');
-  // 停止の選択は描き直しても保つ（初期面は A に戻る）
-  const t = h.mount(); h.advance(60000); assert.equal(t.face(), 'a');
-  t.auto.fire('click'); assert.equal(t.auto.attrs['data-state'], 'on');
-  h.advance(5999); assert.equal(t.face(), 'a'); h.advance(1); assert.equal(t.face(), 'b');
-  // 遷移中に停止を押すと、遷移先を即時に完成させて止まる
-  t.auto.fire('click'); assert.equal(t.face(), 'b'); assert.equal(t.name.textContent, 'Modern Art Generating Interiority'); assert.equal(h.timers.size, 0);
-  // キーボードのフォーカスで止まり、離れても再開しない。マウスで押したフォーカスでは止めない
-  t.auto.fire('click'); t.el.fire('focusin', { target: { matches: () => false } }); assert.equal(t.auto.attrs['data-state'], 'on');
-  t.el.fire('focusin', { target: { matches: () => true } }); assert.equal(t.auto.attrs['data-state'], 'off'); h.advance(60000); assert.equal(t.face(), 'b');
+  const html = h.ctx.magiAcronymHTML();
+  for (const gone of ['magi-acr-auto', 'magi-acr-ctl', 'data-acr-state', 'SYSTEM', 'magi-acr-motion']) assert.ok(!html.includes(gone), gone);
+  h.advance(3000); s.phrase.fire('click'); assert.equal(s.face(), 'b'); h.advance(700);
+  assert.equal(s.name.textContent, 'Modern Art Generating Interiority');
+  h.advance(5999); assert.equal(s.face(), 'b'); h.advance(1); assert.equal(s.face(), 'a');
+  // 描き直すと A 面から始まり、制御器は一つだけ
+  const t = h.mount(); assert.equal(t.face(), 'a'); assert.equal(h.timers.size, 1);
 });
 
 test('MAGIの二つの読み: マウスを乗せている間・見えない間・バックグラウンドでは替えず、戻ったら静止時間から数え直す', () => {
@@ -7165,16 +7160,14 @@ test('MAGIの二つの読み: マウスを乗せている間・見えない間�
   h.ctx.magiAcronymSetActive(true); h.advance(6000); assert.equal(s.face(), 'b');
 });
 
-test('MAGIの二つの読み: DOMから外れたら自ら止まり、動きを減らす設定では自動で替えない', () => {
+test('MAGIの二つの読み: DOMから外れたら自ら止まり、動きを減らす設定では自動で替えず、押すと即時に替わる', () => {
   const h = magiAcronymHarness(), s = h.mount();
   s.el.isConnected = false; h.advance(6000);
   assert.equal(s.face(), 'a'); assert.equal(h.timers.size, 0); assert.equal(h.document.count('visibilitychange'), 0); assert.equal(h.ctx.magiAcronymCtl, null);
-  // 実行中に動きを減らす設定へ変わったら止め、設定が戻っても再開しない
+  // 実行中に動きを減らす設定へ変わったら、遷移先で確定して止める
   const t = h.mount(); h.advance(6000); h.media.matches = true; h.media.fire('change');
-  assert.equal(t.face(), 'b'); assert.equal(h.timers.size, 0); assert.equal(t.auto.attrs['aria-disabled'], 'true');
-  h.media.matches = false; h.media.fire('change'); h.advance(60000); assert.equal(t.face(), 'b'); assert.equal(t.auto.attrs['aria-disabled'], undefined);
+  assert.equal(t.face(), 'b'); assert.equal(h.timers.size, 0); h.advance(60000); assert.equal(t.face(), 'b');
   const r = magiAcronymHarness({ reduce: true }), u = r.mount();
-  r.advance(60000); assert.equal(u.face(), 'a'); assert.equal(u.auto.attrs['aria-disabled'], 'true');
-  u.auto.fire('click'); assert.equal(u.auto.attrs['data-state'], 'off');
+  r.advance(60000); assert.equal(u.face(), 'a');
   u.phrase.fire('click'); assert.equal(u.face(), 'b'); assert.equal(u.name.textContent, 'Modern Art Generating Interiority'); assert.equal(r.timers.size, 0);
 });
