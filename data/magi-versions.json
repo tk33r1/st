@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "7.14",
+      "date": "2026-11-03",
+      "changes": {
+        "ja": [
+          "チャット入力欄の周囲を透過グラデーションにし、上へスクロールしたときに最新の会話へ戻るボタンを追加しました。",
+          "アプリ管理をコンパクトに整理し、MAGIモードを有効にするスイッチを追加しました。",
+          "MAGIモードでも3人格の検討内容を常に表示し、回答に合わせてスクロールする動作を改善しました。"
+        ],
+        "en": [
+          "Added a transparent fade around the composer and a button to return to the latest messages when scrolling up.",
+          "Simplified App management and added a switch to enable MAGI mode.",
+          "Kept all three personas visible in MAGI mode and improved scrolling as replies arrive."
+        ]
+      }
+    },
+    {
       "version": "7.13",
       "date": "2026-11-03",
       "changes": {
