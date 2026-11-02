@@ -301,8 +301,6 @@ const CONSTRAINT_RULES = [
 export const SYNTHESIZER = {
   codename: 'Shinya Takeda',
   constraint_rules: CONSTRAINT_RULES,
-  // 一人称と語尾の正本。統合の system_prompt には書かず、カードより後ろに別のsystemとして送る。
-  // 悪意への短い返し（MALICE_REPLY.output_rules）は別の呼び出しで、評価済みの文面を独自に持つ
   // 書式（rich_reply を送った画面だけ。→ src/index.js の discussionSynthesisMessages・factAnswerMessages）。
   // 画面は Markdown の段落・太字・見出し・箇条書き・番号付き・表・区切り線だけを描き、リンク・画像・HTML・コードブロックは描かない
   rich_rules: [
@@ -316,6 +314,8 @@ export const SYNTHESIZER = {
     '- 長さは内容に必要な分だけ。目安は短い問いで200文字、説明や比較が要る問いで400〜900文字。上限は1,200文字。',
     '- リンク・画像・HTML・コードブロック（```）は使わない。',
   ].join('\n'),
+  // 一人称と語尾の正本。統合の system_prompt には書かず、カードより後ろに別のsystemとして送る。
+  // 悪意への短い返し（MALICE_REPLY.output_rules）は別の呼び出しで、評価済みの文面を独自に持つ
   voice_rules: '【統合人格の一人称と語尾。本人のカード・討議・履歴の口調より優先】あなた自身を指す一人称は必ず「私」。カードや討議に「俺」「僕」「自分」があっても、自分の答えでは「私」を使う。語尾「ぜ」は使わない。「ぜ…じゃなくて」のような言い直しや、口調の指示を守ったと説明する文も書かない。最初から自分の自然な言葉で答える。',
   role: {
     chat: [
@@ -852,9 +852,6 @@ export const SUGGESTER = {
   ].join('\n'),
 };
 
-// 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
-// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談では付けない。失敗・時間切れなら付けない。
-// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する）。反応しない方が自然なら '-' を返させ、付けない
 // 会話の保存（D1 の conversations）。画面の設定「会話をサイトに保存」をオフにしない限り、新しい画面は conversation_storage:true を送る。
 // 送らない画面（配布済みの古いアプリ・DJ・404）と一時チャットは保存しない。1往復ごとに1行、プロンプトの文字と統合人格の答え。
 // 保存期間の削除は毎日の scheduled で行う。新規保存を止めるときは Worker の CONVERSATION_STORE_ENABLED を false
@@ -865,6 +862,9 @@ export const CONVERSATION_STORE = {
   conversation_id_re: /^[A-Za-z0-9_-]{1,80}$/,
 };
 
+// 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
+// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談では付けない。失敗・時間切れなら付けない。
+// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する）。反応しない方が自然なら '-' を返させ、付けない
 export const PROMPT_REACTION = {
   timeout_ms: 6000,
   message_max_chars: 600,   // 今回の発言の頭から渡す長さ
