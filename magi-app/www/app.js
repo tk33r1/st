@@ -1210,8 +1210,13 @@ function showShotCard() {
   go.setAttribute('aria-label', tr('Share', '共有')); go.innerHTML = ICON_SHARE;
   go.addEventListener('click', function () {
     hideShotCard();
-    shareAgentReplyImage(item).then(function (ok) { if (!ok) announceAgent(tr('Could not share the reply.', '共有できませんでした')); })
-      .catch(function (err) { if (!agentShareCancelled(err)) announceAgent(tr('Could not share the reply.', '共有できませんでした')); });
+    var failed = function (err) { if (!agentShareCancelled(err)) announceAgent(tr('Could not share the reply.', '共有できませんでした')); };
+    // 画像に収まらない長い回答は、［共有］のボタンと同じく全文の文で共有する（share-image.js の share_image_too_long）
+    shareAgentReplyImage(item).then(function (ok) { if (!ok) failed(); }, function (err) {
+      var native = nativeShare();
+      if (!(err && err.message === 'share_image_too_long' && native)) return failed(err);
+      native.share({ title: agentTitle || 'MAGI', text: agentReplyShare(item, isJa()).text, dialogTitle: tr('Share reply', '回答を共有') }).catch(failed);
+    });
   });
   card.append(text, go);
   document.getElementById('app').appendChild(card);
