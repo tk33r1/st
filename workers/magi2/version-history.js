@@ -1,5 +1,8 @@
 // Workerと日次検査で共有する、I/Oなしの更新履歴の検査。
-export const VERSION_HISTORY_LIMITS = Object.freeze({max_bytes: 65536, max_versions: 60, max_change_chars: 200});
+// 公開データ（data/magi-versions.json）の件数は制限しない（古い版をまとめたり消したりしない）。
+// 画面へ返すのは新しい display_versions 件まで（トップ・PWA・配布済みのAPKが60件以内を検査するため。displayVersions）。
+// max_bytes は tk.st から読む本文の上限（1版あたり約0.7KB）。
+export const VERSION_HISTORY_LIMITS = Object.freeze({max_bytes: 524288, display_versions: 60, max_change_chars: 200});
 
 // X.Y と X.YZ（Z は1〜9）を同じ尺度で比較する。5.9=590、5.91=591、6.0=600。
 export function versionOrder(version) {
@@ -16,7 +19,7 @@ export function cleanVersionHistory(value) {
   const text = v => typeof v === 'string' && !!v.trim() && Array.from(v).length <= VERSION_HISTORY_LIMITS.max_change_chars
     && !/[\u0000-\u001f\u007f-\u009f]/.test(v);
   if (!object(value) || Object.keys(value).some(k => k !== 'versions') || !Array.isArray(value.versions)
-    || !value.versions.length || value.versions.length > VERSION_HISTORY_LIMITS.max_versions) return null;
+    || !value.versions.length) return null;
   let previous = Infinity, previousDate = '9999-12-31';
   for (const [i, row] of value.versions.entries()) {
     if (!object(row) || Object.keys(row).some(k => !['version', 'date', 'changes'].includes(k))) return null;
@@ -33,3 +36,11 @@ export function cleanVersionHistory(value) {
   return value;
 }
 
+
+// 画面へ返す分だけに絞る。新しい版から display_versions 件で、末尾の earlier（それ以前）は残す。
+export function displayVersions(versions) {
+  const max = VERSION_HISTORY_LIMITS.display_versions;
+  if (versions.length <= max) return versions;
+  const last = versions[versions.length - 1];
+  return last.version === 'earlier' ? versions.slice(0, max - 1).concat([last]) : versions.slice(0, max);
+}

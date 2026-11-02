@@ -4661,7 +4661,7 @@ test('A4: 公開JSONを取得し、同時要求と10分キャッシュを共有�
   let calls = 0;
   const w = worker(completion(), async url => { if (url.endsWith('/magi-versions.json')) { calls++; return Response.json(remote); } });
   const results = await Promise.all([versionRequest(w), versionRequest(w, 'https://tk.st')]);
-  assert.equal(calls, 1); assert.deepEqual(await results[0].json(), remote);
+  assert.equal(calls, 1); assert.deepEqual(await results[0].json(), shownVersions(remote));
   assert.equal(results[0].headers.get('Access-Control-Allow-Origin'), 'https://localhost');
   assert.equal(results[1].headers.get('Access-Control-Allow-Origin'), 'https://tk.st');
   assert.equal(results[0].headers.get('Cache-Control'), 'public, max-age=600');
@@ -4677,10 +4677,10 @@ test('A4: 取得失敗・壊れたJSON・不正な形・容量超過では同梱
   for (const make of [() => new Response('', {status:404}), () => new Response('{'),
     () => Response.json({versions:[]}), () => Response.json({versions:bundled.versions.slice(1)}),
     () => Response.json({versions:[bundled.versions.at(-1)]}),
-    () => new Response(' '.repeat(65537)), () => {throw new Error('offline');}]) {
+    () => new Response(' '.repeat(524289)), () => {throw new Error('offline');}]) {
     let calls = 0;
     const w = worker(completion(), async url => {if (url.endsWith('/magi-versions.json')) { calls++; return make(); }});
-    assert.deepEqual(await (await versionRequest(w)).json(), bundled);
+    assert.deepEqual(await (await versionRequest(w)).json(), shownVersions(bundled));
     assert.equal(calls, 1); await versionRequest(w); assert.equal(calls, 1); assert.equal(w.calls.length, 0);
   }
 });
@@ -4695,7 +4695,7 @@ test('A4: ヘッダーと本文が止まっても期限で同梱分を返し、�
     });
     vm.runInContext('VERSION_HISTORY.fetch_timeout_ms = 15', w.ctx);
     const response = await versionRequest(w);
-    assert.deepEqual(await response.json(), JSON.parse(read('data/magi-versions.json')));
+    assert.deepEqual(await response.json(), shownVersions(JSON.parse(read('data/magi-versions.json'))));
     assert.equal(aborted, true); if (stuckBody) assert.equal(cancelled, true);
   }
 });
@@ -7175,4 +7175,32 @@ test('MAGIの二つの読み: DOMから外れたら自ら止まり、動きを�
   const r = magiAcronymHarness({ reduce: true }), u = r.mount();
   r.advance(60000); assert.equal(u.face(), 'a');
   u.phrase.fire('click'); assert.equal(u.face(), 'b'); assert.equal(u.name.textContent, 'Modern Art Generating Interiority'); assert.equal(r.timers.size, 0);
+});
+
+// 画面へ返す履歴：新しい順に60件まで、末尾の earlier（それ以前）は残す（Worker の displayVersions と同じ規則）
+function shownVersions(data) {
+  const v = data.versions;
+  return { versions: v.length <= 60 ? v : v.slice(0, 59).concat(v.at(-1).version === 'earlier' ? [v.at(-1)] : [v[59]]) };
+}
+
+test('更新履歴: 公開データの件数は制限せず、画面には新旧どちらの形式でも新しい60件と earlier を返す', async () => {
+  const many = [];
+  for (let major = 9; many.length < 75; major--) for (const minor of ['9', '8', '7', '6', '5', '4', '3', '2', '1', '0']) many.push(major + '.' + minor);
+  const history = versionHistoryFixture(...many.slice(0, 75), 'earlier');
+  const w = worker(completion(), async url => url.endsWith('/magi-versions.json') ? Response.json(history) : undefined);
+  assert.ok(w.ctx.cleanVersionHistory(history));
+  const fresh = await (await versionRequest(w)).json();
+  assert.equal(fresh.versions.length, 60); assert.equal(fresh.versions[0].version, '9.9');
+  assert.equal(fresh.versions.at(-1).version, 'earlier'); assert.equal(fresh.versions.at(-2).version, many[58]);
+  const legacy = await (await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions', {headers: {Origin: 'https://localhost'}}), w.env, {waitUntil() {}})).json();
+  assert.equal(legacy.versions.length, 60); assert.equal(legacy.versions.at(-1).version, 'earlier');
+  // 画面側の検査（60件以内）にも通る
+  for (const src of [home, mobile]) {
+    const ctx = vm.createContext({}); vm.runInContext(between(src, 'function validAgentVersions(', 'function loadAgentVersions('), ctx);
+    assert.equal(ctx.validAgentVersions(fresh), true); assert.equal(ctx.validAgentVersions(history), false);
+  }
+  // 正本のデータは61件以上でも受け付け、2.1 は独立した項目のまま
+  const data = JSON.parse(read('data/magi-versions.json'));
+  assert.ok(w.ctx.cleanVersionHistory(data)); assert.ok(data.versions.some(row => row.version === '2.1'));
+  assert.equal(data.versions.at(-1).changes.ja.length, 2);
 });

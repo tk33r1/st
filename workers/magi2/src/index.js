@@ -10,6 +10,7 @@ import { qaBudgetEnv } from '../qa-budget.js';
 // 取得できないときの最後の拠り所で、デプロイし直すたびにその時点の最新に入れ替わる
 import bundledContext from '../../../data/magi-context.json';
 import { getVersionHistory } from '../versions.js';
+import { displayVersions } from '../version-history.js';
 
 import { speechLanguage, speechParts, speechSign, speechVerify } from '../speech.js';
 import { chatPrivacy, privacyFeatures, personalizationNote } from '../privacy.js';
@@ -2579,8 +2580,10 @@ export default {
       try {
         const history = await getVersionHistory();
         // 配布済みのAPKはX.Yだけを受け付ける。キャッシュは完全な履歴を共有し、応答時だけ絞る。
-        const data = url.searchParams.get('format') === '2' ? history
-          : { versions: history.versions.filter(row => row.version === 'earlier' || /^\d{1,2}\.\d$/.test(row.version)) };
+        // 画面は60件以内しか受け付けないので、版で絞った後に新しい順で displayVersions 件にする。
+        const rows = url.searchParams.get('format') === '2' ? history.versions
+          : history.versions.filter(row => row.version === 'earlier' || /^\d{1,2}\.\d$/.test(row.version));
+        const data = { versions: displayVersions(rows) };
         return jsonResponse(data, cors, 200, { 'Cache-Control': 'public, max-age=600', Vary: 'Origin' });
       } catch (err) {
         log('versions', 'unavailable', err && err.message);

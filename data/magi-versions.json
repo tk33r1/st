@@ -879,20 +879,30 @@
       }
     },
     {
+      "version": "2.1",
+      "date": "2026-05-24",
+      "changes": {
+        "ja": [
+          "AndroidでMAGIを使う専用アプリを公開しました。",
+          "サイトとは別のアプリ画面から相談できます。"
+        ],
+        "en": [
+          "A dedicated MAGI app was released for Android.",
+          "Chat with MAGI from its own app screen."
+        ]
+      }
+    },
+    {
       "version": "earlier",
       "date": null,
       "changes": {
         "ja": [
           "Webサイト上でMAGIに相談できるようになりました。",
-          "3つの人格の意見と、それをまとめた回答を読めます。",
-          "AndroidでMAGIを使う専用アプリを公開しました。",
-          "サイトとは別のアプリ画面から相談できます。"
+          "3つの人格の意見と、それをまとめた回答を読めます。"
         ],
         "en": [
           "MAGI became available on the website.",
-          "Read three persona perspectives and a combined reply.",
-          "A dedicated MAGI app was released for Android.",
-          "Chat with MAGI from its own app screen."
+          "Read three persona perspectives and a combined reply."
         ]
       }
     }
