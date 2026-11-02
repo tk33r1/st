@@ -32,13 +32,13 @@ test('費用未確認・要求変更・ゼロのモデル費用は送信前に�
   value.estimates[evaluationRequestHash('openai',body)].max_usd=0;save();assert.throws(()=>g.reserve('openai',body),/exact/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,0);assert.equal(existsSync(path+'.lock'),false);
 }));
-test('失敗と実行をまたいでも予約額が残り、7.1本番確認の追加承認後のLunaの$1.25を超えない',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',.6);save();gate().reserve('openai',body);gate().reserve('openai',body);
+test('失敗と実行をまたいでも予約額が残り、7.1本番確認のやり直しの承認後のLunaの$1.75を超えない',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',.8);save();gate().reserve('openai',body);gate().reserve('openai',body);
   assert.throws(()=>gate().reserve('openai',body),/ceiling reached/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,2);
 }));
-test('Haikuの枠と、7.1本番確認の追加承認後の合計$3.36の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',1.25);estimate('anthropic',1.25);estimate('deepseek',.86);estimate('typesafe',.001);save();
+test('Haikuの枠と、7.1本番確認のやり直しの承認後の合計$4.36の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',1.75);estimate('anthropic',1.75);estimate('deepseek',.86);estimate('typesafe',.001);save();
   const g=gate();g.reserve('openai',body);g.reserve('anthropic',body);g.reserve('deepseek',body);
   assert.throws(()=>g.reserve('typesafe',body),/ceiling reached/);
   assert.throws(()=>g.reserve('anthropic',body),/ceiling reached/);
