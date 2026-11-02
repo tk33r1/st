@@ -1,5 +1,344 @@
 [
   {
+    "date": "20261103",
+    "title": "2026年11月3日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリが新オーディオブランド「life+audio」とガジェットブランド「life+one」を全国展開へ広げ、ワイヤレスイヤホンを各2,990円で11月中旬から販売する。SPAの企画力を活かし、デジタル小物の品揃えを拡大する動きだ。 大阪・梅田茶屋町店8階に「法人事業大阪ショールーム」が開設され、個人客向けの旗艦店を法人需要の商談拠点としても活用し始めた。店舗を多目的な接点に変える戦略が見える。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリが新オーディオブランド「life+audio」とガジェットブランド「life+one」を全国展開へ広げ、ワイヤレスイヤホンを各2,990円で11月中旬から販売する。SPAの企画力を活かし、デジタル小物の品揃えを拡大する動きだ。",
+      "大阪・梅田茶屋町店8階に「法人事業大阪ショールーム」が開設され、個人客向けの旗艦店を法人需要の商談拠点としても活用し始めた。店舗を多目的な接点に変える戦略が見える。",
+      "客数・売上減少が指摘される中、物価高でも売れる売り場づくりが問われている。寝具や生活雑貨の機能訴求と、SNSでの生活者の共感がヒットを支える構図が続いている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリの新ブランド「life+audio」「life+one」、ワイヤレスイヤホン各2,990円で全国展開へ",
+        "original_title": "",
+        "source": "Smart Watch Life",
+        "source_id": "JP-02",
+        "summary": "ニトリが新オーディオブランド「life+audio」とガジェットブランド「life+one」の展開を全国に広げると報じられた。ワイヤレスイヤホンは各2,990円で、11月中旬から全国で販売される。「life+one」では半固体電池を採用したモバイルバッテリーなど、用途で選べるイヤホンやケーブルを含む多数の製品が並ぶ。梅田茶屋町店での先行販売に続く本格展開となる。",
+        "why_it_matters": "2,990円という価格帯で音響とガジェットを一括して提案する点は、SPAならではの企画・調達力を示す。店舗の家具・寝具売場に隣接する形でデジタル小物を並べれば、住空間全体の購入単価を押し上げる余地がある。半固体電池などの技術訴求を価格と両立させられるかが、既存の家電専業ブランドとの差別化の鍵となる。",
+        "tags": [
+          "ニトリ",
+          "life+audio",
+          "life+one",
+          "ガジェット",
+          "オーディオ"
+        ],
+        "search_terms": [
+          "ニトリ 新ブランド ガジェット",
+          "Nitori life+audio earphones",
+          "半固体電池 モバイルバッテリー",
+          "ワイヤレスイヤホン 低価格 Japan retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE05YmRERk1sZXB5OXZfMzIzTkhVZGN6TXdGM0dxTHd6Z3BJUllBTUJMYkI0b3lqR0VNT1JIZXpWeWdxSkp2ZlQ1dWV2SFc?oc=5",
+        "source_pub_ts": 1793629102
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "客数・売上減のニトリ、ユニクロは最高益　渡辺広明氏が語る物価高でも売れる売り場",
+        "original_title": "",
+        "source": "JBpress",
+        "source_id": "JP-14",
+        "summary": "JBpressの記事では、ニトリの客数・売上減少が指摘される一方、ユニクロは過去最高益を達成したと比較されている。渡辺広明氏は、物価高のなかでも売れる売り場づくりについて語ったとされる。低価格と機能性の両立や売場提案の考え方が示され、来店動機を再設計する必要性が論じられている。",
+        "why_it_matters": "客数減の局面で、価格訴求だけでなく売場提案の質で来店と購買を取り戻せるかが問われている。SPAとして商品企画から販売までを一貫管理するニトリにとって、物価高下での客単価維持と買い回りの仕組みづくりは中期的な課題となる。競合ユニクロの好業績との対比は、ブランドの体験価値を再定義する材料になる。",
+        "tags": [
+          "ニトリ",
+          "経営戦略",
+          "価格戦略",
+          "売場づくり"
+        ],
+        "search_terms": [
+          "ニトリ 客数減 売り場改革",
+          "Nitori sales decline store strategy",
+          "ユニクロ 最高益 比較",
+          "retail pricing inflation Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQdU9PdGF6YXpnX3NSeXFIbXVDOUtRYktINFMybDlsSFBZeWdRa0txc1ZhOXZpbkNUdmhMNklDbUc5UTZUcnUtRnZGNUE3TzhncHJQdGRNQU8zdzZwZkczcGFCNG9hdXVTVkw4R1Btdk5SUVdLc1V4NklOczAxenZyTDZNQ09FUjc5SlpFSW9YbzJyVzh2aHdNODR1UG9HV3pOZUJiZEdzVmJZRDlKVWc?oc=5",
+        "source_pub_ts": 1793566800
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ梅田茶屋町店8階に「法人事業大阪ショールーム」オープン",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-07",
+        "summary": "ニトリは梅田茶屋町店8階に「法人事業大阪ショールーム」を開設した。法人向けの提案を実物を見ながら確認できる場として整備された。同店は旧梅田ロフト跡地を活用した世界最大規模の店舗で、個人客向けの売場に加えて法人需要を取り込む拠点となる。大阪エリアで法人営業の接点を強化する狙いがうかがえる。",
+        "why_it_matters": "個人向け店舗の集客力を法人の大口商談につなげる動きは、ニトリの店舗を多目的な接点に変える試みといえる。法人向けの提案窓口を大都市の旗艦店に置くことで、企業や施設の導入案件を獲得しやすくなる。個人消費が伸び悩む局面で、安定的な法人需要の取り込みを広げる戦略として注目できる。",
+        "tags": [
+          "ニトリ",
+          "法人事業",
+          "梅田茶屋町店",
+          "店舗展開"
+        ],
+        "search_terms": [
+          "法人向けショールーム 大阪",
+          "Nitori corporate showroom Osaka",
+          "梅田 旗艦店 法人営業",
+          "B2B retail showroom Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1BWENZS1V1Y2VqRDlUeExnRW84U2diWmZyMkpGRGs5NTUyMlI3bGJuUWNZZXE4U1JHZXNEWXVmbTBITDM1OGkwUVA2WW82Mlk3RFBr?oc=5",
+        "source_pub_ts": 1793594689
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ「点で支える除湿シート付き 体圧分散敷布団」を5人がレビュー、普通の敷布団との違いは",
+        "original_title": "",
+        "source": "マイベスト",
+        "source_id": "JP-05",
+        "summary": "マイベストが、ニトリの「点で支える除湿シート付き 体圧分散敷布団」を体格の異なる5人が実際に寝て比較レビューした。普通の敷布団との違いを、寝心地や体圧の分散の観点から検証している。除湿シートを備えた点が、通常の敷布団との差別化ポイントとして位置づけられている。",
+        "why_it_matters": "寝具という高単価で体感に左右されるカテゴリで、体格別の第三者レビューが掲載されることは、ニトリの商品力を客観的に伝える材料になる。「点で支える」という構造の訴求は、自社開発の機能を消費者にわかりやすく示すPB戦略の好例だ。実体験型の情報が購買判断に影響する中で、体格別の寝心地データを店頭や自社サイトで補完する余地がある。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "体圧分散",
+          "除湿シート",
+          "商品開発"
+        ],
+        "search_terms": [
+          "体圧分散 敷布団 除湿",
+          "Nitori pressure-distributing futon",
+          "寝具 レビュー 体格比較",
+          "bedding humidity-control sheet Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFAwMV9NVHlfd05laF8zSTQxbmdLR3gyaHR3X1NmcklxRnp0bUhmSFVDakR6XzJ5NW9XNVFHQjJTX0ZhVHR4c3dickdPSTJGQQ?oc=5",
+        "source_pub_ts": 1793601687
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ・デコホームのチャームエコバッグ5選　999円でツイードやリボン、ねこ顔ポーチに変わるタイプも",
+        "original_title": "",
+        "source": "えんウチ",
+        "source_id": "JP-04",
+        "summary": "えんウチが、ニトリ・デコホームの2026年冬向けチャームエコバッグを5選として紹介した。999円で購入できるツイードやリボンのデザイン、ねこ顔ポーチに変わるタイプなどが取り上げられている。季節感のある柄や形状で、エコバッグを持ち歩く楽しさを提案する内容となっている。",
+        "why_it_matters": "エコバッグという日常の必需品に装飾性を加えて「持ちたくなる」価値に変える発想は、デコホームのブランド特性を示している。999円という価格で季節感のある柄を展開することは、購入頻度と話題性を同時に高める。情報メディアで紹介されやすい商品として、冬の販促企画に活用できる。",
+        "tags": [
+          "ニトリ",
+          "デコホーム",
+          "エコバッグ",
+          "冬商品"
+        ],
+        "search_terms": [
+          "デコホーム チャーム エコバッグ",
+          "Nitori Decohome eco bag charm",
+          "冬 雑貨 999円 Japan",
+          "seasonal tote bag accessory"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5OYXkxMWo0SmRuaks5eDllSHlhNkxXUzVyaEZGOGMzejhBMk5pbGxPMDJzcV9meExpdVlFeHBnZ21EMVktVml1U0s0Nm11VkwxVmQ1eHRmdFkyUFc0clRkT2VHcGxEVlpyWVNZR3Q3MVbSAXBBVV95cUxOTmF5MTFqNEpkbmpLOXg5ZUh5YTZMV1M1cmhGRjhjM3o4QTJOaWxsTzAyc3FfZnhMaXVZRXhwZ2dtRDFZLVZpdVNLNDZtdVZMMVZkNXh0ZnRZMlBXNHJUZE9lR3BsRFZacllTWUd0NzFW?oc=5",
+        "source_pub_ts": 1793608200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの“スマホ毛布”に「季節がやってきた」の声、2,033いいねの反響",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "X上で「ニトリのスマホ毛布の季節がやってきた」という投稿が2,033いいね、90リツイートを集めた。投稿には写真が添付されており、冬の到来とともに商品を待ち望む声が読み取れる。季節の到来を喜ぶ投稿に多くの共感が集まり、冬の定番アイテムとしての存在感が示された。",
+        "why_it_matters": "「季節がやってきた」という表現は、商品が生活のリズムに組み込まれていることを示す。購入を季節の行事のように感じさせる力は、定番化戦略が生活者に浸透している証左といえる。画像付きの投稿であることから、使用シーンを写真で示す発信が共感を広げやすいと考えられる。",
+        "tags": [
+          "ニトリ",
+          "スマホ毛布",
+          "SNS",
+          "冬商品"
+        ],
+        "search_terms": [
+          "ニトリ スマホ毛布 反響",
+          "Nitori phone blanket X post",
+          "冬の定番 共感 SNS",
+          "winter comfort item social buzz"
+        ],
+        "url": "https://x.com/___h___r___k__/status/2117070579895525803",
+        "source_pub_ts": 1793617200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリのキッチン便利グッズ5選が6.9万回再生　油はね防止ネットやすべり止めトレーに注目",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-07",
+        "summary": "TikTokで「ニトリのキッチン神グッズ5選」の動画が6.9万回再生、357いいねを集めた。料理や片付けのストレスを減らす商品として、油はね防止ネットとすべり止めトレーが特に推されている。後から見返せるよう保存を促す投稿スタイルも特徴で、買い物の参考として活用されている。",
+        "why_it_matters": "油はね防止やすべり止めなど、調理と片付けの小さな不満を解決する機能は、低価格でも実感を得やすい。「1回使うと手放せない」という体験訴求は、ヒット商品の口コミを生む要素となる。動画で具体的な使用場面を示すことで、調理周りの商品群の販促にもつながる。",
+        "tags": [
+          "ニトリ",
+          "キッチン",
+          "便利グッズ",
+          "TikTok"
+        ],
+        "search_terms": [
+          "ニトリ キッチン 便利グッズ",
+          "Nitori kitchen gadget TikTok",
+          "油はね防止ネット すべり止めトレー",
+          "kitchen organization product review"
+        ],
+        "url": "https://www.tiktok.com/@ryohin_note/video/7701641214352903445",
+        "source_pub_ts": 1793178087.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのスマホ毛布の季節がやってきたぞ…… pic.x.com/OK3gQtoxLK",
+        "platform": "x",
+        "author": "@___h___r___k__",
+        "url": "https://x.com/___h___r___k__/status/2117070579895525803",
+        "likes": 2033,
+        "retweets": 90,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:45",
+        "captured_at": "",
+        "text": "ニトリのスマホ毛布の季節がやってきたぞ…… pic.x.com/OK3gQtoxLK",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリ…これくらいしかなかった pic.x.com/GVlABFoSzL",
+        "platform": "x",
+        "author": "@tumaco_28",
+        "url": "https://x.com/tumaco_28/status/2117137959283749297",
+        "likes": 123,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 15:13",
+        "captured_at": "",
+        "text": "ニトリ…これくらいしかなかった pic.x.com/GVlABFoSzL",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "うちは引越し時 お母さまにコンロを塞がれています⚠️ レンジでグリルみたいなニトリのやつ勝ったらレンチンで食べれますか？",
+        "platform": "x",
+        "author": "@Amaui_",
+        "url": "https://x.com/Amaui_/status/2117196897538715993",
+        "likes": 51,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:07",
+        "captured_at": "",
+        "text": "うちは引越し時 お母さまにコンロを塞がれています⚠️ レンジでグリルみたいなニトリのやつ勝ったらレンチンで食べれますか？",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリに行ったら、長ネギ柄のフリーザーバッグが売ってたんですよ… 買わない選択肢なんてない… 大きさは3枚目をご参照ください #WayV p...",
+        "platform": "x",
+        "author": "@kossorichangmin",
+        "url": "https://x.com/kossorichangmin/status/2117237451471077602",
+        "likes": 37,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:48",
+        "captured_at": "",
+        "text": "ニトリに行ったら、長ネギ柄のフリーザーバッグが売ってたんですよ… 買わない選択肢なんてない… 大きさは3枚目をご参照ください #WayV pic.x.com/2llyvqsCzY",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "#おやすみＶライバー 皆さん今日はどんな一日でしたか？ 私はスタバに行ったりにニトリに行ったり今日はよく動く日でした！ ボイス公開チャレンジ...",
+        "platform": "x",
+        "author": "@nizika_0309",
+        "url": "https://x.com/nizika_0309/status/2117228021992337601",
+        "likes": 22,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:11",
+        "captured_at": "",
+        "text": "#おやすみＶライバー 皆さん今日はどんな一日でしたか？ 私はスタバに行ったりにニトリに行ったり今日はよく動く日でした！ ボイス公開チャレンジあともう少しなのでご協力よろしくお願いしますm(*_ _)m #IRIAM準備中 #IRIAMライバーと繋がりたい pic.x.com/MAh19O9bFp",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリへ急げ！無くなる前に！！ #ニトリ#お風呂掃除 #購入品紹介",
+        "platform": "tiktok",
+        "author": "@これこれストア【商品紹介】",
+        "url": "https://www.tiktok.com/@korekorest/video/7703499398159895816",
+        "likes": 703,
+        "retweets": 31,
+        "views": 77300,
+        "comments": 17,
+        "posted_on": "2026-11-02 18:12",
+        "captured_at": "2026-11-02T22:05:07.426296+09:00",
+        "text": "ニトリへ急げ！無くなる前に！！ #ニトリ#お風呂掃除 #購入品紹介",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "＼ お値段以上すぎる！ ／ ニトリのキッチン神グッズ5選💡 毎日の料理や片付けのプチストレスを解消してくれる、ニトリのおすすめ便利アイテムを...",
+        "platform": "tiktok",
+        "author": "@良品ノート/買ってよかった神アイテム",
+        "url": "https://www.tiktok.com/@ryohin_note/video/7701641214352903445",
+        "likes": 357,
+        "retweets": 7,
+        "views": 68600,
+        "comments": 3,
+        "posted_on": "2026-10-28 18:01",
+        "captured_at": "2026-11-02T22:05:07.426296+09:00",
+        "text": "＼ お値段以上すぎる！ ／ ニトリのキッチン神グッズ5選💡 毎日の料理や片付けのプチストレスを解消してくれる、ニトリのおすすめ便利アイテムをまとめました✨ 特に「油はね防止ネット」と「すべり止めトレー」は、1回使うと手放せなくなる優秀アイテム…！ 後から見返せるように【保存】してお買い物の参考にしてみてね📌 ---------------------------------- 良品ノート ｜ 買ってよかった神アイテム ---------------------------------- #ニ#ニトリニ#ニトリ購入品ニ#ニトリおすすめキ#キッチン便利グッズ便利グッズ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-08",
+        "title": "茶屋町ロフト跡地に世界最大のニトリ爆誕！ #NITORI #大阪おでかけ #大阪観光 #大阪旅行 #関西おでかけ",
+        "platform": "tiktok",
+        "author": "@日本一暇な夫婦【りりぼん夫婦】",
+        "url": "https://www.tiktok.com/@riribon_fufu/video/7703171840419564820",
+        "likes": 380,
+        "retweets": 50,
+        "views": 22300,
+        "comments": 10,
+        "posted_on": "2026-11-01 21:01",
+        "captured_at": "2026-11-02T22:05:07.426296+09:00",
+        "text": "茶屋町ロフト跡地に世界最大のニトリ爆誕！ #NITORI #大阪おでかけ #大阪観光 #大阪旅行 #関西おでかけ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261102",
     "title": "2026年11月2日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "梅田の旗艦店開業を起点に、ニトリは家具・家電に加えアパレルやガジェットへと生活提案の領域を広げている。 799円のフローリングワイパーや899円のバスクリーナーなど、低価格で満足度の高い日用品がレビューやSNSで反響を集めている。",
