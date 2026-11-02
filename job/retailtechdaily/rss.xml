@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 02 Nov 2026 05:56:14 +0900</lastBuildDate>
+    <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 03 Nov 2026 08:46:52 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月3日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261103/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261103/</guid>
+      <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジをめぐる生活者の反応が多様化しています。子どもの操作の是非や、機器更新による紙幣投入口の分かりにくさがSNSで議論になりました。 需要予測による発注支援、決済基盤の刷新など、店舗とバックオフィスの効率化が実装段階に入っています。</description>
+    </item>
     <item>
       <title>2026年11月2日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261102/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261019/</guid>
       <pubDate>Mon, 19 Oct 2026 08:00:00 +0900</pubDate>
       <description>京急線内初の無人決済店舗が開業し、鉄道沿線の生活密着型店舗へ無人決済が広がる動きが示された。 セルフレジのNG行動や店員の本音が共感を集め、省人化の現場負荷が生活者の関心事になっている。</description>
-    </item>
-    <item>
-      <title>2026年10月18日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261018/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261018/</guid>
-      <pubDate>Sun, 18 Oct 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジを1人で複数台回す店員の姿に「共感しかない」と反響が広がり、無人化と有人対応のバランスが生活者の関心事になっている。 人件費や物価高騰を背景に病院食堂の廃止・時短が相次ぐなか、無人セルフレジ売店が代替手段として注目されている。</description>
     </item>
   </channel>
 </rss>
