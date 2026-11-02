@@ -490,11 +490,12 @@
     .magi-acr-phrase { display: block; max-width: 100%; margin: 0 auto; padding: 0.15em 0.4em; background: none; border: 0; border-radius: 2px; color: inherit; font: inherit; letter-spacing: inherit; line-height: inherit; cursor: pointer; }
     .magi-acr-line { display: grid; grid-template-columns: max-content max-content max-content; column-gap: 0.6em; justify-content: center; align-items: baseline; }
     .magi-acr-slot { display: grid; }
-    .magi-acr-slot > span { grid-area: 1 / 1; white-space: nowrap; transition: opacity 700ms ease-in-out; }
+    .magi-acr-slot > span { grid-area: 1 / 1; white-space: nowrap; transition: opacity 1000ms ease-in-out; }
     .magi-acr-pre { justify-items: end; }
     .magi-acr-suf { justify-items: start; }
     .magi-acr-pivot { color: var(--primary-color); white-space: nowrap; }
     .magi-acronym[data-face="a"] .magi-acr-slot .magi-acr-b, .magi-acronym[data-face="b"] .magi-acr-slot .magi-acr-a { opacity: 0; }
+    .magi-acronym.is-out .magi-acr-slot > span { opacity: 0; }
     .magi-acronym.is-instant .magi-acr-slot > span { transition: none; }
     @container (max-width: 28em) {
       .magi-acr-line { grid-template-columns: max-content; row-gap: 0.1em; }
@@ -796,6 +797,6 @@
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
   <script src="share-image.js?v=20261102_2"></script>
-  <script src="app.js?v=20261103_1"></script>
+  <script src="app.js?v=20261103_2"></script>
 </body>
 </html>

@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.12';
+var APP_VERSION = '7.13';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2006,9 +2006,11 @@ setTimeout(initAgentPrivacy, 0);
 // MAGI_ACRONYM_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
 // スプラッシュの MAGI の下で、同じ頭字語の二つの読み（工学と芸術）を切り替える。設計は magi-app/magi-dual-acronym-prd.md。
 // 見出しの MAGI と中央の Generating は動かさず、前後の語句の組だけを opacity で入れ替える（両面の語句は同じセルに重ねて幅を確保する）。
+// 切り替わったと分かるよう、前の語句を消す → Generating だけの間を置く → 次の語句を出す、の3段にする（7.13）。
+// fadeOut・fadeIn は CSS の .magi-acr-slot > span の transition と同じ値にする。
 // 操作部は持たない（7.12 で状態表示と停止ボタンを外した）。フレーズを押すと切り替わり、自動の切り替えはそこから数え直す。
 // スプラッシュは同時に一つしかないので、制御器もページに一つだけ置く。HTML の生成（magiAcronymHTML）ではタイマーもイベントも登録しない。
-var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fade: 700 };
+var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fadeOut: 1000, blank: 800, fadeIn: 1000 };
 var magiAcronymCtl = null;
 var magiAcronymAppActive = true;
 function magiAcronymPhrase(face) {
@@ -2060,15 +2062,14 @@ function magiAcronymController(el) {
     return !dead;
   }
   function running() { return !reduced() && !hover && seen && magiAcronymAppActive && !document.hidden; }
-  // 面を替える。animate が偽なら遷移を省いて完成形を即時に出す
-  function show(next, animate) {
+  // 遷移を省いて、指定した面の完成形を即時に出す
+  function show(next) {
     face = next;
-    if (!animate) el.classList.add('is-instant');
+    el.classList.add('is-instant');
+    el.classList.remove('is-out');
     el.setAttribute('data-face', face);
-    if (!animate) {
-      void el.offsetWidth;
-      el.classList.remove('is-instant');
-    }
+    void el.offsetWidth;
+    el.classList.remove('is-instant');
   }
   // 読み上げの名前は完成面の確定時だけ替える（遷移の途中では替えない）
   function done() {
@@ -2076,11 +2077,23 @@ function magiAcronymController(el) {
     name.textContent = magiAcronymPhrase(face);
     schedule();
   }
+  // 前の語句を消し（is-out）、Generating だけの間を置いてから次の面を出す。face は遷移先を指す
   function flip(animate) {
     if (fading) return false;
-    show(face === 'a' ? 'b' : 'a', animate);
-    if (animate) fading = setTimeout(function () { if (alive()) done(); }, MAGI_ACRONYM.fade);
-    else done();
+    var next = face === 'a' ? 'b' : 'a';
+    if (!animate) {
+      show(next);
+      done();
+      return true;
+    }
+    face = next;
+    el.classList.add('is-out');
+    fading = setTimeout(function () {
+      if (!alive()) return;
+      el.setAttribute('data-face', next);
+      el.classList.remove('is-out');
+      fading = setTimeout(function () { if (alive()) done(); }, MAGI_ACRONYM.fadeIn);
+    }, MAGI_ACRONYM.fadeOut + MAGI_ACRONYM.blank);
     return true;
   }
   // 遷移中なら遷移先の完成形で止める
@@ -2088,7 +2101,7 @@ function magiAcronymController(el) {
     if (!fading) return;
     clearTimeout(fading);
     fading = null;
-    show(face, false);
+    show(face);
     name.textContent = magiAcronymPhrase(face);
   }
   function halt() {

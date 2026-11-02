@@ -2561,11 +2561,12 @@
     .magi-acr-phrase { display: block; max-width: 100%; margin: 0 auto; padding: 0.15em 0.4em; background: none; border: 0; border-radius: 2px; color: inherit; font: inherit; letter-spacing: inherit; line-height: inherit; cursor: pointer; }
     .magi-acr-line { display: grid; grid-template-columns: max-content max-content max-content; column-gap: 0.6em; justify-content: center; align-items: baseline; }
     .magi-acr-slot { display: grid; }
-    .magi-acr-slot > span { grid-area: 1 / 1; white-space: nowrap; transition: opacity 700ms ease-in-out; }
+    .magi-acr-slot > span { grid-area: 1 / 1; white-space: nowrap; transition: opacity 1000ms ease-in-out; }
     .magi-acr-pre { justify-items: end; }
     .magi-acr-suf { justify-items: start; }
     .magi-acr-pivot { color: var(--primary-color); white-space: nowrap; }
     .magi-acronym[data-face="a"] .magi-acr-slot .magi-acr-b, .magi-acronym[data-face="b"] .magi-acr-slot .magi-acr-a { opacity: 0; }
+    .magi-acronym.is-out .magi-acr-slot > span { opacity: 0; }
     .magi-acronym.is-instant .magi-acr-slot > span { transition: none; }
     @container (max-width: 28em) {
       .magi-acr-line { grid-template-columns: max-content; row-gap: 0.1em; }
@@ -8392,9 +8393,11 @@ setTimeout(initAgentPrivacy, 0);
 // MAGI_ACRONYM_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
 // スプラッシュの MAGI の下で、同じ頭字語の二つの読み（工学と芸術）を切り替える。設計は magi-app/magi-dual-acronym-prd.md。
 // 見出しの MAGI と中央の Generating は動かさず、前後の語句の組だけを opacity で入れ替える（両面の語句は同じセルに重ねて幅を確保する）。
+// 切り替わったと分かるよう、前の語句を消す → Generating だけの間を置く → 次の語句を出す、の3段にする（7.13）。
+// fadeOut・fadeIn は CSS の .magi-acr-slot > span の transition と同じ値にする。
 // 操作部は持たない（7.12 で状態表示と停止ボタンを外した）。フレーズを押すと切り替わり、自動の切り替えはそこから数え直す。
 // スプラッシュは同時に一つしかないので、制御器もページに一つだけ置く。HTML の生成（magiAcronymHTML）ではタイマーもイベントも登録しない。
-var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fade: 700 };
+var MAGI_ACRONYM = { faces: { a: ['Multiple Agents', 'Intelligence'], b: ['Modern Art', 'Interiority'] }, pivot: 'Generating', hold: 6000, fadeOut: 1000, blank: 800, fadeIn: 1000 };
 var magiAcronymCtl = null;
 var magiAcronymAppActive = true;
 function magiAcronymPhrase(face) {
@@ -8446,15 +8449,14 @@ function magiAcronymController(el) {
     return !dead;
   }
   function running() { return !reduced() && !hover && seen && magiAcronymAppActive && !document.hidden; }
-  // 面を替える。animate が偽なら遷移を省いて完成形を即時に出す
-  function show(next, animate) {
+  // 遷移を省いて、指定した面の完成形を即時に出す
+  function show(next) {
     face = next;
-    if (!animate) el.classList.add('is-instant');
+    el.classList.add('is-instant');
+    el.classList.remove('is-out');
     el.setAttribute('data-face', face);
-    if (!animate) {
-      void el.offsetWidth;
-      el.classList.remove('is-instant');
-    }
+    void el.offsetWidth;
+    el.classList.remove('is-instant');
   }
   // 読み上げの名前は完成面の確定時だけ替える（遷移の途中では替えない）
   function done() {
@@ -8462,11 +8464,23 @@ function magiAcronymController(el) {
     name.textContent = magiAcronymPhrase(face);
     schedule();
   }
+  // 前の語句を消し（is-out）、Generating だけの間を置いてから次の面を出す。face は遷移先を指す
   function flip(animate) {
     if (fading) return false;
-    show(face === 'a' ? 'b' : 'a', animate);
-    if (animate) fading = setTimeout(function () { if (alive()) done(); }, MAGI_ACRONYM.fade);
-    else done();
+    var next = face === 'a' ? 'b' : 'a';
+    if (!animate) {
+      show(next);
+      done();
+      return true;
+    }
+    face = next;
+    el.classList.add('is-out');
+    fading = setTimeout(function () {
+      if (!alive()) return;
+      el.setAttribute('data-face', next);
+      el.classList.remove('is-out');
+      fading = setTimeout(function () { if (alive()) done(); }, MAGI_ACRONYM.fadeIn);
+    }, MAGI_ACRONYM.fadeOut + MAGI_ACRONYM.blank);
     return true;
   }
   // 遷移中なら遷移先の完成形で止める
@@ -8474,7 +8488,7 @@ function magiAcronymController(el) {
     if (!fading) return;
     clearTimeout(fading);
     fading = null;
-    show(face, false);
+    show(face);
     name.textContent = magiAcronymPhrase(face);
   }
   function halt() {
@@ -8533,7 +8547,7 @@ function magiAcronymController(el) {
 }
 // MAGI_ACRONYM_END
     // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
-    const AGENT_SCREEN_VERSION = '7.12';
+    const AGENT_SCREEN_VERSION = '7.13';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。

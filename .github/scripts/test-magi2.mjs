@@ -7123,14 +7123,17 @@ test('MAGIの二つの読み: トップページとアプリで同じ中身を�
   assert.ok(h.ctx.magiAcronymAbout().includes('<span lang="en">Modern Art Generating Interiority</span>'));
 });
 
-test('MAGIの二つの読み: 6秒見せて0.7秒で替わり、名前は完成面でだけ更新し、タイマーを重ねない', () => {
-  const h = magiAcronymHarness(), s = h.mount();
+test('MAGIの二つの読み: 6秒見せ、1秒で消して0.8秒の間を置き、1秒で出す。名前は完成面でだけ更新し、タイマーを重ねない', () => {
+  const h = magiAcronymHarness(), s = h.mount(), out = () => s.el.classes.has('is-out');
   assert.equal(h.timers.size, 1);
-  h.advance(5999); assert.equal(s.face(), 'a');
-  h.advance(1); assert.equal(s.face(), 'b'); assert.equal(s.name.textContent, 'Multiple Agents Generating Intelligence');
-  s.phrase.fire('click'); assert.equal(s.face(), 'b');  // 遷移中の入力は受け付けず、予約もしない
-  h.advance(700); assert.equal(s.name.textContent, 'Modern Art Generating Interiority'); assert.equal(h.timers.size, 1);
-  h.advance(6700); assert.equal(s.face(), 'a');
+  h.advance(5999); assert.equal(s.face(), 'a'); assert.equal(out(), false);
+  // 前の語句を消している間と Generating だけの間は、面はまだ A
+  h.advance(1); assert.equal(out(), true); assert.equal(s.face(), 'a'); assert.equal(s.name.textContent, 'Multiple Agents Generating Intelligence');
+  s.phrase.fire('click'); assert.equal(out(), true); assert.equal(s.face(), 'a');  // 遷移中の入力は受け付けず、予約もしない
+  h.advance(1799); assert.equal(s.face(), 'a'); assert.equal(out(), true);
+  h.advance(1); assert.equal(s.face(), 'b'); assert.equal(out(), false); assert.equal(s.name.textContent, 'Multiple Agents Generating Intelligence');
+  h.advance(1000); assert.equal(s.name.textContent, 'Modern Art Generating Interiority'); assert.equal(h.timers.size, 1);
+  h.advance(6000 + 1800); assert.equal(s.face(), 'a');
   // 描き直しを繰り返しても、制御器・タイマー・文書のリスナーは一つだけ
   for (let i = 0; i < 10; i++) h.mount();
   assert.equal(h.timers.size, 1); assert.equal(h.document.count('visibilitychange'), 1); assert.equal(h.media.count('change'), 1);
@@ -7141,9 +7144,9 @@ test('MAGIの二つの読み: 操作部は持たず、押すと反対の面へ�
   const h = magiAcronymHarness(), s = h.mount();
   const html = h.ctx.magiAcronymHTML();
   for (const gone of ['magi-acr-auto', 'magi-acr-ctl', 'data-acr-state', 'SYSTEM', 'magi-acr-motion']) assert.ok(!html.includes(gone), gone);
-  h.advance(3000); s.phrase.fire('click'); assert.equal(s.face(), 'b'); h.advance(700);
-  assert.equal(s.name.textContent, 'Modern Art Generating Interiority');
-  h.advance(5999); assert.equal(s.face(), 'b'); h.advance(1); assert.equal(s.face(), 'a');
+  h.advance(3000); s.phrase.fire('click'); assert.ok(s.el.classes.has('is-out')); h.advance(2800);
+  assert.equal(s.face(), 'b'); assert.equal(s.name.textContent, 'Modern Art Generating Interiority');
+  h.advance(5999); assert.equal(s.el.classes.has('is-out'), false); h.advance(1 + 1800); assert.equal(s.face(), 'a');
   // 描き直すと A 面から始まり、制御器は一つだけ
   const t = h.mount(); assert.equal(t.face(), 'a'); assert.equal(h.timers.size, 1);
 });
@@ -7151,13 +7154,15 @@ test('MAGIの二つの読み: 操作部は持たず、押すと反対の面へ�
 test('MAGIの二つの読み: マウスを乗せている間・見えない間・バックグラウンドでは替えず、戻ったら静止時間から数え直す', () => {
   const h = magiAcronymHarness(), s = h.mount();
   h.advance(3000); s.el.fire('pointerenter', { pointerType: 'mouse' }); h.advance(60000); assert.equal(s.face(), 'a');
-  s.el.fire('pointerleave', { pointerType: 'mouse' }); h.advance(5999); assert.equal(s.face(), 'a'); h.advance(1); assert.equal(s.face(), 'b');
-  // 遷移中に隠れたら、遷移先で確定して止まる。戻っても経過分をまとめて進めない
-  h.document.hidden = true; h.document.fire('visibilitychange'); assert.equal(h.timers.size, 0); assert.equal(s.name.textContent, 'Modern Art Generating Interiority');
-  h.advance(60000); h.document.hidden = false; h.document.fire('visibilitychange'); h.advance(5999); assert.equal(s.face(), 'b'); h.advance(1); assert.equal(s.face(), 'a'); h.advance(700);
+  s.el.fire('pointerleave', { pointerType: 'mouse' }); h.advance(5999); assert.equal(s.el.classes.has('is-out'), false); h.advance(1); assert.ok(s.el.classes.has('is-out'));
+  // 遷移中に隠れたら、遷移先で確定して止まる（消えたままにしない）。戻っても経過分をまとめて進めない
+  h.document.hidden = true; h.document.fire('visibilitychange');
+  assert.equal(h.timers.size, 0); assert.equal(s.face(), 'b'); assert.equal(s.el.classes.has('is-out'), false); assert.equal(s.name.textContent, 'Modern Art Generating Interiority');
+  h.advance(60000); h.document.hidden = false; h.document.fire('visibilitychange'); h.advance(5999); assert.equal(s.el.classes.has('is-out'), false);
+  h.advance(1 + 1800 + 1000); assert.equal(s.face(), 'a');
   h.observers.at(-1).cb([{ isIntersecting: false }]); h.advance(60000); assert.equal(s.face(), 'a');
   h.observers.at(-1).cb([{ isIntersecting: true }]); h.ctx.magiAcronymSetActive(false); h.advance(60000); assert.equal(s.face(), 'a');
-  h.ctx.magiAcronymSetActive(true); h.advance(6000); assert.equal(s.face(), 'b');
+  h.ctx.magiAcronymSetActive(true); h.advance(6000 + 1800); assert.equal(s.face(), 'b');
 });
 
 test('MAGIの二つの読み: DOMから外れたら自ら止まり、動きを減らす設定では自動で替えず、押すと即時に替わる', () => {
