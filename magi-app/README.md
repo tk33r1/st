@@ -1,6 +1,7 @@
 # MAGI (mobile)
 
-The **MAGI** chat — *Multi-Agent Generative Intelligence* — extracted from
+The **MAGI** chat — *Multiple Agents Generating Intelligence*, also read as
+*Modern Art Generating Interiority* — extracted from
 `tk.st`'s `index.html` into a standalone mobile app. It is a **PWA** that can be
 packaged for **iOS and Android** with [Capacitor](https://capacitorjs.com/).
 

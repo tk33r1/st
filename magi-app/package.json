@@ -1,8 +1,8 @@
 {
   "name": "magi-app",
-  "version": "7.1.0",
+  "version": "7.1.3",
   "private": true,
-  "description": "MAGI mobile — Multi-Agent Generative Intelligence client (PWA + Capacitor)",
+  "description": "MAGI mobile — Multiple Agents Generating Intelligence client (PWA + Capacitor)",
   "scripts": {
     "postinstall": "node scripts/patch-speech.cjs",
     "serve": "npx --yes serve www -l 5173",

@@ -1,7 +1,7 @@
 {
   "name": "MAGI",
   "short_name": "MAGI",
-  "description": "Multi-Agent Generative Intelligence — Shinya Takeda AI",
+  "description": "Multiple Agents Generating Intelligence / Modern Art Generating Interiority — Shinya Takeda AI",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
