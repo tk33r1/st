@@ -339,19 +339,36 @@ try {
     const emojiReady = async () => until(async () => (await emoji.locator('.emoji-results').getAttribute('aria-busy')) === 'false' && (await emoji.locator('.emoji-option').count()) > 0, 'emoji JSON ready');
     await emojiReady(); assert.equal(emojiRequests, 1, name + ' one JSON request');
     assert.equal(await emoji.isVisible(), true);
-    assert.equal(await emoji.locator('[role="tab"]').count(), 10);
+    assert.equal(await emoji.locator('[role="tab"]').count(), 11);
     assert.equal(await emoji.getByText('あなたのリアクション', { exact: true }).count(), 0);
-    // 全カテゴリの合計が正本の全絵文字と一致する。肌色・合成・国旗も選択できる。
+    // 一覧は肌色違いを黄色の親へ集約する。肌色は長押し・右クリックで開く。
     let allEmoji = 0;
-    for (let category = 0; category < 9; category++) {
+    for (let category = 0; category < 10; category++) {
       await emoji.locator('[data-category="' + category + '"]').click();
       allEmoji += await emoji.locator('.emoji-option').count();
     }
-    assert.equal(allEmoji, 3972);
-    for (const [query, match] of [['ねこ', '🐱'], ['CAT', '🐱'], ['japan', '🇯🇵'], ['thumbs up medium skin', '👍🏽']]) {
+    assert.equal(allEmoji, 1927);
+    for (const [query, match] of [['ねこ', '🐱'], ['CAT', '🐱'], ['japan', '🇯🇵'], ['thumbs up medium skin', '👍']]) {
       await search.fill(query);
       await until(async () => (await emoji.locator('.emoji-option[data-emoji="' + match + '"]').count()) === 1, query);
     }
+    assert.match(await emoji.locator('.emoji-close').textContent(), /^(Cancel|キャンセル)$/);
+    await emoji.locator('[data-category="9"]').click();
+    assert.equal(await emoji.locator('[data-emoji="👍"]').count(), 1);
+    assert.equal(await emoji.locator('.emoji-grid').evaluate(el => /[\u{1F3FB}-\u{1F3FF}]/u.test(el.textContent)), false);
+    const thumb = emoji.locator('[data-emoji="👍"]');
+    if (touch) {
+      const box = await thumb.boundingBox();
+      await thumb.dispatchEvent('pointerdown', { button: 0, pointerType: 'touch', clientX: box.x + 10, clientY: box.y + 10 });
+      await until(async () => (await emoji.locator('.emoji-tones button').count()) === 6, 'hold opens skin tones');
+      await thumb.dispatchEvent('pointerup', { button: 0 }); await thumb.dispatchEvent('click');
+    } else await thumb.click({ button: 'right' });
+    assert.deepEqual(await emoji.locator('.emoji-tones button').allTextContents(), ['👍', '👍🏻', '👍🏼', '👍🏽', '👍🏾', '👍🏿']);
+    await page.keyboard.press('Escape');
+    assert.equal(await emoji.isVisible(), true); assert.equal(await emoji.locator('.emoji-tones').count(), 0);
+    await emoji.locator('[data-category="1"]').click();
+    assert.equal(await emoji.locator('[data-emoji="👍"]').count(), 0);
+    assert.equal(await emoji.locator('[data-emoji="👶"]').count(), 1);
     await search.fill('no-such-emoji-123'); await until(async () => await emoji.locator('.emoji-empty').isVisible(), 'empty emoji search');
     await search.fill('👍'); await until(async () => (await emoji.locator('.emoji-option[data-emoji="👍"]').count()) === 1, 'thumbs up');
     const bounds = await emoji.boundingBox();

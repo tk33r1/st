@@ -762,8 +762,14 @@ function openAgentEmojiPicker(bar, opener, current) {
   }
   tab('recent', 'Recent', '最近', 'M12 7v5l3 2', true);
   [0, 9, 1, 2, 3, 4, 5, 6, 7, 8].forEach(function (i) { var g = AGENT_EMOJI_GROUPS[i]; tab(String(i), g[0], g[1], g[2], g[3]); });
+  var toneKeys = null;
   function render() {
     if (!AGENT_EMOJI_CATALOG) return;
+    if (!toneKeys) {
+      var sizes = new Map();
+      AGENT_EMOJI_CATALOG.forEach(function (row) { var key = agentEmojiBaseKey(row[0]); sizes.set(key, (sizes.get(key) || 0) + 1); });
+      toneKeys = new Set(); sizes.forEach(function (size, key) { if (size > 1) toneKeys.add(key); });
+    }
     closeTones(false);
     var query = search.value.trim(), rows;
     if (query) rows = agentEmojiSearch(query);
@@ -777,7 +783,7 @@ function openAgentEmojiPicker(bar, opener, current) {
     rows.forEach(function (row, i) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'emoji-option'; b.dataset.emoji = row[0]; b.textContent = row[0];
       b.title = tr(row[2], row[3]);
-      if (AGENT_EMOJI_CATALOG.some(function (r) { return r[0] !== row[0] && agentEmojiBaseKey(r[0]) === agentEmojiBaseKey(row[0]); })) { b.dataset.tones = 'true'; b.setAttribute('aria-haspopup', 'dialog'); b.title += tr(' — hold or right-click for skin tone', ' — 長押し・右クリックで肌の色'); }
+      if (toneKeys.has(agentEmojiBaseKey(row[0]))) { b.dataset.tones = 'true'; b.setAttribute('aria-haspopup', 'dialog'); b.title += tr(' — hold or right-click for skin tone', ' — 長押し・右クリックで肌の色'); }
       b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(current === row[0])); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
     });
     grid.replaceChildren(frag); results.scrollTop = 0; empty.hidden = !!rows.length;
