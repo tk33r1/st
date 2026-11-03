@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.17",
+      "date": "2026-11-04",
+      "changes": {
+        "ja": [
+          "長い討議でも雲の枠の丸みが四辺に続くようにしました。",
+          "肌の色がある絵文字は黄色の一個にまとめ、長押し・右クリックで肌の色を選べるようにしました。",
+          "「人・からだ」を「手ぶり」と「人」に分け、動物・自然のアイコンを熊の顔に変更しました。",
+          "絵文字検索の右側の閉じるボタンを「キャンセル」に変更しました。"
+        ],
+        "en": [
+          "Kept rounded cloud edges on all four sides of long persona replies.",
+          "Grouped skin-tone variants under a yellow emoji; hold or right-click to choose a skin tone.",
+          "Split People & body into Gestures and People, and replaced the Animals & nature icon with a bear face.",
+          "Replaced the emoji search close icon with a Cancel label."
+        ]
+      }
+    },
+    {
       "version": "7.16",
       "date": "2026-11-03",
       "changes": {

@@ -1,6 +1,6 @@
 {
   "name": "magi-app",
-  "version": "7.1.6",
+  "version": "7.1.7",
   "private": true,
   "description": "MAGI mobile — Multiple Agents Generating Intelligence client (PWA + Capacitor)",
   "scripts": {

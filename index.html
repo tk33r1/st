@@ -2038,24 +2038,19 @@
     .md .md-cite { margin-inline: 2px; text-decoration: underline; color: var(--primary-color) }
 
     .agent-personas { display: grid; gap: 1.25rem; margin: 0.5rem 0.1rem 1.25rem; }
-    /* 雲の上下は32pxのまま、中央だけを伸ばす。長い討議でも輪郭を間延びさせず、本文や操作を切り抜かない。 */
+    /* 丸みを四辺に反復する。長文でも縦方向へ輪郭を引き伸ばさない。 */
     .persona-card {
-      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-6 20 18 6 42 12C66-2 106-2 136 8C162 17 178 3 211 5C246 3 271 18 302 12C335 0 366 3 396 10C426 19 451-2 484 5C507 7 519 17 534 16C568 8 606 16 590 32Z'/%3E%3C/svg%3E");
-      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 17 572 25 545 19C518 34 482 31 456 24C424 16 403 32 367 28C333 32 310 19 279 24C247 34 215 30 186 24C156 18 137 34 103 28C75 33 45 24 34 19C14 23 -6 14 10 0Z'/%3E%3C/svg%3E");
-      --cloud-middle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 100' preserveAspectRatio='none'%3E%3Cpath d='M10 0C-4 17-2 37 5 50C-3 63-4 85 10 100H590C604 85 603 63 595 50C602 37 604 17 590 0Z'/%3E%3C/svg%3E");
-      --cloud-mask: var(--cloud-top) top / 100% 32px no-repeat, var(--cloud-middle) center / 100% calc(100% - 62px) no-repeat, var(--cloud-bottom) bottom / 100% 32px no-repeat;
+      --cloud-mask: linear-gradient(#000 0 0) center / calc(100% - 28px) calc(100% - 28px) no-repeat,
+        radial-gradient(ellipse 50% 100% at 50% 100%, #000 98%, transparent) top / 56px 22px repeat-x,
+        radial-gradient(ellipse 50% 100% at 50% 0%, #000 98%, transparent) bottom / 56px 22px repeat-x,
+        radial-gradient(ellipse 100% 50% at 100% 50%, #000 98%, transparent) left / 22px 56px repeat-y,
+        radial-gradient(ellipse 100% 50% at 0% 50%, #000 98%, transparent) right / 22px 56px repeat-y;
       position: relative;
       isolation: isolate;
       min-width: 0;
-      padding: 1.15rem 1.6rem;
+      padding: 1.65rem 1.8rem;
     }
-    .persona-card:nth-child(2) {
-      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-4 22 17 13 30 15C39 2 72-2 103 6C133 0 164 17 194 12C225 2 256 2 285 10C315 20 341 3 376 6C408-2 441 11 466 12C495 3 529 5 548 16C577 12 604 20 590 32Z'/%3E%3C/svg%3E");
-    }
-    .persona-card:nth-child(3) {
-      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 16 581 24 557 18C534 31 500 33 469 24C436 18 413 33 382 27C350 32 324 19 293 24C264 33 230 30 203 23C173 17 147 33 117 28C86 34 57 24 43 20C19 25 -6 16 10 0Z'/%3E%3C/svg%3E");
-    }
-    .persona-card::before, .persona-card::after { content: ''; position: absolute; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
+    .persona-card::before, .persona-card::after { content: ''; position: absolute; border-radius: 28px; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
     .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
     .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
     .persona-card:focus-within { z-index: 1; }
@@ -2244,7 +2239,7 @@
     .emoji-search { width: 100%; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 16px; outline: none; }
     .emoji-search:focus, .emoji-search:focus-visible { outline: none; box-shadow: none; }
     .emoji-search::placeholder { color: var(--secondary-color); opacity: 1; }
-    .emoji-close { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); font: inherit; font-size: 28px; cursor: pointer; }
+    .emoji-close { display: grid; place-items: center; flex: none; min-width: 70px; height: 44px; padding: 0 4px; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; }
     .emoji-tabs { display: flex; flex: none; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 0 10px; border-bottom: 1px solid var(--border-color); scrollbar-width: thin; }
     .emoji-tabs button { display: grid; place-items: center; flex: 1 0 36px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); cursor: pointer; }
     .emoji-tabs svg { width: 22px; height: 22px; }
@@ -2257,6 +2252,9 @@
     .emoji-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
     .emoji-option { display: grid; place-items: center; width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--text-color); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 30px; line-height: 1; cursor: pointer; }
     .emoji-option[aria-pressed="true"] { background: var(--primary-bg); box-shadow: inset 0 0 0 1px var(--primary-color); }
+    .emoji-option[data-tones] { position: relative; -webkit-touch-callout: none; user-select: none; }
+    .emoji-option[data-tones]::after { content: ''; position: absolute; right: 5px; bottom: 5px; border: 3px solid transparent; border-right-color: var(--secondary-color); border-bottom-color: var(--secondary-color); opacity: 0.65; }
+    .emoji-tones { position: absolute; z-index: 3; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: min(328px, calc(100% - 16px)); max-height: 210px; overflow-y: auto; padding: 8px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--surface-hover); box-shadow: 0 8px 28px #0006; }
     .emoji-empty { margin: 24px 4px; color: var(--secondary-color); font-size: 14px; line-height: 1.6; }
     .emoji-retry { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-color); font: inherit; cursor: pointer; }
     .emoji-retry[hidden] { display: none; }
@@ -8774,7 +8772,7 @@ function magiAcronymController(el) {
 }
 // MAGI_ACRONYM_END
     // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
-    const AGENT_SCREEN_VERSION = '7.16';
+    const AGENT_SCREEN_VERSION = '7.17';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -10063,15 +10061,33 @@ function loadAgentEmoji() {
 }
 var AGENT_EMOJI_GROUPS = [
   ['Smileys & emotion', 'スマイル・気持ち', 'M8 14s1.5 2 4 2 4-2 4-2M8 9h.01M16 9h.01', true],
-  ['People & body', '人・からだ', 'M7 21v-3a5 5 0 0 1 10 0v3M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8'],
-  ['Animals & nature', '動物・自然', 'M12 21c-7-4-9-10-7-16 5-1 10 1 14-2 1 8-1 15-7 18ZM12 21V10'],
+  ['People', '人', 'M7 21v-3a5 5 0 0 1 10 0v3M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8'],
+  ['Animals & nature', '動物・自然', 'M5 8C0 7 2 1 6 3l2 2a10 10 0 0 1 8 0l2-2c4-2 6 4 1 5a8 8 0 1 1-14 0ZM8 11h.01M16 11h.01M10 15q2-2 4 0l-2 2-2-2ZM12 17v2'],
   ['Food & drink', '食べ物・飲み物', 'M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-5 2-5 9 0 9'],
   ['Travel & places', '旅行・場所', 'M4 21V5h10v16M8 9h2M8 13h2M8 17h2M14 11h6v10M2 21h20'],
   ['Activities', 'アクティビティ', 'm5 5 14 14M5 19 19 5M12 2v20M2 12h20', true],
   ['Objects', 'もの', 'M9 18h6M9 22h6M8 14a6 6 0 1 1 8 0c-1 1-1 2-1 4H9c0-2 0-3-1-4'],
   ['Symbols', '記号', 'M5 9h15M4 15h15M11 3 7 21M17 3l-4 18'],
-  ['Flags', '旗', 'M5 22V3c5-3 9 3 14 0v12c-5 3-9-3-14 0']
+  ['Flags', '旗', 'M5 22V3c5-3 9 3 14 0v12c-5 3-9-3-14 0'],
+  ['Gestures', '手ぶり', 'M8 13V5a1.5 1.5 0 0 1 3 0v7-9a1.5 1.5 0 0 1 3 0v9-7a1.5 1.5 0 0 1 3 0v8-5a1.5 1.5 0 0 1 3 0v7c0 5-3 7-6 7-3 0-5-2-7-5l-3-4c-1-2 1-3 2-2l2 2']
 ];
+// 肌色・表示用異体字を除いたキーで束ねる。複数人の別表現も黄色の親に戻す。
+function agentEmojiBaseKey(em) {
+  var key = em.replace(/[\u{1F3FB}-\u{1F3FF}\uFE0F]/gu, '');
+  var aliases = { '🫱‍🫲': '🤝', '👩‍🤝‍👨': '👫', '👩‍🤝‍👩': '👭', '👨‍🤝‍👨': '👬', '🧑‍❤‍🧑': '💑', '🧑‍❤‍💋‍🧑': '💏',
+    '🧑‍🐰‍🧑': '👯', '👩‍🐰‍👩': '👯‍♀', '👨‍🐰‍👨': '👯‍♂', '🧑‍🫯‍🧑': '🤼', '👩‍🫯‍👩': '🤼‍♀', '👨‍🫯‍👨': '🤼‍♂' };
+  return aliases[key] || key;
+}
+function agentEmojiGestures(row) {
+  // Unicodeの手・腕・からだ。人物のポーズや職業は「人」に残す。
+  return row[1] === 1 && /^[\u{1F446}-\u{1F450}\u{1F590}\u{1F595}\u{1F596}\u{1F64C}\u{1F64F}\u{1F918}-\u{1F91F}\u{1F932}\u{1F933}\u{1F90C}\u{1F90F}\u{1FAF0}-\u{1FAFA}\u270A-\u270D\u261D\u{1F485}\u{1F4AA}\u{1F9B4}-\u{1F9B7}\u{1F9BB}\u{1F9BE}\u{1F9BF}\u{1F442}\u{1F443}\u{1F440}\u{1F441}\u{1F444}\u{1F445}\u{1F9E0}\u{1FAC0}-\u{1FAC1}\u{1FAE6}]/u.test(row[0]);
+}
+function agentEmojiFamilies(rows) {
+  var bases = new Map(), families = new Map();
+  AGENT_EMOJI_CATALOG.forEach(function (row) { if (!/[\u{1F3FB}-\u{1F3FF}]/u.test(row[0])) bases.set(agentEmojiBaseKey(row[0]), row); });
+  rows.forEach(function (row) { var key = agentEmojiBaseKey(row[0]); if (bases.has(key)) families.set(key, bases.get(key)); });
+  return Array.from(families.values());
+}
 var agentEmojiDialog = null, agentEmojiSearchRows = null;
 function agentEmojiNormalize(text) {
   return String(text || '').normalize('NFKC').toLowerCase().replace(/\uFE0F/g, '')
@@ -10115,7 +10131,7 @@ function openAgentEmojiPicker(bar, opener, current) {
   dialog.innerHTML = '<div class="emoji-handle" aria-hidden="true"></div><div class="emoji-search-row">'
     + '<label class="emoji-search-box"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>'
     + '<input type="search" class="emoji-search" maxlength="100" autocomplete="off" spellcheck="false"></label>'
-    + '<button type="button" class="emoji-close" autofocus>×</button></div><div class="emoji-tabs" role="tablist"></div>'
+    + '<button type="button" class="emoji-close" autofocus></button></div><div class="emoji-tabs" role="tablist"></div>'
     + '<div class="emoji-results" id="magi-emoji-results" role="tabpanel"><div class="emoji-result-head"><h2 id="magi-emoji-heading"></h2><span role="status" aria-live="polite" aria-atomic="true"></span></div>'
     + '<div class="emoji-grid" role="group"></div><p class="emoji-empty" hidden></p><button type="button" class="emoji-retry" hidden></button></div>';
   var search = dialog.querySelector('.emoji-search'), tabs = dialog.querySelector('.emoji-tabs'), grid = dialog.querySelector('.emoji-grid');
@@ -10123,7 +10139,7 @@ function openAgentEmojiPicker(bar, opener, current) {
   var retry = dialog.querySelector('.emoji-retry'); retry.textContent = tr('Try again', '再読み込み');
   search.setAttribute('aria-controls', 'magi-emoji-results'); results.setAttribute('aria-labelledby', 'magi-emoji-heading');
   search.placeholder = tr('Search', '検索'); search.setAttribute('aria-label', tr('Search all emoji', 'すべての絵文字を検索'));
-  dialog.querySelector('.emoji-close').setAttribute('aria-label', tr('Close', '閉じる'));
+  dialog.querySelector('.emoji-close').textContent = tr('Cancel', 'キャンセル');
   tabs.setAttribute('aria-label', tr('Emoji categories', '絵文字のカテゴリ'));
   function icon(path, circle) { return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (circle ? '<circle cx="12" cy="12" r="9"/>' : '') + '<path d="' + path + '"/></svg>'; }
   function tab(id, en, ja, path, circle) {
@@ -10131,20 +10147,24 @@ function openAgentEmojiPicker(bar, opener, current) {
     b.setAttribute('aria-controls', 'magi-emoji-results'); b.title = tr(en, ja); b.setAttribute('aria-label', b.title); b.innerHTML = icon(path, circle); tabs.appendChild(b);
   }
   tab('recent', 'Recent', '最近', 'M12 7v5l3 2', true);
-  AGENT_EMOJI_GROUPS.forEach(function (g, i) { tab(String(i), g[0], g[1], g[2], g[3]); });
+  [0, 9, 1, 2, 3, 4, 5, 6, 7, 8].forEach(function (i) { var g = AGENT_EMOJI_GROUPS[i]; tab(String(i), g[0], g[1], g[2], g[3]); });
   function render() {
     if (!AGENT_EMOJI_CATALOG) return;
+    closeTones(false);
     var query = search.value.trim(), rows;
     if (query) rows = agentEmojiSearch(query);
     else if (selected === 'recent') rows = recent.map(function (em) { return AGENT_EMOJI_CATALOG.find(function (row) { return row[0] === em; }); }).filter(Boolean);
-    else rows = AGENT_EMOJI_CATALOG.filter(function (row) { return row[1] === Number(selected); });
+    else rows = AGENT_EMOJI_CATALOG.filter(function (row) { return selected === '9' ? agentEmojiGestures(row) : row[1] === Number(selected) && (selected !== '1' || !agentEmojiGestures(row)); });
+    rows = agentEmojiFamilies(rows);
     heading.textContent = query ? tr('Search results', '検索結果') : selected === 'recent' ? tr('Recent', '最近') : tr(AGENT_EMOJI_GROUPS[Number(selected)][0], AGENT_EMOJI_GROUPS[Number(selected)][1]);
     count.textContent = tr(rows.length + ' emoji', rows.length + '件'); grid.setAttribute('aria-label', heading.textContent);
     tabs.querySelectorAll('button').forEach(function (b) { var active = b.dataset.category === selected; b.setAttribute('aria-selected', String(active)); b.tabIndex = active ? 0 : -1; });
     var frag = document.createDocumentFragment();
     rows.forEach(function (row, i) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'emoji-option'; b.dataset.emoji = row[0]; b.textContent = row[0];
-      b.title = tr(row[2], row[3]); b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(current === row[0])); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
+      b.title = tr(row[2], row[3]);
+      if (AGENT_EMOJI_CATALOG.some(function (r) { return r[0] !== row[0] && agentEmojiBaseKey(r[0]) === agentEmojiBaseKey(row[0]); })) { b.dataset.tones = 'true'; b.setAttribute('aria-haspopup', 'dialog'); b.title += tr(' — hold or right-click for skin tone', ' — 長押し・右クリックで肌の色'); }
+      b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(current === row[0])); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
     });
     grid.replaceChildren(frag); results.scrollTop = 0; empty.hidden = !!rows.length;
     empty.textContent = query ? tr('No emoji found. Try another word.', '絵文字が見つかりません。別の言葉で検索してください。') : tr('No recently used emoji yet.', '最近使った絵文字はまだありません。');
@@ -10168,16 +10188,54 @@ function openAgentEmojiPicker(bar, opener, current) {
     else if (e.key === 'End') next = list.length - 1;
     if (next !== undefined && list.length) { e.preventDefault(); next = Math.max(0, Math.min(list.length - 1, next)); list[i].tabIndex = -1; list[next].tabIndex = 0; list[next].focus(); }
   });
-  grid.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-emoji]'); if (!b) return;
-    var em = b.dataset.emoji; closeAgentEmojiPicker(true);
+  var tonePanel = null, toneAnchor = null, holdTimer, holdStart, suppressClick = false;
+  function closeTones(focus) {
+    clearTimeout(holdTimer);
+    if (tonePanel) { tonePanel.remove(); tonePanel = null; }
+    if (toneAnchor) { toneAnchor.setAttribute('aria-expanded', 'false'); if (focus && toneAnchor.isConnected) toneAnchor.focus(); }
+    toneAnchor = null;
+  }
+  function choose(em) {
+    closeAgentEmojiPicker(true);
     if (!bar.isConnected || currentSessionId !== owner.sessionId || reactionOwner(bar).mid !== owner.mid) return;
     rateReply(bar, em);
+  }
+  function showTones(button, keyboard) {
+    if (!button || !button.dataset.tones) return;
+    closeTones(false); toneAnchor = button; button.setAttribute('aria-expanded', 'true');
+    tonePanel = document.createElement('div'); tonePanel.className = 'emoji-tones'; tonePanel.setAttribute('role', 'dialog');
+    tonePanel.setAttribute('aria-label', tr('Skin tone', '肌の色'));
+    var key = agentEmojiBaseKey(button.dataset.emoji);
+    AGENT_EMOJI_CATALOG.filter(function (r) { return agentEmojiBaseKey(r[0]) === key; }).forEach(function (row) {
+      var option = document.createElement('button'); option.type = 'button'; option.className = 'emoji-option'; option.textContent = row[0];
+      option.setAttribute('aria-label', tr(row[2], row[3])); option.addEventListener('click', function () { choose(row[0]); }); tonePanel.appendChild(option);
+    });
+    dialog.appendChild(tonePanel);
+    var r = button.getBoundingClientRect(), d = dialog.getBoundingClientRect(), h = tonePanel.offsetHeight;
+    tonePanel.style.left = Math.max(8, Math.min(r.left - d.left - 12, dialog.clientWidth - tonePanel.offsetWidth - 8)) + 'px';
+    tonePanel.style.top = Math.max(8, Math.min(r.top - d.top - h - 8 < 8 ? r.bottom - d.top + 8 : r.top - d.top - h - 8, dialog.clientHeight - h - 8)) + 'px';
+    if (keyboard) tonePanel.firstElementChild.focus();
+  }
+  grid.addEventListener('contextmenu', function (e) { var b = e.target.closest('[data-tones]'); if (b) { e.preventDefault(); showTones(b, false); } });
+  grid.addEventListener('pointerdown', function (e) {
+    suppressClick = false; clearTimeout(holdTimer);
+    var b = e.target.closest('[data-tones]'); if (!b || e.button !== 0) return;
+    holdStart = { x: e.clientX, y: e.clientY };
+    holdTimer = setTimeout(function () { suppressClick = true; showTones(b, false); }, 450);
+  });
+  grid.addEventListener('pointermove', function (e) { if (holdStart && Math.hypot(e.clientX - holdStart.x, e.clientY - holdStart.y) > 10) clearTimeout(holdTimer); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (name) { grid.addEventListener(name, function () { clearTimeout(holdTimer); }); });
+  grid.addEventListener('keydown', function (e) { if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); showTones(e.target.closest('[data-tones]'), true); } });
+  dialog.addEventListener('pointerdown', function (e) { if (tonePanel && !tonePanel.contains(e.target) && e.target !== toneAnchor) closeTones(false); });
+  results.addEventListener('scroll', function () { closeTones(false); });
+  grid.addEventListener('click', function (e) {
+    if (suppressClick) { suppressClick = false; return; }
+    var b = e.target.closest('[data-emoji]'); if (b) choose(b.dataset.emoji);
   });
   var timer;
   search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(render, 70); });
   dialog.querySelector('.emoji-close').addEventListener('click', function () { closeAgentEmojiPicker(true); });
-  dialog.addEventListener('cancel', function (e) { e.preventDefault(); closeAgentEmojiPicker(true); });
+  dialog.addEventListener('cancel', function (e) { e.preventDefault(); if (tonePanel) closeTones(true); else closeAgentEmojiPicker(true); });
   dialog.addEventListener('click', function (e) { e.stopPropagation(); if (e.target === dialog) closeAgentEmojiPicker(true); });
   function load() {
     results.setAttribute('aria-busy', 'true'); retry.hidden = true;
@@ -10203,7 +10261,7 @@ function openAgentEmojiPicker(bar, opener, current) {
   }
   closePromptMenu(); closeRatePops(false);
   agentEmojiDialog = { dialog: dialog, opener: opener, bar: bar, cleanup: function () {
-    clearTimeout(timer); if (window.visualViewport) window.visualViewport.removeEventListener('resize', viewport); window.removeEventListener('resize', viewport);
+    clearTimeout(timer); closeTones(false); if (window.visualViewport) window.visualViewport.removeEventListener('resize', viewport); window.removeEventListener('resize', viewport);
   } };
   if (window.visualViewport) window.visualViewport.addEventListener('resize', viewport);
   window.addEventListener('resize', viewport); viewport(); document.body.appendChild(dialog); dialog.showModal(); load();

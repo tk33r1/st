@@ -254,24 +254,19 @@
     .prompt-select-text { overflow-y: auto; padding: 4px 2px 12px; font-size: 17px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
     .agent-toast { position: absolute; z-index: 90; left: 50%; bottom: calc(96px + var(--magi-safe-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 999px; background: var(--text-color); color: var(--surface-color); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: fadeIn var(--duration-fast) ease both; pointer-events: none; }
     .agent-personas { display: grid; gap: 1.25rem; margin: 0.5rem 0.1rem 1.25rem; }
-    /* 雲の上下は32pxのまま、中央だけを伸ばす。長い討議でも輪郭を間延びさせず、本文や操作を切り抜かない。 */
+    /* 丸みを四辺に反復する。長文でも縦方向へ輪郭を引き伸ばさない。 */
     .persona-card {
-      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-6 20 18 6 42 12C66-2 106-2 136 8C162 17 178 3 211 5C246 3 271 18 302 12C335 0 366 3 396 10C426 19 451-2 484 5C507 7 519 17 534 16C568 8 606 16 590 32Z'/%3E%3C/svg%3E");
-      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 17 572 25 545 19C518 34 482 31 456 24C424 16 403 32 367 28C333 32 310 19 279 24C247 34 215 30 186 24C156 18 137 34 103 28C75 33 45 24 34 19C14 23 -6 14 10 0Z'/%3E%3C/svg%3E");
-      --cloud-middle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 100' preserveAspectRatio='none'%3E%3Cpath d='M10 0C-4 17-2 37 5 50C-3 63-4 85 10 100H590C604 85 603 63 595 50C602 37 604 17 590 0Z'/%3E%3C/svg%3E");
-      --cloud-mask: var(--cloud-top) top / 100% 32px no-repeat, var(--cloud-middle) center / 100% calc(100% - 62px) no-repeat, var(--cloud-bottom) bottom / 100% 32px no-repeat;
+      --cloud-mask: linear-gradient(#000 0 0) center / calc(100% - 28px) calc(100% - 28px) no-repeat,
+        radial-gradient(ellipse 50% 100% at 50% 100%, #000 98%, transparent) top / 56px 22px repeat-x,
+        radial-gradient(ellipse 50% 100% at 50% 0%, #000 98%, transparent) bottom / 56px 22px repeat-x,
+        radial-gradient(ellipse 100% 50% at 100% 50%, #000 98%, transparent) left / 22px 56px repeat-y,
+        radial-gradient(ellipse 100% 50% at 0% 50%, #000 98%, transparent) right / 22px 56px repeat-y;
       position: relative;
       isolation: isolate;
       min-width: 0;
-      padding: 1.15rem 1.6rem;
+      padding: 1.65rem 1.8rem;
     }
-    .persona-card:nth-child(2) {
-      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-4 22 17 13 30 15C39 2 72-2 103 6C133 0 164 17 194 12C225 2 256 2 285 10C315 20 341 3 376 6C408-2 441 11 466 12C495 3 529 5 548 16C577 12 604 20 590 32Z'/%3E%3C/svg%3E");
-    }
-    .persona-card:nth-child(3) {
-      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 16 581 24 557 18C534 31 500 33 469 24C436 18 413 33 382 27C350 32 324 19 293 24C264 33 230 30 203 23C173 17 147 33 117 28C86 34 57 24 43 20C19 25 -6 16 10 0Z'/%3E%3C/svg%3E");
-    }
-    .persona-card::before, .persona-card::after { content: ''; position: absolute; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
+    .persona-card::before, .persona-card::after { content: ''; position: absolute; border-radius: 28px; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
     .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
     .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
     .persona-card:focus-within { z-index: 1; }
@@ -365,7 +360,7 @@
     .emoji-search { width: 100%; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 16px; outline: none; }
     .emoji-search:focus, .emoji-search:focus-visible { outline: none; box-shadow: none; }
     .emoji-search::placeholder { color: var(--secondary-color); opacity: 1; }
-    .emoji-close { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); font: inherit; font-size: 28px; cursor: pointer; }
+    .emoji-close { display: grid; place-items: center; flex: none; min-width: 70px; height: 44px; padding: 0 4px; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; }
     .emoji-tabs { display: flex; flex: none; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 0 10px; border-bottom: 1px solid var(--border-color); scrollbar-width: thin; }
     .emoji-tabs button { display: grid; place-items: center; flex: 1 0 36px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); cursor: pointer; }
     .emoji-tabs svg { width: 22px; height: 22px; }
@@ -378,6 +373,9 @@
     .emoji-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
     .emoji-option { display: grid; place-items: center; width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--text-color); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 30px; line-height: 1; cursor: pointer; }
     .emoji-option[aria-pressed="true"] { background: var(--primary-bg); box-shadow: inset 0 0 0 1px var(--primary-color); }
+    .emoji-option[data-tones] { position: relative; -webkit-touch-callout: none; user-select: none; }
+    .emoji-option[data-tones]::after { content: ''; position: absolute; right: 5px; bottom: 5px; border: 3px solid transparent; border-right-color: var(--secondary-color); border-bottom-color: var(--secondary-color); opacity: 0.65; }
+    .emoji-tones { position: absolute; z-index: 3; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: min(328px, calc(100% - 16px)); max-height: 210px; overflow-y: auto; padding: 8px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--surface-hover); box-shadow: 0 8px 28px #0006; }
     .emoji-empty { margin: 24px 4px; color: var(--secondary-color); font-size: 14px; line-height: 1.6; }
     .emoji-retry { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-color); font: inherit; cursor: pointer; }
     .emoji-retry[hidden] { display: none; }
@@ -999,6 +997,6 @@
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
   <script src="share-image.js?v=20261102_2"></script>
-  <script src="app.js?v=20261103_20"></script>
+  <script src="app.js?v=20261104_1"></script>
 </body>
 </html>
