@@ -90,9 +90,16 @@ try {
         window.releaseDecode = () => { FileReader.prototype.readAsDataURL = read; reviewReads.splice(0).forEach(start => start()); };
       });
     }
+    // 保存・復元の検査ではキーボード経路を使う。復元スクロールでホバー枠が閉じる
+    // 競合を混ぜない。ホバー操作はtest-magi-hover-reactions-browser.mjsで別途検査する。
+    async function selectReaction(emoji) {
+      const button = page.locator('.agent-reply').last().locator('[data-act="rate"]');
+      await button.focus(); await button.press('Enter');
+      await page.locator('.rate-pop [data-rate="' + emoji + '"]').click();
+    }
     async function beginRating() {
       heldRating = null;
-      await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-rate="👍"]').click();
+      await selectReaction('👍');
       const deadline = Date.now() + 5000;
       while (!heldRating && Date.now() < deadline) await new Promise(r => setTimeout(r, 10));
       assert(heldRating, '評価登録が始まっていない');
@@ -166,13 +173,13 @@ try {
     await page.evaluate(id => loadSavedSession(id), owner);
     await page.reload(); await ready();
     assert.equal(await page.evaluate(() => agentHistory.at(-1).reactions.integrated.delete_token), firstReceipt.token);
-    await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-rate="👍"]').click();
+    await selectReaction('👍');
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, firstReceipt.token); assert.equal(reactions.at(-1).op, 'remove');
     results.push(surface + '/late-rating-stays-with-owner-and-removes-after-reload');
 
     await beginRating(); await reset(); await page.evaluate(id => loadSavedSession(id), owner);
-    await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-rate="👍"]').click();
+    await selectReaction('👍');
     const secondReceipt = await finishRating();
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, secondReceipt.token);
@@ -184,13 +191,13 @@ try {
     assert.equal(await page.evaluate(() => agentHistory.length), 0);
     await page.evaluate(() => toggleAgentTemporary());
     assert.equal(await page.evaluate(() => agentHistory.at(-1).reactions.integrated.delete_token), temporaryReceipt.token);
-    await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-rate="👍"]').click();
+    await selectReaction('👍');
     await page.waitForFunction(() => !agentHistory.at(-1).reactions.integrated);
     assert.equal(reactions.at(-1).delete_token, temporaryReceipt.token);
     results.push(surface + '/temporary-chat-keeps-normal-rating-owner');
 
     await beginRating();
-    await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-rate="😢"]').click();
+    await selectReaction('😢');
     const beforeReplacement = reactions.length;
     await reset(); await send('LEAVE-WHILE-CHANGING-RATING');
     const replacedReceipt = await finishRating();
