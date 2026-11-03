@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 03 Nov 2026 08:46:52 +0900</lastBuildDate>
+    <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 04 Nov 2026 07:11:50 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月4日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261104/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261104/</guid>
+      <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
+      <description>イオンが次世代自動化モデルセンター「イオン川口東XD」を本稼働させ、物流の自動化とサプライチェーン高度化の動きが加速している。 決済事業者の破綻による決済停止を機に、飲食店で店舗DXや決済の冗長化を見直す動きが表面化した。</description>
+    </item>
     <item>
       <title>2026年11月3日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261103/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261020/</guid>
       <pubDate>Tue, 20 Oct 2026 08:00:00 +0900</pubDate>
       <description>物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。</description>
-    </item>
-    <item>
-      <title>2026年10月19日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261019/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261019/</guid>
-      <pubDate>Mon, 19 Oct 2026 08:00:00 +0900</pubDate>
-      <description>京急線内初の無人決済店舗が開業し、鉄道沿線の生活密着型店舗へ無人決済が広がる動きが示された。 セルフレジのNG行動や店員の本音が共感を集め、省人化の現場負荷が生活者の関心事になっている。</description>
     </item>
   </channel>
 </rss>
