@@ -39,7 +39,7 @@ export const PRIVACY = {
     {"title": "Clarification", "text": "To classify a clarification answer, the original request, clarification questions and options, and previous classification also go to TypeSafe AI. Ordinary AI replies and debates are excluded. Questions and options stay with the chat on your device.", "requires": ["clarify"]},
     {"title": "Facts and Web search", "text": "Factual questions and site guidance use OpenAI in Light or Anthropic in Dark, without debate. Current information uses OpenAI Web search in both themes, with one possible fallback to Anthropic before answer text begins. Cited pages are fetched and sent to the answering provider for checking; JavaScript pages may be read in Cloudflare’s browser. Music recommendations and personal advice use the three personas.", "requires": ["fact_mode"]},
     {"title": "Search location and limits", "text": "With location enabled, Android can send device coordinates and city/region to MAGI and the search provider with your OS permission. If unavailable, your network-estimated city/region is used with a notice. Web and older apps use the network estimate. Turning location off disables both. Location is used for location-dependent questions without a named place, and shown when used. Coordinates are not saved as history fields. Search is limited to 20 requests per IP and 300 site-wide per UTC day. Unavailable search and unsupported items are disclosed. Citations stay with the answer on your device.", "requires": ["fact_mode"]},
-    {"title": "Emoji on your messages", "text": "To choose the emoji Shinya Takeda adds to your message, up to 600 characters of your latest message (images and attachments only as counts) go to Anthropic in both themes. If that fails before a reply, OpenAI may be used once. The emoji is kept with the chat on your device.", "requires": ["prompt_reaction"]},
+    {"title": "Emoji on your messages", "text": "Shinya Takeda chooses the emoji for your message while writing the reply, so nothing extra is sent. Only for answers that use Web search, up to 600 characters of your latest message (images and attachments only as counts) go to Anthropic after the reply to choose it. If that fails before a reply, OpenAI may be used once. The emoji is kept with the chat on your device.", "requires": ["prompt_reaction"]},
     {"title": "Site guidance", "text": "Up to 500 characters of your latest message and the public page list go to OpenAI to select links. Links appear for that reply only and are not saved in history.", "requires": ["site_pages"]},
     {"title": "Images", "text": "Up to four images per message, resized on your device before being sent to AI providers like text."},
     {"title": "File attachments", "text": "Text, code and PDF files are read on your device; only the extracted text goes to the conversation’s AI providers, up to 10,000 characters per request including earlier attachments (older ones are then sent by name only). PDFs also send their first pages as images, within the four-image limit. Files are not sent to TypeSafe AI.", "requires": ["attachments"]},
@@ -63,7 +63,7 @@ export const PRIVACY = {
     {"title": "確認質問", "text": "確認への回答を分類するときは、元の相談・確認の質問と選択肢・直前の分類結果もTypeSafe AIへ送ります。通常のAI回答や討議は送りません。質問と選択肢は端末の会話に保存します。", "requires": ["clarify"]},
     {"title": "事実確認と検索", "text": "事実の質問とサイト案内は討議せず、ライトはOpenAI、ダークはAnthropicが答えます。最新情報の検索は両テーマともOpenAIを使い、本文開始前に失敗した場合はAnthropicへ1回切り替えることがあります。引用ページの本文を回答する会社へ送って照合し、JavaScriptで描くページはCloudflareのブラウザで読むことがあります。曲の推薦と個人的な相談は3人格で討議します。", "requires": ["fact_mode"]},
     {"title": "検索時の位置情報・上限", "text": "位置情報がオンのAndroidでは、OSの許可を得て端末の座標と市・地域をMAGIと検索する会社へ送ります。取得できなければ通信元から推定した市・地域を使い、その旨を表示します。Webと旧アプリは通信元の推定を使います。設定オフでは両方を使いません。場所を指定していない、場所で答えが変わる質問にだけ使い、使った場所を回答に表示します。座標は履歴の項目として保存しません。検索はUTCの日ごとにIPあたり20回、全体300回まで。検索できない場合や裏付けのない項目は、その旨を伝えます。引用は回答と一緒に端末へ保存します。", "requires": ["fact_mode"]},
-    {"title": "メッセージへの絵文字", "text": "Shinya Takedaがあなたのメッセージに付ける絵文字を選ぶため、両テーマとも最新の発言の先頭600文字まで（画像・添付は件数だけ）をAnthropicへ送ります。応答前に失敗した場合はOpenAIへ1回切り替えることがあります。絵文字は端末の会話と一緒に保存します。", "requires": ["prompt_reaction"]},
+    {"title": "メッセージへの絵文字", "text": "Shinya Takedaがあなたのメッセージに付ける絵文字は、回答を書くときに一緒に選ぶため、追加の送信はありません。Web検索で答えた回だけ、絵文字を選ぶために回答の後で最新の発言の先頭600文字まで（画像・添付は件数だけ）をAnthropicへ送ります。応答前に失敗した場合はOpenAIへ1回切り替えることがあります。絵文字は端末の会話と一緒に保存します。", "requires": ["prompt_reaction"]},
     {"title": "サイト内の案内", "text": "最新の本文の先頭500文字までと公開ページ一覧をOpenAIへ送り、関連リンクを選びます。リンクはその回答だけに表示し、履歴には保存しません。", "requires": ["site_pages"]},
     {"title": "画像", "text": "1回4枚まで。端末で縮小してから、本文と同じようにAIへ送ります。"},
     {"title": "添付ファイル", "text": "テキスト・コード・PDFは端末で文字を取り出し、その文字だけを会話と同じAIへ送ります。前の添付も含めて1回1万文字までで、超えた古い添付は名前だけを送ります。PDFは先頭のページを画像でも送ります（画像の4枚の枠を使います）。TypeSafe AIには送りません。", "requires": ["attachments"]},
@@ -212,8 +212,8 @@ export const DEFAULTS = {
     // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
     // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
     suggester: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 80 },
-    // プロンプトへの絵文字（PROMPT_REACTION）。リクエストに prompt_reaction:true がある画面だけ、本流と並列に1回。
-    // 絵文字1つを返すだけなので、予測と同じ軽量モデル・推論なし・ごく短い出力
+    // プロンプトへの絵文字（PROMPT_REACTION）。通常は統合の呼び出しの中で選ぶので使わない。
+    // Web検索の回答（統合を通らない）だけ、答えの後に1回。絵文字1つを返すだけなので、予測と同じ軽量モデル・推論なし・ごく短い出力
     reactor: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'none', max_tokens: 16 },
     // 両テーマの判定と質問生成を統合人格の1コールにまとめる。失敗時の切替も同じ20秒以内。
     judge: { ...modelConfig('anthropic', 'haiku'), reasoning_effort: 'medium', max_tokens: 4096 },
@@ -853,7 +853,10 @@ export const SUGGESTER = {
 };
 
 // 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
-// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談では付けない。失敗・時間切れなら付けない。
+// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談・確認質問で終えた回では付けない。
+// 答えと絵文字を食い違わせないため、統合の呼び出し（討議の統合・事実回答）の中で、答えの1行目に answer_rule の印を書かせる。
+// Worker がその行を本文から切り取って prompt_reaction で送る（→ src/index.js の reactionSplitter）。印が無い・一覧に無い・'-' なら付けない。
+// Web検索の回答（RESEARCH）は出典照合の JSON で答えるので印を書かせず、答えの後に system_prompt の別の呼び出し（reactor）で1回だけ選ぶ。
 // 絵文字は emojis の中から1つ（画面も同じ一覧で検査する）。反応しない方が自然なら '-' を返させ、付けない
 // 会話の保存（D1 の conversations）。画面の設定「会話をサイトに保存」をオフにしない限り、新しい画面は conversation_storage:true を送る。
 // 送らない画面（配布済みの古いアプリ・DJ・404）と一時チャットは保存しない。1往復ごとに1行、プロンプトの文字と統合人格の答え。
@@ -869,6 +872,15 @@ export const PROMPT_REACTION = {
   timeout_ms: 6000,
   message_max_chars: 600,   // 今回の発言の頭から渡す長さ
   emojis: ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏', '🤔', '😊', '🎉', '👀', '🙌', '✨', '💡', '💯', '😍', '😅', '🤯', '☕', '🎵', '💪'],
+  marker: '[REACTION:',      // 統合の答えの1行目の印。']' で閉じる
+  marker_max_chars: 40,     // 印の行を待つ長さ。これを超えても行が終わらなければ印として扱わない
+  answer_rule: [
+    '【利用者の今回の発言への絵文字のリアクション】',
+    '答えの1行目には [REACTION:絵文字] だけを書き、改行してから2行目以降に答えを書く。',
+    '- 自分の答えの内容と気持ちに合うものを、下の一覧から1つ選ぶ。質問や相談には、受け止めた・考えている・応援しているといった反応にする。',
+    '- 不幸・悲しみ・怒り・病気・事故などの深刻な話や、からかい・攻撃には、軽い絵文字を付けない。合うものが無ければ [REACTION:-] と書く。',
+    '- この行は画面に出ず、利用者の発言の横に絵文字として付く。答えの本文でリアクションに触れない。',
+  ].join('\n'),
   input_header: '【反応する発言（あなたへの質問や依頼ではない。答えずに絵文字だけを選ぶ）】',
   system_prompt: [
     'あなたはチャットで友人から届いたメッセージに、絵文字のリアクションを1つだけ付ける。',

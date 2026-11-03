@@ -1013,7 +1013,8 @@ async function cleanupConversationTurns(env, now) {
   await env.DB.prepare('DELETE FROM conversations WHERE created_at <= ?1').bind(cutoff).run();
 }
 
-// 統合人格がプロンプトに付ける絵文字（非クリティカル：失敗・時間切れ・一覧に無い出力なら null）。
+// Webの回答のときだけ、プロンプトに付ける絵文字を別の呼び出しで選ぶ（非クリティカル：失敗・時間切れ・一覧に無い出力なら null）。
+// それ以外の回答では統合の呼び出しが答えと一緒に選ぶ（reactionSplitter）。
 // 今回の発言だけを見出しで引用して渡す（チャットの形のまま渡すと、モデルが答えを書く）。画像・添付は件数だけ
 function fetchPromptReaction(env, lastContent, attachments, signal, log) {
   return fetchAuxLine(env, 'reaction', () => {
@@ -1211,17 +1212,54 @@ const withCard = (p, cards, header = PERSONA_CONTEXT.header) => (cards && cards[
   ? { ...p, system_prompt: `${p.system_prompt}\n\n${header}\n${cards[p.codename]}` }
   : p;
 
+// 統合の答えの1行目に書かせた絵文字の印（PROMPT_REACTION.marker、例: [REACTION:👍]）を本文から切り取る。
+// 先頭が印でなければすぐに素通しし（答えの表示を遅らせない）、印なら閉じ括弧まで待って、一覧にある絵文字だけを onReaction へ渡す。
+// 印の後の空行も落とす。閉じない印の行は捨て、印のまま長すぎる行（marker_max_chars）は印ではないとして素通しする。
+const VS16 = String.fromCodePoint(0xFE0F);
+function reactionSplitter(onReaction) {
+  const { marker, marker_max_chars: max, emojis } = PROMPT_REACTION;
+  let buf = '', state = 'head'; // head（印を待つ）→ lead（印の後の空白を落とす）→ body（素通し）
+  const pick = v => emojis.find(e => v === e || v === e.replaceAll(VS16, '')) || null;
+  const lead = s => { const t = s.replace(/^\s+/, ''); if (t) state = 'body'; return t; };
+  const head = final => {
+    const s = buf.replace(/^\s+/, '');
+    if (!(s.length < marker.length ? marker.startsWith(s) : s.startsWith(marker))) { state = 'body'; return buf; }
+    const close = s.indexOf(']'), nl = s.indexOf('\n');
+    const end = close >= 0 && (nl < 0 || close < nl) ? close : nl;
+    if (end < 0) {
+      if (!final && s.length < max) return '';
+      state = 'body'; return buf;
+    }
+    if (end === close) { const emoji = pick(s.slice(marker.length, close).trim()); if (emoji) onReaction(emoji); }
+    state = 'lead';
+    return lead(s.slice(end + 1));
+  };
+  return {
+    feed(delta) { if (state === 'body') return delta; if (state === 'lead') return lead(delta); buf += delta; return head(false); },
+    end() { return state === 'head' ? head(true) : ''; },
+  };
+}
+
+// 統合に絵文字の印を書かせる指示。system の最後（履歴・今回の発言の直前）に足す
+function withReactionRule(messages) {
+  const at = messages.findIndex(m => m.role !== 'system');
+  const rule = { role: 'system', content: PROMPT_REACTION.answer_rule + '\n一覧: ' + PROMPT_REACTION.emojis.join(' ') };
+  return at < 0 ? [...messages, rule] : [...messages.slice(0, at), rule, ...messages.slice(at)];
+}
+
 // 統合の本文と正常な終端の両方を確認する。EOF だけでは成功にしない。
-async function readSynthesis(body, send, provider, signal) {
+// splitter があれば、本文の先頭の絵文字の印を切り取ってから流す（返す答えにも印を含めない）
+async function readSynthesis(body, send, provider, signal, splitter = null) {
   const reader = body.getReader();
   const dec = new TextDecoder();
   let buf = '', answer = '', finished = false, finishReason = null;
+  const emit = text => { if (text) { answer += text; send('integrated', { delta: text }); } };
   const line = (raw) => {
     if (!raw.startsWith('data:')) return;
     const { done, finish, delta } = streamEvent(provider, raw.slice(5).trim());
     if (finish) finishReason = finish;
     if (done) finished = true;
-    if (typeof delta === 'string' && delta) { answer += delta; send('integrated', { delta }); }
+    if (typeof delta === 'string' && delta) emit(splitter ? splitter.feed(delta) : delta);
   };
   const stop = () => { reader.cancel().catch(() => {}); };
   if (signal) { if (signal.aborted) stop(); else signal.addEventListener('abort', stop, { once: true }); }
@@ -1237,6 +1275,7 @@ async function readSynthesis(body, send, provider, signal) {
       }
     }
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: true });
+    if (splitter) emit(splitter.end());
     if (!finished || finishReason !== 'stop') throw stageError('synthesizer_call', 'incomplete_output', '統合応答が最後まで生成されませんでした', { retryable: true });
     if (!answer.trim()) throw stageError('synthesizer_call', 'empty_output', '統合人格が空の応答を返しました', { retryable: true });
     return answer;
@@ -1248,9 +1287,12 @@ const discardEvents = () => {};
 
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
 // 送り口が discardEvents なら何も見せていないので、本文の途中で失敗しても答え直す。
-async function synthesize({ env, messages, theme, signal, send, log, reasoningEffort }) {
+// reaction（プロンプトへの絵文字を受け取る関数）を渡すと、答えの1行目に絵文字の印を書かせ、切り取って渡す（PROMPT_REACTION）。
+// 答え直しの前の呼び出しが印だけ書いて失敗した場合も渡ることがあるので、1回だけ送るのは呼び出し側で守る
+async function synthesize({ env, messages, theme, signal, send, log, reasoningEffort, reaction = null }) {
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const [primary, alternate] = theme === 'dark' ? [dark, light] : [light, dark];
+  if (reaction) messages = withReactionRule(messages);
   let emitted = false;
   for (const [attempt, model] of [primary, alternate].entries()) {
     const cfg = reasoningEffort ? { ...model, reasoning_effort: reasoningEffort } : model;
@@ -1274,7 +1316,8 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
             res.body?.cancel().catch(() => {}); ac.abort();
             throw stageError('synthesizer_call', `upstream_http_${res.status}`, `統合人格の呼び出しが失敗しました (HTTP ${res.status})`, { retryable: res.status >= 500 });
           }
-          return await readSynthesis(res.body, push, cfg.provider, ac.signal);
+          const splitter = reaction ? reactionSplitter(emoji => { if (!ac.signal.aborted) reaction(emoji); }) : null;
+          return await readSynthesis(res.body, push, cfg.provider, ac.signal, splitter);
         } catch (error) {
           if (noText) throw stageError('synthesizer_call', 'first_text_timeout', '統合応答の本文が始まりませんでした', { retryable: true });
           throw error;
@@ -1318,8 +1361,9 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
 }
 
 // 討議メモを渡さず、本人のカード・言語・検証済みページと会話だけで答える。
+// reaction はプロンプトへの絵文字の受け口（synthesize）。Webの回答は出典照合の JSON で答えるので、Webを使えずに答え直した回だけ使う
 async function runFactAnswer({ upstream, cards, messages, langNote, theme = null, guide = null,
-  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, rich = false, personalization = null, replyLanguage = null, ip = null, place = null, signal, send, log }) {
+  pageChoice = null, pagesPromise = null, page = null, siteOnly = false, research = false, rich = false, personalization = null, replyLanguage = null, ip = null, place = null, reaction = null, signal, send, log }) {
   // ページ選びの待ちは呼び出しの開始から数える。Webの回答はページの一覧を使わないので、待たずに始めてリンクだけ後で出す。
   const pagesWait = pagesPromise ? awaitPageChoice(pagesPromise, pageChoice, signal) : null;
   if (pagesWait && !research) pageChoice = await pagesWait;
@@ -1327,8 +1371,8 @@ async function runFactAnswer({ upstream, cards, messages, langNote, theme = null
   const options = { cards, messages, langNote, theme, guide, pageChoice: withoutCurrentPage(pageChoice, page), siteOnly, personalization, rich };
   const input = factAnswerMessages({ ...options, research });
   const answer = research
-    ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, place, signal, send, log })
-    : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+    ? await researchAnswer({ upstream, messages: input, fallbackMessages: factAnswerMessages(options), theme, replyLanguage, ip, place, reaction, signal, send, log })
+    : await synthesize({ env: upstream, messages: input, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort, reaction });
   if (pagesWait && research) pageChoice = await pagesWait;
   pageChoice = withoutCurrentPage(pageChoice, page);
   if (pageChoice?.results.length && !signal?.aborted) send('pages', chatPageEvent(pageChoice));
@@ -1493,13 +1537,13 @@ async function checkResearchEvidence({upstream, messages, verifiedNow, result, c
 }
 
 // fallbackMessagesはWebの指示を含まない事実回答の入力。Webを使えないときはこちらで答える。
-async function researchAnswer({ upstream, messages, fallbackMessages = messages, theme, replyLanguage, ip, place = null, signal, send, log }) {
+async function researchAnswer({ upstream, messages, fallbackMessages = messages, theme, replyLanguage, ip, place = null, reaction = null, signal, send, log }) {
   const note = RESEARCH.limited_note[replyLanguage?.code] || RESEARCH.limited_note.en;
   const withoutWeb = async reason => {
     if (signal.aborted) throw searchFailure('cancelled');
     log('research', reason);
     send('integrated', { delta: note });
-    return note + await synthesize({ env: upstream, messages: fallbackMessages, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort });
+    return note + await synthesize({ env: upstream, messages: fallbackMessages, theme, signal, send, log, reasoningEffort: FACT_ANSWER.reasoning_effort, reaction });
   };
   if (upstream.DB) {
     const day = utcDay();
@@ -1882,7 +1926,7 @@ function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, m
 
 async function runDiscussion({ upstream, cards, plainMessages, messages = plainMessages, context = null, langNote,
   theme = null, adaptive = false, shortDebate = true, newContract = true, guide = null, pageChoice = null,
-  pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, rich = false, signal, send, log }) {
+  pagesPromise = null, page = null, music = false, motion = null, clarification = null, personalization = null, rich = false, reaction = null, signal, send, log }) {
   const history = messages.slice(0, -1);
   const lastContent = messages.at(-1).content;
   const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
@@ -2012,7 +2056,8 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   const synthMessages = discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, rich,
     content: withImages(noteLang(augmented), lastImages) });
 
-  const answer = await synthesize({ env: upstream, messages: synthMessages, theme, signal, send, log });
+  // プロンプトへの絵文字も、討議を読んだ統合人格がこの答えと一緒に選ぶ（reaction）
+  const answer = await synthesize({ env: upstream, messages: synthMessages, theme, signal, send, log, reaction });
   log('synthesizer_call', 'ok');
   if (motion) send('integrated_end', {});
   if (hasPages && !signal.aborted) send('pages', chatPageEvent(pageChoice));
@@ -2237,12 +2282,12 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
             .catch(() => {});
         }
 
-        // --- プロンプトへの絵文字：本流と並列に1回。届き次第送り、done の前に待つ（DJ の相談では付けない）---
-        const reactionPromise = wantReaction && entry === 'chat'
-          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, plainMessages.at(-1).content, plainMessages.at(-1).attachments, signal, log), stop.signal)
-            .then(emoji => { if (emoji && !stop.signal.aborted) send('prompt_reaction', { emoji }); })
-            .catch(() => {})
+        // --- プロンプトへの絵文字：統合人格が答えと一緒に選ぶ（PROMPT_REACTION）。1回だけ送る（DJ の相談では付けない）---
+        let reacted = false;
+        const reaction = wantReaction && entry === 'chat'
+          ? emoji => { if (!reacted && !stop.signal.aborted) { reacted = true; send('prompt_reaction', { emoji }); } }
           : null;
+        const research = factMode && classification.mode === 'fact' && classification.intent === 'research' && classification.fresh === 'yes';
 
         const motionEvent = motionPromise ? await motionPromise : null;
         if (stop.signal.aborted) throw searchFailure('cancelled');
@@ -2254,13 +2299,19 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           entry, page, wantSitePages, searchText, signal: stop.signal, pageSignal: pageStop.signal });
         const answer = factMode && classification.mode === 'fact'
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
-              research: classification.intent === 'research' && classification.fresh === 'yes', rich: richReply,
-              replyLanguage: classification.reply_language, ip: requestIP(request), place, signal: stop.signal, send, log })
+              research, rich: richReply,
+              replyLanguage: classification.reply_language, ip: requestIP(request), place, reaction, signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme, personalization: input.personalization,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music', rich: richReply,
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
-              signal: stop.signal, send, log });
+              reaction, signal: stop.signal, send, log });
+        // Webの回答は統合を通らないので、答えの後に別の呼び出しで絵文字を1回だけ選ぶ（予測と並列。done の前に待つ）
+        const reactionPromise = reaction && research && !reacted && answer !== null
+          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, plainMessages.at(-1).content, plainMessages.at(-1).attachments, signal, log), stop.signal)
+            .then(emoji => { if (emoji) reaction(emoji); })
+            .catch(() => {})
+          : null;
         // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
         if (wantSuggest && answer !== null) {
           const text = await withTimeout(DEFAULTS.timeouts.suggest_ms,

@@ -1456,23 +1456,52 @@ test('スクショ検知の登録は、ネイティブの addListener が Promis
   assert.doesNotThrow(() => vm.runInContext('(function () {' + src + '})();', ctx));
 });
 
-test('プロンプトへの絵文字は prompt_reaction を送った画面だけで選び、一覧の絵文字だけを送る', async () => {
-  for (const [flag, reply, expected] of [[true, '😂', '😂'], [true, '- 付けない', null], [true, '🐟', null], [false, '😂', null]]) {
-    const reactorCalls = [];
-    const w = worker(undefined, (_url, options) => {
-      const body = options?.body && JSON.parse(options.body);
-      if (!body?.messages?.some(m => typeof m.content === 'string' && m.content.includes('絵文字のリアクションを1つだけ付ける'))) return null;
-      reactorCalls.push(body);
-      return Response.json({ choices: [{ message: { content: reply }, finish_reason: 'stop' }] });
-    });
+// 統合の本文を複数の差分に分けて流す（印が差分をまたぐ場合を確かめる）
+const completionParts = parts => parts.map(t => `data: ${JSON.stringify({ choices: [{ delta: { content: t }, finish_reason: null }] })}\n\n`).join('')
+  + `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`;
+const integratedText = sse => [...sse.matchAll(/event: integrated\ndata: (.*)/g)].map(m => JSON.parse(m[1]).delta).join('');
+
+test('プロンプトへの絵文字は統合人格が答えと一緒に選び、印を本文から切り取って一覧の絵文字だけを送る', async () => {
+  const heart = String.fromCodePoint(0x2764), vs16 = String.fromCodePoint(0xFE0F);
+  for (const [flag, parts, expected, answer] of [
+    [true, ['[REACTION:😂]\n\n昇進おめでとう。'], '😂', '昇進おめでとう。'],
+    [true, ['[REAC', 'TION: 👍 ]', '\n', '\n良い', '知らせだ。'], '👍', '良い知らせだ。'],
+    [true, ['[REACTION:' + heart + ']\n嬉しい。'], heart + vs16, '嬉しい。'],
+    [true, ['[REACTION:-]\n答え'], null, '答え'],
+    [true, ['[REACTION:🐟]\n答え'], null, '答え'],
+    [true, ['[REACTION:😂\n答え'], null, '答え'],
+    [true, ['印のない答え'], null, '印のない答え'],
+    [true, ['[参考] 角括弧で始まる答え'], null, '[参考] 角括弧で始まる答え'],
+    [false, ['答え'], null, '答え'],
+  ]) {
+    const w = worker(completionParts(parts));
     const text = await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: '昇進が決まりました！' }], ...(flag ? { prompt_reaction: true } : {}) })).text();
     assert.match(text, /event: done/);
-    assert.equal(reactorCalls.length, flag ? 1 : 0);
-    if (flag) assert.ok(reactorCalls[0].messages.at(-1).content.includes('昇進が決まりました！'));
+    // 絵文字のための別の呼び出しはしない（統合の1回に含める）
+    assert.equal(w.calls.filter(c => c.messages?.some(m => typeof m.content === 'string' && m.content.includes('絵文字のリアクションを1つだけ付ける'))).length, 0);
+    const synth = w.calls.filter(c => c.stream);
+    assert.equal(synth.length, 1);
+    assert.equal(synth[0].messages.some(m => m.role === 'system' && m.content.includes('[REACTION:絵文字]')), flag);
+    // 指示は system の最後（今回の発言より前）に置く
+    if (flag) assert.equal(synth[0].messages.findLastIndex(m => m.role === 'system'), synth[0].messages.findIndex(m => m.content.includes('[REACTION:絵文字]')));
     const ev = text.match(/event: prompt_reaction\ndata: (.*)/);
-    assert.deepEqual(ev ? JSON.parse(ev[1]) : null, expected ? { emoji: expected } : null);
-    if (ev) assert.ok(text.indexOf('event: prompt_reaction') < text.indexOf('event: done'));
+    assert.deepEqual(ev ? JSON.parse(ev[1]) : null, expected ? { emoji: expected } : null, parts.join('|'));
+    assert.equal(integratedText(text), answer, parts.join('|'));
+    // 絵文字は討議の後（統合の本文と同時）に届く
+    if (ev) assert.ok(text.lastIndexOf('event: persona') < text.indexOf('event: prompt_reaction') && text.indexOf('event: prompt_reaction') < text.indexOf('event: integrated'));
   }
+});
+
+test('絵文字の印の切り取りは、差分の切れ目・長すぎる行・終端だけの印を扱う', () => {
+  const w = worker();
+  const run = parts => { const got = []; const s = w.ctx.reactionSplitter(e => got.push(e)); const out = parts.map(p => s.feed(p)).join('') + s.end(); return { got, out }; };
+  assert.deepEqual(run(['[REACTION:🔥]']), { got: ['🔥'], out: '' });
+  assert.deepEqual(run(['  ', '[', 'REACTION:✨', ']答え']), { got: ['✨'], out: '答え' });
+  const long = '[REACTION:' + 'x'.repeat(60) + ' 本文';
+  assert.deepEqual(run([long]), { got: [], out: long });
+  assert.deepEqual(run(['[R']), { got: [], out: '[R' });
+  // 先頭が印でなければ最初の差分からそのまま流す（表示を遅らせない）
+  const s = w.ctx.reactionSplitter(() => {}); assert.equal(s.feed('こんにちは'), 'こんにちは');
 });
 
 test('全人格・統合・タイトル・予測へ同じ言語指定を渡し、日本語の状況説明で上書きしない', async () => {
