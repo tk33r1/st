@@ -1,5 +1,298 @@
 [
   {
+    "date": "20261104",
+    "title": "2026年11月4日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ブラックフライデー期間に、ニトリの圧縮ソファ（3,000円引き）やN+のセールなど、大型家具から衣料まで価格訴求の施策が一斉に動き出した。 デコホームの999円ミニ時計など、低価格で季節感を取り入れられる新商品が継続的に投入され、雑貨の買い足し需要を狙っている。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ブラックフライデー期間に、ニトリの圧縮ソファ（3,000円引き）やN+のセールなど、大型家具から衣料まで価格訴求の施策が一斉に動き出した。",
+      "デコホームの999円ミニ時計など、低価格で季節感を取り入れられる新商品が継続的に投入され、雑貨の買い足し需要を狙っている。",
+      "SNSでは「展示処分品のNインボックス」や「他社家具との組み合わせ収納」など、生活者が自ら価格と使い方の知恵を共有する動きが広がっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリの圧縮コンパクトソファ、ブラックフライデー限定で3,000円引きの26,990円に",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-01",
+        "summary": "ニトリの圧縮コンパクトソファが、ブラックフライデー期間限定で通常29,990円から3,000円引きの26,990円で販売されていることが報じられた。圧縮梱包により搬入がしやすい点が訴求されている。大型家具は搬入経路の制約が購入の障壁になりやすく、その課題を商品設計で解決する点が強調されている。セール価格と圧縮構造を組み合わせた訴求は、家具の購入ハードルを下げる施策として注目される。",
+        "why_it_matters": "圧縮パッキングという物流・設計面の強みを、搬入の不安という生活者の悩みに直結させた点が巧みです。期間限定の3,000円引きは価格訴求として分かりやすく、大型家具の買う理由を後押しします。SPAとして梱包効率と販売価格の両方を設計できる強みが、ブラックフライデーの訴求にも表れています。",
+        "tags": [
+          "ニトリ",
+          "ソファ",
+          "ブラックフライデー",
+          "価格戦略"
+        ],
+        "search_terms": [
+          "圧縮ソファ 値下げ",
+          "compressed sofa discount",
+          "Black Friday furniture sale",
+          "ニトリ ブラックフライデー 家具"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOYzIyeXFJblBpallxUmI4cV9ERlBwU215ZVZ1NFZMVWdZYUlOSUtfeHkyOUVDSGx0LTdHR0VoWmx0U3dCcHkwSmp4RElubUwwbUdmSmVhMXBYM2JGaHFMb05WQ1pJUDN4MTMwVXNzWXZ3NThrNjJKck4wT080S3gwZzRnSFpwbG9v?oc=5",
+        "source_pub_ts": 1793713560
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "アパレル「N+」、11月9日からブラックフライデー開催 アウターや冬パンツを特別価格で",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-05",
+        "summary": "ニトリグループのアパレルブランド「N+」が、11月9日（月）からブラックフライデーを開催すると発表した。これから需要が高まるアウターや人気の冬パンツが、期間限定の特別価格で販売される。季節の入り口に合わせた価格施策で、防寒アイテムの購入を促す狙いがうかがえる。ニトリの衣料ブランドとしての認知拡大を、セールを通じて図る動きとも捉えられる。",
+        "why_it_matters": "ブラックフライデーを11月9日からと日程を設定し、衣料の本格需要期に合わせた点が戦略的です。家具や寝具で培った低価格訴求を、アパレルの「N+」にも展開する立ち位置が見えます。プライベートブランドの衣料で、季節商品の在庫消化と新規顧客の獲得を両立できるかが今後の焦点になります。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "ブラックフライデー",
+          "アパレル"
+        ],
+        "search_terms": [
+          "N+ ブラックフライデー",
+          "apparel Black Friday sale",
+          "冬物アウター 特別価格",
+          "Nitori apparel winter sale"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1kYmt6MjVraHFBQmFCMjRoQS1nNm1QdmpJS2stUFA2aVpSVXdSam9peWlzTDZaM2JMdWZIZzctcE0xbXR2a05ka0NBWGktOVRhMlVpbndyRnFDa2hMVFRhN2hCNnNaTmgzRVMyY25lYW4tQQ?oc=5",
+        "source_pub_ts": 1793681124
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "港区の「みなトクPAY」11月は最大20％還元、ニトリなども対象",
+        "original_title": "",
+        "source": "TRILL",
+        "source_id": "JP-06",
+        "summary": "港区の11月限定の「みなトクPAY」キャンペーンで、最大20％のポイント還元が実施されることが伝えられた。対象店舗にはスターバックス、ニトリ、成城石井などが含まれる。自治体主導の決済キャンペーンに小売店が参加する形で、地域の消費喚起と店舗の集客が狙われている。生活者にとっては日常の買い物でポイント還元を受けられる機会になる。",
+        "why_it_matters": "ニトリは地域の決済キャンペーンへの参加を通じ、大型店と日常の買い物の両方で来店動機を作れます。ただし本記事はキャンペーン全体の紹介が中心で、ニトリ独自の施策ではありません。店舗単位では、こうした地域型の施策を自社の販促と組み合わせる運用が集客の鍵になります。",
+        "tags": [
+          "ニトリ",
+          "決済・ポイント",
+          "地域キャンペーン"
+        ],
+        "search_terms": [
+          "みなトクPAY 還元",
+          "Minato city point campaign",
+          "cashless point return November",
+          "ポイント還元 地域 キャンペーン"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBWVDJCaVVrZUFJeTMxQm0xX1NxSk9ScDRRUWJLdzBVdkI2ZDdqMkNxeWdJSDRSR0gzN1dtNm8tSWc2UklQZ2FURTVNVm5fWUk?oc=5",
+        "source_pub_ts": 1793663295
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "デコホームのデコネコ・シマエナガ ミニ時計、999円で新登場",
+        "original_title": "",
+        "source": "Excite エキサイト",
+        "source_id": "JP-03",
+        "summary": "ニトリのデコホームから、デコネコとシマエナガをモチーフにしたミニ時計が999円で新登場した。手のひらに載るサイズで、どこにでも置きやすい点が特徴として紹介されている。キャラクター性のある雑貨は、冬の季節商品としてお部屋の模様替えの需要と重なる。低価格で気分を変えられるアイテムとして、デコホームの提案力を示す商品といえる。",
+        "why_it_matters": "999円という価格帯で、キャラクター調のデザインを手軽に取り入れられる点が、デコホームの若年層や雑貨好きへの訴求を支えています。置く場所を選ばないサイズ感は、狭い住空間でも導入しやすさにつながります。動物モチーフの小物をシリーズとして広げていく余地も感じられます。",
+        "tags": [
+          "ニトリ",
+          "デコホーム",
+          "時計",
+          "新商品"
+        ],
+        "search_terms": [
+          "ミニ時計 新商品",
+          "mini clock home decor",
+          "cat bird motif desk clock",
+          "デコホーム 雑貨 冬"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBCOTBLMWVTOGdzTXZzYXF3bnkyeUtla1RpMDZEWV9OTWtxOVZ0MVZENDduanlVaW84RzZISTNycXllTllvRjh3T1N4eXdIenRfSGJCY2ZHdzF4bVNnVEd3UC1mSmY2cmxxUDI1dWxzbUdWQ0lCRVE?oc=5",
+        "source_pub_ts": 1793677500
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリのラックをIKEAのコレクションケースと合わせ、グッズ飾りを広げる工夫が好評",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-02",
+        "summary": "グッズが増えて飾る場所がなくなった投稿者が、ニトリのラックを買い足し、IKEAのコレクションケースと組み合わせて飾り棚を広げている。「めちゃくちゃフィットして最高」と満足感を示し、飾るのが楽しみだという前向きな反響が寄せられた。下段には無印良品の引き出しを入れ、収納も兼ねる工夫も紹介されている。",
+        "why_it_matters": "他社ブランドの家具と組み合わせて使われており、ニトリのラックがシンプルな形状で選ばれていることが分かります。飾ると収納を一台で兼ねられる使い方は、生活者の空間づくりのインサイトを示します。ブランドを横断して使いやすい製品設計は、コレクション需要の拡大にもつながります。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "コレクション",
+          "SNS反響"
+        ],
+        "search_terms": [
+          "ラック 買い足し 収納",
+          "collection shelf storage",
+          "display rack hobby goods",
+          "コレクションケース 組み合わせ"
+        ],
+        "url": "https://x.com/ksmgir/status/2117459190881128732",
+        "source_pub_ts": 1793703600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ブラックフライデーで「展示処分品のNインボックス」が狙い目と話題に",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-04",
+        "summary": "ニトリのブラックフライデーセール開始を受け、型落ちのNインボックスが処分品として半額で投げ売りされるとの投稿が286いいねを集めた。展示処分品はほぼ新品として安く買えるという、この時期ならではの購入法が紹介されている。新品も展示品と大差ないという指摘も添えられ、価格重視の生活者の共感を集めた。",
+        "why_it_matters": "型落ち商品の処分と季節セールが重なる時期に、価格と品質への納得感が生活者の購買行動を左右していることが分かります。展示処分品への信頼は、店頭在庫の回転や旧モデルの扱い方を見直すヒントになります。SNS上で購入ノウハウが自発的に共有される点は、製品品質への評価の裏付けにもなります。",
+        "tags": [
+          "ニトリ",
+          "Nインボックス",
+          "ブラックフライデー",
+          "展示処分品"
+        ],
+        "search_terms": [
+          "展示処分品 半額",
+          "display clearance sale",
+          "N box storage discount",
+          "型落ち商品 狙い目"
+        ],
+        "url": "https://x.com/taishonpresso/status/2117391814097539298",
+        "source_pub_ts": 1793703600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのブラックフライデー行きませぇぇぇぇぇん！！！！！ 5万円の毛布1592円だからです！！！ 明日まで！！￼",
+        "platform": "x",
+        "author": "@nszmtkhr2424",
+        "url": "https://x.com/nszmtkhr2424/status/2117475470254182747",
+        "likes": 1056,
+        "retweets": 24,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:34",
+        "captured_at": "",
+        "text": "ニトリのブラックフライデー行きませぇぇぇぇぇん！！！！！ 5万円の毛布1592円だからです！！！ 明日まで！！￼",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "いよいよグッズを飾る場所がなくなってきたのでニトリでラックを買い足したら IKEAのコレクションケースとめちゃくちゃフィットして最高だったら...",
+        "platform": "x",
+        "author": "@ksmgir",
+        "url": "https://x.com/ksmgir/status/2117459190881128732",
+        "likes": 930,
+        "retweets": 33,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:29",
+        "captured_at": "",
+        "text": "いよいよグッズを飾る場所がなくなってきたのでニトリでラックを買い足したら IKEAのコレクションケースとめちゃくちゃフィットして最高だったら💯飾るの楽しみ〜😌ちなみに一番下は無印の引き出し4つ入れて収納も兼ねる◎ pic.x.com/uawiOyfBRi",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリの新作のサイドボードがかわいすぎて客間用にポチッた。同シリーズのテーブルもくそかわ。 pic.x.com/770uE76yV0",
+        "platform": "x",
+        "author": "@EmiTgn",
+        "url": "https://x.com/EmiTgn/status/2117469588430659946",
+        "likes": 333,
+        "retweets": 13,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:11",
+        "captured_at": "",
+        "text": "ニトリの新作のサイドボードがかわいすぎて客間用にポチッた。同シリーズのテーブルもくそかわ。 pic.x.com/770uE76yV0",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリのブラックフライデーセールが始まりましたが、この時期に買うべきはNインボックスです。 毎年この時期になると型落ちのNインボックスが大量...",
+        "platform": "x",
+        "author": "@taishonpresso",
+        "url": "https://x.com/taishonpresso/status/2117391814097539298",
+        "likes": 286,
+        "retweets": 25,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 8:02",
+        "captured_at": "",
+        "text": "ニトリのブラックフライデーセールが始まりましたが、この時期に買うべきはNインボックスです。 毎年この時期になると型落ちのNインボックスが大量に処分品になって半額投げ売りされるので、展示処分品という名のほぼ新品がお得に買えます😌 新品のNインボックスなんて全部展示品みたいなものよね… pic.x.com/uAEMkVCMZh",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリのガラスジャー砂浴び容器にできるかなと思って買ってみたけど、うちの子には少し小さかったのでへやんぽ時のチラ壺に よく入ってくれて嬉しい...",
+        "platform": "x",
+        "author": "@ToaruChinchilla",
+        "url": "https://x.com/ToaruChinchilla/status/2117421299140321304",
+        "likes": 258,
+        "retweets": 20,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:59",
+        "captured_at": "",
+        "text": "ニトリのガラスジャー砂浴び容器にできるかなと思って買ってみたけど、うちの子には少し小さかったのでへやんぽ時のチラ壺に よく入ってくれて嬉しい🐭 pic.x.com/FHi6xNvyC7",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "#一人暮らし #おすすめにのりたい #ニトリ #fyp",
+        "platform": "tiktok",
+        "author": "@sora",
+        "url": "https://www.tiktok.com/@sora4hotel/video/7703551217959439637",
+        "likes": 2645,
+        "retweets": 49,
+        "views": 52900,
+        "comments": 3,
+        "posted_on": "2026-11-02 21:33",
+        "captured_at": "2026-11-03T21:37:29.810273+09:00",
+        "text": "#一人暮らし #おすすめにのりたい #ニトリ #fyp",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "ニトリデコホームの新作が可愛すぎる！冬物お買い物vlog💭🎀北海道は寒すぎてもう本格的に衣替えしました…🥹デコホームはピンクのアイテム多いか...",
+        "platform": "tiktok",
+        "author": "@はーちゃん",
+        "url": "https://www.tiktok.com/@ha_chan0417/video/7703509253591469320",
+        "likes": 530,
+        "retweets": 6,
+        "views": 11600,
+        "comments": 6,
+        "posted_on": "2026-11-02 18:50",
+        "captured_at": "2026-11-03T21:37:29.810273+09:00",
+        "text": "ニトリデコホームの新作が可愛すぎる！冬物お買い物vlog💭🎀北海道は寒すぎてもう本格的に衣替えしました…🥹デコホームはピンクのアイテム多いから嬉しい🫶🏻#ニトリ#ニトリデコホーム #お部屋作り #インテリア雑貨 #衣替え",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261103",
     "title": "2026年11月3日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが新オーディオブランド「life+audio」とガジェットブランド「life+one」を全国展開へ広げ、ワイヤレスイヤホンを各2,990円で11月中旬から販売する。SPAの企画力を活かし、デジタル小物の品揃えを拡大する動きだ。 大阪・梅田茶屋町店8階に「法人事業大阪ショールーム」が開設され、個人客向けの旗艦店を法人需要の商談拠点としても活用し始めた。店舗を多目的な接点に変える戦略が見える。",

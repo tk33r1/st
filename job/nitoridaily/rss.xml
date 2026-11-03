@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 03 Nov 2026 08:50:06 +0900</lastBuildDate>
+    <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 04 Nov 2026 07:15:02 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月4日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261104/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261104/</guid>
+      <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ブラックフライデー期間に、ニトリの圧縮ソファ（3,000円引き）やN+のセールなど、大型家具から衣料まで価格訴求の施策が一斉に動き出した。 デコホームの999円ミニ時計など、低価格で季節感を取り入れられる新商品が継続的に投入され、雑貨の買い足し需要を狙っている。</description>
+    </item>
     <item>
       <title>2026年11月3日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261103/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261021/</guid>
       <pubDate>Wed, 21 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリは埼玉県本庄市に資源循環の拠点となる「リサイクルセンター」を2028年に稼働させる計画を明らかにし、製造・物流・IT・小売を一体化した循環型モデルへの歩みを進めている。 環八用賀店でのロッカー受け取り実証や、デコホーム新店の出店など、店舗網を物流や生活提案の拠点として活用する動きが広がっている。</description>
-    </item>
-    <item>
-      <title>2026年10月20日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261020/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261020/</guid>
-      <pubDate>Tue, 20 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリが韓国で6店舗目となる「ロッテモール チョンリャンリ店」の出店を発表し、海外店舗網の拡大が続いている。 デコホームがクリスマス新作20種以上と、パリ風の秋の花柄コレクションを相次いで発売し、季節商戦を強化している。</description>
     </item>
   </channel>
 </rss>
