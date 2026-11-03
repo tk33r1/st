@@ -1387,6 +1387,19 @@ test('言語の種は新契約の未確定時だけ採用・検査し、初回�
   }
 });
 
+test('分類の材料は上限で切っても、絵文字のサロゲートペアを半分だけ残さない', () => {
+  const w = worker(), long = 'x' + '😀'.repeat(600);
+  assert.equal(w.ctx.classifySlice('ab😀', 3), 'ab');
+  assert.equal(w.ctx.classifySlice('ab😀', 4), 'ab😀');
+  assert.equal(w.ctx.classifySlice(null, 3), '');
+  // 上限はどれも偶数なので、先頭の1文字で絵文字の途中を切る位置にずらす（Jev へ壊れた文字を送らない）
+  const chat = w.ctx.classificationPayload({ profile: 'chat', texts: [long, long] }).state;
+  const legacy = w.ctx.classificationPayload({ profile: 'legacy', texts: [long, long] }).state;
+  for (const text of [chat.latest_message, chat.earlier_messages[0], chat.language_seed, legacy.latest_message, legacy.earlier_messages[0]]) {
+    assert.ok(text.length > 1 && text.length < long.length && long.startsWith(text) && text.isWellFormed(), text.length);
+  }
+});
+
 test('会話の保存は conversation_storage を送った通常チャットだけで、プロンプトの文字と答えを1行書く', async () => {
   const cases = [
     [{ conversation_storage: true, conversation_id: 'session_1_abc' }, 'session_1_abc'],
