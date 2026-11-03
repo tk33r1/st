@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "7.15",
+      "date": "2026-11-03",
+      "changes": {
+        "ja": [
+          "「MAGIについて」とFAQ・利用規約・プライバシーポリシー・バージョン情報・更新履歴を、アプリ管理と同じカードと文字の表示にそろえました。",
+          "「バグを報告」を、説明の入力欄と画像の添付を分けたカード表示にしました。",
+          "「iPhoneでMAGIを使う」を番号付きの手順で表示し、Webの「保存されたチャット」と一時チャットの説明も同じ表示にそろえました。"
+        ],
+        "en": [
+          "Restyled About MAGI, FAQ, Terms of Use, Privacy Policy, Version information and Release History to match App management.",
+          "Report a bug now uses separate cards for your description and attached images.",
+          "Use MAGI on iPhone now shows numbered steps, and Saved Chats on the Web and the temporary chat sheets match too."
+        ]
+      }
+    },
+    {
       "version": "7.14",
       "date": "2026-11-03",
       "changes": {
