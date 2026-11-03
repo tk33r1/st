@@ -1,5 +1,35 @@
 {
  "files": {
+  "unicode-emoji@18.0/emoji-test.txt": {
+   "from": "https://unicode.org/Public/18.0.0/emoji/emoji-test.txt",
+   "sha256": "8f3735cda1f92a779d78af67cf86066bb1f07143dc22f2ac29394d9bc57ab21a",
+   "kind": "unicode-data"
+  },
+  "unicode-emoji@18.0/annotations-en.xml": {
+   "from": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/annotations/en.xml",
+   "sha256": "14d0e9bb5003c085250df4ac7bd7ba1e26d92e74174d7a3a2f42dc16e07fb155",
+   "kind": "unicode-data"
+  },
+  "unicode-emoji@18.0/annotations-ja.xml": {
+   "from": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/annotations/ja.xml",
+   "sha256": "74b6889ca7ad882b547e388a1e36a576ab4bdf00d12f59381eea286be44b15d3",
+   "kind": "unicode-data"
+  },
+  "unicode-emoji@18.0/annotationsDerived-en.xml": {
+   "from": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/annotationsDerived/en.xml",
+   "sha256": "a4a6c1a4c341d94179cb116623c5f44c47400a5bc55da483423ef7430ecf622e",
+   "kind": "unicode-data"
+  },
+  "unicode-emoji@18.0/annotationsDerived-ja.xml": {
+   "from": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/annotationsDerived/ja.xml",
+   "sha256": "9e0c15fb0eeae7c7dd088cd082bcf55580a156a0e6b569f2ebc251b7b06c628f",
+   "kind": "unicode-data"
+  },
+  "unicode-emoji@18.0/LICENSE": {
+   "from": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/LICENSE",
+   "sha256": "65eb33419e22a297550a811b5b535f5e532f9a7e0114b516c0ea18afd53c3804",
+   "kind": "unicode-data"
+  },
   "lucide@0.263.0/lucide.min.js": {
    "from": "https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js",
    "sha256": "b9c0e0f892c6958b192b8fdecb652310d934533464b4300be9d52c7f57a014a5"

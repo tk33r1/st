@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.16",
+      "date": "2026-11-03",
+      "changes": {
+        "ja": [
+          "3人格の討議を思考の雲で表示し、あなたの発言と統合人格の回答を自然な角丸にしました。",
+          "PCで回答を指すと右上に6つの絵文字と「＋」が重なって表示されます。3人格の下の操作アイコンとコピーをなくし、統合人格のコピーは残しました。",
+          "「＋」から全3,972件の絵文字を9カテゴリと日英の検索で選べます。一覧は必要時にJSONで読み込み、検査して端末に保存します。Androidには同じ一覧を同梱しました。",
+          "3人格のリアクションが表示されない不具合、狭いPC表示でキーボード用の絵文字欄が見切れる不具合、応答が途切れたときに内部記号が表示される不具合を修正しました。"
+        ],
+        "en": [
+          "Displayed the three personas' discussion in thought clouds and rounded your messages and the integrated reply.",
+          "Hover over a reply on desktop to show six emoji and a plus button without moving other replies. Removed the three personas' bottom controls and Copy, while keeping Copy for the integrated reply.",
+          "Choose from all 3,972 emoji in nine categories with Japanese and English search. The catalog loads as a verified, cached JSON file when needed; Android bundles the same catalog.",
+          "Fixed missing persona reactions, clipped keyboard emoji menus in narrow desktop chats, and internal markers leaking into interrupted replies."
+        ]
+      }
+    },
+    {
       "version": "7.15",
       "date": "2026-11-03",
       "changes": {

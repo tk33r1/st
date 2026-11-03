@@ -6,5 +6,9 @@ assets/fonts/** -text
 # アプリへ写した pdf.js も同じ（magi-app/scripts/vendor-pdfjs.cjs が照合したバイトのまま）。
 magi-app/www/vendor/pdfjs/** -text
 
+# MAGIの絵文字JSONは画面内のSHA-256と照合する。同じ生成物をWebとAndroidへ配る。
+data/magi-emoji-*.json -text
+magi-app/www/data/magi-emoji-*.json -text
+
 # 日刊検索の固定索引は本文そのものをハッシュに使うため、OSによる改行変換を止める。
 .github/site-search/fixtures/phase3/** -text

@@ -272,6 +272,7 @@ function nativeShell(capacitor) {
     },
     MutationObserver: class { constructor(callback) { state.changed = callback; } observe() {} },
     closeAgentPrivacyDialog() { if (!state.dialog) return false; state.dialog = false; calls.push('dialog'); return true; },
+    closeAgentEmojiPicker() { if (!state.emoji) return false; state.emoji = false; calls.push('emoji'); return true; },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
     closePromptMenu() { return false; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
@@ -293,6 +294,7 @@ test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メ
   const { calls, state } = nativeShell({ isNativePlatform: () => true, getPlatform: () => 'android' });
   state.dialog = true; state.attach = true; state.page = true; state.panel = true; state.usage = true; state.hidden = false; state.rate = true;
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'dialog');
+  state.emoji = true; state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'page');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
@@ -1496,12 +1498,33 @@ test('絵文字の印の切り取りは、差分の切れ目・長すぎる行�
   const w = worker();
   const run = parts => { const got = []; const s = w.ctx.reactionSplitter(e => got.push(e)); const out = parts.map(p => s.feed(p)).join('') + s.end(); return { got, out }; };
   assert.deepEqual(run(['[REACTION:🔥]']), { got: ['🔥'], out: '' });
+  assert.deepEqual(run(['[REACTION:👍']), { got: [], out: '' });
+  assert.deepEqual(run(['  [REAC', 'TION:']), { got: [], out: '' });
   assert.deepEqual(run(['  ', '[', 'REACTION:✨', ']答え']), { got: ['✨'], out: '答え' });
   const long = '[REACTION:' + 'x'.repeat(60) + ' 本文';
   assert.deepEqual(run([long]), { got: [], out: long });
   assert.deepEqual(run(['[R']), { got: [], out: '[R' });
   // 先頭が印でなければ最初の差分からそのまま流す（表示を遅らせない）
   const s = w.ctx.reactionSplitter(() => {}); assert.equal(s.feed('こんにちは'), 'こんにちは');
+});
+
+test('未完成のリアクションの印を本文に流さず、本文を送る前の失敗なら別の会社で答え直す', async () => {
+  for (const theme of ['light', 'dark']) {
+    for (const first of [completion('[REACTION:👍'), completion('[REACTION:👍', null, false), completion('[REAC', null, false), completion('[REACTION:👍]', 'length')]) {
+      let calls = 0;
+      const w = worker(undefined, (_url, options) => {
+        if (JSON.parse(options.body).stream) return new Response(++calls === 1 ? first : completion('[REACTION:🙏]\n代替の回答'));
+      });
+      const text = await (await w.request('/magi2/chat', { theme, prompt_reaction: true, messages: [{ role: 'user', content: '今日は散歩に行きました' }] })).text();
+      assert.equal(calls, 2); assert.match(text, /event: done/); assert.doesNotMatch(text, /event: error/);
+      assert.equal(integratedText(text), '代替の回答');
+    }
+    // 両方の会社で印の途中までしか届かなければ、内部記号や成功を表示せずエラーにする。
+    const w = worker(completion('[REACTION:👍', null, false));
+    const text = await (await w.request('/magi2/chat', { theme, prompt_reaction: true, messages: [{ role: 'user', content: '今日は散歩に行きました' }] })).text();
+    assert.equal(w.calls.filter(c => c.stream).length, 2); assert.equal(integratedText(text), '');
+    assert.match(text, /incomplete_output/); assert.doesNotMatch(text, /event: done/);
+  }
 });
 
 test('全人格・統合・タイトル・予測へ同じ言語指定を渡し、日本語の状況説明で上書きしない', async () => {
@@ -6486,13 +6509,56 @@ test('回答のリアクション: 一覧の絵文字（文字列と登録の記
   assert.equal(ctx.agentRatingOf('\u{1F44D}'), '\u{1F44D}');
   assert.equal(ctx.agentRatingOf({ em: '\u{1F44E}', id: 3, delete_token: 'a'.repeat(64) }), '\u{1F44E}');
   assert.equal(ctx.agentRatingOf({ em: '\u{2764}\u{FE0F}' }), '\u{2764}\u{FE0F}'); assert.equal(ctx.agentRatingOf('\u{1F525}'), '\u{1F525}');
-  for (const other of ['\u{1F4A9}', '<b>', 'good', '', null, undefined, 5]) assert.equal(ctx.agentRatingOf(other), null);
+  for (const em of ['💩', '👍🏽', '👩‍🚀', '🇯🇵', '👨‍👩‍👧‍👦']) assert.equal(ctx.agentRatingOf(em), em);
+  for (const other of ['👍👍', 'hello', '<b>', 'good', '', null, undefined, 5]) assert.equal(ctx.agentRatingOf(other), null);
   assert.equal(ctx.AGENT_RATINGS.good, '\u{1F44D}'); assert.equal(ctx.AGENT_RATINGS.bad, '\u{1F44E}');
   assert.deepEqual([...ctx.AGENT_REACTIONS_QUICK], ['\u{1F44D}', '\u{2764}\u{FE0F}', '\u{1F602}', '\u{1F62E}', '\u{1F622}', '\u{1F64F}']);
   // 統合人格がプロンプトに付ける絵文字は、画面が読める一覧の中から選ぶ
   const worker = read('workers/magi2/personas.js'), list = worker.slice(worker.indexOf('export const PROMPT_REACTION'));
   const emojis = JSON.parse(list.slice(list.indexOf('emojis: [') + 8, list.indexOf(']', list.indexOf('emojis: [')) + 1).replaceAll("'", '"'));
   for (const em of emojis) assert.ok(ctx.AGENT_REACTIONS.includes(em), em);
+});
+
+test('全絵文字: Unicodeのカテゴリ・肌色・合成・旗を日英で探せて、検索語を外へ送らない', () => {
+  const ctx = speechCtx();
+  assert.equal(ctx.AGENT_EMOJI_CATALOG, null, '初期表示では全一覧を読み込まない');
+  ctx.AGENT_EMOJI_CATALOG = JSON.parse(read('data/' + ctx.AGENT_EMOJI_ASSET.file)).emojis;
+  assert.equal(ctx.AGENT_EMOJI_CATALOG.length, 3972);
+  assert.equal(new Set(ctx.AGENT_EMOJI_CATALOG.map(row => row[0])).size, ctx.AGENT_EMOJI_CATALOG.length);
+  assert.equal(new Set(ctx.AGENT_EMOJI_CATALOG.map(row => row[1])).size, 9);
+  assert(ctx.AGENT_EMOJI_CATALOG.every(row => row[0].length <= 64 && ctx.agentEmojiValid(row[0]))); // 既存Workerの入力上限内
+  const find = (query, em) => assert(ctx.agentEmojiSearch(query).some(row => row[0] === em), query);
+  find('ねこ', '🐱'); find('ネコ', '🐱'); find('猫', '🐱'); find('CAT', '🐱');
+  find('お祝い', '🎉'); find('party', '🎉'); find('japan', '🇯🇵'); find('日本', '🇯🇵');
+  find('thumbs up medium skin', '👍🏽'); find('👩‍🚀', '👩‍🚀'); find('family', '👨‍👩‍👧‍👦');
+  assert.equal(ctx.agentEmojiSearch('no-such-emoji-123').length, 0);
+  const code = between(home, 'function agentEmojiSearch(query)', 'function agentEmojiRecent()');
+  assert(!/fetch\(|location\.|URLSearchParams|sendBeacon/.test(code));
+});
+
+test('絵文字JSON: 必要時の1要求だけで読み、検査済みキャッシュからオフライン復帰し、壊れたデータは再試行できる', async () => {
+  const saved = new Map(), requests = [];
+  let offline = false;
+  const ctx = speechCtx({ TextEncoder, Response, crypto: webcrypto,
+    window: { location: new URL('https://tk.st/') }, document: { baseURI: 'https://tk.st/' },
+    caches: { open: async () => ({ match: async url => saved.has(url) ? new Response(saved.get(url)) : undefined,
+      put: async (url, response) => saved.set(url, await response.text()), delete: async url => saved.delete(url) }) },
+    fetch: async url => { requests.push(url); if (offline) throw new Error('offline'); await tick(); return new Response(read('data/' + ctx.AGENT_EMOJI_ASSET.file)); }
+  });
+  assert.equal(ctx.agentRatingOf('🇯🇵'), '🇯🇵'); assert.equal(requests.length, 0);
+  const first = ctx.loadAgentEmoji(); assert.equal(ctx.loadAgentEmoji(), first);
+  assert.equal((await first).length, 3972); assert.equal(requests.length, 1);
+  assert.equal(requests[0], 'https://tk.st/data/magi-emoji-18.0-cldr49.json');
+  offline = true; ctx.AGENT_EMOJI_CATALOG = null;
+  assert.equal((await ctx.loadAgentEmoji()).length, 3972); assert.equal(requests.length, 1);
+  saved.set(requests[0], '{}'); ctx.AGENT_EMOJI_CATALOG = null;
+  await assert.rejects(ctx.loadAgentEmoji(), /offline/); assert.equal(saved.size, 0);
+  offline = false; assert.equal((await ctx.loadAgentEmoji()).length, 3972); assert.equal(requests.length, 3);
+  await assert.rejects(ctx.agentEmojiDecode('{}'), /emoji_data_hash/);
+  ctx.APP_VERSION = '7.14'; ctx.document.baseURI = 'https://localhost/';
+  assert.equal(ctx.agentEmojiURL(), 'https://localhost/data/magi-emoji-18.0-cldr49.json', 'Androidはアプリ内JSONを読む');
+  const pwa = read('magi-app/www/data/' + ctx.AGENT_EMOJI_ASSET.file);
+  assert.equal(pwa, read('data/' + ctx.AGENT_EMOJI_ASSET.file));
 });
 
 test('回答の日時: 保存した at を使い、無ければ送ったときの mid から読む。画面を開いた後に付けた mid は使わない', () => {

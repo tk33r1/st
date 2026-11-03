@@ -1,9 +1,9 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
-var CACHE = 'magi-shell-v146';
+var CACHE = 'magi-shell-v151';
 // Shell files, icons included (they are committed in www/).
 var CORE = [
-  './', './index.html', './app.js?v=20261103_15', './native-location.js?v=20261025_2', './native-widget.js?v=20261022_1', './native-background.js?v=20261025_4', './native-history.js?v=20261025_2', './native-input.js?v=20261022_1', './share-image.js?v=20261102_2', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261022_1', './manifest.webmanifest',
+  './', './index.html', './app.js?v=20261103_20', './native-location.js?v=20261025_2', './native-widget.js?v=20261022_1', './native-background.js?v=20261025_4', './native-history.js?v=20261025_2', './native-input.js?v=20261022_1', './share-image.js?v=20261102_2', './vendor/Readability.js?v=0.6.0', './app-theme.js?v=20261022_1', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png'
 ];
 
@@ -17,13 +17,14 @@ self.addEventListener('install', function (e) {
 });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.map(function (k) { return k === CACHE ? null : caches.delete(k); }));
+    return Promise.all(keys.map(function (k) { return k.startsWith('magi-shell-') && k !== CACHE ? caches.delete(k) : null; }));
   }).then(function () { return self.clients.claim(); }));
 });
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;                      // never intercept POSTs (chat/react)
   var url = new URL(req.url);
+  if (/\/data\/magi-emoji-[^/]+\.json$/.test(url.pathname)) return; // 絵文字の検査済みキャッシュは画面が管理する
   if (url.origin !== location.origin) return;            // only handle our own origin (never the API)
   if (url.pathname.indexOf('/magi2/') !== -1) return;    // belt-and-suspenders: never cache the API
   // Cache-first for the shell, network fallback otherwise.

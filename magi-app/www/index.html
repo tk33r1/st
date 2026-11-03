@@ -225,7 +225,7 @@
       #agent-log { padding-top: 0; }
     }
     .agent-user { display: flex; justify-content: flex-end; }
-    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.5rem 0.8rem; border-radius: 2px; line-height: 1.6; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
+    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.5rem 0.8rem; border-radius: 1.35rem; line-height: 1.6; background: var(--surface-hover); color: var(--text-color); word-break: break-word; white-space: pre-wrap; }
     /* 自分のプロンプトの操作（app.js の openPromptMenu）。PC はマウスオーバーで ⋯ を出し、指の端末は吹き出しの長押しで開く */
     .agent-user { align-items: center; gap: 4px; }
     .prompt-more { display: none; flex-shrink: 0; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); cursor: pointer; opacity: 0; transition: opacity var(--duration-fast), background-color var(--duration-fast); }
@@ -253,8 +253,31 @@
     .prompt-menu button svg { flex-shrink: 0; }
     .prompt-select-text { overflow-y: auto; padding: 4px 2px 12px; font-size: 17px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
     .agent-toast { position: absolute; z-index: 90; left: 50%; bottom: calc(96px + var(--magi-safe-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 999px; background: var(--text-color); color: var(--surface-color); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: fadeIn var(--duration-fast) ease both; pointer-events: none; }
-    .agent-personas { display: grid; gap: 0.4rem; }
-    .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.7rem 0.8rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .agent-personas { display: grid; gap: 1.25rem; margin: 0.5rem 0.1rem 1.25rem; }
+    /* 雲の上下は32pxのまま、中央だけを伸ばす。長い討議でも輪郭を間延びさせず、本文や操作を切り抜かない。 */
+    .persona-card {
+      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-6 20 18 6 42 12C66-2 106-2 136 8C162 17 178 3 211 5C246 3 271 18 302 12C335 0 366 3 396 10C426 19 451-2 484 5C507 7 519 17 534 16C568 8 606 16 590 32Z'/%3E%3C/svg%3E");
+      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 17 572 25 545 19C518 34 482 31 456 24C424 16 403 32 367 28C333 32 310 19 279 24C247 34 215 30 186 24C156 18 137 34 103 28C75 33 45 24 34 19C14 23 -6 14 10 0Z'/%3E%3C/svg%3E");
+      --cloud-middle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 100' preserveAspectRatio='none'%3E%3Cpath d='M10 0C-4 17-2 37 5 50C-3 63-4 85 10 100H590C604 85 603 63 595 50C602 37 604 17 590 0Z'/%3E%3C/svg%3E");
+      --cloud-mask: var(--cloud-top) top / 100% 32px no-repeat, var(--cloud-middle) center / 100% calc(100% - 62px) no-repeat, var(--cloud-bottom) bottom / 100% 32px no-repeat;
+      position: relative;
+      isolation: isolate;
+      min-width: 0;
+      padding: 1.15rem 1.6rem;
+    }
+    .persona-card:nth-child(2) {
+      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-4 22 17 13 30 15C39 2 72-2 103 6C133 0 164 17 194 12C225 2 256 2 285 10C315 20 341 3 376 6C408-2 441 11 466 12C495 3 529 5 548 16C577 12 604 20 590 32Z'/%3E%3C/svg%3E");
+    }
+    .persona-card:nth-child(3) {
+      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 16 581 24 557 18C534 31 500 33 469 24C436 18 413 33 382 27C350 32 324 19 293 24C264 33 230 30 203 23C173 17 147 33 117 28C86 34 57 24 43 20C19 25 -6 16 10 0Z'/%3E%3C/svg%3E");
+    }
+    .persona-card::before, .persona-card::after { content: ''; position: absolute; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
+    .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
+    .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
+    .persona-card:focus-within { z-index: 1; }
+    .persona-head::before, .persona-head::after { content: ''; position: absolute; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-alt); pointer-events: none; }
+    .persona-head::before { left: 15px; bottom: -7px; width: 11px; height: 11px; }
+    .persona-head::after { left: 3px; bottom: -14px; width: 8px; height: 8px; }
     .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite; }
     .persona-card.thinking .persona-text { color: var(--secondary-color); }
     @keyframes thinkingPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
@@ -268,7 +291,7 @@
     /* 第3回以降：統合人格（本人）からこの人格への問い */
     .persona-ask { font-size: 14px; line-height: 1.6; color: var(--primary-color); opacity: 0.85; margin-bottom: 0.1rem; word-break: break-word; }
     .persona-round-label { display: block; font-size: 12px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
-    .agent-reply { margin-top: 0.4rem; padding: 0.75rem 0.85rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: 1.7; word-break: break-word; white-space: pre-wrap; }
+    .agent-reply { margin-top: 0.8rem; padding: 0.9rem 1rem; border: 1px solid var(--primary-bg-hover); border-radius: 1.4rem; background: var(--primary-bg); color: var(--text-color); line-height: 1.7; word-break: break-word; white-space: pre-wrap; }
     /* 統合人格の答えの Markdown（app.js の renderAgentRich）。トップページと同じ見た目 */
     .agent-reply-body.md { display: block; white-space: normal; }
     .md > :first-child { margin-top: 0; }
@@ -330,6 +353,43 @@
     .prompt-menu .prompt-menu-rate { margin: -2px -2px 6px; padding: 2px 2px 6px; border-bottom: 1px solid var(--border-color); border-top: 0; justify-content: space-between; }
     .prompt-menu .prompt-menu-rate > button, .prompt-menu .prompt-menu-rate .react-more > button { width: 40px; height: 40px; min-height: 0; padding: 0; justify-content: center; font-size: 24px; }
     .prompt-menu .prompt-menu-rate button[aria-checked="true"] { color: inherit; }
+    /* AGENT_EMOJI_STYLE_BEGIN — Web/PWA/Androidで同じ選択画面 */
+    .emoji-dialog { width: min(420px, calc(100vw - 24px)); height: min(600px, 80dvh); max-height: calc(var(--emoji-available, 100dvh) - 24px); margin: auto; padding: 16px; border: 1px solid var(--border-color); border-radius: 24px; background: var(--surface-color); color: var(--text-color); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-shadow: 0 16px 60px #0005; overflow: hidden; }
+    .emoji-dialog[open] { display: flex; flex-direction: column; }
+    .emoji-dialog::backdrop { background: #0008; }
+    .emoji-handle { display: none; }
+    .emoji-search-row { display: flex; align-items: center; gap: 8px; flex: none; margin-bottom: 12px; }
+    .emoji-search-box { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; height: 48px; padding: 0 12px; border-radius: 12px; background: var(--surface-hover); color: var(--secondary-color); }
+    .emoji-search-box:focus-within { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    .emoji-search-box svg { flex: none; width: 22px; height: 22px; }
+    .emoji-search { width: 100%; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 16px; outline: none; }
+    .emoji-search:focus, .emoji-search:focus-visible { outline: none; box-shadow: none; }
+    .emoji-search::placeholder { color: var(--secondary-color); opacity: 1; }
+    .emoji-close { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); font: inherit; font-size: 28px; cursor: pointer; }
+    .emoji-tabs { display: flex; flex: none; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 0 10px; border-bottom: 1px solid var(--border-color); scrollbar-width: thin; }
+    .emoji-tabs button { display: grid; place-items: center; flex: 1 0 36px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); cursor: pointer; }
+    .emoji-tabs svg { width: 22px; height: 22px; }
+    .emoji-tabs button[aria-selected="true"] { background: var(--primary-bg); color: var(--primary-color); }
+    .emoji-dialog button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    .emoji-results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 2px 8px; }
+    .emoji-result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 16px 2px 10px; }
+    .emoji-result-head h2 { margin: 0; color: inherit; font: inherit; font-size: 15px; font-weight: 650; letter-spacing: normal; }
+    .emoji-result-head [role="status"] { color: var(--secondary-color); font-size: 12px; white-space: nowrap; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+    .emoji-option { display: grid; place-items: center; width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--text-color); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 30px; line-height: 1; cursor: pointer; }
+    .emoji-option[aria-pressed="true"] { background: var(--primary-bg); box-shadow: inset 0 0 0 1px var(--primary-color); }
+    .emoji-empty { margin: 24px 4px; color: var(--secondary-color); font-size: 14px; line-height: 1.6; }
+    .emoji-retry { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-color); font: inherit; cursor: pointer; }
+    .emoji-retry[hidden] { display: none; }
+    .emoji-tabs button:disabled { opacity: 0.45; cursor: default; }
+    .emoji-empty[hidden] { display: none; }
+    @media (hover: hover) { .emoji-dialog button:hover { background: var(--surface-hover); } }
+    @media (pointer: coarse), (max-width: 600px) {
+      .emoji-dialog { top: auto; bottom: var(--emoji-bottom, 0px); left: 0; right: 0; width: 100%; max-width: 640px; height: min(72dvh, 640px); max-height: calc(var(--emoji-available, 100dvh) - 8px); margin: 0 auto; padding: 8px 16px max(12px, env(safe-area-inset-bottom)); border-bottom: 0; border-radius: 22px 22px 0 0; }
+      .emoji-handle { display: block; flex: none; width: 36px; height: 4px; margin: 0 auto 16px; border-radius: 4px; background: var(--border-color); }
+    }
+    @media (max-width: 359px) { .emoji-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    /* AGENT_EMOJI_STYLE_END */
     /* 札。絵文字は CSS で出す（本文の textContent に混ぜない） */
     .agent-user, .agent-reply { position: relative; }
     .msg-reaction, .prompt-reaction { position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 5px; border-radius: 999px; background: var(--surface-color); border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.25); font-size: 17px; font-style: normal; line-height: 1; pointer-events: none; }
@@ -360,6 +420,20 @@
     .speak-wait { animation: speak-spin 0.9s linear infinite; }
     @keyframes speak-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
+    /* AGENT_REACTION_HOVER_STYLE_BEGIN — すべて位置指定だけで浮かせ、回答の高さ・余白を変えない */
+    .agent-hover-reactions { position: fixed; z-index: 9400; width: max-content; max-width: calc(100vw - 16px); flex-wrap: nowrap; padding: 4px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-hover); color: var(--text-color); box-shadow: 0 4px 16px #0003; }
+    .agent-hover-reactions > button { flex: 1 1 42px; min-width: 0; font-size: 26px; }
+    .agent-hover-reactions > button[data-more] { font-size: 26px; }
+    .agent-reply > .reply-bar { position: static; }
+    .persona-card > .reaction-bar, .persona-card > .reaction-bar:not(:focus-within) { position: static; display: block; width: auto; height: 0; margin: 0; padding: 0; overflow: visible; clip-path: none; white-space: normal; }
+    .reaction-bar > .agent-reaction-access { position: absolute; top: 8px; right: 12px; width: 0; height: 0; min-width: 0; margin: 0; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .reaction-bar > .agent-reaction-access::after { display: none; }
+    .reaction-bar > .agent-reaction-access:focus-visible { width: 34px; height: 34px; overflow: visible; clip-path: none; background: var(--surface-color); z-index: 2; }
+    .persona-card:focus-within { z-index: 3; }
+    .persona-card > .msg-reaction { right: 14px; bottom: -15px; }
+    .persona-card > .reaction-bar > .rate-pop, .agent-reply > .reply-bar > .rate-pop { left: auto !important; right: 4px; bottom: calc(100% - 10px); margin-bottom: 0; max-width: min(320px, calc(100% - 8px)); }
+    @media (hover: none), (pointer: coarse) { .agent-hover-reactions { display: none; } }
+    /* AGENT_REACTION_HOVER_STYLE_END */
     .src-icons { display: inline-flex; }
     .src-icons .src-icon + .src-icon { margin-left: -5px; }
     .src-icon { width: 16px; height: 16px; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-color); box-shadow: 0 0 0 1.5px var(--bg-color); }
@@ -925,6 +999,6 @@
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
   <script src="share-image.js?v=20261102_2"></script>
-  <script src="app.js?v=20261103_15"></script>
+  <script src="app.js?v=20261103_20"></script>
 </body>
 </html>

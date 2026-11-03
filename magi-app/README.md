@@ -125,6 +125,16 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   without them still work. Android notes use the same list and typography, and
   replace the `id: history` browser-storage paragraph with app-storage details.
 
+## 絵文字のリアクション
+
+PCは3人格・統合人格の回答を指すと、右上に6つの絵文字と「＋」を直接表示する。body上の固定枠で重ねるため、ホバーによって本文や隣の回答の高さ・位置を変えない。枠との行き来には短い猶予を設け、スクロール・Esc・画面変更で閉じる。3人格はPC/SPともにコピーと下部の操作列を出さず、SPでは長押しからリアクション・選択を使う。統合人格のコピーなどはPCの下部とSPの長押しに残す。キーボードからもリアクションを開ける。
+
+回答の「＋」から、最近使った絵文字と9カテゴリの全絵文字を選べる。SPは下からのシート、PCはダイアログで開き、日英の名前・キーワード・絵文字そのもので全カテゴリを検索する。同じ絵文字の再選択は取り消し。最近使った42件は端末内の`magi_emoji_recent`に保存し、検索語は通信・URLに渡さない。
+
+Unicode Emoji 18.0とCLDR 49の公式データを`assets/vendor/unicode-emoji@18.0/`へ固定して取り込む。`node .github/scripts/vendor/fetch-vendor.js`で取得し、`node .github/scripts/generate-magi-emoji.mjs`で日英の名前・検索語を`data/magi-emoji-18.0-cldr49.json`へ生成する。Android用にも同じJSONを`www/data/`へ生成する。`--check`で両JSON・画面の版とSHA-256の一致を検査できる。
+
+Webは「＋」の初回表示でtk.stの静的JSONを取得し、版・SHA-256の検査後にCache Storageへ保存する。PWAも取得済みならオフラインで開ける。AndroidはAPK内の同じJSONを必要時に読み、初回からオフラインで使える。読めない場合は選択画面に再読み込みボタンを出し、閉じれば従来の6候補を選べる。保存済みのリアクションの札はJSONの通信を待たずに表示する。絵柄は端末の絵文字フォントを使う。
+
 ## Backend CORS
 
 The Worker at `workers.tk.st/magi2/*` only answers requests whose **Origin** is

@@ -64,6 +64,13 @@ const PDFJS_CMAPS = [
 //   files … [取得元, 置く名前]。置く名前は dir からの相対
 //   license … ライセンス文の取得元（dir/LICENSE に置く）。取れる場所が無いときは { text } で書く
 const LIBS = [
+  // MAGIの全絵文字・日英検索。generate-magi-emoji.mjsで必要な情報を別JSONへ生成する。
+  { dir: 'unicode-emoji@18.0', kind: 'unicode-data', license: 'https://raw.githubusercontent.com/unicode-org/cldr/release-49/LICENSE',
+    files: [
+      ['https://unicode.org/Public/18.0.0/emoji/emoji-test.txt', 'emoji-test.txt'],
+      ...['annotations', 'annotationsDerived'].flatMap(kind => ['en', 'ja'].map(lang =>
+        ['https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/' + kind + '/' + lang + '.xml', kind + '-' + lang + '.xml']))
+    ] },
   { dir: 'lucide@0.263.0', license: JSD + 'lucide@0.263.0/LICENSE',
     files: [[JSD + 'lucide@0.263.0/dist/umd/lucide.min.js', 'lucide.min.js']] },
   { dir: 'encoding-japanese@2.4.0', license: JSD + 'encoding-japanese@2.4.0/LICENSE',
@@ -212,6 +219,7 @@ async function get(url) {
       // 今回置き換えを当てたものは、記録と違って当然なので咎めない
       if (known && known.sha256 !== sum && !p.applied) { console.error('記録と違う: ' + rel); bad++; }
       record.files[rel] = p.count ? { from: from, sha256: sum, patched: p.count } : { from: from, sha256: sum };
+      if (lib.kind) record.files[rel].kind = lib.kind;
     }
     // 分けて置くもの。<名前>.part1, .part2 … に分け、つないだときの SHA-256 も残す
     for (const [from, name, count] of lib.split || []) {

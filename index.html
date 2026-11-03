@@ -1972,8 +1972,9 @@
     .agent-user>span {
       display: inline-block;
       max-width: 85%;
-      padding: 0.3rem 0.6rem;
-      border-radius: 2px;
+      padding: 0.5rem 0.8rem;
+      border-radius: 1.35rem;
+      line-height: 1.6;
       background: var(--surface-hover);
       color: var(--text-color);
       word-break: break-word;
@@ -2036,18 +2037,31 @@
     .md th { font-weight: 700; white-space: nowrap }
     .md .md-cite { margin-inline: 2px; text-decoration: underline; color: var(--primary-color) }
 
-    .agent-personas {
-      display: grid;
-      gap: 0.4rem;
-    }
-
+    .agent-personas { display: grid; gap: 1.25rem; margin: 0.5rem 0.1rem 1.25rem; }
+    /* 雲の上下は32pxのまま、中央だけを伸ばす。長い討議でも輪郭を間延びさせず、本文や操作を切り抜かない。 */
     .persona-card {
-      border: 1px solid var(--border-color);
-      background: var(--surface-alt);
-      padding: 0.4rem 0.5rem;
-      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-6 20 18 6 42 12C66-2 106-2 136 8C162 17 178 3 211 5C246 3 271 18 302 12C335 0 366 3 396 10C426 19 451-2 484 5C507 7 519 17 534 16C568 8 606 16 590 32Z'/%3E%3C/svg%3E");
+      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 17 572 25 545 19C518 34 482 31 456 24C424 16 403 32 367 28C333 32 310 19 279 24C247 34 215 30 186 24C156 18 137 34 103 28C75 33 45 24 34 19C14 23 -6 14 10 0Z'/%3E%3C/svg%3E");
+      --cloud-middle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 100' preserveAspectRatio='none'%3E%3Cpath d='M10 0C-4 17-2 37 5 50C-3 63-4 85 10 100H590C604 85 603 63 595 50C602 37 604 17 590 0Z'/%3E%3C/svg%3E");
+      --cloud-mask: var(--cloud-top) top / 100% 32px no-repeat, var(--cloud-middle) center / 100% calc(100% - 62px) no-repeat, var(--cloud-bottom) bottom / 100% 32px no-repeat;
+      position: relative;
+      isolation: isolate;
+      min-width: 0;
+      padding: 1.15rem 1.6rem;
     }
-
+    .persona-card:nth-child(2) {
+      --cloud-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 32C-4 22 17 13 30 15C39 2 72-2 103 6C133 0 164 17 194 12C225 2 256 2 285 10C315 20 341 3 376 6C408-2 441 11 466 12C495 3 529 5 548 16C577 12 604 20 590 32Z'/%3E%3C/svg%3E");
+    }
+    .persona-card:nth-child(3) {
+      --cloud-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 32' preserveAspectRatio='none'%3E%3Cpath d='M10 0H590C606 16 581 24 557 18C534 31 500 33 469 24C436 18 413 33 382 27C350 32 324 19 293 24C264 33 230 30 203 23C173 17 147 33 117 28C86 34 57 24 43 20C19 25 -6 16 10 0Z'/%3E%3C/svg%3E");
+    }
+    .persona-card::before, .persona-card::after { content: ''; position: absolute; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
+    .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
+    .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
+    .persona-card:focus-within { z-index: 1; }
+    .persona-head::before, .persona-head::after { content: ''; position: absolute; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-alt); pointer-events: none; }
+    .persona-head::before { left: 15px; bottom: -7px; width: 11px; height: 11px; }
+    .persona-head::after { left: 3px; bottom: -14px; width: 8px; height: 8px; }
     .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite }
     .persona-card.thinking .persona-text { color: var(--secondary-color) }
 
@@ -2109,16 +2123,7 @@
       margin-bottom: 0.1rem;
     }
 
-    .agent-reply {
-      margin-top: 0.4rem;
-      padding: 0.5rem 0.6rem;
-      border-left: 2px solid var(--primary-color);
-      background: var(--primary-bg);
-      color: var(--text-color);
-      line-height: var(--phi);
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
+    .agent-reply { margin-top: 0.8rem; padding: 0.9rem 1rem; border: 1px solid var(--primary-bg-hover); border-radius: 1.4rem; background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
 
     .agent-reply .agent-who {
       display: block;
@@ -2227,6 +2232,43 @@
     .prompt-menu .prompt-menu-rate { margin: -2px -2px 6px; padding: 2px 2px 6px; border-bottom: 1px solid var(--border-color); border-top: 0; justify-content: space-between; }
     .prompt-menu .prompt-menu-rate > button, .prompt-menu .prompt-menu-rate .react-more > button { width: 40px; height: 40px; min-height: 0; padding: 0; justify-content: center; font-size: 24px; }
     .prompt-menu .prompt-menu-rate button[aria-checked="true"] { color: inherit; }
+    /* AGENT_EMOJI_STYLE_BEGIN — Web/PWA/Androidで同じ選択画面 */
+    .emoji-dialog { width: min(420px, calc(100vw - 24px)); height: min(600px, 80dvh); max-height: calc(var(--emoji-available, 100dvh) - 24px); margin: auto; padding: 16px; border: 1px solid var(--border-color); border-radius: 24px; background: var(--surface-color); color: var(--text-color); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-shadow: 0 16px 60px #0005; overflow: hidden; }
+    .emoji-dialog[open] { display: flex; flex-direction: column; }
+    .emoji-dialog::backdrop { background: #0008; }
+    .emoji-handle { display: none; }
+    .emoji-search-row { display: flex; align-items: center; gap: 8px; flex: none; margin-bottom: 12px; }
+    .emoji-search-box { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; height: 48px; padding: 0 12px; border-radius: 12px; background: var(--surface-hover); color: var(--secondary-color); }
+    .emoji-search-box:focus-within { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    .emoji-search-box svg { flex: none; width: 22px; height: 22px; }
+    .emoji-search { width: 100%; min-width: 0; height: 100%; padding: 0; border: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 16px; outline: none; }
+    .emoji-search:focus, .emoji-search:focus-visible { outline: none; box-shadow: none; }
+    .emoji-search::placeholder { color: var(--secondary-color); opacity: 1; }
+    .emoji-close { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); font: inherit; font-size: 28px; cursor: pointer; }
+    .emoji-tabs { display: flex; flex: none; gap: 2px; overflow-x: auto; overscroll-behavior-x: contain; padding: 2px 0 10px; border-bottom: 1px solid var(--border-color); scrollbar-width: thin; }
+    .emoji-tabs button { display: grid; place-items: center; flex: 1 0 36px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--secondary-color); cursor: pointer; }
+    .emoji-tabs svg { width: 22px; height: 22px; }
+    .emoji-tabs button[aria-selected="true"] { background: var(--primary-bg); color: var(--primary-color); }
+    .emoji-dialog button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    .emoji-results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 2px 8px; }
+    .emoji-result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 16px 2px 10px; }
+    .emoji-result-head h2 { margin: 0; color: inherit; font: inherit; font-size: 15px; font-weight: 650; letter-spacing: normal; }
+    .emoji-result-head [role="status"] { color: var(--secondary-color); font-size: 12px; white-space: nowrap; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+    .emoji-option { display: grid; place-items: center; width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--text-color); font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 30px; line-height: 1; cursor: pointer; }
+    .emoji-option[aria-pressed="true"] { background: var(--primary-bg); box-shadow: inset 0 0 0 1px var(--primary-color); }
+    .emoji-empty { margin: 24px 4px; color: var(--secondary-color); font-size: 14px; line-height: 1.6; }
+    .emoji-retry { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-color); font: inherit; cursor: pointer; }
+    .emoji-retry[hidden] { display: none; }
+    .emoji-tabs button:disabled { opacity: 0.45; cursor: default; }
+    .emoji-empty[hidden] { display: none; }
+    @media (hover: hover) { .emoji-dialog button:hover { background: var(--surface-hover); } }
+    @media (pointer: coarse), (max-width: 600px) {
+      .emoji-dialog { top: auto; bottom: var(--emoji-bottom, 0px); left: 0; right: 0; width: 100%; max-width: 640px; height: min(72dvh, 640px); max-height: calc(var(--emoji-available, 100dvh) - 8px); margin: 0 auto; padding: 8px 16px max(12px, env(safe-area-inset-bottom)); border-bottom: 0; border-radius: 22px 22px 0 0; }
+      .emoji-handle { display: block; flex: none; width: 36px; height: 4px; margin: 0 auto 16px; border-radius: 4px; background: var(--border-color); }
+    }
+    @media (max-width: 359px) { .emoji-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    /* AGENT_EMOJI_STYLE_END */
     /* 札。絵文字は CSS で出す（本文の textContent に混ぜない） */
     .agent-user, .agent-reply { position: relative; }
     .msg-reaction, .prompt-reaction { position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 5px; border-radius: 999px; background: var(--surface-color); border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.25); font-size: 17px; font-style: normal; line-height: 1; pointer-events: none; }
@@ -2258,6 +2300,20 @@
     .speak-wait { animation: speak-spin 0.9s linear infinite; }
     @keyframes speak-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
+    /* AGENT_REACTION_HOVER_STYLE_BEGIN — すべて位置指定だけで浮かせ、回答の高さ・余白を変えない */
+    .agent-hover-reactions { position: fixed; z-index: 9400; width: max-content; max-width: calc(100vw - 16px); flex-wrap: nowrap; padding: 4px; border: 1px solid var(--border-color); border-radius: 999px; background: var(--surface-hover); color: var(--text-color); box-shadow: 0 4px 16px #0003; }
+    .agent-hover-reactions > button { flex: 1 1 42px; min-width: 0; font-size: 26px; }
+    .agent-hover-reactions > button[data-more] { font-size: 26px; }
+    .agent-reply > .reply-bar { position: static; }
+    .persona-card > .reaction-bar, .persona-card > .reaction-bar:not(:focus-within) { position: static; display: block; width: auto; height: 0; margin: 0; padding: 0; overflow: visible; clip-path: none; white-space: normal; }
+    .reaction-bar > .agent-reaction-access { position: absolute; top: 8px; right: 12px; width: 0; height: 0; min-width: 0; margin: 0; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .reaction-bar > .agent-reaction-access::after { display: none; }
+    .reaction-bar > .agent-reaction-access:focus-visible { width: 34px; height: 34px; overflow: visible; clip-path: none; background: var(--surface-color); z-index: 2; }
+    .persona-card:focus-within { z-index: 3; }
+    .persona-card > .msg-reaction { right: 14px; bottom: -15px; }
+    .persona-card > .reaction-bar > .rate-pop, .agent-reply > .reply-bar > .rate-pop { left: auto !important; right: 4px; bottom: calc(100% - 10px); margin-bottom: 0; max-width: min(320px, calc(100% - 8px)); }
+    @media (hover: none), (pointer: coarse) { .agent-hover-reactions { display: none; } }
+    /* AGENT_REACTION_HOVER_STYLE_END */
     .src-icons { display: inline-flex; }
     .src-icons .src-icon + .src-icon { margin-left: -5px; }
     .src-icon { width: 16px; height: 16px; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-color); box-shadow: 0 0 0 1.5px var(--bg-color); }
@@ -2783,13 +2839,13 @@
         /* スマホでは会話の文字をアプリ（magi-app）と同じ大きさにする。PC の幅では従来の小さな文字のまま */
         #agent-log { font-size: 17px }
         .agent-user>span { padding: 0.5rem 0.8rem; line-height: 1.6 }
-        .persona-card { padding: 0.7rem 0.8rem }
+        .persona-card { padding: 1.15rem 1.6rem }
         .persona-code, .persona-name, .persona-round-label, .agent-reply .agent-who, .magi-thinking { font-size: 12px }
         .persona-text { font-size: 16px; line-height: 1.7 }
         .persona-round { margin-top: 0.4rem }
         .persona-round:not([data-round="1"]) { padding-top: 0.4rem }
         .persona-ask { font-size: 14px; line-height: 1.6 }
-        .agent-reply { padding: 0.75rem 0.85rem; line-height: 1.7 }
+        .agent-reply { padding: 0.9rem 1rem; line-height: 1.7 }
         .reply-time { font-size: 13px }
     }
 
@@ -7813,11 +7869,11 @@
     const ICON_GOOD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
     const ICON_BAD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
     const ICON_RETRY = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.8-4.2L3 9"/><polyline points="3 4 3 9 8 9"/><path d="M4 13a8 8 0 0 0 14.8 4.2L21 15"/><polyline points="21 20 21 15 16 15"/></svg>`;
-    const rateBtnHTML = () => `<button type="button" class="react-btn" data-act="rate" title="${tr('React', 'リアクション')}" aria-label="${tr('React', 'リアクション')}" aria-haspopup="menu" aria-expanded="false">${ICON_RATE}</button>`;
+    const rateBtnHTML = () => `<button type="button" class="react-btn agent-reaction-access" data-act="rate" title="${tr('React', 'リアクション')}" aria-label="${tr('React', 'リアクション')}" aria-haspopup="menu" aria-expanded="false">${ICON_RATE}</button>`;
     // 各人格カードの操作列（target = 人格コードネーム）。［コピー］［評価］
     function reactionBarHTML(target) {
       return `<div class="reaction-bar" data-target="${esc(target)}">`
-        + `<button type="button" class="react-btn" data-act="copy" title="${tr('Copy', 'コピー')}" aria-label="${tr('Copy', 'コピー')}">${ICON_COPY}</button>`
+
         + rateBtnHTML()
         + `</div>`;
     }
@@ -8718,7 +8774,7 @@ function magiAcronymController(el) {
 }
 // MAGI_ACRONYM_END
     // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
-    const AGENT_SCREEN_VERSION = '7.15';
+    const AGENT_SCREEN_VERSION = '7.16';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -8905,6 +8961,7 @@ function magiAcronymController(el) {
       setAgentSuggestion('');
     }
     function resetAgent(keepOpen = false) {
+      closeAgentEmojiPicker(false);
       agentEndTemporary();
       dropAgentRequest();
       if (agentSpeechPlayer) agentSpeechPlayer.stop();
@@ -9519,7 +9576,8 @@ function showPromptTextSheet(text) {
 // AGENT_MSG_MENU_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
 // 吹き出しの操作メニュー。Shinya Takeda 個人とのチャットに見せるため、画面に出す操作と情報を減らし、縦に伸ばさない。
 // - 自分のプロンプト：送った時刻と「コピー」「選択」「共有」。スマホは吹き出しの長押し、PC はマウスオーバーで出る ⋯ から開く
-// - AI の回答（統合人格と3人格のカード）：スマホは操作列を隠し（CSS）、長押しで同じ操作を出す。PC は操作列を固定表示のまま
+// - AIのリアクション：PCはホバーで右上に6候補と＋、スマホは長押し。3人格にコピーや下部の操作列を出さない。
+// - 統合人格のコピー・読み上げなどはPCの操作列とスマホの長押しに残す。
 //   メニューの項目は隠した操作列のボタンを押すので、評価以外の処理は操作列と同じものを使う
 // 時刻は各プロンプトを送った時刻（保存した at、無ければ直後の回答の mid の先頭＝送った時刻）。PC は会話の最上部に最初の
 // プロンプトの時刻（会話を始めた時刻）を出す。画面ごとの agentMenuJa・agentToast・showPromptTextSheet・agentSharePrompt を使う
@@ -9612,12 +9670,12 @@ function openPromptMenu(el, anchor, how, point) {
   items.forEach(function (it) {
     if (it.rate) {
       // 絵文字のリアクションはメニューの上端に1列で並べ、＋でほかを開く（agentReactionPicker）。同じものを選ぶと取り消す（rateReply）
-      var store = reactionStoreFor(it.rate), picker = agentReactionPicker(agentRatingOf(store && store[it.rate.dataset.target]));
+      var store = reactionStoreFor(it.rate), picker = agentReactionPicker(agentRatingOf(store && store[it.rate.dataset.target]), it.rate);
       picker.classList.add('prompt-menu-rate'); picker.setAttribute('role', 'group');
       picker.addEventListener('click', function (e) {
         var b = e.target.closest('button');
         if (!b) return;
-        if (b.dataset.more) { toggleReactionMore(b); return; }
+        if (b.dataset.more) { e.stopPropagation(); toggleReactionMore(b); return; }
         closePromptMenu(); rateReply(it.rate, b.dataset.rate);
       });
       menu.insertBefore(picker, menu.firstChild); return;
@@ -9650,6 +9708,30 @@ function openPromptMenu(el, anchor, how, point) {
 (function () {
   var fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)');
   var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)');
+  agentLog.addEventListener('pointerover', function (e) {
+    if (e.pointerType !== 'mouse' || !(fine && fine.matches)) return;
+    if (e.target.closest('.rate-pop')) return;
+    var host = e.target.closest('.agent-reply, .persona-card');
+    if (host) showAgentHoverReactions(host);
+  });
+  agentLog.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'mouse' && fine && fine.matches) {
+      if (e.target.closest('.rate-pop')) return;
+      var host = e.target.closest('.agent-reply, .persona-card');
+      if (host) showAgentHoverReactions(host);
+    }
+  });
+  agentLog.addEventListener('pointerout', function (e) {
+    var state = agentHoverReactions;
+    if (state && !(e.relatedTarget && (state.host.contains(e.relatedTarget) || state.pop.contains(e.relatedTarget)))) deferAgentHoverReactionsClose();
+  });
+  agentLog.addEventListener('scroll', function () { closeAgentHoverReactions(false); }, { passive: true });
+  window.addEventListener('resize', function () { closeAgentHoverReactions(false); });
+  document.addEventListener('pointerdown', function (e) {
+    if (agentHoverReactions && !agentHoverReactions.pop.contains(e.target) && !agentHoverReactions.host.contains(e.target)) closeAgentHoverReactions(false);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAgentHoverReactions(false); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) closeAgentHoverReactions(false); });
   // 長押しで開く吹き出し。AI の回答はスマホだけ（PC は操作列がある）。リンク・ボタン・入力・確認質問・採決の表示の上では開かない
   function pressTarget(target) {
     if (!target || !target.closest || target.closest('a, button, input, textarea, select, label, summary, .agent-clarify, .magi-panel, .src-list, .agent-pages, .rate-pop')) return null;
@@ -9727,15 +9809,29 @@ function cleanAgentSpeechEvent(data, expectedMode) {
     ...(data.sig_version !== undefined ? { speech_version: data.sig_version, speech_mode: data.conversation_mode } : {}) });
 }
 // AI の回答への絵文字のリアクション（以前の Good / Bad の評価を置き換えた）。Worker へは同じ形で絵文字を送る。
-// よく使う6つを並べ、＋でほかを開く。統合人格がプロンプトに付ける絵文字（prompt_reaction）も同じ一覧で検査する。
-// 保存した値は文字列（旧データ）か { em, id, delete_token }。一覧に無い絵文字は出さない。good / bad は以前の評価の呼び名
+// よく使う6つを並べ、＋で全絵文字のカテゴリと検索を開く。統合人格の候補は固定の小さな一覧。
+// 保存した値は文字列（旧データ）か { em, id, delete_token }。単一の絵文字だけを描く。good / bad は以前の評価の呼び名
+// AGENT_EMOJI_CATALOG_BEGIN
+// Generated by generate-magi-emoji.mjs. 一覧は「＋」を開いたときだけ読む。
+var AGENT_EMOJI_ASSET = {"file":"magi-emoji-18.0-cldr49.json","unicode":"18.0","cldr":"49","count":3972,"sha256":"8046325c5ed3b0f4318365a4b9ce571cb3cc57dc2f241316ff501e00a0f51959"};
+var AGENT_EMOJI_CATALOG = null;
+// AGENT_EMOJI_CATALOG_END
 var AGENT_REACTIONS_QUICK = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
-var AGENT_REACTIONS_MORE = ['🔥', '👏', '🤔', '😊', '🎉', '👀', '🙌', '✨', '💡', '💯', '😍', '😅', '🤯', '☕', '🎵', '💪', '👎'];
-var AGENT_REACTIONS = AGENT_REACTIONS_QUICK.concat(AGENT_REACTIONS_MORE);
+// 統合人格がプロンプトに付ける候補。利用者が選べる全一覧は別JSON。
+var AGENT_REACTIONS = AGENT_REACTIONS_QUICK.concat(['🔥', '👏', '🤔', '😊', '🎉', '👀', '🙌', '✨', '💡', '💯', '😍', '😅', '🤯', '☕', '🎵', '💪', '👎']);
 var AGENT_RATINGS = { good: '\u{1F44D}', bad: '\u{1F44E}' };
+// 保存済みの札は一覧の通信を待たずに描く。文字列は単一の絵文字クラスタだけ受け付ける。
+var agentEmojiSegmenter;
+function agentEmojiValid(em) {
+  if (typeof em !== 'string' || !em || em.length > 64) return false;
+  if (!/^(?=[\s\S]*[\p{Extended_Pictographic}\p{Regional_Indicator}\u20E3\u{1F3FB}-\u{1F3FF}])[\p{Extended_Pictographic}\p{Emoji_Component}\uFE0F\u200D]+$/u.test(em)) return false;
+  if (typeof Intl.Segmenter !== 'function') return AGENT_REACTIONS.indexOf(em) >= 0;
+  if (!agentEmojiSegmenter) agentEmojiSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  return Array.from(agentEmojiSegmenter.segment(em)).length === 1;
+}
 function agentRatingOf(stored) {
   var em = typeof stored === 'string' ? stored : stored && stored.em;
-  return typeof em === 'string' && AGENT_REACTIONS.indexOf(em) >= 0 ? em : null;
+  return agentEmojiValid(em) ? em : null;
 }
 // 絵文字の札（回答・カード・プロンプトの角）。文字は CSS で出し、本文の textContent（コピー・リアクションの送信）に混ぜない。
 // animate なら弾むアニメーション（付けた・付けられた瞬間だけ。履歴の復元では動かさない）
@@ -9798,6 +9894,7 @@ function showRating(bar, value, animate) {
   agentReactionBadge(bar.closest && bar.closest('.agent-reply, .persona-card'), 'msg-reaction', em, animate, tr('Your reaction', 'あなたのリアクション'));
 }
 function closeRatePops(focus) {
+  closeAgentHoverReactions(false);
   agentLog.querySelectorAll('.rate-pop').forEach(function (pop) {
     var btn = pop.parentElement.querySelector('[data-act="rate"]');
     pop.remove();
@@ -9811,17 +9908,77 @@ function openRatePop(btn, bar) {
   closeRatePops(false);
   if (open) return;
   var store = reactionStoreFor(bar), current = agentRatingOf(store && store[bar.dataset.target]);
-  var pop = agentReactionPicker(current);
+  var pop = agentReactionPicker(current, bar);
   pop.classList.add('rate-pop');
   pop.style.left = btn.offsetLeft + 'px';
   bar.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
   agentRevealReactionPicker(pop);
   pop.querySelector('button').focus({ preventScroll: true });
 }
+// PCは回答を指しただけで6候補と＋を表示する。body上の固定枠なので本文・隣の回答の位置を変えない。
+var agentHoverReactions = null;
+function closeAgentHoverReactions(focus) {
+  var state = agentHoverReactions;
+  if (!state) return false;
+  agentHoverReactions = null; clearTimeout(state.timer);
+  if (state.observer) state.observer.disconnect();
+  state.button.setAttribute('aria-expanded', 'false');
+  state.pop.remove();
+  if (focus && state.button.isConnected) state.button.focus({ preventScroll: true });
+  return true;
+}
+function deferAgentHoverReactionsClose() {
+  var state = agentHoverReactions;
+  if (!state) return;
+  clearTimeout(state.timer);
+  state.timer = setTimeout(function () {
+    if (agentHoverReactions !== state || state.host.matches(':hover') || state.pop.matches(':hover') || state.pop.contains(document.activeElement)) return;
+    closeAgentHoverReactions(false);
+  }, 180);
+}
+function showAgentHoverReactions(host) {
+  if (agentTemporary() || !host || !host.isConnected || host.matches('.streaming, .thinking') || agentEmojiDialog) return;
+  var keyboardPop = agentLog.querySelector('.rate-pop');
+  if (keyboardPop && keyboardPop.contains(document.activeElement)) return;
+  if (agentHoverReactions && agentHoverReactions.host === host) { clearTimeout(agentHoverReactions.timer); return; }
+  var bar = host.querySelector(':scope > .reaction-bar'), button = bar && bar.querySelector('[data-act="rate"]');
+  if (!button || button.hidden) return;
+  closeRatePops(false);
+  var store = reactionStoreFor(bar), pop = agentReactionPicker(agentRatingOf(store && store[bar.dataset.target]), bar);
+  pop.classList.add('agent-hover-reactions');
+  var state = { host: host, bar: bar, button: button, pop: pop, timer: 0 };
+  agentHoverReactions = state;
+  button.setAttribute('aria-expanded', 'true');
+  function position() {
+    if (!host.isConnected) { closeAgentHoverReactions(false); return; }
+    var r = host.getBoundingClientRect(), p = pop.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(r.right - p.width - 4, window.innerWidth - p.width - 8)) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.top - p.height + 10, window.innerHeight - p.height - 8)) + 'px';
+  }
+  pop.addEventListener('pointerenter', function () { clearTimeout(state.timer); });
+  pop.addEventListener('pointerleave', deferAgentHoverReactionsClose);
+  pop.addEventListener('focusout', deferAgentHoverReactionsClose);
+  pop.addEventListener('click', function (e) {
+    e.stopPropagation(); var item = e.target.closest('button'); if (!item) return;
+    if (item.dataset.more) { toggleReactionMore(item); return; }
+    closeAgentHoverReactions(false);
+    if (bar.isConnected) rateReply(bar, item.dataset.rate);
+  });
+  pop.addEventListener('keydown', function (e) {
+    var list = Array.from(pop.querySelectorAll('button')), i = list.indexOf(document.activeElement);
+    if (e.key === 'Escape') { e.preventDefault(); closeAgentHoverReactions(true); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault(); list[(i + (e.key === 'ArrowRight' ? 1 : list.length - 1)) % list.length].focus();
+    }
+  });
+  document.body.appendChild(pop); position();
+  if (typeof ResizeObserver === 'function') { state.observer = new ResizeObserver(position); state.observer.observe(host.closest('.agent-turn') || host); }
+}
 // 絵文字を選ぶ枠（PC の評価のメニューと、スマホの長押しのメニューで共用）。いまの絵文字に印を付ける。
-// ＋ を押すとほかの絵文字を開く（data-more。押しても閉じない）
-function agentReactionPicker(current) {
+// ＋ はカテゴリ・検索付きの全絵文字の選択画面を開く（送信先の操作列を保持する）。
+function agentReactionPicker(current, bar) {
   var pop = document.createElement('div'); pop.className = 'react-picker'; pop.setAttribute('role', 'menu');
+  pop.agentBar = bar; pop.agentCurrent = current;
   pop.setAttribute('aria-label', tr('React', 'リアクション'));
   function add(em, parent) {
     var item = document.createElement('button'); item.type = 'button'; item.dataset.rate = em; item.textContent = em;
@@ -9831,32 +9988,232 @@ function agentReactionPicker(current) {
   AGENT_REACTIONS_QUICK.forEach(function (em) { add(em, pop); });
   var more = document.createElement('button'); more.type = 'button'; more.dataset.more = 'true'; more.textContent = '+';
   more.setAttribute('aria-label', tr('More reactions', 'ほかの絵文字')); more.setAttribute('aria-expanded', 'false');
+  more.setAttribute('aria-haspopup', 'dialog');
   pop.appendChild(more);
-  var extra = document.createElement('div'); extra.className = 'react-more'; extra.hidden = true;
-  AGENT_REACTIONS_MORE.forEach(function (em) { add(em, extra); });
-  pop.appendChild(extra);
   return pop;
 }
 function toggleReactionMore(btn) {
-  var extra = btn.parentElement.querySelector('.react-more');
-  if (!extra) return;
-  extra.hidden = !extra.hidden; btn.setAttribute('aria-expanded', String(!extra.hidden));
-  agentRevealReactionPicker(btn.closest('.prompt-menu, .rate-pop'));
-  if (!extra.hidden) { var first = extra.querySelector('button'); if (first) first.focus({ preventScroll: true }); }
+  var picker = btn.closest('.react-picker');
+  if (picker && picker.agentBar) openAgentEmojiPicker(picker.agentBar, btn, picker.agentCurrent);
 }
-// 広げた選択欄を見える位置に寄せる。長押しのメニュー（画面に固定）は下にはみ出す分だけ上げ、操作列の欄は会話の中をスクロールする
+// 選択欄を見える位置に寄せる。操作列の欄は会話へスクロールし、上下もログの表示範囲に収める。
 function agentRevealReactionPicker(box) {
   if (!box) return;
   if (box.classList.contains('prompt-menu')) {
     var r = box.getBoundingClientRect();
     if (r.bottom > window.innerHeight - 8) box.style.top = Math.max(8, window.innerHeight - 8 - r.height) + 'px';
-  } else if (box.scrollIntoView) box.scrollIntoView({ block: 'nearest' });
+  } else if (box.scrollIntoView) {
+    box.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+    if (box.classList.contains('rate-pop')) {
+      var log = agentLog.getBoundingClientRect();
+      var top = Math.max(8, log.top + 4), bottom = Math.min(window.innerHeight - 8, log.bottom - 4);
+      box.style.maxHeight = Math.max(1, bottom - top) + 'px'; box.style.overflowY = 'auto';
+      var r = box.getBoundingClientRect();
+      box.style.top = (box.offsetTop + Math.max(top, Math.min(r.top, bottom - r.height)) - r.top) + 'px';
+      box.style.bottom = 'auto';
+    }
+  }
+}
+// 全絵文字は必要時に静的JSONを取得する。検索・最近の履歴は端末内で処理し、検索語を通信へ渡さない。
+var agentEmojiLoading = null;
+function agentEmojiURL() {
+  if (typeof APP_VERSION === 'string') return new URL('data/' + AGENT_EMOJI_ASSET.file, document.baseURI).href;
+  var site = /^(?:tk\.st|www\.tk\.st|localhost|127\.0\.0\.1)$/.test(window.location.hostname) ? window.location.href : 'https://tk.st/';
+  return new URL('/data/' + AGENT_EMOJI_ASSET.file, site).href;
+}
+async function agentEmojiDecode(text) {
+  var bytes = new TextEncoder().encode(text);
+  if (bytes.length > 2 * 1024 * 1024) throw new Error('emoji_data_size');
+  var digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))).map(function (n) { return n.toString(16).padStart(2, '0'); }).join('');
+  if (digest !== AGENT_EMOJI_ASSET.sha256) throw new Error('emoji_data_hash');
+  var data = JSON.parse(text), seen = new Set();
+  if (!data || data.schema !== 1 || data.unicode !== AGENT_EMOJI_ASSET.unicode || data.cldr !== AGENT_EMOJI_ASSET.cldr
+      || !Array.isArray(data.emojis) || data.emojis.length !== AGENT_EMOJI_ASSET.count) throw new Error('emoji_data_version');
+  data.emojis.forEach(function (row) {
+    if (!Array.isArray(row) || row.length !== 5 || !agentEmojiValid(row[0]) || seen.has(row[0])
+        || !Number.isInteger(row[1]) || row[1] < 0 || row[1] > 8
+        || row.slice(2).some(function (s) { return typeof s !== 'string' || !s || s.length > 2000; })) throw new Error('emoji_data_row');
+    seen.add(row[0]);
+  });
+  return data.emojis;
+}
+function loadAgentEmoji() {
+  if (AGENT_EMOJI_CATALOG) return Promise.resolve(AGENT_EMOJI_CATALOG);
+  if (agentEmojiLoading) return agentEmojiLoading;
+  agentEmojiLoading = (async function () {
+    var url = agentEmojiURL(), cache;
+    try { if (typeof caches !== 'undefined') cache = await caches.open('magi-emoji-v1'); } catch (_) {}
+    if (cache) {
+      try {
+        var hit = await cache.match(url);
+        if (hit) { AGENT_EMOJI_CATALOG = await agentEmojiDecode(await hit.text()); return AGENT_EMOJI_CATALOG; }
+      } catch (_) { try { await cache.delete(url); } catch (_) {} }
+    }
+    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, 10000);
+    try {
+      var response = await fetch(url, { signal: ctrl.signal, cache: 'no-cache', credentials: 'omit', redirect: 'error' });
+      if (!response.ok) throw new Error('emoji_data_http');
+      var text = await response.text(), rows = await agentEmojiDecode(text);
+      if (cache) { try { await cache.put(url, new Response(text, { headers: { 'Content-Type': 'application/json; charset=utf-8' } })); } catch (_) {} }
+      AGENT_EMOJI_CATALOG = rows; agentEmojiSearchRows = null;
+      return rows;
+    } finally { clearTimeout(timer); }
+  })().finally(function () { agentEmojiLoading = null; });
+  return agentEmojiLoading;
+}
+var AGENT_EMOJI_GROUPS = [
+  ['Smileys & emotion', 'スマイル・気持ち', 'M8 14s1.5 2 4 2 4-2 4-2M8 9h.01M16 9h.01', true],
+  ['People & body', '人・からだ', 'M7 21v-3a5 5 0 0 1 10 0v3M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8'],
+  ['Animals & nature', '動物・自然', 'M12 21c-7-4-9-10-7-16 5-1 10 1 14-2 1 8-1 15-7 18ZM12 21V10'],
+  ['Food & drink', '食べ物・飲み物', 'M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-5 2-5 9 0 9'],
+  ['Travel & places', '旅行・場所', 'M4 21V5h10v16M8 9h2M8 13h2M8 17h2M14 11h6v10M2 21h20'],
+  ['Activities', 'アクティビティ', 'm5 5 14 14M5 19 19 5M12 2v20M2 12h20', true],
+  ['Objects', 'もの', 'M9 18h6M9 22h6M8 14a6 6 0 1 1 8 0c-1 1-1 2-1 4H9c0-2 0-3-1-4'],
+  ['Symbols', '記号', 'M5 9h15M4 15h15M11 3 7 21M17 3l-4 18'],
+  ['Flags', '旗', 'M5 22V3c5-3 9 3 14 0v12c-5 3-9-3-14 0']
+];
+var agentEmojiDialog = null, agentEmojiSearchRows = null;
+function agentEmojiNormalize(text) {
+  return String(text || '').normalize('NFKC').toLowerCase().replace(/\uFE0F/g, '')
+    .replace(/[ァ-ヶ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); }).trim();
+}
+function agentEmojiSearch(query) {
+  if (!agentEmojiSearchRows) agentEmojiSearchRows = AGENT_EMOJI_CATALOG.map(function (row) { return agentEmojiNormalize(row[0] + ' ' + row.slice(2).join(' ')); });
+  var words = agentEmojiNormalize(query).split(/\s+/).filter(Boolean);
+  return AGENT_EMOJI_CATALOG.filter(function (_, i) { return words.every(function (word) { return agentEmojiSearchRows[i].indexOf(word) >= 0; }); });
+}
+function agentEmojiRecent() {
+  try {
+    var list = JSON.parse(localStorage.getItem('magi_emoji_recent') || '[]');
+    return Array.isArray(list) ? list.filter(function (em, i) { return agentEmojiValid(em) && list.indexOf(em) === i; }).slice(0, 42) : [];
+  } catch (_) { return []; }
+}
+function rememberAgentEmoji(em) {
+  try { localStorage.setItem('magi_emoji_recent', JSON.stringify([em].concat(agentEmojiRecent().filter(function (old) { return old !== em; })).slice(0, 42))); } catch (_) {}
+}
+function closeAgentEmojiPicker(focus) {
+  closeAgentHoverReactions(false);
+  var state = agentEmojiDialog;
+  if (!state) return false;
+  agentEmojiDialog = null; state.cleanup(); state.dialog.close(); state.dialog.remove();
+  if (focus) {
+    var back = state.opener.isConnected ? state.opener : state.bar.querySelector('[data-act="rate"]');
+    if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+      back = state.bar.closest('.agent-reply, .persona-card');
+      if (back) back.tabIndex = -1;
+    }
+    if (back && back.isConnected) back.focus({ preventScroll: true });
+  }
+  return true;
+}
+function openAgentEmojiPicker(bar, opener, current) {
+  if (agentTemporary() || !bar || !bar.isConnected) return;
+  closeAgentEmojiPicker(false);
+  var owner = reactionOwner(bar), recent = agentEmojiRecent(), selected = recent.length ? 'recent' : '0';
+  var dialog = document.createElement('dialog'); dialog.className = 'emoji-dialog';
+  dialog.setAttribute('aria-label', tr('Choose a reaction', '絵文字を選ぶ'));
+  dialog.innerHTML = '<div class="emoji-handle" aria-hidden="true"></div><div class="emoji-search-row">'
+    + '<label class="emoji-search-box"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>'
+    + '<input type="search" class="emoji-search" maxlength="100" autocomplete="off" spellcheck="false"></label>'
+    + '<button type="button" class="emoji-close" autofocus>×</button></div><div class="emoji-tabs" role="tablist"></div>'
+    + '<div class="emoji-results" id="magi-emoji-results" role="tabpanel"><div class="emoji-result-head"><h2 id="magi-emoji-heading"></h2><span role="status" aria-live="polite" aria-atomic="true"></span></div>'
+    + '<div class="emoji-grid" role="group"></div><p class="emoji-empty" hidden></p><button type="button" class="emoji-retry" hidden></button></div>';
+  var search = dialog.querySelector('.emoji-search'), tabs = dialog.querySelector('.emoji-tabs'), grid = dialog.querySelector('.emoji-grid');
+  var results = dialog.querySelector('.emoji-results'), heading = dialog.querySelector('h2'), count = dialog.querySelector('[role="status"]'), empty = dialog.querySelector('.emoji-empty');
+  var retry = dialog.querySelector('.emoji-retry'); retry.textContent = tr('Try again', '再読み込み');
+  search.setAttribute('aria-controls', 'magi-emoji-results'); results.setAttribute('aria-labelledby', 'magi-emoji-heading');
+  search.placeholder = tr('Search', '検索'); search.setAttribute('aria-label', tr('Search all emoji', 'すべての絵文字を検索'));
+  dialog.querySelector('.emoji-close').setAttribute('aria-label', tr('Close', '閉じる'));
+  tabs.setAttribute('aria-label', tr('Emoji categories', '絵文字のカテゴリ'));
+  function icon(path, circle) { return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (circle ? '<circle cx="12" cy="12" r="9"/>' : '') + '<path d="' + path + '"/></svg>'; }
+  function tab(id, en, ja, path, circle) {
+    var b = document.createElement('button'); b.type = 'button'; b.dataset.category = id; b.setAttribute('role', 'tab');
+    b.setAttribute('aria-controls', 'magi-emoji-results'); b.title = tr(en, ja); b.setAttribute('aria-label', b.title); b.innerHTML = icon(path, circle); tabs.appendChild(b);
+  }
+  tab('recent', 'Recent', '最近', 'M12 7v5l3 2', true);
+  AGENT_EMOJI_GROUPS.forEach(function (g, i) { tab(String(i), g[0], g[1], g[2], g[3]); });
+  function render() {
+    if (!AGENT_EMOJI_CATALOG) return;
+    var query = search.value.trim(), rows;
+    if (query) rows = agentEmojiSearch(query);
+    else if (selected === 'recent') rows = recent.map(function (em) { return AGENT_EMOJI_CATALOG.find(function (row) { return row[0] === em; }); }).filter(Boolean);
+    else rows = AGENT_EMOJI_CATALOG.filter(function (row) { return row[1] === Number(selected); });
+    heading.textContent = query ? tr('Search results', '検索結果') : selected === 'recent' ? tr('Recent', '最近') : tr(AGENT_EMOJI_GROUPS[Number(selected)][0], AGENT_EMOJI_GROUPS[Number(selected)][1]);
+    count.textContent = tr(rows.length + ' emoji', rows.length + '件'); grid.setAttribute('aria-label', heading.textContent);
+    tabs.querySelectorAll('button').forEach(function (b) { var active = b.dataset.category === selected; b.setAttribute('aria-selected', String(active)); b.tabIndex = active ? 0 : -1; });
+    var frag = document.createDocumentFragment();
+    rows.forEach(function (row, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'emoji-option'; b.dataset.emoji = row[0]; b.textContent = row[0];
+      b.title = tr(row[2], row[3]); b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(current === row[0])); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
+    });
+    grid.replaceChildren(frag); results.scrollTop = 0; empty.hidden = !!rows.length;
+    empty.textContent = query ? tr('No emoji found. Try another word.', '絵文字が見つかりません。別の言葉で検索してください。') : tr('No recently used emoji yet.', '最近使った絵文字はまだありません。');
+  }
+  tabs.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; selected = b.dataset.category; search.value = ''; render(); });
+  tabs.addEventListener('keydown', function (e) {
+    var list = Array.from(tabs.children), i = list.indexOf(document.activeElement), next;
+    if (e.key === 'ArrowRight') next = (i + 1) % list.length;
+    else if (e.key === 'ArrowLeft') next = (i + list.length - 1) % list.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = list.length - 1;
+    if (next !== undefined) { e.preventDefault(); list[next].click(); list[next].focus(); list[next].scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  });
+  grid.addEventListener('keydown', function (e) {
+    var list = Array.from(grid.children), i = list.indexOf(document.activeElement), cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length, next;
+    if (e.key === 'ArrowRight') next = i + 1;
+    else if (e.key === 'ArrowLeft') next = i - 1;
+    else if (e.key === 'ArrowDown') next = i + cols;
+    else if (e.key === 'ArrowUp') next = i - cols;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = list.length - 1;
+    if (next !== undefined && list.length) { e.preventDefault(); next = Math.max(0, Math.min(list.length - 1, next)); list[i].tabIndex = -1; list[next].tabIndex = 0; list[next].focus(); }
+  });
+  grid.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-emoji]'); if (!b) return;
+    var em = b.dataset.emoji; closeAgentEmojiPicker(true);
+    if (!bar.isConnected || currentSessionId !== owner.sessionId || reactionOwner(bar).mid !== owner.mid) return;
+    rateReply(bar, em);
+  });
+  var timer;
+  search.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(render, 70); });
+  dialog.querySelector('.emoji-close').addEventListener('click', function () { closeAgentEmojiPicker(true); });
+  dialog.addEventListener('cancel', function (e) { e.preventDefault(); closeAgentEmojiPicker(true); });
+  dialog.addEventListener('click', function (e) { e.stopPropagation(); if (e.target === dialog) closeAgentEmojiPicker(true); });
+  function load() {
+    results.setAttribute('aria-busy', 'true'); retry.hidden = true;
+    heading.textContent = tr('Emoji', '絵文字'); count.textContent = tr('Loading…', '読み込み中…');
+    empty.hidden = false; empty.textContent = tr('Loading emoji…', '絵文字を読み込んでいます…');
+    tabs.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+    loadAgentEmoji().then(function () {
+      if (!agentEmojiDialog || agentEmojiDialog.dialog !== dialog) return;
+      results.setAttribute('aria-busy', 'false');
+      tabs.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+      render();
+    }).catch(function () {
+      if (!agentEmojiDialog || agentEmojiDialog.dialog !== dialog) return;
+      results.setAttribute('aria-busy', 'false'); count.textContent = ''; retry.hidden = false;
+      empty.textContent = tr('Could not load emoji. Check your connection and try again.', '絵文字を読み込めませんでした。通信状態を確認して再読み込みしてください。');
+    });
+  }
+  retry.addEventListener('click', load);
+  function viewport() {
+    var v = window.visualViewport;
+    dialog.style.setProperty('--emoji-available', (v ? v.height : window.innerHeight) + 'px');
+    dialog.style.setProperty('--emoji-bottom', Math.max(0, window.innerHeight - (v ? v.height + v.offsetTop : window.innerHeight)) + 'px');
+  }
+  closePromptMenu(); closeRatePops(false);
+  agentEmojiDialog = { dialog: dialog, opener: opener, bar: bar, cleanup: function () {
+    clearTimeout(timer); if (window.visualViewport) window.visualViewport.removeEventListener('resize', viewport); window.removeEventListener('resize', viewport);
+  } };
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', viewport);
+  window.addEventListener('resize', viewport); viewport(); document.body.appendChild(dialog); dialog.showModal(); load();
+  if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) search.focus({ preventScroll: true });
 }
 // リアクションを付ける・付け替える・取り消す。付いているもの（以前の評価を含む）は消せてから次を付ける。
 // value は絵文字（以前の呼び名 good / bad も受ける）。同じものを選ぶと取り消す
 async function rateReply(bar, value) {
   value = AGENT_RATINGS[value] || value;
-  if (AGENT_REACTIONS.indexOf(value) < 0) return;
+  if (!agentEmojiValid(value)) return;
   if (agentTemporary()) return;
   if (bar.dataset.removing === 'true') return;
   var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target], owner = reactionOwner(bar);
@@ -9869,6 +10226,7 @@ async function rateReply(bar, value) {
     showRating(bar, null);
     if (agentRatingOf(current) === value) return;
   }
+  rememberAgentEmoji(value);
   showRating(bar, value, true);
   registerReaction(bar, ctx.target, value, ctx);
 }
@@ -11431,7 +11789,7 @@ async function unregisterReaction(bar, target) {
       // リアクションのメニューから絵文字を選ぶ（＋ はほかの絵文字を開くだけ）
       const pick = e.target.closest('.rate-pop button');
       if (pick) {
-        if (pick.dataset.more) { toggleReactionMore(pick); return; }
+        if (pick.dataset.more) { e.stopPropagation(); toggleReactionMore(pick); return; }
         const bar = pick.closest('.reaction-bar');
         closeRatePops(true);
         rateReply(bar, pick.dataset.rate);

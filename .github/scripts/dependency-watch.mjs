@@ -62,6 +62,8 @@ export function inventory(root = ROOT) {
   const vendor = readJSON(path.join(root, vendorFile));
   if (!vendor.files || !Object.keys(vendor.files).length) throw new Error('同梱ライブラリの一覧が空です');
   for (const location of [...Object.keys(vendor.files), ...Object.keys(vendor.split || {})]) {
+    // Unicode/CLDRはnpmパッケージではない。生バイトの照合はvendorの--checkで行う。
+    if (vendor.files[location]?.kind === 'unicode-data') continue;
     const match = location.match(/^((?:@[^/]+\/)?[^/@]+)@([^/]+)\//);
     if (!match) throw new Error(`同梱ライブラリの版を特定できません: ${location}`);
     add('npm', match[1], match[2], vendorFile);

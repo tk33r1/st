@@ -64,7 +64,7 @@ try {
     const bar = page.locator('.agent-reply .reply-bar').last();
     await until(async () => (await page.locator('.agent-reply.streaming').count()) === 0 && (await bar.count()) === 1, 'reply done');
     await page.waitForTimeout(300);
-    assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'retry', 'rate'], name);
+    assert.deepEqual(await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act)), ['copy', 'retry'], name);
     // ボタンは枠で囲わない。日時は操作列に出さない（プロンプトを送った時刻を、PC は会話の最上部、スマホは長押しのメニューに出す）
     for (const border of await bar.locator('button:visible').evaluateAll(list => list.map(b => getComputedStyle(b).borderTopColor))) assert.equal(border, 'rgba(0, 0, 0, 0)', name + ' border');
     assert.equal(await bar.locator('time.reply-time').count(), 0, name + ' no reply time');
@@ -76,6 +76,21 @@ try {
       return out;
     });
     assert.equal(cursor.body, '"\u{258C}"', name + ' cursor on body'); assert.equal(cursor.reply, 'none', name + ' no cursor below the bar');
+    if (name === 'app-off') {
+      // 取得失敗・壊れたJSONから再試行でき、選択を閉じれば通常の会話へ戻れる。
+      let mode = 'http', reads = 0;
+      await page.route('**/data/magi-emoji-*.json', async route => {
+        reads++;
+        await route.fulfill({ status: mode === 'http' ? 503 : 200, contentType: 'application/json',
+          body: mode === 'ok' ? readFileSync(resolve(root, 'data/magi-emoji-18.0-cldr49.json')) : '{}' });
+      });
+      await page.locator('.agent-reply').last().hover(); await page.locator('.agent-hover-reactions [data-more]').click();
+      const dialog = page.locator('.emoji-dialog[open]'), retry = dialog.locator('.emoji-retry');
+      await until(async () => await retry.isVisible(), 'JSON HTTP failure');
+      mode = 'hash'; await retry.click(); await until(async () => reads === 2 && await retry.isVisible(), 'JSON hash failure');
+      mode = 'ok'; await retry.click(); await until(async () => (await dialog.locator('.emoji-option').count()) > 0, 'JSON retry success');
+      assert.equal(reads, 3); await page.keyboard.press('Escape'); assert.equal(await page.locator('.emoji-dialog').count(), 0);
+    }
     if (process.argv.includes('--screenshots')) { mkdirSync(captures, { recursive: true }); await page.screenshot({ path: resolve(captures, name + '-bar.png'), animations: 'disabled' }); }
     assert.deepEqual(errors, [], name + ' page errors');
     await context.close();
@@ -87,6 +102,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, locale: lang, serviceWorkers: 'block', isMobile: touch, hasTouch: touch });
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
     const page = await context.newPage(), errors = [], external = [], speech = [], chats = [], reacts = [];
+    let emojiRequests = 0;
     let chatFails = false, speechDelay = 0;
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(() => {
@@ -96,6 +112,7 @@ try {
     });
     await page.route('**/*', async route => {
       const request = route.request(), url = new URL(request.url());
+      if (/\/data\/magi-emoji-.*\.json$/.test(url.pathname)) emojiRequests++;
       if (url.pathname === '/magi2/models') { await route.fulfill({ json: { personas: {}, synthesizer: {}, features: { speech: true } }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
       if (url.pathname === '/magi2/usage') { await route.fulfill({ json: { used: 1, limit: 60, day: '2026-10-23', resets_at: '2026-10-24T00:00:00Z', global_full: false }, headers: { 'Access-Control-Allow-Origin': origin } }); return; }
       if (url.pathname === '/magi2/chat') {
@@ -171,7 +188,7 @@ try {
       await until(async () => (await page.locator('.prompt-menu').count()) === 0, 'menu closed');
     } else {
       const acts = await bar.locator('button:visible').evaluateAll(list => list.map(b => b.dataset.act));
-      assert.deepEqual(acts, ['copy', 'speak', 'retry', 'rate', 'sources'], name);
+      assert.deepEqual(acts, ['copy', 'speak', 'retry', 'sources'], name);
       // 390px 以上は［ソース］まで1行に収める（それより狭い端末では［ソース］だけ2行目の右端へ回る）
       if (width >= 390) {
         const [copyTop, srcTop] = await Promise.all(['copy', 'sources'].map(act => bar.locator(`[data-act="${act}"]`).evaluate(b => b.getBoundingClientRect().top)));
@@ -312,16 +329,35 @@ try {
     // 評価: Good / Bad の2択。付け替えは前の評価を消してから付ける
     // スマホは長押しのメニューの評価の行、PC は操作列の評価のメニュー
     const latest = page.locator('.agent-reply .reply-bar').last(), rate = latest.locator('[data-act="rate"]');
-    const pop = touch ? '.prompt-menu-rate' : '.rate-pop', openRate = async () => { if (touch) await replyMenu(); else await rate.click(); };
+    const pop = touch ? '.prompt-menu-rate' : '.agent-hover-reactions', openRate = async () => { if (touch) await replyMenu(); else await page.locator('.agent-reply').last().hover(); };
     await openRate();
     // よく使う6つと ＋。＋ でほかの絵文字を開く
     assert.deepEqual(await page.locator(pop + ' > button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
-    assert.equal(await page.locator(pop + ' .react-more').isHidden(), true);
+    assert.equal(emojiRequests, 0, name + ' full emoji data is lazy');
     await page.locator(pop + ' [data-more]').click();
-    assert.equal(await page.locator(pop + ' .react-more').isVisible(), true);
-    assert.ok((await page.locator(pop + ' .react-more button').count()) >= 16);
+    const emoji = page.locator('.emoji-dialog[open]'), search = emoji.locator('.emoji-search');
+    const emojiReady = async () => until(async () => (await emoji.locator('.emoji-results').getAttribute('aria-busy')) === 'false' && (await emoji.locator('.emoji-option').count()) > 0, 'emoji JSON ready');
+    await emojiReady(); assert.equal(emojiRequests, 1, name + ' one JSON request');
+    assert.equal(await emoji.isVisible(), true);
+    assert.equal(await emoji.locator('[role="tab"]').count(), 10);
+    assert.equal(await emoji.getByText('あなたのリアクション', { exact: true }).count(), 0);
+    // 全カテゴリの合計が正本の全絵文字と一致する。肌色・合成・国旗も選択できる。
+    let allEmoji = 0;
+    for (let category = 0; category < 9; category++) {
+      await emoji.locator('[data-category="' + category + '"]').click();
+      allEmoji += await emoji.locator('.emoji-option').count();
+    }
+    assert.equal(allEmoji, 3972);
+    for (const [query, match] of [['ねこ', '🐱'], ['CAT', '🐱'], ['japan', '🇯🇵'], ['thumbs up medium skin', '👍🏽']]) {
+      await search.fill(query);
+      await until(async () => (await emoji.locator('.emoji-option[data-emoji="' + match + '"]').count()) === 1, query);
+    }
+    await search.fill('no-such-emoji-123'); await until(async () => await emoji.locator('.emoji-empty').isVisible(), 'empty emoji search');
+    await search.fill('👍'); await until(async () => (await emoji.locator('.emoji-option[data-emoji="👍"]').count()) === 1, 'thumbs up');
+    const bounds = await emoji.boundingBox();
+    assert(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= 901, name + ' emoji fits viewport');
     if (process.argv.includes('--screenshots')) await page.screenshot({ path: resolve(captures, name + '-rate.png'), animations: 'disabled' });
-    await page.locator(pop + ' [data-rate="👍"]').click();
+    await emoji.locator('.emoji-option[data-emoji="👍"]').click();
     await until(async () => reacts.length === 1, 'rated good');
     assert.equal(reacts[0].reaction, '\u{1F44D}'); assert.equal(reacts[0].target, 'integrated');
     assert.equal(await page.locator(pop).count(), 0); assert.match(await rate.getAttribute('class'), /rated/);
@@ -334,6 +370,20 @@ try {
     assert.deepEqual(reacts.slice(1).map(r => r.op || r.reaction), ['remove', '\u{1F602}']);
     await openRate(); await page.keyboard.press('Escape');
     assert.equal(await page.locator(pop).count(), 0);
+    // 新しい選択画面の最近タブにも両方が残り、Escapeで閉じて元の評価へ戻れる。
+    await openRate(); await page.locator(pop + ' [data-more]').click();
+    await emojiReady();
+    assert.equal(await emoji.locator('[data-category="recent"]').getAttribute('aria-selected'), 'true');
+    assert.deepEqual(await emoji.locator('.emoji-option').allTextContents(), ['😂', '👍']);
+    await page.keyboard.press('Escape'); assert.equal(await page.locator('.emoji-dialog').count(), 0);
+    // タブはキーボードでも切り替わり、従来の候補にない国旗も送信・保存・復元できる。
+    await openRate(); await page.locator(pop + ' [data-more]').click();
+    await emojiReady();
+    await emoji.locator('[data-category="recent"]').focus(); await page.keyboard.press('ArrowRight');
+    assert.equal(await emoji.locator('[data-category="0"]').getAttribute('aria-selected'), 'true');
+    await search.fill('japan'); await until(async () => (await emoji.locator('[data-emoji="🇯🇵"]').count()) === 1, 'flag search');
+    await emoji.locator('[data-emoji="🇯🇵"]').click(); await until(async () => reacts.length === 5, 'rated flag');
+    assert.deepEqual(reacts.slice(3).map(r => r.op || r.reaction), ['remove', '🇯🇵']);
 
     // 履歴から開き直しても、保存した署名で 🔊 と［ソース］が出る
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -342,8 +392,13 @@ try {
     await until(async () => (await restored.locator('[data-act="speak"]:not([hidden])').count()) === 1, 'restored speak');
     assert.equal(await restored.locator('[data-act="sources"]:not([hidden])').count(), 1);
     assert.match(await restored.locator('[data-act="rate"]').getAttribute('class'), /rated/, '評価を復元する');
+    assert.equal(await page.locator('.agent-reply').last().locator('.msg-reaction').getAttribute('data-emoji'), '🇯🇵');
     assert.equal(await restored.locator('[data-act="retry"]:not([hidden])').count(), 1, '開き直しても文字の質問は送り直せる');
     assert.equal(await restored.locator('time.reply-time:visible').count(), 0);
+    // 再起動後にネットワークが無くても、検査済みJSONをキャッシュから読める。
+    await context.setOffline(true); await openRate(); await page.locator(pop + ' [data-more]').click(); await emojiReady();
+    assert.equal(await emoji.locator('[data-emoji="🇯🇵"]').count(), 1); assert.equal(emojiRequests, 1, name + ' offline cache');
+    await page.keyboard.press('Escape'); await context.setOffline(false);
     assert.deepEqual(errors, [], name + ' page errors');
     await context.close();
     checked++;

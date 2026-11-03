@@ -39,6 +39,7 @@ test('実ファイルからnpm間接依存・scoped vendor・readability・Pytho
   assert.ok(packages.some(p => p.name === '@mozilla/readability' && p.sources.includes('magi-app/www/vendor/SOURCES.json')));
   assert.ok(packages.some(p => p.ecosystem === 'PyPI' && p.name === 'SudachiPy'));
   assert.ok(packages.some(p => p.name === 'pdfjs-dist' && p.sources.includes('assets/vendor/SOURCES.json')));
+  assert.ok(!packages.some(p => p.name === 'unicode-emoji'), 'Unicodeのデータを架空のnpmパッケージとして照会しない');
   assert.equal(new Set(packages.map(p => JSON.stringify([p.ecosystem, p.name, p.version]))).size, packages.length);
 });
 

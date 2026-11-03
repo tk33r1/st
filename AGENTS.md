@@ -25,6 +25,7 @@
   コマンドとサイトのページを一緒に探す（読む資産と版は `index.html` の `SHARED_SEARCH_ASSETS`。共通検索の版を上げたらここも上げる）。
   tk.st 以外（インスクリプション版など）や読めなかったときは、インラインのコマンド検索のまま動くので、インスクリプション版から落とす行は無い。
   MAGI の＋で PDF を添付したときも、tk.st の上でだけ同梱の pdf.js（`/assets/vendor/pdfjs-dist@6.4.299/`）を遅れて読む（`index.html` の `AGENT_PDFJS_BASE`）。ほかの場所では PDF だけを断り、画像・テキストの添付はそのまま動く。
+  MAGI2の絵文字一覧は、本人了承（2026-11-03）により「＋」を開いたときに`/data/magi-emoji-*.json`を取得してよい。`generate-magi-emoji.mjs`の生成物で、画面が版・SHA-256を検査して端末にキャッシュする。アプリは同じJSONを`magi-app/www/data/`に同梱する。検索語は端末から送らない。
 - **SAFE TOOLS（`tools/` 配下）**: 外部とやりとりするのはアクセス解析だけ（後述「SAFE TOOLS の通信制限」）。
 - **それ以外のページ**: Google Fonts などの Web フォントや CDN の CSS/JS を読み込んでよい。
 - どのページでも、フレームワーク・ビルドツールを勝手に持ち込まない。

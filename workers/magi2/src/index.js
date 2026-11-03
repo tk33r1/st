@@ -1228,7 +1228,7 @@ function reactionSplitter(onReaction) {
     const end = close >= 0 && (nl < 0 || close < nl) ? close : nl;
     if (end < 0) {
       if (!final && s.length < max) return '';
-      state = 'body'; return buf;
+      state = 'body'; return final && s.startsWith(marker) ? '' : buf;
     }
     if (end === close) { const emoji = pick(s.slice(marker.length, close).trim()); if (emoji) onReaction(emoji); }
     state = 'lead';
@@ -1275,8 +1275,8 @@ async function readSynthesis(body, send, provider, signal, splitter = null) {
       }
     }
     if (signal?.aborted) throw stageError('synthesizer_call', 'cancelled', '統合応答が中断されました', { retryable: true });
-    if (splitter) emit(splitter.end());
     if (!finished || finishReason !== 'stop') throw stageError('synthesizer_call', 'incomplete_output', '統合応答が最後まで生成されませんでした', { retryable: true });
+    if (splitter) emit(splitter.end());
     if (!answer.trim()) throw stageError('synthesizer_call', 'empty_output', '統合人格が空の応答を返しました', { retryable: true });
     return answer;
   } finally { signal?.removeEventListener('abort', stop); await reader.cancel().catch(() => {}); reader.releaseLock(); }

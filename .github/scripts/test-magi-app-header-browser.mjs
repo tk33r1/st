@@ -156,7 +156,7 @@ try {
       await page.locator('#btn-history-agent').click(); await page.locator('.session-load').first().click();
       const rate = page.locator('.react-btn[data-act="rate"]').first();
       assert.ok(await rate.count());
-      await rate.click(); assert.equal(await page.locator('.rate-pop').count(), 1);
+      await rate.focus(); await page.keyboard.press('Enter'); assert.equal(await page.locator('.rate-pop').count(), 1);
       await page.locator('#btn-usage').click(); assert.equal(await page.locator('.rate-pop').count(), 0);
     }
     assert.deepEqual(errors, []); assert.deepEqual(posts, []);
