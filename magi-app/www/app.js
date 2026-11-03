@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.18';
+var APP_VERSION = '7.19';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -573,9 +573,12 @@ function showAgentHoverReactions(host) {
   button.setAttribute('aria-expanded', 'true');
   function position() {
     if (!host.isConnected) { closeAgentHoverReactions(false); return; }
-    var r = host.getBoundingClientRect(), p = pop.getBoundingClientRect();
-    pop.style.left = Math.max(8, Math.min(r.right - p.width - 4, window.innerWidth - p.width - 8)) + 'px';
-    pop.style.top = Math.max(8, Math.min(r.top - p.height + 10, window.innerHeight - p.height - 8)) + 'px';
+    // 会話欄の見えている範囲に収める。回答の上端が上に隠れていても、枠をヘッダーの操作（一時チャットなど）に重ねない
+    var r = host.getBoundingClientRect(), p = pop.getBoundingClientRect(), log = agentLog.getBoundingClientRect(), view = magiLogViewport(agentLog);
+    var left = Math.max(8, log.left + 4), right = Math.min(window.innerWidth - 8, log.right - 4);
+    var top = Math.max(8, view.top + 4), bottom = Math.min(window.innerHeight - 8, view.bottom - 4);
+    pop.style.left = Math.max(left, Math.min(r.right - p.width - 4, right - p.width)) + 'px';
+    pop.style.top = Math.max(top, Math.min(r.top - p.height + 10, bottom - p.height)) + 'px';
   }
   pop.addEventListener('pointerenter', function () { clearTimeout(state.timer); });
   pop.addEventListener('pointerleave', deferAgentHoverReactionsClose);

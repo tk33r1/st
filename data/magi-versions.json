@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.19",
+      "date": "2026-11-04",
+      "changes": {
+        "ja": [
+          "PCで回答を指したときに出る絵文字の枠を、会話欄の見えている範囲に表示するようにしました。",
+          "絵文字の枠が上のボタン（一時チャットなど）に重なり、押せなくなることがある不具合を直しました。"
+        ],
+        "en": [
+          "The emoji bar shown when pointing at a reply on PC now stays within the visible chat area.",
+          "Fixed the emoji bar sometimes covering the buttons above the chat, such as Temporary chat, so they could not be clicked."
+        ]
+      }
+    },
+    {
       "version": "7.18",
       "date": "2026-11-04",
       "changes": {
