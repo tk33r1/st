@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.18",
+      "date": "2026-11-04",
+      "changes": {
+        "ja": [
+          "最近使った絵文字を、選んだ肌の色のまま表示するようにしました。",
+          "回答の区切り線が表として表示されることがある不具合と、コード内の出典番号が文字化けする不具合を直しました。",
+          "Web検索で答えた回に、合わない絵文字が付くことがある不具合を直しました。",
+          "回答の生成後に通信が切れても、設定どおり会話を保存するようにしました。"
+        ],
+        "en": [
+          "Recent emoji now keep the skin tone you chose.",
+          "Fixed dividers sometimes shown as tables and garbled citation numbers inside code in replies.",
+          "Fixed a mismatched emoji that could be added to messages answered with Web search.",
+          "Chats are now saved as configured even if the connection drops after the reply is generated."
+        ]
+      }
+    },
+    {
       "version": "7.17",
       "date": "2026-11-04",
       "changes": {

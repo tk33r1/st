@@ -914,9 +914,9 @@ function fetchTitle(env, lastContent, langNote, signal, log, attachments = null)
     // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる。
     // 添付（attachments は名前の配列）は本文を渡さず名前だけを足す（題には足りる）。
     // 発言は見出しを付けて引用する（そのまま渡すと、モデルが題ではなく答えを書く）
-    const names = attachments ? `[添付: ${attachments.join(', ')}]` : '';
+    // 画像は本物を渡すので、注記は添付の名前だけ
     const quoted = `${TITLER.input_header}
-${[contentText(lastContent).trim(), names].filter(Boolean).join('\n') || '（文字なし。画像だけ）'}`;
+${[contentText(lastContent).trim(), ...mediaNotes('', attachments, true)].filter(Boolean).join('\n') || '（文字なし。画像だけ）'}`;
     return {
       cfg: DEFAULTS.models.titler,
       messages: [{ role: 'system', content: withLangNote(TITLER.system_prompt, langNote) }, { role: 'user', content: withImages(quoted, contentImages(lastContent)) }],
@@ -962,8 +962,7 @@ const head = (t, max) => t.length > max ? t.slice(0, max) + '…' : t;
 function fetchSuggestion(env, convo, context, langNote, signal, log) {
   return fetchAuxLine(env, 'suggest', () => {
     const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
-      const imgs = contentImages(m.content).length;
-      const text = tail(contentText(m.content).trim(), SUGGESTER.message_max_chars) + (imgs ? ` [画像${imgs}枚]` : '') + (m.attachments ? ` [添付${m.attachments.length}件]` : '');
+      const text = [tail(contentText(m.content).trim(), SUGGESTER.message_max_chars), ...mediaNotes(m.content, m.attachments)].join(' ');
       return `${m.role === 'user' ? 'ユーザー' : 'AI'}: ${text}`;
     }).join('\n');
     const input = [
@@ -985,6 +984,12 @@ function fetchSuggestion(env, convo, context, langNote, signal, log) {
   }, signal, log);
 }
 
+// 発言の画像・添付を、本文の代わりに書く注記（[画像2枚]・[添付1件]）。names なら添付を名前で書く（会話の保存）
+function mediaNotes(content, attachments, names = false) {
+  const imgs = contentImages(content).length, files = attachments?.length || 0;
+  return [...(imgs ? [`[画像${imgs}枚]`] : []), ...(files ? [names ? `[添付: ${attachments.join(', ')}]` : `[添付${files}件]`] : [])];
+}
+
 // 保存する文から、制御文字（改行・タブは残す）と < > を落とす（AGENTS.md の XSS 対策。表示側も textContent で描く）
 const storedText = text => String(text).replace(replyControls, '').replace(/[<>]/g, '');
 // 会話の1往復を D1 に保存する（非クリティカル：DB が無い・失敗しても会話は続ける。本文はログに書かない）。
@@ -992,8 +997,7 @@ const storedText = text => String(text).replace(replyControls, '').replace(/[<>]
 async function storeConversationTurn(env, row, log) {
   if (!env.DB || env.CONVERSATION_STORE_ENABLED === 'false') return;
   const { content, attachments } = row.message;
-  const imgs = contentImages(content).length;
-  const request = storedText([contentText(content).trim(), imgs ? `[画像${imgs}枚]` : '', attachments?.length ? `[添付: ${attachments.join(', ')}]` : '']
+  const request = storedText([contentText(content).trim(), ...mediaNotes(content, attachments, true)]
     .filter(Boolean).join('\n')).slice(0, CONVERSATION_STORE.request_max_chars);
   const response = storedText(String(row.answer || '')).slice(0, CONVERSATION_STORE.response_max_chars);
   if (!request || !response.trim()) return;
@@ -1013,19 +1017,32 @@ async function cleanupConversationTurns(env, now) {
   await env.DB.prepare('DELETE FROM conversations WHERE created_at <= ?1').bind(cutoff).run();
 }
 
+// プロンプトへの絵文字の照合（統合の印と、Webの回答の後の別の呼び出しで共通）。一覧の絵文字を U+FE0F の有無を問わずに受け付ける。
+// prefix なら先頭の1文字（書記素）だけを見て、肌の色を外して照合する（後ろの余計な文字は無視）。
+// 書記素で切るので、一覧に無い合成絵文字（❤️‍🩹・😮‍💨 など）を、頭が同じ一覧の絵文字（❤️・😮）に化けさせない。一覧に無ければ null
+const VS16 = String.fromCodePoint(0xFE0F);
+const SKIN_TONES = new RegExp(`[${String.fromCodePoint(0x1F3FB)}-${String.fromCodePoint(0x1F3FF)}]`, 'gu');
+const reactionGraphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+function pickReaction(value, prefix = false) {
+  let v = String(value).trim();
+  if (prefix) v = ([...reactionGraphemes.segment(v)][0]?.segment || '').replace(SKIN_TONES, '');
+  return PROMPT_REACTION.emojis.find(e => v === e || v === e.replaceAll(VS16, '')) || null;
+}
+// 指示の後ろに、選べる絵文字の一覧を付ける
+const withReactionChoices = text => `${text}\n一覧: ${PROMPT_REACTION.emojis.join(' ')}`;
+
 // Webの回答のときだけ、プロンプトに付ける絵文字を別の呼び出しで選ぶ（非クリティカル：失敗・時間切れ・一覧に無い出力なら null）。
 // それ以外の回答では統合の呼び出しが答えと一緒に選ぶ（reactionSplitter）。
 // 今回の発言だけを見出しで引用して渡す（チャットの形のまま渡すと、モデルが答えを書く）。画像・添付は件数だけ
 function fetchPromptReaction(env, lastContent, attachments, signal, log) {
   return fetchAuxLine(env, 'reaction', () => {
-    const imgs = contentImages(lastContent).length;
     const quoted = [PROMPT_REACTION.input_header, head(contentText(lastContent).trim(), PROMPT_REACTION.message_max_chars) || '（文字なし）',
-      ...(imgs ? [`[画像${imgs}枚]`] : []), ...(attachments ? [`[添付${attachments.length}件]`] : [])].join('\n');
+      ...mediaNotes(lastContent, attachments)].join('\n');
     return {
       cfg: DEFAULTS.models.reactor,
-      messages: [{ role: 'system', content: PROMPT_REACTION.system_prompt + '\n一覧: ' + PROMPT_REACTION.emojis.join(' ') }, { role: 'user', content: quoted }],
+      messages: [{ role: 'system', content: withReactionChoices(PROMPT_REACTION.system_prompt) }, { role: 'user', content: quoted }],
     };
-  }, raw => PROMPT_REACTION.emojis.find(e => raw.trim().startsWith(e)) || '', signal, log);
+  }, raw => pickReaction(raw, true) || '', signal, log);
 }
 
 // --- 討議の判定（personas.js の DEBATE）---
@@ -1215,11 +1232,9 @@ const withCard = (p, cards, header = PERSONA_CONTEXT.header) => (cards && cards[
 // 統合の答えの1行目に書かせた絵文字の印（PROMPT_REACTION.marker、例: [REACTION:👍]）を本文から切り取る。
 // 先頭が印でなければすぐに素通しし（答えの表示を遅らせない）、印なら閉じ括弧まで待って、一覧にある絵文字だけを onReaction へ渡す。
 // 印の後の空行も落とす。閉じない印の行は捨て、印のまま長すぎる行（marker_max_chars）は印ではないとして素通しする。
-const VS16 = String.fromCodePoint(0xFE0F);
 function reactionSplitter(onReaction) {
-  const { marker, marker_max_chars: max, emojis } = PROMPT_REACTION;
+  const { marker, marker_max_chars: max } = PROMPT_REACTION;
   let buf = '', state = 'head'; // head（印を待つ）→ lead（印の後の空白を落とす）→ body（素通し）
-  const pick = v => emojis.find(e => v === e || v === e.replaceAll(VS16, '')) || null;
   const lead = s => { const t = s.replace(/^\s+/, ''); if (t) state = 'body'; return t; };
   const head = final => {
     const s = buf.replace(/^\s+/, '');
@@ -1230,7 +1245,7 @@ function reactionSplitter(onReaction) {
       if (!final && s.length < max) return '';
       state = 'body'; return final && s.startsWith(marker) ? '' : buf;
     }
-    if (end === close) { const emoji = pick(s.slice(marker.length, close).trim()); if (emoji) onReaction(emoji); }
+    if (end === close) { const emoji = pickReaction(s.slice(marker.length, close)); if (emoji) onReaction(emoji); }
     state = 'lead';
     return lead(s.slice(end + 1));
   };
@@ -1243,7 +1258,7 @@ function reactionSplitter(onReaction) {
 // 統合に絵文字の印を書かせる指示。system の最後（履歴・今回の発言の直前）に足す
 function withReactionRule(messages) {
   const at = messages.findIndex(m => m.role !== 'system');
-  const rule = { role: 'system', content: PROMPT_REACTION.answer_rule + '\n一覧: ' + PROMPT_REACTION.emojis.join(' ') };
+  const rule = { role: 'system', content: withReactionChoices(PROMPT_REACTION.answer_rule) };
   return at < 0 ? [...messages, rule] : [...messages.slice(0, at), rule, ...messages.slice(at)];
 }
 
@@ -2306,6 +2321,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
               reaction, signal: stop.signal, send, log });
+        // 会話の保存。答えが出そろった時点で waitUntil に渡す。この後の予測・絵文字・タイトルを待つ間に切断されても書き終える
+        if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim() && !stop.signal.aborted) {
+          ctx.waitUntil(storeConversationTurn(env, { message: plainMessages.at(-1), answer, ip: requestIP(request), conversationId, theme,
+            intent: classification?.intent || null, mode: motion ? 'magi' : classification?.mode || null }, log));
+        }
         // Webの回答は統合を通らないので、答えの後に別の呼び出しで絵文字を1回だけ選ぶ（予測と並列。done の前に待つ）
         const reactionPromise = reaction && research && !reacted && answer !== null
           ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, plainMessages.at(-1).content, plainMessages.at(-1).attachments, signal, log), stop.signal)
@@ -2321,11 +2341,6 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）。確認質問で終えた回はタイトルを捨てるので待たない
         if (titlePromise && !clarified) await titlePromise;
         if (reactionPromise) await reactionPromise;
-        // 会話の保存。切断されても書き終えるよう waitUntil に渡す（応答の完了は待たせない）
-        if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim() && !stop.signal.aborted) {
-          ctx.waitUntil(storeConversationTurn(env, { message: plainMessages.at(-1), answer, ip: requestIP(request), conversationId, theme,
-            intent: classification?.intent || null, mode: motion ? 'magi' : classification?.mode || null }, log));
-        }
         // 読み上げの署名（読み上げ設計§5.2）。確認質問・DJ の相談・読み上げを止めているときは送らない
         if (speechReady(env) && entry !== 'dj-request' && !clarified && spoken.trim() && !stop.signal.aborted) {
           const lang = speechLanguage(classification?.reply_language?.code);
@@ -2601,7 +2616,10 @@ const POST_ROUTES = new Map([
 
 export default {
   scheduled(event, env, ctx) {
-    ctx.waitUntil(cleanupConversationTurns(env, event.scheduledTime));
+    // 失敗（migration 0003 の未適用・D1 の一時的な失敗）はログに残す。黙って止まると保存期限の約束が守られない
+    ctx.waitUntil(cleanupConversationTurns(env, event.scheduledTime)
+      .then(() => console.log('conversation_cleanup', 'ok'))
+      .catch(err => console.error('conversation_cleanup', 'failed', err && err.message)));
   },
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';

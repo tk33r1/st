@@ -1387,6 +1387,14 @@ test('言語の種は新契約の未確定時だけ採用・検査し、初回�
   }
 });
 
+test('会話の保存は答えが出そろった時点で waitUntil に渡し、予測・絵文字・タイトルの待ちの間の切断で落とさない', () => {
+  const src = read('workers/magi2/src/index.js'), chat = src.slice(src.indexOf('async function handleChat('));
+  const store = chat.indexOf('ctx.waitUntil(storeConversationTurn(');
+  assert.ok(store > 0);
+  for (const later of ['const reactionPromise', 'fetchSuggestion(upstream', 'await titlePromise', 'await reactionPromise']) assert.ok(store < chat.indexOf(later), later);
+  assert.ok(chat.indexOf('const answer = factMode') < store);
+});
+
 test('会話の保存は conversation_storage を送った通常チャットだけで、プロンプトの文字と答えを1行書く', async () => {
   const cases = [
     [{ conversation_storage: true, conversation_id: 'session_1_abc' }, 'session_1_abc'],
@@ -1442,10 +1450,13 @@ test('会話の期限切れ削除は利用の無い日と新規保存の停止�
     assert.equal(sqlite(file,'SELECT request FROM conversations',[]).row.request,'fresh');
     assert.equal(sqlite(file,'SELECT COUNT(*) AS n FROM conversations',[]).row.n,1);
   } finally {rmSync(dir,{recursive:true,force:true});}
-  const failed=[];
+  // 失敗は waitUntil を拒否で終えず、ログに残す（黙って止まると保存期限の約束が守られない）
+  const failed=[],errors=[];
+  w.ctx.console.error=(...a)=>errors.push(a);
   w.env.DB={prepare(){throw new Error('synthetic DB failure');}};
   w.ctx.worker.scheduled({scheduledTime:now},w.env,{waitUntil:p=>failed.push(p)});
-  await assert.rejects(failed[0],/synthetic DB failure/);
+  await assert.doesNotReject(failed[0]);
+  assert.deepEqual(errors,[['conversation_cleanup','failed','synthetic DB failure']]);
 });
 
 test('スクショ検知の登録は、ネイティブの addListener が Promise を返さなくても初期化を止めない', () => {
@@ -1506,6 +1517,15 @@ test('絵文字の印の切り取りは、差分の切れ目・長すぎる行�
   assert.deepEqual(run(['[R']), { got: [], out: '[R' });
   // 先頭が印でなければ最初の差分からそのまま流す（表示を遅らせない）
   const s = w.ctx.reactionSplitter(() => {}); assert.equal(s.feed('こんにちは'), 'こんにちは');
+  // 印の中と、Webの回答の後の別の呼び出し（prefix）は同じ照合を使い、U+FE0F の有無を問わない
+  assert.deepEqual(run(['[REACTION:❤]本文']), { got: ['❤️'], out: '本文' });
+  assert.equal(w.ctx.pickReaction('❤', true), '❤️');
+  assert.equal(w.ctx.pickReaction(' 👍🏻', true), '👍');
+  assert.equal(w.ctx.pickReaction('👍 ok'), null);
+  assert.equal(w.ctx.pickReaction('-', true), null);
+  // 一覧に無い合成絵文字は、頭が同じ一覧の絵文字に化けさせない
+  for (const v of ['❤️‍🩹', '😮‍💨', '👍‍x']) assert.equal(w.ctx.pickReaction(v, true), null, v);
+  assert.equal(w.ctx.pickReaction('🔥 です', true), '🔥');
 });
 
 test('未完成のリアクションの印を本文に流さず、本文を送る前の失敗なら別の会社で答え直す', async () => {
@@ -1613,6 +1633,43 @@ test('回答のMarkdown表示と共有画像は、トップページとアプリ
   // 描ける画面だけが rich_reply を送り、Worker はそのときだけ書式の指示を足す
   for(const src of [home,mobile]) assert.match(src,/adaptive_debate: true, rich_reply: true/);
   assert.ok(!/rich_reply/.test(dj));
+});
+
+test('回答のMarkdown: 単独の --- は区切り線のまま表にせず、コードの中の出典はリンクにしてコードの文字に混ぜない', () => {
+  const el=tag=>({tagName:tag.toUpperCase(),children:[],className:'',own:'',
+    appendChild(c){this.children.push(c);return c;},
+    get textContent(){return this.own+this.children.map(c=>c.textContent).join('');}, set textContent(v){this.own=String(v);this.children=[];},
+    createTHead(){return this.appendChild(el('thead'));}, createTBody(){return this.appendChild(el('tbody'));},
+    insertRow(){return this.appendChild(el('tr'));}, insertCell(){return this.appendChild(el('td'));}});
+  const document={createElement:el,createDocumentFragment:()=>el('#frag'),createTextNode:t=>({tagName:'#TEXT',children:[],textContent:t})};
+  const ctx=vm.createContext({document});vm.runInContext(between(home,'// AGENT_RICH_BEGIN','// AGENT_RICH_END'),ctx);
+  const tags=text=>ctx.agentRichFragment(text,null).children.map(c=>c.tagName);
+  assert.deepEqual(tags('入力 | 出力 の対応です\n---\n本文'),['P','HR','P']);
+  assert.deepEqual(tags('| A | B |\n|---|---|\n| 1 | 2 |'),['DIV']);
+  assert.deepEqual(tags('A | B\n--- | ---\n1 | 2'),['DIV']);
+  const p=el('p'),mark=n=>ctx.AGENT_RICH_MARK_OPEN+n+ctx.AGENT_RICH_MARK_CLOSE;
+  ctx.agentRichInline(p,'前 `co'+mark(2)+'de` 後'+mark(3),n=>Object.assign(el('a'),{own:'['+n+']'}));
+  assert.deepEqual(p.children.map(c=>c.tagName),['#TEXT','CODE','A','#TEXT','A']);
+  assert.equal(p.children[1].textContent,'code');assert.equal(p.textContent,'前 code[2] 後[3]');
+  // 出典の無い描画（受信中）では、目印を文字に残さない
+  const q=el('p');ctx.agentRichInline(q,'`x'+mark(1)+'`',null);assert.equal(q.textContent,'x');
+});
+
+test('絵文字の一覧: 黄色の親と肌の色の候補は一覧ごとに1回だけ作り、選んだ肌の色を親で置き換えるのは一覧・検索だけ', () => {
+  for (const src of [home,mobile]) {
+    const ctx=vm.createContext({});vm.runInContext(between(src,'function agentEmojiBaseKey(','var agentEmojiDialog'),ctx);
+    ctx.AGENT_EMOJI_CATALOG=[['👍',1],['👍🏻',1],['👍🏽',1],['😀',0]];
+    const first=ctx.agentEmojiFamilyIndex();
+    assert.equal(ctx.agentEmojiFamilyIndex(),first);
+    assert.deepEqual([...first.tones],['👍']);
+    assert.deepEqual([...ctx.agentEmojiFamilies([['👍🏽',1],['😀',0]])].map(r=>r[0]),['👍','😀']);
+    ctx.AGENT_EMOJI_CATALOG=[['😀',0]];
+    assert.notEqual(ctx.agentEmojiFamilyIndex(),first);
+    // 最近のタブは選んだ形のまま出す（agentEmojiFamilies を通さない）
+    const picker=between(src,'function openAgentEmojiPicker(','// AGENT_SPEECH_END');
+    assert.match(picker,/else if \(selected === 'recent'\) rows = recent\.map/);
+    assert.ok(!/rows = agentEmojiFamilies\(rows\)/.test(picker));
+  }
 });
 
 test('A2: 引用は安全な文字描画・範囲だけを保存し、Markdownに同じ番号を残す', () => {

@@ -852,12 +852,6 @@ export const SUGGESTER = {
   ].join('\n'),
 };
 
-// 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
-// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談・確認質問で終えた回では付けない。
-// 答えと絵文字を食い違わせないため、統合の呼び出し（討議の統合・事実回答）の中で、答えの1行目に answer_rule の印を書かせる。
-// Worker がその行を本文から切り取って prompt_reaction で送る（→ src/index.js の reactionSplitter）。印が無い・一覧に無い・'-' なら付けない。
-// Web検索の回答（RESEARCH）は出典照合の JSON で答えるので印を書かせず、答えの後に system_prompt の別の呼び出し（reactor）で1回だけ選ぶ。
-// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する）。反応しない方が自然なら '-' を返させ、付けない
 // 会話の保存（D1 の conversations）。画面の設定「会話をサイトに保存」をオフにしない限り、新しい画面は conversation_storage:true を送る。
 // 送らない画面（配布済みの古いアプリ・DJ・404）と一時チャットは保存しない。1往復ごとに1行、プロンプトの文字と統合人格の答え。
 // 保存期間の削除は毎日の scheduled で行う。新規保存を止めるときは Worker の CONVERSATION_STORE_ENABLED を false
@@ -868,6 +862,12 @@ export const CONVERSATION_STORE = {
   conversation_id_re: /^[A-Za-z0-9_-]{1,80}$/,
 };
 
+// 統合人格（本人）が、利用者のプロンプトに絵文字で反応する（画面はプロンプトの吹き出しの角に出す）。
+// 画面が prompt_reaction:true を送ったときだけ。悪意の判定で閉じた回・DJ の相談・確認質問で終えた回では付けない。
+// 答えと絵文字を食い違わせないため、統合の呼び出し（討議の統合・事実回答）の中で、答えの1行目に answer_rule の印を書かせる。
+// Worker がその行を本文から切り取って prompt_reaction で送る（→ src/index.js の reactionSplitter）。印が無い・一覧に無い・'-' なら付けない。
+// Web検索の回答（RESEARCH）は出典照合の JSON で答えるので印を書かせず、答えの後に system_prompt の別の呼び出し（reactor）で1回だけ選ぶ。
+// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する。照合は src/index.js の pickReaction）。反応しない方が自然なら '-' を返させ、付けない
 export const PROMPT_REACTION = {
   timeout_ms: 6000,
   message_max_chars: 600,   // 今回の発言の頭から渡す長さ

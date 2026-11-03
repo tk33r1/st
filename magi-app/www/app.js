@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.17';
+var APP_VERSION = '7.18';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -276,9 +276,18 @@ function agentRichInline(parent, text, cite) {
   parts.forEach(function (part, i) {
     if (!part) return;
     if (i % 2) {
-      var el = document.createElement(part.charAt(0) === '`' ? 'code' : 'strong');
-      if (el.tagName === 'CODE') el.textContent = part.slice(1, -1); else agentRichInline(el, part.slice(2, -2), cite);
-      parent.appendChild(el); return;
+      var el = document.createElement(part.charAt(0) === '`' ? 'code' : 'strong'), marks = [];
+      if (el.tagName !== 'CODE') agentRichInline(el, part.slice(2, -2), cite);
+      // コードの中に入った出典の目印は文字から外し、リンクはコードの直後に置く（私用領域の文字を見せない）
+      else el.textContent = part.slice(1, -1).split(AGENT_RICH_MARK_OPEN).map(function (seg, j) {
+        var end = j ? seg.indexOf(AGENT_RICH_MARK_CLOSE) : -1;
+        if (end < 0) return seg;
+        if (end > 0) marks.push(Number(seg.slice(0, end)));
+        return seg.slice(end + 1);
+      }).join('');
+      parent.appendChild(el);
+      if (cite) marks.forEach(function (n) { parent.appendChild(cite(n)); });
+      return;
     }
     part.split(AGENT_RICH_MARK_OPEN).forEach(function (seg, j) {
       if (j) {
@@ -294,7 +303,8 @@ function agentRichCells(line) {
   var s = line.trim().replace(/^\|/, '').replace(/\|$/, '');
   return s.split('|').map(function (c) { return c.trim(); });
 }
-var AGENT_RICH_TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+// 表の区切り行。「|」を1つ以上含むものだけ（単独の --- は区切り線として扱う）
+var AGENT_RICH_TABLE_RULE = /^(?=[^|]*\|)\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
 var AGENT_RICH_LIST = /^\s*(?:([-*+・•])|(\d{1,3})[.)])\s+(.*)$/;
 function agentRichBlockStart(line, next) {
   return /^#{1,4}\s+\S/.test(line) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(line) || /^\s*>/.test(line)
@@ -345,7 +355,7 @@ function agentRichFragment(text, cite) {
   }
   return frag;
 }
-// 本文の要素に答えを描く。raw は出典（cleanAgentSources で検査する）。出典の番号は renderAgentSources と同じリンクにする
+// 本文の要素に答えを描く。raw は出典（cleanAgentSources で検査する）。出典の番号は agentCiteLink のリンクにする
 function renderAgentRich(body, text, raw, ja) {
   if (!body) return;
   if (body.agentRichTimer) { clearTimeout(body.agentRichTimer); body.agentRichTimer = 0; }
@@ -495,7 +505,7 @@ function agentRetryInput(user, mid, lastSend) {
 }
 // 以下は統合人格の回答の操作列（評価のメニュー・［もう一度］・日時）。画面の agentLog・agentHistory・ICON_*・agentItemFor・
 // reactionStoreFor・getReactionContext・(un)registerReaction・agentLastSend・agentClosed・agentDead などを使う
-// 評価の見た目（value = 'good' | 'bad' | null）
+// 評価・リアクションの見た目（value = 旧形式の 'good' | 'bad'、絵文字、又は null）
 function showRating(bar, value, animate) {
   var em = value && (AGENT_RATINGS[value] || value);
   var btn = bar.querySelector('[data-act="rate"]');
@@ -696,9 +706,22 @@ function agentEmojiGestures(row) {
   // Unicodeの手・腕・からだ。人物のポーズや職業は「人」に残す。
   return row[1] === 1 && /^[\u{1F446}-\u{1F450}\u{1F590}\u{1F595}\u{1F596}\u{1F64C}\u{1F64F}\u{1F918}-\u{1F91F}\u{1F932}\u{1F933}\u{1F90C}\u{1F90F}\u{1FAF0}-\u{1FAFA}\u270A-\u270D\u261D\u{1F485}\u{1F4AA}\u{1F9B4}-\u{1F9B7}\u{1F9BB}\u{1F9BE}\u{1F9BF}\u{1F442}\u{1F443}\u{1F440}\u{1F441}\u{1F444}\u{1F445}\u{1F9E0}\u{1FAC0}-\u{1FAC1}\u{1FAE6}]/u.test(row[0]);
 }
+// 黄色の親（bases）と、肌の色を選べる親のキー（tones）。一覧を読み込んだ後に1回だけ作る（描画・検索の1打鍵ごとに作り直さない）
+var agentEmojiIndex = null;
+function agentEmojiFamilyIndex() {
+  if (agentEmojiIndex && agentEmojiIndex.catalog === AGENT_EMOJI_CATALOG) return agentEmojiIndex;
+  var bases = new Map(), sizes = new Map(), tones = new Set();
+  AGENT_EMOJI_CATALOG.forEach(function (row) {
+    var key = agentEmojiBaseKey(row[0]);
+    sizes.set(key, (sizes.get(key) || 0) + 1);
+    if (!/[\u{1F3FB}-\u{1F3FF}]/u.test(row[0])) bases.set(key, row);
+  });
+  sizes.forEach(function (size, key) { if (size > 1) tones.add(key); });
+  agentEmojiIndex = { catalog: AGENT_EMOJI_CATALOG, bases: bases, tones: tones };
+  return agentEmojiIndex;
+}
 function agentEmojiFamilies(rows) {
-  var bases = new Map(), families = new Map();
-  AGENT_EMOJI_CATALOG.forEach(function (row) { if (!/[\u{1F3FB}-\u{1F3FF}]/u.test(row[0])) bases.set(agentEmojiBaseKey(row[0]), row); });
+  var bases = agentEmojiFamilyIndex().bases, families = new Map();
   rows.forEach(function (row) { var key = agentEmojiBaseKey(row[0]); if (bases.has(key)) families.set(key, bases.get(key)); });
   return Array.from(families.values());
 }
@@ -762,20 +785,15 @@ function openAgentEmojiPicker(bar, opener, current) {
   }
   tab('recent', 'Recent', '最近', 'M12 7v5l3 2', true);
   [0, 9, 1, 2, 3, 4, 5, 6, 7, 8].forEach(function (i) { var g = AGENT_EMOJI_GROUPS[i]; tab(String(i), g[0], g[1], g[2], g[3]); });
-  var toneKeys = null;
   function render() {
     if (!AGENT_EMOJI_CATALOG) return;
-    if (!toneKeys) {
-      var sizes = new Map();
-      AGENT_EMOJI_CATALOG.forEach(function (row) { var key = agentEmojiBaseKey(row[0]); sizes.set(key, (sizes.get(key) || 0) + 1); });
-      toneKeys = new Set(); sizes.forEach(function (size, key) { if (size > 1) toneKeys.add(key); });
-    }
+    var toneKeys = agentEmojiFamilyIndex().tones;
     closeTones(false);
     var query = search.value.trim(), rows;
-    if (query) rows = agentEmojiSearch(query);
+    if (query) rows = agentEmojiFamilies(agentEmojiSearch(query));
+    // 最近は選んだ形（肌の色を含む）のまま出す。黄色の親に束ねない
     else if (selected === 'recent') rows = recent.map(function (em) { return AGENT_EMOJI_CATALOG.find(function (row) { return row[0] === em; }); }).filter(Boolean);
-    else rows = AGENT_EMOJI_CATALOG.filter(function (row) { return selected === '9' ? agentEmojiGestures(row) : row[1] === Number(selected) && (selected !== '1' || !agentEmojiGestures(row)); });
-    rows = agentEmojiFamilies(rows);
+    else rows = agentEmojiFamilies(AGENT_EMOJI_CATALOG.filter(function (row) { return selected === '9' ? agentEmojiGestures(row) : row[1] === Number(selected) && (selected !== '1' || !agentEmojiGestures(row)); }));
     heading.textContent = query ? tr('Search results', '検索結果') : selected === 'recent' ? tr('Recent', '最近') : tr(AGENT_EMOJI_GROUPS[Number(selected)][0], AGENT_EMOJI_GROUPS[Number(selected)][1]);
     count.textContent = tr(rows.length + ' emoji', rows.length + '件'); grid.setAttribute('aria-label', heading.textContent);
     tabs.querySelectorAll('button').forEach(function (b) { var active = b.dataset.category === selected; b.setAttribute('aria-selected', String(active)); b.tabIndex = active ? 0 : -1; });
@@ -1893,34 +1911,34 @@ function agentHistorySettingHTML(native) {
   return '<div class="agent-settings-card"><p id="history-storage-status" class="agent-settings-meta" role="status"></p><div class="native-settings-actions"><button type="button" id="history-export">' + tr('Export all chats', '全会話を書き出す') + '<small>' + tr('JSON · without images', 'JSON形式・画像を除く') + '</small></button><button type="button" id="history-clear" class="agent-setting-danger">' + tr('Delete all chats', '全会話を削除') + '<small>' + tr('Clear history on this device', 'この端末の履歴を削除') + '</small></button></div>'
     + agentSettingDetails(native ? tr('History stays on this device and does not transfer automatically to a new device. Exports include text only, without images.', '履歴はこの端末内に保存します。機種変更では引き継がれません。書き出しには画像を含めません。') : tr('Export chats saved in this browser as JSON, without images. Temporary chats are excluded. Deleting chats keeps your personalization and other settings.', 'このブラウザに保存された会話を、画像を除くJSONで書き出します。一時チャットは対象外です。会話を削除してもパーソナライズなどの設定は残します。')) + '</div>';
 }
-// MAGIモードは明示的にオンにした端末だけで許可する。設定を読めなければオフ。
-function magiModeEnabled() {
-  try { return localStorage.getItem('magi_mode_enabled') === '1'; }
+// 端末に保存するオン・オフの設定。onByDefault なら明示的にオフ（'0'）にしない限りオン、違えば '1' のときだけオン。
+// 設定を読めなければオフに倒す
+function agentFlag(key, onByDefault) {
+  try { var value = localStorage.getItem(key); return onByDefault ? value !== '0' : value === '1'; }
   catch (_) { return false; }
 }
+// agentSettingCard のスイッチ（#<id>-toggle・#<id>-status）を agentFlag の設定につなぐ。保存できなければ状態の行に出す
+function bindAgentFlagSetting(panel, id, key, onByDefault) {
+  var toggle = panel.querySelector('#' + id + '-toggle'), status = panel.querySelector('#' + id + '-status');
+  if (!toggle) return;
+  toggle.setAttribute('aria-checked', String(agentFlag(key, onByDefault)));
+  toggle.addEventListener('click', function () {
+    try {
+      localStorage.setItem(key, agentFlag(key, onByDefault) ? '0' : '1');
+      toggle.setAttribute('aria-checked', String(agentFlag(key, onByDefault))); if (status) status.textContent = '';
+    } catch (_) { if (status) status.textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
+  });
+}
+// MAGIモードは明示的にオンにした端末だけで許可する。設定を読めなければオフ。
+function magiModeEnabled() { return agentFlag('magi_mode_enabled', false); }
 function magiModeSettingHTML() {
   return agentSettingCard('magi-mode', tr('MAGI mode', 'MAGIモード'), tr('Let three personas vote on a decision.', '3人格で相談を採決'),
     tr('Allow three-persona voting when a question is judged suitable. Off by default. Saved on this device and applied from the next message, including temporary chats.', '相談内容に応じて、3人格による採決を使います。初期設定はオフです。この端末に保存し、通常・一時チャットとも次の送信から反映します。'));
 }
-function bindMagiModeSetting(panel) {
-  var toggle = panel.querySelector('#magi-mode-toggle'), status = panel.querySelector('#magi-mode-status');
-  toggle.setAttribute('aria-checked', String(magiModeEnabled()));
-  toggle.addEventListener('click', function () {
-    try {
-      localStorage.setItem('magi_mode_enabled', magiModeEnabled() ? '0' : '1');
-      toggle.setAttribute('aria-checked', String(magiModeEnabled())); status.textContent = '';
-    } catch (_) { status.textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
-  });
-}
-function locationServiceEnabled() {
-  try { return localStorage.getItem('magi_location_enabled') !== '0'; }
-  catch (_) { return false; }
-}
+function bindMagiModeSetting(panel) { bindAgentFlagSetting(panel, 'magi-mode', 'magi_mode_enabled', false); }
+function locationServiceEnabled() { return agentFlag('magi_location_enabled', true); }
 // 会話をサイト（D1）に保存するか。明示的にオフにしない限り保存する。設定を読めないときは保存しない側に倒す
-function conversationStorageEnabled() {
-  try { return localStorage.getItem('magi_conversation_storage') !== '0'; }
-  catch (_) { return false; }
-}
+function conversationStorageEnabled() { return agentFlag('magi_conversation_storage', true); }
 // 送信の本文に足す印。一時チャットと設定オフでは送らない（Worker は印が無ければ保存しない）
 function conversationStorageFields(conversationId) {
   return conversationStorageEnabled() && !agentTemporary() ? { conversation_storage: true, conversation_id: conversationId } : {};
@@ -1929,21 +1947,9 @@ function conversationStorageSettingHTML() {
   return agentSettingCard('conversation-storage', tr('Save chats on the site', '会話をサイトに保存'), tr('Questions, replies and IP · up to one year', '質問・回答・IPを最長1年保存'),
     tr('Save your questions and MAGI’s final answers with your IP address in the site database for up to one year, to review and improve MAGI. Images are saved only as a count and attachments by name. Temporary chats are never saved. Turning this off stops saving from your next message; chats already saved are not deleted.', '質問とMAGIの最終回答を、MAGIの確認と改善のため、IPアドレスと一緒にサイトのDBへ最長1年保存します。画像は枚数、添付ファイルは名前だけを保存します。一時チャットは保存しません。オフにすると次の送信から保存しません。保存済みの会話は消えません。'));
 }
-function bindConversationStorageSetting(panel) {
-  var toggle = panel.querySelector('#conversation-storage-toggle'), status = panel.querySelector('#conversation-storage-status');
-  if (!toggle) return;
-  toggle.setAttribute('aria-checked', String(conversationStorageEnabled()));
-  toggle.addEventListener('click', function () {
-    try {
-      localStorage.setItem('magi_conversation_storage', conversationStorageEnabled() ? '0' : '1');
-      toggle.setAttribute('aria-checked', String(conversationStorageEnabled())); if (status) status.textContent = '';
-    } catch (_) { if (status) status.textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
-  });
-}
+function bindConversationStorageSetting(panel) { bindAgentFlagSetting(panel, 'conversation-storage', 'magi_conversation_storage', true); }
 function agentManagementNative() { return typeof nativeAndroid !== 'undefined' && nativeAndroid; }
-function agentWebNotificationsEnabled() {
-  try { return localStorage.getItem('magi_notifications_enabled') === '1'; } catch (_) { return false; }
-}
+function agentWebNotificationsEnabled() { return agentFlag('magi_notifications_enabled', false); }
 async function agentWebNotificationSupport() {
   if (!window.isSecureContext || !window.Notification || typeof window.Notification.requestPermission !== 'function') return { supported: false };
   var registration = null;
@@ -2011,14 +2017,8 @@ async function initAgentManagement(panel) {
       tr('Notify when a reply finishes while this page is open in the background. Browser permission is required. This does not keep receiving replies after the page is closed. Temporary chats are not notified.', 'この画面を開いたまま別のタブやアプリを見ているとき、回答の完了を通知します。ブラウザの許可が必要です。画面を閉じた後の受信には対応しません。一時チャットは通知しません。'), { disabled: true }))
     + agentSettingsSection(tr('Data', 'データ'), conversationStorageSettingHTML() + agentHistorySettingHTML(false));
   bindConversationStorageSetting(panel);
-  var status = panel.querySelector('#history-storage-status'), locationToggle = panel.querySelector('#native-location-toggle');
-  locationToggle.setAttribute('aria-checked', String(locationServiceEnabled()));
-  locationToggle.addEventListener('click', function () {
-    try {
-      localStorage.setItem('magi_location_enabled', locationServiceEnabled() ? '0' : '1');
-      locationToggle.setAttribute('aria-checked', String(locationServiceEnabled())); panel.querySelector('#native-location-status').textContent = '';
-    } catch (_) { panel.querySelector('#native-location-status').textContent = tr('Could not save this setting.', '設定を保存できませんでした。'); }
-  });
+  bindAgentFlagSetting(panel, 'native-location', 'magi_location_enabled', true);
+  var status = panel.querySelector('#history-storage-status');
   function refreshHistory() {
     try {
       var data = agentWebHistoryData(), count = data.sessions.length;
