@@ -1547,6 +1547,28 @@ test('未完成のリアクションの印を本文に流さず、本文を送�
   }
 });
 
+test('書式の指示は rich_reply を送った統合と事実回答だけに足し、送らない画面と採決の説明には足さない', async () => {
+  const rich = rules => rules.messages.some(m => m.role === 'system' && m.content.includes('【今回の答えの書式と長さ'));
+  for (const flag of [true, false]) {
+    const w = worker();
+    const text = await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: '週末の過ごし方を相談したい' }], ...(flag ? { rich_reply: true } : {}) })).text();
+    assert.match(text, /event: done/);
+    const synth = w.calls.filter(b => b.stream);
+    assert.equal(synth.length, 1); assert.equal(rich(synth[0]), flag);
+  }
+  // 事実回答（Webを使わない）にも足す
+  const fact = a2Worker('research', 'no');
+  const factText = await (await fact.request('/magi2/chat', { classification_state: true, fact_mode: true, rich_reply: true, messages: [{ role: 'user', content: '拍子とは何？' }] })).text();
+  assert.match(factText, /event: done/);
+  const factSynth = fact.calls.filter(b => b.stream);
+  assert.equal(factSynth.length, 1); assert.equal(rich(factSynth[0]), true);
+  // 採決の説明は従来の短い説明のまま
+  const m = magiWorker(), ev = await m.run({ rich_reply: true });
+  assert.ok(ev.some(e => e.name === 'verdict'));
+  const magiSynth = m.api.filter(b => b.stream);
+  assert.equal(magiSynth.length, 1); assert.equal(rich(magiSynth[0]), false);
+});
+
 test('全人格・統合・タイトル・予測へ同じ言語指定を渡し、日本語の状況説明で上書きしない', async () => {
   for (const text of ['What do you think of サカナクション?', 'この曲はどうですか？']) {
     const w = worker();
