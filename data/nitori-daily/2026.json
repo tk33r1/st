@@ -1,5 +1,280 @@
 [
   {
+    "date": "20261105",
+    "title": "2026年11月5日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは大阪・梅田茶屋町に旧梅田ロフトの建物を活用した「世界最大」を掲げる店舗を開業し、都市部の旗艦拠点として体験価値と法人向け提案を強化した。 累計販売約190万個の「伸縮整理トレー Nブラン」に3サイズを追加し、定番商品の拡張で既存顧客の買い増しと新規需要の取り込みを図っている。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリは大阪・梅田茶屋町に旧梅田ロフトの建物を活用した「世界最大」を掲げる店舗を開業し、都市部の旗艦拠点として体験価値と法人向け提案を強化した。",
+      "累計販売約190万個の「伸縮整理トレー Nブラン」に3サイズを追加し、定番商品の拡張で既存顧客の買い増しと新規需要の取り込みを図っている。",
+      "SNSでは「シルクではないのに髪がツルツル」と評された髪ケア枕カバーや、ニトリ購入品の紹介動画が反響を広げ、生活者発の評価が商品の認知と購買を後押ししている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "進化するニトリアプリと入社時年収1300万円の賃金体系を取材",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-09",
+        "summary": "ウォーカープラスの記事は、進化が著しいとされる「ニトリアプリ」について取材した内容を伝えている。あわせて、話題となった「入社時の年収1300万円」という賃金体系についても聞き取りを行っており、アプリと同社の人材戦略の両面に関心が集まる構成だ。具体的な機能や制度の詳細は、原文での確認が必要である。",
+        "why_it_matters": "アプリは店舗・EC・会員データを束ねるDXの中核であり、その進化は顧客接点の強化と購買データの蓄積に直結する。一方で入社時の高水準の賃金体系は、専門人材の獲得競争において同社の採用訴求になりうる。デジタル投資と人材投資を同時に語れる点が、小売業としての差別化要因となる。今後はアプリ機能の具体的な拡充と、その運用を担う人材戦略の両面を追う価値がある。",
+        "tags": [
+          "ニトリ",
+          "アプリ",
+          "DX",
+          "採用・人材"
+        ],
+        "search_terms": [
+          "ニトリアプリ 進化 機能",
+          "Nitori app features DX",
+          "入社時年収 小売 人材戦略",
+          "retail app customer engagement Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1FU3ZDMWtZWFloN1pFTV9MRFlsSkJFZ0FHWXhab0xPWGdlcjRwWlVPVWllOE16TGZPNFMxSDc0Q3VOVGNjR0lpWU1Ncm9xbExRcjhGOS0wU3gwVHdGZVc5TlNSWWoycU5uVG9nN3ZB?oc=5",
+        "source_pub_ts": 1793730023
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ネット担当者フォーラム2026秋、ニトリ登壇を含む全28講演が11月5日開催",
+        "original_title": "",
+        "source": "ネットショップ担当者フォーラム",
+        "source_id": "JP-08",
+        "summary": "ネットショップ担当者フォーラムの「ネッ担2026秋」が11月5日に開催される。カインズ、イズミセ、楽天、LINEヤフー、ユナイテッドアローズなどが登壇する全28講演が発表され、ニトリもその登壇企業に名を連ねている。EC運営やデジタル施策に関する知見が共有される場であり、当日申込も可能とされている。",
+        "why_it_matters": "大手小売が自社のEC・デジタル施策を公の場で語ることは、業界内での実績アピールと提携機会の創出につながる。ニトリがこうした場に登壇することは、オムニチャネル化やDXに取り組む姿勢を外部に示す好機でもある。講演内容には具体的な数字や施策の詳細が含まれる可能性があり、EC担当者にとって参考になる情報源として注目に値する。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "イベント",
+          "DX"
+        ],
+        "search_terms": [
+          "ネッ担2026秋 講演",
+          "online retail seminar Japan 2026",
+          "ECフォーラム 登壇 小売",
+          "e-commerce conference Nitori speaker"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5LZHg2c1VGOTJnV2RoUmgtbDJWUEJpckI0anl2WDg3VmRjY3VZQWZtbEpabkNJZENscnZhQXIzcnRlRzl1YmhKejg1N0NNb0o2ajZsVlN6N2dzRVl5?oc=5",
+        "source_pub_ts": 1793790135
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、世界最大店舗が梅田茶屋町に誕生　旧梅田ロフトの建物を全面活用",
+        "original_title": "",
+        "source": "山陽新聞",
+        "source_id": "JP-05",
+        "summary": "ニトリは大阪・梅田茶屋町に「世界最大」を掲げる店舗「ニトリ 梅田茶屋町店」をオープンした。旧梅田ロフトの建物を活用し、建物全体をニトリの売り場に転換したことが特徴だ。開業を記念したセールも実施されている。同店8階には法人事業向けの大阪ショールームも併設されており、個人客と法人顧客の双方を取り込む旗艦拠点としての役割が注目される。",
+        "why_it_matters": "大型旗艦店は、ニトリが都市部で商品を実際に体験させる拠点としての価値を高めている。SPAとして自社商品の品揃えと売場提案を一体で見せられるため、来店客の購買単価向上や店舗ブランドの強化に直結しやすい。法人向けショールームの併設は、住空間提案をBtoBへ広げる布石とも読める。今後は同規模店の展開ペースと、既存店との客層の住み分けが焦点になる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "梅田茶屋町",
+          "旗艦店"
+        ],
+        "search_terms": [
+          "ニトリ 梅田茶屋町店 旗艦店",
+          "Nitori Umeda Chayamachi flagship store",
+          "世界最大 家具店 大阪 出店",
+          "Nitori largest store Osaka"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE8zZWJpNGNaU1FIMDRUaEdNWEF0RjEyV2pZWWlmZ3FPQjloMDBSZjRzTjVpNWxpX3VIZ21SR0JDRHZvTko4ZVhJbVA0RTZGZGtDb0J3bTFub2JVQW1UOTB1VVlORkNDY0hXb1E1aGtnSQ?oc=5",
+        "source_pub_ts": 1793747816
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "累計190万個の「伸縮整理トレー Nブラン」に新3サイズが登場",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-06",
+        "summary": "ニトリの「伸縮整理トレー Nブラン」シリーズに、新たに3サイズが追加された。伸縮できる仕様により、引き出しの寸法に合わせて使える自由度を高めた形だ。シリーズの累計販売数は約190万個に達しており、収納用品の定番としての支持の厚さがうかがえる。PR TIMESで発表された情報をもとにした記事である。",
+        "why_it_matters": "累計190万個の定番シリーズに新サイズを加える手法は、既存顧客の買い増しと新規需要の両取りに有効だ。ニトリは売れ筋を軸に商品を素早く拡張できる体制を持つ。収納用品は住まいの寸法の多様さに左右されるため、サイズ追加は機会損失の抑制にもつながる。今後は同シリーズのカラーや用途拡張など、横展開の動きが注目される。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "収納",
+          "Nブランド"
+        ],
+        "search_terms": [
+          "伸縮整理トレー 新サイズ",
+          "expandable organizer tray new sizes",
+          "Nブランド 収納 定番商品",
+          "Nitori storage tray expansion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBqSXNwdGMydW9MNTNQSlRNbkJ2QmZYYk9MRkFsWUZCcFN4Tnh6NFJ4b2s3Z1ZoY29EYkktUFZhSlJmRjRwZEtUYWphVS1samJiQWRlRC1pamlNSk94THJtZzBRX0dfREtHU0E?oc=5",
+        "source_pub_ts": 1793757601
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「シルクじゃないのに」ニトリの髪ケア枕カバーが反響、乗り換え検討の声も",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-04",
+        "summary": "Xに投稿された「ニトリの髪ケアピローカバー」の口コミが共感を集めている。帝人（TEIJIN）の繊維技術を使い、寝ている間に髪を潤して整える枕カバーとして紹介された。投稿者は寝癖がつきにくく摩擦も減ったと感じ、洗濯も簡単だと述べている。安価なシルク製品からの乗り換えを検討しているとの声も見られた。",
+        "why_it_matters": "「シルクではないのに」という意外性が、高価な素材の代替として機能性繊維を選ばせる強い動機になっている。素材技術を生活シーンに落とし込んだ商品は、機能の説明よりも使用後の体感が共有されることで拡散しやすい。素材メーカーとの協業で生まれたPB商品であることが生活者に伝わっている点も示唆的である。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "枕カバー",
+          "素材技術"
+        ],
+        "search_terms": [
+          "ニトリ 髪ケア ピローカバー",
+          "Nitori hair care pillowcase",
+          "帝人 繊維 シルク代替 枕",
+          "silk alternative pillowcase Japan"
+        ],
+        "url": "https://x.com/mmmmnyan23/status/2117975893134250205",
+        "source_pub_ts": 1793790000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「二度と手放せない」ニトリ神商品10選の動画、2.7万回再生を記録",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokで、ニトリの「神商品」を紹介する動画が2.7万回再生を記録した。「一度使ったら二度と手放せない」という表現を掲げ、10選のうち1〜5を紹介する構成となっている。「#ニトリ購入品」などのハッシュタグで拡散されており、いいねは197件、コメントは4件が付いている。生活者による購入品紹介が商品の評価を広げている。",
+        "why_it_matters": "購入品紹介の動画は、企業広告よりも実際の使用感を伝えるため購買の後押しに強い。「二度と手放せない」という表現は、リピートや定番化を示すキーワードとして、ニトリの定番商品の強さを象徴している。ハッシュタグを通じて「ニトリ購入品」という文脈が蓄積されれば、新商品の認知も広がりやすい。企業側は、こうした生活者発の文脈を商品企画や販促に取り込む余地がある。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "購入品紹介",
+          "TikTok"
+        ],
+        "search_terms": [
+          "ニトリ 神商品 購入品紹介",
+          "Nitori purchase haul TikTok",
+          "ニトリ購入品 動画 反響",
+          "Japanese home goods review video"
+        ],
+        "url": "https://www.tiktok.com/@nntalk5/video/7703846699034283271",
+        "source_pub_ts": 1793691594.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリごめん、浮気する…… これは妊娠中に知りたかったーーー！！ pic.x.com/CDhY7zuWFd x.com/erimama_ikuji_…",
+        "platform": "x",
+        "author": "@erimama_ikuji_",
+        "url": "https://x.com/erimama_ikuji_/status/2117879216347975858",
+        "likes": 285,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:18",
+        "captured_at": "",
+        "text": "ニトリごめん、浮気する…… これは妊娠中に知りたかったーーー！！ pic.x.com/CDhY7zuWFd x.com/erimama_ikuji_…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "これはニトリがAIを使ったことによるやらかしなのでは？？衣類用品のモデルをAIにしている企業、本当に良くないと思う。購買意欲なくす。 x.c...",
+        "platform": "x",
+        "author": "@gb_kkuk_",
+        "url": "https://x.com/gb_kkuk_/status/2117966174130692215",
+        "likes": 187,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:04",
+        "captured_at": "",
+        "text": "これはニトリがAIを使ったことによるやらかしなのでは？？衣類用品のモデルをAIにしている企業、本当に良くないと思う。購買意欲なくす。 x.com/babelllgogo/st…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "【teppay 20%還元∶とりあえず 16,531円 支払🙋】 ニトリで 買い物 (Smart Code)📱 👉これで 約3,306P (...",
+        "platform": "x",
+        "author": "@Z_otoku",
+        "url": "https://x.com/Z_otoku/status/2117901400164446572",
+        "likes": 62,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:46",
+        "captured_at": "",
+        "text": "【teppay 20%還元∶とりあえず 16,531円 支払🙋】 ニトリで 買い物 (Smart Code)📱 👉これで 約3,306P (決済から7営業日後 付与 ＝ 11/13 (金)ごろ) ┗ 上限 (2.5万円の支払いで 5,000P) まで あと 8,469円分💡 📝チャージを 2.1万円 (セブン-イレブンのATM・現金) にした理由🤔 ┗ 私は pic.x.com/SEm02Jy2KS x.com/Z_otoku/status…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリの髪ケアピローカバー、これすごすぎた。TEIJINの繊維技術を使用して作られた、寝るだけで潤って整えてくれる枕カバー。シルクじゃないの...",
+        "platform": "x",
+        "author": "@mmmmnyan23",
+        "url": "https://x.com/mmmmnyan23/status/2117975893134250205",
+        "likes": 45,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:42",
+        "captured_at": "",
+        "text": "ニトリの髪ケアピローカバー、これすごすぎた。TEIJINの繊維技術を使用して作られた、寝るだけで潤って整えてくれる枕カバー。シルクじゃないのに⁉️なぜ⁉️お洗濯も簡単だし本当に寝癖がつかなくて摩擦も減ったからか朝からツルツル。正直シルクやめてもうこっちに乗り換えようかと思ってる、安価なシル pic.x.com/mgAK8YA4dF",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ごま坦々鍋にしました✨ 今日はノンアルコール🍺 お疲れ様でした！かんぱーい🍻 ニトリで買った箸使いやすい😆 pic.x.com/aA9GiP...",
+        "platform": "x",
+        "author": "@nekoinu_suki",
+        "url": "https://x.com/nekoinu_suki/status/2117952129117896823",
+        "likes": 30,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:08",
+        "captured_at": "",
+        "text": "ごま坦々鍋にしました✨ 今日はノンアルコール🍺 お疲れ様でした！かんぱーい🍻 ニトリで買った箸使いやすい😆 pic.x.com/aA9GiPxvrh x.com/nekoinu_suki/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "一度使ったら二度と手放せない！ニトリの神商品10選(1~5) #ニトリ #ニトリ商品 #ニトリ購入品紹介 #ニトリ購入品",
+        "platform": "tiktok",
+        "author": "@nntalk",
+        "url": "https://www.tiktok.com/@nntalk5/video/7703846699034283271",
+        "likes": 197,
+        "retweets": 6,
+        "views": 27000,
+        "comments": 4,
+        "posted_on": "2026-11-03 16:39",
+        "captured_at": "2026-11-04T21:46:11.868032+09:00",
+        "text": "一度使ったら二度と手放せない！ニトリの神商品10選(1~5) #ニトリ #ニトリ商品 #ニトリ購入品紹介 #ニトリ購入品",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261104",
     "title": "2026年11月4日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ブラックフライデー期間に、ニトリの圧縮ソファ（3,000円引き）やN+のセールなど、大型家具から衣料まで価格訴求の施策が一斉に動き出した。 デコホームの999円ミニ時計など、低価格で季節感を取り入れられる新商品が継続的に投入され、雑貨の買い足し需要を狙っている。",
