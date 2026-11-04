@@ -3763,6 +3763,24 @@ test('MAGIモード設定: 初期・不正値・読取失敗はオフ、明示�
   }
 });
 
+test('端末の設定: 位置・会話の保存は明示的なオフだけで止め、通知は明示的なオンだけで許可し、読めなければどれもオフ', () => {
+  for (const [src, isHome] of [[home, true], [mobile, false]]) {
+    const c = client(src, isHome), fields = () => ({ ...c.ctx.conversationStorageFields('s1') });
+    for (const value of [null, '0', '1', '', 'unexpected']) {
+      c.ctx.localStorage.getItem = () => value;
+      assert.equal(c.ctx.locationServiceEnabled(), value !== '0');
+      assert.equal(c.ctx.conversationStorageEnabled(), value !== '0');
+      assert.equal(c.ctx.agentWebNotificationsEnabled(), value === '1');
+      // 会話の保存の印は、設定がオンで一時チャットでないときだけ送る（Worker は印が無ければ保存しない）
+      assert.deepEqual(fields(), value === '0' ? {} : { conversation_storage: true, conversation_id: 's1' });
+      c.ctx.agentTemporary = () => true; assert.deepEqual(fields(), {}); c.ctx.agentTemporary = () => false;
+    }
+    c.ctx.localStorage.getItem = () => { throw new Error('blocked'); };
+    assert.deepEqual([c.ctx.locationServiceEnabled(), c.ctx.conversationStorageEnabled(), c.ctx.agentWebNotificationsEnabled()], [false, false, false]);
+    assert.deepEqual(fields(), {});
+  }
+});
+
 test('MAGIモード設定: 通常・一時の送信と受信は送信時の許可を使い、途中の変更を混ぜない', async () => {
   for (const [src, isHome] of [[home, true], [mobile, false]]) for (const enabled of [false, true]) for (const temporary of [false, true]) {
     const c = client(src, isHome), bodies = [];
