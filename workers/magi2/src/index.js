@@ -192,9 +192,11 @@ async function countUp(db, key, period, limit) {
   return row ? row.count : null;
 }
 
-async function consumeReactionLimit(db, ip, now) {
+// 登録（react:）と取り消し（react-remove:）は別の枠で数える。登録の上限に達しても、トークンで所有を示す取り消しは止めない
+async function consumeReactionLimit(db, op, ip, now) {
+  const key = (op === 'remove' ? 'react-remove:' : 'react:') + ip;
   for (const [period, limit] of [[now.slice(0, 16), DEFAULTS.reactions.minute_limit], [now.slice(0, 10), DEFAULTS.reactions.daily_limit]]) {
-    if (await countUp(db, `react:${ip}`, period, limit) == null) {
+    if (await countUp(db, key, period, limit) == null) {
       throw stageError('rate_limit', 'reaction_limit_exceeded', 'リアクションの利用上限に達しました。時間を置いてお試しください', { http_status: 429, retryable: true });
     }
   }
@@ -1060,11 +1062,10 @@ function judgeInput(plainMessages, context, opinions, langNote) {
   const earlier = plainMessages.slice(0, -1).slice(-DEBATE.transcript_messages)
     .map(m => `${m.role === 'user' ? 'ユーザー' : '自分'}: ${tail(contentText(m.content).trim(), DEBATE.message_max_chars)}`);
   const last = plainMessages[plainMessages.length - 1].content;
-  const imgs = contentImages(last).length;
   return [
     ...(context ? ['【画面が付けた状況説明（ユーザーの発言ではない）】', head(context.trim(), DEBATE.context_max_chars), ''] : []),
     ...(earlier.length ? ['【ここまでの会話】', ...earlier, ''] : []),
-    '【今回のユーザーの発言】', contentText(last).trim() + (imgs ? ` [画像${imgs}枚]` : ''), '',
+    '【今回のユーザーの発言】', [contentText(last).trim(), ...mediaNotes(last)].join(' '), '',
     '【討議の記録】', debateRecord(opinions),
     ...(langNote ? ['', langNote] : []),
   ].join('\n');
@@ -1707,8 +1708,11 @@ async function handleReaction(request, env, { requestId, cors, log }) {
 
   const ip = requestIP(request);
   const now = new Date().toISOString();
-  try { await consumeReactionLimit(env.DB, ip, now); }
-  catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
+  // 形の誤りは回数を使わずに返す。回数は登録と取り消しで別の枠（consumeReactionLimit）
+  const limited = async () => {
+    try { await consumeReactionLimit(env.DB, op, ip, now); return null; }
+    catch (err) { return httpError(err.envelope?.http_status || 500, toEnvelope(err, requestId), requestId, cors); }
+  };
 
   // 取り消し：登録者だけが持つトークンのハッシュも照合する。IP の変化では所有権を失わない。
   if (op === 'remove') {
@@ -1717,6 +1721,7 @@ async function handleReaction(request, env, { requestId, cors, log }) {
     if (!Number.isSafeInteger(id) || id < 1 || !/^[a-f0-9]{64}$/.test(token)) {
       return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'id と登録時の削除トークンが必要です', retryable: false }, requestId, cors);
     }
+    const blocked = await limited(); if (blocked) return blocked;
     try {
       const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2 AND delete_token_hash = ?3`).bind(id, target, await sha256(token)).run();
       const deleted = (res.meta && res.meta.changes) || 0;
@@ -1735,6 +1740,7 @@ async function handleReaction(request, env, { requestId, cors, log }) {
   if (!reaction || !resText) {
     return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
   }
+  const blocked = await limited(); if (blocked) return blocked;
   try {
     const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
     const fingerprint = await sha256(JSON.stringify([target, reaction, reqText, resText]));
@@ -2162,6 +2168,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   place = input.locationEnabled ? input.devicePlace || place : null;
   const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, storeConversation, conversationId, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
+  // 送り手の IP と今回の発言（添付を外した形）。回数・回答・保存・タイトル・絵文字で同じものを使う
+  const ip = requestIP(request), lastPlain = plainMessages.at(-1);
   const qa = await qaGuard(env, () => {
     const last = fullMessages.at(-1).content;
     return { kind: 'chat', text: contentText(last), images: contentImages(last).map(p => p.image_url.url), historyMessages: plainMessages.length - 1 };
@@ -2186,7 +2194,6 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
   // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
   if (env.DB) {
     try {
-      const ip = requestIP(request);
       const day = utcDay();
       const count = await countUp(env.DB, ip, day, DEFAULTS.daily_limit);
       log('rate_limit', ip, day, count ?? 'limit');
@@ -2271,7 +2278,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         langNote = classified.langNote;
         const classification = classified.classification;
         if (classification) classification.magi_candidate = !classified.malice && classification.mode !== 'fact' && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
-          && entry === 'chat' && classification.votable === 'yes' && !!contentText(plainMessages.at(-1).content).trim();
+          && entry === 'chat' && classification.votable === 'yes' && !!contentText(lastPlain.content).trim();
         if (newContract) send('classification', classification);
         if (classified.malice) {
           log('malice', classified.malice, classified.maliceConfidence);
@@ -2291,8 +2298,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         // 状況説明を足す前の発言から作る（足した後だと、状況説明の回答ルールに従って答えを書いてしまう）
         let titlePromise = null;
         if (input.conversationMode !== 'temporary' && !plainMessages.some(m => m.role === 'assistant')) {
-          const titleTimeoutMs = contentImages(plainMessages.at(-1).content).length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
-          titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, plainMessages.at(-1).content, langNote, signal, log, plainMessages.at(-1).attachments), stop.signal)
+          const titleTimeoutMs = contentImages(lastPlain.content).length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
+          titlePromise = withTimeout(titleTimeoutMs, signal => fetchTitle(upstream, lastPlain.content, langNote, signal, log, lastPlain.attachments), stop.signal)
             .then(t => { if (t) send('title', { text: t }); })
             .catch(() => {});
         }
@@ -2315,20 +2322,22 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         const answer = factMode && classification.mode === 'fact'
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
               research, rich: richReply,
-              replyLanguage: classification.reply_language, ip: requestIP(request), place, reaction, signal: stop.signal, send, log })
+              replyLanguage: classification.reply_language, ip, place, reaction, signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme, personalization: input.personalization,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music', rich: richReply,
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
                 ? { intent: classification.intent, fresh: classification.fresh || 'no' } : null,
               reaction, signal: stop.signal, send, log });
-        // 会話の保存。答えが出そろった時点で waitUntil に渡す。この後の予測・絵文字・タイトルを待つ間に切断されても書き終える
-        if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim() && !stop.signal.aborted) {
-          ctx.waitUntil(storeConversationTurn(env, { message: plainMessages.at(-1), answer, ip: requestIP(request), conversationId, theme,
+        // 会話の保存。答えが出そろった時点で waitUntil に渡す。この後の予測・絵文字・タイトルを待つ間に切断されても書き終える。
+        // answer が文字列なら最後まで生成済み（途中で止めた・切れた回答は readSynthesis や Web の回答が例外にする）なので、
+        // 答えの後のページ選びの待ち（runFactAnswer）の間に切断されていても書く
+        if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim()) {
+          ctx.waitUntil(storeConversationTurn(env, { message: lastPlain, answer, ip, conversationId, theme,
             intent: classification?.intent || null, mode: motion ? 'magi' : classification?.mode || null }, log));
         }
         // Webの回答は統合を通らないので、答えの後に別の呼び出しで絵文字を1回だけ選ぶ（予測と並列。done の前に待つ）
         const reactionPromise = reaction && research && !reacted && answer !== null
-          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, plainMessages.at(-1).content, plainMessages.at(-1).attachments, signal, log), stop.signal)
+          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, lastPlain.content, lastPlain.attachments, signal, log), stop.signal)
             .then(emoji => { if (emoji) reaction(emoji); })
             .catch(() => {})
           : null;

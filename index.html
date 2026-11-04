@@ -2053,7 +2053,6 @@
     .persona-card::before, .persona-card::after { content: ''; position: absolute; border-radius: 28px; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
     .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
     .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
-    .persona-card:focus-within { z-index: 1; }
     .persona-head::before, .persona-head::after { content: ''; position: absolute; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-alt); pointer-events: none; }
     .persona-head::before { left: 15px; bottom: -7px; width: 11px; height: 11px; }
     .persona-head::after { left: 3px; bottom: -14px; width: 8px; height: 8px; }
@@ -2179,7 +2178,7 @@
     .react-btn.rated { color: var(--primary-color); }
     .react-btn[hidden] { display: none; }
 
-    /* 回答の評価（Good / Bad）。評価のボタンの上に開く */
+    /* 回答へのリアクション（絵文字）の候補。リアクションのボタンの上に開く */
     .rate-pop {
       position: absolute;
       bottom: 100%;
@@ -2273,7 +2272,6 @@
     .msg-reaction::before, .prompt-reaction::before { content: attr(data-emoji); }
     .agent-reply > .msg-reaction { right: 10px; bottom: -15px; }
     .agent-reply.has-reaction { margin-bottom: 18px; }
-    .persona-card > .msg-reaction { right: 14px; bottom: 8px; }
     .agent-user > .prompt-reaction { right: 2px; bottom: -15px; }
     .agent-user.has-reaction { margin-bottom: 16px; }
     /* 付けた・付けられた瞬間だけ、弾んで周りに粒が散る */
@@ -2675,12 +2673,6 @@
 
     .magi-ver::after { content:'▾'; }
     .magi-ver:hover,.magi-ver:focus-visible { color:var(--primary-color);border-color:var(--primary-color); }
-    .agent-versions-list { flex:1;min-height:0;overflow-y:auto;text-align:left;overflow-wrap:anywhere; }
-    .agent-versions-list section { padding:0.65rem 0;border-bottom:1px solid var(--border-color); }
-    .agent-versions-list h3 { margin:0 0 0.15rem;font-size:12px;color:var(--primary-color); }
-    .agent-versions-list time { font-size:10px;color:var(--secondary-color); }
-    .agent-versions-list ul { margin:0.45rem 0 0;padding-left:1.2rem; }
-    .agent-versions-list li,.agent-versions-list p { font-size:11px;line-height:1.7;color:var(--text-color); }
 
 
     .magi-nodes {
@@ -3481,6 +3473,7 @@
     .agent-about-page [hidden] { display: none !important; }
     .agent-about-content { color: var(--text-color); flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.7; }
     .agent-about-page .agent-about-content, .agent-about-page .agent-versions-list { box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    .agent-about-page .agent-versions-list { flex: 1; min-height: 0; overflow-y: auto; text-align: left; overflow-wrap: anywhere; }
     .agent-about-card { margin-top: 10px; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 16px; overflow-wrap: anywhere; }
     .agent-about-content > .agent-about-card:first-child { margin-top: 0; }
     .agent-about-card p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; }
@@ -3517,7 +3510,7 @@
     .agent-about-page .agent-versions-list h3 { margin: 0; color: var(--text-color); font-size: 14px; font-weight: 600; line-height: 1.5; }
     .agent-about-page .agent-versions-list time { display: block; color: var(--secondary-color); font-size: 12px; }
     .agent-about-page .agent-versions-list ul { margin: 8px 0 0; padding-left: 1.2rem; }
-    .agent-about-page .agent-versions-list li, .agent-about-page .agent-versions-list p { font-size: 12px; line-height: 1.7; }
+    .agent-about-page .agent-versions-list li, .agent-about-page .agent-versions-list p { color: var(--text-color); font-size: 12px; line-height: 1.7; }
 
     .agent-info-page[hidden] { display: none !important; }
     .agent-info-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
@@ -3573,7 +3566,7 @@
 #btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; outline-offset: 3px; border-radius: 4px; }
 #btn-temporary-agent:focus-visible { outline: 2px solid currentColor; }
 #btn-temporary-agent:disabled { opacity: .4; cursor: default; }
-.agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
+.agent-temporary [data-act="rate"], .agent-temporary [data-act="share"] { display: none !important; }
 .temporary-plus { display: none; stroke-dasharray: none; }
 #btn-temporary-agent[aria-pressed="true"] .temporary-plus { display: block; }
 .agent-temporary-splash h2 { margin: 0 0 8px; font: inherit; font-size: 22px; font-weight: 600; }
@@ -3608,12 +3601,6 @@
 @keyframes agent-settings-shade-in { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,.6); } }
 @keyframes agent-settings-shade-out { from { background: rgba(0,0,0,.6); } to { background: rgba(0,0,0,0); } }
 @media (prefers-reduced-motion: reduce) { .agent-temporary-settings-dialog, .agent-temporary-settings-dialog::backdrop { animation: none !important; } }
-.native-settings-actions { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 12px; }
-.native-settings-actions button { min-height: 44px; padding: 10px 14px; font: inherit; font-size: 12px; text-align: left; color: var(--text-color); background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
-.native-settings-actions button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-.native-settings-actions button:disabled { opacity: .5; cursor: wait; }
-#agent-settings-panel p { font-size: 12px; line-height: 1.7; color: var(--secondary-color); }
-.agent-settings-content { min-height: 0; overflow-y: auto; padding: 4px; }
 .agent-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
 .agent-personalization-form .agent-setting { margin-top: 0; }
 .agent-setting [role="switch"] { position: relative; box-sizing: border-box; width: 52px; height: 44px; flex: 0 0 52px; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
@@ -3631,9 +3618,9 @@
     /* アプリ管理：短い説明と操作をカードに集め、詳細と編集欄は必要なときだけ開く。 */
     #agent-settings-panel { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #agent-settings-panel .agent-panel-body { display: block; }
-    #agent-settings-panel > .agent-settings-content { flex: 1; min-height: 0; overflow-y: auto; }
+    #agent-settings-panel > .agent-settings-content { flex: 1; }
     #agent-settings-panel [hidden] { display: none !important; }
-    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; min-height: 0; margin: 0 auto; padding: 6px 2px 28px; overflow-y: auto; }
     #agent-settings-panel .agent-settings-section { margin-top: 26px; }
     #agent-settings-panel .agent-settings-content > .agent-settings-section:first-child { margin-top: 0; }
     #agent-settings-panel h3 { margin: 0 0 12px; color: var(--text-color); font-size: 14px; font-weight: 650; letter-spacing: .02em; }
@@ -3641,7 +3628,7 @@
     #agent-settings-panel .agent-setting { gap: 16px; margin: 0; }
     #agent-settings-panel .agent-setting-copy { flex: 1; min-width: 0; }
     #agent-settings-panel .agent-setting-title { display: block; color: var(--text-color); font-size: 14px; line-height: 1.5; font-weight: 600; }
-    #agent-settings-panel p { margin: 5px 0 0; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+    #agent-settings-panel p { margin: 5px 0 0; color: var(--secondary-color); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
     #agent-settings-panel [role="status"]:empty { display: none; }
     #agent-settings-panel [role="status"]:not(:empty) { margin-top: 10px; }
     #agent-settings-panel .agent-setting-details { margin-top: 4px; }
@@ -3664,8 +3651,10 @@
     #agent-settings-panel .personal-actions button, #agent-settings-panel .agent-setting-action { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
     #agent-settings-panel .personal-actions button[type="submit"] { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
     #agent-settings-panel [data-personal="delete"] { justify-self: start; min-height: 36px; padding: 4px 0; border: 0; color: #e5484d; font-size: 12px; }
-    #agent-settings-panel .native-settings-actions { gap: 0; margin: 0; }
-    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font-size: 14px; font-weight: 550; }
+    #agent-settings-panel .native-settings-actions { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0; }
+    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; min-height: 44px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 14px; font-weight: 550; text-align: left; cursor: pointer; }
+    #agent-settings-panel .native-settings-actions button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    #agent-settings-panel .native-settings-actions button:disabled { opacity: .5; cursor: wait; }
     #agent-settings-panel .native-settings-actions button + button { border-top: 1px solid var(--border-color); }
     #agent-settings-panel .native-settings-actions button::after { content: '›'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--secondary-color); font-size: 22px; font-weight: 400; }
     #agent-settings-panel .native-settings-actions small { color: var(--secondary-color); font-size: 12px; font-weight: 400; }
@@ -7861,17 +7850,13 @@
     let agentLastSend = null; // 画像付きの質問を送り直すための原寸。この画面で最後に送った質問の分だけ持つ
     // リアクションボタンのアイコン（周囲の細線SVGアイコンと世界観を統一）
     const ICON_COPY = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    // 回答の評価。押すと Good / Bad を選ぶ（上下の親指を重ねた形）。選んだ後はその親指だけを出す
     // 回答へのリアクション（絵文字）のボタン。笑顔に＋
     const ICON_RATE = `<svg aria-hidden="true" class="rate-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 12.5A8.6 8.6 0 1 1 11.5 3.4"/><path d="M8.3 14.2a4.4 4.4 0 0 0 7 0"/><path d="M9 9.6h.01M14.8 9.6h.01"/><path d="M19 1.8v6M16 4.8h6"/></svg>`;
-    const ICON_GOOD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
-    const ICON_BAD = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
     const ICON_RETRY = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.8-4.2L3 9"/><polyline points="3 4 3 9 8 9"/><path d="M4 13a8 8 0 0 0 14.8 4.2L21 15"/><polyline points="21 20 21 15 16 15"/></svg>`;
     const rateBtnHTML = () => `<button type="button" class="react-btn agent-reaction-access" data-act="rate" title="${tr('React', 'リアクション')}" aria-label="${tr('React', 'リアクション')}" aria-haspopup="menu" aria-expanded="false">${ICON_RATE}</button>`;
-    // 各人格カードの操作列（target = 人格コードネーム）。［コピー］［評価］
+    // 各人格カードのリアクション用の目印（target = 人格コードネーム）。下部に操作列やコピーを出さない
     function reactionBarHTML(target) {
       return `<div class="reaction-bar" data-target="${esc(target)}">`
-
         + rateBtnHTML()
         + `</div>`;
     }
@@ -8550,7 +8535,7 @@ function syncAgentPrivacyUI() {
   var voice = document.getElementById('agent-voice'); if (voice) { if (temporary) { if (!voice.hidden) voice.dataset.privacyAvailable = 'true'; voice.hidden = true; } else if (voice.dataset.privacyAvailable === 'true') voice.hidden = false; }
   var camera = document.querySelector('#agent-attach-menu [data-source="camera"]'); if (camera) camera.hidden = temporary || !(typeof nativeAndroid !== 'undefined' && nativeAndroid || agentCameraAvailable());
   if (temporary) {
-    agentLog.querySelectorAll('[data-act="rate"], [data-act="react"], [data-act="share"]').forEach(function (el) { el.remove(); });
+    agentLog.querySelectorAll('[data-act="rate"], [data-act="share"]').forEach(function (el) { el.remove(); });
     agentLog.querySelectorAll('[data-act="speak"]').forEach(function (el) { el.hidden = !(agentPrivacyState.features && agentPrivacyState.features.temporary_speech && agentItemFor(el)?.speech_sig); });
   }
 }
@@ -8754,7 +8739,7 @@ function magiAcronymController(el) {
 }
 // MAGI_ACRONYM_END
     // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
-    const AGENT_SCREEN_VERSION = '7.19';
+    const AGENT_SCREEN_VERSION = '7.2';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -9257,39 +9242,53 @@ function agentRichInline(parent, text, cite) {
   parts.forEach(function (part, i) {
     if (!part) return;
     if (i % 2) {
-      var el = document.createElement(part.charAt(0) === '`' ? 'code' : 'strong'), marks = [];
+      var el = document.createElement(part.charAt(0) === '`' ? 'code' : 'strong'), code = '', marks = [];
       if (el.tagName !== 'CODE') agentRichInline(el, part.slice(2, -2), cite);
       // コードの中に入った出典の目印は文字から外し、リンクはコードの直後に置く（私用領域の文字を見せない）
-      else el.textContent = part.slice(1, -1).split(AGENT_RICH_MARK_OPEN).map(function (seg, j) {
-        var end = j ? seg.indexOf(AGENT_RICH_MARK_CLOSE) : -1;
-        if (end < 0) return seg;
-        if (end > 0) marks.push(Number(seg.slice(0, end)));
-        return seg.slice(end + 1);
-      }).join('');
+      else {
+        agentRichMarks(part.slice(1, -1), function (seg) { code += seg; }, function (n) { marks.push(n); });
+        el.textContent = code;
+      }
       parent.appendChild(el);
       if (cite) marks.forEach(function (n) { parent.appendChild(cite(n)); });
       return;
     }
-    part.split(AGENT_RICH_MARK_OPEN).forEach(function (seg, j) {
-      if (j) {
-        var end = seg.indexOf(AGENT_RICH_MARK_CLOSE), n = Number(seg.slice(0, end));
-        if (end > 0 && cite) parent.appendChild(cite(n));
-        seg = end >= 0 ? seg.slice(end + 1) : seg;
-      }
-      if (seg) parent.appendChild(document.createTextNode(seg));
-    });
+    agentRichMarks(part, function (seg) { parent.appendChild(document.createTextNode(seg)); },
+      function (n) { if (cite) parent.appendChild(cite(n)); });
   });
 }
+// 出典の目印（OPEN 番号 CLOSE）で文字を区切り、文字は onText、番号は onMark へ出てきた順に渡す。目印の文字は渡さない
+function agentRichMarks(text, onText, onMark) {
+  String(text).split(AGENT_RICH_MARK_OPEN).forEach(function (seg, j) {
+    var end = j ? seg.indexOf(AGENT_RICH_MARK_CLOSE) : -1;
+    if (end > 0) onMark(Number(seg.slice(0, end)));
+    if (end >= 0) seg = seg.slice(end + 1);
+    if (seg) onText(seg);
+  });
+}
+// 表の行をセルに分ける。エスケープした「\|」は区切りにせず、セルの中の「|」に戻す。行頭・行末の「|」は外枠として外す
+var AGENT_RICH_BACKSLASH = String.fromCharCode(92);
 function agentRichCells(line) {
-  var s = line.trim().replace(/^\|/, '').replace(/\|$/, '');
-  return s.split('|').map(function (c) { return c.trim(); });
+  var s = line.trim(), cells = [], cell = '', closed = false;
+  for (var i = 0; i < s.length; i++) {
+    var ch = s.charAt(i);
+    if (ch === AGENT_RICH_BACKSLASH && s.charAt(i + 1) === '|') { cell += '|'; i++; closed = false; continue; }
+    if (ch === '|') { cells.push(cell); cell = ''; closed = true; continue; }
+    cell += ch; closed = false;
+  }
+  if (!closed) cells.push(cell);
+  if (s.charAt(0) === '|') cells.shift();
+  return cells.length ? cells.map(function (c) { return c.trim(); }) : [''];
 }
 // 表の区切り行。「|」を1つ以上含むものだけ（単独の --- は区切り線として扱う）
 var AGENT_RICH_TABLE_RULE = /^(?=[^|]*\|)\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
 var AGENT_RICH_LIST = /^\s*(?:([-*+・•])|(\d{1,3})[.)])\s+(.*)$/;
+// ブロックの形の判定。段落を終える判定（agentRichBlockStart）と描画（agentRichFragment）で同じものを使う
+var AGENT_RICH_HEADING = /^(#{1,4})\s+(\S.*)$/, AGENT_RICH_HR = /^\s*([-*_])(\s*\1){2,}\s*$/, AGENT_RICH_QUOTE = /^\s*>/;
+function agentRichTableStart(line, next) { return line.indexOf('|') >= 0 && next != null && AGENT_RICH_TABLE_RULE.test(next); }
 function agentRichBlockStart(line, next) {
-  return /^#{1,4}\s+\S/.test(line) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(line) || /^\s*>/.test(line)
-    || AGENT_RICH_LIST.test(line) || line.indexOf('|') >= 0 && next != null && AGENT_RICH_TABLE_RULE.test(next);
+  return AGENT_RICH_HEADING.test(line) || AGENT_RICH_HR.test(line) || AGENT_RICH_QUOTE.test(line)
+    || AGENT_RICH_LIST.test(line) || agentRichTableStart(line, next);
 }
 function agentRichFragment(text, cite) {
   var frag = document.createDocumentFragment(), lines = String(text || '').replace(/\r\n?/g, '\n').split('\n'), i = 0;
@@ -9297,9 +9296,9 @@ function agentRichFragment(text, cite) {
   while (i < lines.length) {
     var line = lines[i], next = lines[i + 1], m;
     if (!line.trim()) { i++; continue; }
-    if ((m = /^(#{1,4})\s+(.*)$/.exec(line))) { agentRichInline(add(m[1].length <= 2 ? 'h3' : 'h4', 'md-h'), m[2].replace(/\s+#+\s*$/, ''), cite); i++; continue; }
-    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) { add('hr', 'md-hr'); i++; continue; }
-    if (line.indexOf('|') >= 0 && next != null && AGENT_RICH_TABLE_RULE.test(next)) {
+    if ((m = AGENT_RICH_HEADING.exec(line))) { agentRichInline(add(m[1].length <= 2 ? 'h3' : 'h4', 'md-h'), m[2].replace(/\s+#+\s*$/, ''), cite); i++; continue; }
+    if (AGENT_RICH_HR.test(line)) { add('hr', 'md-hr'); i++; continue; }
+    if (agentRichTableStart(line, next)) {
       var wrap = add('div', 'md-table'), table = document.createElement('table'), head = agentRichCells(line);
       var thead = table.createTHead().insertRow();
       head.forEach(function (c) { var th = document.createElement('th'); agentRichInline(th, c, cite); thead.appendChild(th); });
@@ -9311,9 +9310,9 @@ function agentRichFragment(text, cite) {
       }
       wrap.appendChild(table); continue;
     }
-    if (/^\s*>/.test(line)) {
+    if (AGENT_RICH_QUOTE.test(line)) {
       var quote = add('blockquote', 'md-quote'), qlines = [];
-      while (i < lines.length && /^\s*>/.test(lines[i])) qlines.push(lines[i++].replace(/^\s*>\s?/, ''));
+      while (i < lines.length && AGENT_RICH_QUOTE.test(lines[i])) qlines.push(lines[i++].replace(/^\s*>\s?/, ''));
       quote.appendChild(agentRichFragment(qlines.join('\n'), cite)); continue;
     }
     if ((m = AGENT_RICH_LIST.exec(line))) {
@@ -9363,7 +9362,7 @@ function agentRichPlain(text) {
   return String(text || '').replace(/\r\n?/g, '\n').split('\n').filter(function (line) { return !AGENT_RICH_TABLE_RULE.test(line); })
     .map(function (line) {
       if (line.indexOf('|') >= 0 && /^\s*\|/.test(line)) line = agentRichCells(line).join(' ｜ ');
-      return line.replace(/^#{1,4}\s+/, '').replace(/^\s*([-*_])(\s*\1){2,}\s*$/, '').replace(/^(\s*)[-*+]\s+/, '$1・')
+      return line.replace(/^#{1,4}\s+/, '').replace(AGENT_RICH_HR, '').replace(/^(\s*)[-*+]\s+/, '$1・')
         .replace(/\*\*([^*\n]+?)\*\*/g, '$1').replace(/`([^`\n]+)`/g, '$1').replace(/^\s*>\s?/, '');
     }).join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -9579,11 +9578,12 @@ var ICON_MENU_SPEAK = '<svg aria-hidden="true" width="20" height="20" viewBox="0
 var ICON_MENU_RETRY = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
 var ICON_MENU_SOURCES = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
 function agentPromptAt(user, next) {
-  var floor = Date.UTC(2024, 0, 1), at = user && user.at;
-  if (Number.isSafeInteger(at) && at > floor && at < Date.now() + 864e5) return at;
+  var at = agentValidAt(user && user.at);
+  if (at !== null) return at;
   if (!next || next.role !== 'assistant') return null;
-  var m = typeof next.mid === 'string' ? /^m([0-9a-z]{8})/.exec(next.mid) : null, t = m ? parseInt(m[1], 36) : NaN;
-  return t > floor && t < AGENT_OPENED_AT ? t : agentReplyAt(next, AGENT_OPENED_AT);
+  // 質問の時刻は、続く回答の mid（送ったとき）を先に使い、無ければ回答の日時
+  var sent = agentMidAt(next.mid, AGENT_OPENED_AT);
+  return sent !== null ? sent : agentValidAt(next.at);
 }
 function markAgentStarted() {
   agentLog.querySelectorAll('.agent-started').forEach(function (el) { el.remove(); });
@@ -9678,7 +9678,8 @@ function openPromptMenu(el, anchor, how, point) {
   menu.addEventListener('keydown', function (e) {
     var list = Array.from(menu.querySelectorAll('button')), i = list.indexOf(document.activeElement);
     if (e.key === 'Escape') { e.preventDefault(); var back = anchor; closePromptMenu(); if (back && back.focus) back.focus({ preventScroll: true }); }
-    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); list[(i + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length].focus(); }
+    // 文字の無い質問は時刻だけで項目が無い（いまは中に入れないが、項目が無ければ矢印で動かさない）
+    else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && list.length) { e.preventDefault(); list[(i + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length].focus(); }
   });
   menu.addEventListener('mouseenter', function () { clearTimeout(promptMenuClose); });
   menu.addEventListener('mouseleave', function () { if (how === 'hover') promptMenuClose = setTimeout(closePromptMenu, 250); });
@@ -9698,18 +9699,14 @@ function openPromptMenu(el, anchor, how, point) {
 (function () {
   var fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)');
   var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)');
-  agentLog.addEventListener('pointerover', function (e) {
-    if (e.pointerType !== 'mouse' || !(fine && fine.matches)) return;
-    if (e.target.closest('.rate-pop')) return;
-    var host = e.target.closest('.agent-reply, .persona-card');
-    if (host) showAgentHoverReactions(host);
-  });
-  agentLog.addEventListener('pointermove', function (e) {
-    if (e.pointerType === 'mouse' && fine && fine.matches) {
+  // マウスで回答を指したら候補を出す。入ったとき（pointerover）と、中で動いたとき（pointermove）の両方で見る
+  ['pointerover', 'pointermove'].forEach(function (t) {
+    agentLog.addEventListener(t, function (e) {
+      if (e.pointerType !== 'mouse' || !(fine && fine.matches)) return;
       if (e.target.closest('.rate-pop')) return;
       var host = e.target.closest('.agent-reply, .persona-card');
       if (host) showAgentHoverReactions(host);
-    }
+    });
   });
   agentLog.addEventListener('pointerout', function (e) {
     var state = agentHoverReactions;
@@ -9844,10 +9841,17 @@ function agentHaptic(ms) {
 // 回答の日時（ミリ秒）。保存した at を使い、無い回答は mid の先頭（送ったときの時刻を36進で8桁）から読む。
 // 画面を開いた後（openedAt 以降）に付けた mid は、mid の無かった古い回答に後から付けたもので時刻を表さない
 function agentReplyAt(item, openedAt) {
-  var floor = Date.UTC(2024, 0, 1), at = item && item.at;
-  if (Number.isSafeInteger(at) && at > floor && at < Date.now() + 864e5) return at;
-  var m = item && typeof item.mid === 'string' ? /^m([0-9a-z]{8})/.exec(item.mid) : null, t = m ? parseInt(m[1], 36) : NaN;
-  return t > floor && t < openedAt ? t : null;
+  var at = agentValidAt(item && item.at);
+  return at !== null ? at : agentMidAt(item && item.mid, openedAt);
+}
+// 日時の下限（2024年）。読み込みの途中で呼ばれても使えるよう、変数ではなく関数で返す
+function agentTimeFloor() { return Date.UTC(2024, 0, 1); }
+// 保存した日時（ミリ秒）として使える値か。下限より前と、端末の時刻より1日以上先は捨てる
+function agentValidAt(at) { return Number.isSafeInteger(at) && at > agentTimeFloor() && at < Date.now() + 864e5 ? at : null; }
+// mid の先頭（m と36進8桁）から読んだ送信時刻。before 以降の時刻は捨てる
+function agentMidAt(mid, before) {
+  var m = typeof mid === 'string' ? /^m([0-9a-z]{8})/.exec(mid) : null, t = m ? parseInt(m[1], 36) : NaN;
+  return t > agentTimeFloor() && t < before ? t : null;
 }
 // 操作列に収まる短い書き方（端末の時刻）。「今日 15:38」「昨日 15:38」「10/22(木) 15:38」「2025/10/22 15:38」、
 // 英語は「Today 15:38」「Yesterday 15:38」「Oct 22, 15:38」「Oct 22, 2025, 15:38」。曜日まで書いた日時は title に出す
@@ -9891,7 +9895,7 @@ function closeRatePops(focus) {
     if (btn) { btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus({ preventScroll: true }); }
   });
 }
-// 評価のボタンの上に Good / Bad を開く。いまの評価に印を付け、同じものを選ぶと取り消す
+// リアクションのボタンの上に絵文字の候補を開く。いまのリアクションに印を付け、同じものを選ぶと取り消す
 function openRatePop(btn, bar) {
   if (agentTemporary()) return;
   var open = bar.querySelector('.rate-pop');
@@ -10077,18 +10081,20 @@ function agentEmojiGestures(row) {
   // Unicodeの手・腕・からだ。人物のポーズや職業は「人」に残す。
   return row[1] === 1 && /^[\u{1F446}-\u{1F450}\u{1F590}\u{1F595}\u{1F596}\u{1F64C}\u{1F64F}\u{1F918}-\u{1F91F}\u{1F932}\u{1F933}\u{1F90C}\u{1F90F}\u{1FAF0}-\u{1FAFA}\u270A-\u270D\u261D\u{1F485}\u{1F4AA}\u{1F9B4}-\u{1F9B7}\u{1F9BB}\u{1F9BE}\u{1F9BF}\u{1F442}\u{1F443}\u{1F440}\u{1F441}\u{1F444}\u{1F445}\u{1F9E0}\u{1FAC0}-\u{1FAC1}\u{1FAE6}]/u.test(row[0]);
 }
-// 黄色の親（bases）と、肌の色を選べる親のキー（tones）。一覧を読み込んだ後に1回だけ作る（描画・検索の1打鍵ごとに作り直さない）
+// 絵文字の索引。一覧を読み込んだ後に1回だけ作る（描画・検索の1打鍵ごと、最近・肌の色の表示のたびに全一覧を探さない）
+// rows: 絵文字→行、bases: 黄色の親、families: 親のキー→肌の色を含む候補（一覧の順）、tones: 肌の色を選べる親のキー
 var agentEmojiIndex = null;
 function agentEmojiFamilyIndex() {
   if (agentEmojiIndex && agentEmojiIndex.catalog === AGENT_EMOJI_CATALOG) return agentEmojiIndex;
-  var bases = new Map(), sizes = new Map(), tones = new Set();
+  var rows = new Map(), bases = new Map(), families = new Map(), tones = new Set();
   AGENT_EMOJI_CATALOG.forEach(function (row) {
     var key = agentEmojiBaseKey(row[0]);
-    sizes.set(key, (sizes.get(key) || 0) + 1);
+    rows.set(row[0], row);
+    if (families.has(key)) families.get(key).push(row); else families.set(key, [row]);
     if (!/[\u{1F3FB}-\u{1F3FF}]/u.test(row[0])) bases.set(key, row);
   });
-  sizes.forEach(function (size, key) { if (size > 1) tones.add(key); });
-  agentEmojiIndex = { catalog: AGENT_EMOJI_CATALOG, bases: bases, tones: tones };
+  families.forEach(function (list, key) { if (list.length > 1) tones.add(key); });
+  agentEmojiIndex = { catalog: AGENT_EMOJI_CATALOG, rows: rows, bases: bases, families: families, tones: tones };
   return agentEmojiIndex;
 }
 function agentEmojiFamilies(rows) {
@@ -10105,6 +10111,12 @@ function agentEmojiSearch(query) {
   if (!agentEmojiSearchRows) agentEmojiSearchRows = AGENT_EMOJI_CATALOG.map(function (row) { return agentEmojiNormalize(row[0] + ' ' + row.slice(2).join(' ')); });
   var words = agentEmojiNormalize(query).split(/\s+/).filter(Boolean);
   return AGENT_EMOJI_CATALOG.filter(function (_, i) { return words.every(function (word) { return agentEmojiSearchRows[i].indexOf(word) >= 0; }); });
+}
+// 一覧に出す絵文字を選ぶ。検索とカテゴリは黄色の親に束ね、最近は選んだ形（肌の色を含む）のまま出す
+function agentEmojiRows(query, selected, recent) {
+  if (query) return agentEmojiFamilies(agentEmojiSearch(query));
+  if (selected === 'recent') { var rows = agentEmojiFamilyIndex().rows; return recent.map(function (em) { return rows.get(em); }).filter(Boolean); }
+  return agentEmojiFamilies(AGENT_EMOJI_CATALOG.filter(function (row) { return selected === '9' ? agentEmojiGestures(row) : row[1] === Number(selected) && (selected !== '1' || !agentEmojiGestures(row)); }));
 }
 function agentEmojiRecent() {
   try {
@@ -10160,20 +10172,19 @@ function openAgentEmojiPicker(bar, opener, current) {
     if (!AGENT_EMOJI_CATALOG) return;
     var toneKeys = agentEmojiFamilyIndex().tones;
     closeTones(false);
-    var query = search.value.trim(), rows;
-    if (query) rows = agentEmojiFamilies(agentEmojiSearch(query));
-    // 最近は選んだ形（肌の色を含む）のまま出す。黄色の親に束ねない
-    else if (selected === 'recent') rows = recent.map(function (em) { return AGENT_EMOJI_CATALOG.find(function (row) { return row[0] === em; }); }).filter(Boolean);
-    else rows = agentEmojiFamilies(AGENT_EMOJI_CATALOG.filter(function (row) { return selected === '9' ? agentEmojiGestures(row) : row[1] === Number(selected) && (selected !== '1' || !agentEmojiGestures(row)); }));
+    var query = search.value.trim(), rows = agentEmojiRows(query, selected, recent);
     heading.textContent = query ? tr('Search results', '検索結果') : selected === 'recent' ? tr('Recent', '最近') : tr(AGENT_EMOJI_GROUPS[Number(selected)][0], AGENT_EMOJI_GROUPS[Number(selected)][1]);
     count.textContent = tr(rows.length + ' emoji', rows.length + '件'); grid.setAttribute('aria-label', heading.textContent);
     tabs.querySelectorAll('button').forEach(function (b) { var active = b.dataset.category === selected; b.setAttribute('aria-selected', String(active)); b.tabIndex = active ? 0 : -1; });
     var frag = document.createDocumentFragment();
+    // 検索とカテゴリは黄色の親に束ねて並べるので、肌の色を選んでいても親を選択中にする。最近は選んだ形のまま比べる
+    var grouped = !!query || selected !== 'recent', currentKey = current ? agentEmojiBaseKey(current) : null;
     rows.forEach(function (row, i) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'emoji-option'; b.dataset.emoji = row[0]; b.textContent = row[0];
       b.title = tr(row[2], row[3]);
       if (toneKeys.has(agentEmojiBaseKey(row[0]))) { b.dataset.tones = 'true'; b.setAttribute('aria-haspopup', 'dialog'); b.title += tr(' — hold or right-click for skin tone', ' — 長押し・右クリックで肌の色'); }
-      b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(current === row[0])); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
+      var pressed = grouped ? currentKey !== null && agentEmojiBaseKey(row[0]) === currentKey : current === row[0];
+      b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(pressed)); b.tabIndex = i ? -1 : 0; frag.appendChild(b);
     });
     grid.replaceChildren(frag); results.scrollTop = 0; empty.hidden = !!rows.length;
     empty.textContent = query ? tr('No emoji found. Try another word.', '絵文字が見つかりません。別の言葉で検索してください。') : tr('No recently used emoji yet.', '最近使った絵文字はまだありません。');
@@ -10214,10 +10225,10 @@ function openAgentEmojiPicker(bar, opener, current) {
     closeTones(false); toneAnchor = button; button.setAttribute('aria-expanded', 'true');
     tonePanel = document.createElement('div'); tonePanel.className = 'emoji-tones'; tonePanel.setAttribute('role', 'dialog');
     tonePanel.setAttribute('aria-label', tr('Skin tone', '肌の色'));
-    var key = agentEmojiBaseKey(button.dataset.emoji);
-    AGENT_EMOJI_CATALOG.filter(function (r) { return agentEmojiBaseKey(r[0]) === key; }).forEach(function (row) {
+    (agentEmojiFamilyIndex().families.get(agentEmojiBaseKey(button.dataset.emoji)) || []).forEach(function (row) {
       var option = document.createElement('button'); option.type = 'button'; option.className = 'emoji-option'; option.textContent = row[0];
-      option.setAttribute('aria-label', tr(row[2], row[3])); option.addEventListener('click', function () { choose(row[0]); }); tonePanel.appendChild(option);
+      option.setAttribute('aria-label', tr(row[2], row[3])); option.setAttribute('aria-pressed', String(current === row[0]));
+      option.addEventListener('click', function () { choose(row[0]); }); tonePanel.appendChild(option);
     });
     dialog.appendChild(tonePanel);
     var r = button.getBoundingClientRect(), d = dialog.getBoundingClientRect(), h = tonePanel.offsetHeight;
@@ -11727,28 +11738,26 @@ function agentAttachDocHTML(a) {
     async function sendReaction(target, reaction, request, response) {
   if (agentTemporary()) return null;
       if (!response) return undefined;
-      try {
-        const res = await fetch(REACT_API, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ target, reaction, request, response }),
-        });
-        if (!res.ok) return undefined;
-        const j = await res.json();
-        return j && j.id && typeof j.delete_token === 'string' ? { id: j.id, delete_token: j.delete_token } : undefined;
-      } catch (_) { return undefined; }
+      // 取り消し・付け替えはこの完了を待つので、応答が来なくても期限で打ち切って未登録として扱う。
+      // 打ち切った後にサーバーへ届いていた登録はトークンが無く消せない（通信が途中で切れたときと同じ）
+      const j = await postReaction({ target, reaction, request, response }, false);
+      return j && j.id && typeof j.delete_token === 'string' ? { id: j.id, delete_token: j.delete_token } : undefined;
     }
-    // トークンを持たない旧データは、連番だけでの削除を試みない。
+    // トークンを持たない旧データは、連番だけでの削除を試みない。取り消しは画面を閉じても届くよう keepalive で送る
     async function deleteReaction(target, receipt) {
       if (!receipt || !receipt.id || !receipt.delete_token) return true;
+      const j = await postReaction({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }, true);
+      return !!j && j.ok === true;
+    }
+    // リアクションの POST。10秒（本文の読み取りまで）で打ち切る。返すのは 2xx の JSON だけで、失敗・時間切れ・壊れた本文は null
+    async function postReaction(body, keepalive) {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 10000);
       try {
         const res = await fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ op: 'remove', target, id: receipt.id, delete_token: receipt.delete_token }),
-          keepalive: true, signal: ctrl.signal,
-        });
-        return res.ok && (await res.json()).ok === true;
-      } catch (_) { return false; }
+          body: JSON.stringify(body), keepalive, signal: ctrl.signal });
+        return res.ok ? await res.json() : null;
+      } catch (_) { return null; }
       finally { clearTimeout(timer); }
     }
 // 登録の識別子は保存し、通信中のPromiseだけをメモリに持つ。復元した同じ評価からも完了を待てる。
@@ -11852,7 +11861,6 @@ async function unregisterReaction(bar, target) {
         if (!agentModels || Date.now() >= agentModelsExpires) loadAgentModels().then(() => { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
         return;
       }
-      // 評価のメニューから Good / Bad を選ぶ
       // リアクションのメニューから絵文字を選ぶ（＋ はほかの絵文字を開くだけ）
       const pick = e.target.closest('.rate-pop button');
       if (pick) {
@@ -11866,7 +11874,7 @@ async function unregisterReaction(bar, target) {
       if (!btn) return;
       const bar = btn.closest('.reaction-bar');
       const act = btn.getAttribute('data-act');
-  if (agentTemporary() && ['rate','react','share'].includes(act)) return;
+  if (agentTemporary() && ['rate','share'].includes(act)) return;
       if (act === 'rate') { openRatePop(btn, bar); return; }
       if (act === 'retry') { const retry = agentRetryFor(btn); if (retry) agentSend(retry); return; }
       if (act === 'speak' || act === 'share' || act === 'sources') {
@@ -11997,7 +12005,7 @@ async function unregisterReaction(bar, target) {
     const closeAgentPanels = (keepPageStack) => { if (!keepPageStack) agentPageStack = []; AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p && !(keepPageStack && agentPageStack.indexOf(p) >= 0)) removeAgentPanel(p); }); };
     // 情報画面は親を隠して保持し、画面左上・Esc・Androidの戻るで同じ一段を戻る。
 var AGENT_PAGE_IDS = ['agent-bug-report-panel', 'agent-about-panel', 'agent-faq-panel', 'agent-terms-panel', 'agent-info-panel', 'agent-version-info-panel', 'agent-update-panel', 'agent-settings-panel', 'agent-versions-panel', 'agent-install-panel', 'agent-history-panel'];
-    const AGENT_PANEL_IDS = ['agent-camera-panel', 'agent-history-panel', ...AGENT_PAGE_IDS];
+    const AGENT_PANEL_IDS = ['agent-camera-panel', ...AGENT_PAGE_IDS];
 var agentPageStack = [];
 function prepareAgentPage(id) {
   // メニューやヘッダーから直接開く画面は一番上の階層として開く（アプリの履歴はドロワーで、ここを通らない）。
@@ -12472,15 +12480,23 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
       });
     }
 
+    // 書き出しの質問に添える添付の注記。画像は枚数、ファイルは名前だけ（どちらも中身は書き出さない）
+    function agentExportAttachNote(content, images) {
+      var files = Array.isArray(content) ? content.filter(function (p) { return p && p.type === 'attachment' && typeof p.name === 'string'; })
+        .map(function (p) { return p.name.replace(/\s+/g, ' ').trim(); }) : [];
+      var notes = [];
+      if (images) notes.push(images + ' image attachment' + (images > 1 ? 's' : ''));
+      if (files.length) notes.push((files.length > 1 ? 'files: ' : 'file: ') + files.join(', '));
+      return notes.length ? '\n\n(' + notes.join('; ') + ')' : '';
+    }
     function getAgentChatMarkdown() {
   if (agentTemporary()) return "";
       if (!agentHistory || agentHistory.length === 0) return '';
       let md = `# MAGI Chat Log\nGenerated on: ${new Date().toLocaleString()}\n\n---\n\n`;
       cleanHistory(agentHistory).forEach(item => {
         if (item.role === 'user') {
-          // 画像はサムネの data URL なので本文には埋め込まず、枚数だけ残す
-          const imgs = contentImageCount(item.content);
-          md += `## 🧑‍💻 User\n${contentText(item.content)}${imgs ? `\n\n(${imgs} image attachment${imgs > 1 ? 's' : ''})` : ''}\n\n`;
+          // 画像はサムネの data URL なので本文には埋め込まず、枚数だけ残す。ファイルは名前だけ残す
+          md += `## 🧑‍💻 User\n${contentText(item.content)}${agentExportAttachNote(item.content, contentImageCount(item.content))}\n\n`;
         } else {
           md += `## ✦ MAGI\n${agentFactMarkdown(item.content, item.sources)}\n\n`;
           if (item.debate) {

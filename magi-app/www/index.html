@@ -148,11 +148,6 @@
     .agent-panel-close { font-size: 10px; letter-spacing: 0.08em; color: var(--secondary-color); background: transparent; border: none; cursor: pointer; }
     .agent-panel-close:hover, .agent-panel-close:active { color: var(--primary-color); }
     .agent-panel-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.4rem; }
-    #agent-settings-panel p { font-size: 12px; line-height: 1.7; color: var(--secondary-color); }
-    .native-settings-actions { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 12px; }
-    .native-settings-actions button { min-height: 44px; padding: 10px 14px; font: inherit; font-size: 12px; text-align: left; color: var(--text-color); background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; }
-    .native-settings-actions button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
-    .native-settings-actions button:disabled { opacity: .5; cursor: wait; }
     #agent-shared-tray { display: flex; gap: 6px; padding: 6px 12px; }
     #agent-shared-tray[hidden], #agent-voice[hidden] { display: none; }
     #agent-shared-tray button { font: inherit; font-size: 11px; color: var(--text-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; cursor: pointer; }
@@ -176,7 +171,6 @@
     .agent-panel-body ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .agent-panel-body li { font-size: 11px; line-height: 1.6; color: var(--secondary-color); }
     .agent-panel-body li strong { color: var(--text-color); }
-    .agent-panel-body li.warn { color: #ef4444; font-weight: 600; }
 
     /* ---- App shell: full-screen column ---- */
     #app {
@@ -269,7 +263,6 @@
     .persona-card::before, .persona-card::after { content: ''; position: absolute; border-radius: 28px; pointer-events: none; -webkit-mask: var(--cloud-mask); mask: var(--cloud-mask); }
     .persona-card::before { inset: 0; z-index: -2; background: var(--border-color); }
     .persona-card::after { inset: 1px; z-index: -1; background: var(--surface-alt); }
-    .persona-card:focus-within { z-index: 1; }
     .persona-head::before, .persona-head::after { content: ''; position: absolute; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-alt); pointer-events: none; }
     .persona-head::before { left: 15px; bottom: -7px; width: 11px; height: 11px; }
     .persona-head::after { left: 3px; bottom: -14px; width: 8px; height: 8px; }
@@ -327,7 +320,7 @@
     .react-btn:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 1px; }
     .react-btn.rated { color: var(--primary-color); }
     .react-btn[hidden] { display: none; }
-    /* 回答の評価（Good / Bad）。評価のボタンの上に開く */
+    /* 回答へのリアクション（絵文字）の候補。リアクションのボタンの上に開く */
     .rate-pop { position: absolute; bottom: 100%; margin-bottom: 0.25rem; display: flex; gap: 2px; padding: 0.25rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
     .rate-pop button { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0 0.85rem; font: inherit; font-size: 13px; color: var(--text-color); background: transparent; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; }
     .rate-pop button:active, .rate-pop button:focus-visible { background: var(--primary-bg); outline: none; }
@@ -394,7 +387,6 @@
     .msg-reaction::before, .prompt-reaction::before { content: attr(data-emoji); }
     .agent-reply > .msg-reaction { right: 10px; bottom: -15px; }
     .agent-reply.has-reaction { margin-bottom: 18px; }
-    .persona-card > .msg-reaction { right: 14px; bottom: 8px; }
     .agent-user > .prompt-reaction { right: 2px; bottom: -15px; }
     .agent-user.has-reaction { margin-bottom: 16px; }
     /* 付けた・付けられた瞬間だけ、弾んで周りに粒が散る */
@@ -564,7 +556,6 @@
     .agent-imgs img.expanded { max-width: 100%; max-height: none; }
     .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
     #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); }
-    .agent-location-notice { font-size: 11px; line-height: 1.6; color: var(--secondary-color); margin-top: 8px; }
 
     /* splash */
     @keyframes magiFlow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
@@ -575,13 +566,10 @@
     .magi-emblem .hl-flow { stroke: var(--primary-color); stroke-width: 1.618; stroke-dasharray: 5 15; stroke-linecap: round; filter: drop-shadow(0 0 2px var(--primary-color)); animation: magiFlow calc(60s / var(--bpm)) linear infinite; will-change: stroke-dashoffset; }
     .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
     .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem auto 0.4rem; width: fit-content; border-block: 3px double var(--secondary-color); padding: 0.1rem 0.35rem; }
-    .magi-sub { font-size: 11px; line-height: 20px; letter-spacing: 0.12em; color: var(--text-color); }
-    .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.35rem; display: inline-flex; align-items: center; justify-content: center; }
-
-    .magi-ver { background:transparent;border:1px solid var(--border-color);border-radius:2px;padding:0.2rem 0.45rem;font-family:inherit;cursor:pointer;gap:0.35rem; }
+    .magi-sub { display: flex; align-items: center; justify-content: center; font-size: 11px; line-height: 20px; letter-spacing: 0.12em; color: var(--text-color); }
+    .magi-ver { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; margin-top: 0.35rem; padding: 0.2rem 0.45rem; font-family: inherit; font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 2px; cursor: pointer; }
     .magi-ver::after { content:'▾'; }
     .magi-ver:hover,.magi-ver:focus-visible { color:var(--primary-color);border-color:var(--primary-color); }
-    .magi-sub { display:flex;align-items:center;justify-content:center; }
     /* MAGI の二つの読み（MAGI_ACRONYM）。両面の語句を同じセルに重ねて最大幅を確保し、opacity だけを動かす。
        文字の大きさは .magi-sub に従う。狭いときはドックの内側の幅で三段にする */
     .magi-acronym { flex-direction: column; gap: 0.1rem; width: 100%; container-type: inline-size; }
@@ -602,12 +590,6 @@
     .magi-acr-phrase:focus-visible { outline: 1px solid var(--primary-color); outline-offset: 2px; }
     .magi-acr-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
     @media (prefers-reduced-motion: reduce) { .magi-acr-slot > span { transition: none; } }
-    .agent-versions-list { flex:1;min-height:0;overflow-y:auto;text-align:left;overflow-wrap:anywhere; }
-    .agent-versions-list section { padding:0.65rem 0;border-bottom:1px solid var(--border-color); }
-    .agent-versions-list h3 { margin:0 0 0.15rem;font-size:12px;color:var(--primary-color); }
-    .agent-versions-list time { font-size:10px;color:var(--secondary-color); }
-    .agent-versions-list ul { margin:0.45rem 0 0;padding-left:1.2rem; }
-    .agent-versions-list li,.agent-versions-list p { font-size:11px;line-height:1.7;color:var(--text-color); }
 
     .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 1rem; flex-wrap: wrap; }
     .magi-node { background: var(--surface-alt); font-size: 10px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 2px; padding: 0.3rem 0.7rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
@@ -650,6 +632,7 @@
     .agent-about-page [hidden] { display: none !important; }
     .agent-about-content { color: var(--text-color); flex: 1; min-height: 0; overflow-y: auto; font-size: 12px; line-height: 1.7; }
     .agent-about-page .agent-about-content, .agent-about-page .agent-versions-list { box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    .agent-about-page .agent-versions-list { flex: 1; min-height: 0; overflow-y: auto; text-align: left; overflow-wrap: anywhere; }
     .agent-about-card { margin-top: 10px; padding: 14px 16px; border: 1px solid var(--border-color); border-radius: 16px; overflow-wrap: anywhere; }
     .agent-about-content > .agent-about-card:first-child { margin-top: 0; }
     .agent-about-card p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; }
@@ -686,7 +669,7 @@
     .agent-about-page .agent-versions-list h3 { margin: 0; color: var(--text-color); font-size: 14px; font-weight: 600; line-height: 1.5; }
     .agent-about-page .agent-versions-list time { display: block; color: var(--secondary-color); font-size: 12px; }
     .agent-about-page .agent-versions-list ul { margin: 8px 0 0; padding-left: 1.2rem; }
-    .agent-about-page .agent-versions-list li, .agent-about-page .agent-versions-list p { font-size: 12px; line-height: 1.7; }
+    .agent-about-page .agent-versions-list li, .agent-about-page .agent-versions-list p { color: var(--text-color); font-size: 12px; line-height: 1.7; }
 
     .agent-info-page[hidden] { display: none !important; }
     .agent-info-page .agent-page-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex-shrink: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
@@ -743,7 +726,7 @@
 #btn-temporary-agent[aria-pressed="true"] { color: var(--primary-color, var(--accent, #7b91aa)); outline: 1px dashed currentColor; border-radius: 8px; }
 #btn-temporary-agent:focus-visible { outline: 2px solid currentColor; }
 #btn-temporary-agent:disabled { opacity: .4; cursor: default; }
-.agent-temporary [data-act="rate"], .agent-temporary [data-act="react"], .agent-temporary [data-act="share"] { display: none !important; }
+.agent-temporary [data-act="rate"], .agent-temporary [data-act="share"] { display: none !important; }
 .temporary-plus { display: none; stroke-dasharray: none; }
 #btn-temporary-agent[aria-pressed="true"] .temporary-plus { display: block; }
 .agent-temporary-splash h2 { margin: 0 0 8px; font: inherit; font-size: 22px; font-weight: 600; }
@@ -778,7 +761,6 @@
 @keyframes agent-settings-shade-in { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,.6); } }
 @keyframes agent-settings-shade-out { from { background: rgba(0,0,0,.6); } to { background: rgba(0,0,0,0); } }
 @media (prefers-reduced-motion: reduce) { .agent-temporary-settings-dialog, .agent-temporary-settings-dialog::backdrop { animation: none !important; } }
-.agent-settings-content { min-height: 0; overflow-y: auto; padding: 4px; }
 .agent-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
 .agent-personalization-form .agent-setting { margin-top: 0; }
 .agent-setting [role="switch"] { position: relative; box-sizing: border-box; width: 52px; height: 44px; flex: 0 0 52px; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
@@ -796,9 +778,9 @@
     /* アプリ管理：短い説明と操作をカードに集め、詳細と編集欄は必要なときだけ開く。 */
     #agent-settings-panel { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #agent-settings-panel .agent-panel-body { display: block; }
-    #agent-settings-panel > .agent-settings-content { flex: 1; min-height: 0; overflow-y: auto; }
+    #agent-settings-panel > .agent-settings-content { flex: 1; }
     #agent-settings-panel [hidden] { display: none !important; }
-    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 2px 28px; }
+    #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; min-height: 0; margin: 0 auto; padding: 6px 2px 28px; overflow-y: auto; }
     #agent-settings-panel .agent-settings-section { margin-top: 26px; }
     #agent-settings-panel .agent-settings-content > .agent-settings-section:first-child { margin-top: 0; }
     #agent-settings-panel h3 { margin: 0 0 12px; color: var(--text-color); font-size: 14px; font-weight: 650; letter-spacing: .02em; }
@@ -806,7 +788,7 @@
     #agent-settings-panel .agent-setting { gap: 16px; margin: 0; }
     #agent-settings-panel .agent-setting-copy { flex: 1; min-width: 0; }
     #agent-settings-panel .agent-setting-title { display: block; color: var(--text-color); font-size: 14px; line-height: 1.5; font-weight: 600; }
-    #agent-settings-panel p { margin: 5px 0 0; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+    #agent-settings-panel p { margin: 5px 0 0; color: var(--secondary-color); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
     #agent-settings-panel [role="status"]:empty { display: none; }
     #agent-settings-panel [role="status"]:not(:empty) { margin-top: 10px; }
     #agent-settings-panel .agent-setting-details { margin-top: 4px; }
@@ -829,8 +811,10 @@
     #agent-settings-panel .personal-actions button, #agent-settings-panel .agent-setting-action { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
     #agent-settings-panel .personal-actions button[type="submit"] { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
     #agent-settings-panel [data-personal="delete"] { justify-self: start; min-height: 36px; padding: 4px 0; border: 0; color: #e5484d; font-size: 12px; }
-    #agent-settings-panel .native-settings-actions { gap: 0; margin: 0; }
-    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font-size: 14px; font-weight: 550; }
+    #agent-settings-panel .native-settings-actions { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0; }
+    #agent-settings-panel .native-settings-actions button { position: relative; display: grid; gap: 4px; min-height: 44px; padding: 14px 22px 14px 0; border: 0; border-radius: 0; background: transparent; color: var(--text-color); font: inherit; font-size: 14px; font-weight: 550; text-align: left; cursor: pointer; }
+    #agent-settings-panel .native-settings-actions button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    #agent-settings-panel .native-settings-actions button:disabled { opacity: .5; cursor: wait; }
     #agent-settings-panel .native-settings-actions button + button { border-top: 1px solid var(--border-color); }
     #agent-settings-panel .native-settings-actions button::after { content: '›'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--secondary-color); font-size: 22px; font-weight: 400; }
     #agent-settings-panel .native-settings-actions small { color: var(--secondary-color); font-size: 12px; font-weight: 400; }
@@ -997,6 +981,6 @@
   <script src="native-background.js?v=20261025_4"></script>
   <script src="native-location.js?v=20261025_2"></script>
   <script src="share-image.js?v=20261102_2"></script>
-  <script src="app.js?v=20261104_3"></script>
+  <script src="app.js?v=20261105_1"></script>
 </body>
 </html>

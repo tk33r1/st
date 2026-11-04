@@ -1393,6 +1393,9 @@ test('会話の保存は答えが出そろった時点で waitUntil に渡し、
   assert.ok(store > 0);
   for (const later of ['const reactionPromise', 'fetchSuggestion(upstream', 'await titlePromise', 'await reactionPromise']) assert.ok(store < chat.indexOf(later), later);
   assert.ok(chat.indexOf('const answer = factMode') < store);
+  // 返ってきた答えは完成しているので、答えの後の待ち（事実回答のページ選び）の間に切断されていても保存する
+  const condition = chat.slice(chat.lastIndexOf('if (storeConversation', store), store);
+  assert.ok(!/aborted/.test(condition), condition);
 });
 
 test('会話の保存は conversation_storage を送った通常チャットだけで、プロンプトの文字と答えを1行書く', async () => {
@@ -1647,6 +1650,19 @@ test('回答のMarkdown: 単独の --- は区切り線のまま表にせず、�
   assert.deepEqual(tags('入力 | 出力 の対応です\n---\n本文'),['P','HR','P']);
   assert.deepEqual(tags('| A | B |\n|---|---|\n| 1 | 2 |'),['DIV']);
   assert.deepEqual(tags('A | B\n--- | ---\n1 | 2'),['DIV']);
+  // エスケープした「\|」はセルの区切りにせず、セルの中の「|」として描く（後ろのセルを落とさない）
+  const bs=String.fromCharCode(92);
+  const table=ctx.agentRichFragment('| 式 | 意味 |\n|---|---|\n| a '+bs+'| b | AまたはB |\n| `x '+bs+'| y` | 末尾 '+bs+'|',null).children[0].children[0];
+  const cellsOf=row=>row.children.map(c=>c.textContent);
+  assert.deepEqual(cellsOf(table.children[1].children[0]),['a | b','AまたはB']);
+  assert.deepEqual(cellsOf(table.children[1].children[1]),['x | y','末尾 |']);
+  assert.deepEqual([...ctx.agentRichCells('| A | B |')],['A','B']); assert.deepEqual([...ctx.agentRichCells('A | B')],['A','B']);
+  assert.deepEqual([...ctx.agentRichCells('|')],['']); assert.deepEqual([...ctx.agentRichCells('||')],['']);
+  // 共有画像・通知の平文も同じ分け方
+  assert.equal(ctx.agentRichPlain('| 式 | 意味 |\n|---|---|\n| a '+bs+'| b | AまたはB |'),'式 ｜ 意味\na | b ｜ AまたはB');
+  // 段落を終える判定と描画は同じ条件。文字の無い「## 」は先頭でも途中でも見出しにしない
+  assert.deepEqual(tags('## \n本文'),['P']); assert.deepEqual(tags('本文\n## '),['P']);
+  assert.deepEqual(tags('本文\n## 見出し\n> 引用\n***\n- 項目'),['P','H3','BLOCKQUOTE','HR','UL']);
   const p=el('p'),mark=n=>ctx.AGENT_RICH_MARK_OPEN+n+ctx.AGENT_RICH_MARK_CLOSE;
   ctx.agentRichInline(p,'前 `co'+mark(2)+'de` 後'+mark(3),n=>Object.assign(el('a'),{own:'['+n+']'}));
   assert.deepEqual(p.children.map(c=>c.tagName),['#TEXT','CODE','A','#TEXT','A']);
@@ -1657,17 +1673,25 @@ test('回答のMarkdown: 単独の --- は区切り線のまま表にせず、�
 
 test('絵文字の一覧: 黄色の親と肌の色の候補は一覧ごとに1回だけ作り、選んだ肌の色を親で置き換えるのは一覧・検索だけ', () => {
   for (const src of [home,mobile]) {
-    const ctx=vm.createContext({});vm.runInContext(between(src,'function agentEmojiBaseKey(','var agentEmojiDialog'),ctx);
-    ctx.AGENT_EMOJI_CATALOG=[['👍',1],['👍🏻',1],['👍🏽',1],['😀',0]];
+    const ctx=vm.createContext({});vm.runInContext(between(src,'function agentEmojiBaseKey(','function agentEmojiRecent('),ctx);
+    ctx.AGENT_EMOJI_CATALOG=[['👍',1,'thumbs up','いいね'],['👍🏻',1,'thumbs up light','いいね 明るい肌'],['👍🏽',1,'thumbs up medium','いいね 中間の肌'],['😀',0,'grinning','にっこり']];
+    // 一覧に出す絵文字: 最近は選んだ肌の色のまま、知らない絵文字は落とす。カテゴリと検索は黄色の親に束ねる
+    const shown=(q,sel,recent=[])=>[...ctx.agentEmojiRows(q,sel,recent)].map(r=>r[0]);
+    assert.deepEqual(shown('','recent',['👍🏽','🫥','😀']),['👍🏽','😀']);
+    assert.deepEqual(shown('','9'),['👍']); assert.deepEqual(shown('','1'),[]); assert.deepEqual(shown('','0'),['😀']);
+    assert.deepEqual(shown('thumbs','recent',['😀']),['👍']); assert.deepEqual(shown('にっこり','9'),['😀']);
     const first=ctx.agentEmojiFamilyIndex();
     assert.equal(ctx.agentEmojiFamilyIndex(),first);
     assert.deepEqual([...first.tones],['👍']);
+    // 最近・肌の色の表示は索引から引く（全一覧を探さない）
+    assert.equal(first.rows.get('👍🏽'),ctx.AGENT_EMOJI_CATALOG[2]);
+    assert.deepEqual([...first.families.get('👍')].map(r=>r[0]),['👍','👍🏻','👍🏽']);
     assert.deepEqual([...ctx.agentEmojiFamilies([['👍🏽',1],['😀',0]])].map(r=>r[0]),['👍','😀']);
     ctx.AGENT_EMOJI_CATALOG=[['😀',0]];
     assert.notEqual(ctx.agentEmojiFamilyIndex(),first);
-    // 最近のタブは選んだ形のまま出す（agentEmojiFamilies を通さない）
+    // ピッカーの描画は上の agentEmojiRows だけで一覧を選ぶ
     const picker=between(src,'function openAgentEmojiPicker(','// AGENT_SPEECH_END');
-    assert.match(picker,/else if \(selected === 'recent'\) rows = recent\.map/);
+    assert.match(picker,/rows = agentEmojiRows\(query, selected, recent\)/);
     assert.ok(!/rows = agentEmojiFamilies\(rows\)/.test(picker));
   }
 });
@@ -2185,8 +2209,14 @@ test('リアクションの移行・所有権・重複・回数制限を実 SQLi
     assert.equal(remove.deleted, 1); // IPが変わっても自分のトークンで取り消せる。
     w.ctx.defaults.reactions.minute_limit = 2;
     w.ctx.defaults.reactions.daily_limit = 3;
-    for (let i = 0; i < 2; i++) assert.equal((await w.request('/magi2/react', body, '192.0.2.4')).status, 200);
+    const limitedAdd = await (await w.request('/magi2/react', body, '192.0.2.4')).json();
+    assert.equal((await w.request('/magi2/react', body, '192.0.2.4')).status, 200);
     assert.equal((await w.request('/magi2/react', body, '192.0.2.4')).status, 429);
+    // 形の誤りは回数を使わない。登録の上限に達しても、トークンを持つ取り消しは別の枠で通る
+    assert.equal((await w.request('/magi2/react', { op: 'remove', target: body.target, id: limitedAdd.id }, '192.0.2.4')).status, 400);
+    const ownRemove = await (await w.request('/magi2/react', { op: 'remove', target: body.target, id: limitedAdd.id, delete_token: limitedAdd.delete_token }, '192.0.2.4')).json();
+    assert.equal(ownRemove.deleted, 1);
+    assert.equal(sqlite(join(dir, 'new.sqlite'), "SELECT count FROM rate_limit WHERE ip='react-remove:192.0.2.4' AND length(day)>10", []).row.count, 1);
     sqlite(join(dir, 'new.sqlite'), 'DELETE FROM rate_limit WHERE length(day)>10', []);
     assert.equal((await w.request('/magi2/react', body, '192.0.2.4')).status, 200);
     assert.equal((await w.request('/magi2/react', body, '192.0.2.4')).status, 429);
@@ -2939,6 +2969,67 @@ test('両画面は削除トークンを保存し、登録中の取り消しで�
     assert.equal(await failedRemoval, false); assert.equal(store.integrated.delete_token, receipt.delete_token);
     removeStatus = 200;
     assert.equal(await ctx.unregisterReaction(bar, 'integrated'), true); assert.equal(store.integrated, undefined);
+  }
+});
+
+test('会話の書き出し: 質問の添付は画像の枚数とファイルの名前を残し、中身は書き出さない（両画面で同じ）', () => {
+  for (const src of [home, mobile]) {
+    const ctx = vm.createContext({});
+    vm.runInContext(src.match(/function agentExportAttachNote\(content, images\) \{[\s\S]*?\n\s*\}\n/)[0], ctx);
+    const file = (name, text = '中身') => ({ type: 'attachment', name, text });
+    assert.equal(ctx.agentExportAttachNote('文だけ', 0), '');
+    assert.equal(ctx.agentExportAttachNote([{ type: 'text', text: 'x' }], 2), '\n\n(2 image attachments)');
+    assert.equal(ctx.agentExportAttachNote([file('a.txt')], 0), '\n\n(file: a.txt)');
+    assert.equal(ctx.agentExportAttachNote([file('a\nb.pdf'), file('c.js', '秘密')], 1), '\n\n(1 image attachment; files: a b.pdf, c.js)');
+    assert.ok(!ctx.agentExportAttachNote([file('a.txt', '秘密の本文')], 0).includes('秘密'));
+  }
+  for (const src of [home, mobile]) assert.ok(/User\\n['$]?[^\n]*agentExportAttachNote\(item\.content/.test(src));
+});
+
+test('両画面の agentReplyItem は保存する回答を同じ形（キーの順まで）で作り、アプリだけ受信を引き継いだ native_request を足す', () => {
+  const make = src => {
+    const ctx = vm.createContext({ cleanAgentSources: (s, reply) => ({ s, reply }), Date: { now: () => 1234 } });
+    vm.runInContext(src.match(/function agentReplyItem\(r\) \{[\s\S]*?\n\s*return item;\n\s*\}/)[0], ctx);
+    return r => JSON.stringify(ctx.agentReplyItem(r));
+  };
+  const web = make(home), app = make(mobile);
+  const speech = { speech_sig: 'a'.repeat(64), speech_version: 2, speech_mode: 'normal', speech_lang: 'ja' };
+  const base = { reply: '答え', thinkingSeconds: 3, debate: { X: {} }, speech, completed: true, mid: 'm1', reactions: {} };
+  for (const r of [base, { ...base, fact: true, sources: [1] }, { ...base, closed: true }, { ...base, magi: { motion: 'm' }, promptReaction: '🎉' },
+    { ...base, clarify: { q: 1 } }, { ...base, completed: false }, { ...base, speech: {} }, { ...base, speech: { speech_sig: 'b'.repeat(64) } }]) {
+    assert.equal(app(r), web(r));
+  }
+  const native = JSON.parse(app({ ...base, clarify: { q: 1 }, nativeRunId: 'run1' }));
+  assert.deepEqual(Object.keys(native), ['role', 'content', 'thinkingSeconds', 'debate', 'clarify', 'native_request', 'mid', 'at', 'reactions']);
+  assert.equal(native.native_request, 'run1');
+  // アプリは長い組み立てを持たず、両画面とも読み上げの情報を1つの変数で受ける
+  for (const src of [home, mobile]) assert.ok(/speechMeta = cleanAgentSpeechEvent\(/.test(src));
+  assert.ok(!/speechSig|speechVersion/.test(mobile));
+});
+
+test('両画面: 登録の応答が来なくても期限で打ち切り、待っていた取り消しは終わる。遅れた応答で評価を戻さない', async () => {
+  for (const [src, end] of [[mobile, 'function flashReactBtn('], [home, '// agent-log 内の全クリック']]) {
+    const store = {}, posts = [], timers = new Map();
+    const bar = { closest: () => ({ dataset: { mid: 'm1' } }) };
+    const ctx = vm.createContext({ currentSessionId: 'session1', agentHistory: [{ role: 'assistant', mid: 'm1', reactions: store }], pendingReactions: {}, genMid: () => 'r1',
+      agentTemporary: () => false, REACT_API: 'mock', AbortController, reactionStoreFor: () => store, persistReactions() {},
+      setTimeout(fn, ms) { const id = {}; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
+      // 登録は応答しない（止めたときだけ失敗する）
+      fetch: (_, options) => { posts.push(JSON.parse(options.body)); return new Promise((_, reject) => options.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))); },
+    });
+    vm.runInContext(between(src, 'async function sendReaction(', end), ctx);
+    ctx.registerReaction(bar, 'integrated', '👍', { request: 'q', response: 'a' });
+    assert.equal(store.integrated.em, '👍');
+    let done = false;
+    const removing = ctx.unregisterReaction(bar, 'integrated').then(v => { done = true; return v; });
+    await tick(); assert.equal(done, false);
+    const [timer] = [...timers.values()]; assert.equal(timer.ms, 10000);
+    timer.fn();
+    assert.equal(await removing, true);
+    // トークンが無いので削除は送らず、画面からは外す
+    assert.equal(posts.length, 1); assert.equal(posts[0].op, undefined);
+    assert.equal(store.integrated, undefined); assert.equal(timers.size, 0);
+    assert.equal(vm.runInContext('reactionRegistrations.size', ctx), 0);
   }
 });
 
@@ -6625,6 +6716,18 @@ test('回答の日時: 保存した at を使い、無ければ送ったとき�
   assert.equal(ctx.agentReplyAt({ mid }, opened), sent);
   assert.equal(ctx.agentReplyAt({ mid: 'm' + (opened + 1).toString(36) + 'zz' }, opened), null);
   for (const bad of [{ at: 'x' }, { at: 1000 }, { at: Date.now() + 864e6 }, { mid: 'legacy' }, {}, null]) assert.equal(ctx.agentReplyAt(bad, opened), null);
+  // 質問の日時: 保存した at、無ければ続く回答の mid（送ったとき）、それも無ければ回答の at。両画面で同じ
+  for (const src of [home, mobile]) {
+    const p = vm.createContext({ AGENT_OPENED_AT: opened });
+    vm.runInContext(between(src, '// AGENT_SPEECH_BEGIN', '// AGENT_SPEECH_END').match(/function agentTimeFloor[\s\S]*?\n}\n/)[0], p);
+    vm.runInContext(between(src, 'function agentPromptAt(', 'function markAgentStarted('), p);
+    const reply = { role: 'assistant', mid, at: sent + 9 }, late = 'm' + (opened + 1).toString(36) + 'zz';
+    assert.equal(p.agentPromptAt({ at: sent - 7 }, reply), sent - 7);
+    assert.equal(p.agentPromptAt({}, reply), sent);
+    assert.equal(p.agentPromptAt({}, { ...reply, mid: late }), sent + 9);
+    assert.equal(p.agentPromptAt({}, { role: 'assistant', mid: late }), null);
+    assert.equal(p.agentPromptAt({}, { role: 'user', mid }), null); assert.equal(p.agentPromptAt(null, null), null);
+  }
   // 表示は端末の時刻で、操作列に収まる短い形。今日・昨日・今年・それより前
   const at = new Date(2026, 9, 24, 15, 8).getTime(), later = (d, h = 9) => new Date(2026, 9, 24 + d, h).getTime();
   assert.equal(ctx.agentReplyTimeText(at, true, later(0, 23)), '今日 15:08');

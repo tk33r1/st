@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.2",
+      "date": "2026-11-05",
+      "changes": {
+        "ja": [
+          "リアクションの登録の通信が止まっても10秒で打ち切り、外す・付け替える操作が終わるようにしました。利用上限に達しても、自分のリアクションは取り消せます。",
+          "表のセルの中に文字として書いた「|」を区切りと取り違えて、表の一部が表示されなくなる不具合を直しました。",
+          "肌の色を選んだ絵文字を、絵文字の一覧と肌の色の候補で選択中として表示するようにしました。",
+          "会話の書き出しに、質問に添付したファイルの名前を残すようにしました。"
+        ],
+        "en": [
+          "If saving a reaction stalls, it now times out after 10 seconds so removing or changing it still completes. You can also remove your own reactions after reaching the reaction limit.",
+          "Fixed tables losing part of a row when a cell contained a literal \"|\".",
+          "An emoji chosen with a skin tone is now shown as selected in the emoji list and the skin-tone choices.",
+          "Exported chats now include the names of files attached to your messages."
+        ]
+      }
+    },
+    {
       "version": "7.19",
       "date": "2026-11-04",
       "changes": {

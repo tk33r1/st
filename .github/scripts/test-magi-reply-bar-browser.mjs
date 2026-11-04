@@ -366,6 +366,13 @@ try {
     assert.deepEqual(await emoji.locator('.emoji-tones button').allTextContents(), ['👍', '👍🏻', '👍🏼', '👍🏽', '👍🏾', '👍🏿']);
     await page.keyboard.press('Escape');
     assert.equal(await emoji.isVisible(), true); assert.equal(await emoji.locator('.emoji-tones').count(), 0);
+    // 肌の色を選んでいるときは、一覧の黄色の親と、肌の色の候補のその形を選択中にする
+    await page.evaluate(() => { const bars = document.querySelectorAll('.agent-reply .reply-bar'), bar = bars[bars.length - 1]; openAgentEmojiPicker(bar, bar.querySelector('[data-act="rate"]'), '👍🏽'); });
+    await emojiReady(); await emoji.locator('[data-category="9"]').click();
+    assert.equal(await emoji.locator('[data-emoji="👍"]').getAttribute('aria-pressed'), 'true');
+    await emoji.locator('[data-emoji="👍"]').dispatchEvent('contextmenu');
+    assert.deepEqual(await emoji.locator('.emoji-tones button').evaluateAll(bs => bs.map(b => b.getAttribute('aria-pressed'))), ['false', 'false', 'false', 'true', 'false', 'false']);
+    await page.keyboard.press('Escape'); assert.equal(await emoji.locator('.emoji-tones').count(), 0);
     await emoji.locator('[data-category="1"]').click();
     assert.equal(await emoji.locator('[data-emoji="👍"]').count(), 0);
     assert.equal(await emoji.locator('[data-emoji="👶"]').count(), 1);
