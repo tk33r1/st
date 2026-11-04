@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 04 Nov 2026 07:11:50 +0900</lastBuildDate>
+    <pubDate>Thu, 05 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 05 Nov 2026 07:23:03 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月5日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261105/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261105/</guid>
+      <pubDate>Thu, 05 Nov 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジ運用は、単なる省人化にとどまらず、スタッフの役割や店舗オペレーション全体を再設計する段階に入っている。 リテールメディアとAI需要予測は、広告効果や予測精度を数値で示せるかが問われるフェーズへ移りつつある。</description>
+    </item>
     <item>
       <title>2026年11月4日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261104/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261021/</guid>
       <pubDate>Wed, 21 Oct 2026 08:00:00 +0900</pubDate>
       <description>需要予測AIの製品群を俯瞰するカオスマップが公開され、売上予測から在庫・発注、物流・配送まで84製品が整理された。AI需要予測の選定を支える判断材料が増えつつある。 JR品川駅で花や鉄道グッズを扱う無人決済店舗が10月に開業予定となり、駅ナカでの省人化型店舗の展開が広がっている。</description>
-    </item>
-    <item>
-      <title>2026年10月20日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261020/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261020/</guid>
-      <pubDate>Tue, 20 Oct 2026 08:00:00 +0900</pubDate>
-      <description>物流・店舗の自動化が実装段階に入った。米JCペニーは物流センターへのヒト型ロボット投資を加速させ、コメダ珈琲店はレジ注文式のDXモデル店舗を開設した。 セルフレジの普及に伴い、スキャン飛ばしなどの不正が店舗運営上の課題として注目を集めている。省人化と損失対策を両立する設計が問われている。</description>
     </item>
   </channel>
 </rss>
