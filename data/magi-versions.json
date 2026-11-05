@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "7.21",
+      "date": "2026-11-05",
+      "changes": {
+        "ja": [
+          "更新履歴を全件表示し、3.4〜2.1の古い版も個別に確認できるようにしました。",
+          "自分のプロンプトにも絵文字を付けられ、自分のリアクションはクリック・タップで取り消せます。同じ絵文字をまとめ、2件以上のときだけ件数を表示します。",
+          "PCの絵文字の枠を小さくし、選択中は下線で示すようにしました。「…」からコピー・選択・共有ができます。",
+          "3人格の雲の四隅の欠け・二重線を修正しました。回答受信中のリアクション保存、出典付きの共有、キーボード操作も改善しました。"
+        ],
+        "en": [
+          "Release history now shows every recorded version, including 3.4 through 2.1, rather than hiding older entries.",
+          "You can react to your own messages and remove your reactions by clicking or tapping them. Matching emoji are combined, with counts shown only from two reactions.",
+          "Made the PC emoji bar smaller, marked selections with an underline, and added Copy, Select and Share under the ellipsis menu.",
+          "Fixed broken cloud borders on persona cards, kept reactions saved while replies load, preserved sources when sharing, and restored keyboard focus after closing menus."
+        ]
+      }
+    },
+    {
       "version": "7.2",
       "date": "2026-11-05",
       "changes": {
