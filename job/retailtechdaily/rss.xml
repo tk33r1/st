@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 05 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 05 Nov 2026 07:23:03 +0900</lastBuildDate>
+    <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 06 Nov 2026 07:30:41 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月6日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261106/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261106/</guid>
+      <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
+      <description>無人店舗の入口でもLINE連携による入店の実証が始まり、来店から発注まで店舗運営のデジタル化が広がっています。 シノプスの自動納品実証は、AI需要予測と発注自動化を組み合わせ、店舗の省人化を一歩進める動きとして注目されます。</description>
+    </item>
     <item>
       <title>2026年11月5日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261105/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261022/</guid>
       <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
       <description>国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。</description>
-    </item>
-    <item>
-      <title>2026年10月21日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261021/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261021/</guid>
-      <pubDate>Wed, 21 Oct 2026 08:00:00 +0900</pubDate>
-      <description>需要予測AIの製品群を俯瞰するカオスマップが公開され、売上予測から在庫・発注、物流・配送まで84製品が整理された。AI需要予測の選定を支える判断材料が増えつつある。 JR品川駅で花や鉄道グッズを扱う無人決済店舗が10月に開業予定となり、駅ナカでの省人化型店舗の展開が広がっている。</description>
     </item>
   </channel>
 </rss>

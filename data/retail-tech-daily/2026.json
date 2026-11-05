@@ -1,5 +1,205 @@
 [
   {
+    "date": "20261106",
+    "title": "2026年11月6日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "無人店舗の入口でもLINE連携による入店の実証が始まり、来店から発注まで店舗運営のデジタル化が広がっています。 シノプスの自動納品実証は、AI需要予測と発注自動化を組み合わせ、店舗の省人化を一歩進める動きとして注目されます。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "無人店舗の入口でもLINE連携による入店の実証が始まり、来店から発注まで店舗運営のデジタル化が広がっています。",
+      "シノプスの自動納品実証は、AI需要予測と発注自動化を組み合わせ、店舗の省人化を一歩進める動きとして注目されます。",
+      "リテールメディアは大手コンビニの新会社やAIエージェント向け広告技術など拡大が続く一方、海外ではAIショッピングアシスタントが年末商戦の主役になりつつあります。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "フォトシンス、LINEで簡単に入店できる「Akerun」新機能を実証実験へ",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-01",
+        "summary": "スマートロック「Akerun」を提供するフォトシンスが、LINEで簡単に入店できる新機能の実証実験を開始したと発表しました。無人店舗の入口管理にLINE上の操作を組み合わせ、来店者が入店するまでの手間を減らすことを狙う取り組みです。対象店舗や運用の詳細は候補情報からは確認できないため、今後の公表内容を注視したいところです。",
+        "why_it_matters": "無人店舗では入店認証の手間が、利用体験と導入コストの両方を左右します。LINEという既存の生活者接点を入口に使えれば、アプリの新規ダウンロードや会員登録の負担を抑えられる可能性があります。小規模店舗や無人型店舗の運営者にとって、非対面オペレーションを広げる材料になりそうです。",
+        "tags": [
+          "無人店舗",
+          "LINE連携",
+          "入店認証"
+        ],
+        "search_terms": [
+          "無人店舗 入店 LINE連携",
+          "unmanned store LINE entry",
+          "Akerun smart lock",
+          "スマートロック 実証実験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFBFVjh4Wi1WTnNmTGRRYmZRQWFPRWUtWWpucDFyc1pFd0N3dWRYV2F5TmZJbDB1ZEw1QjNCbXB3ZEhXTGpEc21MRl9aQjd5eXhVRWFGcXBGSXEta2lRSkpPUnQ3V1FpZw?oc=5",
+        "source_pub_ts": 1793889168
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "「リテールメディアサミット2026」、初登壇者50名・初参画28社で過去最大規模に",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-02",
+        "summary": "3年目を迎える「リテールメディアサミット2026」について、初登壇者が総勢50名、初参画の企業・団体が28社になるという開催概要が発表されました。過去最大規模で、リテールメディアの最新動向について議論が行われる予定です。小売、メーカー、広告会社などが集まる場として、業界の関心の高さを示すイベントになりそうです。",
+        "why_it_matters": "初参画企業が28社に広がったことは、リテールメディアが一部の先行企業の取り組みから業界全体の共通テーマへ移りつつあることを示します。登壇者の顔ぶれを見ると、どの業界がどの論点で動いているかを把握できます。自社の広告戦略や協業先を検討する際に、議題やセッション内容を確認しておく価値があります。",
+        "tags": [
+          "リテールメディア",
+          "業界イベント",
+          "広告"
+        ],
+        "search_terms": [
+          "リテールメディア 業界イベント",
+          "retail media summit 2026",
+          "リテールメディア 登壇者",
+          "retail media conference Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE5fX1dqZ29oMG9DYTF1UUM0ZGxMbUlzclF3RzZtdE9QS3JCYU5WQjV3Z1l5MDZVTXJFU3BHQmtMU2tGSGxtYlJfSl8wYUk5S2lKR19meThpaVh5U1dlYUxwdWgtMlNFUlEyRmhudTNSY2lHeTZKdllIamZSMA?oc=5",
+        "source_pub_ts": 1793888132
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ZETA、AIエージェントの会話に連動して広告を表示する技術で特許査定",
+        "original_title": "",
+        "source": "BigGo ファイナンス",
+        "source_id": "JP-09",
+        "summary": "マーケティングテクノロジー企業のZETAが、AIエージェントとの会話に連動して広告を表示する技術で特許査定を受けたと報じられました。生活者がAIに相談する場面が増えるなかで、会話の文脈に沿った広告接点を作り、リテールメディアの収益源を広げる狙いがあるとみられます。特許の権利範囲や商用化の時期は、候補情報からは明らかではありません。",
+        "why_it_matters": "AIエージェントが買い物の入口になると、広告の場は検索結果から会話の文脈へ移っていきます。小売の購買データと会話の意図を結びつけられれば、リテールメディアの価値はさらに高まるでしょう。一方で、AIの回答に広告が混ざることは利用者の信頼を損なうリスクもあるため、表示ルールの設計が鍵になります。",
+        "tags": [
+          "リテールメディア",
+          "AIエージェント",
+          "広告技術"
+        ],
+        "search_terms": [
+          "AIエージェント 広告表示",
+          "conversational ad AI agent",
+          "リテールメディア 収益",
+          "ZETA patent advertising"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5pN0tINnRrNUU5OF9MSmxvYlYyN2IzNzVxakhTUVRiWDEyWmdjek1EV3FPZE81YXdKb1pZS2ZoNkxITWFEd1pLSmYwSHhRVG5ZMldpRXNYVEtiX21wT0x1UWpSQzJRd0dnblg4ZURZZklNSmx3?oc=5",
+        "source_pub_ts": 1793836500
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "セブン‐イレブンはリテールメディア市場をどう変えるか、電通・CAと始動した新会社の現在地",
+        "original_title": "",
+        "source": "MarkeZine",
+        "source_id": "JP-10",
+        "summary": "セブン‐イレブンが電通、CAと始動させた新会社について、リテールメディア市場にどのような変化をもたらすのかを整理した記事です。小売の顧客接点を活かした広告事業の現状と展望を取り上げており、連載の第1回として公開されています。事業の具体的な内容や収益モデルは、続く回で詳しく示される見込みです。",
+        "why_it_matters": "大手コンビニが広告会社と組んで新会社を立ち上げたことは、リテールメディアが協業の段階へ進んでいることを示します。店舗の購買データと広告会社の運用力が結びつけば、メーカーの広告出稿先としての存在感が増すでしょう。今後の連載で、提供形態や料金体系などの詳細を確認しておきたいところです。",
+        "tags": [
+          "セブンイレブン",
+          "リテールメディア",
+          "新会社"
+        ],
+        "search_terms": [
+          "セブンイレブン リテールメディア",
+          "7-Eleven retail media",
+          "電通 CA 新会社",
+          "コンビニ 広告事業"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9JbnZDYXE2UFBGcEwxbHB6U0JpNF92MHgxWklmdlVDUEtqZGIxMUp3VEozTEF6YjdadGxmMlBLcjJaR09xLW9ma3NRei1vQ2xoVExN?oc=5",
+        "source_pub_ts": 1793835000
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "シノプス、発注確認0分を実現する自動納品の実証実験を開始",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-11",
+        "summary": "シノプスが、発注確認に要する時間を0分とする自動納品の実証実験を開始したと発表しました。AI需要予測と自動納品を組み合わせ、店舗側の発注作業の負担を減らすことを目指す取り組みとみられます。ぎゅーとらでの実施も報じられており、実際の店舗での運用効果は今後の実証結果で明らかになると見込まれます。",
+        "why_it_matters": "発注の自動化は、人手に頼っていた需要判断をAIに委ねる段階へ進んでいることを示します。店員が発注内容を確認する時間をなくせれば、欠品や廃棄の抑制にもつながる可能性があります。一方で、需要予測の精度と例外時の対応設計が成否を分けるため、実証での検証項目に注目したいところです。",
+        "tags": [
+          "AI需要予測",
+          "自動発注",
+          "省人化"
+        ],
+        "search_terms": [
+          "AI需要予測 自動納品",
+          "automatic ordering AI demand forecast",
+          "発注業務 自動化",
+          "Synopus auto replenishment"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9xbVJXUTU4S1NDUU94Y0I5X0NsM2VZOTkyaDdSTE9xLTdIVmZjekd2TUVySDlaWkV6VFoxbkJxaVZSMUh0NFR2WkhxcUVSMUd2Nkhn?oc=5",
+        "source_pub_ts": 1793833306
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジの確認対応に不満の声、客と店員のコミュニケーション課題がSNSで話題に",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-07",
+        "summary": "Yahoo!ニュースのコメント欄で、セルフレジ利用時の確認対応に不満を示す声が集まり、話題になっています。客と店員のやり取りの難しさや、セルフレジ運用時の心情面の課題が浮かび上がっています。機械化が進む一方で、トラブル時の対応をどう設計するかが生活者の関心を集めています。",
+        "why_it_matters": "セルフレジの省人化効果は、確認や例外処理の場面で利用者の不満に変わりやすい傾向があります。店員の見守りや声かけの役割を見直すことで、無人化と接客の両立を図れる可能性があります。現場では、機械が担う範囲と人が担う範囲を明確に伝える仕組みづくりが求められるでしょう。",
+        "tags": [
+          "セルフレジ",
+          "SNS反応",
+          "接客"
+        ],
+        "search_terms": [
+          "セルフレジ 確認対応 不満",
+          "self-checkout customer complaints",
+          "セルフレジ 店員 コミュニケーション",
+          "self checkout SNS reaction"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFB4VmVxVGdkVkVDczJ2S3ZlMjJzTXZWRVpFYnhJWWlBOE1uWFhKRmVIQk5kZnUycDVlTXVZT3VnX093bmlsY3JOT3V6UkRXOXpNclgzalpFR2tvU2JmLV91NktkNEhndUxJXzIxRDlWdmR2cVY1c2JsU0JJUHZVYkE?oc=5",
+        "source_pub_ts": 1793845011
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ウォルマート、ホリデー商戦に向けAIアシスタント「Sparky」の機能を拡充",
+        "original_title": "Walmart ramps up Sparky features in time for the holidays",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "ウォルマートは、AIショッピングアシスタント「Sparky」の機能を拡充し、ホリデーシーズンに間に合うよう展開を強化していると報じられました。生活者の買い物体験をAIで支えるこの取り組みを、年末商戦の需要期に合わせて広げる狙いがあるとみられます。追加機能の具体的な内容は候補情報からは詳しく確認できませんが、対話型の購買支援が大型商戦の重要な手段になりつつあることを示しています。",
+        "why_it_matters": "年末商戦でAIアシスタントを強化する動きは、対話型の購買支援が検索やアプリに代わる新たな接点になりつつあることを示します。小売側は商品情報の整備や在庫データの連携を進めなければ、AIに適切に推薦されない恐れがあります。国内の小売にとっても、自社データをAIが活用できる形に整えることが重要になるでしょう。",
+        "tags": [
+          "AIアシスタント",
+          "ホリデー商戦",
+          "購買支援"
+        ],
+        "search_terms": [
+          "AIショッピングアシスタント 年末商戦",
+          "Walmart Sparky AI assistant",
+          "AI shopping assistant holiday season",
+          "対話型 購買支援"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQS2l6dU5EUGFPSzdlTFgwVlhfb0hORjZJcVo1M1IwTzZIbmw1eE5LYU1xMEdJVExOd3MzUjhaYWNtVEFGeXJaVmEyT0E0ODhOQlpVTkxtUUtFNEtZNG5IaWVlSGJfWWFNTWFOdzdvMjhySXBzQzR1WG90ZDdVLWpWQQ?oc=5",
+        "source_pub_ts": 1793901694
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "アマゾン、ショッピング向けAlexaの機能を100以上追加",
+        "original_title": "Amazon adds over 100 Alexa for Shopping functions",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "アマゾンは、買い物支援のための「Alexa for Shopping」に100以上の機能を追加したと報じられました。音声アシスタントを通じて商品探しや購入を助ける機能を大幅に拡充し、購買の入口をAIへ移す狙いがあるとみられます。個々の機能の詳細は候補情報からは確認できませんが、AIによる買い物体験の競争が一段と激しくなる局面を示しています。",
+        "why_it_matters": "100を超える機能追加は、音声AIが問い合わせ窓口から購買の実行役へ進化していることを示します。商品データと決済を握る企業がAIを強化すると、他の小売はAI経由の販売機会をどう確保するかが問われます。国内の流通企業も、自社アプリや音声接点との連携を見直す時期に来ているといえるでしょう。",
+        "tags": [
+          "音声AI",
+          "ショッピング",
+          "Alexa"
+        ],
+        "search_terms": [
+          "音声AI 買い物支援",
+          "Amazon Alexa for Shopping",
+          "voice commerce AI assistant",
+          "AIショッピング 機能拡充"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPandnc2tGMk4yWXlfX0p4bVJ6Z3gwVi0tN0JFeDRqd0pqNkJkRjZDOFVLQ2NsZEdLNVR6Y05XRmN6N0lzSGtMT19sNlNYdFFmUExBQzI5MXZWdTBWWERmZHJZOFIwYUJ5X0J6YUVxWGUxb3RTeU41WjgwbnNfNVFISER3TUg3QQ?oc=5",
+        "source_pub_ts": 1793900501
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261105",
     "title": "2026年11月5日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セルフレジ運用は、単なる省人化にとどまらず、スタッフの役割や店舗オペレーション全体を再設計する段階に入っている。 リテールメディアとAI需要予測は、広告効果や予測精度を数値で示せるかが問われるフェーズへ移りつつある。",
