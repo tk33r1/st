@@ -5,10 +5,12 @@
       "date": "2026-11-06",
       "changes": {
         "ja": [
-          "パーソナライズのオン・オフを切り替えると、すぐに保存されるようにしました。呼び方とカスタム指示は保存ボタンで確定します。"
+          "パーソナライズのオン・オフを切り替えると、すぐに保存されるようにしました。",
+          "呼び方とカスタム指示は、これまでどおり保存ボタンで確定します。"
         ],
         "en": [
-          "The personalization switch now saves immediately. Name and custom instructions are saved with the Save button."
+          "The personalization switch now saves immediately.",
+          "Name and custom instructions are still saved with the Save button."
         ]
       }
     },
