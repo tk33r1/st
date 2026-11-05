@@ -1,16 +1,18 @@
 {
   "versions": [
     {
-      "version": "7.3",
+      "version": "7.22",
       "date": "2026-11-06",
       "changes": {
         "ja": [
           "パーソナライズのオン・オフを切り替えると、すぐに保存されるようにしました。",
-          "呼び方とカスタム指示は、これまでどおり保存ボタンで確定します。"
+          "呼び方とカスタム指示は、これまでどおり保存ボタンで確定します。",
+          "一時的に7.3として公開した版番号を7.22に訂正しました。"
         ],
         "en": [
           "The personalization switch now saves immediately.",
-          "Name and custom instructions are still saved with the Save button."
+          "Name and custom instructions are still saved with the Save button.",
+          "Corrected the version number from the briefly published 7.3 to 7.22."
         ]
       }
     },

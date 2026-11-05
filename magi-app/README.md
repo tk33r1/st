@@ -376,7 +376,7 @@ the top page display, Android `versionName`, and the first entry in
 Autonomous updates leave Android `versionCode` unchanged and do not create APKs,
 GitHub Releases, or tags. Starting with the next APK build, set `versionCode` to
 major × 100 plus the two-digit fractional part (`5.9` → 590, `5.91` → 591,
-`6.0` → 600). `verify-apk.py` checks this rule against Gradle and the actual APK;
+`6.0` → 600). Because 7.3 was mistakenly distributed with code 730, 7.22–7.29 use 731–738 so those installations can update without losing data. Do not reuse 7.3. `verify-apk.py` checks this rule against Gradle and the actual APK;
 the source regression test checks the aligned display versions independently of
 APK build timing. Owner Release tags retain the `vX.Y` form.
 
