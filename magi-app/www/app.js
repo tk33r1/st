@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.21';
+var APP_VERSION = '7.3';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -2290,7 +2290,7 @@ function showAgentSettings() {
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
     panel.querySelector('#personal-instructions-count').textContent = Array.from(instructions.value).length + ' / 2000';
-    panel.querySelector('.personal-actions').hidden = enabled.getAttribute('aria-checked') === String(current.enabled) && name.value === current.preferred_name && instructions.value === current.custom_instructions;
+    panel.querySelector('.personal-actions').hidden = name.value === current.preferred_name && instructions.value === current.custom_instructions;
   }
   function save(deleting) {
     try {
@@ -2302,7 +2302,14 @@ function showAgentSettings() {
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
-  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); count(); });
+  enabled.addEventListener('click', function () {
+    try {
+      if (JSON.stringify(readAgentPersonalization()) !== loaded) { status.textContent = tr('Settings changed in another tab. Reopen this panel.', '別のタブで設定が変更されました。この画面を開き直してください。'); return; }
+      var next = { version: 1, enabled: !current.enabled, preferred_name: current.preferred_name, custom_instructions: current.custom_instructions };
+      saveAgentPersonalization(next);
+      current = next; loaded = JSON.stringify(current); setEnabled(current.enabled); status.textContent = ''; count();
+    } catch (_) { status.textContent = tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
+  });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
   panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });

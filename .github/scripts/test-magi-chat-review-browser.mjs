@@ -118,11 +118,11 @@ try {
     assert.equal(await page.locator('#personal-enabled-label').innerText(), 'Personalization: off');
     await page.locator('#personal-enabled').click();
     assert.equal(await page.locator('#personal-enabled-label').innerText(), 'Personalization: on');
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.locator('#agent-settings-panel .agent-page-back').click();
     await page.evaluate(() => showAgentSettings());
     assert.equal(await page.locator('#personal-enabled-label').innerText(), 'Personalization: on');
     assert.equal(await page.locator('#personal-enabled').getAttribute('aria-checked'), 'true');
-    await page.locator('#personal-enabled').click(); await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.locator('#personal-enabled').click(); await page.locator('#agent-settings-panel .agent-page-back').click();
     results.push(surface + '/personalization-state-label-survives-save-and-reopen');
     await send('LONG-QUESTION'); assert.equal(await page.locator('.agent-reply-body').last().innerText(), longReply);
     await send('CONTINUATION'); assert.equal(requests.at(-1).messages.find(m => m.role === 'assistant').content.length, 3999);

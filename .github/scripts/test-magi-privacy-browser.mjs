@@ -79,7 +79,7 @@ try {
     await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-settings-off.png`), animations: 'disabled' });
     await toggle.click();
     assert.equal(await toggle.getAttribute('aria-checked'), 'true');
-    assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), null, '保存前は設定を変えない');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('magi_personalization_v1')).enabled), true, 'スイッチは即時保存');
     await page.screenshot({ path: resolve(out, `${mobile ? 'app' : 'home'}-settings-on.png`), animations: 'disabled' });
     await page.locator('#personal-editor > summary').click();
     await page.locator('#personal-name').fill('合成さん'); await page.locator('#personal-instructions').fill('SYNTHETIC-CUSTOM');
@@ -89,19 +89,20 @@ try {
       await page.locator('#agent-input').fill(text); await page.locator('#agent-send').click();
       await page.waitForFunction(() => document.querySelector('#agent-log').textContent.includes('ANSWER') && !document.querySelector('#btn-temporary-agent').disabled);
     }
-    // スイッチも保存で確定する。取消では旧値を保ち、オフでも呼称・指示を保持する。
+    // スイッチは即時保存し、未保存の指示は取消時に保持しない。
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
-    await toggle.click(); await page.locator('[data-personal="cancel"]').click();
-    await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
-    assert.equal(await toggle.getAttribute('aria-checked'), 'true');
-    await toggle.click(); await page.locator('.agent-personalization-form button[type="submit"]').click();
+    await page.locator('#personal-editor > summary').click();
+    await page.locator('#personal-instructions').fill('UNSAVED');
+    await toggle.click();
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('magi_personalization_v1')).custom_instructions), 'SYNTHETIC-CUSTOM');
+    await page.locator('[data-personal="cancel"]').click();
     await send('PERSONALIZATION-OFF');
     assert.equal('personalization' in requests.at(-1), false);
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
     assert.equal(await toggle.getAttribute('aria-checked'), 'false');
     assert.equal(await page.locator('#personal-name').inputValue(), '合成さん');
     assert.equal(await page.locator('#personal-instructions').inputValue(), 'SYNTHETIC-CUSTOM');
-    await toggle.click(); await page.locator('.agent-personalization-form button[type="submit"]').click();
+    await toggle.click(); await page.locator('#agent-settings-panel .agent-page-back').click();
     await send('NORMAL-QUESTION');
     assert.equal(requests.at(-1).personalization.preferred_name, '合成さん');
     const normalStorage = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter(k => /^magi_current_|magi_saved_sessions$/.test(k)).map(k => [k, localStorage.getItem(k)])));
@@ -228,6 +229,10 @@ try {
     const beforeSettings = await page.evaluate(() => localStorage.getItem('magi_personalization_v1'));
     await page.evaluate(() => { window.failPersonalization = true; });
     await page.locator('#btn-more-agent').click(); await page.locator('#btn-settings-agent').click();
+    const beforeToggle = await toggle.getAttribute('aria-checked');
+    await toggle.click();
+    assert.equal(await toggle.getAttribute('aria-checked'), beforeToggle, '保存失敗時はスイッチ表示を変えない');
+    assert.equal(await page.evaluate(() => localStorage.getItem('magi_personalization_v1')), beforeSettings);
     await page.locator('#personal-editor > summary').click();
     await page.locator('#personal-name').fill('保存に失敗する呼称'); await page.locator('.agent-personalization-form button[type="submit"]').click();
     assert.equal(await page.locator('#personal-name').inputValue(), '保存に失敗する呼称');
