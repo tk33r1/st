@@ -4900,7 +4900,7 @@ test('A6: 履歴の版は X.Y と X.YZ を受け付け、小数部を2桁にそ�
   }
 });
 
-test('A6: format=2 だけが自律の版を受け取り、旧 APK 5.9 の履歴検査にも通る', async () => {
+test('A6: format=2と3は自律の版を受け取り、旧APK向けの応答も維持する', async () => {
   const bundled = versionHistoryFixture('6.0','5.9','earlier');
   const remote = versionHistoryFixture('6.01','6.0','5.9','earlier');
   let loads = 0;
@@ -4910,8 +4910,9 @@ test('A6: format=2 だけが自律の版を受け取り、旧 APK 5.9 の履歴�
   w.ctx.bundledVersions = structuredClone(bundled);
   const request = query => w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions'+query,
     {headers:{Origin:'https://tk.st'}}), w.env, {waitUntil(){}});
-  const [modern, legacy, unknown] = await Promise.all(['?format=2','','?format=3'].map(request));
+  const [modern, legacy, full, unknown] = await Promise.all(['?format=2','','?format=3','?format=4'].map(request));
   assert.deepEqual(await modern.json(), remote);
+  assert.deepEqual(await full.json(), remote);
   const oldData = await legacy.json();
   assert.deepEqual(oldData, bundled);
   assert.deepEqual(await unknown.json(), oldData);
@@ -4922,15 +4923,15 @@ test('A6: format=2 だけが自律の版を受け取り、旧 APK 5.9 の履歴�
   assert.equal(ctx.validAgentVersions(remote), false);
 });
 
-test('A6: 両画面は format=2 を送り、旧 Worker の X.Y だけの応答も受け取る', async () => {
+test('A6: 両画面は全履歴のformat=3を送り、旧Workerの応答も受け取る', async () => {
   const data = versionHistoryFixture('6.0','5.9','earlier');
   for (const source of [home, mobile]) {
     let requested;
-    const ctx = vm.createContext({AGENT_API:'https://example.test/magi2/chat',AbortController,setTimeout,clearTimeout,
+    const ctx = vm.createContext({AGENT_API:'https://example.test/magi2/chat',AbortController,TextDecoder,setTimeout,clearTimeout,
       fetch:async url => {requested = url; return Response.json(data);}});
     vm.runInContext(between(source, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
-    assert.deepEqual(await ctx.loadAgentVersions(), data);
-    assert.equal(requested, 'https://example.test/magi2/versions?format=2');
+    assert.deepEqual(JSON.parse(JSON.stringify(await ctx.loadAgentVersions())), data);
+    assert.equal(requested, 'https://example.test/magi2/versions?format=3');
   }
 });
 
@@ -7572,7 +7573,7 @@ function shownVersions(data) {
   return { versions: v.length <= 60 ? v : v.slice(0, 59).concat(v.at(-1).version === 'earlier' ? [v.at(-1)] : [v[59]]) };
 }
 
-test('更新履歴: 公開データの件数は制限せず、画面には新旧どちらの形式でも新しい60件と earlier を返す', async () => {
+test('更新履歴: 新画面には全履歴を返し、旧画面とAPKだけ60件に制限する', async () => {
   const many = [];
   for (let major = 9; many.length < 75; major--) for (const minor of ['9', '8', '7', '6', '5', '4', '3', '2', '1', '0']) many.push(major + '.' + minor);
   const history = versionHistoryFixture(...many.slice(0, 75), 'earlier');
@@ -7583,13 +7584,28 @@ test('更新履歴: 公開データの件数は制限せず、画面には新旧
   assert.equal(fresh.versions.at(-1).version, 'earlier'); assert.equal(fresh.versions.at(-2).version, many[58]);
   const legacy = await (await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions', {headers: {Origin: 'https://localhost'}}), w.env, {waitUntil() {}})).json();
   assert.equal(legacy.versions.length, 60); assert.equal(legacy.versions.at(-1).version, 'earlier');
-  // 画面側の検査（60件以内）にも通る
+  const complete = await (await w.ctx.worker.fetch(new Request('https://workers.tk.st/magi2/versions?format=3', {headers: {Origin: 'https://localhost'}}), w.env, {waitUntil() {}})).json();
+  assert.deepEqual(complete, history);
+  // 新画面は全履歴を受け取り、公開済みAPKの60件制限は変えない。
   for (const src of [home, mobile]) {
     const ctx = vm.createContext({}); vm.runInContext(between(src, 'function validAgentVersions(', 'function loadAgentVersions('), ctx);
-    assert.equal(ctx.validAgentVersions(fresh), true); assert.equal(ctx.validAgentVersions(history), false);
+    assert.equal(ctx.validAgentVersions(fresh), true); assert.equal(ctx.validAgentVersions(complete), true);
   }
   // 正本のデータは61件以上でも受け付け、2.1 は独立した項目のまま
   const data = JSON.parse(read('data/magi-versions.json'));
   assert.ok(w.ctx.cleanVersionHistory(data)); assert.ok(data.versions.some(row => row.version === '2.1'));
   assert.equal(data.versions.at(-1).changes.ja.length, 2);
+});
+
+test('更新履歴: 全履歴でも512KiBを超える応答は取り込みを中止する', async () => {
+  const data = JSON.parse(read('data/magi-versions.json'));
+  for (const src of [home, mobile]) {
+    const controller = [], ctx = vm.createContext({ AGENT_API: 'https://example.test/magi2/chat', TextDecoder, setTimeout, clearTimeout,
+      AbortController: class extends AbortController { constructor() { super(); controller.push(this); } },
+      fetch: async () => new Response(JSON.stringify(data) + ' '.repeat(524288)) });
+    vm.runInContext(between(src, '// AGENT_VERSIONS_BEGIN', '// AGENT_VERSIONS_END'), ctx);
+    assert.equal(await ctx.loadAgentVersions(), null);
+    assert.equal(controller[0].signal.aborted, true);
+    assert.equal(ctx.agentVersionsCache, null);
+  }
 });

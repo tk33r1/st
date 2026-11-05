@@ -381,9 +381,11 @@ the source regression test checks the aligned display versions independently of
 APK build timing. Owner Release tags retain the `vX.Y` form.
 
 Publish the Worker before the web changes. Updated screens request
-`/magi2/versions?format=2`, which includes `X.YZ`. Older APKs and cached screens
-omit `format=2` and receive only `X.Y` entries, so autonomous releases do not
-appear in their history. Add an `X.YZ` history entry only after both Worker and
+`/magi2/versions?format=3` for the complete recorded history, including `X.YZ`.
+The body is limited to 512 KiB instead of truncating the list at 60 entries.
+Cached `format=2` screens still receive at most 60 entries, including `X.YZ`.
+Older APKs without a format receive at most 60 `X.Y` entries. `earlier` describes
+only the initial releases without separate records. Add an `X.YZ` history entry only after both Worker and
 screens have been published. Bump `app.js?v=` and the `sw.js` cache for PWA
 updates; Android receives the changed shell with the next APK. Keep each used
 daily version number reserved even after a revert, and stop at `X.Y9`; see

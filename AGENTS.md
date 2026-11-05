@@ -214,7 +214,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 - 本人の公開は `X.Y`（例: 6.0）、継続改善の自律公開は小数第2位を上げた `X.YZ`（Zは1〜9。例: 6.01）を使う。`6.00`・`5.90`・`5.100` は使わない。
 - `APP_VERSION`・トップページの `AGENT_SCREEN_VERSION`・Android の versionName・`data/magi-versions.json` の先頭は同じ表示にする。package.json と package-lock.json の version は `X.Y.0` / `X.Y.Z`（例: 6.01 → 6.0.1）でそろえる。
 - 自律更新では versionCode を変えない。次に APK を作るときから、整数×100＋2桁の小数部（5.9 → 590、5.91 → 591、6.0 → 600）にする。実物との照合は `magi-app/scripts/verify-apk.py` で行う。
-- 更新履歴は新画面が `/magi2/versions?format=2` で取得する。`format=2` の無い旧 APK には X.YZ を除いて返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。`data/magi-versions.json` の件数は制限せず古い版も消さない。画面と配布済みのAPKは60件以内しか受け付けないので、Workerが新しい60件（末尾のearlierを含む）に絞って返す（`displayVersions`）。
+- 更新履歴は新画面が `/magi2/versions?format=3` で全件取得する。件数で省略せず、Workerと画面の両方で512KiBの本文上限を検査する。旧画面の `format=2` はX.YZを含む60件、形式指定の無い旧APKにはX.YZを除いた60件を返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。`data/magi-versions.json` の古い版は削除・統合せず、`earlier` は個別の記録がない初期版だけを表す。
 - 自律更新で版を上げる条件・番号の再利用禁止・上限は [継続改善設計§2.4](workers/magi2/magi2継続改善設計書.md) に従う。
 
 ### MAGI の継続改善

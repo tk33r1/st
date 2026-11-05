@@ -74,6 +74,7 @@ jobs:
           node .github/scripts/test-magi-follow-browser.mjs
           node .github/scripts/test-magi-reply-bar-browser.mjs
           node .github/scripts/test-magi-hover-reactions-browser.mjs
+          node .github/scripts/test-magi-a4-browser.mjs
           node .github/scripts/test-magi-ws-browser.mjs
       - name: Privacy boundary regression
         run: |

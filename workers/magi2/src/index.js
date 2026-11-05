@@ -2657,11 +2657,11 @@ export default {
     if (request.method === 'GET' && url.pathname === '/magi2/versions') {
       try {
         const history = await getVersionHistory();
-        // 配布済みのAPKはX.Yだけを受け付ける。キャッシュは完全な履歴を共有し、応答時だけ絞る。
-        // 画面は60件以内しか受け付けないので、版で絞った後に新しい順で displayVersions 件にする。
-        const rows = url.searchParams.get('format') === '2' ? history.versions
+        // 新画面は全履歴を取得する。旧画面・配布済みAPK向けの60件上限は維持する。
+        const format = url.searchParams.get('format');
+        const rows = ['2', '3'].includes(format) ? history.versions
           : history.versions.filter(row => row.version === 'earlier' || /^\d{1,2}\.\d$/.test(row.version));
-        const data = { versions: displayVersions(rows) };
+        const data = { versions: format === '3' ? rows : displayVersions(rows) };
         return jsonResponse(data, cors, 200, { 'Cache-Control': 'public, max-age=600', Vary: 'Origin' });
       } catch (err) {
         log('versions', 'unavailable', err && err.message);

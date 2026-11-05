@@ -21,6 +21,7 @@ const browser=await chromium.launch(),results=[];
 try {
  for(const [label,path,width,lang,theme] of [['home-ja-light','/',1280,'ja','light'],['home-en-dark','/',390,'en','dark'],['app-ja-dark','/magi-app/www/',390,'ja','dark'],['app-en-light','/magi-app/www/',1280,'en','light']]){
   const page=await browser.newPage({viewport:{width,height:900},serviceWorkers:'block'}),errors=[],formats=[];let mode='normal',calls=0;
+  await page.routeWebSocket('**/*',socket=>socket.close());
   page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>(localStorage.setItem('st-analytics','off'),sessionStorage.setItem('magi_transport','sse')));
   await page.route('**/*',async route=>{const url=new URL(route.request().url());
    if(url.pathname==='/magi2/versions'){calls++;formats.push(url.searchParams.get('format'));const payload=structuredClone(data);if(mode==='xss')payload.versions[0].changes[lang][0]='<img src=x onerror=alert(1)> & <確認>';
@@ -29,7 +30,11 @@ try {
     return route.fulfill(mode==='failure'?{status:503,body:''}:{json:payload,headers:{'Access-Control-Allow-Origin':origin}});}
    if(url.pathname==='/magi2/models')return route.fulfill({json:models});
    if(url.pathname==='/magi2/chat'){const event=(name,data)=>`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
-    return route.fulfill({contentType:'text/event-stream',headers:{'Access-Control-Allow-Origin':origin},body:event('integrated',{delta:'回答しました。'})+event('done',{})});}
+    const body=route.request().postDataJSON();
+    return route.fulfill({contentType:'text/event-stream',headers:{'Access-Control-Allow-Origin':origin},body:
+      (body.privacy_contract?event('session',{conversation_mode:body.conversation_mode,personalization_applied:!!body.personalization}):'')
+      +event('classification',{version:1,intent:'research',mode:'fact',fresh:'no',votable:'no',site_pages:'no',magi_candidate:false,reply_language:{version:1,code:lang,source:'ui'}})
+      +event('integrated',{delta:'回答しました。'})+event('done',{})});}
    if(url.origin!==origin)return route.fulfill({body:''});return route.continue();});
   async function open(){await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.locator('#agent-input').waitFor({state:'attached'}); if(path==='/')await page.evaluate(()=>openAgentDock()); await page.locator('#btn-versions-agent').waitFor();
    await page.evaluate(({lang,theme})=>{if(typeof setLanguage==='function')setLanguage(lang);document.documentElement.lang=lang;document.documentElement.setAttribute('data-theme',theme);},{lang,theme});}
@@ -58,7 +63,11 @@ try {
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.screenshot({path:resolve(out,label+'.png'),animations:'disabled'});
   await list.evaluate(e=>e.scrollTop=e.scrollHeight);
-  assert.equal(await list.locator('h3').last().textContent(),lang==='ja'?'それ以前':'Earlier releases');
+  assert.equal(await list.locator('h3').last().textContent(),lang==='ja'?'初期のWeb版':'Initial web releases');
+  const headings=await list.locator('h3').allTextContents();
+  for(const version of ['3.4','3.3','3.2','3.1','3.0','2.4','2.3','2.2','2.1'])assert(headings.includes('ver '+version),version+' remains a separate release');
+  await list.locator('h3').filter({hasText:/^ver 3\.4$/}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:resolve(out,label+'-older-releases.png'),animations:'disabled'});
   if(path==='/'){await page.evaluate(()=>setLanguage('en'));assert.equal(await list.getAttribute('lang'),'en');assert.equal(await page.locator('.agent-versions-title').textContent(),'Release History');}
   await closePages(page);await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();assert.equal(calls,1);
   mode='xss';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('section').first().waitFor();assert.equal(await list.locator('img').count(),0);assert.ok((await list.textContent()).includes('<img src=x onerror=alert(1)>'));
@@ -67,7 +76,7 @@ try {
   mode='invalid';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
   mode='failure';await open();await page.locator('#btn-versions-agent').click();assert.equal(await page.locator('#agent-version-info-panel').count(),1);await page.locator('.agent-open-versions').click();await list.locator('[role=status]').filter({hasText:/取得できませんでした|Could not load/}).waitFor();
   await closePages(page);await page.locator('#agent-input').fill('履歴取得の失敗後の確認');await page.locator('#agent-send').click();await page.locator('.agent-turn .agent-reply').filter({hasText:'回答しました。'}).waitFor();
-  assert.deepEqual(errors,[]);assert.ok(formats.length && formats.every(v=>v==='2'));results.push({label,pass:true,microVersions:true,format:2});console.log(label+' OK');await page.close();
+  assert.deepEqual(errors,[]);assert.ok(formats.length && formats.every(v=>v==='3'));results.push({label,pass:true,microVersions:true,completeHistory:true,format:3});console.log(label+' OK');await page.close();
  }
  writeFileSync(resolve(out,'results.json'),JSON.stringify(results,null,2));
 }finally{await browser.close();await new Promise(r=>server.close(r));}

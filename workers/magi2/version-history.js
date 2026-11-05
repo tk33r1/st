@@ -1,6 +1,6 @@
 // Workerと日次検査で共有する、I/Oなしの更新履歴の検査。
 // 公開データ（data/magi-versions.json）の件数は制限しない（古い版をまとめたり消したりしない）。
-// 画面へ返すのは新しい display_versions 件まで（トップ・PWA・配布済みのAPKが60件以内を検査するため。displayVersions）。
+// format=3は全履歴。旧画面・配布済みAPKへの応答だけdisplayVersionsで60件に制限する。
 // max_bytes は tk.st から読む本文の上限（1版あたり約0.7KB）。
 export const VERSION_HISTORY_LIMITS = Object.freeze({max_bytes: 524288, display_versions: 60, max_change_chars: 200});
 
