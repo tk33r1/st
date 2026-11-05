@@ -17,7 +17,7 @@ android {
         applicationId "st.tk.magi"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 731
+        versionCode 722
         versionName "7.22"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

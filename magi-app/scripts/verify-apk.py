@@ -55,9 +55,7 @@ def release_version(package_version):
         raise ValueError('invalid_magi_package_version')
     major, minor, patch = match.groups()
     display = major + '.' + minor + (patch if patch != '0' else '')
-    # 誤配布した7.3 (730) からデータを維持して更新できるよう7.22〜7.29は731〜738。
-    code = 729 + int(patch) if major == '7' and minor == '2' and int(patch) >= 2 else int(major) * 100 + int(minor) * 10 + int(patch)
-    return display, code
+    return display, int(major) * 100 + int(minor) * 10 + int(patch)
 
 version, version_code = release_version(json.loads(source_bytes('magi-app/package.json'))['version'])
 gradle = source_bytes('magi-app/android/app/build.gradle').decode('utf-8')
