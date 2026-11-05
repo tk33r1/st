@@ -332,7 +332,8 @@ try {
     const pop = touch ? '.prompt-menu-rate' : '.agent-hover-reactions', openRate = async () => { if (touch) await replyMenu(); else await page.locator('.agent-reply').last().hover(); };
     await openRate();
     // よく使う6つと ＋。＋ でほかの絵文字を開く
-    assert.deepEqual(await page.locator(pop + ' > button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
+    assert.deepEqual(await page.locator(pop + ' > button:not([data-actions])').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
+    if (!touch) assert.equal(await page.locator(pop + ' [data-actions][aria-haspopup="menu"]').count(), 1);
     assert.equal(emojiRequests, 0, name + ' full emoji data is lazy');
     await page.locator(pop + ' [data-more]').click();
     const emoji = page.locator('.emoji-dialog[open]'), search = emoji.locator('.emoji-search');
