@@ -17,8 +17,8 @@ android {
         applicationId "st.tk.magi"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 720
-        versionName "7.2"
+        versionCode 723
+        versionName "7.23"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

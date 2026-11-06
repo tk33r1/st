@@ -84,8 +84,9 @@ try {
 
     // Shinya Takeda の絵文字を押すと同じ絵文字で重なり（「🎃 2」）、もう一度押すと取り消す。端末の履歴にだけ残し、送信しない
     const pr = page.locator('.agent-user').last().locator('.prompt-reaction');
-    const prState = async () => pr.evaluate(el => ({ text: getComputedStyle(el, '::before').content.replaceAll(String.fromCharCode(160), ' '), pressed: el.getAttribute('aria-pressed'), joined: el.dataset.joined || null }));
-    const savedJoined = async () => page.evaluate(() => JSON.parse(localStorage.getItem('magi_current_history')).at(-1).prompt_reaction_joined === true);
+    const prState = async () => pr.evaluate(el => ({ text: getComputedStyle(el, '::before').content.replaceAll(String.fromCharCode(160), ' '), pressed: el.getAttribute('aria-pressed'), joined: el.dataset.count === ' 2' ? '1' : null }));
+    // 重ねた絵文字は、質問への自分のリアクション（質問の項目の reactions.prompt）として端末に保存する
+    const savedJoined = async () => page.evaluate(() => JSON.parse(localStorage.getItem('magi_current_history')).find(m => m.role === 'user').reactions?.prompt?.em === '🎃');
     const sentBefore = bodies.length;
     assert.deepEqual(await prState(), { text: '"🎃"', pressed: 'false', joined: null }, name + ' badge before');
     await pr.click();
@@ -114,7 +115,6 @@ try {
     await page.locator('#agent-send').click();
     await done(name + ' fast');
     assert.equal(bodies.at(-1).reply_mode, 'fast'); assert.equal(bodies.at(-1).classification_state, true);
-    assert.ok(!JSON.stringify(bodies.at(-1)).includes('prompt_reaction_joined'), name + ' reaction state not sent');
     assert.ok(!JSON.stringify(bodies.at(-1).messages).includes('prompt_reaction'), name + ' no reaction in history');
     assert.equal(await page.locator('.agent-turn').last().locator('.persona-card').count(), 0, name + ' no persona cards');
     assert.match(await page.locator('.agent-reply-body').last().innerText(), /高速の答え/);

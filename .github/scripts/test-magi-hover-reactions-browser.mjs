@@ -44,6 +44,7 @@ try {
       const log = document.getElementById('agent-log'); log.innerHTML = '';
       const turn = document.createElement('div'); turn.className = 'agent-turn'; turn.dataset.mid = item.mid;
       turn.innerHTML = personaCardsHTML(debate) + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">' + item.content + '</span>' + replyBarHTML() + '</div>';
+      log.appendChild((typeof userBubbleEl === 'function' ? userBubbleEl : agentUserEl)('週末、少し気分を変えたい。', Date.now()));
       log.appendChild(turn); setupReplyBar(turn, item); log.scrollTop = 0;
     }, theme);
     const key = surface + '-' + width + '-' + theme, cards = page.locator('.persona-card'), reply = page.locator('.agent-reply');
@@ -56,7 +57,9 @@ try {
       await page.mouse.move(0, 0); assert.equal(await palette.count(), 0);
       await cards.nth(1).scrollIntoViewIfNeeded(); const before = await rects(); await cards.nth(1).hover();
       await palette.waitFor({ state: 'visible' });
-      assert.deepEqual(await palette.locator('button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+']);
+      assert.deepEqual(await palette.locator('button').allTextContents(), ['👍', '❤️', '😂', '😮', '😢', '🙏', '+', '']);
+      assert.equal(await palette.locator('[role="separator"]').count(), 1);
+      assert((await palette.boundingBox()).height <= 36, key + ': compact desktop toolbar');
       assert.deepEqual(await rects(), before, key + ': hover must not move or resize any response');
       const box = await palette.boundingBox(); assert(box.x >= 0 && box.x + box.width <= width && box.y >= 0);
       await palette.locator('[data-rate="❤️"]').hover();
@@ -99,6 +102,13 @@ try {
         else await page.setViewportSize({ width: panelWidth, height: 1000 });
         for (const host of [cards.first(), reply]) {
           await page.mouse.move(0, 0); await host.scrollIntoViewIfNeeded();
+          await host.hover(); await palette.waitFor({ state: 'visible' });
+          const narrow = await palette.evaluate(el => {
+            const r = el.getBoundingClientRect(), log = document.getElementById('agent-log').getBoundingClientRect();
+            return { fits: r.left >= log.left && r.right <= log.right, menu: [r.left, r.right], log: [log.left, log.right], maxWidth: el.style.maxWidth };
+          });
+          assert.equal(narrow.fits, true, key + ': hover toolbar fits narrow chat ' + panelWidth + ': ' + JSON.stringify(narrow));
+          await page.mouse.move(0, 0); await page.waitForTimeout(220);
           await host.locator('[data-act="rate"]').focus(); await page.keyboard.press('Enter');
           const pop = page.locator('.rate-pop'); await pop.waitFor({ state: 'visible' });
           assert.equal(await pop.locator('button').first().evaluate(el => el === document.activeElement), true);
@@ -170,14 +180,161 @@ try {
       }
     }
     await assertPersonaBadges();
+    // 自分のプロンプトにも同じ操作バーを出す。同じ絵文字はまとめ、自分の分だけ取り消す。
+    const user = page.locator('.agent-user').first();
+    async function react(host, emoji) {
+      if (!touch) { await page.mouse.move(0, 0); await page.waitForTimeout(220); }
+      await host.scrollIntoViewIfNeeded();
+      if (touch) {
+        const cdp = await context.newCDPSession(page), r = await host.boundingBox();
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x + r.width - 25, y: r.y + 12 }] });
+        await page.waitForTimeout(600); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach();
+      } else await host.hover();
+      await page.locator((touch ? '.prompt-menu-rate' : '.agent-hover-reactions') + (emoji === '+' ? ' [data-more]' : ' [data-rate="' + emoji + '"]')).click();
+      // 長押しから離した直後の合成clickを捨てる期間を過ぎてから、次のタップを行う。
+      await page.waitForTimeout(450);
+    }
+    await page.evaluate(() => {
+      const user = document.querySelector('.agent-user'), item = agentHistory.find(it => it.role === 'assistant');
+      item.prompt_reaction = '👍';
+      agentReactionBadge(user, 'prompt-reaction', '👍', false, 'Shinya Takeda'); persistReactions();
+    });
+    const beforePrompt = reactions.length;
+    await react(user.locator(':scope > span'), '👍');
+    assert.equal(reactions.length, beforePrompt, 'own prompt reaction is stored with the conversation, not sent as an answer rating');
+    await page.evaluate(() => renderHistoryToLog(agentHistory));
+    const promptBadge = user.locator('.prompt-reaction');
+    assert.equal(await promptBadge.count(), 1);
+    assert.equal(await promptBadge.getAttribute('data-count'), ' 2');
+    assert.equal(await promptBadge.getAttribute('aria-pressed'), 'true');
+    assert((await promptBadge.getAttribute('aria-label')).includes('Shinya Takeda'));
+    if (!touch) {
+      await user.hover(); await palette.locator('[data-rate="❤️"]').hover();
+      const selected = await palette.locator('[data-rate="👍"]').evaluate(el => ({
+        transform: getComputedStyle(el).transform, shadow: getComputedStyle(el).boxShadow,
+        underline: getComputedStyle(el, '::after').height, background: getComputedStyle(el, '::after').backgroundColor,
+      }));
+      assert.equal(selected.transform, 'none'); assert.equal(selected.shadow, 'none'); assert.equal(selected.underline, '3px');
+      assert.equal(selected.background, theme === 'dark' ? 'rgb(74, 222, 128)' : 'rgb(21, 128, 61)');
+      for (const host of [user, reply, cards.first()]) {
+        await host.scrollIntoViewIfNeeded(); await host.hover();
+        const more = palette.locator('[data-actions]'); await more.hover();
+        assert.equal(await page.locator('.message-actions-menu').count(), 0, 'ellipsis opens only on click');
+        await more.click();
+        const menu = page.locator('.message-actions-menu'); await menu.waitFor();
+        assert.deepEqual(await menu.locator('[data-menu]').evaluateAll(list => list.map(b => b.dataset.menu)), ['copy', 'select', 'share']);
+        await menu.locator('[data-menu="copy"]').focus();
+        await page.keyboard.press('Escape');
+        assert.equal(await more.evaluate(el => el === document.activeElement), true, 'Escape returns focus to the ellipsis');
+        await page.keyboard.press('Enter'); await menu.waitFor();
+        assert((await menu.boundingBox()).y >= (await more.boundingBox()).y + (await more.boundingBox()).height);
+        const option = await menu.locator('[data-menu="select"]').boundingBox();
+        await page.mouse.move(option.x + option.width / 2, option.y + option.height / 2, { steps: 12 });
+        await page.waitForTimeout(250); assert.equal(await menu.isVisible(), true, 'menu stays open while choosing an action');
+        if (host === user) await page.screenshot({ path: resolve(captures, key + '-prompt-menu.png') });
+        await menu.locator('[data-menu="select"]').click();
+        assert((await page.evaluate(() => getSelection().toString())).length > 0, key + ': select text from ' + await host.getAttribute('class'));
+        if (host === user) {
+          await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'https://tk.st' });
+          await page.mouse.move(0, 0); await page.waitForTimeout(220); await user.hover();
+          await more.click(); await menu.locator('[data-menu="copy"]').click();
+          await page.waitForFunction(() => document.querySelector('.agent-toast'));
+          assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '週末、少し気分を変えたい。');
+          await page.mouse.move(0, 0); await page.waitForTimeout(220); await user.hover();
+          await more.click();
+          const [download] = await Promise.all([page.waitForEvent('download'), menu.locator('[data-menu="share"]').click()]);
+          assert.match(download.suggestedFilename(), /\.png$/); await download.delete();
+        }
+        await page.keyboard.press('Escape');
+      }
+      // 回答の共有は、出典付きの完全な本文を使う。長文は省略画像にせず全文コピーへ戻す。
+      await page.evaluate(() => {
+        const item = agentHistory.find(it => it.role === 'assistant');
+        window.shareFixture = { content: item.content, sources: item.sources };
+        item.content = '出典付きの回答です。';
+        item.sources = { items: [{ n: 1, url: 'https://example.com/source', title: '検証用の出典' }], marks: [{ n: 1, at: item.content.length }] };
+        window.shareRenderOriginal = MagiShareImage.render;
+        MagiShareImage.render = options => { window.shareRenderOptions = options; return shareRenderOriginal(options); };
+      });
+      async function openReplyShare() {
+        await page.mouse.move(0, 0); await page.waitForTimeout(220); await reply.hover();
+        await palette.locator('[data-actions]').click();
+      }
+      await openReplyShare();
+      const [image] = await Promise.all([page.waitForEvent('download'), page.locator('.message-actions-menu [data-menu="share"]').click()]);
+      await image.delete();
+      const shared = await page.evaluate(() => shareRenderOptions);
+      assert(shared.text.includes('https://example.com/source')); assert.equal(shared.truncate, false);
+      await page.evaluate(() => { agentHistory.find(it => it.role === 'assistant').content = '省略しない長文の回答。'.repeat(2200) + '長文の終端'; });
+      await openReplyShare(); await page.locator('.message-actions-menu [data-menu="share"]').click();
+      await page.waitForFunction(async () => (await navigator.clipboard.readText()).includes('長文の終端'));
+      const full = await page.evaluate(() => navigator.clipboard.readText());
+      assert(full.includes('https://example.com/source'));
+      await page.evaluate(() => {
+        Object.assign(agentHistory.find(it => it.role === 'assistant'), shareFixture);
+        MagiShareImage.render = shareRenderOriginal;
+      });
+    }
+    if (touch) await promptBadge.tap(); else await promptBadge.click();
+    assert.equal(await promptBadge.count(), 1); assert.equal(await promptBadge.getAttribute('data-count'), '');
+    assert.equal(await promptBadge.isDisabled(), false, 'Shinya Takeda reaction remains and can be joined');
+    assert.equal(await promptBadge.getAttribute('aria-pressed'), 'false');
+    // Shinya Takeda の札を押すと同じ絵文字で重なり（2）、もう一度押すと取り消す
+    if (touch) await promptBadge.tap(); else await promptBadge.click();
+    assert.deepEqual([await promptBadge.count(), await promptBadge.getAttribute('data-count'), await promptBadge.getAttribute('aria-pressed')], [1, ' 2', 'true'], 'joined Shinya Takeda reaction');
+    assert.equal(await page.evaluate(() => agentHistory.find(it => it.role === 'user').reactions?.prompt?.em), await promptBadge.getAttribute('data-emoji'));
+    if (touch) await promptBadge.tap(); else await promptBadge.click();
+    assert.deepEqual([await promptBadge.count(), await promptBadge.getAttribute('data-count'), await promptBadge.getAttribute('aria-pressed')], [1, '', 'false'], 'undo joined reaction');
+    await react(user.locator(':scope > span'), '❤️');
+    assert.equal(await promptBadge.count(), 2);
+    assert.deepEqual(await promptBadge.evaluateAll(list => list.map(b => b.dataset.count)), ['', '']);
+    // AI回答の札そのものを押して取り消し、所有トークン付きの削除を送る。
+    await react(reply.locator('.agent-reply-body'), '👍');
+    const replyBadge = reply.locator('.msg-reaction');
+    await page.waitForFunction(() => agentHistory.find(it => it.role === 'assistant').reactions?.integrated?.id);
+    assert.equal(await replyBadge.getAttribute('data-count'), '');
+    if (touch) await replyBadge.tap(); else await replyBadge.click();
+    await replyBadge.waitFor({ state: 'detached' });
+    assert.equal(reactions.at(-1).op, 'remove'); assert.equal(reactions.at(-1).target, 'integrated');
     await page.reload();
     if (surface === 'web') await page.waitForFunction(() => !document.getElementById('input-line').classList.contains('hidden'));
     if (surface === 'web' && await page.locator('#agentdock').evaluate(el => el.classList.contains('collapsed'))) await page.locator('#activitybar [data-act="agent"]').click();
     await page.evaluate(theme => document.documentElement.setAttribute('data-theme', theme), theme);
     await assertPersonaBadges();
+    assert.deepEqual(await page.locator('.agent-user .prompt-reaction').evaluateAll(list => list.map(b => [b.dataset.emoji, b.dataset.count, b.disabled])), [['❤️', '', false], ['👍', '', false]], 'prompt reactions survive reload');
+    await react(user.locator(':scope > span'), '+');
+    await page.locator('.emoji-option[data-emoji="❤️"]').click();
+    assert.deepEqual(await promptBadge.evaluateAll(list => list.map(b => [b.dataset.emoji, b.dataset.count, b.disabled])), [['👍', '', false]], 'full emoji picker also toggles own prompt reaction');
     await page.locator('.persona-card').first().scrollIntoViewIfNeeded();
     await page.mouse.move(0, 0); await page.waitForTimeout(220);
     await page.screenshot({ path: resolve(captures, key + '-badges.png') });
+    // 長文へ伸びた後も、3人格の輪郭と塗りを一つの閉じたパスで描く。
+    await page.evaluate(() => document.querySelectorAll('.persona-card').forEach((card, index) => {
+      card.querySelector('.persona-text').textContent = 'DJブースで曲の振り切りどころを見極め、フロアの熱と一体感を生み出す。'.repeat(index + 2);
+      const later = card.querySelector('[data-round="2"]'); later.hidden = false;
+      later.querySelector('.persona-text').textContent = '手元と機材周りは清潔に保ち、曲をつなぐ瞬間を大切にする。'.repeat(index + 2);
+    }));
+    await page.waitForFunction(() => [...document.querySelectorAll('.persona-card')].every(card => card.querySelector('.persona-cloud')?.dataset.size === card.clientWidth + ' ' + card.clientHeight));
+    for (const card of await cards.all()) {
+      assert.equal(await card.locator(':scope > .persona-cloud path').count(), 1);
+      const cloud = await card.evaluate(el => {
+        const path = el.querySelector('.persona-cloud path'), box = path.getBBox();
+        return { closed: path.getAttribute('d').endsWith(' Z'), inside: box.x >= 0 && box.y >= 0 && box.x + box.width <= el.clientWidth && box.y + box.height <= el.clientHeight,
+          mask: getComputedStyle(el, '::before').content };
+      });
+      assert.deepEqual(cloud, { closed: true, inside: true, mask: 'none' });
+    }
+    await cards.first().screenshot({ path: resolve(captures, key + '-cloud-fixed.png') });
+    // 受信中（回答の履歴がまだ無い状態）の質問への反応も、再読み込みで失わない。
+    await page.evaluate(async () => {
+      closeRatePops(false); closePromptMenu();
+      agentHistory = agentHistory.filter(it => it.role === 'user');
+      document.querySelector('.agent-reply').classList.add('streaming');
+      await rateReply(document.querySelector('.agent-user .reaction-bar'), '🔥');
+    });
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector('.agent-user .prompt-reaction')?.dataset.emoji === '🔥');
+    assert.equal(await page.locator('.agent-user .prompt-reaction').getAttribute('aria-pressed'), 'true');
     assert.deepEqual(errors, [], key); await context.close();
   }
   console.log(JSON.stringify({ pass: true, cases: cases.length, paidRequests: 0, captures }));

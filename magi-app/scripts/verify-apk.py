@@ -60,7 +60,7 @@ def release_version(package_version):
 version, version_code = release_version(json.loads(source_bytes('magi-app/package.json'))['version'])
 gradle = source_bytes('magi-app/android/app/build.gradle').decode('utf-8')
 assert re.search(r'versionName\s+"([^"]+)"', gradle).group(1) == version
-assert int(re.search(r'versionCode\s+(\d+)', gradle).group(1)) == version_code, 'APK作成時にversionCodeを整数×100＋2桁の小数部へ更新する'
+assert int(re.search(r'versionCode\s+(\d+)', gradle).group(1)) == version_code, 'APK作成時のversionCodeが採番規則と一致しない'
 aapt = tools / ('aapt.exe' if os.name == 'nt' else 'aapt')
 metadata = run([str(aapt), 'dump', 'badging', str(Path(args.apk).resolve())]).decode('utf-8')
 assert "name='st.tk.magi'" in metadata

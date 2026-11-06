@@ -1,4 +1,4 @@
-"""最終署名APKの本番疎通を観測する。入力・送信・設定変更は利用者が行う。課金送信を自動実行しない。"""
+"""最終署名APKの本番疎通を観測する。入力・送信・設定変更はこの観測器では行わない。"""
 import argparse
 import hashlib
 import json
@@ -39,8 +39,8 @@ try:
     assert installed.startswith('/data/app/') and installed.endswith('/base.apk')
     assert hashlib.sha256(run('exec-out', 'cat', installed)).hexdigest() == report['apkSha256'], '最終APKと実機が異なる'
     report['installedApkVerified'] = True
-    print('本番への送信は自動実行しません。利用者が許可した検証予算内で実施してください。', flush=True)
-    print('通常チャットのアプリ管理でパーソナライズをオンにし、保存して閉じ、もう一度アプリ管理を開いてください。保存後の有効状態を再確認します。', flush=True)
+    print('観測器は送信しません。許可された検証予算内で、固定文を照合して送信してください。', flush=True)
+    print('通常チャットのアプリ管理でパーソナライズをオンにし、閉じてからもう一度開いてください。保存後の有効状態を再確認します。', flush=True)
     deadline = time.monotonic() + 360
     while time.monotonic() < deadline:
         rows = nodes()
@@ -50,7 +50,7 @@ try:
             break
         time.sleep(1)
     assert report.get('personalizationOn'), 'パーソナライズ有効を確認できない'
-    print('設定を保存して新しい通常チャットで、次の合成文を入力し、送信してください。', flush=True)
+    print('設定を閉じ、新しい通常チャットで次の合成文を照合して送信してください。', flush=True)
     print(question, flush=True)
     while time.monotonic() < deadline:
         rows = nodes()

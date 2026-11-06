@@ -7,12 +7,15 @@ import {resolve, join, dirname, basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {matrix, root, sha256, git, sourceFingerprint, checkContract} from './magi-chat-contract.mjs';
 
-export function validateReports({commit, fingerprint, apkSha256, apk, referenceVersionCode, browser, android, production, now = Date.now()}) {
+export function validateReports({commit, fingerprint, apkSha256, apk, referenceVersionCode, referenceApkSha256, allow722Correction = false, browser, android, production, now = Date.now()}) {
   assert.match(commit, /^[a-f0-9]{40}$/); assert.match(fingerprint, /^[a-f0-9]{64}$/);
   assert(apk.pass === true && apk.source === 'commit', '最終APKのコミット照合が未成功');
   assert.equal(apk.commit, commit); assert.equal(apk.apkSha256, apkSha256);
   assert(apk.v1 === true && apk.v2 === true, '署名が未確認');
-  assert(Number.isSafeInteger(referenceVersionCode) && apk.versionCode > referenceVersionCode, '配布版のversionCodeを上げる必要がある');
+  // 本人指定の7.3誤配布訂正だけ。7.3導入端末ではデータを消す再インストールが必要。
+  const correction = allow722Correction && apk.versionName === '7.22' && apk.versionCode === 722
+    && referenceVersionCode === 730 && referenceApkSha256 === 'ddd3e2ca60742365bf659b6dc25cd55c747d58e5e545c2db1f5a72335ae67c4c';
+  assert(Number.isSafeInteger(referenceVersionCode) && (apk.versionCode > referenceVersionCode || correction), '配布版のversionCodeを上げる必要がある');
   for (const [kind, report] of Object.entries({browser, android, production})) {
     assert(report?.pass === true && report.schema === 1 && report.kind === kind, kind + ': 未実施または失敗');
     assert.equal(report.commit, commit, kind + ': 別コミットの結果');
@@ -39,7 +42,7 @@ export function validateReports({commit, fingerprint, apkSha256, apk, referenceV
   assert(recovery.answers === 1 && recovery.requests === 1 && recovery.serviceStopped === true, '復元時の二重送信・資源解放が未確認');
   assert.equal(production.apkSha256, apkSha256, '本番疎通を行ったAPKが配布物と異なる');
   for (const key of ['installedApkVerified', 'personalizationOn', 'normalMode', 'observedSending', 'newAnswer', 'complete']) assert(production[key] === true, '最終APKの本番確認が不足: ' + key);
-  return {pass: true, commit, fingerprint, apkSha256, checked: new Date(now).toISOString()};
+  return {pass: true, commit, fingerprint, apkSha256, ...(correction ? {requiresReinstallFrom73: true} : {}), checked: new Date(now).toISOString()};
 }
 
 async function main() {
@@ -59,7 +62,7 @@ async function main() {
     const apk = JSON.parse(readFileSync(verification, 'utf8'));
     const metadata = execFileSync(join(resolve(arg('build-tools')), process.platform === 'win32' ? 'aapt.exe' : 'aapt'), ['dump', 'badging', resolve(arg('reference'))], {encoding: 'utf8'});
     const referenceVersionCode = Number(metadata.match(/versionCode='(\d+)'/)?.[1]);
-    const result = validateReports({commit, fingerprint, apkSha256: sha256(apkBytes), apk, referenceVersionCode, browser: read('browser'), android: read('android'), production: read('production')});
+    const result = validateReports({commit, fingerprint, apkSha256: sha256(apkBytes), apk, referenceVersionCode, referenceApkSha256: sha256(readFileSync(resolve(arg('reference')))), allow722Correction: process.argv.includes('--allow-722-correction'), browser: read('browser'), android: read('android'), production: read('production')});
     const output = resolve(reports, 'release-gate.json'); mkdirSync(dirname(output), {recursive: true}); writeFileSync(output, JSON.stringify(result, null, 2) + '\n');
     if (process.argv.includes('--publish')) {
       // CIの成功も対象SHAと結び付ける。ローカルJSONだけでは公開しない。

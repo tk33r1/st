@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.2';
+var APP_VERSION = '7.23';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -471,46 +471,45 @@ function agentRatingOf(stored) {
 }
 // 絵文字の札（回答・カード・プロンプトの角）。文字は CSS で出し、本文の textContent（コピー・リアクションの送信）に混ぜない。
 // animate なら弾むアニメーション（付けた・付けられた瞬間だけ。履歴の復元では動かさない）
-function agentReactionBadge(host, cls, em, animate, label) {
+function agentReactionBadge(host, cls, em, animate, label, own) {
   if (!host || !host.querySelector) return;
-  var badge = host.querySelector(':scope > .' + cls);
-  if (!em) { if (badge) badge.remove(); host.classList.remove('has-reaction'); return; }
-  // 吹き出しの span（.agent-user > span）の見た目と長押しの対象に混ざらないよう、札は i 要素にする
-  if (!badge) { badge = document.createElement('i'); badge.className = cls; badge.setAttribute('role', 'img'); host.appendChild(badge); }
-  badge.dataset.emoji = em; badge.setAttribute('aria-label', label + ' ' + em);
-  host.classList.add('has-reaction');
-  if (animate) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); agentHaptic(); }
+  own = own === undefined ? cls !== 'prompt-reaction' : own;
+  host[own ? 'agentOwnReaction' : 'agentPromptReaction'] = agentRatingOf(em);
+  host.querySelectorAll(':scope > .' + cls).forEach(function (badge) { badge.remove(); });
+  var mine = host.agentOwnReaction, theirs = host.agentPromptReaction;
+  var emojis = mine ? [mine] : [];
+  if (theirs && theirs !== mine) emojis.push(theirs);
+  emojis.forEach(function (emoji, index) {
+    var selected = emoji === mine, count = selected && emoji === theirs ? 2 : 1;
+    var badge = document.createElement('button'); badge.type = 'button'; badge.className = cls;
+    badge.dataset.emoji = emoji; badge.dataset.count = count > 1 ? ' ' + count : '';
+    badge.style.setProperty('--reaction-offset', (index * 52) + 'px');
+    // Shinya Takeda だけの札（質問の角）も押せる。押すと同じ絵文字を自分のリアクションとして付け（「🤔 2」）、もう一度押すと取り消す
+    badge.disabled = !selected && cls !== 'prompt-reaction';
+    var names = selected ? tr('You', 'あなた') : '';
+    if (emoji === theirs) names += (names ? '・' : '') + 'Shinya Takeda';
+    var text = names + ' ' + emoji + (count > 1 ? ' ' + count : '');
+    if (selected) {
+      badge.setAttribute('aria-pressed', 'true');
+      text += tr(' (click to remove)', '（クリック／タップで取り消し）');
+    } else if (!badge.disabled) {
+      badge.setAttribute('aria-pressed', 'false');
+      text += tr(' (click to react the same)', '（クリック／タップで同じリアクション）');
+    }
+    badge.title = text; badge.setAttribute('aria-label', text);
+    if (animate && emoji === em) badge.classList.add('pop');
+    host.appendChild(badge);
+  });
+  host.classList.toggle('has-reaction', !!emojis.length);
+  if (animate && em) agentHaptic();
+}
+// プロンプトに続く回答を探す（旧形式のリアクション保存先との対応付け）。
+function agentReactionTurn(bar) {
+  var turn = bar.closest('.agent-turn'), user = bar.closest('.agent-user');
+  if (!turn && user && user.nextElementSibling && user.nextElementSibling.classList.contains('agent-turn')) turn = user.nextElementSibling;
+  return turn;
 }
 // スマホ（指の端末）だけ、軽く振動させる（絵文字が付いた瞬間・長押しのメニュー）。振動できない端末（iPhone の Web など）では何もしない
-// Shinya Takeda がプロンプトに付けた絵文字の札。押すと利用者も同じ絵文字で重ね（「🤔 2」）、もう一度押すと取り消す（「🤔」）。
-// 重ねたかどうかは回答の項目の prompt_reaction_joined にだけ持ち、端末の履歴に残す。サーバーには送らない（Worker への履歴からも外す）。
-// 受信中で項目がまだ無いときは札の印（data-joined）に持ち、回答を履歴に入れるときに agentPromptReactionJoined で読む
-function agentPromptReaction(userEl, em, joined, animate) {
-  agentReactionBadge(userEl, 'prompt-reaction', em, animate, '');
-  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
-  if (!badge) return null;
-  var label = joined ? tr('Shinya Takeda and you reacted ' + em + ' (press to remove yours)', 'Shinya Takeda とあなたのリアクション ' + em + '（押すと取り消す）')
-    : tr('Reaction from Shinya Takeda ' + em + ' (press to react the same)', 'Shinya Takeda のリアクション ' + em + '（押すと同じリアクションをする）');
-  badge.setAttribute('role', 'button'); badge.tabIndex = 0;
-  badge.setAttribute('aria-pressed', joined ? 'true' : 'false'); badge.setAttribute('aria-label', label); badge.title = label;
-  if (joined) { badge.dataset.joined = '1'; badge.dataset.count = '2'; } else { delete badge.dataset.joined; delete badge.dataset.count; }
-  return badge;
-}
-function agentPromptReactionJoined(userEl) {
-  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
-  return !!badge && badge.dataset.joined === '1';
-}
-// 札を押したとき。回答が履歴に入っていれば項目にも書いて保存する（一時チャットは保存しない）
-function agentTogglePromptReaction(badge) {
-  var user = badge.closest('.agent-user'), em = badge.dataset.emoji;
-  if (!user || !agentEmojiValid(em)) return;
-  var joined = badge.dataset.joined !== '1';
-  agentPromptReaction(user, em, joined, joined);
-  var turn = user.nextElementSibling, item = turn && turn.classList.contains('agent-turn') ? agentItemFor(turn) : null;
-  if (!item || item.prompt_reaction !== em) return;
-  if (joined) item.prompt_reaction_joined = true; else delete item.prompt_reaction_joined;
-  if (!agentTemporary()) persistReactions();
-}
 function agentHaptic(ms) {
   try {
     if (navigator.vibrate && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate(ms || 12);
@@ -563,7 +562,8 @@ function showRating(bar, value, animate) {
   btn.classList.toggle('rated', !!em);
   var label = em ? tr('Reaction ' + em + ' (press to change)', 'リアクション ' + em + '（押すと変更）') : tr('React', 'リアクション');
   btn.title = label; btn.setAttribute('aria-label', label);
-  agentReactionBadge(bar.closest && bar.closest('.agent-reply, .persona-card'), 'msg-reaction', em, animate, tr('Your reaction', 'あなたのリアクション'));
+  var prompt = bar.dataset.target === 'prompt';
+  agentReactionBadge(bar.closest && bar.closest('.agent-user, .agent-reply, .persona-card'), prompt ? 'prompt-reaction' : 'msg-reaction', em, animate, tr('Your reaction', 'あなたのリアクション'), true);
 }
 function closeRatePops(focus) {
   closeAgentHoverReactions(false);
@@ -587,7 +587,7 @@ function openRatePop(btn, bar) {
   agentRevealReactionPicker(pop);
   pop.querySelector('button').focus({ preventScroll: true });
 }
-// PCは回答を指しただけで6候補と＋を表示する。body上の固定枠なので本文・隣の回答の位置を変えない。
+// PCは質問・回答を指すと6候補・＋・操作メニューを表示する。本文の位置は変えない。
 var agentHoverReactions = null;
 function closeAgentHoverReactions(focus) {
   var state = agentHoverReactions;
@@ -595,6 +595,7 @@ function closeAgentHoverReactions(focus) {
   agentHoverReactions = null; clearTimeout(state.timer);
   if (state.observer) state.observer.disconnect();
   state.button.setAttribute('aria-expanded', 'false');
+  if (promptMenu && state.pop.contains(promptMenu.agentAnchor)) closePromptMenu();
   state.pop.remove();
   if (focus && state.button.isConnected) state.button.focus({ preventScroll: true });
   return true;
@@ -604,12 +605,14 @@ function deferAgentHoverReactionsClose() {
   if (!state) return;
   clearTimeout(state.timer);
   state.timer = setTimeout(function () {
-    if (agentHoverReactions !== state || state.host.matches(':hover') || state.pop.matches(':hover') || state.pop.contains(document.activeElement)) return;
+    if (agentHoverReactions !== state || state.host.matches(':hover') || state.pop.matches(':hover') || state.pop.contains(document.activeElement) || promptMenu && state.pop.contains(promptMenu.agentAnchor)) return;
     closeAgentHoverReactions(false);
   }, 180);
 }
 function showAgentHoverReactions(host) {
   if (agentTemporary() || !host || !host.isConnected || host.matches('.streaming, .thinking') || agentEmojiDialog) return;
+  // 開いたメニューまでの隙間で別の吹き出しを通っても、選んでいる操作を閉じない。
+  if (promptMenu && agentHoverReactions && agentHoverReactions.pop.contains(promptMenu.agentAnchor)) return;
   var keyboardPop = agentLog.querySelector('.rate-pop');
   if (keyboardPop && keyboardPop.contains(document.activeElement)) return;
   if (agentHoverReactions && agentHoverReactions.host === host) { clearTimeout(agentHoverReactions.timer); return; }
@@ -618,23 +621,36 @@ function showAgentHoverReactions(host) {
   closeRatePops(false);
   var store = reactionStoreFor(bar), pop = agentReactionPicker(agentRatingOf(store && store[bar.dataset.target]), bar);
   pop.classList.add('agent-hover-reactions');
+  var divider = document.createElement('span'); divider.className = 'reaction-divider'; divider.setAttribute('role', 'separator');
+  var actions = document.createElement('button'); actions.type = 'button'; actions.dataset.actions = 'true'; actions.innerHTML = ICON_PROMPT_MORE;
+  actions.setAttribute('role', 'menuitem'); actions.setAttribute('aria-label', tr('Message actions', 'メッセージの操作')); actions.setAttribute('aria-haspopup', 'menu'); actions.setAttribute('aria-expanded', 'false');
+  pop.append(divider, actions);
   var state = { host: host, bar: bar, button: button, pop: pop, timer: 0 };
   agentHoverReactions = state;
   button.setAttribute('aria-expanded', 'true');
   function position() {
     if (!host.isConnected) { closeAgentHoverReactions(false); return; }
     // 会話欄の見えている範囲に収める。回答の上端が上に隠れていても、枠をヘッダーの操作（一時チャットなど）に重ねない
-    var r = host.getBoundingClientRect(), p = pop.getBoundingClientRect(), log = agentLog.getBoundingClientRect(), view = magiLogViewport(agentLog);
+    var r = host.getBoundingClientRect(), log = agentLog.getBoundingClientRect(), view = magiLogViewport(agentLog);
     var left = Math.max(8, log.left + 4), right = Math.min(window.innerWidth - 8, log.right - 4);
     var top = Math.max(8, view.top + 4), bottom = Math.min(window.innerHeight - 8, view.bottom - 4);
+    pop.style.maxWidth = Math.max(1, right - left) + 'px';
+    var p = pop.getBoundingClientRect();
     pop.style.left = Math.max(left, Math.min(r.right - p.width - 4, right - p.width)) + 'px';
-    pop.style.top = Math.max(top, Math.min(r.top - p.height + 10, bottom - p.height)) + 'px';
+    var y = r.top - p.height + 10;
+    if (host.classList.contains('agent-user') && y < top) y = r.bottom + 18;
+    pop.style.top = Math.max(top, Math.min(y, bottom - p.height)) + 'px';
   }
   pop.addEventListener('pointerenter', function () { clearTimeout(state.timer); });
   pop.addEventListener('pointerleave', deferAgentHoverReactionsClose);
   pop.addEventListener('focusout', deferAgentHoverReactionsClose);
   pop.addEventListener('click', function (e) {
     e.stopPropagation(); var item = e.target.closest('button'); if (!item) return;
+    if (item.dataset.actions) {
+      if (promptMenu && promptMenu.agentAnchor === item) closePromptMenu();
+      else openPromptMenu(host, item, e.detail === 0 ? 'key-toolbar' : 'toolbar');
+      return;
+    }
     if (item.dataset.more) { toggleReactionMore(item); return; }
     closeAgentHoverReactions(false);
     if (bar.isConnected) rateReply(bar, item.dataset.rate);
@@ -813,7 +829,7 @@ function closeAgentEmojiPicker(focus) {
   if (focus) {
     var back = state.opener.isConnected ? state.opener : state.bar.querySelector('[data-act="rate"]');
     if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
-      back = state.bar.closest('.agent-reply, .persona-card');
+      back = state.bar.closest('.agent-user, .agent-reply, .persona-card');
       if (back) back.tabIndex = -1;
     }
     if (back && back.isConnected) back.focus({ preventScroll: true });
@@ -971,6 +987,15 @@ async function rateReply(bar, value) {
   value = AGENT_RATINGS[value] || value;
   if (!agentEmojiValid(value)) return;
   if (agentTemporary()) return;
+  if (bar.dataset.target === 'prompt') {
+    // 自分の質問への反応は会話とともに端末に保存する。回答の評価APIには送らない。
+    var prompts = reactionStoreFor(bar);
+    if (!prompts) return;
+    var next = agentRatingOf(prompts.prompt) === value ? null : value;
+    if (next) { prompts.prompt = { em: next }; rememberAgentEmoji(next); }
+    else delete prompts.prompt;
+    showRating(bar, next, !!next); persistReactions(); return;
+  }
   if (bar.dataset.removing === 'true') return;
   var ctx = getReactionContext(bar), store = reactionStoreFor(bar), current = store && store[ctx.target], owner = reactionOwner(bar);
   if (current) {
@@ -1544,12 +1569,12 @@ function refreshSpeechFeature() {
 // 公式の Share プラグインで OS の共有シートへ渡す。ブラウザの共有シートは指で操作する端末だけで使い、
 // PC（マウス・トラックパッド）には［共有］を出さない（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る。
 // コピーで足りる）。共有シートが開けなかったときはコピーする
-async function shareAgentReply(btn, bar, item) {
+async function shareAgentReply(btn, bar, item, download) {
   if (agentTemporary()) return;
   var content = agentReplyShare(item, isJa()), text = content.text, title = agentTitle || 'MAGI';
   var native = nativeShare();
   // まず回答を画像（share-image.js）にして渡す。画像を作れない・渡せない端末では、従来どおり文で共有する
-  try { if (await shareAgentReplyImage(item, content)) return; }
+  try { if (await shareAgentReplyImage(item, content, download)) return; }
   catch (err) {
     if (agentShareCancelled(err)) return;
     if (agentShareNeedsTap(err)) { showReplyNote(bar, tr('The image is ready. Press Share again to share it.', '画像を用意しました。もう一度押すと共有します')); return; }
@@ -1577,9 +1602,9 @@ function blobToBase64(blob) {
     r.readAsDataURL(blob);
   });
 }
-function shareAgentReplyImage(item, prepared) {
+function shareAgentReplyImage(item, prepared, download) {
   return item && typeof item.content === 'string' ? agentShareImage((prepared || agentReplyShare(item, isJa())).image,
-    { dialogTitle: tr('Share reply', '回答を共有'), complete: true }) : Promise.resolve(false);
+    { dialogTitle: tr('Share reply', '回答を共有'), complete: true, download: !!download }) : Promise.resolve(false);
 }
 // 文を共有画像にして渡す。共有シートが無い PC で download が真なら PNG を保存する（プロンプトの共有）
 async function agentShareImage(text, options) {
@@ -1669,6 +1694,7 @@ function agentUserEl(content, at) {
   u.innerHTML = '<button type="button" class="prompt-more" aria-haspopup="menu" aria-expanded="false" aria-label="' + tr('Message actions', 'メッセージの操作') + '">' + ICON_PROMPT_MORE + '</button>'
     + '<span>' + userContentHTML(content) + '</span>';
   u.agentContent = content;
+  u.insertAdjacentHTML('beforeend', reactionBarHTML('prompt'));
   if (at) u.dataset.at = String(at);
   return u;
 }
@@ -1692,6 +1718,73 @@ function showPromptTextSheet(text) {
   document.getElementById('app').appendChild(panel);
   try { window.getSelection().selectAllChildren(box); } catch (_) {}
 }
+// AGENT_CLOUD_BEGIN
+// 塗りと枠線を同じ閉じた輪郭で描く。寸法が変わってもマスクの位相差や四隅の切れ目を作らない。
+function agentCloudPath(width, height) {
+  var w = Math.max(64, width), h = Math.max(64, height), r = Math.min(28, (Math.min(w, h) - 2) / 3);
+  var edge = r + 1, nx = Math.max(1, Math.ceil((w - edge * 2) / 50)), ny = Math.max(1, Math.ceil((h - edge * 2) / 50));
+  var dx = (w - edge * 2) / nx, dy = (h - edge * 2) / ny, centers = [];
+  for (var i = 0; i <= nx; i++) centers.push([edge + i * dx, edge]);
+  for (var j = 1; j <= ny; j++) centers.push([w - edge, edge + j * dy]);
+  for (var k = nx - 1; k >= 0; k--) centers.push([edge + k * dx, h - edge]);
+  for (var m = ny - 1; m > 0; m--) centers.push([edge, edge + m * dy]);
+  // 隣り合う丸の外側の交点を、同じ円弧でつなぐ。四隅も丸の輪郭の一部になる。
+  var joins = centers.map(function (a, index) {
+    var b = centers[(index + 1) % centers.length], x = b[0] - a[0], y = b[1] - a[1];
+    var d = Math.hypot(x, y), offset = Math.sqrt(Math.max(0, r * r - d * d / 4));
+    return [(a[0] + b[0]) / 2 + y / d * offset, (a[1] + b[1]) / 2 - x / d * offset];
+  });
+  function n(value) { return Math.round(value * 100) / 100; }
+  var start = joins[joins.length - 1], path = 'M ' + start.map(n).join(' ');
+  centers.forEach(function (center, index) {
+    var from = joins[(index + joins.length - 1) % joins.length], to = joins[index];
+    var angle = (Math.atan2(to[1] - center[1], to[0] - center[0]) - Math.atan2(from[1] - center[1], from[0] - center[0]) + Math.PI * 2) % (Math.PI * 2);
+    path += ' A ' + n(r) + ' ' + n(r) + ' 0 ' + (angle > Math.PI ? '1' : '0') + ' 1 ' + to.map(n).join(' ');
+  });
+  return path + ' Z';
+}
+(function () {
+  var ns = 'http://www.w3.org/2000/svg', watched = new WeakSet();
+  function draw(card) {
+    var w = card.clientWidth, h = card.clientHeight;
+    if (!w || !h) return;
+    var svg = card.querySelector(':scope > .persona-cloud');
+    if (!svg) {
+      svg = document.createElementNS(ns, 'svg'); svg.classList.add('persona-cloud');
+      svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+      svg.appendChild(document.createElementNS(ns, 'path')); card.prepend(svg);
+    }
+    var size = w + ' ' + h;
+    if (svg.dataset.size === size) return;
+    svg.dataset.size = size; svg.setAttribute('viewBox', '0 0 ' + size);
+    svg.firstElementChild.setAttribute('d', agentCloudPath(w, h));
+  }
+  var resize = typeof ResizeObserver === 'function' ? new ResizeObserver(function (entries) {
+    entries.forEach(function (entry) { draw(entry.target); });
+  }) : null;
+  function cards(node, run) {
+    if (!node || node.nodeType !== 1) return;
+    if (node.matches('.persona-card')) run(node);
+    node.querySelectorAll('.persona-card').forEach(run);
+  }
+  function watch(card) {
+    if (!watched.has(card)) { watched.add(card); if (resize) resize.observe(card); }
+    draw(card);
+  }
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      record.addedNodes.forEach(function (node) { cards(node, watch); });
+      record.removedNodes.forEach(function (node) { cards(node, function (card) {
+        if (!card.isConnected) { if (resize) resize.unobserve(card); watched.delete(card); }
+      }); });
+      if (!resize) { var card = record.target.closest && record.target.closest('.persona-card'); if (card) draw(card); }
+    });
+  }).observe(agentLog, { childList: true, subtree: true });
+  cards(agentLog, watch);
+  if (!resize) window.addEventListener('resize', function () { cards(agentLog, draw); });
+})();
+// AGENT_CLOUD_END
+
 // AGENT_MSG_MENU_BEGIN（トップページと同じ中身。test-magi2.mjs が一致を確かめる）
 // 吹き出しの操作メニュー。Shinya Takeda 個人とのチャットに見せるため、画面に出す操作と情報を減らし、縦に伸ばさない。
 // - 自分のプロンプト：送った時刻と「コピー」「選択」「共有」。スマホは吹き出しの長押し、PC はマウスオーバーで出る ⋯ から開く
@@ -1728,7 +1821,7 @@ function closePromptMenu() {
   clearTimeout(promptMenuClose);
   if (!promptMenu) return false;
   var menu = promptMenu, anchor = menu.agentAnchor; promptMenu = null;
-  if (anchor) { anchor.classList.remove('is-pressed'); if (anchor.classList.contains('prompt-more')) anchor.setAttribute('aria-expanded', 'false'); }
+  if (anchor) { anchor.classList.remove('is-pressed'); if (anchor.hasAttribute('aria-expanded')) anchor.setAttribute('aria-expanded', 'false'); }
   menu.remove();
   return true;
 }
@@ -1738,11 +1831,14 @@ function agentBarButton(bar, act) {
   return btn && !btn.hidden ? btn : null;
 }
 // 項目：{ act, icon, label, run } と、評価の行 { rate: bar }
-function agentMenuItems(el) {
+function agentMenuItems(el, compact) {
   var ja = agentMenuJa(), items = [];
   var label = function (en, jp) { return ja ? jp : en; };
-  if (el.classList.contains('agent-user')) {
-    var content = el.agentContent, text = content == null ? '' : contentText(content).trim();
+  var user = el.classList.contains('agent-user');
+  if (user || compact) {
+    var content = el.agentContent, userBar = el.querySelector(':scope > .reaction-bar');
+    var text = user ? (content == null ? '' : contentText(content).trim()) : userBar ? agentRichPlain(getReactionContext(userBar).response) : '';
+    if (user && !compact && userBar && !agentTemporary()) items.push({ rate: userBar });
     if (!text) return items;
     items.push({ act: 'copy', icon: ICON_MENU_COPY, label: label('Copy', 'コピー'), run: function () {
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { agentToast(label('Copied.', 'コピーしました')); }, function () { agentToast(label('Could not copy.', 'コピーできませんでした')); });
@@ -1750,9 +1846,13 @@ function agentMenuItems(el) {
     items.push({ act: 'select', icon: ICON_MENU_SELECT, label: label('Select', '選択'), run: function () {
       // 指の端末は長押しをメニューに使うので、選べる文を下からのシートに出す。PC はその場の吹き出しを選ぶ
       if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) showPromptTextSheet(text);
-      else { var span = el.querySelector(':scope > span'), sel = window.getSelection(); if (span && sel) sel.selectAllChildren(span); }
+      else { var span = el.querySelector(user ? ':scope > span' : '.agent-reply-body') || el, sel = window.getSelection(); if (sel) sel.selectAllChildren(span); }
     } });
     if (!agentTemporary()) items.push({ act: 'share', icon: ICON_MENU_SHARE, label: label('Share', '共有'), run: function () {
+      if (!user && el.classList.contains('agent-reply')) {
+        var item = agentItemFor(userBar), trigger = agentBarButton(userBar, 'share') || agentBarButton(userBar, 'copy');
+        if (item && trigger) return shareAgentReply(trigger, userBar, item, true);
+      }
       agentSharePrompt(text).then(function (ok) { if (!ok) agentToast(label('Could not share.', '共有できませんでした')); })
         .catch(function (err) {
           if (agentShareNeedsTap(err)) agentToast(label('The image is ready. Choose Share again.', '画像を用意しました。もう一度「共有」を押してください'));
@@ -1780,11 +1880,13 @@ function agentMenuItems(el) {
   return items;
 }
 function openPromptMenu(el, anchor, how, point) {
-  var user = el.classList.contains('agent-user'), at = user ? Number(el.dataset.at) : 0, items = agentMenuItems(el);
+  var compact = how === 'toolbar' || how === 'key-toolbar';
+  var user = el.classList.contains('agent-user'), at = user && !compact ? Number(el.dataset.at) : 0, items = agentMenuItems(el, compact);
   if (!items.length && !at) return;
   closePromptMenu();
   var ja = agentMenuJa();
   var menu = document.createElement('div'); menu.className = 'prompt-menu'; menu.setAttribute('role', 'menu');
+  if (compact) menu.classList.add('message-actions-menu');
   menu.setAttribute('aria-label', ja ? 'メッセージの操作' : 'Message actions');
   if (at) { var head = document.createElement('div'); head.className = 'prompt-menu-time'; head.textContent = agentReplyTimeText(at, ja, Date.now()); head.title = new Date(at).toLocaleString(ja ? 'ja-JP' : 'en-US', { dateStyle: 'full', timeStyle: 'short' }); menu.appendChild(head); }
   items.forEach(function (it) {
@@ -1807,24 +1909,24 @@ function openPromptMenu(el, anchor, how, point) {
   });
   menu.addEventListener('keydown', function (e) {
     var list = Array.from(menu.querySelectorAll('button')), i = list.indexOf(document.activeElement);
-    if (e.key === 'Escape') { e.preventDefault(); var back = anchor; closePromptMenu(); if (back && back.focus) back.focus({ preventScroll: true }); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); var back = anchor; closePromptMenu(); if (back && back.focus) back.focus({ preventScroll: true }); }
     // 文字の無い質問は時刻だけで項目が無い（いまは中に入れないが、項目が無ければ矢印で動かさない）
     else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && list.length) { e.preventDefault(); list[(i + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length].focus(); }
   });
   menu.addEventListener('mouseenter', function () { clearTimeout(promptMenuClose); });
   menu.addEventListener('mouseleave', function () { if (how === 'hover') promptMenuClose = setTimeout(closePromptMenu, 250); });
   document.body.appendChild(menu);
-  menu.agentAnchor = anchor; promptMenu = menu;
+  menu.agentAnchor = anchor; menu.agentHost = el; promptMenu = menu;
   if (how === 'press') { anchor.classList.add('is-pressed'); agentHaptic(8); }
-  if (anchor.classList.contains('prompt-more')) anchor.setAttribute('aria-expanded', 'true');
+  if (anchor.hasAttribute('aria-expanded')) anchor.setAttribute('aria-expanded', 'true');
   // 吹き出し（長押し）なら下に右寄せ、⋯（PC）なら下に左寄せ。背の高い回答は指の位置の下に出す。下に入らなければ上へ
   var r = anchor.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
   var byPoint = how === 'press' && point && r.height > vh * 0.3;
   var below = byPoint ? point.y + 16 : r.bottom + 8, above = byPoint ? point.y - 16 - h : r.top - 8 - h;
   var top = below + h > vh - 8 ? Math.max(8, above) : below;
-  var left = byPoint ? point.x - w / 2 : how === 'press' ? r.right - w : r.left;
+  var left = byPoint ? point.x - w / 2 : how === 'press' || compact ? r.right - w : r.left;
   menu.style.top = top + 'px'; menu.style.left = Math.min(Math.max(8, left), vw - w - 8) + 'px';
-  if (how === 'key') { var first = menu.querySelector('button'); if (first) first.focus({ preventScroll: true }); }
+  if (how === 'key' || how === 'key-toolbar') { var first = menu.querySelector('button'); if (first) first.focus({ preventScroll: true }); }
 }
 (function () {
   var fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -1834,7 +1936,7 @@ function openPromptMenu(el, anchor, how, point) {
     agentLog.addEventListener(t, function (e) {
       if (e.pointerType !== 'mouse' || !(fine && fine.matches)) return;
       if (e.target.closest('.rate-pop')) return;
-      var host = e.target.closest('.agent-reply, .persona-card');
+      var host = e.target.closest('.agent-user, .agent-reply, .persona-card');
       if (host) showAgentHoverReactions(host);
     });
   });
@@ -1845,19 +1947,10 @@ function openPromptMenu(el, anchor, how, point) {
   agentLog.addEventListener('scroll', function () { closeAgentHoverReactions(false); }, { passive: true });
   window.addEventListener('resize', function () { closeAgentHoverReactions(false); });
   document.addEventListener('pointerdown', function (e) {
-    if (agentHoverReactions && !agentHoverReactions.pop.contains(e.target) && !agentHoverReactions.host.contains(e.target)) closeAgentHoverReactions(false);
+    if (agentHoverReactions && !agentHoverReactions.pop.contains(e.target) && !agentHoverReactions.host.contains(e.target) && !(promptMenu && promptMenu.contains(e.target))) closeAgentHoverReactions(false);
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAgentHoverReactions(false); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) closeAgentHoverReactions(false); });
-  // Shinya Takeda の絵文字の札を押す（Enter・スペースでも）。同じ絵文字で重ねる／取り消す
-  agentLog.addEventListener('click', function (e) {
-    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
-    if (badge) { e.preventDefault(); agentTogglePromptReaction(badge); }
-  });
-  agentLog.addEventListener('keydown', function (e) {
-    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
-    if (badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); agentTogglePromptReaction(badge); }
-  });
   // 長押しで開く吹き出し。AI の回答はスマホだけ（PC は操作列がある）。リンク・ボタン・入力・確認質問・採決の表示の上では開かない
   function pressTarget(target) {
     if (!target || !target.closest || target.closest('a, button, input, textarea, select, label, summary, .agent-clarify, .magi-panel, .src-list, .agent-pages, .rate-pop')) return null;
@@ -1869,21 +1962,21 @@ function openPromptMenu(el, anchor, how, point) {
   }
   agentLog.addEventListener('click', function (e) {
     if (promptSuppressClick) { promptSuppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
+    var badge = e.target.closest('button.msg-reaction, button.prompt-reaction');
+    if (badge) {
+      e.stopPropagation();
+      if (!badge.disabled) {
+        var bar = badge.parentElement.querySelector(':scope > .reaction-bar');
+        closeRatePops(false); closePromptMenu();
+        if (bar) rateReply(bar, badge.dataset.emoji);
+      }
+      return;
+    }
     var more = e.target.closest('.prompt-more');
     if (!more) return;
     if (promptMenu && promptMenu.agentAnchor === more) { closePromptMenu(); return; }
-    openPromptMenu(more.closest('.agent-user'), more, e.detail === 0 ? 'key' : 'hover');
+    openPromptMenu(more.closest('.agent-user'), more, e.detail === 0 ? 'key' : 'click');
   }, true);
-  agentLog.addEventListener('mouseover', function (e) {
-    var more = e.target.closest('.prompt-more');
-    if (!more || !(fine && fine.matches)) return;
-    clearTimeout(promptMenuClose);
-    if (!promptMenu || promptMenu.agentAnchor !== more) openPromptMenu(more.closest('.agent-user'), more, 'hover');
-  });
-  agentLog.addEventListener('mouseout', function (e) {
-    var more = e.target.closest('.prompt-more');
-    if (more && promptMenu && promptMenu.agentAnchor === more && !(e.relatedTarget && promptMenu.contains(e.relatedTarget))) promptMenuClose = setTimeout(closePromptMenu, 250);
-  });
   // 長押し：指が 0.45 秒動かなければメニューを開く。動いたら（スクロール）やめる。離したときの click は捨てる
   agentLog.addEventListener('pointerdown', function (e) {
     if (e.pointerType === 'mouse') return;
@@ -2205,7 +2298,7 @@ function showAgentSettings() {
   function count() {
     panel.querySelector('#personal-name-count').textContent = Array.from(name.value.trim()).length + ' / 50';
     panel.querySelector('#personal-instructions-count').textContent = Array.from(instructions.value).length + ' / 2000';
-    panel.querySelector('.personal-actions').hidden = enabled.getAttribute('aria-checked') === String(current.enabled) && name.value === current.preferred_name && instructions.value === current.custom_instructions;
+    panel.querySelector('.personal-actions').hidden = name.value === current.preferred_name && instructions.value === current.custom_instructions;
   }
   function save(deleting) {
     try {
@@ -2217,7 +2310,14 @@ function showAgentSettings() {
       announceAgent(tr('Personalization saved.', 'パーソナライズを保存しました。'));
     } catch (error) { status.textContent = error.message === 'invalid_personalization' ? tr('Check the length and characters of your settings.', '設定の文字数と使用できる文字を確認してください。') : tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
   }
-  enabled.addEventListener('click', function () { setEnabled(enabled.getAttribute('aria-checked') !== 'true'); count(); });
+  enabled.addEventListener('click', function () {
+    try {
+      if (JSON.stringify(readAgentPersonalization()) !== loaded) { status.textContent = tr('Settings changed in another tab. Reopen this panel.', '別のタブで設定が変更されました。この画面を開き直してください。'); return; }
+      var next = { version: 1, enabled: !current.enabled, preferred_name: current.preferred_name, custom_instructions: current.custom_instructions };
+      saveAgentPersonalization(next);
+      current = next; loaded = JSON.stringify(current); setEnabled(current.enabled); status.textContent = ''; count();
+    } catch (_) { status.textContent = tr('Could not save settings. Existing chats and settings were kept.', '設定を保存できませんでした。既存の会話と設定は保持しています。'); }
+  });
   form.addEventListener('input', count); count();
   form.addEventListener('submit', function (event) { event.preventDefault(); save(false); });
   panel.querySelector('[data-personal="cancel"]').addEventListener('click', function () { closeAgentPanels(); document.getElementById('btn-more-agent').focus(); });
@@ -2692,7 +2792,20 @@ function setAgentTitle(text) {
 
 // ---- Reactions persistence --------------------------------------------------
 function reactionStoreFor(bar) {
-  var turn = bar.closest('.agent-turn');
+  if (bar.dataset.target === 'prompt') {
+    var user = bar.closest('.agent-user'), index = Array.from(agentLog.querySelectorAll('.agent-user')).indexOf(user);
+    var prompt = agentHistory.filter(function (it) { return it.role === 'user'; })[index];
+    if (!prompt) return null;
+    if (!prompt.reactions) prompt.reactions = {};
+    // 以前は回答に保存していたプロンプトへの反応を、質問そのものへ移す。
+    var priorTurn = agentReactionTurn(bar), prior = priorTurn && agentHistory.find(function (it) { return it.mid === priorTurn.dataset.mid; });
+    if (prior && prior.reactions && prior.reactions.prompt) {
+      if (!prompt.reactions.prompt) prompt.reactions.prompt = prior.reactions.prompt;
+      delete prior.reactions.prompt;
+    }
+    return prompt.reactions;
+  }
+  var turn = agentReactionTurn(bar);
   var mid = turn && turn.dataset.mid;
   if (!mid) return null;
   var item = agentHistory.find(function (it) { return it.mid === mid; });
@@ -2753,7 +2866,8 @@ function applyReactionsToTurn(turn, reactions) {
   Object.keys(reactions).forEach(function (target) {
     var value = agentRatingOf(reactions[target]);
     var sel = (window.CSS && CSS.escape) ? CSS.escape(target) : target;
-    var bar = value && turn.querySelector('.reaction-bar[data-target="' + sel + '"]');
+    var host = target === 'prompt' ? turn.previousElementSibling : turn;
+    var bar = value && host && host.querySelector('.reaction-bar[data-target="' + sel + '"]');
     if (bar) showRating(bar, value);
   });
 }
@@ -2833,7 +2947,8 @@ function renderHistoryToLog(history) {
   cleanHistoryItems.forEach(function (item, i) {
     if (item.role === 'user') {
       var userEl = agentUserEl(item.content, agentPromptAt(item, cleanHistoryItems[i + 1])), next = cleanHistoryItems[i + 1];
-      if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentPromptReaction(userEl, next.prompt_reaction, next.prompt_reaction_joined === true, false);
+      if (item.reactions && agentRatingOf(item.reactions.prompt)) showRating(userEl.querySelector('.reaction-bar'), agentRatingOf(item.reactions.prompt));
+      if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentReactionBadge(userEl, 'prompt-reaction', next.prompt_reaction, false, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
       agentLog.appendChild(userEl);
     } else if (item.role === 'assistant') {
       var turn = document.createElement('div'); turn.className = 'agent-turn';
@@ -3525,7 +3640,7 @@ function renderAgentPages(replyEl, data) {
 
 function prepareAgentMessages(history, lastContent) {
   // 考えた秒数・受信の印・読み上げの署名・回答の日時・送り直しの印は画面のためだけのもので、次の質問の API には送らない
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, magi_panel, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, prompt_reaction_joined, ...m }) => agentFactHistoryMessage(m));
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, magi_panel, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -3896,7 +4011,7 @@ function agentReplyItem(r) {
     if (speech.speech_lang) item.speech_lang = speech.speech_lang;
   }
   item.mid = r.mid; item.at = Date.now(); item.reactions = r.reactions;
-  if (r.promptReaction) { item.prompt_reaction = r.promptReaction; if (r.promptReactionJoined) item.prompt_reaction_joined = true; }
+  if (r.promptReaction) item.prompt_reaction = r.promptReaction;
   return item;
 }
 
@@ -4110,7 +4225,7 @@ async function agentSend(recovered, retry) {
         prompt_reaction: function (d) {
           var em = d && agentEmojiValid(d.emoji) ? d.emoji : null;
           if (!em || dropped()) return;
-          promptReaction = em; agentPromptReaction(u, em, false, true);
+          promptReaction = em; agentReactionBadge(u, 'prompt-reaction', em, true, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
         },
         pages: function (d) { if (!dropped()) sitePages = d; },
         sources: function (d) { if (!dropped()) replySources = d; },
@@ -4167,7 +4282,7 @@ async function agentSend(recovered, retry) {
     agentHistory.push(agentReplyItem({
       reply: reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, fast: fastReply, sources: replySources, debate: debateData,
       magi: magiMeta, clarify: clarifyReply, nativeRunId: nativeRunId, speech: speechMeta, completed: completed, mid: mid,
-      reactions: pendingReactions[mid] || {}, promptReaction: promptReaction, promptReactionJoined: agentPromptReactionJoined(u),
+      reactions: pendingReactions[mid] || {}, promptReaction: promptReaction,
     }));
     delete pendingReactions[mid];
     // 受信復元のattsは保存用サムネイルなので、画像の再送には使わない。
@@ -4636,7 +4751,7 @@ function renderAgentPrivacy(list, lang, data, nativeRows = []) {
 // トップとアプリで同じ、文字だけの更新履歴。チャットの状態には触れない。
 var agentVersionsCache = null, agentVersionsAt = 0, agentVersionsPending = null;
 function validAgentVersions(data) {
-  return data && Array.isArray(data.versions) && data.versions.length > 0 && data.versions.length <= 60
+  return data && Array.isArray(data.versions) && data.versions.length > 0
     && data.versions.every(function (row) { return row && typeof row.version === 'string'
       && (/^\d{1,2}\.\d[1-9]?$/.test(row.version) || row.version === 'earlier')
       && (row.version === 'earlier' ? row.date === null : typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.date))
@@ -4648,8 +4763,23 @@ function loadAgentVersions() {
   if (agentVersionsCache && Date.now() - agentVersionsAt < 600000) return Promise.resolve(agentVersionsCache);
   if (agentVersionsPending) return agentVersionsPending;
   var controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 6000);
-  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions?format=2'), {signal:controller.signal})
-    .then(function (response) { if (!response.ok) throw new Error('versions_unavailable'); return response.json(); })
+  agentVersionsPending = fetch(AGENT_API.replace(/\/chat$/, '/versions?format=3'), {signal:controller.signal})
+    .then(async function (response) {
+      if (!response.ok) throw new Error('versions_unavailable');
+      // 全履歴は件数で切らず、Workerと同じ512KiBのバイト上限で検査する。
+      var reader = response.body.getReader(), chunks = [], size = 0;
+      try {
+        for (;;) {
+          var part = await reader.read(); if (part.done) break;
+          size += part.value.byteLength;
+          if (size > 524288) { controller.abort(); throw new Error('versions_too_large'); }
+          chunks.push(part.value);
+        }
+      } finally { reader.releaseLock(); }
+      var bytes = new Uint8Array(size), offset = 0;
+      chunks.forEach(function (chunk) { bytes.set(chunk, offset); offset += chunk.byteLength; });
+      return JSON.parse(new TextDecoder().decode(bytes));
+    })
     .then(function (data) { if (!validAgentVersions(data)) throw new Error('versions_invalid');
       agentVersionsCache = data; agentVersionsAt = Date.now(); return data; })
     .catch(function () { return null; }).finally(function () { clearTimeout(timer); agentVersionsPending = null; });
@@ -4665,7 +4795,7 @@ function renderAgentVersions(list, lang, data) {
   }
   data.versions.forEach(function (row) {
     var section = document.createElement('section'), title = document.createElement('h3');
-    title.textContent = row.version === 'earlier' ? (lang === 'ja' ? 'それ以前' : 'Earlier releases') : 'ver ' + row.version;
+    title.textContent = row.version === 'earlier' ? (lang === 'ja' ? '初期のWeb版' : 'Initial web releases') : 'ver ' + row.version;
     section.appendChild(title);
     if (row.date) { var date = document.createElement('time'); date.dateTime = row.date; date.textContent = row.date; section.appendChild(date); }
     var changes = document.createElement('ul');

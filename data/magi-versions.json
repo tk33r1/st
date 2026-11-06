@@ -1,6 +1,58 @@
 {
   "versions": [
     {
+      "version": "7.23",
+      "date": "2026-11-06",
+      "changes": {
+        "ja": [
+          "入力欄の「討議 ∨」で「高速」を選ぶと、3人格の討議を省いて Shinya Takeda が直接すばやく答えるようにしました。",
+          "回答を待つ間も入力でき、送ると今の回答を止めて、送信中の質問と追加の文をまとめて考え直します。送信に失敗したときも、質問と書きかけの文を入力欄に戻します。",
+          "Shinya Takeda があなたのメッセージに付ける絵文字を、話題や言い方に合わせて自由に選ぶようにしました（ハロウィンなら🎃、皮肉には😅など）。",
+          "Shinya Takeda の絵文字を押すと、同じ絵文字で重ねて反応できます。もう一度押すと取り消せます。"
+        ],
+        "en": [
+          "Choose \"Fast\" from \"Debate ∨\" in the input box to skip the three-persona debate and get a quick, direct answer from Shinya Takeda.",
+          "You can keep typing while a reply is on its way; sending stops it and rethinks with your earlier question and the new text together. If sending fails, both go back into the input box.",
+          "Shinya Takeda now picks the emoji on your message freely to match the topic or tone (🎃 for Halloween, 😅 for sarcasm, and so on).",
+          "Tap Shinya Takeda's emoji to react with the same one; tap again to remove it."
+        ]
+      }
+    },
+    {
+      "version": "7.22",
+      "date": "2026-11-06",
+      "changes": {
+        "ja": [
+          "パーソナライズのオン・オフを切り替えると、すぐに保存されるようにしました。",
+          "呼び方とカスタム指示は、これまでどおり保存ボタンで確定します。",
+          "一時的に7.3として公開した版番号を7.22に訂正しました。"
+        ],
+        "en": [
+          "The personalization switch now saves immediately.",
+          "Name and custom instructions are still saved with the Save button.",
+          "Corrected the version number from the briefly published 7.3 to 7.22."
+        ]
+      }
+    },
+    {
+      "version": "7.21",
+      "date": "2026-11-05",
+      "changes": {
+        "ja": [
+          "更新履歴を全件表示し、3.4〜2.1の古い版も個別に確認できるようにしました。",
+          "自分のプロンプトにも絵文字を付けられ、自分のリアクションはクリック・タップで取り消せます。同じ絵文字をまとめ、2件以上のときだけ件数を表示します。",
+          "PCの絵文字の枠を小さくし、選択中は下線で示すようにしました。「…」からコピー・選択・共有ができます。",
+          "3人格の雲の四隅の欠け・二重線を修正しました。回答受信中のリアクション保存、出典付きの共有、キーボード操作も改善しました。"
+        ],
+        "en": [
+          "Release history now shows every recorded version, including 3.4 through 2.1, rather than hiding older entries.",
+          "You can react to your own messages and remove your reactions by clicking or tapping them. Matching emoji are combined, with counts shown only from two reactions.",
+          "Made the PC emoji bar smaller, marked selections with an underline, and added Copy, Select and Share under the ellipsis menu.",
+          "Fixed broken cloud borders on persona cards, kept reactions saved while replies load, preserved sources when sharing, and restored keyboard focus after closing menus."
+        ]
+      }
+    },
+    {
       "version": "7.2",
       "date": "2026-11-05",
       "changes": {

@@ -376,14 +376,16 @@ the top page display, Android `versionName`, and the first entry in
 Autonomous updates leave Android `versionCode` unchanged and do not create APKs,
 GitHub Releases, or tags. Starting with the next APK build, set `versionCode` to
 major × 100 plus the two-digit fractional part (`5.9` → 590, `5.91` → 591,
-`6.0` → 600). `verify-apk.py` checks this rule against Gradle and the actual APK;
+`6.0` → 600). The mistakenly distributed 7.3 used code 730; 7.22 uses 722 at the owner’s request and cannot update 7.3 in place. Uninstalling 7.3 deletes its local data. Do not reuse 7.3. `verify-apk.py` checks this rule against Gradle and the actual APK;
 the source regression test checks the aligned display versions independently of
 APK build timing. Owner Release tags retain the `vX.Y` form.
 
 Publish the Worker before the web changes. Updated screens request
-`/magi2/versions?format=2`, which includes `X.YZ`. Older APKs and cached screens
-omit `format=2` and receive only `X.Y` entries, so autonomous releases do not
-appear in their history. Add an `X.YZ` history entry only after both Worker and
+`/magi2/versions?format=3` for the complete recorded history, including `X.YZ`.
+The body is limited to 512 KiB instead of truncating the list at 60 entries.
+Cached `format=2` screens still receive at most 60 entries, including `X.YZ`.
+Older APKs without a format receive at most 60 `X.Y` entries. `earlier` describes
+only the initial releases without separate records. Add an `X.YZ` history entry only after both Worker and
 screens have been published. Bump `app.js?v=` and the `sw.js` cache for PWA
 updates; Android receives the changed shell with the next APK. Keep each used
 daily version number reserved even after a revert, and stop at `X.Y9`; see

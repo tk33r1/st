@@ -213,8 +213,8 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 
 - 本人の公開は `X.Y`（例: 6.0）、継続改善の自律公開は小数第2位を上げた `X.YZ`（Zは1〜9。例: 6.01）を使う。`6.00`・`5.90`・`5.100` は使わない。
 - `APP_VERSION`・トップページの `AGENT_SCREEN_VERSION`・Android の versionName・`data/magi-versions.json` の先頭は同じ表示にする。package.json と package-lock.json の version は `X.Y.0` / `X.Y.Z`（例: 6.01 → 6.0.1）でそろえる。
-- 自律更新では versionCode を変えない。次に APK を作るときから、整数×100＋2桁の小数部（5.9 → 590、5.91 → 591、6.0 → 600）にする。実物との照合は `magi-app/scripts/verify-apk.py` で行う。
-- 更新履歴は新画面が `/magi2/versions?format=2` で取得する。`format=2` の無い旧 APK には X.YZ を除いて返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。`data/magi-versions.json` の件数は制限せず古い版も消さない。画面と配布済みのAPKは60件以内しか受け付けないので、Workerが新しい60件（末尾のearlierを含む）に絞って返す（`displayVersions`）。
+- 自律更新では versionCode を変えない。次に APK を作るときから、整数×100＋2桁の小数部（5.9 → 590、5.91 → 591、6.0 → 600）にする。誤配布した7.3（730）は再利用しない。本人指定の7.22（722）は7.3から上書きできず、アンインストールすると端末のデータは消える。実物との照合は `magi-app/scripts/verify-apk.py` で行う。
+- 更新履歴は新画面が `/magi2/versions?format=3` で全件取得する。件数で省略せず、Workerと画面の両方で512KiBの本文上限を検査する。旧画面の `format=2` はX.YZを含む60件、形式指定の無い旧APKにはX.YZを除いた60件を返す。Worker → 画面の順に公開し、両方の公開後にだけ X.YZ の履歴を足す。`data/magi-versions.json` の古い版は削除・統合せず、`earlier` は個別の記録がない初期版だけを表す。
 - 自律更新で版を上げる条件・番号の再利用禁止・上限は [継続改善設計§2.4](workers/magi2/magi2継続改善設計書.md) に従う。
 
 ### MAGI の継続改善
@@ -229,7 +229,7 @@ Cloudflare は route の重複を許さないため、Worker 同士で接頭辞�
 - `magi-chat-validation.yml` がWeb/PWAの通常・一時×パーソナライズ有効・無効×初回・継続、保存復元と、別ID Android APKの実Java受信・保存・再起動復元を合成応答で検査する。前の回答を今回の成功に数えない。
 - Pagesの `build.sh` は会話イベントの契約を検査し、Cloudflare上では同じSHAの上記workflow成功（pushの実行か、botのpush後に `push-with-retry.sh` が起動したworkflow_dispatchの実行）を待つ。通信エラー・未完了・取消・結果不在では公開しない。magi2のActions公開も同じ検査を先に通す。
 - Androidの一般配布は `.github/scripts/magi-release-gate.mjs --publish` を使う。コミット照合済みの最終署名APK、同じソースのWeb/Android検査、本番疎通の観測結果、同じSHAのCI成功がそろわなければ公開しない。`gh release create/edit/upload`を直接使ってこの検査を省略しない。
-- 本番疎通の観測器は送信を自動実行しない。本人の許可と既存の検証予算に従う。費用・予算が不明なら未実施のまま配布を止め、合成検査で代用したことにしない。
+- 本番疎通は本人の許可と既存の検証予算に従う。固定入力を照合したうえでエージェントが送信してよい。費用・予算が不明なら未実施のまま配布を止め、合成検査で代用したことにしない。
 - CloudflareやGitHubの管理者権限による直接操作まではこのコードで禁止できない。通常経路を迂回して公開済みと報告しない。
 
 ## コーディング規約

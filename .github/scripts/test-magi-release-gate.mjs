@@ -15,6 +15,13 @@ function fixture() {
     production: {...report('production'), apkSha256, installedApkVerified: true, personalizationOn: true, normalMode: true, observedSending: true, newAnswer: true, complete: true}};
 }
 test('公開ゲート: 全必須検査と最終APKが一致すると合格', () => assert.equal(validateReports(fixture()).pass, true));
+test('公開ゲート: 本人指定の7.22訂正だけが7.3からの再インストールを記録する', () => {
+  const f = fixture(); f.apk.versionName = '7.22'; f.apk.versionCode = 722; f.referenceVersionCode = 730;
+  f.referenceApkSha256 = 'ddd3e2ca60742365bf659b6dc25cd55c747d58e5e545c2db1f5a72335ae67c4c';
+  assert.throws(() => validateReports(f)); f.allow722Correction = true;
+  assert.equal(validateReports(f).requiresReinstallFrom73, true);
+  for (const change of [x => { x.referenceApkSha256 = 'a'.repeat(64); }, x => { x.apk.versionName = '7.21'; }, x => { x.referenceVersionCode = 731; }]) { const copy = structuredClone(f); change(copy); assert.throws(() => validateReports(copy)); }
+});
 for (const [name, mutate] of [
   ['本番の未実施', f => { delete f.production; }],
   ['Androidの失敗', f => { f.android.pass = false; }],
