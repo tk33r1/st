@@ -1,6 +1,22 @@
 {
   "versions": [
     {
+      "version": "7.4",
+      "date": "2026-11-07",
+      "changes": {
+        "ja": [
+          "MAGIの説明文を、狭い画面でもWeb・アプリともに1行で表示するようにしました。",
+          "採決結果が届いた後も、追加の文を送ると元の質問とまとめて考え直すようにしました。通常の停止では採決結果を残します。",
+          "Androidで受信を復元した後も考え直しができ、画像付きの質問は元画像を開き直して送り直すようにしました。"
+        ],
+        "en": [
+          "The MAGI description now stays on one line on both Web and app, including narrow screens.",
+          "Sending an addition after a vote result now rethinks with the original question and the new text together. Stopping normally still keeps the vote result.",
+          "Rethinking also works after Android restores a pending reply, reopening original images when resending an image question."
+        ]
+      }
+    },
+    {
       "version": "7.24",
       "date": "2026-11-06",
       "changes": {
