@@ -1,5 +1,319 @@
 [
   {
+    "date": "20261107",
+    "title": "2026年11月7日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリ初のブラックフライデーが11月24日まで実施され、イオンもEC限定セールを早期に打ち出すなど、年末商戦の前倒しが進んでいます。 10月の既存店売上は2.4%減となりましたが、家具・キッチン用品は好調で、カテゴリーごとの明暗が鮮明になっています。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリ初のブラックフライデーが11月24日まで実施され、イオンもEC限定セールを早期に打ち出すなど、年末商戦の前倒しが進んでいます。",
+      "10月の既存店売上は2.4%減となりましたが、家具・キッチン用品は好調で、カテゴリーごとの明暗が鮮明になっています。",
+      "レンジグリルや新ブランド「life+audio」「life+one」などの商品が生活課題の解決を訴求し、模様替え動画や壁面収納の投稿が空間提案への共感を広げています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ初のブラックフライデー、11月24日まで実施",
+        "original_title": "",
+        "source": "Yahoo!ニュース（ネットショップ担当者フォーラム）",
+        "source_id": "JP-01",
+        "summary": "ニトリが初めてブラックフライデーを実施し、11月24日までの期間で販売を行うと、ネットショップ担当者フォーラムのアクセスランキングで紹介されました。同じランキングでは、イオンもブラックフライデーのEC限定セールを10月31日から11月16日まで行うと伝えられており、大手小売各社の年末商戦の早期化が鮮明になっています。",
+        "why_it_matters": "ニトリにとってブラックフライデーは、通常のセールとは異なる大型の価格訴求の機会です。SPAとして原価と在庫を自社でコントロールできる強みを活かし、限定価格と日常価格のメリハリをどう設計するかが焦点になります。期間を長く取る設計は購買の分散にもつながり、競合の動きと比較した価格戦略の巧拙が問われます。",
+        "tags": [
+          "ニトリ",
+          "ブラックフライデー",
+          "価格戦略",
+          "年末商戦"
+        ],
+        "search_terms": [
+          "ブラックフライデー 価格訴求",
+          "Black Friday sale",
+          "Nitori Black Friday 2026",
+          "年末商戦 前倒し"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFA4MTlMVlRhdktaX3lDb2V0NWpfeU5RQlREQ1NMTWxlU1pnQnJpM1VqdjRlWFRQYnVDV2xzQlN2Vlh0am50Y2MwUDRhdzg2UTEzRnZMYzMtdWpOVDloQWFDWGVGVTc4VDhocFE4U2duRk10T3g5bjlFbUtCUEFvaG8?oc=5",
+        "source_pub_ts": 1793948469
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリの10月既存店売上は2.4%減、家具・キッチン用品は好調",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-06",
+        "summary": "流通スーパーニュースは、ニトリの10月の既存店売上高が前年同月比2.4%減だったと報じました。一方で家具やキッチン用品などのカテゴリーは好調だったとされ、部門ごとに明暗が分かれた形です。記事では既存店の減少幅とカテゴリー別の動きが中心に伝えられており、来店客数や客単価の詳細は確認できません。",
+        "why_it_matters": "既存店が減少する中で家具・キッチン用品が伸びたことは、暮らしの基盤となる商品群で需要を取り込めている証左といえます。物価高で節約志向が強まる局面では、低価格で機能的なPBを揃える強みが再評価されやすくなります。今後は客数回復策と、新規出店やEC強化による既存店の落ち込みの補完がどこまで進むかが注目点です。",
+        "tags": [
+          "ニトリ",
+          "既存店",
+          "業績",
+          "家具",
+          "キッチン用品"
+        ],
+        "search_terms": [
+          "既存店売上 減少",
+          "same-store sales decline",
+          "Nitori October sales",
+          "家具 キッチン用品 好調"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9GUERSMklXR05YbnQ0b1hXUU1YU3VYUWQzcjBNT2NVSVJwMnhOTWpTLW1xbDZCNXVXWFZnSTBYcm9nMmV1bDNDb0kzNXFGM0pBUjE4ZTlzb1VpQQ?oc=5",
+        "source_pub_ts": 1793926203
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのレンジグリル、「火加減不要」「洗い物が楽」と人気に",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-02",
+        "summary": "ねとらぼリサーチの記事で、ニトリの簡単に調理できるレンジグリルが人気として紹介されました。利用者からは「火加減や時間を気にせず洗い物も楽」「お魚がこんがり焼けておいしくなった」といった声が寄せられており、調理の手間と後片付けの負担を減らせる点が評価されています。",
+        "why_it_matters": "魚焼きグリルの代わりとして、火加減の調整や焼き時間の管理を不要にする手軽さは、共働き世帯や単身世帯の調理ニーズと合致します。焼きやすさと洗い物の少なさという生活者の不満点を解消する設計が、リピートや口コミを生む要因になります。キッチン用品のヒット商品を育てるには、具体的な利用シーンを売り場で示すことが重要です。",
+        "tags": [
+          "ニトリ",
+          "キッチン用品",
+          "商品開発",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "レンジグリル 調理家電",
+          "microwave grill",
+          "Nitori kitchen appliance",
+          "時短調理 グリル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFA1TE9KRUo3NGNIWHF6aTNqVUVrRFR2TmNxZTlIVWNQVy1aVXdqbTJ0Q0JsMHhlcDNoLW10LUV3UGRPVUxPYkVGbHJqVEVHZWFMb1l1X01qaHhMM2tWUFBCTjVmTHg4NjhuczJF?oc=5",
+        "source_pub_ts": 1793940000
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの新ブランド「life+audio」「life+one」、ノイキャンヘッドホンと半固体モバイルバッテリーを先行販売",
+        "original_title": "",
+        "source": "Dtimes",
+        "source_id": "JP-05",
+        "summary": "ニトリの新ブランド「life+audio」「life+one」で、ノイズキャンセリングヘッドホンや半固体モバイルバッテリーの先行販売が伝えられました。すでに発表されていたワイヤレスイヤホン（各2,990円）の全国展開に続き、オーディオと充電関連へとラインアップが広がる形です。",
+        "why_it_matters": "家具・インテリアで培った企画力と低価格の強みを、ガジェット領域へ広げる動きとして注目されます。ノイズキャンセリングや半固体電池といった付加価値の高いカテゴリーを手頃に揃えられれば、ニトリへの来店理由が生活雑貨から電子機器へと広がります。自社企画の品質基準と保証体制を明示できるかが、家電領域での信頼獲得の鍵になります。",
+        "tags": [
+          "ニトリ",
+          "life+audio",
+          "PB",
+          "オーディオ"
+        ],
+        "search_terms": [
+          "ノイズキャンセリングヘッドホン",
+          "wireless earbuds",
+          "semi-solid power bank",
+          "PB 新ブランド"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE9STHhZNGhvRzlaSWMtT283LTB2R1pqMEsxQzJncHBzOHFRSWpmQkg3ZW41bm0tNVZTYU9VeEpiR3N2NkJEWXc?oc=5",
+        "source_pub_ts": 1793927540
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "リビング模様替えの動画とニトリ購入品紹介、20万回再生の反響",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokで「ダブル紹介」として、リビングを模様替えした様子とニトリでの購入品を紹介する投稿が20万回再生を記録しました。模様替えの後にニトリ商品を並べる構成で、いいねは3,438件に達しています。部屋の変化を見せてから商品を示す流れが、多くの視聴者の関心を集めたと考えられます。",
+        "why_it_matters": "模様替えの前後を見せる構成は、ニトリの家具や収納をどう組み合わせれば部屋が変わるかを具体的に伝えるものです。これは売り場での空間提案と通じる発想です。生活者が自宅の空間に置き換えて想像できることが共感と購入の後押しになり、単品訴求から空間全体の提案へ軸を移す重要性を示す事例です。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "模様替え",
+          "購入品紹介"
+        ],
+        "search_terms": [
+          "模様替え 動画",
+          "room makeover video",
+          "TikTok Nitori haul",
+          "ルームツアー 購入品"
+        ],
+        "url": "https://www.tiktok.com/@user4451996609038/video/7702454504523844886",
+        "source_pub_ts": 1793367445.0
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "壁面収納に棚板を足して飾る計画、約17,000円の組み合わせが共感を集める",
+        "original_title": "",
+        "source": "X（旧Twitter）",
+        "source_id": "SNS-02",
+        "summary": "Xで、ニトリの壁面収納に棚板を追加して飾る計画を夫婦の会話形式で投稿したものが、119いいねを集めました。全体の費用は約17,000円とされ、推しグッズを飾るための収納を少しずつ揃えていく様子が語られています。",
+        "why_it_matters": "壁面収納は床面積を使わずに飾るスペースを広げられるため、グッズ好きの生活者にとって拡張性が購入動機になります。棚板を後から足せる構成は、少しずつ買い足す心理に合い、結果として購入額が積み上がる導線にもなります。「飾る」という目的から商品を提案する売り場づくりが有効だと示唆されます。",
+        "tags": [
+          "ニトリ",
+          "壁面収納",
+          "SNS",
+          "収納"
+        ],
+        "search_terms": [
+          "壁面収納 飾る",
+          "wall shelf storage",
+          "display shelf Nitori",
+          "棚板 追加 収納"
+        ],
+        "url": "https://x.com/FVvwcGdYQVxsSX8/status/2118494112018284791",
+        "source_pub_ts": 1793962800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのミンユンギ買った pic.x.com/jVZmZEK5WZ",
+        "platform": "x",
+        "author": "@you___s613",
+        "url": "https://x.com/you___s613/status/2118577205261599174",
+        "likes": 602,
+        "retweets": 33,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:32",
+        "captured_at": "",
+        "text": "ニトリのミンユンギ買った pic.x.com/jVZmZEK5WZ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "私 どう飾る？ 夫 ニトリの壁面収納の棚を買おうと思うんだ！棚板も追加してさ、いっぱい置けるよ 私 へー全部で17,000円くらいか、いいね...",
+        "platform": "x",
+        "author": "@FVvwcGdYQVxsSX8",
+        "url": "https://x.com/FVvwcGdYQVxsSX8/status/2118494112018284791",
+        "likes": 119,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:02",
+        "captured_at": "",
+        "text": "私 どう飾る？ 夫 ニトリの壁面収納の棚を買おうと思うんだ！棚板も追加してさ、いっぱい置けるよ 私 へー全部で17,000円くらいか、いいね♡(金銭感覚が崩壊🤣) 夫 ちいかわグッズはこの辺でさ、あとは全部、羽生のでいいよ 私 おー！豪華！大賛成！ ちいかわvs羽生くん 平和的解決😂 #羽生結弦",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "買い物は食材や日用品の他に猫たちのお土産に新しい秋冬用ベッドを買い、とりあえずそのへんに置いて購入したものを整理収納してふと見たらあずきがも...",
+        "platform": "x",
+        "author": "@Lutea_BlackCat",
+        "url": "https://x.com/Lutea_BlackCat/status/2118617065187910048",
+        "likes": 56,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:10",
+        "captured_at": "",
+        "text": "買い物は食材や日用品の他に猫たちのお土産に新しい秋冬用ベッドを買い、とりあえずそのへんに置いて購入したものを整理収納してふと見たらあずきがもう寝てる🤣 誰も使わないよりずっといいのだが早えーよww ニトリNウォームのペットベッドです pic.x.com/bQXvfa9ngj",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "もりのみやキューズモール、子育て世帯が 欲しい店が揃いすぎてる。 ライフとエディオン、西松屋、セリア、 ニトリ デコホームや薬局も。 それに...",
+        "platform": "x",
+        "author": "@mansion_neco",
+        "url": "https://x.com/mansion_neco/status/2118672745420783767",
+        "likes": 52,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:52",
+        "captured_at": "",
+        "text": "もりのみやキューズモール、子育て世帯が 欲しい店が揃いすぎてる。 ライフとエディオン、西松屋、セリア、 ニトリ デコホームや薬局も。 それにフードコートも芝生広場もある。 大阪市都心の駅近で、この充実ぶり。 「とりあえずキューズモール」で日々の 用事が片付く生活、羨ましい。 pic.x.com/VVQbZ49Twb",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "机組み立てしようと思ってたのに気付いたら寝落ちしてた、今日まではニトリの机使いますか🤝",
+        "platform": "x",
+        "author": "@Mosura_meso",
+        "url": "https://x.com/Mosura_meso/status/2118677019043262810",
+        "likes": 48,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:08",
+        "captured_at": "",
+        "text": "机組み立てしようと思ってたのに気付いたら寝落ちしてた、今日まではニトリの机使いますか🤝",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒 - 008",
+        "platform": "tiktok",
+        "author": "@user4451996609038",
+        "url": "https://www.tiktok.com/@user4451996609038/video/7702454504523844886",
+        "likes": 3438,
+        "retweets": 15,
+        "views": 200300,
+        "comments": 9,
+        "posted_on": "2026-10-30 22:37",
+        "captured_at": "2026-11-06T21:42:59.679041+09:00",
+        "text": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒 - 008",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒 - 006",
+        "platform": "tiktok",
+        "author": "@user4451996609038",
+        "url": "https://www.tiktok.com/@user4451996609038/video/7702453361534176534",
+        "likes": 84,
+        "retweets": 2,
+        "views": 11100,
+        "comments": 0,
+        "posted_on": "2026-10-30 22:33",
+        "captured_at": "2026-11-06T21:42:59.679041+09:00",
+        "text": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒 - 006",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-08",
+        "title": "ニトリのバスケット持ってる人〜‼️ #ニトリ#生活音 #日常vlog #購入品紹介 #CapCut",
+        "platform": "tiktok",
+        "author": "@ぽっちゃりこなす🍆",
+        "url": "https://www.tiktok.com/@k____lifestyle/video/7703124822506671380",
+        "likes": 49,
+        "retweets": 0,
+        "views": 11000,
+        "comments": 2,
+        "posted_on": "2026-11-01 17:58",
+        "captured_at": "2026-11-06T21:42:59.679041+09:00",
+        "text": "ニトリのバスケット持ってる人〜‼️ #ニトリ#生活音 #日常vlog #購入品紹介 #CapCut",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261106",
     "title": "2026年11月6日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリは東京都足立区に「大谷田店」を11月6日にオープンする。国内の店舗網拡大が続いていることを示す動きだ。 デコホームの「ご当地デコネコ」やNウォームのベビーおでかけ用品など、既存ブランドを新しい切り口で広げる商品展開が見られた。",

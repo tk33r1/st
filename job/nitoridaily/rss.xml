@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 06 Nov 2026 07:50:34 +0900</lastBuildDate>
+    <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 07 Nov 2026 06:59:49 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月7日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261107/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261107/</guid>
+      <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ニトリ初のブラックフライデーが11月24日まで実施され、イオンもEC限定セールを早期に打ち出すなど、年末商戦の前倒しが進んでいます。 10月の既存店売上は2.4%減となりましたが、家具・キッチン用品は好調で、カテゴリーごとの明暗が鮮明になっています。</description>
+    </item>
     <item>
       <title>2026年11月6日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261106/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261024/</guid>
       <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
       <description>10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。</description>
-    </item>
-    <item>
-      <title>2026年10月23日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261023/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261023/</guid>
-      <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリ初の家具・大型家電「ブラックフライデー」が10月30日から始まり、約600アイテムを期間限定価格で提供します。価格訴求を強めた年末商戦の大型施策です。 スマートバスマットの新色ライムグリーンは、ニトリ会員の投票で決まりました。顧客の声を企画に反映する共創型の商品開発が進んでいます。</description>
     </item>
   </channel>
 </rss>
