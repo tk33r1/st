@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- 検査用の別ID（-PmagiB3Probe=true）だけで使う。本番の「MAGI」と端末で見分けられるようにする。 -->
+<resources>
+    <string name="app_name">MAGI b3</string>
+    <string name="title_activity_main">MAGI b3</string>
+</resources>

@@ -46,6 +46,7 @@ import okhttp3.Response;
 @CapacitorPlugin(name = "MagiUpdate")
 public class MagiUpdatePlugin extends Plugin {
     static final long LIMIT = 64L * 1024 * 1024;
+    private static final String PRODUCTION = "st.tk.magi";
     private static final String RELEASES = "https://github.com/tk33r1/st/releases/download/";
     private static final Pattern VERSION = Pattern.compile("\\d{1,2}\\.\\d[1-9]?");
     private static final Pattern SHA256 = Pattern.compile("[0-9a-f]{64}");
@@ -66,6 +67,8 @@ public class MagiUpdatePlugin extends Plugin {
     @PluginMethod public void install(PluginCall call) {
         String version = call.getString("version", ""), sha256 = call.getString("sha256", "");
         if (!VERSION.matcher(version).matches() || !SHA256.matcher(sha256).matches()) { call.reject("invalid_release"); return; }
+        // 検査用の別ID（MAGI b3）は公開ReleaseのAPKとパッケージ名が違い、入れ替えられない。ダウンロード前に断る。
+        if (!production()) { call.reject("probe_build", "probe_build"); return; }
         if (!busy.compareAndSet(false, true)) { call.reject("busy"); return; }
         // 複製側から許可画面を開くと、機種によって通常側の設定へ転送される。
         // 通常側を許可してもこのプロファイルには反映されないので、ダウンロード前に案内へ戻す。
@@ -84,8 +87,11 @@ public class MagiUpdatePlugin extends Plugin {
     @PluginMethod public void information(PluginCall call) {
         JSObject data = new JSObject();
         data.put("needsMainProfile", needsMainProfile());
+        data.put("probe", !production());
         call.resolve(data);
     }
+
+    private boolean production() { return PRODUCTION.equals(getContext().getPackageName()); }
 
     private boolean needsMainProfile() {
         UserManager users = getContext().getSystemService(UserManager.class);

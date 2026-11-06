@@ -54,6 +54,8 @@ android {
         }
     }
     buildFeatures { buildConfig = true }
+    // 検査用の別IDは名前を「MAGI b3」にして、端末で本番のMAGIと取り違えないようにする。
+    if (magiB3Probe) sourceSets.debug.res.srcDirs += 'src/b3probe/res'
 }
 
 repositories {

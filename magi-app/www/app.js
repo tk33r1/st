@@ -5423,6 +5423,15 @@ function newerRelease(parts, current) {
   return !!parts && !!installed && releaseCode(parts) > releaseCode(installed);
 }
 function updateStore(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+// ネイティブが返す失敗の理由ごとに、利用者が次にできることを書く。知らない理由は従来の文言。
+function updateFailureText(code) {
+  if (code === 'busy') return tr('The update is already downloading. Wait a moment and try again.', 'アップデートをダウンロード中です。少し待ってから、もう一度お試しください。');
+  if (code === 'probe_build') return tr('This is MAGI b3, a test build, so it does not update itself. Open the regular MAGI app to update, or get it from the download page.', 'このアプリは検査用の「MAGI b3」なので、アプリ内では更新しません。通常の「MAGI」を開いて更新するか、ダウンロードページから入手してください。');
+  if (code === 'package_mismatch') return tr('The downloaded file is for a different app, so it cannot replace this one. Get MAGI from the download page.', 'ダウンロードしたファイルが、このアプリとは別のアプリ用でした。このアプリには入れられません。ダウンロードページから入手してください。');
+  if (code === 'signature_mismatch') return tr('The update is signed differently from this app, so Android cannot install it over this copy. To switch, uninstall this app and install from the download page. Chats stored only on this device will be deleted.', 'このアプリと署名が違うため、上書きで更新できません。入れ替えるには、このアプリをアンインストールしてからダウンロードページで入れ直してください。この端末だけにある会話は消えます。');
+  if (code === 'not_newer') return tr('The downloaded version is not newer than this app, so it cannot be installed over it.', 'ダウンロードした版が、入っている版より新しくないため入れられません。');
+  return tr('Could not download or verify the update. Try again, or use the download page.', 'アップデートを取得・確認できませんでした。もう一度お試しいただくか、ダウンロードページから入手してください。');
+}
 // 公開中の最新Releaseを5秒で諦めて取る。APKの添付にGitHubが記録したSHA-256があれば返し、ネイティブはそれと照合してから入れる。
 async function fetchLatestRelease() {
   var controller = new AbortController(), timer;
@@ -5499,6 +5508,7 @@ function showAppUpdatePanel() {
       try {
         var info = await plugin.information();
         if (!panel.isConnected) return;
+        if (info.probe) return show(found + updateFailureText('probe_build'), '', null, true);
         if (info.needsMainProfile) return showInstallPermissionHelp(true);
       } catch (_) { if (!panel.isConnected) return; }
     }
@@ -5522,8 +5532,9 @@ function showAppUpdatePanel() {
       else showInstallPermissionHelp(result.state === 'profile');
     } catch (error) {
       if (!panel.isConnected) return;
-      show(error && error.code === 'busy' ? tr('The update is already downloading. Wait a moment and try again.', 'アップデートをダウンロード中です。少し待ってから、もう一度お試しください。')
-        : tr('Could not download or verify the update. Try again, or use the download page.', 'アップデートを取得・確認できませんでした。もう一度お試しいただくか、ダウンロードページから入手してください。'), tr('Try again', '再試行'), install, true);
+      // 入れ直しても結果が変わらない理由には「再試行」を出さない。
+      var code = error && error.code, settled = /^(probe_build|package_mismatch|signature_mismatch|not_newer)$/.test(code || '');
+      show(updateFailureText(code), settled ? '' : tr('Try again', '再試行'), settled ? null : install, true);
     } finally { listener.remove(); }
   }
   panel.querySelector('.agent-page-back').focus();

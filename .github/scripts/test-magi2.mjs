@@ -5232,6 +5232,19 @@ test('アップデートの確認はAPKの添付に記録されたSHA-256だけ�
   for(const reply of [{tag_name:'v4.7',draft:true},{tag_name:'v4.7',prerelease:true},{tag_name:'4.7'}])
     assert.equal(await appUpdateFixture({reply}).ctx.fetchLatestRelease(),null);
 });
+test('アップデートの失敗は理由ごとに次の操作を書き、検査用の別IDはネイティブと画面の両方で断る', () => {
+  const f=appUpdateFixture();f.ctx.tr=(en,ja)=>ja;
+  const text=code=>f.ctx.updateFailureText(code);
+  assert.match(text('probe_build'),/MAGI b3/);assert.match(text('package_mismatch'),/別のアプリ/);
+  assert.match(text('signature_mismatch'),/会話は消えます/);assert.match(text('not_newer'),/新しくない/);
+  assert.match(text('busy'),/ダウンロード中/);
+  for(const code of [undefined,'download_failed','invalid_release'])assert.match(text(code),/取得・確認できませんでした/);
+  assert.match(between(mobile,'// APP_UPDATE_BEGIN','// APP_UPDATE_END'),/if \(info\.probe\) return show\(/);
+  const plugin=read('magi-app/android/app/src/main/java/st/tk/magi/MagiUpdatePlugin.java');
+  assert.match(plugin,/if \(!production\(\)\) \{ call\.reject\("probe_build"/);assert.match(plugin,/data\.put\("probe", !production\(\)\)/);
+  assert.match(read('magi-app/android/app/src/b3probe/res/values/strings.xml'),/<string name="app_name">MAGI b3<\/string>/);
+  assert.match(read('magi-app/android/app/build.gradle'),/if \(magiB3Probe\) sourceSets\.debug\.res\.srcDirs \+= 'src\/b3probe\/res'/);
+});
 test('画面の言語は保存した選択、無ければ端末の言語で決め、保存できなくても切り替えられる', () => {
   for (const [saved, language, expected] of [[null, 'ja-JP', 'ja'], [null, 'ja', 'ja'], [null, 'en-US', 'en'], [null, 'jav', 'en'], [null, '', 'en'],
     ['en', 'ja-JP', 'en'], ['ja', 'en-US', 'ja'], ['fr', 'ja-JP', 'ja'], ['throw', 'ja-JP', 'ja']]) {
