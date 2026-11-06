@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.24",
+      "date": "2026-11-06",
+      "changes": {
+        "ja": [
+          "Android の「バージョン情報」でアップデートに失敗したとき、理由（別のアプリ用のファイル・署名の違い・新しくない版など）と次にできることを表示するようにしました。",
+          "入れ直しても結果が変わらない失敗では「再試行」を出さず、ダウンロードページへ案内するようにしました。"
+        ],
+        "en": [
+          "When an update fails in \"Version information\" on Android, MAGI now tells you why (a file for a different app, a different signature, a version that is not newer, and so on) and what you can do next.",
+          "For failures that retrying cannot fix, MAGI no longer offers \"Try again\" and points you to the download page instead."
+        ]
+      }
+    },
+    {
       "version": "7.23",
       "date": "2026-11-06",
       "changes": {
