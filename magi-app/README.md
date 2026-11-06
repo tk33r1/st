@@ -366,9 +366,10 @@ See [B1 implementation record](B1実装評価20261020.md) for coverage and outst
 release checks. A separate test application ID must be used for destructive
 fixtures on a physical device; never clear the installed production app.
 
-**Version display must always match the release.** Owner releases use `X.Y`
-(e.g. `6.0`); autonomous daily releases use `X.YZ`, with Z from 1 to 9 (e.g.
-`6.01`). Do not use `6.00`, `5.90`, or `5.100`. Keep `APP_VERSION` in `www/app.js`,
+**Version display must always match the release.** Major updates use `X.Y`;
+minor updates use `X.Y.Z`, regardless of whether the owner or an agent requests
+publication. A bug fix does not justify a major version bump. An explicit version
+specified by the owner takes precedence. Keep `APP_VERSION` in `www/app.js`,
 the top page display, Android `versionName`, and the first entry in
 `data/magi-versions.json` aligned. The npm version in `package.json` and
 `package-lock.json` is `X.Y.0` / `X.Y.Z` (`6.01` becomes `6.0.1`).
@@ -376,9 +377,13 @@ the top page display, Android `versionName`, and the first entry in
 Autonomous updates leave Android `versionCode` unchanged and do not create APKs,
 GitHub Releases, or tags. Starting with the next APK build, set `versionCode` to
 major × 100 plus the two-digit fractional part (`5.9` → 590, `5.91` → 591,
-`6.0` → 600). The mistakenly distributed 7.3 used code 730; 7.22 uses 722 at the owner’s request and cannot update 7.3 in place. Uninstalling 7.3 deletes its local data. Do not reuse 7.3. `verify-apk.py` checks this rule against Gradle and the actual APK;
+`6.0` → 600). The owner has explicitly made 7.3 and 7.4 available for reuse
+(2026-11-07): the earlier publications were agent mistakes, not official owner
+releases. Check Android upgrade compatibility against the actual installed APK;
+do not change the owner's version number to work around versionCode constraints.
+`verify-apk.py` checks Gradle and the actual APK;
 the source regression test checks the aligned display versions independently of
-APK build timing. Owner Release tags retain the `vX.Y` form.
+APK build timing. Release tags follow the owner's approved display version.
 
 Publish the Worker before the web changes. Updated screens request
 `/magi2/versions?format=3` for the complete recorded history, including `X.YZ`.
@@ -387,8 +392,8 @@ Cached `format=2` screens still receive at most 60 entries, including `X.YZ`.
 Older APKs without a format receive at most 60 `X.Y` entries. `earlier` describes
 only the initial releases without separate records. Add an `X.YZ` history entry only after both Worker and
 screens have been published. Bump `app.js?v=` and the `sw.js` cache for PWA
-updates; Android receives the changed shell with the next APK. Keep each used
-daily version number reserved even after a revert, and stop at `X.Y9`; see
+updates; Android receives the changed shell with the next APK. Version format and
+reuse follow `AGENTS.md` and the owner's explicit instructions; see
 [the daily improvement design](../workers/magi2/magi2継続改善設計書.md#24-版の上げ方2026-10-23-本人決定)
 for bump conditions, numbering, and history limits.
 

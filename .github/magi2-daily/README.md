@@ -64,11 +64,11 @@ node .github/scripts/magi2-daily-check.mjs --worker
 
 ## 版とキャッシュ
 
-画面の②⑥で利用者が気づく不具合を直した日だけ、自律の版X.YZを1つ足す。Worker・文書・テストだけ、または①だけなら版を上げない。PWAを変えればシェルキャッシュはbaseより1つ上げる。HTMLが読むすべてのローカルJS（native系・app-theme・vendorを含む）をSWのCOREと照合し、変更したファイルの`?v=`も更新して両方をそろえる。
+画面の②⑥で利用者が気づく不具合を直した日だけ、マイナーの版X.Y.Zを1つ足す。版番号の形式・再利用はAGENTS.md「MAGIの版番号」と本人指定を正本とする。Worker・文書・テストだけ、または①だけなら版を上げない。PWAを変えればシェルキャッシュはbaseより1つ上げる。HTMLが読むすべてのローカルJS（native系・app-theme・vendorを含む）をSWのCOREと照合し、変更したファイルの`?v=`も更新して両方をそろえる。
 
 - 次の番号は`--next-version`の結果だけを使う。mainのbaseまでの全履歴を読み、戻した番号も使わない。PR自身の未マージの番号を使用済みに数えない。履歴が浅いcheckoutでは採番しない。
 - X.Y9の次、履歴60件・64KiBを超えるものはB。自律で次の本人の版へ繰り上げない。
-- APP_VERSION・トップのAGENT_SCREEN_VERSION・npm版・Android versionName・履歴をそろえる。npmはX.Y.Z、表示はX.YZ。package-lockもそろえ、versionCodeは変えない。
+- APP_VERSION・トップのAGENT_SCREEN_VERSION・npm版・Android versionName・履歴をそろえる。マイナーはX.Y.Z。本人指定の具体的な版番号があれば、その指定と既存画面の互換性を優先する。package-lockもそろえ、versionCodeは変えない。
 - 更新履歴は日英2件ずつ、利用体験の変化を短く書く。モデル名・内部の仕組みを書かない。
 - 最後に`bump version [magi2-daily]`のコミットを1つだけ置く。同じ未マージPRでは件数を増やさず直し、PWAのキャッシュもbaseより1つ上がった値を保つ。
 - APK・Release・タグを作らない。改修したWorkerと画面の公開が済むまでX.YZの履歴を本番へ入れない。
