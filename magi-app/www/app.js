@@ -482,6 +482,35 @@ function agentReactionBadge(host, cls, em, animate, label) {
   if (animate) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); agentHaptic(); }
 }
 // スマホ（指の端末）だけ、軽く振動させる（絵文字が付いた瞬間・長押しのメニュー）。振動できない端末（iPhone の Web など）では何もしない
+// Shinya Takeda がプロンプトに付けた絵文字の札。押すと利用者も同じ絵文字で重ね（「🤔 2」）、もう一度押すと取り消す（「🤔」）。
+// 重ねたかどうかは回答の項目の prompt_reaction_joined にだけ持ち、端末の履歴に残す。サーバーには送らない（Worker への履歴からも外す）。
+// 受信中で項目がまだ無いときは札の印（data-joined）に持ち、回答を履歴に入れるときに agentPromptReactionJoined で読む
+function agentPromptReaction(userEl, em, joined, animate) {
+  agentReactionBadge(userEl, 'prompt-reaction', em, animate, '');
+  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
+  if (!badge) return null;
+  var label = joined ? tr('Shinya Takeda and you reacted ' + em + ' (press to remove yours)', 'Shinya Takeda とあなたのリアクション ' + em + '（押すと取り消す）')
+    : tr('Reaction from Shinya Takeda ' + em + ' (press to react the same)', 'Shinya Takeda のリアクション ' + em + '（押すと同じリアクションをする）');
+  badge.setAttribute('role', 'button'); badge.tabIndex = 0;
+  badge.setAttribute('aria-pressed', joined ? 'true' : 'false'); badge.setAttribute('aria-label', label); badge.title = label;
+  if (joined) { badge.dataset.joined = '1'; badge.dataset.count = '2'; } else { delete badge.dataset.joined; delete badge.dataset.count; }
+  return badge;
+}
+function agentPromptReactionJoined(userEl) {
+  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
+  return !!badge && badge.dataset.joined === '1';
+}
+// 札を押したとき。回答が履歴に入っていれば項目にも書いて保存する（一時チャットは保存しない）
+function agentTogglePromptReaction(badge) {
+  var user = badge.closest('.agent-user'), em = badge.dataset.emoji;
+  if (!user || !agentEmojiValid(em)) return;
+  var joined = badge.dataset.joined !== '1';
+  agentPromptReaction(user, em, joined, joined);
+  var turn = user.nextElementSibling, item = turn && turn.classList.contains('agent-turn') ? agentItemFor(turn) : null;
+  if (!item || item.prompt_reaction !== em) return;
+  if (joined) item.prompt_reaction_joined = true; else delete item.prompt_reaction_joined;
+  if (!agentTemporary()) persistReactions();
+}
 function agentHaptic(ms) {
   try {
     if (navigator.vibrate && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate(ms || 12);
@@ -1307,6 +1336,7 @@ function updateSendState() {
   var turn = lastAgentTurn(), clarify = turn && turn._clarify;
   var ready = !!agentInput.value.trim() || !!(attachments && attachments.length) || !!(clarify && clarify.picks.some(function (p) { return p !== undefined; }));
   agentSendBtn.classList.toggle('is-empty', !ready && !agentSendBtn.dataset.stop);
+  syncAgentRethinkButton(!!agentInput.value.trim() || !!(attachments && attachments.length));
 }
 function fitAgentInput() {
   updateSendState();
@@ -1316,6 +1346,9 @@ function fitAgentInput() {
   var want = agentInput.scrollHeight + border;
   agentInput.style.height = Math.min(want, max) + 'px';
   agentInput.style.overflowY = want > max ? 'auto' : 'hidden';
+  // 下端の余白（--agent-compose-height）も同じ時点で合わせる。ResizeObserver の更新を待つと、送信で入力欄が縮んだ直後の
+  // スクロール（agentScroll・採決の表示の追従）が古い余白で計算され、追従が外れる（複数行の質問を送ったとき）
+  agentLog.style.setProperty('--agent-compose-height', document.getElementById('agent-compose-area').offsetHeight + 'px');
 }
 agentInput.addEventListener('input', fitAgentInput);
 // 末尾から十分離れたときだけ案内を出す。表示/非表示の閾値を分け、境目でちらつかせない。
@@ -1816,6 +1849,15 @@ function openPromptMenu(el, anchor, how, point) {
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAgentHoverReactions(false); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) closeAgentHoverReactions(false); });
+  // Shinya Takeda の絵文字の札を押す（Enter・スペースでも）。同じ絵文字で重ねる／取り消す
+  agentLog.addEventListener('click', function (e) {
+    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
+    if (badge) { e.preventDefault(); agentTogglePromptReaction(badge); }
+  });
+  agentLog.addEventListener('keydown', function (e) {
+    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
+    if (badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); agentTogglePromptReaction(badge); }
+  });
   // 長押しで開く吹き出し。AI の回答はスマホだけ（PC は操作列がある）。リンク・ボタン・入力・確認質問・採決の表示の上では開かない
   function pressTarget(target) {
     if (!target || !target.closest || target.closest('a, button, input, textarea, select, label, summary, .agent-clarify, .magi-panel, .src-list, .agent-pages, .rate-pop')) return null;
@@ -2775,7 +2817,7 @@ function startMagiThinking(target, startedAt) {
 
 // ---- Render persisted history ----------------------------------------------
 function turnHTML(item) {
-  return (item.closed === true || item.mode === 'fact' ? '' : personaCardsHTML(item.debate || {}))
+  return (item.closed === true || item.mode === 'fact' || item.mode === 'fast' ? '' : personaCardsHTML(item.debate || {}))
     + '<div class="agent-reply"><span class="agent-who">✦ Shinya Takeda' + magiThinkingHTML(item.thinkingSeconds) + '</span><span class="agent-reply-body">' + esc(item.content || '') + '</span>' + replyBarHTML() + '</div>';
 }
 function renderHistoryToLog(history) {
@@ -2791,7 +2833,7 @@ function renderHistoryToLog(history) {
   cleanHistoryItems.forEach(function (item, i) {
     if (item.role === 'user') {
       var userEl = agentUserEl(item.content, agentPromptAt(item, cleanHistoryItems[i + 1])), next = cleanHistoryItems[i + 1];
-      if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentReactionBadge(userEl, 'prompt-reaction', next.prompt_reaction, false, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
+      if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentPromptReaction(userEl, next.prompt_reaction, next.prompt_reaction_joined === true, false);
       agentLog.appendChild(userEl);
     } else if (item.role === 'assistant') {
       var turn = document.createElement('div'); turn.className = 'agent-turn';
@@ -2906,7 +2948,7 @@ var MAGI_IDS=["MELCHIOR-1","BALTHASAR-2","CASPER-3"],MAGI_TIME={slot:600,pulse:3
 function magiBody(text,vote,ja){return text===""&&vote?ja?"（理由なし）":"(no reason given)":text}
 function magiMotion(text){if(typeof text!="string"||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(text))return null;var s=text.trim().replace(/[\r\n\t]+/g," ");return s&&s.length<=120?s:null}
 function magiClean(v){if(!v||typeof v!="object")return null;if(v.votable===!1){var reason=v.reason===void 0?"not_votable":v.reason;return v.motion===""&&["not_votable","failed"].indexOf(reason)>=0?{motion:"",votable:!1,reason}:null}var motion=magiMotion(v.motion),t=v.tally,count={approve:0,reject:0,none:0},votes={};if(!motion||!t||!Number.isInteger(v.rounds)||v.rounds<1||v.rounds>5||typeof v.reason_missing!="boolean"||!v.votes)return null;for(var i=0;i<3;i++){var k=MAGI_IDS[i],x=v.votes[k];if(!x||["voted","carried","unreadable","absent"].indexOf(x.state)<0)return null;if(x.state==="voted"||x.state==="carried"){if(["approve","reject"].indexOf(x.vote)<0||!Number.isInteger(x.round)||x.round<1||x.round>v.rounds||(x.state==="carried"?x.round>=v.rounds||["no_response","unreadable"].indexOf(x.issue)<0:x.issue!==void 0))return null}else if(x.vote!==null||x.round!==null||x.issue!==void 0)return null;votes[k]={vote:x.vote,round:x.round,state:x.state},x.issue&&(votes[k].issue=x.issue),count[x.vote||"none"]++}return!["approve","reject","none"].every(function(k2){return Number.isInteger(t[k2])&&t[k2]===count[k2]})||v.result!==(count.approve>=2?"approve":count.reject>=2?"reject":"hold")?null:{motion,result:v.result,tally:count,rounds:v.rounds,votes,reason_missing:v.reason_missing}}
-function magiCleanItem(item){var out=Object.assign({},item);delete out.mode,delete out.magi;delete out.sources;if(item.role==="assistant"&&item.mode==="fact"){out.mode="fact";delete out.debate;var sources=cleanAgentSources(item.sources,item.content);if(sources)out.sources=sources;return out}var m=item.mode==="magi"?magiClean(item.magi):null;return m&&(out.mode="magi",out.magi=m),out}
+function magiCleanItem(item){var out=Object.assign({},item);delete out.mode,delete out.magi;delete out.sources;if(item.role==="assistant"&&item.mode==="fact"){out.mode="fact";delete out.debate;var sources=cleanAgentSources(item.sources,item.content);if(sources)out.sources=sources;return out}if(item.role==="assistant"&&item.mode==="fast"){out.mode="fast";delete out.debate;return out}var m=item.mode==="magi"?magiClean(item.magi):null;return m&&(out.mode="magi",out.magi=m),out}
 function magiMarkdown(m,debate){if(!m)return"";function escape(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/[\\`*_{}\[\]()#+.!|~-]/g,"\\$&")}if(m.votable===!1)return"**Motion dismissed:** "+m.reason+`
 
 `;var out="**Motion:** "+escape(m.motion)+`
@@ -3437,6 +3479,7 @@ attachMenu.addEventListener('keydown', function (e) {
 document.addEventListener('pointerdown', function (e) {
   if (!attachMenu.hidden && !e.target.closest('#agent-attach-menu, #agent-attach')) setAttachMenu(false);
 });
+setupAgentReplyMode();
 attachFile.addEventListener('change', function () { addAttachments(attachFile.files); attachFile.value = ''; });
 attachTray.addEventListener('click', function (e) {
   var x = e.target.closest('.attach-x'); if (!x) return;
@@ -3482,7 +3525,7 @@ function renderAgentPages(replyEl, data) {
 
 function prepareAgentMessages(history, lastContent) {
   // 考えた秒数・受信の印・読み上げの署名・回答の日時・送り直しの印は画面のためだけのもので、次の質問の API には送らない
-  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, magi_panel, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, ...m }) => agentFactHistoryMessage(m));
+  const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, native_request, magi_panel, speech_sig, speech_lang, speech_version, speech_mode, at, retry_of, prompt_reaction, prompt_reaction_joined, ...m }) => agentFactHistoryMessage(m));
   while (messages[0] && messages[0].role === 'assistant') messages.shift();
   messages[messages.length - 1].content = lastContent;
   let remaining = 8;
@@ -3714,13 +3757,89 @@ function agentAttachDocHTML(a) {
     + esc(a.truncated ? tr(size + ' chars (start)', '先頭' + size + '字') : tr(size + ' chars', size + '字')) + '</small></span>';
 }
 // AGENT_ATTACH_END
+// AGENT_REPLY_MODE_BEGIN
+// 返答のモード（入力欄の「討議 ∨」）。討議＝3人格が討議してから統合人格が答える、高速＝討議を省いて統合人格が直接答える
+// （Worker の reply_mode:'fast'、FAST_REPLY）。選んだモードは端末に保存し、次の送信から使う（送信中の回答は変えない）。
+// 文言は HTML の data-ja で訳し、ここでは表示する方と選択の印だけを切り替える。トップページとアプリで同じ中身。
+// 入力欄の準備（setupAgentReplyMode）はこの区画より前の行から呼ぶので、値は初めて読むときに端末の保存から決める
+var AGENT_REPLY_MODES = ['debate', 'fast'];
+var agentReplyModeValue;
+function agentReplyMode() {
+  if (agentReplyModeValue === undefined) {
+    agentReplyModeValue = 'debate';
+    try { if (localStorage.getItem('magi_reply_mode') === 'fast') agentReplyModeValue = 'fast'; } catch (_) { }
+  }
+  return agentReplyModeValue;
+}
+function renderAgentReplyMode() {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return;
+  btn.querySelectorAll('[data-mode-label]').forEach(function (el) { el.hidden = el.dataset.modeLabel !== agentReplyMode(); });
+  menu.querySelectorAll('[data-mode]').forEach(function (el) { el.setAttribute('aria-checked', String(el.dataset.mode === agentReplyMode())); });
+}
+function setAgentReplyMode(mode) {
+  if (AGENT_REPLY_MODES.indexOf(mode) < 0) return;
+  agentReplyModeValue = mode;
+  try { localStorage.setItem('magi_reply_mode', mode); } catch (_) { }
+  renderAgentReplyMode();
+}
+function setAgentModeMenu(open) {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return false;
+  var was = !menu.hidden;
+  menu.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+  if (open) (menu.querySelector('[aria-checked="true"]') || menu.querySelector('[data-mode]')).focus();
+  return was;
+}
+function setupAgentReplyMode() {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', function () { setAgentModeMenu(menu.hidden); });
+  menu.addEventListener('click', function (e) {
+    var item = e.target.closest('[data-mode]'); if (!item) return;
+    setAgentReplyMode(item.dataset.mode); setAgentModeMenu(false); btn.focus();
+  });
+  menu.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { setAgentModeMenu(false); btn.focus(); return; }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    var items = Array.prototype.slice.call(menu.querySelectorAll('[data-mode]'));
+    var next = items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : -1);
+    e.preventDefault(); items[(next + items.length) % items.length].focus();
+  });
+  document.addEventListener('pointerdown', function (e) {
+    if (!menu.hidden && !e.target.closest('#agent-mode-menu, #agent-mode')) setAgentModeMenu(false);
+  });
+  renderAgentReplyMode();
+}
+// AGENT_REPLY_MODE_END
+
+// AGENT_RETHINK_BEGIN
+// 回答を待つ間に打った文で考え直す。送信中の質問と、待つ間に入力欄へ書いた文・添付を1つの質問にまとめて送り直す（文は空行でつなぐ）。
+// 1回の上限（本文1000字・画像 ATTACH_MAX 枚・ファイル AGENT_ATTACH_FILE_MAX 件・添付の文字の合計）を超えるなら
+// まとめずに error を返す。呼び出し側はそのとき今の回答を止めず、入力も残す。トップページとアプリで同じ中身
+var AGENT_RETHINK_TEXT_MAX = 1000;
+function agentRethinkMerge(text, atts, draft, drafts) {
+  var merged = [String(text || '').trim(), String(draft || '').trim()].filter(Boolean).join('\n\n');
+  var all = (atts || []).concat(drafts || []);
+  if (!merged && !all.length) return { error: 'empty' };
+  if (merged.length > AGENT_RETHINK_TEXT_MAX) return { error: 'text' };
+  var capacity = agentAttachCapacity(all, 'pdf');
+  if (agentAttachCount(all, 'image') > ATTACH_MAX || capacity.fileSlots < 0 || capacity.textLeft < 0) return { error: 'attachments' };
+  return { text: merged, atts: all };
+}
+function agentRethinkError(code) {
+  return code === 'text'
+    ? tr('To rethink, keep the earlier question and your addition within 1,000 characters in total.', '考え直すには、送信中の質問と追加の文を合わせて1000文字以内にしてください。')
+    : tr('To rethink, keep the attachments of the earlier question and your addition within the per-message limit.', '考え直すには、送信中の質問と追加の添付を合わせて1回の上限以内にしてください。');
+}
+// AGENT_RETHINK_END
 
 // While a reply is being generated the send button becomes a stop button (■). Pressing it drops the
 // connection, and the Worker stops its remaining upstream calls too.
 var AGENT_SEND_ICON = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
 var AGENT_STOP_ICON = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
 function labelSendButton() {
-  agentSendBtn.title = agentSendBtn.ariaLabel = agentSendBtn.dataset.stop ? tr('Stop', '停止') : tr('Send', '送信');
+  agentSendBtn.title = agentSendBtn.ariaLabel = agentSendBtn.dataset.stop ? (agentSendBtn.dataset.rethink ? tr('Send and rethink', '送信して考え直す') : tr('Stop', '停止')) : tr('Send', '送信');
 }
 function labelVoiceButton() {
   var voice = document.getElementById('agent-voice');
@@ -3734,16 +3853,38 @@ function setAgentStopMode(on) {
   if (on) agentSendBtn.disabled = false;
   updateSendState();
 }
+// 回答を待つ間に入力欄へ文字・添付があれば、■の代わりに送信ボタンを出す（押すと考え直す。agentRethink）
+function syncAgentRethinkButton(ready) {
+  if (!agentSendBtn.dataset.stop) { agentSendBtn.dataset.rethink = ''; return; }
+  var on = ready ? '1' : '';
+  if (agentSendBtn.dataset.rethink === on) return;
+  agentSendBtn.dataset.rethink = on;
+  agentSendBtn.innerHTML = on ? AGENT_SEND_ICON : AGENT_STOP_ICON;
+  labelSendButton();
+}
 function agentStop() {
   if (!agentCtrl) return;
   agentCtrl.userStopped = true;
   agentCtrl.abort();
+}
+// 回答を待つ間に打った文で考え直す（AGENT_RETHINK）。今の回答を止め、止めた送信の後始末の中で、
+// 送信中の質問と入力欄の文・添付をまとめて送り直す（agentSend の末尾）。まとめると上限を超えるなら止めずに知らせる
+function agentRethink() {
+  var ctrl = agentCtrl;
+  if (!agentBusy || !ctrl || !ctrl.sent || ctrl.rethink || agentPrivacyState.attachmentJobs) return;
+  if (nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
+  if (!agentInput.value.trim() && !attachments.length) return;
+  var merged = agentRethinkMerge(ctrl.sent.text, ctrl.sent.atts, agentInput.value, attachments);
+  if (merged.error) { announceAgent(agentRethinkError(merged.error)); return; }
+  ctrl.rethink = true;
+  agentStop();
 }
 // 保存する回答の項目（トップページの agentReplyItem と同じ形。アプリは受信を引き継いだ native_request も持つ）
 function agentReplyItem(r) {
   var item = { role: 'assistant', content: r.reply, thinkingSeconds: r.thinkingSeconds };
   if (r.closed) item.closed = true;
   else if (r.fact) { item.mode = 'fact'; item.sources = cleanAgentSources(r.sources, r.reply); }
+  else if (r.fast) item.mode = 'fast';
   else item.debate = r.debate;
   if (r.magi) { item.mode = 'magi'; item.magi = r.magi; }
   if (r.clarify) item.clarify = r.clarify;
@@ -3755,7 +3896,7 @@ function agentReplyItem(r) {
     if (speech.speech_lang) item.speech_lang = speech.speech_lang;
   }
   item.mid = r.mid; item.at = Date.now(); item.reactions = r.reactions;
-  if (r.promptReaction) item.prompt_reaction = r.promptReaction;
+  if (r.promptReaction) { item.prompt_reaction = r.promptReaction; if (r.promptReactionJoined) item.prompt_reaction_joined = true; }
   return item;
 }
 
@@ -3786,13 +3927,16 @@ async function agentSend(recovered, retry) {
   if (!recovered && !retry && nativeInput && nativeInput.listening()) { nativeInput.finishVoice(); return; }
   var savedUser = recovered ? agentHistory.at(-1) : null;
   if (recovered && (!nativeConversation || !savedUser || savedUser.role !== 'user' || savedUser.native_request !== recovered.id)) return;
-  // 復元は送信済みの許可を維持する。印のない旧アプリの受信は従来どおりMAGI対応として読む。
-  var requestMagiPanel = recovered ? savedUser.magi_panel !== false : magiModeEnabled();
-  var draftText = recovered ? contentText(savedUser.content) : retry ? retry.text : agentInput.value;
-  var text = recovered || retry ? draftText : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
+  // 高速モード（AGENT_REPLY_MODE）。受信の復元は送信時の選択（保存した質問の reply_mode）を使う
+  var fastReply = recovered ? savedUser.reply_mode === 'fast' : agentReplyMode() === 'fast';
+  // 復元は送信済みの許可を維持する。印のない旧アプリの受信は従来どおりMAGI対応として読む。高速モードは採決しない
+  var requestMagiPanel = !fastReply && (recovered ? savedUser.magi_panel !== false : magiModeEnabled());
+  // 考え直し（retry.rethink）は、まとめた質問を入力欄に置いてから呼ぶ。入力欄から読み、［もう一度］の置き換え（mid）だけを引き継ぐ
+  var draftText = recovered ? contentText(savedUser.content) : retry && !retry.rethink ? retry.text : agentInput.value;
+  var text = recovered || retry && !retry.rethink ? draftText : retry ? draftText.trim() : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(document.documentElement.lang === 'ja' ? '回答全体を1000文字以内、その他を100文字以内にしてください。' : 'Keep the full answer within 1,000 characters and Other within 100.'); return; }
   var atts = recovered ? contentImages(savedUser.content).map(function (p) { return { url: p.image_url.url, thumb: p.image_url.url, file: p.file }; })
-    .concat(agentAttachDraftItems(savedUser.content)) : retry ? retry.atts : attachments.slice();
+    .concat(agentAttachDraftItems(savedUser.content)) : retry && !retry.rethink ? retry.atts : attachments.slice();
   if (!text && !atts.length) return;
   var retryOf = retry ? retry.mid : recovered && typeof savedUser.retry_of === 'string' ? savedUser.retry_of : null;
   agentRetryEls(retryOf).forEach(function (el) { el.hidden = true; });
@@ -3800,7 +3944,7 @@ async function agentSend(recovered, retry) {
   var clarifyDraft = retry ? null : freezeAgentClarify();
   var startedAt = recovered ? recovered.startedAt : Date.now();
   setAgentSuggestion('');
-  if (!retry) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
+  if (!retry || retry.rethink) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
   // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）。添付ファイルの文字はどちらも同じ
   var partsOf = function (key) {
     return (text ? [{ type: 'text', text: text }] : []).concat(atts.map(function (a) {
@@ -3822,7 +3966,7 @@ async function agentSend(recovered, retry) {
   var turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
   var mid = recovered ? recovered.mid : genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
   var nativeRunId = recovered ? recovered.id : !agentTemporary() && nativeConversation ? nativeConversation.id() : null;
-  turn.innerHTML = personaCardsHTML();
+  turn.innerHTML = fastReply ? '' : personaCardsHTML();
   var replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
   replyEl.innerHTML = '<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>' + replyBarHTML();
   turn.appendChild(replyEl);
@@ -3830,13 +3974,14 @@ async function agentSend(recovered, retry) {
   var replyBody = replyEl.querySelector('.agent-reply-body');
   var thinking = startMagiThinking(replyEl.querySelector('.agent-who'), startedAt);
 
-  var userItem = recovered ? savedUser : { role: 'user', content: storeContent, at: sentAt, ...(nativeRunId ? { native_request: nativeRunId, magi_panel: requestMagiPanel } : {}), ...(retryOf ? { retry_of: retryOf } : {}) };
+  var userItem = recovered ? savedUser : { role: 'user', content: storeContent, at: sentAt, ...(nativeRunId ? { native_request: nativeRunId, magi_panel: requestMagiPanel } : {}), ...(nativeRunId && fastReply ? { reply_mode: 'fast' } : {}), ...(retryOf ? { retry_of: retryOf } : {}) };
   if (!recovered) agentHistory.push(userItem);
   safeStore('magi_current_history', agentHistory);
   syncRetryButtons();
   if (!recovered && nativeHistory && nativeHistory.active) atts.forEach(function (a) { if (a.file) nativeHistory.releaseImage(a.file); });
 
-  agentBusy = true; setAgentControlsEnabled(false);
+  // 回答を待つ間も入力欄は開けておく（打った文で考え直せる。agentRethink）
+  agentBusy = true;
   setAgentStopMode(true);
   var reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false, promptReaction = null;
       var magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
@@ -3846,6 +3991,7 @@ async function agentSend(recovered, retry) {
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…', followups: [] }; });
 
   var ctrl = new AbortController();
+  ctrl.sent = { text: text, atts: atts }; // 考え直すときに、入力欄の文とまとめる元（agentRethink）
   var conversationId = ensureAgentConversation();
   var gen = agentGen; agentCtrl = ctrl;
 
@@ -3882,7 +4028,7 @@ async function agentSend(recovered, retry) {
     var outbound = prepareAgentMessages(history, sendContent);
     var deviceLocation = !recovered ? await locationForMessage(ctrl.signal, turn) : null;
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
-    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', requestMagiPanel), nativeAndroid && agentShared ? { shared: agentShared } : {}, requestPrivacy || {}));
+    var requestBody = JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: 'app', adaptive_debate: true, rich_reply: true, prompt_reaction: true, prompt_reaction_open: true, location_enabled: locationServiceEnabled() }, fastReply ? { reply_mode: 'fast' } : {}, conversationStorageFields(conversationId), locationServiceEnabled() && deviceLocation ? { device_location: deviceLocation } : {}, classificationFields(history, agentReplyLanguage, isJa() ? 'ja' : 'en', 'chat', requestMagiPanel), nativeAndroid && agentShared ? { shared: agentShared } : {}, requestPrivacy || {}));
     if (nativeRunId && nativeConversation && !recovered) { syncCurrentToSaved(); await nativeHistory.flush(); }
     if (dropped() || ctrl.signal.aborted) throw new DOMException('stopped', 'AbortError');
     var res = nativeRunId && nativeConversation ? await nativeConversation.open(requestBody, { id: nativeRunId, sessionId: conversationId, mid: mid, title: agentTitle || text.slice(0, 80), ctrl: ctrl, resume: !!recovered }) : await openAgentChat(AGENT_API, requestBody, ctrl.signal); // Android はネイティブ受信の SSE のまま、ブラウザは WebSocket（読み上げ設計§6.3）
@@ -3960,11 +4106,11 @@ async function agentSend(recovered, retry) {
             },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
         suggest: function (d) { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
-        // 統合人格がプロンプトに付けた絵文字（一覧にあるものだけ）。届いた瞬間に吹き出しの角へ弾ませて出す
+        // 統合人格がプロンプトに付けた絵文字（話題に合わせて一覧の外からも選ぶ。絵文字1つだけ受け付ける）。届いた瞬間に吹き出しの角へ弾ませて出す
         prompt_reaction: function (d) {
-          var em = d && typeof d.emoji === 'string' && AGENT_REACTIONS.indexOf(d.emoji) >= 0 ? d.emoji : null;
+          var em = d && agentEmojiValid(d.emoji) ? d.emoji : null;
           if (!em || dropped()) return;
-          promptReaction = em; agentReactionBadge(u, 'prompt-reaction', em, true, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
+          promptReaction = em; agentPromptReaction(u, em, false, true);
         },
         pages: function (d) { if (!dropped()) sitePages = d; },
         sources: function (d) { if (!dropped()) replySources = d; },
@@ -4019,9 +4165,9 @@ async function agentSend(recovered, retry) {
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
     if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(function (el) { el.remove(); }); delete userItem.retry_of; }
     agentHistory.push(agentReplyItem({
-      reply: reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, sources: replySources, debate: debateData,
+      reply: reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, fast: fastReply, sources: replySources, debate: debateData,
       magi: magiMeta, clarify: clarifyReply, nativeRunId: nativeRunId, speech: speechMeta, completed: completed, mid: mid,
-      reactions: pendingReactions[mid] || {}, promptReaction: promptReaction,
+      reactions: pendingReactions[mid] || {}, promptReaction: promptReaction, promptReactionJoined: agentPromptReactionJoined(u),
     }));
     delete pendingReactions[mid];
     // 受信復元のattsは保存用サムネイルなので、画像の再送には使わない。
@@ -4035,9 +4181,28 @@ async function agentSend(recovered, retry) {
     setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
     if (completed && !errored) agentNotifyWebReply();
   } else {
+    // 考え直す（agentRethink）なら、送信中の質問と入力欄の文・添付をまとめて、この後すぐ送り直す。
+    // ［もう一度］の送り直しなら置き換える回答もそのまま引き継ぐ。受信の復元・まとめられないときは通常の停止と同じに戻す
+    var rethink = ctrl.rethink && !recovered && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
+    var rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
     turn.remove(); u.remove(); delete pendingReactions[mid];
     markAgentStarted(); // 最初の発言だったなら、会話を始めた時刻の行も消す（残すとスプラッシュも戻らない）
-    if (!retry && nativeHistory && nativeHistory.active && !agentInput.value) atts.forEach(function (a) { if (a.file) nativeHistory.retainImage(a.file); });
+    // 中断・通信失敗でも、質問と画像を入力欄へ戻す。待つ間に打った文・添付があれば、質問の後ろにつなぐ（1回の上限を超えるなら打った方だけを残す）
+    var sentText = clarifyDraft ? draftText : text;
+    var back = rethinkNext ? rethink : !retry || retry.rethink
+      ? (agentInput.value.trim() || attachments.length ? agentRethinkMerge(sentText, atts, agentInput.value, attachments) : { text: sentText, atts: atts }) : null;
+    if (back && back.error) back = null;
+    // 送信時に手放した画像は、質問を履歴から外して保存する前に持ち直す（外した後の片付けで消さない）
+    if (back && nativeHistory && nativeHistory.active) atts.forEach(function (a) { if (a.file) nativeHistory.retainImage(a.file); });
+    if (rethinkNext) {
+      var lastItem = agentHistory[agentHistory.length - 1];
+      if (lastItem && lastItem.role === 'user' && lastItem.content === storeContent) agentHistory.pop();
+      syncRetryButtons(); safeStore('magi_current_history', agentHistory);
+      // まとめた質問は入力欄に置く。待つ間に別の送信が始まっても、まとめた質問は入力欄に残る
+      agentInput.value = back.text; attachments = back.atts; renderAttachTray(); fitAgentInput();
+      if (nativeConversation && nativeRunId) { try { await nativeHistory.flush(); await nativeConversation.acknowledge(nativeRunId); } catch (_) { } }
+      agentSend(undefined, rethinkNext); return;
+    }
     var last = agentHistory[agentHistory.length - 1];
     if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
     // ［もう一度］が届かなければ前の往復を見せ直す（質問は入力欄に戻さない）。最後の回答の［もう一度］も出し直す
@@ -4046,8 +4211,7 @@ async function agentSend(recovered, retry) {
     // 初回の送信の失敗。分類などで仮保存した保存済みの会話も消す（syncCurrentToSaved は空の履歴を書かない）
     if (!agentHistory.length && !agentTemporary() && currentSessionId) { writeSavedSessions(readSavedSessions().filter(function (s) { return s.id !== currentSessionId; })); renderSavedSessionsList(); }
     safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); updateAgentActionButtons();
-    // 中断・通信失敗でも、質問と画像を戻して同じ会話で送り直せるようにする。
-    if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+    if (back) { agentInput.value = back.text; attachments = back.atts; renderAttachTray(); fitAgentInput(); }
     restoreAgentClarify(clarifyDraft);
     if (recovered && attachments === atts && atts.some(function (a) { return a.file; })) {
       sharedLoading = true;
@@ -4443,7 +4607,7 @@ function deleteSavedSession(id) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization', 'attachments', 'conversation_storage', 'prompt_reaction'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization', 'attachments', 'conversation_storage', 'prompt_reaction', 'reply_mode'];
 function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'
@@ -4838,7 +5002,8 @@ function exportAgentChat() {
 }
 
 // ---- Wire up ----------------------------------------------------------------
-agentSendBtn.addEventListener('click', function () { if (agentBusy) agentStop(); else agentSend(); });
+// 回答を待つ間は、入力欄に文字・添付があれば考え直し、無ければ停止（ボタンの形は syncAgentRethinkButton）
+agentSendBtn.addEventListener('click', function () { if (agentBusy) { if (agentSendBtn.dataset.rethink) agentRethink(); else agentStop(); } else agentSend(); });
 // 物理キーボードのある環境（マウス・トラックパッドが主の入力）だけ Enter で送信、Shift+Enter で改行。
 // スマホ・タブレットの Enter は改行のまま（チャットの一般的な動き）で、送信はボタン。Ctrl/⌘+Enter はどこでも送信。
 // 日本語入力の変換を確定する Enter では送らない
@@ -4846,7 +5011,7 @@ agentInput.addEventListener('keydown', function (e) {
   if (e.isComposing || e.keyCode === 229) return;
   if (e.key !== 'Enter' || e.shiftKey) return;
   var fine = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
-  if (fine || e.ctrlKey || e.metaKey) { e.preventDefault(); agentSend(); }
+  if (fine || e.ctrlKey || e.metaKey) { e.preventDefault(); if (agentBusy) agentRethink(); else agentSend(); }
 });
 document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
 
@@ -5090,7 +5255,7 @@ function applyStaticLanguage() {
 function applyLanguage() {
   applyStaticLanguage();
   if (!agentBusy) {
-    closeAgentPanels(); closeAttachMenu(); closeRatePops(false);
+    closeAgentPanels(); closeAttachMenu(); setAgentModeMenu(false); closeRatePops(false);
     if (agentHistory.length) renderHistoryToLog(agentHistory);
     else if (agentLog.querySelector('.agent-splash')) renderAgentSplash();
   }
@@ -5376,6 +5541,7 @@ if (WEB_INSTALL && location.hash === '#install') showInstallPanel();
     if (closeAgentPrivacyDialog()) return;
     // パネルやメニューを閉じる操作で、会話や入力中の文は消さない。
     if (closeAttachMenu()) return;
+    if (setAgentModeMenu(false)) return;
     if (closePromptMenu()) return;
     if (backAgentPage()) return;
     if (document.querySelector('.agent-panel')) { closeAgentPanels(); return; }

@@ -83,7 +83,8 @@ try {
           if (mode.endsWith('stop')) await page.locator(send).click(); else await page.clock.runFor(20000);
         }
         const closed = malice && name !== 'dj';
-        await until(async () => closed ? await page.locator('.agent-closed').count() === 1 : !await page.locator(input).isDisabled());
+        // 入力欄は回答を待つ間も開いている（考え直し）ので、送信ボタンが停止の形でなくなるのも待つ
+        await until(async () => closed ? await page.locator('.agent-closed').count() === 1 : !await page.locator(input).isDisabled() && !await page.locator(send).getAttribute('data-stop'));
         const body = page.locator(name === 'dj' ? '.ab' : '.agent-reply-body').last();
         assert.equal(await body.textContent(), fact ? answer.slice(0,18)+'[1]'+answer.slice(18) : answer); assert.equal(await page.locator(input).inputValue(), '');
         const saved = await page.evaluate(dj => localStorage.getItem(dj ? 'tkdj.consults' : 'magi_current_history'), name === 'dj');
@@ -122,7 +123,7 @@ try {
           if(process.argv.includes('--fact-long')) {
             assert.ok(answer.length>4000);
             await page.locator(input).fill('続けて説明して');await page.locator(send).click();
-            await until(()=>requests.length===2);await until(async()=>!await page.locator(input).isDisabled());
+            await until(()=>requests.length===2);await until(async()=>!await page.locator(input).isDisabled()&&!await page.locator(send).getAttribute('data-stop'));
             const previous=requests[1].messages.filter(m=>m.role==='assistant').at(-1);
             assert.equal(previous.mode,'fact');assert.equal(previous.content,answer.slice(0,4000));
             const savedAgain=JSON.parse(await page.evaluate(()=>localStorage.getItem('magi_current_history')));

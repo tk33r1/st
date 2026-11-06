@@ -80,7 +80,7 @@ try {
         await until(async () => (await body.textContent()) === parts[0], 'first delta');
         assert.equal(await page.locator('.magi-stream-note').count(), 0, name + ': まとめて届いた注記を出さない');
         await until(async () => (await body.textContent()) === parts.join(''), 'full reply');
-        await until(async () => !(await page.locator('#agent-input').isDisabled()), 'input enabled');
+        await until(async () => !(await page.locator('#agent-input').isDisabled()) && !(await page.locator('#agent-send').getAttribute('data-stop')), 'reply finished'); // 入力欄は回答を待つ間も開いている（考え直し）ので、送信ボタンが停止の形でなくなるのを待つ
         assert.equal(sse.length, 0, name + ': SSE を使わない');
         assert.equal(wsConnections, 1);
         assert.equal(wsMessages[0].type, 'chat'); assert.equal(wsMessages[0].v, 1); assert.equal(wsMessages[0].body.messages.at(-1).content, '受信の確認');
@@ -91,7 +91,7 @@ try {
         await until(async () => (await body.textContent()) === parts.join(''), 'sse reply', 12000);
         assert.equal(sse.length, 1);
         assert.equal(await page.evaluate(() => sessionStorage.getItem('magi_transport')), 'sse');
-        await until(async () => !(await page.locator('#agent-input').isDisabled()), 'input enabled');
+        await until(async () => !(await page.locator('#agent-input').isDisabled()) && !(await page.locator('#agent-send').getAttribute('data-stop')), 'reply finished'); // 入力欄は回答を待つ間も開いている（考え直し）ので、送信ボタンが停止の形でなくなるのを待つ
         const before = sockets.length;
         await page.locator('#agent-input').fill('2回目'); await page.locator('#agent-send').click();
         await until(async () => sse.length === 2, 'second via sse', 12000);

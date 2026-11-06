@@ -37,6 +37,7 @@ export const PRIVACY = {
     {"title": "Provider retention and training", "text": "OpenAI: sent to the US, retained up to 30 days for abuse monitoring, with no training by default. Anthropic: no training by default; normally deleted within 30 days, with safety and legal exceptions. DeepSeek: stored in China and may be used for training."},
     {"title": "Request classification", "text": "The current and up to two previous user messages go to TypeSafe AI (Jev). The first message also sets the chat language. Images, ordinary AI replies and DJ context are excluded. Language stays with the chat on your device; classification results are not stored in the site database. TypeSafe states that API inputs are not used for training.", "requires": ["classification_state"]},
     {"title": "Clarification", "text": "To classify a clarification answer, the original request, clarification questions and options, and previous classification also go to TypeSafe AI. Ordinary AI replies and debates are excluded. Questions and options stay with the chat on your device.", "requires": ["clarify"]},
+    {"title": "Fast mode", "text": "In Fast mode the three personas do not discuss, so your input is not sent to DeepSeek. The reply comes from OpenAI in Light or Anthropic in Dark (the other one once if it fails before replying). Chat titles, next-question suggestions, classification, Web search and site guidance work as usual.", "requires": ["reply_mode"]},
     {"title": "Facts and Web search", "text": "Factual questions and site guidance use OpenAI in Light or Anthropic in Dark, without debate. Current information uses OpenAI Web search in both themes, with one possible fallback to Anthropic before answer text begins. Cited pages are fetched and sent to the answering provider for checking; JavaScript pages may be read in Cloudflare’s browser. Music recommendations and personal advice use the three personas.", "requires": ["fact_mode"]},
     {"title": "Search location and limits", "text": "With location enabled, Android can send device coordinates and city/region to MAGI and the search provider with your OS permission. If unavailable, your network-estimated city/region is used with a notice. Web and older apps use the network estimate. Turning location off disables both. Location is used for location-dependent questions without a named place, and shown when used. Coordinates are not saved as history fields. Search is limited to 20 requests per IP and 300 site-wide per UTC day. Unavailable search and unsupported items are disclosed. Citations stay with the answer on your device.", "requires": ["fact_mode"]},
     {"title": "Emoji on your messages", "text": "Shinya Takeda chooses the emoji for your message while writing the reply, so nothing extra is sent. Only for answers that use Web search, up to 600 characters of your latest message (images and attachments only as counts) go to Anthropic after the reply to choose it. If that fails before a reply, OpenAI may be used once. The emoji is kept with the chat on your device.", "requires": ["prompt_reaction"]},
@@ -61,6 +62,7 @@ export const PRIVACY = {
     {"title": "送信先での保存・学習", "text": "OpenAI：米国へ送信。不正利用監視のため最大30日保持し、既定では学習に使いません。Anthropic：既定では学習に使わず、通常30日以内に削除（安全管理・法令等の例外あり）。DeepSeek：中国のサーバーに保存し、学習に使うことがあります。"},
     {"title": "発言の分類", "text": "今回と直近2件までのユーザー本文をTypeSafe AI（Jev）へ送ります。初回は最初の発言から会話の言語も決めます。画像・通常のAI回答・DJの状況説明は送りません。言語は端末の会話に保存し、分類結果はサイトのDBに保存しません。同社はAPI入力を学習に使わないとしています。", "requires": ["classification_state"]},
     {"title": "確認質問", "text": "確認への回答を分類するときは、元の相談・確認の質問と選択肢・直前の分類結果もTypeSafe AIへ送ります。通常のAI回答や討議は送りません。質問と選択肢は端末の会話に保存します。", "requires": ["clarify"]},
+    {"title": "高速モード", "text": "高速モードでは3人格の討議をしないため、DeepSeekへは送りません。回答はライトがOpenAI、ダークがAnthropicが書きます（応答前に失敗したときはもう一方へ1回）。会話の題・次の質問の候補・分類・Web検索・サイト案内は通常と同じです。", "requires": ["reply_mode"]},
     {"title": "事実確認と検索", "text": "事実の質問とサイト案内は討議せず、ライトはOpenAI、ダークはAnthropicが答えます。最新情報の検索は両テーマともOpenAIを使い、本文開始前に失敗した場合はAnthropicへ1回切り替えることがあります。引用ページの本文を回答する会社へ送って照合し、JavaScriptで描くページはCloudflareのブラウザで読むことがあります。曲の推薦と個人的な相談は3人格で討議します。", "requires": ["fact_mode"]},
     {"title": "検索時の位置情報・上限", "text": "位置情報がオンのAndroidでは、OSの許可を得て端末の座標と市・地域をMAGIと検索する会社へ送ります。取得できなければ通信元から推定した市・地域を使い、その旨を表示します。Webと旧アプリは通信元の推定を使います。設定オフでは両方を使いません。場所を指定していない、場所で答えが変わる質問にだけ使い、使った場所を回答に表示します。座標は履歴の項目として保存しません。検索はUTCの日ごとにIPあたり20回、全体300回まで。検索できない場合や裏付けのない項目は、その旨を伝えます。引用は回答と一緒に端末へ保存します。", "requires": ["fact_mode"]},
     {"title": "メッセージへの絵文字", "text": "Shinya Takedaがあなたのメッセージに付ける絵文字は、回答を書くときに一緒に選ぶため、追加の送信はありません。Web検索で答えた回だけ、絵文字を選ぶために回答の後で最新の発言の先頭600文字まで（画像・添付は件数だけ）をAnthropicへ送ります。応答前に失敗した場合はOpenAIへ1回切り替えることがあります。絵文字は端末の会話と一緒に保存します。", "requires": ["prompt_reaction"]},
@@ -277,7 +279,7 @@ PERSONAS.forEach(p => {
   p.system_prompt = [
     `あなたは、Shinya Takeda という一人の人間の中にある3つの面の1つ「${p.name}」（${p.codename}）。`,
     'このチャット（MAGI）では、3つの面（Enthusiast・Humanist・Strategist）がそれぞれ意見を出し、それを読んだ Shinya Takeda 本人が利用者に答える。',
-    `この呼び出しで頼むのは、${p.name} としてのあなたの意見だけ。書いた文章はそのまま画面の ${p.name} のカードに出て、ほかの2つの面と本人が読む。`,
+    `この呼び出しで頼むのは、${p.name} としてのあなたの意見・感想・問いだけ。書いた文章はそのまま画面の ${p.name} のカードに出て、ほかの2つの面と本人が読む。`,
     '',
     '【気質と話し方】',
     ...p.temperament,
@@ -306,7 +308,7 @@ export const SYNTHESIZER = {
   // 書式（rich_reply を送った画面だけ。→ src/index.js の discussionSynthesisMessages・factAnswerMessages）。
   // 画面は Markdown の段落・太字・見出し・箇条書き・番号付き・表・区切り線だけを描き、リンク・画像・HTML・コードブロックは描かない
   rich_rules: [
-    '【今回の答えの書式と長さ。system の「目標200文字以内」より優先】',
+    '【今回の答えの書式と長さ】',
     '画面は Markdown を整えて表示する。内容に合わせて、読みやすい形で書く。',
     '- 結論を最初の1〜2文で述べる。続けて理由・条件・具体例を段落に分ける（段落の間は空行）。',
     '- 要点は **太字** にする。多用しない（1段落に1か所まで）。',
@@ -316,13 +318,12 @@ export const SYNTHESIZER = {
     '- 長さは内容に必要な分だけ。目安は短い問いで200文字、説明や比較が要る問いで400〜900文字。上限は1,200文字。',
     '- リンク・画像・HTML・コードブロック（```）は使わない。',
   ].join('\n'),
+  // 書式の印（rich_reply）の無い画面の通常の答えの長さ。採決の説明は role.magi に、書式のある画面は rich_rules に長さを持つ
+  brief_rule: '【答えの長さ】目標200文字以内。',
   voice_rules: '【統合人格の一人称と語尾。本人のカード・討議・履歴の口調より優先】あなた自身を指す一人称は必ず「私」。カードや討議に「俺」「僕」「自分」があっても、自分の答えでは「私」を使う。語尾「ぜ」は使わない。「ぜ…じゃなくて」のような言い直しや、口調の指示を守ったと説明する文も書かない。最初から自分の自然な言葉で答える。',
   role: {
-    chat: [
-      '3人の議論を踏まえ、自分の思想として自然に導いた結論を、あなた自身の言葉で「私」として簡潔に返答する。',
-      '討議や判定メモの数値も正しいとは限らない。入力の条件から検算し、処理能力と実際の処理数、平均と最大、待機中と処理中を区別する。入力にない到着分布・所要時間などを暗黙に仮定せず、最大値を断定できなければ条件や範囲を示す。',
-      '時間・定員・担当者数に制約がある案は、準備や入替も含む配分が制約内に収まるか確認する。討議の誤りは引き継がず、成立する条件を短く明記する。',
-    ].join('\n'),
+    // 数値の検算は constraint_rules、一人称は voice_rules が受け持つ（同じ指示を重ねない）
+    chat: '3人の議論を踏まえ、自分の思想として自然に導いた結論を、あなた自身の言葉で簡潔に返答する。討議の数値や誤りはそのまま引き継がない。',
     magi: [
       '決議は自分の中の3つの面の採決で既に決まっており、変えられない。票を選び直したり逆の結論を書かない。',
       '採用票の理由・少数意見の懸念・討議で示した前提と条件を、自分の考えとして説明する。討議にない理由を後付けしない。',
@@ -339,17 +340,17 @@ export const SYNTHESIZER = {
     '絶対ルール：',
     '- 【Enthusiast】等のペルソナ名を引用・言及しない',
     '- 「～が言うように」「3人の意見では」等の傍観者表現を使わない',
-    // 一人称「私」と語尾「ぜ」の禁止は voice_rules に1つにまとめ、カードの後に送る（runDiscussion）
-    '- 「私は～」「～だと思う」と、統合された自分の考えとして語る',
-    '返答は会話で指定された出力言語で、目標200文字以内。',
+    // 一人称「私」と語尾「ぜ」の禁止は voice_rules に1つにまとめ、カードの後に送る。長さは rich_rules・brief_rule・role.magi
+    '返答は会話で指定された出力言語で書く。',
   ].join('\n'),
 };
 
-const magiPersonaRole = '同じ議題の文のとおりにすること・主張を支持するなら賛成、支持しないなら反対と必ず決める。情報不足でも既知の範囲で決め、前提・条件は理由に書く。保留や両論併記はしない。1行目に [VOTE:APPROVE] または [VOTE:REJECT] だけ、2行目から理由を120文字以内で書く。タグは本文の文字数に含めない。';
+const magiPersonaRole = '共通の議題を文のとおりに読み、支持するなら賛成、支持しないなら反対と必ず決める。情報不足でも既知の範囲で決め、前提・条件は理由に書く。保留や両論併記はしない。1行目に [VOTE:APPROVE] または [VOTE:REJECT] だけ、2行目から理由を120文字以内で書く。タグは本文の文字数に含めない。';
 // 長さはカードの大きさから決める。字数だけだと英語の答えに効かないので、文の数で書く。名前はカードに出るので書かせない
 const chatPersonaRole = [
   '【書き方】',
-  '判定や採決はしない。自分の面から意見・感想や問いを返す。',
+  // 何を返すか（意見・感想・問い）は枠（system_prompt）の3行目に書いてある
+  '判定や採決はしない。',
   'カードに収まるよう、2〜3文（日本語なら120字、英語なら40語ほど）で書く。名前は画面が出すので、本文から書き始める。',
 ].join('\n');
 PERSONAS.forEach(p => {
@@ -399,8 +400,8 @@ export const MAGI_MODE = {
     type: 'object', additionalProperties: false, properties: { motion: { type: 'string' }, votable: { type: 'boolean' } }, required: ['motion', 'votable'],
   } } },
   persona_rounds: { first: '同じ議題へ、自分の関心と価値観から初回の票と理由を出す。',
-    debate: '他の面の票と理由を読んで票を入れ直す。変えてもよい。変えるなら変えた理由を、変えないなら自分の理由を足す。自分の関心と価値観を手放さない。',
-    followup: '問いを受けて票を入れ直す。票を変えてもよい。変えた理由、または変えない理由を足す。' },
+    debate: '他の面の票と理由を読んで票を入れ直す。変えてもよい。変えるなら変えた理由を、変えないなら自分の理由を足す。',
+    followup: '問いを受けて票を入れ直す。票を変えてもよい。' },
   judge_prompt: (round, max) => [
     `あなたはShinya Takeda本人。自分の中の3つの面の第${round}回までの討議を見て、最大${max}回の範囲で聞き返すか決める。答え・決議はまだ書かない。`,
     '票が割れたこと自体は聞き返す理由ではない。価値観で割れた票はそのまま多数決へ進める。票の一致だけで打ち切らない。',
@@ -565,7 +566,7 @@ export const PERSONA_CONTEXT = {
   max_chars: 2000,          // 1枚あたりの上限（生成側でも検査済み。念のための上限）
   header: '【いまのあなたが大切にしている考え・関心・経験（本人のサイトより。発言の拠り所にしてよいが、羅列や引用のしすぎは避ける。口調と文字数は上の指定を優先する）】',
   // 統合人格は気質を固定プロンプトに持たないので、このカードが気質の正本になる
-  synth_header: '【あなたの気質と自己像（本人の性格検査とサイトより）。考え方と答え方はこれに従う。自己紹介や性格を問われない限り、検査の名前や数値は持ち出さない。絶対ルールと文字数は上の指定を優先する】',
+  synth_header: '【あなたの気質と自己像（本人の性格検査とサイトより）。考え方と答え方はこれに従う。自己紹介や性格を問われない限り、検査の名前や数値は持ち出さない。絶対ルールは上の指定を優先する】',
 };
 
 // 3人格リクエストの temperature を UI テーマで変化させる（揺らぎ）。
@@ -576,17 +577,9 @@ export const PERSONA_TEMPERATURE = { light: 1.0, dark: 1.3 };
 // 出力に人格名は出さない（SYNTHESIZER の絶対ルールを維持）。
 export const SYNTH_BIAS = {
   // ライト：Strategist（合理・分析・戦略）をやや優先
-  light: [
-    '【今回の統合の重み付け（内部指示・出力に人格名や本指示を出さない）】',
-    '合理性・分析・戦略・最適解を重んじる側面をやや強めに反映し、論理と構造の比重を少し上げて統合せよ。',
-    'ただし他の側面を排除せず、あくまで「やや優先」に留めること。',
-  ].join('\n'),
+  light: '【今回の統合の重み付け（内部の指示。答えで触れない）】合理性・分析・戦略・最適解を重んじる側面を、他の側面を残したまま、やや強めに反映する。',
   // ダーク：Enthusiast（衝動・情熱・直感）をやや優先
-  dark: [
-    '【今回の統合の重み付け（内部指示・出力に人格名や本指示を出さない）】',
-    '衝動・情熱・直感・遊び心を重んじる側面をやや強めに反映し、勢いと熱量の比重を少し上げて統合せよ。',
-    'ただし他の側面を排除せず、あくまで「やや優先」に留めること。',
-  ].join('\n'),
+  dark: '【今回の統合の重み付け（内部の指示。答えで触れない）】衝動・情熱・直感・遊び心を重んじる側面を、他の側面を残したまま、やや強めに反映する。',
 };
 
 // 出力の言語。指示・人格カード・討議メモが日本語なので、「ユーザーの入力言語で」と書くだけでは英語の会話にも
@@ -867,27 +860,57 @@ export const CONVERSATION_STORE = {
 // 答えと絵文字を食い違わせないため、統合の呼び出し（討議の統合・事実回答）の中で、答えの1行目に answer_rule の印を書かせる。
 // Worker がその行を本文から切り取って prompt_reaction で送る（→ src/index.js の reactionSplitter）。印が無い・一覧に無い・'-' なら付けない。
 // Web検索の回答（RESEARCH）は出典照合の JSON で答えるので印を書かせず、答えの後に system_prompt の別の呼び出し（reactor）で1回だけ選ぶ。
-// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する。照合は src/index.js の pickReaction）。反応しない方が自然なら '-' を返させ、付けない
+// 絵文字は emojis の中から1つ（画面も同じ一覧で検査する。照合は src/index.js の pickReaction）。反応しない方が自然なら '-' を返させ、付けない。
+// 一覧の外の絵文字も描ける画面（prompt_reaction_open:true。トップページと、この印に対応した後のアプリ）には open_* の指示を使い、
+// 絵文字を自由に1つ選ばせる。照合は「絵文字1つ（書記素1つ）」かどうかだけ。印の無い画面（配布済みの古いアプリ）は一覧の絵文字しか描かないので、一覧から選ばせる。
+// どちらも「何の話か」の印ではなく、本人がメッセージを読んだときの反応として書かせる（本人の方針 2026-11-06）。判断の順は、
+// ①言い方の色（皮肉・軽口・自慢など）への反応 → ②色の無い質問・相談は話題の絵文字（ハロウィン🎃・ジャズ🎷・中国🐼） → 深刻な話は付けない。
+// 軽い皮肉・ツッコミは攻撃とみなさない（以前の「からかいには付けない」が皮肉への🔥・😅を潰していた）。例は①②の両方から並べる（片方だけだとそちらに偏る）
+// 4つの指示（統合の答えの1行目に書かせる answer / Web検索の後の別の呼び出し、一覧から選ぶ版 / 一覧の外も選べる open）は、
+// 判断の行を共有し、書き出し・例・出力の形だけを替える。一覧の版の例は一覧の中の絵文字だけ（一覧に無い絵文字を書くと付かない）。
+// open の話題の例は本人の指定（2026-11-06）：ハロウィン🎃・ジャズ🎷・中国🐼、皮肉に🔥・😅
+const REACTION_EXAMPLES = {
+  list: { tone: '皮肉や鋭いツッコミに🔥や😅、冗談に😂、自慢に👏、意外な話に👀、うれしい報告に🎉',
+    topic: '音楽の話に🎵、コーヒーの話に☕、挑戦の相談に💪、思いつきの話に💡' },
+  open: { tone: '皮肉や鋭いツッコミに🔥や😅、冗談に🤣、自慢に👏、無茶ぶりに🫠、意外な話に👀、うれしい報告に🎉',
+    topic: 'ハロウィンの相談に🎃、ジャズの話に🎷、中国の話に🐼、ラーメンに🍜、旅行に✈️' },
+};
+function reactionRule({ answer, open }) {
+  const ex = REACTION_EXAMPLES[open ? 'open' : 'list'];
+  const how = '「何の話か」を示す印ではなく、「読んでどう反応したか」を' + (open ? ' Unicode の絵文字1つで返す。決まった一覧は無い。' : '下の一覧の絵文字1つで返す。');
+  return [
+    ...(answer ? ['【利用者の今回の発言への絵文字のリアクション】', '答えの1行目には [REACTION:絵文字] だけを書き、改行してから2行目以降に答えを書く。',
+      '- これは、あなたがチャットで友人のメッセージを読んだときに思わず付けるリアクション。' + how]
+      : ['あなたはチャットで友人から届いたメッセージを読んで、思わず付ける絵文字のリアクションを1つだけ選ぶ。' + how]),
+    `- まず言い方と気持ちを読む。皮肉・軽口・自虐・自慢・愚痴・はしゃぎ${open ? '・無茶ぶり' : ''}など、言い方に色があれば、それへの反応を選ぶ（例：${ex.tone}）。`,
+    `- 言い方に特に色の無い質問・相談・依頼には、その話題${open ? 'を表す' : 'に合う'}絵文字で「その話いいね」と返す（例：${ex.topic}）。`,
+    `- 不幸・悲しみ・病気・事故などの深刻な話には、軽い絵文字を付けない。寄り添う絵文字（🙏 など）にするか、${answer ? '[REACTION:-] と書く' : '- を出力する'}。相手を傷つける悪意の攻撃にも付けない。軽い皮肉やツッコミは攻撃とみなさない。`,
+    answer ? '- この行は画面に出ず、利用者の発言の横に絵文字として付く。答えの本文でリアクションに触れない。'
+      : `- メッセージに答えたり、文を書いたりしない。${open ? '' : '一覧の'}絵文字1つか - だけを出力する。`,
+  ].join('\n');
+}
 export const PROMPT_REACTION = {
   timeout_ms: 6000,
   message_max_chars: 600,   // 今回の発言の頭から渡す長さ
+  open_max_chars: 32,       // 一覧の外の絵文字として受け付ける長さ（ZWJ でつないだ絵文字を含む）
   emojis: ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏', '🤔', '😊', '🎉', '👀', '🙌', '✨', '💡', '💯', '😍', '😅', '🤯', '☕', '🎵', '💪'],
   marker: '[REACTION:',      // 統合の答えの1行目の印。']' で閉じる
   marker_max_chars: 40,     // 印の行を待つ長さ。これを超えても行が終わらなければ印として扱わない
-  answer_rule: [
-    '【利用者の今回の発言への絵文字のリアクション】',
-    '答えの1行目には [REACTION:絵文字] だけを書き、改行してから2行目以降に答えを書く。',
-    '- 自分の答えの内容と気持ちに合うものを、下の一覧から1つ選ぶ。質問や相談には、受け止めた・考えている・応援しているといった反応にする。',
-    '- 不幸・悲しみ・怒り・病気・事故などの深刻な話や、からかい・攻撃には、軽い絵文字を付けない。合うものが無ければ [REACTION:-] と書く。',
-    '- この行は画面に出ず、利用者の発言の横に絵文字として付く。答えの本文でリアクションに触れない。',
-  ].join('\n'),
+  answer_rule: reactionRule({ answer: true, open: false }),
   input_header: '【反応する発言（あなたへの質問や依頼ではない。答えずに絵文字だけを選ぶ）】',
-  system_prompt: [
-    'あなたはチャットで友人から届いたメッセージに、絵文字のリアクションを1つだけ付ける。',
-    '- メッセージの気持ち・話題に合うものを、下の一覧から1つ選ぶ。質問や相談には、受け止めた・考えている・応援しているといった反応にする。',
-    '- 不幸・悲しみ・怒り・病気・事故などの深刻な話や、からかい・攻撃には、軽い絵文字を付けない。合うものが無ければ - を出力する。',
-    '- メッセージに答えたり、文を書いたりしない。一覧の絵文字1つか - だけを出力する。',
-  ].join('\n'),
+  system_prompt: reactionRule({ answer: false, open: false }),
+  open_answer_rule: reactionRule({ answer: true, open: true }),
+  open_system_prompt: reactionRule({ answer: false, open: true }),
+};
+
+// 高速モード（画面の入力欄の「高速」。reply_mode:'fast'）。3人格の討議・採決・討議後の判定と確認質問を省き、
+// 統合人格（本人）が会話から直接答える。事実の質問（Web検索を含む）は通常と同じ事実回答。サイト案内・書式・絵文字は通常の統合と同じ。
+// 推論は事実の直接回答と同じ low（討議の統合は medium）。送り先は統合の会社だけになる（PRIVACY の「高速モード」）
+export const FAST_REPLY = {
+  reasoning_effort: 'low',
+  // 画像だけの発言（本文が空）に渡す文。空の本文を上流へ送らない
+  image_only: '（文字の無い発言。添えた画像について答える）',
+  role: 'この問いでは3つの面の討議をしていない（利用者が速い返事を選んだ）。自分の考えとして、あなた自身の言葉で直接、簡潔に答える。',
 };
 
 export const MUSIC_CONSULT = { system_note: '【音楽・DJ・選曲の相談】本人の人格カードと与えられた事実に基づいて答える。選曲・推薦を求められた場合は実在する曲を1〜3曲、「アーティスト名 - 曲名」の形式で鉤括弧に囲んで挙げる。説明や事実の質問にはその依頼に答え、求められていない推薦を加えない。' };

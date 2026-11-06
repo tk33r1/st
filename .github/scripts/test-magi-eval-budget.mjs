@@ -37,8 +37,8 @@ test('失敗と実行をまたいでも予約額が残り、7.1本番確認の�
   assert.throws(()=>gate().reserve('openai',body),/ceiling reached/);
   assert.equal(JSON.parse(readFileSync(path)).reservations.length,2);
 }));
-test('Haikuの枠と、7.1本番確認のやり直しの承認後の合計$4.36の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
-  estimate('openai',1.75);estimate('anthropic',1.75);estimate('deepseek',.86);estimate('typesafe',.001);save();
+test('Haikuの枠と、2026-11-06の承認後の合計$4.86の両方を守る',()=>fixture(({estimate,save,gate,path})=>{
+  estimate('openai',1.75);estimate('anthropic',2.00);estimate('deepseek',1.11);estimate('typesafe',.001);save();
   const g=gate();g.reserve('openai',body);g.reserve('anthropic',body);g.reserve('deepseek',body);
   assert.throws(()=>g.reserve('typesafe',body),/ceiling reached/);
   assert.throws(()=>g.reserve('anthropic',body),/ceiling reached/);

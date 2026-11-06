@@ -2272,7 +2272,11 @@
     .msg-reaction::before, .prompt-reaction::before { content: attr(data-emoji); }
     .agent-reply > .msg-reaction { right: 10px; bottom: -15px; }
     .agent-reply.has-reaction { margin-bottom: 18px; }
-    .agent-user > .prompt-reaction { right: 2px; bottom: -15px; }
+    .agent-user > .prompt-reaction { right: 2px; bottom: -15px; pointer-events: auto; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .agent-user > .prompt-reaction:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    /* 利用者も同じ絵文字で重ねた札（「🤔 2」） */
+    .agent-user > .prompt-reaction[data-joined] { padding: 0 9px; border-color: var(--primary-color); background: var(--surface-color); background: color-mix(in srgb, var(--primary-color) 18%, var(--surface-color)); }
+    .agent-user > .prompt-reaction[data-count]::before { content: attr(data-emoji) "\00a0" attr(data-count); font-size: 15px; font-variant-numeric: tabular-nums; }
     .agent-user.has-reaction { margin-bottom: 16px; }
     /* 付けた・付けられた瞬間だけ、弾んで周りに粒が散る */
     @keyframes reactPop { 0% { transform: scale(0) rotate(-25deg); opacity: 0; } 45% { transform: scale(1.4) rotate(10deg); opacity: 1; } 70% { transform: scale(0.88) rotate(-4deg); } 100% { transform: scale(1) rotate(0); } }
@@ -2488,6 +2492,52 @@
     }
     #agent-attach-menu button svg { flex-shrink: 0; color: var(--secondary-color) }
     #agent-attach-menu button:hover, #agent-attach-menu button:focus-visible { background: var(--primary-bg); outline: none }
+
+    /* 返答のモード（討議 / 高速）。送信ボタンの左の小さな選択。メニューは入力バーの上の右寄せ */
+    #agent-mode {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      height: var(--composer-button);
+      padding: 0 0.45rem;
+      flex-shrink: 0;
+      border-radius: calc(var(--composer-button) / 2);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      color: var(--secondary-color);
+      transition: background-color var(--duration-fast), color var(--duration-fast);
+    }
+    #agent-mode:hover, #agent-mode[aria-expanded="true"] { background: var(--primary-bg); color: var(--primary-color) }
+    #agent-mode [hidden] { display: none }
+    #agent-mode-menu {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 0.35rem);
+      z-index: 60;
+      width: min(16rem, calc(100vw - 2rem));
+      padding: 0.25rem;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    #agent-mode-menu[hidden] { display: none }
+    #agent-mode-menu button {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.1rem;
+      width: 100%;
+      padding: 0.45rem 0.6rem 0.45rem 1.6rem;
+      position: relative;
+      border-radius: 6px;
+      text-align: left;
+      color: var(--text-color);
+    }
+    #agent-mode-menu button[aria-checked="true"]::before { content: '✓'; position: absolute; left: 0.55rem; top: 0.45rem; font-size: 0.8rem; color: var(--primary-color) }
+    #agent-mode-menu button:hover, #agent-mode-menu button:focus-visible { background: var(--primary-bg); outline: none }
+    .agent-mode-name { font-size: 0.8rem }
+    .agent-mode-desc { font-size: 0.7rem; color: var(--secondary-color) }
 
     #agent-attach-tray {
       display: flex;
@@ -4234,6 +4284,16 @@
                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                       stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
               </div>
+              <!-- 返答のモード（AGENT_REPLY_MODE）。討議＝3人格が討議してから答える、高速＝討議を省いて統合人格が直接答える -->
+              <div id="agent-mode-menu" role="menu" aria-label="Reply mode" data-ja-aria="返答のモード" hidden>
+                <button type="button" role="menuitemradio" data-mode="debate" aria-checked="true"><span class="agent-mode-name" data-ja="討議">Debate</span><span
+                    class="agent-mode-desc" data-ja="3人格が討議してから答える">Three personas debate, then reply</span></button>
+                <button type="button" role="menuitemradio" data-mode="fast" aria-checked="false"><span class="agent-mode-name" data-ja="高速">Fast</span><span
+                    class="agent-mode-desc" data-ja="討議を省き、Shinya Takeda が直接答える">Skip the debate; Shinya Takeda replies directly</span></button>
+              </div>
+              <button id="agent-mode" type="button" title="Reply mode" data-ja-title="返答のモード" aria-haspopup="menu" aria-expanded="false"><span
+                  data-mode-label="debate" data-ja="討議">Debate</span><span data-mode-label="fast" data-ja="高速" hidden>Fast</span><svg aria-hidden="true" width="12" height="12"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg></button>
               <button id="agent-send" class="is-empty" title="Send" data-ja-title="送信"
                 data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg></button>
             </div>
@@ -8854,6 +8914,9 @@ function magiAcronymController(el) {
       const want = agentInput.scrollHeight + border;
       agentInput.style.height = Math.min(want, max) + 'px';
       agentInput.style.overflowY = want > max ? 'auto' : 'hidden';
+      // 下端の余白（--agent-compose-height）も同じ時点で合わせる。ResizeObserver の更新を待つと、送信で入力欄が縮んだ直後の
+      // スクロール（agentScroll・採決の表示の追従）が古い余白で計算され、追従が外れる（複数行の質問を送ったとき）
+      agentLog.style.setProperty('--agent-compose-height', document.getElementById('agent-compose-area').offsetHeight + 'px');
     }
     agentInput.addEventListener('input', fitAgentInput);
     // 幅が変わると折り返しも変わる（ドックの幅の変更・画面の回転）。高さの変化では呼ばないよう幅だけを見る
@@ -8976,7 +9039,7 @@ var MAGI_IDS=["MELCHIOR-1","BALTHASAR-2","CASPER-3"],MAGI_TIME={slot:600,pulse:3
 function magiBody(text,vote,ja){return text===""&&vote?ja?"（理由なし）":"(no reason given)":text}
 function magiMotion(text){if(typeof text!="string"||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/.test(text))return null;var s=text.trim().replace(/[\r\n\t]+/g," ");return s&&s.length<=120?s:null}
 function magiClean(v){if(!v||typeof v!="object")return null;if(v.votable===!1){var reason=v.reason===void 0?"not_votable":v.reason;return v.motion===""&&["not_votable","failed"].indexOf(reason)>=0?{motion:"",votable:!1,reason}:null}var motion=magiMotion(v.motion),t=v.tally,count={approve:0,reject:0,none:0},votes={};if(!motion||!t||!Number.isInteger(v.rounds)||v.rounds<1||v.rounds>5||typeof v.reason_missing!="boolean"||!v.votes)return null;for(var i=0;i<3;i++){var k=MAGI_IDS[i],x=v.votes[k];if(!x||["voted","carried","unreadable","absent"].indexOf(x.state)<0)return null;if(x.state==="voted"||x.state==="carried"){if(["approve","reject"].indexOf(x.vote)<0||!Number.isInteger(x.round)||x.round<1||x.round>v.rounds||(x.state==="carried"?x.round>=v.rounds||["no_response","unreadable"].indexOf(x.issue)<0:x.issue!==void 0))return null}else if(x.vote!==null||x.round!==null||x.issue!==void 0)return null;votes[k]={vote:x.vote,round:x.round,state:x.state},x.issue&&(votes[k].issue=x.issue),count[x.vote||"none"]++}return!["approve","reject","none"].every(function(k2){return Number.isInteger(t[k2])&&t[k2]===count[k2]})||v.result!==(count.approve>=2?"approve":count.reject>=2?"reject":"hold")?null:{motion,result:v.result,tally:count,rounds:v.rounds,votes,reason_missing:v.reason_missing}}
-function magiCleanItem(item){var out=Object.assign({},item);delete out.mode,delete out.magi;delete out.sources;if(item.role==="assistant"&&item.mode==="fact"){out.mode="fact";delete out.debate;var sources=cleanAgentSources(item.sources,item.content);if(sources)out.sources=sources;return out}var m=item.mode==="magi"?magiClean(item.magi):null;return m&&(out.mode="magi",out.magi=m),out}
+function magiCleanItem(item){var out=Object.assign({},item);delete out.mode,delete out.magi;delete out.sources;if(item.role==="assistant"&&item.mode==="fact"){out.mode="fact";delete out.debate;var sources=cleanAgentSources(item.sources,item.content);if(sources)out.sources=sources;return out}if(item.role==="assistant"&&item.mode==="fast"){out.mode="fast";delete out.debate;return out}var m=item.mode==="magi"?magiClean(item.magi):null;return m&&(out.mode="magi",out.magi=m),out}
 function magiMarkdown(m,debate){if(!m)return"";function escape(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/[\\`*_{}\[\]()#+.!|~-]/g,"\\$&")}if(m.votable===!1)return"**Motion dismissed:** "+m.reason+`
 
 `;var out="**Motion:** "+escape(m.motion)+`
@@ -9719,6 +9782,15 @@ function openPromptMenu(el, anchor, how, point) {
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAgentHoverReactions(false); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) closeAgentHoverReactions(false); });
+  // Shinya Takeda の絵文字の札を押す（Enter・スペースでも）。同じ絵文字で重ねる／取り消す
+  agentLog.addEventListener('click', function (e) {
+    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
+    if (badge) { e.preventDefault(); agentTogglePromptReaction(badge); }
+  });
+  agentLog.addEventListener('keydown', function (e) {
+    var badge = e.target.closest && e.target.closest('.agent-user > .prompt-reaction');
+    if (badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); agentTogglePromptReaction(badge); }
+  });
   // 長押しで開く吹き出し。AI の回答はスマホだけ（PC は操作列がある）。リンク・ボタン・入力・確認質問・採決の表示の上では開かない
   function pressTarget(target) {
     if (!target || !target.closest || target.closest('a, button, input, textarea, select, label, summary, .agent-clarify, .magi-panel, .src-list, .agent-pages, .rate-pop')) return null;
@@ -9833,6 +9905,35 @@ function agentReactionBadge(host, cls, em, animate, label) {
   if (animate) { badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop'); agentHaptic(); }
 }
 // スマホ（指の端末）だけ、軽く振動させる（絵文字が付いた瞬間・長押しのメニュー）。振動できない端末（iPhone の Web など）では何もしない
+// Shinya Takeda がプロンプトに付けた絵文字の札。押すと利用者も同じ絵文字で重ね（「🤔 2」）、もう一度押すと取り消す（「🤔」）。
+// 重ねたかどうかは回答の項目の prompt_reaction_joined にだけ持ち、端末の履歴に残す。サーバーには送らない（Worker への履歴からも外す）。
+// 受信中で項目がまだ無いときは札の印（data-joined）に持ち、回答を履歴に入れるときに agentPromptReactionJoined で読む
+function agentPromptReaction(userEl, em, joined, animate) {
+  agentReactionBadge(userEl, 'prompt-reaction', em, animate, '');
+  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
+  if (!badge) return null;
+  var label = joined ? tr('Shinya Takeda and you reacted ' + em + ' (press to remove yours)', 'Shinya Takeda とあなたのリアクション ' + em + '（押すと取り消す）')
+    : tr('Reaction from Shinya Takeda ' + em + ' (press to react the same)', 'Shinya Takeda のリアクション ' + em + '（押すと同じリアクションをする）');
+  badge.setAttribute('role', 'button'); badge.tabIndex = 0;
+  badge.setAttribute('aria-pressed', joined ? 'true' : 'false'); badge.setAttribute('aria-label', label); badge.title = label;
+  if (joined) { badge.dataset.joined = '1'; badge.dataset.count = '2'; } else { delete badge.dataset.joined; delete badge.dataset.count; }
+  return badge;
+}
+function agentPromptReactionJoined(userEl) {
+  var badge = userEl && userEl.querySelector && userEl.querySelector(':scope > .prompt-reaction');
+  return !!badge && badge.dataset.joined === '1';
+}
+// 札を押したとき。回答が履歴に入っていれば項目にも書いて保存する（一時チャットは保存しない）
+function agentTogglePromptReaction(badge) {
+  var user = badge.closest('.agent-user'), em = badge.dataset.emoji;
+  if (!user || !agentEmojiValid(em)) return;
+  var joined = badge.dataset.joined !== '1';
+  agentPromptReaction(user, em, joined, joined);
+  var turn = user.nextElementSibling, item = turn && turn.classList.contains('agent-turn') ? agentItemFor(turn) : null;
+  if (!item || item.prompt_reaction !== em) return;
+  if (joined) item.prompt_reaction_joined = true; else delete item.prompt_reaction_joined;
+  if (!agentTemporary()) persistReactions();
+}
 function agentHaptic(ms) {
   try {
     if (navigator.vibrate && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate(ms || 12);
@@ -10739,6 +10840,7 @@ async function parseSSE(body, handlers, onChunk) {
       const clarify = lastAgentTurn()?._clarify;
       const ready = !!agentInput.value.trim() || attachments.length > 0 || !!clarify?.picks.some(p => p !== undefined);
       agentSendBtn.classList.toggle('is-empty', !ready && !agentSendBtn.dataset.stop);
+      syncAgentRethinkButton(!!agentInput.value.trim() || attachments.length > 0);
     };
     // 確認質問の選択肢を押したあと、送信ボタンの濃さを見直す
     agentLog.addEventListener('click', () => updateSendState());
@@ -11055,6 +11157,7 @@ function showAgentCamera() {
     document.addEventListener('pointerdown', (e) => {
       if (!attachMenu.hidden && !e.target.closest('#agent-attach-menu, #agent-attach')) setAttachMenu(false);
     });
+    setupAgentReplyMode();
     attachFile.addEventListener('change', () => { addAttachments(attachFile.files); attachFile.value = ''; });
     attachTray.addEventListener('click', (e) => {
       const x = e.target.closest('.attach-x'); if (!x) return;
@@ -11156,7 +11259,7 @@ function showAgentCamera() {
 
     function prepareAgentMessages(history, lastContent) {
       // 考えた秒数・読み上げの署名・回答の日時は画面の表示のためだけのもので、次の質問の API には送らない
-      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, speech_sig, speech_lang, speech_version, speech_mode, at, prompt_reaction, ...m }) => agentFactHistoryMessage(m));
+      const messages = cleanHistory(history).slice(-AGENT_MAX_HISTORY).map(({ thinkingSeconds, speech_sig, speech_lang, speech_version, speech_mode, at, prompt_reaction, prompt_reaction_joined, ...m }) => agentFactHistoryMessage(m));
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
       messages[messages.length - 1].content = lastContent;
       let remaining = 8;
@@ -11388,6 +11491,82 @@ function agentAttachDocHTML(a) {
     + esc(a.truncated ? tr(size + ' chars (start)', '先頭' + size + '字') : tr(size + ' chars', size + '字')) + '</small></span>';
 }
 // AGENT_ATTACH_END
+// AGENT_REPLY_MODE_BEGIN
+// 返答のモード（入力欄の「討議 ∨」）。討議＝3人格が討議してから統合人格が答える、高速＝討議を省いて統合人格が直接答える
+// （Worker の reply_mode:'fast'、FAST_REPLY）。選んだモードは端末に保存し、次の送信から使う（送信中の回答は変えない）。
+// 文言は HTML の data-ja で訳し、ここでは表示する方と選択の印だけを切り替える。トップページとアプリで同じ中身。
+// 入力欄の準備（setupAgentReplyMode）はこの区画より前の行から呼ぶので、値は初めて読むときに端末の保存から決める
+var AGENT_REPLY_MODES = ['debate', 'fast'];
+var agentReplyModeValue;
+function agentReplyMode() {
+  if (agentReplyModeValue === undefined) {
+    agentReplyModeValue = 'debate';
+    try { if (localStorage.getItem('magi_reply_mode') === 'fast') agentReplyModeValue = 'fast'; } catch (_) { }
+  }
+  return agentReplyModeValue;
+}
+function renderAgentReplyMode() {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return;
+  btn.querySelectorAll('[data-mode-label]').forEach(function (el) { el.hidden = el.dataset.modeLabel !== agentReplyMode(); });
+  menu.querySelectorAll('[data-mode]').forEach(function (el) { el.setAttribute('aria-checked', String(el.dataset.mode === agentReplyMode())); });
+}
+function setAgentReplyMode(mode) {
+  if (AGENT_REPLY_MODES.indexOf(mode) < 0) return;
+  agentReplyModeValue = mode;
+  try { localStorage.setItem('magi_reply_mode', mode); } catch (_) { }
+  renderAgentReplyMode();
+}
+function setAgentModeMenu(open) {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return false;
+  var was = !menu.hidden;
+  menu.hidden = !open; btn.setAttribute('aria-expanded', String(open));
+  if (open) (menu.querySelector('[aria-checked="true"]') || menu.querySelector('[data-mode]')).focus();
+  return was;
+}
+function setupAgentReplyMode() {
+  var btn = document.getElementById('agent-mode'), menu = document.getElementById('agent-mode-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', function () { setAgentModeMenu(menu.hidden); });
+  menu.addEventListener('click', function (e) {
+    var item = e.target.closest('[data-mode]'); if (!item) return;
+    setAgentReplyMode(item.dataset.mode); setAgentModeMenu(false); btn.focus();
+  });
+  menu.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { setAgentModeMenu(false); btn.focus(); return; }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    var items = Array.prototype.slice.call(menu.querySelectorAll('[data-mode]'));
+    var next = items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : -1);
+    e.preventDefault(); items[(next + items.length) % items.length].focus();
+  });
+  document.addEventListener('pointerdown', function (e) {
+    if (!menu.hidden && !e.target.closest('#agent-mode-menu, #agent-mode')) setAgentModeMenu(false);
+  });
+  renderAgentReplyMode();
+}
+// AGENT_REPLY_MODE_END
+
+// AGENT_RETHINK_BEGIN
+// 回答を待つ間に打った文で考え直す。送信中の質問と、待つ間に入力欄へ書いた文・添付を1つの質問にまとめて送り直す（文は空行でつなぐ）。
+// 1回の上限（本文1000字・画像 ATTACH_MAX 枚・ファイル AGENT_ATTACH_FILE_MAX 件・添付の文字の合計）を超えるなら
+// まとめずに error を返す。呼び出し側はそのとき今の回答を止めず、入力も残す。トップページとアプリで同じ中身
+var AGENT_RETHINK_TEXT_MAX = 1000;
+function agentRethinkMerge(text, atts, draft, drafts) {
+  var merged = [String(text || '').trim(), String(draft || '').trim()].filter(Boolean).join('\n\n');
+  var all = (atts || []).concat(drafts || []);
+  if (!merged && !all.length) return { error: 'empty' };
+  if (merged.length > AGENT_RETHINK_TEXT_MAX) return { error: 'text' };
+  var capacity = agentAttachCapacity(all, 'pdf');
+  if (agentAttachCount(all, 'image') > ATTACH_MAX || capacity.fileSlots < 0 || capacity.textLeft < 0) return { error: 'attachments' };
+  return { text: merged, atts: all };
+}
+function agentRethinkError(code) {
+  return code === 'text'
+    ? tr('To rethink, keep the earlier question and your addition within 1,000 characters in total.', '考え直すには、送信中の質問と追加の文を合わせて1000文字以内にしてください。')
+    : tr('To rethink, keep the attachments of the earlier question and your addition within the per-message limit.', '考え直すには、送信中の質問と追加の添付を合わせて1回の上限以内にしてください。');
+}
+// AGENT_RETHINK_END
 
     // 生成中は送信ボタンを停止ボタン（■）に変える。押すと接続を切り、Worker も続きの呼び出しを止める
     const AGENT_SEND_ICON = '<svg aria-hidden="true" width="16" height="16" stroke-width="2.2"><use href="#ic-send" /></svg>';
@@ -11400,10 +11579,30 @@ function agentAttachDocHTML(a) {
       if (on) agentSendBtn.disabled = false;
       updateSendState();
     }
+    // 回答を待つ間に入力欄へ文字・添付があれば、■の代わりに送信ボタンを出す（押すと考え直す。agentRethink）
+    function syncAgentRethinkButton(ready) {
+      if (!agentSendBtn.dataset.stop) { agentSendBtn.dataset.rethink = ''; return; }
+      const on = ready ? '1' : '';
+      if (agentSendBtn.dataset.rethink === on) return;
+      agentSendBtn.dataset.rethink = on;
+      agentSendBtn.innerHTML = on ? AGENT_SEND_ICON : AGENT_STOP_ICON;
+      agentSendBtn.title = agentSendBtn.ariaLabel = on ? tr('Send and rethink', '送信して考え直す') : tr('Stop', '停止');
+    }
     function agentStop() {
       if (!agentCtrl) return;
       agentCtrl.userStopped = true;
       agentCtrl.abort();
+    }
+    // 回答を待つ間に打った文で考え直す（AGENT_RETHINK）。今の回答を止め、止めた送信の後始末の中で、
+    // 送信中の質問と入力欄の文・添付をまとめて送り直す（agentSend の末尾）。まとめると上限を超えるなら止めずに知らせる
+    function agentRethink() {
+      const ctrl = agentCtrl;
+      if (!agentBusy || !ctrl || !ctrl.sent || ctrl.rethink || agentPrivacyState.attachmentJobs) return;
+      if (!agentInput.value.trim() && !attachments.length) return;
+      const merged = agentRethinkMerge(ctrl.sent.text, ctrl.sent.atts, agentInput.value, attachments);
+      if (merged.error) { announceAgent(agentRethinkError(merged.error)); return; }
+      ctrl.rethink = true;
+      agentStop();
     }
 
     // retry: ［もう一度］のときの { text, atts, mid（置き換える回答） }。入力欄には触れない。
@@ -11416,6 +11615,7 @@ function agentAttachDocHTML(a) {
       const item = { role: 'assistant', content: r.reply, thinkingSeconds: r.thinkingSeconds };
       if (r.closed) item.closed = true;
       else if (r.fact) { item.mode = 'fact'; item.sources = cleanAgentSources(r.sources, r.reply); }
+      else if (r.fast) item.mode = 'fast';
       else item.debate = r.debate;
       if (r.magi) { item.mode = 'magi'; item.magi = r.magi; }
       if (r.clarify) item.clarify = r.clarify;
@@ -11426,7 +11626,7 @@ function agentAttachDocHTML(a) {
         if (speech.speech_lang) item.speech_lang = speech.speech_lang;
       }
       item.mid = r.mid; item.at = Date.now(); item.reactions = r.reactions;
-      if (r.promptReaction) item.prompt_reaction = r.promptReaction;
+      if (r.promptReaction) { item.prompt_reaction = r.promptReaction; if (r.promptReactionJoined) item.prompt_reaction_joined = true; }
       return item;
     }
     async function agentSend(retry) {
@@ -11448,19 +11648,22 @@ function agentAttachDocHTML(a) {
 
       if (agentBusy || agentDead || agentClosed) return;
       if (agentSpeechPlayer) agentSpeechPlayer.stop();
-      var draftText = retry ? retry.text : agentInput.value;
-      var text = retry ? retry.text : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
+      // 考え直し（retry.rethink）は、まとめた質問を入力欄に置いてから呼ぶ。入力欄から読み、［もう一度］の置き換え（mid）だけを引き継ぐ
+      var draftText = retry && !retry.rethink ? retry.text : agentInput.value;
+      var text = retry ? (retry.rethink ? draftText.trim() : retry.text) : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
   if (text === null) { announceAgent(tr('Keep the full answer within 1,000 characters and Other within 100.', '回答全体を1000文字以内、その他を100文字以内にしてください。')); return; }
-      const atts = retry ? retry.atts : attachments.slice();
+      const atts = retry && !retry.rethink ? retry.atts : attachments.slice();
       if (!text && !atts.length) return;
       const retryOf = retry ? retry.mid : null;
       agentRetryEls(retryOf).forEach(el => { el.hidden = true; });
       const sendHistory = () => { const pair = agentRetryPair(retryOf); return pair.length ? agentHistory.filter(it => !pair.includes(it)) : agentHistory; };
   var clarifyDraft = retry ? null : freezeAgentClarify();
       const startedAt = Date.now();
-      const requestMagiPanel = magiModeEnabled();
+      // 高速モード（AGENT_REPLY_MODE）は討議をしないので、採決（MAGI）の対応も送らない
+      const fastReply = agentReplyMode() === 'fast';
+      const requestMagiPanel = magiModeEnabled() && !fastReply;
       setAgentSuggestion('');
-      if (!retry) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
+      if (!retry || retry.rethink) { agentInput.value = ''; fitAgentInput(); attachments = []; renderAttachTray(); }
       // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
       // localStorage をすぐ食い潰すので、保存用と送信用で解像度を分ける。添付ファイルの文字はどちらも同じ。
       const partsOf = (key) => [
@@ -11475,7 +11678,7 @@ function agentAttachDocHTML(a) {
       const u = userBubbleEl(storeContent, sentAt);
       agentLog.appendChild(u); markAgentStarted();
       const mid = genMid(); pendingReactions[mid] = {};
-      const turn = agentTurnEl(mid, personaCardsHTML(), '', true);
+      const turn = agentTurnEl(mid, fastReply ? '' : personaCardsHTML(), '', true);
       agentLog.appendChild(turn); agentScroll();
       const replyEl = turn.querySelector('.agent-reply');
       const replyBody = replyEl.querySelector('.agent-reply-body');
@@ -11485,7 +11688,8 @@ function agentAttachDocHTML(a) {
       saveCurrentHistory();
       syncRetryButtons();
 
-      agentBusy = true; setAgentInputEnabled(false); setAgentStopMode(true);
+      // 回答を待つ間も入力欄は開けておく（打った文で考え直せる。agentRethink）
+      agentBusy = true; setAgentStopMode(true);
       let reply = '', errored = false, timedOut = false, suggestion = '', completed = false, sitePages = null, classified = false, promptReaction = null;
       let magiMeta = null, magiView = null, integratedEnd = false, magiRetained = false;
       var closedReply = false, factReply = false, replySources = null, clarifyReply = null, speechMeta = {};
@@ -11494,6 +11698,7 @@ function agentAttachDocHTML(a) {
 
       // 受信の終端まで300秒待つ。15秒の空白は注記・再生へ切り替えるだけで打ち切らない。
       const ctrl = new AbortController();
+      ctrl.sent = { text, atts }; // 考え直すときに、入力欄の文とまとめる元（agentRethink）
       const conversationId = ensureAgentConversation();
       const gen = agentGen; agentCtrl = ctrl;
 
@@ -11529,7 +11734,7 @@ function agentAttachDocHTML(a) {
         const history = sendHistory();
         const outbound = prepareAgentMessages(history, sendContent);
         // WebSocket で受け、開けなければ SSE（openAgentChat。読み上げ設計§6.3）
-        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true, rich_reply: true, prompt_reaction: true, location_enabled: locationServiceEnabled() }, conversationStorageFields(conversationId), classificationFields(history, agentReplyLanguage, currentLang, 'chat', requestMagiPanel), requestPrivacy || {})), ctrl.signal);
+        const res = await openAgentChat(AGENT_API, JSON.stringify(Object.assign({ messages: outbound, theme, suggest: true, site_pages: true, page: '/', adaptive_debate: true, rich_reply: true, prompt_reaction: true, prompt_reaction_open: true, location_enabled: locationServiceEnabled() }, fastReply ? { reply_mode: 'fast' } : {}, conversationStorageFields(conversationId), classificationFields(history, agentReplyLanguage, currentLang, 'chat', requestMagiPanel), requestPrivacy || {})), ctrl.signal);
         if (dropped()) return;
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
@@ -11602,11 +11807,11 @@ function agentAttachDocHTML(a) {
             },
             // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
             suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
-            // 統合人格がプロンプトに付けた絵文字（一覧にあるものだけ）。届いた瞬間に吹き出しの角へ弾ませて出す
+            // 統合人格がプロンプトに付けた絵文字（話題に合わせて一覧の外からも選ぶ。絵文字1つだけ受け付ける）。届いた瞬間に吹き出しの角へ弾ませて出す
             prompt_reaction: (d) => {
-              const em = d && typeof d.emoji === 'string' && AGENT_REACTIONS.indexOf(d.emoji) >= 0 ? d.emoji : null;
+              const em = d && agentEmojiValid(d.emoji) ? d.emoji : null;
               if (!em || dropped()) return;
-              promptReaction = em; agentReactionBadge(u, 'prompt-reaction', em, true, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
+              promptReaction = em; agentPromptReaction(u, em, false, true);
             },
             pages: (d) => { if (!dropped()) sitePages = d; },
             sources: (d) => { if (!dropped()) replySources = d; },
@@ -11660,8 +11865,8 @@ function agentAttachDocHTML(a) {
     if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
         if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(el => el.remove()); }
         agentHistory.push(agentReplyItem({
-          reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, sources: replySources, debate: debateData,
-          magi: magiMeta, clarify: clarifyReply, speech: speechMeta, completed, mid, reactions: pendingReactions[mid] || {}, promptReaction,
+          reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, fast: fastReply, sources: replySources, debate: debateData,
+          magi: magiMeta, clarify: clarifyReply, speech: speechMeta, completed, mid, reactions: pendingReactions[mid] || {}, promptReaction, promptReactionJoined: agentPromptReactionJoined(u),
         }));
         delete pendingReactions[mid];
         agentLastSend = atts.length ? { mid, atts } : null;
@@ -11674,6 +11879,11 @@ function agentAttachDocHTML(a) {
         syncCurrentToSaved();
         setAgentSuggestion(completed && !clarifyReply && !closedReply && !magiMeta?.reason_missing ? suggestion : '');
       } else {
+        // 考え直す（agentRethink）なら、送信中の質問と入力欄の文・添付をまとめて、この後すぐ送り直す。
+        // ［もう一度］の送り直しなら置き換える回答もそのまま引き継ぐ。まとめられなければ通常の停止と同じに戻す
+        const rethink = ctrl.rethink && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
+        const rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
+        if (rethinkNext) { agentInput.value = rethink.text; attachments = rethink.atts; renderAttachTray(); fitAgentInput(); }
         // 失敗した往復を次の質問の履歴に持ち越さない。
         turn.remove();
         const last = agentHistory[agentHistory.length - 1];
@@ -11681,6 +11891,7 @@ function agentAttachDocHTML(a) {
         delete pendingReactions[mid];
         u.remove();
         markAgentStarted(); // 最初の発言だったなら、会話を始めた時刻の行も消す
+        if (rethinkNext) { syncRetryButtons(); if (agentHistory.length) saveCurrentHistory(); agentSend(rethinkNext); return; }
         // ［もう一度］が届かなければ前の往復を見せ直す（質問は入力欄に戻さない）。最後の回答の［もう一度］も出し直す
         agentRetryEls(retryOf).forEach(el => { el.hidden = false; });
         syncRetryButtons();
@@ -11691,20 +11902,25 @@ function agentAttachDocHTML(a) {
           if (!agentTemporary() && currentSessionId) { safeStore('magi_saved_sessions', loadSavedSessions().filter(s => s.id !== currentSessionId)); renderSavedSessionsList(); }
         }
         syncCurrentToSaved(); updateAgentActionButtons();
-        // 中断・通信失敗でも、質問と画像を戻す。待つ間に打ち始めた文があればそちらを残す。
-        if (!retry && !agentInput.value) { agentInput.value = clarifyDraft ? draftText : text; attachments = atts; renderAttachTray(); fitAgentInput(); }
+        // 中断・通信失敗でも、質問と画像を入力欄へ戻す。待つ間に打った文・添付があれば、質問の後ろにつなぐ（1回の上限を超えるなら打った方だけを残す）
+        if (!retry || retry.rethink) {
+          const sentText = clarifyDraft ? draftText : text;
+          const back = agentInput.value.trim() || attachments.length ? agentRethinkMerge(sentText, atts, agentInput.value, attachments) : { text: sentText, atts };
+          if (!back.error) { agentInput.value = back.text; attachments = back.atts; renderAttachTray(); fitAgentInput(); }
+        }
     restoreAgentClarify(clarifyDraft);
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
         if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) renderAgentSplash();
       }
     }
-    agentSendBtn.addEventListener('click', () => (agentBusy ? agentStop() : agentSend()));
+    // 回答を待つ間は、入力欄に文字・添付があれば考え直し、無ければ停止（ボタンの形は syncAgentRethinkButton）
+    agentSendBtn.addEventListener('click', () => (agentBusy ? (agentSendBtn.dataset.rethink ? agentRethink() : agentStop()) : agentSend()));
     // 物理キーボードのある環境（マウス・トラックパッドが主の入力）だけ Enter で送信、Shift+Enter で改行。
     // スマホ・タブレットの Enter は改行のまま（チャットの一般的な動き）で、送信はボタン。Ctrl/⌘+Enter はどこでも送信
     const agentEnterSends = e => !e.shiftKey && (e.ctrlKey || e.metaKey
       || !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches));
-    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && agentEnterSends(e)) { e.preventDefault(); agentSend(); } });
+    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && agentEnterSends(e)) { e.preventDefault(); if (agentBusy) agentRethink(); else agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
 
     // --- リアクション（コピー / いいね / 絵文字）---
@@ -11917,7 +12133,7 @@ async function unregisterReaction(bar, target) {
   cleanHistoryItems.forEach((item, i) => {
         if (item.role === 'user') {
           const userEl = userBubbleEl(item.content, agentPromptAt(item, cleanHistoryItems[i + 1])), next = cleanHistoryItems[i + 1];
-          if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentReactionBadge(userEl, 'prompt-reaction', next.prompt_reaction, false, tr('Reaction from Shinya Takeda', 'Shinya Takeda のリアクション'));
+          if (next && next.role === 'assistant' && agentRatingOf(next.prompt_reaction)) agentPromptReaction(userEl, next.prompt_reaction, next.prompt_reaction_joined === true, false);
           agentLog.appendChild(userEl); return;
         }
         const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false, item.thinkingSeconds);
@@ -12160,7 +12376,7 @@ function makeAgentPanel(id, title, bodyHTML) {
 // AGENT_PRIVACY_BEGIN
 // 未対応・未知の機能の段落は表示しない。APIの文章はHTMLとして解釈しない。
 // data が undefined のときは取得中。null や形の違う応答は取得の失敗として案内を出す。
-var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization', 'attachments', 'conversation_storage', 'prompt_reaction'];
+var AGENT_PRIVACY_FEATURES = ['classification_state', 'magi_panel', 'site_pages', 'close_on_malice', 'fact_mode', 'clarify', 'speech', 'temporary_chat', 'personalization', 'attachments', 'conversation_storage', 'prompt_reaction', 'reply_mode'];
 function renderAgentPrivacy(list, lang, data, nativeRows = []) {
   if (!list || !list.isConnected) return;
   var fallback = lang === 'ja'

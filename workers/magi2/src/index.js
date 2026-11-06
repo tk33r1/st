@@ -1,4 +1,4 @@
-import { ATTACHMENTS, CONVERSATION_STORE, DEBATE, DEFAULTS, FACT_ANSWER, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROMPT_REACTION, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
+import { ATTACHMENTS, CONVERSATION_STORE, DEBATE, DEFAULTS, FACT_ANSWER, FAST_REPLY, INTENT_CLASSIFY, LINE_CONTROL_RE, MAGI_MODE, MALICE_REPLY, MUSIC_CONSULT, PERSONAS, PERSONA_CONTEXT, PERSONA_GUIDE, PERSONA_TEMPERATURE, PRIVACY, PROMPT_REACTION, PROVIDERS, REPLY_LANGUAGE, RESEARCH, SEARCH_CLICK, SHARED, SITE_GUIDE, SPEECH, SITE_RANK, SITE_SEARCH, STREAM, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TEXT_CONTROL_RE, TITLER } from '../personas.js';
 import { cleanMotion, parseVote, magiTally, cleanMagiHistory, magiHistoryNote } from '../magi-mode.js';
 import { billingFailureBody, chatPageEvent, getSitePages, getSiteSnapshot, isBillingFailure, readLimited, resolveSiteHistory, searchDeadline, searchFailure, searchSlice, selectSitePages, sha256, siteGuide, snapshotHash } from '../site-search.js';
 import { rankCandidateHash, rankQuery, rankSearch, rankSiteUrl } from '../site-rank.js';
@@ -1025,26 +1025,33 @@ async function cleanupConversationTurns(env, now) {
 const VS16 = String.fromCodePoint(0xFE0F);
 const SKIN_TONES = new RegExp(`[${String.fromCodePoint(0x1F3FB)}-${String.fromCodePoint(0x1F3FF)}]`, 'gu');
 const reactionGraphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-function pickReaction(value, prefix = false) {
+// 一覧の外の絵文字（open）：絵文字の部品だけでできた書記素1つで、絵文字の本体（国旗の文字を含む）を持つもの
+const OPEN_EMOJI_CHARS = /^[\p{Extended_Pictographic}\p{Emoji_Component}]+$/u;
+const OPEN_EMOJI_BASE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+function pickReaction(value, prefix = false, open = false) {
   let v = String(value).trim();
   if (prefix) v = ([...reactionGraphemes.segment(v)][0]?.segment || '').replace(SKIN_TONES, '');
-  return PROMPT_REACTION.emojis.find(e => v === e || v === e.replaceAll(VS16, '')) || null;
+  const listed = PROMPT_REACTION.emojis.find(e => v === e || v === e.replaceAll(VS16, ''));
+  if (listed || !open) return listed || null;
+  v = v.replace(SKIN_TONES, '');
+  return v.length <= PROMPT_REACTION.open_max_chars && OPEN_EMOJI_CHARS.test(v) && OPEN_EMOJI_BASE.test(v)
+    && [...reactionGraphemes.segment(v)].length === 1 ? v : null;
 }
-// 指示の後ろに、選べる絵文字の一覧を付ける
-const withReactionChoices = text => `${text}\n一覧: ${PROMPT_REACTION.emojis.join(' ')}`;
+// 指示の後ろに、選べる絵文字の一覧を付ける。一覧の外も描ける画面（open）には一覧を付けず、open の指示を使う
+const reactionText = (open, key) => open ? PROMPT_REACTION[`open_${key}`] : `${PROMPT_REACTION[key]}\n一覧: ${PROMPT_REACTION.emojis.join(' ')}`;
 
 // Webの回答のときだけ、プロンプトに付ける絵文字を別の呼び出しで選ぶ（非クリティカル：失敗・時間切れ・一覧に無い出力なら null）。
 // それ以外の回答では統合の呼び出しが答えと一緒に選ぶ（reactionSplitter）。
 // 今回の発言だけを見出しで引用して渡す（チャットの形のまま渡すと、モデルが答えを書く）。画像・添付は件数だけ
-function fetchPromptReaction(env, lastContent, attachments, signal, log) {
+function fetchPromptReaction(env, lastContent, attachments, signal, log, open = false) {
   return fetchAuxLine(env, 'reaction', () => {
     const quoted = [PROMPT_REACTION.input_header, head(contentText(lastContent).trim(), PROMPT_REACTION.message_max_chars) || '（文字なし）',
       ...mediaNotes(lastContent, attachments)].join('\n');
     return {
       cfg: DEFAULTS.models.reactor,
-      messages: [{ role: 'system', content: withReactionChoices(PROMPT_REACTION.system_prompt) }, { role: 'user', content: quoted }],
+      messages: [{ role: 'system', content: reactionText(open, 'system_prompt') }, { role: 'user', content: quoted }],
     };
-  }, raw => pickReaction(raw, true) || '', signal, log);
+  }, raw => pickReaction(raw, true, open) || '', signal, log);
 }
 
 // --- 討議の判定（personas.js の DEBATE）---
@@ -1233,7 +1240,7 @@ const withCard = (p, cards, header = PERSONA_CONTEXT.header) => (cards && cards[
 // 統合の答えの1行目に書かせた絵文字の印（PROMPT_REACTION.marker、例: [REACTION:👍]）を本文から切り取る。
 // 先頭が印でなければすぐに素通しし（答えの表示を遅らせない）、印なら閉じ括弧まで待って、一覧にある絵文字だけを onReaction へ渡す。
 // 印の後の空行も落とす。閉じない印の行は捨て、印のまま長すぎる行（marker_max_chars）は印ではないとして素通しする。
-function reactionSplitter(onReaction) {
+function reactionSplitter(onReaction, open = false) {
   const { marker, marker_max_chars: max } = PROMPT_REACTION;
   let buf = '', state = 'head'; // head（印を待つ）→ lead（印の後の空白を落とす）→ body（素通し）
   const lead = s => { const t = s.replace(/^\s+/, ''); if (t) state = 'body'; return t; };
@@ -1246,7 +1253,7 @@ function reactionSplitter(onReaction) {
       if (!final && s.length < max) return '';
       state = 'body'; return final && s.startsWith(marker) ? '' : buf;
     }
-    if (end === close) { const emoji = pickReaction(s.slice(marker.length, close)); if (emoji) onReaction(emoji); }
+    if (end === close) { const emoji = pickReaction(s.slice(marker.length, close), false, open); if (emoji) onReaction(emoji); }
     state = 'lead';
     return lead(s.slice(end + 1));
   };
@@ -1257,9 +1264,9 @@ function reactionSplitter(onReaction) {
 }
 
 // 統合に絵文字の印を書かせる指示。system の最後（履歴・今回の発言の直前）に足す
-function withReactionRule(messages) {
+function withReactionRule(messages, open = false) {
   const at = messages.findIndex(m => m.role !== 'system');
-  const rule = { role: 'system', content: withReactionChoices(PROMPT_REACTION.answer_rule) };
+  const rule = { role: 'system', content: reactionText(open, 'answer_rule') };
   return at < 0 ? [...messages, rule] : [...messages.slice(0, at), rule, ...messages.slice(at)];
 }
 
@@ -1304,11 +1311,12 @@ const discardEvents = () => {};
 // 統合は本文を送る前だけ、もう一方の会社で一度答え直す。用途ごとの呼び出しにも同じ規則を使う。
 // 送り口が discardEvents なら何も見せていないので、本文の途中で失敗しても答え直す。
 // reaction（プロンプトへの絵文字を受け取る関数）を渡すと、答えの1行目に絵文字の印を書かせ、切り取って渡す（PROMPT_REACTION）。
-// 答え直しの前の呼び出しが印だけ書いて失敗した場合も渡ることがあるので、1回だけ送るのは呼び出し側で守る
+// 答え直しの前の呼び出しが印だけ書いて失敗した場合も渡ることがあるので、1回だけ送るのは呼び出し側で守る。
+// reaction.open が true なら、一覧の外の絵文字も選ばせる（PROMPT_REACTION.open_*）
 async function synthesize({ env, messages, theme, signal, send, log, reasoningEffort, reaction = null }) {
   const { synthesizer: light, synthesizer_dark: dark } = DEFAULTS.models;
   const [primary, alternate] = theme === 'dark' ? [dark, light] : [light, dark];
-  if (reaction) messages = withReactionRule(messages);
+  if (reaction) messages = withReactionRule(messages, !!reaction.open);
   let emitted = false;
   for (const [attempt, model] of [primary, alternate].entries()) {
     const cfg = reasoningEffort ? { ...model, reasoning_effort: reasoningEffort } : model;
@@ -1332,7 +1340,7 @@ async function synthesize({ env, messages, theme, signal, send, log, reasoningEf
             res.body?.cancel().catch(() => {}); ac.abort();
             throw stageError('synthesizer_call', `upstream_http_${res.status}`, `統合人格の呼び出しが失敗しました (HTTP ${res.status})`, { retryable: res.status >= 500 });
           }
-          const splitter = reaction ? reactionSplitter(emoji => { if (!ac.signal.aborted) reaction(emoji); }) : null;
+          const splitter = reaction ? reactionSplitter(emoji => { if (!ac.signal.aborted) reaction(emoji); }, !!reaction.open) : null;
           return await readSynthesis(res.body, push, cfg.provider, ac.signal, splitter);
         } catch (error) {
           if (noText) throw stageError('synthesizer_call', 'first_text_timeout', '統合応答の本文が始まりませんでした', { retryable: true });
@@ -1371,7 +1379,7 @@ function factAnswerMessages({ cards, messages, langNote, theme = null, guide = n
     ...(siteOnly ? [{ role: 'system', content: FACT_ANSWER.site_prompt }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
     // Webの回答は出典の照合の契約（RESEARCH.answer_rules）を優先し、書式の指示を足さない
-    ...(rich && !research ? [{ role: 'system', content: SYNTHESIZER.rich_rules }] : []),
+    ...(research ? [] : [{ role: 'system', content: rich ? SYNTHESIZER.rich_rules : SYNTHESIZER.brief_rule }]),
     ...messages,
   ];
 }
@@ -1794,6 +1802,10 @@ async function readChatInput(request, parsed = null) {
   const richReply = body.rich_reply === true;
   // 統合人格がプロンプトに絵文字で反応するか（PROMPT_REACTION）。描ける画面（トップページ・アプリ）だけが送る
   const wantReaction = body.prompt_reaction === true;
+  // 一覧の外の絵文字も描ける画面か（PROMPT_REACTION.open_*）。印の無い配布済みのアプリは一覧の絵文字しか描かない
+  const reactionOpen = wantReaction && body.prompt_reaction_open === true;
+  // 高速モード（FAST_REPLY）。入力欄で「高速」を選んだ画面だけが送る。それ以外の値は通常（討議）として扱う
+  const fast = body.reply_mode === 'fast';
   // 会話を D1 に保存するか（CONVERSATION_STORE）。設定でオフにしていない新しい画面だけが送る。一時チャットでは保存しない
   const storeConversation = body.conversation_storage === true;
   const conversationId = typeof body.conversation_id === 'string' && CONVERSATION_STORE.conversation_id_re.test(body.conversation_id) ? body.conversation_id : null;
@@ -1841,7 +1853,7 @@ async function readChatInput(request, parsed = null) {
   // 共有資料は最後の発言の頭に添える。討議・議題は状況説明なしの会話に添え、サイト検索の語には含めない。
   const withShared = list => shared ? list.map((m, i) => i === list.length - 1 ? { ...m, content: prependText(sharedNote(shared), m.content) } : m) : list;
   const searchText = contentText(withContext(plainMessages).at(-1).content);
-  return { messages: withShared(messages), plainMessages, fullMessages, discussMessages: withShared(fullMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, storeConversation, conversationId, page,
+  return { messages: withShared(messages), plainMessages, fullMessages, discussMessages: withShared(fullMessages), searchText, context, langNote, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, reactionOpen, fast, storeConversation, conversationId, page,
     ...privacy, locationEnabled: body.location_enabled !== false,
     devicePlace: body.location_enabled === false ? null : devicePlace(body.device_location),
     shared, newContract, factMode, clarify: newContract && body.clarify === true, magiPanel: body.magi_panel === true, entry, replyLanguage, seed, uiLanguage: body.ui_language === 'en' ? 'en' : 'ja' };
@@ -1922,23 +1934,24 @@ function discussionPersonas({ cards, motion, guide, music, pageChoice, personali
 
 // 判定のメモと上限を含む討議記録。本文・改行の順序は統合への入力契約として保つ。
 function discussionSynthesisText({ lastUser, lastRound, opinions, assessment, magiVerdict, motion, longDebate, maxRounds }) {
-  return `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${debateRecord(opinions)}`
+  return `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解${lastRound > 2 ? '、自分が聞き返した問いへの答え' : ''}]\n${debateRecord(opinions)}`
     + (assessment ? `\n\n[討議を見た自分のメモ]\n${assessment}` : '')
     + (magiVerdict ? `\n\n【共通の議題と確定した採決】${motion}\n${JSON.stringify(magiVerdict)}\n採決は変更せず、その根拠を説明する。` : '')
     + (longDebate && lastRound === maxRounds ? `\n\n[${motion ? MAGI_MODE.synth_cap_note(maxRounds) : `討議は上限の${maxRounds}回で打ち切った。割れたままの点は、どれを取るか自分で決めて答える`}]` : '');
 }
 
-function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, content, rich = false }) {
+// role は統合の役割の指示。省くと討議の統合（採決なら採決の説明）。高速モードは FAST_REPLY.role を渡す
+function discussionSynthesisMessages({ cards, motion, bias, guide, pageChoice, music, personalization, history, content, rich = false, role = null }) {
   return [
     // 統合人格のカード（自己像）があれば骨格の後ろに足す。無ければ骨格だけ
-    { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + SYNTHESIZER.role[motion ? 'magi' : 'chat'] }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
+    { role: 'system', content: withCard({ ...SYNTHESIZER, system_prompt: SYNTHESIZER.system_prompt + '\n' + (role || SYNTHESIZER.role[motion ? 'magi' : 'chat']) }, cards, PERSONA_CONTEXT.synth_header).system_prompt },
     ...(bias ? [{ role: 'system', content: bias }] : []),
     ...(guide ? [{ role: 'system', content: guide.synth }] : []),
     ...(pageChoice ? [{ role: 'system', content: siteSelectionNote(pageChoice) }] : []),
     ...(music ? [{ role: 'system', content: MUSIC_CONSULT.system_note }] : []),
     { role: 'system', content: SYNTHESIZER.voice_rules },
     // 採決の説明（MAGI）は従来の短い説明のまま
-    ...(rich && !motion ? [{ role: 'system', content: SYNTHESIZER.rich_rules }] : []),
+    ...(motion ? [] : [{ role: 'system', content: rich ? SYNTHESIZER.rich_rules : SYNTHESIZER.brief_rule }]),
     { role: 'system', content: SYNTHESIZER.constraint_rules + personalizationNote(personalization) },
     ...history.map(m => ({ ...m, content: prependText(magiHistoryNote(m.magi), m.content) })),
     { role: 'user', content },
@@ -2085,6 +2098,28 @@ async function runDiscussion({ upstream, cards, plainMessages, messages = plainM
   return answer;
 }
 
+// 高速モード（FAST_REPLY）：3人格の討議・判定を省き、統合人格が会話から直接答える。
+// 入力の組み方（カード・テーマの重み・サイト案内・音楽・書式・絵文字・履歴）は討議の統合と同じで、討議メモの代わりに今回の発言だけを渡す
+async function runDirectAnswer({ upstream, cards, messages, langNote, theme = null, guide = null, pageChoice = null, pagesPromise = null,
+  page = null, music = false, personalization = null, rich = false, reaction = null, signal, send, log }) {
+  const lastContent = messages.at(-1).content;
+  const lastUser = contentText(lastContent), lastImages = contentImages(lastContent);
+  const text = lastUser.trim() ? lastUser : FAST_REPLY.image_only;
+  if (pagesPromise) {
+    pageChoice = await awaitPageChoice(pagesPromise, pageChoice, signal);
+    if (signal.aborted) throw searchFailure('cancelled');
+  }
+  pageChoice = withoutCurrentPage(pageChoice, page);
+  log('discussion', 'fast');
+  const synthMessages = discussionSynthesisMessages({ cards, motion: null, bias: theme ? SYNTH_BIAS[theme] : null, guide, pageChoice, music, personalization,
+    history: messages.slice(0, -1), rich, role: FAST_REPLY.role,
+    content: withImages(langNote ? joinContent(text, langNote) : text, lastImages) });
+  const answer = await synthesize({ env: upstream, messages: synthMessages, theme, signal, send, log, reasoningEffort: FAST_REPLY.reasoning_effort, reaction });
+  log('synthesizer_call', 'ok');
+  if (pageChoice?.results.length && !signal.aborted) send('pages', chatPageEvent(pageChoice));
+  return answer;
+}
+
 // チャットのサイト案内とページ選び。人格カード（cardsPromise）も待って一緒に返す。
 // サイトの索引（data/site-search.json）は、ページ選びとサイト案内で同じものを使う。カードを待つ前に取り始める。
 // 停止フラグ（SITE_SEARCH_ENABLED）が true でなければ索引を読まない（サイト案内は場面の説明だけになる）
@@ -2135,7 +2170,7 @@ async function chatSitePages({ env, ctx, log, cardsPromise, classification, moti
 // （上流のエラー本文・例外の文・要求由来の値は入力を映しうる）。新しい語をログに足したら、残すならここにも足す
 const PRIVATE_LOG_WORDS = new Set([
   'start', 'ok', 'failed', 'fallback', 'complete', 'unavailable', 'timeout', 'upstream', 'incomplete', 'missing', 'omitted', 'HTTP', 'tokens', 'elapsed_ms',
-  'round1 start', 'round1 ok', 'round2 start', 'round2 ok', 'dropped', 'temperature', 'bias', 'synthesizer', 'title', 'suggest', 'motion',
+  'round1 start', 'round1 ok', 'round2 start', 'round2 ok', 'dropped', 'fast', 'temperature', 'bias', 'synthesizer', 'title', 'suggest', 'motion',
   'judge', 'judge failed', 'over budget', 'over budget after judge', 'answer', 'ask_personas', 'ask_user',
   'known', 'unknown', 'listed', 'unlisted', 'results', 'no_results', 'alert_failed',
   'render_limit', 'rendered', 'render_failed', 'ip_limit', 'global_limit', 'both_failed',
@@ -2166,7 +2201,7 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
     || input.personalization && !features.personalization
     || input.temporaryPersonalization && !features.temporary_personalization)) return httpError(409, { stage: 'bad_request', code: 'privacy_feature_unavailable', message: 'この会話機能は現在利用できません', retryable: true }, requestId, cors);
   place = input.locationEnabled ? input.devicePlace || place : null;
-  const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, storeConversation, conversationId, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
+  const { messages, plainMessages, fullMessages, discussMessages, searchText, context, shared, theme, wantSuggest, wantSitePages, adaptive, richReply, wantReaction, reactionOpen, fast, storeConversation, conversationId, page, newContract, factMode, clarify, magiPanel, entry, replyLanguage, seed, uiLanguage } = input;
   let langNote = input.langNote;
   // 送り手の IP と今回の発言（添付を外した形）。回数・回答・保存・タイトル・絵文字で同じものを使う
   const ip = requestIP(request), lastPlain = plainMessages.at(-1);
@@ -2277,7 +2312,8 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         if (stop.signal.aborted) throw searchFailure('cancelled');
         langNote = classified.langNote;
         const classification = classified.classification;
-        if (classification) classification.magi_candidate = !classified.malice && classification.mode !== 'fact' && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
+        // 高速モードは討議をしないので、採決（MAGI）にもしない
+        if (classification) classification.magi_candidate = !classified.malice && !fast && classification.mode !== 'fact' && env.MAGI_MODE_ENABLED === 'true' && newContract && magiPanel
           && entry === 'chat' && classification.votable === 'yes' && !!contentText(lastPlain.content).trim();
         if (newContract) send('classification', classification);
         if (classified.malice) {
@@ -2305,9 +2341,10 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         }
 
         // --- プロンプトへの絵文字：統合人格が答えと一緒に選ぶ（PROMPT_REACTION）。1回だけ送る（DJ の相談では付けない）---
+        // open は一覧の外の絵文字も選ばせるか（synthesize が読む）
         let reacted = false;
         const reaction = wantReaction && entry === 'chat'
-          ? emoji => { if (!reacted && !stop.signal.aborted) { reacted = true; send('prompt_reaction', { emoji }); } }
+          ? Object.assign(emoji => { if (!reacted && !stop.signal.aborted) { reacted = true; send('prompt_reaction', { emoji }); } }, { open: reactionOpen })
           : null;
         const research = factMode && classification.mode === 'fact' && classification.intent === 'research' && classification.fresh === 'yes';
 
@@ -2323,6 +2360,9 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
           ? await runFactAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
               research, rich: richReply,
               replyLanguage: classification.reply_language, ip, place, reaction, signal: stop.signal, send, log })
+          : fast
+          ? await runDirectAnswer({ upstream, cards, messages, langNote, theme, guide, pageChoice, pagesPromise, page, personalization: input.personalization,
+              music: newContract && classification?.intent === 'music', rich: richReply, reaction, signal: stop.signal, send, log })
           : await runDiscussion({ upstream, cards, plainMessages: discussMessages, messages, context, langNote, theme, personalization: input.personalization,
               adaptive, shortDebate, newContract, guide, pageChoice, pagesPromise, page, motion, music: !motion && newContract && classification.intent === 'music', rich: richReply,
               clarification: clarify && entry === 'chat' && !motion && !previousClarify
@@ -2333,11 +2373,11 @@ async function handleChat(request, env, ctx, { requestId, cors, log, place = req
         // 答えの後のページ選びの待ち（runFactAnswer）の間に切断されていても書く
         if (storeConversation && input.conversationMode !== 'temporary' && entry === 'chat' && typeof answer === 'string' && answer.trim()) {
           ctx.waitUntil(storeConversationTurn(env, { message: lastPlain, answer, ip, conversationId, theme,
-            intent: classification?.intent || null, mode: motion ? 'magi' : classification?.mode || null }, log));
+            intent: classification?.intent || null, mode: motion ? 'magi' : fast && !(factMode && classification?.mode === 'fact') ? 'fast' : classification?.mode || null }, log));
         }
         // Webの回答は統合を通らないので、答えの後に別の呼び出しで絵文字を1回だけ選ぶ（予測と並列。done の前に待つ）
         const reactionPromise = reaction && research && !reacted && answer !== null
-          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, lastPlain.content, lastPlain.attachments, signal, log), stop.signal)
+          ? withTimeout(PROMPT_REACTION.timeout_ms, signal => fetchPromptReaction(upstream, lastPlain.content, lastPlain.attachments, signal, log, reactionOpen), stop.signal)
             .then(emoji => { if (emoji) reaction(emoji); })
             .catch(() => {})
           : null;

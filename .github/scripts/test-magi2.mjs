@@ -274,6 +274,7 @@ function nativeShell(capacitor) {
     closeAgentPrivacyDialog() { if (!state.dialog) return false; state.dialog = false; calls.push('dialog'); return true; },
     closeAgentEmojiPicker() { if (!state.emoji) return false; state.emoji = false; calls.push('emoji'); return true; },
     closeAttachMenu() { if (!state.attach) return false; state.attach = false; calls.push('attach'); return true; },
+    setAgentModeMenu(open) { if (open || !state.mode) return false; state.mode = false; calls.push('mode'); return true; },
     closePromptMenu() { return false; },
     closeUsagePop() { if (!state.usage) return false; state.usage = false; calls.push('usage'); return true; },
     backAgentPage() { if (!state.page) return false; state.page = false; calls.push('page'); return true; },
@@ -296,6 +297,7 @@ test('B0: Androidの戻るは添付メニュー・パネル・利用回数・メ
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'dialog');
   state.emoji = true; state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'emoji');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'attach');
+  state.mode = true; state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'mode');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'page');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'panel');
   state.back({ canGoBack: false }); assert.equal(calls.at(-1), 'usage');
@@ -1529,6 +1531,104 @@ test('絵文字の印の切り取りは、差分の切れ目・長すぎる行�
   // 一覧に無い合成絵文字は、頭が同じ一覧の絵文字に化けさせない
   for (const v of ['❤️‍🩹', '😮‍💨', '👍‍x']) assert.equal(w.ctx.pickReaction(v, true), null, v);
   assert.equal(w.ctx.pickReaction('🔥 です', true), '🔥');
+});
+
+test('一覧の外の絵文字は、描ける画面（prompt_reaction_open）にだけ一覧の外から反応を選ばせ、絵文字1つだけを受け付ける', async () => {
+  for (const open of [false, true]) {
+    const w = worker(completionParts(['[REACTION:🎃]\nハロウィンの答え']));
+    const text = await (await w.request('/magi2/chat', { prompt_reaction: true, ...(open ? { prompt_reaction_open: true } : {}),
+      messages: [{ role: 'user', content: 'ハロウィンの仮装を相談したい' }] })).text();
+    assert.match(text, /event: done/);
+    const synth = w.calls.filter(c => c.stream);
+    const rule = synth[0].messages.find(m => m.role === 'system' && m.content.includes('[REACTION:絵文字]')).content;
+    // 開いた画面には一覧を付けず、話題の例（🎃・🎷・🐼）を渡す。古い画面には従来どおり一覧を付ける
+    assert.equal(rule.includes('一覧: '), !open); assert.equal(rule.includes('🎷'), open);
+    const ev = text.match(/event: prompt_reaction\ndata: (.*)/);
+    assert.deepEqual(ev ? JSON.parse(ev[1]) : null, open ? { emoji: '🎃' } : null);
+    assert.equal(integratedText(text), 'ハロウィンの答え');
+  }
+  // 4つの指示はどれも「読んでどう反応したか」を書かせ、皮肉への🔥・😅を例に持つ。
+  // 一覧の版の例は一覧の中の絵文字だけ（一覧の外の例を見せると、一覧に無い絵文字を書いて付かなくなる）
+  const w = worker();
+  const PR = vm.runInContext('PROMPT_REACTION', w.ctx);
+  for (const key of ['answer_rule', 'system_prompt', 'open_answer_rule', 'open_system_prompt']) {
+    const rule = PR[key];
+    assert.match(rule, /読んでどう反応したか/, key); assert.match(rule, /皮肉や鋭いツッコミに🔥や😅/, key);
+    assert.match(rule, /軽い皮肉やツッコミは攻撃とみなさない/, key);
+    assert.doesNotMatch(rule, /考えている|からかい/, key);
+    const examples = rule.match(/\p{Extended_Pictographic}️?/gu);
+    if (!key.startsWith('open_')) for (const em of examples) assert.ok(PR.emojis.includes(em), key + ' ' + em);
+  }
+  for (const em of ['🎃', '🎷', '🐼']) { assert.ok(PR.open_answer_rule.includes(em)); assert.ok(PR.open_system_prompt.includes(em)); }
+  const run = parts => { const got = []; const s = w.ctx.reactionSplitter(e => got.push(e), true); const out = parts.map(p => s.feed(p)).join('') + s.end(); return { got, out }; };
+  assert.deepEqual(run(['[REACTION:🐼]', '本文']), { got: ['🐼'], out: '本文' });
+  assert.deepEqual(run(['[REACTION:🎷🎺]本文']), { got: [], out: '本文' });
+  for (const [v, want] of [['🎃', '🎃'], ['🇨🇳', '🇨🇳'], ['👩🏽‍💻', '👩‍💻'], ['🎷 jazz', null], ['a', null], ['1', null], ['-', null], ['❤', '❤️']]) {
+    assert.equal(w.ctx.pickReaction(v, false, true), want, v);
+  }
+  // prefix（Webの回答の後の別の呼び出し）は先頭の1つだけを見る。開いていなければ一覧の外は付けない
+  assert.equal(w.ctx.pickReaction('🎷 です', true, true), '🎷');
+  assert.equal(w.ctx.pickReaction('🎷', true, false), null);
+});
+
+test('高速モードは3人格の討議と採決を省き、統合人格が推論 low で直接答える', async () => {
+  for (const theme of ['light', 'dark']) {
+    const w = worker(completionParts(['[REACTION:🎷]\n高速の答え']));
+    const text = await (await w.request('/magi2/chat', { theme, reply_mode: 'fast', prompt_reaction: true, prompt_reaction_open: true, adaptive_debate: true,
+      messages: [{ role: 'user', content: 'ジャズを聴き始めたい' }] })).text();
+    assert.match(text, /event: done/); assert.doesNotMatch(text, /event: (persona|ask|judge|motion)/);
+    assert.equal(integratedText(text), '高速の答え');
+    assert.deepEqual(JSON.parse(text.match(/event: prompt_reaction\ndata: (.*)/)[1]), { emoji: '🎷' });
+    // 3人格（【書き方】の指示）は呼ばない。統合は1回だけで、討議メモではなく今回の発言を渡す
+    assert.equal(w.calls.filter(c => c.messages?.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('【書き方】'))).length, 0);
+    const synth = w.calls.filter(c => c.stream);
+    assert.equal(synth.length, 1);
+    const system = synth[0].messages.filter(m => m.role === 'system').map(m => m.content).join('\n');
+    assert.ok(system.includes(vm.runInContext('FAST_REPLY.role', w.ctx)));
+    assert.ok(!system.includes('3人の議論を踏まえ'));
+    const last = JSON.stringify(synth[0].messages.at(-1));
+    assert.ok(last.includes('ジャズを聴き始めたい')); assert.ok(!last.includes('内部討議メモ'));
+    if (theme === 'light') assert.equal(synth[0].reasoning_effort, 'low');
+  }
+  // 値が違えば通常の討議のまま
+  const w = worker();
+  const text = await (await w.request('/magi2/chat', { reply_mode: 'turbo', messages: [{ role: 'user', content: 'ジャズを聴き始めたい' }] })).text();
+  assert.match(text, /event: persona/);
+});
+
+test('高速モードと考え直しの共通部品は、トップページとアプリで同じ中身で、履歴に高速の印を残す', () => {
+  for (const [begin, end] of [['// AGENT_REPLY_MODE_BEGIN', '// AGENT_REPLY_MODE_END'], ['// AGENT_RETHINK_BEGIN', '// AGENT_RETHINK_END']]) {
+    const blocks = [home, mobile].map(s => between(s, begin, end).replaceAll('\r\n', '\n'));
+    assert.equal(blocks[0], blocks[1], begin);
+  }
+  for (const src of [home, mobile]) {
+    assert.ok(src.includes("prompt_reaction_open: true"));
+    assert.ok(src.includes("fastReply ? { reply_mode: 'fast' } : {}"));
+    // 回答を待つ間も入力欄を閉じない
+    assert.ok(!/agentBusy = true; setAgent(?:Input|Controls)Enabled\(false\)/.test(src));
+    const ctx = vm.createContext({ document: {} });
+    vm.runInContext(between(src, '// MAGI_PRESENTATION_CORE_BEGIN', '// MAGI_PRESENTATION_CORE_END') + '\n' + between(src, '// AGENT_FACT_BEGIN', '// AGENT_FACT_END'), ctx);
+    assert.deepEqual(JSON.parse(JSON.stringify(ctx.magiCleanItem({ role: 'assistant', content: 'a', mode: 'fast', debate: { X: {} } }))), { role: 'assistant', content: 'a', mode: 'fast' });
+  }
+  for (const page of ['index.html', 'magi-app/www/index.html']) {
+    const html = read(page);
+    for (const id of ['agent-mode', 'agent-mode-menu']) assert.ok(html.includes(`id="${id}"`), page + id);
+    assert.ok(html.includes('data-mode="fast"') && html.includes('data-ja="高速"'));
+  }
+});
+
+test('考え直しは送信中の質問と入力欄の文・添付を1回の上限の中でまとめる', () => {
+  const ctx = vm.createContext({ tr: (en, ja) => ja });
+  vm.runInContext(between(home, '// AGENT_ATTACH_BEGIN', '// AGENT_ATTACH_END') + '\nvar ATTACH_MAX = 4;\n' + between(home, '// AGENT_RETHINK_BEGIN', '// AGENT_RETHINK_END'), ctx);
+  const merge = (...a) => JSON.parse(JSON.stringify(ctx.agentRethinkMerge(...a)));
+  const img = { url: 'u', thumb: 't' }, file = n => ({ kind: 'attachment', name: 'a.txt', text: 'x'.repeat(n) });
+  assert.deepEqual(merge('ハロウィンの仮装', [], '  予算は3000円で ', []), { text: 'ハロウィンの仮装\n\n予算は3000円で', atts: [] });
+  assert.deepEqual(merge('', [img], '補足', [img]), { text: '補足', atts: [img, img] });
+  assert.equal(merge('あ'.repeat(600), [], 'い'.repeat(398), []).text.length, 1000);
+  assert.deepEqual(merge('あ'.repeat(600), [], 'い'.repeat(399), []), { error: 'text' });
+  assert.deepEqual(merge('a', [img, img, img], 'b', [img, img]), { error: 'attachments' });
+  assert.deepEqual(merge('a', [file(6000)], 'b', [file(5000)]), { error: 'attachments' });
+  assert.deepEqual(merge('', [], ' ', []), { error: 'empty' });
 });
 
 test('未完成のリアクションの印を本文に流さず、本文を送る前の失敗なら別の会社で答え直す', async () => {
@@ -5184,7 +5284,7 @@ test('人格は自分の意見だけ：枠に頼むことと行き先があり�
   });
   for (const p of vm.runInContext('PERSONAS', w.ctx)) {
     // 枠はこの呼び出しで頼むことと行き先を書き、書き方は回の種類（チャット／採決）で分ける
-    assert.match(p.system_prompt, new RegExp(`この呼び出しで頼むのは、${p.name} としてのあなたの意見だけ`));
+    assert.match(p.system_prompt, new RegExp(`この呼び出しで頼むのは、${p.name} としてのあなたの意見・感想・問いだけ`));
     assert.match(p.role.chat, /名前は画面が出す/); assert.match(p.role.magi, /\[VOTE:APPROVE\]/);
   }
   const text = await (await w.chat([{ role: 'user', content: 'どっちを選ぶ？' }])).text();
