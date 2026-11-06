@@ -14,7 +14,8 @@ const scope='magi-dialogue-20261015';
 // 2026-11-02 本人承認: 7.1最終APKの本番確認に総額$3.36・各社$1.25。
 // 2026-11-03 本人承認: 7.1の本番確認のやり直しに$1追加（総額$4.36）。OpenAI・Anthropicの個別上限も同じ$1の範囲で$1.75へ。
 // 2026-11-06 本人承認: 絵文字・高速モード・統合人格と3人格のプロンプト整理の手元Worker確認6件に追加$0.50（総額$4.86）。Anthropicの個別上限を$2.00へ。
-export const evaluationBudgetCaps={openai:1.75,anthropic:2.00,total:4.86};
+// 2026-11-06 本人承認: 7.23の本番での有料の応答確認とAPK作成に$10追加（総額$14.86）。OpenAI・Anthropicの個別上限は$5ずつ上げる。
+export const evaluationBudgetCaps={openai:6.75,anthropic:7.00,total:14.86};
 const caps=evaluationBudgetCaps;
 const providers=['openai','anthropic','deepseek','typesafe'];
 const cents=value=>Math.ceil(value*1e6); // 比較は百万分の1ドル、端数は切り上げる。
