@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 06 Nov 2026 07:30:41 +0900</lastBuildDate>
+    <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 07 Nov 2026 07:15:56 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月7日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261107/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261107/</guid>
+      <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
+      <description>省人化はセルフレジなど顧客接点の自動化にとどまらず、バックヤードや決済インフラを含む店舗全体の再設計へと広がっている。 リテールメディアサミット2026は全登壇者と34セッションが確定し、リテールメディアを巡る議論のテーマが具体化した。</description>
+    </item>
     <item>
       <title>2026年11月6日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261106/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261023/</guid>
       <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
       <description>食品売り場でも有人レジを廃止する動きが出ており、セルフレジの省人化が店舗運営の中心へ移りつつある一方、混雑や不公平感など生活者の反発も表面化している イオンがネットスーパー専用の物流施設を開設し、リテールメディアでも独自完結型とネットワーク型の両面戦略を進めるなど、小売各社の物流・広告投資が加速している</description>
-    </item>
-    <item>
-      <title>2026年10月22日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261022/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261022/</guid>
-      <pubDate>Thu, 22 Oct 2026 08:00:00 +0900</pubDate>
-      <description>国内ではニトリがスマートロッカーシステム「Quist」を活用した店舗受け取りの実験を開始し、店舗を受け取り拠点として活用する動きが広がり始めている。 米Targetはホリデー販促の柱に価格訴求や限定商品と並べてAIアシスタントを据え、AIが買い物体験の中核に入りつつあることを示した。</description>
     </item>
   </channel>
 </rss>
