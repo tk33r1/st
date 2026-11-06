@@ -32,7 +32,7 @@ var API_BASE = (function () {
 var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
-var APP_VERSION = '7.24';
+var APP_VERSION = '7.25';
 
 // 画面の言語（en / ja）。app-theme.js が描画前に <html lang> を決め、︙のメニューで切り替える（applyLanguage）。
 function isJa() { return document.documentElement.lang === 'ja'; }
@@ -4270,7 +4270,10 @@ async function agentSend(recovered, retry) {
     }
   }
   if (dropped()) return; // 予約したリアクションは finally で消してある
-  if (completed && reply.trim() && !errored || magiRetained) {
+  // 考え直しは、停止時に採決や完成済みの回答を残す処理より先に扱う。受信を復元した質問も送り直せる。
+  var rethink = ctrl.rethink && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
+  var rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
+  if (!rethinkNext && (completed && reply.trim() && !errored || magiRetained)) {
     renderAgentPages(replyEl, sitePages);
     if (!magiView) renderAgentRich(replyBody, reply, replySources, document.documentElement.lang === "ja");
     if (!magiView) announceAgent(tr('MAGI replied. ', 'MAGIが回答しました。') + agentRichPlain(reply));
@@ -4297,9 +4300,7 @@ async function agentSend(recovered, retry) {
     if (completed && !errored) agentNotifyWebReply();
   } else {
     // 考え直す（agentRethink）なら、送信中の質問と入力欄の文・添付をまとめて、この後すぐ送り直す。
-    // ［もう一度］の送り直しなら置き換える回答もそのまま引き継ぐ。受信の復元・まとめられないときは通常の停止と同じに戻す
-    var rethink = ctrl.rethink && !recovered && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
-    var rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
+    // ［もう一度］の送り直しなら置き換える回答もそのまま引き継ぐ。まとめられないときは通常の停止と同じに戻す
     turn.remove(); u.remove(); delete pendingReactions[mid];
     markAgentStarted(); // 最初の発言だったなら、会話を始めた時刻の行も消す（残すとスプラッシュも戻らない）
     // 中断・通信失敗でも、質問と画像を入力欄へ戻す。待つ間に打った文・添付があれば、質問の後ろにつなぐ（1回の上限を超えるなら打った方だけを残す）
@@ -4315,7 +4316,17 @@ async function agentSend(recovered, retry) {
       syncRetryButtons(); safeStore('magi_current_history', agentHistory);
       // まとめた質問は入力欄に置く。待つ間に別の送信が始まっても、まとめた質問は入力欄に残る
       agentInput.value = back.text; attachments = back.atts; renderAttachTray(); fitAgentInput();
-      if (nativeConversation && nativeRunId) { try { await nativeHistory.flush(); await nativeConversation.acknowledge(nativeRunId); } catch (_) { } }
+      // 復元中の画像は保存用サムネイルなので、元画像を開き直してから送る。後始末の間に別の送信を始めない。
+      sharedLoading = true;
+      try {
+        if (recovered && back.atts.some(function (a) { return a.file; })) {
+          var rethinkImages = await restoreNativeRequestImages(back.atts);
+          if (dropped()) return;
+          if (attachments === back.atts) { attachments = rethinkImages; renderAttachTray(); }
+        }
+        if (nativeConversation && nativeRunId) { try { await nativeHistory.flush(); await nativeConversation.acknowledge(nativeRunId); } catch (_) { } }
+      } finally { if (!dropped()) sharedLoading = false; }
+      if (dropped()) return;
       agentSend(undefined, rethinkNext); return;
     }
     var last = agentHistory[agentHistory.length - 1];

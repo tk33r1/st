@@ -116,6 +116,28 @@ try {
   const restoredImage = await p.evaluate(() => ({ count: attachments.length, file: attachments[0]?.file, jpeg: attachments[0]?.url.startsWith('data:image/jpeg;') }));
   assert.deepEqual(restoredImage, { count: 1, file: originalName, jpeg: true });
   assert(storage.files.has('DATA:magi/images/' + originalName)); results.push('interrupted image restores the original for a full-size retry');
+  // 受信が続いている状態で画面を開き直した後も、考え直しは元画像を保って一度だけ再送する。
+  await send(p, 'Image question before reopening'); await p.evaluate(() => nativeHistory.flush());
+  await p.waitForFunction(async () => (await nativeConversation.pending()).some(row => row.status === 'receiving'));
+  const reconsidered = [...runs.values()].find(row => row.status === 'receiving'); assert(reconsidered);
+  await p.close(); launchUrl = 'magi://open?id=' + reconsidered.sessionId;
+  p = await page(); await p.waitForFunction(() => agentBusy);
+  const beforeRethink = calls.filter(c => c[0] === 'begin').length;
+  completeImmediately = true;
+  await p.locator('#agent-input').fill('Please focus on the image.'); await p.locator('#agent-send').click(); await idle(p);
+  const revised = JSON.parse(calls.filter(c => c[0] === 'begin').at(-1)[1].body).messages.at(-1).content;
+  assert.equal(calls.filter(c => c[0] === 'begin').length, beforeRethink + 1);
+  assert.equal(revised.find(part => part.type === 'text').text, 'Image question before reopening\n\nPlease focus on the image.');
+  assert.equal(revised.filter(part => part.type === 'image_url').length, 1);
+  assert(revised.find(part => part.type === 'image_url').image_url.url.startsWith('data:image/jpeg;'));
+  assert.equal(await p.locator('#agent-input').inputValue(), '');
+  assert.equal(await p.evaluate(id => agentHistory.some(item => item.native_request === id), reconsidered.id), false);
+  assert(storage.files.has('DATA:magi/images/' + originalName));
+  const revisedHistory = await p.evaluate(() => JSON.stringify(agentHistory));
+  await p.close(); p = await page(); await idle(p);
+  assert.equal(await p.evaluate(() => JSON.stringify(agentHistory)), revisedHistory);
+  assert.equal(calls.filter(c => c[0] === 'begin').length, beforeRethink + 1);
+  results.push('rethink after native receive recovery resends once with the original image and survives reopening');
   // 受信列を全削除の対象に含め、通知拒否の状態を画面へ出す。
   // 通知は切り替えスイッチ（1b51035a以降）。許可が無ければオフと表示し、オンにすると端末の通知設定を開く
   await p.evaluate(() => showAgentSettings()); await p.waitForFunction(() => !document.querySelector('#native-notification-toggle').disabled);

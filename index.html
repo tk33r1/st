@@ -2681,9 +2681,9 @@
     }
 
     /* MAGI の二つの読み（MAGI_ACRONYM）。両面の語句を同じセルに重ねて最大幅を確保し、opacity だけを動かす。
-       文字の大きさは .magi-sub に従う。狭いときはドックの内側の幅で三段にする */
+       狭いときは文字を内側の幅に合わせ、どちらの読みも一行に収める */
     .magi-acronym { flex-direction: column; gap: 0.1rem; width: 100%; container-type: inline-size; }
-    .magi-acr-phrase { display: block; max-width: 100%; margin: 0 auto; padding: 0.15em 0.4em; background: none; border: 0; border-radius: 2px; color: inherit; font: inherit; letter-spacing: inherit; line-height: inherit; cursor: pointer; }
+    .magi-acr-phrase { display: block; max-width: 100%; margin: 0 auto; padding: 0.15em 0.4em; background: none; border: 0; border-radius: 2px; color: inherit; font: inherit; font-size: min(1em, 3.3cqi); letter-spacing: 0.12em; line-height: inherit; cursor: pointer; }
     .magi-acr-line { display: grid; grid-template-columns: max-content max-content max-content; column-gap: 0.6em; justify-content: center; align-items: baseline; }
     .magi-acr-slot { display: grid; }
     .magi-acr-slot > span { grid-area: 1 / 1; white-space: nowrap; transition: opacity 1000ms ease-in-out; }
@@ -2693,10 +2693,6 @@
     .magi-acronym[data-face="a"] .magi-acr-slot .magi-acr-b, .magi-acronym[data-face="b"] .magi-acr-slot .magi-acr-a { opacity: 0; }
     .magi-acronym.is-out .magi-acr-slot > span { opacity: 0; }
     .magi-acronym.is-instant .magi-acr-slot > span { transition: none; }
-    @container (max-width: 28em) {
-      .magi-acr-line { grid-template-columns: max-content; row-gap: 0.1em; }
-      .magi-acr-pre, .magi-acr-suf { justify-items: center; }
-    }
     .magi-acr-phrase:focus-visible { outline: 1px solid var(--primary-color); outline-offset: 2px; }
     .magi-acr-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
     @media (prefers-reduced-motion: reduce) { .magi-acr-slot > span { transition: none; } }
@@ -8817,7 +8813,7 @@ function magiAcronymController(el) {
 }
 // MAGI_ACRONYM_END
     // 版番号の正本。スプラッシュとアプリ情報の両方がこれを表示する（版の更新はこの1行だけを書き換える）
-    const AGENT_SCREEN_VERSION = '7.24';
+    const AGENT_SCREEN_VERSION = '7.25';
     const agentHintHTML = () => agentTemporary() ? agentTemporaryHintHTML() : '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       // 枠の形は表示とマスクで共用し、線と発光を半透明の枠の外だけに描く。
@@ -11965,7 +11961,10 @@ function agentRethinkError(code) {
         }
       }
       if (dropped()) return; // 予約したリアクションは finally で消してある
-      if (completed && reply.trim() && !errored || magiRetained) {
+      // 考え直しは、停止時に採決や完成済みの回答を残す処理より先に扱う。
+      const rethink = ctrl.rethink && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
+      const rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
+      if (!rethinkNext && (completed && reply.trim() && !errored || magiRetained)) {
         renderAgentPages(replyEl, sitePages);
         if (!magiView) renderAgentRich(replyBody, reply, replySources, currentLang === 'ja');
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
@@ -11992,8 +11991,6 @@ function agentRethinkError(code) {
       } else {
         // 考え直す（agentRethink）なら、送信中の質問と入力欄の文・添付をまとめて、この後すぐ送り直す。
         // ［もう一度］の送り直しなら置き換える回答もそのまま引き継ぐ。まとめられなければ通常の停止と同じに戻す
-        const rethink = ctrl.rethink && !agentDead && !agentClosed ? agentRethinkMerge(text, atts, agentInput.value, attachments) : null;
-        const rethinkNext = rethink && !rethink.error ? { rethink: true, mid: retryOf } : null;
         if (rethinkNext) { agentInput.value = rethink.text; attachments = rethink.atts; renderAttachTray(); fitAgentInput(); }
         // 失敗した往復を次の質問の履歴に持ち越さない。
         turn.remove();
