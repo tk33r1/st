@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 07 Nov 2026 06:59:49 +0900</lastBuildDate>
+    <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 08 Nov 2026 05:44:45 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月8日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261108/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261108/</guid>
+      <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
+      <description>799円のふわふわスリッパや「どこでもソファになる」クッションなど、低価格の生活雑貨がSNSで好評を集め、リピートや共感の声が広がった。 ニトリ仙台青葉店（仮称）が2027年12月竣工予定と伝えられ、東北エリアでの店舗網強化の具体的な進捗が見えてきた。</description>
+    </item>
     <item>
       <title>2026年11月7日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261107/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261025/</guid>
       <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリは10月23日に神奈川県相模原市で「デコホーム ボーノ相模大野店」を開店し、地域密着型の店舗網を広げました。 「179円飯碗」や「999円フタ付きタンブラー」など、低価格で機能性や質感を備えた商品がSNSで高評価を集めています。</description>
-    </item>
-    <item>
-      <title>2026年10月24日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261024/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261024/</guid>
-      <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
-      <description>10月30日、約2,700坪の旗艦店「ニトリ 梅田茶屋町店」がオープンし、全国166店舗で記念セールも開催される。SPAの商品ラインアップを一度に体験できる大型店として注目される。 秋冬新商品約420アイテムの披露と、冬限定「2026 WINTER COLLECTION」97アイテムの発売が重なり、季節商品の企画力と短サイクルの商品開発力が示された。</description>
     </item>
   </channel>
 </rss>
