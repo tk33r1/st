@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年11月8日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261108/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年11月8日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261108/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261108.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年11月8日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261108.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261108/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年11月8日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる",
+      "url": "https://tk.st/job/retailtechdaily/20261108/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261108.webp",
+      "datePublished": "2026-11-08T08:00:00+09:00",
+      "dateModified": "2026-11-08T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "店舗DX・次世代決済",
+        "リテールメディア・広告"
+      ],
+      "keywords": [
+        "AI売場",
+        "AI肌診断",
+        "ドラッグストア",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "商品発見",
+        "店舗DX",
+        "店舗DX・次世代決済",
+        "店頭提案",
+        "美容小売",
+        "配達アプリ"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261108/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261108/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261108/#art-3"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261108/#newslist",
+      "name": "2026年11月8日号 掲載ニュース一覧",
+      "numberOfItems": 3,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261108/#art-1",
+            "position": 1,
+            "headline": "「アットコスメ」が京都で仕掛ける新戦略！AIを活用した最新の売場づくり",
+            "description": "美容情報サイト「アットコスメ」が、京都の店舗でAIを活用した新たな売場づくりに取り組むことが、ダイヤモンド・チェーンストアオンラインで報じられた。店頭でのAI活用は、顧客の商品選びを支援し売場の生産性を高める手段として注目が高まっている。今回の取り組みは、リアル店舗で体験価値を高める動きの一例といえ、具体的な施策内容や効果については原文の確認が必要である。",
+            "url": "https://tk.st/job/retailtechdaily/20261108/#art-1",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-08T08:00:00+09:00",
+            "dateModified": "2026-11-08T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261108/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5xRkpKVUxwU29uMl96SVFGYjZzeUEyT3RlQ2QzZkotQ24xa3BZc3V3eldwOFMyUzVsdzJ4TklLb2k1NUxFNXMwdEFleGFkb0FWdTRQaG9CWGdzdU5lY0pmZg?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-11-07T09:02:28+09:00"
+            },
+            "keywords": [
+              "AI売場",
+              "美容小売",
+              "店舗DX"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261108/#art-2",
+            "position": 2,
+            "headline": "薬王堂、AI肌診断機能を刷新",
+            "description": "ドラッグストアチェーンの薬王堂が、AIを用いた肌診断機能を刷新したことが、週刊ドラッグストアニュースで報じられた。肌状態の診断を通じて商品提案に活用される機能とみられる。AI接客は、専門知識を持つ人材が不足する中での売場支援策として関心が高まっており、今回の刷新は美容カウンセリングの省力化と購買促進の両立を図る取り組みといえる。ただし刷新の具体的内容は原文で確認が必要である。",
+            "url": "https://tk.st/job/retailtechdaily/20261108/#art-2",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-08T08:00:00+09:00",
+            "dateModified": "2026-11-08T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261108/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE4xdVBFMm1lVFgydllzWTlwYi04NzktYzBtUlFMa1N6bGtPdXFvX3VOaFNtVVVNSWtoTUlNTjhYVVRueGd3ZzViMk9JWlhnWWw2NWxDRkxjUQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-11-07T07:09:46+09:00"
+            },
+            "keywords": [
+              "AI肌診断",
+              "ドラッグストア",
+              "店頭提案"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261108/#art-3",
+            "position": 3,
+            "headline": "配達アプリはいかにして「発見の場」になったか",
+            "description": "Modern Retailの記事は、フードデリバリーや配達アプリが、注文の手段から商品やブランドを発見する「ディスカバリープラットフォーム」へと変化した経緯を取り上げている。利用者が配達アプリで新しい店舗や商品に出会う機会が増えたことで、プラットフォーム側には広告やレコメンドの価値が生まれている。記事の詳細な論点は原文で確認が必要となる。",
+            "url": "https://tk.st/job/retailtechdaily/20261108/#art-3",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-08T08:00:00+09:00",
+            "dateModified": "2026-11-08T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261108/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNOXVPZ1lCZGlwWTF2OHM2d3dLa3JkVkpYN0lkNWNQWnA3NUMybUkyVEZ0VU5FNDF1b2k4c0ZkNkU0NGRGd0l0VlV5MWl1bzNkU1ZTMzNsZ2tfX1ZvRExMRkQxODl0cEYzTGJNdkg4bHVHZDNDR0x2M3NfSURNZzJCRnVJUEM0R0RjSmNhMGRKNA?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Modern Retail"
+              },
+              "datePublished": "2026-11-07T14:03:25+09:00"
+            },
+            "keywords": [
+              "リテールメディア",
+              "配達アプリ",
+              "商品発見"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261108/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年11月8日号",
+          "item": "https://tk.st/job/retailtechdaily/20261108/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年11月8日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年11月8日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年11月8日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約2分 / 1,216字
+          </span>
+          <span class="stat">全 3 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="daily-status" aria-labelledby="dailyStatusTitle">
+          <span class="daily-status-label">LOW VOLUME BRIEF</span>
+          <h2 id="dailyStatusTitle">本日の概況</h2>
+          <p>国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている</p>
+        </section>
+
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">3 stories</span>
+        </div>
+
+
+
+
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">店舗DX・次世代決済</span>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-07T09:02:28+09:00" title="出典の公開日時">公開 2026.11.07 09:02 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE5xRkpKVUxwU29uMl96SVFGYjZzeUEyT3RlQ2QzZkotQ24xa3BZc3V3eldwOFMyUzVsdzJ4TklLb2k1NUxFNXMwdEFleGFkb0FWdTRQaG9CWGdzdU5lY0pmZg?oc=5" target="_blank" rel="noopener noreferrer">「アットコスメ」が京都で仕掛ける新戦略！AIを活用した最新の売場づくり<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>美容情報サイト「アットコスメ」が、京都の店舗でAIを活用した新たな売場づくりに取り組むことが、ダイヤモンド・チェーンストアオンラインで報じられた。店頭でのAI活用は、顧客の商品選びを支援し売場の生産性を高める手段として注目が高まっている。今回の取り組みは、リアル店舗で体験価値を高める動きの一例といえ、具体的な施策内容や効果については原文の確認が必要である。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">美容領域では商品数の多さが顧客の迷いにつながりやすく、AIによる提案型の売場は購買体験の差別化要因になる。</p>
+              </div>
+              <p class="wim-detail">リアル店舗がデータを活かす場として機能すれば、オンラインとの連携による来店促進にもつながる。自社店舗でAI活用を検討する企業は、接客と売場設計の役割分担を見直す好機といえる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E5%A3%B2%E5%A0%B4">#AI売場</a><button type="button" class="topic-watch-btn" data-watch-topic="AI売場" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%BE%8E%E5%AE%B9%E5%B0%8F%E5%A3%B2">#美容小売</a><button type="button" class="topic-watch-btn" data-watch-topic="美容小売" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97DX">#店舗DX</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE5xRkpKVUxwU29uMl96SVFGYjZzeUEyT3RlQ2QzZkotQ24xa3BZc3V3eldwOFMyUzVsdzJ4TklLb2k1NUxFNXMwdEFleGFkb0FWdTRQaG9CWGdzdU5lY0pmZg?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%888%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">店舗DX・次世代決済</span>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-07T07:09:46+09:00" title="出典の公開日時">公開 2026.11.07 07:09 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE4xdVBFMm1lVFgydllzWTlwYi04NzktYzBtUlFMa1N6bGtPdXFvX3VOaFNtVVVNSWtoTUlNTjhYVVRueGd3ZzViMk9JWlhnWWw2NWxDRkxjUQ?oc=5" target="_blank" rel="noopener noreferrer">薬王堂、AI肌診断機能を刷新<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>ドラッグストアチェーンの薬王堂が、AIを用いた肌診断機能を刷新したことが、週刊ドラッグストアニュースで報じられた。肌状態の診断を通じて商品提案に活用される機能とみられる。AI接客は、専門知識を持つ人材が不足する中での売場支援策として関心が高まっており、今回の刷新は美容カウンセリングの省力化と購買促進の両立を図る取り組みといえる。ただし刷新の具体的内容は原文で確認が必要である。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">AI肌診断は、接客人材に頼らず個別提案を可能にする店頭DXの代表的な施策である。</p>
+              </div>
+              <p class="wim-detail">診断データが会員情報や購買履歴と連携すれば、リピート購入や関連商品のクロスセルにもつながる。ドラッグストア各社は美容・健康領域での差別化を急いでおり、同種の機能を導入する際はデータ活用の設計と個人情報の取り扱いを同時に検討することが重要となる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E8%82%8C%E8%A8%BA%E6%96%AD">#AI肌診断</a><button type="button" class="topic-watch-btn" data-watch-topic="AI肌診断" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%89%E3%83%A9%E3%83%83%E3%82%B0%E3%82%B9%E3%83%88%E3%82%A2">#ドラッグストア</a><button type="button" class="topic-watch-btn" data-watch-topic="ドラッグストア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E9%A0%AD%E6%8F%90%E6%A1%88">#店頭提案</a><button type="button" class="topic-watch-btn" data-watch-topic="店頭提案" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE4xdVBFMm1lVFgydllzWTlwYi04NzktYzBtUlFMa1N6bGtPdXFvX3VOaFNtVVVNSWtoTUlNTjhYVVRueGd3ZzViMk9JWlhnWWw2NWxDRkxjUQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%888%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="GLOBAL" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-global">海外 GLOBAL</span>
+              <span class="category-badge">リテールメディア・広告</span>
+              <span class="source-tag">Modern Retail</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-07T14:03:25+09:00" title="出典の公開日時">公開 2026.11.07 14:03 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMijwFBVV95cUxNOXVPZ1lCZGlwWTF2OHM2d3dLa3JkVkpYN0lkNWNQWnA3NUMybUkyVEZ0VU5FNDF1b2k4c0ZkNkU0NGRGd0l0VlV5MWl1bzNkU1ZTMzNsZ2tfX1ZvRExMRkQxODl0cEYzTGJNdkg4bHVHZDNDR0x2M3NfSURNZzJCRnVJUEM0R0RjSmNhMGRKNA?oc=5" target="_blank" rel="noopener noreferrer">配達アプリはいかにして「発見の場」になったか<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">How delivery apps came to be ‘discovery platforms’</p>
+            <div class="card-summary"><p>Modern Retailの記事は、フードデリバリーや配達アプリが、注文の手段から商品やブランドを発見する「ディスカバリープラットフォーム」へと変化した経緯を取り上げている。利用者が配達アプリで新しい店舗や商品に出会う機会が増えたことで、プラットフォーム側には広告やレコメンドの価値が生まれている。記事の詳細な論点は原文で確認が必要となる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">配達アプリが発見の場になると、ブランドにとって商品露出や広告出稿の場が増えることになる。</p>
+              </div>
+              <p class="wim-detail">小売企業は自社アプリや自社ECだけでなく、外部プラットフォームでの見つけやすさを前提に商品情報や販促を設計する必要がある。<strong class="kw-scan">リテールメディア</strong>の広がりを考えるうえで、購買の起点がどこに移っているかを把握する材料になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%85%8D%E9%81%94%E3%82%A2%E3%83%97%E3%83%AA">#配達アプリ</a><button type="button" class="topic-watch-btn" data-watch-topic="配達アプリ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%95%86%E5%93%81%E7%99%BA%E8%A6%8B">#商品発見</a><button type="button" class="topic-watch-btn" data-watch-topic="商品発見" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMijwFBVV95cUxNOXVPZ1lCZGlwWTF2OHM2d3dLa3JkVkpYN0lkNWNQWnA3NUMybUkyVEZ0VU5FNDF1b2k4c0ZkNkU0NGRGd0l0VlV5MWl1bzNkU1ZTMzNsZ2tfX1ZvRExMRkQxODl0cEYzTGJNdkg4bHVHZDNDR0x2M3NfSURNZzJCRnVJUEM0R0RjSmNhMGRKNA?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%888%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261107/" class="nav-prev">&larr; 2026.11.07 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>

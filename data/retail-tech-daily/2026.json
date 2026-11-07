@@ -1,5 +1,90 @@
 [
   {
+    "date": "20261108",
+    "title": "2026年11月8日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる",
+    "count": 3,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている",
+      "ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる",
+      "海外では配達アプリが商品や店舗を見つける「発見の場」へ変化しており、リテールメディアの接点が広がっている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "「アットコスメ」が京都で仕掛ける新戦略！AIを活用した最新の売場づくり",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-03",
+        "summary": "美容情報サイト「アットコスメ」が、京都の店舗でAIを活用した新たな売場づくりに取り組むことが、ダイヤモンド・チェーンストアオンラインで報じられた。店頭でのAI活用は、顧客の商品選びを支援し売場の生産性を高める手段として注目が高まっている。今回の取り組みは、リアル店舗で体験価値を高める動きの一例といえ、具体的な施策内容や効果については原文の確認が必要である。",
+        "why_it_matters": "美容領域では商品数の多さが顧客の迷いにつながりやすく、AIによる提案型の売場は購買体験の差別化要因になる。リアル店舗がデータを活かす場として機能すれば、オンラインとの連携による来店促進にもつながる。自社店舗でAI活用を検討する企業は、接客と売場設計の役割分担を見直す好機といえる。",
+        "tags": [
+          "AI売場",
+          "美容小売",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "AI売場づくり",
+          "AI in-store merchandising",
+          "beauty retail Kyoto",
+          "アットコスメ 京都 店舗"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5xRkpKVUxwU29uMl96SVFGYjZzeUEyT3RlQ2QzZkotQ24xa3BZc3V3eldwOFMyUzVsdzJ4TklLb2k1NUxFNXMwdEFleGFkb0FWdTRQaG9CWGdzdU5lY0pmZg?oc=5",
+        "source_pub_ts": 1794009748
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "薬王堂、AI肌診断機能を刷新",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-04",
+        "summary": "ドラッグストアチェーンの薬王堂が、AIを用いた肌診断機能を刷新したことが、週刊ドラッグストアニュースで報じられた。肌状態の診断を通じて商品提案に活用される機能とみられる。AI接客は、専門知識を持つ人材が不足する中での売場支援策として関心が高まっており、今回の刷新は美容カウンセリングの省力化と購買促進の両立を図る取り組みといえる。ただし刷新の具体的内容は原文で確認が必要である。",
+        "why_it_matters": "AI肌診断は、接客人材に頼らず個別提案を可能にする店頭DXの代表的な施策である。診断データが会員情報や購買履歴と連携すれば、リピート購入や関連商品のクロスセルにもつながる。ドラッグストア各社は美容・健康領域での差別化を急いでおり、同種の機能を導入する際はデータ活用の設計と個人情報の取り扱いを同時に検討することが重要となる。",
+        "tags": [
+          "AI肌診断",
+          "ドラッグストア",
+          "店頭提案"
+        ],
+        "search_terms": [
+          "AI肌診断",
+          "AI skin diagnosis",
+          "drugstore beauty consultation AI",
+          "薬王堂 肌診断 刷新"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE4xdVBFMm1lVFgydllzWTlwYi04NzktYzBtUlFMa1N6bGtPdXFvX3VOaFNtVVVNSWtoTUlNTjhYVVRueGd3ZzViMk9JWlhnWWw2NWxDRkxjUQ?oc=5",
+        "source_pub_ts": 1794002986
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "配達アプリはいかにして「発見の場」になったか",
+        "original_title": "How delivery apps came to be ‘discovery platforms’",
+        "source": "Modern Retail",
+        "source_id": "GL-01",
+        "summary": "Modern Retailの記事は、フードデリバリーや配達アプリが、注文の手段から商品やブランドを発見する「ディスカバリープラットフォーム」へと変化した経緯を取り上げている。利用者が配達アプリで新しい店舗や商品に出会う機会が増えたことで、プラットフォーム側には広告やレコメンドの価値が生まれている。記事の詳細な論点は原文で確認が必要となる。",
+        "why_it_matters": "配達アプリが発見の場になると、ブランドにとって商品露出や広告出稿の場が増えることになる。小売企業は自社アプリや自社ECだけでなく、外部プラットフォームでの見つけやすさを前提に商品情報や販促を設計する必要がある。リテールメディアの広がりを考えるうえで、購買の起点がどこに移っているかを把握する材料になる。",
+        "tags": [
+          "リテールメディア",
+          "配達アプリ",
+          "商品発見"
+        ],
+        "search_terms": [
+          "配達アプリ 発見",
+          "delivery app discovery",
+          "retail media on delivery platforms",
+          "food delivery advertising"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNOXVPZ1lCZGlwWTF2OHM2d3dLa3JkVkpYN0lkNWNQWnA3NUMybUkyVEZ0VU5FNDF1b2k4c0ZkNkU0NGRGd0l0VlV5MWl1bzNkU1ZTMzNsZ2tfX1ZvRExMRkQxODl0cEYzTGJNdkg4bHVHZDNDR0x2M3NfSURNZzJCRnVJUEM0R0RjSmNhMGRKNA?oc=5",
+        "source_pub_ts": 1794027805
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261107",
     "title": "2026年11月7日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "省人化はセルフレジなど顧客接点の自動化にとどまらず、バックヤードや決済インフラを含む店舗全体の再設計へと広がっている。 リテールメディアサミット2026は全登壇者と34セッションが確定し、リテールメディアを巡る議論のテーマが具体化した。",

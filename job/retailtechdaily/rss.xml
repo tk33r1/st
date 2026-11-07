@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 07 Nov 2026 07:15:56 +0900</lastBuildDate>
+    <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 08 Nov 2026 05:39:06 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月8日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261108/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261108/</guid>
+      <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
+      <description>国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる</description>
+    </item>
     <item>
       <title>2026年11月7日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261107/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261024/</guid>
       <pubDate>Sat, 24 Oct 2026 08:00:00 +0900</pubDate>
       <description>無人食堂や給油所を活用した無人店舗など、無人化・省人化の取り組みが業態を越えて広がっている AIが買い物の起点になりつつあるなか、リテールメディアは購買データとAIとの接点をどう設計するかが問われ始めた</description>
-    </item>
-    <item>
-      <title>2026年10月23日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261023/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261023/</guid>
-      <pubDate>Fri, 23 Oct 2026 08:00:00 +0900</pubDate>
-      <description>食品売り場でも有人レジを廃止する動きが出ており、セルフレジの省人化が店舗運営の中心へ移りつつある一方、混雑や不公平感など生活者の反発も表面化している イオンがネットスーパー専用の物流施設を開設し、リテールメディアでも独自完結型とネットワーク型の両面戦略を進めるなど、小売各社の物流・広告投資が加速している</description>
     </item>
   </channel>
 </rss>
