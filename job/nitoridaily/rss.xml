@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 08 Nov 2026 05:44:45 +0900</lastBuildDate>
+    <pubDate>Mon, 09 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 09 Nov 2026 06:00:20 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月9日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261109/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261109/</guid>
+      <pubDate>Mon, 09 Nov 2026 08:00:00 +0900</pubDate>
+      <description>梅田茶屋町の世界最大級店舗など大型旗艦店の出店が相次ぎ、ネット通販が主流の中でもリアル店舗の体験価値を重視するニトリの戦略が鮮明になった。 「包み込まれるローチェア」が家族で取り合いになるほど支持を集めるなど、ヒット商品の実感価値がSNSで拡散し、購買の後押しになっている。</description>
+    </item>
     <item>
       <title>2026年11月8日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261108/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261026/</guid>
       <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
       <description>物流・店舗網：スマートロッカーを使った店舗受取の実証実験が始まり、ネット注文と店頭をつなぐ次の一手として注目される。 サステナビリティ：家具の再資源化に向けた新工場計画（年間1万トン規模）は、企画から回収までを自社で管理するSPAの強みを示す。</description>
-    </item>
-    <item>
-      <title>2026年10月25日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261025/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261025/</guid>
-      <pubDate>Sun, 25 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリは10月23日に神奈川県相模原市で「デコホーム ボーノ相模大野店」を開店し、地域密着型の店舗網を広げました。 「179円飯碗」や「999円フタ付きタンブラー」など、低価格で機能性や質感を備えた商品がSNSで高評価を集めています。</description>
     </item>
   </channel>
 </rss>
