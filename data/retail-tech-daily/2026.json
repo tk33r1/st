@@ -1,5 +1,116 @@
 [
   {
+    "date": "20261109",
+    "title": "2026年11月9日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジをめぐる生活者の反響が続いており、小銭の大量投入、スキャン漏れ、万引きの疑いといったトラブルが、店員の負担や客との摩擦として注目を集めています。 リテールメディアは広告枠の販売だけでなく、社内の販促・商品・店舗部門をまたいだ連携と効果検証を整えられるかが普及の鍵になっています。",
+    "count": 4,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジをめぐる生活者の反響が続いており、小銭の大量投入、スキャン漏れ、万引きの疑いといったトラブルが、店員の負担や客との摩擦として注目を集めています。",
+      "リテールメディアは広告枠の販売だけでなく、社内の販促・商品・店舗部門をまたいだ連携と効果検証を整えられるかが普及の鍵になっています。",
+      "省人化の進展に伴い、利用者への利用ルール周知と、有人対応とのすみ分けを含めた店舗の顧客体験設計が一層重要になっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "社内連携と効果検証の壁を越え、売上につながる手段へ「リテールメディア活用基礎講座」",
+        "original_title": "",
+        "source": "Excite エキサイト",
+        "source_id": "JP-01",
+        "summary": "小売業のリテールメディア活用で、多くの企業が直面する社内連携の難しさと効果検証の壁を取り上げ、売上につなげるための基本的な考え方を解説する基礎講座の記事です。媒体の特集コンテンツとして、実務担当者が押さえるべき視点を整理しています。導入を進める現場では、広告の販売部門と店舗・商品部門の連携が課題になりやすく、成果を示す指標の設計も欠かせません。",
+        "why_it_matters": "リテールメディアは広告枠の販売だけでなく、社内の販促・商品・店舗部門を横断して成果を測れるかが普及の鍵です。効果検証の仕組みを先に設計し、売上に直結する指標を関係者間で共有できる体制を整えることが、導入企業にとっての次の一手になります。",
+        "tags": [
+          "リテールメディア",
+          "効果検証",
+          "社内連携"
+        ],
+        "search_terms": [
+          "リテールメディア 基礎講座",
+          "retail media basics",
+          "retail media ROI measurement",
+          "小売事業者 広告 効果検証"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTFBtUVZaUGY3X282N2h5YVQ0RjBiYlZLd1loVjAxcEZyQ1RuV2VUTkpNQ3NHQWNfMVRSaFpjNWdVcDlPX0N6dHk1Z3JUU1oyNnVwbU93akRRel9pVERHZHZMdjBUXzRJTHRyNnNSamFNSXhIajQ?oc=5",
+        "source_pub_ts": 1794132600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジor有人レジ、あなたはどっち派？理不尽なクレームを浴びても耐えるしかない販売員が不憫",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-04",
+        "summary": "セルフレジと有人レジのどちらを選ぶかをテーマにした記事で、客からの理不尽なクレームを受けても対応せざるを得ない販売員の立場に焦点を当てています。作者への取材をもとに、買い物客の利用感と現場の負担のギャップを紹介しています。セルフレジの普及が進む中で、現場の販売員が矢面に立つ場面も増えており、レジ形態をめぐる利用者の本音と働く人の実情を対比して伝えています。",
+        "why_it_matters": "セルフレジは効率化の象徴ですが、利用者の好みや不満が有人レジの現場に持ち込まれる構図が続いています。顧客体験の設計では、セルフ化の範囲と有人対応の役割を明確に分けて示すことが、店員の負担軽減と顧客満足度の両立につながります。",
+        "tags": [
+          "セルフレジ",
+          "有人レジ",
+          "カスハラ",
+          "店員負担"
+        ],
+        "search_terms": [
+          "セルフレジ 有人レジ 比較",
+          "self-checkout vs cashier",
+          "販売員 カスタマーハラスメント",
+          "checkout staff burden"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9Qd1BvV19VZlhzQ2VKOWt5Y2RoTUFOZmNxc0ZvdDYycUlERU8yX2dBMzFyS0N2WHZSdG00TldxMVFFNFNvZTFaMjJEdy1PZFBXVmZUWmJn0gFbQVVfeXFMUFVLUFFfbkR5MDM3bFA1MTZ0dFBqYWhRLTdMa093WGN4dmIxYWIxdnBQYzlGck9Tdno0UVV1dS13bjluV012b1VKWURFT21GVjVUaXFBbld6VHZWZw?oc=5",
+        "source_pub_ts": 1793970984
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジに小銭20枚以上は危険！「両替機」替わりにする客が知らない故障のリアル",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-05",
+        "summary": "セルフレジに大量の小銭を投入する行為は、両替機の代わりに使われることで機器の故障を招きかねないとして注意を呼びかける記事です。作者への取材をもとに、現場で起きている故障のリアルと、利用者が知っておくべきマナーを伝えています。小銭は一度に大量に投入すると詰まりや誤作動の原因となり、結果的に他の利用者や店員にも影響が及ぶことがあります。",
+        "why_it_matters": "小銭投入は会計時間の延長だけでなく、機器停止によるレジ全体の止まりや店員の対応負荷につながるリスクがあります。記事は生活者への利用ルール周知の重要性を示しており、店頭表示や音声案内などで事前に伝える工夫が求められます。",
+        "tags": [
+          "セルフレジ",
+          "小銭",
+          "故障",
+          "利用マナー"
+        ],
+        "search_terms": [
+          "セルフレジ 小銭 投入",
+          "self-checkout coin jam",
+          "レジ 故障 リスク",
+          "customer etiquette self checkout"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBrZk15WHpOMF9QQWZRQ3RpNDh6Y09fS094cXlsU0t1LXJ2Z19PVE9QN0o3TTFvTW8yRmljUThDbVZrZnZSZ3VSUk5RNHRPUXdoY0V2YVVrSGZ6bFNzc0tPNTJrQUgwR2t6WkZyNjJ3?oc=5",
+        "source_pub_ts": 1793961366
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「万引きの濡れ衣」「レジ袋のスキャン忘れで帰宅」セルフレジでの“ピンチ”に身を守るためにどう対応すべきか？",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-02",
+        "summary": "セルフレジで万引きを疑われる、レジ袋のスキャン忘れを指摘されるといった“ピンチ”に、利用者がどう身を守るべきかを考える記事です。セルフレジ特有のトラブルに対する心構えや対応のポイントを、生活者目線で整理しています。万引きの疑いをかけられた場合やレジ袋の商品スキャン漏れを指摘された場合など、想定外の場面での落ち着いた対応が重要であることを示しています。",
+        "why_it_matters": "セルフレジの無人化は利用者の確認責任を強めつつ、誤認や確認行為によるトラブルを生みやすい構造です。店舗側は確認フローや記録の残し方を明確にし、顧客に疑念を抱かせない仕組みづくりを進めることが、信頼維持の鍵となります。",
+        "tags": [
+          "セルフレジ",
+          "トラブル対策",
+          "無人レジ",
+          "顧客信頼"
+        ],
+        "search_terms": [
+          "セルフレジ トラブル 対処",
+          "self-checkout shoplifting suspicion",
+          "レジ袋 スキャン忘れ",
+          "無人レジ 誤認 防止"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPNUl3SVJyT2tGa1NxbEhLT2tad3loeFY1Qlg4cTJlbnZMeThtWEtyWUZnMEk5VjZoRFBFLUJTYkVXajd6c2FFdmE3NGpMR1VSVjkzU0VWcDZJdTlselp6YVJwdmNTTzIyNTg1ZFJXUzJSdWhWT0pDT01oLWV4RFcyT2lYb3BkWDBhYlBYLUNB?oc=5",
+        "source_pub_ts": 1794035700
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261108",
     "title": "2026年11月8日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる",
