@@ -3564,6 +3564,25 @@ test('判定を待つ間に討議の予算を過ぎたら、聞き返さずに�
   assert.equal(events.at(-1)[0], 'done');
 });
 
+test('第2回の人格の呼び出しの間に討議の予算を過ぎたら、判定を呼ばずに統合する', async () => {
+  let judged = 0, w;
+  w = worker(completion(), (url, options) => {
+    if (isJudge(options)) judged++;
+    if (options.body.includes('[討議メモ：')) w.ctx.clockSkew = w.ctx.DEBATE_BUDGET + 1;
+  });
+  vm.runInContext('globalThis.clockSkew = 0; globalThis.DEBATE_BUDGET = DEBATE.budget_ms; { const now = Date.now; Date.now = () => now() + globalThis.clockSkew; }', w.ctx);
+  const events = sseEvents(await (await w.request('/magi2/chat', { messages: [{ role: 'user', content: 'q' }], adaptive_debate: true })).text());
+  assert.equal(events.filter(([e, d]) => e === 'persona' && d.round === 2).length, 3, '第2回は最後まで待つ');
+  assert.equal(judged, 0, '予算を過ぎた後は判定を始めない');
+  assert.equal(events.some(([e]) => e === 'ask'), false);
+  assert.equal(events.some(([e, d]) => e === 'persona' && d.round >= 3), false);
+  const synth = w.calls.find(c => c.stream);
+  assert.ok(synth, '第2回までの討議で統合する');
+  assert.match(synth.messages.at(-1).content, /内部討議メモ/);
+  assert.doesNotMatch(synth.messages.at(-1).content, /上限/);
+  assert.equal(events.at(-1)[0], 'done');
+});
+
 test('履歴の followups はいちばん新しい意見を人格の過去の発言に使い、欠席の印は飛ばす', async () => {
   const w = worker();
   await (await w.request('/magi2/chat', { adaptive_debate: true, messages: [
