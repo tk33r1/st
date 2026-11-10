@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 09 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 09 Nov 2026 05:56:59 +0900</lastBuildDate>
+    <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 10 Nov 2026 09:33:00 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月10日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261110/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261110/</guid>
+      <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
+      <description>リテール現場の省人化は、店頭の機器導入と客の受容性の両面で課題が見えてきた。松屋の新しい機器へのSNS反応は、説明不足が不安を生むことを示している。 需要予測AIや店内メディアなど、データと空間を活用する施策が国内でも具体化している。展示会での紹介やリテールメディアの企画がその例である。</description>
+    </item>
     <item>
       <title>2026年11月9日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261109/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261027/</guid>
       <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
       <description>AI CROSSがEC市場の販売動向を需要予測に取り込むオプションを提供開始し、需要予測は自社データ中心から市場データ連携へと広がりつつある リテールメディアの効果測定をエッジAIと人流データで補う手法や、店舗在庫をGoogle検索などに表示する取り組みが進み、オフラインの成果を可視化する動きが強まっている</description>
-    </item>
-    <item>
-      <title>2026年10月26日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261026/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261026/</guid>
-      <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
-      <description>岡山市役所の新庁舎に無人コンビニが設けられる計画が報じられ、無人店舗の設置場所が住宅地や駅前から官公庁などの公共施設へ広がりつつある。 地域金融機関とPOSベンダーの提携や、出荷実績データを使ったAIによる製品置場の最適化実証など、店舗DXとサプライチェーンの連携が進んでいる。</description>
     </item>
   </channel>
 </rss>
