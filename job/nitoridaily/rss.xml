@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 10 Nov 2026 09:36:58 +0900</lastBuildDate>
+    <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 11 Nov 2026 07:14:17 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月11日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261111/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261111/</guid>
+      <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
+      <description>「1枚4役」のまな板など、調理の手間を減らす新商品が「時短になり助かります」といった声で高評価を集めている。 SNSでは、お盆や寝具といった既存アイテムの使い方や、CMなどのブランド記憶に基づく反響が目立つ。</description>
+    </item>
     <item>
       <title>2026年11月10日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261110/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261028/</guid>
       <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
       <description>大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した</description>
-    </item>
-    <item>
-      <title>2026年10月27日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261027/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261027/</guid>
-      <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
-      <description>ニトリの「ステンレス味噌漉し」「点で支えるまくら」「1台10役スライサーセット」など、日常の小さな不便を低価格で解決する商品がSNSや記事で反響を広げている。 秋冬商材では「N+」の新作アパレルに吸湿発熱素材「Nウォーム」を初採用し、11月9日までの値下げで季節需要を取り込む動きが見られる。</description>
     </item>
   </channel>
 </rss>
