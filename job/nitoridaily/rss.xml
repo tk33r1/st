@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 09 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 09 Nov 2026 06:00:20 +0900</lastBuildDate>
+    <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 10 Nov 2026 09:36:58 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月10日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261110/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261110/</guid>
+      <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
+      <description>個人情報最大3,762万件の流出可能性が国内外で報じられ、EC・会員基盤のセキュリティ管理と情報開示が喫緊の経営課題として浮上した。 フィリピン8店舗目（11月12日開店）とインド2店舗目（ムンバイ）の報道により、東南アジア・南アジアでの店舗網拡大が着実に進んでいることが示された。</description>
+    </item>
     <item>
       <title>2026年11月9日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261109/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261027/</guid>
       <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
       <description>ニトリの「ステンレス味噌漉し」「点で支えるまくら」「1台10役スライサーセット」など、日常の小さな不便を低価格で解決する商品がSNSや記事で反響を広げている。 秋冬商材では「N+」の新作アパレルに吸湿発熱素材「Nウォーム」を初採用し、11月9日までの値下げで季節需要を取り込む動きが見られる。</description>
-    </item>
-    <item>
-      <title>2026年10月26日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261026/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261026/</guid>
-      <pubDate>Mon, 26 Oct 2026 08:00:00 +0900</pubDate>
-      <description>物流・店舗網：スマートロッカーを使った店舗受取の実証実験が始まり、ネット注文と店頭をつなぐ次の一手として注目される。 サステナビリティ：家具の再資源化に向けた新工場計画（年間1万トン規模）は、企画から回収までを自社で管理するSPAの強みを示す。</description>
     </item>
   </channel>
 </rss>

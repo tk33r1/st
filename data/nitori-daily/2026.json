@@ -1,5 +1,330 @@
 [
   {
+    "date": "20261110",
+    "title": "2026年11月10日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "個人情報最大3,762万件の流出可能性が国内外で報じられ、EC・会員基盤のセキュリティ管理と情報開示が喫緊の経営課題として浮上した。 フィリピン8店舗目（11月12日開店）とインド2店舗目（ムンバイ）の報道により、東南アジア・南アジアでの店舗網拡大が着実に進んでいることが示された。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "個人情報最大3,762万件の流出可能性が国内外で報じられ、EC・会員基盤のセキュリティ管理と情報開示が喫緊の経営課題として浮上した。",
+      "フィリピン8店舗目（11月12日開店）とインド2店舗目（ムンバイ）の報道により、東南アジア・南アジアでの店舗網拡大が着実に進んでいることが示された。",
+      "1,000円台の調理アイテムやソファでも使えるこたつなど、低価格と多用途性を兼ね備えた商品が反響を集め、SNSでは既製品の使い方提案が生活者の共感を呼んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "GLOBAL",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、最大3,762万件の顧客情報流出の可能性を公表",
+        "original_title": "Japanese home retailer Nitori says up to 38 million customer records may have been leaked",
+        "source": "The Straits Times",
+        "source_id": "GL-02",
+        "summary": "ニトリは、最大3,762万件の顧客情報が流出した可能性があると公表した。不正アクセスは11月6日に確認されたとされ、対象は商品購入者や会員の氏名、住所、電話番号などだ。クレジットカード情報やパスワードは含まれないとしている。大規模な個人情報の流出可能性は、同社の信頼と事業運営に影響を与えかねない問題である。",
+        "why_it_matters": "SPAとして自社EC・会員基盤を強化してきた同社にとって、顧客データの管理は競争力の根幹である。なりすましや不審な連絡への警戒が生活者や取引先に広がるおそれがあるため、被害の実態や再発防止策の透明な開示が求められる。セキュリティ体制の見直しが、ブランド信頼の回復に直結する局面だ。",
+        "tags": [
+          "ニトリ",
+          "情報漏洩",
+          "セキュリティ",
+          "EC"
+        ],
+        "search_terms": [
+          "ニトリ 顧客情報 流出 可能性",
+          "不正アクセス 3762万件",
+          "Nitori customer data breach",
+          "Japan retailer cyberattack leak"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQQUJGWHk2M3M5T0FkWmRxeFZOaFBQSmR1ZGRvcmNrMmFxREFYY19WNHg5SVFjRUNjNlBLNEd6MkZTa29QY3pra0dwWnRDVGNLUUNCMzN5VzVqOWlxbVY0YVItQTRJaGxhbjA3elhUNFY4X3pzQ3JrSEV1aGRnSExuSDlxQjlDZktqbnRKMnNHV0RDZ2wtRkV3cXpLazB3RzM0M3BwbGhRREFSeEcwSnhIUzhzNFRCd2ZBSjhLdjhB?oc=5",
+        "source_pub_ts": 1794225180
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリHD、秋冬の新商品展示会を開催",
+        "original_title": "",
+        "source": "毎日新聞",
+        "source_id": "JP-03",
+        "summary": "ニトリホールディングスが秋冬の新商品展示会を開催したことを、毎日新聞が「けいざいフラッシュ」で伝えた。同社は企画から製造、物流、販売までを一貫して手掛けるSPAモデルを採っており、展示会は次の売り場に並ぶ新商品の方向性を社内外に示す重要な機会となる。季節商品の提案力を示す動きとして注目される。",
+        "why_it_matters": "展示会は、SPAとして商品企画から店頭投入までのスピードを測る指標になる。秋冬の新作が暮らしの提案にどう結び付くか、季節ごとの商品ラインナップの厚みや価格帯の設計を見ることで、同社の開発力と需要の読みを確認できる。ヒット商品の再現性を高める観点からも、展示内容の追跡が欠かせない。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "新商品",
+          "展示会"
+        ],
+        "search_terms": [
+          "秋冬の新商品展示会",
+          "ニトリ 新商品 展示会",
+          "Nitori autumn winter product exhibition",
+          "Nitori new product showcase"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE40am50Y3BOelhtUHJWZHhydFR0WndiaDZMZGhhcmI5UTh1cURQSzk4aWtEOWM0SjlPcVZCdmVmX2hfXzJVVk1ZSUJ1WVBLaTBFOXRsTHZjNTk3bE1WZFlmSmFkYzFhaG9I?oc=5",
+        "source_pub_ts": 1794243650
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、フィリピン8店舗目「NITORI Robinsons Manila店」を11月12日オープン",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-10",
+        "summary": "ニトリホールディングスは、フィリピンへの8店舗目となる「NITORI Robinsons Manila店」を11月12日にオープンすると発表した。ロビンソンズマニラ内への出店で、フィリピンでの店舗網をさらに広げる。NNAアジアや千葉テレビ放送なども同件を報じており、東南アジアでの展開が着実に進んでいることを示す。",
+        "why_it_matters": "フィリピンで8店舗目となり、東南アジアでの店舗網拡大が積み上がっている。現地ショッピングモール内に出店することで、来店動線に乗った認知拡大を狙える。現地での品揃えや価格設定の適応が今後の鍵となり、為替変動や現地物流のコストを踏まえた運営体制が成果を左右する。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "フィリピン",
+          "店舗展開"
+        ],
+        "search_terms": [
+          "フィリピン8店舗目の出店",
+          "ニトリ マニラ 新店",
+          "Nitori Philippines eighth store",
+          "Robinsons Manila mall opening"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE52VGcwUnpTamVEdGE3eVZHcHFSNUpQYjdVVlFEeXZVcnZNbUNMWm1FeDJiTjRkUTVsRk9GOTROZWthb2l3cmRIdS1zYUhqSWJteGxwTUNzaEZFNWt1VmZqZHV1VEt6QW5tR3c?oc=5",
+        "source_pub_ts": 1794186002
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリHD、インド2店舗目をムンバイに出店へ",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-11",
+        "summary": "ニトリHDがインド2店舗目をムンバイに出店すると、Dellows Newsが報じた。報道では2026年10月15日のオープンとされているが、本記事の発表日時点での開業状況は各社の公式発表で確認が必要だ。同社はインドでも店舗展開を進めており、アジアでの海外事業の広がりを示す動きとして注目される。",
+        "why_it_matters": "インドは人口規模と都市部の住環境ニーズが大きく、家具・インテリア需要の伸びが見込まれる市場である。2店舗目をムンバイに置くことで、都市単位での集客と物流拠点の効率化を検討できる段階に入ったといえる。現地の住宅事情や価格感に合わせた商品構成がどこまで浸透するかが今後の評価軸となる。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "インド",
+          "ムンバイ"
+        ],
+        "search_terms": [
+          "インド2店舗目 ムンバイ",
+          "ニトリ インド 出店",
+          "Nitori India second store",
+          "Mumbai furniture retail expansion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5qTnVSRVR2S1NkNkROeDdKUEVqb2Z5RlNoSkRHc0cyU0xXbDVTWXpKbUFoQlRXWm55alZvLWIzWkUzQVVsYUE?oc=5",
+        "source_pub_ts": 1794184377
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの人気調理アイテムがセール中、一人鍋から雑炊まで活躍と話題",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-08",
+        "summary": "ニトリの人気の調理アイテムがセール中であることを、ねとらぼリサーチが紹介した。1,000円台で購入できる点が注目され、「一人鍋から雑炊まで」「麺も野菜も茹でられる」といった使い方が生活者の関心を集めている。手頃な価格で多用途に使える点が、日常の食生活に取り入れやすい理由として評価されている。",
+        "why_it_matters": "一人鍋から雑炊、麺や野菜の下ゆでまで対応できる汎用性は、単身世帯や少人数世帯の時短・省スペース需要と合致する。1,000円台という価格帯で多用途を訴求する点は、ニトリが得意とする低価格と機能性の両立の好例である。セール時の反響を定番化につなげられるかが焦点となる。",
+        "tags": [
+          "ニトリ",
+          "調理用品",
+          "セール",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "人気の調理アイテム セール",
+          "ニトリ 調理器具 1000円台",
+          "Nitori cooking gadget sale",
+          "multi-use kitchen tool budget"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1SYlhzQV91T0tZUkZmMndudW9qR19nU3NZV1NRTVIxdmRtZmJWVm0tT2ZNMDZzRFlrUW1YVDRzSm1XVnNQSWNSOFpOMXJNQXF6QWRkRGxnWnVnckd6STFXalJiNFdNM1lhTXZN?oc=5",
+        "source_pub_ts": 1794199200
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「ソファでも使えるこたつ」がセール価格に、「想像以上に暖かい」と反響",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-05",
+        "summary": "ニトリの「ソファでも使えるこたつ」がセール価格になったことを、ねとらぼリサーチが紹介した。購入者からは「想像以上に暖かい」「ソファーに合わせて高さを変えられる」といった声が寄せられ、「2個目です」という反応も見られる。居住空間に合わせて使い方を選べる点が、リピート購入につながっている。",
+        "why_it_matters": "ソファ脇でも使える高さ調整機能は、ダイニングや居間の家具配置に制約がある住宅で有効な提案である。セール価格での再購入や2個目の需要は、商品の満足度の高さと家族単位での購買意欲を示す。季節商品を複数台で使う提案に広げることで、冬の売場の客単価を押し上げる余地もある。",
+        "tags": [
+          "ニトリ",
+          "こたつ",
+          "季節商品",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "ソファでも使えるこたつ",
+          "ニトリ こたつ セール",
+          "Nitori kotatsu sofa-compatible",
+          "adjustable height winter table"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFByN1VNNDdnN3NxTXZaYWJaNFZIdlRFNGVRdE5MUThPRkJqT0lrQXJMSXNWbUQycFZMMDBwOVBfUXVpZjNkMWpTektoT014ZGY5aHFMam9hcW51M0xsWF9yUTlIZ9IBaEFVX3lxTFBzMUtmMXFINTdLTHh4YmV4UDFxdTBUQ3g0WmNuZnk5ZmUzUHZTS3BlQ2Z6V0tTZ1hxQm41VE1jM3dIVFhqS25kR05jQkJwZDZoUWlLNjh6MGZjNHpxYW5neEZkcnhiSDY2?oc=5",
+        "source_pub_ts": 1794219710
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "X投稿で話題の「猫コタツDIY」、ニトリのプラケースで手軽に居場所づくり",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "X上で「猫コタツDIY」の投稿が2,228いいね、486リポストを集めた。ニトリで650円前後のプラケースを購入し、内側に薄手のブランケットを貼って逆さにし、アンカと毛布の上に載せて厚手の毛布をかけるだけで完成する手軽さが特徴だ。猫が入りたくなる居場所を低コストで用意できる点が、ペット飼育者の共感を集めている。",
+        "why_it_matters": "市販の安価なケースを一工夫するだけで「こたつ風」の居場所が作れる点が、暮らしの工夫を楽しむ層に刺さっている。ペットと暮らす生活者にとっては、既製品の用途を変える発想そのものが購買動機になる。プラケースや収納用品を季節の居場所づくりとして提案する示唆がある。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "DIY",
+          "ペット",
+          "収納"
+        ],
+        "search_terms": [
+          "猫コタツDIY",
+          "ニトリ プラケース DIY",
+          "cat kotatsu DIY hack",
+          "budget pet bed storage bin"
+        ],
+        "url": "https://x.com/kiji_nana/status/2119737950397440026",
+        "source_pub_ts": 1794222000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "TikTokで1.8万回再生、ニトリとセリアで実践する冷凍庫の「立てて収納」術",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokで冷凍庫の収納を紹介した動画が1.8万回再生を集めた。ニトリの「冷凍庫トレー スリム」とセリアの「立てて置ける保存容器」を組み合わせ、食品を上下に重ねず立てて収納し、上から中身が見えるように並べる工夫が紹介されている。冷凍うどんや小分けの肉に合わせてトレーと容器を使い分ける点も解説され、整理の参考として共有されている。",
+        "why_it_matters": "立てる、見える化するという整理の原則が、ニトリの収納トレーを生活者の具体的な課題解決の文脈で使われている。ブランドを横断して組み合わせる投稿は、単品の訴求より暮らしの中の使い方を提示する力が大きい。冷凍庫収納の売場提案に、こうした使い方の見せ方を取り入れる示唆がある。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "冷凍庫",
+          "TikTok",
+          "セリア"
+        ],
+        "search_terms": [
+          "冷凍庫 立てて収納",
+          "ニトリ 冷凍庫トレー",
+          "freezer storage organization hack",
+          "upright food storage containers"
+        ],
+        "url": "https://www.tiktok.com/@shiho_kurashi_/video/7704446867706498325",
+        "source_pub_ts": 1793831334.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "猫コタツDIY ①ニトリで650円位のプラケース購入 ②内側に薄手のブランケット貼付け ③アンカ＋毛布の上に逆さに載せ ④上から厚手の毛布か...",
+        "platform": "x",
+        "author": "@kiji_nana",
+        "url": "https://x.com/kiji_nana/status/2119737950397440026",
+        "likes": 2228,
+        "retweets": 486,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:24",
+        "captured_at": "",
+        "text": "猫コタツDIY ①ニトリで650円位のプラケース購入 ②内側に薄手のブランケット貼付け ③アンカ＋毛布の上に逆さに載せ ④上から厚手の毛布かけて完成 pic.x.com/zveoUzOYP1",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリの棚を夫と組み立てて、シャワハーのグッズを飾ってみた タオルは棚に100均の強力マグネットで留めたらシンデレラフィット🩷 キーホルダー...",
+        "platform": "x",
+        "author": "@FVvwcGdYQVxsSX8",
+        "url": "https://x.com/FVvwcGdYQVxsSX8/status/2119775739822342208",
+        "likes": 232,
+        "retweets": 21,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:54",
+        "captured_at": "",
+        "text": "ニトリの棚を夫と組み立てて、シャワハーのグッズを飾ってみた タオルは棚に100均の強力マグネットで留めたらシンデレラフィット🩷 キーホルダーをどう飾るか考え中だから、まだ未完成だけど、とりあえず頑張った！！ #シャワハー #羽生結弦 pic.x.com/V7LyxJRWNW",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "私はよく考えたら、ニトリで1回も買い物をしたことがないので無問題でした。あはは。 x.com/nikkei/status/…",
+        "platform": "x",
+        "author": "@May_Roma",
+        "url": "https://x.com/May_Roma/status/2119726460093026520",
+        "likes": 230,
+        "retweets": 26,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:39",
+        "captured_at": "",
+        "text": "私はよく考えたら、ニトリで1回も買い物をしたことがないので無問題でした。あはは。 x.com/nikkei/status/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "もうここまで来ると 自分が何かしらの被害に遭ったとしても どこから漏れたものが原因なのか特定不可能だと思う まぁ私はニトリは個人的思想から ...",
+        "platform": "x",
+        "author": "@yatowaresabu",
+        "url": "https://x.com/yatowaresabu/status/2119724769864282260",
+        "likes": 182,
+        "retweets": 39,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:32",
+        "captured_at": "",
+        "text": "もうここまで来ると 自分が何かしらの被害に遭ったとしても どこから漏れたものが原因なのか特定不可能だと思う まぁ私はニトリは個人的思想から 10年以上使ってないですけどね approach.yahoo.co.jp/r/SwgTLr?src=h…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "お値段以上のリスクだったニトリ x.com/yahoonewstopic…",
+        "platform": "x",
+        "author": "@arumajiro1717",
+        "url": "https://x.com/arumajiro1717/status/2119767577354506601",
+        "likes": 33,
+        "retweets": 30,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:22",
+        "captured_at": "",
+        "text": "お値段以上のリスクだったニトリ x.com/yahoonewstopic…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "冷凍庫の中、下に入れた食品が見つからないことはありませんか？ 今回は、ニトリとセリアのアイテムを使った、わが家の冷凍庫収納をご紹介します🌿 ...",
+        "platform": "tiktok",
+        "author": "@Shiho | 2児ママのバタバタでも整う暮らし🕊️",
+        "url": "https://www.tiktok.com/@shiho_kurashi_/video/7704446867706498325",
+        "likes": 148,
+        "retweets": 3,
+        "views": 18200,
+        "comments": 1,
+        "posted_on": "2026-11-05 07:28",
+        "captured_at": "2026-11-09T22:37:21.736309+09:00",
+        "text": "冷凍庫の中、下に入れた食品が見つからないことはありませんか？ 今回は、ニトリとセリアのアイテムを使った、わが家の冷凍庫収納をご紹介します🌿 ポイントは、食品を上下に重ねず「立てて収納」すること。 上から中身が見えるように並べて、取り出しやすくしています。 【動画で使っているアイテム】 ・ニトリ「冷凍庫トレー スリム」 ・セリア「立てて置ける保存容器」 冷凍うどんや小分けにしたお肉など、食品に合わせてトレーと保存容器を使っています。 冷凍庫の整理をするときの参考になれば嬉しいです☺️ 皆さんの冷凍庫収納の工夫も、ぜひコメントで教えてください。 ──────────────── 収納アイデアや暮らしの工夫は、Instagramでも発信しています🌿 ▶ Instagram https://www.instagram.com/shiho_kurashi_/ 愛用品や暮らしに役立つアイテムは、楽天ROOMにまとめています。 ▶ 楽天ROOM https://room.rakuten.co.jp/room_5bdaa925cf #冷凍庫収納 #キッチン収納 #ニトリ #セリア #収納アイデア",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261109",
     "title": "2026年11月9日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "梅田茶屋町の世界最大級店舗など大型旗艦店の出店が相次ぎ、ネット通販が主流の中でもリアル店舗の体験価値を重視するニトリの戦略が鮮明になった。 「包み込まれるローチェア」が家族で取り合いになるほど支持を集めるなど、ヒット商品の実感価値がSNSで拡散し、購買の後押しになっている。",
