@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 10 Nov 2026 09:33:00 +0900</lastBuildDate>
+    <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 11 Nov 2026 07:08:11 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月11日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261111/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261111/</guid>
+      <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
+      <description>東武百貨店池袋本店が顔認証による手ぶら決済を始めるなど、店舗での非接触決済と体験型の買い物がさらに広がっています。 AI発注は欠品と過剰在庫を同時に抑える手段として、サプライチェーンDXの実務テーマになりつつあります。</description>
+    </item>
     <item>
       <title>2026年11月10日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261110/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261028/</guid>
       <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
       <description>トランスコスモスが「trans-scManager」を拡充し、AIとBPOを組み合わせて需要予測から在庫配置・出荷指示までを一貫支援する動きが国内で広がっている。 商品データ整備や売場づくりなど、AIの活用領域が店舗・EC現場の日常業務へ入り込み始めた。</description>
-    </item>
-    <item>
-      <title>2026年10月27日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261027/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261027/</guid>
-      <pubDate>Tue, 27 Oct 2026 08:00:00 +0900</pubDate>
-      <description>AI CROSSがEC市場の販売動向を需要予測に取り込むオプションを提供開始し、需要予測は自社データ中心から市場データ連携へと広がりつつある リテールメディアの効果測定をエッジAIと人流データで補う手法や、店舗在庫をGoogle検索などに表示する取り組みが進み、オフラインの成果を可視化する動きが強まっている</description>
     </item>
   </channel>
 </rss>
