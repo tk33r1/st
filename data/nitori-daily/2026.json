@@ -1,5 +1,292 @@
 [
   {
+    "date": "20261112",
+    "title": "2026年11月12日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリ環八用賀店でリニアモータ式ロボット倉庫「CUEBUS」の実証実験が始まる見通しとなり、店舗併設型の物流自動化とDXの進化が注目された。 「よこ伸縮式ワードローブ」「ベッドにもなるソファ」など、部屋の寸法や限られた空間に合わせた多機能な新商品提案が生活者の高い関心を集めた。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリ環八用賀店でリニアモータ式ロボット倉庫「CUEBUS」の実証実験が始まる見通しとなり、店舗併設型の物流自動化とDXの進化が注目された。",
+      "「よこ伸縮式ワードローブ」「ベッドにもなるソファ」など、部屋の寸法や限られた空間に合わせた多機能な新商品提案が生活者の高い関心を集めた。",
+      "「かわいい上に2way」という投稿が1万超のいいねを集めるなど、デザインの可愛らしさと機能性の両立がSNS上で強い共感を生んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ環八用賀店でロボット倉庫「CUEBUS」の実証実験へ、リニアモータ式で物流を自動化",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-08",
+        "summary": "ニトリは環八用賀店で、リニアモータ式のロボット倉庫「CUEBUS（キューバス）」の実証実験を開始する見通しとなった。ニトリグループは店舗や物流拠点での省人化と在庫運用の効率化を進めており、今回の取り組みはその一環と位置づけられる。実験を通じて、既存店舗のバックヤードでの自動化導入の実現性が検証される見込みだ。",
+        "why_it_matters": "都市部の店舗併設型の倉庫で自動化を試すことは、ラストワンマイルのスピードと在庫精度の両立に直結する。SPAとして製造から物流・販売までを自社で管理するニトリにとって、ロボット倉庫の知見は全社の物流コスト構造を変えうる投資テーマだ。今後は導入効果を示す数値が公開されるかが注目点となる。",
+        "tags": [
+          "ニトリ",
+          "物流",
+          "自動化",
+          "DX"
+        ],
+        "search_terms": [
+          "ロボット倉庫 実証実験",
+          "自動化 物流 DX",
+          "warehouse robot automation trial",
+          "CUEBUS linear motor warehouse",
+          "Nitori logistics automation"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9QQXg2eVRkM0N3Tjlvcm5SRHRzaVFwcVpDWThyTmdZMF84ZmdETHJrTFc0SjdwMmJyQWtMMjdKaGNhRjRkdGl6R21KQ25hS1hPMEVEQlB3Z0twS1QxUnplNGRRbWQwc2Zv?oc=5",
+        "source_pub_ts": 1794346190
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "衣替えの整理に新提案、ニトリの「よこ伸縮式ワードローブ」が話題に",
+        "original_title": "",
+        "source": "All About ニュース",
+        "source_id": "JP-02",
+        "summary": "ニトリの新商品「よこ伸縮式ワードローブ」が、衣替えシーズンの収納整理に役立つと話題になっている。横幅を部屋の幅に合わせて伸縮できる設計により、居室のサイズに合わせて設置しやすい点が注目を集めた。季節ごとの衣類を整理したい生活者の悩みに応える、空間にフィットする収納家具として紹介されている。",
+        "why_it_matters": "「部屋の幅にぴったり」という訴求は、賃貸住宅や狭小空間が多い日本の住空間に対する寸法提案の強さを示す。SPAとして自社で設計・寸法を管理できるニトリは、サイズ課題を商品化しやすい立場にある。収納の悩みを具体的な生活シーンで訴求できれば、季節需要を超えた販売拡大も期待できる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "収納",
+          "新商品"
+        ],
+        "search_terms": [
+          "伸縮式収納 新商品",
+          "横幅調整 ワードローブ",
+          "expandable wardrobe furniture",
+          "Nitori new storage product",
+          "small room storage solution"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9JU0VxOERuU2xTZHcwcDlSMU1OMTZndzYyQ2MzRlpocnBHOVJyX3U2Qk12SFFucHJKZlZaTGQzeXBqODFxWVl6Ty0zQ1MwZjFYZ1lxMjFNLW1lZw?oc=5",
+        "source_pub_ts": 1794394800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「ベッドを捨てられる」ニトリのベッドになるソファに絶賛の声、6畳の部屋でも圧迫感なし",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-04",
+        "summary": "ニトリの「ベッドにもなるソファ」について、「ベッドを捨てられる」「毎日快適」といった声が上がり、評価が広がっている。6畳の部屋に置いても圧迫感が少ないという点が好感されており、一台で座る・寝るの二役をこなす使い方が支持されている。限られた空間を有効に使いたい生活者の関心を集めている。",
+        "why_it_matters": "寝具とソファを一体化させる発想は、ベッドを置くことで生じていた部屋の圧迫感という不満を解消する提案だ。機能性家具を得意とするニトリにとって、家具の複数機能化は買い替え需要や単身者の初期購入の取り込みにつながる。口コミで「捨てられる」という買い替えの文脈が語られた点も示唆的だ。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ソファ",
+          "寝具"
+        ],
+        "search_terms": [
+          "ベッドソファ 多機能家具",
+          "convertible sofa bed",
+          "small room furniture multi-use",
+          "Nitori sofa bed review",
+          "compact living space furniture"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNZ0laV2liS2trRkhtMzNndExBXzZSbHdyejRpX3dvc09HczRDVGxsMEVGN0I3cXo0NzB6YV9MaU14R3BMLTI0Q1Q1NGJLNkp4NDBkZVdUZGl5blFyQUhEcF9vXzB2WWVkWUVsalRaNUE0eWRrSXFPeXV5T1B4VHNiUmFCR2djd3Z0R0JNd09B?oc=5",
+        "source_pub_ts": 1794389473
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「雪の宿」そっくりのキッチンスポンジがニトリに登場、おせんべいの焼き目を細部まで再現",
+        "original_title": "",
+        "source": "山陽新聞",
+        "source_id": "JP-10",
+        "summary": "ニトリから、お菓子「雪の宿」にそっくりなキッチンスポンジが登場した。おせんべいの焼き目をイメージした模様を細部まで表現しており、キッチンに置くだけで遊び心を演出できる点が特徴だ。日用品ながら見た目の楽しさで選ばれる商品として、食卓まわりの小物需要を喚起している。",
+        "why_it_matters": "お菓子をモチーフにした模様は、SNSでの共有やギフト需要を生みやすい。機能品である日用品に感情価値を加えるアプローチは、価格競争から離れた商品開発の方向性を示す。細部へのこだわりが話題を呼ぶ点は、企画力を強みとするSPA型の商品開発の特徴ともいえる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "キッチン雑貨",
+          "ユーモア"
+        ],
+        "search_terms": [
+          "キッチンスポンジ 新商品",
+          "おせんべい柄 雑貨",
+          "novelty kitchen sponge",
+          "snack-themed kitchen goods",
+          "Nitori kitchen sponge"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFAzbkY3YnRTWEZ0NUFvZHFwejh6QkxDQWRSc1FySUF6V2wweGswVE5lVExwajl3OVRNTzRvQnc1RnQ3N2hsVElyLVpWMm9tQkI0VF9mYkNsakNTR1V4bVFhUFRjRU9pSzcxRGU1YjA1Mjc?oc=5",
+        "source_pub_ts": 1794339149
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの「吸湿発熱BOXパッド」が好評、「寝過ぎ注意」の声も",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-06",
+        "summary": "ニトリの「吸湿発熱BOXパッド」が寝具ユーザーの間で好評となっている。「寝心地はふかふかパラダイス」「安眠間違いなし」といった口コミが広がり、寝具の快適性を評価する声が目立つ。寝室の快適性を手軽に高めたい生活者にとって、導入しやすいアイテムとして注目されている。",
+        "why_it_matters": "寝具の機能素材を「ボックスパッド」という手軽な形で提案する点は、ベッド買い替えに至らない層へのアップセルとして機能する。ニトリの寝具は機能訴求を続けており、体感価値を口コミが後押しする構図が強まっている。素材機能と口コミの相乗効果をどう継続させるかが今後の鍵となる。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "ヒット商品",
+          "口コミ"
+        ],
+        "search_terms": [
+          "吸湿発熱 ボックスパッド",
+          "moisture-heating mattress pad",
+          "bed pad comfort review",
+          "Nitori bedding product",
+          "寝具 快適 口コミ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5jTm1yVjlFcUJNUnR0WVNQQnVrV2IzaDZtZDJMOFliNk5iOGdzR3E4X0QxbWJoenpIWjN2TWtLeC1OX21zczM4LWt5NWVkSWp5YTg3MXVSb1l1dXh1VTByRURn0gFiQVVfeXFMTmNObXJWOUVxQk1SdHRZU1BCdWtXYjNoNm1kMkw4WWI2TmI4Z3NHcThfRDFtYmh6ekhaM3ZNa0t4LU5fbXNzMzgta3k1ZWRJanlhODcxdVJvWXV1eHVVMHJFRGc?oc=5",
+        "source_pub_ts": 1794365700
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「かわいい上に2wayはエグい」、1万超のいいねを集めたニトリ投稿",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "X上で「ニトリ…？？？かわいい上に2wayはエグいって」という投稿が、1万504いいね、486リポストを集めた。デザインの可愛らしさに加え、一つで二通りの使い方ができる点に驚きの声が上がっている。投稿は、ニトリ商品の見た目と機能性のギャップを率直に表現したものであり、その意外性が多くの共感を呼んだとみられる。",
+        "why_it_matters": "「かわいい」と「機能的」の両立が同時に評価される点が、この投稿の拡散力の源泉だ。生活者は価格の安さだけでなく、意外性のある使い方を発見する体験を共有したがる。商品側は2wayのような機能を一言で明確に伝えられれば、SNSでの二次拡散を生みやすくなる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "口コミ",
+          "2way"
+        ],
+        "search_terms": [
+          "SNS反響 ニトリ",
+          "2way 可愛い 収納",
+          "viral product review Japan",
+          "social media buzz Nitori",
+          "X いいね 話題"
+        ],
+        "url": "https://x.com/oniku117/status/2120334488119234837",
+        "source_pub_ts": 1794394800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ニトリ大好き」投稿が300いいね、お手頃価格の購入品リストが共感を呼ぶ",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "ニトリ愛好者が最近購入して良かったもの5選を紹介した投稿が、X上で300いいねを集めた。お手頃な価格の商品が多いことを前面に出した構成で、日常使いできる実用品への共感が広がっている。購入品を具体的に並べる形式は、読み手が自分の生活に当てはめて判断しやすい点も支持された要因とみられる。",
+        "why_it_matters": "価格の手頃さと実用性が生活者の信頼を得る要素になっていることを示す投稿だ。「買ってよかった」という個人の体験談は、企業広告よりも購買の後押しになりやすい。ファン層の自発的な発信をどう拾い、商品企画や販促に活かすかがポイントとなる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "購入体験",
+          "お手頃価格"
+        ],
+        "search_terms": [
+          "購入品紹介 ニトリ",
+          "お手頃 実用品 口コミ",
+          "haul post Nitori favorites",
+          "budget-friendly home goods review",
+          "social recommendation Japan"
+        ],
+        "url": "https://x.com/aibymakeupppp/status/2120343529084030980",
+        "source_pub_ts": 1794394800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリ…？？？かわいい上に2wayはエグいって pic.x.com/6k8JVkoLfk",
+        "platform": "x",
+        "author": "@oniku117",
+        "url": "https://x.com/oniku117/status/2120334488119234837",
+        "likes": 10504,
+        "retweets": 486,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:55",
+        "captured_at": "",
+        "text": "ニトリ…？？？かわいい上に2wayはエグいって pic.x.com/6k8JVkoLfk",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ふかふか毛布（ニトリNウォーム）出したら、ネコホイホイになった pic.x.com/mh28qLCRpj",
+        "platform": "x",
+        "author": "@emlktwnc",
+        "url": "https://x.com/emlktwnc/status/2120322025604710632",
+        "likes": 340,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:05",
+        "captured_at": "",
+        "text": "ふかふか毛布（ニトリNウォーム）出したら、ネコホイホイになった pic.x.com/mh28qLCRpj",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリ大好き女が最近購入して良かったもの5選🌿 お手頃な価格のもの多め.ᐟ pic.x.com/SYx95Z7cpX",
+        "platform": "x",
+        "author": "@aibymakeupppp",
+        "url": "https://x.com/aibymakeupppp/status/2120343529084030980",
+        "likes": 300,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:31",
+        "captured_at": "",
+        "text": "ニトリ大好き女が最近購入して良かったもの5選🌿 お手頃な価格のもの多め.ᐟ pic.x.com/SYx95Z7cpX",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "グッドジファール🌞 ニトリで見つけて笑っちゃった🤣 3Dステッカー？の、ハスキー！ 悪そうな顔がない🤭 pic.x.com/zRM0bXJY33",
+        "platform": "x",
+        "author": "@Genie_0213",
+        "url": "https://x.com/Genie_0213/status/2120491413989437585",
+        "likes": 69,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:18",
+        "captured_at": "",
+        "text": "グッドジファール🌞 ニトリで見つけて笑っちゃった🤣 3Dステッカー？の、ハスキー！ 悪そうな顔がない🤭 pic.x.com/zRM0bXJY33",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "先日ニトリでせいろを買いました！ pic.x.com/Jc6eduXjm8",
+        "platform": "x",
+        "author": "@RabbitsRapid",
+        "url": "https://x.com/RabbitsRapid/status/2120522474463076641",
+        "likes": 65,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 23:22",
+        "captured_at": "",
+        "text": "先日ニトリでせいろを買いました！ pic.x.com/Jc6eduXjm8",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261111",
     "title": "2026年11月11日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "「1枚4役」のまな板など、調理の手間を減らす新商品が「時短になり助かります」といった声で高評価を集めている。 SNSでは、お盆や寝具といった既存アイテムの使い方や、CMなどのブランド記憶に基づく反響が目立つ。",

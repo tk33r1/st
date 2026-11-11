@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 11 Nov 2026 07:14:17 +0900</lastBuildDate>
+    <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 12 Nov 2026 08:23:25 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月12日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261112/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261112/</guid>
+      <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ニトリ環八用賀店でリニアモータ式ロボット倉庫「CUEBUS」の実証実験が始まる見通しとなり、店舗併設型の物流自動化とDXの進化が注目された。 「よこ伸縮式ワードローブ」「ベッドにもなるソファ」など、部屋の寸法や限られた空間に合わせた多機能な新商品提案が生活者の高い関心を集めた。</description>
+    </item>
     <item>
       <title>2026年11月11日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261111/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261029/</guid>
       <pubDate>Thu, 29 Oct 2026 08:00:00 +0900</pubDate>
       <description>PB・新商品の販売が好調で、N+の「あったかダウンパンツ」は累計10万本（※注記付き）を突破し、ノンオイルフライヤー4.0Lも先行予約販売が始まった。 店舗面では、ニトリ東金店の駐車場を2027年3月に230台から61台へ縮小する届出が公表され、既存店の立地・店舗運営を見直す動きがうかがえる。</description>
-    </item>
-    <item>
-      <title>2026年10月28日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261028/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261028/</guid>
-      <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
-      <description>大阪・梅田エリアに約2,700坪の旗艦店「ニトリ 梅田茶屋町店」が10月30日にオープンし、都市型大型店による店舗体験の強化が鮮明になった ペットとの暮らしに対応した「ペット空気清浄機」など、複数用途を一台に集約する商品企画が生活者の課題解決に直結する新製品として登場した</description>
     </item>
   </channel>
 </rss>
