@@ -1,5 +1,182 @@
 [
   {
+    "date": "20261112",
+    "title": "2026年11月12日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "食品スーパー向け広告サイネージで設置台数No.1の報道が出るなど、店頭リテールメディアの存在感が高まっている AIによる発注量の自動調整を実証する動きが出ており、発注業務の確認工程を見直す段階に入りつつある",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "食品スーパー向け広告サイネージで設置台数No.1の報道が出るなど、店頭リテールメディアの存在感が高まっている",
+      "AIによる発注量の自動調整を実証する動きが出ており、発注業務の確認工程を見直す段階に入りつつある",
+      "セルフレジをめぐる生活者と現場のすれ違いが話題となり、有人レジとの役割分担や運用設計の重要性が改めて浮かび上がっている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "『デリッシュキッチン』、食品スーパー向け広告サイネージ設置台数で国内No.1を獲得",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-01",
+        "summary": "食品スーパー向けの広告サイネージで、デリッシュキッチンが設置台数において国内No.1を獲得したと報じられた。店頭で買い物客の目に入る広告媒体として、食品スーパー各社のリテールメディア施策の一環に位置づけられる動きだ。複数のニュースメディアが同内容を伝えており、発表された数値の詳細は各社の記事で確認できる。",
+        "why_it_matters": "店舗の売場サイネージは、メーカーや小売が来店客の購買直前に訴求できる貴重な接点として注目度が高まっている。設置台数で首位となったことは、食品スーパーの店頭メディア市場で同社の存在感が増していることを示唆する。小売側にとっては、自社の売場媒体をどう広告枠として販売し、どの程度の設置網を持てるかが収益化の鍵になる。広告主側は、単発の出稿より店頭接点を横断的に確保できるネットワークの価値を見直す必要があるだろう。",
+        "tags": [
+          "リテールメディア",
+          "デジタルサイネージ",
+          "食品スーパー"
+        ],
+        "search_terms": [
+          "店頭広告サイネージ",
+          "retail media signage",
+          "食品スーパー 広告媒体",
+          "in-store digital signage Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBONk1ld3IwczVMWjd3TEtCdTRRa095U0lCTFlqTXdESDh4Y1JSenRBaVotN2R1NFB2dUMzRHJGcTFpRjdCVzNkNlAwTUJLLXNsZm44U25adTVZYUhhMktqMjZZVWNOZ3lF?oc=5",
+        "source_pub_ts": 1794421300
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジを両替機代わりにする客に、店員は何を思うのか　作者への取材で明らかになった現場の本音",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-02",
+        "summary": "セルフレジを両替機代わりに使う客に対し、店員側はどう感じているのか。ウォーカープラスの記事では、作者への取材をもとに、お財布がすっきりする一方でレジが混乱する現場の本音を紹介している。セルフレジをめぐる生活者と現場のすれ違いを描いた内容で、利用者目線と店舗運営の双方から考えさせられる記事だ。",
+        "why_it_matters": "セルフレジは省人化の切り札として導入が広がる一方、利用客のマナー差や想定外の使い方が店舗運営の新たな負担になっている。今回の話題は、機械の設計と運用ルールの両面で、混乱を生まない仕組みが必要であることを示す。小銭投入の上限表示や有人サポートの配置など、店側の対策が問われる。流通DXでは、顧客の行動特性を前提にした導入設計が成果を左右する。",
+        "tags": [
+          "セルフレジ",
+          "生活者の声",
+          "店舗運営"
+        ],
+        "search_terms": [
+          "セルフレジ 利用者マナー",
+          "self-checkout customer behavior",
+          "無人レジ 現場の声",
+          "self-service checkout Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5nNTBuc3dWRTByMkdWZTNlUTBoSTVEN3k2Tk9vMXFrSGx3SGE0OHpjY3pHNGtMNkhwcVRoV1Q1a0FpTGtmcF9LN0s3Z2Z5VGp3Y2RfcWtB0gFbQVVfeXFMUEJ2U0IzSkZZQ1l1eWVsTHZlZk5yT29PczRGSjF4S1dtYWlhM2RMM2J4VF9zS1VTWFhucDBGZGlYZHBudnhRaldteXgzd0gtUUlpYjBJWTVhY3RXMA?oc=5",
+        "source_pub_ts": 1794413692
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "スーパーの発注確認が不要に？シノプス、AIが発注量を自動調整する「自動納品」の実証を開始",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-04",
+        "summary": "シノプスが、AIが発注量を自動で調整する「自動納品」の実証を開始したと報じられた。従来は店舗担当者が発注内容を確認していた工程を省略し、AIの判断で納品量を決める仕組みを検証する。食品スーパーなどの発注業務の負担軽減と欠品・過剰在庫の抑制を目指す取り組みとして、発注自動化の新たな段階を示す動きだ。",
+        "why_it_matters": "AI発注は需要予測の精度向上だけでなく、確認工程を含めた業務フロー全体の見直しへと進みつつある。発注確認を省けるかどうかは、需要予測の信頼性と例外処理の設計にかかっており、実証結果が今後の判断材料になる。店舗では、人が判断すべき商品と自動化に任せる商品を切り分ける運用設計が重要になる。サプライチェーン全体での在庫最適化につながるかが注目点だ。",
+        "tags": [
+          "AI需要予測",
+          "自動発注",
+          "サプライチェーン"
+        ],
+        "search_terms": [
+          "AI自動発注",
+          "automated replenishment",
+          "AI需要予測 発注",
+          "store ordering automation Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFB2NExGa3FyUllxdlJaVndKbjluT1ROcWNCXzlsRXpSTTlfd0RrU2t6ZGFwV2FqeXJHN2FvRE1UX0U3Zkt5eUs4QjFMdGlYR3BEdHc?oc=5",
+        "source_pub_ts": 1794377190
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "注文の多いお客様はセルフレジへ、チェッカーの鳥海さんが語る会計の工夫",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-06",
+        "summary": "チェッカーの鳥海さんが、注文の多い客にはセルフレジを案内するといったレジ対応の工夫を語った内容が紹介されている。会計は迅速に、でも商品が傷つかないよう丁寧にという、現場の接客の考え方が示されている。セルフレジと有人レジの役割分担を、現場目線で考える材料になる記事だ。",
+        "why_it_matters": "セルフレジと有人レジの使い分けは、客の購入点数や商品特性に応じた運用設計の問題として捉えられつつある。現場の販売員が、商品の扱いへの配慮と会計スピードを両立させている点は、機械では代替しにくい価値を示す。生活者の利用体験を改善するには、セルフレジの導入だけでなく、有人レジとの誘導設計を含めた店舗全体の動線づくりが欠かせない。",
+        "tags": [
+          "セルフレジ",
+          "有人レジ",
+          "接客"
+        ],
+        "search_terms": [
+          "セルフレジ 誘導",
+          "self-checkout staff guidance",
+          "レジ接客 現場の工夫",
+          "checkout operations retail Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9wWVR6bHBuTnpPM3k0VnlNRURyMEhzUmg1a3VZLW93dXZVMkdZVGVtRU5EbmVlTUJwcFByb25PRU9Lb05ha0xETkRrNTlPUmVVMHRIbXh5OWE1a01jUnFNeUVxSmJnWmVfajRPUVpR?oc=5",
+        "source_pub_ts": 1794329373
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "DoorDashとInstacartの組み合わせが、ECの価格設定に注目を集める",
+        "original_title": "DoorDash-Instacart combination shines a spotlight on e-commerce pricing",
+        "source": "Grocery Dive",
+        "source_id": "GL-01",
+        "summary": "DoorDashとInstacartの組み合わせが、ネット通販における価格設定に注目を集めていると、Grocery Diveが報じている。宅配プラットフォームと食品EC大手の連携が、利用者が目にする価格や手数料のあり方にどう影響するかが議論の焦点になっている。小売業者にとっては、オンラインでの価格の透明性と収益性のバランスを改めて考える契機となる動きだ。",
+        "why_it_matters": "デリバリーとEC代行の提携は、店頭価格とオンライン価格の差をどう管理するかという課題を浮き彫りにする。消費者が比較しやすいデジタル環境では、価格の一貫性が信頼に直結する。日本の食品ECや店舗併用型のネットスーパーにとっても、プラットフォーム手数料を織り込んだ価格戦略の見直しは避けて通れない論点になるだろう。",
+        "tags": [
+          "EC価格",
+          "デリバリー",
+          "プラットフォーム"
+        ],
+        "search_terms": [
+          "ネット通販 価格戦略",
+          "online grocery pricing",
+          "宅配プラットフォーム 提携",
+          "DoorDash Instacart e-commerce"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPVjBIemhyaDYtd2swS21oTUFwS1Qwcjg2d1VmdUNrRnNGa0VlQVU0NllrVm1nbzhkYnhqWC04RWJaU1lqQTFnVHRCcnVKTVo2WFIwNEotdUJfWnU1UUx5NENZU0pHbWVGNGY1czNaMlRQYTZTamJUWUx5c0NUY1lEc3A0TWRWU2hwZEJtd3ZNZFRFcndGeTgw?oc=5",
+        "source_pub_ts": 1794411667
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "次世代店舗アワード：Anthropologieやdiptyqueなどが店内体験をどう変革しているか",
+        "original_title": "The Next Gen Store Awards: How Anthropologie, Diptyque and others are transforming the in-store experience",
+        "source": "Modern Retail",
+        "source_id": "GL-02",
+        "summary": "Modern Retailの「Next Gen Store Awards」は、Anthropologieやdiptyqueなどが店舗体験をどう変革しているかを紹介している。店内での接客、空間設計、デジタル技術の活用など、実店舗ならではの価値を高める取り組みが取り上げられている。オンライン購買が広がる中で、店舗を体験の場として再定義する先進事例をまとめた内容だ。",
+        "why_it_matters": "EC全盛の時代にも、店舗は体験価値とブランド接点を提供する場として再評価されている。先進的な小売の事例は、テクノロジーを接客や空間演出に組み込む際の方向性を示す。日本の流通企業にとっても、省人化や効率化だけでなく、来店動機を生む店内体験の設計が重要な競争軸になると考えられる。",
+        "tags": [
+          "店内体験",
+          "次世代店舗",
+          "ブランド体験"
+        ],
+        "search_terms": [
+          "次世代店舗 体験設計",
+          "next gen store experience",
+          "店内体験 デジタル活用",
+          "in-store experience innovation"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxQR3hJSjBQdjhRd1Byc3l2NzNuekhZVy1mTk9QMGFPZXZJMkkyN0dQV2hVNUN6ZzlJRU9mOFFpQkJOcllwMjM2OElkOHh5QnBJdDZTS0xqUVNSN2NxRDNrME9ETTdaT25WWHJiSkN0eWlvWnBZMlVGOVMxdm1Ld3pDMlRhZjVYdUgyRS1HaEhtWGtCVEx6SWxvMnhZYS1UZlgxR1VTQm9rUWtCVTdqS0dPbTFuVjVOYmhaRU5nMWFlMldSR1FvVlIyYmF6VF83MFdzNFI2ZF9QN3FUdjM5QU0yUjBya01yUHNV?oc=5",
+        "source_pub_ts": 1794384411
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "Mattel、BarbieやHot WheelsをTikTok Shopに展開",
+        "original_title": "Mattel brings Barbie, Hot Wheels to TikTok Shop",
+        "source": "Modern Retail",
+        "source_id": "GL-03",
+        "summary": "Modern Retailは、MattelがBarbieやHot WheelsなどのブランドをTikTok Shopで展開すると報じている。玩具メーカーの大手が、ショート動画とライブ配信を核とするソーシャルコマースへ本格的に参入する動きだ。商品発見からその場での購入までを一体化させるプラットフォームで、ブランドの販売チャネルを広げる狙いがうかがえる。",
+        "why_it_matters": "ソーシャルコマースは、商品との出会いから購入までを数分で完結させる新しい流通チャネルとして存在感を高めている。玩具のようなブランド力の強い商材が参入することは、SNS経由の購買が一般的な商品カテゴリーに広がる兆しといえる。日本でも、ブランドが自社EC以外の販売接点をどう組み合わせるかが、今後の売場戦略の論点になる。",
+        "tags": [
+          "ソーシャルコマース",
+          "TikTok Shop",
+          "ブランド戦略"
+        ],
+        "search_terms": [
+          "ソーシャルコマース 参入",
+          "social commerce brand expansion",
+          "TikTok Shop 玩具ブランド",
+          "short video commerce"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQSmNURnQxQkRKV2tzX1dGMm9KQkVHaGxoVmdCay1lQ21iR2hoZzhiMTdCdG1rekV0WDE0dXR2Ym1fNEtTaGxIVmZ2VGJRdzRyTkNmM0pEVW01cHJoZzM4d0dJdl80U3dESXJnMzc4emE2WWNiUnJEOG9NWEJqeHVxVDVkRVhvelNkaldUV3RTUQ?oc=5",
+        "source_pub_ts": 1794382311
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261111",
     "title": "2026年11月11日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "東武百貨店池袋本店が顔認証による手ぶら決済を始めるなど、店舗での非接触決済と体験型の買い物がさらに広がっています。 AI発注は欠品と過剰在庫を同時に抑える手段として、サプライチェーンDXの実務テーマになりつつあります。",

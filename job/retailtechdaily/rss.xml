@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 11 Nov 2026 07:08:11 +0900</lastBuildDate>
+    <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 12 Nov 2026 08:16:37 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月12日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261112/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261112/</guid>
+      <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
+      <description>食品スーパー向け広告サイネージで設置台数No.1の報道が出るなど、店頭リテールメディアの存在感が高まっている AIによる発注量の自動調整を実証する動きが出ており、発注業務の確認工程を見直す段階に入りつつある</description>
+    </item>
     <item>
       <title>2026年11月11日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261111/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261029/</guid>
       <pubDate>Thu, 29 Oct 2026 08:00:00 +0900</pubDate>
       <description>需要予測AIが検証段階から本番運用へ進む動きが出ています。DATAFLUCTとアース製薬の事例は返品・廃棄ロス削減が狙いで、Woowa Brothersも注文発生前の需要予測を披露しました。 リテールメディアは、広告の視聴から来店・購買までをつなぐ計測の高度化が焦点になっています。データ・ワンとTVer、NTTドコモの連携はその具体例です。</description>
-    </item>
-    <item>
-      <title>2026年10月28日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261028/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261028/</guid>
-      <pubDate>Wed, 28 Oct 2026 08:00:00 +0900</pubDate>
-      <description>トランスコスモスが「trans-scManager」を拡充し、AIとBPOを組み合わせて需要予測から在庫配置・出荷指示までを一貫支援する動きが国内で広がっている。 商品データ整備や売場づくりなど、AIの活用領域が店舗・EC現場の日常業務へ入り込み始めた。</description>
     </item>
   </channel>
 </rss>
