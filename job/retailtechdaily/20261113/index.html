@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年11月13日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261113/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年11月13日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261113/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261113.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年11月13日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261113.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261113/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年11月13日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。",
+      "url": "https://tk.st/job/retailtechdaily/20261113/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261113.webp",
+      "datePublished": "2026-11-13T08:00:00+09:00",
+      "dateModified": "2026-11-13T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "店舗DX・次世代決済",
+        "リテールメディア・広告",
+        "サプライチェーン・店舗自動化"
+      ],
+      "keywords": [
+        "AI",
+        "AI需要予測",
+        "EC物流",
+        "POS",
+        "SNS",
+        "サプライチェーン",
+        "サプライチェーン・店舗自動化",
+        "デジタルサイネージ",
+        "ドローン配送",
+        "モバイルレジ",
+        "ラストワンマイル",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "在庫最適化",
+        "店内会計",
+        "店舗DX",
+        "店舗DX・次世代決済",
+        "店頭広告",
+        "百貨店",
+        "自動化",
+        "需給計画",
+        "非食品広告"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261113/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261113/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261113/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261113/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261113/#art-5"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261113/#newslist",
+      "name": "2026年11月13日号 掲載ニュース一覧",
+      "numberOfItems": 5,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261113/#art-1",
+            "position": 1,
+            "headline": "「Redx Mobile」正式リリース、1台で商品登録から会計まで完結する持ち運び型端末",
+            "description": "「Redx Mobile」は、商品登録から会計までを1台で完結できる持ち運び可能な端末として正式リリースされた。沖縄の百貨店「デパートリウボウ」への導入成果も併せて公開されている。レジ周りの省人化やレジ設置場所の柔軟化に関心を持つ小売店にとって、導入判断の材料となる事例だ。導入後の具体的な成果が示された点も注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261113/#art-1",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-13T08:00:00+09:00",
+            "dateModified": "2026-11-13T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261113/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1wQUNTcnpLdE1kMzNkS3ppU2o5c05JVHVYZThmWnVtelVVZXhTTS1COUEyZkRpajhjUF9qQXhjbXdKOGxCRWpNNjdMaldUamRCdl81MThGZllpVHp3WkZ5VlRyMTFOWmd4cEtLbUhNQmh6Um9KaklyRXN3aw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ニコニコニュース"
+              },
+              "datePublished": "2026-11-13T02:51:29+09:00"
+            },
+            "keywords": [
+              "POS",
+              "モバイルレジ",
+              "店内会計",
+              "百貨店"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261113/#art-2",
+            "position": 2,
+            "headline": "「デリッシュキッチン」、スーパー店頭サイネージで食品以外の広告配信を開始",
+            "description": "料理レシピ動画メディア「デリッシュキッチン」が、食品スーパーの店頭サイネージで保険やキャッシュレス決済など食品以外の広告配信を開始した。食品関連の枠を超えた広告商材を扱う動きで、買い物客の動線上で多様な商材を訴求できるようになる。店頭メディアの販売領域を広げる取り組みとして注目される。",
+            "url": "https://tk.st/job/retailtechdaily/20261113/#art-2",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-13T08:00:00+09:00",
+            "dateModified": "2026-11-13T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261113/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBNdUlzUFBXUHN1dHE4OW9fMG9xYTZ0bGVZZlNOemZWNVlncnczT2tyRnQxQWJNS1l5LVkyUHBpbGdPdG5EZjVXOFpCNFFCQXRUZGExanhFbllJd2xOMnMtQTlPb3k0eW9wN2RqckI3NWgyT0hpYUhweQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ニコニコニュース"
+              },
+              "datePublished": "2026-11-12T12:51:11+09:00"
+            },
+            "keywords": [
+              "デジタルサイネージ",
+              "リテールメディア",
+              "非食品広告",
+              "店頭広告"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261113/#art-3",
+            "position": 3,
+            "headline": "DATAFLUCT、アース製薬でAI需要予測モデルの本番運用を開始",
+            "description": "AIデータ分析を手がけるDATAFLUCTは、アース製薬の需要予測にAIモデルを適用し、本番運用を開始したと発表した。需要予測の精度向上と在庫の適正化を目指した取り組みとみられる。日用品メーカーの需給計画にAIを組み込む事例で、検証段階を経て実業務に移行した点が特徴だ。",
+            "url": "https://tk.st/job/retailtechdaily/20261113/#art-3",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-13T08:00:00+09:00",
+            "dateModified": "2026-11-13T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261113/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1kbWxUaG5XSEJoZzhfZjFhWWdPSUdkaE9RZno0YXloZzNSZW9rMkVHNFNCMnljVkk5dDJPSHFERm03REhqVEE?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Dellows News"
+              },
+              "datePublished": "2026-11-12T01:14:47+09:00"
+            },
+            "keywords": [
+              "AI需要予測",
+              "需給計画",
+              "在庫最適化",
+              "サプライチェーン"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261113/#art-4",
+            "position": 4,
+            "headline": "ナラティブテクノロジーズ、SNS×AI×リテールメディアの店舗DXソリューション提供開始",
+            "description": "ナラティブテクノロジーズは、SNS・AI・リテールメディアを組み合わせた店舗ビジネス特化型のDXソリューションの提供を開始したと発表した。店舗の集客や販促をデジタルで支援する狙いで、SNSでの情報発信と店頭の販促施策を結びつける構成とみられる。サービスの具体的な機能や料金体系は発表資料で確認できる。",
+            "url": "https://tk.st/job/retailtechdaily/20261113/#art-4",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-13T08:00:00+09:00",
+            "dateModified": "2026-11-13T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261113/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE04V2VJWlRtOS1QcDdqa0F0MEUxbkR0UkxFWEFvOVRveHp4WE01bjByWE92U05DYm9rbzhIVW9uT01reGgtb3BoQ29QUTd0MEFXNzdhNWFFS0RSZlJHWEs3ckJmRHB4N2xaY3c?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "PR TIMES"
+              },
+              "datePublished": "2026-11-12T12:02:52+09:00"
+            },
+            "keywords": [
+              "SNS",
+              "AI",
+              "リテールメディア",
+              "店舗DX"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261113/#art-5",
+            "position": 5,
+            "headline": "ウォルマート、計画中のドローン配送拠点を倍増以上に拡大",
+            "description": "米小売大手ウォルマートは、ドローン配送の計画拠点数を倍増以上に拡大したと報じられた。ドローンによる商品配送を通じて、ラストワンマイルの配送時間短縮と配送コストの抑制を目指す。店舗を起点とした自動化配送網の拡大で、即日配送などの需要に対応する狙いが読み取れる。",
+            "url": "https://tk.st/job/retailtechdaily/20261113/#art-5",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-13T08:00:00+09:00",
+            "dateModified": "2026-11-13T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261113/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPQ0hxR3NVLXdQNGxtN2VvQ0ZwQ3I3ZW1kUEdpOGhWUGktbmxLWHRmQXdmTWR0ckFJQkVWNzFfbmlUNXBxVXdFN3R4LVZSWVZhM2ZFWTJZdGNULWR3bzFYdzNoaVRpNEVPZm9kV01nX3doSDNTcGxkSml5YnBOaGJ4QmdKd3FscTQ0ZFd3VmNTN3Z5VUhKeERmbkNhZ2YzNmU1UWRKeQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Retail Dive"
+              },
+              "datePublished": "2026-11-13T01:48:27+09:00"
+            },
+            "keywords": [
+              "ドローン配送",
+              "ラストワンマイル",
+              "自動化",
+              "EC物流"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261113/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年11月13日号",
+          "item": "https://tk.st/job/retailtechdaily/20261113/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年11月13日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年11月13日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年11月13日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約3分 / 1,913字
+          </span>
+          <span class="stat">全 5 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。</li><li>店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。</li><li>DATAFLUCTとアース製薬によるAI需要予測の本番運用が始まり、需要予測AIは実務段階に入った。米Walmartのドローン配送拠点の拡大も、配送自動化の加速を示している。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">「Redx Mobile」正式リリース、1台で商品登録から会計まで完結する持ち運び型端末</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">「デリッシュキッチン」、スーパー店頭サイネージで食品以外の広告配信を開始</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">DATAFLUCT、アース製薬でAI需要予測モデルの本番運用を開始</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">ナラティブテクノロジーズ、SNS×AI×リテールメディアの店舗DXソリューション提供開始</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">ウォルマート、計画中のドローン配送拠点を倍増以上に拡大</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">5 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">5</strong> / 5</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">5</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">4</span></button><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">1</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="リテールメディア・広告" aria-pressed="false">リテールメディア・広告 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="サプライチェーン・店舗自動化" aria-pressed="false">サプライチェーン・店舗自動化 <span class="chip-count">2</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">ニコニコニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-13T02:51:29+09:00" title="出典の公開日時">公開 2026.11.13 02:51 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE1wQUNTcnpLdE1kMzNkS3ppU2o5c05JVHVYZThmWnVtelVVZXhTTS1COUEyZkRpajhjUF9qQXhjbXdKOGxCRWpNNjdMaldUamRCdl81MThGZllpVHp3WkZ5VlRyMTFOWmd4cEtLbUhNQmh6Um9KaklyRXN3aw?oc=5" target="_blank" rel="noopener noreferrer">「Redx Mobile」正式リリース、1台で商品登録から会計まで完結する持ち運び型端末<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>「Redx Mobile」は、商品登録から会計までを1台で完結できる持ち運び可能な端末として正式リリースされた。沖縄の百貨店「デパートリウボウ」への導入成果も併せて公開されている。レジ周りの<strong class="kw-scan">省人化</strong>やレジ設置場所の柔軟化に関心を持つ小売店にとって、導入判断の材料となる事例だ。導入後の具体的な成果が示された点も注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">登録から会計までを一台に集約すると、レジ台の固定化から解放され、売場の柔軟な運用や繁忙時の臨時会計対応が可能になる。</p>
+              </div>
+              <p class="wim-detail">一方で、決済や在庫・POSデータとの連携範囲、導入コストと人件費削減の見合いは、公開された成果数値と照らし合わせて確認すべきだ。小規模店舗や百貨店の催事売場での活用余地が広がるかが、次の焦点になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=POS">#POS</a><button type="button" class="topic-watch-btn" data-watch-topic="POS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%A2%E3%83%90%E3%82%A4%E3%83%AB%E3%83%AC%E3%82%B8">#モバイルレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="モバイルレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E5%86%85%E4%BC%9A%E8%A8%88">#店内会計</a><button type="button" class="topic-watch-btn" data-watch-topic="店内会計" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%99%BE%E8%B2%A8%E5%BA%97">#百貨店</a><button type="button" class="topic-watch-btn" data-watch-topic="百貨店" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMie0FVX3lxTE1wQUNTcnpLdE1kMzNkS3ppU2o5c05JVHVYZThmWnVtelVVZXhTTS1COUEyZkRpajhjUF9qQXhjbXdKOGxCRWpNNjdMaldUamRCdl81MThGZllpVHp3WkZ5VlRyMTFOWmd4cEtLbUhNQmh6Um9KaklyRXN3aw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8813%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">ニコニコニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-12T12:51:11+09:00" title="出典の公開日時">公開 2026.11.12 12:51 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMieEFVX3lxTFBNdUlzUFBXUHN1dHE4OW9fMG9xYTZ0bGVZZlNOemZWNVlncnczT2tyRnQxQWJNS1l5LVkyUHBpbGdPdG5EZjVXOFpCNFFCQXRUZGExanhFbllJd2xOMnMtQTlPb3k0eW9wN2RqckI3NWgyT0hpYUhweQ?oc=5" target="_blank" rel="noopener noreferrer">「デリッシュキッチン」、スーパー店頭サイネージで食品以外の広告配信を開始<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>料理レシピ動画メディア「デリッシュキッチン」が、食品スーパーの<strong class="kw-scan">店頭サイネージ</strong>で保険やキャッシュレス決済など食品以外の広告配信を開始した。食品関連の枠を超えた広告商材を扱う動きで、買い物客の動線上で多様な商材を訴求できるようになる。店頭メディアの販売領域を広げる取り組みとして注目される。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">店頭サイネージ</strong>は食品メーカー向けの広告枠が中心になりがちだったが、保険や決済など高単価・非食品カテゴリの広告主を取り込めば、スーパー側にとっては媒体収益の多角化につながる。</p>
+              </div>
+              <p class="wim-detail">レシピ動画の文脈と非食品広告の親和性や、買い物客の反応をどう測定するかが課題となる。サイネージ設置台数で国内トップの実績を持つ同社の動きは、<strong class="kw-scan">リテールメディア</strong>の広告主開拓の方向性を示す事例と言える。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%87%E3%82%B8%E3%82%BF%E3%83%AB%E3%82%B5%E3%82%A4%E3%83%8D%E3%83%BC%E3%82%B8">#デジタルサイネージ</a><button type="button" class="topic-watch-btn" data-watch-topic="デジタルサイネージ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%9D%9E%E9%A3%9F%E5%93%81%E5%BA%83%E5%91%8A">#非食品広告</a><button type="button" class="topic-watch-btn" data-watch-topic="非食品広告" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E9%A0%AD%E5%BA%83%E5%91%8A">#店頭広告</a><button type="button" class="topic-watch-btn" data-watch-topic="店頭広告" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMieEFVX3lxTFBNdUlzUFBXUHN1dHE4OW9fMG9xYTZ0bGVZZlNOemZWNVlncnczT2tyRnQxQWJNS1l5LVkyUHBpbGdPdG5EZjVXOFpCNFFCQXRUZGExanhFbllJd2xOMnMtQTlPb3k0eW9wN2RqckI3NWgyT0hpYUhweQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8813%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">Dellows News</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-12T01:14:47+09:00" title="出典の公開日時">公開 2026.11.12 01:14 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1kbWxUaG5XSEJoZzhfZjFhWWdPSUdkaE9RZno0YXloZzNSZW9rMkVHNFNCMnljVkk5dDJPSHFERm03REhqVEE?oc=5" target="_blank" rel="noopener noreferrer">DATAFLUCT、アース製薬でAI需要予測モデルの本番運用を開始<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>AIデータ分析を手がけるDATAFLUCTは、アース製薬の<strong class="kw-scan">需要予測</strong>にAIモデルを適用し、本番運用を開始したと発表した。<strong class="kw-scan">需要予測</strong>の精度向上と在庫の適正化を目指した取り組みとみられる。日用品メーカーの需給計画にAIを組み込む事例で、検証段階を経て実業務に移行した点が特徴だ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">PoCから本番運用へ移行した事例は、<strong class="kw-scan">需要予測AI</strong>が実務で使える段階に入ったことを示す。</p>
+              </div>
+              <p class="wim-detail">メーカー側の需給計画が安定すれば、卸・小売への欠品抑制や過剰在庫の削減につながり、サプライチェーン全体のコストに効いてくる。一方で、予測結果を現場の発注判断や販促計画とどう接続するか、運用体制の設計が成否を分けるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E9%9C%80%E8%A6%81%E4%BA%88%E6%B8%AC">#AI需要予測</a><button type="button" class="topic-watch-btn" data-watch-topic="AI需要予測" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%9C%80%E7%B5%A6%E8%A8%88%E7%94%BB">#需給計画</a><button type="button" class="topic-watch-btn" data-watch-topic="需給計画" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%9C%A8%E5%BA%AB%E6%9C%80%E9%81%A9%E5%8C%96">#在庫最適化</a><button type="button" class="topic-watch-btn" data-watch-topic="在庫最適化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B5%E3%83%97%E3%83%A9%E3%82%A4%E3%83%81%E3%82%A7%E3%83%BC%E3%83%B3">#サプライチェーン</a><button type="button" class="topic-watch-btn" data-watch-topic="サプライチェーン" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiRkFVX3lxTE1kbWxUaG5XSEJoZzhfZjFhWWdPSUdkaE9RZno0YXloZzNSZW9rMkVHNFNCMnljVkk5dDJPSHFERm03REhqVEE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8813%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">PR TIMES</span>
+            </div>
+            <div class="source-details"><span class="source-kind">プレスリリース</span><time datetime="2026-11-12T12:02:52+09:00" title="出典の公開日時">公開 2026.11.12 12:02 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE04V2VJWlRtOS1QcDdqa0F0MEUxbkR0UkxFWEFvOVRveHp4WE01bjByWE92U05DYm9rbzhIVW9uT01reGgtb3BoQ29QUTd0MEFXNzdhNWFFS0RSZlJHWEs3ckJmRHB4N2xaY3c?oc=5" target="_blank" rel="noopener noreferrer">ナラティブテクノロジーズ、SNS×AI×リテールメディアの店舗DXソリューション提供開始<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>ナラティブテクノロジーズは、SNS・AI・<strong class="kw-scan">リテールメディア</strong>を組み合わせた店舗ビジネス特化型のDXソリューションの提供を開始したと発表した。店舗の集客や販促をデジタルで支援する狙いで、SNSでの情報発信と店頭の販促施策を結びつける構成とみられる。サービスの具体的な機能や料金体系は発表資料で確認できる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">SNSと<strong class="kw-scan">リテールメディア</strong>を一体で扱うソリューションは、店舗の集客データと広告配信を結びつける方向性を示す。</p>
+              </div>
+              <p class="wim-detail">特に中小の店舗ビジネスでは広告運用の専門人材が不足しがちなため、一括支援の価値が高まる可能性がある。ただし、SNS経由の来店効果を測定できるかどうかが、導入継続の判断を左右するだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS">#SNS</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI">#AI</a><button type="button" class="topic-watch-btn" data-watch-topic="AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97DX">#店舗DX</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiakFVX3lxTE04V2VJWlRtOS1QcDdqa0F0MEUxbkR0UkxFWEFvOVRveHp4WE01bjByWE92U05DYm9rbzhIVW9uT01reGgtb3BoQ29QUTd0MEFXNzdhNWFFS0RSZlJHWEs3ckJmRHB4N2xaY3c?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8813%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">Retail Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-13T01:48:27+09:00" title="出典の公開日時">公開 2026.11.13 01:48 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMipAFBVV95cUxPQ0hxR3NVLXdQNGxtN2VvQ0ZwQ3I3ZW1kUEdpOGhWUGktbmxLWHRmQXdmTWR0ckFJQkVWNzFfbmlUNXBxVXdFN3R4LVZSWVZhM2ZFWTJZdGNULWR3bzFYdzNoaVRpNEVPZm9kV01nX3doSDNTcGxkSml5YnBOaGJ4QmdKd3FscTQ0ZFd3VmNTN3Z5VUhKeERmbkNhZ2YzNmU1UWRKeQ?oc=5" target="_blank" rel="noopener noreferrer">ウォルマート、計画中のドローン配送拠点を倍増以上に拡大<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Walmart more than doubles planned drone delivery sites</p>
+            <div class="card-summary"><p>米小売大手<strong class="kw-scan">ウォルマート</strong>は、ドローン配送の計画拠点数を倍増以上に拡大したと報じられた。ドローンによる商品配送を通じて、ラストワンマイルの配送時間短縮と配送コストの抑制を目指す。店舗を起点とした自動化配送網の拡大で、即日配送などの需要に対応する狙いが読み取れる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">店舗在庫を起点にしたドローン配送の拡大は、ECの配送網を店舗インフラと一体で自動化する流れを示す。</p>
+              </div>
+              <p class="wim-detail">日本でも店舗在庫を活用した即日配送や過疎地配送への応用が検討されるが、規制や離着陸拠点の確保が普及の前提となる。自社の店舗網をどう配送資産として活かすかが、国内リテール各社の次の論点になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%89%E3%83%AD%E3%83%BC%E3%83%B3%E9%85%8D%E9%80%81">#ドローン配送</a><button type="button" class="topic-watch-btn" data-watch-topic="ドローン配送" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%A9%E3%82%B9%E3%83%88%E3%83%AF%E3%83%B3%E3%83%9E%E3%82%A4%E3%83%AB">#ラストワンマイル</a><button type="button" class="topic-watch-btn" data-watch-topic="ラストワンマイル" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%87%AA%E5%8B%95%E5%8C%96">#自動化</a><button type="button" class="topic-watch-btn" data-watch-topic="自動化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=EC%E7%89%A9%E6%B5%81">#EC物流</a><button type="button" class="topic-watch-btn" data-watch-topic="EC物流" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMipAFBVV95cUxPQ0hxR3NVLXdQNGxtN2VvQ0ZwQ3I3ZW1kUEdpOGhWUGktbmxLWHRmQXdmTWR0ckFJQkVWNzFfbmlUNXBxVXdFN3R4LVZSWVZhM2ZFWTJZdGNULWR3bzFYdzNoaVRpNEVPZm9kV01nX3doSDNTcGxkSml5YnBOaGJ4QmdKd3FscTQ0ZFd3VmNTN3Z5VUhKeERmbkNhZ2YzNmU1UWRKeQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8813%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261112/" class="nav-prev">&larr; 2026.11.12 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>

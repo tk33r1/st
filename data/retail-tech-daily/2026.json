@@ -1,5 +1,141 @@
 [
   {
+    "date": "20261113",
+    "title": "2026年11月13日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。",
+    "count": 5,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。",
+      "店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。",
+      "DATAFLUCTとアース製薬によるAI需要予測の本番運用が始まり、需要予測AIは実務段階に入った。米Walmartのドローン配送拠点の拡大も、配送自動化の加速を示している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "「Redx Mobile」正式リリース、1台で商品登録から会計まで完結する持ち運び型端末",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-02",
+        "summary": "「Redx Mobile」は、商品登録から会計までを1台で完結できる持ち運び可能な端末として正式リリースされた。沖縄の百貨店「デパートリウボウ」への導入成果も併せて公開されている。レジ周りの省人化やレジ設置場所の柔軟化に関心を持つ小売店にとって、導入判断の材料となる事例だ。導入後の具体的な成果が示された点も注目される。",
+        "why_it_matters": "登録から会計までを一台に集約すると、レジ台の固定化から解放され、売場の柔軟な運用や繁忙時の臨時会計対応が可能になる。一方で、決済や在庫・POSデータとの連携範囲、導入コストと人件費削減の見合いは、公開された成果数値と照らし合わせて確認すべきだ。小規模店舗や百貨店の催事売場での活用余地が広がるかが、次の焦点になるだろう。",
+        "tags": [
+          "POS",
+          "モバイルレジ",
+          "店内会計",
+          "百貨店"
+        ],
+        "search_terms": [
+          "持ち運び型POS",
+          "portable POS terminal",
+          "モバイルレジ",
+          "Redx Mobile"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1wQUNTcnpLdE1kMzNkS3ppU2o5c05JVHVYZThmWnVtelVVZXhTTS1COUEyZkRpajhjUF9qQXhjbXdKOGxCRWpNNjdMaldUamRCdl81MThGZllpVHp3WkZ5VlRyMTFOWmd4cEtLbUhNQmh6Um9KaklyRXN3aw?oc=5",
+        "source_pub_ts": 1794505889
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "「デリッシュキッチン」、スーパー店頭サイネージで食品以外の広告配信を開始",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-03",
+        "summary": "料理レシピ動画メディア「デリッシュキッチン」が、食品スーパーの店頭サイネージで保険やキャッシュレス決済など食品以外の広告配信を開始した。食品関連の枠を超えた広告商材を扱う動きで、買い物客の動線上で多様な商材を訴求できるようになる。店頭メディアの販売領域を広げる取り組みとして注目される。",
+        "why_it_matters": "店頭サイネージは食品メーカー向けの広告枠が中心になりがちだったが、保険や決済など高単価・非食品カテゴリの広告主を取り込めば、スーパー側にとっては媒体収益の多角化につながる。レシピ動画の文脈と非食品広告の親和性や、買い物客の反応をどう測定するかが課題となる。サイネージ設置台数で国内トップの実績を持つ同社の動きは、リテールメディアの広告主開拓の方向性を示す事例と言える。",
+        "tags": [
+          "デジタルサイネージ",
+          "リテールメディア",
+          "非食品広告",
+          "店頭広告"
+        ],
+        "search_terms": [
+          "店頭デジタルサイネージ",
+          "in-store digital signage",
+          "リテールメディア広告",
+          "retail media non-food ads"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBNdUlzUFBXUHN1dHE4OW9fMG9xYTZ0bGVZZlNOemZWNVlncnczT2tyRnQxQWJNS1l5LVkyUHBpbGdPdG5EZjVXOFpCNFFCQXRUZGExanhFbllJd2xOMnMtQTlPb3k0eW9wN2RqckI3NWgyT0hpYUhweQ?oc=5",
+        "source_pub_ts": 1794455471
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "DATAFLUCT、アース製薬でAI需要予測モデルの本番運用を開始",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-09",
+        "summary": "AIデータ分析を手がけるDATAFLUCTは、アース製薬の需要予測にAIモデルを適用し、本番運用を開始したと発表した。需要予測の精度向上と在庫の適正化を目指した取り組みとみられる。日用品メーカーの需給計画にAIを組み込む事例で、検証段階を経て実業務に移行した点が特徴だ。",
+        "why_it_matters": "PoCから本番運用へ移行した事例は、需要予測AIが実務で使える段階に入ったことを示す。メーカー側の需給計画が安定すれば、卸・小売への欠品抑制や過剰在庫の削減につながり、サプライチェーン全体のコストに効いてくる。一方で、予測結果を現場の発注判断や販促計画とどう接続するか、運用体制の設計が成否を分けるだろう。",
+        "tags": [
+          "AI需要予測",
+          "需給計画",
+          "在庫最適化",
+          "サプライチェーン"
+        ],
+        "search_terms": [
+          "AI需要予測",
+          "AI demand forecasting",
+          "需給計画の自動化",
+          "demand forecast production deployment"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1kbWxUaG5XSEJoZzhfZjFhWWdPSUdkaE9RZno0YXloZzNSZW9rMkVHNFNCMnljVkk5dDJPSHFERm03REhqVEE?oc=5",
+        "source_pub_ts": 1794413687
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ナラティブテクノロジーズ、SNS×AI×リテールメディアの店舗DXソリューション提供開始",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-05",
+        "summary": "ナラティブテクノロジーズは、SNS・AI・リテールメディアを組み合わせた店舗ビジネス特化型のDXソリューションの提供を開始したと発表した。店舗の集客や販促をデジタルで支援する狙いで、SNSでの情報発信と店頭の販促施策を結びつける構成とみられる。サービスの具体的な機能や料金体系は発表資料で確認できる。",
+        "why_it_matters": "SNSとリテールメディアを一体で扱うソリューションは、店舗の集客データと広告配信を結びつける方向性を示す。特に中小の店舗ビジネスでは広告運用の専門人材が不足しがちなため、一括支援の価値が高まる可能性がある。ただし、SNS経由の来店効果を測定できるかどうかが、導入継続の判断を左右するだろう。",
+        "tags": [
+          "SNS",
+          "AI",
+          "リテールメディア",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "SNSマーケティング",
+          "social commerce",
+          "店舗向けリテールメディア",
+          "retail media for stores"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE04V2VJWlRtOS1QcDdqa0F0MEUxbkR0UkxFWEFvOVRveHp4WE01bjByWE92U05DYm9rbzhIVW9uT01reGgtb3BoQ29QUTd0MEFXNzdhNWFFS0RSZlJHWEs3ckJmRHB4N2xaY3c?oc=5",
+        "source_pub_ts": 1794452572
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ウォルマート、計画中のドローン配送拠点を倍増以上に拡大",
+        "original_title": "Walmart more than doubles planned drone delivery sites",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "米小売大手ウォルマートは、ドローン配送の計画拠点数を倍増以上に拡大したと報じられた。ドローンによる商品配送を通じて、ラストワンマイルの配送時間短縮と配送コストの抑制を目指す。店舗を起点とした自動化配送網の拡大で、即日配送などの需要に対応する狙いが読み取れる。",
+        "why_it_matters": "店舗在庫を起点にしたドローン配送の拡大は、ECの配送網を店舗インフラと一体で自動化する流れを示す。日本でも店舗在庫を活用した即日配送や過疎地配送への応用が検討されるが、規制や離着陸拠点の確保が普及の前提となる。自社の店舗網をどう配送資産として活かすかが、国内リテール各社の次の論点になる。",
+        "tags": [
+          "ドローン配送",
+          "ラストワンマイル",
+          "自動化",
+          "EC物流"
+        ],
+        "search_terms": [
+          "ドローン配送",
+          "drone delivery",
+          "ラストワンマイル自動化",
+          "Walmart drone delivery"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPQ0hxR3NVLXdQNGxtN2VvQ0ZwQ3I3ZW1kUEdpOGhWUGktbmxLWHRmQXdmTWR0ckFJQkVWNzFfbmlUNXBxVXdFN3R4LVZSWVZhM2ZFWTJZdGNULWR3bzFYdzNoaVRpNEVPZm9kV01nX3doSDNTcGxkSml5YnBOaGJ4QmdKd3FscTQ0ZFd3VmNTN3Z5VUhKeERmbkNhZ2YzNmU1UWRKeQ?oc=5",
+        "source_pub_ts": 1794502107
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261112",
     "title": "2026年11月12日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "食品スーパー向け広告サイネージで設置台数No.1の報道が出るなど、店頭リテールメディアの存在感が高まっている AIによる発注量の自動調整を実証する動きが出ており、発注業務の確認工程を見直す段階に入りつつある",

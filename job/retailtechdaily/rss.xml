@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 12 Nov 2026 08:16:37 +0900</lastBuildDate>
+    <pubDate>Fri, 13 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 13 Nov 2026 07:33:03 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月13日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261113/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261113/</guid>
+      <pubDate>Fri, 13 Nov 2026 08:00:00 +0900</pubDate>
+      <description>持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。</description>
+    </item>
     <item>
       <title>2026年11月12日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261112/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261030/</guid>
       <pubDate>Fri, 30 Oct 2026 08:00:00 +0900</pubDate>
       <description>アドインテが「結 -Yui」でAIエージェント機能を実装し、リテールメディア向けサイネージの運用負荷低減が進む方向性が示された イオンの次世代物流センター「川口東XD」がロボットによる仕分けから混載までを自動化し、サプライチェーンの省人化が具体化した</description>
-    </item>
-    <item>
-      <title>2026年10月29日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261029/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261029/</guid>
-      <pubDate>Thu, 29 Oct 2026 08:00:00 +0900</pubDate>
-      <description>需要予測AIが検証段階から本番運用へ進む動きが出ています。DATAFLUCTとアース製薬の事例は返品・廃棄ロス削減が狙いで、Woowa Brothersも注文発生前の需要予測を披露しました。 リテールメディアは、広告の視聴から来店・購買までをつなぐ計測の高度化が焦点になっています。データ・ワンとTVer、NTTドコモの連携はその具体例です。</description>
     </item>
   </channel>
 </rss>
