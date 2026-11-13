@@ -1,5 +1,189 @@
 [
   {
+    "date": "20261114",
+    "title": "2026年11月14日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "高千穂交易がセルフレジ不正対策「Sesame Solution」の国内独占販売代理店契約を締結し、無人化が進む店舗での不正リスク対策が国内で本格化する流れが明確になった。 PPIHの体験型リテールメディアやリアル脱出ゲームとの連動、ファミリーマートの推し活タイアップなど、リテールメディアが売場体験と結びつく方向へ広がっている。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "高千穂交易がセルフレジ不正対策「Sesame Solution」の国内独占販売代理店契約を締結し、無人化が進む店舗での不正リスク対策が国内で本格化する流れが明確になった。",
+      "PPIHの体験型リテールメディアやリアル脱出ゲームとの連動、ファミリーマートの推し活タイアップなど、リテールメディアが売場体験と結びつく方向へ広がっている。",
+      "シノプスの高精度需要予測によるサプライチェーン改善の取り組みや、unerryの増収（リテールDX・リテールメディア領域が成長）から、AI活用と小売DX投資の拡大が続いていることがうかがえる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "高千穂交易、世界2000店舗導入のセルフレジ不正対策を国内展開",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-06",
+        "summary": "高千穂交易は、セルフレジ向け不正対策ソリューション「Sesame Solution」の国内独占販売代理店契約を締結し、国内展開を始めると発表した。同製品は世界約2000店舗で導入されているとされる。セルフレジ導入が広がる中、無人化の裏側で生じる不正リスクへの備えとして、小売業の関心が高まりそうだ。",
+        "why_it_matters": "セルフレジの拡大は省人化の一方で、会計時の不正や運用リスクを増やす。導入店舗にとっては、防犯・損失対策を後付けではなく設計段階から組み込むことが重要になる。レジ周辺のセキュリティ投資は、無人店舗の拡大を支える基盤として今後さらに評価される分野になるだろう。",
+        "tags": [
+          "セルフレジ",
+          "不正対策",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "セルフレジ 不正対策",
+          "self-checkout fraud prevention",
+          "Sesame Solution 国内展開",
+          "無人店舗 防犯 対策",
+          "retail loss prevention"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9RZnFtbVBDSFRDU1IyYzlLRTFrcGZrWW4xV2o3ZlR5OXlNX1pLc1AwVHh6Sl9fd2Y2UkMxOHltMGkxcGR1U0x2NVBlOUFEbkF5MXZz?oc=5",
+        "source_pub_ts": 1794542510
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "unerry、第1四半期は23%増収　リテールDX・リテールメディア領域が成長",
+        "original_title": "",
+        "source": "株探",
+        "source_id": "JP-02",
+        "summary": "unerryの第1四半期決算は23%の増収となり、リテールDXおよびリテールメディア領域が成長を牽引したと伝えられた。リテールメディアは小売店の購買データや店舗の媒体価値を活用した広告事業で、小売各社の関心が高まっている分野である。同社の伸長は、店舗DXと広告領域への企業ニーズが拡大していることを示している。",
+        "why_it_matters": "リテールメディアの成長は、小売業が店舗データを収益源に変えられるかどうかに左右される。広告主側から見ると、購買に近いデータを使った効果測定の精度が選定の決め手になる。店舗DX基盤を持つ企業の成長は、業界全体の投資方向を読む指標になりそうだ。",
+        "tags": [
+          "リテールメディア",
+          "決算",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "リテールメディア 成長",
+          "retail media growth",
+          "unerry 決算",
+          "リテールDX 売上",
+          "retail DX earnings"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE0xeFhxc20tU3BYOUNFbEl3TGQwa1NhWUYxOGhSbmhENm03M0tUa0huTTF4SHh3alRmSkZkZnZUTnhySWhpZnQ1VHJ5Y1dkdzh3SzFqS1I1ZVFvcGlIaFVVZEl3?oc=5",
+        "source_pub_ts": 1794550809
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "PPIH、体験型リテールメディアを開始　第1弾はロート製薬「メンソレータム」",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-04",
+        "summary": "PPIHは体験型リテールメディアの提供を開始し、第1弾としてロート製薬の「メンソレータム」を取り上げた。店舗での体験を通じて商品を理解してもらう仕組みで、従来の陳列や販促物による広告とは異なるアプローチだ。来店客との接点を売場の体験に置くことで、新たな広告価値を生み出す狙いがうかがえる。",
+        "why_it_matters": "店頭での体験を広告価値に変えるモデルは、メーカーにとって購買直前の接触を増やす手段になる。小売側にとっては、売場の時間と空間を新たな収益源として設計できる点が重要だ。今後は体験の効果をどのように計測し、広告主に示せるかが普及の鍵になる。",
+        "tags": [
+          "リテールメディア",
+          "体験型",
+          "店頭販促"
+        ],
+        "search_terms": [
+          "体験型リテールメディア",
+          "experiential retail media",
+          "PPIH 広告施策",
+          "店頭体験 販促",
+          "in-store experience advertising"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1ENnlKRDJ6SjhkNUhVN0lDRVBCMXFuNHZKOFI5bjZUSkxaaFdXdm1OSWU3d2FmY0pOTlhwZlAzLXViMldXdWlpMGZPaEYxQVJPMG0tUzJ6ZlI?oc=5",
+        "source_pub_ts": 1794546480
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "新たな体験型リテールメディアが提供開始　リアル脱出ゲーム「謎にまみれたドン・キホーテからの脱出」",
+        "original_title": "",
+        "source": "Digital PR Platform",
+        "source_id": "JP-09",
+        "summary": "リアル脱出ゲームを題材にした新たな体験型リテールメディアの提供が始まった。舞台はドン・キホーテで、謎解きというエンターテインメント要素を通じて来店客の店内体験を高める内容とみられる。広告をエンタメと結びつけることで、商品への接触機会を自然に増やす手法として注目される。",
+        "why_it_matters": "エンタメ型の体験広告は、生活者の参加意欲を引き出しやすい一方、商品との関連性をどう持たせるかが課題になる。広告主はブランド認知の向上だけでなく、来店行動や購買への影響を見極める必要がある。小売店と企業が共同で体験を設計する動きは、今後の店頭広告の主流候補になりそうだ。",
+        "tags": [
+          "リテールメディア",
+          "体験型",
+          "エンタメ連動"
+        ],
+        "search_terms": [
+          "体験型リテールメディア 脱出ゲーム",
+          "experiential retail media escape game",
+          "ドン・キホーテ 店内体験",
+          "エンタメ連動 広告",
+          "in-store entertainment marketing"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiQ0FVX3lxTFBzbVpNLTQ5WlJfZVF4Tlo5QkFUZ0pYMW9hUnBJUGdsZS1jeS1PbVE2Ry1rVkl1ZnlUZi03TVNPTkV4VUE?oc=5",
+        "source_pub_ts": 1794539106
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ファミリーマートのCHARGESPOTをジャック　「REAL AKIBA BOYZ」20周年タイアップ企画が11月13日から開催",
+        "original_title": "",
+        "source": "大分合同新聞",
+        "source_id": "JP-05",
+        "summary": "渋谷区のファミリーマートに設置されたスマートフォン充電スポット「CHARGESPOT」を活用し、アイドルグループ「REAL AKIBA BOYZ」の20周年を記念したタイアップ企画が11月13日から始まった。推し活層に向けた広告施策で、充電中の滞留時間を活かしてファンの目に触れさせる狙いがうかがえる。コンビニの店頭設備を広告媒体にする新しい事例だ。",
+        "why_it_matters": "推し活市場は消費意欲が高く、コンビニとの接点を作れることは大きな強みになる。店頭設備を広告に変えるモデルは、店舗の非売場スペースの活用を広げる可能性がある。今後は来店や購買につながったかを示せる計測設計が、企業の採用判断を左右するだろう。",
+        "tags": [
+          "リテールメディア",
+          "推し活",
+          "コンビニ"
+        ],
+        "search_terms": [
+          "推し活 リテールメディア",
+          "fan marketing retail media",
+          "ファミリーマート 広告施策",
+          "CHARGESPOT 広告",
+          "convenience store media"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1DSXk2cURsZTJyZzVxU3pPZ1hTVzdROHVBbk1lY3pDZ254WW1WOGU5S2VONjFNemNnVkdMb3hndk1HcnhVZGdLanVUdVFibTFrcDVWaEluYkZLV2VuUkg0NEpTQ2tYNVVNRjBKSXdR?oc=5",
+        "source_pub_ts": 1794542825
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "物流新ステージ、シノプスが高精度需要予測で欠品レスを目指す",
+        "original_title": "",
+        "source": "日刊工業新聞",
+        "source_id": "JP-10",
+        "summary": "日刊工業新聞は、物流の新たな段階としてシノプスの高精度な需要予測による欠品抑制の取り組みを取り上げた。小売店では欠品が機会損失につながる一方、過剰在庫は廃棄や値引きの原因となり、両立が大きな課題になっている。AIを用いた需要予測は、発注精度を高め、店舗運営と物流の効率化を同時に進める手段として注目されている。",
+        "why_it_matters": "需要予測の精度向上は、欠品と過剰在庫という相反する課題の解消に直結する。発注業務の自動化と組み合わせることで、店舗の人手負担の軽減にもつながる。AI需要予測を基盤に据えた物流・店舗の連携は、今後のサプライチェーン改革の中心テーマになりそうだ。",
+        "tags": [
+          "AI需要予測",
+          "欠品対策",
+          "物流"
+        ],
+        "search_terms": [
+          "AI需要予測 欠品対策",
+          "demand forecasting AI retail",
+          "シノプス 需要予測",
+          "在庫最適化 小売",
+          "retail inventory optimization"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE4xRmlrWmdWaGFOUkU4dkhBZkJfQy1mVkFmMFFoTUtoWmdSQUtDdXFueEF6WTg5UnhTaDRFYnI4bW5ab05PV2Y0WnBrV0djN1NVNXVIVHBRNFk?oc=5",
+        "source_pub_ts": 1794513600
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "TikTok Shop、有料会員制度のパイロット運用を開始",
+        "original_title": "TikTok Shop pilots paid membership",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "米Retail Diveは、TikTok Shopが有料会員制度のパイロット運用を開始したと報じた。ショート動画を起点に商品を購入できるソーシャルコマースで、会員制を導入することで継続的な購買や囲い込みを狙う動きとみられる。動画視聴と購買を一体化させるプラットフォームが、収益モデルを多様化させようとしている事例である。",
+        "why_it_matters": "ソーシャルコマースでの会員制導入は、プラットフォームへの依存を強める一方、小売ブランドにとっては顧客データと特典設計の重要性を高める。日本の小売業者も、SNS経由の購買をどう自社の会員施策と結びつけるかを検討する必要がある。リテールメディアとの関係も含め、動向を注視すべきテーマだ。",
+        "tags": [
+          "ソーシャルコマース",
+          "TikTok Shop",
+          "会員制"
+        ],
+        "search_terms": [
+          "TikTok Shop 有料会員",
+          "social commerce membership",
+          "ソーシャルコマース 会員制",
+          "TikTok Shop pilot",
+          "paid membership retail platform"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTFB5RzVUS2hDemllV1lEcUYzY0V0dHBrdnM4ZXAtRXNPQ3V0alE2dkdITnFUd0d2aC1EWk1YSERxSWNOejE5ZkJ4T1dpYWVJd3FYd094My1FODFKemcwbjFKem1hajNtU2NvRjZZTGVvbEZKUHFYcVV6UGhZdHE?oc=5",
+        "source_pub_ts": 1794500865
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261113",
     "title": "2026年11月13日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。",

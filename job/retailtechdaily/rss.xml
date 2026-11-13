@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 13 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 13 Nov 2026 07:33:03 +0900</lastBuildDate>
+    <pubDate>Sat, 14 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 14 Nov 2026 07:21:43 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月14日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261114/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261114/</guid>
+      <pubDate>Sat, 14 Nov 2026 08:00:00 +0900</pubDate>
+      <description>高千穂交易がセルフレジ不正対策「Sesame Solution」の国内独占販売代理店契約を締結し、無人化が進む店舗での不正リスク対策が国内で本格化する流れが明確になった。 PPIHの体験型リテールメディアやリアル脱出ゲームとの連動、ファミリーマートの推し活タイアップなど、リテールメディアが売場体験と結びつく方向へ広がっている。</description>
+    </item>
     <item>
       <title>2026年11月13日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261113/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261031/</guid>
       <pubDate>Sat, 31 Oct 2026 08:00:00 +0900</pubDate>
       <description>AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。</description>
-    </item>
-    <item>
-      <title>2026年10月30日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261030/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261030/</guid>
-      <pubDate>Fri, 30 Oct 2026 08:00:00 +0900</pubDate>
-      <description>アドインテが「結 -Yui」でAIエージェント機能を実装し、リテールメディア向けサイネージの運用負荷低減が進む方向性が示された イオンの次世代物流センター「川口東XD」がロボットによる仕分けから混載までを自動化し、サプライチェーンの省人化が具体化した</description>
     </item>
   </channel>
 </rss>
