@@ -1,5 +1,250 @@
 [
   {
+    "date": "20261114",
+    "title": "2026年11月14日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリHDの2027年3月期第2四半期（4〜9月）は増収増益で着地し、純利益は6.8％増、7〜9月期は21％増益となった。新商品投入やセール施策に加え、物流費の抑制と原価低減が利益を押し上げた。 SNSや記事では「5つ目の購入」「249円」「100均とは使い心地が違う」といった声が広がり、手頃な価格で実用性の高い商品がリピートされている。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリHDの2027年3月期第2四半期（4〜9月）は増収増益で着地し、純利益は6.8％増、7〜9月期は21％増益となった。新商品投入やセール施策に加え、物流費の抑制と原価低減が利益を押し上げた。",
+      "SNSや記事では「5つ目の購入」「249円」「100均とは使い心地が違う」といった声が広がり、手頃な価格で実用性の高い商品がリピートされている。",
+      "似鳥昭雄会長は事業のスピード感を「一番早い」と語り、海外戦略や米国景気への見方を示した。地域では川西店のオープン告知など店舗網の更新も続いている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリHD、4〜9月増収増益 新商品・セールと物流費抑制が奏功",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-07",
+        "summary": "ニトリホールディングスの2027年3月期第2四半期（4〜9月）連結決算は増収増益となった。純利益は前年同期比6.8％増、7〜9月期は21％増益で着地した。ニトリ事業では新商品の投入やセール施策が奏功したほか、販促強化や物流費の抑制、原価低減が利益を支えた。売り場改善により為替変動の影響も緩和された。",
+        "why_it_matters": "増益の要因が新商品、セール、物流費減少、原価低減と複数に分散している点は、SPAとして製造・物流・販売を一体で最適化してきた構造的な強みの表れだ。7〜9月期の伸びが上期を上回ったことから、下期の販促と物流効率化を持続できるかが次の焦点となる。為替の影響を売り場改善で吸収した点も、価格戦略の柔軟性を示している。",
+        "tags": [
+          "ニトリ",
+          "決算",
+          "物流",
+          "価格戦略"
+        ],
+        "search_terms": [
+          "ニトリ 中間決算 増益",
+          "Nitori interim earnings",
+          "retailer half-year profit Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE0wR0pDVXhTbUh6X2dtVGxjNUxObmdZZmZKaGZxUEF2cjdXV3AyN2dmMXBvN0lzR25PaWlhUk1iRi1NZ0VxVEc1eEUzT3k2b3A4enY2SUxCTDk?oc=5",
+        "source_pub_ts": 1794556440
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "似鳥会長が語る「スピード感は一番早い」、米景気と海外戦略",
+        "original_title": "",
+        "source": "北海道新聞デジタル",
+        "source_id": "JP-04",
+        "summary": "北海道新聞デジタルは、ニトリホールディングスの似鳥昭雄会長への一問一答を掲載した。会長は事業のスピード感について「一番早い」と語り、米国の景気動向や海外戦略についての考えを示している。中間決算の発表を受けた取材で、国内外の事業環境に対する経営トップの見方が示された形だ。詳細は元記事で確認したい。",
+        "why_it_matters": "会長自らスピードの速さを強調したことは、企画から店頭までを自社で一貫して手がけるSPAモデルの機動力を経営が強く意識していることを示す。米国景気と海外戦略への言及は、海外展開の進捗とリスク認識を読むうえで重要だ。国内の商品開発や物流で培った速さを海外事業へどう移植するかが、今後の成長の鍵になる。",
+        "tags": [
+          "ニトリ",
+          "海外戦略",
+          "経営"
+        ],
+        "search_terms": [
+          "似鳥会長 インタビュー",
+          "Nitori chairman interview",
+          "Japanese retailer overseas strategy"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9EWXJhMVFSVjhJUXZSUzl2cE9lZVBXNV84bjhzRUEwS1NkcW1sajNIX0NpMG5NdllreEdmcjUyZXZZdWxlZWRPVUpqU3FETVJzX2dYbnN2X2ZjUQ?oc=5",
+        "source_pub_ts": 1794572552
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのキッチン収納がランキング首位、「5つ目の購入」の声も",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-09",
+        "summary": "ねとらぼは、ニトリのキッチン収納ランキングで首位となった商品について購入者の声を紹介した。「5つ目の購入となりました」との投稿や、「やはり100均とは使い心地が全然違う」「近日中にMを3個増やす予定」といった反応が寄せられている。サイズ違いを買い足す形でリピートにつながっている様子がうかがえる。",
+        "why_it_matters": "同じ商品を複数購入し、サイズ違いを追加していく行動は、規格を揃えた収納システムとして設計されていることが生活者に評価されている証拠だ。100均との比較で使い心地を挙げる声は、価格以上の品質実感がリピートを生むことを示す。サイズ展開の拡充と、組み合わせ提案の訴求が客単価の向上に直結する。",
+        "tags": [
+          "ニトリ",
+          "キッチン収納",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "キッチン収納 リピート購入",
+          "Nitori kitchen storage repeat purchase",
+          "storage ranking Japan review"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE9Pc3pTVjhmSURIU1l1cU9qVmZiRDY5d2g1d0RpYzdJUUVKc1o1b0RpTkdNbVF4UDRGZ0VzWkg2c2tScXVKRDRYOU5QX2x1UTllSlBjeWtFOHFYaVpMOWwwc0dBaDBDUQ?oc=5",
+        "source_pub_ts": 1794543600
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "249円の猫グッズ、ニトリ「デコネコちゃんのバッグ」が実用性で注目",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-06",
+        "summary": "LIMOは、ニトリの猫グッズ「デコネコちゃんのバッグ」を紹介した。価格は249円と手頃ながら、幅が45cmあり大きめのものも入ると実用性が伝えられている。キャラクター性のあるデザインと日常使いのしやすさを両立している点が特徴だ。小さな買い物で満足感を得られる商品として取り上げられている。",
+        "why_it_matters": "249円という価格帯でキャラクター要素と幅45cmの実用スペックを両立させている点は、ニトリの安くて使えるという価値を体現する好事例だ。キャラクターグッズは話題化によって需要が跳ねやすく、記事や口コミでの紹介が購入動機を後押しする。サイズ感を数値で示す訴求は、収納用途の顧客に刺さる情報として活用できる。",
+        "tags": [
+          "ニトリ",
+          "キャラクター",
+          "低価格"
+        ],
+        "search_terms": [
+          "猫グッズ バッグ 低価格",
+          "Nitori cat character bag",
+          "affordable everyday bag Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE03alZnN2MtQVItRlRseG1GOF83eFlEZXJBTjkxWkh5SjI4cFdmRUcwT09JR0lBbVdtSWl3SXJPREZIcHBHeldyTHJyQ05oclY4QXZzQTljZHFMZmEzd2ZBaDBvdWlCbXNVSTRiUi1kNUZGQWxvTGpjc2ozbDM4TDQ?oc=5",
+        "source_pub_ts": 1794562275
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "磁石で浴室の壁に付くステンレスボトルラック、ニトリで高評価",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-08",
+        "summary": "ｄメニューニュースは、ニトリの磁石で浴室の壁に付くボトルラックを紹介した。ステンレス製で「高見え」すると評価されているほか、「ポンプの押し込みに負けない」「もう一つ購入予定」といった声が寄せられている。磁石で取り付けられる手軽さと、実使用での安定感が支持を集めている様子がうかがえる。",
+        "why_it_matters": "磁石で壁面に付く設計は、穴あけを避けたい住まいの事情と相性がよい。ステンレス素材による高見え評価は、低価格でも素材感で満足度を高められることを示す。ポンプ式ボトルの押し込みに耐えた点が評価されたことは、実使用で検証する生活者の目線を映している。",
+        "tags": [
+          "ニトリ",
+          "バス用品",
+          "収納"
+        ],
+        "search_terms": [
+          "浴室 ボトルラック 磁石",
+          "Nitori magnetic bottle rack",
+          "bathroom storage stainless Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOZTNiRTFJa3QwbUlLNlQ3RU9YM3k3cUs4bFN6SHh3NW0xWGpzd2oxZGNLQ3VSRTFVOXFZTXNSUElzRjFpLTVGUU9DZGZic0k5SmtNVnFVWHBxSFVUN3dXalFtek16Yk5ZVDlfSnVVU2I5QjUwVUVZZUVFT1NyNXd3LWtkZ1VKcEYtQTFfYXZQbHBLSFpyRWJvZlF6ZlJGZm9mdkZIcWxrM1BVeXFmMTkybXRKd2E3NzBZT2F1eE9WLXRzbllOQTM1bzNZSdIBe0FVX3lxTFB5X1pPRDhUT2MwMlZxTHA5UW1OUkEybXlZTktoMmhXT0hlMzBadlo3bG1kdDFpRTV2NDZHbHAtekRrUzl3eGxsWjF0VDJKX1FxOEt6ZmJFZkxHcU1HYXFfRVpUaGowZ0hvcWVFODNpVmNXNnJKMmI3THQ5OA?oc=5",
+        "source_pub_ts": 1794551460
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリデコホーム川西店、12月18日に2階ダイソー跡地へオープン確定",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-04",
+        "summary": "Xでは、ニトリデコホーム川西店が12月18日（金）に2階のダイソー跡地へオープンすることが投稿された。投稿者は地元情報サイトの記事をリンクし、4階でも新たな動きがあると伝えている。投稿は約23いいね、4リポストを集め、地元の関心を集めている様子がうかがえる。",
+        "why_it_matters": "既存の生活雑貨店の跡地を活用する出店は、地域の買い回り動線を取り込みながら新規顧客を獲得する戦略として注目される。地元の告知を生活者が自発的に拡散する構図は、オープン前の認知形成に効果的だ。テナントの組み替えを機に、店舗を地域の生活拠点へ変えていく流れが読み取れる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "SNS反響"
+        ],
+        "search_terms": [
+          "ニトリ 川西店 オープン",
+          "Nitori new store Kawanishi",
+          "store opening local reaction Japan"
+        ],
+        "url": "https://x.com/kawa_maga/status/2121185117167403186",
+        "source_pub_ts": 1794567600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "無印・ニトリにはない、この発想…！ 待って、これソファなの？テーブルなの？一体型って面白すぎる🤎 pic.x.com/PA9f7wq8cw ...",
+        "platform": "x",
+        "author": "@mimi3605",
+        "url": "https://x.com/mimi3605/status/2121167728128184755",
+        "likes": 56,
+        "retweets": 42,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:06",
+        "captured_at": "",
+        "text": "無印・ニトリにはない、この発想…！ 待って、これソファなの？テーブルなの？一体型って面白すぎる🤎 pic.x.com/PA9f7wq8cw x.com/mimi3605/statu…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "1月2月に、ご主人様にお手伝いというか、倉庫のお片付けをお願いしたい。倉庫の床にすのこを敷いて&衣装を片付けられるようにしたい&なんかニトリ...",
+        "platform": "x",
+        "author": "@Kyoka_Tomarigi",
+        "url": "https://x.com/Kyoka_Tomarigi/status/2121140064864620946",
+        "likes": 40,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:16",
+        "captured_at": "",
+        "text": "1月2月に、ご主人様にお手伝いというか、倉庫のお片付けをお願いしたい。倉庫の床にすのこを敷いて&衣装を片付けられるようにしたい&なんかニトリとかの棚があったら嬉しいかもしれない収納的な意味で。 私は本当に片付けが壊滅的に苦手で、本当に見てるだけになりそう、お礼はします…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "スーパーとコンビニ以外で、近所にこれがあれば便利だと思うお店 ・吉野家 ・マクドナルド ・スタバ ・ユニクロ ・ダイソー ・ニトリ これがそ...",
+        "platform": "x",
+        "author": "@6330218g",
+        "url": "https://x.com/6330218g/status/2121136228217262307",
+        "likes": 24,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:01",
+        "captured_at": "",
+        "text": "スーパーとコンビニ以外で、近所にこれがあれば便利だと思うお店 ・吉野家 ・マクドナルド ・スタバ ・ユニクロ ・ダイソー ・ニトリ これがそろってたら勝ちじゃないですか？",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリデコホームラソラ川西店は12/18(金)、2階のDAISO跡地にオープン確定！更に4階にも新たな動きが。 詳細はURLから↓ kawa...",
+        "platform": "x",
+        "author": "@kawa_maga",
+        "url": "https://x.com/kawa_maga/status/2121185117167403186",
+        "likes": 23,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:15",
+        "captured_at": "",
+        "text": "ニトリデコホームラソラ川西店は12/18(金)、2階のDAISO跡地にオープン確定！更に4階にも新たな動きが。 詳細はURLから↓ kawanishi.love/2026/11/13/nit… #川西市 pic.x.com/js08J2LkOK",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "これが気になっていて、出先のニトリで現物確認 絶妙に水平が出ていない…惜しい😅 全体が柔らか素材で芯が無いので軽いのだけど、分解組み立てを繰...",
+        "platform": "x",
+        "author": "@Pochi_Ko_Bo",
+        "url": "https://x.com/Pochi_Ko_Bo/status/2121057033281790239",
+        "likes": 5,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:46",
+        "captured_at": "",
+        "text": "これが気になっていて、出先のニトリで現物確認 絶妙に水平が出ていない…惜しい😅 全体が柔らか素材で芯が無いので軽いのだけど、分解組み立てを繰り返す想定でいくとストッパー部分の耐久性が気になるところ この辺りを解決できそうな案があれば検討したいくらいには持ち運び性が良さそう pic.x.com/ogHRoTd8Mb x.com/kobax27/status…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261113",
     "title": "2026年11月13日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリはローソファ座椅子を9,990円から8,990円に値下げし、冬のブラックフライデーでは「N+」の防寒アウターやボトムスを手頃な価格で展開するなど、季節需要を捉えた価格施策を進めている ノンオイルフライヤー（4.0L）の先行予約やクリスマス用大人向けギフトの発売により、調理家電や贈答品で新たな用途と購買機会を広げている",
