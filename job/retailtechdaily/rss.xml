@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 14 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 14 Nov 2026 07:21:43 +0900</lastBuildDate>
+    <pubDate>Sun, 15 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 15 Nov 2026 06:04:38 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月15日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261115/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261115/</guid>
+      <pubDate>Sun, 15 Nov 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジをめぐる生活者の反響が広がっている。スキャン忘れが万引と誤解される不安や、小銭の大量投入による現場の負担が、SNSで賛否を呼んでいる。 店舗オペレーションへのAI活用が総菜領域にも広がっている。東急ストアがAIカメラを導入し、ラベル貼り間違いの防止に取り組む。</description>
+    </item>
     <item>
       <title>2026年11月14日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261114/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261101/</guid>
       <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
       <description>セルフレジの小銭大量投入が店舗の“レジ崩壊”リスクにつながるという現場の声が、生活者の関心を集めています。 1人で複数台のセルフレジを監視する店員の負担が可視化され、有人レジを求める客の声とのギャップが浮き彫りになりました。</description>
-    </item>
-    <item>
-      <title>2026年10月31日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261031/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261031/</guid>
-      <pubDate>Sat, 31 Oct 2026 08:00:00 +0900</pubDate>
-      <description>AIが需要予測や商品提案の中核に入りつつある。カインズの予測誤差19%改善やAlexaの4億人超利用は、在庫と購買の起点がAIに移る流れを示している。 セルフレジの運用課題が表面化している。東芝テックの商品券連動システムが登場する一方、半額シールと定価の食い違いに対する消費者の不安が拡散している。</description>
     </item>
   </channel>
 </rss>

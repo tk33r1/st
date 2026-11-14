@@ -1,5 +1,90 @@
 [
   {
+    "date": "20261115",
+    "title": "2026年11月15日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジをめぐる生活者の反響が広がっている。スキャン忘れが万引と誤解される不安や、小銭の大量投入による現場の負担が、SNSで賛否を呼んでいる。 店舗オペレーションへのAI活用が総菜領域にも広がっている。東急ストアがAIカメラを導入し、ラベル貼り間違いの防止に取り組む。",
+    "count": 3,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジをめぐる生活者の反響が広がっている。スキャン忘れが万引と誤解される不安や、小銭の大量投入による現場の負担が、SNSで賛否を呼んでいる。",
+      "店舗オペレーションへのAI活用が総菜領域にも広がっている。東急ストアがAIカメラを導入し、ラベル貼り間違いの防止に取り組む。",
+      "無人化・省人化を進めるほど、誤解を防ぐ運用設計と現金処理を含む店舗側の仕組みづくりが重要になっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジのスキャン忘れは逮捕対象になるのか　1割以上が経験したとされ、SNSで「万引の濡れ衣」が議論に",
+        "original_title": "",
+        "source": "日刊ゲンダイDIGITAL",
+        "source_id": "JP-01",
+        "summary": "セルフレジでの商品のスキャン忘れが、故意の万引と誤解される事例がSNSで議論を呼んでいる。記事では、セルフレジ利用者の1割以上がスキャン忘れを経験したとされ、うっかりミスでも逮捕されるのかという不安が広がっていると伝えている。店側の監視・確認体制と、客の誤解の境界が改めて問われている形だ。",
+        "why_it_matters": "セルフレジの普及に伴い、スキャン漏れと窃盗の区別は運営側にとって無視できない課題になりつつある。重要なのは、客を責めるのではなく、検知と声かけの設計で誤解を防ぐことだ。会計後の自動チェック精度を高め、画面で明示的に確認を促す仕組みは、客の安心感を損なわずに損失を抑える可能性がある。SNS上の炎上リスクも含め、運用ルールの透明化が店舗ブランドを守る鍵になる。",
+        "tags": [
+          "セルフレジ",
+          "万引対策",
+          "SNS話題"
+        ],
+        "search_terms": [
+          "スキャン忘れ 誤解",
+          "セルフレジ 万引 濡れ衣",
+          "self-checkout scan error",
+          "self-checkout shoplifting misunderstanding"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9VNjZSVmlvRWFkUEJXbnFYOXNqdTVWbzNqRl9yNk9JZUR0dzVEck5qMG5oSVVLQUlBYUZhU28tYlRoZEFLY014STl3Tmc0REI0cVg4UDExWXo2VlFVLVNqQXRxaVhTOWs?oc=5",
+        "source_pub_ts": 1794690000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジは両替機ではない」　小銭を大量投入する客が招く“レジ崩壊”の危機、作者に聞く",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-03",
+        "summary": "セルフレジに小銭を大量に投入する一部の客がおり、現場がレジ崩壊の危機に直面しているという声を描いた漫画が話題になっている。記事では、店員が「セルフレジは両替機ではない」と訴える場面を取り上げ、作者への取材を通じて接客現場の本音を紹介している。セルフレジ導入店での運用の難しさが、生活者の認識とずれている実態を浮き彫りにしている。",
+        "why_it_matters": "セルフレジは無人化や省人化の切り札として語られるが、現金処理の負荷は残りやすく、運用設計の見直しが求められる。両替機能を持つ機器の導入、現金利用が多い時間帯の人員配置、客への利用ガイド表示など、ハードとソフト両面の対策が考えられる。SNSで共感が広がっている今こそ、店舗が利用マナーを穏やかに伝える仕組みを整えるチャンスだ。",
+        "tags": [
+          "セルフレジ",
+          "現金処理",
+          "接客現場"
+        ],
+        "search_terms": [
+          "小銭投入 セルフレジ",
+          "レジ崩壊 現場の声",
+          "self-checkout cash handling",
+          "checkout staff workload"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9ydlNvbHdXS3I3SUxFQ19qNmhQS3ZEeS11akNxZGFZWkYycl80azQ5TFRYYzU5X1RISTZHV1YwWHdtd05qV2JvS1dlZ1pibUxrVU1haERVUXNmbWpLWmttQXhtamJlaDJERXZLVjFR?oc=5",
+        "source_pub_ts": 1794630512
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "東急ストア、総菜の「ラベル貼り間違い」防止にAIカメラを導入",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-05",
+        "summary": "東急ストアは、総菜商品のラベル貼り間違いを防ぐためにAIカメラを導入した。ラベルの誤りは売価違いやアレルギー表示の不備につながるため、目視確認に頼る従来の運用には限界があった。記事は週刊リテールテックの特集として、この取り組みを紹介している。画像認識を活用した照合の仕組みで、店内加工品の品質管理を支える狙いがうかがえる。",
+        "why_it_matters": "総菜は店内での調理・包装・陳列工程が多く、ラベルのミスは誤販売や表示トラブルに直結する。AIカメラによる自動照合は、現場の確認作業の負荷軽減に効果が期待できる。店内加工の多い生鮮・総菜領域でのAI活用は、人手不足の中で品質を維持する現実的な手段となる。今後は他チェーンへの横展開や、ラベル発行システムとの連携がどこまで進むかが注目点だ。",
+        "tags": [
+          "AIカメラ",
+          "総菜",
+          "店舗オペレーション"
+        ],
+        "search_terms": [
+          "ラベル貼り間違い 防止",
+          "AIカメラ 総菜管理",
+          "AI camera deli label",
+          "store label error prevention"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE91MlFRb2RFUWx3dHduMXJsZEczdC1nNC1VUDJrSjFHWE1oZ2hlU1RfVXJjTS02UjhNWFY0X0RNMFVTOXQ4dUs1RmNDZUM5V0YzdF9Z?oc=5",
+        "source_pub_ts": 1794607620
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261114",
     "title": "2026年11月14日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "高千穂交易がセルフレジ不正対策「Sesame Solution」の国内独占販売代理店契約を締結し、無人化が進む店舗での不正リスク対策が国内で本格化する流れが明確になった。 PPIHの体験型リテールメディアやリアル脱出ゲームとの連動、ファミリーマートの推し活タイアップなど、リテールメディアが売場体験と結びつく方向へ広がっている。",
