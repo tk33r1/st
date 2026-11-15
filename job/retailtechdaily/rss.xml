@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 15 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 15 Nov 2026 06:04:38 +0900</lastBuildDate>
+    <pubDate>Mon, 16 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 16 Nov 2026 06:26:48 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月16日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261116/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261116/</guid>
+      <pubDate>Mon, 16 Nov 2026 08:00:00 +0900</pubDate>
+      <description>新規性の高い国内ニュースは限られ、直近掲載済みの『セルフレジ不正対策』『体験型リテールメディア』『SNS×AI×リテールメディア』関連は重複のため除外した。 アマゾンの『30分配送』と自律型AIの組み合わせが、ラストワンマイルとオンライン流通の効率化を一段と加速させる方向性を示した。</description>
+    </item>
     <item>
       <title>2026年11月15日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261115/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261102/</guid>
       <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
       <description>本日のセルフレジ関連ニュースは既報と重複するものが多く、新規性の高い国内の動きは限定的でした。 薬局のセルフレジから出たレシートがSNSで「不気味」と話題になり、無人化された決済体験への生活者の違和感が表れました。</description>
-    </item>
-    <item>
-      <title>2026年11月1日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261101/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261101/</guid>
-      <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジの小銭大量投入が店舗の“レジ崩壊”リスクにつながるという現場の声が、生活者の関心を集めています。 1人で複数台のセルフレジを監視する店員の負担が可視化され、有人レジを求める客の声とのギャップが浮き彫りになりました。</description>
     </item>
   </channel>
 </rss>
