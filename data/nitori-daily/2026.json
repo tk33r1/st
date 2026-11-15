@@ -1,5 +1,309 @@
 [
   {
+    "date": "20261116",
+    "title": "2026年11月16日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリホールディングスが最大3762万件の個人情報流出の可能性を発表し、顧客データ保護の体制と透明な情報開示が改めて問われる局面となった。 コンパクトソファや2490円の排水口ラックなど、狭小住宅の課題を解決する低価格商品が「値段以上」の評価を集め、生活者の共感が広がっている。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリホールディングスが最大3762万件の個人情報流出の可能性を発表し、顧客データ保護の体制と透明な情報開示が改めて問われる局面となった。",
+      "コンパクトソファや2490円の排水口ラックなど、狭小住宅の課題を解決する低価格商品が「値段以上」の評価を集め、生活者の共感が広がっている。",
+      "ソファとベッドの兼用ニーズや、既存収納にアクセサリーを組み合わせる使い方がSNSで反響を呼び、生活空間提案の余地が示された。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、最大3762万件の個人情報流出の可能性を発表　カード情報とパスワードは含まれず",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-09",
+        "summary": "ニトリは最大3762万件の個人情報が流出した可能性があると発表した。対象にはECモールのニトリ公式ショップでの注文も含まれるが、クレジットカード情報とパスワードは含まれていないという。店舗とECを横断して顧客データを扱う事業構造のなかで、データ保護体制が改めて問われる形となった。対象顧客への案内や再発防止策の詳細が今後の焦点になる。",
+        "why_it_matters": "全国の店舗とECを横断して顧客データを集めるニトリにとって、信頼は会員基盤とアプリ戦略の土台である。カード情報が含まれないとの説明は被害範囲を示す一方、「自分が対象か」という不安は購買意欲に直結しかねない。今後のアプリ・EC拡大に合わせたセキュリティ投資と、透明性の高い情報開示が顧客維持の鍵になる。",
+        "tags": [
+          "ニトリ",
+          "個人情報",
+          "EC",
+          "セキュリティ"
+        ],
+        "search_terms": [
+          "ニトリ 個人情報 流出",
+          "Nitori personal data leak",
+          "顧客データ 漏えい 小売 EC",
+          "retail customer data breach Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBoaENEY05ZRVFBZXhUZ0R6WS1LdUdCU01wdENLQnRSXy14WFVpMnFFWlk0akREZmdUbmc3dlhneHY1U3pSNnZ5ZExyN0E?oc=5",
+        "source_pub_ts": 1794568980
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの新商品「よこ伸縮式ワードローブ」が話題　部屋の幅に合わせて衣替えの整理に",
+        "original_title": "",
+        "source": "TRILL",
+        "source_id": "JP-06",
+        "summary": "ニトリの新商品「よこ伸縮式ワードローブ」が、衣替えの時期の収納見直しに向けて注目を集めている。部屋の幅に合わせて設置できる点が特徴として紹介され、季節ごとに衣類を入れ替える家庭のニーズに応える収納家具として反響が広がっている。限られたスペースを有効に使いたい生活者の声が背景にある。",
+        "why_it_matters": "衣替えという季節需要に合わせた収納家具は、生活動線を的確に捉えた企画の好例である。部屋ごとの寸法差に対応する可変型は、間取りが多様な賃貸住宅市場で訴求力を持つ。企画から販売まで一貫して手掛けるSPAのニトリだからこそ、寸法設計を商品力に変えられる。同じ設計思想の展開余地も大きい。",
+        "tags": [
+          "ニトリ",
+          "ワードローブ",
+          "収納",
+          "新商品"
+        ],
+        "search_terms": [
+          "よこ伸縮 ワードローブ",
+          "expandable wardrobe Nitori",
+          "衣替え 収納 家具",
+          "space-saving wardrobe Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1Ra3JiZ25qWWZSUTFJUGRxaTRqMmxsc3EwU2N3U3p6Zm54NDFwMEtIY2c5M3NVREkyLXBHdTU1NUgwYnJhekdJOGQzbTFmQlk?oc=5",
+        "source_pub_ts": 1794578700
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "狭い部屋でも圧迫感がないと好評のニトリ「コンパクトソファ」　値段以上の作りに称賛の声",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-01",
+        "summary": "ねとらぼリサーチの記事で、ニトリのコンパクトソファが「狭い部屋でも圧迫感がない」と好評を集めていることが伝えられた。ユーザーからは「値段よりもしっかりした作り」「掃除もラクです」といった声が寄せられている。都市部の住宅事情に合わせたサイズ設計と価格のバランスが評価につながっている。",
+        "why_it_matters": "コンパクトな住空間で「圧迫感の少なさ」と「品質感」が両立すると、価格以上の満足度を生みやすい。掃除のしやすさといった日常の手間の軽減は、リピートや口コミにつながる要素である。素材選定から設計まで自社で管理するニトリの強みが、価格と品質のギャップを生み出していることを示す事例である。",
+        "tags": [
+          "ニトリ",
+          "ソファ",
+          "狭小住宅",
+          "口コミ"
+        ],
+        "search_terms": [
+          "コンパクトソファ 狭い部屋",
+          "compact sofa small room Japan",
+          "ニトリ ソファ 口コミ",
+          "small living space furniture"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFAtemtjZ3ZSWWZUTnhFWnprN0ZlakVRQlNoc1FkOWNwcUthVmJkNXZNd05Mc001VmpnSlY5clVWTUFPWXExbVM5alhTSExEeGhaWGszc2dUQTZtTHRsN0tHcG5wUdIBaEFVX3lxTE9Damxvb01Vd3N1c2VLbTlvaFUwejdEVVJxUVhRbWlZX2ZjQ0xEcEowYlA2ZjNGWU40c1FSTFJWQjlSemlHSm9tNlRmSFRVdUxYYU9WZGVLeFF3RzhVQ1BpZHRONWhmWU0y?oc=5",
+        "source_pub_ts": 1794746083
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "2490円の排水口ラックが「狭い脱衣所に買って良かった」と好評",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-02",
+        "summary": "ニトリの2490円の排水口ラックが、狭い脱衣所で重宝すると話題になっている。排水パイプをきれいに隠しつつ、上に物を置けるという使い勝手が評価され、「やっと見つけて即買い」といった声も上がった。低価格ながら水回りの収納課題を一度に解決する点が、生活者の共感を集めている。",
+        "why_it_matters": "水回りは専用商品が少なく、収納の課題が明確な領域である。排水パイプを隠すという見た目の改善と、置き場所を生み出す機能を組み合わせた点が「一石二鳥」として受けている。低価格帯でも課題解決型の企画が刺さることを示しており、狭小空間向けの関連アイテムを広げる余地がある。",
+        "tags": [
+          "ニトリ",
+          "排水口ラック",
+          "水回り",
+          "収納"
+        ],
+        "search_terms": [
+          "排水口ラック 脱衣所",
+          "bathroom drain rack Nitori",
+          "水回り 収納 低価格",
+          "space-saving bathroom storage Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1IbW9Oclg3V3NtRFZBQ0RWS1MwNVlKT0hKOE5TMjcxUzg3Um9wY3FDdmZWNzd0dDV6Wm10THk5Zm9OVXBGWGFINmgtem5iSEo5MlMwTm9IbVFYdXZqbUNjdml3QdIBaEFVX3lxTE5XMFNtcHloSTNnNWhEa09GbnNfTW9oUWFkUGxYTWVfRVNxV19xcmQ0LXlMTkNqeEhyQzZPTzlWdktFTmcwc0IyOW9iZXp0UGZzXzFCWEhPZzAwcnVjM3paWHpYOWt1UkRn?oc=5",
+        "source_pub_ts": 1794710578
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの4990円ミニファンヒーター、人感センサーで足元の冷え対策に注目",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-03",
+        "summary": "ニトリの4990円ミニファンヒーターが、人感センサーにより近づくと自動で運転する点で注目を集めている。ツラい足元の冷え対策として役立つと紹介され、「買って正解」といった声も寄せられている。冬の暖房需要が高まるなかで、手頃な価格と分かりやすい機能を備えた暖房家電として関心が高まっている。",
+        "why_it_matters": "暖房家電は季節需要が強く、価格と分かりやすい機能の組み合わせが購買を後押しする。人感センサーという機能は、足元の冷えという具体的な生活課題に直結しており、ニトリの生活提案力を示している。家具・寝具中心のイメージから家電領域へ広がる動きとして、冬季の販売動向が注目される。",
+        "tags": [
+          "ニトリ",
+          "ファンヒーター",
+          "冬物家電",
+          "人感センサー"
+        ],
+        "search_terms": [
+          "ミニファンヒーター 人感センサー",
+          "compact fan heater motion sensor",
+          "足元 暖房 家電 冬",
+          "Nitori space heater"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5qN3V1OFNwMFFVd1daMjZGeS1pQnpQemhhU18xTEJiN1hURlZhdm0yR2NodGNYMUdHWmJBa3UzMWFBcWRpX0tvQzR2SHhwdnlMbWJjVmVfYWNBSEQ1am1BdDI1M3dfSExTTzdQQzRtMXM4N1ByWmxfbGhqME16eUU?oc=5",
+        "source_pub_ts": 1794694253
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、上期増益と通期計画を据え置き　店舗計画は1,131店舗を目指す",
+        "original_title": "Nitori Holdings: First-half profit grew, full-year guidance held, and the store plan targets 1,131 locations",
+        "source": "TradingView",
+        "source_id": "GL-01",
+        "summary": "TradingViewは、ニトリホールディングスの上期利益が増加し、通期の業績予想が据え置かれたと報じた。あわせて店舗計画では1,131店舗を目指す方針が示されたという。国内の決算報道が相次ぐなか、海外の金融メディアが店舗網の拡大計画に言及した点が特徴的である。",
+        "why_it_matters": "1,131店舗という目標は、SPAモデルでの出店余力と成長戦略の規模感を示している。海外の金融メディアが同点に注目することは、ニトリの国際的な認知と投資家の関心の高まりを示唆する。国内の業績と店舗計画を一体で捉えることで、今後の店舗戦略の方向性を読み取る材料となる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "決算",
+          "海外"
+        ],
+        "search_terms": [
+          "ニトリ 店舗計画 1131店",
+          "Nitori store expansion plan",
+          "Nitori Holdings first-half results",
+          "Japanese home furnishing retailer growth"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMilwJBVV95cUxQWjV6UFRmSkJfbnJDV3hCZ1M4b3ZRd3VqM0dDWlY5ZVc0dHpmUEhMTHkzQ3prMm1EdHdvNDd6dWlmMVpzVlA2THRZd0ExWngtUDdKcjM3dS1BeV9QSUZoT2d3WEpNVEZRTGNpWmk5NXNLYVFscHJjcFVLUXAwSERCVHB4VWhsZFFkN3NKeGRfNEcyeGJsT2U5MlYycHBxRWQ2VTRhbXNYdnY3Z1pKV1ZLOF8tN0dnQVZ5elZNeTBhYzV5RVFhWHVUSFQ3QXFmZTdzQ0JqNGl4WC1QRURCT1ZqazVBMW01UHdqa2Fmb3paM1VvVkEyRnlYeFcySC1kRHR3dVphNkJMMmpIeC1YVEFBVFBEc0QxTlU?oc=5",
+        "source_pub_ts": 1794579436
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ソファもベッドも置きたいけど場所がない」悩みに響くニトリ投稿、2,406いいね",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "X上で、ソファもベッドも置きたいが場所がないという悩みに応えるニトリ製品を紹介する投稿が2,406いいねを集めた。「天才すぎじゃない」と反響を呼び、写真付きで提案されたことが共感につながった。ソファとベッドの両立を望む生活者の悩みに、ニトリの製品が応えられることを示す投稿として注目される。",
+        "why_it_matters": "狭小住空間で「一台で複数の役割」を求める需要は根強く、投稿の共感はその生活課題に直結している。ユーザー自身が発信する形は、公式の提案より説得力が高い。兼用家具の訴求を生活シーン別の投稿や写真で広げる設計が、ニトリの空間提案力を高める示唆になる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "兼用家具",
+          "空間提案"
+        ],
+        "search_terms": [
+          "ソファ ベッド 兼用 場所がない",
+          "sofa bed small space Japan",
+          "ニトリ SNS 反響",
+          "multifunctional furniture social buzz"
+        ],
+        "url": "https://x.com/mimi3605/status/2121892404831936671",
+        "source_pub_ts": 1794740400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ハコブNにミニポケットを組み合わせたコスメ収納、小物が埋もれない工夫が共感を集める",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "X上では、ニトリのハコブNインボックスに100均の冷蔵庫用ミニポケットを組み合わせたコスメ収納が754いいねを集めた。単色アイシャドウのような小さなアイテムが奥に埋もれず定位置を確保でき、使用期限の短い試供品も忘れにくい点が評価されている。既存の収納家具を自分流にカスタムする使い方が反響を呼んだ。",
+        "why_it_matters": "収納ボックスの価値は、付属品や他社製アイテムとの組み合わせで完成する。「小物を見失う」「期限切れを防ぎたい」という具体的な悩みへの解決策であり、収納ラインがアクセサリーで機能拡張される需要を示している。公式側が組み合わせ提案を発信する余地がある。",
+        "tags": [
+          "ニトリ",
+          "ハコブN",
+          "コスメ収納",
+          "SNS"
+        ],
+        "search_terms": [
+          "ハコブN コスメ収納",
+          "cosmetic storage box organizer Japan",
+          "冷蔵庫用 ミニポケット 収納",
+          "DIY storage customization social"
+        ],
+        "url": "https://x.com/kataru_kabe/status/2121782988677787937",
+        "source_pub_ts": 1794740400
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリ天才すぎじゃない!??? ソファもベッドも置きたいけど場所がない…って人に朗報🤎 pic.x.com/50juFrjwkU x.com...",
+        "platform": "x",
+        "author": "@mimi3605",
+        "url": "https://x.com/mimi3605/status/2121892404831936671",
+        "likes": 2406,
+        "retweets": 132,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:05",
+        "captured_at": "",
+        "text": "ニトリ天才すぎじゃない!??? ソファもベッドも置きたいけど場所がない…って人に朗報🤎 pic.x.com/50juFrjwkU x.com/mimi3605/statu…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "現在のコスメ収納について。ニトリのハコブNインボックスに100均で買った冷蔵庫用のミニポケットを装着しています。このミニポケットが本当に便利...",
+        "platform": "x",
+        "author": "@kataru_kabe",
+        "url": "https://x.com/kataru_kabe/status/2121782988677787937",
+        "likes": 754,
+        "retweets": 58,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:50",
+        "captured_at": "",
+        "text": "現在のコスメ収納について。ニトリのハコブNインボックスに100均で買った冷蔵庫用のミニポケットを装着しています。このミニポケットが本当に便利で！単色アイシャドウのような小さいアイテムが奥底に埋もれず定位置を獲得できるし、使用期限が短い試供品の存在を忘れることなく使えます。 pic.x.com/ytUnTmof4Y",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリさん…子育て経験者いるよね？ キッズコーナー、オシャレすぎん？ pic.x.com/FaG5j0WFAa",
+        "platform": "x",
+        "author": "@fuuko_kosodate",
+        "url": "https://x.com/fuuko_kosodate/status/2121881979327336883",
+        "likes": 399,
+        "retweets": 16,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:24",
+        "captured_at": "",
+        "text": "ニトリさん…子育て経験者いるよね？ キッズコーナー、オシャレすぎん？ pic.x.com/FaG5j0WFAa",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ぬい持参でニトリ肉まんに乗っかるのがつくね氏スタイル pic.x.com/9N9CtgTpML",
+        "platform": "x",
+        "author": "@29ne____",
+        "url": "https://x.com/29ne____/status/2121768578408128740",
+        "likes": 186,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:53",
+        "captured_at": "",
+        "text": "ぬい持参でニトリ肉まんに乗っかるのがつくね氏スタイル pic.x.com/9N9CtgTpML",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "返信先:@kufuu_wow・柳宗理のボウル&ザル ・少なくとも1万円以上の包丁 ・ストウブ(鋳物の鍋) 柳宗理のボウルとザルは激推しいたし...",
+        "platform": "x",
+        "author": "@AnnonHeionBuji",
+        "url": "https://x.com/AnnonHeionBuji/status/2121893308406620610",
+        "likes": 152,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:09",
+        "captured_at": "",
+        "text": "返信先:@kufuu_wow・柳宗理のボウル&ザル ・少なくとも1万円以上の包丁 ・ストウブ(鋳物の鍋) 柳宗理のボウルとザルは激推しいたします。 特にザル。パンチングザルなので目詰まりを起こしにくく洗いやすい。ニトリなどにも類似品はありますが、柳宗理のは穴と穴の間隔が少ないので水捌けが段違いです。",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261115",
     "title": "2026年11月15日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "梅田茶屋町に旧梅田ロフトの店舗を活用した「世界最大」のニトリ店舗が誕生し、都心の商業地図での存在感が一段と高まった。 ブラックフライデーの前哨戦として、ニトリをはじめ小売各社が販促を前倒しし、年末商戦の需要を早期に取り込む動きが目立っている。",

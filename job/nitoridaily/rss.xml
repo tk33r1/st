@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 15 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 15 Nov 2026 06:12:55 +0900</lastBuildDate>
+    <pubDate>Mon, 16 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 16 Nov 2026 06:33:12 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月16日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261116/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261116/</guid>
+      <pubDate>Mon, 16 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ニトリホールディングスが最大3762万件の個人情報流出の可能性を発表し、顧客データ保護の体制と透明な情報開示が改めて問われる局面となった。 コンパクトソファや2490円の排水口ラックなど、狭小住宅の課題を解決する低価格商品が「値段以上」の評価を集め、生活者の共感が広がっている。</description>
+    </item>
     <item>
       <title>2026年11月15日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261115/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261102/</guid>
       <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
       <description>梅田の旗艦店開業を起点に、ニトリは家具・家電に加えアパレルやガジェットへと生活提案の領域を広げている。 799円のフローリングワイパーや899円のバスクリーナーなど、低価格で満足度の高い日用品がレビューやSNSで反響を集めている。</description>
-    </item>
-    <item>
-      <title>2026年11月1日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261101/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261101/</guid>
-      <pubDate>Sun, 01 Nov 2026 08:00:00 +0900</pubDate>
-      <description>梅田茶屋町の旧梅田ロフト跡地に「世界最大のニトリ」がオープンし、大阪エリアでの大型店舗展開が本格化した。 基幹システムのオンプレミス環境からの脱却が報じられ、ニトリのDXとインフラ刷新が具体的な段階に入っていることが分かった。</description>
     </item>
   </channel>
 </rss>
