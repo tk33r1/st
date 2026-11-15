@@ -3672,6 +3672,36 @@ test('添付ファイルは本文の上限と別に、履歴を含めて合計1�
   assert.ok(w.calls.some(c => JSON.stringify(c).split(String.fromCharCode(92)).join('').includes('"name":"file","text":"","omitted":true')));
 });
 
+test('画像は data:image の base64 だけを受け、外部URL・他の形式・枚数と容量の超過は上流へ送る前に断る', async () => {
+  const w = worker(), vision = w.ctx.defaults.vision, mb = vision.max_image_bytes;
+  const input = messages => w.ctx.readChatInput(new Request('https://example.test/chat', { method: 'POST', body: JSON.stringify({ messages }) }));
+  const refused = (messages, code) => assert.rejects(input(messages), e => e.envelope?.code === code);
+  // デコード後に n バイトになる base64（末尾の = も数える）
+  const b64 = n => 'A'.repeat(Math.ceil(n / 3) * 4 - (3 - n % 3) % 3) + '='.repeat((3 - n % 3) % 3);
+  const image = url => ({ type: 'image_url', image_url: { url } }), thumb = image('data:image/png;base64,dGh1bWI=');
+  const user = (...parts) => ({ role: 'user', content: [{ type: 'text', text: 'q' }, ...parts] }), answer = { role: 'assistant', content: 'a' };
+  // 外部URLを受けると Worker が任意の取得の踏み台になる（AGENTS.md）。断るときは画像の取得も上流の呼び出しもしない
+  const fetched = [], web = worker(completion(), url => { fetched.push(url); });
+  const res = await web.chat([user(image('https://example.test/a.png'))]);
+  assert.equal(res.status, 400); assert.equal((await res.json()).error.code, 'invalid_image');
+  assert.deepEqual(fetched, []); assert.equal(web.calls.length, 0);
+  for (const part of [image('http://example.test/a.png'), image(' data:text/html;base64,PGI+'), image('data:image/svg+xml;base64,PHN2Zz4='),
+    image('data:image/png,dGh1bWI='), image('data:image/png;base64,dGh1b'), image(1), { type: 'image_url' }]) await refused([user(part)], 'invalid_image');
+  // 1枚の上限ちょうどは受け、1バイト超えれば断る。合計の上限は1枚ずつ上限内でも数える
+  assert.equal((await input([user(image('data:image/jpeg;base64,' + b64(mb)))])).messages.length, 1);
+  await refused([user(image('data:image/jpeg;base64,' + b64(mb + 1)))], 'image_too_large');
+  const half = image('data:image/webp;base64,' + b64(vision.max_total_bytes / 2 + 1));
+  await refused([user(half, half)], 'images_too_large');
+  // 枚数は1発言・1リクエストの両方で数え、履歴を12件に切り詰めた後の分だけを数える
+  await refused([user(thumb, thumb, thumb, thumb, thumb)], 'too_many_images');
+  await refused([user(thumb, thumb, thumb), answer, user(thumb, thumb, thumb), answer, user(thumb, thumb, thumb)], 'too_many_images');
+  const four = user(thumb, thumb, thumb, thumb);
+  const trimmed = [four, answer, four, answer, four, ...Array.from({ length: 4 }, () => [answer, user()]).flat()];
+  assert.equal(trimmed.length, w.ctx.defaults.history_max_messages + 1);
+  assert.equal((await input(trimmed)).messages.length, w.ctx.defaults.history_max_messages);
+  assert.equal((await input([four, answer, four])).messages.length, 3);
+});
+
 test('Jev の失敗・言語の無い発言・低い確信・キー未設定では手元の規則に戻す', async () => {
   const messages = [{ role: 'user', content: 'PDFを結合する方法は？' }];
   for (const reply of [() => new Response('down', { status: 500 }), () => jevReply('other'), () => jevReply('ja', 0.3), () => jevReply('xx'), () => Response.json({})]) {
