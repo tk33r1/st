@@ -3414,6 +3414,19 @@ test('A3: 不正JSON・重複キー・長さ超過・配列混在を修繕せず
   ]) assert.throws(() => parse(bad));
   assert.equal(parse(a3Decision('ask_user', { questions: a3Clarify.questions }), undefined, false).next_step, 'answer');
 });
+test('A3: next_stepと合わない問い・同じ問いを拒否し、欠席者の問いだけを除いて残りの問いを整える', () => {
+  const w = worker(), parse = (v, active) => w.ctx.parseJudgement(JSON.stringify(v), active, true);
+  const q = (target, question) => ({ target, question }), all = ['MELCHIOR-1', 'BALTHASAR-2', 'CASPER-3'];
+  for (const bad of [
+    a3Decision('answer', { persona_questions: [q('CASPER-3', '問い')] }),
+    a3Decision('answer', { questions: a3Clarify.questions }),
+    a3Decision('ask_user', { questions: a3Clarify.questions, persona_questions: [q('CASPER-3', '問い')] }),
+    a3Decision('ask_personas', { persona_questions: [q('CASPER-3', '同じ問い'), q('MELCHIOR-1', ' 同じ問い ')] }),
+  ]) assert.throws(() => parse(bad, all));
+  const v = parse(a3Decision('ask_personas', { persona_questions: [q('CASPER-3', '  時間を検算できる？ '), q('MELCHIOR-1', '音源は？')] }), ['CASPER-3', 'BALTHASAR-2']);
+  assert.equal(v.next_step, 'ask_personas');
+  assert.equal(JSON.stringify(v.persona_questions), JSON.stringify([q('CASPER-3', '時間を検算できる？')]));
+});
 test('A3: clarify対応の通常チャットだけ確認してdoneで終え、統合と予測を呼ばない', async () => {
   for (const entry of ['chat', 'dj-request']) for (const supports of [true, false]) {
     let judges = 0;
