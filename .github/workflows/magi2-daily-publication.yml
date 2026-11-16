@@ -32,12 +32,12 @@ jobs:
         run: |
           [[ "$DAILY_TARGET" =~ ^[a-f0-9]{40}$ ]] || exit 1
           [[ "$DAILY_VERSION_ID" =~ ^[a-fA-F0-9]{8}(-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$ ]] || exit 1
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Fetch target objects without checking out or executing target code
@@ -56,7 +56,7 @@ jobs:
         run: node .github/scripts/magi2-daily-publication-run.mjs
       - name: Save status-only publication evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: magi2-daily-publication-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/magi2-daily-publication.json
