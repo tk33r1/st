@@ -172,7 +172,6 @@
     .m-0 { margin: 0 }
     .mt-4 { margin-top: 1rem }
     .mt-auto { margin-top: auto }
-    .mt-0\.5 { margin-top: 0.125rem }
     .mt-6 { margin-top: 1.5rem }
     .mt-2 { margin-top: 0.5rem }
     .mb-2 { margin-bottom: 0.5rem }
@@ -267,29 +266,20 @@
     .hover\:text-primary:hover { color: var(--primary-color) }
     .overflow-x-auto { overflow-x: auto }
     .overflow-hidden { overflow: hidden }
-    .overflow-y-auto { overflow-y: auto }
     .no-underline { text-decoration: none }
-    .min-w-0 { min-width: 0 }
-    .flex-shrink-0 { flex-shrink: 0 }
     .z-40 { z-index: 40 }
     .border-l { border-left-width: 1px }
     .border-none { border-width: 0 }
     .bg-transparent { background-color: transparent }
-    .text-\[9px\] { font-size: 9px }
     .text-\[11px\] { font-size: 11px }
-    .font-semibold { font-weight: 600 }
     .uppercase { text-transform: uppercase }
     .tracking-widest { letter-spacing: 0.1em }
-    .opacity-60 { opacity: 0.6 }
     .opacity-80 { opacity: 0.8 }
     .ml-1 { margin-left: 0.25rem }
     .mt-1 { margin-top: 0.25rem }
     .pt-3 { padding-top: 0.8125rem }
     .pb-1 { padding-bottom: 0.25rem }
-    .pb-4 { padding-bottom: 1rem }
-    .pr-1 { padding-right: 0.25rem }
     .pr-2 { padding-right: 0.5rem }
-    .p-1\.5 { padding: 0.375rem }
 
     .select-none {
       -webkit-user-select: none;
@@ -311,16 +301,7 @@
       padding-bottom: 0.25rem;
     }
 
-    .py-8 {
-      padding-top: 2rem;
-      padding-bottom: 2rem;
-    }
-
-    .space-y-1\.5> :not([hidden])~ :not([hidden]) { margin-top: 0.375rem }
-    .hover\:bg-surface-alt:hover { background-color: var(--surface-alt) }
-    .hover\:opacity-100:hover { opacity: 1 }
     .hover\:text-red-500:hover { color: #ef4444 }
-    .group:hover .group-hover\:text-primary { color: var(--primary-color) }
 
     .sr-only {
       position: absolute;
@@ -1841,7 +1822,6 @@
         }
 
         .tl-track { padding-left: 0.8rem }
-        .tl-track>div { padding: 0.625rem }
         #editor-gutter { display: none }
 
         #editor-content {
@@ -1858,7 +1838,7 @@
 
         #editor-content .w-\[90\%\] {
           width: 482px;
-          max-width: none;
+          max-width: 100%;
         }
     }
 
@@ -1967,6 +1947,8 @@
     .agent-user {
       display: flex;
       justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
     }
 
     .agent-user>span {
@@ -1983,7 +1965,6 @@
     }
 
     /* 自分のプロンプトの操作（openPromptMenu）。PC はマウスオーバーで ⋯ を出し、指の端末は吹き出しの長押しで開く */
-    .agent-user { align-items: center; gap: 4px }
     .prompt-more { display: none; flex-shrink: 0; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--secondary-color); cursor: pointer; opacity: 0; transition: opacity var(--duration-fast), background-color var(--duration-fast) }
     @media (hover: hover) and (pointer: fine) {
       .prompt-more { display: inline-flex }
@@ -1997,7 +1978,7 @@
       .agent-started { display: none }
       /* AI の回答はスマホでは操作列を出さず、長押しのメニューにまとめる（PC は固定表示のまま） */
       /* 操作列は支援技術とTab移動に残し、フォーカス時には画面にも表示する。 */
-      .agent-reply > .reply-bar:not(:focus-within), .persona-card .reaction-bar:not(:focus-within) { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
+      .agent-reply > .reply-bar:not(:focus-within) { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
       .agent-reply, .persona-card { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: opacity 0.15s ease }
       .agent-reply.is-pressed, .persona-card.is-pressed { opacity: 0.78 }
     }
@@ -2202,19 +2183,17 @@
 
     /* 絵文字のリアクション（agentReactionPicker・agentReactionBadge）。トップページとアプリで同じ見た目 */
     .react-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; }
-    .react-picker > button, .react-more > button { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; min-height: 0; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--secondary-color); font-size: 24px; line-height: 1; cursor: pointer; transition: background-color 0.12s ease; }
+    .react-picker > button { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; min-height: 0; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--secondary-color); font-size: 24px; line-height: 1; cursor: pointer; transition: background-color 0.12s ease; }
     .react-picker > button[data-more] { font-size: 22px; font-weight: 300; }
-    @media (hover: hover) { .react-picker > button:hover, .react-more > button:hover { background: var(--surface-hover); } }
-    .react-picker > button:focus-visible, .react-more > button:focus-visible { background: var(--surface-hover); outline: 2px solid var(--primary-color); outline-offset: -2px; }
-    .react-picker > button:active, .react-more > button:active { background: var(--primary-bg); }
+    @media (hover: hover) { .react-picker > button:hover { background: var(--surface-hover); } }
+    .react-picker > button:focus-visible { background: var(--surface-hover); outline: 2px solid var(--primary-color); outline-offset: -2px; }
+    .react-picker > button:active { background: var(--primary-bg); }
     .react-picker button[aria-checked="true"] { box-shadow: none; }
     .react-picker button[aria-checked="true"]::after { content: ''; position: absolute; left: 5px; right: 5px; bottom: 1px; height: 3px; border-radius: 2px; background: var(--primary-color); pointer-events: none; }
-    .react-more { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, 42px); gap: 2px; justify-content: center; padding-top: 4px; border-top: 1px solid var(--border-color); }
-    .react-more[hidden] { display: none; }
     .rate-pop.react-picker { flex-wrap: wrap; width: max-content; max-width: min(320px, calc(100vw - 32px)); padding: 4px; border-radius: 26px; }
-    .rate-pop.react-picker > button, .rate-pop .react-more > button { min-height: 0; padding: 0; gap: 0; }
+    .rate-pop.react-picker > button { min-height: 0; padding: 0; gap: 0; }
     .prompt-menu .prompt-menu-rate { margin: -2px -2px 6px; padding: 2px 2px 6px; border-bottom: 1px solid var(--border-color); border-top: 0; justify-content: space-between; }
-    .prompt-menu .prompt-menu-rate > button, .prompt-menu .prompt-menu-rate .react-more > button { width: 40px; height: 40px; min-height: 0; padding: 0; justify-content: center; font-size: 24px; }
+    .prompt-menu .prompt-menu-rate > button { width: 40px; height: 40px; min-height: 0; padding: 0; justify-content: center; font-size: 24px; }
     .prompt-menu .prompt-menu-rate button[aria-checked="true"] { color: inherit; }
     /* AGENT_EMOJI_STYLE_BEGIN — Web/PWA/Androidで同じ選択画面 */
     .emoji-dialog { width: min(420px, calc(100vw - 24px)); height: min(600px, 80dvh); max-height: calc(var(--emoji-available, 100dvh) - 24px); margin: auto; padding: 16px; border: 1px solid var(--border-color); border-radius: 24px; background: var(--surface-color); color: var(--text-color); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; box-shadow: 0 16px 60px #0005; overflow: hidden; }
@@ -2272,7 +2251,7 @@
     @keyframes reactBurst { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
     .msg-reaction.pop, .prompt-reaction.pop { animation: reactPop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
     .msg-reaction.pop::after, .prompt-reaction.pop::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; box-shadow: 0 -18px 0 #f59e0b, 13px -13px 0 #ec4899, 18px 0 0 #22c55e, 13px 13px 0 #3b82f6, 0 18px 0 #f59e0b, -13px 13px 0 #ec4899, -18px 0 0 #22c55e, -13px -13px 0 #3b82f6; animation: reactBurst 0.6s ease-out 0.08s both; pointer-events: none; }
-    @media (prefers-reduced-motion: reduce) { .msg-reaction.pop, .prompt-reaction.pop, .msg-reaction.pop::after, .prompt-reaction.pop::after { animation: none; } .msg-reaction.pop::after, .prompt-reaction.pop::after { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .msg-reaction.pop, .prompt-reaction.pop { animation: none; } .msg-reaction.pop::after, .prompt-reaction.pop::after { display: none; } }
 
     .react-btn .rate-icon { width: 18px; height: 18px; }
     /* 統合人格の回答の操作列（読み上げ設計§4.1）。押せる高さは 44px（ボタン 32px と上下 6px）。
@@ -2283,11 +2262,9 @@
     .reply-bar .react-btn svg { width: 17px; height: 17px; }
     .reply-bar .react-btn .rate-icon { width: 20px; height: 20px; }
     .reply-bar .reply-src { margin-left: auto; gap: 0.4rem; padding: 0 0.55rem; }
-    .reply-time { padding: 0 0.35rem; font-size: 11px; color: var(--secondary-color); white-space: nowrap; }
     .agent-reply.streaming .reply-bar { opacity: 0.4; pointer-events: none; }
     .react-btn[data-act="speak"][data-state="loading"], .react-btn[data-act="speak"][data-state="playing"] { color: var(--primary-color); }
-    .speak-wait { animation: speak-spin 0.9s linear infinite; }
-    @keyframes speak-spin { to { transform: rotate(360deg); } }
+    .speak-wait { animation: spin 0.9s linear infinite; }
     @media (prefers-reduced-motion: reduce) { .speak-wait { animation: none; } }
     /* AGENT_REACTION_HOVER_STYLE_BEGIN — 操作バーは本文の寸法を変えずに浮かせる */
     .agent-hover-reactions { position: fixed; z-index: 9400; width: max-content; max-width: calc(100vw - 16px); flex-wrap: nowrap; transition-property: none; gap: 2px; padding: 3px; border: 1px solid var(--border-color); border-radius: 18px; background: var(--surface-color); color: var(--text-color); box-shadow: 0 4px 16px #0003; }
@@ -2879,7 +2856,6 @@
         .persona-round:not([data-round="1"]) { padding-top: 0.4rem }
         .persona-ask { font-size: 14px; line-height: 1.6 }
         .agent-reply { padding: 0.9rem 1rem; line-height: 1.7 }
-        .reply-time { font-size: 13px }
     }
 
     #cmd-palette {
@@ -3050,6 +3026,8 @@
     }
 
     #editor-content { min-width: 0 }
+    /* 中の先頭・末尾の余白を箱の内側に収める（親に padding があるので見た目は変わらない）。行番号の数はこの高さで決める */
+    #output-area { display: flow-root }
 
     #toast-container {
       position: fixed;
@@ -3529,20 +3507,14 @@
     .agent-about-rows > button + button { border-top: 1px solid var(--border-color); }
     .agent-about-rows > button::after { content: '›'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: var(--secondary-color); font-size: 22px; font-weight: 400; }
     .agent-about-rows > button:hover { color: var(--primary-color); }
-    .agent-about-rows > button:focus-visible, .agent-about-faq summary:focus-visible, .agent-about-actions > :focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 8px; }
+    .agent-about-rows > button:focus-visible, .agent-about-faq summary:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 8px; }
     .agent-about-faq details + details { border-top: 1px solid var(--border-color); }
     .agent-about-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 12px 0; box-sizing: border-box; color: var(--text-color); font-size: 14px; font-weight: 550; line-height: 1.5; list-style: none; cursor: pointer; }
     .agent-about-faq summary::-webkit-details-marker { display: none; }
     .agent-about-faq summary::after { content: '⌄'; flex-shrink: 0; margin-top: -0.5em; color: var(--secondary-color); line-height: 1; }
-    .agent-about-faq details[open] > summary::after { margin: 0.5em 0 0; }
-    .agent-about-faq details[open] > summary::after { transform: rotate(180deg); }
+    .agent-about-faq details[open] > summary::after { margin: 0.5em 0 0; transform: rotate(180deg); }
     .agent-about-faq details > p { margin: 0 0 8px; }
     .agent-about-faq details > p:last-child { margin-bottom: 14px; }
-    .agent-about-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    .agent-about-actions:not(:has(> :not([hidden]))) { display: none; }
-    .agent-about-actions > * { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; text-decoration: none; cursor: pointer; }
-    .agent-about-actions > button { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
-    .agent-about-actions > button:disabled { opacity: .45; cursor: default; }
     .agent-privacy-list { list-style: none; margin: 0; padding: 0; }
     .agent-about-page ul.agent-privacy-list { display: block; margin: 0; padding: 0 16px; }
     .agent-about-page .agent-privacy-list li { padding: 14px 0; color: var(--text-color); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
@@ -3589,11 +3561,6 @@
     #agent-bug-form #agent-bug-attach:disabled, #agent-bug-form > button[type="submit"]:disabled { opacity: .45; cursor: default; }
     #agent-bug-form textarea:focus-visible, #agent-bug-form button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
     /* iPhoneでMAGIを使う・保存されたチャット（トップページ）も同じカードと行で描く。 */
-    .agent-install-steps { margin: 0; padding: 0 16px; list-style: none; counter-reset: install-step; }
-    .agent-about-page .agent-install-steps li { position: relative; padding: 14px 0 14px 36px; color: var(--text-color); font-size: 13px; line-height: 1.7; counter-increment: install-step; }
-    .agent-about-page .agent-install-steps li + li { border-top: 1px solid var(--border-color); }
-    .agent-install-steps li::before { content: counter(install-step); position: absolute; left: 0; top: 14px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hover); color: var(--text-color); font-size: 12px; font-weight: 600; line-height: 24px; text-align: center; }
-    .agent-install-steps strong { color: var(--text-color); font-weight: 600; }
     .agent-history-empty { margin-top: 0; padding: 28px 16px; color: var(--secondary-color); text-align: center; }
     .agent-history-rows { margin-top: 0; padding-top: 0; padding-bottom: 0; }
     .agent-history-row { display: flex; align-items: center; gap: 8px; }
@@ -3660,7 +3627,6 @@
 .agent-personalization-form button:not([role="switch"]) { padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; color: inherit; background: transparent; cursor: pointer; }
     /* アプリ管理：短い説明と操作をカードに集め、詳細と編集欄は必要なときだけ開く。 */
     #agent-settings-panel { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    #agent-settings-panel .agent-panel-body { display: block; }
     #agent-settings-panel > .agent-settings-content { flex: 1; }
     #agent-settings-panel [hidden] { display: none !important; }
     #agent-settings-panel .agent-settings-content { width: 100%; max-width: 720px; min-height: 0; margin: 0 auto; padding: 6px 2px 28px; overflow-y: auto; }
@@ -3691,7 +3657,7 @@
     #agent-settings-panel .agent-settings-fields small { color: var(--secondary-color); font-size: 10px; font-weight: 400; }
     #agent-settings-panel .agent-personalization-form input[type="text"], #agent-settings-panel .agent-personalization-form textarea { min-width: 0; padding: 10px 12px; border-color: var(--border-color); border-radius: 10px; font-size: 16px; line-height: 1.5; }
     #agent-settings-panel .personal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    #agent-settings-panel .personal-actions button, #agent-settings-panel .agent-setting-action { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
+    #agent-settings-panel .personal-actions button { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 999px; color: var(--text-color); background: var(--surface-hover); font: inherit; font-size: 13px; cursor: pointer; }
     #agent-settings-panel .personal-actions button[type="submit"] { color: var(--surface-color); background: var(--primary-color); font-weight: 600; }
     #agent-settings-panel [data-personal="delete"] { justify-self: start; min-height: 36px; padding: 4px 0; border: 0; color: #e5484d; font-size: 12px; }
     #agent-settings-panel .native-settings-actions { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0; }
@@ -3706,7 +3672,6 @@
 
     /* 撮影プレビュー。トップページとPWAで同じ表示・操作にする。映像をパネルいっぱいに出し、操作はカメラアプリと同じ形で重ねる。 */
     #agent-camera-panel { padding: 0; background: #000; color: #fff; border-top-width: 0; }
-    #agent-camera-panel .agent-panel-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
     #agent-camera-panel .agent-camera-body { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000; }
     #agent-camera-panel video, #agent-camera-panel .agent-camera-frozen { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
     #agent-camera-panel[data-facing="user"] video, #agent-camera-panel[data-facing="user"] .agent-camera-frozen { transform: scaleX(-1); }
@@ -3720,8 +3685,7 @@
     #agent-camera-panel .agent-camera-status { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     #agent-camera-panel[data-state="error"] .agent-camera-message svg { display: block; }
     #agent-camera-panel[data-state="error"] .agent-camera-status { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; max-width: 22rem; font-size: 13px; line-height: 1.7; }
-    #agent-camera-panel[data-state="starting"] .agent-camera-message::before { content: ''; width: 32px; height: 32px; border: 3px solid rgba(255, 255, 255, 0.25); border-top-color: #fff; border-radius: 50%; animation: agent-camera-spin 0.9s linear infinite; }
-    @keyframes agent-camera-spin { to { transform: rotate(360deg); } }
+    #agent-camera-panel[data-state="starting"] .agent-camera-message::before { content: ''; width: 32px; height: 32px; border: 3px solid rgba(255, 255, 255, 0.25); border-top-color: #fff; border-radius: 50%; animation: spin 0.9s linear infinite; }
     /* 下端：左に写真、中央にシャッター（エラーのときは再試行）、右に前後の切り替え */
     #agent-camera-panel .agent-camera-actions { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 28px calc(24px + var(--magi-safe-right, 0px)) calc(20px + var(--magi-safe-bottom, 0px)) calc(24px + var(--magi-safe-left, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.5)); }
     #agent-camera-panel [data-camera="photo"] { grid-area: 1 / 1; justify-self: start; width: 48px; height: 48px; border-radius: 12px; }
@@ -3900,7 +3864,7 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-  <!-- Icon sprite: only for glyphs used in more than one place. Geometry carries no
+  <!-- Icon sprite for the glyphs the markup draws with <use>. Geometry carries no
        stroke-width, so each <use> site keeps setting its own on the referencing <svg>. -->
   <svg class="hidden" aria-hidden="true">
     <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
@@ -4196,7 +4160,7 @@
             <button id="btn-temporary-agent" class="dock-icon-btn" type="button" aria-label="Temporary chat" aria-pressed="false"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 4"><path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path class="temporary-plus" d="M9 11h6m-3-3v6"/></svg></button>
             <!-- Kebab Menu (More Options) -->
             <div class="relative flex items-center justify-center">
-              <button id="btn-more-agent" class="dock-icon-btn"
+              <button id="btn-more-agent" class="dock-icon-btn" aria-expanded="false" aria-controls="agent-more-dropdown"
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" stroke-width="2"><use href="#ic-kebab" /></svg>
               </button>
@@ -4253,7 +4217,7 @@
             <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
               tabindex="-1">
             <div id="agent-composer">
-              <div id="agent-attach-menu" role="menu" aria-label="Add an image" data-ja-aria="画像を追加" hidden>
+              <div id="agent-attach-menu" role="menu" aria-label="Add photos and files" data-ja-aria="写真やファイルを追加" hidden>
                 <button type="button" role="menuitem" data-source="camera"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg><span
                     data-ja="カメラ">Camera</span></button>
@@ -4264,8 +4228,8 @@
                     fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg><span
                     data-ja="ファイル">Files</span></button>
               </div>
-              <button id="agent-attach" title="Add an image" data-ja-title="画像を追加" data-ja-aria="画像を追加"
-                aria-label="Add an image" aria-haspopup="menu" aria-expanded="false"><svg aria-hidden="true" width="18" height="18" stroke-width="2"><use href="#ic-plus" /></svg></button>
+              <button id="agent-attach" title="Add photos and files" data-ja-title="写真やファイルを追加" data-ja-aria="写真やファイルを追加"
+                aria-label="Add photos and files" aria-haspopup="menu" aria-expanded="false"><svg aria-hidden="true" width="18" height="18" stroke-width="2"><use href="#ic-plus" /></svg></button>
               <div id="agent-input-wrap" class="flex-1">
                 <!-- 内容に合わせて伸び縮みする（fitAgentInput）。PC は Enter で送信・Shift+Enter で改行、スマホは Enter で改行（agentEnterSends） -->
                 <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
@@ -4318,7 +4282,7 @@
     </footer>
   </div>
 
-  <div id="cmd-palette" class="hidden" role="dialog" aria-modal="true" aria-label="Command Palette">
+  <div id="cmd-palette" class="hidden" role="dialog" aria-modal="true" aria-label="Command Palette" data-ja-aria="コマンドパレット">
     <div id="cmd-palette-box">
       <!-- Same combobox contract as #cmd-input: renderPalette() keeps aria-activedescendant
            pointing at the highlighted row, and #cmd-palette-count is an aria-live region so
@@ -4483,6 +4447,9 @@
     // view renders the countdown, and it outlives any single charge.
     let shockReadyAt = 0;
     let sudoContext = null;
+    // ⟳ のたびに進む。遅れて終わる処理（letter.txt の読み込み・拡張機能の導入）は、始めた時の値と
+    // 違っていたら何もしない（リロード後の新しいセッションへ前の結果を持ち込まない）
+    let sessionGen = 0;
     let unreadHistoryCount = 0;
 
     // Shared helpers (deduped across the script).
@@ -5067,8 +5034,6 @@
     // is shown (header + any .dynamic-job-title elements). Shared by theme + language switches.
     function setJobTitle(isDark) {
       config.job_title = jobTitleFor(isDark);
-      const headerJobTitle = document.getElementById('header-job-title');
-      if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
     }
 
@@ -5191,7 +5156,7 @@
         const root = tlChip.closest('[data-timeline]');
         if (root) {
           const f = tlChip.dataset.filter;
-          root.querySelectorAll('[data-action="timeline-filter"]').forEach(c => c.classList.toggle('active', c === tlChip));
+          root.querySelectorAll('[data-action="timeline-filter"]').forEach(c => { c.classList.toggle('active', c === tlChip); c.setAttribute('aria-pressed', String(c === tlChip)); });
           const items = root.querySelectorAll('.tl-item');
           items.forEach(it => {
             const matches = (f === 'all' || it.dataset.cat === f);
@@ -5321,6 +5286,10 @@
         e.preventDefault();
         const i = tabOrder.indexOf(cmd);
         if (i >= 0 && tabOrder.length) focusTab(tabOrder[wrapIndex(i, e.key === 'ArrowRight' ? 1 : -1, tabOrder.length)]);
+      } else if (e.key === 'Home' || e.key === 'End') {
+        // #panel-tabs と同じく両端へ移る（矢印と同じで、選ぶのは Enter/Space）
+        e.preventDefault();
+        if (tabOrder.length) focusTab(tabOrder[e.key === 'Home' ? 0 : tabOrder.length - 1]);
       }
     });
 
@@ -5657,8 +5626,8 @@
               <div class="text-sm font-bold glow mb-1 text-primary">${tr('Timeline', 'タイムライン')}</div>
               <div class="text-xs mb-3 text-secondary">${tr('Moments and impulses that shaped me.', '私を形づくった瞬間と衝動。')}</div>
               <div class="flex gap-2 mb-4">
-                <button type="button" class="tl-chip active" data-action="timeline-filter" data-filter="all">${tr('All', 'すべて')}</button>
-                ${cats.map(c => `<button type="button" class="tl-chip" data-action="timeline-filter" data-filter="${c.key}">${esc(c.label)}</button>`).join('\n                ')}
+                <button type="button" class="tl-chip active" aria-pressed="true" data-action="timeline-filter" data-filter="all">${tr('All', 'すべて')}</button>
+                ${cats.map(c => `<button type="button" class="tl-chip" aria-pressed="false" data-action="timeline-filter" data-filter="${c.key}">${esc(c.label)}</button>`).join('\n                ')}
               </div>
               <div>${rows}</div>
             </div>
@@ -5685,7 +5654,9 @@
         const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.terminalLog.appendChild(loadingDiv); scrollTerminal();
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `${tr('Loading', '読み込み中')}...  ${spinners[frameIndex++ % 4]}`; }, 300);
+        const gen = sessionGen;
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
+        if (gen !== sessionGen) return null;
         return `<div class="letter my-4 border text-sm relative">
           <div class="letter-head">LETTER.TXT</div>
           <p class="letter-body">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
@@ -6287,7 +6258,7 @@
         };
         // Element to scroll for a pan of (dx, dy) under (x, y): nearest scrollable ancestor that can
         // still move that way (chains past inner boxes at their limit, like native scrolling).
-        const canScroll = (el, axisAuto, pos, max, delta) =>
+        const canScroll = (axisAuto, pos, max, delta) =>
           axisAuto && max > 0 && ((delta < 0 && pos > 0) || (delta > 0 && pos < max - 1));
         const scrollTargetFor = (x, y, dx, dy) => {
           let el = document.elementFromPoint(x, y), fallback = null;
@@ -6297,8 +6268,8 @@
             const ox = /(auto|scroll)/.test(s.overflowX) && el.scrollWidth > el.clientWidth;
             if (oy || ox) {
               if (!fallback) fallback = el;
-              if (canScroll(el, oy, el.scrollTop, el.scrollHeight - el.clientHeight, dy) ||
-                canScroll(el, ox, el.scrollLeft, el.scrollWidth - el.clientWidth, dx)) return el;
+              if (canScroll(oy, el.scrollTop, el.scrollHeight - el.clientHeight, dy) ||
+                canScroll(ox, el.scrollLeft, el.scrollWidth - el.clientWidth, dx)) return el;
             }
             el = el.parentElement;
           }
@@ -7387,6 +7358,7 @@
       DOM.inputLine.classList.remove('hidden'); DOM.inputLine.classList.add('flex', 'fade-in');
       DOM.input.focus({ preventScroll: true });
       updateCaret();
+      booted = true;
 
       if (targetCmd) {
         await delay(500);
@@ -7458,7 +7430,7 @@
       if (!e.target.isConnected) return;
       if (sidebarEl.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sidebarEl.classList.remove('open'); return; }
       if (isMobile() && agentDockEl.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"], [data-act="settings"]')) { closeAgentDock(); return; }
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
+      if (!window.getSelection().toString() && !e.target.closest('a, button, summary, select, textarea, label, input, [role="button"], [role="tab"], .cursor-pointer, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
     });
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
@@ -7467,9 +7439,13 @@
     // start a *second* boot() alongside the first — duplicated banner lines, and the ?cmd=
     // easter egg run twice.
     let reloading = false;
+    // 初回の boot() がバナーを出し終えるまでは ⟳ を受け付けない（二つの boot() が並走する）。
+    // ?cmd= の実行は待たない（長いコマンドの間ずっとリロードできなくなるため）
+    let booted = false;
     async function softReload() {
-      if (reloading) return;
+      if (reloading || !booted) return;
       reloading = true;
+      sessionGen++;
       const overlay = document.getElementById('close-overlay');
       if (overlay) overlay.remove();
       DOM.app.style.opacity = '0';
@@ -7478,6 +7454,9 @@
       commandHistory = [];
       inputHistory = [];
       unreadHistoryCount = 0;
+      // sudo のパスワード待ちのままだと、入力欄が伏せ字のまま次のコマンドをパスワードとして読む
+      sudoContext = null; restorePrompt();
+      extPending.clear();
       updateGitBadge();
       // The notification centre is session state like everything else here: leaving the bell
       // holding pre-reload toasts (and their unread count) was the one thing that survived.
@@ -7538,6 +7517,7 @@
 
     document.getElementById('btn-close').addEventListener('click', async () => {
       DOM.app.style.opacity = '0'; await delay(500);
+      if (document.getElementById('close-overlay')) return; // 連打で重ねない（softReload は1枚しか外さない）
       const overlay = document.createElement('div'); overlay.id = 'close-overlay';
       overlay.innerHTML = `<div>${tr('Connection closed.', '接続を終了しました。')}</div><div class="hover:underline text-primary">${tr('[ Click anywhere to reconnect ]', '[ クリックして再接続 ]')}</div>`;
       overlay.addEventListener('click', () => { softReload(); });
@@ -7777,7 +7757,9 @@
       extPending.add(cmd);
       btn.innerHTML = `<span class="ext-spinner"></span> ${act.spinner()}`;
       btn.disabled = true;
+      const gen = sessionGen;
       setTimeout(() => {
+        if (gen !== sessionGen) return; // リロードで導入状態も extPending も初期化済み
         extPending.delete(cmd);
         act.apply(cmd);
         renderExtensions();
@@ -7971,7 +7953,7 @@
     // PC（マウス・トラックパッド）には［共有］を出さない（Windows の共有画面は送り先のアプリによって本文が入らない・下に入る。
     // コピーで足りる）。共有シートが開けなかったときはコピーする
     async function shareAgentReply(btn, bar, item, download) {
-  if (agentTemporary()) return;
+      if (agentTemporary()) return;
       const content = agentReplyShare(item, currentLang === 'ja'), text = content.text, title = agentTitle || 'MAGI';
       // まず回答を画像（MAGI_SHARE_IMAGE）にして渡す。画像で渡せない端末では、従来どおり文で共有する
       try { if (await agentShareImage(content.image, { complete: true, download: !!download })) return; }
@@ -8997,6 +8979,8 @@ function magiAcronymController(el) {
     let agentGen = 0, agentCtrl = null;
     function dropAgentRequest() {
       agentGen++;
+      // 送信前の確認（agentPrivacyRequest）も止める。待つ間は preparing が次の送信と一時チャットの切替を止めている
+      cancelAgentPrivacyPreparation();
       if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
       setAgentStopMode(false);
       // 予測は直前の会話に対するものなので、会話が替わったら捨てる
@@ -10989,15 +10973,17 @@ async function parseSSE(body, handlers, onChunk) {
         + `<button type="button" class="attach-x" data-i="${i}" title="${tr('Remove', '削除')}" aria-label="${tr('Remove attachment', '添付を削除')}"><span aria-hidden="true">×</span></button></span>`).join('')
         + (attachNotice ? `<span class="attach-note">${esc(attachNotice)}</span>` : '');
     }
+    let attachNoticeTimer = null;
     function noticeAttach(msg) {
       attachNotice = msg; renderAttachTray();
-      setTimeout(() => { attachNotice = ''; renderAttachTray(); }, 2500);
+      clearTimeout(attachNoticeTimer); // 前の注意文のタイマーで新しい注意文を消さない
+      attachNoticeTimer = setTimeout(() => { attachNotice = ''; renderAttachTray(); }, 2500);
     }
     async function addAttachments(files) {
-  if (agentPrivacyState.switching || agentPrivacyState.preparing) return;
-  agentPrivacyState.attachmentJobs++; syncAgentPrivacyUI();
-  try { return await addAgentAttachments(files); }
-  finally { agentPrivacyState.attachmentJobs--; syncAgentPrivacyUI(); }
+      if (agentPrivacyState.switching || agentPrivacyState.preparing) return;
+      agentPrivacyState.attachmentJobs++; syncAgentPrivacyUI();
+      try { return await addAgentAttachments(files); }
+      finally { agentPrivacyState.attachmentJobs--; syncAgentPrivacyUI(); }
 }
 async function addAgentAttachments(files) {
       if (agentDead || agentClosed) return;
@@ -11257,8 +11243,7 @@ function showAgentCamera() {
       if (e.key === 'Escape') { setAttachMenu(false); attachBtn.focus(); return; }
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       const items = [...attachMenu.querySelectorAll('[data-source]')].filter(item => !item.hidden);
-      const next = items.indexOf(document.activeElement) + (e.key === 'ArrowDown' ? 1 : -1);
-      e.preventDefault(); items[(next + items.length) % items.length].focus();
+      e.preventDefault(); items[wrapIndex(items.indexOf(document.activeElement), e.key === 'ArrowDown' ? 1 : -1, items.length)].focus();
     });
     document.addEventListener('pointerdown', (e) => {
       if (!attachMenu.hidden && !e.target.closest('#agent-attach-menu, #agent-attach')) setAttachMenu(false);
@@ -11758,13 +11743,13 @@ function agentRethinkError(code) {
       // 考え直し（retry.rethink）は、まとめた質問を入力欄に置いてから呼ぶ。入力欄から読み、［もう一度］の置き換え（mid）だけを引き継ぐ
       var draftText = retry && !retry.rethink ? retry.text : agentInput.value;
       var text = retry ? (retry.rethink ? draftText.trim() : retry.text) : agentClarifyAnswer(lastAgentTurn(), draftText.trim());
-  if (text === null) { announceAgent(tr('Keep the full answer within 1,000 characters and Other within 100.', '回答全体を1000文字以内、その他を100文字以内にしてください。')); return; }
+      if (text === null) { announceAgent(tr('Keep the full answer within 1,000 characters and Other within 100.', '回答全体を1000文字以内、その他を100文字以内にしてください。')); return; }
       const atts = retry && !retry.rethink ? retry.atts : attachments.slice();
       if (!text && !atts.length) return;
       const retryOf = retry ? retry.mid : null;
       agentRetryEls(retryOf).forEach(el => { el.hidden = true; });
       const sendHistory = () => { const pair = agentRetryPair(retryOf); return pair.length ? agentHistory.filter(it => !pair.includes(it)) : agentHistory; };
-  var clarifyDraft = retry ? null : freezeAgentClarify();
+      var clarifyDraft = retry ? null : freezeAgentClarify();
       const startedAt = Date.now();
       // 高速モード（AGENT_REPLY_MODE）は討議をしないので、採決（MAGI）の対応も送らない
       const fastReply = agentReplyMode() === 'fast';
@@ -11780,7 +11765,7 @@ function agentRethinkError(code) {
       const sendContent = atts.length ? partsOf('url') : text;
       const storeContent = atts.length ? partsOf('thumb') : text;
       if (splashOnly()) agentLog.innerHTML = '';
-  agentClarifyPlaceholder(false);
+      agentClarifyPlaceholder(false);
       const sentAt = Date.now();
       const u = userBubbleEl(storeContent, sentAt);
       agentLog.appendChild(u); markAgentStarted();
@@ -11899,7 +11884,7 @@ function agentRethinkError(code) {
               if (magiView) magiView.push('ask', d); else agentScroll();
             },
             clarify: function (d) { if (!dropped()) { clarifyReply = cleanAgentClarify(d); reply = agentClarifyText(clarifyReply); thinking.finish(); } },
-        integrated: function (d) {
+            integrated: function (d) {
               if (dropped()) return;
               turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); });
               reply += d.delta || '';
@@ -11972,7 +11957,7 @@ function agentRethinkError(code) {
         // debateData is this call's own object and the stream is over, so it is stored as is.
         Object.keys(debateData).forEach(function (cn) { if (debateData[cn].round2 === '…') delete debateData[cn].round2; });
         if (closedReply) closeAgentConversation(turn);
-    if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
+        if (clarifyReply) { renderAgentClarify(turn, clarifyReply, true); replyEl.querySelector('.reaction-bar')?.remove(); }
         if (retryOf) { agentHistory = sendHistory(); agentRetryEls(retryOf).forEach(el => el.remove()); }
         agentHistory.push(agentReplyItem({
           reply, thinkingSeconds: thinking.finish(), closed: closedReply, fact: factReply, fast: fastReply, sources: replySources, debate: debateData,
@@ -12016,7 +12001,7 @@ function agentRethinkError(code) {
           const back = agentInput.value.trim() || attachments.length ? agentRethinkMerge(sentText, atts, agentInput.value, attachments) : { text: sentText, atts };
           if (!back.error) { agentInput.value = back.text; attachments = back.atts; renderAttachTray(); fitAgentInput(); }
         }
-    restoreAgentClarify(clarifyDraft);
+        restoreAgentClarify(clarifyDraft);
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
         if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) renderAgentSplash();
@@ -12198,7 +12183,7 @@ async function unregisterReaction(bar, target) {
       if (!btn) return;
       const bar = btn.closest('.reaction-bar');
       const act = btn.getAttribute('data-act');
-  if (agentTemporary() && ['rate','share'].includes(act)) return;
+      if (agentTemporary() && ['rate','share'].includes(act)) return;
       if (act === 'rate') { openRatePop(btn, bar); return; }
       if (act === 'retry') { const retry = agentRetryFor(btn); if (retry) agentSend(retry); return; }
       if (act === 'speak' || act === 'share' || act === 'sources') {
@@ -12286,7 +12271,7 @@ async function unregisterReaction(bar, target) {
     // 現在の会話を Saved Sessions にリアルタイム同期する
     // （新規ならリストの先頭に追加、既存なら該当セッションを更新して先頭に移動）
     function syncCurrentToSaved() {
-  if (agentTemporary()) return;
+      if (agentTemporary()) return;
       if (!agentHistory || agentHistory.length === 0) return;
 
       const firstUserMsg = agentHistory.find(m => m.role === 'user');
@@ -12452,7 +12437,7 @@ function makeAgentPanel(id, title, bodyHTML) {
     }
 
     function loadSavedSession(id) {
-  agentEndTemporary();
+      agentEndTemporary();
       syncCurrentToSaved(); // 現在の会話を保存
 
       const session = loadSavedSessions().find(s => s.id === id);
@@ -12468,8 +12453,11 @@ function makeAgentPanel(id, title, bodyHTML) {
       currentSessionId = session.id;
       safeStore('magi_current_session_id', currentSessionId);
       saveAgentLanguage(session.reply_language);
+      agentLastSend = null; // 前の会話で最後に送った質問の原寸。開いた会話の［もう一度］には使わない
       renderHistoryToLog(agentHistory);
       updateAgentActionButtons();
+      // 一時チャットを終えたときは agentEndTemporary が添付と入力欄の値を空にしている。表示と送信ボタンも合わせる
+      renderAttachTray(); fitAgentInput();
     }
 
     function deleteSavedSession(id) {
@@ -12630,12 +12618,12 @@ function showFAQPanel() {
     [tr('How do I report a problem?', '不具合を見つけたら？'), tr('Choose Report a bug in the more menu and describe what you did, what happened and what you expected, in up to 2,000 characters. You can attach up to three PNG, JPEG or WebP images (5 MB each, 10 MB total). Do not include passwords or other sensitive information.', '︙の「バグを報告」から、行った操作・起きたこと・期待していた動作を2000文字以内で教えてください。PNG・JPEG・WebPの画像を3枚まで（1枚5MB・合計10MB）添付できます。パスワードなどの機密情報は入力しないでください。')],
     [tr('Where can I check for updates?', '更新はどこで確認する？'), tr('Open “Version information” under “About MAGI”. Android checks for app updates there; the Web and PWA versions show the current version and release history.', '「MAGIについて」の「バージョン情報」を開いてください。Androidではアプリの更新を確認でき、Web・PWAでは現在の版と更新履歴を確認できます。')]
   ];
-  var panel = makeAboutPanel('agent-faq-panel', 'FAQ', aboutBody('<div class="agent-about-card agent-about-faq">' + rows.map(function (row) {
+  makeAboutPanel('agent-faq-panel', 'FAQ', aboutBody('<div class="agent-about-card agent-about-faq">' + rows.map(function (row) {
     return '<details><summary>' + row[0] + '</summary><p>' + row[1] + '</p></details>';
   }).join('') + '</div>'));
 }
 function showTermsPanel() {
-  var panel = makeAboutPanel('agent-terms-panel', tr('Terms of Use', '利用規約'), aboutBody(
+  makeAboutPanel('agent-terms-panel', tr('Terms of Use', '利用規約'), aboutBody(
     '<div class="agent-about-card"><p>' + tr('MAGI is an experimental parody operated by Shinya Takeda on tk.st. It is not intended for practical work.', 'MAGIは武田伸也がtk.stで運営する実験的なパロディです。実務での利用は想定していません。') + '</p>'
     + '<p>' + tr('AI answers may contain errors. Check important information yourself before using it.', 'AIの回答には誤りが含まれることがあります。重要な情報は、ご自身で確かめてから利用してください。') + '</p>'
     + '<p>' + tr('Do not enter confidential or personal information. Do not use the service for illegal activity, infringement of others’ rights, discrimination or violence.', '機密情報や個人情報を入力しないでください。違法行為、他者の権利の侵害、差別や暴力を助長する目的で利用しないでください。') + '</p>'
@@ -12792,20 +12780,28 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
 
     const moreBtn = document.getElementById('btn-more-agent');
     const moreDropdown = document.getElementById('agent-more-dropdown');
+    // 開閉は aria-expanded とそろえる。Esc で閉じてボタンへ戻し、↑↓で項目を移る（添付・返答モードのメニューと同じ操作）
+    const setMoreMenu = (open) => { moreDropdown.classList.toggle('hidden', !open); moreBtn.setAttribute('aria-expanded', String(open)); };
     moreBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      moreDropdown.classList.toggle('hidden');
+      setMoreMenu(moreDropdown.classList.contains('hidden'));
     });
     document.addEventListener('click', (e) => {
-      if (!moreDropdown.classList.contains('hidden') && !e.target.closest('#agent-more-dropdown')) {
-        moreDropdown.classList.add('hidden');
-      }
+      if (!moreDropdown.classList.contains('hidden') && !e.target.closest('#agent-more-dropdown')) setMoreMenu(false);
     });
     moreDropdown.querySelectorAll('button, a').forEach(item => {
-      item.addEventListener('click', () => {
-        moreDropdown.classList.add('hidden');
-      });
+      item.addEventListener('click', () => setMoreMenu(false));
     });
+    [moreBtn, moreDropdown].forEach(el => el.addEventListener('keydown', (e) => {
+      if (moreDropdown.classList.contains('hidden')) return;
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setMoreMenu(false); moreBtn.focus(); return; }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = [...moreDropdown.querySelectorAll('button:not([disabled]), a[href]')];
+      if (!items.length) return;
+      e.preventDefault();
+      const i = items.indexOf(document.activeElement), dir = e.key === 'ArrowDown' ? 1 : -1;
+      items[i < 0 ? (dir > 0 ? 0 : items.length - 1) : wrapIndex(i, dir, items.length)].focus();
+    }));
 
     // エクスポート＆共有ロジック
     function updateAgentActionButtons() {
@@ -12879,13 +12875,16 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
       }
       try {
         await navigator.clipboard.writeText(md);
-        const originalTitle = btn.getAttribute('title');
-        btn.setAttribute('title', 'Copied to clipboard! ✓');
-        const originalText = agentTitleEl.innerHTML;
-        agentTitleEl.innerHTML = `<span class="text-sm inline-block">✓</span> COPIED!`;
+        const copiedTitle = 'Copied to clipboard! ✓', copiedText = `<span class="text-sm inline-block">✓</span> COPIED!`;
+        const originalTitle = btn.getAttribute('title'), originalText = agentTitleEl.innerHTML;
+        btn.setAttribute('title', copiedTitle);
+        agentTitleEl.innerHTML = copiedText;
+        // 2秒の間に題名が替わった（会話の切替・要約・言語）か、もう一度押して戻し済みなら触らない
         setTimeout(() => {
-          btn.setAttribute('title', originalTitle);
-          agentTitleEl.innerHTML = originalText;
+          if (btn.getAttribute('title') === copiedTitle && originalTitle !== copiedTitle) {
+            if (originalTitle === null) btn.removeAttribute('title'); else btn.setAttribute('title', originalTitle);
+          }
+          if (agentTitleEl.innerHTML === copiedText && originalText !== copiedText) agentTitleEl.innerHTML = originalText;
         }, 2000);
       } catch (err) {
         console.error('Clipboard copy failed', err);
@@ -12975,8 +12974,12 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
     // both divide by it, and all three used to spell 20 separately.
     const LINE_H = 20;
     function updateGutter() {
-      const h = Math.max(DOM.editorContent.scrollHeight, DOM.editor.clientHeight);
+      // #editor-content はガターと同じ行で引き伸ばされるので、その高さはガターより低くならない（ガターを伸ばすと
+      // 本文も伸び、行数が増え続ける）。引き伸ばされない #output-area（flow-root で中の余白も含む）に上下の余白を足して測る
+      const cs = getComputedStyle(DOM.editorContent);
+      const h = Math.max(DOM.output.offsetHeight + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0), DOM.editor.clientHeight);
       const n = Math.max(1, Math.ceil(h / LINE_H));
+      if (DOM.gutter.childElementCount === n) return; // 行数が同じなら作り直さない
       let html = '';
       for (let i = 1; i <= n; i++) html += `<div class="ed-ln">${i}</div>`;
       DOM.gutter.innerHTML = html;
@@ -13006,7 +13009,11 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
         gutter.querySelectorAll('.ed-ln.active').forEach(el => el.classList.remove('active'));
       });
       ed.addEventListener('scroll', measure, { passive: true });
-      window.addEventListener('resize', () => { measure(); updateGutter(); });
+      // 本文の高さは <details> の開閉・絞り込み・ドラッグでの幅の変更でも変わる。どれも1フレームにまとめて追う
+      let frame = 0;
+      const refresh = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; measure(); updateGutter(); }); };
+      if (window.ResizeObserver) { const ro = new ResizeObserver(refresh); ro.observe(ed); ro.observe(DOM.output); }
+      window.addEventListener('resize', refresh);
     })();
 
     // --- Inline IntelliSense suggestions on the terminal input ---
@@ -13250,7 +13257,9 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
         chordK = false; if (chordTimer) clearTimeout(chordTimer);
         if (mod && key === 't') { e.preventDefault(); toggleTheme(); return; }
       }
-      if (modalOpen() || !mod) return; // an open dialog owns the keyboard
+      // an open dialog owns the keyboard: the APK dialog, the palette, a modal <dialog> (emoji picker,
+      // temporary-chat settings) and the "connection closed" overlay
+      if (!mod || modalOpen() || document.querySelector('dialog[open], #close-overlay')) return;
       const SHORTCUTS = {
         p: () => openPalette(e.shiftKey ? '>' : ''),
         b: toggleSidebar,
@@ -13264,6 +13273,9 @@ document.getElementById('btn-about-agent').addEventListener('click', showAboutPa
       SHORTCUTS[key]();
     });
 
+    // 先頭の静的な索引（JS が無い環境と検索エンジン向けの .sr-only のリンク）は、画面に見えないまま
+    // Tab の順番の先頭を占めるので、ターミナルが動くときは Tab の対象から外す（読み上げの閲覧では読める）
+    document.querySelectorAll('body > .sr-only a[href]').forEach(a => { a.tabIndex = -1; });
     boot();
     renderExtensions();
     recountProblems();
