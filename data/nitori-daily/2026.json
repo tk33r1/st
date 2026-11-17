@@ -1,5 +1,311 @@
 [
   {
+    "date": "20261117",
+    "title": "2026年11月17日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリHDは今期の純増店舗数計画を143店舗から62店舗へ修正し、81店舗減らすと示した。量の拡大から立地の質を重視する方針への転換が具体化している。 島忠事業は利益体質への転換が進み、関東・関西ではニトリとの合同出店も計画されている。グループ内で店舗機能を補完する動きが広がっている。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリHDは今期の純増店舗数計画を143店舗から62店舗へ修正し、81店舗減らすと示した。量の拡大から立地の質を重視する方針への転換が具体化している。",
+      "島忠事業は利益体質への転換が進み、関東・関西ではニトリとの合同出店も計画されている。グループ内で店舗機能を補完する動きが広がっている。",
+      "2,490円の室内物干しや99円の丸ボウルなど、低価格で実用性の高い商品が生活者から高評価を得ている。SNSでも店舗そのものへの共感投稿が反響を集めている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリHD、今期の純増店舗数を143→62に修正　81店舗減「立地を吟味した結果」",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-06",
+        "summary": "ニトリホールディングスは今期の純増店舗数の計画を143店舗から62店舗へ修正し、81店舗を減らすと示した。理由は立地を吟味した結果とされる。前期までの通期計画据え置きに続く具体的な店舗計画の見直しであり、出店数を追うより個々の立地の質を優先する姿勢がうかがえる。",
+        "why_it_matters": "出店数を絞り込み、立地の質を優先する方針は、既存店の収益性や在庫・物流の効率を高める狙いと読める。新規出店を急がず店舗網の最適化を進める姿勢は、今後の利益率改善の確度を測る重要な指標になる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "出店計画",
+          "経営"
+        ],
+        "search_terms": [
+          "出店計画の見直し",
+          "store opening plan revision",
+          "Nitori store network",
+          "純増店舗数 修正"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5iMG5LZmg5dHdJaF9DVEIydEFld0prTnRSQlJyeUpqXzZSVFhPRE1HczFPU29VdG1TMGV1QzZ3dDZ3RHJ5aWVGSzc0dzBaMU1nNWZSUE90TWc?oc=5",
+        "source_pub_ts": 1794797280
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "島忠事業が利益体質へ転換、関東・関西でニトリとの合同出店を計画",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-05",
+        "summary": "島忠事業は利益体質への転換が進んでいると報じられた。関東と関西ではニトリとの合同出店も計画されており、グループ内で店舗機能を相互に補完する動きが具体化している。島忠の店舗網を活用して、ホームセンターやインテリア需要を取り込む狙いがうかがえる。",
+        "why_it_matters": "グループ内での合同出店は、ニトリ単独では難しい大型売場や商圏の補完を可能にする。不動産や販管費の共有によるコスト効率化にもつながり、買収後の統合効果が数字に表れ始めたことを示す材料になる。",
+        "tags": [
+          "ニトリ",
+          "島忠",
+          "合同出店",
+          "店舗展開"
+        ],
+        "search_terms": [
+          "合同出店",
+          "joint store opening",
+          "島忠 利益改善",
+          "Shimachu store integration"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5qMHJPbG4wODVZTHgyWjlCcHFXSU5NR1hHOS1xcWNIYzZIRjVjY3JBN3RsRjluYVhzUU5oc3E1Nlh1OFByNTdSZjg1Z2diMkFHeS1xWnFkNTE?oc=5",
+        "source_pub_ts": 1794805140
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "【N+】冬の定番「あったかパンツシリーズ」が税込3,490円から登場",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-08",
+        "summary": "ニトリのPBブランド「N+」から、冬に頼れる「あったかパンツシリーズ」が税込3,490円から登場した。起毛素材や吸湿発熱素材など、好みに応じて選べる複数のバリエーションを用意している。機能素材を複数の選択肢で揃え、冬の防寒ニーズに対応する新商品である。",
+        "why_it_matters": "起毛と吸湿発熱という異なる機能を価格差のある複数の選択肢で提示するのは、同一カテゴリ内で顧客の好みを取り込むSPA型の商品設計だ。3,490円からという入口価格は衣料の日常使いを促し、冬場の買い回り客数を伸ばす材料になる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "PB",
+          "冬物衣料",
+          "新商品"
+        ],
+        "search_terms": [
+          "冬物パンツ 新商品",
+          "winter pants PB launch",
+          "起毛 吸湿発熱 防寒",
+          "N+ apparel"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9Ueks0TS1ZVGFHMXhOeFMyM3lNTEFxaXhpV3dWSk1GWXIzRGk2cU1YU3RUaFJlaG9zTl9QQjFjckNCbjRBUlJSMHZGalVydkdCUlMtbDBYYUU2Nk0wVm1hYjVZb1pKRTRWbnc?oc=5",
+        "source_pub_ts": 1794794402
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの袖付きスマホ毛布が好評、布団でスマホを見ても肩や腕が冷えない",
+        "original_title": "",
+        "source": "All About ニュース",
+        "source_id": "JP-02",
+        "summary": "ニトリの「袖付きスマホ毛布」が、布団の中でスマホを見る際に肩や腕が冷えない点で好評と紹介された。寝具にいながら端末を使う夜の習慣に合わせた生活提案で、冬場の寝床周りの快適性を高める商品として注目されている。",
+        "why_it_matters": "スマホ利用時の冷えという、寝具の新しい使用シーンに着目した発想が共感を集めている。ブランケットを体の一部を覆う形状へ拡張する商品設計は、生活者の困りごとを起点にした開発の好例で、寝具カテゴリに新たな需要を生む可能性がある。",
+        "tags": [
+          "ニトリ",
+          "寝具",
+          "毛布",
+          "商品開発"
+        ],
+        "search_terms": [
+          "袖付き毛布",
+          "sleeved blanket",
+          "スマホ 寝具 防寒",
+          "smartphone blanket with sleeves"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE15MmY0OTk2T1g3WElCYXlNSVpDQ3NpVjhEbjFyT1dLMWRNaTFLdHRQYXdCc0FkUndzWDBhN2pXNlZ6MXRXbG51YjBsM0xkSnJybkhUc1QtVWNIUQ?oc=5",
+        "source_pub_ts": 1794819600
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの2,490円室内物干しが「3人分の洗濯物が干せる」と大好評",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-03",
+        "summary": "ニトリの2,490円の室内物干しが、3人分の洗濯物を干せると好評を集めている。雨の日の室内干し用として、タオルや服、靴下まで干しやすく、コンパクトで軽い点が評価された。低価格帯で生活動線に合う収納型アイテムとして支持が広がっている。",
+        "why_it_matters": "3人分の洗濯物を2,490円で干せる容量は、価格と機能のバランスが生活者に伝わりやすいことを示す。室内干しは季節性が強いため、ヒット商品として定番化すれば季節ごとの売場提案の軸になり得る。",
+        "tags": [
+          "ニトリ",
+          "物干し",
+          "室内干し",
+          "商品開発"
+        ],
+        "search_terms": [
+          "室内物干し",
+          "indoor drying rack",
+          "雨の日 洗濯 室内干し",
+          "compact laundry rack"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9pcVAyYnJKdlVqR3U5NDQ1QTdsS2VCN2tKUUx1dGhBdnZ1SUNpTXo4dVNTTTNWV2JKU1V4NWhqR1hkRU9OME9HNzZNYldjN2Q4X1RTZ3l0UEphRmVsd0dDZEJtRE1VckwxR0pJ?oc=5",
+        "source_pub_ts": 1794814800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの99円丸ボウルが高評価、シチューからご飯茶碗まで毎日使える",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ニトリの99円丸ボウルが「シチューやカレー、ご飯茶碗用に毎日使っている」と高評価を得ている。使い勝手の良さからもう一つ買い足す声も多く、100円前後の価格で日常使いの定番になっている。低価格でも実用性を重視した商品設計が支持されている。",
+        "why_it_matters": "99円で複数の用途に使えることが、リピートや買い足しを生む構造は、SPAによる企画・調達の効率を示す好例である。日用品の一点を「もう一つ欲しい」と思わせる設計は、客単価を押し上げる入口商品としての役割も担う。",
+        "tags": [
+          "ニトリ",
+          "食器",
+          "99円",
+          "商品開発"
+        ],
+        "search_terms": [
+          "99円 丸ボウル",
+          "low price bowl",
+          "食器 買い足し",
+          "value tableware"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1sbC1sRGl1cEgxcE5ScmxDOEVhd1JpQk9jU3E4S0hkNlpWLVBXZkxEdzJmc09BOTNCSFduWnZJcEp1NXVuTDFVSXk2Q24xSzRRc25ob3VRY2d0UlZaRlVuUTVaWDUwVFd3bHZz?oc=5",
+        "source_pub_ts": 1794805200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリで買った冬アイテムの写真投稿が1,993いいね、購入品を見せたくなる商品力",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "Xで「ニトリで買った最新冬アイテム」と写真付きで投稿された内容が、1,993いいね、127リポストを集めた。投稿文は短く商品の詳細は含まれないが、購入した冬物を見せ合う形で共感が広がっており、買い物の成果を共有したくなる商品力がうかがえる。",
+        "why_it_matters": "説明の少ない投稿でも二千近い反響があったことは、冬の新作を買って誇らしく見せたくなる訴求力が生活者に届いていることを示す。店頭での色味や質感の見え方が、SNS拡散の起点になり得るため、写真映えする陳列や冬商品の開発に示唆を与える。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "冬物",
+          "反響"
+        ],
+        "search_terms": [
+          "ニトリ 冬アイテム 投稿",
+          "Nitori winter haul SNS",
+          "購入品 シェア 共感",
+          "social buzz winter items"
+        ],
+        "url_note": "",
+        "url": "https://x.com/chihuahua_1223/status/2122324552491651322",
+        "source_pub_ts": 1794826800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "パーマ帰りに自撮りしたくなるニトリ、気軽に立ち寄れる店舗体験への共感",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-02",
+        "summary": "パーマをかけた足で入ったニトリで自撮りしたくなるという、軽妙な投稿が1,309いいねを集めた。買い物の目的を特に持たずに立ち寄り、気分を上げられる場所として店舗が受け止められていることがうかがえる投稿である。",
+        "why_it_matters": "店舗が買う場所にとどまらず、日常の寄り道先として生活者に認識されていることを示す。自然に撮りたくなる明るい売場や回遊しやすい動線は、来店頻度を高めるリアル店舗のUX設計の示唆になる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "店舗体験",
+          "来店"
+        ],
+        "search_terms": [
+          "ニトリ 店舗体験 投稿",
+          "store visit social post",
+          "寄り道 買い物 気分転換",
+          "in-store experience buzz"
+        ],
+        "url": "https://x.com/sono_rin_/status/2122256720579940689",
+        "source_pub_ts": 1794826800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリで買った最新冬アイテム pic.x.com/JwmWD0w9Qk",
+        "platform": "x",
+        "author": "@chihuahua_1223",
+        "url": "https://x.com/chihuahua_1223/status/2122324552491651322",
+        "likes": 1993,
+        "retweets": 127,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:42",
+        "captured_at": "",
+        "text": "ニトリで買った最新冬アイテム pic.x.com/JwmWD0w9Qk",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "パーマかけた足で入ったニトリで自撮りしちゃうよな pic.x.com/jHt7tzqo7B",
+        "platform": "x",
+        "author": "@sono_rin_",
+        "url": "https://x.com/sono_rin_/status/2122256720579940689",
+        "likes": 1309,
+        "retweets": 23,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:13",
+        "captured_at": "",
+        "text": "パーマかけた足で入ったニトリで自撮りしちゃうよな pic.x.com/jHt7tzqo7B",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "IKEA、無印、ニトリでインテリア揃う前にこのアカウント見ててよかった…。 pic.x.com/uE9SdqnPmV x.com/iro_t...",
+        "platform": "x",
+        "author": "@iro_to_kurashi",
+        "url": "https://x.com/iro_to_kurashi/status/2122128978303676840",
+        "likes": 321,
+        "retweets": 13,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:45",
+        "captured_at": "",
+        "text": "IKEA、無印、ニトリでインテリア揃う前にこのアカウント見ててよかった…。 pic.x.com/uE9SdqnPmV x.com/iro_to_kurashi…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリの黒猫でおちつく黒猫兄妹 pic.x.com/xaYOEuNHYx",
+        "platform": "x",
+        "author": "@umeko9625yamato",
+        "url": "https://x.com/umeko9625yamato/status/2122192645791662298",
+        "likes": 108,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:58",
+        "captured_at": "",
+        "text": "ニトリの黒猫でおちつく黒猫兄妹 pic.x.com/xaYOEuNHYx",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "返信先:@taroinagaki025亀田製菓は買うのやめたよ ユニクロ ニトリ イオンも買わない",
+        "platform": "x",
+        "author": "@luna14861327",
+        "url": "https://x.com/luna14861327/status/2122134834839687436",
+        "likes": 81,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:09",
+        "captured_at": "",
+        "text": "返信先:@taroinagaki025亀田製菓は買うのやめたよ ユニクロ ニトリ イオンも買わない",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261116",
     "title": "2026年11月16日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリホールディングスが最大3762万件の個人情報流出の可能性を発表し、顧客データ保護の体制と透明な情報開示が改めて問われる局面となった。 コンパクトソファや2490円の排水口ラックなど、狭小住宅の課題を解決する低価格商品が「値段以上」の評価を集め、生活者の共感が広がっている。",
