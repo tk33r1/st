@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 16 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 16 Nov 2026 06:26:48 +0900</lastBuildDate>
+    <pubDate>Tue, 17 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 17 Nov 2026 09:38:14 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月17日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261117/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261117/</guid>
+      <pubDate>Tue, 17 Nov 2026 08:00:00 +0900</pubDate>
+      <description>トライアルや東急百貨店×アビームコンサルティングの事例が示すように、店内サイネージや来店接点を活用したリテールメディアの収益化が実証と本格展開の両面で進んでいます。 新宿住友ビルの無人決済直営店は、無人決済を実際に体験してもらう場を設けることで、消費者の受容性を確かめる動きを示しています。</description>
+    </item>
     <item>
       <title>2026年11月16日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261116/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261103/</guid>
       <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
       <description>セルフレジをめぐる生活者の反応が多様化しています。子どもの操作の是非や、機器更新による紙幣投入口の分かりにくさがSNSで議論になりました。 需要予測による発注支援、決済基盤の刷新など、店舗とバックオフィスの効率化が実装段階に入っています。</description>
-    </item>
-    <item>
-      <title>2026年11月2日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261102/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261102/</guid>
-      <pubDate>Mon, 02 Nov 2026 08:00:00 +0900</pubDate>
-      <description>本日のセルフレジ関連ニュースは既報と重複するものが多く、新規性の高い国内の動きは限定的でした。 薬局のセルフレジから出たレシートがSNSで「不気味」と話題になり、無人化された決済体験への生活者の違和感が表れました。</description>
     </item>
   </channel>
 </rss>

@@ -1,5 +1,159 @@
 [
   {
+    "date": "20261117",
+    "title": "2026年11月17日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "トライアルや東急百貨店×アビームコンサルティングの事例が示すように、店内サイネージや来店接点を活用したリテールメディアの収益化が実証と本格展開の両面で進んでいます。 新宿住友ビルの無人決済直営店は、無人決済を実際に体験してもらう場を設けることで、消費者の受容性を確かめる動きを示しています。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "トライアルや東急百貨店×アビームコンサルティングの事例が示すように、店内サイネージや来店接点を活用したリテールメディアの収益化が実証と本格展開の両面で進んでいます。",
+      "新宿住友ビルの無人決済直営店は、無人決済を実際に体験してもらう場を設けることで、消費者の受容性を確かめる動きを示しています。",
+      "AI需要予測は食品ロスとCO₂排出量の削減という環境面の成果で評価される段階に入り、物流側の実行まで連携させる取り組みが広がっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "なぜ、トライアルは店内サイネージを大量設置するのか 「品川駅をベンチマークにした」リテールメディア戦略",
+        "original_title": "",
+        "source": "ITmedia",
+        "source_id": "JP-04",
+        "summary": "トライアルが店内に多数のサイネージを設置する背景と、その戦略を取り上げた記事です。同社は「品川駅をベンチマークにした」と説明し、駅構内の広告媒体のように店内の動線上で情報を届ける設計を重視しています。来店客の買い物行動の中で広告接点を増やし、リテールメディアとして収益化を目指す狙いがうかがえます。",
+        "why_it_matters": "店舗のサイネージを単なる販促物ではなく、駅のような人流の多い場の媒体として捉える発想は、リテールメディアの収益化モデルを考える上で示唆に富みます。広告主にとっては購買直前の接点を確保できるかが、店舗側にとっては売場運営と広告枠の両立をどう設計するかが焦点になります。自社の導線データや来店頻度をどう活かせるかを検討する材料になるでしょう。",
+        "tags": [
+          "リテールメディア",
+          "店内サイネージ",
+          "トライアル"
+        ],
+        "search_terms": [
+          "店内サイネージ 大量設置",
+          "in-store digital signage retail media",
+          "リテールメディア 収益化 戦略",
+          "Trial retail media Shinagawa benchmark"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE9fcG9YOHN1cUlfTmtCTEE1R01mR1A4bWJhNU1xb2FFTzd0Q0M2UzR1am9uNU9uTkR0amk4ZWl1R25LSEx6MUF4Z0llQmp6ZkdmVzlVVGhYM2ZRaDY2dG1wUUNIcGxHOUkybUxKSmFZclJKZw?oc=5",
+        "source_pub_ts": 1794861000
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "東急百貨店とアビームコンサルティング、渋谷スクランブルスクエアでAIを活用したリテールメディアの実証実験を開始",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-05",
+        "summary": "東急百貨店とアビームコンサルティングは、渋谷スクランブルスクエアでAIを活用したリテールメディアの実証実験を開始したと発表しました。都市型商業施設の来館者接点をデジタル広告の媒体として活用する取り組みです。AIによる施策の検証を通じて、広告の効果や運用の在り方を探る狙いがあるとみられます。",
+        "why_it_matters": "百貨店や大型商業施設が持つ来館者接点を、AIでどう価値化するかはリテールメディアの次の論点です。実証段階で広告効果の測定方法や運用体制を固められるかが、事業化の成否を左右します。店舗を持つ企業にとっては、自社の顧客データと広告配信をどうつなぐかを具体的に検討する好材料と言えます。",
+        "tags": [
+          "リテールメディア",
+          "AI活用",
+          "実証実験"
+        ],
+        "search_terms": [
+          "AIリテールメディア 実証実験",
+          "retail media AI pilot",
+          "渋谷 商業施設 デジタル広告",
+          "Tokyu Department Store ABeam retail media"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1zdWlOQUF1MmRIdGUzMEhqemMyNUMyUlhobXRITzVwZ3NoYkN4bUcwYjh3OWZFVHpHLWxrRkYzM3FfNVBRZUVRVmxpLVIxYndnWm43RGlZYWxBRnlfNkx3VURmX0N1TktpYkJqb21wTXVidw?oc=5",
+        "source_pub_ts": 1794838202
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "新宿住友ビル地下1階に無人決済システムを体験できる直営店舗を2026年10月27日にオープン",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-12",
+        "summary": "新宿住友ビル地下1階に、無人決済システムを体験できる直営店舗が2026年10月27日にオープンしたことが伝えられました。来店者が実際に無人決済による購買を体験できる場として設けられた形です。実店舗での体験を通じて、無人決済の利便性や導入後のイメージを伝える狙いがあるとみられます。",
+        "why_it_matters": "無人決済は導入コストや運用の複雑さが課題とされがちですが、直営店で体験の場を設けることは消費者の受容性を確かめる有効な手段です。小売事業者にとっては、来店客の反応や利用動線に関する実データを得られる点が重要です。ショールーム的な店舗は、今後の導入判断や提案活動の基盤になる可能性があります。",
+        "tags": [
+          "無人決済",
+          "店舗DX",
+          "直営店"
+        ],
+        "search_terms": [
+          "無人決済 体験店舗",
+          "unmanned checkout store experience",
+          "無人店舗 決済システム 新宿",
+          "cashierless retail Shinjuku"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1iclllbFcwdUVLRnU2TVVaSzc3enlrTmtPRVVkMHc0Y1ljMDRYZlZMZHE5TXZyenA3R1d0U1Z0Y0dZWnpWbC1tYzFnQksxOXpvS0drYTVPVEo0VHkycG14R3AtMzV1MTNma2c?oc=5",
+        "source_pub_ts": 1794794402
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "令和8年度「気候変動アクション環境大臣表彰」にて 最高賞の「気候変動アクション大賞」を受賞 ～需要予測を活用した食品サプライチェーン全体の最適化により、食品ロスとCO₂排出量の削減に貢献～",
+        "original_title": "",
+        "source": "一般財団法人 日本気象協会",
+        "source_id": "JP-03",
+        "summary": "一般財団法人日本気象協会が、令和8年度「気候変動アクション環境大臣表彰」で最高賞の「気候変動アクション大賞」を受賞したと発表しました。需要予測を活用して食品サプライチェーン全体を最適化した点が評価され、食品ロスとCO₂排出量の削減に貢献したとしています。需要予測の社会的な価値が改めて示された形です。",
+        "why_it_matters": "需要予測は在庫の最適化や廃棄削減に直結し、環境面の成果としても評価される段階に来ています。小売や食品メーカーにとっては、食品ロス削減とCO₂削減を同時に示せる取り組みとして、経営レベルの投資判断の材料になります。予測精度だけでなく、サプライチェーン全体での活用設計が問われていることを示す事例です。",
+        "tags": [
+          "AI需要予測",
+          "食品ロス",
+          "サプライチェーン"
+        ],
+        "search_terms": [
+          "需要予測 食品ロス削減",
+          "AI demand forecasting food waste",
+          "気候変動アクション大賞 受賞",
+          "food supply chain optimization CO2"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB1bWFGQmdDRDQwZXVzREkyTHBWSU1tUDV2emhvSThVYnFZZWhtMWxKOXdaNURlek11SFRWN3lLemdlYkN2RFNwRk93N0loQUlQT3Zj?oc=5",
+        "source_pub_ts": 1794870141
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "需要予測で物流の動きも変える、JDSCが実演",
+        "original_title": "",
+        "source": "LOGISTICS TODAY",
+        "source_id": "JP-07",
+        "summary": "JDSCが、需要予測を物流の動きに結び付ける取り組みを実演したことを伝える記事です。需要予測の結果が配送や物流オペレーションの判断にどう影響するかを示した形です。予測の精度向上だけでなく、物流現場での活用イメージを具体化する点に特徴があります。需要予測の結果が物流現場の動きそのものを変えうることを示しています。",
+        "why_it_matters": "需要予測は販売計画の立案にとどまらず、物流の拠点配置や配送計画まで影響する領域へ広がっています。物流コストや人手不足が課題となる中、予測と物流実行をつなぐ仕組みは競争力の源泉になります。自社の需要予測を物流側とどう連携させるか、部門横断での見直しを促す示唆として捉えられます。",
+        "tags": [
+          "AI需要予測",
+          "物流",
+          "JDSC"
+        ],
+        "search_terms": [
+          "需要予測 物流連携",
+          "demand forecasting logistics integration",
+          "JDSC 需要予測 実演",
+          "AI forecast logistics operations"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE8tMmFOWGNQQ3JBMER3ZDZ2Mml3QXh0QkVmRG5DX1BnZ1cwSnVJNjVyUHpLdDR4d2QwZF8wdnNTYWpBcDNETE5xSFdB?oc=5",
+        "source_pub_ts": 1794817381
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジで万引きを疑われ…原因は1枚3円のレジ袋 「たった3円で…」まさかの警察沙汰にぼう然",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-02",
+        "summary": "レジ袋を巡る会計の行き違いが誤解を生み、警察沙汰に発展したとされる出来事を伝える記事です。買い物客が「たった3円で」と驚いた点も反響を呼んでいるようです。セルフレジでの会計確認の難しさを改めて浮き彫りにしています。",
+        "why_it_matters": "セルフレジの会計確認は、店舗の不正対策と顧客体験の両立が難しい領域です。小さな会計の行き違いが警察沙汰に発展すれば、店舗と顧客双方の信頼を損ないかねません。レジ袋のような付随商品の扱いも含め、レシート照合や声かけの運用ルールを見直す契機として考えるべき事例です。",
+        "tags": [
+          "セルフレジ",
+          "SNS反響",
+          "生活者の声"
+        ],
+        "search_terms": [
+          "セルフレジ 万引き 誤解",
+          "self-checkout misunderstanding shoplifting",
+          "レジ袋 3円 会計トラブル",
+          "self-checkout customer backlash"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9DVlRKc1VmTjdzODR4U1Q4R1VlQ1VjY0NLX1U4bVVoR1JSMWlKenU3QzAwRUlmSXBDdzZDbHB3Yy1vRmJFUUtYSE1OVWRTdEZNV1l4V05scTgteEctVUY3OFdLUUFPdlZTWjRLU1RwYzdieUdadzJxRm5EeWllNHc?oc=5",
+        "source_pub_ts": 1794872400
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261116",
     "title": "2026年11月16日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "新規性の高い国内ニュースは限られ、直近掲載済みの『セルフレジ不正対策』『体験型リテールメディア』『SNS×AI×リテールメディア』関連は重複のため除外した。 アマゾンの『30分配送』と自律型AIの組み合わせが、ラストワンマイルとオンライン流通の効率化を一段と加速させる方向性を示した。",
