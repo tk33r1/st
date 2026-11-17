@@ -55,3 +55,14 @@ test('画像は512px以下のPNG/JPEGだけで、画像分のtoken枠も足す',
     v.setUint32(16,513);await assert.rejects(qaBudgetEnv(f.env,{...f.request,images:['data:image/png;base64,'+Buffer.from(b).toString('base64')]}),/image_dimensions/);
   }finally{f.close();}
 });
+test('JPEGはプログレッシブ・詰め物の0xFFも読み、512px超・0pxを課金前に拒否する',async()=>{
+  const f=fixture();try{
+    const jpeg=(sof,w,h)=>'data:image/jpeg;base64,'+Buffer.from([0xff,0xd8,0xff,0xe0,0,16,0x4a,0x46,0x49,0x46,0,1,1,0,0,1,0,1,0,0,
+      0xff,0xff,sof,0,17,8,h>>8,h&255,w>>8,w&255,3,1,0x22,0,2,0x11,1,3,0x11,1,0xff,0xd9]).toString('base64');
+    f.plan.cases[0].images=1;f.update();
+    for(const image of [jpeg(0xc0,513,240),jpeg(0xc2,320,513),jpeg(0xc0,320,0),jpeg(0xc9,320,240)])
+      await assert.rejects(qaBudgetEnv(f.env,{...f.request,images:[image]}),/image_dimensions/);
+    assert.equal(f.db.prepare('SELECT COUNT(*) n FROM rate_limit').get().n,0);
+    assert.equal(typeof (await qaBudgetEnv(f.env,{...f.request,images:[jpeg(0xc2,320,240)]})).qaReserve,'function');
+  }finally{f.close();}
+});
