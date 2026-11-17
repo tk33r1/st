@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://tk.st/</loc>
-<lastmod>2026-11-18T07:45:54+09:00</lastmod>
+<lastmod>2026-11-17T22:51:56Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/dj/</loc>
@@ -102,7 +102,7 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/</loc>
-<lastmod>2026-11-17T00:42:43Z</lastmod>
+<lastmod>2026-11-17T23:48:52Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/</loc>
@@ -410,7 +410,11 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/20261117/</loc>
-<lastmod>2026-11-17T00:42:39Z</lastmod>
+<lastmod>2026-11-17T23:48:52Z</lastmod>
+</url>
+<url>
+<loc>https://tk.st/job/nitoridaily/20261118/</loc>
+<lastmod>2026-11-17T23:48:52Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/20260912/</loc>
