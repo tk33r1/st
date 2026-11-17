@@ -1,5 +1,309 @@
 [
   {
+    "date": "20261118",
+    "title": "2026年11月18日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "速暖カーボンヒーター（5,990円）や音響ブランド「life+audio」の展開など、冬の定番と新領域の両面で商品投入が加速している。 中国大陸79号店と韓国7号店が11月20日に同日オープンし、海外店舗網の拡大を継続する姿勢が鮮明になった。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "速暖カーボンヒーター（5,990円）や音響ブランド「life+audio」の展開など、冬の定番と新領域の両面で商品投入が加速している。",
+      "中国大陸79号店と韓国7号店が11月20日に同日オープンし、海外店舗網の拡大を継続する姿勢が鮮明になった。",
+      "AI回答調査ではニトリが価格・購入条件の領域で首位となり、SNSでは日用品や収納の使い方に対する生活者の共感が広がっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリが音響機器市場に本格参入、新ブランド『life+audio』を展開",
+        "original_title": "",
+        "source": "財経日報（재경일보）",
+        "source_id": "JP-10",
+        "summary": "ニトリが音響機器市場へ本格参入し、新ブランド『life+audio』を展開することが報じられた。家具やインテリア、生活雑貨を中心に事業を広げてきた同社にとって、音のある暮らしを提案する新たな領域となる。ブランド名に『life（暮らし）』を冠しており、生活空間に溶け込む製品提案を意図していると考えられる。今後の商品ラインナップや価格帯に注目が集まる。",
+        "why_it_matters": "家具・インテリアで培った暮らしの提案を、音響という体験価値の高い領域へ広げる動きは、客単価と来店頻度を高める狙いがあるとみられる。SPAとして企画から調達、販売まで自社で完結できる体制は、低価格で新カテゴリに参入する際の強みになる。一方で音響は専門性が求められるため、ブランド価値の伝え方が成否を分けるだろう。",
+        "tags": [
+          "ニトリ",
+          "新ブランド",
+          "音響",
+          "カテゴリ拡張"
+        ],
+        "search_terms": [
+          "音響機器 新ブランド 参入",
+          "life+audio ブランド",
+          "Nitori audio brand entry",
+          "home audio new category retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1EWTByTDNhZVZZRUpJNmlKUnU4QUFvWlFVTEdxcFhXSVZ0LTB5NmVZQWZHSjVEaS1WR0NSdDdqazVURWFzMlBLMUx6cDQteHpVRl9jNEZlU2RueUdWc2RMNlg5TQ?oc=5",
+        "source_pub_ts": 1794880886
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "家具選びのAI回答調査、価格・購入条件でニトリが言及率79.2%で首位",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-15",
+        "summary": "家具・インテリア選びに関するAIの回答状況を調べた調査で、『価格・購入条件』に関する20問ではニトリが言及率79.2%で首位となった。一方、『デザイン・テイスト』に関する20問ではACTUSが言及率43.5%で最上位だった。生活者が生成AIに相談する際に、ブランドがどう語られるかが可視化された格好である。質問テーマごとに強みを持つブランドが分かれている点も特徴だ。",
+        "why_it_matters": "AIが安くて買いやすい家具を探す場面でニトリが想起されることは、長年築いてきた価格訴求とPB展開の評価が検索の枠組みにも反映されていることを示す。一方でデザイン領域では他社が優位であり、ブランドの世界観や情報発信の充実が今後のAI時代の露出を左右する。従来のSEOに加え、AIに参照される情報設計が重要になる。",
+        "tags": [
+          "ニトリ",
+          "AI",
+          "デジタルマーケティング",
+          "価格訴求"
+        ],
+        "search_terms": [
+          "AI 回答 家具 調査",
+          "生成AI ブランド 言及率",
+          "furniture AI search brand mention",
+          "generative AI consumer search"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5NQjVvNm1VWURZUFA4YThwTzdlajhteFJocHVraE5aajZhQWxRRTJaaUdhd0hqTnZiS3J0UXl0MmhKaWJHRXdqWW43dEJ5M2JhLVRPbFNBSFZPR2pNTkZqN3huNHdzVGxqZVE?oc=5",
+        "source_pub_ts": 1794870002
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ニトリ、家具から1万トンの素材を回収する工場を計画",
+        "original_title": "Nitori plant to recover 10,000 tons of materials from furniture",
+        "source": "朝日新聞",
+        "source_id": "GL-01",
+        "summary": "ニトリが、家具から1万トンの素材を回収する工場について報じられた。家具の廃棄削減と資源循環に向けた取り組みであり、大量の廃棄物を再資源化する狙いがあるとみられる。大型の家具を扱う小売業にとって、回収とリサイクルの仕組みをどう構築するかは、環境対応の中心課題となっている。",
+        "why_it_matters": "小売業が家具を回収して再資源化する仕組みは、物流の逆流、いわゆるリバースロジスティクスの構築を意味する。SPAとして企画、調達、販売を担う同社にとって、製品のライフサイクル全体に責任を持つ取り組みは、ブランドの信頼性向上と調達コストの最適化の両面に寄与する。環境規制が強まる中、先行事例としての意義が大きい。",
+        "tags": [
+          "ニトリ",
+          "サステナビリティ",
+          "リサイクル",
+          "物流"
+        ],
+        "search_terms": [
+          "家具 素材 回収 工場",
+          "furniture recycling plant",
+          "Nitori recycling 10,000 tons",
+          "circular economy furniture"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1jZG9EN0Jzdnk5T3VWS1lLbk5WV0drUFpvUFEyRVBYSkREVzVDMmhUMlZnc3VFYW9UcWl4QjFzbjFHT2NIQkw0NHBSSHV1Y2d0TzVRZ1Zn?oc=5",
+        "source_pub_ts": 1794952800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ『速暖カーボンヒーター』5,990円、スイッチON後約3〜5秒で発熱",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-01",
+        "summary": "ニトリの『速暖カーボンヒーター』（5,990円）が注目を集めている。スイッチを入れてから約3〜5秒で発熱し、冬のキッチンやデスク下の足元を素早く暖められる点が特徴だ。自動首振り機能に加え取っ手が付いており、部屋間の持ち運びも容易である。冬の暖房需要が高まる中、即暖性と手軽さを両立した新たな暖房提案といえる。",
+        "why_it_matters": "即暖性と持ち運びやすさを両立させた点は、部屋全体ではなく必要な場所だけを暖めたいという生活者の省エネ志向に合致する。5,990円という価格帯は、エアコン購入の前段階として手に取りやすい。企画から販売までを自社で手掛けるSPAの強みにより、冬季の季節商品を低価格で素早く投入できる体制が表れている。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "暖房",
+          "冬物"
+        ],
+        "search_terms": [
+          "速暖カーボンヒーター 新商品",
+          "カーボンヒーター 足元暖房",
+          "carbon heater Nitori",
+          "winter heater home appliance"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE94clZkajNrci1QTVVxeGRkYXd3MlhDQzJ3bWZmMGdvTzNWemdlbjBnN2xRTXpVZWhHbEFxY21udjFSaDdjaWl5OUJXX013WVBkYmhFWTItbmNXcm01MDJKaUZnUHJNRF9QVUNNZ0ZTU0lrbUxZQXVvek5XVTd6TFE?oc=5",
+        "source_pub_ts": 1794949844
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、中国大陸79号店・韓国7号店を11月20日に同日オープン",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-03",
+        "summary": "ニトリの中国大陸79号店と韓国7号店が、11月20日に同日オープンすることが分かった。中国と韓国という両市場で店舗網を同時に広げる形であり、海外展開の歩みを一段と進める出店といえる。アジア市場での店舗数を積み上げる取り組みが続いていることを示す発表である。",
+        "why_it_matters": "同日オープンは、中国・韓国の両市場で同時に店舗網を広げる戦略を示す。海外店舗では、現地の住環境に合わせた商品構成と、日本で磨いた価格と品質のバランスをどう届けるかが問われる。店舗数の積み上げは、現地での物流拠点の活用や仕入れ規模の拡大にもつながり、海外展開の実行力を測る指標になる。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "中国",
+          "韓国"
+        ],
+        "search_terms": [
+          "中国大陸 店舗 オープン",
+          "韓国 出店 海外展開",
+          "Nitori China Korea store opening",
+          "overseas store expansion Japan retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFA5LVVIeXRuUXNRblRaWF9lbFZqZ25nR3lpbW5zOXo0dWtINEpzdlZXYzNPLUpDRzZJV2FXRFg2V0xueU5rdkJfMkxydkN0X052WDc0?oc=5",
+        "source_pub_ts": 1794910576
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの『手で洗える』タイルカーペットが人気、追加購入の声も",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-04",
+        "summary": "ニトリの『手で洗える』タイルカーペットが、利用者の間で人気を集めている。投稿では『丈夫でズレにくい』『踏み心地が良い』といった声が挙がり、良かったので追加購入したという反響も見られた。汚れが気になる場所にも敷きやすく、日常の手入れの負担を減らす点が評価されている。",
+        "why_it_matters": "手で洗えるという機能は、洗濯機に入らない大判アイテムの手入れ負担を下げ、買い替えではなく追加購入につながる点が特徴だ。ズレにくさや踏み心地といった使用感の良さが口コミで広がることは、機能性と価格の両立というニトリの強みを裏付ける。レビューを次の商品改良に反映させる循環づくりが鍵となる。",
+        "tags": [
+          "ニトリ",
+          "タイルカーペット",
+          "口コミ",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "手洗い可能 タイルカーペット",
+          "洗えるラグ 追加購入",
+          "washable tile carpet Nitori",
+          "home textile hit product"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxPM0N0ZzJuVWJ0YkVNcUd5LTlxMWJIdE9KM2k1dXFCVW9RZnJ0bmtXT2oxZDRqYktJRzZnV2h1dnF0Y1lZWUFWOGhFZ3VTUXoyOTZneHBnU2J4V2pSdmpHUVlrcW1hMUdicEgyakVnQlNCVmY5dXJEWWo2b1lVZXlTeDBtMXQ1ZVNmejhLUkJFSnM5V2NlSWZLNUlFUU85X19FNHBpbkhoYWxZQTFtOFBCSWFCcUhvZ08yM2lCdU42VEFpcjJLamo0VEhqRdIBe0FVX3lxTE4wSVVRRzVXRzk2dGdiam0tTkFSd2lRRjdiM2NieXVwUkFhZ0o0R3pONEJNU1diVUs2b0xBbWtkLUpEcFBBakVLTjd5azNnNFlvVUpicEJMSzVMRWZWQ1VYR20tN0NYbkQzSkxaS3E4blhDQWJ3RHJjSnFtRQ?oc=5",
+        "source_pub_ts": 1794900600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリ『トロリ4』を土台に、ベビーワゴンを組み立てる暮らしの工夫が反響",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "インスタグラムでサイズ感を調べ、ニトリの『トロリ4』レギュラーサイズをワゴン本体に選んだベビーワゴンの投稿が517いいねを集めた。1段目に楽天の『おむつストッカー』、2段目と3段目にセリアのバスケットを組み合わせ、収納量と見た目を両立させている。ひとつのワゴンを軸に複数ブランドの品を重ねる、生活者ならではの空間づくりが共感を呼んだ形だ。",
+        "why_it_matters": "ニトリの収納アイテムは、他社商品やプチプラ雑貨と組み合わせて使われることで、生活者自身による空間の再設計を促している。汎用的なワゴンという土台は、子育て期のニーズに応じて中身を入れ替えられる柔軟性が評価されたとみられる。商品単体の完成度だけでなく、他ブランドと組み合わせやすい寸法と構造の設計が、口コミやリピートにつながるという示唆がある。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "SNS",
+          "子育て"
+        ],
+        "search_terms": [
+          "トロリ4 ベビーワゴン",
+          "ベビーワゴン 収納 DIY",
+          "baby wagon storage Nitori",
+          "nursery storage cart"
+        ],
+        "url": "https://x.com/r_u_k_a_____/status/2122610100443734108",
+        "source_pub_ts": 1794913200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "子どもがお小遣いで買ったニトリのハンカチ、母への誕生日プレゼントが反響",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-04",
+        "summary": "友達と遊ぶと言って自転車でニトリへ向かい、お小遣いで買ったハンカチを母親の誕生日プレゼントにした長男のエピソードが139いいねを集めた。投稿者は『タネも仕掛けもない』普通のハンカチだと添えつつ、その背景にある気持ちを伝えている。手頃な価格で手に取りやすく、贈り物にも使える日用品としてのニトリの存在感を示す話である。",
+        "why_it_matters": "ニトリが生活者にとって日常の中で気軽に買える場所として定着していることを示す。ハンカチのような低価格の日用品は、贈り物として選ばれることでブランドへの好意や再来店の動機を生む。価格の手軽さに加え、子どもにとっても身近な買い物先であることは、ファミリー層への接点の広さを物語っている。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "ギフト",
+          "日用品"
+        ],
+        "search_terms": [
+          "誕生日プレゼント ハンカチ",
+          "birthday gift handkerchief",
+          "Nitori gift daily goods",
+          "family word of mouth Nitori"
+        ],
+        "url": "https://x.com/komatsu_yurika/status/2122662293100278047",
+        "source_pub_ts": 1794913200
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリから情報漏洩ゴメンナサイメールが来たけど、ニトリのアカウントは持ってない（記録にない） 3年前に会員登録せずに買った記録はあったが、そ...",
+        "platform": "x",
+        "author": "@MiRON_P",
+        "url": "https://x.com/MiRON_P/status/2122546315783725085",
+        "likes": 2557,
+        "retweets": 290,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:24",
+        "captured_at": "",
+        "text": "ニトリから情報漏洩ゴメンナサイメールが来たけど、ニトリのアカウントは持ってない（記録にない） 3年前に会員登録せずに買った記録はあったが、その情報持ってるってこと？なんのために？",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ベビーワゴン一旦完成！！ インスタでぴったりサイズを色々調べていい感じになった✨ ・ワゴン →ニトリ トロリ4 レギュラーサイズ ・1段目 ...",
+        "platform": "x",
+        "author": "@r_u_k_a_____",
+        "url": "https://x.com/r_u_k_a_____/status/2122610100443734108",
+        "likes": 517,
+        "retweets": 15,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:37",
+        "captured_at": "",
+        "text": "ベビーワゴン一旦完成！！ インスタでぴったりサイズを色々調べていい感じになった✨ ・ワゴン →ニトリ トロリ4 レギュラーサイズ ・1段目 →楽天 Ciilee babyおむつストッカー ・2段目 →seria ラッセバスケットスリム×3 ・3段目 →seria ラッセバスケットワイド×2 pic.x.com/BuAB6EOHdL",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "まさにこれ。高い家具や家電じゃなくても、毎日使う日用品を変えるだけで暮らしは激変する。QOL爆上がり名品4選✍🏻✨️ ①無印良品 再生ポリプ...",
+        "platform": "x",
+        "author": "@_36do5bu_",
+        "url": "https://x.com/_36do5bu_/status/2122531924556349584",
+        "likes": 363,
+        "retweets": 21,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:27",
+        "captured_at": "",
+        "text": "まさにこれ。高い家具や家電じゃなくても、毎日使う日用品を変えるだけで暮らしは激変する。QOL爆上がり名品4選✍🏻✨️ ①無印良品 再生ポリプロピレン入り 収納ストッカー ②ニトリ 毎日とりかえキッチンスポンジ ③ITO クレンジングタオル ④THREEPY トワルドジュイシリーズ pic.x.com/Ahk9jKaJKV x.com/kufuu_wow/stat…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ここになんの変哲もない、タネも仕掛けもないハンカチがありますね。 これは、長男が放課後に友達と遊びに行くふりをしてニトリまでチャリを走らせて...",
+        "platform": "x",
+        "author": "@komatsu_yurika",
+        "url": "https://x.com/komatsu_yurika/status/2122662293100278047",
+        "likes": 139,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:05",
+        "captured_at": "",
+        "text": "ここになんの変哲もない、タネも仕掛けもないハンカチがありますね。 これは、長男が放課後に友達と遊びに行くふりをしてニトリまでチャリを走らせて、自分のお小遣いを削って買ってきてくれた、私への誕生日プレゼントのハンカチなんです。尊い……食べちゃうかも…… pic.x.com/THayGWSKsj",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "おはゆめございます！ #スーパードーム西院店 様にて実践開始いたします✔︎ 抽選番号48番で入場 新台もカバネリもダメなら、大好きな戦国乙女...",
+        "platform": "x",
+        "author": "@yumepachi_777",
+        "url": "https://x.com/yumepachi_777/status/2122505882026365424",
+        "likes": 132,
+        "retweets": 10,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:43",
+        "captured_at": "",
+        "text": "おはゆめございます！ #スーパードーム西院店 様にて実践開始いたします✔︎ 抽選番号48番で入場 新台もカバネリもダメなら、大好きな戦国乙女5へ⚔️ ⭐️屋台〈おでん8種〉 ⭐️限界突破DOME覚醒取材 最近、朝がかなり寒くなってきたので 勝ってニトリで羽毛布団を買いたい🥺🙏🏻 pic.x.com/kHdEtSMo7e x.com/yumepachi_777/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261117",
     "title": "2026年11月17日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリHDは今期の純増店舗数計画を143店舗から62店舗へ修正し、81店舗減らすと示した。量の拡大から立地の質を重視する方針への転換が具体化している。 島忠事業は利益体質への転換が進み、関東・関西ではニトリとの合同出店も計画されている。グループ内で店舗機能を補完する動きが広がっている。",
