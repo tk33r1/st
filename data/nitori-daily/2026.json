@@ -1,5 +1,287 @@
 [
   {
+    "date": "20261119",
+    "title": "2026年11月19日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリグループが2026年秋冬の新商品展示会で約420アイテムを披露し、企画から販売までを内製するSPAならではの商品開発力とスピード感を示した。 11月27日に「(新)いわき店」が開業予定と伝えられ、島忠は2027年の正月飾りを11月上旬から発売するなど、年末商戦に向けた店舗・季節商品の動きが加速している。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリグループが2026年秋冬の新商品展示会で約420アイテムを披露し、企画から販売までを内製するSPAならではの商品開発力とスピード感を示した。",
+      "11月27日に「(新)いわき店」が開業予定と伝えられ、島忠は2027年の正月飾りを11月上旬から発売するなど、年末商戦に向けた店舗・季節商品の動きが加速している。",
+      "SNSでは「ニトリ・IKEA・無印を比較する」「ステンレスのお風呂ラック」など、ブランドを横断して比較・素材で選ぶ生活者の声が広がっており、商品力と情報発信の重要性が高まっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "進化するニトリアプリと、入社時年収1300万円の賃金体系を聞いてみた",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-10",
+        "summary": "ウォーカープラスの記事は、進化が著しい「ニトリアプリ」と、入社時の年収1300万円とされる賃金体系について聞いた内容を伝えている。アプリの機能強化と人材の待遇という、デジタル活用と人への投資の両面からニトリの取り組みが紹介された形だ。読者の関心を集めた話題性の高い内容となっている。",
+        "why_it_matters": "アプリはSPAにとって顧客データを一元化する重要な接点であり、購買データを商品開発や在庫配分へ還流させる基盤になる。一方で高水準の初任給は採用競争力を示す反面、人件費の上昇をどう生産性や価格で吸収するかが問われる。アプリの進化と人材投資を一体の成長戦略として捉えることが、今後の評価軸になるだろう。",
+        "tags": [
+          "ニトリ",
+          "ニトリアプリ",
+          "DX",
+          "人材"
+        ],
+        "search_terms": [
+          "ニトリアプリ 進化",
+          "ニトリ 初任給 年収",
+          "Nitori app digital transformation",
+          "retail employee salary Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1FU3ZDMWtZWFloN1pFTV9MRFlsSkJFZ0FHWXhab0xPWGdlcjRwWlVPVWllOE16TGZPNFMxSDc0Q3VOVGNjR0lpWU1Ncm9xbExRcjhGOS0wU3gwVHdGZVc5TlNSWWoycU5uVG9nN3ZB?oc=5",
+        "source_pub_ts": 1794998765
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリグループ、2026年秋冬新商品展示会で約420アイテムを披露",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-08",
+        "summary": "ニトリグループは2026年秋冬の新商品展示会を開催し、約420アイテムの新商品を披露した。企画・開発から販売までを自社で手がけるグループの新作ラインアップが一堂に示された形だ。今シーズンの品揃えの全体像が明らかになったことで、今後の店頭展開や販促計画の方向性も見えてくる。",
+        "why_it_matters": "420アイテムという規模は、企画・開発を内製するSPAならではのスピード感と開発力の表れといえる。展示会は次期商品の方向性を社内で共有する場でもあり、商品の選択と絞り込みの精度が店頭の回転率を左右する。価格や機能で差別化に苦しむ競合が多い中、季節ごとに新作を大量に投入し続けられる体制は、来店動機を継続的に生む強みになる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "秋冬新商品",
+          "展示会"
+        ],
+        "search_terms": [
+          "秋冬新商品展示会",
+          "ニトリ 新商品 2026",
+          "Nitori autumn winter new product exhibition",
+          "SPA product development"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBTWjVObDBFMDhOTGcxYjVaTG9QQ0ZFbGNvVEtkX2prd0JWYWVqSXowUlMyQllQZEtaVWxhTWV0eFdTazFwZ2c?oc=5",
+        "source_pub_ts": 1794941757
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ「(新)いわき店」、11月27日に開業予定",
+        "original_title": "",
+        "source": "出店ウォッチ",
+        "source_id": "JP-05",
+        "summary": "ニトリの「(新)いわき店」が2026年11月27日（金）に開業予定であることが、出店情報サイトで伝えられた。開業日は年末商戦が本格化する時期にあたり、地域での新たな購買拠点として期待が高まる。記事では開業に向けた最新情報も掲載されており、店舗情報の更新が続いている。",
+        "why_it_matters": "11月末の開業は年末需要や冬物の販売機会を取り込むタイミングと重なる。ニトリは店舗数の量よりも立地の質を重視する出店方針を示しており、いわき店のような地方立地での新規出店は、その計画を具体化する事例として注目される。既存店との商圏の棲み分けや、開業初期の集客施策が今後の注目点になる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "出店",
+          "いわき"
+        ],
+        "search_terms": [
+          "いわき店 開業",
+          "ニトリ 新店舗 出店",
+          "Nitori new store opening Iwaki",
+          "retail store expansion Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFAxalRDVXYxTU1KdGpybWc4Y1JVMDRRU3RYclJTQ00yQnJ0dFFhWVlTSkZqTVNZWDNvSU1xME1PS1NkVWlUVnIzbGNJQjhjeFp3?oc=5",
+        "source_pub_ts": 1794980481
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ウールのような上質感とジャージーのラクさを両立、「ふんわり上品ジャージーメルトンシリーズ」登場",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-09",
+        "summary": "【N+】ブランドから「ふんわり上品ジャージーメルトンシリーズ」が登場した。ウールのような上質感と、ジャージーの着心地のラクさを両立させたことが特徴で、価格は税込4,990円からとなる。冬物の定番アイテムとして、上質な見え方を手頃な価格で提供する商品設計が打ち出されている。",
+        "why_it_matters": "上質感と着心地のラクさを両立させ、4,990円からという価格で訴求する設計は、SPAとして素材選定と価格設定を一体で練り上げる力の表れだ。既存の冬物シリーズと組み合わせた提案で、客単価の引き上げにつなげられる余地もある。素材の見え方と価格のバランスをどこまで磨けるかが、冬物の差別化の鍵になる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "商品開発",
+          "冬物"
+        ],
+        "search_terms": [
+          "ジャージーメルトン 新商品",
+          "N+ 冬物 シリーズ",
+          "Nitori winter apparel new series",
+          "knit fabric wool-like comfort"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9iZUFfN3ZGcTBnX2RIUno4WGhYR3poSGtYd1RiYklQNVNLNmxhOTVoNUk0VGU4bG53VnpLRDNZMHRNUUtOcnliSVdDdTZfQk83d3BHcUVNRXFIUTNURm5GNmF5blF0b3pXQzV4TGZNa1pnbENiQ2ZWMDhTNA?oc=5",
+        "source_pub_ts": 1794971757
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "島忠、2027年の正月飾りを11月上旬から発売",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-06",
+        "summary": "流通スーパーニュースは、島忠が2027年の正月向けの「正月飾り」を11月上旬から発売したと伝えた。ニトリグループの島忠が季節商品を早期に投入し、年末年始の需要を先取りする動きが示された。正月飾りは年に一度の販売機会が限られる商材であり、売り場の提案力と発売時期の判断が問われる。",
+        "why_it_matters": "季節行事の商材は需要が年に一度に集中するため、発売時期と在庫判断の精度が売上を大きく左右する。11月上旬という早い投入は、年末の店頭需要を確実に取り込むためのリードタイム管理の表れといえる。ニトリグループ内で島忠の商品調達や売り場運営をどう連携させるかは、利益体質への転換を支える課題になるだろう。",
+        "tags": [
+          "島忠",
+          "ニトリグループ",
+          "正月飾り",
+          "季節商品"
+        ],
+        "search_terms": [
+          "島忠 正月飾り 2027",
+          "島忠 季節商品 発売",
+          "Shimachu New Year decorations",
+          "seasonal merchandise retail Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBaSi1SNFlIWHNjb0pMQm80QzJ1LUxZY3FJUkRtRUxTNjZXLU1rMWpUQ0JIbU5Lejd2dnluOGF5MVhWM25LVDBVZzQ1MmFJUUxhUDhvRlpsY0FOUDVOa1E?oc=5",
+        "source_pub_ts": 1794974077
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ニトリ・IKEA・無印でインテリアを揃える前に」紹介された投稿が524いいねの反響",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "X上で、ニトリ・IKEA・無印良品でインテリアを揃える前に知っておきたいとして紹介された投稿が、524いいねを集めた。複数の家具・雑貨ブランドを横断して比較しながら選ぶ生活者の姿勢がうかがえる。写真付きの投稿として、インテリア選びの参考情報として共有された点が反響の背景と考えられる。",
+        "why_it_matters": "生活者はニトリを単独ではなく、IKEAや無印良品と並べて比較検討している。価格・機能・デザインといった比較軸のなかでニトリが選ばれるには、他ブランドと並んだときの見え方と価格優位を明確に示す発信が重要になる。ニトリを比較の土俵に乗せた情報の拡散は、新規顧客の獲得機会として活用できる。",
+        "tags": [
+          "ニトリ",
+          "IKEA",
+          "無印良品",
+          "SNS",
+          "インテリア"
+        ],
+        "search_terms": [
+          "インテリア 比較 SNS",
+          "ニトリ IKEA 無印 比較",
+          "Nitori IKEA Muji interior comparison",
+          "social media home decor reviews"
+        ],
+        "url": "https://x.com/iro_to_kurashi/status/2122900065174036756",
+        "source_pub_ts": 1794999600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「お風呂ラックはステンレスこそが正義」、ニトリで買えると154いいねの反響",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-02",
+        "summary": "X上で「お風呂ラックはステンレスこそが正義」として、ニトリで買えることを紹介する投稿が154いいねを集めた。浴室という水回りで素材を重視して選ぶ生活者の判断基準が、短い投稿の中に明確に表れている。写真付きの推薦投稿として広がり、ニトリの水回り収納が実用面で支持されていることがうかがえる。",
+        "why_it_matters": "湿気の多い浴室で、ステンレスという素材を基準に選ぶ生活者の姿勢が鮮明に示された。ニトリの水回り商品が「安いから買う」ではなく「この素材だから選ぶ」と支持されている点は、素材選定と機能訴求を強化する示唆になる。SNSでの一言の推薦が購買を後押しする構図から、商品の使いやすさを伝える口コミ設計の重要性も読み取れる。",
+        "tags": [
+          "ニトリ",
+          "お風呂ラック",
+          "ステンレス",
+          "SNS",
+          "水回り収納"
+        ],
+        "search_terms": [
+          "ステンレス お風呂ラック",
+          "浴室収納 ニトリ 口コミ",
+          "stainless steel bathroom rack",
+          "Nitori bathroom storage review"
+        ],
+        "url": "https://x.com/yuyumaru222/status/2122844199653708105",
+        "source_pub_ts": 1794999600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリIKEA 無印 でインテリア揃える前にこのアカウント知っててよかった。 pic.x.com/Syfq0U3dT8 x.com/iro_...",
+        "platform": "x",
+        "author": "@iro_to_kurashi",
+        "url": "https://x.com/iro_to_kurashi/status/2122900065174036756",
+        "likes": 524,
+        "retweets": 29,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:49",
+        "captured_at": "",
+        "text": "ニトリIKEA 無印 でインテリア揃える前にこのアカウント知っててよかった。 pic.x.com/Syfq0U3dT8 x.com/iro_to_kurashi…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "お風呂ラックはステンレスこそが正義 ニトリで買えます🏄‍♂️ pic.x.com/4p6uGWk6u7",
+        "platform": "x",
+        "author": "@yuyumaru222",
+        "url": "https://x.com/yuyumaru222/status/2122844199653708105",
+        "likes": 154,
+        "retweets": 4,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:07",
+        "captured_at": "",
+        "text": "お風呂ラックはステンレスこそが正義 ニトリで買えます🏄‍♂️ pic.x.com/4p6uGWk6u7",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリに捕獲されたすくすく pic.x.com/5djWrGfWHo",
+        "platform": "x",
+        "author": "@nukodeppou_OL",
+        "url": "https://x.com/nukodeppou_OL/status/2123066142596190615",
+        "likes": 73,
+        "retweets": 15,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 23:49",
+        "captured_at": "",
+        "text": "ニトリに捕獲されたすくすく pic.x.com/5djWrGfWHo",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ピットロード 護衛艦「まや」完成！ 何故か未だにWLで発売していないですね。まぁピットロードが有るから困らないのですが価格がねぇ・・・ キッ...",
+        "platform": "x",
+        "author": "@pipocyun",
+        "url": "https://x.com/pipocyun/status/2122879429378777109",
+        "likes": 67,
+        "retweets": 10,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:27",
+        "captured_at": "",
+        "text": "ピットロード 護衛艦「まや」完成！ 何故か未だにWLで発売していないですね。まぁピットロードが有るから困らないのですが価格がねぇ・・・ キットはパーツが細かく精密感はありますが作るのが大変です。これでイージス艦が全て揃いましたのでニトリの2000円のケースに全て収納して無事終了です。 pic.x.com/76BxMRAtH5",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ぷえもにありがとうございました☀️ タイムスタンプ完了したよお🪐✧ 💛ボイジャー1光日到達おめ！ 🩵ニキビ占いって知ってる？ 💛ニトリの枕気...",
+        "platform": "x",
+        "author": "@tamamachi_pue",
+        "url": "https://x.com/tamamachi_pue/status/2122868479397331045",
+        "likes": 61,
+        "retweets": 15,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:44",
+        "captured_at": "",
+        "text": "ぷえもにありがとうございました☀️ タイムスタンプ完了したよお🪐✧ 💛ボイジャー1光日到達おめ！ 🩵ニキビ占いって知ってる？ 💛ニトリの枕気になります 🔽ボイジャーから配信してないです🔽 pic.x.com/WBBBqMH9FD",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261118",
     "title": "2026年11月18日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "速暖カーボンヒーター（5,990円）や音響ブランド「life+audio」の展開など、冬の定番と新領域の両面で商品投入が加速している。 中国大陸79号店と韓国7号店が11月20日に同日オープンし、海外店舗網の拡大を継続する姿勢が鮮明になった。",
