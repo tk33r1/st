@@ -191,6 +191,22 @@ test('一時/設定: 会話を替えて送信を捨てるときは送信前の�
   }
 });
 
+test('添付の注意文: 続けて出した新しい注意文を、前の注意文のタイマーで早く消さない', () => {
+  for (const source of [home, mobile]) {
+    const timers = new Map();
+    const ctx = vm.createContext({ attachNotice: '', attachNoticeTimer: null, renderAttachTray() {},
+      setTimeout: (fn, ms, id = {}) => (timers.set(id, fn), id), clearTimeout(id) { timers.delete(id); } });
+    vm.runInContext(between(source, 'function noticeAttach(', 'async function addAttachments('), ctx);
+    ctx.noticeAttach('first'); const first = [...timers.keys()][0];
+    ctx.noticeAttach('second');
+    timers.get(first)?.();
+    assert.equal(ctx.attachNotice, 'second');
+    assert.equal(timers.size, 1);
+    [...timers.values()].forEach(fn => fn());
+    assert.equal(ctx.attachNotice, '');
+  }
+});
+
 test('一時/設定: 新契約の上流エラーが本文を返してもログ・通知・D1カウンターへ転記しない', async () => {
   for (const mode of ['normal', 'temporary']) {
     const logs = [], mails = [];
