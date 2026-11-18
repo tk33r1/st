@@ -1,5 +1,182 @@
 [
   {
+    "date": "20261119",
+    "title": "2026年11月19日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "ウォルマートが電子棚札の点灯を買い物体験の向上に使う新サービスを導入し、棚札が価格表示から顧客接点へと役割を広げつつあります。 リテールメディアは、アサヒ・サッポロ・フマキラーのようにメーカーごとに異なる手法で広がっており、小売と広告主の接続方法が競争軸になっています。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ウォルマートが電子棚札の点灯を買い物体験の向上に使う新サービスを導入し、棚札が価格表示から顧客接点へと役割を広げつつあります。",
+      "リテールメディアは、アサヒ・サッポロ・フマキラーのようにメーカーごとに異なる手法で広がっており、小売と広告主の接続方法が競争軸になっています。",
+      "セルフレジをめぐる店員や利用者の声が話題となり、無人化の進展に伴う接客と見守りの設計が現場の重要課題になっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ウォルマート、電子棚札の「点灯」を使った新サービスを導入",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "ウォルマートが電子棚札を活用し、棚札の「点灯」によって買い物をより便利にする新サービスを導入したと報じられました。電子棚札を店内の案内や情報表示に生かす取り組みで、店頭の価格表示を起点とした顧客体験の向上を狙う動きです。従来は値札の更新手段とされてきた電子棚札を、買い物客への情報提供の接点として捉え直す点が特徴です。店舗運営側の省力化に加え、来店者の利便性向上を両立させる試みとして注目されます。",
+        "why_it_matters": "電子棚札は価格更新の効率化にとどまらず、顧客接点を生む情報インフラへ進化しつつあります。日本の小売でも、値札の自動更新を導入済みの企業が次に何を表示するかが競争軸になります。売場の点灯機能を販促やリテールメディアと結びつけられるかが、投資回収の鍵になるでしょう。",
+        "tags": [
+          "電子棚札",
+          "店内UX",
+          "リテールメディア"
+        ],
+        "search_terms": [
+          "電子棚札 点灯 サービス",
+          "electronic shelf label Walmart",
+          "ESL in-store customer experience",
+          "ウォルマート 店舗DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFByMGVEV2tpbzc1WDBlMzJGX1hkSmtvbGVpa3E5b2MwN3p4cEdOQUVSRWpoUWF4eEw0VGJqLVFLOEowcDVvUkpvNl96VU1EeG5IVFg3YU9sSWxnU09tcnc5MV9waU7SAWpBVV95cUxPZ1pJSkFoVVFZNGZiekNnSW5OUjdvY3J1ckxicGYxT09FWERDWHFXOTZKZWtfX1R2cHBfNG9INElRXzZkM21aaVpQNl9jSVRwZG1lRVBGZ2s1ODBVMGNqQkFlNHRITlBfTzZn?oc=5",
+        "source_pub_ts": 1795036439
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アサヒは購買データ、サッポロは売り場連動、フマキラーはAI 三社三様のリテールメディア戦略",
+        "original_title": "",
+        "source": "ITmedia",
+        "source_id": "JP-02",
+        "summary": "アサヒは購買データ、サッポロは売り場との連動、フマキラーはAIを軸に、それぞれ異なるアプローチでリテールメディアの次の展開を模索していると報じられました。メーカー各社が小売の購買情報や店頭接点をどう活用するかが焦点となっています。広告枠の販売にとどまらず、データと売場を結ぶ仕組みづくりへ関心が移っている状況がうかがえます。各社の取り組みの違いは、リテールメディアを支える前提条件の多様さを示しています。",
+        "why_it_matters": "リテールメディアは広告枠の販売から、購買データと売場を結ぶ仕組みづくりへと移行しつつあります。メーカーにとっては、どのデータを持ち、どの接点で施策を打つかが差別化要因です。小売との協業設計を早期に固めることが、今後の成果を左右します。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "AI"
+        ],
+        "search_terms": [
+          "リテールメディア 購買データ 活用",
+          "retail media manufacturer strategy",
+          "in-store advertising data Japan",
+          "メーカー 広告 売場連動"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1Gd3ozTGlIZnhoU3liX2FzU0lUWlNvZGVZVDJfcXpDemlJel9IYWJtQ194RGVOaGtvMmxjSGdzejFRTDdabHNhUjJSSFcxM0FEdnptcmVUekthdnRoT1hadGFvZ1lsd1liZUFELUx6bGFEUQ?oc=5",
+        "source_pub_ts": 1795033800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "伊集院光さん、ローソンのセルフレジで「かけられた言葉」に驚く",
+        "original_title": "",
+        "source": "au Webポータル",
+        "source_id": "JP-05",
+        "summary": "タレントの伊集院光さんが、ローソンのセルフレジで店側から「かけられた言葉」に驚いたエピソードが話題になりました。セルフレジ利用中の声かけや見守りのあり方を、利用者の視点から捉えた反響として広がっています。無人に近い売場でも、店員の存在が利用者の印象に強く残ることを示す事例です。賛否を含む反応が広がり、セルフレジの運用ルールへの関心の高さがうかがえます。",
+        "why_it_matters": "セルフレジの運用は、機械の操作性だけでなく、店舗スタッフの声かけ方法が生活者の受け止めを大きく左右することを示しています。無人化を進める際は、見守りと過干渉の境界をどう設計するかが重要です。現場の接客ルールを整備することが、体験価値の向上につながります。",
+        "tags": [
+          "セルフレジ",
+          "SNS話題",
+          "接客"
+        ],
+        "search_terms": [
+          "セルフレジ 声かけ 反響",
+          "self-checkout customer reaction",
+          "ローソン セルフレジ 体験",
+          "無人レジ 見守り 接客"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1ib1NjSTM3UnZzdWYyeGhlX0lOWVg1U2dZck9yNTVVMW91WDJXSktna3MtZTFJdVRmZDlrZmp1RUZlaUtGQ25TakVTNHZYXzlNRTdwZGdTYlNsN3JMaWJzV2pOdEZ6VUU4U3cwaEhB?oc=5",
+        "source_pub_ts": 1794963600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジでぼーっと立ってるだけなら仕事しろ」と言われた店員の本音",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-06",
+        "summary": "セルフレジ対応をする店員が、客から「ぼーっと立っているだけなら仕事しろ」とクレームを受けた経験と、その本音が紹介されています。セルフ化が進む中で、スタッフの役割が客から見えにくくなり、評価や不満が生じている現状が浮き彫りになりました。見守りやトラブル対応といった業務の実態が伝わりにくいことが背景にあるとみられます。現場の声として、生活者の認識とのギャップを示す話題です。",
+        "why_it_matters": "セルフレジの普及は、店舗スタッフの業務を「レジ打ち」から「見守り・トラブル対応」へ移す流れを生みます。しかし、その役割が客に伝わらないと不満につながります。スタッフの役割を可視化する仕組みや案内設計が、無人化時代の現場運営で重要になります。",
+        "tags": [
+          "セルフレジ",
+          "店員の本音",
+          "SNS話題"
+        ],
+        "search_terms": [
+          "セルフレジ 店員 クレーム",
+          "self-checkout staff complaints",
+          "セルフレジ 見守り 役割",
+          "レジ業務 現場の声"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBvNWlzNUtzdWF1QTRCY3J0RlA3Mm80WUpLMTEwUUlkeWo4M1FMRUkxX01pcWoteFhVbF9reG1wODF2YUpOT3lVeDhMYXZqOC1PSG9qY1JlbktKa2FyX0dlell6OEZhN0l0WnI4RWNB?oc=5",
+        "source_pub_ts": 1794933652
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "クロガー、リテールメディア責任者を新たに任命",
+        "original_title": "Kroger names new retail media chief",
+        "source": "Grocery Dive",
+        "source_id": "GL-01",
+        "summary": "米食品スーパー大手クロガーが、リテールメディア事業を率いる新たな責任者を任命したと報じられました。小売企業が自社の購買データを基に広告事業を強化する中、組織体制を明確にする動きとして注目されます。広告事業は、店舗やECの顧客データを活用して広告主に価値を届ける役割を担うため、専任の責任者を置くことは事業の方向性を示す意味を持ちます。今後の施策展開に関心が集まっています。",
+        "why_it_matters": "リテールメディアは、小売企業にとって収益源であると同時に、組織横断的な運営体制が求められる分野です。責任者の任命は、データ活用、広告主対応、店舗施策を一体で推進する意思表示といえます。日本の小売企業にとっても、専任体制の整備が事業成長の前提になるでしょう。",
+        "tags": [
+          "リテールメディア",
+          "組織体制",
+          "米国小売"
+        ],
+        "search_terms": [
+          "リテールメディア 責任者 任命",
+          "Kroger retail media leadership",
+          "retail media executive appointment",
+          "小売 広告事業 組織"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNOFFFU182aFJBQzJfcFpWcnkyTzdvc24xSE91Q2l5bEdLa1F3dW9PRldpWGFiMXpCdDdiRVJXdE9CNmVfVThFV3Q2d2s0YnhCTWFSU0hfRXE4OVVJTlJySGg1eUlDRFZkcU10cklLVkhNcTlyWk9kT2NxN0Mtck5YdFRvLU43Z3FTRFhVNjJrbkZvUTJCY19fc212aHBmZlFYV0MtRXNfSWJIRVE?oc=5",
+        "source_pub_ts": 1795019351
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "広告バイヤーがリテールメディアとストリーミングの「蜜月」を歓迎",
+        "original_title": "Ad Buyers Embrace Retail Media’s Honeymoon With Streaming",
+        "source": "ADWEEK",
+        "source_id": "GL-06",
+        "summary": "広告バイヤーの間で、リテールメディアとストリーミング広告を組み合わせる動きが広がっていると報じられました。小売の購買データを活用した動画広告が、広告主の関心を集めている状況が示されています。従来の店内やサイト上の広告から、映像領域へと広告の場が拡張しつつあります。広告主にとっては、購買に近いデータを使って効果を測れる点が評価されている模様です。",
+        "why_it_matters": "リテールメディアは店内・サイト上の広告から、テレビ的な動画領域へと広がりつつあります。購買データに基づくターゲティングを映像広告に組み合わせられれば、広告主にとって効果測定の説得力が高まります。小売各社は、自社データを外部の広告枠とどう接続するかを検討する必要があります。",
+        "tags": [
+          "リテールメディア",
+          "ストリーミング広告",
+          "広告主"
+        ],
+        "search_terms": [
+          "リテールメディア 動画広告",
+          "retail media streaming advertising",
+          "CTV retail data targeting",
+          "広告バイヤー 購買データ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxNWkNQQk5aYUx6VDV5ZjJPUzV4Wk95aGlLeVhLVHNvWGF1S2gydkNtNkNYOUNaNmxzWFRUWlRmNXRpbFNKemgzT2NHZ0gtS2Q4bWVtOVRpSERpblpoM0lpa1Jmel9DZDlkMkRVaGFpLU5OZ0F6T3FDTFFTd0JsdlJLV1VRQ0lHQ21KZ2plU3JkV3pSY1U?oc=5",
+        "source_pub_ts": 1794951290
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "アマゾン、当日配送の食料品サービスに調理済み食品を追加",
+        "original_title": "Amazon adds prepared meals to same-day grocery delivery service",
+        "source": "Grocery Dive",
+        "source_id": "GL-03",
+        "summary": "米アマゾンが、当日配送の食料品サービスで調理済みの食事を取り扱うようになったと報じられました。日常の食品購入を即日で完結させる取り組みを広げ、生鮮や食品ECの利便性を高める狙いがうかがえます。食材の購入だけでなく、すぐに食べられる商品まで含めることで、利用頻度を高める効果が期待されます。配送網と品揃えを組み合わせた展開として注目されています。",
+        "why_it_matters": "食品ECでは、配送スピードに加えて、食事の提案まで含めた品揃えが顧客の再訪を左右します。調理済み食品の追加は、ラストワンマイル配送と売場の商品構成を一体で設計する重要性を示しています。日本の食品小売にとっても、即日配送と惣菜の連携は検討すべきテーマです。",
+        "tags": [
+          "食品EC",
+          "即日配送",
+          "調理済み食品"
+        ],
+        "search_terms": [
+          "即日配送 食料品 調理済み",
+          "Amazon same-day grocery delivery",
+          "prepared meals online grocery",
+          "食品EC 配送 品揃え"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOYlpGcGpoTHZuZE4yYTJESUtEODRwbmpNS01sa3otalEzZVcxaUdJbllSelhUV3RtSGVpOXFORDc5aHl2azlFMGFGT1phajlrajRXNEY3b3dlOHNLWnlrTVpFbDNobE5Mal9JNXZva3gyOTJsTXZUNklzV3I3NVY2ZFRzWmZtUQ?oc=5",
+        "source_pub_ts": 1795009751
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261118",
     "title": "2026年11月18日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内では、販促業務のDX実態調査で現場の4割が「情報のブラックボックス化」に直面していることが示され、店舗・本部間のデータ共有基盤の整備が課題として浮き彫りになった。 海外では、余剰食品を割引販売するアプリ「Flashfood」が新たな州へ事業を拡大し、小売の在庫情報をデジタルで活用した食品ロス対策が広がっている。",

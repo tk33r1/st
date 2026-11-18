@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 18 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 18 Nov 2026 09:01:35 +0900</lastBuildDate>
+    <pubDate>Thu, 19 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 19 Nov 2026 08:16:08 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月19日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261119/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261119/</guid>
+      <pubDate>Thu, 19 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ウォルマートが電子棚札の点灯を買い物体験の向上に使う新サービスを導入し、棚札が価格表示から顧客接点へと役割を広げつつあります。 リテールメディアは、アサヒ・サッポロ・フマキラーのようにメーカーごとに異なる手法で広がっており、小売と広告主の接続方法が競争軸になっています。</description>
+    </item>
     <item>
       <title>2026年11月18日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261118/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261105/</guid>
       <pubDate>Thu, 05 Nov 2026 08:00:00 +0900</pubDate>
       <description>セルフレジ運用は、単なる省人化にとどまらず、スタッフの役割や店舗オペレーション全体を再設計する段階に入っている。 リテールメディアとAI需要予測は、広告効果や予測精度を数値で示せるかが問われるフェーズへ移りつつある。</description>
-    </item>
-    <item>
-      <title>2026年11月4日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261104/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261104/</guid>
-      <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
-      <description>イオンが次世代自動化モデルセンター「イオン川口東XD」を本稼働させ、物流の自動化とサプライチェーン高度化の動きが加速している。 決済事業者の破綻による決済停止を機に、飲食店で店舗DXや決済の冗長化を見直す動きが表面化した。</description>
     </item>
   </channel>
 </rss>
