@@ -1,5 +1,113 @@
 [
   {
+    "date": "20261118",
+    "title": "2026年11月18日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内では、販促業務のDX実態調査で現場の4割が「情報のブラックボックス化」に直面していることが示され、店舗・本部間のデータ共有基盤の整備が課題として浮き彫りになった。 海外では、余剰食品を割引販売するアプリ「Flashfood」が新たな州へ事業を拡大し、小売の在庫情報をデジタルで活用した食品ロス対策が広がっている。",
+    "count": 4,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "国内では、販促業務のDX実態調査で現場の4割が「情報のブラックボックス化」に直面していることが示され、店舗・本部間のデータ共有基盤の整備が課題として浮き彫りになった。",
+      "海外では、余剰食品を割引販売するアプリ「Flashfood」が新たな州へ事業を拡大し、小売の在庫情報をデジタルで活用した食品ロス対策が広がっている。",
+      "食品小売のEC対応が事業を圧迫しているとの指摘があり、一方でアパレル分野ではAIスタイルアドバイザーの導入が進むなど、デジタルを活用した顧客接点の再設計が問われている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "販促業務のDX実態調査、現場の4割が「情報のブラックボックス化」に直面",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-01",
+        "summary": "流通ニュースは、クレオが実施した販促業務のDX実態調査の結果を伝えた。調査では、現場の約4割が「情報のブラックボックス化」に直面していることが示された。ここでいう情報のブラックボックス化とは、販促の計画や実施、効果に関する情報が特定の担当者や部署に閉じ、組織内で共有・可視化されにくい状態を指す。販促業務のデジタル化が進む一方で、データが散在すると施策の検証や改善が難しくなる。店舗や本部の販促現場で情報をどう流通させるかが、DX推進の大きな課題であることが浮き彫りになった。",
+        "why_it_matters": "販促は店舗DXのなかでもデータ連携が遅れやすい領域です。情報が一部の担当者に依存すると、施策の効果測定や本部と店舗の連携が滞り、リテールメディアや需要予測などの高度な施策にも影響します。まずは販促計画や実績データの標準化と共有基盤の整備から着手することが、DXを前に進める現実的な一歩になるでしょう。",
+        "tags": [
+          "販促DX",
+          "データ共有",
+          "流通DX"
+        ],
+        "search_terms": [
+          "販促業務 デジタル化",
+          "promotion DX survey",
+          "情報の属人化 データ共有",
+          "retail promotion data silo"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBMTGUtczFVMThDdUZKVG56R3RSVmFFUHpDOG5qdVE3ZjZLamMzXzRWWmJCMkpudHUxUG1uUDl1ZTBxcEhwUTdOdWpleWZFUUtyekNnUnBQRjRadw?oc=5",
+        "source_pub_ts": 1794885000
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "Flashfood、新たな州へ事業を拡大",
+        "original_title": "Flashfood expands into new state",
+        "source": "Grocery Dive",
+        "source_id": "GL-01",
+        "summary": "Grocery Diveは、余剰食品を割引価格で販売するアプリ「Flashfood」が新たな州へ事業を拡大したと報じた。Flashfoodは、小売店の売れ残りや期限間近の商品をアプリ上で掲示し、利用者が購入できる仕組みを提供している。店舗は廃棄を減らしながら売上の一部を回収でき、消費者は手頃な価格で食品を入手できる。地域をまたぐ展開は、デジタルプラットフォームを活用した食品ロス対策が広がりつつあることを示している。",
+        "why_it_matters": "食品ロス対策は、需要予測や在庫最適化と並ぶ店舗DXの重要テーマです。売れ残りや廃棄の情報をデジタルで流通させる仕組みは、値引きの自動化や電子棚札との連携にもつながる可能性があります。国内でも同様の取り組みが広がるなか、自社の売れ残り削減策とどう組み合わせるかを検討する材料になるでしょう。",
+        "tags": [
+          "食品ロス",
+          "在庫最適化",
+          "デジタルプラットフォーム"
+        ],
+        "search_terms": [
+          "食品ロス削減アプリ",
+          "food waste app",
+          "余剰食品 割引販売",
+          "surplus food marketplace"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQR0FyX2VNd0JFczE4bTk2RzhXaTFhVkFDOXlPalNGWC1EZ2x2elBtMnhZbTYwVnR3clNqZ1U3OTdQc3VXSTFwaVZuLUZ5ZXVYcTRWei1oTHdIOURKRGx2aGoyeENsUGluaGZiUVpzZ2R0VXVhRW5FOW0yaEROSzJvTE43dnA?oc=5",
+        "source_pub_ts": 1794930212
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "食品小売は自ら窮地に陥った？Eコマース対応が生んだ構造的な課題",
+        "original_title": "Pardon the Disruption: Grocers have backed themselves into a corner with e-commerce",
+        "source": "Grocery Dive",
+        "source_id": "GL-02",
+        "summary": "Grocery Diveに掲載された論考「Pardon the Disruption」は、食品小売事業者がEコマースへの対応によって自ら難しい局面に陥ったという見方を示した。オンライン対応では配送コストや在庫管理の負担が増えやすく、店舗運営との両立が課題となる。見出しからは、デジタルチャネルへの投資が既存の店舗運営を圧迫している構図が読み取れる。店舗網を維持しながらオンライン事業の収益性をどう確保するかが、業界全体の問いとなっている。",
+        "why_it_matters": "オンライン強化は競争上不可欠ですが、店舗網と物流の二重投資が収益を圧迫するケースは少なくありません。ダークストアやネットスーパー、店舗在庫の活用など、既存資産を生かした統合型の設計が問われます。自社のEC戦略が店舗のオペレーションを崩していないか、改めて点検する視点として示唆に富みます。",
+        "tags": [
+          "Eコマース",
+          "食品小売",
+          "オムニチャネル"
+        ],
+        "search_terms": [
+          "食品小売 EC戦略",
+          "grocery e-commerce strategy",
+          "オンラインと店舗の両立",
+          "omnichannel grocery profitability"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQNlhCc1RpajBKM3ZWMkR1akd3T3NmQlpyNFg3Y0xYcFB0NGhybDV0X19mZk5uNGNJZG1zRjFGZ05ybHhzZHQzYTBLb00tUHJNdmFqa0xNWHhJZmFKa1pCSXVmM0hySlRkcl95aWh2OWJySVNrS3ItNXIwbUNlanFpNTY3NW1rNTVraXhkd1VBYWJLOXo0WEgtLVZPdw?oc=5",
+        "source_pub_ts": 1794930212
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "J.Crew、AI搭載の「Style Advisor」を導入",
+        "original_title": "J. Crew introduces AI-powered Style Advisor",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "Retail Diveは、アパレルブランドJ.Crewがスタイル提案を行うAI機能「Style Advisor」を導入したと報じた。AIが利用者の好みに応じてコーディネートなどを提案する仕組みとみられ、オンライン上の買い物体験を支援する狙いがあるとされる。ファッション分野で生成AIを顧客接点に組み込む動きとして注目される。接客の一部をデジタルで代替しつつ、購入相談の質を高める試みといえる。",
+        "why_it_matters": "AIスタイリングは、ネット通販での商品選びの迷いを減らし、客単価や購入率の改善につながりうる施策です。店舗でも同様の対話型AIを接客や売場提案に応用できる可能性があります。ただし提案精度と個人情報の扱いに対する信頼の確保が前提となるため、導入時には検証体制の整備が欠かせません。",
+        "tags": [
+          "AI接客",
+          "パーソナライズ",
+          "アパレル"
+        ],
+        "search_terms": [
+          "AIスタイリング機能",
+          "AI style advisor",
+          "対話型AI 接客",
+          "AI shopping assistant fashion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1heWNwOHFiSFh6TVg4Ykh5UW9kd3M5V1hBWUtWWDVMWkdYQVNzRXVTUWR3RGxPNDNuRm45eDJJQW92ODczNkRQVV8zVHdiS0RSbF9BVE1RT3h5Q2dNaDdYLTV0a0txQ3E4MUZvWDNCQmFJRHV2ODZzYWZHUDlVRGc?oc=5",
+        "source_pub_ts": 1794849146
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261117",
     "title": "2026年11月17日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "トライアルや東急百貨店×アビームコンサルティングの事例が示すように、店内サイネージや来店接点を活用したリテールメディアの収益化が実証と本格展開の両面で進んでいます。 新宿住友ビルの無人決済直営店は、無人決済を実際に体験してもらう場を設けることで、消費者の受容性を確かめる動きを示しています。",

@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 17 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 17 Nov 2026 09:38:14 +0900</lastBuildDate>
+    <pubDate>Wed, 18 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 18 Nov 2026 09:01:35 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月18日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261118/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261118/</guid>
+      <pubDate>Wed, 18 Nov 2026 08:00:00 +0900</pubDate>
+      <description>国内では、販促業務のDX実態調査で現場の4割が「情報のブラックボックス化」に直面していることが示され、店舗・本部間のデータ共有基盤の整備が課題として浮き彫りになった。 海外では、余剰食品を割引販売するアプリ「Flashfood」が新たな州へ事業を拡大し、小売の在庫情報をデジタルで活用した食品ロス対策が広がっている。</description>
+    </item>
     <item>
       <title>2026年11月17日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261117/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261104/</guid>
       <pubDate>Wed, 04 Nov 2026 08:00:00 +0900</pubDate>
       <description>イオンが次世代自動化モデルセンター「イオン川口東XD」を本稼働させ、物流の自動化とサプライチェーン高度化の動きが加速している。 決済事業者の破綻による決済停止を機に、飲食店で店舗DXや決済の冗長化を見直す動きが表面化した。</description>
-    </item>
-    <item>
-      <title>2026年11月3日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261103/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261103/</guid>
-      <pubDate>Tue, 03 Nov 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジをめぐる生活者の反応が多様化しています。子どもの操作の是非や、機器更新による紙幣投入口の分かりにくさがSNSで議論になりました。 需要予測による発注支援、決済基盤の刷新など、店舗とバックオフィスの効率化が実装段階に入っています。</description>
     </item>
   </channel>
 </rss>
