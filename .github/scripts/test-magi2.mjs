@@ -178,6 +178,19 @@ test('一時/設定: 確認通信が中止後に応答しても送信契約を�
   }
 });
 
+test('一時/設定: 会話を替えて送信を捨てるときは送信前の確認も止め、新しい会話の送信を確認の期限まで待たせない', () => {
+  for (const source of [home, mobile]) {
+    const preflight = new AbortController(), agentCtrl = new AbortController();
+    const ctx = vm.createContext({ agentGen: 0, agentCtrl, agentPrivacyState: { preflight }, setAgentStopMode() {}, setAgentSuggestion() {} });
+    vm.runInContext(between(source, 'function cancelAgentPrivacyPreparation(', 'function agentPrivateStorage('), ctx);
+    vm.runInContext(between(source, 'function dropAgentRequest(', 'function resetAgent('), ctx);
+    ctx.dropAgentRequest();
+    assert.equal(preflight.signal.aborted, true);
+    assert.equal(agentCtrl.signal.aborted, true);
+    assert.equal(ctx.agentGen, 1);
+  }
+});
+
 test('一時/設定: 新契約の上流エラーが本文を返してもログ・通知・D1カウンターへ転記しない', async () => {
   for (const mode of ['normal', 'temporary']) {
     const logs = [], mails = [];
@@ -2781,6 +2794,7 @@ function client(src, isHome = false) {
     userBubbleEl: element, agentUserEl() { return ctx.document.createElement('div'); }, markAgentStarted() {}, agentPromptAt: () => null, renderAgentRich(body, text) { if (body) body.textContent = text; }, renderAgentRichSoon(body, text) { if (body) body.textContent = text; }, agentRichPlain: s => s, agentTurnEl: element, splashOnly: () => false, isDarkNow: () => false, cssEsc: s => s, tr: s => s, isJa: () => ctx.document.documentElement.lang === 'ja', pickLang: s => s, announceAgent() {},
     personaCardsHTML: () => '', reactionBarHTML: () => '', replyBarHTML: () => '', agentScroll() {}, safeStore() {}, safeRemove() {}, saveCurrentHistory() {}, syncCurrentToSaved() {}, updateAgentActionButtons() {},
     agentPrivacyState: { preparing: false, switching: false }, agentTemporary: () => false, agentPrivateStorage: () => false, agentPrivacyRequest: async () => null, agentPrivacyExpected: () => null, syncAgentPrivacyUI() {}, queueMicrotask,
+    cancelAgentPrivacyPreparation() {},
     agentSpeechPlayer: null, setupReplyBar() {}, refreshSpeechFeature() {}, syncRetryButtons() {}, refreshReplyTimes() {}, agentRetryEls: () => [], agentRetryPair: () => [], agentLastSend: null,
     updateSendState() {}, loadUsage() {}, archiveCurrentHistory() {}, closeAgentPanels() {}, setAgentTitle() {}, showSplashIfEmpty() {}, renderAgentPages() {}, renderAgentError(e) { errors.push(e); }, agentDegrade() {}, setAgentInputEnabled(enabled) { ctx.agentInput.disabled = ctx.agentSendBtn.disabled = ctx.attachBtn.disabled = !enabled; },
   });
