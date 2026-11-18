@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.26",
+      "date": "2026-11-19",
+      "changes": {
+        "ja": [
+          "アプリで送信した直後に新しい会話や保存した会話へ切り替えると、しばらく送信できないことがある問題を直しました。",
+          "アプリで添付の注意が続けて出たとき、後から出た注意がすぐに消えてしまう問題を直しました。"
+        ],
+        "en": [
+          "In the app, switching to a new or saved chat right after sending no longer blocks sending for a while.",
+          "In the app, a second attachment notice shown in quick succession no longer disappears too early."
+        ]
+      }
+    },
+    {
       "version": "7.25",
       "date": "2026-11-07",
       "changes": {
