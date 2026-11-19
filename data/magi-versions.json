@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "7.26",
+      "date": "2026-11-20",
+      "changes": {
+        "ja": [
+          "アプリで新しい会話や保存した会話に切り替えた直後でも、待たされずに次の質問を送れるようにしました。",
+          "アプリで保存した会話を開いたとき、添付欄と入力欄の表示が前の会話のまま残らないようにし、添付の注意文が早く消えないようにしました。"
+        ],
+        "en": [
+          "In the app, you can send the next question right away after switching to a new or saved chat, without waiting.",
+          "In the app, opening a saved chat no longer leaves the previous chat's attachments or input on screen, and attachment notices no longer disappear early."
+        ]
+      }
+    },
+    {
       "version": "7.25",
       "date": "2026-11-07",
       "changes": {
