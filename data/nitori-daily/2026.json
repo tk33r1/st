@@ -1,5 +1,292 @@
 [
   {
+    "date": "20261120",
+    "title": "2026年11月20日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "59周年創業祭が11月27日から開催され、約1,400アイテムを感謝価格で販売します。大型家具・家電の引取料金も最大無料となり、価格訴求と買い替え需要の喚起を同時に狙います。 Toffyとのコラボ家電3機種や「TORERU4」など、既存の人気カテゴリーと協業による商品開発が話題を集めています。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "59周年創業祭が11月27日から開催され、約1,400アイテムを感謝価格で販売します。大型家具・家電の引取料金も最大無料となり、価格訴求と買い替え需要の喚起を同時に狙います。",
+      "Toffyとのコラボ家電3機種や「TORERU4」など、既存の人気カテゴリーと協業による商品開発が話題を集めています。",
+      "公式通販でのPC周辺機器展開や蚕室の7号店出店など、EC領域と海外店舗網の拡大が同時に進んでいます。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ、59周年記念創業祭を11月27日から開催　約1,400アイテムを感謝価格で販売",
+        "original_title": "",
+        "source": "AMP[アンプ]",
+        "source_id": "JP-12",
+        "summary": "ニトリは59周年記念創業祭を11月27日から開催し、約1,400アイテムを感謝価格で販売すると発表した。Nスリープの最上位シリーズなど、「いつか欲しかった」家具・家電が対象に含まれる。大型家具・大型家電の引取料金も最大無料とされ、周年企画として価格訴求と買い替え需要の喚起を同時に狙う施策とみられる。",
+        "why_it_matters": "約1,400アイテムという大規模な感謝価格を、高単価の寝具や家具にも広げた点が特徴です。引取料金の無料化は大型商品の購入時の心理的ハードルを下げ、買い替えを後押しする仕組みとして機能します。SPAとして在庫回転と価格設計を両立できるかが試される局面で、周年祭は客数と客単価の両方を押し上げる重要な販促機会になります。",
+        "tags": [
+          "ニトリ",
+          "59周年",
+          "創業祭",
+          "価格戦略",
+          "大型家具"
+        ],
+        "search_terms": [
+          "創業祭 キャンペーン",
+          "anniversary sale",
+          "Nitori 59th anniversary",
+          "大型家具 引取 無料"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9uS2Vuckc4VXNHNUNRZk9yY3hKVHNsNEhrSHo0Tk01VEdycm9xYVp2SzkxTHJXdDViZG5XalVMTElCQnlVd0NWUVhaVlFKRDF1R1lTeDBR?oc=5",
+        "source_pub_ts": 1795064991
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ公式通販でPC周辺機器を本格展開　マーケットプレイス「プリンストン」出店でデスク環境を一式提案",
+        "original_title": "",
+        "source": "ゴゴ通信",
+        "source_id": "JP-09",
+        "summary": "ニトリ公式通販でPC周辺機器の本格展開が始まった。ニトリネットマーケットプレイス内の「プリンストン」出店により、パソコン周辺機器やオーディオ製品のカテゴリー展開を開始した。家具とあわせてデスク環境を一式そろえられる点を打ち出しており、インテリアから電子機器まで購買範囲を広げる動きといえる。",
+        "why_it_matters": "家具・インテリアで培った購買導線を、PC周辺機器やオーディオへ拡張する動きです。デスク環境を一括で提案できれば客単価の向上につながります。音響機器の新ブランド「life+audio」との関係をどう整理するかが今後の注目点で、公式通販とマーケットプレイスの役割分担が戦略の鍵になります。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "PC周辺機器",
+          "プリンストン",
+          "デスク環境"
+        ],
+        "search_terms": [
+          "PC周辺機器 通販",
+          "PC peripherals marketplace",
+          "desk setup furniture",
+          "マーケットプレイス 出店 Nitori"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE5yS0lxMm80dHJHR2lpenBGT0ZQTWtqcm9NVjMzYjlKbTlfQmd1ejJjV0w4RW1DZDVxUmdQYVhRdHdyblVxVVNBVDFn?oc=5",
+        "source_pub_ts": 1795071780
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ×Toffy、限定カラーのコラボ家電3機種を発売　「ちょうどいい」サイズ感が特徴",
+        "original_title": "",
+        "source": "Excite エキサイト",
+        "source_id": "JP-10",
+        "summary": "ニトリはキッチン家電ブランド「Toffy」とのコラボ家電3機種を発売した。ホットサンドメーカーやコーヒーメーカーなどで構成され、「ちょうどいい」サイズ感を訴求している。限定カラーとして11月中旬から販売されるとされ、他社ブランドとの協業により家電カテゴリーの話題性と新たな顧客層の取り込みを図る狙いがうかがえる。",
+        "why_it_matters": "ブランド同士のコラボにより、ニトリ単独では届きにくいデザイン志向の顧客にアプローチできる点が注目です。コンパクトなサイズ感は一人暮らしや限られた調理スペースの住まいと相性が良く、「暮らしに合う家電」という文脈を補強します。限定カラーは販売期間を区切ることで購入動機を高める施策であり、小型家電の定番化に向けた試金石になり得ます。",
+        "tags": [
+          "ニトリ",
+          "Toffy",
+          "コラボ",
+          "キッチン家電",
+          "限定カラー"
+        ],
+        "search_terms": [
+          "コラボ家電 限定色",
+          "collaboration kitchen appliance",
+          "Toffy Nitori collab",
+          "小型キッチン家電 compact"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9vNklkR3UyUWJ6ZXdramhCd3h5T0kzcjc5cnFXM0IxVjMwOUVCcnE0RjREdjNGX0ZLSnl3TXBOM0xibFVPalFvemlvaG5BSnBoOF9MNkJWNUNmUVkt?oc=5",
+        "source_pub_ts": 1795071540
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ「超・超・軽量 取っ手がとれる鍋・フライパン TORERU4」発売　TORERU史上最軽量を訴求",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-13",
+        "summary": "ニトリは「取っ手がとれる鍋・フライパン」シリーズの新製品「TORERU4」を発売した。同シリーズ史上最軽量を謳い、軽さと使いやすさをさらに進化させたとしている。取っ手が取り外せる仕様は引き継がれており、収納性の高さも継続して訴求される。最軽量の根拠は注釈付きで示されている。",
+        "why_it_matters": "取っ手が取れる調理器具は、ニトリが継続的に改良してきたヒット商品群です。今回の軽量化は、重い鍋やフライパンを扱う場面での負担軽減につながり、使い勝手の向上を通じて支持層を広げる効果が見込めます。毎年の進化を明示して買い替える理由を生み出す点が重要で、定番商品の価値を更新し続けるSPAの開発サイクルを示す好例です。",
+        "tags": [
+          "ニトリ",
+          "TORERU",
+          "調理器具",
+          "軽量",
+          "新商品"
+        ],
+        "search_terms": [
+          "取っ手が取れる鍋 軽量",
+          "detachable handle cookware",
+          "lightweight pan Nitori",
+          "フライパン 新商品 軽さ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5CNkNYbTFrTHFhRUlMQUFOM3JNWmpZM29UX09VVnh6YzJNSVlVbHpYSXF0U2FvWDZWQWw5ZW43Tzg2UXJGNVh1VFFLalNtMGhfcUlOOVB1cVgzRWFoanA4NTZYcnlEM2t5TlE?oc=5",
+        "source_pub_ts": 1795057202
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、蚕室に7号店　小型店を軸に商業施設へ出店",
+        "original_title": "",
+        "source": "NNAアジア",
+        "source_id": "JP-02",
+        "summary": "NNAアジアによると、蚕室（チャムシル）にニトリの7号店が出店する。商業施設への入居を前提に、小型店を軸とした出店形態をとるとしている。店舗面積を抑えつつ都市部の商業施設に出店する手法で、海外での店舗網拡大を進める動きといえる。新規の出店拠点が積み上がることで、アジア事業の基盤強化が進んでいることがうかがえる。",
+        "why_it_matters": "小型店を商業施設に組み込む出店モデルは、郊外の大型店に依存しない都市型展開の選択肢になります。海外では出店用地の確保が課題となりやすく、小型フォーマットの標準化は出店スピードの向上につながります。日本で確立したSPAモデルを海外へ移植する際の検証事例として注目すべき動きです。",
+        "tags": [
+          "ニトリ",
+          "海外出店",
+          "韓国",
+          "小型店",
+          "商業施設"
+        ],
+        "search_terms": [
+          "小型店 出店 商業施設",
+          "small format store Korea",
+          "Nitori Korea store expansion",
+          "蚕室 出店"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5RTVdoemNjbzRCMUR0TllqMHNlOFBTTHhpeUhvMTg0dUpzb3g3dVVZRm14MFEyTXBha0w1MEoySmptSVhBOFE?oc=5",
+        "source_pub_ts": 1795100400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「座椅子で読書が捗る」　サイドテーブルにお茶とおやつを添えた暮らしが共感を集める",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-02",
+        "summary": "ニトリの座椅子を買ってから読書が捗るようになったという投稿が、84いいねを集めた。サイドテーブルにお茶やおやつを置くことで、読書の時間を気軽に楽しめる小さな居場所をつくっている。商品そのものより、その空間で過ごす時間の変化が共感を呼んでいる点が特徴的である。",
+        "why_it_matters": "座椅子は「購入したこと」より「その空間で過ごす時間の変化」が語られやすい商品です。今回の投稿は、商品が生活提案として受け取られている好例といえます。サイドテーブルや飲み物など周辺アイテムと組み合わせた「くつろぎの一式」提案へ広げる余地があり、購入後の使い方を発信する売場や情報設計が効果的です。",
+        "tags": [
+          "ニトリ",
+          "座椅子",
+          "読書",
+          "生活提案",
+          "SNS"
+        ],
+        "search_terms": [
+          "座椅子 読書 くつろぎ",
+          "reading chair lifestyle",
+          "side table reading corner",
+          "生活提案 インテリア"
+        ],
+        "url": "https://x.com/Eni_Kaita_Moch1/status/2123376287259705514",
+        "source_pub_ts": 1795086000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの棚を組み立てて四苦八苦　軍手を買いに行った体験談に「とても共感」",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-04",
+        "summary": "ニトリの棚を組み立てた際に四苦八苦し、作業の途中で軍手を買いに行ったという体験談が、37いいねを集めた。DIYや組み立て家具ならではの手間と、そこから生まれる達成感を含んだ生活者の声として共感を呼んでいる。",
+        "why_it_matters": "組み立て家具は、購入後の体験が満足度を大きく左右します。説明書の分かりやすさや作業のしやすさを改善すれば、手間が「楽しい体験」に変わります。ニトリが商品設計で組み立て負荷を下げる一方、こうした声を拾い、組み立てに必要な工具や周辺品を案内する導線を整えることも有効と考えられます。",
+        "tags": [
+          "ニトリ",
+          "組み立て家具",
+          "DIY",
+          "UX",
+          "SNS"
+        ],
+        "search_terms": [
+          "組み立て家具 DIY",
+          "furniture assembly experience",
+          "flat-pack shelf assembly",
+          "棚 組み立て 体験"
+        ],
+        "url": "https://x.com/lionlion0812/status/2123355900010447072",
+        "source_pub_ts": 1795086000
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのNウォームスリッパと🐈‍⬛、ちょっと似ている。 pic.x.com/KngTqNw5Be",
+        "platform": "x",
+        "author": "@senjitonaraban1",
+        "url": "https://x.com/senjitonaraban1/status/2123344563796599294",
+        "likes": 184,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:16",
+        "captured_at": "",
+        "text": "ニトリのNウォームスリッパと🐈‍⬛、ちょっと似ている。 pic.x.com/KngTqNw5Be",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリの座椅子買ってから読書捗るようになった。サイドテーブルにはお茶とおやつを。 pic.x.com/KZUE4lT6Rv",
+        "platform": "x",
+        "author": "@Eni_Kaita_Moch1",
+        "url": "https://x.com/Eni_Kaita_Moch1/status/2123376287259705514",
+        "likes": 84,
+        "retweets": 6,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:22",
+        "captured_at": "",
+        "text": "ニトリの座椅子買ってから読書捗るようになった。サイドテーブルにはお茶とおやつを。 pic.x.com/KZUE4lT6Rv",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "今の世の中、大抵の人は身の回りに100円ショップや、ファストファションブランドや、ニトリの家具なんかが溢れてると思いますよ 茶碗も陶工の作品...",
+        "platform": "x",
+        "author": "@kitsunep",
+        "url": "https://x.com/kitsunep/status/2123254588367360236",
+        "likes": 42,
+        "retweets": 17,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:18",
+        "captured_at": "",
+        "text": "今の世の中、大抵の人は身の回りに100円ショップや、ファストファションブランドや、ニトリの家具なんかが溢れてると思いますよ 茶碗も陶工の作品しか使わないって人はあまりいないでしょうね x.com/soeda00078/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "『ましゃラジオトークカフェ』 ましゃ ニトリの棚を組み立てるの巻 四苦八苦しながら 組み立てた話 とても共感！(^-^)/ 作業途中で 軍手...",
+        "platform": "x",
+        "author": "@lionlion0812",
+        "url": "https://x.com/lionlion0812/status/2123355900010447072",
+        "likes": 37,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:01",
+        "captured_at": "",
+        "text": "『ましゃラジオトークカフェ』 ましゃ ニトリの棚を組み立てるの巻 四苦八苦しながら 組み立てた話 とても共感！(^-^)/ 作業途中で 軍手を買いに行った話も ましゃ軍手 ツアーグッズになると 嬉しいなぁ(^-^) その軍手をはめて DIYをするBrosが増えそう pic.x.com/xpXxQSdKg2",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ブライトクロス橋本駅前、見てきました。木の葉モール至近、始発駅で天神南駅まで乗り換えなし。大和ハウスと西鉄さんの物件なので安心感もあります。...",
+        "platform": "x",
+        "author": "@fukuoka_kantei",
+        "url": "https://x.com/fukuoka_kantei/status/2123382277983842358",
+        "likes": 22,
+        "retweets": 1,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:46",
+        "captured_at": "",
+        "text": "ブライトクロス橋本駅前、見てきました。木の葉モール至近、始発駅で天神南駅まで乗り換えなし。大和ハウスと西鉄さんの物件なので安心感もあります。個人的にはニトリが近くて◎です pic.x.com/va5xYRbkK9",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261119",
     "title": "2026年11月19日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリグループが2026年秋冬の新商品展示会で約420アイテムを披露し、企画から販売までを内製するSPAならではの商品開発力とスピード感を示した。 11月27日に「(新)いわき店」が開業予定と伝えられ、島忠は2027年の正月飾りを11月上旬から発売するなど、年末商戦に向けた店舗・季節商品の動きが加速している。",
