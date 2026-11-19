@@ -36,7 +36,7 @@ try {
       +event('classification',{version:1,intent:'research',mode:'fact',fresh:'no',votable:'no',site_pages:'no',magi_candidate:false,reply_language:{version:1,code:lang,source:'ui'}})
       +event('integrated',{delta:'回答しました。'})+event('done',{})});}
    if(url.origin!==origin)return route.fulfill({body:''});return route.continue();});
-  async function open(){await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.locator('#agent-input').waitFor({state:'attached'}); if(path==='/')await page.evaluate(()=>openAgentDock()); await page.locator('#btn-versions-agent').waitFor();
+  async function open(){await page.goto(origin+path,{waitUntil:'domcontentloaded'});await page.locator('#agent-input').waitFor({state:'attached'}); if(path==='/'){await page.waitForFunction(()=>!document.getElementById('input-line').classList.contains('hidden'));await page.evaluate(()=>openAgentDock());} await page.locator('#btn-versions-agent').waitFor();
    await page.evaluate(({lang,theme})=>{if(typeof setLanguage==='function')setLanguage(lang);document.documentElement.lang=lang;document.documentElement.setAttribute('data-theme',theme);},{lang,theme});}
   await open();assert.equal(calls,0);
   await page.screenshot({path:resolve(out,label+'-splash.png'),animations:'disabled'});
