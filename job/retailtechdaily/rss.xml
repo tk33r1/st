@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 19 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 19 Nov 2026 08:16:08 +0900</lastBuildDate>
+    <pubDate>Fri, 20 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 20 Nov 2026 08:23:42 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月20日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261120/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261120/</guid>
+      <pubDate>Fri, 20 Nov 2026 08:00:00 +0900</pubDate>
+      <description>国内ではファミマが飲料補充ロボットを2027年1月から本格導入すると発表し、店舗作業の自動化が実装段階に入りつつあります。 フレスタは無人店舗「よりみちフレスタ」を11月28日に開店すると発表する一方、SNSではセルフレジの是非をめぐる議論が広がっています。</description>
+    </item>
     <item>
       <title>2026年11月19日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261119/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261106/</guid>
       <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
       <description>無人店舗の入口でもLINE連携による入店の実証が始まり、来店から発注まで店舗運営のデジタル化が広がっています。 シノプスの自動納品実証は、AI需要予測と発注自動化を組み合わせ、店舗の省人化を一歩進める動きとして注目されます。</description>
-    </item>
-    <item>
-      <title>2026年11月5日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261105/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261105/</guid>
-      <pubDate>Thu, 05 Nov 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジ運用は、単なる省人化にとどまらず、スタッフの役割や店舗オペレーション全体を再設計する段階に入っている。 リテールメディアとAI需要予測は、広告効果や予測精度を数値で示せるかが問われるフェーズへ移りつつある。</description>
     </item>
   </channel>
 </rss>

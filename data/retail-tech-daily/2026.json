@@ -1,5 +1,205 @@
 [
   {
+    "date": "20261120",
+    "title": "2026年11月20日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内ではファミマが飲料補充ロボットを2027年1月から本格導入すると発表し、店舗作業の自動化が実装段階に入りつつあります。 フレスタは無人店舗「よりみちフレスタ」を11月28日に開店すると発表する一方、SNSではセルフレジの是非をめぐる議論が広がっています。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "国内ではファミマが飲料補充ロボットを2027年1月から本格導入すると発表し、店舗作業の自動化が実装段階に入りつつあります。",
+      "フレスタは無人店舗「よりみちフレスタ」を11月28日に開店すると発表する一方、SNSではセルフレジの是非をめぐる議論が広がっています。",
+      "海外ではターゲットのAIショッピング支援機能が売上に寄与していると報じられ、AIエージェントが購買を担う「エージェンティック・コマース」への関心が高まっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ファミマ、飲料補充ロボットを2027年1月から本格導入 作業時間7割削減を打ち出す",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-02",
+        "summary": "ファミリーマートは、飲料の補充ロボットを2027年1月から本格導入すると発表した。作業時間の7割削減を打ち出しており、人手不足が深刻なコンビニの店舗オペレーションを省力化する狙いがある。ロボットによる売場補充が本格展開される段階に入ったことは、コンビニ業界の店舗自動化が実装フェーズに進んだことを示している。",
+        "why_it_matters": "補充は店舗作業のなかで時間と人手を多く消費する業務であり、機械に任せられれば店員は接客や販売機会づくりに時間を振り向けられる。一方、ロボットが通路を移動する前提での店舗レイアウトや、既存の陳列棚との適合性が導入の成否を左右する。他の小売企業も、自社の店舗規模や商品特性に合わせて自動化の優先順位を見直す必要がある。",
+        "tags": [
+          "補充ロボット",
+          "店舗自動化",
+          "省人化"
+        ],
+        "search_terms": [
+          "飲料補充ロボット",
+          "convenience store restocking robot",
+          "store automation robotics",
+          "コンビニ 省人化 ロボティクス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9VdWpTMWUybEFSZGlRX2ZDMVk4M21UR3dxRnZYVEstV0hCTzdwNUkxUTBtU05EVzBuaEk3SUxYd2dHdnBhTlRGcy12VVJjTXBL?oc=5",
+        "source_pub_ts": 1795066800
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "フレスタ、創業140周年事業の第1弾となる無人店舗「よりみちフレスタ」を11月28日開店",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-03",
+        "summary": "フレスタは、創業140周年プロジェクトの第1弾として、無人店舗「よりみちフレスタ」を11月28日に開店すると発表した。地域密着型のスーパーが無人店舗という新しい形態に挑戦する取り組みであり、今後の店舗モデルを探る動きとして位置づけられる。",
+        "why_it_matters": "地域スーパーにとって無人店舗は、人件費の抑制と営業時間の柔軟化を同時に狙える選択肢になり得る。ただし、商品補充や品質管理、トラブル発生時の対応は無人化に伴って別途の仕組みが必要となる。周年事業の第1弾という位置づけからも、無人店舗を今後の事業の柱として検証する意図がうかがえ、他の地方スーパーにとって参考事例となる。",
+        "tags": [
+          "無人店舗",
+          "地域スーパー",
+          "店舗DX"
+        ],
+        "search_terms": [
+          "無人店舗 よりみちフレスタ",
+          "unmanned store Japan supermarket",
+          "地域スーパー 無人化",
+          "frestа unmanned store opening"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9MQmpmQjU5SlktVV9KRTJTMk1MQWVxczhUYm95anBnYVhtMk9VMGdWZTAySHIyQnFEdEVXSWtrQTNsUmlsc2tCRUZJRkx5RnBCWGg0?oc=5",
+        "source_pub_ts": 1795064563
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジ論争」がSNSで拡散 スーパー「アキダイ」秋葉社長があえてセルフレジを導入しない理由",
+        "original_title": "",
+        "source": "Yahoo!ニュース（ABEMA TIMES）",
+        "source_id": "JP-04",
+        "summary": "SNS上で「レジ打ちは働かされているみたい」といった声をきっかけに、セルフレジをめぐる論争が広がっている。そのなかで、スーパー「アキダイ」の秋葉社長が、あえてセルフレジを導入しない理由を語った。慶應大学の教授とともに、効率化と働き方、顧客体験の関係を読み解く内容になっている。",
+        "why_it_matters": "セルフレジは効率化の象徴である一方、顧客によっては接客機会の喪失や「作業を押し付けられる」という受け止めにもつながる。導入の判断は、コスト削減だけでなく、顧客が店舗に求める体験価値との整合性で考える必要がある。無人化や省人化を進める企業にとって、人の関わりをどこに残すかは、ブランド評価を左右する重要な論点になる。",
+        "tags": [
+          "セルフレジ",
+          "SNS反響",
+          "顧客体験"
+        ],
+        "search_terms": [
+          "セルフレジ論争",
+          "self-checkout debate Japan",
+          "レジ打ち 働き方 議論",
+          "SNS reaction self checkout"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5UVmpuaHMydW12NDJzcUViTEd4Y1VqSlkzRU1JaERWaEd6dDg1QmlQc0ZiQThnbGFSQ0wzRDQyOFR1N20wZk5DbV82R055WmYzOUt3dHNodXZSVXZaX0VwTHpFMVhUWm9xamRvS2RScHNFYkR3clp6R0ZlNmJucm8?oc=5",
+        "source_pub_ts": 1795055436
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジに小銭を大量投入する客…現場の悲鳴を描いた接客あるある漫画に共感の声",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-01",
+        "summary": "接客の現場で働く人の悩みを描いた漫画が、SNSで共感を集めている。客がセルフレジに小銭を大量に投入する場面などが題材となっており、作者へのインタビューも掲載された。利用者のマナーや操作の仕方が、店舗運営の負担として多くの人に意識されていることが分かる。",
+        "why_it_matters": "セルフレジは客にとって自分で会計できる利便性がある一方、想定外の利用方法が店舗の運用に影響を与える。無人化や省人化を設計する際には、利用者の行動や操作性を前提にした仕組みづくりが欠かせない。現場の声がSNSで可視化されている点も、店舗DXの評価を考えるうえで見逃せない材料である。",
+        "tags": [
+          "セルフレジ",
+          "生活者の声",
+          "店舗運営"
+        ],
+        "search_terms": [
+          "セルフレジ 小銭 漫画",
+          "self-checkout customer behavior Japan",
+          "接客 あるある 共感",
+          "self checkout frustration"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5RLU4xYzkzazdHQmxPWGZBa0NYbE43NWlFWDk3ZXJfejhmeW10WHVFVVJPaWZRNnpRQXpBajd4STVsRDZKNDMtVFNiN1Y1V2JxUTNEanZB0gFbQVVfeXFMT0s5dnpjN2tPcEpMbnFCU1dtUVRXSlpLQzZfaHJuNU1icmp2a3RvNjhiRkNkZDBKTy0wN2ZzLXI2T3BtejYwTE5SOW1wZlBEZ1RtQjloaDhXeEtuMA?oc=5",
+        "source_pub_ts": 1795083120
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "消費財マーケターは「リテールメディア幻滅期」とどう向き合うべきか 共通指標とT字型アプローチの実装",
+        "original_title": "",
+        "source": "MarkeZine（マーケジン）",
+        "source_id": "JP-05",
+        "summary": "リテールメディアは期待先行の時期を過ぎ、成果への疑問が広がる「幻滅期」に入ったとされる。本記事は、消費財マーケターが向き合うべき課題として、媒体をまたいで使える共通指標の整備と、「T字型」アプローチの実装方法を取り上げている。広告主がリテールメディアを継続的に活用するための考え方を整理した内容である。",
+        "why_it_matters": "リテールメディアは小売の購買データを活用できる点が強みだが、媒体ごとに指標が異なると、メーカーは効果を比較できず投資判断が難しくなる。共通指標の整備は、小売と広告主の双方にとって透明性を高める前提条件になる。短期の売上効果とブランドへの中長期的な効果を分けて評価する設計が、幻滅期を越える鍵になる。",
+        "tags": [
+          "リテールメディア",
+          "広告効果測定",
+          "消費財マーケティング"
+        ],
+        "search_terms": [
+          "リテールメディア 幻滅期",
+          "retail media measurement KPI",
+          "消費財 マーケティング 共通指標",
+          "retail media T-shaped approach"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9KMXRSUWFqcG9oZVJ4ZFBfeTNBZkN3N2xEM0ZDZEJmRWNqZEdncmtMd0hRZFZDQWRFQUxLdjZlS25IYUljd0oyTFB5VHJXVmp1TW5R?oc=5",
+        "source_pub_ts": 1795055400
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ターゲットのAIショッピングアシスタント、売上を押し上げる",
+        "original_title": "Target’s AI shopping assistant is driving sales",
+        "source": "Retail Dive",
+        "source_id": "GL-05",
+        "summary": "米小売大手ターゲットが提供するAIショッピングアシスタントが、売上の伸びに寄与していると報じられた。商品探しや買い物の判断を支援するAIが、実際の購買行動に結びつき始めていることが注目される。小売企業が顧客接点にAIを組み込む動きが、実売の成果として示された事例といえる。",
+        "why_it_matters": "AIアシスタントは、検索やレコメンドを通じて顧客の購買判断に直接関わる点で、従来のECサイトより一歩進んだ接点になる。売上への寄与が確認されれば、日本の小売でも自社アプリや店頭端末へのAI実装の優先度が上がるだろう。一方、提案の精度や在庫情報との整合性、個人情報の扱いが信頼性を左右するため、体験設計とデータガバナンスを同時に整える必要がある。",
+        "tags": [
+          "AIアシスタント",
+          "顧客接点",
+          "売上効果"
+        ],
+        "search_terms": [
+          "AIショッピングアシスタント 売上",
+          "AI shopping assistant retail",
+          "ターゲット AI 購買支援",
+          "generative AI shopping Target"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNaGtNaEtMOVlqMVFzbTNueXFtdG9rc2NIazZ1Z3BXZm54dWZHVXQxbWZHN19aYWt2bEd5aUFXMUZSWld0NUxScVhucThULVg4c1JxVlhjdFZGR2Y2V2VuOTg4ZU5HUkVNVXpQemkzWmZvNml0OGlQcUQ4X1FsZmpzeUhOb2ViOFNqR0RzZw?oc=5",
+        "source_pub_ts": 1795102724
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "図解で読む「エージェンティック・コマース」の時代へようこそ",
+        "original_title": "In Graphic Detail: Welcome to the agentic commerce quarter",
+        "source": "Modern Retail",
+        "source_id": "GL-06",
+        "summary": "Modern Retailの図解コラムは、AIエージェントが消費者に代わって商品を探し、購入まで担う「エージェンティック・コマース」の広がりを取り上げた。ショッピングの起点がAIへと移りつつあることを、図解を通じて整理している。小売やブランドが次に備えるべき変化の方向性を示す内容である。",
+        "why_it_matters": "AIエージェントが購買の起点になると、消費者が小売の自社サイトを直接訪れる機会は減り、ブランドはAIから推奨される存在になる必要が出てくる。商品情報の構造化や在庫・価格データの正確性が新たな競争力となる。流通各社は、AIに自社商品を正しく理解させるデータ基盤の整備を今から検討すべきである。",
+        "tags": [
+          "エージェンティック・コマース",
+          "AIエージェント",
+          "EC"
+        ],
+        "search_terms": [
+          "エージェンティックコマース",
+          "agentic commerce AI shopping",
+          "AIエージェント 購買",
+          "AI agent retail data readiness"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPUmZaM0Y2Ym5OYzY3SHVPb053Tjh3RzVpdUZuTlB4RGR3WVJuRXJwT2VXbEhyNjZCeXRqX0tsZGhSSkR6NzVxWHowaWExUkRGY2djQjFQSnN3dDhpMVltM0k3NFlUSU4yUml0aGx4OUpHOXRrRGU0cko5RzVmeW5Eam5hbHFIZm1RWlhaY2R1QVljbzZQOF9sbFFNS1p1dw?oc=5",
+        "source_pub_ts": 1795064644
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "DoorDash、「サーベイランス・プライシング」の利用を否定",
+        "original_title": "DoorDash denies using surveillance pricing",
+        "source": "Grocery Dive",
+        "source_id": "GL-07",
+        "summary": "フードデリバリー大手のDoorDashが、個人の情報をもとに価格を変える「サーベイランス・プライシング」を使っているとの指摘を否定したと報じられた。デジタル上の価格が顧客ごとに変わるのではないかという懸念が、消費者の間で広がっていることが背景にある。価格設定とデータ活用の関係が、改めて問われている。",
+        "why_it_matters": "購買データを使った動的な価格設定は、需要予測や電子棚札と同じデータ基盤を用いるため、値付けの高度化と隣り合わせにある。しかし顧客ごとに価格を変えるとみなされれば、信頼を大きく損なうリスクがある。価格を柔軟に変える仕組みを導入する企業は、説明責任と透明性を前提にした運用ルールを先に定める必要がある。",
+        "tags": [
+          "ダイナミックプライシング",
+          "データ倫理",
+          "消費者信頼"
+        ],
+        "search_terms": [
+          "サーベイランス・プライシング",
+          "surveillance pricing retail",
+          "動的価格設定 消費者 懸念",
+          "DoorDash pricing data privacy"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxOYkViTVYtQTJBaV82aGdpSHVkTEJLUUxNTFo3TTZyN1hFTVBYeEJMaWhsa09peUwyd1ltVkhpOGx3SjQyZlNBYWJMVUZGT21tenF6SWt3NTJKem9Nd3hwdHJhRlRVNDFIcHFtdDZfUTAtTV9NeFotSFBGaEpjejU3aVhKS2xFbDVnQnNlWTBaUWRhaDVKaEtvX2ZTbjI0Zw?oc=5",
+        "source_pub_ts": 1795064051
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261119",
     "title": "2026年11月19日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "ウォルマートが電子棚札の点灯を買い物体験の向上に使う新サービスを導入し、棚札が価格表示から顧客接点へと役割を広げつつあります。 リテールメディアは、アサヒ・サッポロ・フマキラーのようにメーカーごとに異なる手法で広がっており、小売と広告主の接続方法が競争軸になっています。",
