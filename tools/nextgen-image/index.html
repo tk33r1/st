@@ -130,8 +130,8 @@
   <style>
     /* ------------------------------------------------------------------
        NextGen Image — the Instrument shell comes from tools/assets/tools-ui.css.
-       This block holds only what belongs to this tool: its accent, the
-       Darkroom result canvas, and the result rows.
+       This block holds only what belongs to this tool: the Darkroom result
+       canvas and the result rows.
        ------------------------------------------------------------------ */
 
     /* ---- toolbar extras ---- */
@@ -215,21 +215,6 @@
       border: 1px solid transparent;
     }
     .savings-badge.negative { background: transparent; color: var(--warn); border-color: var(--warn); }
-
-    /* The summary badge is the gauge, so it overrides the small-badge look. */
-    #summary-badge {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      font-size: clamp(48px, 13vw, 68px);
-      font-weight: 700;
-      line-height: 0.85;
-      letter-spacing: -0.05em;
-      color: var(--accent);
-      background: none;
-      border: 0;
-      padding: 0;
-    }
-    #summary-badge.negative { color: var(--warn); background: none; }
   </style>
   <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は tools/assets/tools-base.css の冒頭） -->
   <link rel="stylesheet" href="../../tools/assets/tools-base.css?v=20260926_1">
@@ -342,10 +327,10 @@
     <!-- ===================== view 2 : processing ===================== -->
     <div id="view-loading" class="hidden" role="status" aria-live="polite">
       <div class="console" id="console">
-        <div class="cl hi"><span class="pr">$</span> <span id="loading-msg">convert</span></div>
+        <div class="cl hi"><span>$</span> <span id="loading-msg">convert</span></div>
         <div class="cl" id="loading-submsg"></div>
         <div id="log-stream"></div>
-        <div class="cl"><span class="pr">$</span> <span class="st-caret"></span></div>
+        <div class="cl"><span>$</span> <span class="st-caret"></span></div>
       </div>
 
       <div class="pbar"><div id="progress-bar"></div></div>
@@ -359,7 +344,7 @@
     <div id="view-result" class="hidden">
       <div class="readout">
         <div class="gauge">
-          <span id="summary-badge" class="savings-badge">-0%</span>
+          <span id="summary-badge" class="gauge-num">-0%</span>
           <span class="gauge-cap">
             <span class="st-lbl">saved</span>
             <span class="st-lbl"><span id="summary-count">0</span> files</span>
@@ -369,7 +354,7 @@
         <div class="bars">
           <div class="barrow">
             <span class="st-lbl">before</span>
-            <span class="bar"><i class="before" style="width:100%"></i></span>
+            <span class="bar"><i class="before"></i></span>
             <span id="summary-original" class="num">0</span>
           </div>
           <div class="barrow">
@@ -453,16 +438,10 @@
     const formatBtns = document.querySelectorAll('.format-btn');
     let selectedFormat = 'webp';
 
-    const formatExtensions = {
-      'webp': 'webp',
-      'webp-lossless': 'webp',
-      'avif': 'avif'
-    };
-
-    const formatMimeTypes = {
-      'webp': 'image/webp',
-      'webp-lossless': 'image/webp',
-      'avif': 'image/avif'
+    const FORMATS = {
+      'webp':          { ext: 'webp', mime: 'image/webp' },
+      'webp-lossless': { ext: 'webp', mime: 'image/webp', lossless: true },
+      'avif':          { ext: 'avif', mime: 'image/avif' },
     };
 
     formatBtns.forEach(btn => {
@@ -483,7 +462,7 @@
     });
 
     function applyQualityState() {
-      const disabled = selectedFormat === 'webp-lossless';
+      const disabled = Boolean(FORMATS[selectedFormat].lossless);
       optQuality.disabled = disabled;
       qualityRow.classList.toggle('quality-disabled', disabled);
     }
@@ -492,72 +471,60 @@
     // Resize control (scale by percentage or custom width/height in px, aspect ratio preserved)
     const MAX_RESIZE_PX = 16384;
     const resizeModeBtns = document.querySelectorAll('.resize-mode-btn');
-    const resizeScaleWrap = document.getElementById('resize-scale-wrap');
-    const resizeWidthWrap = document.getElementById('resize-width-wrap');
-    const resizeHeightWrap = document.getElementById('resize-height-wrap');
-    const resizePercent = document.getElementById('resize-percent');
-    const resizeWidth = document.getElementById('resize-width');
-    const resizeHeight = document.getElementById('resize-height');
+    const RESIZE_MODES = {
+      scale:  { wrap: document.getElementById('resize-scale-wrap'),  input: document.getElementById('resize-percent'), label: '縮小率', max: 100,           unit: '%' },
+      width:  { wrap: document.getElementById('resize-width-wrap'),  input: document.getElementById('resize-width'),   label: '横幅',   max: MAX_RESIZE_PX, unit: 'px' },
+      height: { wrap: document.getElementById('resize-height-wrap'), input: document.getElementById('resize-height'),  label: '高さ',   max: MAX_RESIZE_PX, unit: 'px' },
+    };
     let selectedResizeMode = 'scale';
 
     resizeModeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        selectedResizeMode = btn.dataset.mode;
         resizeModeBtns.forEach(b => {
           const active = b === btn;
           b.classList.toggle('active', active);
           b.setAttribute('aria-pressed', String(active));
         });
-        selectedResizeMode = btn.dataset.mode;
-        resizeScaleWrap.classList.toggle('hidden', selectedResizeMode !== 'scale');
-        resizeWidthWrap.classList.toggle('hidden', selectedResizeMode !== 'width');
-        resizeHeightWrap.classList.toggle('hidden', selectedResizeMode !== 'height');
-        if (selectedResizeMode === 'width') {
-          resizeWidth.focus();
-        } else if (selectedResizeMode === 'height') {
-          resizeHeight.focus();
-        } else {
-          resizePercent.focus();
-        }
+        Object.entries(RESIZE_MODES).forEach(([mode, cfg]) => {
+          cfg.wrap.classList.toggle('hidden', mode !== selectedResizeMode);
+        });
+        RESIZE_MODES[selectedResizeMode].input.focus();
       });
     });
 
-    function parseResizePx(val) {
-      if (val === '' || val === null || val === undefined) return NaN;
-      const n = Number(val);
-      if (!Number.isFinite(n) || n <= 0) return NaN;
-      return Math.round(n);
+    // 選択中のリサイズ入力を検証し、{ mode, value, cliArg } を返す。不正ならトーストを出して null。
+    function readResizeOption() {
+      const mode = selectedResizeMode;
+      const cfg = RESIZE_MODES[mode];
+      const raw = cfg.input.value.trim();
+      if (raw === '') return { mode, value: null, cliArg: '' };
+
+      const num = Number(raw);
+      const val = Number.isFinite(num) && num >= 1 ? (mode === 'scale' ? num : Math.round(num)) : NaN;
+      if (!Number.isFinite(val) || val < 1 || val > cfg.max) {
+        showToast(`${cfg.label}は 1〜${cfg.max}${cfg.unit} の範囲で指定してください`, 'error');
+        cfg.input.focus();
+        return null;
+      }
+      if (mode === 'scale' && val >= 100) return { mode, value: null, cliArg: '' };
+      return { mode, value: val, cliArg: ` --${mode} ${val}${cfg.unit}` };
     }
 
     // Compute target dimensions keeping aspect ratio.
-    // - In 'width' mode: resizes to specified px width (if valid and > 0).
-    // - In 'height' mode: resizes to specified px height (if valid and > 0).
-    // - In 'scale' mode: only shrinks — 100% (or >= 100) leaves the image untouched.
-    function computeResizeTarget(w, h, opts) {
-      if (opts.resizeMode === 'width') {
-        const targetW = parseResizePx(opts.resizeWidth);
-        if (!targetW || targetW === w) return { w, h };
-        const scale = targetW / w;
-        return {
-          w: targetW,
-          h: Math.max(1, Math.round(h * scale)),
-        };
-      } else if (opts.resizeMode === 'height') {
-        const targetH = parseResizePx(opts.resizeHeight);
-        if (!targetH || targetH === h) return { w, h };
-        const scale = targetH / h;
-        return {
-          w: Math.max(1, Math.round(w * scale)),
-          h: targetH,
-        };
-      } else {
-        const p = Number(opts.resizePercent);
-        if (!Number.isFinite(p) || p <= 0 || p >= 100) return { w, h };
-        const scale = p / 100;
-        return {
-          w: Math.max(1, Math.round(w * scale)),
-          h: Math.max(1, Math.round(h * scale)),
-        };
+    function computeResizeTarget(w, h, { mode, value }) {
+      if (!value) return { w, h };
+      if (mode === 'width') {
+        return value === w ? { w, h } : { w: value, h: Math.max(1, Math.round(h * (value / w))) };
       }
+      if (mode === 'height') {
+        return value === h ? { w, h } : { w: Math.max(1, Math.round(w * (value / h))), h: value };
+      }
+      const scale = value / 100;
+      return {
+        w: Math.max(1, Math.round(w * scale)),
+        h: Math.max(1, Math.round(h * scale)),
+      };
     }
 
     const dropzone = document.getElementById('dropzone');
@@ -573,9 +540,15 @@
     const summaryOutput = document.getElementById('summary-output');
     const summaryBadge = document.getElementById('summary-badge');
     const summaryCount = document.getElementById('summary-count');
+    const barBefore = document.querySelector('.bar i.before');
+    const barAfter = document.getElementById('bar-after');
     const btnDownloadAll = document.getElementById('btn-download-all');
     const btnDownloadAllLabel = document.getElementById('btn-download-all-label');
     const btnReset = document.getElementById('btn-reset');
+
+    const hasWebShare = typeof navigator.canShare === 'function';
+    const hasClipboardItem = typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined';
+    const canShare = hasWebShare || hasClipboardItem;
 
     let results = [];        // array of result objects
     // Teardowns for each rendered inline compare slider — replaced wholesale
@@ -584,93 +557,74 @@
     let blobUrls = [];       // all created blob URLs (for cleanup)
     let isProcessing = false;
 
+    function calcSavings(orig, out) {
+      return orig > 0 ? Math.round((1 - out / orig) * 100) : 0;
+    }
+
+    function formatSavings(pct, isNegative = pct < 0) {
+      return (isNegative ? '+' : '-') + Math.abs(Math.round(pct)) + '%';
+    }
+
     function isHeicFile(file) {
-      const n = file.name.toLowerCase();
+      const n = (file.name || '').toLowerCase();
       return n.endsWith('.heic') || n.endsWith('.heif')
         || file.type === 'image/heic' || file.type === 'image/heif';
     }
 
-    async function decodeToBitmap(file) {
+    async function decodeImage(file) {
       if (isHeicFile(file)) {
-        const conversionResult = await heic2any({ blob: file, toType: 'image/png' });
-        const blobArr = Array.isArray(conversionResult) ? conversionResult : [conversionResult];
-        const png = new File(blobArr, file.name.replace(/\.heic$|\.heif$/i, '.png'), { type: 'image/png' });
-        return await createImageBitmap(png);
+        const res = await heic2any({ blob: file, toType: 'image/png' });
+        const pngBlob = Array.isArray(res) ? res[0] : res;
+        if (!pngBlob) throw new Error('HEIC画像のデコードに失敗しました');
+        return { bitmap: await createImageBitmap(pngBlob), previewBlob: pngBlob };
       }
-      return await createImageBitmap(file);
+      return { bitmap: await createImageBitmap(file), previewBlob: file };
     }
 
-    // Lazily loaded WASM-based AVIF encoder (used when the browser's native canvas.toBlob
-    // does not support image/avif). The module is fetched only when needed.
-    let avifEncoderPromise = null;
-    function loadAvifEncoder() {
-      if (!avifEncoderPromise) {
-        avifEncoderPromise = import('../../assets/vendor/@jsquash/avif@2.1.1/encode.js').then(m => m.default);
+    // Lazily loaded WASM encoders (fetched only when needed).
+    const WASM_ENCODERS = {
+      webp: { path: '../../assets/vendor/@jsquash/webp@1.4.0/encode.js', label: '可逆WebP', errorLabel: 'WebP', mime: 'image/webp' },
+      avif: { path: '../../assets/vendor/@jsquash/avif@2.1.1/encode.js', label: 'AVIF',     errorLabel: 'AVIF', mime: 'image/avif' },
+    };
+    const wasmEncoderPromises = {};
+    function loadWasmEncoder(key) {
+      if (!wasmEncoderPromises[key]) {
+        const loading = import(WASM_ENCODERS[key].path).then(m => m.default);
+        wasmEncoderPromises[key] = loading;
+        loading.catch(() => { if (wasmEncoderPromises[key] === loading) delete wasmEncoderPromises[key]; });
       }
-      return avifEncoderPromise;
+      return wasmEncoderPromises[key];
     }
 
-    let webpEncoderPromise = null;
-    function loadWebpEncoder() {
-      if (!webpEncoderPromise) {
-        webpEncoderPromise = import('../../assets/vendor/@jsquash/webp@1.4.0/encode.js').then(m => m.default);
-      }
-      return webpEncoderPromise;
-    }
-
-    async function encodeCanvasAsLosslessWebp(canvas, statusUpdate) {
-      statusUpdate && statusUpdate('可逆WebPエンコーダを読み込み中...');
+    async function encodeWithWasm(canvas, key, encodeOpts, statusUpdate) {
+      const spec = WASM_ENCODERS[key];
+      statusUpdate?.(`${spec.label}エンコーダを読み込み中...`);
       let encode;
       try {
-        encode = await loadWebpEncoder();
+        encode = await loadWasmEncoder(key);
       } catch (e) {
-        console.error('jsquash WebP load failed:', e);
-        throw new Error('WebPエンコーダの読み込みに失敗しました: ' + (e.message || e));
+        console.error(`jsquash ${spec.errorLabel} load failed:`, e);
+        throw new Error(`${spec.errorLabel}エンコーダの読み込みに失敗しました: ` + (e.message || e));
       }
-      statusUpdate && statusUpdate('可逆WebPを生成中 (WASM)...');
+      statusUpdate?.(`${spec.label}を生成中 (WASM)...`);
       const ctx = canvas.getContext('2d');
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const buf = await encode(imageData, { lossless: 1, quality: 100, exact: 1 });
-      return new Blob([buf], { type: 'image/webp' });
+      const buf = await encode(imageData, encodeOpts);
+      return new Blob([buf], { type: spec.mime });
     }
 
-    async function encodeWithCanvasToBlob(canvas, mimeType, q) {
-      const blob = await new Promise((resolve) => {
-        canvas.toBlob(b => resolve(b), mimeType, q);
-      });
-      console.log('[encode] canvas.toBlob returned:', blob && blob.type, 'size=' + (blob && blob.size));
-      return blob;
-    }
-
-    async function encodeCanvasAsAvif(canvas, quality, statusUpdate) {
-      // 1) Try native canvas.toBlob('image/avif') — fastest when available
-      const native = await encodeWithCanvasToBlob(canvas, 'image/avif', quality);
-      if (native && native.type === 'image/avif') return native;
-
-      // 2) Fall back to WASM encoder (jsquash)
-      statusUpdate && statusUpdate('AVIFエンコーダを読み込み中...');
-      let encode;
-      try {
-        encode = await loadAvifEncoder();
-      } catch (e) {
-        console.error('jsquash AVIF load failed:', e);
-        throw new Error('AVIFエンコーダの読み込みに失敗しました: ' + (e.message || e));
-      }
-      statusUpdate && statusUpdate('AVIFを生成中 (WASM)...');
-      const ctx = canvas.getContext('2d');
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const buf = await encode(imageData, { quality: Math.round(quality * 100) });
-      return new Blob([buf], { type: 'image/avif' });
+    function encodeWithCanvasToBlob(canvas, mimeType, q) {
+      return new Promise(resolve => canvas.toBlob(resolve, mimeType, q));
     }
 
     async function encodeOne(file, opts, statusUpdate) {
-      const { format, quality } = opts;
-      const mimeType = formatMimeTypes[format];
+      const { format, quality, resize } = opts;
+      const mimeType = FORMATS[format].mime;
 
-      const bitmap = await decodeToBitmap(file);
+      const { bitmap, previewBlob } = await decodeImage(file);
       let targetW, targetH, canvas;
       try {
-        ({ w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts));
+        ({ w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, resize));
         if (targetW > MAX_RESIZE_PX || targetH > MAX_RESIZE_PX) {
           throw new Error(`リサイズ後のサイズ (${targetW}×${targetH}) が上限 (${MAX_RESIZE_PX}px) を超えています`);
         }
@@ -687,12 +641,15 @@
       }
 
       const q = quality / 100;
-
       let blob;
       if (format === 'avif') {
-        blob = await encodeCanvasAsAvif(canvas, q, statusUpdate);
+        // Try native canvas.toBlob('image/avif') first; fall back to WASM encoder.
+        const native = await encodeWithCanvasToBlob(canvas, mimeType, q);
+        blob = (native && native.type === mimeType)
+          ? native
+          : await encodeWithWasm(canvas, 'avif', { quality }, statusUpdate);
       } else if (format === 'webp-lossless') {
-        blob = await encodeCanvasAsLosslessWebp(canvas, statusUpdate);
+        blob = await encodeWithWasm(canvas, 'webp', { lossless: 1, quality: 100, exact: 1 }, statusUpdate);
       } else {
         blob = await encodeWithCanvasToBlob(canvas, mimeType, q);
         if (!blob) throw new Error('エンコードに失敗しました (toBlob returned null)');
@@ -701,179 +658,147 @@
         }
       }
 
-      if (!blob) throw new Error('エンコードに失敗しました');
-      return { blob, width: targetW, height: targetH };
+      return { blob, beforeBlob: previewBlob, width: targetW, height: targetH };
     }
 
     function buildOutputFilename(originalName, format) {
       const dot = originalName.lastIndexOf('.');
-      const baseName = dot >= 0 ? originalName.slice(0, dot) : (originalName || 'image');
-      return `${baseName}.${formatExtensions[format]}`;
+      const baseName = dot > 0 ? originalName.slice(0, dot) : (originalName || 'image');
+      return `${baseName}.${FORMATS[format].ext}`;
+    }
+
+    function teardownCompares() {
+      compareTeardowns.forEach(fn => { try { fn(); } catch (_) { } });
+      compareTeardowns = [];
+    }
+
+    function clearResults() {
+      teardownCompares();
+      blobUrls.forEach(u => URL.revokeObjectURL(u));
+      blobUrls = [];
+      results = [];
+      resultList.innerHTML = '';
     }
 
     async function processFiles(files) {
       if (isProcessing) return;
       if (!files || files.length === 0) return;
 
-      // 変換開始前にリサイズ入力値を検証する
-      const rawWidth = resizeWidth.value.trim();
-      const rawHeight = resizeHeight.value.trim();
-      const rawPercent = resizePercent.value.trim();
-      const parsedWidth = parseResizePx(rawWidth);
-      const parsedHeight = parseResizePx(rawHeight);
-      const parsedPercent = rawPercent === '' ? 100 : Number(rawPercent);
-
-      if (selectedResizeMode === 'width' && rawWidth !== '') {
-        if (!parsedWidth || parsedWidth > MAX_RESIZE_PX) {
-          showToast(`横幅は 1〜${MAX_RESIZE_PX}px の範囲で指定してください`, 'error');
-          resizeWidth.focus();
-          return;
-        }
-      } else if (selectedResizeMode === 'height' && rawHeight !== '') {
-        if (!parsedHeight || parsedHeight > MAX_RESIZE_PX) {
-          showToast(`高さは 1〜${MAX_RESIZE_PX}px の範囲で指定してください`, 'error');
-          resizeHeight.focus();
-          return;
-        }
-      } else if (selectedResizeMode === 'scale' && rawPercent !== '') {
-        if (!Number.isFinite(parsedPercent) || parsedPercent <= 0 || parsedPercent > 100) {
-          showToast('縮小率は 1〜100% の範囲で指定してください', 'error');
-          resizePercent.focus();
-          return;
-        }
-      }
+      const resize = readResizeOption();
+      if (!resize) return;
 
       isProcessing = true;
+      try {
+        clearResults();
 
-      // Cleanup previous results
-      teardownCompares();
-      blobUrls.forEach(u => URL.revokeObjectURL(u));
-      blobUrls = [];
-      results = [];
+        switchView('view-loading');
+        clearLog();
+        setStatus('working');
 
-      switchView('view-loading');
-      progressBar.classList.remove('indeterminate');
-      clearLog();
-      setStatus('working');
+        const opts = {
+          format: selectedFormat,
+          quality: parseInt(optQuality.value, 10),
+          resize,
+        };
 
-      const opts = {
-        format: selectedFormat,
-        quality: parseInt(optQuality.value, 10),
-        resizeMode: selectedResizeMode,
-        resizePercent: parsedPercent,
-        resizeWidth: parsedWidth,
-        resizeHeight: parsedHeight,
-      };
+        const total = files.length;
 
-      const total = files.length;
+        // The command line the user effectively just typed.
+        loadingMsg.textContent =
+          `convert ${total} file${total > 1 ? 's' : ''} --to ${opts.format}`
+          + (FORMATS[opts.format].lossless ? '' : ` --quality ${opts.quality}`)
+          + resize.cliArg;
+        loadingSubmsg.textContent = '';
 
-      let resizeArg = '';
-      if (opts.resizeMode === 'width') {
-        if (opts.resizeWidth > 0) resizeArg = ` --width ${opts.resizeWidth}px`;
-      } else if (opts.resizeMode === 'height') {
-        if (opts.resizeHeight > 0) resizeArg = ` --height ${opts.resizeHeight}px`;
-      } else {
-        if (opts.resizePercent > 0 && opts.resizePercent < 100) resizeArg = ` --scale ${opts.resizePercent}%`;
-      }
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          loadingSubmsg.textContent = file.name;
+          progressBar.style.width = Math.round((i / total) * 100) + '%';
+          progressText.textContent = `${i} / ${total}`;
 
-      // The command line the user effectively just typed.
-      loadingMsg.textContent =
-        `convert ${total} file${total > 1 ? 's' : ''} --to ${opts.format}`
-        + (opts.format === 'webp-lossless' ? '' : ` --quality ${opts.quality}`)
-        + resizeArg;
-      loadingSubmsg.textContent = '';
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        loadingSubmsg.textContent = file.name;
-        const pct = Math.round((i / total) * 100);
-        progressBar.style.width = pct + '%';
-        progressText.textContent = `${i} / ${total}`;
-
-        const startedAt = performance.now();
-        try {
-          const { blob, width, height } = await encodeOne(file, opts, (sub) => {
-            loadingSubmsg.textContent = `${file.name} — ${sub}`;
-          });
-          const elapsed = Math.round(performance.now() - startedAt);
-          const savedPct = Math.round((1 - blob.size / file.size) * 100);
-          logLine(
-            `✓ ${file.name}  ${formatBytes(file.size)} → ${formatBytes(blob.size)}`
-            + `  ${savedPct >= 0 ? '-' : '+'}${Math.abs(savedPct)}%  ${width}×${height}  ${elapsed}ms`,
-            'ok'
-          );
-          const outName = buildOutputFilename(file.name, opts.format);
-          const outUrl = URL.createObjectURL(blob);
-          const beforeUrl = URL.createObjectURL(file);
-          blobUrls.push(outUrl, beforeUrl);
-          results.push({
-            ok: true,
-            originalFile: file,
-            originalSize: file.size,
-            outputBlob: blob,
-            outputSize: blob.size,
-            outputName: outName,
-            outputUrl: outUrl,
-            beforeUrl,
-            width, height,
-          });
-        } catch (err) {
-          console.error('Conversion failed for', file.name, err);
-          logLine(`✗ ${file.name}  ${err.message || '不明なエラー'}`, 'err');
-          results.push({
-            ok: false,
-            originalFile: file,
-            originalSize: file.size,
-            error: err.message || '不明なエラー',
-          });
+          const startedAt = performance.now();
+          try {
+            const { blob, beforeBlob, width, height } = await encodeOne(file, opts, (sub) => {
+              loadingSubmsg.textContent = `${file.name} — ${sub}`;
+            });
+            const elapsed = Math.round(performance.now() - startedAt);
+            const savedPct = calcSavings(file.size, blob.size);
+            logLine(
+              `✓ ${file.name}  ${formatBytes(file.size)} → ${formatBytes(blob.size)}`
+              + `  ${formatSavings(savedPct)}  ${width}×${height}  ${elapsed}ms`,
+              'ok'
+            );
+            const outName = buildOutputFilename(file.name, opts.format);
+            const outUrl = URL.createObjectURL(blob);
+            const beforeUrl = URL.createObjectURL(beforeBlob);
+            blobUrls.push(outUrl, beforeUrl);
+            results.push({
+              ok: true,
+              originalFile: file,
+              originalSize: file.size,
+              outputBlob: blob,
+              outputSize: blob.size,
+              outputName: outName,
+              outputUrl: outUrl,
+              beforeUrl,
+              width, height,
+            });
+          } catch (err) {
+            console.error('Conversion failed for', file.name, err);
+            logLine(`✗ ${file.name}  ${err.message || '不明なエラー'}`, 'err');
+            results.push({
+              ok: false,
+              originalFile: file,
+              originalSize: file.size,
+              error: err.message || '不明なエラー',
+            });
+          }
         }
-      }
 
-      progressBar.style.width = '100%';
-      progressText.textContent = `${total} / ${total}`;
+        progressBar.style.width = '100%';
+        progressText.textContent = `${total} / ${total}`;
 
-      isProcessing = false;
-
-      renderResults();
-      const failCount = results.filter(r => !r.ok).length;
-      if (failCount === total) {
-        const firstErr = results[0]?.error || '不明なエラー';
-        const prefix = total === 1 ? '変換失敗' : `全${total}件失敗`;
-        setStatus('failed', 'err');
-        showToast(`${prefix}: ${firstErr}`, 'error');
-        switchView('view-upload');
-      } else if (failCount > 0) {
-        setStatus(`${total - failCount} ok / ${failCount} failed`, 'err');
-        showToast(`${total - failCount}件成功 / ${failCount}件失敗`, 'error');
-        switchView('view-result');
-      } else {
-        setStatus(`${total} file${total > 1 ? 's' : ''} done`, 'idle');
-        showToast(`${total}件の変換が完了しました`);
-        switchView('view-result');
+        const failCount = results.filter(r => !r.ok).length;
+        if (failCount === total) {
+          const firstErr = results[0]?.error || '不明なエラー';
+          const prefix = total === 1 ? '変換失敗' : `全${total}件失敗`;
+          clearResults();
+          setStatus('failed', 'err');
+          showToast(`${prefix}: ${firstErr}`, 'error');
+          switchView('view-upload');
+        } else {
+          renderResults();
+          if (failCount > 0) {
+            setStatus(`${total - failCount} ok / ${failCount} failed`, 'err');
+            showToast(`${total - failCount}件成功 / ${failCount}件失敗`, 'error');
+          } else {
+            setStatus(`${total} file${total > 1 ? 's' : ''} done`, 'idle');
+            showToast(`${total}件の変換が完了しました`);
+          }
+          switchView('view-result');
+        }
+      } finally {
+        isProcessing = false;
       }
     }
 
     function renderResults() {
       const okResults = results.filter(r => r.ok);
-      const totalOrig = results.reduce((s, r) => s + r.originalSize, 0);
+      const totalOrig = okResults.reduce((s, r) => s + r.originalSize, 0);
       const totalOut = okResults.reduce((s, r) => s + r.outputSize, 0);
-      const pct = totalOrig > 0 ? Math.round((1 - totalOut / totalOrig) * 100) : 0;
+      const pct = calcSavings(totalOrig, totalOut);
 
       summaryOriginal.textContent = formatBytes(totalOrig);
       summaryOutput.textContent = formatBytes(totalOut);
       summaryCount.textContent = okResults.length;
       summaryBadge.classList.toggle('negative', pct < 0);
-      animateCount(summaryBadge, pct, v =>
-        (pct >= 0 ? '-' : '+') + Math.abs(Math.round(v)) + '%'
-      );
+      animateCount(summaryBadge, pct, v => formatSavings(v, pct < 0));
 
       // The bar is only meaningful next to a visible baseline, so it grows
       // from zero once the result view is actually on screen — a transition
       // on a display:none element never runs.
       // Both bars are scaled against the larger of the two, so a file that
       // grew shows a longer "after" bar instead of both pinning at full.
-      const barAfter = document.getElementById('bar-after');
-      const barBefore = document.querySelector('.bar i.before');
       const barMax = Math.max(totalOrig, totalOut, 1);
       barBefore.style.width = Math.max(1, Math.round((totalOrig / barMax) * 100)) + '%';
       const barTarget = Math.max(1, Math.round((totalOut / barMax) * 100));
@@ -936,10 +861,10 @@
         const meta = document.createElement('div');
         meta.className = 'r-meta';
         if (r.ok) {
-          const rpct = Math.round((1 - r.outputSize / r.originalSize) * 100);
+          const rpct = calcSavings(r.originalSize, r.outputSize);
           const badge = document.createElement('span');
           badge.className = 'savings-badge' + (rpct < 0 ? ' negative' : '');
-          badge.textContent = (rpct >= 0 ? '-' : '+') + Math.abs(rpct) + '%';
+          badge.textContent = formatSavings(rpct);
           meta.appendChild(badge);
           const sizeSpan = document.createElement('span');
           sizeSpan.innerHTML = `${formatBytes(r.originalSize)} <span class="r-arrow">→</span> <span class="r-out">${formatBytes(r.outputSize)}</span>`;
@@ -959,20 +884,19 @@
         info.appendChild(meta);
         metaRow.appendChild(info);
 
-        const actions = document.createElement('div');
-        actions.className = 'flex items-center gap-1';
-        if (r.ok) {
-          if (canShareResult()) {
-            const shareBtn = document.createElement('button');
-            shareBtn.className = 'icon-btn';
-            shareBtn.title = '共有';
-            shareBtn.setAttribute('aria-label', '共有');
-            shareBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
-            shareBtn.addEventListener('click', () => shareOne(r, shareBtn));
-            actions.appendChild(shareBtn);
-          }
+        if (r.ok && canShare) {
+          const actions = document.createElement('div');
+          actions.className = 'flex items-center gap-1';
+          const shareBtn = document.createElement('button');
+          shareBtn.type = 'button';
+          shareBtn.className = 'icon-btn';
+          shareBtn.title = '共有';
+          shareBtn.setAttribute('aria-label', '共有');
+          shareBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
+          shareBtn.addEventListener('click', () => shareOne(r, shareBtn));
+          actions.appendChild(shareBtn);
+          metaRow.appendChild(actions);
         }
-        metaRow.appendChild(actions);
 
         row.appendChild(metaRow);
         resultList.appendChild(row);
@@ -981,21 +905,11 @@
       if (window.lucide) lucide.createIcons();
     }
 
-    function downloadOne(r) {
-      saveBlob(r.outputUrl, r.outputName);
-    }
-
-    function canShareResult() {
-      const hasWebShare = typeof navigator.canShare === 'function';
-      const hasClipboardItem = typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined';
-      return hasWebShare || hasClipboardItem;
-    }
-
     async function shareOne(r, btn) {
       const file = new File([r.outputBlob], r.outputName, { type: r.outputBlob.type });
 
       // 1) Web Share API (mobile, Safari, Edge) — shares the actual file
-      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+      if (hasWebShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file], title: r.outputName });
           return;
@@ -1006,7 +920,7 @@
       }
 
       // 2) Clipboard fallback — copies the image (limited to types the browser allows; PNG always, WEBP on modern Chromium)
-      if (typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined') {
+      if (hasClipboardItem) {
         try {
           await navigator.clipboard.write([new ClipboardItem({ [r.outputBlob.type]: r.outputBlob })]);
           showToast('画像をクリップボードにコピーしました', 'success');
@@ -1020,22 +934,26 @@
       showToast('この環境では共有がサポートされていません', 'error');
     }
 
+    const shareBtnTimers = new WeakMap();
     function flashShareBtn(btn) {
-      const original = btn.innerHTML;
+      const prev = shareBtnTimers.get(btn);
+      if (prev) clearTimeout(prev);
       btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
       if (window.lucide) lucide.createIcons();
-      setTimeout(() => {
-        btn.innerHTML = original;
+      shareBtnTimers.set(btn, setTimeout(() => {
+        shareBtnTimers.delete(btn);
+        btn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
         if (window.lucide) lucide.createIcons();
-      }, 1400);
+      }, 1400));
     }
 
     async function downloadAllAsZip() {
-      const okResults = results.filter(r => r.ok);
+      const runResults = results;
+      const okResults = runResults.filter(r => r.ok);
       if (okResults.length === 0) return;
 
       if (okResults.length === 1) {
-        downloadOne(okResults[0]);
+        saveBlob(okResults[0].outputUrl, okResults[0].outputName);
         return;
       }
 
@@ -1046,17 +964,18 @@
 
       const zip = new JSZip();
       // Avoid filename collisions
-      const used = new Map();
+      const used = new Set();
       okResults.forEach(r => {
         let name = r.outputName;
-        const seen = used.get(name) || 0;
-        if (seen > 0) {
+        if (used.has(name)) {
           const dot = name.lastIndexOf('.');
-          const base = dot >= 0 ? name.slice(0, dot) : name;
-          const ext = dot >= 0 ? name.slice(dot) : '';
-          name = `${base}_${seen}${ext}`;
+          const base = dot > 0 ? name.slice(0, dot) : name;
+          const ext = dot > 0 ? name.slice(dot) : '';
+          let n = 1;
+          while (used.has(`${base}_${n}${ext}`)) n++;
+          name = `${base}_${n}${ext}`;
         }
-        used.set(r.outputName, seen + 1);
+        used.add(name);
         zip.file(name, r.outputBlob);
       });
 
@@ -1070,23 +989,17 @@
         console.error('ZIP creation failed', err);
         showToast('ZIP生成に失敗しました: ' + (err.message || ''), 'error');
       } finally {
-        btnDownloadAll.disabled = false;
-        btnDownloadAllLabel.textContent = `${okResults.length}件をZIPでダウンロード`;
+        if (results === runResults) {
+          btnDownloadAll.disabled = false;
+          btnDownloadAllLabel.textContent = `${okResults.length}件をZIPでダウンロード`;
+        }
       }
     }
 
-    function teardownCompares() {
-      compareTeardowns.forEach(fn => { try { fn(); } catch (_) { } });
-      compareTeardowns = [];
-    }
-
     function filterImageFiles(fileList) {
-      return Array.from(fileList || []).filter(f => {
-        if (!f) return false;
-        if (f.type && f.type.startsWith('image/')) return true;
-        const n = (f.name || '').toLowerCase();
-        return n.endsWith('.heic') || n.endsWith('.heif');
-      });
+      return Array.from(fileList || []).filter(f =>
+        f && ((f.type && f.type.startsWith('image/')) || isHeicFile(f))
+      );
     }
 
     setupDropzone({
@@ -1124,17 +1037,11 @@
       }
     });
 
-    btnDownloadAll.addEventListener('click', () => {
-      downloadAllAsZip();
-    });
+    btnDownloadAll.addEventListener('click', downloadAllAsZip);
 
     btnReset.addEventListener('click', () => {
       switchView('view-upload');
-      teardownCompares();
-      blobUrls.forEach(u => URL.revokeObjectURL(u));
-      blobUrls = [];
-      results = [];
-      resultList.innerHTML = '';
+      clearResults();
       clearLog();
       setStatus('ready', 'idle');
     });
