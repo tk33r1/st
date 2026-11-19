@@ -4722,8 +4722,11 @@ function loadSavedSession(id) {
   saveAgentLanguage(session.reply_language);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   setAgentSuggestion('');
+  agentLastSend = null; // 前の会話で最後に送った質問の原寸。開いた会話の［もう一度］には使わない
   renderHistoryToLog(agentHistory);
   updateAgentActionButtons();
+  // 一時チャットを終えたときは agentEndTemporary が添付と入力欄の値を空にしている。表示と送信ボタンも合わせる
+  renderAttachTray(); fitAgentInput();
   if (nativeConversation) recoverNativeConversation(id).catch(function () { announceAgent('Could not recover the pending reply. / 未保存の回答を復元できませんでした。'); });
 }
 function deleteSavedSession(id) {

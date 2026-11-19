@@ -207,6 +207,19 @@ test('添付の注意文: 続けて出した新しい注意文を、前の注意
   }
 });
 
+test('保存した会話を開くと添付と入力欄を描き直し、前の会話で送った画像の原寸を［もう一度］に残さない', () => {
+  for (const [src, isHome] of [[mobile, false], [home, true]]) {
+    const c = client(src, isHome), drawn = [];
+    const saved = [{ id: 'saved', history: [{ role: 'user', content: 'saved question' }] }];
+    Object.assign(c.ctx, { readSavedSessions: () => saved, loadSavedSessions: () => saved, renderHistoryToLog() {}, dropAgentRequest() {},
+      agentLastSend: { mid: 'm0', atts: [{ url: 'data:image/jpeg;base64,AAAA' }] }, renderAttachTray() { drawn.push('tray'); }, fitAgentInput() { drawn.push('input'); } });
+    vm.runInContext(between(src, 'function loadSavedSession(', 'function deleteSavedSession('), c.ctx);
+    c.ctx.loadSavedSession('saved');
+    assert.deepEqual(drawn, ['tray', 'input']);
+    assert.equal(c.ctx.agentLastSend, null);
+  }
+});
+
 test('一時/設定: 新契約の上流エラーが本文を返してもログ・通知・D1カウンターへ転記しない', async () => {
   for (const mode of ['normal', 'temporary']) {
     const logs = [], mails = [];
