@@ -3309,9 +3309,11 @@ function renderAttachTray() {
       + '<button type="button" class="attach-x" data-i="' + i + '" aria-label="Remove attachment"><span aria-hidden="true">×</span></button></span>';
   }).join('') + (attachNotice ? '<span class="attach-note">' + esc(attachNotice) + '</span>' : '');
 }
+var attachNoticeTimer = null;
 function noticeAttach(msg) {
   attachNotice = msg; renderAttachTray();
-  setTimeout(function () { attachNotice = ''; renderAttachTray(); }, 2500);
+  clearTimeout(attachNoticeTimer); // 前の注意文のタイマーで新しい注意文を消さない
+  attachNoticeTimer = setTimeout(function () { attachNotice = ''; renderAttachTray(); }, 2500);
 }
 async function addAttachments(files) {
   if (agentPrivacyState.switching || agentPrivacyState.preparing) return;
