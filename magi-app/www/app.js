@@ -3008,6 +3008,8 @@ function initAgent() {
 var agentGen = 0, agentCtrl = null;
 function dropAgentRequest() {
   agentGen++;
+  // 送信前の確認（agentPrivacyRequest）も止める。待つ間は preparing が次の送信と一時チャットの切替を止めている
+  cancelAgentPrivacyPreparation();
   if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
   setAgentStopMode(false);
   setAgentSuggestion('');
