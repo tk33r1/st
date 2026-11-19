@@ -75,10 +75,11 @@ try {
       assert.equal(jsonRequests, 1); await page.keyboard.press('Escape');
       await page.mouse.move(0, 0); await page.waitForTimeout(220); assert.equal(await palette.count(), 0);
       // 回答の上端が会話欄の上に隠れていても、枠は会話欄の中に出し、ヘッダーの操作（一時チャットなど）に重ねない
-      await reply.evaluate(el => {
+      await reply.evaluate(el => new Promise(resolve => {
         const log = document.getElementById('agent-log'), spacer = document.createElement('div'); spacer.id = 'hover-test-spacer'; spacer.style.cssText = 'flex: none; height: 2000px'; log.appendChild(spacer);
         log.scrollTo({ top: log.scrollTop + el.getBoundingClientRect().top - log.getBoundingClientRect().top + 40, behavior: 'instant' });
-      });
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }));
       const replyBox = await reply.boundingBox(), logBox = await page.locator('#agent-log').boundingBox();
       assert(replyBox.y < logBox.y, key + ': reply top must be hidden above the chat');
       await page.mouse.move(replyBox.x + replyBox.width / 2, logBox.y + 24); await palette.waitFor({ state: 'visible' });
