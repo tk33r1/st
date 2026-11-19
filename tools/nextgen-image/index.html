@@ -137,6 +137,7 @@
     /* ---- toolbar extras ---- */
     .format-btn .sub { font-size: 9px; opacity: 0.75; margin-left: 3px; }
     #quality-val { min-width: 34px; }
+    #resize-group { flex-wrap: wrap; }
 
     /* ---- result ---- */
     #btn-download-all { width: 100%; }
@@ -288,22 +289,33 @@
 
       <div class="tb-group" id="resize-group">
         <span class="st-lbl">resize</span>
-        <div class="st-seg" id="resize-mode">
-          <button type="button" class="resize-mode-btn active" data-mode="scale">scale</button>
-          <button type="button" class="resize-mode-btn" data-mode="width">width</button>
+        <div class="st-seg" id="resize-mode" role="group" aria-label="リサイズ方法">
+          <button type="button" class="resize-mode-btn active" data-mode="scale" aria-pressed="true">scale</button>
+          <button type="button" class="resize-mode-btn" data-mode="width" aria-pressed="false">width</button>
+          <button type="button" class="resize-mode-btn" data-mode="height" aria-pressed="false">height</button>
         </div>
         <div id="resize-scale-wrap" class="flex items-center gap-1">
-          <input type="number" id="resize-percent" class="tb-input" style="width:54px" min="1" max="100" step="1" value="100" title="縦横比を維持して縮小">
+          <input type="number" id="resize-percent" class="tb-input" style="width:54px" min="1" max="100" step="1" value="100" inputmode="numeric" aria-label="縮小率（%）" title="縦横比を維持して縮小">
           <span class="unit">%</span>
         </div>
         <div id="resize-width-wrap" class="flex items-center gap-1 hidden">
-          <input type="number" id="resize-width" class="tb-input" style="width:68px" min="1" step="1" placeholder="auto" title="横幅（px）を手入力で指定。縦横比を維持してリサイズ（空欄で変更なし）" list="width-presets">
+          <input type="number" id="resize-width" class="tb-input" style="width:68px" min="1" max="16384" step="1" inputmode="numeric" placeholder="auto" aria-label="横幅（px）" title="横幅（px）を手入力で指定。縦横比を維持してリサイズ（空欄で変更なし）" list="width-presets">
           <span class="unit">px</span>
           <datalist id="width-presets">
             <option value="1920">
             <option value="1200">
             <option value="800">
             <option value="640">
+          </datalist>
+        </div>
+        <div id="resize-height-wrap" class="flex items-center gap-1 hidden">
+          <input type="number" id="resize-height" class="tb-input" style="width:68px" min="1" max="16384" step="1" inputmode="numeric" placeholder="auto" aria-label="高さ（px）" title="高さ（px）を手入力で指定。縦横比を維持してリサイズ（空欄で変更なし）" list="height-presets">
+          <span class="unit">px</span>
+          <datalist id="height-presets">
+            <option value="1080">
+            <option value="800">
+            <option value="720">
+            <option value="480">
           </datalist>
         </div>
       </div>
@@ -477,46 +489,69 @@
     }
     applyQualityState();
 
-    // Resize control (scale by percentage or custom width in px, aspect ratio preserved)
+    // Resize control (scale by percentage or custom width/height in px, aspect ratio preserved)
+    const MAX_RESIZE_PX = 16384;
     const resizeModeBtns = document.querySelectorAll('.resize-mode-btn');
     const resizeScaleWrap = document.getElementById('resize-scale-wrap');
     const resizeWidthWrap = document.getElementById('resize-width-wrap');
+    const resizeHeightWrap = document.getElementById('resize-height-wrap');
     const resizePercent = document.getElementById('resize-percent');
     const resizeWidth = document.getElementById('resize-width');
+    const resizeHeight = document.getElementById('resize-height');
     let selectedResizeMode = 'scale';
 
     resizeModeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        resizeModeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        resizeModeBtns.forEach(b => {
+          const active = b === btn;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-pressed', String(active));
+        });
         selectedResizeMode = btn.dataset.mode;
+        resizeScaleWrap.classList.toggle('hidden', selectedResizeMode !== 'scale');
+        resizeWidthWrap.classList.toggle('hidden', selectedResizeMode !== 'width');
+        resizeHeightWrap.classList.toggle('hidden', selectedResizeMode !== 'height');
         if (selectedResizeMode === 'width') {
-          resizeScaleWrap.classList.add('hidden');
-          resizeWidthWrap.classList.remove('hidden');
           resizeWidth.focus();
+        } else if (selectedResizeMode === 'height') {
+          resizeHeight.focus();
         } else {
-          resizeWidthWrap.classList.add('hidden');
-          resizeScaleWrap.classList.remove('hidden');
           resizePercent.focus();
         }
       });
     });
 
+    function parseResizePx(val) {
+      if (val === '' || val === null || val === undefined) return NaN;
+      const n = Number(val);
+      if (!Number.isFinite(n) || n <= 0) return NaN;
+      return Math.round(n);
+    }
+
     // Compute target dimensions keeping aspect ratio.
     // - In 'width' mode: resizes to specified px width (if valid and > 0).
+    // - In 'height' mode: resizes to specified px height (if valid and > 0).
     // - In 'scale' mode: only shrinks — 100% (or >= 100) leaves the image untouched.
     function computeResizeTarget(w, h, opts) {
       if (opts.resizeMode === 'width') {
-        const targetW = parseInt(opts.resizeWidth, 10);
-        if (!targetW || targetW <= 0 || targetW === w) return { w, h };
+        const targetW = parseResizePx(opts.resizeWidth);
+        if (!targetW || targetW === w) return { w, h };
         const scale = targetW / w;
         return {
           w: targetW,
           h: Math.max(1, Math.round(h * scale)),
         };
+      } else if (opts.resizeMode === 'height') {
+        const targetH = parseResizePx(opts.resizeHeight);
+        if (!targetH || targetH === h) return { w, h };
+        const scale = targetH / h;
+        return {
+          w: Math.max(1, Math.round(w * scale)),
+          h: targetH,
+        };
       } else {
-        const p = parseFloat(opts.resizePercent);
-        if (!p || p <= 0 || p >= 100) return { w, h };
+        const p = Number(opts.resizePercent);
+        if (!Number.isFinite(p) || p <= 0 || p >= 100) return { w, h };
         const scale = p / 100;
         return {
           w: Math.max(1, Math.round(w * scale)),
@@ -633,16 +668,23 @@
       const mimeType = formatMimeTypes[format];
 
       const bitmap = await decodeToBitmap(file);
+      let targetW, targetH, canvas;
+      try {
+        ({ w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts));
+        if (targetW > MAX_RESIZE_PX || targetH > MAX_RESIZE_PX) {
+          throw new Error(`リサイズ後のサイズ (${targetW}×${targetH}) が上限 (${MAX_RESIZE_PX}px) を超えています`);
+        }
 
-      const { w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(bitmap, 0, 0, targetW, targetH);
-      if (bitmap.close) bitmap.close();
+        canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('描画コンテキストの作成に失敗しました');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+      } finally {
+        if (bitmap.close) bitmap.close();
+      }
 
       const q = quality / 100;
 
@@ -672,6 +714,35 @@
     async function processFiles(files) {
       if (isProcessing) return;
       if (!files || files.length === 0) return;
+
+      // 変換開始前にリサイズ入力値を検証する
+      const rawWidth = resizeWidth.value.trim();
+      const rawHeight = resizeHeight.value.trim();
+      const rawPercent = resizePercent.value.trim();
+      const parsedWidth = parseResizePx(rawWidth);
+      const parsedHeight = parseResizePx(rawHeight);
+      const parsedPercent = rawPercent === '' ? 100 : Number(rawPercent);
+
+      if (selectedResizeMode === 'width' && rawWidth !== '') {
+        if (!parsedWidth || parsedWidth > MAX_RESIZE_PX) {
+          showToast(`横幅は 1〜${MAX_RESIZE_PX}px の範囲で指定してください`, 'error');
+          resizeWidth.focus();
+          return;
+        }
+      } else if (selectedResizeMode === 'height' && rawHeight !== '') {
+        if (!parsedHeight || parsedHeight > MAX_RESIZE_PX) {
+          showToast(`高さは 1〜${MAX_RESIZE_PX}px の範囲で指定してください`, 'error');
+          resizeHeight.focus();
+          return;
+        }
+      } else if (selectedResizeMode === 'scale' && rawPercent !== '') {
+        if (!Number.isFinite(parsedPercent) || parsedPercent <= 0 || parsedPercent > 100) {
+          showToast('縮小率は 1〜100% の範囲で指定してください', 'error');
+          resizePercent.focus();
+          return;
+        }
+      }
+
       isProcessing = true;
 
       // Cleanup previous results
@@ -689,8 +760,9 @@
         format: selectedFormat,
         quality: parseInt(optQuality.value, 10),
         resizeMode: selectedResizeMode,
-        resizePercent: parseFloat(resizePercent.value),
-        resizeWidth: parseInt(resizeWidth.value, 10),
+        resizePercent: parsedPercent,
+        resizeWidth: parsedWidth,
+        resizeHeight: parsedHeight,
       };
 
       const total = files.length;
@@ -698,8 +770,10 @@
       let resizeArg = '';
       if (opts.resizeMode === 'width') {
         if (opts.resizeWidth > 0) resizeArg = ` --width ${opts.resizeWidth}px`;
+      } else if (opts.resizeMode === 'height') {
+        if (opts.resizeHeight > 0) resizeArg = ` --height ${opts.resizeHeight}px`;
       } else {
-        if (opts.resizePercent < 100) resizeArg = ` --scale ${opts.resizePercent}%`;
+        if (opts.resizePercent > 0 && opts.resizePercent < 100) resizeArg = ` --scale ${opts.resizePercent}%`;
       }
 
       // The command line the user effectively just typed.
@@ -1027,11 +1101,13 @@
 
     // Paste event handling
     document.addEventListener('paste', (e) => {
-      // Don't intercept if user is typing in a text input
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
+      // テキスト入力欄にフォーカス中でも、画像のみの貼り付け（スクショ等）は受け付ける
+      const isEditable = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+      const hasPlainText = Array.from(items).some(item => item.kind === 'string' && item.type === 'text/plain');
+      if (isEditable && hasPlainText) return;
+
       const pastedFiles = [];
       for (const item of items) {
         if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -1042,7 +1118,10 @@
           }
         }
       }
-      if (pastedFiles.length) processFiles(pastedFiles);
+      if (pastedFiles.length) {
+        e.preventDefault();
+        processFiles(pastedFiles);
+      }
     });
 
     btnDownloadAll.addEventListener('click', () => {
