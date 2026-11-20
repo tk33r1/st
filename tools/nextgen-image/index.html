@@ -371,6 +371,41 @@
 
       <div id="result-list"></div>
 
+      <template id="result-success-template">
+        <div class="result-row">
+          <div class="result-canvas"><div class="result-compare"></div></div>
+          <div class="result-meta-row">
+            <img class="result-thumb" alt="">
+            <div class="r-info">
+              <div class="r-name"></div>
+              <div class="r-meta">
+                <span class="savings-badge"></span>
+                <span><span class="r-original"></span> <span class="r-arrow">→</span> <span class="r-out"></span></span>
+                <span class="r-dim"></span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button type="button" class="icon-btn result-download" title="画像をダウンロード" aria-label="画像をダウンロード">
+                <i data-lucide="download" class="w-4 h-4"></i>
+              </button>
+              <button type="button" class="icon-btn result-share" title="共有" aria-label="共有">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template id="result-failure-template">
+        <div class="result-row failed">
+          <div class="result-meta-row">
+            <div class="r-info">
+              <div class="r-name"></div>
+              <div class="r-meta"><span class="r-err"></span></div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <button id="btn-reset" class="st-btn-quiet" type="button">別の画像を変換する</button>
     </div>
 
@@ -536,6 +571,8 @@
     const progressText = document.getElementById('progress-text');
 
     const resultList = document.getElementById('result-list');
+    const resultSuccessTemplate = document.getElementById('result-success-template');
+    const resultFailureTemplate = document.getElementById('result-failure-template');
     const summaryOriginal = document.getElementById('summary-original');
     const summaryOutput = document.getElementById('summary-output');
     const summaryBadge = document.getElementById('summary-badge');
@@ -550,11 +587,9 @@
     const hasClipboardItem = typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined';
     const canShare = hasWebShare || hasClipboardItem;
 
-    let results = [];        // array of result objects
-    // Teardowns for each rendered inline compare slider — replaced wholesale
-    // on every renderResults() so listeners can't accumulate across runs.
-    let compareTeardowns = [];
-    let blobUrls = [];       // all created blob URLs (for cleanup)
+    let results = [];
+    const compareTeardowns = [];
+    const blobUrls = [];
     let isProcessing = false;
 
     function calcSavings(orig, out) {
@@ -667,17 +702,13 @@
       return `${baseName}.${FORMATS[format].ext}`;
     }
 
-    function teardownCompares() {
-      compareTeardowns.forEach(fn => { try { fn(); } catch (_) { } });
-      compareTeardowns = [];
-    }
-
     function clearResults() {
-      teardownCompares();
-      blobUrls.forEach(u => URL.revokeObjectURL(u));
-      blobUrls = [];
+      compareTeardowns.forEach(teardown => teardown());
+      compareTeardowns.length = 0;
+      blobUrls.forEach(url => URL.revokeObjectURL(url));
+      blobUrls.length = 0;
       results = [];
-      resultList.innerHTML = '';
+      resultList.replaceChildren();
     }
 
     async function processFiles(files) {
@@ -730,8 +761,9 @@
             );
             const outName = buildOutputFilename(file.name, opts.format);
             const outUrl = URL.createObjectURL(blob);
+            blobUrls.push(outUrl);
             const beforeUrl = URL.createObjectURL(beforeBlob);
-            blobUrls.push(outUrl, beforeUrl);
+            blobUrls.push(beforeUrl);
             results.push({
               ok: true,
               originalFile: file,
@@ -749,7 +781,6 @@
             results.push({
               ok: false,
               originalFile: file,
-              originalSize: file.size,
               error: err.message || '不明なエラー',
             });
           }
@@ -758,8 +789,9 @@
         progressBar.style.width = '100%';
         progressText.textContent = `${total} / ${total}`;
 
-        const failCount = results.filter(r => !r.ok).length;
-        if (failCount === total) {
+        const okResults = results.filter(r => r.ok);
+        const failCount = total - okResults.length;
+        if (!okResults.length) {
           const firstErr = results[0]?.error || '不明なエラー';
           const prefix = total === 1 ? '変換失敗' : `全${total}件失敗`;
           clearResults();
@@ -767,7 +799,7 @@
           showToast(`${prefix}: ${firstErr}`, 'error');
           switchView('view-upload');
         } else {
-          renderResults();
+          renderResults(okResults);
           if (failCount > 0) {
             setStatus(`${total - failCount} ok / ${failCount} failed`, 'err');
             showToast(`${total - failCount}件成功 / ${failCount}件失敗`, 'error');
@@ -782,8 +814,7 @@
       }
     }
 
-    function renderResults() {
-      const okResults = results.filter(r => r.ok);
+    function renderResults(okResults) {
       const totalOrig = okResults.reduce((s, r) => s + r.originalSize, 0);
       const totalOut = okResults.reduce((s, r) => s + r.outputSize, 0);
       const pct = calcSavings(totalOrig, totalOut);
@@ -807,100 +838,48 @@
         barAfter.style.width = barTarget + '%';
       }));
 
-      btnDownloadAll.disabled = okResults.length === 0;
+      btnDownloadAll.disabled = false;
       btnDownloadAllLabel.textContent = okResults.length > 1
         ? `${okResults.length}件をZIPでダウンロード`
         : '画像をダウンロード';
 
-      teardownCompares();
-      resultList.innerHTML = '';
-
-      results.forEach((r) => {
-        const row = document.createElement('div');
-        row.className = 'result-row' + (r.ok ? '' : ' failed');
-
-        // Inline Before/After compare lives at the top of every successful
-        // result row — no button press required.
-        if (r.ok) {
-          // setupInlineCompare adds .compare-inline to the element it is given,
-          // so the darkroom frame has to be a wrapper — styling the same node
-          // would override the slider's own checkerboard background.
-          const canvasWrap = document.createElement('div');
-          canvasWrap.className = 'result-canvas';
-          const compareBox = document.createElement('div');
-          compareBox.className = 'result-compare';
-          canvasWrap.appendChild(compareBox);
-          row.appendChild(canvasWrap);
-          const teardown = setupInlineCompare({
-            container: compareBox,
-            beforeUrl: r.beforeUrl,
-            afterUrl: r.outputUrl,
-          });
-          compareTeardowns.push(teardown);
-        }
-
-        const metaRow = document.createElement('div');
-        metaRow.className = 'result-meta-row';
-
-        if (r.ok) {
-          const thumb = document.createElement('img');
-          thumb.className = 'result-thumb';
-          thumb.alt = '';
-          thumb.src = r.outputUrl;
-          metaRow.appendChild(thumb);
-        }
-
-        const info = document.createElement('div');
-        info.className = 'r-info';
-        const name = document.createElement('div');
-        name.className = 'r-name';
+      for (const r of results) {
+        const template = r.ok ? resultSuccessTemplate : resultFailureTemplate;
+        const row = template.content.firstElementChild.cloneNode(true);
+        const name = row.querySelector('.r-name');
         name.title = r.originalFile.name;
         name.textContent = r.ok ? r.outputName : r.originalFile.name;
-        info.appendChild(name);
-
-        const meta = document.createElement('div');
-        meta.className = 'r-meta';
         if (r.ok) {
+          row.querySelector('.result-thumb').src = r.outputUrl;
           const rpct = calcSavings(r.originalSize, r.outputSize);
-          const badge = document.createElement('span');
-          badge.className = 'savings-badge' + (rpct < 0 ? ' negative' : '');
+          const badge = row.querySelector('.savings-badge');
+          badge.classList.toggle('negative', rpct < 0);
           badge.textContent = formatSavings(rpct);
-          meta.appendChild(badge);
-          const sizeSpan = document.createElement('span');
-          sizeSpan.innerHTML = `${formatBytes(r.originalSize)} <span class="r-arrow">→</span> <span class="r-out">${formatBytes(r.outputSize)}</span>`;
-          meta.appendChild(sizeSpan);
-          if (r.width && r.height) {
-            const dim = document.createElement('span');
-            dim.className = 'r-dim';
-            dim.textContent = `${r.width}×${r.height}`;
-            meta.appendChild(dim);
+          row.querySelector('.r-original').textContent = formatBytes(r.originalSize);
+          row.querySelector('.r-out').textContent = formatBytes(r.outputSize);
+          row.querySelector('.r-dim').textContent = `${r.width}×${r.height}`;
+
+          const downloadBtn = row.querySelector('.result-download');
+          downloadBtn.setAttribute('aria-label', `${r.outputName} をダウンロード`);
+          downloadBtn.addEventListener('click', () => downloadResult(r));
+
+          const shareBtn = row.querySelector('.result-share');
+          if (canShare) {
+            shareBtn.addEventListener('click', () => shareOne(r, shareBtn));
+          } else {
+            shareBtn.remove();
           }
+
+          compareTeardowns.push(setupInlineCompare({
+            container: row.querySelector('.result-compare'),
+            beforeUrl: r.beforeUrl,
+            afterUrl: r.outputUrl,
+          }));
         } else {
-          const err = document.createElement('span');
-          err.className = 'r-err';
-          err.textContent = '失敗: ' + r.error;
-          meta.appendChild(err);
+          row.querySelector('.r-err').textContent = '失敗: ' + r.error;
         }
-        info.appendChild(meta);
-        metaRow.appendChild(info);
-
-        if (r.ok && canShare) {
-          const actions = document.createElement('div');
-          actions.className = 'flex items-center gap-1';
-          const shareBtn = document.createElement('button');
-          shareBtn.type = 'button';
-          shareBtn.className = 'icon-btn';
-          shareBtn.title = '共有';
-          shareBtn.setAttribute('aria-label', '共有');
-          shareBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
-          shareBtn.addEventListener('click', () => shareOne(r, shareBtn));
-          actions.appendChild(shareBtn);
-          metaRow.appendChild(actions);
-        }
-
-        row.appendChild(metaRow);
         resultList.appendChild(row);
-      });
+      }
 
       if (window.lucide) lucide.createIcons();
     }
@@ -947,13 +926,21 @@
       }, 1400));
     }
 
-    async function downloadAllAsZip() {
-      const runResults = results;
-      const okResults = runResults.filter(r => r.ok);
+    function downloadResult({ outputBlob, outputName }) {
+      saveBlob(outputBlob, outputName);
+    }
+
+    function zipFilenameKey(name) {
+      return name.normalize('NFC').toLowerCase().toUpperCase().normalize('NFC');
+    }
+
+    async function downloadResults() {
+      const batch = results;
+      const okResults = batch.filter(r => r.ok);
       if (okResults.length === 0) return;
 
       if (okResults.length === 1) {
-        saveBlob(okResults[0].outputUrl, okResults[0].outputName);
+        downloadResult(okResults[0]);
         return;
       }
 
@@ -962,26 +949,35 @@
         return;
       }
 
-      const zip = new JSZip();
-      // Avoid filename collisions
-      const used = new Set();
-      okResults.forEach(r => {
-        let name = r.outputName;
-        if (used.has(name)) {
-          const dot = name.lastIndexOf('.');
-          const base = dot > 0 ? name.slice(0, dot) : name;
-          const ext = dot > 0 ? name.slice(dot) : '';
-          let n = 1;
-          while (used.has(`${base}_${n}${ext}`)) n++;
-          name = `${base}_${n}${ext}`;
-        }
-        used.add(name);
-        zip.file(name, r.outputBlob);
-      });
-
+      const downloadLabel = btnDownloadAllLabel.textContent;
       btnDownloadAll.disabled = true;
       btnDownloadAllLabel.textContent = 'ZIPを生成中...';
       try {
+        const zip = new JSZip();
+        // 展開時の衝突を避けるため、大小文字とUnicode表記をそろえた名前を先に予約する。
+        const usedNameKeys = new Set(okResults.map(r => zipFilenameKey(r.outputName)));
+        const nextSuffix = new Map();
+        for (const { outputName, outputBlob } of okResults) {
+          let name = outputName;
+          const outputKey = zipFilenameKey(outputName);
+          let suffix = nextSuffix.get(outputKey);
+          if (suffix === undefined) {
+            suffix = 1;
+          } else {
+            const dot = outputName.lastIndexOf('.');
+            const base = outputName.slice(0, dot);
+            const extension = outputName.slice(dot);
+            let nameKey;
+            do {
+              name = `${base}_${suffix}${extension}`;
+              suffix += 1;
+              nameKey = zipFilenameKey(name);
+            } while (usedNameKeys.has(nameKey));
+            usedNameKeys.add(nameKey);
+          }
+          nextSuffix.set(outputKey, suffix);
+          zip.file(name, outputBlob);
+        }
         const content = await zip.generateAsync({ type: 'blob' });
         const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
         saveBlob(content, `converted_${ts}.zip`);
@@ -989,9 +985,9 @@
         console.error('ZIP creation failed', err);
         showToast('ZIP生成に失敗しました: ' + (err.message || ''), 'error');
       } finally {
-        if (results === runResults) {
+        if (results === batch) {
           btnDownloadAll.disabled = false;
-          btnDownloadAllLabel.textContent = `${okResults.length}件をZIPでダウンロード`;
+          btnDownloadAllLabel.textContent = downloadLabel;
         }
       }
     }
@@ -1037,7 +1033,7 @@
       }
     });
 
-    btnDownloadAll.addEventListener('click', downloadAllAsZip);
+    btnDownloadAll.addEventListener('click', downloadResults);
 
     btnReset.addEventListener('click', () => {
       switchView('view-upload');
