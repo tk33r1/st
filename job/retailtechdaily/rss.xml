@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 20 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 20 Nov 2026 08:23:42 +0900</lastBuildDate>
+    <pubDate>Sat, 21 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 21 Nov 2026 07:56:37 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月21日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261121/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261121/</guid>
+      <pubDate>Sat, 21 Nov 2026 08:00:00 +0900</pubDate>
+      <description>生体認証に対応したフルセルフレジを備えた大型スーパーの新店舗や、都市型小型店舗向けスマートカートの登場により、店舗の自動化と次世代決済の実装が国内で進んでいる。 TDSEが需要予測・発注最適化の取り組みを打ち出すなど、AI予測と人の判断を組み合わせた発注業務改革が小売現場の現実的な課題として浮上している。</description>
+    </item>
     <item>
       <title>2026年11月20日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261120/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261107/</guid>
       <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
       <description>省人化はセルフレジなど顧客接点の自動化にとどまらず、バックヤードや決済インフラを含む店舗全体の再設計へと広がっている。 リテールメディアサミット2026は全登壇者と34セッションが確定し、リテールメディアを巡る議論のテーマが具体化した。</description>
-    </item>
-    <item>
-      <title>2026年11月6日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261106/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261106/</guid>
-      <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
-      <description>無人店舗の入口でもLINE連携による入店の実証が始まり、来店から発注まで店舗運営のデジタル化が広がっています。 シノプスの自動納品実証は、AI需要予測と発注自動化を組み合わせ、店舗の省人化を一歩進める動きとして注目されます。</description>
     </item>
   </channel>
 </rss>

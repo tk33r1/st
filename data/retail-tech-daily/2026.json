@@ -1,5 +1,189 @@
 [
   {
+    "date": "20261121",
+    "title": "2026年11月21日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "生体認証に対応したフルセルフレジを備えた大型スーパーの新店舗や、都市型小型店舗向けスマートカートの登場により、店舗の自動化と次世代決済の実装が国内で進んでいる。 TDSEが需要予測・発注最適化の取り組みを打ち出すなど、AI予測と人の判断を組み合わせた発注業務改革が小売現場の現実的な課題として浮上している。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "生体認証に対応したフルセルフレジを備えた大型スーパーの新店舗や、都市型小型店舗向けスマートカートの登場により、店舗の自動化と次世代決済の実装が国内で進んでいる。",
+      "TDSEが需要予測・発注最適化の取り組みを打ち出すなど、AI予測と人の判断を組み合わせた発注業務改革が小売現場の現実的な課題として浮上している。",
+      "セルフレジをめぐる生活者の不満が表面化する一方、米ニューヨーク市は個人データに基づく価格設定を禁止し、小売のAI活用に規制の目が向き始めている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "東武ストア春日部店が11月26日オープン 生体認証対応のフルセルフレジを導入",
+        "original_title": "",
+        "source": "AMP[アンプ]",
+        "source_id": "JP-01",
+        "summary": "埼玉県春日部市に「東武ストア 春日部店」が11月26日にオープンする。店舗には生体認証サービスに対応したフルセルフレジが導入され、会計の仕組みを先進的なものに刷新する。レジ待ちの解消と顧客体験の向上を両立させる狙いがあり、地域密着型スーパーにおける無人化・省人化の新たな取り組みとして注目される。",
+        "why_it_matters": "生体認証による決済とフルセルフレジの組み合わせは、レジ待ち解消と人件費抑制を同時に狙える施策だ。ただし認証登録の手間や高齢客の利用ハードルが定着の鍵となる。地方都市のスーパーにも導入が広がれば、顧客データを活かした次世代決済の本格展開が見えてくる。他店舗への横展開の有無が今後の注目点である。",
+        "tags": [
+          "セルフレジ",
+          "生体認証",
+          "次世代決済",
+          "スーパー"
+        ],
+        "search_terms": [
+          "生体認証決済",
+          "biometric payment",
+          "フルセルフレジ",
+          "self-checkout Japan supermarket"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1lb1NqRWlzeWx2UDhiQVZ0VXpVQlQ2T3A1bFFsQVlmQXF6M1NfOVJlS3FWNGpoUTNkaHRzaWxLeHFSSElNZS1jYXBqWHpEcmpqTnFWYlRHUGZsdlVDV1BSVw?oc=5",
+        "source_pub_ts": 1795177350
+      },
+      {
+        "region": "JP",
+        "category": "AI需要予測",
+        "title": "TDSE、需要予測・発注最適化ウェビナーを開催 AIと人の判断で店舗発注を支援",
+        "original_title": "",
+        "source": "日本経済新聞",
+        "source_id": "JP-04",
+        "summary": "TDSEは2026年11月20日の適時開示で、需要予測・発注最適化ウェビナーの開催を発表した。AIによる予測と人の判断を組み合わせ、店舗の発注業務改革を支援する内容だ。需要予測を軸に発注業務の属人化解消を目指す同社の取り組みを紹介するもので、小売現場におけるAI活用ニーズの高まりを映している。",
+        "why_it_matters": "AI需要予測は欠品と廃棄の同時削減に直結する領域で、発注担当者の経験に頼る運用からの脱却が課題になっている。AIの提案を最終判断する「人の関与」をどこに残すかが、現場定着の分かれ目となる。SaaS提供企業にとっては、予測精度の説明責任と業務プロセスへの組み込みが差別化要素になる。導入効果の数値開示が今後の評価軸となるだろう。",
+        "tags": [
+          "AI需要予測",
+          "発注最適化",
+          "SaaS",
+          "業務改革"
+        ],
+        "search_terms": [
+          "需要予測AI",
+          "AI demand forecasting",
+          "発注業務の自動化",
+          "store ordering optimization"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1ObmJ4X3UydktmRmhORnc2OVJqZDBOMEpXOG9fdjk2VnBwWmJudEhFMDA1QnhwOXk0YXNBZjdIazJrM29EN3NtMHI3aFA1MVRYWTdCOUFMOVFGM1Zid191SndRejNPSEtzQlE?oc=5",
+        "source_pub_ts": 1795156200
+      },
+      {
+        "region": "JP",
+        "category": "スマートカート",
+        "title": "セルフレジ機能付きスマートカート「Skip Cart version5」小型モデルを開発",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-07",
+        "summary": "都市型・小型店舗にも対応したセルフレジ機能付きスマートカート「Skip Cart® version5（小型モデル）」が開発された。カート上で商品を読み取り会計まで行える仕組みを、狭い店舗スペースでも運用しやすい形に改良したモデルである。大型店向けに限られてきたスマートカートの適用範囲を広げ、都市部の小型店舗への導入を後押しする点が特徴だ。",
+        "why_it_matters": "スマートカートの普及で大きな壁となってきたのは、店舗面積と導入コストの制約だ。小型モデルの登場は、都市型店舗やドラッグストアなど新たな導入先を開く可能性がある。レジ待ちの削減だけでなく、カートから得られる購買データを陳列やリテールメディアに活用できるかが、投資回収の鍵になるだろう。",
+        "tags": [
+          "スマートカート",
+          "セルフレジ",
+          "小型店舗",
+          "店内UX"
+        ],
+        "search_terms": [
+          "スマートカート小型モデル",
+          "smart cart compact model",
+          "カート型セルフレジ",
+          "self-checkout shopping cart"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1NRS1CaXZyckQ2MmdfdHlfaTlBQ0FxWFlOLUFUZi1oaFlWUUp1M014ZUg0OW9XWnA5NXYzRUFkTzJJYTc4TnExemRpZUFXeVY5Y0cxY05KSXZncERROFlXaEJTSTdGdjEySXc?oc=5",
+        "source_pub_ts": 1795136403
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「有人レジ開けて」とクレームも セルフレジ増加で生じる人件費と顧客満足のジレンマ",
+        "original_title": "",
+        "source": "ABEMA TIMES",
+        "source_id": "JP-06",
+        "summary": "ABEMA TIMESは、セルフレジの増加に伴い客から「有人レジを開けて仕事しなさい」といった不満が出ている実態を取り上げた。慶應義塾大学の教授は、人件費削減と顧客満足度のジレンマから不満が出るのはやむを得ないと分析している。セルフレジ運用が生活者の感情と直接ぶつかる現場の課題を示す記事だ。",
+        "why_it_matters": "セルフレジは効率化の象徴である一方、利用者からは「店が作業を客に押し付けている」と受け取られやすい。店舗側は省人化の目的と有人対応による安心感のバランスを設計し直す必要がある。レジ運用の説明の仕方や、困った時にすぐ人が駆けつける動線づくりが、顧客体験の差を生む要素になる。",
+        "tags": [
+          "セルフレジ",
+          "顧客満足",
+          "人件費",
+          "SNS反響"
+        ],
+        "search_terms": [
+          "セルフレジ不満",
+          "self-checkout customer complaints",
+          "省人化と顧客満足",
+          "labor cost customer satisfaction retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE4zd0hjaHVLMlhDcjB0THRweHl5U3l6b0lVem5vR1dQRl9ZR1E0R2VDLTgzcFV5ODhEOGNObGJpWHNhQ0pqRkJDSGRBcG03MzdLeXRmaQ?oc=5",
+        "source_pub_ts": 1795141800
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ローソン・郵便局でネット注文が可能に 石川・福井14局で実験開始",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-03",
+        "summary": "ローソンは、郵便局で商品のネット注文を可能にする取り組みを石川県と福井県の14局で実験開始した。来店せずに注文できる仕組みを地域の郵便局網と組み合わせ、受け取り拠点の拡充を図る。買い物の利便性確保を狙った実証であり、既存の店舗網を超えた流通の新しい接点づくりとして注目される。",
+        "why_it_matters": "コンビニの店舗網に郵便局という公共インフラを重ねる試みは、ラストワンマイル課題への現実的な解の一つになり得る。注文から受け取りまでの在庫連携や、局員の業務負荷をどう設計するかが実装の焦点となる。実験結果次第では、他地域や他チェーンへの展開モデルとしても参照されるだろう。",
+        "tags": [
+          "ラストワンマイル",
+          "ネット注文",
+          "コンビニ",
+          "公共インフラ"
+        ],
+        "search_terms": [
+          "郵便局ネット注文",
+          "post office online ordering",
+          "ラストワンマイル受け取り",
+          "convenience store pickup Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBkZ09rQkdwOGFaRnRwbDlLdXlCZDFyUktiVktVRGNJZUw4R2N4OUJJZVlUWDlJbWdJZXlTbHA3WEMzQVhRdEd5VW9ZNW9EN1Zp?oc=5",
+        "source_pub_ts": 1795158300
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ニューヨーク市、サーベイランス・プライシングを禁止",
+        "original_title": "The Weekly Closeout: NYC bans surveillance pricing, FabFitFun lands in Walmart",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "ニューヨーク市が、顧客の個人データに基づいて価格を変える「サーベイランス・プライシング」を禁止した。デジタル小売で広がる個人別の価格設定に対し、規制当局が法的に歯止めをかける動きとして注目される。Retail Diveの週次まとめで取り上げられた。同じ週には、FabFitFunのWalmartへの展開も報じられている。",
+        "why_it_matters": "DoorDashが同種の価格設定を否定したばかりの中で、ニューヨーク市が禁止に踏み切ったことは、米国で規制の潮目が変わりつつあることを示す。小売企業にとっては、AIや電子棚札を使った価格最適化の設計思想を、透明性と公平性の観点から見直す必要がある。日本でも同様の議論が広がるかを注視すべきだ。",
+        "tags": [
+          "価格規制",
+          "サーベイランス・プライシング",
+          "AI価格",
+          "米国規制"
+        ],
+        "search_terms": [
+          "個人別価格設定の規制",
+          "surveillance pricing ban",
+          "AI価格最適化 規制",
+          "New York City pricing regulation"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNZW5ubDJVck1fREZjSWZwSllDRE93ZDdBWFg5dnJtRDF6b1BPT3Z6ZTQwdDR2XzFyZ1NjZE8yZjhNeng0ZW9HQVdjSzE0SEJ5cEtMcUdkWi1GVlJvcllLX2h0MFkzVmZ3SVRycE1HSjhqR0RLQnFkRThVTFh2aFNlanZWRFJIejZhOWFidExZTQ?oc=5",
+        "source_pub_ts": 1795191547
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "Mall of America、AI搭載コンシェルジュ「Mallie」を公開",
+        "original_title": "Mall of America debuts AI-backed concierge, Mallie",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "米国の大型商業施設Mall of Americaが、AIを活用したコンシェルジュ「Mallie」を導入した。来館者の案内や施設情報の提供を担う想定で、リアルな施設での顧客体験をデジタルで補強する狙いだ。店頭にAIアシスタントを置く動きとして、ショッピングモールの役割を見直す事例となる。",
+        "why_it_matters": "オンラインでAIショッピングアシスタントが広がる中、AIを店頭や施設空間に実装する流れも強まっている。来館者との対話を通じて得られる回遊や関心のデータは、テナントのリテールメディアや販促施策に活用できる可能性がある。対話型AIを現場の接点にどう接続するかが、今後の差別化を左右するだろう。",
+        "tags": [
+          "AIコンシェルジュ",
+          "商業施設",
+          "対話型AI",
+          "顧客体験"
+        ],
+        "search_terms": [
+          "AIコンシェルジュ 商業施設",
+          "AI concierge shopping mall",
+          "対話型AIアシスタント 店舗",
+          "in-store AI assistant"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPRU93TGdmZzJnMHFOTTk1RmFobENMTWF1NDBVNmdfR1lpRHBkSWJSSUVjOE13cnFxTXQ5Zk0zYkk1eDhySkZ1MWtVaW5jMU1QYzdEYzJWRjhqOWZBV0dLdTNodUpuN3FhcnBjdHUzcTB4SlBUX2p6b1JBc2o4TUFXcGpiRnhkcUx2V3c?oc=5",
+        "source_pub_ts": 1795109766
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261120",
     "title": "2026年11月20日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内ではファミマが飲料補充ロボットを2027年1月から本格導入すると発表し、店舗作業の自動化が実装段階に入りつつあります。 フレスタは無人店舗「よりみちフレスタ」を11月28日に開店すると発表する一方、SNSではセルフレジの是非をめぐる議論が広がっています。",
