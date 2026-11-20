@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 20 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 20 Nov 2026 08:28:10 +0900</lastBuildDate>
+    <pubDate>Sat, 21 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 21 Nov 2026 08:00:58 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月21日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261121/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261121/</guid>
+      <pubDate>Sat, 21 Nov 2026 08:00:00 +0900</pubDate>
+      <description>冬の暖房補助アイテムや座り心地を高めた家具など、快適性を訴求した商品が生活者から支持を集めている。 ニトリグループのNプラスが起毛カルゼシリーズを全3型で発売するなど、素材を生かしたシリーズ展開が進んでいる。</description>
+    </item>
     <item>
       <title>2026年11月20日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261120/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261107/</guid>
       <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
       <description>ニトリ初のブラックフライデーが11月24日まで実施され、イオンもEC限定セールを早期に打ち出すなど、年末商戦の前倒しが進んでいます。 10月の既存店売上は2.4%減となりましたが、家具・キッチン用品は好調で、カテゴリーごとの明暗が鮮明になっています。</description>
-    </item>
-    <item>
-      <title>2026年11月6日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261106/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261106/</guid>
-      <pubDate>Fri, 06 Nov 2026 08:00:00 +0900</pubDate>
-      <description>ニトリは東京都足立区に「大谷田店」を11月6日にオープンする。国内の店舗網拡大が続いていることを示す動きだ。 デコホームの「ご当地デコネコ」やNウォームのベビーおでかけ用品など、既存ブランドを新しい切り口で広げる商品展開が見られた。</description>
     </item>
   </channel>
 </rss>
