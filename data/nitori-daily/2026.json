@@ -1,5 +1,286 @@
 [
   {
+    "date": "20261122",
+    "title": "2026年11月22日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "冬の暖房コストや防災など、季節と生活課題に直結した実用商品が注目を集めた。足もとヒーターは1時間約1.3円の低ランニングコストが、突っ張り棒は耐圧200kgと工具不要の設置性が評価されている。 小型ドライヤー「NQ898」の発売と、デコホーム初のブラックフライデー開催により、商品ラインナップの拡張と年末商戦に向けた価格訴求が並行して進んでいる。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "冬の暖房コストや防災など、季節と生活課題に直結した実用商品が注目を集めた。足もとヒーターは1時間約1.3円の低ランニングコストが、突っ張り棒は耐圧200kgと工具不要の設置性が評価されている。",
+      "小型ドライヤー「NQ898」の発売と、デコホーム初のブラックフライデー開催により、商品ラインナップの拡張と年末商戦に向けた価格訴求が並行して進んでいる。",
+      "SNSでは、無印良品の新商品と見間違えるデザインのセンサーライトや、ネット購入品で収納を見直す動画が反響を集め、ニトリの見た目の良さと収納提案への共感が広がっている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "デコホーム初のブラックフライデー、11月30日まで約150アイテムを期間限定価格で",
+        "original_title": "",
+        "source": "明石じゃーなる",
+        "source_id": "JP-07",
+        "summary": "デコホームは初めてとなる「ブラックフライデー」を11月30日まで開催している。デコネコなど約150アイテムが期間限定価格で販売される。年末商戦に向けた価格訴求を、ニトリグループのデコホームとして初めて打ち出した施策だ。",
+        "why_it_matters": "ブラックフライデーは年末商戦の起点として定着しつつあり、デコホームが初めて大型の値引き施策を組んだことは、グループ内の販促ノウハウを横展開できる機会だ。キャラクター商品を含む約150点という絞り込みは、限定感と送客の両立を狙った設計と読める。ニトリ本体の年末施策との連動や、売上・在庫への効果が注目点になる。",
+        "tags": [
+          "デコホーム",
+          "ニトリグループ",
+          "ブラックフライデー",
+          "価格戦略",
+          "年末商戦"
+        ],
+        "search_terms": [
+          "ブラックフライデー 期間限定価格",
+          "Black Friday sale",
+          "Decohome Black Friday",
+          "年末セール 雑貨"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1fbkxBMl9HV3p3WXMxQ0oxTGFvc0dIMFFSZE90MjVrcnBnRlJBa2o5NV90OFoybWYyYTZVblNDcXJhUGVHZ1lEMmFkU2x2dmhXdXBXVC1TWjVGbTExcnBQd1BTZmlWTFFO?oc=5",
+        "source_pub_ts": 1795222819
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのマグネット式足もとデスクヒーター、「1時間約1.3円」で人気",
+        "original_title": "",
+        "source": "Yahoo!ニュース（LIMO）",
+        "source_id": "JP-02",
+        "summary": "ニトリの「マグネット式足もとデスクヒーター」が、1時間あたり約1.3円という低い電気代で使えることから注目を集めている。「暖房費が節約できそう」「すぐにあたたかくなって便利」といった声が寄せられ、人気となっている。足もとを手軽に温める用途で、部屋全体を暖めるより効率的に感じられる点も評価されている。",
+        "why_it_matters": "冬場の暖房需要は省エネ志向と結びつきやすく、「電気代が見える化された低価格ヒーター」は小型・低単価ながら購買理由が明確な商品だ。SPAとして企画から調達まで一貫して価格を設計できるニトリにとって、ランニングコストを訴求軸にした冬物の展開は、季節商材の回転と客単価向上の両面で有効と考えられる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "暖房",
+          "省エネ",
+          "冬物"
+        ],
+        "search_terms": [
+          "足もとヒーター 省エネ",
+          "desk foot heater",
+          "winter heater electricity cost",
+          "ニトリ 暖房家電"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBOT0JYTTk4TzlESkp3YWpKSTFtYlROQWR6b0VPVzFsamtqMkQwb3VQem1uNlFzYmNxYUZaY2dsUHJuV19KeW1zTVk4SkwyZEx0VDZWdlI2cW43bG5qMXh0TWNaYWMyeFhCazVCdzBlOFdxMVNGSklXdGJWV2kwY2c?oc=5",
+        "source_pub_ts": 1795268134
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの家具転倒防止突っ張り棒、耐圧200kg・工具不要で防災需要に訴求",
+        "original_title": "",
+        "source": "All About ニュース",
+        "source_id": "JP-05",
+        "summary": "All Aboutが紹介したニトリの「家具転倒防止突っ張り棒」が、購入者から高評価を得ている。耐圧は200kgで、工具を使わずに設置できる点が特徴だ。「防災にはうってつけ」という声が挙がり、地震への備えを身近な日用品で実現できる商品として注目されている。",
+        "why_it_matters": "防災関連は「備えたいが手間は避けたい」という生活者ニーズが強く、工具不要・高耐圧という分かりやすいスペックが購買の決め手になりやすい。日用品の延長線上で防災を提案できる商材は、季節を問わず販売機会を生む。仕様の訴求を耐圧や設置の簡便さに絞り、防災の文脈で収納や家具と組み合わせた売り場提案につなげる余地がある。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "防災",
+          "家具転倒防止"
+        ],
+        "search_terms": [
+          "家具転倒防止 突っ張り棒",
+          "furniture anti-tip pole",
+          "earthquake disaster prevention home",
+          "防災グッズ 工具不要"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1xU0hDVldiN21DZUd0QUMwWEM0U0JXV1JLRVJSaGJCeXpiVXVDM0FNcE1qWHVPTWdaenlXN0Z4QWtqeTRRenpaYlh1SXlmb0VSOWd1ckpaNHBvdw?oc=5",
+        "source_pub_ts": 1795251600
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、海外でも使える小型ドライヤー「NQ898」を発売　収納袋付き",
+        "original_title": "",
+        "source": "TRILL",
+        "source_id": "JP-06",
+        "summary": "ニトリは、海外でも使える小型ドライヤー「NQ898」を発売した。収納袋が付属しており、持ち運びのしやすさを打ち出している。旅行や出張で使う家電の選択肢を広げる商品として位置づけられ、ヘアケア家電を生活雑貨のラインナップに加える動きとして注目される。",
+        "why_it_matters": "ドライヤーは専門性の高い家電だが、小型・収納袋付きという生活動線に沿った設計で、旅行やサブ用途の需要を取り込める。ニトリはPB家電を低価格で展開しやすく、ヘアケア分野を日用品の延長として提案できれば、ファッション・雑貨と並ぶ客単価の底上げに寄与しうる。海外で使える点は訴求の差別化要素となる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "ドライヤー",
+          "旅行",
+          "小型家電"
+        ],
+        "search_terms": [
+          "小型ドライヤー 旅行用",
+          "compact travel hair dryer",
+          "portable hair dryer Nitori",
+          "ヘアドライヤー 収納袋"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE91U1lRTG5IOV8wY0dLNXNCSW56SHA5TTFmVjROUkk2Z1U5M2hBTzRZWFM5TUUwblJaTVZCNi03MTFHQURTVTBWeGRsWHVJUWc?oc=5",
+        "source_pub_ts": 1795232149
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「無印の新商品かと思った」ニトリのセンサーライトがX上で反響",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-04",
+        "summary": "X上で、無印良品の新商品と見間違えるほどシンプルなデザインのセンサーライトがニトリの商品だったと驚く投稿が、148いいね・70リポストを集めた。投稿者は一瞬無印の新商品かと思ったと率直な感想を投稿しており、デザインへの好印象が伝わる内容となっている。",
+        "why_it_matters": "ニトリのデザインが無印良品の商品と並んで見えるほど、ミニマルで生活感の少ない意匠が受け入れられていることを示す。機能品である照明でも、ブランド間の境界を曖昧にする見た目が「ニトリで探せる」という発見につながる。売り場では無印的な世界観と並べた提案が、ブランドの価格優位を見せる契機になる。",
+        "tags": [
+          "ニトリ",
+          "SNS反響",
+          "センサーライト",
+          "デザイン",
+          "無印良品"
+        ],
+        "search_terms": [
+          "センサーライト デザイン",
+          "motion sensor light minimal design",
+          "Nitori sensor light SNS",
+          "シンプル照明 無印風"
+        ],
+        "url": "https://x.com/mimi3605/status/2124065938161201632",
+        "source_pub_ts": 1795258800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ネット購入品で収納を見直し、ニトリオンラインショップの購入品紹介動画が1.1万回再生",
+        "original_title": "",
+        "source": "TikTok（前日投稿の再生数上位）",
+        "source_id": "SNS-06",
+        "summary": "4児の母を名乗る投稿者が、ニトリオンラインショップでまとめて買い物した商品を紹介し、収納を見直した様子を動画で公開した。ハッシュタグには生活音やASMRが含まれ、TikTokで約1.1万回再生を記録した。商品単体ではなく暮らしの変化を見せる構成が共感を集めている。",
+        "why_it_matters": "ネット通販での大量購入品を収納の見直しと結びつけて見せる構成は、商品単体より「暮らしが整う変化」への共感を生みやすい。生活音やASMRといった要素は、家事動線を視覚・聴覚で伝えるコンテンツとして機能する。オンラインショップの購入体験を収納提案の文脈で発信できるかが、EC上の回遊と購入を後押しするポイントになる。",
+        "tags": [
+          "ニトリ",
+          "SNS反響",
+          "TikTok",
+          "収納",
+          "購入品紹介",
+          "ECオンラインショップ"
+        ],
+        "search_terms": [
+          "収納見直し 購入品紹介",
+          "storage organization haul video",
+          "Nitori online shop haul",
+          "生活音 ASMR 家事動線"
+        ],
+        "url": "https://www.tiktok.com/@chobi_29/video/7710163461971381524",
+        "source_pub_ts": 1795162328.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのこのクッションが好きらしい pic.x.com/1peKGIjExA",
+        "platform": "x",
+        "author": "@gameootrpg",
+        "url": "https://x.com/gameootrpg/status/2123956483889246480",
+        "likes": 1103,
+        "retweets": 38,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:47",
+        "captured_at": "",
+        "text": "ニトリのこのクッションが好きらしい pic.x.com/1peKGIjExA",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "はぁ…このアカ ニトリ行く前に知りたかったーー pic.x.com/wnNOzkI9Uy x.com/kirameki_yumek…",
+        "platform": "x",
+        "author": "@kirameki_yumeko",
+        "url": "https://x.com/kirameki_yumeko/status/2123957430753374671",
+        "likes": 604,
+        "retweets": 26,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:51",
+        "captured_at": "",
+        "text": "はぁ…このアカ ニトリ行く前に知りたかったーー pic.x.com/wnNOzkI9Uy x.com/kirameki_yumek…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリの推し活ボックスプラスチックケースに フィギュア入れたら可愛い😍 緑の小さいクリスマスツリー飾りたいかも 台が安定しているひな壇タイプ...",
+        "platform": "x",
+        "author": "@sr_nerupi",
+        "url": "https://x.com/sr_nerupi/status/2124086866907713638",
+        "likes": 151,
+        "retweets": 18,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:25",
+        "captured_at": "",
+        "text": "ニトリの推し活ボックスプラスチックケースに フィギュア入れたら可愛い😍 緑の小さいクリスマスツリー飾りたいかも 台が安定しているひな壇タイプがオススメです pic.x.com/mbEoadsWsN",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "一瞬、無印の新商品かと思った🫣 まさかニトリのセンサーライトとは…！ pic.x.com/uS7FBLBQOn x.com/mimi3605...",
+        "platform": "x",
+        "author": "@mimi3605",
+        "url": "https://x.com/mimi3605/status/2124065938161201632",
+        "likes": 148,
+        "retweets": 70,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:02",
+        "captured_at": "",
+        "text": "一瞬、無印の新商品かと思った🫣 まさかニトリのセンサーライトとは…！ pic.x.com/uS7FBLBQOn x.com/mimi3605/statu…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリの今年のは色が好みでとても良い☺️ うちの猫ちゃんには小さいかしら...笑 使ってくれるといいな🥹 pic.x.com/SSbv8kOjj3",
+        "platform": "x",
+        "author": "@jackdaniels0802",
+        "url": "https://x.com/jackdaniels0802/status/2124083448944132256",
+        "likes": 41,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:12",
+        "captured_at": "",
+        "text": "ニトリの今年のは色が好みでとても良い☺️ うちの猫ちゃんには小さいかしら...笑 使ってくれるといいな🥹 pic.x.com/SSbv8kOjj3",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリオンラインショップで沢山お買い物したけんその紹介と 収納見直したぞ✨️ #4児ママ #ニトリ #購入品紹介 #生活音 #asmr",
+        "platform": "tiktok",
+        "author": "@ちょび☺︎",
+        "url": "https://www.tiktok.com/@chobi_29/video/7710163461971381524",
+        "likes": 52,
+        "retweets": 0,
+        "views": 11000,
+        "comments": 15,
+        "posted_on": "2026-11-20 17:12",
+        "captured_at": "2026-11-21T22:14:29.395096+09:00",
+        "text": "ニトリオンラインショップで沢山お買い物したけんその紹介と 収納見直したぞ✨️ #4児ママ #ニトリ #購入品紹介 #生活音 #asmr",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261121",
     "title": "2026年11月21日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "冬の暖房補助アイテムや座り心地を高めた家具など、快適性を訴求した商品が生活者から支持を集めている。 ニトリグループのNプラスが起毛カルゼシリーズを全3型で発売するなど、素材を生かしたシリーズ展開が進んでいる。",
