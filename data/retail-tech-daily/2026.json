@@ -1,5 +1,90 @@
 [
   {
+    "date": "20261122",
+    "title": "2026年11月22日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジをめぐっては、巧妙化する万引きと利用者の「うっかりミス」の双方が問題化し、体験談がSNSで広がっている。 ヤマザワの給与システム刷新のように、店舗運営を支える人事・給与のバックオフィスDXも進んでいる。",
+    "count": 3,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "セルフレジをめぐっては、巧妙化する万引きと利用者の「うっかりミス」の双方が問題化し、体験談がSNSで広がっている。",
+      "ヤマザワの給与システム刷新のように、店舗運営を支える人事・給与のバックオフィスDXも進んでいる。",
+      "セルフレジの操作仕様の統一性や高齢者への配慮は、生活者の評価を左右する未解決の課題として残っている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジ万引きの実態、年間被害額3460億円 一方で「うっかり万引き」も深刻化とSNSで体験談が相次ぐ",
+        "original_title": "",
+        "source": "ABEMA TIMES（Yahoo!ニュース経由）",
+        "source_id": "JP-01",
+        "summary": "セルフレジを狙った万引きの被害額が年間3460億円にのぼるとされ、手口の巧妙化が問題になっている。一方で、ピッと読み取った際に隣の客の商品の音が鳴った、4点買ったのにレシートには3点しか載っていなかったなど、意図しない「うっかり万引き」を疑わせる体験談もSNSで相次いでいる。",
+        "why_it_matters": "読み取り精度や表示の確認はセルフレジの信頼性に直結する。店側は意図的な不正だけでなく、利用客の誤認や読み取りミスへの対策も並行して求められる。カメラや重量センサーによる検知と、客が安心して使える操作設計の両立が今後の論点になる。",
+        "tags": [
+          "セルフレジ",
+          "万引き対策",
+          "SNS話題"
+        ],
+        "search_terms": [
+          "セルフレジ 万引き",
+          "self-checkout shoplifting",
+          "うっかり万引き 誤読み取り",
+          "retail theft Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQUGNXR2I3WExFb0I2QmVudnFHT29ieUNhNWpWTDlhV0dLWnNBWHNITUVIUzZNdkpFZUtRbnVGQl8zZkdIbnFEbUF1X1k5UllzcnpZZnBPWVhVNHBIbmZQT21HMTFQQ2FieUhiWF9SeTZHMjFWM0VHazV5UUVGTFlDTUtiZ1Nqc1o0M3RHd2N3?oc=5",
+        "source_pub_ts": 1795229146
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ヤマザワ、約5000人の給与システムを刷新 複雑な時給ルールを一元管理",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-03",
+        "summary": "ヤマザワは、約5000人の従業員を対象とする給与システムを刷新したと報じられた。複雑な時給ルールを一元管理できる仕組みを整え、勤務条件の違いに応じた給与計算の煩雑さを解消する狙いとみられる。多数の従業員を抱える小売業にとって、給与計算は人手と誤りのリスクを伴う業務であり、今回の刷新は現場の負担軽減に直結する取り組みとして注目される。",
+        "why_it_matters": "パートやアルバイトを含む多数の従業員を抱える小売業では、時給や手当のルールが複雑化しやすく、給与計算の属人化や誤支払いが課題になる。勤怠・人事データとの連携を前提にした基幹システムの刷新は、店舗運営の省力化とコンプライアンス強化を同時に進める投資といえる。",
+        "tags": [
+          "給与システム",
+          "店舗運営",
+          "バックオフィスDX"
+        ],
+        "search_terms": [
+          "給与システム刷新",
+          "payroll system retail",
+          "時給ルール 一元管理",
+          "retail HR system Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5UQVVOYnNsOXNDTU9JRVdwMlVxQjRGY2x2WTNJRXZwODdhRlJvWnBHVU5lMHBEVzJaYmRPeUFSek5qdHFXMWtHTU9HTnVtMzZ5ajJ3?oc=5",
+        "source_pub_ts": 1795205280
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "60代利用者が語るセルフレジの戸惑い 操作仕様が統一されず、老眼で説明も読みにくい",
+        "original_title": "",
+        "source": "Togetter",
+        "source_id": "JP-04",
+        "summary": "60代の利用者が、セルフレジの操作仕様がATMのように統一されていない点に戸惑うと投稿し、SNSで共有された。加えて老眼で画面上の説明文が読みにくくなったという声も添えられ、高齢者にとって画面の文字の大きさや案内表示のわかりやすさが課題として浮かび上がっている。",
+        "why_it_matters": "セルフレジは店舗ごとに機種や画面設計が異なるため、初めて利用する人ほど迷いやすい。操作の標準化や大きな文字、音声案内などのユニバーサルデザインは、利用率と顧客満足を左右する要素であり、導入企業が見落としやすいポイントといえる。",
+        "tags": [
+          "セルフレジ",
+          "UX",
+          "高齢者対応"
+        ],
+        "search_terms": [
+          "セルフレジ 操作性",
+          "self-checkout usability",
+          "セルフレジ 高齢者 見やすさ",
+          "kiosk UX elderly Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBLQlJvX1czWFdCZi1tLW10UFhtemp1Sll4OV9KZWRob2ZzS0NpWVlvQ1I5NEMyLVZ1dVZjUkVSMjMwZ0doRXhfaVl5V0Z6TlE?oc=5",
+        "source_pub_ts": 1795201212
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261121",
     "title": "2026年11月21日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "生体認証に対応したフルセルフレジを備えた大型スーパーの新店舗や、都市型小型店舗向けスマートカートの登場により、店舗の自動化と次世代決済の実装が国内で進んでいる。 TDSEが需要予測・発注最適化の取り組みを打ち出すなど、AI予測と人の判断を組み合わせた発注業務改革が小売現場の現実的な課題として浮上している。",

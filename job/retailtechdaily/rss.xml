@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 21 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 21 Nov 2026 07:56:37 +0900</lastBuildDate>
+    <pubDate>Sun, 22 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 22 Nov 2026 06:59:57 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月22日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261122/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261122/</guid>
+      <pubDate>Sun, 22 Nov 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジをめぐっては、巧妙化する万引きと利用者の「うっかりミス」の双方が問題化し、体験談がSNSで広がっている。 ヤマザワの給与システム刷新のように、店舗運営を支える人事・給与のバックオフィスDXも進んでいる。</description>
+    </item>
     <item>
       <title>2026年11月21日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261121/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261108/</guid>
       <pubDate>Sun, 08 Nov 2026 08:00:00 +0900</pubDate>
       <description>国内では、美容情報サイト「アットコスメ」が京都でAIを活用した売場づくりに取り組み、店頭でのAI活用が広がりを見せている ドラッグストアの薬王堂がAI肌診断機能を刷新し、店頭での個別提案の高度化が進んでいる</description>
-    </item>
-    <item>
-      <title>2026年11月7日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261107/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261107/</guid>
-      <pubDate>Sat, 07 Nov 2026 08:00:00 +0900</pubDate>
-      <description>省人化はセルフレジなど顧客接点の自動化にとどまらず、バックヤードや決済インフラを含む店舗全体の再設計へと広がっている。 リテールメディアサミット2026は全登壇者と34セッションが確定し、リテールメディアを巡る議論のテーマが具体化した。</description>
     </item>
   </channel>
 </rss>
