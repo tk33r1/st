@@ -1,12 +1,12 @@
 {
-  "captured_at": "2026-11-20T22:50:01.823468+09:00",
-  "captured_date": "20261120",
+  "captured_at": "2026-11-21T22:14:29.395096+09:00",
+  "captured_date": "20261121",
   "window_days": 7,
   "min_views": 10000,
   "items": [
     {
-      "title": "【TikTokで1.9万回再生】ニトリ店員がこっそり教えるめちゃくちゃ売れてる神品TOP8(1~4) #紹介 #おすすめ #生活のコツ #神品 #ニトリ",
-      "description": "TikTokで再生数19,500回を集めた動画（いいね120 / コメント3）：\n「ニトリ店員がこっそり教えるめちゃくちゃ売れてる神品TOP8(1~4) #紹介 #おすすめ #生活のコツ #神品 #ニトリ」",
+      "title": "【TikTokで2.4万回再生】ニトリ店員がこっそり教えるめちゃくちゃ売れてる神品TOP8(1~4) #紹介 #おすすめ #生活のコツ #神品 #ニトリ",
+      "description": "TikTokで再生数23,900回を集めた動画（いいね154 / コメント3）：\n「ニトリ店員がこっそり教えるめちゃくちゃ売れてる神品TOP8(1~4) #紹介 #おすすめ #生活のコツ #神品 #ニトリ」",
       "source": "TikTok (@nntalk)",
       "link": "https://www.tiktok.com/@nntalk5/video/7709776653014093074",
       "pub_date": "2026-11-19 16:11",
@@ -22,14 +22,42 @@
         "神品",
         "ニトリ"
       ],
-      "likes": 120,
-      "retweets": 3,
-      "views": 19500,
+      "likes": 154,
+      "retweets": 5,
+      "views": 23900,
       "comments": 3,
       "raw_text": "ニトリ店員がこっそり教えるめちゃくちゃ売れてる神品TOP8(1~4) #紹介 #おすすめ #生活のコツ #神品 #ニトリ",
       "consumer_filter": {
         "signature": "808568c973843ba36915a529286ba47692059362d3971fa6f038b856cd88b3af",
         "probability": 0.64
+      }
+    },
+    {
+      "title": "【TikTokで1.1万回再生】ニトリオンラインショップで沢山お買い物したけんその紹介と 収納見直したぞ✨️ #4児ママ #ニトリ #購入品紹介 #生活音 #asmr",
+      "description": "TikTokで再生数11,000回を集めた動画（いいね52 / コメント15）：\n「ニトリオンラインショップで沢山お買い物したけんその紹介と 収納見直したぞ✨️ #4児ママ #ニトリ #購入品紹介 #生活音 #asmr」",
+      "source": "TikTok (@ちょび☺︎)",
+      "link": "https://www.tiktok.com/@chobi_29/video/7710163461971381524",
+      "pub_date": "2026-11-20 17:12",
+      "pub_ts": 1795162328.0,
+      "is_sns_raw": true,
+      "platform": "tiktok",
+      "author": "@ちょび☺︎",
+      "author_handle": "@chobi_29",
+      "hashtags": [
+        "4児ママ",
+        "ニトリ",
+        "購入品紹介",
+        "生活音",
+        "asmr"
+      ],
+      "likes": 52,
+      "retweets": 0,
+      "views": 11000,
+      "comments": 15,
+      "raw_text": "ニトリオンラインショップで沢山お買い物したけんその紹介と 収納見直したぞ✨️ #4児ママ #ニトリ #購入品紹介 #生活音 #asmr",
+      "consumer_filter": {
+        "signature": "1923d0e0ebff013ac1171f9fc788f9f226159911b94d11fe0bbb638bb337e71b",
+        "probability": 0.97
       }
     }
   ]
