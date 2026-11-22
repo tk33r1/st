@@ -2727,7 +2727,8 @@ export default {
         // 一時会話の読み上げは、読み上げと一時会話の両方が使えるときだけ
         features: { speech, ...privacy, temporary_speech: speech && privacy.temporary_speech },
       };
-      return jsonResponse(body, cors, 200, { 'Cache-Control': url.searchParams.get('capabilities') === '1' ? 'no-store' : 'public, max-age=600' });
+      // 許可するOriginを返すので、versionsと同じくVaryを付ける（tk.stとwww.tk.stは同じブラウザキャッシュを共有する）
+      return jsonResponse(body, cors, 200, { 'Cache-Control': url.searchParams.get('capabilities') === '1' ? 'no-store' : 'public, max-age=600', Vary: 'Origin' });
     }
     // --- 今日の利用回数（IP×UTC日、通常チャットの上限）。アプリのヘッダーの円グラフが読む。数えずに読むだけ。
     // 全利用者の合計の上限に達した日は、IPの回数が残っていても送れないので global_full で知らせる ---

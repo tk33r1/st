@@ -5108,6 +5108,16 @@ test('A4: 公開JSONを取得し、同時要求と10分キャッシュを共有�
   assert.equal((await versionRequest(w, 'https://elsewhere.invalid')).headers.get('Access-Control-Allow-Origin'), 'https://tk.st');
 });
 
+test('modelsもOriginごとの許可をキャッシュさせるのでVary: Originを付け、tk.stとwww.tk.stで使い回させない', async () => {
+  const w = worker();
+  for (const origin of ['https://tk.st', 'https://www.tk.st', 'https://localhost']) {
+    const res = await w.ctx.worker.fetch(new Request('https://example.test/magi2/models', { headers: { Origin: origin } }), w.env, { waitUntil() {} });
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), origin);
+    assert.equal(res.headers.get('Cache-Control'), 'public, max-age=600');
+    assert.equal(res.headers.get('Vary'), 'Origin');
+  }
+});
+
 test('A4: 取得失敗・壊れたJSON・不正な形・容量超過では同梱分を返す', async () => {
   const bundled = JSON.parse(read('data/magi-versions.json'));
   for (const make of [() => new Response('', {status:404}), () => new Response('{'),
