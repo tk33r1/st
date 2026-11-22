@@ -1,5 +1,141 @@
 [
   {
+    "date": "20261123",
+    "title": "2026年11月23日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "惣菜の表示ミス防止やレシートクーポンなど、店頭の確認作業や販促をデジタルで置き換える動きが進んでいる セルフレジをめぐる不満が「利用者への還元」を含む議論へ広がり、生活者の反応が省人化の設計にも影響し始めている",
+    "count": 5,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "惣菜の表示ミス防止やレシートクーポンなど、店頭の確認作業や販促をデジタルで置き換える動きが進んでいる",
+      "セルフレジをめぐる不満が「利用者への還元」を含む議論へ広がり、生活者の反応が省人化の設計にも影響し始めている",
+      "リテールメディアは食品スーパーだけでなくホームセンターなど非食品業態にも広がり、店舗を広告媒体とする取り組みが業態を横断しつつある"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "東急ストア、惣菜のラベル貼り間違いをAIで防止 スーパー全店に「デリカスキャン」導入",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "東急ストアは、惣菜売場で起きるラベルの貼り間違いをAIで防ぐ「デリカスキャン」を、スーパー全店に導入した。惣菜は商品ごとに価格や原材料などの表示が異なるため、ラベルの取り違えは販売価格の誤りや表示トラブルに直結しやすい。店頭での目視確認に頼ってきた従来の運用を、AIによる照合で補完する取り組みとみられる。",
+        "why_it_matters": "惣菜は製造から陳列までの時間が短く、ラベル誤りが起きても現場で気づきにくい領域だ。AIによる自動照合は、熟練者の目視に依存してきた確認作業を標準化し、人手不足の中でも品質を保つ手段になる。全店展開まで踏み切った点は、AI検品が試験運用を超え店舗オペレーションの一部として定着しつつあることを示す。今後はチェーン間での導入競争が起きる可能性がある。",
+        "tags": [
+          "AI",
+          "惣菜",
+          "品質管理",
+          "店舗オペレーション"
+        ],
+        "search_terms": [
+          "惣菜ラベル誤り防止AI",
+          "AI label verification deli",
+          "デリカスキャン 東急ストア",
+          "store operations AI quality control"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9NV1ZQWi1yTFVmN3A4Z3pPSUtGQWpZV20wZmlYdjFIVUd4OVJYTDkycG93MnBVWnlCN014WU02SllvZTBlWkhLUlpNOWpRQnJsTE5Z?oc=5",
+        "source_pub_ts": 1795370753
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "サンベルクス、テスクの「商談.net リベート管理システム」を導入",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-02",
+        "summary": "サンベルクスが、テスクの「商談.net リベート管理システム」を導入した。リベートとは、メーカーと小売の間で取引条件に応じて支払われる販売奨励金などを指し、複数の取引先や条件が絡むため計算と管理が煩雑になりやすい。システムで取引条件を一元管理することで、商談内容と精算の整合性を保ちやすくなる。流通業の取引管理をデジタル化する動きの一例といえる。",
+        "why_it_matters": "商談やリベートのデジタル化は、店舗現場の外側で進むバックオフィス改革の代表例である。精算の煩雑さが解消されれば、利益管理の精度向上と担当者の工数削減が同時に期待できる。地域の中堅チェーンでも取引管理のSaaS導入が進んでいることを示し、店舗DXの前段として取引先との情報連携の重要性が高まっている。",
+        "tags": [
+          "取引管理",
+          "リベート",
+          "バックオフィス",
+          "SaaS"
+        ],
+        "search_terms": [
+          "リベート管理システム導入",
+          "rebate management system retail",
+          "商談管理 SaaS 小売",
+          "trade terms digitalization"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9oWFVubVhaejAyaS0wdllhd29XYjlNYnBwQVU1bnVOTEhYMzdaMUVGdkJfSlBreGRhSWZodWpyVFdUNXdQalp3bS1fMVVMNUlrSE53?oc=5",
+        "source_pub_ts": 1795359093
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジなら1円引きにしてみたら？」不満募る“セルフレジ論争” 慶応大教授が視聴者の案を評価",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-03",
+        "summary": "ABEMA TIMESの報道によると、セルフレジ利用への不満をめぐり、視聴者から「セルフレジなら1円引きにしてはどうか」という案が出た。慶應義塾大学の教授はこの発想を評価し、セルフ決済は労働の一部を消費者に担ってもらう形になっていると指摘したという。セルフレジをめぐる議論は、利用者へ何らかの還元を設けるかどうかという論点へ広がっている。",
+        "why_it_matters": "セルフレジは店舗の省人化の柱だが、客側の作業負担に対する納得感が欠けると反発につながりやすい。作業の対価を価格で還元するという発想は、セルフ化を「お得な選択」として設計し直す余地があることを示す。導入企業は、人件費削減の効果と顧客満足のバランスを、利用者に伝わる形で説明する必要がある。",
+        "tags": [
+          "セルフレジ",
+          "顧客満足",
+          "値引き",
+          "SNS"
+        ],
+        "search_terms": [
+          "セルフレジ 1円引き 論争",
+          "self-checkout discount debate",
+          "セルフレジ 顧客の不満",
+          "self-checkout customer satisfaction"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1TVlkzb1lEVFJyakxWLUJqM3pyYnRXcnR0SDRXUTBVLU5rMmtJdk0wdkpwekVWZ1J6Wm9lRXhGQVJFd1hqWTBrSVJMWktCeG1KWEloNWJvZDc5U1l2OEkxbEdLMFYycHNESG5yM2lFMFVoX3RtLWN5Szl6TG5FcjQ?oc=5",
+        "source_pub_ts": 1795320377
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アオキスーパー、東芝テックのレシートクーポン発券サービス「クーポンデリ」を導入",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-05",
+        "summary": "アオキスーパーが、東芝テックのレシートクーポン発券サービス「クーポンデリ」を導入した。レシートに付随して発券されるクーポンは、会計という来店客との確実な接点を活用して次回の来店を促す仕組みである。チラシなど紙媒体に比べ、購買後のタイミングで販促を届けられる点が特徴となる。既存のレジ機器を活かした顧客接点の強化として注目される。",
+        "why_it_matters": "レシートクーポンは、レジ端末そのものを販促チャネルに変えられる点が強みだ。購買データと販促を結びつける取り組みはリテールメディアの入り口にあたり、大がかりな投資をせずに始められる。食品スーパーにとっては、販促費の使い道を見直す契機にもなる。今後は効果測定の仕組みが導入の成否を分けるだろう。",
+        "tags": [
+          "レシートクーポン",
+          "販促",
+          "レジ",
+          "顧客接点"
+        ],
+        "search_terms": [
+          "レシートクーポン 発券",
+          "receipt coupon issuing service",
+          "クーポンデリ 東芝テック",
+          "retail coupon POS"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5ic1kySXdHazNkT05rTTkzTG9aS2FZV3B0dl81UHB2d0w0VGtJV0xZTUJVVmRpMml6bXFJRXRiQWQ2TFlaMjk3QmpWMFZia1Bfd2Fr?oc=5",
+        "source_pub_ts": 1795276182
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アークランズがリテールメディア「ARUTANA」に参画 ビバホームなどを展開",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-12",
+        "summary": "アークランズが、リテールメディア「ARUTANA」に参画したと報じられた。アークランズはビバホームなどのホームセンターを展開しており、同社の店舗網が広告や販促の場として活用される枠組みに加わったことになる。ホームセンターは住まいやDIYに関わる購買意図が明確な来店客が多く、店内メディアとしての価値が注目されている。",
+        "why_it_matters": "小売企業が店舗と購買データを広告媒体として提供する流れが、食品以外の業態にも広がっていることを示す。購買意図が明確な業態は、メーカーにとってターゲティング精度の高い接点になりうる。参画企業が増えるほど広告主の選択肢と媒体の価値が高まり、リテールメディア市場の裾野が広がっていく。",
+        "tags": [
+          "リテールメディア",
+          "ホームセンター",
+          "広告",
+          "業態横断"
+        ],
+        "search_terms": [
+          "リテールメディア 参画 ホームセンター",
+          "retail media network home improvement",
+          "ARUTANA リテールメディア",
+          "in-store advertising Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTFBWNXJPQWFXSGJ0V1NERzlRYzdacEE1ZkNJcm9tQ2p6cUVvMUREZGlzWEVLYkFOT1BMTkoybmFiOFVTZjZJc0E?oc=5",
+        "source_pub_ts": 1795129437
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261122",
     "title": "2026年11月22日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セルフレジをめぐっては、巧妙化する万引きと利用者の「うっかりミス」の双方が問題化し、体験談がSNSで広がっている。 ヤマザワの給与システム刷新のように、店舗運営を支える人事・給与のバックオフィスDXも進んでいる。",
