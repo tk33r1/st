@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
       with:
         # 全履歴が要る。sitemap の lastmod も dateModified も git のコミット日時から引く。
         fetch-depth: 0

@@ -26,13 +26,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch fixed fixture baselines
         run: git fetch --no-tags --depth=1 origin 9b0dd28bc3eeebfbd41dc2ba27033d1760666c75 ec5a1ab481d02757abae2458233144ae8b870278
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
       - name: Cold and warm dependencies, build and Python verification
@@ -63,7 +63,7 @@ jobs:
           node .github/scripts/measure-search-ui.mjs "$OUT/fixtures" "$OUT/ui-adapter" --adapter --records=7500
       - name: Save verification evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: phase4-linux-${{ github.sha }}
           path: |
