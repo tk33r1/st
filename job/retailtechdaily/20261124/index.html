@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年11月24日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261124/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年11月24日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261124/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261124.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年11月24日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261124.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261124/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年11月24日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。",
+      "url": "https://tk.st/job/retailtechdaily/20261124/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261124.webp",
+      "datePublished": "2026-11-24T08:00:00+09:00",
+      "dateModified": "2026-11-24T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "サプライチェーン・店舗自動化",
+        "SNS話題・生活者のリアル",
+        "流通DX一般",
+        "リテールメディア・広告",
+        "店舗DX・次世代決済",
+        "グローバル先端トレンド"
+      ],
+      "keywords": [
+        "24時間営業",
+        "AI活用",
+        "BtoB",
+        "SNS話題・生活者のリアル",
+        "グローバル先端トレンド",
+        "サプライチェーン",
+        "サプライチェーン・店舗自動化",
+        "セルフレジ",
+        "バックオフィス",
+        "フィジカルAI",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "広告技術",
+        "店舗DX・次世代決済",
+        "店舗運営",
+        "有人サポート",
+        "決済",
+        "流通DX一般",
+        "無人店舗",
+        "物流",
+        "生成AI",
+        "生活者の声",
+        "生活者ニーズ",
+        "省人化",
+        "自律型ロボット",
+        "販促",
+        "顧客体験",
+        "顧客対応",
+        "顧客接点"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-5"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-6"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-7"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261124/#art-8"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261124/#newslist",
+      "name": "2026年11月24日号 掲載ニュース一覧",
+      "numberOfItems": 8,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-1",
+            "position": 1,
+            "headline": "小売向けフィジカルAI　人手不足・業務負荷軽減を図る24時間稼働の自律型ロボット",
+            "description": "小売現場向けの「フィジカルAI」として、人手不足や業務負荷の軽減を狙い24時間稼働する自律型ロボットが紹介された。現実空間で作業を担うAIとして、省人化の新たな選択肢に位置づけられている。記事は、ロボットがどのような業務を担うかを中心に、小売業の現場課題との関係を解説している。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-1",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9MVXl1NjMwVWpSSXA3TGZTcEw4b3ZuVUdickN2RUNvOFJkMTh0WTlGRFZ4WXY2Y2ZJX3N3emwyOHBwWUM2YUFHX1pjQXNtWFZtdUHSAVdBVV95cUxOWkdLT3VDWVFrRmt4UmNMRWhoRnZKNEpCVnBSc2NIanZLbXV6TUdMaUxrYjlMcXdJVE16R2JRbnd6dnFRWnlhWUhJOVUweG5uZW9qOWVZWms?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ダイヤモンド・チェーンストアオンライン"
+              },
+              "datePublished": "2026-11-24T11:00:00+09:00"
+            },
+            "keywords": [
+              "フィジカルAI",
+              "自律型ロボット",
+              "省人化"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-2",
+            "position": 2,
+            "headline": "「ありがとうを言わずに暮らせる時代」に感謝の広告を掲載、7割以上が感謝を伝える機会の減少を実感",
+            "description": "株式会社タイミーが、「ありがとう」を伝える機会が減ったと感じる人が7割以上に上るという調査結果をもとに、感謝をテーマにした広告を掲載したことが報じられた。セルフレジなどの普及が、日常の小さなやり取りを減らしている実感を浮き彫りにした。生活者の感覚を起点にした発信として反響を呼んでいる。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-2",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNLVFnNnZabkM4TmFmSTZWY3A0V1hOQ21ENDhROGNqZExEdExRMFRkd3B1ZzkyVC1rT2pHLUNUa3BLTWxWTUw4TGxza193azNDUkJOckRSX3lScWpXeGVaOTI0LUJLb1VyOWVqM2YzTm5GaEdYS3kxT3dGalJWVFRCSkpKWGltVDV3?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yahoo!ニュース"
+              },
+              "datePublished": "2026-11-24T10:12:54+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "生活者の声",
+              "顧客体験"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-3",
+            "position": 3,
+            "headline": "PPIH、宣伝担当のAI社員「近藤あい」が正式デビュー、顧客との接点拡大へ",
+            "description": "PPIHの宣伝担当として、AI社員「近藤あい」が正式にデビューしたと報じられた。顧客との接点を広げる取り組みとして紹介されており、AIを人格を持つ担当者として運用する事例となる。小売の販促や顧客対応の領域でAI活用が広がっていることを示す動きだ。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-3",
+            "articleSection": "流通DX一般",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QT2JzRjV2V2FRVkl4MkxuYV93bFIwU1FBUnRPSExPR1lLZk9YMFlRdUxRbjM3R0huS1YzT2J6ZXBTcjFwWnhrb0IwMDBJT0RZMk9fUVVlcUdydw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "流通ニュース"
+              },
+              "datePublished": "2026-11-24T10:03:00+09:00"
+            },
+            "keywords": [
+              "AI活用",
+              "顧客接点",
+              "販促"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-4",
+            "position": 4,
+            "headline": "ZETA、生成AI×広告の特許査定を受領 リテールメディア広告事業の成長を解説するIR動画を公開",
+            "description": "広告テクノロジー企業のZETAが、生成AIと広告に関する特許査定を受領したことを発表した。あわせて、リテールメディア広告事業の成長を解説する投資家向けIR動画が公開された。生成AIを活用した広告技術の知財化と、リテールメディア事業の拡大が同時に示された形だ。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-4",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiO0FVX3lxTE50b2lIb09DWHA4Qkt3TVJwNEFnWUpNOWZ6MkpxSkRXR3RnZEM0Nm95WDlIZVJ6dXh2R1J3?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Howl.Link"
+              },
+              "datePublished": "2026-11-24T08:00:00+09:00"
+            },
+            "keywords": [
+              "リテールメディア",
+              "生成AI",
+              "広告技術"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-5",
+            "position": 5,
+            "headline": "「喪服レスキュー」24時間・無人店舗型の喪服レンタルが話題、祖父の葬儀の苦い経験から起業",
+            "description": "24時間営業の無人店舗型で喪服をレンタルする「喪服レスキュー」が話題になっている。祖父の葬儀でサイズの合わない喪服を着た経験をきっかけに起業したという背景が紹介された。急な弔事に対応するニーズを無人店舗という形態で満たす取り組みとして注目を集めている。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-5",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOTkZWUUdjUUlHQV93NEQ0Q184Wk5jbWNucnJyRW5qQ0tUNG5jbjhuMHY5NVBWcTZ3Q2c1U2VCOTEyNjVNNGZ4R1lpNUlLNzY4dWh5amZ4TWJZWnFWclBjZlhJTlBEYVNTejdxYnU2TFdXOXBzMWlmcmFiQnhIX3ZZblRmeHdGNTdXSl9jOEZn?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yahoo!ニュース"
+              },
+              "datePublished": "2026-11-24T07:46:31+09:00"
+            },
+            "keywords": [
+              "無人店舗",
+              "24時間営業",
+              "生活者ニーズ"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 6,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-6",
+            "position": 6,
+            "headline": "ホームデポ、プロ向け事業に欠けていた物流の要素をどう構築したか",
+            "description": "Home Depotが、プロ向け（Pro）事業において不足していた物流の要素をどのように構築したかを解説する記事。法人顧客向けの配送や供給網の整備が、事業成長の課題解決にどう寄与したかが取り上げられている。BtoB顧客への対応力を高める物流投資の一例として位置づけられる。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-6",
+            "articleSection": "サプライチェーン・店舗自動化",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTFBLUUdsc3NXWTN3TDk5Q296Qmxua1pJZ2p4R215WnFPcTdWMTk3dWxzYmc4bUZfaXplRXVUNmJWaThvSlVPODlOWFJmUWZlU1dTc2VWVWlTSmN5SUo1Y1BBU0E3dUxWX0gtRW5TT2VHNWZUVkE1MUtMQ0dWZnluQQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Retail Dive"
+              },
+              "datePublished": "2026-11-24T05:44:34+09:00"
+            },
+            "keywords": [
+              "物流",
+              "BtoB",
+              "サプライチェーン"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 7,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-7",
+            "position": 7,
+            "headline": "小売業者が自動化された決済サポートより人の専門知識を選ぶ理由",
+            "description": "小売業者が、自動化された決済サポートよりも人による専門的な支援を選ぶ理由を論じた記事。決済に関するトラブルや問い合わせ対応では、自動応答だけでは解決しにくいケースがあることが背景にある。自動化一辺倒ではなく、人の判断を組み合わせる運用の重要性が示されている。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-7",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOZm5ud1pOU2wzakFJclBaSzFhZFBnUFZsTW9zRGU4UzBjYVhPa1J4bW9xMjZSaVpTRWprbE0tTVoxNC1US20zM1FwRVU1a0wwNlI4QXRTWkhzVjIzbWQwX3hYSGxTVTB4TlVFUGxXWTZDZ0g5MndQZjBhSnUyc1lIUmktdzhXWkhiYnF3d3BYYm9sbUVuVFdVdzBzV0JmTVZ4QVVTQkw2UEFNTVFyV3NIUHBLZw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Retail Dive"
+              },
+              "datePublished": "2026-11-23T23:44:34+09:00"
+            },
+            "keywords": [
+              "決済",
+              "有人サポート",
+              "顧客対応"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 8,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261124/#art-8",
+            "position": 8,
+            "headline": "小売AIで今もっとも速く成果が出ているのは店頭の裏側にある",
+            "description": "小売業のAI活用で、現時点でもっとも速く成果が出ている分野は店頭（ストアフロント）の裏側にあるという趣旨の記事。顧客の目に見えないバックオフィスや店舗運営の領域でのAI導入が、投資回収の早い取り組みとして注目されている。顧客向け施策より、業務の効率化に価値を見いだす視点が示された。",
+            "url": "https://tk.st/job/retailtechdaily/20261124/#art-8",
+            "articleSection": "グローバル先端トレンド",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-24T08:00:00+09:00",
+            "dateModified": "2026-11-24T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261124/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQdDBuNU9FdUZUTUJQcjhRWkFaU3h3ZEswdkdiWTI3UGxhQ21NYzkxZlM1Ym9IU3FKTVBTVWFMM2dqMDEwY2JKMVFsNWJnVTlqcjBFem52eHlwSzlVVWVjMkZsbC03aU1NXzZwZi1wQ3BBVDhudG0yMS1uSXNMSDVaVWNIbVNTUmZBSFJCeUctU1NCRG9wcl9ENENjczV2MFBsaWgyelBB?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Retail Dive"
+              },
+              "datePublished": "2026-11-23T19:05:06+09:00"
+            },
+            "keywords": [
+              "AI活用",
+              "バックオフィス",
+              "店舗運営"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261124/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年11月24日号",
+          "item": "https://tk.st/job/retailtechdaily/20261124/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年11月24日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年11月24日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年11月24日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約5分 / 2,661字
+          </span>
+          <span class="stat">全 8 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。</li><li>セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。</li><li>リテールメディアや無人店舗、AI活用の取り組みが広がる中で、成果は技術そのものより、運用設計と有人対応の組み合わせによって左右されるという論点が目立った。</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">小売向けフィジカルAI　人手不足・業務負荷軽減を図る24時間稼働の自律型ロボット</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">SNS話題・生活者のリアル</span></span>
+              <span class="qi-title">「ありがとうを言わずに暮らせる時代」に感謝の広告を掲載、7割以上が感謝を伝える機会の減少を実感</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">流通DX一般</span></span>
+              <span class="qi-title">PPIH、宣伝担当のAI社員「近藤あい」が正式デビュー、顧客との接点拡大へ</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">ZETA、生成AI×広告の特許査定を受領 リテールメディア広告事業の成長を解説するIR動画を公開</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">「喪服レスキュー」24時間・無人店舗型の喪服レンタルが話題、祖父の葬儀の苦い経験から起業</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-6" class="qi-link">
+            <span class="qi-num">06</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">サプライチェーン・店舗自動化</span></span>
+              <span class="qi-title">ホームデポ、プロ向け事業に欠けていた物流の要素をどう構築したか</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-7" class="qi-link">
+            <span class="qi-num">07</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">小売業者が自動化された決済サポートより人の専門知識を選ぶ理由</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-8" class="qi-link">
+            <span class="qi-num">08</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-global">海外</span><span class="qi-cat">グローバル先端トレンド</span></span>
+              <span class="qi-title">小売AIで今もっとも速く成果が出ているのは店頭の裏側にある</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">8 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">8</strong> / 8</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">8</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">5</span></button><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">3</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="サプライチェーン・店舗自動化" aria-pressed="false">サプライチェーン・店舗自動化 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・生活者のリアル" aria-pressed="false">SNS話題・生活者のリアル <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="流通DX一般" aria-pressed="false">流通DX一般 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="リテールメディア・広告" aria-pressed="false">リテールメディア・広告 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="グローバル先端トレンド" aria-pressed="false">グローバル先端トレンド <span class="chip-count">1</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">ダイヤモンド・チェーンストアオンライン</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-24T11:00:00+09:00" title="出典の公開日時">公開 2026.11.24 11:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE9MVXl1NjMwVWpSSXA3TGZTcEw4b3ZuVUdickN2RUNvOFJkMTh0WTlGRFZ4WXY2Y2ZJX3N3emwyOHBwWUM2YUFHX1pjQXNtWFZtdUHSAVdBVV95cUxOWkdLT3VDWVFrRmt4UmNMRWhoRnZKNEpCVnBSc2NIanZLbXV6TUdMaUxrYjlMcXdJVE16R2JRbnd6dnFRWnlhWUhJOVUweG5uZW9qOWVZWms?oc=5" target="_blank" rel="noopener noreferrer">小売向けフィジカルAI　人手不足・業務負荷軽減を図る24時間稼働の自律型ロボット<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>小売現場向けの「フィジカルAI」として、人手不足や業務負荷の軽減を狙い24時間稼働する自律型ロボットが紹介された。現実空間で作業を担うAIとして、<strong class="kw-scan">省人化</strong>の新たな選択肢に位置づけられている。記事は、ロボットがどのような業務を担うかを中心に、小売業の現場課題との関係を解説している。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">24時間稼働できる自律型ロボットは、夜間や繁忙時間帯の作業負荷を平準化する手段になり得る。</p>
+              </div>
+              <p class="wim-detail">導入判断では、機器の性能より、既存の店舗レイアウトや業務フローにどこまで組み込めるかが成否を分ける。人とロボットの役割分担を先に定義することが、現場の受容性を高める近道となる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%95%E3%82%A3%E3%82%B8%E3%82%AB%E3%83%ABAI">#フィジカルAI</a><button type="button" class="topic-watch-btn" data-watch-topic="フィジカルAI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%87%AA%E5%BE%8B%E5%9E%8B%E3%83%AD%E3%83%9C%E3%83%83%E3%83%88">#自律型ロボット</a><button type="button" class="topic-watch-btn" data-watch-topic="自律型ロボット" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%9C%81%E4%BA%BA%E5%8C%96">#省人化</a><button type="button" class="topic-watch-btn" data-watch-topic="省人化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiUkFVX3lxTE9MVXl1NjMwVWpSSXA3TGZTcEw4b3ZuVUdickN2RUNvOFJkMTh0WTlGRFZ4WXY2Y2ZJX3N3emwyOHBwWUM2YUFHX1pjQXNtWFZtdUHSAVdBVV95cUxOWkdLT3VDWVFrRmt4UmNMRWhoRnZKNEpCVnBSc2NIanZLbXV6TUdMaUxrYjlMcXdJVE16R2JRbnd6dnFRWnlhWUhJOVUweG5uZW9qOWVZWms?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="SNS話題・生活者のリアル">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="SNS話題・生活者のリアル" title="このカテゴリで絞り込み">SNS話題・生活者のリアル</button>
+              <span class="source-tag">Yahoo!ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-11-24T10:12:54+09:00" title="出典の公開日時">公開 2026.11.24 10:12 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNLVFnNnZabkM4TmFmSTZWY3A0V1hOQ21ENDhROGNqZExEdExRMFRkd3B1ZzkyVC1rT2pHLUNUa3BLTWxWTUw4TGxza193azNDUkJOckRSX3lScWpXeGVaOTI0LUJLb1VyOWVqM2YzTm5GaEdYS3kxT3dGalJWVFRCSkpKWGltVDV3?oc=5" target="_blank" rel="noopener noreferrer">「ありがとうを言わずに暮らせる時代」に感謝の広告を掲載、7割以上が感謝を伝える機会の減少を実感<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>株式会社タイミーが、「ありがとう」を伝える機会が減ったと感じる人が7割以上に上るという調査結果をもとに、感謝をテーマにした広告を掲載したことが報じられた。<strong class="kw-scan">セルフレジ</strong>などの普及が、日常の小さなやり取りを減らしている実感を浮き彫りにした。生活者の感覚を起点にした発信として反響を呼んでいる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>は効率化の手段であると同時に、接客での感謝のやり取りを減らすという体験面のコストも抱えている。</p>
+              </div>
+              <p class="wim-detail">運用設計では、声掛けや案内表示など人の温かみを補う仕掛けを組み込むことが、顧客満足の維持に寄与し得る。生活者の「ありがとう」の減少という感覚は、今後の店舗DXの評価軸に加えるべき論点である。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E5%A3%B0">#生活者の声</a><button type="button" class="topic-watch-btn" data-watch-topic="生活者の声" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%A1%A7%E5%AE%A2%E4%BD%93%E9%A8%93">#顧客体験</a><button type="button" class="topic-watch-btn" data-watch-topic="顧客体験" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNLVFnNnZabkM4TmFmSTZWY3A0V1hOQ21ENDhROGNqZExEdExRMFRkd3B1ZzkyVC1rT2pHLUNUa3BLTWxWTUw4TGxza193azNDUkJOckRSX3lScWpXeGVaOTI0LUJLb1VyOWVqM2YzTm5GaEdYS3kxT3dGalJWVFRCSkpKWGltVDV3?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="流通DX一般">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="流通DX一般" title="このカテゴリで絞り込み">流通DX一般</button>
+              <span class="source-tag">流通ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-24T10:03:00+09:00" title="出典の公開日時">公開 2026.11.24 10:03 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QT2JzRjV2V2FRVkl4MkxuYV93bFIwU1FBUnRPSExPR1lLZk9YMFlRdUxRbjM3R0huS1YzT2J6ZXBTcjFwWnhrb0IwMDBJT0RZMk9fUVVlcUdydw?oc=5" target="_blank" rel="noopener noreferrer">PPIH、宣伝担当のAI社員「近藤あい」が正式デビュー、顧客との接点拡大へ<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>PPIHの宣伝担当として、AI社員「近藤あい」が正式にデビューしたと報じられた。顧客との接点を広げる取り組みとして紹介されており、AIを人格を持つ担当者として運用する事例となる。小売の販促や顧客対応の領域でAI活用が広がっていることを示す動きだ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">AI社員は、接客負荷を増やさずに情報発信を常時行える点で、人手が限られる販促業務と相性がよい。</p>
+              </div>
+              <p class="wim-detail">一方で、ブランドの一貫性や発信内容の正確性を保つ運用ルールが不可欠になる。ツールの導入より、誰が内容を監修し、どの接点で使うかの設計が効果を左右する。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E6%B4%BB%E7%94%A8">#AI活用</a><button type="button" class="topic-watch-btn" data-watch-topic="AI活用" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%A1%A7%E5%AE%A2%E6%8E%A5%E7%82%B9">#顧客接点</a><button type="button" class="topic-watch-btn" data-watch-topic="顧客接点" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B2%A9%E4%BF%83">#販促</a><button type="button" class="topic-watch-btn" data-watch-topic="販促" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QT2JzRjV2V2FRVkl4MkxuYV93bFIwU1FBUnRPSExPR1lLZk9YMFlRdUxRbjM3R0huS1YzT2J6ZXBTcjFwWnhrb0IwMDBJT0RZMk9fUVVlcUdydw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">Howl.Link</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-24T08:00:00+09:00" title="出典の公開日時">公開 2026.11.24 08:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiO0FVX3lxTE50b2lIb09DWHA4Qkt3TVJwNEFnWUpNOWZ6MkpxSkRXR3RnZEM0Nm95WDlIZVJ6dXh2R1J3?oc=5" target="_blank" rel="noopener noreferrer">ZETA、生成AI×広告の特許査定を受領 リテールメディア広告事業の成長を解説するIR動画を公開<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>広告テクノロジー企業のZETAが、<strong class="kw-scan">生成AI</strong>と広告に関する特許査定を受領したことを発表した。あわせて、<strong class="kw-scan">リテールメディア</strong>広告事業の成長を解説する投資家向けIR動画が公開された。<strong class="kw-scan">生成AI</strong>を活用した広告技術の知財化と、<strong class="kw-scan">リテールメディア</strong>事業の拡大が同時に示された形だ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">リテールメディア</strong>では、購買データを活用した広告配信の精度や、<strong class="kw-scan">生成AI</strong>によるクリエイティブ制作が差別化要因になりつつある。</p>
+              </div>
+              <p class="wim-detail">特許取得は技術の独自性を示す材料であり、小売事業者にとっては広告媒体としての信頼性評価に影響し得る。ただし記事はIR動画の案内が中心のため、事業実績は個別に確認が必要だ。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%88%90AI">#生成AI</a><button type="button" class="topic-watch-btn" data-watch-topic="生成AI" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%83%E5%91%8A%E6%8A%80%E8%A1%93">#広告技術</a><button type="button" class="topic-watch-btn" data-watch-topic="広告技術" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiO0FVX3lxTE50b2lIb09DWHA4Qkt3TVJwNEFnWUpNOWZ6MkpxSkRXR3RnZEM0Nm95WDlIZVJ6dXh2R1J3?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">Yahoo!ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-24T07:46:31+09:00" title="出典の公開日時">公開 2026.11.24 07:46 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxOTkZWUUdjUUlHQV93NEQ0Q184Wk5jbWNucnJyRW5qQ0tUNG5jbjhuMHY5NVBWcTZ3Q2c1U2VCOTEyNjVNNGZ4R1lpNUlLNzY4dWh5amZ4TWJZWnFWclBjZlhJTlBEYVNTejdxYnU2TFdXOXBzMWlmcmFiQnhIX3ZZblRmeHdGNTdXSl9jOEZn?oc=5" target="_blank" rel="noopener noreferrer">「喪服レスキュー」24時間・無人店舗型の喪服レンタルが話題、祖父の葬儀の苦い経験から起業<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>24時間営業の<strong class="kw-scan">無人店舗</strong>型で喪服をレンタルする「喪服レスキュー」が話題になっている。祖父の葬儀でサイズの合わない喪服を着た経験をきっかけに起業したという背景が紹介された。急な弔事に対応するニーズを<strong class="kw-scan">無人店舗</strong>という形態で満たす取り組みとして注目を集めている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">無人店舗</strong>は人員を置かずに長時間の利用を可能にし、急な需要に即応するサービス設計と相性がよい。</p>
+              </div>
+              <p class="wim-detail">小売・サービス業の店舗DXでは、無人化を単なる効率化ではなく、利用時間の拡張や新規需要の獲得という視点で捉えることができる。在庫管理や無人運営時の顧客対応など、課題の設計も併せて検討する必要がある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%84%A1%E4%BA%BA%E5%BA%97%E8%88%97">#無人店舗</a><button type="button" class="topic-watch-btn" data-watch-topic="無人店舗" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=24%E6%99%82%E9%96%93%E5%96%B6%E6%A5%AD">#24時間営業</a><button type="button" class="topic-watch-btn" data-watch-topic="24時間営業" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E6%B4%BB%E8%80%85%E3%83%8B%E3%83%BC%E3%82%BA">#生活者ニーズ</a><button type="button" class="topic-watch-btn" data-watch-topic="生活者ニーズ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMijgFBVV95cUxOTkZWUUdjUUlHQV93NEQ0Q184Wk5jbWNucnJyRW5qQ0tUNG5jbjhuMHY5NVBWcTZ3Q2c1U2VCOTEyNjVNNGZ4R1lpNUlLNzY4dWh5amZ4TWJZWnFWclBjZlhJTlBEYVNTejdxYnU2TFdXOXBzMWlmcmFiQnhIX3ZZblRmeHdGNTdXSl9jOEZn?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-6" data-region="GLOBAL" data-category="サプライチェーン・店舗自動化">
+          <div class="card-index" aria-hidden="true">06</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="サプライチェーン・店舗自動化" title="このカテゴリで絞り込み">サプライチェーン・店舗自動化</button>
+              <span class="source-tag">Retail Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-24T05:44:34+09:00" title="出典の公開日時">公開 2026.11.24 05:44 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMifkFVX3lxTFBLUUdsc3NXWTN3TDk5Q296Qmxua1pJZ2p4R215WnFPcTdWMTk3dWxzYmc4bUZfaXplRXVUNmJWaThvSlVPODlOWFJmUWZlU1dTc2VWVWlTSmN5SUo1Y1BBU0E3dUxWX0gtRW5TT2VHNWZUVkE1MUtMQ0dWZnluQQ?oc=5" target="_blank" rel="noopener noreferrer">ホームデポ、プロ向け事業に欠けていた物流の要素をどう構築したか<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">How Home Depot built the missing logistics piece for its Pro business</p>
+            <div class="card-summary"><p>Home Depotが、プロ向け（Pro）事業において不足していた物流の要素をどのように構築したかを解説する記事。法人顧客向けの配送や供給網の整備が、事業成長の課題解決にどう寄与したかが取り上げられている。BtoB顧客への対応力を高める物流投資の一例として位置づけられる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">プロ顧客は納期や在庫の確実性を重視するため、店舗網とは別に物流体制を整えることが競争力になる。</p>
+              </div>
+              <p class="wim-detail">リテールの物流DXでは、在庫の見える化と配送の最適化を組み合わせ、法人需要への対応を強化する視点が有効だ。国内の小売でも、BtoB向けの供給網設計は参考になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%89%A9%E6%B5%81">#物流</a><button type="button" class="topic-watch-btn" data-watch-topic="物流" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=BtoB">#BtoB</a><button type="button" class="topic-watch-btn" data-watch-topic="BtoB" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B5%E3%83%97%E3%83%A9%E3%82%A4%E3%83%81%E3%82%A7%E3%83%BC%E3%83%B3">#サプライチェーン</a><button type="button" class="topic-watch-btn" data-watch-topic="サプライチェーン" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMifkFVX3lxTFBLUUdsc3NXWTN3TDk5Q296Qmxua1pJZ2p4R215WnFPcTdWMTk3dWxzYmc4bUZfaXplRXVUNmJWaThvSlVPODlOWFJmUWZlU1dTc2VWVWlTSmN5SUo1Y1BBU0E3dUxWX0gtRW5TT2VHNWZUVkE1MUtMQ0dWZnluQQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-7" data-region="GLOBAL" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">07</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">Retail Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-23T23:44:34+09:00" title="出典の公開日時">公開 2026.11.23 23:44 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOZm5ud1pOU2wzakFJclBaSzFhZFBnUFZsTW9zRGU4UzBjYVhPa1J4bW9xMjZSaVpTRWprbE0tTVoxNC1US20zM1FwRVU1a0wwNlI4QXRTWkhzVjIzbWQwX3hYSGxTVTB4TlVFUGxXWTZDZ0g5MndQZjBhSnUyc1lIUmktdzhXWkhiYnF3d3BYYm9sbUVuVFdVdzBzV0JmTVZ4QVVTQkw2UEFNTVFyV3NIUHBLZw?oc=5" target="_blank" rel="noopener noreferrer">小売業者が自動化された決済サポートより人の専門知識を選ぶ理由<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Why retailers prefer real human expertise over automated payment support</p>
+            <div class="card-summary"><p>小売業者が、自動化された決済サポートよりも人による専門的な支援を選ぶ理由を論じた記事。決済に関するトラブルや問い合わせ対応では、自動応答だけでは解決しにくいケースがあることが背景にある。自動化一辺倒ではなく、人の判断を組み合わせる運用の重要性が示されている。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">セルフ決済やキャッシュレス化が進むほど、トラブル時の人的サポートが顧客の信頼を左右する。</p>
+              </div>
+              <p class="wim-detail">国内でも、<strong class="kw-scan">セルフレジ</strong>の普及に伴う操作の戸惑いや問い合わせ増への対応が課題になりつつある。自動化の範囲と有人対応の配置を設計段階で決めておくことが、次世代決済の定着には欠かせない。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%B1%BA%E6%B8%88">#決済</a><button type="button" class="topic-watch-btn" data-watch-topic="決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%9C%89%E4%BA%BA%E3%82%B5%E3%83%9D%E3%83%BC%E3%83%88">#有人サポート</a><button type="button" class="topic-watch-btn" data-watch-topic="有人サポート" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%A1%A7%E5%AE%A2%E5%AF%BE%E5%BF%9C">#顧客対応</a><button type="button" class="topic-watch-btn" data-watch-topic="顧客対応" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOZm5ud1pOU2wzakFJclBaSzFhZFBnUFZsTW9zRGU4UzBjYVhPa1J4bW9xMjZSaVpTRWprbE0tTVoxNC1US20zM1FwRVU1a0wwNlI4QXRTWkhzVjIzbWQwX3hYSGxTVTB4TlVFUGxXWTZDZ0g5MndQZjBhSnUyc1lIUmktdzhXWkhiYnF3d3BYYm9sbUVuVFdVdzBzV0JmTVZ4QVVTQkw2UEFNTVFyV3NIUHBLZw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-8" data-region="GLOBAL" data-category="グローバル先端トレンド">
+          <div class="card-index" aria-hidden="true">08</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-global" data-filter-trigger="region" data-filter-val="GLOBAL" title="この地域のニュースで絞り込み">海外 GLOBAL</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="グローバル先端トレンド" title="このカテゴリで絞り込み">グローバル先端トレンド</button>
+              <span class="source-tag">Retail Dive</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-23T19:05:06+09:00" title="出典の公開日時">公開 2026.11.23 19:05 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxQdDBuNU9FdUZUTUJQcjhRWkFaU3h3ZEswdkdiWTI3UGxhQ21NYzkxZlM1Ym9IU3FKTVBTVWFMM2dqMDEwY2JKMVFsNWJnVTlqcjBFem52eHlwSzlVVWVjMkZsbC03aU1NXzZwZi1wQ3BBVDhudG0yMS1uSXNMSDVaVWNIbVNTUmZBSFJCeUctU1NCRG9wcl9ENENjczV2MFBsaWgyelBB?oc=5" target="_blank" rel="noopener noreferrer">小売AIで今もっとも速く成果が出ているのは店頭の裏側にある<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+            <p class="original-title">Retail’s fastest AI return right now sits behind the storefront</p>
+            <div class="card-summary"><p>小売業のAI活用で、現時点でもっとも速く成果が出ている分野は店頭（ストアフロント）の裏側にあるという趣旨の記事。顧客の目に見えないバックオフィスや店舗運営の領域でのAI導入が、投資回収の早い取り組みとして注目されている。顧客向け施策より、業務の効率化に価値を見いだす視点が示された。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">顧客向けの派手なAI施策より、発注・在庫管理・返品処理などのバックオフィス領域のほうが効果を測りやすく、導入の初速も出やすい。</p>
+              </div>
+              <p class="wim-detail">国内のAI<strong class="kw-scan">需要予測</strong>や<strong class="kw-scan">電子棚札</strong>の運用にも通じる視点である。まず社内業務で成果を積み上げ、その後に顧客接点へ広げる順序が現実的だ。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E6%B4%BB%E7%94%A8">#AI活用</a><button type="button" class="topic-watch-btn" data-watch-topic="AI活用" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%90%E3%83%83%E3%82%AF%E3%82%AA%E3%83%95%E3%82%A3%E3%82%B9">#バックオフィス</a><button type="button" class="topic-watch-btn" data-watch-topic="バックオフィス" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E9%81%8B%E5%96%B6">#店舗運営</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗運営" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMipgFBVV95cUxQdDBuNU9FdUZUTUJQcjhRWkFaU3h3ZEswdkdiWTI3UGxhQ21NYzkxZlM1Ym9IU3FKTVBTVWFMM2dqMDEwY2JKMVFsNWJnVTlqcjBFem52eHlwSzlVVWVjMkZsbC03aU1NXzZwZi1wQ3BBVDhudG0yMS1uSXNMSDVaVWNIbVNTUmZBSFJCeUctU1NCRG9wcl9ENENjczV2MFBsaWgyelBB?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8824%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B8%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261123/" class="nav-prev">&larr; 2026.11.23 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>

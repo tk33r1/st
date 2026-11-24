@@ -1,5 +1,205 @@
 [
   {
+    "date": "20261124",
+    "title": "2026年11月24日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。",
+      "セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。",
+      "リテールメディアや無人店舗、AI活用の取り組みが広がる中で、成果は技術そのものより、運用設計と有人対応の組み合わせによって左右されるという論点が目立った。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "小売向けフィジカルAI　人手不足・業務負荷軽減を図る24時間稼働の自律型ロボット",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-02",
+        "summary": "小売現場向けの「フィジカルAI」として、人手不足や業務負荷の軽減を狙い24時間稼働する自律型ロボットが紹介された。現実空間で作業を担うAIとして、省人化の新たな選択肢に位置づけられている。記事は、ロボットがどのような業務を担うかを中心に、小売業の現場課題との関係を解説している。",
+        "why_it_matters": "24時間稼働できる自律型ロボットは、夜間や繁忙時間帯の作業負荷を平準化する手段になり得る。導入判断では、機器の性能より、既存の店舗レイアウトや業務フローにどこまで組み込めるかが成否を分ける。人とロボットの役割分担を先に定義することが、現場の受容性を高める近道となる。",
+        "tags": [
+          "フィジカルAI",
+          "自律型ロボット",
+          "省人化"
+        ],
+        "search_terms": [
+          "自律型ロボット 小売",
+          "フィジカルAI 店舗",
+          "autonomous robot retail",
+          "store automation labor shortage"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9MVXl1NjMwVWpSSXA3TGZTcEw4b3ZuVUdickN2RUNvOFJkMTh0WTlGRFZ4WXY2Y2ZJX3N3emwyOHBwWUM2YUFHX1pjQXNtWFZtdUHSAVdBVV95cUxOWkdLT3VDWVFrRmt4UmNMRWhoRnZKNEpCVnBSc2NIanZLbXV6TUdMaUxrYjlMcXdJVE16R2JRbnd6dnFRWnlhWUhJOVUweG5uZW9qOWVZWms?oc=5",
+        "source_pub_ts": 1795485600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「ありがとうを言わずに暮らせる時代」に感謝の広告を掲載、7割以上が感謝を伝える機会の減少を実感",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-04",
+        "summary": "株式会社タイミーが、「ありがとう」を伝える機会が減ったと感じる人が7割以上に上るという調査結果をもとに、感謝をテーマにした広告を掲載したことが報じられた。セルフレジなどの普及が、日常の小さなやり取りを減らしている実感を浮き彫りにした。生活者の感覚を起点にした発信として反響を呼んでいる。",
+        "why_it_matters": "セルフレジは効率化の手段であると同時に、接客での感謝のやり取りを減らすという体験面のコストも抱えている。運用設計では、声掛けや案内表示など人の温かみを補う仕掛けを組み込むことが、顧客満足の維持に寄与し得る。生活者の「ありがとう」の減少という感覚は、今後の店舗DXの評価軸に加えるべき論点である。",
+        "tags": [
+          "セルフレジ",
+          "生活者の声",
+          "顧客体験"
+        ],
+        "search_terms": [
+          "セルフレジ 感謝 減少",
+          "店舗 接客 温かみ",
+          "self-checkout customer experience",
+          "consumer survey thank you"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNLVFnNnZabkM4TmFmSTZWY3A0V1hOQ21ENDhROGNqZExEdExRMFRkd3B1ZzkyVC1rT2pHLUNUa3BLTWxWTUw4TGxza193azNDUkJOckRSX3lScWpXeGVaOTI0LUJLb1VyOWVqM2YzTm5GaEdYS3kxT3dGalJWVFRCSkpKWGltVDV3?oc=5",
+        "source_pub_ts": 1795482774
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "PPIH、宣伝担当のAI社員「近藤あい」が正式デビュー、顧客との接点拡大へ",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-05",
+        "summary": "PPIHの宣伝担当として、AI社員「近藤あい」が正式にデビューしたと報じられた。顧客との接点を広げる取り組みとして紹介されており、AIを人格を持つ担当者として運用する事例となる。小売の販促や顧客対応の領域でAI活用が広がっていることを示す動きだ。",
+        "why_it_matters": "AI社員は、接客負荷を増やさずに情報発信を常時行える点で、人手が限られる販促業務と相性がよい。一方で、ブランドの一貫性や発信内容の正確性を保つ運用ルールが不可欠になる。ツールの導入より、誰が内容を監修し、どの接点で使うかの設計が効果を左右する。",
+        "tags": [
+          "AI活用",
+          "顧客接点",
+          "販促"
+        ],
+        "search_terms": [
+          "AI社員 小売 販促",
+          "バーチャル担当者 顧客接点",
+          "AI virtual employee retail",
+          "generative AI customer engagement"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QT2JzRjV2V2FRVkl4MkxuYV93bFIwU1FBUnRPSExPR1lLZk9YMFlRdUxRbjM3R0huS1YzT2J6ZXBTcjFwWnhrb0IwMDBJT0RZMk9fUVVlcUdydw?oc=5",
+        "source_pub_ts": 1795482180
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ZETA、生成AI×広告の特許査定を受領 リテールメディア広告事業の成長を解説するIR動画を公開",
+        "original_title": "",
+        "source": "Howl.Link",
+        "source_id": "JP-06",
+        "summary": "広告テクノロジー企業のZETAが、生成AIと広告に関する特許査定を受領したことを発表した。あわせて、リテールメディア広告事業の成長を解説する投資家向けIR動画が公開された。生成AIを活用した広告技術の知財化と、リテールメディア事業の拡大が同時に示された形だ。",
+        "why_it_matters": "リテールメディアでは、購買データを活用した広告配信の精度や、生成AIによるクリエイティブ制作が差別化要因になりつつある。特許取得は技術の独自性を示す材料であり、小売事業者にとっては広告媒体としての信頼性評価に影響し得る。ただし記事はIR動画の案内が中心のため、事業実績は個別に確認が必要だ。",
+        "tags": [
+          "リテールメディア",
+          "生成AI",
+          "広告技術"
+        ],
+        "search_terms": [
+          "リテールメディア 広告 生成AI",
+          "特許 広告技術",
+          "retail media generative AI",
+          "ad tech patent"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiO0FVX3lxTE50b2lIb09DWHA4Qkt3TVJwNEFnWUpNOWZ6MkpxSkRXR3RnZEM0Nm95WDlIZVJ6dXh2R1J3?oc=5",
+        "source_pub_ts": 1795474800
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "「喪服レスキュー」24時間・無人店舗型の喪服レンタルが話題、祖父の葬儀の苦い経験から起業",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-07",
+        "summary": "24時間営業の無人店舗型で喪服をレンタルする「喪服レスキュー」が話題になっている。祖父の葬儀でサイズの合わない喪服を着た経験をきっかけに起業したという背景が紹介された。急な弔事に対応するニーズを無人店舗という形態で満たす取り組みとして注目を集めている。",
+        "why_it_matters": "無人店舗は人員を置かずに長時間の利用を可能にし、急な需要に即応するサービス設計と相性がよい。小売・サービス業の店舗DXでは、無人化を単なる効率化ではなく、利用時間の拡張や新規需要の獲得という視点で捉えることができる。在庫管理や無人運営時の顧客対応など、課題の設計も併せて検討する必要がある。",
+        "tags": [
+          "無人店舗",
+          "24時間営業",
+          "生活者ニーズ"
+        ],
+        "search_terms": [
+          "無人店舗 レンタル 24時間",
+          "喪服 レンタル 無人",
+          "unmanned store rental",
+          "24-hour unmanned retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOTkZWUUdjUUlHQV93NEQ0Q184Wk5jbWNucnJyRW5qQ0tUNG5jbjhuMHY5NVBWcTZ3Q2c1U2VCOTEyNjVNNGZ4R1lpNUlLNzY4dWh5amZ4TWJZWnFWclBjZlhJTlBEYVNTejdxYnU2TFdXOXBzMWlmcmFiQnhIX3ZZblRmeHdGNTdXSl9jOEZn?oc=5",
+        "source_pub_ts": 1795473991
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ホームデポ、プロ向け事業に欠けていた物流の要素をどう構築したか",
+        "original_title": "How Home Depot built the missing logistics piece for its Pro business",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "Home Depotが、プロ向け（Pro）事業において不足していた物流の要素をどのように構築したかを解説する記事。法人顧客向けの配送や供給網の整備が、事業成長の課題解決にどう寄与したかが取り上げられている。BtoB顧客への対応力を高める物流投資の一例として位置づけられる。",
+        "why_it_matters": "プロ顧客は納期や在庫の確実性を重視するため、店舗網とは別に物流体制を整えることが競争力になる。リテールの物流DXでは、在庫の見える化と配送の最適化を組み合わせ、法人需要への対応を強化する視点が有効だ。国内の小売でも、BtoB向けの供給網設計は参考になる。",
+        "tags": [
+          "物流",
+          "BtoB",
+          "サプライチェーン"
+        ],
+        "search_terms": [
+          "法人向け 物流 小売",
+          "プロ顧客 供給網",
+          "Home Depot Pro logistics",
+          "B2B retail supply chain"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTFBLUUdsc3NXWTN3TDk5Q296Qmxua1pJZ2p4R215WnFPcTdWMTk3dWxzYmc4bUZfaXplRXVUNmJWaThvSlVPODlOWFJmUWZlU1dTc2VWVWlTSmN5SUo1Y1BBU0E3dUxWX0gtRW5TT2VHNWZUVkE1MUtMQ0dWZnluQQ?oc=5",
+        "source_pub_ts": 1795466674
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗DX・次世代決済",
+        "title": "小売業者が自動化された決済サポートより人の専門知識を選ぶ理由",
+        "original_title": "Why retailers prefer real human expertise over automated payment support",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "小売業者が、自動化された決済サポートよりも人による専門的な支援を選ぶ理由を論じた記事。決済に関するトラブルや問い合わせ対応では、自動応答だけでは解決しにくいケースがあることが背景にある。自動化一辺倒ではなく、人の判断を組み合わせる運用の重要性が示されている。",
+        "why_it_matters": "セルフ決済やキャッシュレス化が進むほど、トラブル時の人的サポートが顧客の信頼を左右する。国内でも、セルフレジの普及に伴う操作の戸惑いや問い合わせ増への対応が課題になりつつある。自動化の範囲と有人対応の配置を設計段階で決めておくことが、次世代決済の定着には欠かせない。",
+        "tags": [
+          "決済",
+          "有人サポート",
+          "顧客対応"
+        ],
+        "search_terms": [
+          "決済 有人サポート 小売",
+          "自動応答 人の判断",
+          "retail payment human support",
+          "automated customer service retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOZm5ud1pOU2wzakFJclBaSzFhZFBnUFZsTW9zRGU4UzBjYVhPa1J4bW9xMjZSaVpTRWprbE0tTVoxNC1US20zM1FwRVU1a0wwNlI4QXRTWkhzVjIzbWQwX3hYSGxTVTB4TlVFUGxXWTZDZ0g5MndQZjBhSnUyc1lIUmktdzhXWkhiYnF3d3BYYm9sbUVuVFdVdzBzV0JmTVZ4QVVTQkw2UEFNTVFyV3NIUHBLZw?oc=5",
+        "source_pub_ts": 1795445074
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "小売AIで今もっとも速く成果が出ているのは店頭の裏側にある",
+        "original_title": "Retail’s fastest AI return right now sits behind the storefront",
+        "source": "Retail Dive",
+        "source_id": "GL-04",
+        "summary": "小売業のAI活用で、現時点でもっとも速く成果が出ている分野は店頭（ストアフロント）の裏側にあるという趣旨の記事。顧客の目に見えないバックオフィスや店舗運営の領域でのAI導入が、投資回収の早い取り組みとして注目されている。顧客向け施策より、業務の効率化に価値を見いだす視点が示された。",
+        "why_it_matters": "顧客向けの派手なAI施策より、発注・在庫管理・返品処理などのバックオフィス領域のほうが効果を測りやすく、導入の初速も出やすい。国内のAI需要予測や電子棚札の運用にも通じる視点である。まず社内業務で成果を積み上げ、その後に顧客接点へ広げる順序が現実的だ。",
+        "tags": [
+          "AI活用",
+          "バックオフィス",
+          "店舗運営"
+        ],
+        "search_terms": [
+          "小売AI 業務効率化",
+          "バックオフィス 自動化",
+          "retail AI back-office ROI",
+          "AI demand forecasting retail"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQdDBuNU9FdUZUTUJQcjhRWkFaU3h3ZEswdkdiWTI3UGxhQ21NYzkxZlM1Ym9IU3FKTVBTVWFMM2dqMDEwY2JKMVFsNWJnVTlqcjBFem52eHlwSzlVVWVjMkZsbC03aU1NXzZwZi1wQ3BBVDhudG0yMS1uSXNMSDVaVWNIbVNTUmZBSFJCeUctU1NCRG9wcl9ENENjczV2MFBsaWgyelBB?oc=5",
+        "source_pub_ts": 1795428306
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261123",
     "title": "2026年11月23日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "惣菜の表示ミス防止やレシートクーポンなど、店頭の確認作業や販促をデジタルで置き換える動きが進んでいる セルフレジをめぐる不満が「利用者への還元」を含む議論へ広がり、生活者の反応が省人化の設計にも影響し始めている",
