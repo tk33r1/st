@@ -1,5 +1,285 @@
 [
   {
+    "date": "20261124",
+    "title": "2026年11月24日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリホールディングスに不正アクセスがあり、最大3,762万件の個人情報が漏えいした可能性が報じられ、データ管理とブランド信頼が経営課題として浮上しました。 中間決算は増収営業増益となり、島忠買収から5年を経た改革の成果が検証の焦点になっています。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリホールディングスに不正アクセスがあり、最大3,762万件の個人情報が漏えいした可能性が報じられ、データ管理とブランド信頼が経営課題として浮上しました。",
+      "中間決算は増収営業増益となり、島忠買収から5年を経た改革の成果が検証の焦点になっています。",
+      "東映との初コラボによる店舗での映像放映や、SNSでの「棚にぬいを飾る」使い方の反響など、店舗と暮らしの空間を活用した提案が広がっています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリHDに不正アクセス、最大3,762万件の個人情報が漏えいのおそれ",
+        "original_title": "",
+        "source": "ScanNetSecurity",
+        "source_id": "JP-09",
+        "summary": "ニトリホールディングスに対する不正アクセスにより、最大3,762万件の個人情報が漏えいした可能性があると報じられました。報道の見出しでは「漏えい」と示されています。経緯の詳細や対象となった情報の内訳、再発防止策などは候補情報からは確認できないため、今後の公式発表を注視する必要があります。",
+        "why_it_matters": "大規模な顧客情報の漏えいは、ブランドへの信頼を左右する重大な経営リスクです。ニトリは店舗・ネット通販・会員サービスなど多くの顧客接点を持つため、データ管理体制はDX戦略の前提条件になります。被害範囲の特定、通知対応、セキュリティ投資の方向性が今後の焦点で、利用者の不安を払拭する迅速で透明な情報開示が求められます。",
+        "tags": [
+          "ニトリ",
+          "個人情報",
+          "セキュリティ",
+          "DX"
+        ],
+        "search_terms": [
+          "ニトリ 個人情報 漏えい",
+          "Nitori data breach",
+          "不正アクセス 情報漏洩 小売",
+          "customer data leak Japan retailer"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1Bd2NLOHZiNVJTSHVUSU4ycjI5ak1ycG9hQlNfY3RadEdVVGhRY3dsaFFtMnBpM3Y1SFVGVzgzaUhsenBCYXEtM3dHdjhWbERoczVMQWhZVDl6enBSRHdGS0NzMXZVN1d0bG5Yag?oc=5",
+        "source_pub_ts": 1795475110
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリHD中間決算は増収営業増益、島忠買収から5年の改革成果を検証",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-10",
+        "summary": "ニトリホールディングスの中間決算は増収営業増益となりました。記事では、島忠の買収から5年が経過したことを踏まえ、同社の改革の成果が検証されています。数字の増減だけでなく、統合後の店舗網やグループ運営がどのように機能しているかが論点として示されています。",
+        "why_it_matters": "買収後の統合成果は、M&Aを成長戦略の柱とする小売企業にとって重要な判断材料です。ニトリは製造・物流・小売を一体で運営するSPAモデルを持つため、島忠の店舗網をどう活用し、コスト構造や売場提案に反映させたかが収益性に直結します。今後は既存店の伸びと統合効果の持続性に注目する必要があります。",
+        "tags": [
+          "ニトリ",
+          "決算",
+          "島忠",
+          "M&A"
+        ],
+        "search_terms": [
+          "ニトリ 中間決算 増益",
+          "Nitori interim results",
+          "島忠 買収 統合効果",
+          "Shimachu acquisition integration"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFBYSENnOW16RHhWbEFFZklRNTd6TUFudDBBRDg0MWN6MjN2ZnVPQjdiSmlYbDJlN3JVckxBTDBHOXFISlp6a0Vfc0hwSlRIUQ?oc=5",
+        "source_pub_ts": 1795466574
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ北海道応援事業、助成総額10億円で24日から募集開始",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-11",
+        "summary": "似鳥財団が「ニトリ北海道応援事業」の募集を24日から開始しました。北海道の課題解決や地域活性化につながる活動を支援するもので、助成総額は10億円です。自治体・法人・任意団体が対象で、1件100万円以上で上限はありません。応募は2月28日まで受け付けられます。",
+        "why_it_matters": "地域密着型の支援は、本社を置く北海道での信頼醸成とブランド価値の向上につながります。助成は企業の本業とは別の枠組みですが、地域課題の解決を通じて店舗が地域の一員として受け入れられる基盤になります。募集規模や採択事例が、どのような地域投資につながるかを継続的に確認する価値があります。",
+        "tags": [
+          "ニトリ",
+          "社会貢献",
+          "北海道",
+          "似鳥財団"
+        ],
+        "search_terms": [
+          "ニトリ 北海道 応援事業",
+          "Nitori Hokkaido support program",
+          "似鳥財団 助成 募集",
+          "regional grant foundation Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9BeVByOEtQNjU3dUM1T05GTnVYZHlscTFZWFZKbEJwN3VzUXZaNnlPVG5DUVMyOGk5aVZFYW1xaGdaVzNDNEZlMWhBaTVzVlpVXzFlU1Ita3FJTENHNVdfOGdCX2o1ZFk3QWpyM0tRTkhrLVdvV2tjOFpfLVU3N2c?oc=5",
+        "source_pub_ts": 1795436401
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "東映とニトリが初コラボ、全国の店舗で新作映画の予告映像を放映",
+        "original_title": "",
+        "source": "クレアウェブ",
+        "source_id": "JP-01",
+        "summary": "東映とニトリが店頭プロモーションで初めてコラボレーションし、全国のニトリ店舗で新作映画の予告映像を放映することが決まりました。店舗を映像メディアとして活用する取り組みで、来店客に映画の情報を届ける施策です。対象となる作品名や放映期間などの詳細は、候補情報からは確認できません。",
+        "why_it_matters": "店舗空間を広告メディアとして活用する取り組みは、生活提案以外の体験で来店動機を広げる手段になります。ニトリは全国に店舗網を持つため、エンタメ企業との提携は若年層や家族層への接点拡大に有効です。家具という生活財と映画という異業種の組み合わせが、来店や売上にどう結びつくかが今後の注目点です。",
+        "tags": [
+          "ニトリ",
+          "店頭プロモーション",
+          "コラボ",
+          "映画"
+        ],
+        "search_terms": [
+          "ニトリ 東映 コラボ",
+          "Nitori Toei collaboration",
+          "店頭 映像 プロモーション",
+          "in-store promotion movie trailer"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1hTjhVUTIwbUZLNm5RLXpmVWRoN1NVbTdOVlhzamtFX0NYdEhmeVhseVd6V1ppR0pzZ0hVVm8tUEtfb29haWlLajhPcjlBQVFENXhSclg2enFaVU1nQkE4aEpfbS0xVlluSFc5cWExNjdUQQ?oc=5",
+        "source_pub_ts": 1795486624
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "秋冬の季節感を映すリードディフューザー4種をニトリが発売",
+        "original_title": "",
+        "source": "Dellows News",
+        "source_id": "JP-04",
+        "summary": "ニトリが秋冬の季節をイメージしたリードディフューザーを4種類発売しました。香りを使って部屋の季節感を演出する提案で、インテリア小物としての位置づけが特徴です。置くだけで香りが広がる手軽さも、日常使いの雑貨として訴求されています。価格や香りの詳細は候補情報からは確認できません。",
+        "why_it_matters": "香りは家具や布製品とは異なる感覚価値として、季節ごとの買い替え需要を生みやすいカテゴリです。ニトリは企画から販売までを自社で行うSPAのため、季節ごとに商品を素早く入れ替える強みを活かせます。暮らしの空間提案と組み合わせた展開が、ヒット商品につながる鍵になるでしょう。",
+        "tags": [
+          "ニトリ",
+          "新商品",
+          "季節商品",
+          "雑貨"
+        ],
+        "search_terms": [
+          "ニトリ リードディフューザー",
+          "Nitori reed diffuser",
+          "秋冬 香り 季節商品",
+          "seasonal home fragrance Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1yc1FROHc3eGIzS2dwajlpSWl5d0ZWSDR1Uy1kVU9KWlVmSEZOVUtDZ3dHdWtwVVk2ZUFwZHFkOXZKZGdwUHc?oc=5",
+        "source_pub_ts": 1795472551
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの棚にぬいぐるみを飾る使い方が反響、収納家具が展示空間に",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-04",
+        "summary": "X上で、ニトリで購入した棚にぬいぐるみを飾った写真の投稿が104いいねを集めました。投稿者は、棚にぬいぐるみを鎮座させた様子を共有しています。本来は収納用の家具が、ぬいぐるみのディスプレイ用の展示棚として使われている点が特徴です。",
+        "why_it_matters": "ぬい活のような趣味の飾り方に、汎用的な棚が自分らしい展示空間として取り込まれています。商品の用途を限定しない設計や陳列が、生活者の表現欲求と結びつく好例です。店頭では収納の提案に加えて、コレクションを見せる使い方も伝えることで、購入動機を広げられる可能性があります。",
+        "tags": [
+          "ニトリ",
+          "SNS反響",
+          "収納",
+          "ぬい活"
+        ],
+        "search_terms": [
+          "ニトリ 棚 ぬいぐるみ",
+          "Nitori shelf display",
+          "ぬい活 飾り棚",
+          "collectible display shelf SNS"
+        ],
+        "url": "https://x.com/wf_watermelon/status/2124759962702516236",
+        "source_pub_ts": 1795431600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリと無印の購入品を並べた「爆買い」紹介動画が反響、ブランド横断の買い方",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-02",
+        "summary": "X上で、ニトリと無印良品の購入品を取り上げた紹介投稿が170いいね、16リポストを集めました。「爆買い」企画で買ってよかった物をTOP5形式で紹介する内容で、YouTubeの動画へ誘導しています。ニトリ単独ではなく、無印良品と並べて語られている点が特徴です。",
+        "why_it_matters": "生活者は価格と品質を比較しながら、ブランドを横断して暮らしの道具を選んでいます。ランキング形式の紹介は「買ってよかった」という実感を可視化し、購入の後押しになります。ニトリにとっては、他ブランドとの比較の中で商品力や価格の納得感をどう伝えるかが問われる示唆です。",
+        "tags": [
+          "ニトリ",
+          "無印良品",
+          "SNS反響",
+          "購入品紹介"
+        ],
+        "search_terms": [
+          "ニトリ 無印 爆買い",
+          "Nitori Muji comparison video",
+          "買ってよかった物 ランキング",
+          "household goods haul review Japan"
+        ],
+        "url": "https://x.com/_yoshida_akari/status/2124836920861794494",
+        "source_pub_ts": 1795431600
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリに棚を買いに行ったんですけどね 重くて嵩張るのでカートのまま車まで戻って買ったものと荷物を乗せてカート返してこようと思ってドア閉めた瞬...",
+        "platform": "x",
+        "author": "@ekoh257",
+        "url": "https://x.com/ekoh257/status/2124713282640736601",
+        "likes": 213,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:54",
+        "captured_at": "",
+        "text": "ニトリに棚を買いに行ったんですけどね 重くて嵩張るのでカートのまま車まで戻って買ったものと荷物を乗せてカート返してこようと思ってドア閉めた瞬間 ガチャン 鍵閉じ込めました…………",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "【ニトリ･無印】爆買い企画で買ってよかった物TOP5🏆️特にお気に入りアイテムはこれ！ youtu.be/Y-tzVF87r2s?si… @...",
+        "platform": "x",
+        "author": "@_yoshida_akari",
+        "url": "https://x.com/_yoshida_akari/status/2124836920861794494",
+        "likes": 170,
+        "retweets": 16,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:06",
+        "captured_at": "",
+        "text": "【ニトリ･無印】爆買い企画で買ってよかった物TOP5🏆️特にお気に入りアイテムはこれ！ youtu.be/Y-tzVF87r2s?si… @YouTubeより 爆買い後のよかったもの🎀",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ニトリでコタツをゲットしました☺️ これで冬の寒さもバッチリだね🟡🟡 ほにゃり( *´꒳`* )🟡 #えもじの子 #ぬい活 #ほにゃ pic...",
+        "platform": "x",
+        "author": "@chibitan6014",
+        "url": "https://x.com/chibitan6014/status/2124797676051149015",
+        "likes": 134,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:30",
+        "captured_at": "",
+        "text": "ニトリでコタツをゲットしました☺️ これで冬の寒さもバッチリだね🟡🟡 ほにゃり( *´꒳`* )🟡 #えもじの子 #ぬい活 #ほにゃ pic.x.com/t9t4h9d0vW",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリで買ってきた棚にぬいを鎮座させてみた pic.x.com/rKDCvOjZKL",
+        "platform": "x",
+        "author": "@wf_watermelon",
+        "url": "https://x.com/wf_watermelon/status/2124759962702516236",
+        "likes": 104,
+        "retweets": 7,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:00",
+        "captured_at": "",
+        "text": "ニトリで買ってきた棚にぬいを鎮座させてみた pic.x.com/rKDCvOjZKL",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "📓昨日、今日で購入したもの そろそろ冬支度で🧢🧣等を購入 最近、モンベルのインバウンド客がすごくて昨日も混雑に巻き込まれました😅 日本企業な...",
+        "platform": "x",
+        "author": "@jasmine17361736",
+        "url": "https://x.com/jasmine17361736/status/2124864550826877264",
+        "likes": 54,
+        "retweets": 2,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:56",
+        "captured_at": "",
+        "text": "📓昨日、今日で購入したもの そろそろ冬支度で🧢🧣等を購入 最近、モンベルのインバウンド客がすごくて昨日も混雑に巻き込まれました😅 日本企業ならではの機能性と価格のバランスの良さを考えると、人気なのも納得ですが そして、うさぎスリッパはニトリで見つけて、かわいい！となり思わず購入♡ pic.x.com/dEWQjks0wK x.com/jasmine1736173…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261123",
     "title": "2026年11月23日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが東京都調布市で延床面積約56,300㎡の大型商業施設「（仮称）ニトリモール東八三鷹」の建設事業を進めることが報じられ、郊外での大型モール展開が注目されている。 税込2,990円からの「振動スピーカー」や799円の皿など、低価格で暮らしの体験を変える商品がヒット商品として生活者の支持を集めている。",
