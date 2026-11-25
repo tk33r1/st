@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 24 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 24 Nov 2026 12:08:55 +0900</lastBuildDate>
+    <pubDate>Wed, 25 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 25 Nov 2026 10:14:39 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月25日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261125/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261125/</guid>
+      <pubDate>Wed, 25 Nov 2026 08:00:00 +0900</pubDate>
+      <description>米国のリテールメディア市場が、AI購買代行の台頭によって構造転換の局面を迎えている ファミリーマートが飲料補充ロボットを2027年1月から本格導入し、店舗バックヤードの自動化が接客以外の業務へ広がっている</description>
+    </item>
     <item>
       <title>2026年11月24日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261124/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261111/</guid>
       <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
       <description>東武百貨店池袋本店が顔認証による手ぶら決済を始めるなど、店舗での非接触決済と体験型の買い物がさらに広がっています。 AI発注は欠品と過剰在庫を同時に抑える手段として、サプライチェーンDXの実務テーマになりつつあります。</description>
-    </item>
-    <item>
-      <title>2026年11月10日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261110/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261110/</guid>
-      <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
-      <description>リテール現場の省人化は、店頭の機器導入と客の受容性の両面で課題が見えてきた。松屋の新しい機器へのSNS反応は、説明不足が不安を生むことを示している。 需要予測AIや店内メディアなど、データと空間を活用する施策が国内でも具体化している。展示会での紹介やリテールメディアの企画がその例である。</description>
     </item>
   </channel>
 </rss>

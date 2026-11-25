@@ -1,5 +1,182 @@
 [
   {
+    "date": "20261125",
+    "title": "2026年11月25日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "米国のリテールメディア市場が、AI購買代行の台頭によって構造転換の局面を迎えている ファミリーマートが飲料補充ロボットを2027年1月から本格導入し、店舗バックヤードの自動化が接客以外の業務へ広がっている",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "米国のリテールメディア市場が、AI購買代行の台頭によって構造転換の局面を迎えている",
+      "ファミリーマートが飲料補充ロボットを2027年1月から本格導入し、店舗バックヤードの自動化が接客以外の業務へ広がっている",
+      "セルフレジの利用者間の摩擦がSNSで顕在化し、省人化と顧客体験のバランスが改めて問われている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "AI購買代行が揺さぶる米リテールメディア市場、アマゾンとウォルマートの分岐点",
+        "original_title": "",
+        "source": "JBpress",
+        "source_id": "JP-01",
+        "summary": "米国のリテールメディア市場は11.8兆円規模とされ、消費者に代わってAIが商品を選び購入する「AI購買代行」の広がりが、その前提を揺さぶっているという。記事は、AI時代にアマゾンとウォルマートがそれぞれどの方向へ進むのかを比較し、両社の戦略が分岐点を迎えつつあると論じている。",
+        "why_it_matters": "購買の起点が検索や広告枠から自動購買エージェントへ移れば、棚やスポンサー枠の価値そのものが再定義されかねない。国内の小売やメーカーにとっても、自社の購買データと広告基盤が、AIに選ばれる存在になれるかを問う契機になる。",
+        "tags": [
+          "リテールメディア",
+          "AI購買代行",
+          "米国市場"
+        ],
+        "search_terms": [
+          "リテールメディア 市場規模",
+          "AI購買代行 エージェント",
+          "retail media Amazon Walmart",
+          "agentic AI shopping"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQRW1IdHZSdUdPTXA1NWFmeEVld256b3RhX0duc2hPXzJKQUdYR2EwY2cxWE5ha3J6QzA5QTVVZXJOb1lLMTdQM1pESjBlTjJHclRKX3pWakNQc2xXTWNidXZVUXJ0SnJZMmg2eWh1ZUlRaG41UERQWW1iS1djU3B3TFctVmRKd1JoalBJdGREd3NuZXVxV2pvVFRWc1FiY2xIOTdpLW1qNGhncTNieXc?oc=5",
+        "source_pub_ts": 1795554000
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ファミマ、飲料補充ロボットを2027年1月から本格導入 作業時間約7割削減",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-05",
+        "summary": "ファミリーマートは飲料補充ロボットを2027年1月から本格導入すると発表した。補充作業時間を約7割削減できる点が特徴で、人手不足が続くコンビニの店舗オペレーションを省力化する狙いがある。売場とバックヤードの作業をロボットが担う流れは、店舗自動化が接客以外の裏方業務へ広がっていることを示している。",
+        "why_it_matters": "補充は欠品防止と店員の負荷軽減に直結する業務で、作業時間削減が数値で示されたことは他チェーンの投資判断の材料になる。今後は補充ロボットと販売データ、発注や需要予測をどう連携させるかが、店舗自動化の成否を分けるだろう。",
+        "tags": [
+          "店舗自動化",
+          "補充ロボット",
+          "コンビニ"
+        ],
+        "search_terms": [
+          "飲料補充ロボット 導入",
+          "店舗自動化 省人化",
+          "convenience store restocking robot",
+          "in-store robotics"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5Sb09ELXhIbVoyc21XTERZZnpRd0Q5cjg1MzlfbzFtWG9ROVZuOXFnZTRDRnNuSTBSYV9QNTBHTGxGbjIxaWpvd3BJSklMS29HV1VF?oc=5",
+        "source_pub_ts": 1795484576
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ジャングリア、価格のAI化とダイナミックプライシングの是非",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-03",
+        "summary": "テーマパークのジャングリアを題材に、AIによる価格変動（ダイナミックプライシング）の導入可能性を論じた解説記事。「雨の日SPA会員」という企画名から、天候などの需要変動に応じた価格設計の発想が取り上げられている。レジャー施設でも価格のAI化が現実味を帯びつつあることを示す内容だ。",
+        "why_it_matters": "ダイナミックプライシングは小売の値付けや電子棚札と結びつく技術で、レジャーでの事例は価格のAI化を生活者がどう受け止めるかを占う材料になる。公平感や納得感を損なわない説明設計が、小売の価格運用にも共通する課題になる。",
+        "tags": [
+          "ダイナミックプライシング",
+          "価格AI",
+          "レジャー"
+        ],
+        "search_terms": [
+          "ダイナミックプライシング 価格AI",
+          "需要予測 値付け",
+          "dynamic pricing AI",
+          "AI pricing consumer acceptance"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQVTRUOFhyMWhHTkNQS2s2b2pQdnJ0eFFPMWRaZXpyckM5Wm44MENtOElaVWpncXA1NmZGSS1GOE1RNUpkYW9RTno2SWJNdmY4emNTN1RndDREcXNrdFpKRWZVZzB0d0FUaFZoY0I4Z3lnbE1YcTMwd01kWnQ0by1PQjZPY0ZDclR1?oc=5",
+        "source_pub_ts": 1795487114
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ドンキ・アピタなど、PeopleXのAI面接・AIロープレを導入",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-04",
+        "summary": "ドン・キホーテやアピタなどを展開する流通グループが、PeopleXのAI面接とAIロープレ（ロールプレイング）を導入した。採用の初期選考と店員の接客練習をAIで効率化する取り組みで、人手不足が続く店舗現場での人材確保と育成のデジタル化を示している。面接や練習の標準化が進めば、教育担当者の負荷軽減にもつながる。",
+        "why_it_matters": "AIロープレは接客練習を店舗の空き時間に繰り返せるため、教育担当者の負担を抑えつつ接客品質のばらつきを減らしやすい。採用と育成のAI化は、バックヤード効率化と並ぶ小売の人手不足対策として、今後の投資テーマになりそうだ。",
+        "tags": [
+          "人材育成",
+          "AI面接",
+          "店舗運営"
+        ],
+        "search_terms": [
+          "AIロープレ 接客研修",
+          "AI面接 採用効率化",
+          "retail staff training AI",
+          "AI interview recruitment"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5Db0dDVV85eTg2OWk1QmtSNnluR3owUnVKelNWM3dMTEQtbE5mNTh1X2s5MVZrTFVSdnk5ZmZzczFWWTdIZVdfZDg2SnVTX2ZP?oc=5",
+        "source_pub_ts": 1795486560
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジで会計後の行動が物議、「毎回焦る」の声も",
+        "original_title": "",
+        "source": "TRILL",
+        "source_id": "JP-09",
+        "summary": "セルフレジで会計後に取った行動が、後ろに人が並ぶ中で目撃され、SNS上で物議を醸した。「毎回焦る」「サッカー台でやって」といった声が上がり、セルフレジ特有の会計後の動線やマナーをめぐる利用者の戸惑いが浮かび上がった。利用者同士の摩擦が店舗の運用課題として意識される事例だ。",
+        "why_it_matters": "セルフレジの普及で会計後の袋詰めや移動は各自に委ねられ、そこで生じる小さな摩擦が店舗への不満として表れやすい。サッカー台の配置やレジ周辺の案内表示など、設計と声かけで緩和できる余地があり、運用の見直し材料として捉えたい。",
+        "tags": [
+          "セルフレジ",
+          "SNS反響",
+          "店内マナー"
+        ],
+        "search_terms": [
+          "セルフレジ 会計後 マナー",
+          "サッカー台 動線",
+          "self-checkout etiquette",
+          "self-checkout customer complaints"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE00ZTJodllVTVRQeFVZQnRtYUFwNWRpclRDZHFTSTQ0Wm9FenllUkpZbU1NVXRuX3EtUnhHUEdQOVVkNWtWWXJDYnprTHlOYTg?oc=5",
+        "source_pub_ts": 1795449900
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "先進的なテック起業家が食品小売業界の将来対応を目指す取り組み",
+        "original_title": "How a forward-thinking tech entrepreneur is looking to future-proof the grocery industry",
+        "source": "Grocery Dive",
+        "source_id": "GL-01",
+        "summary": "Grocery Diveは、食品小売業界の将来への備えを目指す先見的なテック起業家の取り組みを紹介している。変化が続く食品流通において、テクノロジーを使って事業の持続性を高める考え方が取り上げられている。記事の詳細な施策内容は候補情報からは限られるが、食品小売のDXの方向性を読み解く一本として位置づけられる。",
+        "why_it_matters": "食品スーパーは人手不足、価格競争、オンライン対応など複数の圧力に直面しており、テック起業家の視点から業界の将来像を描く記事は、国内の食品小売がどの領域へ投資すべきかを考える参考になる。自社の課題に合う技術を見極める視点も得られる。",
+        "tags": [
+          "食品小売",
+          "テック起業",
+          "将来対応"
+        ],
+        "search_terms": [
+          "食品小売 テック 将来対応",
+          "grocery tech future-proof",
+          "grocery industry innovation",
+          "food retail digital transformation"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPYXNMNGpuMjQtRnZ1cWhmeFpNeUZtUGdFZkE5cmVtQzJDUUwwUENjblBPRE5hcGR6RExvLWdYcGlXQWRDOEowbnExcHFmbzhGaWRTc2pTMm9PTHY4aDdsejBTRTdmXzRwOEthQXRUWU5Fc0hkRUZwM1dfX0RvVF9oZ1RpSjE5SXJaSGtGclhheDdPaXVQMmlMbmpfMndEY2FLaUZWRVN1ell3QQ?oc=5",
+        "source_pub_ts": 1795534855
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Dibs Beautyがヒートマップを活用し、Ulta Beautyでの販売展開を最適化",
+        "original_title": "How Dibs Beauty uses heat maps to optimize its Ulta Beauty presence",
+        "source": "Modern Retail",
+        "source_id": "GL-02",
+        "summary": "Modern Retailは、美容ブランドのDibs BeautyがヒートマップのデータをもとにUlta Beautyでの販売展開を最適化している事例を紹介している。顧客の関心が集まる商品や陳列を可視化し、限られた露出を改善する取り組みとして取り上げられている。データを用いて売場の判断を行う動きを示す記事だ。",
+        "why_it_matters": "ヒートマップによる可視化は、顧客の関心や注目点を把握して露出や陳列を改善する手法で、感覚頼りの判断からの脱却を象徴する。国内の化粧品や専門店でも、販売データとの組み合わせで売場改善に活かせる余地があり、ブランド側の分析力が問われる。",
+        "tags": [
+          "ヒートマップ",
+          "売場分析",
+          "美容小売"
+        ],
+        "search_terms": [
+          "ヒートマップ 売場分析",
+          "販売展開 最適化",
+          "retail heat map analytics",
+          "beauty retail merchandising data"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQbzJTM19mWjlUTUpJYkRJT3ZZOTRabS1yZFl6VnB6RGJyQUEyTFdBS1VEYjI3UTYwcTRZekdQN0Rad01kWFFybnIzLUhWSGVnUXZmdkFGdFR3Wk9CWlFFbTNFSkFMeThlZVpoTnNhNFBSQXhsMTRGdzdEWk1XMHBHSEZOQkNSc1ZWeG1YeTZQRjZvQzY3czFWTE9jbE1mY25pNlg4ZS1ZV2JpRms?oc=5",
+        "source_pub_ts": 1795453561
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261124",
     "title": "2026年11月24日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "小売現場の人手不足を背景に、24時間稼働の自律型ロボットなど「フィジカルAI」が注目され、店舗の省人化が次の段階に入りつつある。 セルフレジの普及により、「ありがとう」を伝える機会が減ったと感じる生活者が多いことが調査で示され、効率化の裏にある体験面の課題が顕在化した。",
