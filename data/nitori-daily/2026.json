@@ -1,5 +1,281 @@
 [
   {
+    "date": "20261125",
+    "title": "2026年11月25日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリがマレーシアで16店舗目（首都圏）、福島県で7店舗目（いわき店）を相次いで開業し、国内外で店舗網の拡大を続けている。 エゾクロテンのキャラクター商品や3cm厚の極暖ラグなど、生活者の共感を集める新商品・ヒット商品が生まれている。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリがマレーシアで16店舗目（首都圏）、福島県で7店舗目（いわき店）を相次いで開業し、国内外で店舗網の拡大を続けている。",
+      "エゾクロテンのキャラクター商品や3cm厚の極暖ラグなど、生活者の共感を集める新商品・ヒット商品が生まれている。",
+      "アパレル「N+」のアプリ会員限定ポイント最大7倍など、会員基盤を活かした価格施策で秋冬の購買を促す動きが目立つ。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリのアパレル「N+」、アプリ会員限定で秋服全アイテムのポイントが最大7倍",
+        "original_title": "",
+        "source": "朝日新聞",
+        "source_id": "JP-17",
+        "summary": "ニトリのアパレルブランド「N+（エヌプラス）」は、寒暖差が気になる季節に合わせて秋服のキャンペーンを実施している。アプリ会員限定で「N+」の全アイテムのポイントを最大7倍にする施策だ。秋服の買い足しを促すとともに、ブラックフライデー前後の販促ともつながる、会員基盤を活かした価格施策といえる。",
+        "why_it_matters": "ポイント還元は実質的な値引きとして機能し、アプリ会員の囲い込みと非家具領域の成長を同時に狙える。アパレルは在庫回転が収益を左右するため、還元施策への販売反応は商品企画や次期の発注を判断する早期指標になる。ニトリの会員基盤がアパレルにも広がるかが注目点だ。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "価格戦略",
+          "アプリ会員"
+        ],
+        "search_terms": [
+          "N+ ポイント7倍 秋服",
+          "Nitori apparel points campaign",
+          "アプリ会員限定 ポイント還元",
+          "Nitori app member discount"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBfMk9ldWNHVW8tLXkyMVlRdWhwOUNQRncydzBzV25yQ0EyZnliSkVwMGZHVmtzRkZtNzZQQVJfWWdyM1FKRERKMHVncEdDLW00dVRDVFJDbTVILUE?oc=5",
+        "source_pub_ts": 1795471783
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、福島県いわき市に「いわき店」11月27日オープン 県内7店舗目",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-01",
+        "summary": "ニトリは福島県いわき市に「いわき店」を11月27日にオープンすると発表した。福島県内では7店舗目となる。家具やインテリア、日用品を地域の生活者に届ける郊外型の店舗で、同県での店舗網をさらに広げる。地域ごとの需要に合わせて出店を積み重ねる、ニトリの地方展開の流れを示す出店ニュースだ。",
+        "why_it_matters": "福島県内での7店舗目は、地方都市の商圏を着実に深耕する出店戦略の表れといえる。SPAとして物流拠点から店舗へ商品を供給する体制が整うほど、一店舗あたりの在庫効率と配送の安定性は高まる。新店が地域のオンライン購入の受け取り拠点としても機能すれば、店舗とECの連携効果も期待できる。",
+        "tags": [
+          "ニトリ",
+          "店舗展開",
+          "福島県"
+        ],
+        "search_terms": [
+          "ニトリ いわき店 出店",
+          "Nitori Iwaki store opening",
+          "福島県 店舗展開 郊外型",
+          "Nitori Fukushima expansion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1XRzhSd0NnYmdyQjY3LVVoVE5KWlBkZkdJR3JoSWpLQm5vUk5CeGVDNXpZekhEc3lSbzhLVzlSX08wb1V2bU9NRENuekQyYkVxbGhmUQ?oc=5",
+        "source_pub_ts": 1795568700
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリHD、マレーシア16店舗目「NITORI チェラスレジャーモール店」を11月26日にオープン",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-02",
+        "summary": "ニトリホールディングスは、マレーシアで16店舗目となる「NITORI チェラスレジャーモール店」を11月26日に開業する。首都圏のチェラスに出店し、現地の生活者に家具や雑貨を提供する。海外での店舗網を一店ずつ積み上げ、東南アジアでの事業基盤を強化する動きであり、海外展開の進展を示す出店ニュースだ。",
+        "why_it_matters": "海外16店舗目という水準は、国内で確立したSPAモデルを現地の住環境に合わせて展開できている証拠といえる。今後の出店速度は、現地での商品調達や物流網の整備に大きく左右される。現地の住宅事情や嗜好に合った商品構成をどう磨くかが、アジア市場での次の成長の鍵となる。",
+        "tags": [
+          "ニトリ",
+          "海外展開",
+          "マレーシア"
+        ],
+        "search_terms": [
+          "ニトリ マレーシア 出店",
+          "Nitori Malaysia store",
+          "東南アジア 海外店舗 拡大",
+          "Nitori Cheras Leisure Mall"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9URTVZelFYeXJnWkdKWVBGVXNERW5mNnNSTEk0Rjk4anN5S0lOaEU3RUhuLVZTbzFMU1FZZENSRDVmTHd3UzFVUWJadXpTQmttcFc0cHNR?oc=5",
+        "source_pub_ts": 1795568400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの新キャラクター「エゾクロテン」、ぬいぐるみは999円から登場 公式Xで名前投票も",
+        "original_title": "",
+        "source": "えんウチ",
+        "source_id": "JP-05",
+        "summary": "ニトリは北海道に生息する「エゾクロテン」をモチーフにした新キャラクターの雑貨を発売した。ぬいぐるみは999円からの価格で展開される。公式Xでは名前を募る投票も実施し、ファンが商品の誕生に参加できる仕掛けを用意した。キャラクターを軸にした商品展開と、SNSを使った参加型プロモーションを組み合わせた取り組みだ。",
+        "why_it_matters": "命名投票をSNSで行うことで、購入前から愛着を育て、二次拡散も同時に生む設計になっている。999円からという価格帯は衝動買いを誘いやすく、ぬいぐるみ売り場の回遊性も高める。キャラクター商品をシリーズ化できれば、ニトリの雑貨ラインの新しい柱になりうる。",
+        "tags": [
+          "ニトリ",
+          "キャラクター",
+          "雑貨"
+        ],
+        "search_terms": [
+          "エゾクロテン ぬいぐるみ 新商品",
+          "Nitori character plush",
+          "キャラクター商品 名前投票 SNS",
+          "Ezo sable character goods"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE13NWxHcVFNbVI1cWRPelNRd214X0FQN1p3VXdCeEYyVFFROXpvekJ3dmMzeUhlVmxuNWJobGY0M2tFcVAxRTQxb0pyZ19uOGx6eldsckhUZldiR21CaU5EdEN30gFiQVVfeXFMTXc1bEdxUU1tUjVxZE96U1F3bXhfQVA3WndVd0J4RjJUUVE5em96Qnd2YzN5SGVWbG41YmhsZjQza0VxUDFFNDFvSnJnX244bHp6V2xySFRmV2JHbUJpTkR0Q3c?oc=5",
+        "source_pub_ts": 1795519800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの3cm厚「極暖ラグ」が好評、「床暖房をつけなくても暖かい」と支持",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-12",
+        "summary": "ニトリの3cm厚の「極暖ラグ」が、ネット上で好評を集めている。「このフワフワ感」「床暖房をつけなくても暖かい」といった声が上がり、ふかふかの厚みと保温性が評価されている。暖房費を抑えたい冬の生活者のニーズに応える商品として、関心が高まっている。",
+        "why_it_matters": "暖房代を増やさずに快適性を得たいという冬の生活課題に、低価格のラグが直接応えている点が支持の理由と考えられる。「床暖房なしで暖かい」という体感の言葉で語られる口コミは、機能訴求を生活者の実感に変える力を持つ。SPAの素材調達と価格設計が噛み合えば、冬の定番ヒットとして育つ可能性がある。",
+        "tags": [
+          "ニトリ",
+          "ラグ",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "極暖ラグ 3cm 好評",
+          "Nitori warm rug",
+          "冬の暖房費 節約 ラグ",
+          "winter floor rug thick"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9aX2NRLTZpODRvamNBMjhJZjBPZXU2T1V5WUNSc3JYMmNwbl9Oa01VQXdPbUFPc0VEOF9VSlhka1g4NmJURFFhVnhEMkc3MzAyekpaZXp3V19SOUdfSUpaMktmQ2pjSm9kMnlQdEFnWVpPeXNwQkt0aC1nd9IBe0FVX3lxTE9aX2NRLTZpODRvamNBMjhJZjBPZXU2T1V5WUNSc3JYMmNwbl9Oa01VQXdPbUFPc0VEOF9VSlhka1g4NmJURFFhVnhEMkc3MzAyekpaZXp3V19SOUdfSUpaMktmQ2pjSm9kMnlQdEFnWVpPeXNwQkt0aC1ndw?oc=5",
+        "source_pub_ts": 1795501860
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「リビングの赤ちゃんの居場所はニトリのキルティング折りたたみマットが一択」の声",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-04",
+        "summary": "X上では、リビングで赤ちゃんが過ごす場所としてニトリのキルティング折りたたみマットを挙げる投稿が131いいねを集めた。投稿者は「一択」と言い切り、子育て中の生活空間づくりに欠かせない存在として紹介している。投稿には写真も添えられ、実際の暮らしの中で使われている様子が伝わる。",
+        "why_it_matters": "子育て世帯にとって、床に敷くだけで安全な居場所を作れるマットは、使わない時にたためる収納性と安全性の両立が支持される理由と考えられる。『一択』という断定的な表現は、代替品を探す手間を省く強い商品力を示す。生活シーンの写真と組み合わせた提案が、購入の後押しになる。",
+        "tags": [
+          "ニトリ",
+          "子育て",
+          "SNS反響",
+          "マット"
+        ],
+        "search_terms": [
+          "キルティング 折りたたみマット 赤ちゃん",
+          "Nitori baby floor mat",
+          "リビング 子育て 居場所 収納",
+          "foldable quilted mat baby"
+        ],
+        "url": "https://x.com/taki_ikuji/status/2125222866530849043",
+        "source_pub_ts": 1795518000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「今日のコーデにニトリの着る毛布でおやすみなさい」、部屋着の提案が共感を集める",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "ファッションを発信する投稿者が、ニトリの着る毛布を取り入れた日の装いを紹介し、174いいねを集めた。「今日のコーデにニトリの着る毛布でおやすみなさい」という一言が、寝る前のリラックスウェアとしての使い方を印象づけている。ホームウェアと外出着の境界が曖昧になる中、部屋着を楽しむ提案として共感を呼んだ。",
+        "why_it_matters": "着る毛布を『寝る前の装い』として見せる投稿は、部屋着をライフスタイルとして提案できる余地を示している。寒い季節の室内での過ごし方と結びつけることで、防寒寝具の枠を超えた新しいカテゴリの広がりが見込める。衣料品のN+などとの連動も、次の企画につながりうる。",
+        "tags": [
+          "ニトリ",
+          "着る毛布",
+          "部屋着",
+          "SNS反響"
+        ],
+        "search_terms": [
+          "着る毛布 部屋着 コーデ",
+          "Nitori wearable blanket",
+          "ルームウェア 冬 リラックス",
+          "wearable blanket loungewear coordinate"
+        ],
+        "url": "https://x.com/kyoko0924xxx/status/2125202600639561801",
+        "source_pub_ts": 1795518000
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリもUberできるの⁉️⁉️⁉️ すごい‼️‼️‼️✨✨ pic.x.com/XoAgl1bUiV",
+        "platform": "x",
+        "author": "@SekaiBuzzDouga",
+        "url": "https://x.com/SekaiBuzzDouga/status/2125158602407280935",
+        "likes": 892,
+        "retweets": 15,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:24",
+        "captured_at": "",
+        "text": "ニトリもUberできるの⁉️⁉️⁉️ すごい‼️‼️‼️✨✨ pic.x.com/XoAgl1bUiV",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "お値段² ニトリ",
+        "platform": "x",
+        "author": "@Jinzou_human",
+        "url": "https://x.com/Jinzou_human/status/2125189704710803920",
+        "likes": 375,
+        "retweets": 34,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:28",
+        "captured_at": "",
+        "text": "お値段² ニトリ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "今日のコーデにニトリの着る毛布で、おやすみなさい。 また明日、撮影できたらって思うので、楽しみにしてくれたら嬉しいです(｡>﹏<｡) pic...",
+        "platform": "x",
+        "author": "@kyoko0924xxx",
+        "url": "https://x.com/kyoko0924xxx/status/2125202600639561801",
+        "likes": 174,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:19",
+        "captured_at": "",
+        "text": "今日のコーデにニトリの着る毛布で、おやすみなさい。 また明日、撮影できたらって思うので、楽しみにしてくれたら嬉しいです(｡>﹏<｡) pic.x.com/QOjy8ZYgcx",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "リビングでの赤ちゃんの居場所はニトリのキルティング折りたたみマット一択！！！ pic.x.com/QgnGDpB5Ae",
+        "platform": "x",
+        "author": "@taki_ikuji",
+        "url": "https://x.com/taki_ikuji/status/2125222866530849043",
+        "likes": 131,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:39",
+        "captured_at": "",
+        "text": "リビングでの赤ちゃんの居場所はニトリのキルティング折りたたみマット一択！！！ pic.x.com/QgnGDpB5Ae",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "あの、今ニトリなんですけど、ニトリのぬいぐるみ売り場にいるんですけど、あの、黄色くて首とまつげの長い方でなく、まさしくキリン（麒麟）のぬいぐ...",
+        "platform": "x",
+        "author": "@suekawa_u",
+        "url": "https://x.com/suekawa_u/status/2125074346557534523",
+        "likes": 92,
+        "retweets": 13,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:49",
+        "captured_at": "",
+        "text": "あの、今ニトリなんですけど、ニトリのぬいぐるみ売り場にいるんですけど、あの、黄色くて首とまつげの長い方でなく、まさしくキリン（麒麟）のぬいぐるみが売っているんですけど、ねえ、どうしよう（？）",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261124",
     "title": "2026年11月24日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリホールディングスに不正アクセスがあり、最大3,762万件の個人情報が漏えいした可能性が報じられ、データ管理とブランド信頼が経営課題として浮上しました。 中間決算は増収営業増益となり、島忠買収から5年を経た改革の成果が検証の焦点になっています。",

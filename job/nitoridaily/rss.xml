@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 24 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 24 Nov 2026 12:12:49 +0900</lastBuildDate>
+    <pubDate>Wed, 25 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 25 Nov 2026 10:18:20 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月25日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261125/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261125/</guid>
+      <pubDate>Wed, 25 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ニトリがマレーシアで16店舗目（首都圏）、福島県で7店舗目（いわき店）を相次いで開業し、国内外で店舗網の拡大を続けている。 エゾクロテンのキャラクター商品や3cm厚の極暖ラグなど、生活者の共感を集める新商品・ヒット商品が生まれている。</description>
+    </item>
     <item>
       <title>2026年11月24日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261124/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261111/</guid>
       <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
       <description>「1枚4役」のまな板など、調理の手間を減らす新商品が「時短になり助かります」といった声で高評価を集めている。 SNSでは、お盆や寝具といった既存アイテムの使い方や、CMなどのブランド記憶に基づく反響が目立つ。</description>
-    </item>
-    <item>
-      <title>2026年11月10日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261110/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261110/</guid>
-      <pubDate>Tue, 10 Nov 2026 08:00:00 +0900</pubDate>
-      <description>個人情報最大3,762万件の流出可能性が国内外で報じられ、EC・会員基盤のセキュリティ管理と情報開示が喫緊の経営課題として浮上した。 フィリピン8店舗目（11月12日開店）とインド2店舗目（ムンバイ）の報道により、東南アジア・南アジアでの店舗網拡大が着実に進んでいることが示された。</description>
     </item>
   </channel>
 </rss>
