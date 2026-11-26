@@ -1,5 +1,159 @@
 [
   {
+    "date": "20261126",
+    "title": "2026年11月26日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "リテールメディアは、トライアルの店内サイネージ大量設置やリテールメディアサミットの議論を通じて、広告が買い物体験の一部として設計される段階に入りつつあります。 需要予測AIのマーケット掲載や、米食材卸による在庫スキャンロボットの試験拡大など、サプライチェーンと倉庫業務の自動化が実装フェーズへ進んでいます。",
+    "count": 6,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "リテールメディアは、トライアルの店内サイネージ大量設置やリテールメディアサミットの議論を通じて、広告が買い物体験の一部として設計される段階に入りつつあります。",
+      "需要予測AIのマーケット掲載や、米食材卸による在庫スキャンロボットの試験拡大など、サプライチェーンと倉庫業務の自動化が実装フェーズへ進んでいます。",
+      "セルフレジの操作負担や顔認証決済の広がりは、店頭の接客と決済の在り方を変えつつあり、生活者の賛否を含めて現実の課題として表面化しています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "トライアル、店内サイネージを大量設置へ 品川駅をベンチマークにしたリテールメディア戦略",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-01",
+        "summary": "トライアルが店内に多数のデジタルサイネージを設置する狙いと、その戦略の背景を伝える記事です。記事では、人の流れが集中する駅構内の広告空間である品川駅をベンチマークにしたとされ、店内を広告メディアとして活用する考え方が示されています。来店客の動線上で情報を届けるリテールメディアの具体的な手法として注目されます。",
+        "why_it_matters": "量販・ディスカウント業態が店内メディアを収益源にする動きは、メーカー出稿と店舗販促を一体化する新たな収益モデルの一例です。駅広告のように人の流れを読んで配置を設計できるかが成否を分けます。小売側はサイネージの台数よりも、来店客の購買行動データとどう接続するかを検討すべきでしょう。広告主にとっては、店内接触の効果を計測できるかが出稿判断の鍵になります。",
+        "tags": [
+          "リテールメディア",
+          "店内サイネージ",
+          "ベンチマーク戦略"
+        ],
+        "search_terms": [
+          "店内デジタルサイネージ",
+          "in-store digital signage",
+          "retail media Japan",
+          "トライアル 店内広告"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBPVjBTVEdJcEgwMUszOERfS1gzS0Q5OU1xakZ3MUg2LVdLazZWSnBmbUJEOUgzSjZHUE82YnNkM0dXYmlhcDlzQ3hzcl9PRGtNTGJrZ01EMElfZ3F0VmZyYWdzZlI4YWQxaXdadTdwbGpVYWVZaGhQM1kxSk1Jd3c?oc=5",
+        "source_pub_ts": 1795639169
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "広告・販促の高度化は買い物体験をどう変えるか｜リテールメディアサミット2026現地レポート",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-02",
+        "summary": "リテールメディアサミット2026の現地レポートで、広告・販促の高度化が買い物体験にどのような変化をもたらすかが取り上げられました。デジタル販促が店頭やオンラインで顧客に合わせて展開される中、広告が購買体験の一部として設計される方向性が論点になっています。業界関係者の議論を通じて、小売と広告主の関係の変化をたどるレポートです。",
+        "why_it_matters": "広告が買い物体験の一部として組み込まれると、売場の価値は棚割りから情報提供の質へ移ります。小売業者はメディア事業者として、データ連携と顧客体験の両立を設計する必要があります。広告主にとっては、単発の販促ではなく購買全体の中での接点設計が評価軸になるでしょう。サミットでの議論は、こうした役割分担の見直しを先取りするものです。",
+        "tags": [
+          "リテールメディア",
+          "販促高度化",
+          "カンファレンス"
+        ],
+        "search_terms": [
+          "リテールメディア 販促",
+          "retail media summit",
+          "in-store advertising",
+          "購買体験 広告 高度化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE1QNnlXR05hYVhLV0lPYjg3NEViT0pHcktleVFZV3haang2eXd4RGtVX0Y3cFhLYUxVNi1wQ2pBdXNEanRWWHFmY1RQUnhpd3VXQVFwV1AwYw?oc=5",
+        "source_pub_ts": 1795636920
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "DATAFLUCT、AI Marketに需要予測AIと営業支援AIエージェントを掲載開始",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-03",
+        "summary": "データ分析企業DATAFLUCTが、AI関連サービスを扱うマーケットプレイス「AI Market」に、需要予測AIと営業支援AIエージェントを新たに掲載開始したことを伝える記事です。小売・流通の現場で需要予測や営業活動の効率化を担うAIを、導入企業が比較・検討できる場が広がることを意味します。AIを自社開発せず調達する動きの一端を示しています。",
+        "why_it_matters": "需要予測AIは発注精度と在庫の最適化に直結するため、流通DXの中核テーマです。マーケット型での掲載は、中堅・中小の小売や卸にとって導入の障壁を下げる可能性があります。一方で、予測精度をどの指標で評価するかを事前に決めておくことが、AI導入を成果につなげる前提になります。",
+        "tags": [
+          "需要予測AI",
+          "AIマーケット",
+          "営業支援AI"
+        ],
+        "search_terms": [
+          "需要予測AI",
+          "demand forecasting AI",
+          "AI marketplace Japan",
+          "営業支援 AIエージェント"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9mNFNVb291SVhrWjZXUkZJUEpBdFJGVkthY0gweWFfNUxkNG13ZU1EX19Fd2xxN2F1a2k4b2pwWVJTSkZuQjJVNDE0Q1ZIcElTaTc5ZkNDaDFtVjl0bWdBLVgtZDZmVk0?oc=5",
+        "source_pub_ts": 1795592630
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "高齢女性が店員にセルフレジを代わりにやらせる場面にSNSで賛否",
+        "original_title": "",
+        "source": "Togetter",
+        "source_id": "JP-04",
+        "summary": "SNSで、高齢の女性客が店員に「私できないの」と言いながらセルフレジの操作を任せていた場面を目撃したという投稿が話題になりました。申し訳ないと言いつつ頼む態度に恐怖を感じたという声がある一方、高齢者の事情に理解を示す反論も寄せられています。セルフレジの普及に伴う、店員と客の間の新たな摩擦を映す事例です。",
+        "why_it_matters": "セルフレジは省人化の切り札である一方、操作に不慣れな客が増えると、スタッフが補助役を担わざるを得なくなります。店舗としては、操作案内やサポート体制の設計が省人化効果を左右します。利用者の感情面にも配慮した有人対応の設計が、DXの満足度を支える要素になるでしょう。",
+        "tags": [
+          "セルフレジ",
+          "SNS反響",
+          "高齢者対応"
+        ],
+        "search_terms": [
+          "セルフレジ 高齢者",
+          "self-checkout elderly customers",
+          "セルフレジ 店員 負担",
+          "self-checkout backlash Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5WVHhNbjNaaDc4RTkwWDBVV2Vncm9jOVJtZV9BN1BSTjE4V0lBQnVTR2dDVzI0cWF0czJpaXMwRDNXS1hqZFE?oc=5",
+        "source_pub_ts": 1795580140
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "日立×東武鉄道、福岡・天神のビルで「SAKULaLa」活用の顔認証決済を提供",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-05",
+        "summary": "日立製作所と東武鉄道が、福岡・天神のワンビルで顔認証決済を提供することを伝える記事です。顔認証の仕組みとして「SAKULaLa」を活用し、ビル内の店舗で顔を使った決済ができる環境を整える取り組みとされています。都市部の商業施設で非接触決済の利便性を高める試みとして、ビル単位での導入事例に当たります。",
+        "why_it_matters": "顔認証決済は、店舗単位ではなくビルや沿線単位で展開されると利用者の接点が広がり、利用が定着しやすくなります。鉄道会社が都市開発と結びつけて決済基盤を持つ動きは、流通と交通の連携の新しい形です。店舗側はテナントとして参加するメリットと、生体情報の扱いに関する利用者の信頼確保を同時に検討する必要があります。",
+        "tags": [
+          "顔認証決済",
+          "非接触決済",
+          "都市商業施設"
+        ],
+        "search_terms": [
+          "顔認証決済",
+          "facial recognition payment",
+          "biometric payment Japan",
+          "SAKULaLa 日立"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE0yQkVQTTVhOVMzLS0xQlpPUEIxYTItRjEtV2VCbmtObEdUdFpjMGFfRjlSUVZxVG5ybWR4SXpSUFowNDdXajdmc0c2Z3VLRlhJ?oc=5",
+        "source_pub_ts": 1795573560
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "米食材卸US Foods、在庫スキャンロボットを新たに6拠点の倉庫で試験導入へ",
+        "original_title": "US Foods to test inventory-scanning robots at 6 more warehouses",
+        "source": "Grocery Dive",
+        "source_id": "GL-01",
+        "summary": "米食材卸大手US Foodsが、在庫をスキャンするロボットを新たに6つの倉庫で試験導入すると伝えられました。対象拠点を広げることで、倉庫内の在庫確認業務を自動化できるかを検証する段階に入ります。食品流通の物流現場における人手不足や在庫精度の課題に対応する動きとして注目されます。",
+        "why_it_matters": "在庫スキャンロボットは、棚卸しや在庫照合の負担を減らし、在庫精度を高める効果が期待されます。食品卸のように品目数と回転が大きい業態では、データ精度が発注や欠品対策に直結します。日本の卸・物流事業者にとっても、試験拠点での検証結果をどう業務フローに組み込むかが参考になるでしょう。",
+        "tags": [
+          "在庫スキャンロボット",
+          "倉庫自動化",
+          "食品卸"
+        ],
+        "search_terms": [
+          "在庫スキャンロボット",
+          "inventory scanning robot",
+          "warehouse robotics",
+          "US Foods 倉庫自動化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxONVpTcjhndnlIbE9ERmNKZjNlcW1SeENYd2pIdS00Yy1pV0lkSDhUZGpacUFfdEpDYVNOU3RrbU9ZN2xZYWRVRnBsdUJCRDJYQjdkb2YyeGpSVDdpZ3otVU4xMjVXZ0l3eHk2azdfS0VLTHhsNG53bGhBcVhWOHVtX1U1UE9jeVRq?oc=5",
+        "source_pub_ts": 1795621859
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261125",
     "title": "2026年11月25日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "米国のリテールメディア市場が、AI購買代行の台頭によって構造転換の局面を迎えている ファミリーマートが飲料補充ロボットを2027年1月から本格導入し、店舗バックヤードの自動化が接客以外の業務へ広がっている",
