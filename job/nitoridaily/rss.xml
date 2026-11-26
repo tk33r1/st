@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 25 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 25 Nov 2026 10:18:20 +0900</lastBuildDate>
+    <pubDate>Thu, 26 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 26 Nov 2026 09:53:11 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月26日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261126/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261126/</guid>
+      <pubDate>Thu, 26 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ニトリは自社ECの大改革としてマーケットプレイス拡大に動き、オンライン販売の取扱い商品と顧客接点を広げる戦略が注目されています。 使用済み家具の再資源化拠点を本庄に開設し、年間1万トン以上の再資源化を目指す計画が示され、物流網を活かした循環型の仕組みが強化されています。</description>
+    </item>
     <item>
       <title>2026年11月25日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261125/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261112/</guid>
       <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
       <description>ニトリ環八用賀店でリニアモータ式ロボット倉庫「CUEBUS」の実証実験が始まる見通しとなり、店舗併設型の物流自動化とDXの進化が注目された。 「よこ伸縮式ワードローブ」「ベッドにもなるソファ」など、部屋の寸法や限られた空間に合わせた多機能な新商品提案が生活者の高い関心を集めた。</description>
-    </item>
-    <item>
-      <title>2026年11月11日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20261111/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261111/</guid>
-      <pubDate>Wed, 11 Nov 2026 08:00:00 +0900</pubDate>
-      <description>「1枚4役」のまな板など、調理の手間を減らす新商品が「時短になり助かります」といった声で高評価を集めている。 SNSでは、お盆や寝具といった既存アイテムの使い方や、CMなどのブランド記憶に基づく反響が目立つ。</description>
     </item>
   </channel>
 </rss>

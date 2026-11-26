@@ -1,5 +1,367 @@
 [
   {
+    "date": "20261126",
+    "title": "2026年11月26日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは自社ECの大改革としてマーケットプレイス拡大に動き、オンライン販売の取扱い商品と顧客接点を広げる戦略が注目されています。 使用済み家具の再資源化拠点を本庄に開設し、年間1万トン以上の再資源化を目指す計画が示され、物流網を活かした循環型の仕組みが強化されています。",
+    "count": 8,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリは自社ECの大改革としてマーケットプレイス拡大に動き、オンライン販売の取扱い商品と顧客接点を広げる戦略が注目されています。",
+      "使用済み家具の再資源化拠点を本庄に開設し、年間1万トン以上の再資源化を目指す計画が示され、物流網を活かした循環型の仕組みが強化されています。",
+      "59周年の創業祭では約1,400点を感謝価格で打ち出し、TikTokでも創業祭の実用品紹介や新商品の使い心地が反響を集めており、価格訴求と生活者の共感が購買を後押ししています。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリが自社EC大改革へ、マーケットプレイス拡大の勝算を検証",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "ダイヤモンド・チェーンストアオンラインは、ニトリが自社ECを大きく改革し、マーケットプレイスの拡大を進める動きを取り上げた。マーケットプレイスとは、外部の販売者の商品を同じサイト上で扱える仕組みを指す。自社サイトを軸に取扱い商品の幅と集客を広げる狙いがうかがえ、記事ではその勝算が検証されている。オンライン戦略の方向性を把握するうえで注目度の高い報道である。",
+        "why_it_matters": "SPAとして自社在庫と物流を強みにしてきたニトリにとって、マーケットプレイス拡大は取扱い品目を増やしつつ、ECの回遊と購買頻度を高める手段になり得る。一方で、外部出品者の管理、在庫や配送品質の維持、ブランド体験の一貫性をどう確保するかが成否を分ける。自社ECの会員基盤やアプリとの連携と組み合わせられれば、単なる販路拡大を超えた顧客接点の強化につながる。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "マーケットプレイス",
+          "DX"
+        ],
+        "search_terms": [
+          "ニトリ 自社EC 改革",
+          "マーケットプレイス 拡大",
+          "Nitori e-commerce marketplace",
+          "Japanese retail online strategy"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1tRGM3VWpBWVJsRllkaFIxQVVhSEdvbUpVTTJjSkw3Vm44bWZlSlp6eUJZcklEdUdCak93REtLamFjeHVpQkpRdWQ0M2poUF9MNXl5etIBWkFVX3lxTE5UTXgzbElxa2hMRENobkVwb1Y5eXpCaVM5bi03cE5WVTJzM21JUTQwNUQtSXNxdVRGNmtsT0QyZXdDUnB0NG5qdThLeURVY0tNNjlFQ3ZWalZxUQ?oc=5",
+        "source_pub_ts": 1795639140
+      },
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリ、使用済み家具の再資源化拠点を本庄に開設し年間1万トン超を目指す",
+        "original_title": "",
+        "source": "埼玉新聞（Yahoo!ニュース）",
+        "source_id": "JP-05",
+        "summary": "埼玉新聞の報道によると、ニトリは使用済み家具を再資源化する中核拠点を埼玉県本庄市に開設した。国内最大級の施設とされ、関東圏の店舗や物流拠点から回収した家具を運び込む。他社製品も回収対象とし、年間1万トン以上の再資源化を目指す。家具の循環利用を仕組みとして整え、廃棄の削減と資源の活用を進める取り組みとして注目される。",
+        "why_it_matters": "店舗と物流拠点の回収網を活かし、廃棄家具を資源として循環させる仕組みは、SPAの物流インフラを環境対応へ広げる好例である。他社製品も受け入れる姿勢は、回収事業を新たな収益源やブランド価値の柱に育てる可能性を示す。今後は回収量の確保、再資源化の歩留まり、物流コストとのバランスが焦点となり、サステナビリティを競争力に変えられるかが問われる。",
+        "tags": [
+          "ニトリ",
+          "再資源化",
+          "物流",
+          "サステナビリティ"
+        ],
+        "search_terms": [
+          "使用済み家具 再資源化",
+          "家具リサイクル 拠点",
+          "furniture recycling Japan",
+          "Nitori recycling logistics"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE4tMkMzYkhBU3JISndiZnB2ZFhEUEJWZFk0SmxpZmZVZ3BZaHVtQk9qTUVBM1ZrbzRTZ3E2ZnVMYkhGRlBySFl4VXpqcTgxQUFUQ3R3VWdsSGJDTHNfNjhjRDFEb3dnemt3NFFVWjlkWWhHd3V6MUhEWjN2cUcwbFE?oc=5",
+        "source_pub_ts": 1795589069
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ59周年創業祭、11月27日から約1,400点を感謝価格で販売",
+        "original_title": "",
+        "source": "マイナビ子育て",
+        "source_id": "JP-10",
+        "summary": "ニトリは創業59周年を記念した創業祭を11月27日から開催する。ベッドや冷蔵庫など約1,400点を感謝価格で販売するという。家具や家電を中心に幅広いカテゴリーが対象となる大型の価格施策であり、来店と購買を促す狙いがある。年末商戦に向けた販促の一環と位置づけられ、マイナビ子育てが伝えた。",
+        "why_it_matters": "約1,400点という規模は、ニトリの品揃えの広さと、商品開発や調達を内製化するSPAの強みを背景にしている。大型家電や寝具など単価の高い商品を感謝価格で打ち出すことで、客数と客単価の双方を取りに行く構えがうかがえる。為替や原材料価格の変動が続くなかで、価格訴求とコスト管理をどう両立させるかが今後の注目点となる。",
+        "tags": [
+          "ニトリ",
+          "創業祭",
+          "価格戦略",
+          "年末商戦"
+        ],
+        "search_terms": [
+          "ニトリ 創業祭 感謝価格",
+          "59周年 セール",
+          "Nitori anniversary sale",
+          "year-end retail promotion Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE80SGJXUkNmLTVyNV90MTNHMFMxNm45bUU4WjlmMWs2N21JaHZ1cGtJRkNFWWVDWXVOSzZfZnlkQ2oyRVZWYTNjMl9Tc05OQXl3SDVj?oc=5",
+        "source_pub_ts": 1795575900
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの手のひらサイズの新ドライヤー、海外でも使えツヤ出しモードを搭載",
+        "original_title": "",
+        "source": "マイナビ子育て",
+        "source_id": "JP-04",
+        "summary": "ニトリの新ドライヤーが登場した。手のひらに収まるコンパクトなサイズで、海外でも使える仕様を備え、ツヤ出しモードも搭載されたと伝えられている。マイナビ子育ての記事で紹介された。旅行や持ち運びのニーズに応える小型家電として、同社の家電ラインの拡充を示す動きである。コンパクトさと機能性を両立した点が特徴とされる。",
+        "why_it_matters": "美容家電は単価が高めの領域であり、ニトリの低価格で生活に密着した強みと組み合わせると、普段使いの「試しやすい家電」として新規顧客の獲得に寄与し得る。海外対応や手のひらサイズは、旅行や単身、子育て層など多様なライフスタイルに響く設計思想を示す。一方で、家電の品質と安全性への信頼をどう積み上げるかが、継続的な支持のカギとなる。",
+        "tags": [
+          "ニトリ",
+          "ドライヤー",
+          "新商品",
+          "家電"
+        ],
+        "search_terms": [
+          "ニトリ 新ドライヤー 小型",
+          "コンパクト ドライヤー 海外対応",
+          "Nitori compact hair dryer",
+          "travel beauty appliance Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE44MXhIVGgwaERFeTFfdUg5N2xkTjEzY1NhR2hqQ0ZHd2hpdE15V1NLTHQxZVlONlVfYXkwT0JmSS1UeE52cHRyRTFSWGVidk5xeVVz?oc=5",
+        "source_pub_ts": 1795595460
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、4K対応ミニLEDテレビを発表 55型は99,900円",
+        "original_title": "",
+        "source": "AV Watch",
+        "source_id": "JP-08",
+        "summary": "AV Watchによると、ニトリは新パネルによって輝度を高めた4K対応のミニLEDテレビを発表した。55型で99,900円という価格設定である。大画面かつ高画質の製品を手の届きやすい価格で提供する家電として、同社の存在感を強める動きだ。リビングや寝室など幅広い住空間での利用を想定した製品群の一つとみられる。",
+        "why_it_matters": "ミニLEDは従来の液晶より明暗表現に優れ、高価格帯の技術とされてきた。これを10万円前後で展開することは、ニトリの価格戦略を家電の高付加価値領域へ広げる試みといえる。家具やインテリアと組み合わせた提案、たとえばテレビボードや壁面収納とのセット提案によるクロスセルも期待でき、住空間全体の購買単価を引き上げる契機になり得る。",
+        "tags": [
+          "ニトリ",
+          "テレビ",
+          "ミニLED",
+          "価格戦略"
+        ],
+        "search_terms": [
+          "ニトリ ミニLEDテレビ 55型",
+          "4K テレビ 低価格",
+          "Nitori mini LED TV",
+          "affordable 4K television Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1mMWdCcDhFczJyZm1VcDFpMHVqVFk0NXdRem11aE5vSmRkSlpTWFNYSUQyWWJ5Z1BoYXQxU1EyLU9PeGtSVWVuSXd6XzBPQzNxSl9fbm42MG54YUNBdWtyR0pzOA?oc=5",
+        "source_pub_ts": 1795588588
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリの布張り1人掛けローソファ、こたつに収まる低め設計で15,000円",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-02",
+        "summary": "LIMOの記事で、ニトリの布張り1人掛けローソファが紹介された。こたつにすっぽり収まりやすい低めの座面高17cmの設計で、肩までやさしく支える構造が特徴だ。耐久性に配慮したS字バネを採用しているという。価格は15,000円で、温かみのあるベージュが部屋になじむとされる。冬の室内での過ごし方に合わせた快適家具として注目される。",
+        "why_it_matters": "こたつ連動の低座ソファという提案は、座椅子とソファの中間にある「冬の居場所」需要に応えるもので、季節性の高い空間提案として訴求しやすい。1万円台半ばの価格は、ソファの購入ハードルを下げる設定といえる。S字バネなど耐久性の機能を明確に伝えることで、家具を買い替えずに過ごし方を変えられるという体験価値を届けられる。",
+        "tags": [
+          "ニトリ",
+          "ソファ",
+          "冬物",
+          "家具"
+        ],
+        "search_terms": [
+          "ニトリ 1人掛け ローソファ",
+          "こたつ 低いソファ",
+          "Nitori low sofa kotatsu",
+          "winter living room furniture"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBaYUpJeW5MUk1Nb0lVN2gtLUlELWV5N2x2MXhkZWpUWlhzamZPY0NuRFE4Q3dMUjRiM1dzM0VMbThsRDdZa0RsZnFweFcxNXRUWnc?oc=5",
+        "source_pub_ts": 1795614300
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリの新ソフトグリップブラシ、浴室掃除で「過去一使いやすい」と反響",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokに前日投稿された浴室床の掃除動画が約2.2万回再生され、反響を集めた。投稿者はニトリの新商品であるソフトグリップブラシを使い、「過去一使いやすかった」と紹介している。生活音ASMRの要素を含む掃除動画として届けられ、実際の使用感が手元の映像から伝わる構成だ。生活者の日常的な実感が拡散の起点になった事例といえる。",
+        "why_it_matters": "掃除道具は機能よりも「握りやすさ」「疲れにくさ」が選ばれる理由になりやすい。動画では使用シーンと手元の感触が可視化され、言語化しにくい使い心地を共感として伝えられることが示された。新商品の訴求では、スペック説明に加えて日常動作での使いやすさを映像で示すことが、拡散と購買につながる鍵になる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "掃除",
+          "新商品",
+          "リアル反響"
+        ],
+        "search_terms": [
+          "ニトリ ソフトグリップブラシ 掃除",
+          "浴室掃除 動画 反響",
+          "Nitori cleaning brush TikTok",
+          "ASMR cleaning video Japan"
+        ],
+        "url": "https://www.tiktok.com/@honu_life710/video/7711791217645833490",
+        "source_pub_ts": 1795557600.0
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリ創業祭のおすすめ10選動画が反響、水回りや収納の実用品に共感",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-08",
+        "summary": "TikTokでは、ニトリ創業祭のおすすめ10選（6〜10位）を紹介する動画が約1.2万回再生された。フレッシュキーパー、珪藻土入りのやわらかバスマット、折りたたみできるランドリーバスケット、マグネット収納付きバスブーツ、伸縮レンジ上ラックなどが挙げられている。キッチンや水回りの生活用品を中心に、暮らしを整える実用品が並ぶ構成である。",
+        "why_it_matters": "創業祭の感謝価格と実用的な小物の組み合わせは、ユーザーが自ら価値を選別して紹介する「おすすめ型」コンテンツと相性がよい。収納や水回り、キッチンという生活課題に直結する商品は、比較検討の材料として共有されやすい。店舗側はセール告知だけでなく、生活シーン別の提案と結びつけることで購買動機を高められる。",
+        "tags": [
+          "ニトリ",
+          "創業祭",
+          "購入品紹介",
+          "収納"
+        ],
+        "search_terms": [
+          "ニトリ 創業祭 おすすめ 購入品",
+          "水回り 収納 便利グッズ",
+          "Nitori购入品 storage haul",
+          "Japanese home organization TikTok"
+        ],
+        "url": "https://www.tiktok.com/@yujung.bae/video/7711287959202417942",
+        "source_pub_ts": 1795424150.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリの中の人に見て欲しい。爪研ぎやすいみたいです😂次もニトリです pic.x.com/iKekM29IDp",
+        "platform": "x",
+        "author": "@kuroneko_kuma5",
+        "url": "https://x.com/kuroneko_kuma5/status/2125557747131523091",
+        "likes": 3144,
+        "retweets": 259,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:50",
+        "captured_at": "",
+        "text": "ニトリの中の人に見て欲しい。爪研ぎやすいみたいです😂次もニトリです pic.x.com/iKekM29IDp",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリごめん、ちょっと浮気させて…！！ このチェック柄のお布団、見れば見るほど可愛すぎるーーー🤎 pic.x.com/zQFqescWv0 ...",
+        "platform": "x",
+        "author": "@mimi3605",
+        "url": "https://x.com/mimi3605/status/2125514960247890144",
+        "likes": 771,
+        "retweets": 59,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:00",
+        "captured_at": "",
+        "text": "ニトリごめん、ちょっと浮気させて…！！ このチェック柄のお布団、見れば見るほど可愛すぎるーーー🤎 pic.x.com/zQFqescWv0 x.com/mimi3605/statu…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ガチでオススメするのは ニトリで売ってる金属の靴べら 重さ的に軽いし取り回しはしやすい 何年か前から玄関に置いてます 購入する時、変なの来た...",
+        "platform": "x",
+        "author": "@Tarpan127",
+        "url": "https://x.com/Tarpan127/status/2125567664991183152",
+        "likes": 504,
+        "retweets": 78,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:29",
+        "captured_at": "",
+        "text": "ガチでオススメするのは ニトリで売ってる金属の靴べら 重さ的に軽いし取り回しはしやすい 何年か前から玄関に置いてます 購入する時、変なの来たら、ぶん殴る想定で買いました 中指から小指を紐に引っ掛けたらすっぽ抜けも無くなります 次は鉈 これも軽いし短いので扱い易いんじゃないかしら pic.x.com/jnDRV6jsfW x.com/moukon_genius/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "結局今年はニトリのぽこぽこ掛け布団カバーを買ってみた(ᐡ- ̫ - ꜀ ᐡ)🤍🛌また届いたら載せる🎶 x.com/mi__lk_y/statu…",
+        "platform": "x",
+        "author": "@mi__lk_y",
+        "url": "https://x.com/mi__lk_y/status/2125443796959965541",
+        "likes": 321,
+        "retweets": 8,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:17",
+        "captured_at": "",
+        "text": "結局今年はニトリのぽこぽこ掛け布団カバーを買ってみた(ᐡ- ̫ - ꜀ ᐡ)🤍🛌また届いたら載せる🎶 x.com/mi__lk_y/statu…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "同棲は早くても2年後なのに、恋人に「ニトリ行きたい！」と頼み、家具やインテリアを見て「カーテンはこの色がいいなー」とか「お箸は私こっちで、〇...",
+        "platform": "x",
+        "author": "@yubune76",
+        "url": "https://x.com/yubune76/status/2125575442384159196",
+        "likes": 266,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:00",
+        "captured_at": "",
+        "text": "同棲は早くても2年後なのに、恋人に「ニトリ行きたい！」と頼み、家具やインテリアを見て「カーテンはこの色がいいなー」とか「お箸は私こっちで、〇〇は黄色好きだからこれ？」とか「冬はこれ買ってお鍋したい！」とはしゃぎ、彼は「ずっと楽しそうで可愛い」と付き合ってくれて早く同棲したくなった",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "浴室床の掃除🧼🫧 ニトリ新商品のソフトグリップブラシを使ってみましたが、過去一使いやすかったです🫧 ぜひ、つかってみてください🫧 #生活音a...",
+        "platform": "tiktok",
+        "author": "@ホヌ",
+        "url": "https://www.tiktok.com/@honu_life710/video/7711791217645833490",
+        "likes": 326,
+        "retweets": 9,
+        "views": 22100,
+        "comments": 13,
+        "posted_on": "2026-11-25 07:00",
+        "captured_at": "2026-11-26T00:17:56.109498+09:00",
+        "text": "浴室床の掃除🧼🫧 ニトリ新商品のソフトグリップブラシを使ってみましたが、過去一使いやすかったです🫧 ぜひ、つかってみてください🫧 #生活音asmr #cleantok #掃除 #ニトリ #fyp",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒02",
+        "platform": "tiktok",
+        "author": "@user4866818017780",
+        "url": "https://www.tiktok.com/@user4866818017780/video/7711691994829016340",
+        "likes": 59,
+        "retweets": 2,
+        "views": 19400,
+        "comments": 0,
+        "posted_on": "2026-11-24 20:03",
+        "captured_at": "2026-11-26T00:17:56.109498+09:00",
+        "text": "【ダブル紹介】リビングを模様替えしたので紹介からのニトリ購入品紹介🛒02",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-08",
+        "title": "ニトリ創業祭おすすめしたいもの10選 (6~10) フレッシュキーパー 🥬 珪藻土入りやわらかバスマット 🌿 折りたたみできるランドリーバス...",
+        "platform": "tiktok",
+        "author": "@Yu-jung Kim",
+        "url": "https://www.tiktok.com/@yujung.bae/video/7711287959202417942",
+        "likes": 173,
+        "retweets": 7,
+        "views": 12100,
+        "comments": 2,
+        "posted_on": "2026-11-23 17:55",
+        "captured_at": "2026-11-26T00:17:56.109498+09:00",
+        "text": "ニトリ創業祭おすすめしたいもの10選 (6~10) フレッシュキーパー 🥬 珪藻土入りやわらかバスマット 🌿 折りたたみできるランドリーバスケット 🧺 マグネット収納付きバスブーツ 🛁 伸縮レンジ上ラック 🍳 #ニトリ購入品紹介 #ニトリおすすめキ #ニトリ",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261125",
     "title": "2026年11月25日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリがマレーシアで16店舗目（首都圏）、福島県で7店舗目（いわき店）を相次いで開業し、国内外で店舗網の拡大を続けている。 エゾクロテンのキャラクター商品や3cm厚の極暖ラグなど、生活者の共感を集める新商品・ヒット商品が生まれている。",
