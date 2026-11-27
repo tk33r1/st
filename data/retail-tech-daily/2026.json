@@ -1,5 +1,136 @@
 [
   {
+    "date": "20261127",
+    "title": "2026年11月27日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している",
+    "count": 5,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている",
+      "アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している",
+      "韓国の新世界I&Cが、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受けた。また神奈川の生協は、最先端より1つ下のDXシステムを選び、組織の強さにつなげている"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "ローソン「Lawson Go」県立広島病院店が中国・四国に初出店、ウォークスルー決済を導入",
+        "original_title": "",
+        "source": "LAWSON",
+        "source_id": "JP-04",
+        "summary": "ローソンは、商品を手に取って店の外に出るだけで会計が完了する「ウォークスルー決済」を導入した店舗「Lawson Go 県立広島病院店」を、中国・四国地区に初めて出店すると発表した。店舗は県立広島病院内に設けられ、12月1日のオープンが予定されている。来店客は専用の操作をせずに買い物を完結できるのが特徴で、これまでの導入地域とは異なる医療施設の中で無人決済体験を提供する形となる。",
+        "why_it_matters": "病院内という日常の動線の中に無人決済店舗を置くことで、待ち時間の多い施設でも手軽に買い物できる環境を作れる点が示唆的だ。地域の公共性が高い施設では、来店時間帯や購買傾向のデータも蓄積しやすく、品揃えや補充計画の最適化に活かせる可能性がある。一方で、利用者層や混雑時間帯に合わせた運営設計が、店舗の収益性と顧客満足を左右するだろう。",
+        "tags": [
+          "無人店舗・決済",
+          "ウォークスルー決済",
+          "ローソン"
+        ],
+        "search_terms": [
+          "ウォークスルー決済",
+          "walk-through checkout",
+          "無人店舗 決済 病院",
+          "Lawson Go unmanned store"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90N0NDcENnQWFpdmhqeU1NTGhFZWJyeU9yMklEZlMzMU02X3h1T2w5b3Y3SUwxVjhUZ3Y1YWpld2lrYUZheHVhaVlqdDcyOXFmZWhPVFNhbXlZTzNNSkswdzIxVDdkWnkxd1V0SlJRdw?oc=5",
+        "source_pub_ts": 1795673775
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "新世界I&C、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受賞",
+        "original_title": "",
+        "source": "매일경제",
+        "source_id": "JP-07",
+        "summary": "韓国の流通大手、新世界アイアンドシー(I&C)は、AI基盤の流通ソリューションとソフトウェア開発プラットフォームを商用化した成果により、政府から褒賞を受けた。受賞の対象には、バーコードを読み取らずに商品を認識するセルフレジが含まれており、生成AIを活用した開発基盤も評価された。科学技術情報通信部長官賞という国家レベルの表彰であり、AI技術の実店舗への実装が公的に認められた形だ。",
+        "why_it_matters": "バーコードを使わない商品認識は、スキャン作業の手間を省き、会計の速さと精度を同時に高める方向性を示す。国内のセルフレジでは読み取りミスや操作の煩雑さが課題となる場面も多く、画像認識の実用化は省人化と顧客体験の両立に直結する。国内小売にとっても、導入コストと運用の安定性をどう評価するかが今後の判断材料になるだろう。",
+        "tags": [
+          "セルフレジ",
+          "AI画像認識",
+          "新世界I&C"
+        ],
+        "search_terms": [
+          "AIセルフレジ",
+          "AI self-checkout",
+          "バーコードレス 商品認識",
+          "image recognition checkout"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE1qSlozb2dfRzZ1M1NoeVIycWVKT3BQRktfd0JCU1A1bE9oYWlLc3k1eFdzWUo3RVpkMXZQelUwX1YxRk9NRFM0ei1TUQ?oc=5",
+        "source_pub_ts": 1795666776
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アサヒは購買データ、サッポロは売り場連動、フマキラーはAI　リテールメディアの次の一手",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-10",
+        "summary": "Yahoo!ニュースの記事では、リテールメディアの次の展開として3社の取り組みが紹介されている。アサヒは購買データの活用、サッポロは売り場と連動した施策、フマキラーはAIを活用したアプローチを進めている。メーカー各社が小売店の売り場や購買情報とどう結びつけて広告価値を高めるかに焦点を当てた内容で、リテールメディアの手法が多様化していることがうかがえる。",
+        "why_it_matters": "メーカーごとに購買データ、売り場連動、AIと異なる強みを持ち寄る動きは、リテールメディアが単一の広告枠から施策パッケージへ進化していることを示す。小売側は自社の購買データや店頭接点をどこまで開放するかを判断する必要があり、広告主側は効果測定の共通指標を整えることが求められる。両者の連携設計が今後の収益化の鍵になるだろう。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "売り場連動"
+        ],
+        "search_terms": [
+          "リテールメディア 購買データ",
+          "retail media purchase data",
+          "売り場連動 広告",
+          "in-store retail media AI"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE04UktLamg2QS1wdHJRcmNCRm1aLXdoWXZ5SmhLdlp0MUhaODROejlORVdIUjR3YjRuQmlral9VODZLSDJkOHlGRTM1b3dwalAzTnV0ZFBQWGpURlE5UjU1TzRwUmZKNXZHRjdFMXNZVnhGNlJKcG42d3M1UjhsM3c?oc=5",
+        "source_pub_ts": 1795638630
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ツルハグループが描くリテールメディアとAI活用の未来、5,600超店舗の顧客接点をどう生かすか",
+        "original_title": "",
+        "source": "MarkeZine",
+        "source_id": "JP-08",
+        "summary": "MarkeZineは、ツルハグループがリテールメディアとAI活用によって描く将来像を取り上げた。同グループは5,600店舗を超える店舗網を持ち、そこでの顧客接点をどのように広告やマーケティングに生かすかが焦点となっている。全3回の連載の1回目として、店舗網の規模を背景にした取り組みの方向性が語られている。ドラッグストア業態における顧客接点の活用が主要な論点だ。",
+        "why_it_matters": "5,600店舗超という規模は、全国の購買接点を一括で扱えるリテールメディアの基盤になり得る。AIを組み合わせれば、来店者ごとの関心に応じた販促や商品提案をスケールさせやすい。一方で、広告事業としての収益モデルと、顧客の利便性やプライバシー配慮をどう両立させるかが実装時の大きな論点となる。",
+        "tags": [
+          "リテールメディア",
+          "AI活用",
+          "ドラッグストア"
+        ],
+        "search_terms": [
+          "リテールメディア AI",
+          "retail media AI drugstore",
+          "店舗網 顧客接点",
+          "Tsuruha retail media"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB2SFBsVHEyelFRS251ekFPSllKZmtTcm5ib3VXdWZTSUxxZkdYbGRROUdYV2hjeFhfS3FWM05Zci1MZHhuejJRTUpQaEpTSFBwR0ZJ?oc=5",
+        "source_pub_ts": 1795656600
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "「強さ」に直結するDX、神奈川の生協が最先端の1つ下のシステムを採用した理由",
+        "original_title": "",
+        "source": "日経ビジネス電子版",
+        "source_id": "JP-03",
+        "summary": "日経ビジネス電子版は、神奈川の生協がDXを進めるにあたり、最先端のシステムではなく、その1つ下のシステムを採用した経緯を紹介した。記事では、DXが組織の「強さ」に直結するという視点から、導入する技術の選び方が論点になっている。最新技術を追うことよりも、現場の運用力や組織の受け入れやすさに合わせた選択が成果につながるかを考察している。",
+        "why_it_matters": "最先端を選ぶことが必ずしも最適ではないという判断は、流通企業のDX投資で見落とされがちな視点だ。現場が使いこなせる水準のシステムを選ぶことで、定着率と改善サイクルが高まり、結果的に事業の強さにつながる。自社の人材や業務の成熟度に合わせた段階的な導入計画を立てる際の参考になるだろう。",
+        "tags": [
+          "流通DX",
+          "システム選定",
+          "生協"
+        ],
+        "search_terms": [
+          "流通DX 導入",
+          "retail DX system selection",
+          "生協 DX 事例",
+          "digital transformation cooperative"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5XLS1UYmxYeDBOMXBKa1h2WUdEWDg1UG0zbzFrZzVFaVAyTTR0eWhnOGJ0VVRGOEo1OFZYeC02b0hKZVVNT2JCbVdQWm9XLWV2Y21ScmJIYkdCVUR3S19LN1dKZkJYSHhEVEx1dUdFZ3BsOWMt?oc=5",
+        "source_pub_ts": 1795680000
+      }
+    ],
+    "sns_buzz": []
+  },
+  {
     "date": "20261126",
     "title": "2026年11月26日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "リテールメディアは、トライアルの店内サイネージ大量設置やリテールメディアサミットの議論を通じて、広告が買い物体験の一部として設計される段階に入りつつあります。 需要予測AIのマーケット掲載や、米食材卸による在庫スキャンロボットの試験拡大など、サプライチェーンと倉庫業務の自動化が実装フェーズへ進んでいます。",

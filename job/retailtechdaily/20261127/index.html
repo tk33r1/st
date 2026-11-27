@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年11月27日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261127/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年11月27日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261127/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261127.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年11月27日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261127.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261127/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年11月27日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している",
+      "url": "https://tk.st/job/retailtechdaily/20261127/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261127.webp",
+      "datePublished": "2026-11-27T08:00:00+09:00",
+      "dateModified": "2026-11-27T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "店舗DX・次世代決済",
+        "リテールメディア・広告",
+        "流通DX一般"
+      ],
+      "keywords": [
+        "AI活用",
+        "AI画像認識",
+        "ウォークスルー決済",
+        "システム選定",
+        "セルフレジ",
+        "ドラッグストア",
+        "リテールメディア",
+        "リテールメディア・広告",
+        "ローソン",
+        "売り場連動",
+        "店舗DX・次世代決済",
+        "新世界I\u0026C",
+        "流通DX",
+        "流通DX一般",
+        "無人店舗・決済",
+        "生協",
+        "購買データ"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261127/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261127/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261127/#art-3"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261127/#art-4"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261127/#art-5"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261127/#newslist",
+      "name": "2026年11月27日号 掲載ニュース一覧",
+      "numberOfItems": 5,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261127/#art-1",
+            "position": 1,
+            "headline": "ローソン「Lawson Go」県立広島病院店が中国・四国に初出店、ウォークスルー決済を導入",
+            "description": "ローソンは、商品を手に取って店の外に出るだけで会計が完了する「ウォークスルー決済」を導入した店舗「Lawson Go 県立広島病院店」を、中国・四国地区に初めて出店すると発表した。店舗は県立広島病院内に設けられ、12月1日のオープンが予定されている。来店客は専用の操作をせずに買い物を完結できるのが特徴で、これまでの導入地域とは異なる医療施設の中で無人決済体験を提供する形となる。",
+            "url": "https://tk.st/job/retailtechdaily/20261127/#art-1",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-27T08:00:00+09:00",
+            "dateModified": "2026-11-27T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261127/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90N0NDcENnQWFpdmhqeU1NTGhFZWJyeU9yMklEZlMzMU02X3h1T2w5b3Y3SUwxVjhUZ3Y1YWpld2lrYUZheHVhaVlqdDcyOXFmZWhPVFNhbXlZTzNNSkswdzIxVDdkWnkxd1V0SlJRdw?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "LAWSON"
+              },
+              "datePublished": "2026-11-26T15:16:15+09:00"
+            },
+            "keywords": [
+              "無人店舗・決済",
+              "ウォークスルー決済",
+              "ローソン"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261127/#art-2",
+            "position": 2,
+            "headline": "新世界I\u0026C、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受賞",
+            "description": "韓国の流通大手、新世界アイアンドシー(I\u0026C)は、AI基盤の流通ソリューションとソフトウェア開発プラットフォームを商用化した成果により、政府から褒賞を受けた。受賞の対象には、バーコードを読み取らずに商品を認識するセルフレジが含まれており、生成AIを活用した開発基盤も評価された。科学技術情報通信部長官賞という国家レベルの表彰であり、AI技術の実店舗への実装が公的に認められた形だ。",
+            "url": "https://tk.st/job/retailtechdaily/20261127/#art-2",
+            "articleSection": "店舗DX・次世代決済",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-27T08:00:00+09:00",
+            "dateModified": "2026-11-27T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261127/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE1qSlozb2dfRzZ1M1NoeVIycWVKT3BQRktfd0JCU1A1bE9oYWlLc3k1eFdzWUo3RVpkMXZQelUwX1YxRk9NRFM0ei1TUQ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "매일경제"
+              },
+              "datePublished": "2026-11-26T13:19:36+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "AI画像認識",
+              "新世界I\u0026C"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261127/#art-3",
+            "position": 3,
+            "headline": "アサヒは購買データ、サッポロは売り場連動、フマキラーはAI　リテールメディアの次の一手",
+            "description": "Yahoo!ニュースの記事では、リテールメディアの次の展開として3社の取り組みが紹介されている。アサヒは購買データの活用、サッポロは売り場と連動した施策、フマキラーはAIを活用したアプローチを進めている。メーカー各社が小売店の売り場や購買情報とどう結びつけて広告価値を高めるかに焦点を当てた内容で、リテールメディアの手法が多様化していることがうかがえる。",
+            "url": "https://tk.st/job/retailtechdaily/20261127/#art-3",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-27T08:00:00+09:00",
+            "dateModified": "2026-11-27T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261127/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE04UktLamg2QS1wdHJRcmNCRm1aLXdoWXZ5SmhLdlp0MUhaODROejlORVdIUjR3YjRuQmlral9VODZLSDJkOHlGRTM1b3dwalAzTnV0ZFBQWGpURlE5UjU1TzRwUmZKNXZHRjdFMXNZVnhGNlJKcG42d3M1UjhsM3c?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Yahoo!ニュース"
+              },
+              "datePublished": "2026-11-26T05:30:30+09:00"
+            },
+            "keywords": [
+              "リテールメディア",
+              "購買データ",
+              "売り場連動"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261127/#art-4",
+            "position": 4,
+            "headline": "ツルハグループが描くリテールメディアとAI活用の未来、5,600超店舗の顧客接点をどう生かすか",
+            "description": "MarkeZineは、ツルハグループがリテールメディアとAI活用によって描く将来像を取り上げた。同グループは5,600店舗を超える店舗網を持ち、そこでの顧客接点をどのように広告やマーケティングに生かすかが焦点となっている。全3回の連載の1回目として、店舗網の規模を背景にした取り組みの方向性が語られている。ドラッグストア業態における顧客接点の活用が主要な論点だ。",
+            "url": "https://tk.st/job/retailtechdaily/20261127/#art-4",
+            "articleSection": "リテールメディア・広告",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-27T08:00:00+09:00",
+            "dateModified": "2026-11-27T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261127/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFB2SFBsVHEyelFRS251ekFPSllKZmtTcm5ib3VXdWZTSUxxZkdYbGRROUdYV2hjeFhfS3FWM05Zci1MZHhuejJRTUpQaEpTSFBwR0ZJ?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "MarkeZine"
+              },
+              "datePublished": "2026-11-26T10:30:00+09:00"
+            },
+            "keywords": [
+              "リテールメディア",
+              "AI活用",
+              "ドラッグストア"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261127/#art-5",
+            "position": 5,
+            "headline": "「強さ」に直結するDX、神奈川の生協が最先端の1つ下のシステムを採用した理由",
+            "description": "日経ビジネス電子版は、神奈川の生協がDXを進めるにあたり、最先端のシステムではなく、その1つ下のシステムを採用した経緯を紹介した。記事では、DXが組織の「強さ」に直結するという視点から、導入する技術の選び方が論点になっている。最新技術を追うことよりも、現場の運用力や組織の受け入れやすさに合わせた選択が成果につながるかを考察している。",
+            "url": "https://tk.st/job/retailtechdaily/20261127/#art-5",
+            "articleSection": "流通DX一般",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-27T08:00:00+09:00",
+            "dateModified": "2026-11-27T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261127/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5XLS1UYmxYeDBOMXBKa1h2WUdEWDg1UG0zbzFrZzVFaVAyTTR0eWhnOGJ0VVRGOEo1OFZYeC02b0hKZVVNT2JCbVdQWm9XLWV2Y21ScmJIYkdCVUR3S19LN1dKZkJYSHhEVEx1dUdFZ3BsOWMt?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "日経ビジネス電子版"
+              },
+              "datePublished": "2026-11-26T17:00:00+09:00"
+            },
+            "keywords": [
+              "流通DX",
+              "システム選定",
+              "生協"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261127/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年11月27日号",
+          "item": "https://tk.st/job/retailtechdaily/20261127/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年11月27日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年11月27日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年11月27日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約4分 / 2,110字
+          </span>
+          <span class="stat">全 5 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>昨日の3大重要トピック（Executive Summary）</span>
+          </h2>
+          <ol class="exec-list"><li>ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている</li><li>アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している</li><li>韓国の新世界I&amp;Cが、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受けた。また神奈川の生協は、最先端より1つ下のDXシステムを選び、組織の強さにつなげている</li></ol>
+        </section>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside"><span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">        <li class="qi-item">
+          <a href="#art-1" class="qi-link">
+            <span class="qi-num">01</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">ローソン「Lawson Go」県立広島病院店が中国・四国に初出店、ウォークスルー決済を導入</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-2" class="qi-link">
+            <span class="qi-num">02</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">店舗DX・次世代決済</span></span>
+              <span class="qi-title">新世界I&amp;C、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受賞</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-3" class="qi-link">
+            <span class="qi-num">03</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">アサヒは購買データ、サッポロは売り場連動、フマキラーはAI　リテールメディアの次の一手</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-4" class="qi-link">
+            <span class="qi-num">04</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">リテールメディア・広告</span></span>
+              <span class="qi-title">ツルハグループが描くリテールメディアとAI活用の未来、5,600超店舗の顧客接点をどう生かすか</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li>
+        <li class="qi-item">
+          <a href="#art-5" class="qi-link">
+            <span class="qi-num">05</span>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge badge-jp">国内</span><span class="qi-cat">流通DX一般</span></span>
+              <span class="qi-title">「強さ」に直結するDX、神奈川の生協が最先端の1つ下のシステムを採用した理由</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </a>
+        </li></ol>
+        </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">5 stories</span>
+        </div>
+
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">5</strong> / 5</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">5</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
+            <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">5</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗DX・次世代決済" aria-pressed="false">店舗DX・次世代決済 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="リテールメディア・広告" aria-pressed="false">リテールメディア・広告 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="流通DX一般" aria-pressed="false">流通DX一般 <span class="chip-count">1</span></button>
+          </div>
+        </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">LAWSON</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-26T15:16:15+09:00" title="出典の公開日時">公開 2026.11.26 15:16 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE90N0NDcENnQWFpdmhqeU1NTGhFZWJyeU9yMklEZlMzMU02X3h1T2w5b3Y3SUwxVjhUZ3Y1YWpld2lrYUZheHVhaVlqdDcyOXFmZWhPVFNhbXlZTzNNSkswdzIxVDdkWnkxd1V0SlJRdw?oc=5" target="_blank" rel="noopener noreferrer">ローソン「Lawson Go」県立広島病院店が中国・四国に初出店、ウォークスルー決済を導入<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ローソン</strong>は、商品を手に取って店の外に出るだけで会計が完了する「<strong class="kw-scan">ウォークスルー決済</strong>」を導入した店舗「Lawson Go 県立広島病院店」を、中国・四国地区に初めて出店すると発表した。店舗は県立広島病院内に設けられ、12月1日のオープンが予定されている。来店客は専用の操作をせずに買い物を完結できるのが特徴で、これまでの導入地域とは異なる医療施設の中で<strong class="kw-scan">無人決済</strong>体験を提供する形となる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">病院内という日常の動線の中に<strong class="kw-scan">無人決済</strong>店舗を置くことで、待ち時間の多い施設でも手軽に買い物できる環境を作れる点が示唆的だ。</p>
+              </div>
+              <p class="wim-detail">地域の公共性が高い施設では、来店時間帯や購買傾向のデータも蓄積しやすく、品揃えや補充計画の最適化に活かせる可能性がある。一方で、利用者層や混雑時間帯に合わせた運営設計が、店舗の収益性と顧客満足を左右するだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%84%A1%E4%BA%BA%E5%BA%97%E8%88%97%E3%83%BB%E6%B1%BA%E6%B8%88">#無人店舗・決済</a><button type="button" class="topic-watch-btn" data-watch-topic="無人店舗・決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%A6%E3%82%A9%E3%83%BC%E3%82%AF%E3%82%B9%E3%83%AB%E3%83%BC%E6%B1%BA%E6%B8%88">#ウォークスルー決済</a><button type="button" class="topic-watch-btn" data-watch-topic="ウォークスルー決済" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AD%E3%83%BC%E3%82%BD%E3%83%B3">#ローソン</a><button type="button" class="topic-watch-btn" data-watch-topic="ローソン" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMib0FVX3lxTE90N0NDcENnQWFpdmhqeU1NTGhFZWJyeU9yMklEZlMzMU02X3h1T2w5b3Y3SUwxVjhUZ3Y1YWpld2lrYUZheHVhaVlqdDcyOXFmZWhPVFNhbXlZTzNNSkswdzIxVDdkWnkxd1V0SlJRdw?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8827%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="店舗DX・次世代決済">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="店舗DX・次世代決済" title="このカテゴリで絞り込み">店舗DX・次世代決済</button>
+              <span class="source-tag">매일경제</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-26T13:19:36+09:00" title="出典の公開日時">公開 2026.11.26 13:19 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiS0FVX3lxTE1qSlozb2dfRzZ1M1NoeVIycWVKT3BQRktfd0JCU1A1bE9oYWlLc3k1eFdzWUo3RVpkMXZQelUwX1YxRk9NRFM0ei1TUQ?oc=5" target="_blank" rel="noopener noreferrer">新世界I&amp;C、バーコードなしで商品を認識するAIセルフレジで政府褒賞を受賞<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>韓国の流通大手、新世界アイアンドシー(I&amp;C)は、AI基盤の流通ソリューションとソフトウェア開発プラットフォームを商用化した成果により、政府から褒賞を受けた。受賞の対象には、バーコードを読み取らずに商品を認識する<strong class="kw-scan">セルフレジ</strong>が含まれており、<strong class="kw-scan">生成AI</strong>を活用した開発基盤も評価された。科学技術情報通信部長官賞という国家レベルの表彰であり、AI技術の実店舗への実装が公的に認められた形だ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">バーコードを使わない商品認識は、スキャン作業の手間を省き、会計の速さと精度を同時に高める方向性を示す。</p>
+              </div>
+              <p class="wim-detail">国内の<strong class="kw-scan">セルフレジ</strong>では読み取りミスや操作の煩雑さが課題となる場面も多く、画像認識の実用化は<strong class="kw-scan">省人化</strong>と顧客体験の両立に直結する。国内小売にとっても、導入コストと運用の安定性をどう評価するかが今後の判断材料になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E7%94%BB%E5%83%8F%E8%AA%8D%E8%AD%98">#AI画像認識</a><button type="button" class="topic-watch-btn" data-watch-topic="AI画像認識" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%96%B0%E4%B8%96%E7%95%8CI%26C">#新世界I&amp;C</a><button type="button" class="topic-watch-btn" data-watch-topic="新世界I&amp;C" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiS0FVX3lxTE1qSlozb2dfRzZ1M1NoeVIycWVKT3BQRktfd0JCU1A1bE9oYWlLc3k1eFdzWUo3RVpkMXZQelUwX1YxRk9NRFM0ei1TUQ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8827%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">Yahoo!ニュース</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-26T05:30:30+09:00" title="出典の公開日時">公開 2026.11.26 05:30 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE04UktLamg2QS1wdHJRcmNCRm1aLXdoWXZ5SmhLdlp0MUhaODROejlORVdIUjR3YjRuQmlral9VODZLSDJkOHlGRTM1b3dwalAzTnV0ZFBQWGpURlE5UjU1TzRwUmZKNXZHRjdFMXNZVnhGNlJKcG42d3M1UjhsM3c?oc=5" target="_blank" rel="noopener noreferrer">アサヒは購買データ、サッポロは売り場連動、フマキラーはAI　リテールメディアの次の一手<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>Yahoo!ニュースの記事では、<strong class="kw-scan">リテールメディア</strong>の次の展開として3社の取り組みが紹介されている。アサヒは購買データの活用、サッポロは売り場と連動した施策、フマキラーはAIを活用したアプローチを進めている。メーカー各社が小売店の売り場や購買情報とどう結びつけて広告価値を高めるかに焦点を当てた内容で、<strong class="kw-scan">リテールメディア</strong>の手法が多様化していることがうかがえる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">メーカーごとに購買データ、売り場連動、AIと異なる強みを持ち寄る動きは、<strong class="kw-scan">リテールメディア</strong>が単一の広告枠から施策パッケージへ進化していることを示す。</p>
+              </div>
+              <p class="wim-detail">小売側は自社の購買データや店頭接点をどこまで開放するかを判断する必要があり、広告主側は効果測定の共通指標を整えることが求められる。両者の連携設計が今後の収益化の鍵になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E8%B3%BC%E8%B2%B7%E3%83%87%E3%83%BC%E3%82%BF">#購買データ</a><button type="button" class="topic-watch-btn" data-watch-topic="購買データ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%A3%B2%E3%82%8A%E5%A0%B4%E9%80%A3%E5%8B%95">#売り場連動</a><button type="button" class="topic-watch-btn" data-watch-topic="売り場連動" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE04UktLamg2QS1wdHJRcmNCRm1aLXdoWXZ5SmhLdlp0MUhaODROejlORVdIUjR3YjRuQmlral9VODZLSDJkOHlGRTM1b3dwalAzTnV0ZFBQWGpURlE5UjU1TzRwUmZKNXZHRjdFMXNZVnhGNlJKcG42d3M1UjhsM3c?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8827%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-4" data-region="JP" data-category="リテールメディア・広告">
+          <div class="card-index" aria-hidden="true">04</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="リテールメディア・広告" title="このカテゴリで絞り込み">リテールメディア・広告</button>
+              <span class="source-tag">MarkeZine</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-26T10:30:00+09:00" title="出典の公開日時">公開 2026.11.26 10:30 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiU0FVX3lxTFB2SFBsVHEyelFRS251ekFPSllKZmtTcm5ib3VXdWZTSUxxZkdYbGRROUdYV2hjeFhfS3FWM05Zci1MZHhuejJRTUpQaEpTSFBwR0ZJ?oc=5" target="_blank" rel="noopener noreferrer">ツルハグループが描くリテールメディアとAI活用の未来、5,600超店舗の顧客接点をどう生かすか<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>MarkeZineは、ツルハグループが<strong class="kw-scan">リテールメディア</strong>とAI活用によって描く将来像を取り上げた。同グループは5,600店舗を超える店舗網を持ち、そこでの顧客接点をどのように広告やマーケティングに生かすかが焦点となっている。全3回の連載の1回目として、店舗網の規模を背景にした取り組みの方向性が語られている。ドラッグストア業態における顧客接点の活用が主要な論点だ。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">5,600店舗超という規模は、全国の購買接点を一括で扱える<strong class="kw-scan">リテールメディア</strong>の基盤になり得る。</p>
+              </div>
+              <p class="wim-detail">AIを組み合わせれば、来店者ごとの関心に応じた販促や商品提案をスケールさせやすい。一方で、広告事業としての収益モデルと、顧客の利便性やプライバシー配慮をどう両立させるかが実装時の大きな論点となる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%AA%E3%83%86%E3%83%BC%E3%83%AB%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2">#リテールメディア</a><button type="button" class="topic-watch-btn" data-watch-topic="リテールメディア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=AI%E6%B4%BB%E7%94%A8">#AI活用</a><button type="button" class="topic-watch-btn" data-watch-topic="AI活用" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%83%89%E3%83%A9%E3%83%83%E3%82%B0%E3%82%B9%E3%83%88%E3%82%A2">#ドラッグストア</a><button type="button" class="topic-watch-btn" data-watch-topic="ドラッグストア" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiU0FVX3lxTFB2SFBsVHEyelFRS251ekFPSllKZmtTcm5ib3VXdWZTSUxxZkdYbGRROUdYV2hjeFhfS3FWM05Zci1MZHhuejJRTUpQaEpTSFBwR0ZJ?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8827%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-5" data-region="JP" data-category="流通DX一般">
+          <div class="card-index" aria-hidden="true">05</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge badge-jp" data-filter-trigger="region" data-filter-val="JP" title="この地域のニュースで絞り込み">国内 JAPAN</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="流通DX一般" title="このカテゴリで絞り込み">流通DX一般</button>
+              <span class="source-tag">日経ビジネス電子版</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-26T17:00:00+09:00" title="出典の公開日時">公開 2026.11.26 17:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTE5XLS1UYmxYeDBOMXBKa1h2WUdEWDg1UG0zbzFrZzVFaVAyTTR0eWhnOGJ0VVRGOEo1OFZYeC02b0hKZVVNT2JCbVdQWm9XLWV2Y21ScmJIYkdCVUR3S19LN1dKZkJYSHhEVEx1dUdFZ3BsOWMt?oc=5" target="_blank" rel="noopener noreferrer">「強さ」に直結するDX、神奈川の生協が最先端の1つ下のシステムを採用した理由<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>日経ビジネス電子版は、神奈川の生協がDXを進めるにあたり、最先端のシステムではなく、その1つ下のシステムを採用した経緯を紹介した。記事では、DXが組織の「強さ」に直結するという視点から、導入する技術の選び方が論点になっている。最新技術を追うことよりも、現場の運用力や組織の受け入れやすさに合わせた選択が成果につながるかを考察している。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">最先端を選ぶことが必ずしも最適ではないという判断は、流通企業のDX投資で見落とされがちな視点だ。</p>
+              </div>
+              <p class="wim-detail">現場が使いこなせる水準のシステムを選ぶことで、定着率と改善サイクルが高まり、結果的に事業の強さにつながる。自社の人材や業務の成熟度に合わせた段階的な導入計画を立てる際の参考になるだろう。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E6%B5%81%E9%80%9ADX">#流通DX</a><button type="button" class="topic-watch-btn" data-watch-topic="流通DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E9%81%B8%E5%AE%9A">#システム選定</a><button type="button" class="topic-watch-btn" data-watch-topic="システム選定" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%94%9F%E5%8D%94">#生協</a><button type="button" class="topic-watch-btn" data-watch-topic="生協" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMidEFVX3lxTE5XLS1UYmxYeDBOMXBKa1h2WUdEWDg1UG0zbzFrZzVFaVAyTTR0eWhnOGJ0VVRGOEo1OFZYeC02b0hKZVVNT2JCbVdQWm9XLWV2Y21ScmJIYkdCVUR3S19LN1dKZkJYSHhEVEx1dUdFZ3BsOWMt?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8827%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261126/" class="nav-prev">&larr; 2026.11.26 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>

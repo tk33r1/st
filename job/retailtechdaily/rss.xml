@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 26 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 26 Nov 2026 09:49:43 +0900</lastBuildDate>
+    <pubDate>Fri, 27 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 27 Nov 2026 09:55:54 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月27日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261127/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261127/</guid>
+      <pubDate>Fri, 27 Nov 2026 08:00:00 +0900</pubDate>
+      <description>ローソンが「Lawson Go 県立広島病院店」で中国・四国初のウォークスルー決済を導入し、無人決済の店舗が病院など新たな生活接点に広がっている アサヒ、サッポロ、フマキラーなどメーカー各社がリテールメディアに購買データ、売り場連動、AIといった異なる強みを持ち込み、施策が多様化している</description>
+    </item>
     <item>
       <title>2026年11月26日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261126/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261113/</guid>
       <pubDate>Fri, 13 Nov 2026 08:00:00 +0900</pubDate>
       <description>持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。</description>
-    </item>
-    <item>
-      <title>2026年11月12日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261112/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261112/</guid>
-      <pubDate>Thu, 12 Nov 2026 08:00:00 +0900</pubDate>
-      <description>食品スーパー向け広告サイネージで設置台数No.1の報道が出るなど、店頭リテールメディアの存在感が高まっている AIによる発注量の自動調整を実証する動きが出ており、発注業務の確認工程を見直す段階に入りつつある</description>
     </item>
   </channel>
 </rss>
