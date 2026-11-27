@@ -1,5 +1,285 @@
 [
   {
+    "date": "20261127",
+    "title": "2026年11月27日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "電気を使わない「ポケットこたつ」や、Dolby Atmos対応の薄型サウンドバーなど、単身層や在宅層の暮らしの困りごとに応える新商品が相次いで登場した。 デコホームのブラシウォッシュトレーなど499円の実用品が、手入れの手間を減らす提案として注目を集めている。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "電気を使わない「ポケットこたつ」や、Dolby Atmos対応の薄型サウンドバーなど、単身層や在宅層の暮らしの困りごとに応える新商品が相次いで登場した。",
+      "デコホームのブラシウォッシュトレーなど499円の実用品が、手入れの手間を減らす提案として注目を集めている。",
+      "大型家具・家電の引取料が最大無料となるなど買い替えの負担を下げる施策が示され、SNSでは犬用ブランケットや家具の寸法確認といった生活シーンへの共感が広がった。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリの大型家具・家電、引取料が最大無料に ベッド・ソファ・冷蔵庫も対象",
+        "original_title": "",
+        "source": "Ameba News [アメーバニュース]",
+        "source_id": "JP-06",
+        "summary": "ニトリのベッド、ソファ、冷蔵庫などを対象としたお得な案内が報じられた。大型家具・家電の引取料は最大無料とされ、買い替え時に生じる古い製品の処分負担を抑えられる。年末の生活準備を控え、買い替えを検討する生活者への訴求として注目される。",
+        "why_it_matters": "引取無料は、大型家具の買い替えで生じる「古いものの処分」の負担を解消するサービス設計だ。購入の心理的ハードルを下げるとともに、使用済み家具の回収や再資源化を進めるニトリの循環型の取り組みとも親和性が高い。年末の買い替え需要に向けた販促として、物流や回収網の活用余地が注目される。",
+        "tags": [
+          "ニトリ",
+          "価格戦略",
+          "引取サービス",
+          "大型家具"
+        ],
+        "search_terms": [
+          "大型家具 引取 無料",
+          "買い替え 処分 サービス",
+          "furniture pickup free Japan",
+          "Nitori bulky item disposal"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9IMWFRb2lody1HcnpuWnpELUFrcWN1a3lkUjE2SGI0WnZVNDlmb0RUMHdHY3NzeGM3RWloTUR0WmVJZG9DYkJsR1ZManJrQ0E1akJEbk83Z2Nndw?oc=5",
+        "source_pub_ts": 1795667762
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ、29,900円のDolby Atmos対応「スリムサウンドバー」を発表 ワイヤレスサブウーファー付属",
+        "original_title": "",
+        "source": "AV Watch",
+        "source_id": "JP-07",
+        "summary": "ニトリが、Dolby Atmosに対応した「スリムサウンドバー」を29,900円で発表した。ワイヤレスサブウーファーが付属し、薄型の本体と合わせてテレビ周りに迫力ある音響環境を手軽に組める構成だ。低価格帯で立体音響に対応する点が、ホームシアターを身近にする提案として注目される。",
+        "why_it_matters": "薄型でテレビ台の上にも置きやすいサイズ感は、リビングの配置自由度を重視する生活者に合う。Dolby Atmos対応を2万円台後半で実現した価格設定は、家電売場の訴求を「高機能の手頃さ」へ寄せる狙いを示す。家具・インテリアとのセット提案で、テレビ周りの空間づくりへ発展させる余地がある。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "家電",
+          "サウンドバー"
+        ],
+        "search_terms": [
+          "サウンドバー 新商品",
+          "soundbar Dolby Atmos",
+          "スリム 薄型 スピーカー",
+          "Nitori soundbar 29900"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1wM1Y0MDFoWHVQZXYxUXVsMW5iRFlZU3lmSU0yamJwTUdGemdpXzVGUWVEMEtoY0F1OUhoeC1Hc2N1d25RRW9jOXRMajZKSHhHVnVJTWpzTk9wMkk1MmdkT05GSQ?oc=5",
+        "source_pub_ts": 1795664258
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "電気を使わない「ポケットこたつ」4,990円で登場、おひとり様の節電と快適さを両立",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-01",
+        "summary": "ニトリのネット特別商品「ポケットこたつ」が4,990円で登場した。電気を使わず足元を温める仕様で、おひとり様の節電と快適さの両立を訴求している。パッチワーク柄の2色展開で、洗濯機で丸洗いできるのも特徴だ。自宅まで無料で届けられる。",
+        "why_it_matters": "「こたつ」を電気を使わない小型アイテムとして再定義した点が特徴だ。単身層やデスクワーク層に向け、ネット限定の価格と送料無料の組み合わせで購入の障壁を下げている。丸洗いできる手入れやすさは、ホットカーペットやラグと並ぶ冬の定番として、関連商品のクロスセル設計にもつながる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "季節商品",
+          "節電"
+        ],
+        "search_terms": [
+          "ポケットこたつ 新商品",
+          "足元暖房 小型",
+          "pocket kotatsu",
+          "foot warmer Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE1FR3p0VThocXZaWDNnWEw5d1hZdnNpa0JON0kyQzJsSGt5S0Z5WUxIeDVIQlYyYXQxQnd2QVo2QkZiNW5EbG05dlZtRV8?oc=5",
+        "source_pub_ts": 1795725900
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "デコホーム「ブラシウォッシュトレー」発売、洗う・干すを1つで完結 499円",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-09",
+        "summary": "デコホームから、メイクブラシ用の「ブラシウォッシュトレー」が新登場し、499円で販売されている。洗ったブラシをそのまま干せるため、洗浄から乾燥までを1つで完結できるのが特徴だ。メイクブラシの手入れを手軽にしたい生活者向けの、低価格な実用品として提案されている。",
+        "why_it_matters": "ブラシの手入れは面倒という生活者の潜在課題に、499円の価格で応える実用提案だ。ブランドの「ちょうどいい価格の解決策」を示す好例で、メイク周りの小物はSNSでも話題化しやすく、新カテゴリの販促起点になり得る。複数の工程を1アイテムにまとめる設計思想は、収納や水回り商品の開発にも応用できる。",
+        "tags": [
+          "デコホーム",
+          "商品開発",
+          "実用品",
+          "ニトリ"
+        ],
+        "search_terms": [
+          "ブラシ洗いトレー 新商品",
+          "メイクブラシ 乾燥 トレー",
+          "makeup brush washing tray",
+          "Decohome brush wash"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9rRXB3eV9DRDVaclVVajRWaW45eHAzbHlwM04xclJ0WGs2Uk1fdms5WU4tZG1RNG1ycC1lMnZzOVA5TUZ4TTl0TzRkX1VZUmtWMFRBZ2RVQS1ib3V0WlRBblN0SnBDcFltY1E?oc=5",
+        "source_pub_ts": 1795660201
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ホットカーペットの必需品」ニトリのアルミシートが好評、100円ショップにはない厚さに支持",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-02",
+        "summary": "ホットカーペットと組み合わせて使うニトリのアルミシートが、「ホットカーペットの必需品」として好評だ。「100円ショップにはない厚さ」「おかげで無事に冬を越せました」といった声が寄せられている。季節の使用シーンに根ざした実用品として、生活者の支持を集めている。",
+        "why_it_matters": "100円ショップとの差別化を「厚さ」で示した点が、品質と価格のバランスを重視する生活者の評価ポイントになっている。冬の季節商材は需要が短期間に集中するため、ホットカーペット関連の周辺アイテムをまとめて提案する売場設計が有効だ。口コミで語られる「必需品」という評価は、季節商材の拡販につながる。",
+        "tags": [
+          "ニトリ",
+          "SNS反響",
+          "季節商品",
+          "実用品"
+        ],
+        "search_terms": [
+          "アルミシート ホットカーペット",
+          "冬の暖房 対策 グッズ",
+          "aluminum sheet hot carpet",
+          "winter warmth goods Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1NamJ2OTdCQWFQZHExUm84SUxvNjZTQkRfV3E1WDNET2NVN0FEWkh4ZkRmSmVRNmRqWC0teFU1dWpnbXNoMXZWT01kR0p0ek83cWhMY1R0bmlRWVAycGNWSnB1bkJEOXpVY19DdV9sdHFIQnk2UG9udm9icHFoRk0?oc=5",
+        "source_pub_ts": 1795679144
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリのブランケットに犬が入る投稿が4,856いいね、「寝心地が良さそう」と共感広がる",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-01",
+        "summary": "ニトリで購入したブランケットに犬が入って過ごす様子の投稿が、4,856いいね、263リポストの反響を集めた。「お気に入りで可愛い」「寝心地が良さそう」といった声が並び、ペットと一緒に過ごす生活シーンへの共感が広がった。商品の機能説明よりも、暮らしの情景が支持された投稿である。",
+        "why_it_matters": "ペットと暮らす世帯では、飼い主と動物が同じ空間で心地よく過ごせる寝具へのニーズが強い。投稿は商品の機能よりも「一緒に入る」情景に共感が集まった点が特徴で、生活シーンを見せる提案が購買の後押しになることを示す。ペット向け商品を生活提案として打ち出す余地がある。",
+        "tags": [
+          "SNS",
+          "ペット",
+          "ブランケット",
+          "ニトリ"
+        ],
+        "search_terms": [
+          "犬 ブランケット 寝床",
+          "pet blanket dog bed",
+          "ペットと暮らす 寝具",
+          "dog sleeping blanket viral"
+        ],
+        "url": "https://x.com/callmeshiro510/status/2125840456752013787",
+        "source_pub_ts": 1795690800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「ニトリに行く前に家具のサイズを測る人」投稿が1,024いいね、購入前の寸法確認に共感",
+        "original_title": "",
+        "source": "X（Yahoo!リアルタイム検索）",
+        "source_id": "SNS-02",
+        "summary": "「ニトリに行く前に、置ける家具のサイズを測る人」という投稿が、1,024いいね、120リポストを集めた。家具購入前に寸法を確認するという、多くの生活者が経験する行動をユーモラスに描いた点が共感を呼んだ。家具選びでの失敗しない工夫が、ニトリの店舗利用を前提に語られている。",
+        "why_it_matters": "家具購入で「サイズが合わない」は代表的な失敗要因だ。ニトリは豊富な品揃えと低価格が強みだが、購入前に置き場所をイメージできる仕組みがあれば、購買体験はさらに向上する。投稿は、サイズ感の見える化が購入の鍵であることを示唆しており、店頭やオンラインでの提案強化につながる。",
+        "tags": [
+          "SNS",
+          "家具",
+          "購買体験",
+          "ニトリ"
+        ],
+        "search_terms": [
+          "家具 サイズ 測る 購入前",
+          "furniture size measuring",
+          "家具選び 失敗 防止",
+          "furniture shopping tips viral"
+        ],
+        "url": "https://x.com/puaneusa/status/2125852854590259210",
+        "source_pub_ts": 1795690800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリで買った犬が入れるブランケット？お気に入りで可愛い、寝心地良さそう pic.x.com/n4Tf8HHDyP",
+        "platform": "x",
+        "author": "@callmeshiro510",
+        "url": "https://x.com/callmeshiro510/status/2125840456752013787",
+        "likes": 4856,
+        "retweets": 263,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 15:33",
+        "captured_at": "",
+        "text": "ニトリで買った犬が入れるブランケット？お気に入りで可愛い、寝心地良さそう pic.x.com/n4Tf8HHDyP",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "作品名『ニトリに行く前に、置ける家具のサイズを測る人』 pic.x.com/CUJwNPMc0Z",
+        "platform": "x",
+        "author": "@puaneusa",
+        "url": "https://x.com/puaneusa/status/2125852854590259210",
+        "likes": 1024,
+        "retweets": 120,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 16:23",
+        "captured_at": "",
+        "text": "作品名『ニトリに行く前に、置ける家具のサイズを測る人』 pic.x.com/CUJwNPMc0Z",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "ちなみに完全ノーマークだったけどニトリのクリスマスグッズ、特にクッションカバー可愛いの多すぎてびっくりした！ pic.x.com/5cyQP3ZFxn",
+        "platform": "x",
+        "author": "@hi_yo02",
+        "url": "https://x.com/hi_yo02/status/2125906007843098806",
+        "likes": 447,
+        "retweets": 20,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:54",
+        "captured_at": "",
+        "text": "ちなみに完全ノーマークだったけどニトリのクリスマスグッズ、特にクッションカバー可愛いの多すぎてびっくりした！ pic.x.com/5cyQP3ZFxn",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "物を増やしたくない女がクリスマスツリーを買う話② ニトリのオーナメントもふわふわユニコーンとかあってとってもかわいかったんですが、全部買うと...",
+        "platform": "x",
+        "author": "@akagocawaii",
+        "url": "https://x.com/akagocawaii/status/2125908675940553133",
+        "likes": 426,
+        "retweets": 24,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:05",
+        "captured_at": "",
+        "text": "物を増やしたくない女がクリスマスツリーを買う話② ニトリのオーナメントもふわふわユニコーンとかあってとってもかわいかったんですが、全部買うととんでもない額になりそうだったので100均にお世話になりました… 薄いピンクのツリーです🌲 #育児絵日記 #育児漫画 pic.x.com/s14RAcKBPO",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "【ハンカチの収納】 フェイラーやコメダ珈琲店などのシェニール織りハンカチ（25cmサイズ） 近沢レース店のシーズンハンカチなど🍋 ニトリ「整...",
+        "platform": "x",
+        "author": "@clipnotebook",
+        "url": "https://x.com/clipnotebook/status/2125914704254251207",
+        "likes": 310,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:28",
+        "captured_at": "",
+        "text": "【ハンカチの収納】 フェイラーやコメダ珈琲店などのシェニール織りハンカチ（25cmサイズ） 近沢レース店のシーズンハンカチなど🍋 ニトリ「整理ボックス クラネ ロータイプ奥行伸縮 幅13cm ホワイト」を使用（999円） 高さが15cm以上ある引き出しや棚に収納できる✨ pic.x.com/D5rRJJ8Vbn",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261126",
     "title": "2026年11月26日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリは自社ECの大改革としてマーケットプレイス拡大に動き、オンライン販売の取扱い商品と顧客接点を広げる戦略が注目されています。 使用済み家具の再資源化拠点を本庄に開設し、年間1万トン以上の再資源化を目指す計画が示され、物流網を活かした循環型の仕組みが強化されています。",
