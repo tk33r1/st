@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>
+
+(function(w,d) {
+  var portal=false,held=false;
+  function header(e) {return e.target.closest && e.target.closest('.header-search');}
+  d.addEventListener('compositionstart',function(e) {var f=header(e);if(f) f._stComposing=true;},true);
+  d.addEventListener('compositionend',function(e) {var f=header(e);if(f) f._stComposing=false;},true);
+  d.addEventListener('keydown',function(e) {
+    var f=header(e);if(!f || (e.key!=='Enter' && e.code!=='Enter' && e.code!=='NumpadEnter')) return;
+    if(f._stComposing || e.isComposing || e.keyCode===229) {held=true;f._stImeEnterHeld=true;return;}
+    if(held || e.repeat) e.preventDefault();
+  },true);
+  d.addEventListener('keyup',function(e) {if(e.key==='Enter' || e.code==='Enter' || e.code==='NumpadEnter') {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;}},true);
+  w.addEventListener('blur',function() {held=false;var f=d.querySelector('.header-search');if(f) f._stImeEnterHeld=false;});
+  d.addEventListener('submit',function(e) {
+    var f=header(e);if(!f || f.dataset.stSearchOwned) return;
+    e.preventDefault();if(f._stComposing || held) return;
+    var q=Array.from(f.querySelector('input').value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim()).slice(0,200).join('');
+    try {sessionStorage.removeItem('st-search-explicit');}catch(_) {}
+    if(portal) {if(f._stSearchFor) f._stSearchFor(q); else w.STDailyPendingSearch=q;return;}
+    var target=new URL(f.getAttribute('action') || './',location.href);
+    location.href=target.href.split('#')[0]+(q?'#q='+encodeURIComponent(q):'#archiveSearch');
+  },true);
+})(window,document);
+
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../../assets/analytics.js" async></script>
+  <title>2026年11月28日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily | tk.st</title>
+  <meta name="description" content="トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる ローソンがアバター接客を拡大する一方で、生成AIで代替せず人を採用する方針を示し、店舗接客の役割設計が問われている">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="#1a47d4">
+
+  <link rel="canonical" href="https://tk.st/job/retailtechdaily/20261128/">
+  <link rel="author" href="https://tk.st/">
+
+  <meta property="og:title" content="2026年11月28日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta property="og:description" content="トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる ローソンがアバター接客を拡大する一方で、生成AIで代替せず人を採用する方針を示し、店舗接客の役割設計が問われている">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://tk.st/job/retailtechdaily/20261128/">
+  <meta property="og:site_name" content="Retail Tech Daily | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://tk.st/images/ogp/retailtechdaily/20261128.webp">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@retailtechdaily">
+  <meta name="twitter:title" content="2026年11月28日号：昨日のリテールテック＆流通DXまとめ — Retail Tech Daily">
+  <meta name="twitter:description" content="トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる ローソンがアバター接客を拡大する一方で、生成AIで代替せず人を採用する方針を示し、店舗接客の役割設計が問われている">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/retailtechdaily/20261128.webp">
+
+  <link rel="icon" href="../../../images/favicons/retail-tech-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../../../images/favicons/retail-tech-apple-touch-icon.png">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "@id": "https://tk.st/job/retailtechdaily/20261128/#article",
+      "isPartOf": {
+        "@type": "Periodical",
+        "name": "Retail Tech Daily",
+        "url": "https://tk.st/job/retailtechdaily/"
+      },
+      "headline": "2026年11月28日号：昨日のリテールテック＆流通DXまとめ",
+      "description": "トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる ローソンがアバター接客を拡大する一方で、生成AIで代替せず人を採用する方針を示し、店舗接客の役割設計が問われている",
+      "url": "https://tk.st/job/retailtechdaily/20261128/",
+      "image": "https://tk.st/images/ogp/retailtechdaily/20261128.webp",
+      "datePublished": "2026-11-28T08:00:00+09:00",
+      "dateModified": "2026-11-28T08:00:00+09:00",
+      "inLanguage": "ja",
+      "author": {
+        "@id": "https://tk.st/#author"
+      },
+      "publisher": {
+        "@id": "https://tk.st/#author"
+      },
+      "articleSection": [
+        "スマートカート",
+        "流通DX一般",
+        "SNS話題・生活者のリアル"
+      ],
+      "keywords": [
+        "SNS話題",
+        "SNS話題・生活者のリアル",
+        "アバター接客",
+        "コンビニ",
+        "スマートカート",
+        "セルフレジ",
+        "人手不足",
+        "店員の役割",
+        "店舗DX",
+        "店舗運営",
+        "流通DX一般",
+        "省人化",
+        "都市型店舗"
+      ],
+      "hasPart": [
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261128/#art-1"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261128/#art-2"
+        },
+        {
+          "@id": "https://tk.st/job/retailtechdaily/20261128/#art-3"
+        }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://tk.st/job/retailtechdaily/20261128/#newslist",
+      "name": "2026年11月28日号 掲載ニュース一覧",
+      "numberOfItems": 3,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261128/#art-1",
+            "position": 1,
+            "headline": "西友、セルフレジ機能付きカートの小型モデルを初導入 23区内初のトライアル西友がオープン",
+            "description": "東京23区内で初となるトライアル西友がオープンしたと報じられた。注目点は、セルフレジ機能を備えたカートの小型モデルを初めて導入したことだ。買い物客はカート上で商品を読み取り、そのまま会計まで進められる仕組みとみられ、レジ待ちの解消と店舗の省人化を同時に狙う取り組みと言える。",
+            "url": "https://tk.st/job/retailtechdaily/20261128/#art-1",
+            "articleSection": "スマートカート",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-28T08:00:00+09:00",
+            "dateModified": "2026-11-28T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261128/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiPkFVX3lxTE50SVNtRXluZnFyX3VyM3BLY2dhY1ZnWkxjQ1EzSzJzWVVLa2F1Um9IQ3pQcGpuUUROLUFTc0d3?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "PR EDGE"
+              },
+              "datePublished": "2026-11-27T11:00:18+09:00"
+            },
+            "keywords": [
+              "スマートカート",
+              "セルフレジ",
+              "都市型店舗",
+              "省人化"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261128/#art-2",
+            "position": 2,
+            "headline": "ローソン、アバター接客を拡大へ 生成AIで代替せず人を採用する理由",
+            "description": "ローソンがアバターを介した接客を拡大する方針が報じられた。注目すべきは、接客の担い手を生成AIで置き換えるのではなく、人を採用して任せる判断を取っている点だ。店舗の人手不足を補いながら接客品質を保つ取り組みとして、コンビニ業界の接客DXの方向性を考えるうえで重要な動きである。",
+            "url": "https://tk.st/job/retailtechdaily/20261128/#art-2",
+            "articleSection": "流通DX一般",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-28T08:00:00+09:00",
+            "dateModified": "2026-11-28T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261128/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMiO0FVX3lxTE55VGpDMUdUT09JR3FWUklkcnVmMEs3NVlOckM2UWI4M2tPMjRXa3lpVzdnWXNySjRrSmZj?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Howl.Link"
+              },
+              "datePublished": "2026-11-27T17:40:47+09:00"
+            },
+            "keywords": [
+              "アバター接客",
+              "人手不足",
+              "店舗DX",
+              "コンビニ"
+            ]
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "NewsArticle",
+            "@id": "https://tk.st/job/retailtechdaily/20261128/#art-3",
+            "position": 3,
+            "headline": "「セルフレジでぼーっと立ってるだけなら仕事しろ」と言われた店員の本音",
+            "description": "セルフレジ導入店で、見守りのために立つ店員が客から「ぼーっとしているなら仕事をしろ」とクレームを受けた経験を、現場の店員が語った内容が取り上げられている。セルフレジの普及で店員の役割が外からは見えにくくなり、客と現場の認識にずれが生じていることがうかがえる。",
+            "url": "https://tk.st/job/retailtechdaily/20261128/#art-3",
+            "articleSection": "SNS話題・生活者のリアル",
+            "inLanguage": "ja",
+            "datePublished": "2026-11-28T08:00:00+09:00",
+            "dateModified": "2026-11-28T08:00:00+09:00",
+            "isPartOf": {
+              "@id": "https://tk.st/job/retailtechdaily/20261128/#article"
+            },
+            "author": {
+              "@id": "https://tk.st/#author"
+            },
+            "publisher": {
+              "@id": "https://tk.st/#author"
+            },
+            "isBasedOn": {
+              "@type": "NewsArticle",
+              "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBvNWlzNUtzdWF1QTRCY3J0RlA3Mm80WUpLMTEwUUlkeWo4M1FMRUkxX01pcWoteFhVbF9reG1wODF2YUpOT3lVeDhMYXZqOC1PSG9qY1JlbktKa2FyX0dlell6OEZhN0l0WnI4RWNB?oc=5",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ウォーカープラス"
+              },
+              "datePublished": "2026-11-27T16:42:34+09:00"
+            },
+            "keywords": [
+              "セルフレジ",
+              "店員の役割",
+              "SNS話題",
+              "店舗運営"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://tk.st/job/retailtechdaily/20261128/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Shinya Takeda",
+          "item": "https://tk.st/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Job",
+          "item": "https://tk.st/job/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Retail Tech Daily",
+          "item": "https://tk.st/job/retailtechdaily/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "2026年11月28日号",
+          "item": "https://tk.st/job/retailtechdaily/20261128/"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://tk.st/#author",
+      "name": "Shinya Takeda",
+      "url": "https://tk.st/job/",
+      "jobTitle": "Digital Marketer / Tech Lead",
+      "sameAs": [
+        "https://tk.st/",
+        "https://github.com/tk33r1"
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="../../../job/assets/daily-base.css?v=20261030_1">
+</head>
+<body id="top" data-daily-media="retailtechdaily" data-share-prefix="【流通DX日刊速報】">
+
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+  <defs>
+    <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
+    </linearGradient>
+    <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="7" fill="url(#headerCartBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="6" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.2" />
+  <path d="M12 26 h5 l5 16 h17 l4 -11 h-23" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="24" cy="47" r="3" fill="#ffffff" />
+  <circle cx="38" cy="47" r="3" fill="#ffffff" />
+  <circle cx="40" cy="26" r="2.2" fill="url(#headerCartSignal)" />
+  <path d="M 41.8 19.2 A 7 7 0 0 1 46.8 24.2" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M 43.1 14.4 A 12 12 0 0 1 51.6 22.9" fill="none" stroke="url(#headerCartSignal)" stroke-width="2.8" stroke-linecap="round" />
+</svg></span>
+        <span class="brand-text">
+          <span class="brand-name">Retail Tech Daily</span>
+          <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search" data-search-assets="search-ui.css?v=20261012_16 search-analytics.js?v=20261009_1 japanese-search.js?v=20261012_16 site-search.js?v=20261011_1 search-ui.js?v=20261015_1 search-data.js?v=20261012_16">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" autocomplete="off" enterkeyhint="search" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer">公式X</a>
+            <a href="../../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Retail Tech Daily</a><span class="sep" aria-hidden="true">/</span>
+      <strong>2026年11月28日号</strong>
+    </nav>
+
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">2026年11月28日 08:00 JST 配信</span>
+        </div>
+        <h1 class="issue-title">2026年11月28日号：昨日のリテールテック＆流通DXまとめ</h1>
+        <p class="issue-lede">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約2分 / 1,250字
+          </span>
+          <span class="stat">全 3 本</span>
+          <span class="engine-badge engine-anthropic"><span class="engine-dot"></span>Anthropic (claude-haiku-5-5)</span>
+        </div>
+      </header>
+
+      <section class="daily-status" aria-labelledby="dailyStatusTitle">
+          <span class="daily-status-label">LOW VOLUME BRIEF</span>
+          <h2 id="dailyStatusTitle">本日の概況</h2>
+          <p>トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる</p>
+        </section>
+
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">3 stories</span>
+        </div>
+
+
+
+
+
+        <div class="articles-list detail-view" id="articlesList">
+
+        <article class="news-card" id="art-1" data-region="JP" data-category="スマートカート">
+          <div class="card-index" aria-hidden="true">01</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">スマートカート</span>
+              <span class="source-tag">PR EDGE</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-27T11:00:18+09:00" title="出典の公開日時">公開 2026.11.27 11:00 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiPkFVX3lxTE50SVNtRXluZnFyX3VyM3BLY2dhY1ZnWkxjQ1EzSzJzWVVLa2F1Um9IQ3pQcGpuUUROLUFTc0d3?oc=5" target="_blank" rel="noopener noreferrer">西友、セルフレジ機能付きカートの小型モデルを初導入 23区内初のトライアル西友がオープン<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p>東京23区内で初となる<strong class="kw-scan">トライアル</strong>西友がオープンしたと報じられた。注目点は、<strong class="kw-scan">セルフレジ</strong>機能を備えたカートの小型モデルを初めて導入したことだ。買い物客はカート上で商品を読み取り、そのまま会計まで進められる仕組みとみられ、レジ待ちの解消と店舗の<strong class="kw-scan">省人化</strong>を同時に狙う取り組みと言える。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">スマートカート</strong>は<strong class="kw-scan">セルフレジ</strong>に続く<strong class="kw-scan">省人化</strong>の手段として注目度が高まっている。</p>
+              </div>
+              <p class="wim-detail">小型モデルの導入は、店舗面積が限られる都市型店舗でもカートによる会計を展開しやすくする点で示唆が大きい。一方で、読み取り精度や盗難対策、高齢客や子ども連れを含む多様な利用者が迷わず使えるUIが普及の鍵になる。食品小売企業は、導入店舗の購買データ活用まで含めて投資判断を検討すべき段階にある。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%82%AB%E3%83%BC%E3%83%88">#スマートカート</a><button type="button" class="topic-watch-btn" data-watch-topic="スマートカート" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E9%83%BD%E5%B8%82%E5%9E%8B%E5%BA%97%E8%88%97">#都市型店舗</a><button type="button" class="topic-watch-btn" data-watch-topic="都市型店舗" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E7%9C%81%E4%BA%BA%E5%8C%96">#省人化</a><button type="button" class="topic-watch-btn" data-watch-topic="省人化" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiPkFVX3lxTE50SVNtRXluZnFyX3VyM3BLY2dhY1ZnWkxjQ1EzSzJzWVVLa2F1Um9IQ3pQcGpuUUROLUFTc0d3?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8828%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-2" data-region="JP" data-category="流通DX一般">
+          <div class="card-index" aria-hidden="true">02</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">流通DX一般</span>
+              <span class="source-tag">Howl.Link</span>
+            </div>
+            <div class="source-details"><span class="source-kind">報道・解説</span><time datetime="2026-11-27T17:40:47+09:00" title="出典の公開日時">公開 2026.11.27 17:40 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMiO0FVX3lxTE55VGpDMUdUT09JR3FWUklkcnVmMEs3NVlOckM2UWI4M2tPMjRXa3lpVzdnWXNySjRrSmZj?oc=5" target="_blank" rel="noopener noreferrer">ローソン、アバター接客を拡大へ 生成AIで代替せず人を採用する理由<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">ローソン</strong>がアバターを介した接客を拡大する方針が報じられた。注目すべきは、接客の担い手を<strong class="kw-scan">生成AI</strong>で置き換えるのではなく、人を採用して任せる判断を取っている点だ。店舗の人手不足を補いながら接客品質を保つ取り組みとして、コンビニ業界の接客DXの方向性を考えるうえで重要な動きである。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">コンビニの接客を<strong class="kw-scan">生成AI</strong>で代替するか、人が担うかは今後の店舗DXの設計思想を分ける論点だ。</p>
+              </div>
+              <p class="wim-detail">今回の動きは、AIを活用した接客の拡大と人材採用を両立させる姿勢を示している点に示唆がある。小売企業にとっては、<strong class="kw-scan">省人化</strong>の効果だけでなく、顧客が違和感なく受け入れられるか、従業員の役割がどう変わるかを見据えた導入計画が求められる。アバター接客が人手不足対策として定着するかは、今後の採用実績と顧客評価が鍵になる。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%A2%E3%83%90%E3%82%BF%E3%83%BC%E6%8E%A5%E5%AE%A2">#アバター接客</a><button type="button" class="topic-watch-btn" data-watch-topic="アバター接客" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E4%BA%BA%E6%89%8B%E4%B8%8D%E8%B6%B3">#人手不足</a><button type="button" class="topic-watch-btn" data-watch-topic="人手不足" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97DX">#店舗DX</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗DX" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%B3%E3%83%B3%E3%83%93%E3%83%8B">#コンビニ</a><button type="button" class="topic-watch-btn" data-watch-topic="コンビニ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMiO0FVX3lxTE55VGpDMUdUT09JR3FWUklkcnVmMEs3NVlOckM2UWI4M2tPMjRXa3lpVzdnWXNySjRrSmZj?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8828%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="news-card" id="art-3" data-region="JP" data-category="SNS話題・生活者のリアル">
+          <div class="card-index" aria-hidden="true">03</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <span class="region-badge badge-jp">国内 JAPAN</span>
+              <span class="category-badge">SNS話題・生活者のリアル</span>
+              <span class="source-tag">ウォーカープラス</span>
+            </div>
+            <div class="source-details"><span class="source-kind">SNS投稿</span><time datetime="2026-11-27T16:42:34+09:00" title="出典の公開日時">公開 2026.11.27 16:42 JST</time></div>
+            <h3 class="card-title"><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTFBvNWlzNUtzdWF1QTRCY3J0RlA3Mm80WUpLMTEwUUlkeWo4M1FMRUkxX01pcWoteFhVbF9reG1wODF2YUpOT3lVeDhMYXZqOC1PSG9qY1JlbktKa2FyX0dlell6OEZhN0l0WnI4RWNB?oc=5" target="_blank" rel="noopener noreferrer">「セルフレジでぼーっと立ってるだけなら仕事しろ」と言われた店員の本音<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></h3>
+
+            <div class="card-summary"><p><strong class="kw-scan">セルフレジ</strong>導入店で、見守りのために立つ店員が客から「ぼーっとしているなら仕事をしろ」とクレームを受けた経験を、現場の店員が語った内容が取り上げられている。<strong class="kw-scan">セルフレジ</strong>の普及で店員の役割が外からは見えにくくなり、客と現場の認識にずれが生じていることがうかがえる。</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text"><strong class="kw-scan">セルフレジ</strong>は<strong class="kw-scan">省人化</strong>の手段である一方、見守りやトラブル対応を担う店員の業務は生活者から理解されにくい。</p>
+              </div>
+              <p class="wim-detail">店員の役割を可視化するための案内表示や声掛けの設計、従業員への役割説明が必要になる。現場の本音は、サービス設計を見直すための重要な材料でもある。店舗DXを進める際は、機械の導入効果だけでなく、人の役割を再定義しなければ不満が生じやすいことを示している。</p>
+            </div>
+            <div class="card-tags" aria-label="記事タグ"><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E3%82%BB%E3%83%AB%E3%83%95%E3%83%AC%E3%82%B8">#セルフレジ</a><button type="button" class="topic-watch-btn" data-watch-topic="セルフレジ" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E5%93%A1%E3%81%AE%E5%BD%B9%E5%89%B2">#店員の役割</a><button type="button" class="topic-watch-btn" data-watch-topic="店員の役割" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=SNS%E8%A9%B1%E9%A1%8C">#SNS話題</a><button type="button" class="topic-watch-btn" data-watch-topic="SNS話題" aria-pressed="false" title="このテーマをウォッチ">☆</button></span><span class="topic-tag-wrap"><a class="topic-tag" href="../#q=%E5%BA%97%E8%88%97%E9%81%8B%E5%96%B6">#店舗運営</a><button type="button" class="topic-watch-btn" data-watch-topic="店舗運営" aria-pressed="false" title="このテーマをウォッチ">☆</button></span></div>
+
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
+                <a class="source-link" href="https://news.google.com/rss/articles/CBMibkFVX3lxTFBvNWlzNUtzdWF1QTRCY3J0RlA3Mm80WUpLMTEwUUlkeWo4M1FMRUkxX01pcWoteFhVbF9reG1wODF2YUpOT3lVeDhMYXZqOC1PSG9qY1JlbktKa2FyX0dlell6OEZhN0l0WnI4RWNB?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+                <a class="correction-link" href="https://tk.st/contact/?subject=Retail%20Tech%20Daily%202026%E5%B9%B411%E6%9C%8828%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
+              </div>
+            </div>
+          </div>
+        </article>
+        </div>
+
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
+
+
+
+
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        <a href="../20261127/" class="nav-prev">&larr; 2026.11.27 号</a>
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        <span class="nav-disabled nav-next">最新号</span>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="../">Home</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a class="footer-x-link" href="https://x.com/retailtechdaily" target="_blank" rel="noopener noreferrer" title="公式X" aria-label="公式X @retailtechdaily"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://tk.st/contact/?to=retailtechdaily">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>
+
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js?v=20261030_2"></script>
+</body>
+</html>

@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 27 Nov 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 27 Nov 2026 09:55:54 +0900</lastBuildDate>
+    <pubDate>Sat, 28 Nov 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 28 Nov 2026 09:20:46 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年11月28日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261128/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261128/</guid>
+      <pubDate>Sat, 28 Nov 2026 08:00:00 +0900</pubDate>
+      <description>トライアル系列の西友がセルフレジ機能付きカートの小型モデルを初導入し、スマートカートの都市型店舗への展開が進んでいる ローソンがアバター接客を拡大する一方で、生成AIで代替せず人を採用する方針を示し、店舗接客の役割設計が問われている</description>
+    </item>
     <item>
       <title>2026年11月27日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261127/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261114/</guid>
       <pubDate>Sat, 14 Nov 2026 08:00:00 +0900</pubDate>
       <description>高千穂交易がセルフレジ不正対策「Sesame Solution」の国内独占販売代理店契約を締結し、無人化が進む店舗での不正リスク対策が国内で本格化する流れが明確になった。 PPIHの体験型リテールメディアやリアル脱出ゲームとの連動、ファミリーマートの推し活タイアップなど、リテールメディアが売場体験と結びつく方向へ広がっている。</description>
-    </item>
-    <item>
-      <title>2026年11月13日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20261113/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261113/</guid>
-      <pubDate>Fri, 13 Nov 2026 08:00:00 +0900</pubDate>
-      <description>持ち運び型の一体型POS「Redx Mobile」が正式リリースされ、レジの設置場所に縛られない会計運用の選択肢が広がった。 店頭サイネージでの非食品広告の拡大や、SNS×リテールメディアの店舗向けソリューションの提供開始など、リテールメディアの広告主と販売領域が多様化している。</description>
     </item>
   </channel>
 </rss>
