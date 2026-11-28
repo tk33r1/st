@@ -1,5 +1,305 @@
 [
   {
+    "date": "20261128",
+    "title": "2026年11月28日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリが台湾に2店舗を出店し、グループ店舗数は1104店舗目に到達。海外展開が着実に進んでいることを示した。 12月の月替わりセールでは収納・水まわり・カーテン・寝具など約800アイテムを期間限定10％OFFにし、年末の住まい準備需要を取り込む。",
+    "count": 7,
+    "generated_by": "Anthropic (claude-haiku-5-5)",
+    "engine_type": "anthropic",
+    "executive_summary": [
+      "ニトリが台湾に2店舗を出店し、グループ店舗数は1104店舗目に到達。海外展開が着実に進んでいることを示した。",
+      "12月の月替わりセールでは収納・水まわり・カーテン・寝具など約800アイテムを期間限定10％OFFにし、年末の住まい準備需要を取り込む。",
+      "LEDシーリングライトや着る毛布など冬季・実用品が売れ筋として反響を集めた。TikTokでは入居時にニトリで揃えた生活空間の投稿が9.5万回再生され、空間単位の提案が共感を生んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "価格戦略・PB",
+        "title": "12月の月替わりセール、過去最大の約800アイテムが10％OFF",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-15",
+        "summary": "ニトリは12月の月替わりセールで、収納・水まわり用品、カーテン、寝具など約800アイテムを期間限定で10％OFFにすると発表した。月替わりセールの対象点数としては過去最大となる。日常使いの実用品が中心で、年末の準備や大掃除、模様替えに合わせた購入を後押しする内容だ。",
+        "why_it_matters": "月替わりセールを対象点数で拡大させることで、毎月の来店動機を作る仕組みを強化している。値引きを行いながらも対象を実用品中心に広げる点は、低価格の定番品を大量に仕入れられるSPAの強みと一致する。値引き原資を仕入れや物流効率でどこまで吸収できるかが、収益面での注目点となる。",
+        "tags": [
+          "ニトリ",
+          "価格戦略",
+          "セール",
+          "年末需要"
+        ],
+        "search_terms": [
+          "ニトリ 月替わりセール 12月",
+          "Nitori monthly sale 10% off",
+          "年末 収納 寝具 値引き",
+          "Nitori December discount"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBJRzR4WlFEcUhFQXBMRThTTVc2ZUdjN3hwQXJJSGFzWVdvWEU4eFRYcXpod3plcjktNHlUb09WX2lYTTBUWHZTUFliUFBLbTlXSlVyRkNFV2VzQ1lIbVJrTWpZbUVWMlFqdnc?oc=5",
+        "source_pub_ts": 1795741202
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリが台湾に2店舗出店、グループ1104店舗目に",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-14",
+        "summary": "ニトリが台湾に新たに2店舗を出店したと流通スーパーニュースが報じた。この出店により、ニトリグループの店舗数は1104店舗目に達した。海外での店舗網拡大が着実に進んでいることを示すニュースで、グループ全体の成長戦略の一端がうかがえる。今後の出店ペースや地域別の展開にも注目が集まる。",
+        "why_it_matters": "グループ店舗数の積み上げは、海外拠点での認知向上と仕入れ・物流の規模効果を同時に狙える局面を示す。SPAとして商品企画から店舗運営までを一貫させる強みを、現地の住環境や生活スタイルに合わせて展開できるかが今後の焦点となる。既存店舗網のノウハウを活かせる台湾での出店は、海外拡大の再現性を測る材料にもなる。",
+        "tags": [
+          "ニトリ",
+          "台湾",
+          "店舗展開",
+          "海外出店"
+        ],
+        "search_terms": [
+          "ニトリ 台湾 出店",
+          "Nitori Taiwan store opening",
+          "ニトリグループ 店舗数 1104店舗",
+          "Nitori overseas expansion"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9jaE80WlN5T3R2YUo4OXlHMzJoQ2NZNzJ6ZXVxSUxQMDAtUmdvLXJpZUEtbTlEZ200emR6eXZycmdSSGU1WWdVaDRXYjk5V0xTNUpV?oc=5",
+        "source_pub_ts": 1795746206
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "2990円のLEDシーリングライト、売れ筋1位で高評価",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-03",
+        "summary": "ニトリの「LEDシーリングライト」（2990円）が小型家電部門の売れ筋1位になったと、LIMOが紹介した。直径約40cmで6畳を照らせ、無段階調光とリモコンを備える。公式サイトのレビューは271件で星平均は4.6と高評価だ。約3600lmの明るさに加え、常夜灯とスリープタイマーも搭載している。",
+        "why_it_matters": "2990円で調光・リモコン・常夜灯などの機能を揃えた価格設定が、照明の買い替え需要を強く刺激している。照明は買い替え頻度が低い分、レビュー評価の高さが指名買いを生む重要な要因になる。SPAとして企画と調達を一体化し、機能を絞り込みながら価格を抑えた商品開発の成果といえる。",
+        "tags": [
+          "ニトリ",
+          "LED",
+          "シーリングライト",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "ニトリ LEDシーリングライト",
+          "Nitori LED ceiling light",
+          "調光 リモコン 照明 6畳",
+          "Nitori home lighting bestseller"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9uNGdVU2hqTThXUURYUkxBUnVfRTE5cWNpVElwakNGQjRYaXh1ai1WdGNmSGpaWkJpRXpNbXVqMXZDVnRPNjJtWGZPV1o?oc=5",
+        "source_pub_ts": 1795787100
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「着る寝袋」のような中わた入り着る毛布、真冬の防寒に支持",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-06",
+        "summary": "ニトリの「中わた入りボリューム着る毛布」が、真冬の防寒アイテムとして注目を集めている。LIMOは、着る寝袋のようにぬくぬくと包まれる使用感を紹介した。暖房の使用を抑える選択肢としても挙げられ、暖房費の節約にもつながる可能性があると伝えている。",
+        "why_it_matters": "暖房の温度設定を抑えたい生活者の需要と、着用型の寝具という新しい用途が結びついた商品である。中わたのボリュームを前面に出す訴求は防寒性能を分かりやすく伝えられるため、冬の売場の訴求軸として有効だ。寝具を寝る場面から生活の中で着る場面へ広げる発想は、季節商品の提案幅を示している。",
+        "tags": [
+          "ニトリ",
+          "着る毛布",
+          "防寒",
+          "冬物"
+        ],
+        "search_terms": [
+          "ニトリ 着る毛布 中わた",
+          "Nitori wearable blanket",
+          "防寒 暖房費 節約 寝具",
+          "winter warm wearable blanket"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE93MWNHbE15SUVkZWYxSUx5ZTBZb09xRHRIVzZuYUNxS0gtd3pNYnBpU1JndTZOdzJRTjd5QlRQcV9rb0h3dkFSZ1VzOTM?oc=5",
+        "source_pub_ts": 1795777800
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "199円エコバッグに「各サイズ買いました」の声、頑丈さと肩掛けが支持",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-08",
+        "summary": "ニトリの199円エコバッグが、ニコニコニュースの紹介で「各サイズ買いました」と反響を呼んでいる。「レジャーシートのような頑丈さ」や「肩掛けできる」といった声が寄せられ、低価格ながら実用性が評価されている。サイズ違いをそろえて購入する動きが見られる点も特徴だ。",
+        "why_it_matters": "199円という価格で耐久性と使い勝手を両立したことが、1つ買うだけでなく複数サイズを揃える需要を生んでいる。サイズ展開を前提とした購買は、1回の来店での購入点数を押し上げる効果がある。低価格の実用品をSPAの企画力で磨き込むことが、ブランドへの信頼と日常的な接点の両立につながっている。",
+        "tags": [
+          "ニトリ",
+          "エコバッグ",
+          "実用品",
+          "ヒット商品"
+        ],
+        "search_terms": [
+          "ニトリ 199円 エコバッグ",
+          "Nitori eco bag 199 yen",
+          "肩掛け 頑丈 買い物袋",
+          "reusable shopping bag Japan"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE03UVpmd1o2eHZJM2FrYmtkeUtZeEUxZ19hanYxaW5aYUlCaVpsekMyZHh5R01tMWtHSHJYUmd2MHBYT191Z3VxRzlQU09LYkx6UHV3M3Nyc3FrNUZvNnQzNnNzaHlSOGdBelE2WHhHR1paYkpOZnF1Ykp4TC0?oc=5",
+        "source_pub_ts": 1795768062
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "4K対応Mini LEDテレビに75型追加、輝度は前モデルから約10％向上",
+        "original_title": "",
+        "source": "インターネットコム",
+        "source_id": "JP-13",
+        "summary": "インターネットコムが、ニトリの4K対応Mini LED液晶テレビについて買い替えの観点から解説した。前モデルより輝度が約10％向上し、新たに75型が追加されて11月下旬に発売される。先に発表された55型（99,900円）に加え、大画面を求める層にも選択肢を広げる構成となる。",
+        "why_it_matters": "55型に75型を加えたことで、価格を抑えた大画面テレビを求める層の選択肢が広がる。輝度向上という前モデルからの改良点を明示する点は、買い替え判断を助ける情報提供にもつながっている。PB家電の品ぞろえをサイズ展開で拡張する動きは、家電分野でもSPAの商品企画力を示す好例である。",
+        "tags": [
+          "ニトリ",
+          "テレビ",
+          "家電",
+          "Mini LED"
+        ],
+        "search_terms": [
+          "ニトリ 4K Mini LEDテレビ 75型",
+          "Nitori Mini LED TV 75-inch",
+          "輝度向上 大画面 テレビ 買い替え",
+          "Nitori 4K television launch"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE12N1Z6YjgyODJVVGE0cjBpOTJGQmlnQUFwOHg5RlBydVVnNXJwSXhvd3ZlS2hfN292N1QyVm1KY0dPay1oNlN0UWtuNmVURDNCSFoyOHhMc20tTFdDRzlBNTZ2U19Za1RLNHZCbNIBckFVX3lxTE80eW9nQ3hRRlBQOVFZbUlmLTBpb1otSmViUlNYamJDVDFfXzFQN2RlaGJlZzZ0MGZHNGZLWGF2dEV5YV8zckRKMmVKX3J6STgzdkl4UnhGQVR3MlhnclZIZkRIWExxSkJMT0FpaGlfaXl6UQ?oc=5",
+        "source_pub_ts": 1795759200
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "入居時に買ってよかったニトリ品、TikTokで9.5万回再生",
+        "original_title": "",
+        "source": "TikTok（投稿）",
+        "source_id": "SNS-06",
+        "summary": "一人暮らしの入居時に買ってよかったニトリ品として、伸縮シンク上ラック5点セット、コンロ横ラック、高さ調節できる3段キッチンワゴン、ポケットコイルマットレスが紹介された。前日投稿の再生数は9.5万回、いいねは2644件に達した。収納・キッチン・寝具をまとめて見せる構成が多くの共感を集めている。",
+        "why_it_matters": "入居時に買い揃えた、という文脈で複数カテゴリを紹介する投稿は、ニトリを一括で生活空間を整える店として認識させる。収納・キッチン・寝具という生活動線に沿った提案が、見る人に自分の部屋での使い方を想像させている。再生が伸びた要因は商品単体ではなく暮らしの場面として提示された点にあり、特集や売場でも空間単位の提案が有効であることを示す。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "一人暮らし",
+          "収納",
+          "キッチン"
+        ],
+        "search_terms": [
+          "ニトリ 入居時 購入品",
+          "Nitori move-in essentials TikTok",
+          "伸縮シンク上ラック キッチンワゴン",
+          "one-person household Nitori haul"
+        ],
+        "url": "https://www.tiktok.com/@lunachan1202/video/7710893488438512917",
+        "source_pub_ts": 1795332299.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "マットレス変えようかと思ってて、予算は50万前後！体痛くなりにくいものでオススメ知ってる人いたらリプでもDMでも教えて下さい！今はニトリマッ...",
+        "platform": "x",
+        "author": "@7mim_sub",
+        "url": "https://x.com/7mim_sub/status/2126140258169622535",
+        "likes": 817,
+        "retweets": 22,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:25",
+        "captured_at": "",
+        "text": "マットレス変えようかと思ってて、予算は50万前後！体痛くなりにくいものでオススメ知ってる人いたらリプでもDMでも教えて下さい！今はニトリマットレス dual pocket",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリひどい…来ないからシャワー浴びてたらその瞬間にピンポンきて、慌てて対応しようとしたけど10分経過で本日中の再配達もできない…。 すぐ必...",
+        "platform": "x",
+        "author": "@uduki_yu",
+        "url": "https://x.com/uduki_yu/status/2126178861008466229",
+        "likes": 479,
+        "retweets": 14,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:58",
+        "captured_at": "",
+        "text": "ニトリひどい…来ないからシャワー浴びてたらその瞬間にピンポンきて、慌てて対応しようとしたけど10分経過で本日中の再配達もできない…。 すぐ必要なんですけど…。 注文時に宅配ボックスって書いてるのに…対面にされてた。 なーんでーーーー！！！ pic.x.com/nAapO4QMu4",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "週末ニトリでNウォーム買わなくてよかったぁ……だって、マリメッコ風の毛布が3000円台の世界線がある。 pic.x.com/zkVAfSEh...",
+        "platform": "x",
+        "author": "@aco___select",
+        "url": "https://x.com/aco___select/status/2126149512456704352",
+        "likes": 284,
+        "retweets": 10,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:02",
+        "captured_at": "",
+        "text": "週末ニトリでNウォーム買わなくてよかったぁ……だって、マリメッコ風の毛布が3000円台の世界線がある。 pic.x.com/zkVAfSEhTJ x.com/aco___select/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリのケースでハンカチ収納 pic.x.com/Zj4qWF0PJk x.com/clipnotebook/s…",
+        "platform": "x",
+        "author": "@clipnotebook",
+        "url": "https://x.com/clipnotebook/status/2126268383037640861",
+        "likes": 159,
+        "retweets": 8,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:54",
+        "captured_at": "",
+        "text": "ニトリのケースでハンカチ収納 pic.x.com/Zj4qWF0PJk x.com/clipnotebook/s…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "新作Youtube公開!! 100均・ニトリのドリッパーって実際どうなのでしょう？ ダイソー（3つ穴）・セリア（4つ穴）・ニトリ（2つ穴）を...",
+        "platform": "x",
+        "author": "@gingacoffee",
+        "url": "https://x.com/gingacoffee/status/2126301275776283075",
+        "likes": 31,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:05",
+        "captured_at": "",
+        "text": "新作Youtube公開!! 100均・ニトリのドリッパーって実際どうなのでしょう？ ダイソー（3つ穴）・セリア（4つ穴）・ニトリ（2つ穴）を日本代表審査委員としてガチ検証(ΦωΦ) 適当に淹れても美味しいのは？ 100均売場の「絶対に買ってはいけない罠」も必見(゜゜) 本編動画はリプライ欄より ↓ pic.x.com/2b2ZWqpmoQ",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "入居時に色々買った中でも特に良かったアイテムたち✨ ①伸縮シンク上ラック5点セット ②コンロ横ラック ③3段とも高さ調節ができるキッチンワゴ...",
+        "platform": "tiktok",
+        "author": "@Luna🌙",
+        "url": "https://www.tiktok.com/@lunachan1202/video/7710893488438512917",
+        "likes": 2644,
+        "retweets": 33,
+        "views": 95300,
+        "comments": 3,
+        "posted_on": "2026-11-22 16:24",
+        "captured_at": "2026-11-27T23:42:02.926749+09:00",
+        "text": "入居時に色々買った中でも特に良かったアイテムたち✨ ①伸縮シンク上ラック5点セット ②コンロ横ラック ③3段とも高さ調節ができるキッチンワゴン ④ポケットコイルマットレス #ニトリ #ニトリ購入品 #ニトリ購入品紹介 #一人暮らし #社会人の日常",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ]
+  },
+  {
     "date": "20261127",
     "title": "2026年11月27日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "電気を使わない「ポケットこたつ」や、Dolby Atmos対応の薄型サウンドバーなど、単身層や在宅層の暮らしの困りごとに応える新商品が相次いで登場した。 デコホームのブラシウォッシュトレーなど499円の実用品が、手入れの手間を減らす提案として注目を集めている。",
